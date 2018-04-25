@@ -48,7 +48,6 @@ Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_point) {
 			else {
 				/* decrease the radius */
 				this->radius = std::max(std::min(this->radius, solution.norm)/2., 1e-4);
-				
 			}
 		}
 		catch (const std::invalid_argument& e) {
