@@ -1,0 +1,333 @@
+g3 0 1 0	# problem ex6_2_9
+ 4 2 1 0 2	# vars, constraints, objectives, ranges, eqns
+ 0 1	# nonlinear constraints, objectives
+ 0 0	# network constraints: nonlinear, linear
+ 0 4 0	# nonlinear vars in constraints, objectives, both
+ 0 0 0 1	# linear network variables; functions; arith, flags
+ 0 0 0 0 0	# discrete variables: binary, integer, nonlinear (b,c,o)
+ 4 4	# nonzeros in Jacobian, gradients
+ 0 0	# max name lengths: constraints, variables
+ 0 0 0 0 0	# common exprs: b,c,o,c1,o1
+b
+0 1e-07 0.5
+0 1e-07 0.5
+0 1e-07 0.5
+0 1e-07 0.5
+x4
+0 0.4998
+1 0.0002
+2 0.0451
+3 0.4549
+r
+4 0.5
+4 0.5
+C0
+n0
+C1
+n0
+O0 0
+o54
+22
+o2
+o0
+o2
+n31.4830434782609
+v0
+o2
+n6
+v2
+o43
+o0
+o2
+n4.8274
+v0
+o2
+n0.92
+v2
+o2
+o2
+n11.5030434782609
+v0
+o43
+o3
+v0
+o0
+o2
+n4.8274
+v0
+o2
+n0.92
+v2
+o2
+o2
+n20.98
+v0
+o43
+o3
+v0
+o0
+o2
+n4.196
+v0
+o2
+n1.4
+v2
+o2
+o2
+n7
+v2
+o43
+o3
+v2
+o0
+o2
+n4.196
+v0
+o2
+n1.4
+v2
+o2
+o0
+o2
+n4.196
+v0
+o2
+n1.4
+v2
+o43
+o0
+o2
+n4.196
+v0
+o2
+n1.4
+v2
+o2
+o2
+n1.62
+v0
+o43
+o3
+v0
+o0
+o2
+n7.52678200680961
+v0
+o2
+n0.443737968424621
+v2
+o2
+o2
+n0.848
+v0
+o43
+o3
+v0
+o0
+o2
+n7.52678200680961
+v0
+o2
+n0.443737968424621
+v2
+o2
+o2
+n1.728
+v0
+o43
+o3
+v0
+o0
+o2
+n1.82245052351472
+v0
+o2
+n1.4300083598626
+v2
+o2
+o2
+n1.4
+v2
+o43
+o3
+v2
+o0
+o2
+n0.504772348000588
+v0
+o2
+n1.4
+v2
+o2
+o0
+o2
+n31.4830434782609
+v1
+o2
+n6
+v3
+o43
+o0
+o2
+n4.8274
+v1
+o2
+n0.92
+v3
+o2
+o2
+n11.5030434782609
+v1
+o43
+o3
+v1
+o0
+o2
+n4.8274
+v1
+o2
+n0.92
+v3
+o2
+o2
+n20.98
+v1
+o43
+o3
+v1
+o0
+o2
+n4.196
+v1
+o2
+n1.4
+v3
+o2
+o2
+n7
+v3
+o43
+o3
+v3
+o0
+o2
+n4.196
+v1
+o2
+n1.4
+v3
+o2
+o0
+o2
+n4.196
+v1
+o2
+n1.4
+v3
+o43
+o0
+o2
+n4.196
+v1
+o2
+n1.4
+v3
+o2
+o2
+n1.62
+v1
+o43
+o3
+v1
+o0
+o2
+n7.52678200680961
+v1
+o2
+n0.443737968424621
+v3
+o2
+o2
+n0.848
+v1
+o43
+o3
+v1
+o0
+o2
+n7.52678200680961
+v1
+o2
+n0.443737968424621
+v3
+o2
+o2
+n1.728
+v1
+o43
+o3
+v1
+o0
+o2
+n1.82245052351472
+v1
+o2
+n1.4300083598626
+v3
+o2
+o2
+n1.4
+v3
+o43
+o3
+v3
+o0
+o2
+n0.504772348000588
+v1
+o2
+n1.4
+v3
+o16
+o2
+o2
+n35.6790434782609
+v0
+o43
+v0
+o16
+o2
+o2
+n7.4
+v2
+o43
+v2
+o16
+o2
+o2
+n35.6790434782609
+v1
+o43
+v1
+o16
+o2
+o2
+n7.4
+v3
+o43
+v3
+k3
+1
+2
+3
+J0 2
+0 1
+1 1
+J1 2
+2 1
+3 1
+G0 4
+0 -1.36551138119385
+1 -1.36551138119385
+2 2.8555953099828
+3 2.8555953099828

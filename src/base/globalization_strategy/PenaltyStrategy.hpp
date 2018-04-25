@@ -1,0 +1,50 @@
+#ifndef PENALTYSTRATEGY_H
+#define PENALTYSTRATEGY_H
+
+#include <vector>
+#include "GlobalizationStrategy.hpp"
+#include "Constraint.hpp"
+
+/*! \class PenaltyStrategy
+* \brief Step acceptance strategy based on a penalty method
+*
+*  Strategy that accepts or declines a trial step
+*/
+class PenaltyStrategy: public GlobalizationStrategy {
+	public:
+		/*!
+         *  Constructor that takes an optimization problem and a set of constants
+         */
+		PenaltyStrategy(LocalApproximation& local_approximation, double tolerance);
+
+		LocalSolution compute_step(Problem& problem, Iterate& current_point, double radius);
+
+		/*!
+         *  Check the validity of a step
+         *  Implements the purely virtual method of the superclass
+         */
+		bool check_step(Problem& problem, Iterate& current_point, LocalSolution& solution, double step_length);
+		
+		double compute_KKT_error(Problem& problem, Iterate& current_point);
+		
+		void initialize(Problem& problem, Iterate& current_point);
+		
+		double penalty_parameter; /*!< Penalty */
+	
+	private:
+		PenaltyConstraints penalty_constraints;
+		double tau;
+		double eta;
+		double epsilon1;
+		double epsilon2;
+		
+		double compute_linear_model(Problem& problem, LocalSolution& solution);
+		
+		std::vector<double> compute_multipliers(Problem& problem, LocalSolution& solution);
+		
+		double compute_error(Problem& problem, Iterate& current_point, std::vector<double>& multipliers, double penalty_parameter);
+		
+		OptimalityStatus compute_status(Problem& problem, Iterate& current_point, double step_norm);
+};
+
+#endif // PENALTYSTRATEGY_H

@@ -1,0 +1,6 @@
+Argonot syntax conventions (may be subject to change):
+
+- class names in Camel case: ClassName, QPSolver
+- variable and method names with underscores: variable_name, method_name
+- private attributes have a "_" suffix: private_attribute_
+- attributes and methods are called with a "this->" suffix: this->attribute, this->method()

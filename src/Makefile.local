@@ -1,0 +1,10 @@
+# specify local compilers and compiler flags
+CFLAGS = -Wall -pedantic $(PROFILER)
+
+# local directories & libraries (change appropriately)
+AMPL_DIR = ~/src/amplsolver
+GALAHAD_DIR = 
+BQPD_DIR = ~/Desktop/robust/software/bqpd
+
+# local libraries
+LIBCOMPIL = -lgfortran -lz -lrt

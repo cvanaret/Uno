@@ -1,0 +1,170 @@
+g9 1 1 0 0 20170614 0 4 0 240	# problem box2
+ 2 0 1 0 0	# vars, constraints, objectives, ranges, eqns
+ 0 1	# nonlinear constraints, objectives
+ 0 0	# network constraints: nonlinear, linear
+ 0 2 0	# nonlinear vars in constraints, objectives, both
+ 0 0 0 1	# linear network variables; functions; arith, flags
+ 0 0 0 0 0	# discrete variables: binary, integer, nonlinear (b,c,o)
+ 0 2	# nonzeros in Jacobian, gradients
+ 0 0	# max name lengths: constraints, variables
+ 0 0 0 0 0	# common exprs: b,c,o,c1,o1
+b
+3
+3
+x2
+0 0
+1 10
+O0 0
+o54
+10
+o5
+o0
+n-0.5369579768645172
+o1
+o44
+o16
+o2
+n0.1
+v0
+o44
+o16
+o2
+n0.1
+v1
+n2
+o5
+o0
+n-0.6833954698413691
+o1
+o44
+o16
+o2
+n0.2
+v0
+o44
+o16
+o2
+n0.2
+v1
+n2
+o5
+o0
+n-0.6910311523138539
+o1
+o44
+o16
+o2
+n0.30000000000000004
+v0
+o44
+o16
+o2
+n0.30000000000000004
+v1
+n2
+o5
+o0
+n-0.6520044071469051
+o1
+o44
+o16
+o2
+n0.4
+v0
+o44
+o16
+o2
+n0.4
+v1
+n2
+o5
+o0
+n-0.599792712713548
+o1
+o44
+o16
+o2
+n0.5
+v0
+o44
+o16
+o2
+n0.5
+v1
+n2
+o5
+o0
+n-0.54633288391736
+o1
+o44
+o16
+o2
+n0.6000000000000001
+v0
+o44
+o16
+o2
+n0.6000000000000001
+v1
+n2
+o5
+o0
+n-0.49567342182585494
+o1
+o44
+o16
+o2
+n0.7000000000000001
+v0
+o44
+o16
+o2
+n0.7000000000000001
+v1
+n2
+o5
+o0
+n-0.44899350148931905
+o1
+o44
+o16
+o2
+n0.8
+v0
+o44
+o16
+o2
+n0.8
+v1
+n2
+o5
+o0
+n-0.4064462499365124
+o1
+o44
+o16
+o2
+n0.9
+v0
+o44
+o16
+o2
+n0.9
+v1
+n2
+o5
+o0
+n-0.36783404124167984
+o1
+o44
+o16
+v0
+o44
+o16
+v1
+n2
+k1
+0
+G0 2
+0 0
+1 0
