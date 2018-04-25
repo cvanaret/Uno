@@ -47,17 +47,21 @@ Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_point) {
 			}
 			else {
 				/* decrease the radius */
-				this->radius = std::max(std::min(this->radius, solution.norm)/2., 1e-4);
+				this->radius = std::min(this->radius, solution.norm)/2.;
 			}
 		}
 		catch (const std::invalid_argument& e) {
-			WARNING << RED << e.what() << "\n" RESET;
+			WARNING << RED << e.what() << RESET "\n";
 			this->radius /= 2.;
+		}
+		/* radius gets too small */
+		if (this->radius < 1e-4) {
+			throw std::out_of_range("Trust-region radius became too small");
 		}
 	}
 
 	if (this->max_iterations < this->number_iterations) {
-		throw std::out_of_range("Iteration limit reached");
+		throw std::out_of_range("Trust-region iteration limit reached");
 	}
 	
 	return current_point;
