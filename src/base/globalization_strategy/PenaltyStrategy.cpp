@@ -3,7 +3,7 @@
 #include "Logger.hpp"
 
 /*
-* we use Infeasibility detection and SQP methods for nonlinear optimization 
+* Infeasibility detection and SQP methods for nonlinear optimization 
 * http://epubs.siam.org/doi/pdf/10.1137/080738222
 */
 
@@ -20,73 +20,75 @@ LocalSolution PenaltyStrategy::compute_step(Problem& problem, Iterate& current_p
 	LocalSolution solution = this->local_approximation.compute_l1_penalty_step(problem, current_point, radius, this->penalty_parameter, this->penalty_constraints);
 	DEBUG << solution;
 	
-	/* check infeasibility */
-	double linear_model = this->compute_linear_model(problem, solution);
 	/* if penalty parameter is already 0, no need to decrease it */
-	if (linear_model != 0. && 0. < this->penalty_parameter) {
-		double current_penalty_parameter = this->penalty_parameter;
-		
-		/* stage c: solve the ideal l1 penalty problem with a zero penalty (no initial objective) */
-		LocalSolution ideal_solution = this->local_approximation.compute_l1_penalty_step(problem, current_point, radius, 0., this->penalty_constraints);
-		DEBUG << ideal_solution;
-		
-		/* stage f: update the penalty parameter */
-		std::vector<double> ideal_multipliers = this->compute_multipliers(problem, ideal_solution);
-		/* compute the ideal error (with a zero penalty parameter) */
-		double ideal_error = this->compute_error(problem, current_point, ideal_multipliers, 0.);
-		
-		/* if error is 0, set the parameter to 0 and not enter the decreasing loop */
-		if (ideal_error == 0.) {
-			this->penalty_parameter = 0.;
-		}
-		else {
-			double ideal_linear_model = this->compute_linear_model(problem, ideal_solution);
+	if (0. < this->penalty_parameter) {
+		/* check infeasibility */
+		double linear_model = this->compute_linear_model(problem, solution);
+		if (linear_model != 0.) {
+			double current_penalty_parameter = this->penalty_parameter;
 			
-			/* decrease penalty parameter to satisfy 2 conditions */
-			bool condition1 = false, condition2 = false;
-			while (!condition2) {
-				this->penalty_parameter *= this->tau;
-				if (this->penalty_parameter < 1e-10) {
-					this->penalty_parameter = 0.;
-					condition2 = true;
-				}
-				
-				DEBUG << "\nSolving with penalty parameter " << this->penalty_parameter << "\n";
-				solution = this->local_approximation.compute_l1_penalty_step(problem, current_point, radius, this->penalty_parameter, this->penalty_constraints);
-				DEBUG << solution;
-				
-				double trial_linear_model = this->compute_linear_model(problem, solution);
-				if (!condition1) {
-					/* stage d: reach a fraction of the ideal decrease */
-					if((ideal_linear_model == 0. && trial_linear_model == 0.) || (ideal_linear_model != 0. &&
-						current_point.residual - trial_linear_model >= this->epsilon1*(current_point.residual - ideal_linear_model))) {
-						condition1 = true;
-					}
-				}
-				/* stage e: further decrease penalty parameter if necessary */
-				if (condition1 && current_point.residual - solution.objective >= this->epsilon2*(current_point.residual - ideal_solution.objective)) {
-					condition2 = true;
-				}
-			}
-		}
-
-		/* stage f: update the penalty parameter */
-		double term = ideal_error / std::max(1., current_point.residual);
-		this->penalty_parameter = std::min(this->penalty_parameter, term*term);
-		
-		if (this->penalty_parameter < current_penalty_parameter) {
-			DEBUG << "I just updated the penalty parameter to " << this->penalty_parameter << "\n";
-			/* recompute the solution */
-			if (this->penalty_parameter == 0.) {
-				solution = ideal_solution;
+			/* stage c: solve the ideal l1 penalty problem with a zero penalty (no objective) */
+			LocalSolution ideal_solution = this->local_approximation.compute_l1_penalty_step(problem, current_point, radius, 0., this->penalty_constraints);
+			DEBUG << ideal_solution;
+			
+			/* stage f: update the penalty parameter */
+			std::vector<double> ideal_multipliers = this->compute_multipliers(problem, ideal_solution);
+			/* compute the ideal error (with a zero penalty parameter) */
+			double ideal_error = this->compute_error(problem, current_point, ideal_multipliers, 0.);
+			
+			if (ideal_error == 0.) {
+				/* stage f: update the penalty parameter */
+				this->penalty_parameter = 0.;
 			}
 			else {
-				solution = this->local_approximation.compute_l1_penalty_step(problem, current_point, radius, this->penalty_parameter, this->penalty_constraints);
+				double ideal_linear_model = this->compute_linear_model(problem, ideal_solution);
+				
+				/* decrease penalty parameter to satisfy 2 conditions */
+				bool condition1 = false, condition2 = false;
+				while (!condition2) {
+					this->penalty_parameter *= this->tau;
+					if (this->penalty_parameter < 1e-10) {
+						this->penalty_parameter = 0.;
+						condition2 = true;
+					}
+					
+					DEBUG << "\nSolving with penalty parameter " << this->penalty_parameter << "\n";
+					solution = this->local_approximation.compute_l1_penalty_step(problem, current_point, radius, this->penalty_parameter, this->penalty_constraints);
+					DEBUG << solution;
+					
+					double trial_linear_model = this->compute_linear_model(problem, solution);
+					if (!condition1) {
+						/* stage d: reach a fraction of the ideal decrease */
+						if((ideal_linear_model == 0. && trial_linear_model == 0.) || (ideal_linear_model != 0. &&
+							current_point.residual - trial_linear_model >= this->epsilon1*(current_point.residual - ideal_linear_model))) {
+							condition1 = true;
+						}
+					}
+					/* stage e: further decrease penalty parameter if necessary */
+					if (condition1 && current_point.residual - solution.objective >= this->epsilon2*(current_point.residual - ideal_solution.objective)) {
+						condition2 = true;
+					}
+				}
+				
+				/* stage f: update the penalty parameter */
+				double term = ideal_error / std::max(1., current_point.residual);
+				this->penalty_parameter = std::min(this->penalty_parameter, term*term);
 			}
-			DEBUG << solution;
+			
+			if (this->penalty_parameter < current_penalty_parameter) {
+				DEBUG << "Penalty parameter updated to " << this->penalty_parameter << "\n";
+				/* recompute the solution */
+				if (this->penalty_parameter == 0.) {
+					solution = ideal_solution;
+				}
+				else {
+					solution = this->local_approximation.compute_l1_penalty_step(problem, current_point, radius, this->penalty_parameter, this->penalty_constraints);
+					DEBUG << solution;
+				}
+			}
 		}
 	}
-	INFO << "penalty parameter: " << std::fixed << this->penalty_parameter << "\t";
+	INFO << "penalty parameter: " << this->penalty_parameter << "\t";
 	return solution;
 }
 

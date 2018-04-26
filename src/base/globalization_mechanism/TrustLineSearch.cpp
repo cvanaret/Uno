@@ -44,11 +44,10 @@ Iterate TrustLineSearch::compute_iterate(Problem& problem, Iterate& current_poin
 					
 					/* increase the radius if trust region is active, otherwise keep the same radius */
 					// TODO handle the case where the solution is the new point
-					if (solution.norm == this->radius) {
-						std::cout << this->radius << " RADIUS MULTIPLIED BY 2\n";
-						this->radius *= 2.;
-					}
-					this->reset_radius(solution.norm);
+					//if (solution.norm == this->radius) {
+					//	std::cout << this->radius << " RADIUS MULTIPLIED BY 2\n";
+					//	this->radius *= 2.;
+					//}
 				}
 				else {
 					/* decrease alpha */
@@ -96,11 +95,4 @@ void TrustLineSearch::correct_multipliers(Problem& problem, LocalSolution& solut
 
 bool TrustLineSearch::termination_criterion(bool is_accepted, int iteration) {
 	return is_accepted || this->max_iterations < iteration;
-}
-
-void TrustLineSearch::reset_radius(double step_norm) {
-	if (this->radius - 1e-6 <= step_norm || this->radius < 1e-4) {
-		this->radius = std::max(1e-4, 2.*this->radius);
-	}
-	return;
 }

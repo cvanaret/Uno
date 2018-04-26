@@ -31,9 +31,9 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, std::vector<doub
 		DEBUG << "\n\t\tARGONOT iteration " << major_iterations << "\n";
 
 		/* update the current point */
-		INFO << "major: " << std::fixed << major_iterations << "\t";
+		INFO << "major: " << major_iterations << "\t";
 		current_point = this->globalization_mechanism.compute_iterate(problem, current_point);
-		INFO << "constraints: " << std::fixed << current_point.residual << "\tobjective: " << std::fixed << current_point.objective << "\t";
+		INFO << "constraints: " << current_point.residual << "\tobjective: " << current_point.objective << "\t";
 		INFO << "status: " << current_point.status << "\n";
 		DEBUG << "Next point\n" << current_point;
 		

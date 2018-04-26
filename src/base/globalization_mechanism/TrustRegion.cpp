@@ -1,21 +1,18 @@
+#include <cmath>
 #include "TrustRegion.hpp"
 #include "Utils.hpp"
 #include "Logger.hpp"
 
 TrustRegion::TrustRegion(GlobalizationStrategy& globalization_strategy, double initial_radius, int max_iterations):
 		GlobalizationMechanism(globalization_strategy, max_iterations), radius(initial_radius) {
-	this->radius_max_ = initial_radius;
-	this->radius_min_ = initial_radius;
-	this->radius_sum_ = initial_radius;
+	this->radius_max_ = -INFINITY;
+	this->radius_min_ = INFINITY;
+	this->radius_sum_ = 0;
 }
 
 Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_point) {
 	bool is_accepted = false;
 	this->number_iterations = 0;
-	
-	DEBUG << "STARTING TR with radius " << this->radius << "\n";
-	/* reset radius (should only increase, if first minor successful) */
-	// TODO
 	
 	while (!this->termination_criterion(is_accepted, this->number_iterations, this->radius)) {
 		try {
@@ -41,7 +38,7 @@ Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_point) {
 				INFO << "step norm: " << std::fixed << solution.norm << "\t";
 				
 				/* increase the radius if trust region is active, otherwise keep the same radius */
-				if (solution.norm == this->radius) {
+				if (solution.norm >= this->radius - 1e-6) {
 					this->radius *= 2.;
 				}
 			}

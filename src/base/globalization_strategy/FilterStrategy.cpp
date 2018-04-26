@@ -18,9 +18,9 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_point, LocalS
 	Iterate trial_point(problem, x_trial, solution.multipliers);
 
 	/* find out if transition of one phase to the other */
-	/* infeasible QP: go from phase II (optimality) to I (restoration) */
 	if (this->phase == OPTIMALITY) {
 		if (solution.phase == RESTORATION) {
+			/* infeasible QP: go from phase II (optimality) to I (restoration) */
 			DEBUG << "Switching from optimality to restoration phase\n";
 			this->phase = RESTORATION;
 			/* add [h,f] (c/s violation) to filter, entering restoration */
@@ -33,30 +33,26 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_point, LocalS
 			this->filter_restoration.reset();
 			this->filter_restoration.upper_bound = this->filter_optimality.upper_bound;
 			this->filter_restoration.add(current_point.infeasibility_measure, current_point.feasibility_measure);
-			
-			trial_point.infeasibility_measure = problem.feasible_residual_norm(solution.constraint_partition, trial_point.constraints);
-			trial_point.feasibility_measure = problem.infeasible_residual_norm(solution.constraint_partition, trial_point.constraints);
 		}
 	}
-	/* check whether we can switch from phase I (restoration) to II (optimality) */
 	else { /* phase == RESTORATION */
-		/* check whether the trial point is acceptable to the optimality filter */
+		/* check whether we can switch from phase I (restoration) to II (optimality) */
 		if (solution.phase == OPTIMALITY && this->filter_optimality.query(trial_point.infeasibility_measure, trial_point.feasibility_measure)) {
 			DEBUG << "Switching from restoration to optimality phase\n";
 			this->phase = OPTIMALITY;
 			current_point.infeasibility_measure = current_point.residual;
 			current_point.feasibility_measure = current_point.objective;
-			//current_point.is_hessian_computed = false;
 		}
-		else {
-			trial_point.infeasibility_measure = problem.feasible_residual_norm(solution.constraint_partition, trial_point.constraints);
-			trial_point.feasibility_measure = problem.infeasible_residual_norm(solution.constraint_partition, trial_point.constraints);
-		}
+	}
+	
+	/* if RESTORATION phase, compute (in)feasibility measures of trial point */
+	if (this->phase == RESTORATION) {
+		trial_point.infeasibility_measure = problem.feasible_residual_norm(solution.constraint_partition, trial_point.constraints);
+		trial_point.feasibility_measure = problem.infeasible_residual_norm(solution.constraint_partition, trial_point.constraints);
 	}
 	
 	DEBUG << "TESTING " << current_point.infeasibility_measure << " " << current_point.feasibility_measure << " ";
 	DEBUG << trial_point.infeasibility_measure << " " << trial_point.feasibility_measure << "\n";
-	
 	
 	Filter& filter = (this->phase == OPTIMALITY) ? this->filter_optimality : this->filter_restoration;
 	

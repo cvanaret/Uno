@@ -36,9 +36,11 @@ Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_point) {
 		else {
 			/* decrease alpha */
 			step_length *= ratio;
-			if (step_length < 1e-8) {
-				step_length = 0.;
-			}
+		}
+		
+		/* step length gets too small */
+		if (step_length < 1e-8) {
+			throw std::out_of_range("Step length became too small");
 		}
 	}
 
@@ -49,9 +51,9 @@ Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_point) {
 	/* print summary */
 	// TODO handle the case where the solution is a new point
 	double step_norm = solution.norm*step_length;
-	INFO << "minor: " << std::fixed << this->number_iterations << "\t";
-	INFO << "step length: " << std::fixed << step_length << "\t";
-	INFO << "step norm: " << std::fixed << step_norm << "\t";
+	INFO << "minor: " << this->number_iterations << "\t";
+	INFO << "step length: " << step_length << "\t";
+	INFO << "step norm: " << step_norm << "\t";
 
 	return current_point;
 }
