@@ -1,0 +1,141 @@
+\section{Implementation of \solvername{}}
+\label{S:implementation}
+
+
+
+\subsection{\solvername{} class}
+
+TODO
+
+%\begin{algorithm}[h!]
+%\SetAlgoVlined
+%$\mathit{termination} \gets \mathit{false}$ \;
+%\While{not $\mathit{termination}$} {
+	%$x^{(k+1)} \gets $ Globalization.compute\_iterate($x^{(k)}$) \Comment*{\autoref{alg:globalization}}
+	%$\mathit{termination} \gets$ TODO \;
+	%$k \gets k+1$ \;
+%}
+%\caption{\solvername{}: \solvername{} class}
+%\end{algorithm}
+
+\clearpage
+
+\subsection{Globalization class}
+
+TODO
+
+%\begin{figure}[h!]
+	%\centering
+	%\includegraphics[width=0.5\columnwidth]{figures/Globalization}
+	%\caption{Globalization class: inheritance diagram}
+%\end{figure}
+
+%\begin{algorithm}[h!]
+%\SetAlgoVlined
+%reset trust-region radius $\rho^{(k)} \in [\underline{\rho}, \overline{\rho}]$ \;
+%$\mathit{accept} \gets \mathit{false}$ \;
+%\While{not $\mathit{accept}$} {
+	%$(d^{(k)}, \mathit{accept}) \gets$ StepAccept.compute\_step($x^{(k)}, \rho^{(k)}$) \Comment*{\autoref{alg:step_accept}}
+	%\eIf{accept} {
+		%$x^{(k+1)} \gets x^{(k)} + d^{(k)}$ \;
+		%\If{trust region active at $d^{(k)}$} {
+			%increase $\rho^{(k)}$ \;
+		%}
+	%}{
+		%decrease $\rho^{(k)}$ \;
+		%$x^{(k+1)} \gets x^{(k)}$ \;
+	%}
+%}
+%\Return $x^{(k+1)}$ \;
+%\caption{\solvername{}: TrustRegion.compute\_iterate()}
+%\label{alg:globalization}
+%\end{algorithm}
+
+\clearpage
+
+\subsection{StepAccept class}
+
+TODO
+
+%\begin{figure}[htbp]
+	%\centering
+	%\includegraphics[width=0.85\columnwidth]{figures/StepAccept}
+	%\caption{StepAccept class: inheritance diagram}
+%\end{figure}
+
+%\vspace{-1cm}
+
+%\begin{algorithm}[htbp]
+%\SetAlgoVlined
+%% QP part
+%$d^{(k)} \gets$ solve optimality $TR(x^{(k)}, \rho^{(k)})$ for the step $d$ \;
+  %\sven{Rename functions ... } \;
+%\If{$TR(x^{(k)}, \rho^{(k)})$ is infeasible} {
+	%compute constraint partition $\mathcal{S}(x^{(k)})$, $\overline{\mathcal{V}}^{(k)}$ and $\underline{\mathcal{V}}^{(k)}$ \;
+	%$d^{(k)} \gets$ solve feasibility $FTR(x^{(k)}, \rho^{(k)}, \mathcal{S}(x^{(k)}), \overline{\mathcal{V}}^{(k)}, \underline{\mathcal{V}}^{(k)})$ for the step $d$, w/ initial $d^{(k)}$ \;
+%}
+
+%% filter part
+%$\mathit{accept} \gets \mathit{false}$ \;
+%\uIf{$d^{(k)} = 0$} {
+	%$\mathit{accept} \gets \mathit{true}$ \;
+	%%terminate with KKT point \;
+%}
+%% transition phase II -> phase I or phase I -> phase II
+%\uElseIf{phase is OPTIMALITY and $TR(x^{(k)}, \rho^{(k)})$ is infeasible} {
+  %\sven{Rename functions ... } \;
+	%phase $\gets$ RESTORATION \;
+	%add $(h^{(k)}, f^{(k)})$ to $\mathcal{F_O}$ \;
+	%$\mathcal{F_R} \gets \{(h_{\mathcal{S}(x^{(k)})}^{(k)}, h_{\mathcal{V}(x^{(k)})}^{(k)})\}$ \;
+%}
+%\ElseIf{phase is RESTORATION and $TR(x^{(k)}, \rho^{(k)})$ is \textcolor{red}{in}feasible} {
+  %\sven{See above ... should be ``feasible'', I think.}\;
+	%\If{$x^{(k)} + d^{(k)}$ acceptable to $\mathcal{F_O}$} {
+		%phase $\gets$ OPTIMALITY \;
+	%}
+%}
+
+%% select current filter
+%\eIf{phase is OPTIMALITY} {
+	%$\mathcal{S} \gets \mathcal{F_O}$ \;
+%} {
+	%$\mathcal{S} \gets \mathcal{F_R}$ \;
+%}
+%% check acceptance
+%\If{$x^{(k)} + d^{(k)}$ acceptable to $\mathcal{S}$} {
+	%% TODO what to do about query_current_point?
+	%compute predicted reduction $\Delta q$ and actual reduction $\Delta f$ \;
+	%\uIf{$\Delta q < \delta {h^{(k)}}^2$} {
+		%$\mathit{accept} \gets \mathit{true}$ \;
+		%add $(h^{(k)}, f^{(k)})$ to $\mathcal{S}$ \;
+	%}
+	%% \varepsilon = 1e-9
+	%\ElseIf{$\Delta f \ge \sigma \max(0, \Delta q)-\varepsilon$} {
+		%$\mathit{accept} \gets \mathit{true}$ \;
+	%}
+%}
+% 
+%\If{accept} {
+	%% correct bound multipliers for variables on the trust region
+	%set multipliers of active trust-region constraints to 0 \;
+	%\If{$TR(x^{(k)}, \rho^{(k)})$ is infeasible} {
+		%% correct multipliers for infeasibility problem
+		%set multipliers of infeasible constraints at upper bound to -1 \;
+		%set multipliers of infeasible constraints at lower bound to 1 \;
+                %\sven{Are the other multipliers lost?}
+	%}
+%}
+%\Return $(d^{(k)}, \mathit{accept})$
+%\caption{\solvername{}: StepAccept.compute\_step method}
+%\label{alg:step_accept}
+%\end{algorithm}
+
+\subsection{DirectionComputation class}
+
+TODO
+
+%\begin{figure}[htbp]
+	%\centering
+	%\includegraphics[width=0.6\columnwidth]{figures/DirectionComputation}
+	%\caption{DirectionComputation class: inheritance diagram}
+%\end{figure}

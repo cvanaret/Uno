@@ -1,0 +1,278 @@
+\section{Description of \solvername{}}\label{S:description}
+
+Our goal is to develop an open-source, object-oriented framework for nonlinear optimization that
+implements a range of iterative methods, including sequential quadratic/linear programming (SLQP) methods,
+interior-point methods, and augmented Lagrangian methods.
+
+\solvername{} implements a basic iterative scheme that can be adapted to allow a range of globalization and
+step-computation methods. Our general nonlinear optimization scheme has three basic components.
+We can interpret different methods for solving nonlinear optimization problems as a particular
+path in the decision tree in Figure~\ref{fig:combination-tree} that shows the combinations of
+some the possible strategies: Globalization Mechanism (trust region, line search) $\times$ Globalization Strategy
+(filter, penalty) $\times$ Step Computation (QP, LP). We note that not all combinations lead to convergent
+or sensible methods, and that we can easily extend this framework. An alternative view is to
+interpret a particular method as a hyperedge within the hypergraph of building block, as
+in Figure~\ref{fig:StrategyGraph}.
+
+This framework is very flexible, and allows us to consider a broad range of optimization methods
+within a single framework. In addition to the three ingredients of an optimization method, a nonlinear solver requires a
+range of utility functions \charlie{vague} that can be implemented independently of step computation or globalization
+strategy. Similarly, the choice of specialized solvers (QP solver: BQPD, QPSOPT, Galahad, ...)
+can be done independently of the method, resulting in a large amount of code re-use. Below, we show how
+some standard methods fit into the framework outlined above.
+
+\begin{figure}[h!]
+\centering
+\input{figures/tree.tex}
+\caption{Decision tree of strategy combinations.}
+\label{fig:combination-tree}
+\end{figure}
+
+%\begin{figure}[h!]
+%\centering\includegraphics[width=5in, angle=90]{figures/NonLinOptnBlocks.pdf}
+%\caption{Hypergraph of strategy combinations.}
+%\label{fig:StrategyGraph}
+%\end{figure}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.48\columnwidth]{figures/blocks.pdf}
+\caption{Hypergraph of strategy combinations.}
+\label{fig:StrategyGraph}
+\end{figure}
+
+Below, we indicate how the three components of a general NLP solvers are implemented for
+different algorithmic choices. We start by defining a generic outer loop.
+
+%\clearpage
+
+%%% ================================================================================== %%%
+\subsection{Outer Loop}
+The optimization loop and termination criteria in the common framework (Algorithm~\ref{alg:iterative-methods}) can be
+implemented once and for all, whatever the optimization method. We outline our general algorithmic framework in
+Algorithm~\ref{alg:argonot-framework} below. The algorithm starts from an initial primal guess $x^{(0)}$ and an
+initial dual guess $\lambda^{(0)}$. 
+
+\medskip
+\begin{algorithm}[H]
+\label{alg:argonot-framework}
+\caption{\solvername{}: Framework for Nonlinear Optimization Methods}
+Given initial primal-dual estimate $(x^{(0)}, \lambda^{(0)}, \nu^{(0)})$ \;
+Set $k \gets 0$ \;
+\While{termination criteria are not met} {
+	\globalizationmechanism \textbf{Globalization Mechanism:} \;
+	\globalizationmechanism Compute acceptable iterate $(\hat{x}^{(k)}, \hat{\lambda}^{(k)}, \hat{\nu}^{(k)})$ \;
+	Update $(x^{(k+1)}, \lambda^{(k+1)}, \nu^{(k+1)}) \gets (\hat{x}^{(k)}, \hat{\lambda}^{(k)}, \hat{\nu}^{(k)})$ \;
+	Set $k \gets k+1$ \;
+}
+\end{algorithm}
+\medskip
+
+We note that we check for termination, rather than for optimality in Algorithm~\ref{alg:argonot-framework}. The reason
+for this is the fact that optimization algorithms may terminate at locally infeasible points, or at points that fail to
+satisfy constraint qualifications.
+
+Next, we show how two popular globalization mechanisms, namely a trust-region framework and a line-search method,
+can be implemented.
+
+%%% ============================================================================================ %%%
+\subsection{Two Generic Globalization Mechanisms}
+
+We briefly show how two generic globalization mechanisms fit within our framework.
+In a trust-region method (Algorithm \ref{alg:TR}), we restrict the step that we compute to lie within a trust-region around
+the current point, and we adjust the size of this region if we cannot find an acceptable step.
+
+\begin{algorithm}[h!]
+\caption{\solvername{} Globalization Mechanism: Trust-Region Method}
+\label{alg:TR}
+\SetAlgoVlined
+Given primal-dual point $(x^{(k)}, \lambda^{(k)}, \nu^{(k)})$ \;
+Reset trust-region radius $\rho \in [\underline{\rho}, \overline{\rho}]$ \;
+\While{$\hat{x}^{(k)}$ is not acceptable} {
+	\globalizationstrategy \textbf{Globalization Strategy:} \;
+	\globalizationstrategy $(d^{(k)}, \hat{\lambda}^{(k)}, \hat{\nu}^{(k)}) \gets$ solve trust-region problem at $(x^{(k)}, \lambda^{(k)})$ with radius $\rho$ \;
+	Correct multipliers \;
+	Compute trial iterate $\hat{x}^{(k)} := x^{(k)} + d^{(k)}$ \;
+	\globalizationstrategy \textbf{Globalization Strategy:} \;
+	\globalizationstrategy Check whether $\hat{x}^{(k)}$ is acceptable \;
+	\eIf{$\hat{x}^{(k)}$ is acceptable} {
+		\If{trust region active at $d^{(k)}$} {
+			Increase radius $\rho$ \;
+		}
+	}{
+		Decrease radius $\rho$ \;
+	}
+}
+\Return $(\hat{x}^{(k)}, \hat{\lambda}^{(k)}, \hat{\nu}^{(k)})$ \;
+\end{algorithm}
+
+In a line-search method (Algoritm \ref{alg:LS}), we compute a (descent) direction, and backtrack along this direction
+until an acceptable point can be found.
+
+\begin{algorithm}[h!]
+\caption{\solvername{} Globalization Mechanism: Line-Search Method}
+\label{alg:LS}
+\SetAlgoVlined
+Given primal-dual point $(x^{(k)}, \lambda^{(k)}, \nu^{(k)})$ \;
+Set $\alpha \gets 1$ \;
+\globalizationstrategy \textbf{Globalization Strategy:} \;
+\globalizationstrategy $(d^{(k)}, \hat{\lambda}^{(k)}, \hat{\nu}^{(k)}) \gets$ solve subproblem at $(x^{(k)}, \lambda^{(k)})$ \;
+\While{$\hat{x}^{(k)}$ is not acceptable} {
+	Compute trial step $s^{(k)} := \alpha d^{(k)}$ \;
+	Compute trial iterate $\hat{x}^{(k)} := x^{(k)} + s^{(k)}$ \;
+	\globalizationstrategy \textbf{Globalization Strategy:} \;
+	\globalizationstrategy Check whether $\hat{x}^{(k)}$ is acceptable \;
+	\If{$\hat{x}^{(k)}$ is not acceptable} {
+		Decrease step size $\alpha$ \;
+	}
+}
+\Return $(\hat{x}^{(k)}, \hat{\lambda}^{(k)}, \hat{\nu}^{(k)})$ \;
+\end{algorithm}
+
+The bulk of the computational effort is spent in the computation of steps (Section \ref{S:step_computation}).
+
+\newpage
+
+%%% ============================================================================================ %%%
+%\subsection{Step Computation Techniques}
+%\label{S:step_computation}
+
+%We now give two examples of how steps are computed. Step computation is initiated by the step acceptance
+%algorithm described in the previous section, and depends on the step computation strategy (e.g. LP vs. QP)
+%as well as on the globalization mechanism, e.g. adding a trust-region or regularization term.
+   
+%\begin{algorithm}[h!]
+%\caption{\solvername{}: Step Computation: Tube Trust-Region QP\label{alg:TRQP}}
+%\SetAlgoVlined
+%Set $\alpha_0 \gets 1$ and set $l \gets 0$ \;
+%$\mathit{accept} \gets \mathit{false}$ \;
+%{\bf Step Computation:} Solve \eqref{eq:TRQP} for a step $d^{(k)}$\;
+%\If{\eqref{eq:TRQP} infeasible}{
+  %Switch to feasibility restoration.
+%}
+%\eIf{$h(x^{(k)}+d^{(k)}) \leq \beta U_k$}{
+  %$\mathit{accept} \gets \mathit{true}$ and set $x^{(k+1)} \gets x^{(k)} + d^{(k)}$\;
+  %\eIf{$\Delta q \geq \gamma \min(h_k^2,1)$ and $\Delta f \geq \sigma \Delta q$}{
+    %Leave $U_{k+1} \gets U_k$\;
+  %}{
+    %Reduce $U_{k+1} \gets \max(\beta U_k, h_k -\gamma \max(h_k - h_{k+1},0))$\;    
+  %}
+%}{
+  %Reject step: $\mathit{accept} \gets \mathit{false}$ and set $x^{(k+1)} \gets x^{(k)}$\;
+%}
+%\Return $x^{(k+1)}$ and $\mathit{accept}$ \;
+%\end{algorithm}
+
+
+\newpage
+%In the remainder of this section, we show more details of these generic frameworks.
+
+%%% ============================================================================================ %%%
+\subsection{Filter Trust-Region SQP Methods}
+
+We can now summarize the developments into the full algorithm.
+
+\medskip
+\begin{algorithm}[H]
+\caption{\solvername{}: Filter Trust-Region SQP Methods}
+Given initial primal-dual estimate $(x^{(0)}, \lambda^{(0)})$ \;
+Set $k \gets 0$ \;
+\globalizationstrategy Set $\mathit{phase} \gets$ Optimality \;
+\While{termination criteria are not met} {
+	\colorbox[gray]{0.95}{
+	\begin{minipage}{0.88\textwidth}
+	Reset trust-region radius $\rho \in [\underline{\rho}, \overline{\rho}]$ \;
+	\While{$\hat{x}^{(k)}$ is not acceptable} {
+		$(d^{(k)}, \hat{\lambda}^{(k)}, \hat{\nu}^{(k)}) \gets$ solve optimality subproblem at $(x^{(k)}, \lambda^{(k)})$ in current $\mathit{phase}$ with radius $\rho$ \;
+		\If{optimality subproblem is infeasible} {
+		$(d^{(k)}, \hat{\lambda}^{(k)}, \hat{\nu}^{(k)}) \gets$ solve feasibility restoration problem at $(x^{(k)}, \lambda^{(k)})$ with radius $\rho$ \;
+		}
+		Correct multipliers \;
+		Compute trial iterate $\hat{x}^{(k)} := x^{(k)} + d^{(k)}$ \;
+		\globalizationstrategy $\mathit{accept} \gets$ check whether $\hat{x}^{(k)}$ is acceptable \;
+		\eIf{accept} {
+			\If{trust region active at $d^{(k)}$} {
+				Increase radius: $\rho \gets 2 \rho$ \;
+			}
+		}{
+			Decrease radius: $\rho \gets \rho/2$ \;
+		}
+	}
+	\end{minipage}} \;
+	Update $(x^{(k+1)}, \lambda^{(k+1)}, \nu^{(k+1)}) \gets (\hat{x}^{(k)}, \hat{\lambda}^{(k)}, \hat{\nu}^{(k)})$ \;
+	Set $k \gets k+1$ \;
+}
+\end{algorithm}
+\medskip
+
+%%% ============================================================================================ %%%
+\subsection{$\ell_1$-Penalty Line-Search S$\ell_1$QP Method}
+
+Smooth QP approximation
+
+\begin{equation}
+\begin{array}{lll} \dps
+\mini_{d,s} & \sigma \nabla f(x^{(k)})^T d + \frac{1}{2} d^T W_\sigma(x^{(k)}, \lambda^{(k)}) d + \sum\limits_{j = 1}^m s_j \\
+\st 		& \underline{c} - c(x^{(k)}) - \nabla c(x^{(k)})^T d \le s \\
+			& c(x^{(k)}) + \nabla c(x^{(k)})^T d - \overline{c} \le s \\
+			& \underline{x} \le x^{(k)} + d \le \overline{x} \\
+			& 0 \le s \\
+\end{array}
+\end{equation}
+
+\medskip
+\begin{algorithm}[H]
+\caption{\solvername{}: $\ell_1$-Penalty Line-Search S$\ell_1$QP Method}
+Given initial primal-dual estimate $(x^{(0)}, \lambda^{(0)})$ \;
+Set $k \gets 0$ \;
+\While{termination criteria are not met} {
+	\colorbox[gray]{0.95}{
+	\begin{minipage}{0.88\textwidth}
+	Set $\alpha \gets 1$ \;
+	\globalizationstrategy $(d^{(k)}, \hat{\lambda}^{(k)}, \hat{\nu}^{(k)}) \gets$ solve subproblem at $(x^{(k)}, \lambda^{(k)})$ \;
+	\While{$\hat{x}^{(k)}$ is not acceptable} {
+		Compute trial iterate $\hat{x}^{(k)} := x^{(k)} + \alpha d^{(k)}$ \;
+		\globalizationstrategy Check whether $\hat{x}^{(k)}$ is acceptable \;
+		\If{$\hat{x}^{(k)}$ is not acceptable} {
+			Decrease step-size: $\alpha \gets \alpha/2$ \;
+		}
+	}
+	\end{minipage}} \;
+	Update $(x^{(k+1)}, \lambda^{(k+1)}, \nu^{(k+1)}) \gets (\hat{x}^{(k)}, \hat{\lambda}^{(k)}, \hat{\nu}^{(k)})$ \;
+	Set $k \gets k+1$ \;
+}
+\end{algorithm}
+\medskip
+
+\clearpage
+
+\subsection{Architecture}
+
+UML diagram
+
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=0.5\columnwidth]{figures/uml_legend}
+	\caption{UML description}
+\end{figure}
+
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=0.6\columnwidth]{figures/argonot_uml}
+	\caption{Argonot: UML diagram}
+\end{figure}
+
+\subsection{Interfaces to numerical solvers}
+
+Subproblem solvers
+BQPD, QPOPT, Galahad, CLP
+
+\subsection{Solver configuration}
+
+Text files + structure passed as a parameter
+
+\subsection{Interface with AMPL}
+
+\cite{Gay1997Hooking}
+
+\lstinputlisting[language=AMPL,caption=Example of AMPL model]{models/hs015.mod}
