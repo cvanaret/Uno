@@ -1,3 +1,4 @@
+#include <ostream>
 #include <cmath>
 #include "GlobalizationStrategy.hpp"
 
@@ -27,13 +28,8 @@ std::vector<double> GlobalizationStrategy::compute_lagrangian_gradient(Problem& 
 		lagrangian_gradient[i] -= multiplier_i;
 	}
 	/* constraints */
-	if (!current_point.is_constraint_jacobian_computed) {
-		std::vector<std::map<int,double> > constraint_jacobian(problem.number_constraints);
-		for (int j = 0; j < problem.number_constraints; j++) {
-			constraint_jacobian[j] = problem.constraint_sparse_gradient(j, current_point.x);
-		}
-		current_point.set_constraint_jacobian(constraint_jacobian);
-	}
+	current_point.compute_constraint_jacobian(problem);
+	
 	for (int j = 0; j < problem.number_constraints; j++) {
 		double multiplier_j = multipliers[problem.number_variables + j];
 		if (multiplier_j != 0.) {

@@ -33,16 +33,18 @@ Iterate::Iterate(Problem& problem, std::vector<double>& x, std::vector<double>& 
 void Iterate::set_objective_gradient(std::map<int,double>& objective_gradient) {
 	this->objective_gradient = objective_gradient;
 	this->is_objective_gradient_computed = true;
+	return;
 }
 
-void Iterate::set_constraint_jacobian(std::vector<std::map<int,double> >& constraint_jacobian) {
-	this->constraint_jacobian = constraint_jacobian;
-	this->is_constraint_jacobian_computed = true;
-}
-
-void Iterate::evaluate_infeasibility(Problem& problem, ConstraintPartition& constraint_partition) {
-	this->objective = problem.infeasible_residual_norm(constraint_partition, this->constraints);
-	this->residual = problem.feasible_residual_norm(constraint_partition, this->constraints); 
+void Iterate::compute_constraint_jacobian(Problem& problem) {
+	if (!this->is_constraint_jacobian_computed) {
+		std::vector<std::map<int,double> > constraint_jacobian(problem.number_constraints);
+		for (int j = 0; j < problem.number_constraints; j++) {
+			constraint_jacobian[j] = problem.constraint_sparse_gradient(j, this->x);
+		}
+		this->constraint_jacobian = constraint_jacobian;
+		this->is_constraint_jacobian_computed = true;
+	}
 	return;
 }
 

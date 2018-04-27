@@ -12,8 +12,7 @@ Argonot::Argonot(GlobalizationMechanism& globalization_mechanism, int max_iterat
 Result Argonot::solve(Problem& problem, std::vector<double>& x, std::vector<double>& multipliers) {
 	std::clock_t c_start = std::clock();
 	
-	int major_iterations = 0;
-	int minor_iterations = 0;
+	int major_iterations = 0, minor_iterations = 0;
 	
 	INFO << "Problem " << problem.name << "\n";
 	INFO << problem.number_variables << " variables, " << problem.number_constraints << " constraints\n";
@@ -98,28 +97,3 @@ void Result::display() {
 	std::cout << "Number of subproblems solved:\t\t" << this->number_subproblems_solved << "\n";
 	return;
 }
-
-/* check termination conditions */
-	//ifail = CheckIfail(ifail, optimal, nlp->phase, MajorIter, radius, *h);
-
-////! check ifail & return appropriate error code
-//int CheckIfail(int ifail, int optimal, Phase phase, int MajorIter, double rho, double h) {
-  //if (ifail == 0){
-    //if      ((optimal == KKT_POINT) && (phase == OPTIMALITY)) return(0); // optimal solution
-    //else if ((optimal == KKT_POINT) && (phase == RESTORATION)) return(3); // min. of infeasibility
-    //else if (optimal == SMALL_STEP)                   return(2); // step got too small
-    //else if (MajorIter >= IterLim.major)     return(6); // iteration limit
-    //else if (rho <= tolerance)                return(5); // TR got too small 
-    //else if ((h <= tolerance)&&(phase == RESTORATION))  return(4); // h<eps, but QP inf.
-  //}
-  //else if ((ifail == 1)&&(MajorIter == 0))   return(11);// IEEE error in obj/con
-  //else if ((ifail == 2)&&(MajorIter == 0))   return(12);// IEEE error in grad/hess
-  //else if (ifail == 1)                       return(7); // IEEE error in obj/con
-  //else if (ifail == 2)                       return(7); // IEEE error in grad/hess
-  //else if (ifail >= 4)                       return(8); // crash in QP solver
-  //fprintf(stdout,"Unknown Error in CheckIfail:\n");
-  //fprintf(stdout,"   ifail = %d ; optimal = %d ; phase = %d; iter = %d\n",
-	  //ifail, optimal, phase, MajorIter);
-  //fprintf(stdout,"   rho = %16.8g ; h = %16.8g\n", rho, h);
-  //return(13); // unknown error
-//}

@@ -51,8 +51,7 @@ class Iterate {
 		bool is_hessian_computed; /*!< Flag that indicates if the Hessian has already been computed */
 		
 		void set_objective_gradient(std::map<int,double>& objective_gradient);
-		void set_constraint_jacobian(std::vector<std::map<int,double> >& constraint_jacobian);
-		void evaluate_infeasibility(Problem& problem, ConstraintPartition& constraint_partition);
+		void compute_constraint_jacobian(Problem& problem);
 		
 		/*!
          *  Compute the Hessian in a lazy way: the Hessian is computed only when required and stored

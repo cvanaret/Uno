@@ -144,7 +144,6 @@ QP QPApproximation::generate_infeasibility_qp(Problem& problem, Iterate& current
 	
 	/* compute the objective */
 	this->set_infeasibility_objective(problem, qp, current_point, constraint_partition);
-	
 	return qp;
 }
 
@@ -196,13 +195,8 @@ QP QPApproximation::generate_l1_penalty_qp(Problem& problem, Iterate& current_po
 	}
 	
 	/* compute the original constraint gradients */
-	if (!current_point.is_constraint_jacobian_computed) {
-		std::vector<std::map<int,double> > constraint_jacobian(problem.number_constraints);
-		for (int j = 0; j < problem.number_constraints; j++) {
-			constraint_jacobian[j] = problem.constraint_sparse_gradient(j, current_point.x);
-		}
-		current_point.set_constraint_jacobian(constraint_jacobian);
-	}
+	current_point.compute_constraint_jacobian(problem);
+
 	/* add the constraints */
 	int current_additional_variable = problem.number_variables;
 	int current_constraint = 0;
@@ -247,13 +241,7 @@ QP QPApproximation::generate_l1_penalty_qp(Problem& problem, Iterate& current_po
 
 void QPApproximation::set_constraints(Problem& problem, QP& qp, Iterate& current_point) {
 	/* compute the constraint Jacobian */
-	if (!current_point.is_constraint_jacobian_computed) {
-		std::vector<std::map<int,double> > constraint_jacobian(problem.number_constraints);
-		for (int j = 0; j < problem.number_constraints; j++) {
-			constraint_jacobian[j] = problem.constraint_sparse_gradient(j, current_point.x);
-		}
-		current_point.set_constraint_jacobian(constraint_jacobian);
-	}
+	current_point.compute_constraint_jacobian(problem);
 	qp.constraints = current_point.constraint_jacobian;
 	return;
 }
@@ -263,7 +251,7 @@ void QPApproximation::set_optimality_objective(Problem& problem, QP& qp, Iterate
 	if (!current_point.is_objective_gradient_computed) {
 		std::map<int,double> objective_gradient = problem.objective_sparse_gradient(current_point.x);
 		current_point.set_objective_gradient(objective_gradient);
-	}
+	}	
 	qp.objective = current_point.objective_gradient;
 	return;
 }

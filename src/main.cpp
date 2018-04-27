@@ -20,22 +20,22 @@ void test_argonot(std::string file_name) {
 	
 	double tolerance = 1e-6;
 	
-	/*
+	
 	FilterConstants filter_constants = {0.999, 0.001};
 	Filter filter_restoration(filter_constants);
 	Filter filter_optimality(filter_constants);
 	LocalSolutionConstants step_constants = {0.1, 0.999};
 	Tolerances filter_tolerances = {1e2, 1.25};
 	FilterStrategy globalization_strategy = FilterStrategy(local_approximation, filter_restoration, filter_optimality, step_constants, filter_tolerances, tolerance);
-	*/
-	PenaltyStrategy globalization_strategy = PenaltyStrategy(local_approximation, tolerance);
+	
+	//PenaltyStrategy globalization_strategy = PenaltyStrategy(local_approximation, tolerance);
 	
 	
-	//double radius = 10.;
-	//TrustRegion globalization_mechanism = TrustRegion(globalization_strategy, radius);
+	double radius = 10.;
+	TrustRegion globalization_mechanism = TrustRegion(globalization_strategy, radius);
 	
 	//TrustLineSearch globalization_mechanism = TrustLineSearch(globalization_strategy, radius);
-	LineSearch globalization_mechanism = LineSearch(globalization_strategy);
+	//LineSearch globalization_mechanism = LineSearch(globalization_strategy);
 	
 	int max_iterations = 1001;
 	Argonot argonot = Argonot(globalization_mechanism, max_iterations);

@@ -14,7 +14,7 @@ L = -ldl
 LIBCOIN   = -lOsiClp -lClp -lCoinUtils -lOsi
 LIBLINALG = #-lblas -llapack
 
-INCLUDES = -I base  -I base/globalization_mechanism -I base/globalization_strategy -I base/local_approximation -I interfaces -I logger -I interfaces/AMPL -I solvers -I $(AMPL_DIR)
+INCLUDES = -I base -I base/globalization_mechanism -I base/globalization_strategy -I base/local_approximation -I interfaces -I logger -I interfaces/AMPL -I solvers -I $(AMPL_DIR)
 
 SRC_FILES = main.cpp base/Argonot.cpp base/Iterate.cpp \
 	base/Problem.cpp interfaces/AMPL/AMPLModel.cpp \
