@@ -55,7 +55,7 @@ class Iterate {
 		
 		/*!
          *  Compute the Hessian in a lazy way: the Hessian is computed only when required and stored
-         *  The Hessian is stored in CSC (Compressed Sparse Column)
+         *  in CSC (Compressed Sparse Column)
          */
 		void compute_hessian(Problem& problem, double obj_multiplier, std::vector<double>& constraint_multipliers);
 		
