@@ -50,7 +50,7 @@ Iterate TrustLineSearch::compute_iterate(Problem& problem, Iterate& current_poin
 				}
 				else {
 					/* decrease alpha */
-					step_length *= ratio;
+					step_length *= this->ratio;
 				}
 			}
 			if (this->max_iterations < this->number_iterations) {
