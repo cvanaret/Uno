@@ -2,15 +2,14 @@
 #include "LineSearch.hpp"
 #include "Logger.hpp"
 
-LineSearch::LineSearch(GlobalizationStrategy& globalization_strategy, int max_iterations):
-		GlobalizationMechanism(globalization_strategy, max_iterations) {
+LineSearch::LineSearch(GlobalizationStrategy& globalization_strategy, int max_iterations, double ratio):
+		GlobalizationMechanism(globalization_strategy, max_iterations), ratio(ratio) {
 }
 
 // TODO catch exceptions
 Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_point) {
 	this->number_iterations = 0;
-	double ratio = 0.5; // in ]0, 1[
-
+	
 	/* compute a trial direction */
 	LocalSolution solution = this->globalization_strategy.compute_step(problem, current_point, INFINITY);
 
@@ -35,7 +34,7 @@ Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_point) {
 		}
 		else {
 			/* decrease alpha */
-			step_length *= ratio;
+			step_length *= this->ratio;
 		}
 		
 		/* step length gets too small */

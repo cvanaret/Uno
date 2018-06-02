@@ -2,14 +2,13 @@
 #include <cmath>
 #include "TrustLineSearch.hpp"
 
-TrustLineSearch::TrustLineSearch(GlobalizationStrategy& globalization_strategy, double initial_radius, int max_iterations):
-		GlobalizationMechanism(globalization_strategy, max_iterations), radius(initial_radius) {
+TrustLineSearch::TrustLineSearch(GlobalizationStrategy& globalization_strategy, double initial_radius, int max_iterations, double ratio):
+		GlobalizationMechanism(globalization_strategy, max_iterations), ratio(ratio), radius(initial_radius) {
 }
 
 // TODO catch exceptions
 Iterate TrustLineSearch::compute_iterate(Problem& problem, Iterate& current_point) {
 	this->number_iterations = 0;
-	double ratio = 0.5; // in ]0, 1[
 
 	bool is_accepted = false;
 	bool linesearch_failed = false;

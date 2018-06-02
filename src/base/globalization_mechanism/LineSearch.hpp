@@ -13,7 +13,7 @@ class LineSearch: public GlobalizationMechanism {
 		/*!
          *  Constructor
          */
-		LineSearch(GlobalizationStrategy& globalization_strategy, int max_iterations = 30);
+		LineSearch(GlobalizationStrategy& globalization_strategy, int max_iterations = 30, double ratio = 0.5);
 		
 		/*!
          *  Compute the next iterate from a given point
@@ -22,6 +22,9 @@ class LineSearch: public GlobalizationMechanism {
          * \param current_point: current point and its evaluations
          */
 		Iterate compute_iterate(Problem& problem, Iterate& current_point);
+		
+		/* ratio of step length update in ]0, 1[ */
+		double ratio;
 		
 	private:
 		bool termination_criterion(bool is_accepted, int iteration);
