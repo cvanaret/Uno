@@ -4,10 +4,11 @@
 
 TrustLineSearch::TrustLineSearch(GlobalizationStrategy& globalization_strategy, double initial_radius, int max_iterations, double ratio):
 		GlobalizationMechanism(globalization_strategy, max_iterations), ratio(ratio), radius(initial_radius) {
+			
+	this->activity_tolerance_ = 1e-6;
 }
 
-// TODO catch exceptions
-Iterate TrustLineSearch::compute_iterate(Problem& problem, Iterate& current_point) {
+Iterate TrustLineSearch::compute_iterate(Problem& problem, Iterate& current_iterate) {
 	this->number_iterations = 0;
 
 	bool is_accepted = false;
@@ -18,7 +19,7 @@ Iterate TrustLineSearch::compute_iterate(Problem& problem, Iterate& current_poin
 				throw std::out_of_range("radius is zero");
 			}
 			/* compute a trial direction */
-			LocalSolution solution = this->globalization_strategy.compute_step(problem, current_point, this->radius);
+			LocalSolution solution = this->globalization_strategy.compute_step(problem, current_iterate, this->radius);
 			
 			/* set multipliers of active trust region to 0 */
 			this->correct_multipliers(problem, solution);
@@ -31,7 +32,7 @@ Iterate TrustLineSearch::compute_iterate(Problem& problem, Iterate& current_poin
 				
 				try {
 					/* check whether the trial step is accepted */
-					is_accepted = this->globalization_strategy.check_step(problem, current_point, solution, step_length);
+					is_accepted = this->globalization_strategy.check_step(problem, current_iterate, solution, step_length);
 				}
 				catch (const std::invalid_argument& e) {
 					DEBUG << RED << e.what() << "\n" RESET;
@@ -43,7 +44,7 @@ Iterate TrustLineSearch::compute_iterate(Problem& problem, Iterate& current_poin
 					
 					/* increase the radius if trust region is active, otherwise keep the same radius */
 					// TODO handle the case where the solution is the new point
-					//if (solution.norm == this->radius) {
+					//if (solution.norm == this->radius - this->activity_tolerance_) {
 					//	std::cout << this->radius << " RADIUS MULTIPLIED BY 2\n";
 					//	this->radius *= 2.;
 					//}
@@ -73,7 +74,7 @@ Iterate TrustLineSearch::compute_iterate(Problem& problem, Iterate& current_poin
 		}
 	}
 
-	return current_point;
+	return current_iterate;
 }
 
 void TrustLineSearch::correct_multipliers(Problem& problem, LocalSolution& solution) {

@@ -21,19 +21,19 @@ class TwoPhaseStrategy: public GlobalizationStrategy {
 		/*!
          *  TwoPhaseStrategy implements the compute_step method
          */
-		LocalSolution compute_step(Problem& problem, Iterate& current_point, double radius);
+		LocalSolution compute_step(Problem& problem, Iterate& current_iterate, double radius);
 		
-		virtual bool check_step(Problem& problem, Iterate& current_point, LocalSolution& solution, double step_length = 1.) = 0;
+		virtual bool check_step(Problem& problem, Iterate& current_iterate, LocalSolution& solution, double step_length = 1.) = 0;
 		
-		virtual void initialize(Problem& problem, Iterate& current_point) = 0;
+		virtual void initialize(Problem& problem, Iterate& current_iterate) = 0;
 		
-		double compute_KKT_error(Problem& problem, Iterate& current_point);
+		double compute_KKT_error(Problem& problem, Iterate& current_iterate);
 		
 		Phase phase; /*!< Current phase (optimality or feasibility restoration) */
 		LocalSolutionConstants& constants; /*!< Set of constants */
 	
 	protected:
-		void update_restoration_multipliers(Iterate& trial_point, ConstraintPartition& constraint_partition);
+		void update_restoration_multipliers(Iterate& trial_iterate, ConstraintPartition& constraint_partition);
 };
 
 #endif // TWOPHASESTRATEGY_H

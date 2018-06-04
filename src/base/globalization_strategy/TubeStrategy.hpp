@@ -22,12 +22,12 @@ class TubeStrategy: public TwoPhaseStrategy {
 		Tube tube_restoration; /*!< Tube for restoration phase */
 		Tube tube_optimality; /*!< Tube for optimality phase */
 		
-		bool check_step(Problem& problem, Iterate& current_point, Step& step, Phase& phase);
+		bool check_step(Problem& problem, Iterate& current_iterate, Step& step, Phase& phase);
 		
-		void initialize(Iterate& current_point);
+		void initialize(Iterate& current_iterate);
 	
 	protected:
-		void phase_transition(Problem& problem, Iterate& current_point, Iterate& trial_point, Step& step, Phase& phase, ConstraintPartition& constraint_partition);
+		void phase_transition(Problem& problem, Iterate& current_iterate, Iterate& trial_iterate, Step& step, Phase& phase, ConstraintPartition& constraint_partition);
 };
 
 #endif // TUBESTRATEGY_H

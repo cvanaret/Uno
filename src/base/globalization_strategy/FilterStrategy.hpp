@@ -25,12 +25,12 @@ class FilterStrategy: public TwoPhaseStrategy {
          *  Check the validity of a step
          *  Implements the purely virtual method of the superclass
          */
-		bool check_step(Problem& problem, Iterate& current_point, LocalSolution& solution, double step_length = 1.);
+		bool check_step(Problem& problem, Iterate& current_iterate, LocalSolution& solution, double step_length = 1.);
 		
-		void initialize(Problem& problem, Iterate& current_point);
+		void initialize(Problem& problem, Iterate& current_iterate);
 		
 	private:
-		OptimalityStatus compute_status(Problem& problem, Iterate& current_point, double step_norm);
+		OptimalityStatus compute_status(Problem& problem, Iterate& current_iterate, double step_norm);
 };
 
 #endif // FILTERSTRATEGY_H

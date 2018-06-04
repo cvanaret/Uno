@@ -4,7 +4,7 @@ GlobalizationMechanism::GlobalizationMechanism(GlobalizationStrategy& globalizat
 		globalization_strategy(globalization_strategy), max_iterations(max_iterations), number_iterations(0) {
 }
 
-void GlobalizationMechanism::initialize(Problem& problem, Iterate& current_point) {
-	this->globalization_strategy.initialize(problem, current_point);
+void GlobalizationMechanism::initialize(Problem& problem, Iterate& current_iterate) {
+	this->globalization_strategy.initialize(problem, current_iterate);
 	return;
 }

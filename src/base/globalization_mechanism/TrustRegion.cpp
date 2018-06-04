@@ -8,27 +8,30 @@ TrustRegion::TrustRegion(GlobalizationStrategy& globalization_strategy, double i
 	this->radius_max_ = -INFINITY;
 	this->radius_min_ = INFINITY;
 	this->radius_sum_ = 0;
+	
+	this->activity_tolerance_ = 1e-6;
 }
 
-Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_point) {
+Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_iterate) {
 	bool is_accepted = false;
 	this->number_iterations = 0;
 	
 	while (!this->termination_criterion(is_accepted, this->number_iterations, this->radius)) {
 		try {
 			this->number_iterations++;
-			DEBUG << "\n\tTRUST REGION iteration " << this->number_iterations << ", radius " << this->radius << "\n";
 			/* keep track of min/max/average radius */
 			this->record_radius(this->radius);
 			
+			DEBUG << "\n\tTRUST REGION iteration " << this->number_iterations << ", radius " << this->radius << "\n";
+			
 			/* compute the step within trust region */
-			LocalSolution solution = this->globalization_strategy.compute_step(problem, current_point, this->radius);
+			LocalSolution solution = this->globalization_strategy.compute_step(problem, current_iterate, this->radius);
 			
 			/* set multipliers of active trust region to 0 */
 			this->correct_multipliers(problem, solution);
 			
-			/* generate a trial step and check whether it is accepted */
-			is_accepted = this->globalization_strategy.check_step(problem, current_point, solution);
+			/* check whether the trial step is accepted */
+			is_accepted = this->globalization_strategy.check_step(problem, current_iterate, solution);
 			
 			if (is_accepted) {
 				DEBUG << CYAN "TR trial point accepted\n" RESET;
@@ -38,7 +41,7 @@ Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_point) {
 				INFO << "step norm: " << std::fixed << solution.norm << "\t";
 				
 				/* increase the radius if trust region is active, otherwise keep the same radius */
-				if (solution.norm >= this->radius - 1e-6) {
+				if (solution.norm >= this->radius - this->activity_tolerance_) {
 					this->radius *= 2.;
 				}
 			}
@@ -61,10 +64,11 @@ Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_point) {
 		throw std::out_of_range("Trust-region iteration limit reached");
 	}
 	
-	return current_point;
+	return current_iterate;
 }
 
 void TrustRegion::correct_multipliers(Problem& problem, LocalSolution& solution) {
+	/* set multipliers for bound constraints active at trust region to 0 */
 	for (unsigned int k = 0; k < solution.active_set.at_upper_bound.size(); k++) {
 		int i = solution.active_set.at_upper_bound[k];
 		if (i < problem.number_variables && solution.x[i] == this->radius) {

@@ -6,12 +6,11 @@ LineSearch::LineSearch(GlobalizationStrategy& globalization_strategy, int max_it
 		GlobalizationMechanism(globalization_strategy, max_iterations), ratio(ratio) {
 }
 
-// TODO catch exceptions
-Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_point) {
+Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_iterate) {
 	this->number_iterations = 0;
 	
 	/* compute a trial direction */
-	LocalSolution solution = this->globalization_strategy.compute_step(problem, current_point, INFINITY);
+	LocalSolution solution = this->globalization_strategy.compute_step(problem, current_iterate, INFINITY);
 
 	/* length follows the following sequence: 1, ratio, ratio^2, ratio^3, ... */
 	double step_length = 1.;
@@ -22,18 +21,23 @@ Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_point) {
 			
 		try {
 			/* check whether the trial step is accepted */
-			is_accepted = this->globalization_strategy.check_step(problem, current_point, solution, step_length);
+			is_accepted = this->globalization_strategy.check_step(problem, current_iterate, solution, step_length);
 		}
 		catch (const std::invalid_argument& e) {
-			//WARNING << RED << e.what() << "\n" RESET;
+			WARNING << RED << e.what() << RESET "\n";
 			is_accepted = false;
 		}
 		
 		if (is_accepted) {
 			DEBUG << CYAN "LS trial point accepted\n" RESET;
+			/* print summary */
+			// TODO handle the case where the solution is a new point: what???
+			INFO << "minor: " << std::fixed << this->number_iterations << "\t";
+			INFO << "step length: " << step_length << "\t";
+			INFO << "step norm: " << std::fixed << (step_length*solution.norm) << "\t";
 		}
 		else {
-			/* decrease alpha */
+			/* decrease the step length */
 			step_length *= this->ratio;
 		}
 		
@@ -47,14 +51,7 @@ Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_point) {
 		throw std::out_of_range("Iteration limit reached");
 	}
 	
-	/* print summary */
-	// TODO handle the case where the solution is a new point
-	double step_norm = solution.norm*step_length;
-	INFO << "minor: " << this->number_iterations << "\t";
-	INFO << "step length: " << step_length << "\t";
-	INFO << "step norm: " << step_norm << "\t";
-
-	return current_point;
+	return current_iterate;
 }
 
 bool LineSearch::termination_criterion(bool is_accepted, int iteration) {

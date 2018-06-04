@@ -24,11 +24,11 @@ class GlobalizationMechanism {
          * (purely virtual)
          * 
          * \param problem: optimization problem
-         * \param current_point: current point and its evaluations
+         * \param current_iterate: current point and its evaluations
          */
-		virtual Iterate compute_iterate(Problem& problem, Iterate& current_point) = 0;
+		virtual Iterate compute_iterate(Problem& problem, Iterate& current_iterate) = 0;
 		
-		void initialize(Problem& problem, Iterate& current_point);
+		void initialize(Problem& problem, Iterate& current_iterate);
 		
 		/* references to allow polymorphism */
 		GlobalizationStrategy& globalization_strategy;  /*!< Strategy to accept or reject a step */

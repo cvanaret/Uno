@@ -57,28 +57,28 @@ class Argonot {
          * 
          * \param problem: optimization problem
          * \param phase: current phase (optimality or feasibility restoration)
-         * \param current_point: current point and its evaluations
+         * \param current_iterate: current point and its evaluations
          */
-		OptimalityStatus optimality_test(Problem& problem, Phase& phase, Iterate& current_point);
+		OptimalityStatus optimality_test(Problem& problem, Phase& phase, Iterate& current_iterate);
 		
 		/*!
          *  Compute the KKT error
          * 
          * \param problem: optimization problem
          * \param phase: current phase (optimality or feasibility restoration)
-         * \param current_point: current point and its evaluations
+         * \param current_iterate: current point and its evaluations
 
          */
-		double compute_KKT_error(Problem& problem, Phase& phase, Iterate& current_point);
+		double compute_KKT_error(Problem& problem, Phase& phase, Iterate& current_iterate);
 			
 		/*!
          *  Compute the complementarity error
          * 
          * \param problem: optimization problem
          * \param phase: current phase (optimality or feasibility restoration)
-         * \param current_point: current point and its evaluations
+         * \param current_iterate: current point and its evaluations
          */
-		double compute_complementarity_error(const Problem& problem, Phase& phase, Iterate& current_point);
+		double compute_complementarity_error(const Problem& problem, Phase& phase, Iterate& current_iterate);
 };
 
 #endif // ARGONOT_H

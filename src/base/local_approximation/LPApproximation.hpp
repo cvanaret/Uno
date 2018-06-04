@@ -23,9 +23,9 @@ class LPApproximation: public LocalApproximation {
          * 
          * \param problem: optimization problem
          * \param phase: current phase (optimality or feasibility restoration)
-         * \param current_point: current point and its evaluations
+         * \param current_iterate: current point and its evaluations
          */
-		LocalSolution compute_direction(Problem& problem, Iterate& current_point, Phase& phase);
+		LocalSolution compute_direction(Problem& problem, Iterate& current_iterate, Phase& phase);
 		
 		// TODO static list of available solvers (BQPD)
 		
@@ -37,9 +37,9 @@ class LPApproximation: public LocalApproximation {
          *  Generate a linear local approximation
          * 
          * \param problem: optimization problem
-         * \param current_point: current point and its evaluations
+         * \param current_iterate: current point and its evaluations
          */
-		LP generate_LP(Problem& problem, Iterate& current_point) const;
+		LP generate_LP(Problem& problem, Iterate& current_iterate) const;
 };
 
 #endif // LPAPPROXIMATION_H

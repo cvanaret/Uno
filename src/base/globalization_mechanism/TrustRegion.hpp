@@ -23,9 +23,9 @@ class TrustRegion: public GlobalizationMechanism {
          *  Compute the next iterate from a given point
          * 
          * \param problem: optimization problem
-         * \param current_point: current point and its evaluations
+         * \param current_iterate: current point and its evaluations
          */
-		Iterate compute_iterate(Problem& problem, Iterate& current_point);
+		Iterate compute_iterate(Problem& problem, Iterate& current_iterate);
 		
 		double radius; /*!< Current trust region radius */
 
@@ -50,6 +50,8 @@ class TrustRegion: public GlobalizationMechanism {
 		double radius_max_; /*!< Maximum used radius */
 		double radius_min_; /*!< Minimum used radius */
 		double radius_sum_; /*!< Sum of all used radii */
+		
+		double activity_tolerance_;
 };
 
 #endif // TRUSTREGION_H

@@ -97,8 +97,8 @@ bool Filter::query(double cons, double objf) {
 		return false; // point rejected by entry [index-1]
 }
 
-//! query_current_point: check acceptable wrt current point 
-bool Filter::query_current_point(double curc, double curf, double newc, double newf) {
+//! query_current_iterate: check acceptable wrt current point 
+bool Filter::query_current_iterate(double curc, double curf, double newc, double newf) {
 	return !((newf > curf - this->constants.Gamma*newc) && (newc > this->constants.Beta*curc));
 }
 
@@ -203,8 +203,8 @@ bool NonMonotonicFilter::query(double cons, double objf) {
 	return (dominated_entries <= this->number_dominated_entries); // point acceptable (dominated by <= this->number_dominated_entries)
 }
 
-//! query_current_point: check acceptable wrt current point 
-bool NonMonotonicFilter::query_current_point(double curc, double curf, double newc, double newf) {
+//! query_current_iterate: check acceptable wrt current point 
+bool NonMonotonicFilter::query_current_iterate(double curc, double curf, double newc, double newf) {
 	int dominated_entries;
 	
 	/* check acceptability wrt current point (non-monotone) */

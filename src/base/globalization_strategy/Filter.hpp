@@ -57,13 +57,13 @@ class Filter {
          * \param trial_constraint: trial objective value
          * \param trial_objective: trial objective value
          */
-		virtual bool query_current_point(double current_constraint, double current_objective, double trial_constraint, double trial_objective);
+		virtual bool query_current_iterate(double current_constraint, double current_objective, double trial_constraint, double trial_objective);
 		
 		/*!
          *  Compute the actual reduction resulting from taking the step
          *  Virtual method (may be overwritten in subclasses)
          * 
-         * \param current_point: current iterate and its evaluations
+         * \param current_iterate: current iterate and its evaluations
          * \param trial_objective: objective value of the trial point
          */
 		virtual double compute_actual_reduction(double current_objective, double current_residual, double new_objective);
@@ -124,12 +124,12 @@ class NonMonotonicFilter: Filter {
          * \param trial_constraint: trial objective value
          * \param trial_objective: trial objective value
          */
-		bool query_current_point(double curc, double curf, double newc, double newf);
+		bool query_current_iterate(double curc, double curf, double newc, double newf);
 		
 		/*!
          *  Compute the actual reduction resulting from taking the step
          * 
-         * \param current_point: current iterate and its evaluations
+         * \param current_iterate: current iterate and its evaluations
          * \param trial_objective: objective value of the trial point
          */
 		double compute_actual_reduction(double current_objective, double current_residual, double new_objective);
