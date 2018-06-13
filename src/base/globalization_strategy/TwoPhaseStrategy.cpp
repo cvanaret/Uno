@@ -7,7 +7,8 @@ TwoPhaseStrategy::TwoPhaseStrategy(LocalApproximation& local_approximation, Loca
 }
 
 LocalSolution TwoPhaseStrategy::compute_step(Problem& problem, Iterate& current_iterate, double radius) {
-	double objective_multiplier = (phase == OPTIMALITY) ? problem.obj_sign : 0.;
+	double objective_multiplier = problem.obj_sign;
+	//double objective_multiplier = (phase == OPTIMALITY) ? problem.obj_sign : 0.;
 	LocalSolution solution = this->local_approximation.compute_optimality_step(problem, current_iterate, objective_multiplier, radius);
 	solution.phase = OPTIMALITY;
 	DEBUG << solution;

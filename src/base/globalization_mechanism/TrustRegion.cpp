@@ -55,9 +55,9 @@ Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_iterate)
 			this->radius /= 2.;
 		}
 		/* radius gets too small */
-		if (this->radius < 1e-4) {
+		/*if (this->radius < 1e-16) {
 			throw std::out_of_range("Trust-region radius became too small");
-		}
+		}*/
 	}
 
 	if (this->max_iterations < this->number_iterations) {

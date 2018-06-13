@@ -42,9 +42,9 @@ Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_iterate) 
 		}
 		
 		/* step length gets too small */
-		if (step_length < 1e-8) {
-			throw std::out_of_range("Step length became too small");
-		}
+		//if (step_length < 1e-16) {
+		//	throw std::out_of_range("Step length became too small");
+		//}
 	}
 
 	if (this->max_iterations < this->number_iterations) {
