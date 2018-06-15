@@ -79,9 +79,7 @@ QP QPApproximation::generate_optimality_qp(Problem& problem, Iterate& current_it
 	/* keep only the multipliers of the general constraints */
 	std::vector<double> constraint_multipliers(problem.number_constraints);
 	for (int j = 0; j < problem.number_constraints; j++) {
-		/* take the opposite of the multiplier. The reason is that in AMPL, the
-		 * Lagrangian is f + lambda.g, while Argonot uses f - lambda.g */
-		constraint_multipliers[j] = -current_iterate.multipliers[problem.number_variables + j];
+		constraint_multipliers[j] = current_iterate.multipliers[problem.number_variables + j];
 	}
 	current_iterate.compute_hessian(problem, objective_multiplier, constraint_multipliers);
 	
@@ -104,23 +102,21 @@ QP QPApproximation::generate_infeasibility_qp(Problem& problem, Iterate& current
 	int number_infeasible = constraint_partition.infeasible_set.size();
 	DEBUG << "Creating the restoration problem with infeasible " << number_infeasible << " constraints\n";
 
-	/* compute the Lagrangian Hessian */
-	double objective_multiplier = 0.;
 	/* keep only the multipliers of the general constraints */
 	std::vector<double> constraint_multipliers(problem.number_constraints);
 	for (int j = 0; j < problem.number_constraints; j++) {
-		/* take the opposite of the multiplier. The reason is that in AMPL, the
-		 * Lagrangian is f + lambda.g, while Argonot uses f - lambda.g */
 		if (constraint_partition.status[j] == INFEASIBLE_LOWER) {
-			constraint_multipliers[j] = -1.;
-		}
-		else if (constraint_partition.status[j] == INFEASIBLE_UPPER) {
 			constraint_multipliers[j] = 1.;
 		}
+		else if (constraint_partition.status[j] == INFEASIBLE_UPPER) {
+			constraint_multipliers[j] = -1.;
+		}
 		else {
-			constraint_multipliers[j] = -current_iterate.multipliers[problem.number_variables + j];
+			constraint_multipliers[j] = current_iterate.multipliers[problem.number_variables + j];
 		}
 	}
+	/* compute the Lagrangian Hessian */
+	double objective_multiplier = 0.;
 	current_iterate.compute_hessian(problem, objective_multiplier, constraint_multipliers);
 	
 	/* initialize the QP */
@@ -157,9 +153,7 @@ QP QPApproximation::generate_l1_penalty_qp(Problem& problem, Iterate& current_it
 	/* keep only the multipliers of the general constraints */
 	std::vector<double> constraint_multipliers(problem.number_constraints);
 	for (int j = 0; j < problem.number_constraints; j++) {
-		/* take the opposite of the multiplier. The reason is that in AMPL, the
-		 * Lagrangian is f + lambda.g, while Argonot uses f - lambda.g */
-		constraint_multipliers[j] = -current_iterate.multipliers[problem.number_variables + j];
+		constraint_multipliers[j] = current_iterate.multipliers[problem.number_variables + j];
 	}
 	current_iterate.compute_hessian(problem, objective_multiplier, constraint_multipliers);
 	

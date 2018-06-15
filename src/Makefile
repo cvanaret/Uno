@@ -1,7 +1,7 @@
 # specify local compilers and compiler flags
 PROFILER =# -pg
 CC     = gcc
-CPP    = g++
+CPP    = g++ -std=c++11
 F77    = gfortran
 FFLAGS = $(PROFILER)
 
@@ -21,12 +21,14 @@ SRC_FILES = main.cpp base/Argonot.cpp base/Iterate.cpp \
 	base/Matrix.cpp \
 	base/globalization_strategy/GlobalizationStrategy.cpp base/globalization_strategy/TwoPhaseStrategy.cpp \
 	base/globalization_strategy/Filter.cpp base/globalization_strategy/FilterStrategy.cpp \
-	base/globalization_strategy/PenaltyStrategy.cpp \
-	base/globalization_mechanism/GlobalizationMechanism.cpp base/globalization_mechanism/TrustRegion.cpp base/globalization_mechanism/LineSearch.cpp base/globalization_mechanism/TrustLineSearch.cpp \
+	base/globalization_strategy/PenaltyStrategy.cpp base/globalization_strategy/GlobalizationStrategyFactory.cpp \
+	base/globalization_mechanism/GlobalizationMechanism.cpp base/globalization_mechanism/TrustRegion.cpp \
+	base/globalization_mechanism/LineSearch.cpp base/globalization_mechanism/TrustLineSearch.cpp \
+	base/globalization_mechanism/GlobalizationMechanismFactory.cpp \
 	base/local_approximation/QP.cpp base/local_approximation/LP.cpp \
 	base/local_approximation/LocalApproximation.cpp base/local_approximation/QPApproximation.cpp \
-	base/local_approximation/LocalSolution.cpp base/Utils.cpp \
-	solvers/BQPDSolver.cpp
+	base/local_approximation/LocalApproximationFactory.cpp base/local_approximation/LocalSolution.cpp base/Utils.cpp \
+	solvers/BQPDSolver.cpp solvers/QPSolverFactory.cpp
 OBJ_FILES = $(subst .cpp,.o,$(SRC_FILES)) solvers/wdotd.o
 EXEC_NAME = argonot
 

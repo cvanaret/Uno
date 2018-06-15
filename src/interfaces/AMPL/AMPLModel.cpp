@@ -405,51 +405,22 @@ Matrix AMPLModel::lagrangian_hessian(std::vector<double> x, double objective_mul
 	int obj_number = (objective_multiplier != 0.) ? 0 : -1;
 	double* obj_multiplier = (objective_multiplier != 0.) ? &objective_multiplier : NULL;
 	
+	/* take the opposite of the multiplier. The reason is that in AMPL, the
+	* Lagrangian is f + lambda.g, while Argonot uses f - lambda.g */
+	std::vector<double> ampl_multipliers(multipliers.size());
+	for (unsigned int j = 0; j < multipliers.size(); j++) {
+		ampl_multipliers[j] = -multipliers[j];
+	}
+	
 	/* compute the Hessian */
 	std::vector<double> hessian(this->hessian_maximum_number_nonzero);
-	(*((ASL*) this->asl_)->p.Sphes)((ASL*) this->asl_, 0, hessian.data(), obj_number, obj_multiplier, multipliers.data());
+	(*((ASL*) this->asl_)->p.Sphes)((ASL*) this->asl_, 0, hessian.data(), obj_number, obj_multiplier, ampl_multipliers.data());
 	
 	/* unregister the vector of variables */
 	this->asl_->i.x_known = 0;
 	
 	return Matrix(hessian, this->hessian_column_start, this->hessian_row_number);
 }
-
-//Matrix AMPLModel::lagrangian_hessian(std::vector<double> x, double objective_multiplier, std::vector<double> multipliers) {
-	//this->number_eval_hessian++;
-	///* register the vector of variables */
-	//(*((ASL*) this->asl_)->p.Xknown)((ASL*) this->asl_, x.data(), 0);
-
-	///* set the multiplier for the objective function */
-	//int obj_number = (objective_multiplier != 0.) ? 0 : -1;
-	//double* obj_multiplier = (objective_multiplier != 0.) ? &objective_multiplier : NULL;
-
-	///* compute the sparse description */
-	//int upper_triangular = 1;
-	//int hessian_number_nonzero = (*((ASL*) this->asl_)->p.Sphset)((ASL*) this->asl_, NULL, obj_number, 0. < objective_multiplier, 1, upper_triangular);
-	
-	///* compute the Hessian */
-	//std::vector<double> hessian(hessian_number_nonzero);
-	//(*((ASL*) this->asl_)->p.Sphes)((ASL*) this->asl_, 0, hessian.data(), obj_number, obj_multiplier, multipliers.data());
-	
-	///* unregister the vector of variables */
-	//this->asl_->i.x_known = 0;
-	
-	///* build sparse description */
-	//std::vector<int> hessian_column_start(this->number_variables+1);
-	//int* ampl_column_start = this->asl_->i.sputinfo_->hcolstarts;
-	//for (int k = 0; k < this->number_variables+1; k++) {
-		//hessian_column_start[k] = ampl_column_start[k];
-	//}
-	
-	//std::vector<int> hessian_row_number(hessian_number_nonzero);
-	//int* ampl_row_number = this->asl_->i.sputinfo_->hrownos;
-	//for (int k = 0; k < hessian_number_nonzero; k++) {
-		//hessian_row_number[k] = ampl_row_number[k];
-	//}
-	
-	//return Matrix(hessian, hessian_column_start, hessian_row_number);
-//}
 
 /* initial primal point */
 std::vector<double> AMPLModel::primal_initial_solution() {

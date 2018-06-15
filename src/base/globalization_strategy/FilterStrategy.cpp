@@ -4,9 +4,12 @@
 #include "Utils.hpp"
 
 /* TODO option to switch between filter or non-monotonic filter */
-FilterStrategy::FilterStrategy(LocalApproximation& local_approximation, Filter& filter_restoration,
-	Filter& filter_optimality, LocalSolutionConstants& constants, Tolerances& tolerances, double tolerance):
-		TwoPhaseStrategy(local_approximation, constants, tolerance), filter_restoration(filter_restoration), filter_optimality(filter_optimality), tolerances(tolerances) {
+FilterStrategy::FilterStrategy(LocalApproximation& local_approximation, std::shared_ptr<Filter> filter_optimality,
+	std::shared_ptr<Filter> filter_restoration, TwoPhaseConstants& constants, Tolerances& tolerances, double tolerance):
+		TwoPhaseStrategy(local_approximation, constants, tolerance),
+		filter_optimality(filter_optimality),
+		filter_restoration(filter_restoration),
+		tolerances(tolerances) {
 }
 
 /* check acceptability of step(s) (filter & sufficient reduction)
@@ -38,7 +41,7 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Loca
 		DEBUG << trial_iterate.infeasibility_measure << " " << trial_iterate.feasibility_measure << "\n";
 		
 		/* check acceptance */
-		Filter& filter = (this->phase == OPTIMALITY) ? this->filter_optimality : this->filter_restoration;
+		Filter& filter = (this->phase == OPTIMALITY) ? *(this->filter_optimality) : *(this->filter_restoration);
 		bool acceptable = filter.query(trial_iterate.infeasibility_measure, trial_iterate.feasibility_measure);
 		if (acceptable) {
 			// check acceptance wrt current x (h,f)
@@ -82,19 +85,19 @@ void FilterStrategy::switch_phase(Problem& problem, LocalSolution& solution, Ite
 			DEBUG << "Switching from optimality to restoration phase\n";
 			this->phase = RESTORATION;
 			/* add [h,f] (c/s violation) to filter, entering restoration */
-			this->filter_optimality.add(current_iterate.infeasibility_measure, current_iterate.feasibility_measure);
+			this->filter_optimality->add(current_iterate.infeasibility_measure, current_iterate.feasibility_measure);
 			
 			/* re-initialize the restoration filter */
 			current_iterate.infeasibility_measure = problem.feasible_residual_norm(solution.constraint_partition, current_iterate.constraints);
 			current_iterate.feasibility_measure = problem.infeasible_residual_norm(solution.constraint_partition, current_iterate.constraints);
 			current_iterate.is_hessian_computed = false;
-			this->filter_restoration.reset();
-			this->filter_restoration.upper_bound = this->filter_optimality.upper_bound;
-			this->filter_restoration.add(current_iterate.infeasibility_measure, current_iterate.feasibility_measure);
+			this->filter_restoration->reset();
+			this->filter_restoration->upper_bound = this->filter_optimality->upper_bound;
+			this->filter_restoration->add(current_iterate.infeasibility_measure, current_iterate.feasibility_measure);
 		}
 	}
 	/* check whether we can switch from phase I (restoration) to II (optimality) */
-	else if (solution.phase == OPTIMALITY && this->filter_optimality.query(trial_iterate.infeasibility_measure, trial_iterate.feasibility_measure)) {
+	else if (solution.phase == OPTIMALITY && this->filter_optimality->query(trial_iterate.infeasibility_measure, trial_iterate.feasibility_measure)) {
 		DEBUG << "Switching from restoration to optimality phase\n";
 		this->phase = OPTIMALITY;
 		current_iterate.infeasibility_measure = current_iterate.residual;
@@ -129,8 +132,8 @@ OptimalityStatus FilterStrategy::compute_status(Problem& problem, Iterate& curre
 void FilterStrategy::initialize(Problem& problem, Iterate& current_iterate) {
 	/* set the filter upper bound */
 	double upper_bound = std::max(this->tolerances.ubd, this->tolerances.fact*current_iterate.residual);
-	this->filter_optimality.upper_bound = upper_bound;
-	this->filter_restoration.upper_bound = upper_bound;
+	this->filter_optimality->upper_bound = upper_bound;
+	this->filter_restoration->upper_bound = upper_bound;
 	
 	/* allocate the subproblem solver */
 	this->local_approximation.allocate_solver(problem.number_variables, problem.number_constraints);

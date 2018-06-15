@@ -1,6 +1,7 @@
 #ifndef BQPDSOLVER_H
 #define BQPDSOLVER_H
 
+#include <iostream>
 #include <vector>
 #include <map>
 #include "QPSolver.hpp"

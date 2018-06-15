@@ -29,7 +29,7 @@ class LocalSolution {
 		LocalSolution(std::vector<double>& x, int n, int m);
 		
 		Status status; /*!< Status of the computed step */
-		Phase phase; /*!< Phase during which the step was computed */
+		Phase phase;
 		std::vector<double> x; /*!< Primal variables in \f$\mathbf{R}^n\f$ */
 		double norm; /*!< Norm of \f$x\f$ */
 		double objective; /*!< Objective value */
@@ -38,16 +38,6 @@ class LocalSolution {
 		ConstraintPartition constraint_partition; /*!< Partition of feasible and infeasible constraints */
 		
 		friend std::ostream& operator<< (std::ostream &stream, LocalSolution& step);
-};
-
-/*! \class LocalSolutionConstants
-* \brief Constants for step acceptance strategy
-*
-*  Set of constants to control the step acceptance strategy
-*/
-struct LocalSolutionConstants {
-	double Sigma; /*!< Sufficient reduction constant */
-	double Delta; /*!< Switching constant */
 };
 
 #endif // LOCALSOLUTION_H

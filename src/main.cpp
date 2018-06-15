@@ -1,47 +1,33 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <memory>
 #include "AMPLModel.hpp"
-#include "BQPDSolver.hpp"
-#include "QPApproximation.hpp"
-#include "FilterStrategy.hpp"
-#include "PenaltyStrategy.hpp"
-#include "TrustRegion.hpp"
-#include "LineSearch.hpp"
-#include "TrustLineSearch.hpp"
+#include "QPSolverFactory.hpp"
+#include "LocalApproximationFactory.hpp"
+#include "GlobalizationStrategyFactory.hpp"
+#include "GlobalizationMechanismFactory.hpp"
 #include "Argonot.hpp"
 #include "Logger.hpp"
-
-TrustRegion compute_tr(GlobalizationStrategy& globalization_strategy) {
-	double radius = 10.;
-	TrustRegion globalization_mechanism = TrustRegion(globalization_strategy, radius);
-	return globalization_mechanism;
-}
 
 void test_argonot(std::string file_name, std::map<std::string, std::string> options) {
 	AMPLModel problem = AMPLModel(file_name);
 	
-	BQPDSolver solver = BQPDSolver(problem.hessian_column_start, problem.hessian_row_number);
-	QPApproximation local_approximation = QPApproximation(solver);
+	/* create the local solver */
+	std::shared_ptr<QPSolver> solver = QPSolverFactory::create("BQPD", problem);
 	
+	/* create the local approximation strategy */
+	std::shared_ptr<LocalApproximation> local_approximation = LocalApproximationFactory::create(options["-local_approximation"], *solver);
+	
+	/* create the globalization strategy */
 	double tolerance = 1e-6;
+	std::shared_ptr<GlobalizationStrategy> globalization_strategy = GlobalizationStrategyFactory::create(options["-strategy"], *local_approximation, tolerance);
 	
-	FilterConstants filter_constants = {0.999, 0.001};
-	Filter filter_restoration(filter_constants);
-	Filter filter_optimality(filter_constants);
-	LocalSolutionConstants step_constants = {0.1, 0.999};
-	Tolerances filter_tolerances = {1e2, 1.25};
-	FilterStrategy globalization_strategy = FilterStrategy(local_approximation, filter_restoration, filter_optimality, step_constants, filter_tolerances, tolerance);
-	
-	//PenaltyStrategy globalization_strategy = PenaltyStrategy(local_approximation, tolerance);
-
-	double radius = 10.;
-	TrustRegion globalization_mechanism = TrustRegion(globalization_strategy, radius);
-	//TrustLineSearch globalization_mechanism = TrustLineSearch(globalization_strategy, radius);
-	//LineSearch globalization_mechanism = LineSearch(globalization_strategy);
+	/* create the globalization mechanism */
+	std::shared_ptr<GlobalizationMechanism> globalization_mechanism = GlobalizationMechanismFactory::create(options["-mechanism"], *globalization_strategy);
 	
 	int max_iterations = 1001;
-	Argonot argonot = Argonot(globalization_mechanism, max_iterations);
+	Argonot argonot = Argonot(*globalization_mechanism, max_iterations);
 	
 	/* initial primal and dual points */
 	std::vector<double> x = problem.primal_initial_solution();
@@ -71,7 +57,16 @@ std::map<std::string, std::string> get_command_options(int argc, char *argv[]) {
 			i++;
 		}
 	}
-	
+	/* default values */
+	if (options.count("-local_approximation") == 0) {
+		options["-local_approximation"] = "QP";
+	}
+	if (options.count("-strategy") == 0) {
+		options["-strategy"] = "filter";
+	}
+	if (options.count("-mechanism") == 0) {
+		options["-mechanism"] = "TR";
+	}
 	return options;
 }
 

@@ -1,6 +1,8 @@
 #ifndef FILTERSTRATEGY_H
 #define FILTERSTRATEGY_H
 
+#include <iostream>
+#include <memory>
 #include "TwoPhaseStrategy.hpp"
 #include "Filter.hpp"
 
@@ -14,11 +16,12 @@ class FilterStrategy: public TwoPhaseStrategy {
 		/*!
          *  Constructor that takes an optimization problem, filters for restoration and optimality, and a set of constants
          */
-		FilterStrategy(LocalApproximation& local_approximation, Filter& filter_restoration, Filter& filter_optimality, LocalSolutionConstants& constants, Tolerances& tolerances, double tolerance);
+		FilterStrategy(LocalApproximation& local_approximation, std::shared_ptr<Filter> filter_optimality,
+			std::shared_ptr<Filter> filter_restoration, TwoPhaseConstants& constants, Tolerances& tolerances, double tolerance);
 	
-		/* use references to allow polymorphism */
-		Filter& filter_restoration; /*!< Filter for the restoration phase */
-		Filter& filter_optimality; /*!< Filter for the optimality phase */
+		/* use pointers to allow polymorphism */
+		std::shared_ptr<Filter> filter_optimality; /*!< Filter for the optimality phase */
+		std::shared_ptr<Filter> filter_restoration; /*!< Filter for the restoration phase */
 		Tolerances& tolerances; /*!< Tolerances */
 		
 		/*!

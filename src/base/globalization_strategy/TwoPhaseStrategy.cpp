@@ -2,7 +2,7 @@
 #include "TwoPhaseStrategy.hpp"
 #include "Logger.hpp"
 
-TwoPhaseStrategy::TwoPhaseStrategy(LocalApproximation& local_approximation, LocalSolutionConstants& constants, double tolerance):
+TwoPhaseStrategy::TwoPhaseStrategy(LocalApproximation& local_approximation, TwoPhaseConstants& constants, double tolerance):
 		GlobalizationStrategy(local_approximation, tolerance), phase(OPTIMALITY), constants(constants) {
 }
 
@@ -22,11 +22,10 @@ LocalSolution TwoPhaseStrategy::compute_step(Problem& problem, Iterate& current_
 		/* partition of feasible and infeasible phase II constraints */
 		ConstraintPartition constraint_partition = solution.constraint_partition;
 		
-		std::vector<double>& multipliers = (this->phase == OPTIMALITY) ? solution.multipliers : current_iterate.multipliers;
 		/* compute the step in phase 1, starting from infeasible solution */
-		solution = this->local_approximation.compute_infeasibility_step(problem, current_iterate, radius, solution.x, constraint_partition, multipliers);
-		solution.phase = RESTORATION;
+		solution = this->local_approximation.compute_infeasibility_step(problem, current_iterate, radius, solution.x, constraint_partition, solution.multipliers);
 		solution.constraint_partition = constraint_partition;
+		solution.phase = RESTORATION;
 		DEBUG << solution;
 	}
 	/* from this point on, the step is feasible */

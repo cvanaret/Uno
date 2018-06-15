@@ -22,6 +22,7 @@ class LocalApproximation {
          * \param name: name of the strategy
          */
 		LocalApproximation(std::string name);
+		virtual ~LocalApproximation();
 		
 		virtual LocalSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double objective_multiplier, double radius) = 0;
 		
