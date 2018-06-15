@@ -40,7 +40,7 @@ class TwoPhaseStrategy: public GlobalizationStrategy {
 		double compute_KKT_error(Problem& problem, Iterate& current_iterate);
 		
 		Phase phase; /*!< Current phase (optimality or feasibility restoration) */
-		TwoPhaseConstants& constants; /*!< Set of constants */
+		TwoPhaseConstants constants; /*!< Set of constants */
 	
 	protected:
 		void update_restoration_multipliers(Iterate& trial_iterate, ConstraintPartition& constraint_partition);

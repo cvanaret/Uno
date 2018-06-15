@@ -37,22 +37,22 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Loca
 			trial_iterate.feasibility_measure = problem.infeasible_residual_norm(solution.constraint_partition, trial_iterate.constraints);
 		}
 		
-		DEBUG << "TESTING " << current_iterate.infeasibility_measure << " " << current_iterate.feasibility_measure << " against ";
+		DEBUG << "TESTING current " << current_iterate.infeasibility_measure << " " << current_iterate.feasibility_measure << " against trial ";
 		DEBUG << trial_iterate.infeasibility_measure << " " << trial_iterate.feasibility_measure << "\n";
 		
 		/* check acceptance */
-		Filter& filter = (this->phase == OPTIMALITY) ? *(this->filter_optimality) : *(this->filter_restoration);
-		bool acceptable = filter.query(trial_iterate.infeasibility_measure, trial_iterate.feasibility_measure);
+		std::shared_ptr<Filter> filter = (this->phase == OPTIMALITY) ? this->filter_optimality : this->filter_restoration;
+		bool acceptable = filter->query(trial_iterate.infeasibility_measure, trial_iterate.feasibility_measure);
 		if (acceptable) {
 			// check acceptance wrt current x (h,f)
-			acceptable = filter.query_current_iterate(current_iterate.infeasibility_measure, current_iterate.feasibility_measure, trial_iterate.infeasibility_measure, trial_iterate.feasibility_measure);
+			acceptable = filter->query_current_iterate(current_iterate.infeasibility_measure, current_iterate.feasibility_measure, trial_iterate.infeasibility_measure, trial_iterate.feasibility_measure);
 			if (acceptable) {
 				double predicted_reduction = -solution.objective;
-				double actual_reduction = filter.compute_actual_reduction(current_iterate.feasibility_measure, current_iterate.infeasibility_measure, trial_iterate.feasibility_measure);
+				double actual_reduction = filter->compute_actual_reduction(current_iterate.feasibility_measure, current_iterate.infeasibility_measure, trial_iterate.feasibility_measure);
 				DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << actual_reduction << "\n\n";
 				
 				if (predicted_reduction < this->constants.Delta*current_iterate.infeasibility_measure*current_iterate.infeasibility_measure) {
-					filter.add(current_iterate.infeasibility_measure, current_iterate.feasibility_measure);
+					filter->add(current_iterate.infeasibility_measure, current_iterate.feasibility_measure);
 					accept = true;
 				}
 				else if (actual_reduction >= this->constants.Sigma*std::max(0., predicted_reduction-1e-9)) {

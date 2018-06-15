@@ -23,7 +23,7 @@ class Filter {
 		double upper_bound; /*!< Upper bound on constraint violation */
 		int size; /*!< Current filter size */
 		int max_size; /*!< Max filter size */
-		FilterConstants constants;/*!< Set of constants */
+		FilterConstants constants; /*!< Set of constants */
 		
 		/*!
          *  Reset filter size to zero

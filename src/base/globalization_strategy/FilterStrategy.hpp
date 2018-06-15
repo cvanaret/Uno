@@ -22,7 +22,7 @@ class FilterStrategy: public TwoPhaseStrategy {
 		/* use pointers to allow polymorphism */
 		std::shared_ptr<Filter> filter_optimality; /*!< Filter for the optimality phase */
 		std::shared_ptr<Filter> filter_restoration; /*!< Filter for the restoration phase */
-		Tolerances& tolerances; /*!< Tolerances */
+		Tolerances tolerances; /*!< Tolerances */
 		
 		/*!
          *  Check the validity of a step
