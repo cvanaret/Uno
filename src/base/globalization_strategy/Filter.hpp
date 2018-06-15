@@ -17,6 +17,7 @@ struct FilterConstants {
 class Filter {
 	public:
 		Filter(FilterConstants& constants);
+		virtual ~Filter();
 		
 		std::vector<double> constraints; /*!< Array of constraint residuals */
 		std::vector<double> objective; /*!< Array of objective values */
@@ -91,14 +92,14 @@ class Filter {
 		void shift_right(int start, int length);
 };
 
-/*! \class NonMonotonicFilter
+/*! \class NonmonotoneFilter
 * \brief Non-monotonic filter
 *
 *  Non-monotonic filter
 */
-class NonMonotonicFilter: Filter {
+class NonmonotoneFilter: public Filter {
 	public:
-		NonMonotonicFilter(FilterConstants& constants, int number_dominated_entries = 3);
+		NonmonotoneFilter(FilterConstants& constants, int number_dominated_entries = 3);
 	
 		/*!
          *  Add a point to the filter

@@ -6,6 +6,9 @@ Filter::Filter(FilterConstants& constants): constants(constants) {
 	this->reset();
 }
 
+Filter::~Filter() {
+}
+
 void Filter::reset() {
 	/* initialize the maximum filter size (not critical) */
 	this->max_size = 50;
@@ -136,14 +139,14 @@ std::ostream& operator<< (std::ostream &stream, Filter& filter) {
 	return stream;
 }
 
-/* NonMonotonicFilter class*/
+/* NonmonotoneFilter class*/
 
-NonMonotonicFilter::NonMonotonicFilter(FilterConstants& constants, int number_dominated_entries):
+NonmonotoneFilter::NonmonotoneFilter(FilterConstants& constants, int number_dominated_entries):
 		Filter(constants), number_dominated_entries(number_dominated_entries) {
 }
 
 //!  add (cons,objf) to the filter
-void NonMonotonicFilter::add(double cons, double objf) {
+void NonmonotoneFilter::add(double cons, double objf) {
 	int new_size = this->size;
 	int dominated_entries;
 	/* find entries in filter that are dominated by this->number_dominated_entries other entries */
@@ -185,7 +188,7 @@ void NonMonotonicFilter::add(double cons, double objf) {
 }
 
 //! query: check if (cons,objf) acceptable; return 1 if yes, 0 if not
-bool NonMonotonicFilter::query(double cons, double objf) {
+bool NonmonotoneFilter::query(double cons, double objf) {
 	/* check upper bound first */
 	if (cons >= this->constants.Beta*this->upper_bound) {
 		return 0;
@@ -204,7 +207,7 @@ bool NonMonotonicFilter::query(double cons, double objf) {
 }
 
 //! query_current_iterate: check acceptable wrt current point 
-bool NonMonotonicFilter::query_current_iterate(double curc, double curf, double newc, double newf) {
+bool NonmonotoneFilter::query_current_iterate(double curc, double curf, double newc, double newf) {
 	int dominated_entries;
 	
 	/* check acceptability wrt current point (non-monotone) */
@@ -224,7 +227,7 @@ bool NonMonotonicFilter::query_current_iterate(double curc, double curf, double 
 }
 
 /* check NON-MONOTONE sufficient reduction condition */
-double NonMonotonicFilter::compute_actual_reduction(double current_objective, double current_residual, double new_objective) {
+double NonmonotoneFilter::compute_actual_reduction(double current_objective, double current_residual, double new_objective) {
 	/* max penalty among most recent entries */
 	double max_objective = current_objective;
 	for (int i = 0; i < this->number_dominated_entries; i++) {
