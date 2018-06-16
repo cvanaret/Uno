@@ -24,7 +24,7 @@ std::shared_ptr<GlobalizationStrategy> GlobalizationStrategyFactory::create(cons
 		
 		/* create both filters */
 		FilterConstants filter_constants = {0.999, 0.001};
-		int number_dominated_entries = 10;
+		int number_dominated_entries = 3;
 		std::shared_ptr<Filter> filter_optimality = std::make_shared<NonmonotoneFilter>(filter_constants, number_dominated_entries);
 		std::shared_ptr<Filter> filter_restoration = std::make_shared<NonmonotoneFilter>(filter_constants, number_dominated_entries);
 		
