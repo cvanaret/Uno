@@ -8,7 +8,8 @@
 
 class GlobalizationStrategyFactory {
 	public:
-		static std::shared_ptr<GlobalizationStrategy> create(const std::string& type, LocalApproximation& local_approximation, double tolerance);
+		static std::shared_ptr<GlobalizationStrategy> create(const std::string& type, LocalApproximation& local_approximation,
+			std::map<std::string, std::string> default_values);
 };
 
 #endif // GLOBALIZATIONSTRATEGYFACTORY_H

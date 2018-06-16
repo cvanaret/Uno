@@ -8,7 +8,7 @@
 
 class LocalApproximationFactory {
 	public:
-		static std::shared_ptr<LocalApproximation> create(const std::string& type, QPSolver& solver);
+		static std::shared_ptr<LocalApproximation> create(const std::string& type, QPSolver& solver, std::map<std::string, std::string> default_values);
 };
 
 #endif // LOCALAPPROXIMATIONFACTORY_H

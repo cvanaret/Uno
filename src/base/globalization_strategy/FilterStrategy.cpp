@@ -5,11 +5,10 @@
 
 /* TODO option to switch between filter or non-monotonic filter */
 FilterStrategy::FilterStrategy(LocalApproximation& local_approximation, std::shared_ptr<Filter> filter_optimality,
-	std::shared_ptr<Filter> filter_restoration, TwoPhaseConstants& constants, Tolerances& tolerances, double tolerance):
+	std::shared_ptr<Filter> filter_restoration, TwoPhaseConstants& constants, double tolerance):
 		TwoPhaseStrategy(local_approximation, constants, tolerance),
 		filter_optimality(filter_optimality),
-		filter_restoration(filter_restoration),
-		tolerances(tolerances) {
+		filter_restoration(filter_restoration) {
 }
 
 /* check acceptability of step(s) (filter & sufficient reduction)
@@ -144,7 +143,7 @@ OptimalityStatus FilterStrategy::compute_status(Problem& problem, Iterate& curre
 
 void FilterStrategy::initialize(Problem& problem, Iterate& current_iterate) {
 	/* set the filter upper bound */
-	double upper_bound = std::max(this->tolerances.ubd, this->tolerances.fact*current_iterate.residual);
+	double upper_bound = std::max(this->constants.ubd, this->constants.fact*current_iterate.residual);
 	this->filter_optimality->upper_bound = upper_bound;
 	this->filter_restoration->upper_bound = upper_bound;
 	

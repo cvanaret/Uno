@@ -7,16 +7,6 @@
 #include "LocalSolution.hpp"
 #include "Constraint.hpp"
 
-/*! \struct Tolerances
-*
-*  Tolerances for termination criteria
-*/
-struct Tolerances {
-	//double inf;
-	double ubd;
-	double fact;
-};
-
 /*! \class GlobalizationStrategy
 * \brief Step acceptance strategy
 *

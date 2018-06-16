@@ -2,6 +2,8 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <iostream>
+#include <fstream>
 #include "AMPLModel.hpp"
 #include "QPSolverFactory.hpp"
 #include "LocalApproximationFactory.hpp"
@@ -10,24 +12,23 @@
 #include "Argonot.hpp"
 #include "Logger.hpp"
 
-void test_argonot(std::string file_name, std::map<std::string, std::string> options) {
-	AMPLModel problem = AMPLModel(file_name);
+void test_argonot(std::string problem_name, std::map<std::string, std::string> options, std::map<std::string, std::string> default_values) {
+	AMPLModel problem = AMPLModel(problem_name);
 	
 	/* create the local solver */
-	std::shared_ptr<QPSolver> solver = QPSolverFactory::create("BQPD", problem);
+	std::shared_ptr<QPSolver> solver = QPSolverFactory::create("BQPD", problem, default_values);
 	
 	/* create the local approximation strategy */
-	std::shared_ptr<LocalApproximation> local_approximation = LocalApproximationFactory::create(options["-local_approximation"], *solver);
+	std::shared_ptr<LocalApproximation> local_approximation = LocalApproximationFactory::create(options["local_approximation"], *solver, default_values);
 	
 	/* create the globalization strategy */
-	double tolerance = 1e-6;
-	std::shared_ptr<GlobalizationStrategy> globalization_strategy = GlobalizationStrategyFactory::create(options["-strategy"], *local_approximation, tolerance);
+	std::shared_ptr<GlobalizationStrategy> strategy = GlobalizationStrategyFactory::create(options["strategy"], *local_approximation, default_values);
 	
 	/* create the globalization mechanism */
-	std::shared_ptr<GlobalizationMechanism> globalization_mechanism = GlobalizationMechanismFactory::create(options["-mechanism"], *globalization_strategy);
+	std::shared_ptr<GlobalizationMechanism> mechanism = GlobalizationMechanismFactory::create(options["mechanism"], *strategy, default_values);
 	
-	int max_iterations = 1001;
-	Argonot argonot = Argonot(*globalization_mechanism, max_iterations);
+	int max_iterations = stoi(default_values["max_iterations"]);
+	Argonot argonot = Argonot(*mechanism, max_iterations);
 	
 	/* initial primal and dual points */
 	std::vector<double> x = problem.primal_initial_solution();
@@ -49,23 +50,13 @@ std::map<std::string, std::string> get_command_options(int argc, char *argv[]) {
 		if (argument_i[0] == '-' && i < argc-1) {
 			std::string value_i = std::string(argv[i+1]);
 			std::cout << "(" << argument_i << ", " << value_i << ")\n";
-			options[argument_i] = value_i;
+			options[argument_i.substr(1)] = value_i;
 			i += 2;
 		}
 		else {
 			std::cout << "Argument " << argument_i << " was ignored\n"; 
 			i++;
 		}
-	}
-	/* default values */
-	if (options.count("-local_approximation") == 0) {
-		options["-local_approximation"] = "QP";
-	}
-	if (options.count("-strategy") == 0) {
-		options["-strategy"] = "filter";
-	}
-	if (options.count("-mechanism") == 0) {
-		options["-mechanism"] = "TR";
 	}
 	return options;
 }
@@ -107,6 +98,20 @@ void set_logger(std::map<std::string, std::string> options) {
 	return;
 }
 
+std::map<std::string, std::string> get_default_values(std::string file_name) {
+	std::ifstream file;
+	file.open(file_name);
+	
+	std::map<std::string, std::string> default_values;
+	std::string key, value;
+	while (file >> key >> value) {
+		std::cout << "Default value " << key << " = " << value << "\n";
+		default_values[key] = value;
+	}
+	file.close();
+	return default_values;
+}
+
 int main (int argc, char* argv[]) {
 	if (1 < argc) {
 		/* get the command line options */
@@ -118,7 +123,9 @@ int main (int argc, char* argv[]) {
 			std::cout << "Welcome in Argonot\n";
 		}
 		else {
-			test_argonot(std::string(argv[argc-1]), options);
+			std::string problem_name = std::string(argv[argc-1]);
+			std::map<std::string, std::string> default_values = get_default_values("argonot.cfg");
+			test_argonot(problem_name, options, default_values);
 		}
 	}
 	return 0;

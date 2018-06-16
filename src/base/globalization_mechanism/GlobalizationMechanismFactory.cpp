@@ -4,20 +4,25 @@
 #include "LineSearch.hpp"
 #include "TrustLineSearch.hpp"
 
-std::shared_ptr<GlobalizationMechanism> GlobalizationMechanismFactory::create(const std::string& type, GlobalizationStrategy& globalization_strategy) {
+std::shared_ptr<GlobalizationMechanism> GlobalizationMechanismFactory::create(const std::string& type,
+		GlobalizationStrategy& globalization_strategy, std::map<std::string, std::string> default_values) {
 	if (type == "TR") {
-		double radius = 10.;
-		return std::make_shared<TrustRegion>(globalization_strategy, radius);
+		double radius = stod(default_values["TR_radius"]);
+		int max_iterations = stoi(default_values["TR_max_iterations"]);
+		return std::make_shared<TrustRegion>(globalization_strategy, radius, max_iterations);
 	}
 	else if (type == "LS") {
-		return std::make_shared<LineSearch>(globalization_strategy);
+		int max_iterations = stoi(default_values["LS_max_iterations"]);
+		double ratio = stod(default_values["LS_ratio"]);
+		return std::make_shared<LineSearch>(globalization_strategy, max_iterations, ratio);
 	}
 	else if (type == "TLS") {
 		double radius = INFINITY;
-		return std::make_shared<TrustLineSearch>(globalization_strategy, radius);
+		int max_iterations = stoi(default_values["LS_max_iterations"]);
+		double ratio = stod(default_values["LS_ratio"]);
+		return std::make_shared<TrustLineSearch>(globalization_strategy, radius, max_iterations, ratio);
 	}
 	else {
-		//TrustLineSearch globalization_mechanism = TrustLineSearch(*globalization_strategy, radius);
 		throw std::invalid_argument("GlobalizationMechanism type " + type + " does not exist");
 	}
 }

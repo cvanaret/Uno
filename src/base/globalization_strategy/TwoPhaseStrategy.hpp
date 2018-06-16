@@ -11,6 +11,8 @@
 struct TwoPhaseConstants {
 	double Sigma; /*!< Sufficient reduction constant */
 	double Delta; /*!< Switching constant */
+	double ubd;
+	double fact;
 };
 
 /*! \class GlobalizationStrategy
