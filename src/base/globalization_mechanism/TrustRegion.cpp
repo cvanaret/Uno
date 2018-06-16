@@ -4,12 +4,7 @@
 #include "Logger.hpp"
 
 TrustRegion::TrustRegion(GlobalizationStrategy& globalization_strategy, double initial_radius, int max_iterations):
-		GlobalizationMechanism(globalization_strategy, max_iterations), radius(initial_radius) {
-	this->radius_max_ = -INFINITY;
-	this->radius_min_ = INFINITY;
-	this->radius_sum_ = 0;
-	
-	this->activity_tolerance_ = 1e-6;
+		GlobalizationMechanism(globalization_strategy, max_iterations), radius(initial_radius), activity_tolerance_(1e-6) {
 }
 
 Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_iterate) {
@@ -19,9 +14,6 @@ Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_iterate)
 	while (!this->termination(is_accepted, this->number_iterations, this->radius)) {
 		try {
 			this->number_iterations++;
-			/* keep track of min/max/average radius */
-			this->record_radius(this->radius);
-			
 			DEBUG << "\n\tTRUST REGION iteration " << this->number_iterations << ", radius " << this->radius << "\n";
 			
 			/* compute the step within trust region */
@@ -87,11 +79,4 @@ bool TrustRegion::termination(bool is_accepted, int iteration, double radius) {
 		throw std::out_of_range("Trust-region radius became too small");
 	}
 	return false;
-}
-
-void TrustRegion::record_radius(double radius) {
-	this->radius_max_ = std::max(this->radius_max_, radius);
-	this->radius_min_ = std::min(this->radius_min_, radius);
-	this->radius_sum_ += radius;
-	return;
 }

@@ -39,18 +39,7 @@ class TrustRegion: public GlobalizationMechanism {
          * \param radius: current trust region radius
          */
 		bool termination(bool success, int iteration, double radius);
-	
-		/*!
-         *  Keep track of min/max/average radius
-         * 
-         * \param radius: current trust region radius
-         */
-		void record_radius(double radius);
 
-		double radius_max_; /*!< Maximum used radius */
-		double radius_min_; /*!< Minimum used radius */
-		double radius_sum_; /*!< Sum of all used radii */
-		
 		double activity_tolerance_;
 };
 

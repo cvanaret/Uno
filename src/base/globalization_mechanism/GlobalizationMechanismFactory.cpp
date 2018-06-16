@@ -1,6 +1,8 @@
+#include <cmath>
 #include "GlobalizationMechanismFactory.hpp"
 #include "TrustRegion.hpp"
 #include "LineSearch.hpp"
+#include "TrustLineSearch.hpp"
 
 std::shared_ptr<GlobalizationMechanism> GlobalizationMechanismFactory::create(const std::string& type, GlobalizationStrategy& globalization_strategy) {
 	if (type == "TR") {
@@ -9,6 +11,10 @@ std::shared_ptr<GlobalizationMechanism> GlobalizationMechanismFactory::create(co
 	}
 	else if (type == "LS") {
 		return std::make_shared<LineSearch>(globalization_strategy);
+	}
+	else if (type == "TLS") {
+		double radius = INFINITY;
+		return std::make_shared<TrustLineSearch>(globalization_strategy, radius);
 	}
 	else {
 		//TrustLineSearch globalization_mechanism = TrustLineSearch(*globalization_strategy, radius);

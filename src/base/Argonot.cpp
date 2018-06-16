@@ -43,6 +43,9 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, std::vector<doub
 	catch (std::out_of_range& exception) {
 		ERROR << exception.what();
 	}
+	catch (std::invalid_argument& exception) {
+		ERROR << exception.what();
+	}
 	std::clock_t c_end = std::clock();
 	double cpu_time = (c_end-c_start) / (double) CLOCKS_PER_SEC;
 

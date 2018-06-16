@@ -23,7 +23,7 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Loca
 	
 	bool accept = false;
 	/* check zero step */
-	if (solution.phase == OPTIMALITY && step_norm == 0.) {
+	if (/*solution.phase == OPTIMALITY &&*/ step_norm == 0.) {
 		DEBUG << "Feasible step = 0, terminating with KKT point\n";
 		accept = true;
 	}

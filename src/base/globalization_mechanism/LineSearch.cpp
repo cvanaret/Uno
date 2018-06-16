@@ -7,14 +7,19 @@ LineSearch::LineSearch(GlobalizationStrategy& globalization_strategy, int max_it
 }
 
 Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_iterate) {
-	this->number_iterations = 0;
-	
 	/* compute a trial direction */
 	LocalSolution solution = this->globalization_strategy.compute_step(problem, current_iterate, INFINITY);
+	
+	/* fail if direction is not a descent direction */
+	if (0. < solution.objective_terms.linear) {
+		throw std::out_of_range("Line search direction is not a descent direction");
+	}
 
 	/* length follows the following sequence: 1, ratio, ratio^2, ratio^3, ... */
 	double step_length = 1.;
 	bool is_accepted = false;
+	this->number_iterations = 0;
+	
 	while (!this->termination(is_accepted, this->number_iterations)) {
 		this->number_iterations++;
 		DEBUG << "\n\tLINE SEARCH iteration " << this->number_iterations << ", step_length " << step_length << "\n";
@@ -49,7 +54,7 @@ bool LineSearch::termination(bool is_accepted, int iteration) {
 		return true;
 	}
 	else if (this->max_iterations < iteration) {
-		throw std::out_of_range("Iteration limit reached");
+		throw std::out_of_range("Line-search iteration limit reached");
 	}
 	/* step length gets too small */
 	//if (step_length < 1e-16) {
