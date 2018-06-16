@@ -16,7 +16,7 @@ Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_iterate)
 	bool is_accepted = false;
 	this->number_iterations = 0;
 	
-	while (!this->termination_criterion(is_accepted, this->number_iterations, this->radius)) {
+	while (!this->termination(is_accepted, this->number_iterations, this->radius)) {
 		try {
 			this->number_iterations++;
 			/* keep track of min/max/average radius */
@@ -54,16 +54,7 @@ Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_iterate)
 			WARNING << RED << e.what() << RESET "\n";
 			this->radius /= 2.;
 		}
-		/* radius gets too small */
-		/*if (this->radius < 1e-16) {
-			throw std::out_of_range("Trust-region radius became too small");
-		}*/
 	}
-
-	if (this->max_iterations < this->number_iterations) {
-		throw std::out_of_range("Trust-region iteration limit reached");
-	}
-	
 	return current_iterate;
 }
 
@@ -84,9 +75,18 @@ void TrustRegion::correct_multipliers(Problem& problem, LocalSolution& solution)
 	return;
 }
 
-bool TrustRegion::termination_criterion(bool is_accepted, int iteration, double radius) {
-	/* 1e-16: something like machine precision */
-	return is_accepted || this->max_iterations < iteration || radius <= 1e-18;
+bool TrustRegion::termination(bool is_accepted, int iteration, double radius) {
+	if (is_accepted) {
+		return true;
+	}
+	else if (this->max_iterations < iteration) {
+		throw std::out_of_range("Trust-region iteration limit reached");
+	}
+	/* radius gets too small */
+	else if (this->radius < 1e-16) { /* 1e-16: something like machine precision */
+		throw std::out_of_range("Trust-region radius became too small");
+	}
+	return false;
 }
 
 void TrustRegion::record_radius(double radius) {

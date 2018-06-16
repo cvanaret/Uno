@@ -38,7 +38,7 @@ class TrustRegion: public GlobalizationMechanism {
          * \param iteration: current iteration number
          * \param radius: current trust region radius
          */
-		bool termination_criterion(bool success, int iteration, double radius);
+		bool termination(bool success, int iteration, double radius);
 	
 		/*!
          *  Keep track of min/max/average radius

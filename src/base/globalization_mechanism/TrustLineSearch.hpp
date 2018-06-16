@@ -28,7 +28,7 @@ class TrustLineSearch: public GlobalizationMechanism {
 		double radius; /*!< Current trust region radius */
 		
 	private:
-		bool termination_criterion(bool is_accepted, int iteration);
+		bool termination(bool is_accepted, int iteration);
 		
 		void correct_multipliers(Problem& problem, LocalSolution& solution);
 		

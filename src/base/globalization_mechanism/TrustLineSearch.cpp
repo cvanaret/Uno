@@ -13,7 +13,7 @@ Iterate TrustLineSearch::compute_iterate(Problem& problem, Iterate& current_iter
 
 	bool is_accepted = false;
 	bool linesearch_failed = false;
-	while (!this->termination_criterion(is_accepted, this->number_iterations)) {
+	while (!this->termination(is_accepted, this->number_iterations)) {
 		try {
 			if (this->radius == 0.) {
 				throw std::out_of_range("radius is zero");
@@ -26,7 +26,7 @@ Iterate TrustLineSearch::compute_iterate(Problem& problem, Iterate& current_iter
 
 			/* length follows the following sequence: 1, ratio, ratio^2, ratio^3, ... */
 			double step_length = 1.;
-			while (!this->termination_criterion(is_accepted, this->number_iterations)) {
+			while (!this->termination(is_accepted, this->number_iterations)) {
 				this->number_iterations++;
 				DEBUG << "\n\tTRUST LINE SEARCH iteration " << this->number_iterations << ", radius " << this->radius << ", step_length " << step_length << "\n";
 				
@@ -93,6 +93,16 @@ void TrustLineSearch::correct_multipliers(Problem& problem, LocalSolution& solut
 	return;
 }
 
-bool TrustLineSearch::termination_criterion(bool is_accepted, int iteration) {
-	return is_accepted || this->max_iterations < iteration;
+bool TrustLineSearch::termination(bool is_accepted, int iteration) {
+	if (is_accepted) {
+		return true;
+	}
+	else if (this->max_iterations < iteration) {
+		throw std::out_of_range("Trust-region iteration limit reached");
+	}
+	/* radius gets too small */
+	else if (this->radius < 1e-16) { /* 1e-16: something like machine precision */
+		throw std::out_of_range("Trust-region radius became too small");
+	}
+	return false;
 }

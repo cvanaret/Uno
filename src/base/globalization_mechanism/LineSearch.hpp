@@ -27,7 +27,7 @@ class LineSearch: public GlobalizationMechanism {
 		double ratio;
 		
 	private:
-		bool termination_criterion(bool is_accepted, int iteration);
+		bool termination(bool is_accepted, int iteration);
 };
 
 #endif // LINESEARCH_H

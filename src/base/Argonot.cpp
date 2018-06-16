@@ -23,22 +23,26 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, std::vector<doub
 	/* use the evaluation of the current point to initialize the strategies */
 	this->globalization_mechanism.initialize(problem, current_iterate);
 	
-	/* check for convergence */
-	while (!this->termination_criterion(current_iterate.status, major_iterations)) {
-		major_iterations++;
-		DEBUG << "\n\t\tARGONOT iteration " << major_iterations << "\n";
-		INFO << "major: " << major_iterations << "\t";
+	try {
+		/* check for convergence */
+		while (!this->termination_criterion(current_iterate.status, major_iterations)) {
+			major_iterations++;
+			DEBUG << "\n\t\tARGONOT iteration " << major_iterations << "\n";
+			INFO << "major: " << major_iterations << "\t";
 
-		/* update the current point */
-		
-		current_iterate = this->globalization_mechanism.compute_iterate(problem, current_iterate);
-		minor_iterations += this->globalization_mechanism.number_iterations;
-		
-		INFO << "constraints: " << current_iterate.residual << "\tobjective: " << current_iterate.objective << "\t";
-		INFO << "status: " << current_iterate.status << "\n";
-		DEBUG << "Next iterate\n" << current_iterate;
+			/* update the current point */
+			
+			current_iterate = this->globalization_mechanism.compute_iterate(problem, current_iterate);
+			minor_iterations += this->globalization_mechanism.number_iterations;
+			
+			INFO << "constraints: " << current_iterate.residual << "\tobjective: " << current_iterate.objective << "\t";
+			INFO << "status: " << current_iterate.status << "\n";
+			DEBUG << "Next iterate\n" << current_iterate;
+		}
 	}
-	
+	catch (std::out_of_range& exception) {
+		ERROR << exception.what();
+	}
 	std::clock_t c_end = std::clock();
 	double cpu_time = (c_end-c_start) / (double) CLOCKS_PER_SEC;
 
@@ -75,7 +79,7 @@ void Result::display() {
 		std::cout << "Infeasible small step\n";
 	}
 	else { // NOT_OPTIMAL
-		std::cout << "Argonot reached max iter\n";
+		std::cout << "Irregular termination\n";
 	}
 
 	std::cout << "Objective value:\t" << this->solution.objective << "\n";
