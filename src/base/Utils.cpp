@@ -51,13 +51,19 @@ double norm_inf(std::vector<double>& x) {
 }
 
 double dot(std::vector<double>& x, std::vector<double>& y) {
-	if (x.size() != y.size()) {
-		throw std::length_error("Utils.dot: x and y have different sizes");
-	}
-	
 	double dot = 0.;
-	for (unsigned int i = 0; i < x.size(); i++) {
+	for (unsigned int i = 0; i < std::min(x.size(), y.size()); i++) {
 		dot += x[i]*y[i];
+	}
+	return dot;
+}
+
+double dot(std::vector<double>& x, std::map<int,double>& y) {
+	double dot = 0.;
+	for (std::map<int,double>::iterator it = y.begin(); it != y.end(); it++) {
+		int i = it->first;
+		double yi = it->second;
+		dot += x[i]*yi;
 	}
 	return dot;
 }

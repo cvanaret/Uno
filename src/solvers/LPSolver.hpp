@@ -17,6 +17,7 @@ class LPSolver {
          * \param lp: linear program
          * \param d0: initial point
          */
+		virtual ~LPSolver() {};
 		virtual LocalSolution solve(LP& lp, std::vector<double>& x0) = 0;
 		
 		virtual void allocate(int n, int m) = 0;

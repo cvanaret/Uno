@@ -37,8 +37,8 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Loca
 			trial_iterate.feasibility_measure = problem.infeasible_residual_norm(solution.constraint_partition, trial_iterate.constraints);
 		}
 		
-		DEBUG << "TESTING current " << current_iterate.infeasibility_measure << " " << current_iterate.feasibility_measure << " against trial ";
-		DEBUG << trial_iterate.infeasibility_measure << " " << trial_iterate.feasibility_measure << "\n";
+		DEBUG << "TESTING trial " << trial_iterate.infeasibility_measure << " " << trial_iterate.feasibility_measure << " against current ";
+		DEBUG << current_iterate.infeasibility_measure << " " << current_iterate.feasibility_measure << "\n";
 		
 		/* check acceptance */
 		std::shared_ptr<Filter> filter = (this->phase == OPTIMALITY) ? this->filter_optimality : this->filter_restoration;
@@ -47,15 +47,18 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Loca
 			// check acceptance wrt current x (h,f)
 			acceptable = filter->query_current_iterate(current_iterate.infeasibility_measure, current_iterate.feasibility_measure, trial_iterate.infeasibility_measure, trial_iterate.feasibility_measure);
 			if (acceptable) {
-				double predicted_reduction = -solution.objective;
+				double predicted_reduction = this->compute_predicted_reduction(solution, step_length);
 				double actual_reduction = filter->compute_actual_reduction(current_iterate.feasibility_measure, current_iterate.infeasibility_measure, trial_iterate.feasibility_measure);
-				DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << actual_reduction << "\n\n";
+				DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << current_iterate.feasibility_measure << "-" << trial_iterate.feasibility_measure << " = " << actual_reduction << "\n\n";
 				
+				/* switching condition */
 				if (predicted_reduction < this->constants.Delta*current_iterate.infeasibility_measure*current_iterate.infeasibility_measure) {
 					filter->add(current_iterate.infeasibility_measure, current_iterate.feasibility_measure);
 					accept = true;
 				}
-				else if (actual_reduction >= this->constants.Sigma*std::max(0., predicted_reduction-1e-9)) {
+				/* sufficient decrease condition */
+				//else if (actual_reduction >= this->constants.Sigma*std::max(0., predicted_reduction-1e-9)) {
+				else if (actual_reduction >= this->constants.Sigma*predicted_reduction) {
 					accept = true;
 				}
 			}
@@ -75,6 +78,15 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Loca
 	}
 	
 	return accept;
+}
+
+double FilterStrategy::compute_predicted_reduction(LocalSolution& solution, double step_length) {
+	if (step_length == 1.) {
+		return -solution.objective;
+	}
+	else {
+		return -(step_length*solution.objective_terms.linear + step_length*step_length*solution.objective_terms.quadratic);
+	}
 }
 
 void FilterStrategy::switch_phase(Problem& problem, LocalSolution& solution, Iterate& current_iterate, Iterate& trial_iterate) {

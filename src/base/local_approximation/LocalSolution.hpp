@@ -19,6 +19,11 @@ enum Status {OPTIMAL = 0,
 			MAX_RESTARTS_REACHED,
 			UNDEFINED};
 
+struct ObjectiveTerms {
+	double linear;
+	double quadratic;
+};
+
 /*! \struct LocalSolution
 * \brief Solution of a local subproblem
 *
@@ -33,6 +38,7 @@ class LocalSolution {
 		std::vector<double> x; /*!< Primal variables in \f$\mathbf{R}^n\f$ */
 		double norm; /*!< Norm of \f$x\f$ */
 		double objective; /*!< Objective value */
+		ObjectiveTerms objective_terms; /*!< Decomposition of the objective value in quadratic and linear terms */
 		std::vector<double> multipliers; /*!< Approximate Lagrange multipliers/dual variables of the subproblem */
 		ConstraintActivity active_set; /*!< Active set */
 		ConstraintPartition constraint_partition; /*!< Partition of feasible and infeasible constraints */

@@ -17,6 +17,7 @@ class QPSolver {
          * \param qp: quadratic program
          * \param d0: initial point
          */
+        virtual ~QPSolver() {};
 		virtual LocalSolution solve(QP& qp, std::vector<double>& x0) = 0;
 		
 		virtual void allocate(int n, int m) = 0;

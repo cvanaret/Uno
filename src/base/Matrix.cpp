@@ -79,7 +79,7 @@ Matrix Matrix::add_identity_multiple(double multiple) {
 
 /* product of symmetric (n, n) matrix with (n, 1) vector */
 std::vector<double> Matrix::product(std::vector<double>& vector) {
-	int n = vector.size();
+	int n = this->column_start.size()-1;
 	/* create (n, 1) result */
 	std::vector<double> result(n); // = {0.}
 	for (int i = 0; i < n; i++) {
@@ -125,9 +125,9 @@ double Matrix::quadratic_product(std::vector<double>& x, std::vector<double>& y)
 	if (x.size() != y.size()) {
 		throw std::length_error("Matrix::quadratic_product: x and y have different sizes");
 	}
-	
+
 	std::vector<double> hy = this->product(y); // H*y
-	double product = dot(x, hy); // x^T*(H*y)    
+	double product = dot(x, hy); // x^T*(H*y)
 	return product;
 }
 

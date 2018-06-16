@@ -31,6 +31,7 @@ class GlobalizationStrategy {
          * \param constants: set of constants
          */
 		GlobalizationStrategy(LocalApproximation& local_approximation, double tolerance);
+		virtual ~GlobalizationStrategy();
 		
 		LocalApproximation& local_approximation;
 		double tolerance; /*!< Tolerance of the termination criteria */

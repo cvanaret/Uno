@@ -18,6 +18,7 @@ class GlobalizationMechanism {
          * \param step_accept: strategy to accept or reject a step
          */
 		GlobalizationMechanism(GlobalizationStrategy& globalization_strategy, int max_iterations);
+		virtual ~GlobalizationMechanism();
 		
 		/*!
          *  Compute the next iterate from a given point

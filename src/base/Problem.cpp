@@ -3,6 +3,9 @@
 Problem::Problem(std::string name): name(name) {
 }
 
+Problem::~Problem() {
+}
+
 //! compute || c(feasible_constraints) ||_1 and || c(infeasible_constraints) ||_1 for index sets
 // feasible_constraints, infeasible_constraints (overall length m)
 double Problem::feasible_residual_norm(ConstraintPartition& constraint_partition, std::vector<double>& constraints) {

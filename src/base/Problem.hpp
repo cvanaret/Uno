@@ -21,6 +21,7 @@ enum FunctionType {
 class Problem {
 	public:
 		Problem(std::string name);
+		virtual ~Problem();
 	
 		int number_variables; /*!< Number of variables */
 		int number_constraints; /*!< Number of constraints */

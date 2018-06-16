@@ -5,8 +5,7 @@
 #include "Logger.hpp"
 
 Argonot::Argonot(GlobalizationMechanism& globalization_mechanism, int max_iterations):
-		globalization_mechanism(globalization_mechanism) {
-	this->max_iterations = max_iterations;
+		globalization_mechanism(globalization_mechanism), max_iterations(max_iterations) {
 }
 
 Result Argonot::solve(Problem& problem, std::vector<double>& x, std::vector<double>& multipliers) {

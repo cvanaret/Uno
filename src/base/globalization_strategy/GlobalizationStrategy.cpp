@@ -6,6 +6,9 @@ GlobalizationStrategy::GlobalizationStrategy(LocalApproximation& local_approxima
 	this->tolerance = tolerance;
 }
 
+GlobalizationStrategy::~GlobalizationStrategy() {
+}
+
 std::vector<double> GlobalizationStrategy::compute_lagrangian_gradient(Problem& problem, Iterate& current_iterate, double objective_multiplier, std::vector<double>& multipliers) {
 	std::vector<double> lagrangian_gradient(problem.number_variables);
 	

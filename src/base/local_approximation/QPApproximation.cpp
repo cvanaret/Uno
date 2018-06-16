@@ -23,6 +23,11 @@ LocalSolution QPApproximation::compute_optimality_step(Problem& problem, Iterate
 	/* solve the QP */
 	LocalSolution solution = this->solver.solve(qp, d0);
 	this->number_subproblems_solved++;
+	
+	double linear_term = dot(solution.x, qp.objective);
+	double quadratic_term = current_iterate.hessian.quadratic_product(solution.x, solution.x);
+	solution.objective_terms = {linear_term, quadratic_term/2.};
+	
 	return solution;
 }
 
@@ -38,6 +43,11 @@ LocalSolution QPApproximation::compute_infeasibility_step(Problem& problem, Iter
 	/* solve the QP */
 	LocalSolution solution = this->solver.solve(qp, d0);
 	this->number_subproblems_solved++;
+	
+	double linear_term = dot(solution.x, qp.objective);
+	double quadratic_term = current_iterate.hessian.quadratic_product(solution.x, solution.x);
+	solution.objective_terms = {linear_term, quadratic_term/2.};
+	
 	return solution;
 }
 
@@ -53,6 +63,11 @@ LocalSolution QPApproximation::compute_l1_penalty_step(Problem& problem, Iterate
 	/* solve the QP */
 	LocalSolution solution = this->solver.solve(qp, d0);
 	this->number_subproblems_solved++;
+	
+	double linear_term = dot(solution.x, qp.objective);
+	double quadratic_term = current_iterate.hessian.quadratic_product(solution.x, solution.x);
+	solution.objective_terms = {linear_term, quadratic_term/2.};
+	
 	return solution;
 }
 
