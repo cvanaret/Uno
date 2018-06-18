@@ -1,6 +1,6 @@
 #include "QP.hpp"
 
-QP::QP(int number_variables, int number_constraints, const Matrix& hessian):
+QP::QP(int number_variables, int number_constraints, const CSCMatrix& hessian):
 		variable_lb(number_variables), variable_ub(number_variables),
 		constraint_lb(number_constraints), constraint_ub(number_constraints),
 		constraints(number_constraints),

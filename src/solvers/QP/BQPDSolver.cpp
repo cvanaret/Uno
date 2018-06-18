@@ -63,12 +63,14 @@ void BQPDSolver::allocate(int n, int m) {
 		this->hessian_column_start.push_back(last_value);
 	}
 	
+	int use_fortran = 1;
+	
 	this->lws_[0] = this->hessian_nnz_ + 1;
 	for(int i = 0; i < this->hessian_nnz_; i++) {
-		this->lws_[i+1] = hessian_row_number[i];
+		this->lws_[i+1] = hessian_row_number[i] + use_fortran;
 	}
 	for(int i = 0; i < this->n_ + 1; i++) {
-		this->lws_[this->hessian_nnz_ + i + 1] = hessian_column_start[i];
+		this->lws_[this->hessian_nnz_ + i + 1] = hessian_column_start[i] + use_fortran;
 	}
 	
 	/* initialize wsc_ common block (Hessian & workspace for bqpd) */
@@ -97,7 +99,7 @@ LocalSolution BQPDSolver::solve(QP& qp, std::vector<double>& x) {
 	// TODO preallocate
 	std::vector<double> jacobian;
 	std::vector<int> jacobian_sparsity;
-	jacobian_sparsity.push_back(0); // header-related, to be modified later on
+	jacobian_sparsity.push_back(0); // header-related, will be modified later on
 	build_jacobian(jacobian, jacobian_sparsity, qp.objective);
 	for (int j = 0; j < qp.number_constraints; j++) {
 		build_jacobian(jacobian, jacobian_sparsity, qp.constraints[j]);

@@ -47,7 +47,7 @@ class Iterate {
 		bool is_objective_gradient_computed; /*!< Flag that indicates if the objective gradient has already been computed */
 		bool is_constraint_jacobian_computed; /*!< Flag that indicates if the constraint Jacobian has already been computed */
 		
-		Matrix hessian; /*!< Sparse Lagrangian Hessian */
+		CSCMatrix hessian; /*!< Sparse Lagrangian Hessian */
 		bool is_hessian_computed; /*!< Flag that indicates if the Hessian has already been computed */
 		
 		void set_objective_gradient(std::map<int,double>& objective_gradient);

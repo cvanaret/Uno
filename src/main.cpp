@@ -11,6 +11,7 @@
 #include "GlobalizationMechanismFactory.hpp"
 #include "Argonot.hpp"
 #include "Logger.hpp"
+#include "MA57Solver.hpp"
 
 void test_argonot(std::string problem_name, std::map<std::string, std::string> options, std::map<std::string, std::string> default_values) {
 	AMPLModel problem = AMPLModel(problem_name);
@@ -67,7 +68,7 @@ void set_logger(std::map<std::string, std::string> options) {
 	Logger::logger_level = INFO;
 	
 	try {
-		std::string logger_level = options.at("-logger");
+		std::string logger_level = options.at("logger");
 		if (logger_level.compare("ERROR") == 0) {
 			Logger::logger_level = ERROR;
 		}
@@ -127,6 +128,37 @@ int main (int argc, char* argv[]) {
 			std::map<std::string, std::string> default_values = get_default_values("argonot.cfg");
 			test_argonot(problem_name, options, default_values);
 		}
+	}
+	else {
+		/*
+		A[0][0] = 2; A[0][1] = 3;
+		A[1][2] = 4; A[1][4] = 6;
+		A[2][2] = 1; A[2][3] = 5;
+		A[4][4] = 1;
+		*/
+		
+		int n = 5;
+		COOMatrix matrix(n, 0);
+		matrix.add_term(2., 0, 0);
+		matrix.add_term(3., 0, 1);
+		matrix.add_term(4., 1, 2);
+		matrix.add_term(6., 1, 4);
+		matrix.add_term(1., 2, 2);
+		matrix.add_term(5., 2, 3);
+		matrix.add_term(1., 4, 4);
+		
+		// b[0] = 8.; b[1] = 45.; b[2] = 31.; b[3] = 15.; b[4] = 17.;
+		std::vector<double> rhs = {8., 45., 31., 15., 17.};
+		
+		MA57Solver s;
+		LocalSolution solution = s.solve(matrix, rhs);
+		
+		std::cout << "solution";
+		for (unsigned int k = 0; k < solution.x.size(); k++) {
+			std::cout << " " << solution.x[k];
+		}
+		std::cout << "\n";
+	
 	}
 	return 0;
 }

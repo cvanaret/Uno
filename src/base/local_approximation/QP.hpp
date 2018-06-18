@@ -18,7 +18,7 @@ struct QP {
 	 * \param hessian_column_start: column description of sparse Hessian
 	 * \param hessian_row_number: row description of sparse Hessian
 	 */
-	QP(int number_variables, int number_constraints, const Matrix& hessian);
+	QP(int number_variables, int number_constraints, const CSCMatrix& hessian);
 
 	int number_variables;
 	int number_constraints;
@@ -30,7 +30,7 @@ struct QP {
 	
 	std::map<int,double> objective;
 	std::vector<std::map<int,double> > constraints;
-	const Matrix& hessian; /*!< Sparse Hessian */
+	const CSCMatrix& hessian; /*!< Sparse Hessian */
 	
 	friend std::ostream& operator<< (std::ostream &stream, QP& qp);
 };

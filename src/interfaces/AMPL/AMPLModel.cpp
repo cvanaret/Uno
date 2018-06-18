@@ -382,21 +382,22 @@ void AMPLModel::initialize_lagrangian_hessian() {
 	this->hessian_maximum_number_nonzero = (*((ASL*) this->asl_)->p.Sphset)((ASL*) this->asl_, NULL, obj_number, 1, 1, upper_triangular);
 	
 	/* build sparse description */
+	int use_fortran = 1;
 	this->hessian_column_start.resize(this->number_variables+1);
 	int* ampl_column_start = this->asl_->i.sputinfo_->hcolstarts;
 	for (int k = 0; k < this->number_variables+1; k++) {
-		this->hessian_column_start[k] = ampl_column_start[k];
+		this->hessian_column_start[k] = ampl_column_start[k] - use_fortran;
 	}
 	
 	this->hessian_row_number.resize(this->hessian_maximum_number_nonzero);
 	int* ampl_row_number = this->asl_->i.sputinfo_->hrownos;
 	for (int k = 0; k < this->hessian_maximum_number_nonzero; k++) {
-		this->hessian_row_number[k] = ampl_row_number[k];
+		this->hessian_row_number[k] = ampl_row_number[k] - use_fortran;
 	}
 	return;
 }
 
-Matrix AMPLModel::lagrangian_hessian(std::vector<double> x, double objective_multiplier, std::vector<double> multipliers) {
+CSCMatrix AMPLModel::lagrangian_hessian(std::vector<double> x, double objective_multiplier, std::vector<double> multipliers) {
 	this->number_eval_hessian++;
 	/* register the vector of variables */
 	(*((ASL*) this->asl_)->p.Xknown)((ASL*) this->asl_, x.data(), 0);
@@ -419,7 +420,7 @@ Matrix AMPLModel::lagrangian_hessian(std::vector<double> x, double objective_mul
 	/* unregister the vector of variables */
 	this->asl_->i.x_known = 0;
 	
-	return Matrix(hessian, this->hessian_column_start, this->hessian_row_number);
+	return CSCMatrix(hessian, this->hessian_column_start, this->hessian_row_number);
 }
 
 /* initial primal point */

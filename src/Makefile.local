@@ -1,10 +1,11 @@
 # specify local compilers and compiler flags
 CFLAGS = -Wall -pedantic $(PROFILER)
+#-Weffc++
 
 # local directories & libraries (change appropriately)
 AMPL_DIR = ~/src/amplsolver
-GALAHAD_DIR = 
-BQPD_DIR = ~/Desktop/robust/software/bqpd
+BQPD_DIR = ~/Bureau/robust/software/bqpd
+MA57_DIR = ~/src/ma57-3.10.0
 
 # local libraries
-LIBCOMPIL = -lgfortran -lz -lrt
+LIBCOMPIL = -lgfortran

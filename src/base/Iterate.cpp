@@ -24,7 +24,6 @@ Iterate::Iterate(Problem& problem, std::vector<double>& x, std::vector<double>& 
 	this->is_objective_gradient_computed = false;
 	this->is_constraint_jacobian_computed = false;
 	this->is_hessian_computed = false;
-	this->is_hessian_computed = false;
 	
 	/* status */
 	this->status = NOT_OPTIMAL;

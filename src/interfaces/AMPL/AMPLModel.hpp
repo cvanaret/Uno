@@ -50,7 +50,7 @@ class AMPLModel: public Problem {
 		void create_jacobian_sparsity();
 		
 		/* Hessian */
-		Matrix lagrangian_hessian(std::vector<double> x, double objective_multiplier, std::vector<double> multipliers);
+		CSCMatrix lagrangian_hessian(std::vector<double> x, double objective_multiplier, std::vector<double> multipliers);
 		
 		std::vector<double> primal_initial_solution();
 		std::vector<double> dual_initial_solution();

@@ -12,9 +12,9 @@ LFLAGS = $(PROFILER)
 # local libraries
 L = -ldl
 LIBCOIN   = -lOsiClp -lClp -lCoinUtils -lOsi
-LIBLINALG = #-lblas -llapack
+LIBLINALG = -lblas -llapack
 
-INCLUDES = -I base -I base/globalization_mechanism -I base/globalization_strategy -I base/local_approximation -I interfaces -I logger -I interfaces/AMPL -I solvers -I $(AMPL_DIR)
+INCLUDES = -I base -I base/globalization_mechanism -I base/globalization_strategy -I base/local_approximation -I logger -I interfaces/AMPL -I solvers/QP -I solvers/KKT -I $(AMPL_DIR)
 
 SRC_FILES = main.cpp base/Argonot.cpp base/Iterate.cpp \
 	base/Problem.cpp interfaces/AMPL/AMPLModel.cpp \
@@ -28,15 +28,17 @@ SRC_FILES = main.cpp base/Argonot.cpp base/Iterate.cpp \
 	base/local_approximation/QP.cpp base/local_approximation/LP.cpp \
 	base/local_approximation/LocalApproximation.cpp base/local_approximation/QPApproximation.cpp \
 	base/local_approximation/LocalApproximationFactory.cpp base/local_approximation/LocalSolution.cpp base/Utils.cpp \
-	solvers/BQPDSolver.cpp solvers/QPSolverFactory.cpp
-OBJ_FILES = $(subst .cpp,.o,$(SRC_FILES)) solvers/wdotd.o
+	solvers/QP/BQPDSolver.cpp solvers/QP/QPSolverFactory.cpp \
+	solvers/KKT/MA57Solver.cpp
+OBJ_FILES = $(subst .cpp,.o,$(SRC_FILES)) solvers/QP/wdotd.o
 EXEC_NAME = argonot
 
-# base/globalization_strategy/Tube.cpp base/globalization_strategy/TubeGlobalizationStrategy.cpp
-# base/direction_computation/LPDirectionComputation.cpp \
+# base/globalization_strategy/Tube.cpp base/globalization_strategy/TubeStrategy.cpp
+# base/direction_computation/LPApproximation.cpp \
+#solvers/KKT/MA57Solver.cpp
 
 DEFINES =# -D BQPD # https://stackoverflow.com/questions/10337248/what-does-the-g-d-flag-do
-LIBS = $(AMPL_DIR)/amplsolver.a $(BQPD_DIR)/libbqpd.a
+LIBS = $(AMPL_DIR)/amplsolver.a $(BQPD_DIR)/libbqpd.a -L$(MA57_DIR) -lma57 -lfakemetis 
 
 .cpp.o:
 	$(CPP) $(CFLAGS) $(DEFINES) $(INCLUDES) -c $< -o $@ ;
@@ -52,7 +54,7 @@ LIBS = $(AMPL_DIR)/amplsolver.a $(BQPD_DIR)/libbqpd.a
 
 all: $(EXEC_NAME) $(AMPL_DIR)/amplsolver.a
 
-$(EXEC_NAME): $(OBJ_FILES) $(LIBS)
+$(EXEC_NAME): $(OBJ_FILES) $(AMPL_DIR)/amplsolver.a
 	$(CPP) $(LFLAGS) -o $(EXEC_NAME) $(OBJ_FILES) $(LIBS) $(LIBLINALG) $(L) $(LIBCOMPIL)
 
 $(AMPL_DIR)/amplsolver.a:
