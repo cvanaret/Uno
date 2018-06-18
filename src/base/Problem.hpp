@@ -56,7 +56,7 @@ class Problem {
 		
 		std::vector<int> jacobian_sparsity;
 		virtual std::vector<std::vector<double> > constraints_jacobian_dense(std::vector<double> x) = 0;
-		virtual void create_jacobian_sparsity() = 0;
+		//virtual void create_jacobian_sparsity() = 0;
 		
 		/* Hessian */
 		int hessian_maximum_number_nonzero;  /*!< Number of nonzero elements in the Hessian */

@@ -10,8 +10,8 @@ ASL_pfgh* generate_asl(std::string file_name, Option_Info* option_info) {
 	
 	ASL_pfgh* asl = (ASL_pfgh*) ASL_alloc(ASL_read_pfgh);
 	FILE* nl = jac0dim_ASL((ASL*) asl, const_cast<char*>(file_name.data()), (fint) file_name.size());
-	/* indicate that row/col indices are as in Fortran (for bqpd.f) */
-	asl->i.Fortran_ = 1;
+	/* indices start at 0 */
+	asl->i.Fortran_ = 0;
 
 	// TODO remove macros
 	fint n_discrete = nlogv + niv + nlvbi + nlvci + nlvoi;
@@ -36,12 +36,12 @@ AMPLModel::AMPLModel(std::string file_name): Problem(file_name) {
 	keyword keywords[1];
 	int size_keywords = sizeof(keywords)/sizeof(keyword);
 	
-	Option_Info astros_info = {	const_cast<char*>("astros"),
-								const_cast<char*>("ASTROS 2017"),
-								const_cast<char*>("astros_options"),
+	Option_Info info = {	const_cast<char*>("Argonot"),
+								const_cast<char*>("Argonot 2018"),
+								const_cast<char*>("argonot_options"),
 								keywords, size_keywords};
 	
-	this->asl_ = generate_asl(file_name, &astros_info);
+	this->asl_ = generate_asl(file_name, &info);
 	this->asl_->i.congrd_mode = 0;
 	
 	/* dimensions */
@@ -57,10 +57,10 @@ AMPLModel::AMPLModel(std::string file_name): Problem(file_name) {
 	
 	/* constraints */
 	this->generate_constraints();
-	set_function_types(file_name, &astros_info);
+	set_function_types(file_name, &info);
 	
 	/* fix the Jacobian sparsity pattern */
-	this->create_jacobian_sparsity();
+	//this->create_jacobian_sparsity();
 	
 	/* Lagrangian Hessian */
 	this->initialize_lagrangian_hessian();
@@ -267,40 +267,6 @@ std::vector<std::vector<double> > AMPLModel::constraints_jacobian_dense(std::vec
 	return jacobian;
 }
 
-void AMPLModel::create_jacobian_sparsity() {
-	int use_fortran = 1;
-	
-	/* compute Jacobian sparsity. Initial size = n (dense objective gradient), then grows with the constraints */
-	this->jacobian_sparsity.resize(1 + this->number_variables);
-	
-	/* objective gradient */
-	for (int i = 0; i < this->number_variables; i++) {
-		this->jacobian_sparsity[i+1] = i + use_fortran;
-	}
-	
-	/* constraint gradients: build Jacobian and sparsity pattern in the same order */
-	for (int j = 0; j < this->number_constraints; j++) {
-		
-		for (std::map<int,double>::iterator it = this->constraint_variables[j].begin(); it != this->constraint_variables[j].end(); it++) {
-			int variable_index = it->first;
-			this->jacobian_sparsity.push_back(variable_index + use_fortran);
-		}
-	}
-	
-	/* Jacobian header */
-	this->jacobian_sparsity[0] = jacobian_sparsity.size();
-	unsigned int total_size = 1;
-	this->jacobian_sparsity.push_back(total_size);
-	total_size += this->number_variables;
-	this->jacobian_sparsity.push_back(total_size);
-	
-	for (int j = 0; j < this->number_constraints; j++) {
-		total_size += this->constraint_variables[j].size();
-		this->jacobian_sparsity.push_back(total_size);
-	}
-	return;
-}
-
 void AMPLModel::generate_constraints() {
 	SufDesc* uncertain_suffixes = suf_get_ASL((ASL*) this->asl_, UNCERTAINTY_SET_SUFFIX, ASL_Sufkind_con);
 	
@@ -382,17 +348,16 @@ void AMPLModel::initialize_lagrangian_hessian() {
 	this->hessian_maximum_number_nonzero = (*((ASL*) this->asl_)->p.Sphset)((ASL*) this->asl_, NULL, obj_number, 1, 1, upper_triangular);
 	
 	/* build sparse description */
-	int use_fortran = 1;
 	this->hessian_column_start.resize(this->number_variables+1);
 	int* ampl_column_start = this->asl_->i.sputinfo_->hcolstarts;
 	for (int k = 0; k < this->number_variables+1; k++) {
-		this->hessian_column_start[k] = ampl_column_start[k] - use_fortran;
+		this->hessian_column_start[k] = ampl_column_start[k];
 	}
 	
 	this->hessian_row_number.resize(this->hessian_maximum_number_nonzero);
 	int* ampl_row_number = this->asl_->i.sputinfo_->hrownos;
 	for (int k = 0; k < this->hessian_maximum_number_nonzero; k++) {
-		this->hessian_row_number[k] = ampl_row_number[k] - use_fortran;
+		this->hessian_row_number[k] = ampl_row_number[k];
 	}
 	return;
 }

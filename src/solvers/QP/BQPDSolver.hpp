@@ -23,6 +23,7 @@ class BQPDSolver: public QPSolver, public LPSolver {
          */
 		BQPDSolver(std::vector<int>& hessian_column_start, std::vector<int>& hessian_row_number);
 	
+		int use_fortran;
 		void allocate(int n, int m);
 	
 		/*!

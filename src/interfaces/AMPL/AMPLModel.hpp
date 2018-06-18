@@ -47,7 +47,7 @@ class AMPLModel: public Problem {
 		
 		std::vector<int> jacobian_sparsity;
 		std::vector<std::vector<double> > constraints_jacobian_dense(std::vector<double> x);
-		void create_jacobian_sparsity();
+		//void create_jacobian_sparsity();
 		
 		/* Hessian */
 		CSCMatrix lagrangian_hessian(std::vector<double> x, double objective_multiplier, std::vector<double> multipliers);

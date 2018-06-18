@@ -12,7 +12,7 @@ extern "C" {
 		int* lrhs, double work[], int* lwork, int iwork[], int icntl[], int info[]);
 }
 
-MA57Solver::MA57Solver(): cntl_(5), icntl_(20), info_(40), rinfo_(20) {
+MA57Solver::MA57Solver(): use_fortran(1), cntl_(5), icntl_(20), info_(40), rinfo_(20) {
 }
 
 LocalSolution MA57Solver::solve(COOMatrix& matrix, std::vector<double> rhs) {
@@ -28,13 +28,12 @@ LocalSolution MA57Solver::solve(COOMatrix& matrix, std::vector<double> rhs) {
 	std::vector<int> iwork(5*n);
 	std::vector<int> row_indices(matrix.row_indices);
 	std::vector<int> column_indices(matrix.column_indices);
-	int use_fortran = 1;
 	// shift the indices for Fortran
 	for (unsigned int k = 0; k < row_indices.size(); k++) {
-		row_indices[k] += use_fortran;
+		row_indices[k] += this->use_fortran;
 	}
 	for (unsigned int k = 0; k < column_indices.size(); k++) {
-		column_indices[k] += use_fortran;
+		column_indices[k] += this->use_fortran;
 	}
 	ma57ad_(&n, &nnz, row_indices.data(), column_indices.data(), &lkeep, keep.data(), iwork.data(),
 		this->icntl_.data(), this->info_.data(), this->rinfo_.data());

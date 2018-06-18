@@ -14,6 +14,7 @@ class MA57Solver {
 	public:
 		MA57Solver();
 		
+		int use_fortran;
 		LocalSolution solve(COOMatrix& matrix, std::vector<double> rhs);
 		
 	private:
