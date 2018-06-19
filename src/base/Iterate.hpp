@@ -43,15 +43,15 @@ class Iterate {
 		double feasibility_measure;
 
 		std::map<int,double> objective_gradient; /*!< Sparse Jacobian of the objective */
-		std::vector<std::map<int,double> > constraint_jacobian; /*!< Sparse Jacobian of the constraints */
+		std::vector<std::map<int,double> > constraints_jacobian; /*!< Sparse Jacobian of the constraints */
 		bool is_objective_gradient_computed; /*!< Flag that indicates if the objective gradient has already been computed */
-		bool is_constraint_jacobian_computed; /*!< Flag that indicates if the constraint Jacobian has already been computed */
+		bool is_constraints_jacobian_computed; /*!< Flag that indicates if the constraint Jacobian has already been computed */
 		
 		CSCMatrix hessian; /*!< Sparse Lagrangian Hessian */
 		bool is_hessian_computed; /*!< Flag that indicates if the Hessian has already been computed */
 		
 		void set_objective_gradient(std::map<int,double>& objective_gradient);
-		void compute_constraint_jacobian(Problem& problem);
+		void compute_constraints_jacobian(Problem& problem);
 		
 		/*!
          *  Compute the Hessian in a lazy way: the Hessian is computed only when required and stored

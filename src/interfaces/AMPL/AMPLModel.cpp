@@ -59,15 +59,13 @@ AMPLModel::AMPLModel(std::string file_name): Problem(file_name) {
 	this->generate_constraints();
 	set_function_types(file_name, &info);
 	
-	/* fix the Jacobian sparsity pattern */
-	//this->create_jacobian_sparsity();
-	
 	/* Lagrangian Hessian */
 	this->initialize_lagrangian_hessian();
 	
 	/* evaluations counters */
 	this->number_eval_objective = 0;
 	this->number_eval_constraints = 0;
+	this->number_eval_jacobian = 0;
 	this->number_eval_hessian = 0;
 }
 
@@ -255,16 +253,13 @@ std::map<int,double> AMPLModel::constraint_sparse_gradient(int j, std::vector<do
 	return gradient;
 }
 
-/* dense gradients */
-std::vector<std::vector<double> > AMPLModel::constraints_jacobian_dense(std::vector<double> x) {
-	/* compute the AMPL gradient */
-	std::vector<std::vector<double> > jacobian(this->number_constraints);
-	
+std::vector<std::map<int,double> > AMPLModel::constraints_sparse_jacobian(std::vector<double> x) {
+	this->number_eval_jacobian++;
+	std::vector<std::map<int,double> > constraints_jacobian(this->number_constraints);
 	for (int j = 0; j < this->number_constraints; j++) {
-		jacobian[j] = this->constraint_dense_gradient(j, x);
+		constraints_jacobian[j] = this->constraint_sparse_gradient(j, x);
 	}
-	
-	return jacobian;
+	return constraints_jacobian;
 }
 
 void AMPLModel::generate_constraints() {

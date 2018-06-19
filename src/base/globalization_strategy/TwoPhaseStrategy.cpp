@@ -12,7 +12,7 @@ LocalSolution TwoPhaseStrategy::compute_step(Problem& problem, Iterate& current_
 	LocalSolution solution = this->local_approximation.compute_optimality_step(problem, current_iterate, objective_multiplier, radius);
 	solution.phase = OPTIMALITY;
 	DEBUG << solution;
-
+	
 	if (solution.status == INFEASIBLE) { 
 		/* infeasible subproblem during optimality phase */
 		DEBUG << "Moving on to the feasibility step\n";

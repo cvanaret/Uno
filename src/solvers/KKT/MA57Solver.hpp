@@ -7,6 +7,7 @@
 
 /*! \class MA57Solver
 * \brief Interface for MA57
+* see https://github.com/YimingYAN/linSolve
 *
 *  Interface to the sparse symmetric linear solver MA57
 */

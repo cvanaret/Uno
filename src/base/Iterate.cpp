@@ -22,7 +22,7 @@ Iterate::Iterate(Problem& problem, std::vector<double>& x, std::vector<double>& 
 	
 	/* Jacobian and Hessian will be evaluated only when necessary */
 	this->is_objective_gradient_computed = false;
-	this->is_constraint_jacobian_computed = false;
+	this->is_constraints_jacobian_computed = false;
 	this->is_hessian_computed = false;
 	
 	/* status */
@@ -35,14 +35,10 @@ void Iterate::set_objective_gradient(std::map<int,double>& objective_gradient) {
 	return;
 }
 
-void Iterate::compute_constraint_jacobian(Problem& problem) {
-	if (!this->is_constraint_jacobian_computed) {
-		std::vector<std::map<int,double> > constraint_jacobian(problem.number_constraints);
-		for (int j = 0; j < problem.number_constraints; j++) {
-			constraint_jacobian[j] = problem.constraint_sparse_gradient(j, this->x);
-		}
-		this->constraint_jacobian = constraint_jacobian;
-		this->is_constraint_jacobian_computed = true;
+void Iterate::compute_constraints_jacobian(Problem& problem) {
+	if (!this->is_constraints_jacobian_computed) {
+		this->constraints_jacobian = problem.constraints_sparse_jacobian(this->x);
+		this->is_constraints_jacobian_computed = true;
 	}
 	return;
 }

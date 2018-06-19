@@ -53,10 +53,9 @@ class Problem {
 		virtual std::vector<double> evaluate_constraints(std::vector<double> x) = 0;
 		virtual std::vector<double> constraint_dense_gradient(int j, std::vector<double> x) = 0;
 		virtual std::map<int,double> constraint_sparse_gradient(int j, std::vector<double> x) = 0;
+		virtual std::vector<std::map<int,double> > constraints_sparse_jacobian(std::vector<double> x) = 0;
 		
 		std::vector<int> jacobian_sparsity;
-		virtual std::vector<std::vector<double> > constraints_jacobian_dense(std::vector<double> x) = 0;
-		//virtual void create_jacobian_sparsity() = 0;
 		
 		/* Hessian */
 		int hessian_maximum_number_nonzero;  /*!< Number of nonzero elements in the Hessian */
@@ -74,6 +73,7 @@ class Problem {
 		
 		int number_eval_objective;
 		int number_eval_constraints;
+		int number_eval_jacobian;
 		int number_eval_hessian;
 };
 

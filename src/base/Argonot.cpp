@@ -54,6 +54,7 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, std::vector<doub
 					cpu_time,
 					problem.number_eval_objective,
 					problem.number_eval_constraints,
+					problem.number_eval_jacobian,
 					problem.number_eval_hessian,
 					this->globalization_mechanism.globalization_strategy.local_approximation.number_subproblems_solved};
 	return result;
@@ -100,6 +101,7 @@ void Result::display() {
 	std::cout << "Iterations:\t\t" << this->iteration << "\n";
 	std::cout << "Objective evaluations:\t\t" << this->objective_evaluations << "\n";
 	std::cout << "Constraints evaluations:\t\t" << this->constraint_evaluations << "\n";
+	std::cout << "Jacobian evaluations:\t\t" << this->jacobian_evaluations << "\n";
 	std::cout << "Hessian evaluations:\t\t" << this->hessian_evaluations << "\n";
 	std::cout << "Number of subproblems solved:\t\t" << this->number_subproblems_solved << "\n";
 	return;

@@ -31,12 +31,12 @@ std::vector<double> GlobalizationStrategy::compute_lagrangian_gradient(Problem& 
 		lagrangian_gradient[i] -= multiplier_i;
 	}
 	/* constraints */
-	current_iterate.compute_constraint_jacobian(problem);
+	current_iterate.compute_constraints_jacobian(problem);
 	
 	for (int j = 0; j < problem.number_constraints; j++) {
 		double multiplier_j = multipliers[problem.number_variables + j];
 		if (multiplier_j != 0.) {
-			for (std::map<int,double>::iterator it = current_iterate.constraint_jacobian[j].begin(); it != current_iterate.constraint_jacobian[j].end(); it++) {
+			for (std::map<int,double>::iterator it = current_iterate.constraints_jacobian[j].begin(); it != current_iterate.constraints_jacobian[j].end(); it++) {
 				int variable_index = it->first;
 				double derivative = it->second;
 				lagrangian_gradient[variable_index] -= multiplier_j*derivative;

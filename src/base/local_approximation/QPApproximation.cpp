@@ -204,7 +204,7 @@ QP QPApproximation::generate_l1_penalty_qp(Problem& problem, Iterate& current_it
 	}
 	
 	/* compute the original constraint gradients */
-	current_iterate.compute_constraint_jacobian(problem);
+	current_iterate.compute_constraints_jacobian(problem);
 
 	/* add the constraints */
 	int current_additional_variable = problem.number_variables;
@@ -212,7 +212,7 @@ QP QPApproximation::generate_l1_penalty_qp(Problem& problem, Iterate& current_it
 	for (int j = 0; j < problem.number_constraints; j++) {
 		if (penalty_constraints.status[j] == EQUALITY) {
 			/* a single constraint with both additional variables */
-			std::map<int,double> gradient(current_iterate.constraint_jacobian[j]);
+			std::map<int,double> gradient(current_iterate.constraints_jacobian[j]);
 			gradient[current_additional_variable] = -1.;
 			gradient[current_additional_variable+1] = 1.;
 			qp.constraints[current_constraint] = gradient;
@@ -224,7 +224,7 @@ QP QPApproximation::generate_l1_penalty_qp(Problem& problem, Iterate& current_it
 		}
 		if (penalty_constraints.status[j] == BOUNDED_BOTH_SIDES || penalty_constraints.status[j] == BOUNDED_LOWER) {
 			/* a single constraint with one additional variable */
-			std::map<int,double> gradient(current_iterate.constraint_jacobian[j]);
+			std::map<int,double> gradient(current_iterate.constraints_jacobian[j]);
 			gradient[current_additional_variable] = 1.;
 			qp.constraints[current_constraint] = gradient;
 			/* bounds */
@@ -235,7 +235,7 @@ QP QPApproximation::generate_l1_penalty_qp(Problem& problem, Iterate& current_it
 		}
 		if (penalty_constraints.status[j] == BOUNDED_BOTH_SIDES || penalty_constraints.status[j] == BOUNDED_UPPER) {
 			/* a single constraint with one additional variable */
-			std::map<int,double> gradient(current_iterate.constraint_jacobian[j]);
+			std::map<int,double> gradient(current_iterate.constraints_jacobian[j]);
 			gradient[current_additional_variable] = -1.;
 			qp.constraints[current_constraint] = gradient;
 			/* bounds */
@@ -250,8 +250,8 @@ QP QPApproximation::generate_l1_penalty_qp(Problem& problem, Iterate& current_it
 
 void QPApproximation::set_constraints(Problem& problem, QP& qp, Iterate& current_iterate) {
 	/* compute the constraint Jacobian */
-	current_iterate.compute_constraint_jacobian(problem);
-	qp.constraints = current_iterate.constraint_jacobian;
+	current_iterate.compute_constraints_jacobian(problem);
+	qp.constraints = current_iterate.constraints_jacobian;
 	return;
 }
 
@@ -273,7 +273,7 @@ void QPApproximation::set_infeasibility_objective(Problem& problem, QP& qp, Iter
 		int j = constraint_partition.infeasible_set[k];
 		/* combine into objective_gradient */
 		
-		for (std::map<int,double>::iterator it = current_iterate.constraint_jacobian[j].begin(); it != current_iterate.constraint_jacobian[j].end(); it++) {
+		for (std::map<int,double>::iterator it = current_iterate.constraints_jacobian[j].begin(); it != current_iterate.constraints_jacobian[j].end(); it++) {
 			int variable_index = it->first;
 			double derivative = it->second;
 			

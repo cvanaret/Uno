@@ -10,6 +10,7 @@ struct Result {
 	double cpu_time;
 	int objective_evaluations;
 	int constraint_evaluations;
+	int jacobian_evaluations;
 	int hessian_evaluations;
 	int number_subproblems_solved;
 	
