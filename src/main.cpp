@@ -34,10 +34,7 @@ void test_argonot(std::string problem_name, std::map<std::string, std::string> o
 	/* initial primal and dual points */
 	std::vector<double> x = problem.primal_initial_solution();
 	std::vector<double> multipliers = problem.dual_initial_solution();
-	
-	x[0] = 1e-2;
-	x[1] = 1e-2;
-	
+
 	Result result = argonot.solve(problem, x, multipliers);
 	result.display();
 	return;
