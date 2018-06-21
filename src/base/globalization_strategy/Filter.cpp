@@ -22,13 +22,13 @@ void Filter::reset() {
 	return;
 }
 
-/*  add (cons,objf) to the filter */
-void Filter::add(double cons, double objf) {
+/*  add (infeasibility_measure, objf) to the filter */
+void Filter::add(double infeasibility_measure, double objf) {
 	/* remove any redundant entries from the filter */
 
 	/* find position in filter WITHOUT margin */
 	int start = 0;
-	while (start < this->size && cons >= this->constraints[start]) {
+	while (start < this->size && infeasibility_measure >= this->constraints[start]) {
 		start++;
 	}
 
@@ -57,9 +57,9 @@ void Filter::add(double cons, double objf) {
 
 	/* add new entry to the filter */
 
-	/*  find position of cons in filter (new entry will be index) */
+	/*  find position of infeasibility_measure in filter (new entry will be index) */
 	int index = 0;
-	while (index < new_size && cons >= this->constants.Beta*this->constraints[index]) {
+	while (index < new_size && infeasibility_measure >= this->constants.Beta*this->constraints[index]) {
 		index++;
 	}
 
@@ -71,30 +71,30 @@ void Filter::add(double cons, double objf) {
 	}
 
 	/* add new entry to filter in position index */
-	this->constraints[index] = cons;
+	this->constraints[index] = infeasibility_measure;
 	this->objective[index] = objf;
 	this->size = new_size + 1;
 
 	return;
 }
 
-/* query: return true if (cons,objf) acceptable, false otherwise */
-bool Filter::query(double cons, double objf) {
+/* query: return true if (infeasibility_measure,objf) acceptable, false otherwise */
+bool Filter::query(double infeasibility_measure, double objf) {
 	/* check upper bound first */
-	if (this->constants.Beta*this->upper_bound <= cons) {
+	if (this->constants.Beta*this->upper_bound <= infeasibility_measure) {
 		return false;
 	}
 
-	/* find position of cons in filter (new entry will be index) */
+	/* find position of infeasibility_measure in filter (new entry will be index) */
 	int index = 0;
-	while (index < this->size && cons >= this->constants.Beta*this->constraints[index]) {
+	while (index < this->size && infeasibility_measure >= this->constants.Beta*this->constraints[index]) {
 		index++;
 	}
 
 	/* now check acceptability */
 	if (index == 0)
 		return true; // acceptable as left-most entry
-	else if (objf <= this->objective[index-1] - this->constants.Gamma*cons) 
+	else if (objf <= this->objective[index-1] - this->constants.Gamma*infeasibility_measure) 
 		return true; // point acceptable
 	else 
 		return false; // point rejected by entry [index-1]
@@ -145,14 +145,14 @@ NonmonotoneFilter::NonmonotoneFilter(FilterConstants& constants, int number_domi
 		Filter(constants), number_dominated_entries(number_dominated_entries) {
 }
 
-//!  add (cons,objf) to the filter
-void NonmonotoneFilter::add(double cons, double objf) {
+//!  add (infeasibility_measure,objf) to the filter
+void NonmonotoneFilter::add(double infeasibility_measure, double objf) {
 	int new_size = this->size;
 	int dominated_entries;
 	/* find entries in filter that are dominated by this->number_dominated_entries other entries */
 	for (int i = 0; i < this->size; i++) {
-		/* check whether ith entry dominated by (cons,objf) */
-		if ((this->objective[i] > objf) && (this->constraints[i] > cons)) {
+		/* check whether ith entry dominated by (infeasibility_measure,objf) */
+		if ((this->objective[i] > objf) && (this->constraints[i] > infeasibility_measure)) {
 			dominated_entries = 1;
 		}
 		else {
@@ -180,25 +180,25 @@ void NonmonotoneFilter::add(double cons, double objf) {
 	}
 
 	/* add new entry to filter in position new_size */
-	this->constraints[new_size] = cons;
+	this->constraints[new_size] = infeasibility_measure;
 	this->objective[new_size] = objf;
 	this->size = new_size + 1;
 
 	return;
 }
 
-//! query: check if (cons,objf) acceptable; return 1 if yes, 0 if not
-bool NonmonotoneFilter::query(double cons, double objf) {
+//! query: check if (infeasibility_measure,objf) acceptable; return 1 if yes, 0 if not
+bool NonmonotoneFilter::query(double infeasibility_measure, double objf) {
 	/* check upper bound first */
-	if (cons >= this->constants.Beta*this->upper_bound) {
+	if (infeasibility_measure >= this->constants.Beta*this->upper_bound) {
 		return 0;
 	}
 	
 	/* check acceptability by counting how many entries dominate */
 	int dominated_entries = 0;
 	for (int i = 0; i < this->size; i++) {
-		if (((objf > this->objective[i] - this->constants.Gamma*cons) && (cons >= this->constants.Beta*this->constraints[i])) ||
-				((objf >= this->objective[i] - this->constants.Gamma*cons) && (cons > this->constants.Beta*this->constraints[i]))) {
+		if (((objf > this->objective[i] - this->constants.Gamma*infeasibility_measure) && (infeasibility_measure >= this->constants.Beta*this->constraints[i])) ||
+				((objf >= this->objective[i] - this->constants.Gamma*infeasibility_measure) && (infeasibility_measure > this->constants.Beta*this->constraints[i]))) {
 			dominated_entries++;
 		}
 	}

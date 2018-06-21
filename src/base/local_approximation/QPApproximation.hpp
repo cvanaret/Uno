@@ -36,19 +36,19 @@ class QPApproximation: public LocalApproximation {
          * \param problem: optimization problem
          * \param current_iterate: current point and its evaluations
          */
-		QP generate_optimality_qp(Problem& problem, Iterate& current_iterate, double objective_multiplier, double radius);
+		QP generate_optimality_qp_(Problem& problem, Iterate& current_iterate, double objective_multiplier, double radius);
 		
-		QP generate_infeasibility_qp(Problem& problem, Iterate& current_iterate, double radius, ConstraintPartition& constraint_partition, std::vector<double>& multipliers);
+		QP generate_infeasibility_qp_(Problem& problem, Iterate& current_iterate, double radius, ConstraintPartition& constraint_partition, std::vector<double>& multipliers);
 		
-		QP generate_qp(Problem& problem, Iterate& current_iterate, double radius);
+		QP generate_qp_(Problem& problem, Iterate& current_iterate, double radius);
 		
-		QP generate_l1_penalty_qp(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyConstraints penalty_constraints);
+		QP generate_l1_penalty_qp_(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyConstraints penalty_constraints);
 		
-		void set_constraints(Problem& problem, QP& qp, Iterate& current_iterate);
+		void set_constraints_(Problem& problem, QP& qp, Iterate& current_iterate);
 		
-		void set_optimality_objective(Problem& problem, QP& qp, Iterate& current_iterate);
+		void set_optimality_objective_(Problem& problem, QP& qp, Iterate& current_iterate);
 		
-		void set_infeasibility_objective(Problem& problem, QP& qp, Iterate& current_iterate, ConstraintPartition& constraint_partition);
+		void set_infeasibility_objective_(Problem& problem, QP& qp, Iterate& current_iterate, ConstraintPartition& constraint_partition);
 		
 		/*!
          *  Generate a quadratic local approximation

@@ -15,11 +15,11 @@ std::ostream& operator<< (std::ostream &stream, LocalSolution& solution) {
 		stream << GREEN "Status: unbounded\n" RESET;
 	}
 	else {
-		stream << RED "Status " << solution.status << ": Beware peasant, something went wrong: " << solution.status << "\n" RESET;
+		stream << RED "Status " << solution.status << ": Beware peasant, something went wrong\n" RESET;
 	}
 	
 	stream << MAGENTA;
-	stream << "x^* = ";
+	stream << "d^* = ";
 	print_vector(stream, solution.x, max_size);
 	
 	stream << "objective = " << solution.objective << "\n";
@@ -60,6 +60,12 @@ std::ostream& operator<< (std::ostream &stream, LocalSolution& solution) {
 	for (unsigned int k = 0; k < solution.constraint_partition.infeasible_set.size(); k++) {
 		int index = solution.constraint_partition.infeasible_set[k];
 		stream << " c" << index;
+		if (solution.constraint_partition.status[index] == INFEASIBLE_LOWER) {
+			stream << " (lower)";
+		}
+		else if (solution.constraint_partition.status[index] == INFEASIBLE_UPPER) {
+			stream << " (upper)";
+		}
 	}
 	stream << "\n";
 

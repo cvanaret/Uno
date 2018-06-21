@@ -222,7 +222,7 @@ LocalSolution BQPDSolver::generate_solution(std::vector<double>& x) {
 	solution.norm = norm_inf(x);
 	solution.objective = this->f_solution_;
 	std::vector<ConstraintFeasibility> status(this->m_);
-
+	
 	/* active constraints */
 	for (int j = 0; j < this->n_-this->k_; j++) {
 		int index = std::abs(this->ls_[j])-1;
