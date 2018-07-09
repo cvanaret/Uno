@@ -13,22 +13,22 @@
 #include "Logger.hpp"
 #include "MA57Solver.hpp"
 
-void test_argonot(std::string problem_name, std::map<std::string, std::string> options, std::map<std::string, std::string> default_values) {
+void test_argonot(std::string problem_name, std::map<std::string, std::string> options) {
 	AMPLModel problem = AMPLModel(problem_name);
 	
 	/* create the local solver */
-	std::shared_ptr<QPSolver> solver = QPSolverFactory::create("BQPD", problem, default_values);
+	std::shared_ptr<QPSolver> solver = QPSolverFactory::create("BQPD", problem, options);
 	
 	/* create the local approximation strategy */
-	std::shared_ptr<LocalApproximation> local_approximation = LocalApproximationFactory::create(options["local_approximation"], *solver, default_values);
+	std::shared_ptr<LocalApproximation> local_approximation = LocalApproximationFactory::create(options["local_approximation"], *solver, options);
 	
 	/* create the globalization strategy */
-	std::shared_ptr<GlobalizationStrategy> strategy = GlobalizationStrategyFactory::create(options["strategy"], *local_approximation, default_values);
+	std::shared_ptr<GlobalizationStrategy> strategy = GlobalizationStrategyFactory::create(options["strategy"], *local_approximation, options);
 	
 	/* create the globalization mechanism */
-	std::shared_ptr<GlobalizationMechanism> mechanism = GlobalizationMechanismFactory::create(options["mechanism"], *strategy, default_values);
+	std::shared_ptr<GlobalizationMechanism> mechanism = GlobalizationMechanismFactory::create(options["mechanism"], *strategy, options);
 	
-	int max_iterations = stoi(default_values["max_iterations"]);
+	int max_iterations = stoi(options["max_iterations"]);
 	Argonot argonot = Argonot(*mechanism, max_iterations);
 	
 	/* initial primal and dual points */
@@ -40,9 +40,7 @@ void test_argonot(std::string problem_name, std::map<std::string, std::string> o
 	return;
 }
 
-std::map<std::string, std::string> get_command_options(int argc, char *argv[]) {
-	std::map<std::string, std::string> options;
-	
+std::map<std::string, std::string> get_command_options(int argc, char* argv[], std::map<std::string, std::string>& options) {
 	/* build the (argument, value) map */
 	int i = 1;
 	while (i < argc-1) {
@@ -114,9 +112,11 @@ std::map<std::string, std::string> get_default_values(std::string file_name) {
 }
 
 int main (int argc, char* argv[]) {
+	std::map<std::string, std::string> options = get_default_values("argonot.cfg");
+	
 	if (1 < argc) {
 		/* get the command line options */
-		std::map<std::string, std::string> options = get_command_options(argc, argv);
+		get_command_options(argc, argv, options);
 	
 		set_logger(options);
 		
@@ -125,8 +125,7 @@ int main (int argc, char* argv[]) {
 		}
 		else {
 			std::string problem_name = std::string(argv[argc-1]);
-			std::map<std::string, std::string> default_values = get_default_values("argonot.cfg");
-			test_argonot(problem_name, options, default_values);
+			test_argonot(problem_name, options);
 		}
 	}
 	else {
@@ -147,7 +146,7 @@ int main (int argc, char* argv[]) {
 		matrix.add_term(5., 2, 3);
 		matrix.add_term(1., 4, 4);
 		
-		// b[0] = 8.; b[1] = 45.; b[2] = 31.; b[3] = 15.; b[4] = 17.;
+		/* right hand side */
 		std::vector<double> rhs = {8., 45., 31., 15., 17.};
 		
 		MA57Solver s;
