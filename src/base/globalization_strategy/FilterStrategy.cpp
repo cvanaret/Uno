@@ -75,10 +75,6 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Loca
 		INFO << "phase: " << this->phase << "\t";
 	}
 	
-	INFO << "\n";
-	INFO << *(this->filter_optimality);
-	INFO << *(this->filter_restoration);
-	
 	return accept;
 }
 

@@ -112,9 +112,9 @@ std::map<std::string, std::string> get_default_values(std::string file_name) {
 }
 
 int main (int argc, char* argv[]) {
-	std::map<std::string, std::string> options = get_default_values("argonot.cfg");
-	
 	if (1 < argc) {
+		/* get the default values */
+		std::map<std::string, std::string> options = get_default_values("argonot.cfg");
 		/* get the command line options */
 		get_command_options(argc, argv, options);
 	

@@ -24,7 +24,7 @@ BQPDSolver::BQPDSolver(std::vector<int>& hessian_column_start, std::vector<int>&
 		hessian_column_start(hessian_column_start), hessian_row_number(hessian_row_number) {
 	/* preallocate a bunch of stuff */
 	this->k_ = 0;
-	/* warm start = 2 */
+	/* warm start: mode = 2 */
 	this->mode_ = 0;
 	
 	this->iprint_ = 0;
