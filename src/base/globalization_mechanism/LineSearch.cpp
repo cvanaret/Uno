@@ -10,10 +10,11 @@ Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_iterate) 
 	/* compute a trial direction */
 	LocalSolution solution = this->globalization_strategy.compute_step(problem, current_iterate, INFINITY);
 	
-	/* fail if direction is not a descent direction */
-	if (0. < solution.objective_terms.linear) {
-		throw std::out_of_range("Line search direction is not a descent direction");
-	}
+	///* fail if direction is not a descent direction */
+	//std::map<int,double> objective_gradient = problem.objective_sparse_gradient(current_iterate.x);
+	//if (0. < dot(solution.x, objective_gradient)) {
+		//throw std::out_of_range("Line search direction is not a descent direction");
+	//}
 
 	/* length follows the following sequence: 1, ratio, ratio^2, ratio^3, ... */
 	double step_length = 1.;
