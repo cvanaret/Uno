@@ -52,9 +52,9 @@ LocalSolution QPApproximation::compute_infeasibility_step(Problem& problem, Iter
 }
 
 /* additional variables */
-LocalSolution QPApproximation::compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyConstraints penalty_constraints) {
+LocalSolution QPApproximation::compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyDimensions penalty_dimensions) {
 	/* generate the QP */
-	QP qp = this->generate_l1_penalty_qp_(problem, current_iterate, radius, penalty_parameter, penalty_constraints);
+	QP qp = this->generate_l1_penalty_qp_(problem, current_iterate, radius, penalty_parameter, penalty_dimensions);
 	DEBUG << qp;
 	
 	/* generate the initial solution */
@@ -158,9 +158,9 @@ QP QPApproximation::generate_infeasibility_qp_(Problem& problem, Iterate& curren
 	return qp;
 }
 
-QP QPApproximation::generate_l1_penalty_qp_(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyConstraints penalty_constraints) {
-	int number_variables = problem.number_variables + penalty_constraints.number_additional_variables;
-	int number_constraints = penalty_constraints.number_constraints;
+QP QPApproximation::generate_l1_penalty_qp_(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyDimensions penalty_dimensions) {
+	int number_variables = problem.number_variables + penalty_dimensions.number_additional_variables;
+	int number_constraints = penalty_dimensions.number_constraints;
 	
 	/* compute the Lagrangian Hessian from scratch */
 	current_iterate.is_hessian_computed = false;
@@ -181,7 +181,7 @@ QP QPApproximation::generate_l1_penalty_qp_(Problem& problem, Iterate& current_i
 		qp.variable_ub[i] = std::min(radius, problem.variable_ub[i] - current_iterate.x[i]);
 	}
 	/* bounds of additional variables */
-	for (int k = 0; k < penalty_constraints.number_additional_variables; k++) {
+	for (int k = 0; k < penalty_dimensions.number_additional_variables; k++) {
 		qp.variable_lb[problem.number_variables + k] = 0.;
 		qp.variable_ub[problem.number_variables + k] = INFINITY;
 	}
@@ -199,7 +199,7 @@ QP QPApproximation::generate_l1_penalty_qp_(Problem& problem, Iterate& current_i
 		}
 	}
 	/* add additional variables to the objective */
-	for (int k = 0; k < penalty_constraints.number_additional_variables; k++) {
+	for (int k = 0; k < penalty_dimensions.number_additional_variables; k++) {
 		qp.objective[problem.number_variables + k] = 1.;
 	}
 	
@@ -210,7 +210,7 @@ QP QPApproximation::generate_l1_penalty_qp_(Problem& problem, Iterate& current_i
 	int current_additional_variable = problem.number_variables;
 	int current_constraint = 0;
 	for (int j = 0; j < problem.number_constraints; j++) {
-		if (penalty_constraints.status[j] == EQUALITY) {
+		if (problem.constraint_status[j] == EQUALITY) {
 			/* a single constraint with both additional variables */
 			std::map<int,double> gradient(current_iterate.constraints_jacobian[j]);
 			gradient[current_additional_variable] = -1.;
@@ -222,7 +222,7 @@ QP QPApproximation::generate_l1_penalty_qp_(Problem& problem, Iterate& current_i
 			current_additional_variable += 2;
 			current_constraint++;
 		}
-		if (penalty_constraints.status[j] == BOUNDED_BOTH_SIDES || penalty_constraints.status[j] == BOUNDED_LOWER) {
+		if (problem.constraint_status[j] == BOUNDED_BOTH_SIDES || problem.constraint_status[j] == BOUNDED_LOWER) {
 			/* a single constraint with one additional variable */
 			std::map<int,double> gradient(current_iterate.constraints_jacobian[j]);
 			gradient[current_additional_variable] = 1.;
@@ -233,7 +233,7 @@ QP QPApproximation::generate_l1_penalty_qp_(Problem& problem, Iterate& current_i
 			current_additional_variable++;
 			current_constraint++;
 		}
-		if (penalty_constraints.status[j] == BOUNDED_BOTH_SIDES || penalty_constraints.status[j] == BOUNDED_UPPER) {
+		if (problem.constraint_status[j] == BOUNDED_BOTH_SIDES || problem.constraint_status[j] == BOUNDED_UPPER) {
 			/* a single constraint with one additional variable */
 			std::map<int,double> gradient(current_iterate.constraints_jacobian[j]);
 			gradient[current_additional_variable] = -1.;

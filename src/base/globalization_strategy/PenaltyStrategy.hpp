@@ -32,7 +32,7 @@ class PenaltyStrategy: public GlobalizationStrategy {
 		double penalty_parameter; /*!< Penalty */
 	
 	private:
-		PenaltyConstraints penalty_constraints;
+		PenaltyDimensions penalty_dimensions;
 		double tau;
 		double eta;
 		double epsilon1;

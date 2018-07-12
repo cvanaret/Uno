@@ -24,7 +24,7 @@ class QPApproximation: public LocalApproximation {
 		
 		LocalSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, double radius, const std::vector<double>& d, ConstraintPartition& constraint_partition, std::vector<double>& multipliers);
 		
-		LocalSolution compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyConstraints penalty_constraints);
+		LocalSolution compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyDimensions penalty_dimensions);
 		
 		/* use a reference to allow polymorphism */
 		QPSolver& solver; /*!< Solver that solves the subproblem */
@@ -42,7 +42,7 @@ class QPApproximation: public LocalApproximation {
 		
 		QP generate_qp_(Problem& problem, Iterate& current_iterate, double radius);
 		
-		QP generate_l1_penalty_qp_(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyConstraints penalty_constraints);
+		QP generate_l1_penalty_qp_(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyDimensions penalty_dimensions);
 		
 		void set_constraints_(Problem& problem, QP& qp, Iterate& current_iterate);
 		

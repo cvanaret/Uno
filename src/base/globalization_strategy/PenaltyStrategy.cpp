@@ -17,7 +17,7 @@ PenaltyStrategy::PenaltyStrategy(LocalApproximation& local_approximation, double
 
 LocalSolution PenaltyStrategy::compute_step(Problem& problem, Iterate& current_iterate, double radius) {
 	/* stage a: compute the step within trust region */
-	LocalSolution solution = this->local_approximation.compute_l1_penalty_step(problem, current_iterate, radius, this->penalty_parameter, this->penalty_constraints);
+	LocalSolution solution = this->local_approximation.compute_l1_penalty_step(problem, current_iterate, radius, this->penalty_parameter, this->penalty_dimensions);
 	DEBUG << solution;
 	
 	/* if penalty parameter is already 0, no need to decrease it */
@@ -28,7 +28,7 @@ LocalSolution PenaltyStrategy::compute_step(Problem& problem, Iterate& current_i
 			double current_penalty_parameter = this->penalty_parameter;
 			
 			/* stage c: solve the ideal l1 penalty problem with a zero penalty (no objective) */
-			LocalSolution ideal_solution = this->local_approximation.compute_l1_penalty_step(problem, current_iterate, radius, 0., this->penalty_constraints);
+			LocalSolution ideal_solution = this->local_approximation.compute_l1_penalty_step(problem, current_iterate, radius, 0., this->penalty_dimensions);
 			DEBUG << ideal_solution;
 			
 			/* stage f: update the penalty parameter */
@@ -53,7 +53,7 @@ LocalSolution PenaltyStrategy::compute_step(Problem& problem, Iterate& current_i
 					}
 					
 					DEBUG << "\nSolving with penalty parameter " << this->penalty_parameter << "\n";
-					solution = this->local_approximation.compute_l1_penalty_step(problem, current_iterate, radius, this->penalty_parameter, this->penalty_constraints);
+					solution = this->local_approximation.compute_l1_penalty_step(problem, current_iterate, radius, this->penalty_parameter, this->penalty_dimensions);
 					DEBUG << solution;
 					
 					double trial_linear_model = this->compute_linear_model(problem, solution);
@@ -82,7 +82,7 @@ LocalSolution PenaltyStrategy::compute_step(Problem& problem, Iterate& current_i
 					solution = ideal_solution;
 				}
 				else {
-					solution = this->local_approximation.compute_l1_penalty_step(problem, current_iterate, radius, this->penalty_parameter, this->penalty_constraints);
+					solution = this->local_approximation.compute_l1_penalty_step(problem, current_iterate, radius, this->penalty_parameter, this->penalty_dimensions);
 					DEBUG << solution;
 				}
 			}
@@ -159,7 +159,7 @@ OptimalityStatus PenaltyStrategy::compute_status(Problem& problem, Iterate& tria
 
 double PenaltyStrategy::compute_linear_model(Problem& problem, LocalSolution& solution) {
 	double linear_model = 0.;
-	for (int k = 0; k < this->penalty_constraints.number_additional_variables; k++) {
+	for (int k = 0; k < this->penalty_dimensions.number_additional_variables; k++) {
 		linear_model += solution.x[problem.number_variables + k];
 	}
 	return linear_model;
@@ -170,9 +170,9 @@ std::vector<double> PenaltyStrategy::compute_multipliers(Problem& problem, Local
 	for (int i = 0; i < problem.number_variables; i++) {
 		multipliers[i] = solution.multipliers[i];
 	}
-	int current_constraint = problem.number_variables + this->penalty_constraints.number_additional_variables;
+	int current_constraint = problem.number_variables + this->penalty_dimensions.number_additional_variables;
 	for (int j = 0; j < problem.number_constraints; j++) {
-		if (this->penalty_constraints.status[j] == BOUNDED_BOTH_SIDES) {
+		if (problem.constraint_status[j] == BOUNDED_BOTH_SIDES) {
 			/* only case where 2 constraints were generated */
 			/* only one bound is active: one multiplier is > 0, the other is 0 */
 			multipliers[problem.number_variables + j] = solution.multipliers[current_constraint] + solution.multipliers[current_constraint+1];
@@ -265,36 +265,31 @@ double PenaltyStrategy::compute_KKT_error(Problem& problem, Iterate& current_ite
 
 void PenaltyStrategy::initialize(Problem& problem, Iterate& current_iterate) {
 	/* compute the number of necessary additional variables and constraints */
-	this->penalty_constraints.status.resize(problem.number_constraints);
-	this->penalty_constraints.number_additional_variables = 0;
-	this->penalty_constraints.number_constraints = 0;
+	this->penalty_dimensions.number_additional_variables = 0;
+	this->penalty_dimensions.number_constraints = 0;
 	
 	for (int j = 0; j < problem.number_constraints; j++) {
-		if (problem.constraint_lb[j] == problem.constraint_ub[j]) {
-			this->penalty_constraints.status[j] = EQUALITY;
-			this->penalty_constraints.number_additional_variables += 2;
-			this->penalty_constraints.number_constraints++;
+		if (problem.constraint_status[j] == EQUALITY) {
+			this->penalty_dimensions.number_additional_variables += 2;
+			this->penalty_dimensions.number_constraints++;
 		}
-		else if (-INFINITY < problem.constraint_lb[j] && problem.constraint_ub[j] < INFINITY) {
-			this->penalty_constraints.status[j] = BOUNDED_BOTH_SIDES;
-			this->penalty_constraints.number_additional_variables += 2;
-			this->penalty_constraints.number_constraints += 2;
+		else if (problem.constraint_status[j] == BOUNDED_BOTH_SIDES) {
+			this->penalty_dimensions.number_additional_variables += 2;
+			this->penalty_dimensions.number_constraints += 2;
 		}
-		else if (-INFINITY < problem.constraint_lb[j]) {
-			this->penalty_constraints.status[j] = BOUNDED_LOWER;
-			this->penalty_constraints.number_additional_variables++;
-			this->penalty_constraints.number_constraints++;
+		else if (problem.constraint_status[j] == BOUNDED_LOWER) {
+			this->penalty_dimensions.number_additional_variables++;
+			this->penalty_dimensions.number_constraints++;
 		}
 		else {
-			this->penalty_constraints.status[j] = BOUNDED_UPPER;
-			this->penalty_constraints.number_additional_variables++;
-			this->penalty_constraints.number_constraints++;
+			this->penalty_dimensions.number_additional_variables++;
+			this->penalty_dimensions.number_constraints++;
 		}
 	}
 	
 	/* allocate the subproblem solver */
-	int number_variables = problem.number_variables + this->penalty_constraints.number_additional_variables;
-	int number_constraints = this->penalty_constraints.number_constraints;
+	int number_variables = problem.number_variables + this->penalty_dimensions.number_additional_variables;
+	int number_constraints = this->penalty_dimensions.number_constraints;
 	this->local_approximation.allocate_solver(number_variables, number_constraints);
 	return;
 }

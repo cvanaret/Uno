@@ -32,14 +32,14 @@ ASL_pfgh* generate_asl(std::string file_name, Option_Info* option_info) {
 }
 
 AMPLModel::AMPLModel(std::string file_name): Problem(file_name) {
-	/* avoid using implicit AMPL macros */
+	/* TODO: avoid using implicit AMPL macros */
 	keyword keywords[1];
 	int size_keywords = sizeof(keywords)/sizeof(keyword);
 	
-	Option_Info info = {	const_cast<char*>("Argonot"),
-								const_cast<char*>("Argonot 2018"),
-								const_cast<char*>("argonot_options"),
-								keywords, size_keywords};
+	Option_Info info = {const_cast<char*>("Argonot"),
+						const_cast<char*>("Argonot 2018"),
+						const_cast<char*>("argonot_options"),
+						keywords, size_keywords};
 	
 	this->asl_ = generate_asl(file_name, &info);
 	this->asl_->i.congrd_mode = 0;
@@ -270,13 +270,27 @@ void AMPLModel::generate_constraints() {
 	this->constraint_lb.reserve(this->number_constraints);
 	this->constraint_ub.reserve(this->number_constraints);
 	this->constraint_is_uncertainty_set.reserve(this->number_constraints);
+	this->constraint_status.reserve(this->number_constraints);
 	
 	for (int j = 0; j < this->number_constraints; j++) {
-		constraint_name.push_back(con_name_ASL((ASL*) this->asl_, j));
-		constraint_variables.push_back(create_cstr_variables(this->asl_->i.Cgrad_[j]));
-		constraint_lb[j] = (this->asl_->i.LUrhs_ != NULL) ? this->asl_->i.LUrhs_[2*j] : -INFINITY;
-		constraint_ub[j] = (this->asl_->i.LUrhs_ != NULL) ? this->asl_->i.LUrhs_[2*j+1] : INFINITY;
-		constraint_is_uncertainty_set[j] = (uncertain_suffixes->u.i != NULL && uncertain_suffixes->u.i[j] == 1);
+		this->constraint_name.push_back(con_name_ASL((ASL*) this->asl_, j));
+		this->constraint_variables.push_back(create_cstr_variables(this->asl_->i.Cgrad_[j]));
+		this->constraint_lb[j] = (this->asl_->i.LUrhs_ != NULL) ? this->asl_->i.LUrhs_[2*j] : -INFINITY;
+		this->constraint_ub[j] = (this->asl_->i.LUrhs_ != NULL) ? this->asl_->i.LUrhs_[2*j+1] : INFINITY;
+		this->constraint_is_uncertainty_set[j] = (uncertain_suffixes->u.i != NULL && uncertain_suffixes->u.i[j] == 1);
+
+		if (this->constraint_lb[j] == this->constraint_ub[j]) {
+			this->constraint_status[j] = EQUALITY;
+		}
+		else if (-INFINITY < this->constraint_lb[j] && this->constraint_ub[j] < INFINITY) {
+			this->constraint_status[j] = BOUNDED_BOTH_SIDES;
+		}
+		else if (-INFINITY < this->constraint_lb[j]) {
+			this->constraint_status[j] = BOUNDED_LOWER;
+		}
+		else {
+			this->constraint_status[j] = BOUNDED_UPPER;
+		}
 	}
 	return;
 }
@@ -301,19 +315,19 @@ void AMPLModel::set_function_types(std::string file_name, Option_Info* option_in
 	if (asl->i.n_con_ != this->number_constraints) {
 		throw std::length_error("AMPLModel.set_function_types: inconsistent number of constraints");
 	}
-	this->constraints_type.reserve(this->number_constraints);
+	this->constraint_type.reserve(this->number_constraints);
 	
 	for (int j = 0; j < this->number_constraints; j++) {
 		fint qp = nqpcheck_ASL((ASL*) asl, -(j+1), &rowq, &colqp, &delsqp);
 		
 		if (0 < qp) {
-			this->constraints_type[j] = QUADRATIC;
+			this->constraint_type[j] = QUADRATIC;
 		}
 		else if (qp == 0) {
-			this->constraints_type[j] = LINEAR;
+			this->constraint_type[j] = LINEAR;
 		}
 		else {
-			this->constraints_type[j] = NONLINEAR;
+			this->constraint_type[j] = NONLINEAR;
 		}
 	}
 	/* objective function */

@@ -5,8 +5,7 @@
 
 enum ConstraintType {EQUALITY, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES};
 
-struct PenaltyConstraints {
-	std::vector<ConstraintType> status;
+struct PenaltyDimensions {
 	int number_additional_variables;
 	int number_constraints;
 };

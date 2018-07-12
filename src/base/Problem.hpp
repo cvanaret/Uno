@@ -48,7 +48,8 @@ class Problem {
 		std::vector<std::map<int,double> > constraint_variables;
 		std::vector<double> constraint_lb;
 		std::vector<double> constraint_ub;
-		std::vector<FunctionType> constraints_type; /*!< Types of the constraints (LINEAR, QUADRATIC, NONLINEAR) */
+		std::vector<FunctionType> constraint_type; /*!< Types of the constraints (LINEAR, QUADRATIC, NONLINEAR) */
+		std::vector<ConstraintType> constraint_status; /*!< Status of the constraints (EQUALITY, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES) */
 		virtual double evaluate_constraint(int j, std::vector<double> x) = 0;
 		virtual std::vector<double> evaluate_constraints(std::vector<double> x) = 0;
 		virtual std::vector<double> constraint_dense_gradient(int j, std::vector<double> x) = 0;
