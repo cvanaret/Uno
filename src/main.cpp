@@ -129,28 +129,51 @@ int main (int argc, char* argv[]) {
 		}
 	}
 	else {
-		/*
-		A[0][0] = 2; A[0][1] = 3;
-		A[1][2] = 4; A[1][4] = 6;
-		A[2][2] = 1; A[2][3] = 5;
-		A[4][4] = 1;
-		*/
+		/* test of hs015 */
+		std::vector<double> x = {0.49, 2.1};
+		std::vector<double> lambda = {700., 0.};
+		double mu = 1e-7;
+		std::vector<double> s = {x[0]*x[1] - 1., x[0] + x[1]*x[1]};
+		double v = 0.5 - x[0];
 		
-		int n = 5;
+		int n = 8;
 		COOMatrix matrix(n, 0);
-		matrix.add_term(2., 0, 0);
-		matrix.add_term(3., 0, 1);
-		matrix.add_term(4., 1, 2);
-		matrix.add_term(6., 1, 4);
-		matrix.add_term(1., 2, 2);
-		matrix.add_term(5., 2, 3);
-		matrix.add_term(1., 4, 4);
+		
+		matrix.add_term(1200.*x[0]*x[0] + 2. - 400.*x[1], 0, 0);
+		matrix.add_term(-400.*x[0] + lambda[0], 0, 1);
+		matrix.add_term(200. + 2.*lambda[1], 1, 1);
+		
+		matrix.add_term(x[1], 0, 5);
+		matrix.add_term(x[0], 1, 5);
+		matrix.add_term(1., 0, 6);
+		matrix.add_term(2.*x[1], 1, 6);
+		
+		matrix.add_term(1., 0, 7);
+		
+		matrix.add_term(mu/(s[0]*s[0]), 2, 2);
+		matrix.add_term(mu/(s[1]*s[1]), 3, 3);
+		
+		matrix.add_term(1., 2, 5);
+		matrix.add_term(1., 3, 6);
+		
+		matrix.add_term(mu/(v*v), 4, 4);
+		
+		matrix.add_term(-1., 4, 7);
 		
 		/* right hand side */
-		std::vector<double> rhs = {8., 45., 31., 15., 17.};
+		std::vector<double> rhs = {
+			-400.*x[0]*x[0]*x[0] - 2.*x[0] + 400.*x[0]*x[1] + 2.,
+			-200.*x[1] + 200*x[0]*x[0],
+			mu/s[0],
+			mu/s[1],
+			mu/v,
+			-x[0]*x[1] + 1. + s[0],
+			-x[0] - x[1]*x[1] + s[1],
+			-x[0] + 0.5 - v
+		};
 		
-		MA57Solver s;
-		LocalSolution solution = s.solve(matrix, rhs);
+		MA57Solver solver;
+		LocalSolution solution = solver.solve(matrix, rhs);
 		
 		std::cout << "solution";
 		for (unsigned int k = 0; k < solution.x.size(); k++) {
