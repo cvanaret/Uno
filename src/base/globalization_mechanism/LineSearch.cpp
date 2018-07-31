@@ -10,7 +10,7 @@ Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_iterate) 
 	/* compute a trial direction */
 	LocalSolution solution = this->globalization_strategy.compute_step(problem, current_iterate, INFINITY);
 	
-	/* length follows the following sequence: 1, ratio, ratio^2, ratio^3, ... */
+	/* step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ... */
 	this->step_length = 1.;
 	bool is_accepted = false;
 	this->number_iterations = 0;
@@ -34,6 +34,7 @@ Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_iterate) 
 			// TODO handle the case where the solution is a new point: what???
 			INFO << "minor: " << std::fixed << this->number_iterations << "\t";
 			INFO << "step length: " << step_length << "\t";
+			// TODO: if stragegy == penalty, the step norm has no meaning!
 			INFO << "step norm: " << std::fixed << (step_length*solution.norm) << "\t";
 		}
 		else {

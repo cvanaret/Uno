@@ -47,7 +47,7 @@ AMPLModel::AMPLModel(std::string file_name): Problem(file_name) {
 	/* dimensions */
 	this->number_variables = this->asl_->i.n_var_;
 	this->number_constraints = this->asl_->i.n_con_;
-	this->obj_sign = (this->asl_->i.objtype_[0] == 1) ? -1. : 1.;
+	this->objective_sign = (this->asl_->i.objtype_[0] == 1) ? -1. : 1.;
 	
 	/* variables */
 	this->generate_variables();
@@ -88,6 +88,7 @@ void AMPLModel::generate_variables() {
 	this->variable_lb.reserve(this->number_variables);
 	this->variable_ub.reserve(this->number_variables);
 	this->variable_uncertain.reserve(this->number_variables);
+	this->variable_status.reserve(this->number_variables);
 	
 	for (int i = 0; i < this->number_variables; i++) {
 		this->variable_name.push_back(var_name_ASL((ASL*) this->asl_, i));
@@ -95,6 +96,22 @@ void AMPLModel::generate_variables() {
 		this->variable_lb[i] = (this->asl_->i.LUv_ != NULL) ? this->asl_->i.LUv_[2*i] : -INFINITY;
 		this->variable_ub[i] = (this->asl_->i.LUv_ != NULL) ? this->asl_->i.LUv_[2*i+1] : INFINITY;
 		this->variable_uncertain[i] = (uncertain_suffixes->u.i != NULL && uncertain_suffixes->u.i[i] == 1);
+
+		if (this->variable_lb[i] == this->variable_ub[i]) {
+			this->variable_status[i] = EQUAL_BOUNDS;
+		}
+		else if (-INFINITY < this->variable_lb[i] && this->variable_ub[i] < INFINITY) {
+			this->variable_status[i] = BOUNDED_BOTH_SIDES;
+		}
+		else if (-INFINITY < this->variable_lb[i]) {
+			this->variable_status[i] = BOUNDED_LOWER;
+		}
+		else if (this->variable_ub[i] < INFINITY) {
+			this->variable_status[i] = BOUNDED_UPPER;
+		}
+		else {
+			this->variable_status[i] = UNBOUNDED;
+		}
 	}
 	return;
 }
@@ -127,7 +144,7 @@ std::map<int,double> create_cstr_variables(cgrad* ampl_variables) {
 double AMPLModel::objective(std::vector<double> x) {
 	this->number_eval_objective++;
 	int nerror = 0;
-	double result = this->obj_sign*(*((ASL*) this->asl_)->p.Objval)((ASL*) this->asl_, 0, x.data(), &nerror);
+	double result = this->objective_sign*(*((ASL*) this->asl_)->p.Objval)((ASL*) this->asl_, 0, x.data(), &nerror);
 	if (0 < nerror) {
 		throw std::invalid_argument("IEEE error in objective function");
 	}
@@ -145,7 +162,7 @@ std::vector<double> AMPLModel::objective_dense_gradient(std::vector<double> x) {
 	}
 
 	/* if maximization, take the opposite */
-	if (this->obj_sign < 0.) {
+	if (this->objective_sign < 0.) {
 		for (unsigned int i = 0; i < x.size(); i++) {
 			gradient[i] = -gradient[i];
 		}
@@ -169,7 +186,7 @@ std::map<int,double> AMPLModel::objective_sparse_gradient(std::vector<double> x)
 	while (ampl_variables_tmp != NULL) {
 		double partial_derivative = dense_gradient[ampl_variables_tmp->varno];
 		/* if maximization, take the opposite */
-		if (this->obj_sign < 0.) {
+		if (this->objective_sign < 0.) {
 			partial_derivative = -partial_derivative;
 		}
 		gradient[ampl_variables_tmp->varno] = partial_derivative;
@@ -280,7 +297,7 @@ void AMPLModel::generate_constraints() {
 		this->constraint_is_uncertainty_set[j] = (uncertain_suffixes->u.i != NULL && uncertain_suffixes->u.i[j] == 1);
 
 		if (this->constraint_lb[j] == this->constraint_ub[j]) {
-			this->constraint_status[j] = EQUALITY;
+			this->constraint_status[j] = EQUAL_BOUNDS;
 		}
 		else if (-INFINITY < this->constraint_lb[j] && this->constraint_ub[j] < INFINITY) {
 			this->constraint_status[j] = BOUNDED_BOTH_SIDES;
@@ -288,8 +305,11 @@ void AMPLModel::generate_constraints() {
 		else if (-INFINITY < this->constraint_lb[j]) {
 			this->constraint_status[j] = BOUNDED_LOWER;
 		}
-		else {
+		else if (this->constraint_ub[j] < INFINITY) {
 			this->constraint_status[j] = BOUNDED_UPPER;
+		}
+		else {
+			this->constraint_status[j] = UNBOUNDED;
 		}
 	}
 	return;

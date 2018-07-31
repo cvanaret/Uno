@@ -11,7 +11,7 @@
 #include "GlobalizationMechanismFactory.hpp"
 #include "Argonot.hpp"
 #include "Logger.hpp"
-#include "MA57Solver.hpp"
+#include "InteriorPoint.hpp"
 
 void test_argonot(std::string problem_name, std::map<std::string, std::string> options) {
 	AMPLModel problem = AMPLModel(problem_name);
@@ -111,6 +111,23 @@ std::map<std::string, std::string> get_default_values(std::string file_name) {
 	return default_values;
 }
 
+void test_interior_point() {
+	/* test of hs015 */
+	AMPLModel problem = AMPLModel("../ampl_models/hs015");
+	for (int i = 0; i < problem.number_variables; i++) {
+		std::cout << "x" << i << " in [" << problem.variable_lb[i] << ", " << problem.variable_ub[i] << "]\n";
+	}
+	
+	std::vector<double> x = problem.primal_initial_solution();
+	std::vector<double> multipliers = problem.dual_initial_solution();
+	Iterate current_iterate(problem, x, multipliers);
+	
+	InteriorPoint ipm;
+	ipm.compute_optimality_step(problem, current_iterate, problem.objective_sign, INFINITY);
+	
+	return;
+}
+
 int main (int argc, char* argv[]) {
 	if (1 < argc) {
 		/* get the default values */
@@ -129,58 +146,7 @@ int main (int argc, char* argv[]) {
 		}
 	}
 	else {
-		/* test of hs015 */
-		std::vector<double> x = {0.49, 2.1};
-		std::vector<double> lambda = {700., 0.};
-		double mu = 1e-7;
-		std::vector<double> s = {x[0]*x[1] - 1., x[0] + x[1]*x[1]};
-		double v = 0.5 - x[0];
-		
-		int n = 8;
-		COOMatrix matrix(n, 0);
-		
-		matrix.add_term(1200.*x[0]*x[0] + 2. - 400.*x[1], 0, 0);
-		matrix.add_term(-400.*x[0] + lambda[0], 0, 1);
-		matrix.add_term(200. + 2.*lambda[1], 1, 1);
-		
-		matrix.add_term(x[1], 0, 5);
-		matrix.add_term(x[0], 1, 5);
-		matrix.add_term(1., 0, 6);
-		matrix.add_term(2.*x[1], 1, 6);
-		
-		matrix.add_term(1., 0, 7);
-		
-		matrix.add_term(mu/(s[0]*s[0]), 2, 2);
-		matrix.add_term(mu/(s[1]*s[1]), 3, 3);
-		
-		matrix.add_term(1., 2, 5);
-		matrix.add_term(1., 3, 6);
-		
-		matrix.add_term(mu/(v*v), 4, 4);
-		
-		matrix.add_term(-1., 4, 7);
-		
-		/* right hand side */
-		std::vector<double> rhs = {
-			-400.*x[0]*x[0]*x[0] - 2.*x[0] + 400.*x[0]*x[1] + 2.,
-			-200.*x[1] + 200*x[0]*x[0],
-			mu/s[0],
-			mu/s[1],
-			mu/v,
-			-x[0]*x[1] + 1. + s[0],
-			-x[0] - x[1]*x[1] + s[1],
-			-x[0] + 0.5 - v
-		};
-		
-		MA57Solver solver;
-		LocalSolution solution = solver.solve(matrix, rhs);
-		
-		std::cout << "solution";
-		for (unsigned int k = 0; k < solution.x.size(); k++) {
-			std::cout << " " << solution.x[k];
-		}
-		std::cout << "\n";
-	
+		test_interior_point();
 	}
 	return 0;
 }

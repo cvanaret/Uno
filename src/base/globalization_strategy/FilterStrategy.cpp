@@ -120,6 +120,7 @@ void FilterStrategy::switch_phase(Problem& problem, LocalSolution& solution, Ite
 OptimalityStatus FilterStrategy::compute_status(Problem& problem, Iterate& current_iterate, double step_norm) {
 	OptimalityStatus status = NOT_OPTIMAL;
 	
+	/* TODO: check if test on residual can indeed be replaced by infeasibility_measure */
 	if (current_iterate.residual <= this->tolerance*problem.number_constraints) {
 		if (current_iterate.KKTerror <= this->tolerance*sqrt(problem.number_variables) &&
 				current_iterate.complementarity_error <= this->tolerance*(problem.number_variables + problem.number_constraints)) {

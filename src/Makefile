@@ -26,7 +26,7 @@ SRC_FILES = main.cpp base/Argonot.cpp base/Iterate.cpp \
 	base/globalization_mechanism/LineSearch.cpp base/globalization_mechanism/TrustLineSearch.cpp \
 	base/globalization_mechanism/GlobalizationMechanismFactory.cpp \
 	base/local_approximation/QP.cpp base/local_approximation/LP.cpp \
-	base/local_approximation/LocalApproximation.cpp base/local_approximation/QPApproximation.cpp \
+	base/local_approximation/LocalApproximation.cpp base/local_approximation/QPApproximation.cpp base/local_approximation/InteriorPoint.cpp \
 	base/local_approximation/LocalApproximationFactory.cpp base/local_approximation/LocalSolution.cpp base/Utils.cpp \
 	solvers/QP/BQPDSolver.cpp solvers/QP/QPSolverFactory.cpp \
 	solvers/KKT/MA57Solver.cpp

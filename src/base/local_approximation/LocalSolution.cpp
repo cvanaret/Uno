@@ -11,7 +11,7 @@ std::ostream& operator<< (std::ostream &stream, LocalSolution& solution) {
 	if (solution.status == OPTIMAL) {
 		stream << GREEN "Status: optimal\n" RESET;
 	}
-	else if (solution.status == UNBOUNDED) {
+	else if (solution.status == UNBOUNDED_PROBLEM) {
 		stream << GREEN "Status: unbounded\n" RESET;
 	}
 	else {

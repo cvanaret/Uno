@@ -36,9 +36,9 @@ class GlobalizationStrategy {
 		
 		virtual void initialize(Problem& problem, Iterate& current_iterate) = 0;
 		
-		virtual double compute_KKT_error(Problem& problem, Iterate& current_iterate) = 0;
-		
 		std::vector<double> compute_lagrangian_gradient(Problem& problem, Iterate& current_iterate, double objective_multiplier, std::vector<double>& multipliers);
+		
+		virtual double compute_KKT_error(Problem& problem, Iterate& current_iterate) = 0;
 		
 		double compute_complementarity_error(const Problem& problem, Iterate& current_iterate);
 };

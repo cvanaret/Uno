@@ -269,7 +269,7 @@ void PenaltyStrategy::initialize(Problem& problem, Iterate& current_iterate) {
 	this->penalty_dimensions.number_constraints = 0;
 	
 	for (int j = 0; j < problem.number_constraints; j++) {
-		if (problem.constraint_status[j] == EQUALITY) {
+		if (problem.constraint_status[j] == EQUAL_BOUNDS) {
 			this->penalty_dimensions.number_additional_variables += 2;
 			this->penalty_dimensions.number_constraints++;
 		}

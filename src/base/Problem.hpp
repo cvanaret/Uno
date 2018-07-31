@@ -29,7 +29,7 @@ class Problem {
 		std::string name;
 		
 		/* objective */
-		double obj_sign; /*!< Sign of the objective function (1: minimization, -1: maximization) */
+		double objective_sign; /*!< Sign of the objective function (1: minimization, -1: maximization) */
 		std::string objective_name;
 		FunctionType objective_type; /*!< Type of the objective (LINEAR, QUADRATIC, NONLINEAR) */
 		std::map<int,double> objective_variables;
@@ -42,6 +42,7 @@ class Problem {
 		std::vector<bool> variable_discrete;
 		std::vector<double> variable_lb;
 		std::vector<double> variable_ub;
+		std::vector<ConstraintType> variable_status; /*!< Status of the constraints (EQUALITY, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES) */
 		
 		/* constraints */
 		std::vector<std::string> constraint_name;

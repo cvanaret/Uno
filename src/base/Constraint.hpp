@@ -3,7 +3,7 @@
 
 #include <vector>
 
-enum ConstraintType {EQUALITY, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES};
+enum ConstraintType {EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES, UNBOUNDED};
 
 struct PenaltyDimensions {
 	int number_additional_variables;

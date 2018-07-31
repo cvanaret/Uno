@@ -210,7 +210,7 @@ QP QPApproximation::generate_l1_penalty_qp_(Problem& problem, Iterate& current_i
 	int current_additional_variable = problem.number_variables;
 	int current_constraint = 0;
 	for (int j = 0; j < problem.number_constraints; j++) {
-		if (problem.constraint_status[j] == EQUALITY) {
+		if (problem.constraint_status[j] == EQUAL_BOUNDS) {
 			/* a single constraint with both additional variables */
 			std::map<int,double> gradient(current_iterate.constraints_jacobian[j]);
 			gradient[current_additional_variable] = -1.;
