@@ -83,12 +83,11 @@ bool is_discrete(ASL_pfgh* asl, int index) {
 void AMPLModel::generate_variables() {
 	SufDesc* uncertain_suffixes = suf_get_ASL((ASL*) this->asl_, UNCERTAIN_SUFFIX, ASL_Sufkind_var);
 
-	this->variable_name.reserve(this->number_variables);
-	this->variable_discrete.reserve(this->number_variables);
-	this->variable_lb.reserve(this->number_variables);
-	this->variable_ub.reserve(this->number_variables);
-	this->variable_uncertain.reserve(this->number_variables);
-	this->variable_status.reserve(this->number_variables);
+	this->variable_name.resize(this->number_variables);
+	this->variable_discrete.resize(this->number_variables);
+	this->variable_lb.resize(this->number_variables);
+	this->variable_ub.resize(this->number_variables);
+	this->variable_uncertain.resize(this->number_variables);
 	
 	for (int i = 0; i < this->number_variables; i++) {
 		this->variable_name.push_back(var_name_ASL((ASL*) this->asl_, i));
@@ -96,23 +95,8 @@ void AMPLModel::generate_variables() {
 		this->variable_lb[i] = (this->asl_->i.LUv_ != NULL) ? this->asl_->i.LUv_[2*i] : -INFINITY;
 		this->variable_ub[i] = (this->asl_->i.LUv_ != NULL) ? this->asl_->i.LUv_[2*i+1] : INFINITY;
 		this->variable_uncertain[i] = (uncertain_suffixes->u.i != NULL && uncertain_suffixes->u.i[i] == 1);
-
-		if (this->variable_lb[i] == this->variable_ub[i]) {
-			this->variable_status[i] = EQUAL_BOUNDS;
-		}
-		else if (-INFINITY < this->variable_lb[i] && this->variable_ub[i] < INFINITY) {
-			this->variable_status[i] = BOUNDED_BOTH_SIDES;
-		}
-		else if (-INFINITY < this->variable_lb[i]) {
-			this->variable_status[i] = BOUNDED_LOWER;
-		}
-		else if (this->variable_ub[i] < INFINITY) {
-			this->variable_status[i] = BOUNDED_UPPER;
-		}
-		else {
-			this->variable_status[i] = UNBOUNDED;
-		}
 	}
+	this->variable_status = this->determine_constraints_types(this->variable_lb, this->variable_ub);
 	return;
 }
 

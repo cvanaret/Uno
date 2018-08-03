@@ -25,6 +25,9 @@ class InteriorPoint: public LocalApproximation {
 		LocalSolution compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyDimensions penalty_dimensions);
 		
 		MA57Solver solver; /*!< Solver that solves the subproblem */
+		
+	private:
+		std::vector<double> compute_slack_displacements(Problem& problem, std::vector<ConstraintType>& variable_status, int number_slacks, double mu, std::vector<double>& multipliers, std::vector<double>& s, std::vector<double>& solution);
 };
 
 #endif // INTERIORPOINT_H

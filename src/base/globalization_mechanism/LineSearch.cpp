@@ -31,7 +31,6 @@ Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_iterate) 
 		if (is_accepted) {
 			/* print summary */
 			DEBUG << CYAN "LS trial point accepted\n" RESET;
-			// TODO handle the case where the solution is a new point: what???
 			INFO << "minor: " << std::fixed << this->number_iterations << "\t";
 			INFO << "step length: " << step_length << "\t";
 			// TODO: if stragegy == penalty, the step norm has no meaning!
@@ -57,4 +56,87 @@ bool LineSearch::termination(bool is_accepted, int iteration) {
 		throw std::out_of_range("Step length became too small");
 	}
 	return false;
+}
+
+/*
+ * Interpolation functions
+ */
+
+double LineSearch::quadratic_interpolation(Problem& problem, Iterate& current_iterate, std::vector<double> direction, double steplength) {
+	std::cout << "Current point: "; print_vector(std::cout, current_iterate.x);
+	std::cout << "Direction: "; print_vector(std::cout, direction);
+	
+	/* compute trial point */
+	std::vector<double> trial_point(problem.number_variables);
+	for (int i = 0; i < problem.number_variables; i++) {
+		trial_point[i] = current_iterate.x[i] + steplength*direction[i];
+	}
+	/* evaluate trial point */
+	double phi_alpha0 = problem.objective(trial_point);
+	std::cout << "phi(alpha0) = f(x + alpha0*p) = " << phi_alpha0 << "\n";
+	/* compute dot product */
+	if (!current_iterate.is_objective_gradient_computed) {
+		std::map<int,double> objective_gradient = problem.objective_sparse_gradient(current_iterate.x);
+		current_iterate.set_objective_gradient(objective_gradient);
+	}
+	double phi_prime_0 = dot(direction, current_iterate.objective_gradient);
+	std::cout << "phi'(0) = nabla f(x)^T p = " << phi_prime_0 << "\n";
+	
+	/* compute the minimum of the quadratic */
+	double a = (phi_alpha0 - current_iterate.objective - phi_prime_0*steplength)/(steplength*steplength);
+	double b = phi_prime_0;
+	std::cout << "a = " << a << ", b = " << b << "\n";
+	return this->minimize_quadratic(a, b);
+}
+
+double LineSearch::cubic_interpolation(Problem& problem, Iterate& current_iterate, std::vector<double> direction, double steplength1, double steplength2) {
+	std::cout << "Current point: "; print_vector(std::cout, current_iterate.x);
+	std::cout << "Direction: "; print_vector(std::cout, direction);
+	
+	/* compute trial points */
+	std::vector<double> trial_point1(problem.number_variables);
+	std::vector<double> trial_point2(problem.number_variables);
+	for (int i = 0; i < problem.number_variables; i++) {
+		trial_point1[i] = current_iterate.x[i] + steplength1*direction[i];
+		trial_point2[i] = current_iterate.x[i] + steplength2*direction[i];
+	}
+	/* evaluate trial points */
+	double phi_alpha1 = problem.objective(trial_point1);
+	double phi_alpha2 = problem.objective(trial_point2);
+	std::cout << "phi(alpha1) = f(x + alpha1*p) = " << phi_alpha1 << "\n";
+	std::cout << "phi(alpha2) = f(x + alpha2*p) = " << phi_alpha2 << "\n";
+	/* compute dot product */
+	if (!current_iterate.is_objective_gradient_computed) {
+		std::map<int,double> objective_gradient = problem.objective_sparse_gradient(current_iterate.x);
+		current_iterate.set_objective_gradient(objective_gradient);
+	}
+	double phi_prime_0 = dot(direction, current_iterate.objective_gradient);
+	std::cout << "phi'(0) = nabla f(x)^T p = " << phi_prime_0 << "\n";
+	
+	/* compute the minimum of the cubic */
+	double det = steplength1*steplength1*steplength2*steplength2*(steplength1 - steplength2);
+	std::cout << "Det = " << det << "\n";
+	double K1 = phi_alpha1 - current_iterate.objective - steplength1*phi_prime_0;
+	double K2 = phi_alpha2 - current_iterate.objective - steplength2*phi_prime_0;
+	
+	double a = (steplength2*steplength2*K1 - steplength1*steplength1*K2)/det;
+	double b = (-steplength2*steplength2*steplength2*K1 + steplength1*steplength1*steplength1*K2)/det;//phi_prime_0;
+	double c = phi_prime_0;
+	std::cout << "a = " << a << ", b = " << b << ", c = " << c << "\n";
+	if (a == 0.) {
+		return this->minimize_quadratic(b, c);
+	}
+	else {
+		return this->minimize_cubic(a, b, c);
+	}
+}
+
+/* return the minimum of x -> ax^2 + bx + R */
+double LineSearch::minimize_quadratic(double a, double b) {
+	return -b/(2.*a);
+}
+
+/* return the minimum of x -> ax^3 + bx^2 + cx + R */
+double LineSearch::minimize_cubic(double a, double b, double c) {
+	return (-b + std::sqrt(b*b - 3.*a*c))/(3.*a);
 }

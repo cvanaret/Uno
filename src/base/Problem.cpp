@@ -1,4 +1,6 @@
 #include "Problem.hpp"
+#include <cmath>
+#include <iostream>
 
 Problem::Problem(std::string name): name(name) {
 }
@@ -57,4 +59,27 @@ double Problem::l1_inf_norm(std::vector<double> constraints) {
 		norm += std::max(0., residual);
 	}
 	return norm;
+}
+
+std::vector<ConstraintType> Problem::determine_constraints_types(std::vector<double>& lb, std::vector<double>& ub) {
+	std::vector<ConstraintType> status(lb.size());
+	
+	for (unsigned int i = 0; i < lb.size(); i++) {
+		if (lb[i] == ub[i]) {
+			status[i] = EQUAL_BOUNDS;
+		}
+		else if (-INFINITY < lb[i] && ub[i] < INFINITY) {
+			status[i] = BOUNDED_BOTH_SIDES;
+		}
+		else if (-INFINITY < lb[i]) {
+			status[i] = BOUNDED_LOWER;
+		}
+		else if (ub[i] < INFINITY) {
+			status[i] = BOUNDED_UPPER;
+		}
+		else {
+			status[i] = UNBOUNDED;
+		}
+	}
+	return status;
 }

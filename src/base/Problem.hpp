@@ -72,6 +72,7 @@ class Problem {
 		double infeasible_residual_norm(ConstraintPartition& constraint_partition, std::vector<double>& constraints);
 		
 		double l1_inf_norm(std::vector<double> constraints);
+		std::vector<ConstraintType> determine_constraints_types(std::vector<double>& lb, std::vector<double>& ub);
 		
 		int number_eval_objective;
 		int number_eval_constraints;

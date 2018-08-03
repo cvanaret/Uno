@@ -82,6 +82,18 @@ class AMPLModel: public Problem {
          *  Generate the Hessian of the Lagrangian
          */
 		void initialize_lagrangian_hessian();
+		
+		//template <typename T>
+		//void print_vector(std::ostream &stream, std::vector<T> x, unsigned int max_size = std::numeric_limits<unsigned int>::max()) {
+			//for (unsigned int i = 0; i < std::min<unsigned int>(x.size(), max_size); i++) {
+				//stream << x[i] << " ";
+			//}
+			//if (max_size < x.size()) {
+				//stream << "...";
+			//}
+			//stream << "\n";
+			//return;
+		//}
 };
 
 #endif // AMPLMODEL_H

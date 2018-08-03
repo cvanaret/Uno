@@ -29,6 +29,11 @@ class LineSearch: public GlobalizationMechanism {
 		
 	private:
 		bool termination(bool is_accepted, int iteration);
+		
+		double quadratic_interpolation(Problem& problem, Iterate& current_iterate, std::vector<double> direction, double steplength = 1.);
+		double cubic_interpolation(Problem& problem, Iterate& current_iterate, std::vector<double> direction, double steplength1, double steplength2);
+		double minimize_quadratic(double a, double b);
+		double minimize_cubic(double a, double b, double c);
 };
 
 #endif // LINESEARCH_H

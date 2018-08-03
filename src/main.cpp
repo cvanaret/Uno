@@ -114,16 +114,14 @@ std::map<std::string, std::string> get_default_values(std::string file_name) {
 void test_interior_point() {
 	/* test of hs015 */
 	AMPLModel problem = AMPLModel("../ampl_models/hs015");
-	for (int i = 0; i < problem.number_variables; i++) {
-		std::cout << "x" << i << " in [" << problem.variable_lb[i] << ", " << problem.variable_ub[i] << "]\n";
-	}
 	
 	std::vector<double> x = problem.primal_initial_solution();
 	std::vector<double> multipliers = problem.dual_initial_solution();
 	Iterate current_iterate(problem, x, multipliers);
 	
+	double radius = INFINITY;
 	InteriorPoint ipm;
-	ipm.compute_optimality_step(problem, current_iterate, problem.objective_sign, INFINITY);
+	ipm.compute_optimality_step(problem, current_iterate, problem.objective_sign, radius);
 	
 	return;
 }
