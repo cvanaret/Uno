@@ -37,7 +37,7 @@ class TwoPhaseStrategy: public GlobalizationStrategy {
 		
 		virtual bool check_step(Problem& problem, Iterate& current_iterate, LocalSolution& solution, double step_length = 1.) = 0;
 		
-		virtual void initialize(Problem& problem, Iterate& current_iterate) = 0;
+		virtual void initialize(Problem& problem, Iterate& current_iterate, bool use_trust_region) = 0;
 		
 		double compute_KKT_error(Problem& problem, Iterate& current_iterate);
 		

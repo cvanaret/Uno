@@ -113,7 +113,7 @@ std::map<std::string, std::string> get_default_values(std::string file_name) {
 
 void test_interior_point() {
 	/* test of hs015 */
-	AMPLModel problem = AMPLModel("../ampl_models/hs015");
+	AMPLModel problem = AMPLModel("../ampl_models/karmarkar");
 	
 	std::vector<double> x = problem.primal_initial_solution();
 	std::vector<double> multipliers = problem.dual_initial_solution();

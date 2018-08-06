@@ -80,3 +80,8 @@ bool TrustRegion::termination(bool is_accepted, int iteration, double radius) {
 	}
 	return false;
 }
+
+void TrustRegion::initialize(Problem& problem, Iterate& current_iterate) {
+	this->globalization_strategy.initialize(problem, current_iterate, true);
+	return;
+}

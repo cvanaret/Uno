@@ -27,7 +27,7 @@ class PenaltyStrategy: public GlobalizationStrategy {
 		
 		double compute_KKT_error(Problem& problem, Iterate& current_iterate);
 		
-		void initialize(Problem& problem, Iterate& current_iterate);
+		void initialize(Problem& problem, Iterate& current_iterate, bool use_trust_region);
 		
 		double penalty_parameter; /*!< Penalty */
 	

@@ -8,7 +8,7 @@
 QPApproximation::QPApproximation(QPSolver& solver): LocalApproximation("QP"), solver(solver) {
 }
 
-void QPApproximation::allocate_solver(int number_variables, int number_constraints) {
+void QPApproximation::initialize(Problem& problem, Iterate& current_iterate, int number_variables, int number_constraints, bool use_trust_region) {
 	this->solver.allocate(number_variables, number_constraints);
 }
 

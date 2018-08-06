@@ -27,6 +27,8 @@ class TrustRegion: public GlobalizationMechanism {
          */
 		Iterate compute_iterate(Problem& problem, Iterate& current_iterate);
 		
+		void initialize(Problem& problem, Iterate& current_iterate);
+		
 		double radius; /*!< Current trust region radius */
 
 	private:

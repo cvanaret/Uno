@@ -6,8 +6,3 @@ GlobalizationMechanism::GlobalizationMechanism(GlobalizationStrategy& globalizat
 
 GlobalizationMechanism::~GlobalizationMechanism() {
 }
-
-void GlobalizationMechanism::initialize(Problem& problem, Iterate& current_iterate) {
-	this->globalization_strategy.initialize(problem, current_iterate);
-	return;
-}

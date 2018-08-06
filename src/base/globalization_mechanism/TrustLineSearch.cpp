@@ -109,3 +109,8 @@ bool TrustLineSearch::termination(bool is_accepted, int iteration) {
 	}
 	return false;
 }
+
+void TrustLineSearch::initialize(Problem& problem, Iterate& current_iterate) {
+	this->globalization_strategy.initialize(problem, current_iterate, true);
+	return;
+}

@@ -31,23 +31,23 @@ class AMPLModel: public Problem {
 		~AMPLModel();
 		
 		/* objective */
-		double objective(std::vector<double> x);
-		std::vector<double> objective_dense_gradient(std::vector<double> x);
-		std::map<int,double> objective_sparse_gradient(std::vector<double> x);
+		double objective(std::vector<double>& x);
+		std::vector<double> objective_dense_gradient(std::vector<double>& x);
+		std::map<int,double> objective_sparse_gradient(std::vector<double>& x);
 		
 		/* variables */
 		std::vector<bool> variable_uncertain;
 		
 		/* constraints */
 		std::vector<bool> constraint_is_uncertainty_set;
-		double evaluate_constraint(int j, std::vector<double> x);
-		std::vector<double> evaluate_constraints(std::vector<double> x);
-		std::vector<double> constraint_dense_gradient(int j, std::vector<double> x);
-		std::map<int,double> constraint_sparse_gradient(int j, std::vector<double> x);
-		std::vector<std::map<int,double> > constraints_sparse_jacobian(std::vector<double> x);
+		double evaluate_constraint(int j, std::vector<double>& x);
+		std::vector<double> evaluate_constraints(std::vector<double>& x);
+		std::vector<double> constraint_dense_gradient(int j, std::vector<double>& x);
+		std::map<int,double> constraint_sparse_gradient(int j, std::vector<double>& x);
+		std::vector<std::map<int,double> > constraints_sparse_jacobian(std::vector<double>& x);
 		
 		/* Hessian */
-		CSCMatrix lagrangian_hessian(std::vector<double> x, double objective_multiplier, std::vector<double> multipliers);
+		CSCMatrix lagrangian_hessian(std::vector<double>& x, double objective_multiplier, std::vector<double>& multipliers);
 		
 		std::vector<double> primal_initial_solution();
 		std::vector<double> dual_initial_solution();

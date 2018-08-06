@@ -58,6 +58,11 @@ bool LineSearch::termination(bool is_accepted, int iteration) {
 	return false;
 }
 
+void LineSearch::initialize(Problem& problem, Iterate& current_iterate) {
+	this->globalization_strategy.initialize(problem, current_iterate, true);
+	return;
+}
+
 /*
  * Interpolation functions
  */

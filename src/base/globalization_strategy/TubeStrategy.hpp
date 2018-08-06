@@ -24,7 +24,7 @@ class TubeStrategy: public TwoPhaseStrategy {
 		
 		bool check_step(Problem& problem, Iterate& current_iterate, Step& step, Phase& phase);
 		
-		void initialize(Iterate& current_iterate);
+		void initialize(Problem& problem, Iterate& current_iterate, bool use_trust_region);
 	
 	protected:
 		void phase_transition(Problem& problem, Iterate& current_iterate, Iterate& trial_iterate, Step& step, Phase& phase, ConstraintPartition& constraint_partition);

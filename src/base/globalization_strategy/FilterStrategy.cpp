@@ -141,13 +141,13 @@ OptimalityStatus FilterStrategy::compute_status(Problem& problem, Iterate& curre
 	return status;
 }
 
-void FilterStrategy::initialize(Problem& problem, Iterate& current_iterate) {
+void FilterStrategy::initialize(Problem& problem, Iterate& current_iterate, bool use_trust_region) {
 	/* set the filter upper bound */
 	double upper_bound = std::max(this->constants.ubd, this->constants.fact*current_iterate.residual);
 	this->filter_optimality->upper_bound = upper_bound;
 	this->filter_restoration->upper_bound = upper_bound;
 	
 	/* allocate the subproblem solver */
-	this->local_approximation.allocate_solver(problem.number_variables, problem.number_constraints);
+	this->local_approximation.initialize(problem, current_iterate, problem.number_variables, problem.number_constraints, use_trust_region);
 	return;
 }

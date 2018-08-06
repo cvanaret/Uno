@@ -263,7 +263,7 @@ double PenaltyStrategy::compute_KKT_error(Problem& problem, Iterate& current_ite
 	return KKTerror;
 }
 
-void PenaltyStrategy::initialize(Problem& problem, Iterate& current_iterate) {
+void PenaltyStrategy::initialize(Problem& problem, Iterate& current_iterate, bool use_trust_region) {
 	/* compute the number of necessary additional variables and constraints */
 	this->penalty_dimensions.number_additional_variables = 0;
 	this->penalty_dimensions.number_constraints = 0;
@@ -290,6 +290,6 @@ void PenaltyStrategy::initialize(Problem& problem, Iterate& current_iterate) {
 	/* allocate the subproblem solver */
 	int number_variables = problem.number_variables + this->penalty_dimensions.number_additional_variables;
 	int number_constraints = this->penalty_dimensions.number_constraints;
-	this->local_approximation.allocate_solver(number_variables, number_constraints);
+	this->local_approximation.initialize(problem, current_iterate, number_variables, number_constraints, use_trust_region);
 	return;
 }

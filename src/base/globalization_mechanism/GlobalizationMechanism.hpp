@@ -29,7 +29,7 @@ class GlobalizationMechanism {
          */
 		virtual Iterate compute_iterate(Problem& problem, Iterate& current_iterate) = 0;
 		
-		void initialize(Problem& problem, Iterate& current_iterate);
+		virtual void initialize(Problem& problem, Iterate& current_iterate) = 0;
 		
 		/* references to allow polymorphism */
 		GlobalizationStrategy& globalization_strategy;  /*!< Strategy to accept or reject a step */

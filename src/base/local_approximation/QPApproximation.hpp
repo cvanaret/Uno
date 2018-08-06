@@ -18,7 +18,7 @@ class QPApproximation: public LocalApproximation {
          */
 		QPApproximation(QPSolver& solver);
 		
-		void allocate_solver(int number_variables, int number_constraints);
+		void initialize(Problem& problem, Iterate& current_iterate, int number_variables, int number_constraints, bool use_trust_region);
 		
 		LocalSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double objective_multiplier, double radius);
 		

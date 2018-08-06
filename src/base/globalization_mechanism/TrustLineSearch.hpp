@@ -23,6 +23,8 @@ class TrustLineSearch: public GlobalizationMechanism {
          */
 		Iterate compute_iterate(Problem& problem, Iterate& current_iterate);
 		
+		void initialize(Problem& problem, Iterate& current_iterate);
+		
 		/* ratio of step length update in ]0, 1[ */
 		double ratio;
 		double radius; /*!< Current trust region radius */

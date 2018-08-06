@@ -33,9 +33,9 @@ class Problem {
 		std::string objective_name;
 		FunctionType objective_type; /*!< Type of the objective (LINEAR, QUADRATIC, NONLINEAR) */
 		std::map<int,double> objective_variables;
-		virtual double objective(std::vector<double> x) = 0;
-		virtual std::vector<double> objective_dense_gradient(std::vector<double> x) = 0;
-		virtual std::map<int,double> objective_sparse_gradient(std::vector<double> x) = 0;
+		virtual double objective(std::vector<double>& x) = 0;
+		virtual std::vector<double> objective_dense_gradient(std::vector<double>& x) = 0;
+		virtual std::map<int,double> objective_sparse_gradient(std::vector<double>& x) = 0;
 		
 		/* variables */
 		std::vector<std::string> variable_name;
@@ -51,11 +51,11 @@ class Problem {
 		std::vector<double> constraint_ub;
 		std::vector<FunctionType> constraint_type; /*!< Types of the constraints (LINEAR, QUADRATIC, NONLINEAR) */
 		std::vector<ConstraintType> constraint_status; /*!< Status of the constraints (EQUALITY, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES) */
-		virtual double evaluate_constraint(int j, std::vector<double> x) = 0;
-		virtual std::vector<double> evaluate_constraints(std::vector<double> x) = 0;
-		virtual std::vector<double> constraint_dense_gradient(int j, std::vector<double> x) = 0;
-		virtual std::map<int,double> constraint_sparse_gradient(int j, std::vector<double> x) = 0;
-		virtual std::vector<std::map<int,double> > constraints_sparse_jacobian(std::vector<double> x) = 0;
+		virtual double evaluate_constraint(int j, std::vector<double>& x) = 0;
+		virtual std::vector<double> evaluate_constraints(std::vector<double>& x) = 0;
+		virtual std::vector<double> constraint_dense_gradient(int j, std::vector<double>& x) = 0;
+		virtual std::map<int,double> constraint_sparse_gradient(int j, std::vector<double>& x) = 0;
+		virtual std::vector<std::map<int,double> > constraints_sparse_jacobian(std::vector<double>& x) = 0;
 		
 		std::vector<int> jacobian_sparsity;
 		
@@ -63,7 +63,7 @@ class Problem {
 		int hessian_maximum_number_nonzero;  /*!< Number of nonzero elements in the Hessian */
 		std::vector<int> hessian_column_start; /*!< Column description of sparse Hessian */
 		std::vector<int> hessian_row_number; /*!< Row description of sparse Hessian */
-		virtual CSCMatrix lagrangian_hessian(std::vector<double> x, double objective_multiplier, std::vector<double> multipliers) = 0;
+		virtual CSCMatrix lagrangian_hessian(std::vector<double>& x, double objective_multiplier, std::vector<double>& multipliers) = 0;
 		
 		virtual std::vector<double> primal_initial_solution() = 0;
 		virtual std::vector<double> dual_initial_solution() = 0;
@@ -71,7 +71,7 @@ class Problem {
 		double feasible_residual_norm(ConstraintPartition& constraint_partition, std::vector<double>& constraints);
 		double infeasible_residual_norm(ConstraintPartition& constraint_partition, std::vector<double>& constraints);
 		
-		double l1_inf_norm(std::vector<double> constraints);
+		double l1_inf_norm(std::vector<double>& constraints);
 		std::vector<ConstraintType> determine_constraints_types(std::vector<double>& lb, std::vector<double>& ub);
 		
 		int number_eval_objective;

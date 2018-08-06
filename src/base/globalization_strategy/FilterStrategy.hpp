@@ -29,7 +29,7 @@ class FilterStrategy: public TwoPhaseStrategy {
          */
 		bool check_step(Problem& problem, Iterate& current_iterate, LocalSolution& solution, double step_length = 1.);
 		
-		void initialize(Problem& problem, Iterate& current_iterate);
+		void initialize(Problem& problem, Iterate& current_iterate, bool use_trust_region);
 		
 	private:
 		double compute_predicted_reduction(LocalSolution& solution, double step_length);

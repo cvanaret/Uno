@@ -125,7 +125,7 @@ std::map<int,double> create_cstr_variables(cgrad* ampl_variables) {
 	return variables;
 }
 
-double AMPLModel::objective(std::vector<double> x) {
+double AMPLModel::objective(std::vector<double>& x) {
 	this->number_eval_objective++;
 	int nerror = 0;
 	double result = this->objective_sign*(*((ASL*) this->asl_)->p.Objval)((ASL*) this->asl_, 0, x.data(), &nerror);
@@ -136,7 +136,7 @@ double AMPLModel::objective(std::vector<double> x) {
 }
 
 /* dense gradient */
-std::vector<double> AMPLModel::objective_dense_gradient(std::vector<double> x) {
+std::vector<double> AMPLModel::objective_dense_gradient(std::vector<double>& x) {
 	std::vector<double> gradient(x.size());
 	int nerror = 0;
 	/* compute the AMPL gradient (always in dense format) */
@@ -155,7 +155,7 @@ std::vector<double> AMPLModel::objective_dense_gradient(std::vector<double> x) {
 }
 
 /* sparse gradient */
-std::map<int,double> AMPLModel::objective_sparse_gradient(std::vector<double> x) {
+std::map<int,double> AMPLModel::objective_sparse_gradient(std::vector<double>& x) {
 	/* compute the AMPL gradient (always in dense format) */
 	std::vector<double> dense_gradient(x.size());
 	int nerror = 0;
@@ -185,7 +185,7 @@ void AMPLModel::initialize_objective() {
 	return;
 }
 
-double AMPLModel::evaluate_constraint(int j, std::vector<double> x) {
+double AMPLModel::evaluate_constraint(int j, std::vector<double>& x) {
 	int nerror = 0;
 	double result = (*((ASL*) this->asl_)->p.Conival)((ASL*) this->asl_, j, x.data(), &nerror);
 	if (0 < nerror) {
@@ -195,7 +195,7 @@ double AMPLModel::evaluate_constraint(int j, std::vector<double> x) {
 	return result;
 }
 
-std::vector<double> AMPLModel::evaluate_constraints(std::vector<double> x) {
+std::vector<double> AMPLModel::evaluate_constraints(std::vector<double>& x) {
 	this->number_eval_constraints++;
 	std::vector<double> constraints(this->number_constraints);
 	for (int j = 0; j < this->number_constraints; j++) {
@@ -205,7 +205,7 @@ std::vector<double> AMPLModel::evaluate_constraints(std::vector<double> x) {
 }
 
 /* dense gradient */
-std::vector<double> AMPLModel::constraint_dense_gradient(int j, std::vector<double> x) {
+std::vector<double> AMPLModel::constraint_dense_gradient(int j, std::vector<double>& x) {
 	int congrd_mode_backup = this->asl_->i.congrd_mode;
 	this->asl_->i.congrd_mode = 0; // dense computation
 	
@@ -223,7 +223,7 @@ std::vector<double> AMPLModel::constraint_dense_gradient(int j, std::vector<doub
 }
 
 /* sparse gradient */
-std::map<int,double> AMPLModel::constraint_sparse_gradient(int j, std::vector<double> x) {
+std::map<int,double> AMPLModel::constraint_sparse_gradient(int j, std::vector<double>& x) {
 	int number_variables = this->constraint_variables[j].size(); // <= size(x)
 	int congrd_mode_backup = this->asl_->i.congrd_mode;
 	this->asl_->i.congrd_mode = 1; // sparse computation
@@ -254,7 +254,7 @@ std::map<int,double> AMPLModel::constraint_sparse_gradient(int j, std::vector<do
 	return gradient;
 }
 
-std::vector<std::map<int,double> > AMPLModel::constraints_sparse_jacobian(std::vector<double> x) {
+std::vector<std::map<int,double> > AMPLModel::constraints_sparse_jacobian(std::vector<double>& x) {
 	this->number_eval_jacobian++;
 	std::vector<std::map<int,double> > constraints_jacobian(this->number_constraints);
 	for (int j = 0; j < this->number_constraints; j++) {
@@ -268,8 +268,8 @@ void AMPLModel::generate_constraints() {
 	
 	this->constraint_name.reserve(this->number_constraints);
 	this->constraint_variables.reserve(this->number_constraints);
-	this->constraint_lb.reserve(this->number_constraints);
-	this->constraint_ub.reserve(this->number_constraints);
+	this->constraint_lb.resize(this->number_constraints);
+	this->constraint_ub.resize(this->number_constraints);
 	this->constraint_is_uncertainty_set.reserve(this->number_constraints);
 	this->constraint_status.reserve(this->number_constraints);
 	
@@ -279,23 +279,8 @@ void AMPLModel::generate_constraints() {
 		this->constraint_lb[j] = (this->asl_->i.LUrhs_ != NULL) ? this->asl_->i.LUrhs_[2*j] : -INFINITY;
 		this->constraint_ub[j] = (this->asl_->i.LUrhs_ != NULL) ? this->asl_->i.LUrhs_[2*j+1] : INFINITY;
 		this->constraint_is_uncertainty_set[j] = (uncertain_suffixes->u.i != NULL && uncertain_suffixes->u.i[j] == 1);
-
-		if (this->constraint_lb[j] == this->constraint_ub[j]) {
-			this->constraint_status[j] = EQUAL_BOUNDS;
-		}
-		else if (-INFINITY < this->constraint_lb[j] && this->constraint_ub[j] < INFINITY) {
-			this->constraint_status[j] = BOUNDED_BOTH_SIDES;
-		}
-		else if (-INFINITY < this->constraint_lb[j]) {
-			this->constraint_status[j] = BOUNDED_LOWER;
-		}
-		else if (this->constraint_ub[j] < INFINITY) {
-			this->constraint_status[j] = BOUNDED_UPPER;
-		}
-		else {
-			this->constraint_status[j] = UNBOUNDED;
-		}
 	}
+	this->constraint_status = this->determine_constraints_types(this->constraint_lb, this->constraint_ub);
 	return;
 }
 
@@ -375,7 +360,7 @@ void AMPLModel::initialize_lagrangian_hessian() {
 	return;
 }
 
-CSCMatrix AMPLModel::lagrangian_hessian(std::vector<double> x, double objective_multiplier, std::vector<double> multipliers) {
+CSCMatrix AMPLModel::lagrangian_hessian(std::vector<double>& x, double objective_multiplier, std::vector<double>& multipliers) {
 	this->number_eval_hessian++;
 	/* register the vector of variables */
 	(*((ASL*) this->asl_)->p.Xknown)((ASL*) this->asl_, x.data(), 0);
