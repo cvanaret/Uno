@@ -16,7 +16,7 @@ class FilterStrategy: public TwoPhaseStrategy {
 		/*!
          *  Constructor that takes an optimization problem, filters for restoration and optimality, and a set of constants
          */
-		FilterStrategy(LocalApproximation& local_approximation, std::shared_ptr<Filter> filter_optimality,
+		FilterStrategy(Subproblem& subproblem, std::shared_ptr<Filter> filter_optimality,
 			std::shared_ptr<Filter> filter_restoration, TwoPhaseConstants& constants, double tolerance);
 	
 		/* use pointers to allow polymorphism */

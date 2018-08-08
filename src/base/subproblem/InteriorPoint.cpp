@@ -1,6 +1,6 @@
 #include "InteriorPoint.hpp"
 
-InteriorPoint::InteriorPoint(): LocalApproximation("IPM"), tau(0.995), default_multiplier(0.5), default_slack(1.) {
+InteriorPoint::InteriorPoint(): Subproblem("IPM"), tau(0.995), default_multiplier(0.5), default_slack(1.) {
 }
 
 void InteriorPoint::initialize(Problem& problem, Iterate& current_iterate, int number_variables, int number_constraints, bool use_trust_region) {

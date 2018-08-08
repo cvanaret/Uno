@@ -1,8 +1,8 @@
-#include "LocalApproximationFactory.hpp"
+#include "SubproblemFactory.hpp"
 #include "QPApproximation.hpp"
 #include "BQPDSolver.hpp"
 
-std::shared_ptr<LocalApproximation> LocalApproximationFactory::create(const std::string& type,
+std::shared_ptr<Subproblem> SubproblemFactory::create(const std::string& type,
 		QPSolver& solver, std::map<std::string, std::string> default_values) {
 	if (type == "QP") {
 		return std::make_shared<QPApproximation>(solver);

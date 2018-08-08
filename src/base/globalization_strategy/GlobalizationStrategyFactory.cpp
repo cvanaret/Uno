@@ -3,12 +3,12 @@
 #include "Filter.hpp"
 #include "FilterStrategy.hpp"
 
-std::shared_ptr<GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& type, LocalApproximation& local_approximation,
+std::shared_ptr<GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& type, Subproblem& subproblem,
 		std::map<std::string, std::string> default_values) {
 	double tolerance = stod(default_values["tolerance"]);
 	
 	if (type == "penalty") {
-		return std::make_shared<PenaltyStrategy>(local_approximation, tolerance);
+		return std::make_shared<PenaltyStrategy>(subproblem, tolerance);
 	}
 	else if (type == "filter" || type == "nonmonotone_filter") {
 		double Sigma = stod(default_values["Sigma"]);
@@ -24,13 +24,13 @@ std::shared_ptr<GlobalizationStrategy> GlobalizationStrategyFactory::create(cons
 		if (type == "filter") {
 			std::shared_ptr<Filter> filter_optimality = std::make_shared<Filter>(filter_constants);
 			std::shared_ptr<Filter> filter_restoration = std::make_shared<Filter>(filter_constants);
-			return std::make_shared<FilterStrategy>(local_approximation, filter_optimality, filter_restoration, constants, tolerance);
+			return std::make_shared<FilterStrategy>(subproblem, filter_optimality, filter_restoration, constants, tolerance);
 		}
 		else {
 			int number_dominated_entries = stoi(default_values["number_dominated_entries"]);
 			std::shared_ptr<Filter> filter_optimality = std::make_shared<NonmonotoneFilter>(filter_constants, number_dominated_entries);
 			std::shared_ptr<Filter> filter_restoration = std::make_shared<NonmonotoneFilter>(filter_constants, number_dominated_entries);
-			return std::make_shared<FilterStrategy>(local_approximation, filter_optimality, filter_restoration, constants, tolerance);
+			return std::make_shared<FilterStrategy>(subproblem, filter_optimality, filter_restoration, constants, tolerance);
 		}
 	}
 	else {

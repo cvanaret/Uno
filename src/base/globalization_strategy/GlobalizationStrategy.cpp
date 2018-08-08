@@ -2,7 +2,7 @@
 #include <cmath>
 #include "GlobalizationStrategy.hpp"
 
-GlobalizationStrategy::GlobalizationStrategy(LocalApproximation& local_approximation, double tolerance): local_approximation(local_approximation){
+GlobalizationStrategy::GlobalizationStrategy(Subproblem& subproblem, double tolerance): subproblem(subproblem){
 	this->tolerance = tolerance;
 }
 

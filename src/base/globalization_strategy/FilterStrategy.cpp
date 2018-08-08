@@ -4,9 +4,9 @@
 #include "Utils.hpp"
 
 /* TODO option to switch between filter or non-monotonic filter */
-FilterStrategy::FilterStrategy(LocalApproximation& local_approximation, std::shared_ptr<Filter> filter_optimality,
+FilterStrategy::FilterStrategy(Subproblem& subproblem, std::shared_ptr<Filter> filter_optimality,
 	std::shared_ptr<Filter> filter_restoration, TwoPhaseConstants& constants, double tolerance):
-		TwoPhaseStrategy(local_approximation, constants, tolerance),
+		TwoPhaseStrategy(subproblem, constants, tolerance),
 		filter_optimality(filter_optimality),
 		filter_restoration(filter_restoration) {
 }
@@ -148,6 +148,6 @@ void FilterStrategy::initialize(Problem& problem, Iterate& current_iterate, bool
 	this->filter_restoration->upper_bound = upper_bound;
 	
 	/* allocate the subproblem solver */
-	this->local_approximation.initialize(problem, current_iterate, problem.number_variables, problem.number_constraints, use_trust_region);
+	this->subproblem.initialize(problem, current_iterate, problem.number_variables, problem.number_constraints, use_trust_region);
 	return;
 }

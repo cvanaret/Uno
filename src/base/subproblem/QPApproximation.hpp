@@ -1,7 +1,7 @@
 #ifndef QPAPPROXIMATION_H
 #define QPAPPROXIMATION_H
 
-#include "LocalApproximation.hpp"
+#include "Subproblem.hpp"
 #include "QPSolver.hpp"
 
 /*! \class QPApproximation
@@ -9,7 +9,7 @@
 *
 *  Quadratic approximation
 */
-class QPApproximation: public LocalApproximation {
+class QPApproximation: public Subproblem {
 	public:
 		/*!
          *  Constructor

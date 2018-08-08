@@ -7,8 +7,8 @@
 * http://epubs.siam.org/doi/pdf/10.1137/080738222
 */
 
-PenaltyStrategy::PenaltyStrategy(LocalApproximation& local_approximation, double tolerance):
-		GlobalizationStrategy(local_approximation, tolerance), penalty_parameter(1.) {
+PenaltyStrategy::PenaltyStrategy(Subproblem& subproblem, double tolerance):
+		GlobalizationStrategy(subproblem, tolerance), penalty_parameter(1.) {
 	this->tau = 0.5;
 	this->eta = 1e-8;
 	this->epsilon1 = 0.1;
@@ -17,7 +17,7 @@ PenaltyStrategy::PenaltyStrategy(LocalApproximation& local_approximation, double
 
 LocalSolution PenaltyStrategy::compute_step(Problem& problem, Iterate& current_iterate, double radius) {
 	/* stage a: compute the step within trust region */
-	LocalSolution solution = this->local_approximation.compute_l1_penalty_step(problem, current_iterate, radius, this->penalty_parameter, this->penalty_dimensions);
+	LocalSolution solution = this->subproblem.compute_l1_penalty_step(problem, current_iterate, radius, this->penalty_parameter, this->penalty_dimensions);
 	DEBUG << solution;
 	
 	/* if penalty parameter is already 0, no need to decrease it */
@@ -28,7 +28,7 @@ LocalSolution PenaltyStrategy::compute_step(Problem& problem, Iterate& current_i
 			double current_penalty_parameter = this->penalty_parameter;
 			
 			/* stage c: solve the ideal l1 penalty problem with a zero penalty (no objective) */
-			LocalSolution ideal_solution = this->local_approximation.compute_l1_penalty_step(problem, current_iterate, radius, 0., this->penalty_dimensions);
+			LocalSolution ideal_solution = this->subproblem.compute_l1_penalty_step(problem, current_iterate, radius, 0., this->penalty_dimensions);
 			DEBUG << ideal_solution;
 			
 			/* stage f: update the penalty parameter */
@@ -53,7 +53,7 @@ LocalSolution PenaltyStrategy::compute_step(Problem& problem, Iterate& current_i
 					}
 					
 					DEBUG << "\nSolving with penalty parameter " << this->penalty_parameter << "\n";
-					solution = this->local_approximation.compute_l1_penalty_step(problem, current_iterate, radius, this->penalty_parameter, this->penalty_dimensions);
+					solution = this->subproblem.compute_l1_penalty_step(problem, current_iterate, radius, this->penalty_parameter, this->penalty_dimensions);
 					DEBUG << solution;
 					
 					double trial_linear_model = this->compute_linear_model(problem, solution);
@@ -82,7 +82,7 @@ LocalSolution PenaltyStrategy::compute_step(Problem& problem, Iterate& current_i
 					solution = ideal_solution;
 				}
 				else {
-					solution = this->local_approximation.compute_l1_penalty_step(problem, current_iterate, radius, this->penalty_parameter, this->penalty_dimensions);
+					solution = this->subproblem.compute_l1_penalty_step(problem, current_iterate, radius, this->penalty_parameter, this->penalty_dimensions);
 					DEBUG << solution;
 				}
 			}
@@ -290,6 +290,6 @@ void PenaltyStrategy::initialize(Problem& problem, Iterate& current_iterate, boo
 	/* allocate the subproblem solver */
 	int number_variables = problem.number_variables + this->penalty_dimensions.number_additional_variables;
 	int number_constraints = this->penalty_dimensions.number_constraints;
-	this->local_approximation.initialize(problem, current_iterate, number_variables, number_constraints, use_trust_region);
+	this->subproblem.initialize(problem, current_iterate, number_variables, number_constraints, use_trust_region);
 	return;
 }

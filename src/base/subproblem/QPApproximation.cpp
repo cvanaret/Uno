@@ -5,7 +5,7 @@
 #include "Utils.hpp"
 #include "Logger.hpp"
 
-QPApproximation::QPApproximation(QPSolver& solver): LocalApproximation("QP"), solver(solver) {
+QPApproximation::QPApproximation(QPSolver& solver): Subproblem("QP"), solver(solver) {
 }
 
 void QPApproximation::initialize(Problem& problem, Iterate& current_iterate, int number_variables, int number_constraints, bool use_trust_region) {

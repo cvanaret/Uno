@@ -28,7 +28,7 @@ class TwoPhaseStrategy: public GlobalizationStrategy {
          * \param problem: optimization problem
          * \param constants: set of constants
          */
-		TwoPhaseStrategy(LocalApproximation& local_approximation, TwoPhaseConstants& constants, double tolerance);
+		TwoPhaseStrategy(Subproblem& subproblem, TwoPhaseConstants& constants, double tolerance);
 		
 		/*!
          *  TwoPhaseStrategy implements the compute_step method

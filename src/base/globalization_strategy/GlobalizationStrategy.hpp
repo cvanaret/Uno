@@ -2,7 +2,7 @@
 #define GLOBALIZATIONSTRATEGY_H
 
 #include "Problem.hpp"
-#include "LocalApproximation.hpp"
+#include "Subproblem.hpp"
 #include "Iterate.hpp"
 #include "LocalSolution.hpp"
 #include "Constraint.hpp"
@@ -20,10 +20,10 @@ class GlobalizationStrategy {
          * \param problem: optimization problem
          * \param constants: set of constants
          */
-		GlobalizationStrategy(LocalApproximation& local_approximation, double tolerance);
+		GlobalizationStrategy(Subproblem& subproblem, double tolerance);
 		virtual ~GlobalizationStrategy();
 		
-		LocalApproximation& local_approximation;
+		Subproblem& subproblem;
 		double tolerance; /*!< Tolerance of the termination criteria */
 		
 		virtual LocalSolution compute_step(Problem& problem, Iterate& current_iterate, double radius) = 0;

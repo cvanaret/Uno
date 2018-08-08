@@ -15,7 +15,7 @@ class PenaltyStrategy: public GlobalizationStrategy {
 		/*!
          *  Constructor that takes an optimization problem and a set of constants
          */
-		PenaltyStrategy(LocalApproximation& local_approximation, double tolerance);
+		PenaltyStrategy(Subproblem& subproblem, double tolerance);
 
 		LocalSolution compute_step(Problem& problem, Iterate& current_iterate, double radius);
 

@@ -1,15 +1,15 @@
 #ifndef INTERIORPOINT_H
 #define INTERIORPOINT_H
 
-#include "LocalApproximation.hpp"
+#include "Subproblem.hpp"
 #include "MA57Solver.hpp"
 
-/*! \class LocalApproximation
-* \brief Local approximation
+/*! \class InteriorPoint
+* \brief Interior Point Method
 *
-*  Local appromination of a nonlinear optimization problem (virtual class) 
+*  Implementation of an Interior Point Method
 */
-class InteriorPoint: public LocalApproximation {
+class InteriorPoint: public Subproblem {
 	public:
 		/*!
          *  Constructor

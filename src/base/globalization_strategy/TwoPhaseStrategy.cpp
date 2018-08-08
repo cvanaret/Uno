@@ -2,14 +2,14 @@
 #include "TwoPhaseStrategy.hpp"
 #include "Logger.hpp"
 
-TwoPhaseStrategy::TwoPhaseStrategy(LocalApproximation& local_approximation, TwoPhaseConstants& constants, double tolerance):
-		GlobalizationStrategy(local_approximation, tolerance), phase(OPTIMALITY), constants(constants) {
+TwoPhaseStrategy::TwoPhaseStrategy(Subproblem& subproblem, TwoPhaseConstants& constants, double tolerance):
+		GlobalizationStrategy(subproblem, tolerance), phase(OPTIMALITY), constants(constants) {
 }
 
 LocalSolution TwoPhaseStrategy::compute_step(Problem& problem, Iterate& current_iterate, double radius) {
 	double objective_multiplier = problem.objective_sign;
 	//double objective_multiplier = (phase == OPTIMALITY) ? problem.obj_sign : 0.;
-	LocalSolution solution = this->local_approximation.compute_optimality_step(problem, current_iterate, objective_multiplier, radius);
+	LocalSolution solution = this->subproblem.compute_optimality_step(problem, current_iterate, objective_multiplier, radius);
 	solution.phase = OPTIMALITY;
 	DEBUG << solution;
 	
@@ -23,7 +23,7 @@ LocalSolution TwoPhaseStrategy::compute_step(Problem& problem, Iterate& current_
 		ConstraintPartition constraint_partition = solution.constraint_partition;
 		
 		/* compute the step in phase 1, starting from infeasible solution */
-		solution = this->local_approximation.compute_infeasibility_step(problem, current_iterate, radius, solution.x, constraint_partition, solution.multipliers);
+		solution = this->subproblem.compute_infeasibility_step(problem, current_iterate, radius, solution.x, constraint_partition, solution.multipliers);
 		solution.constraint_partition = constraint_partition;
 		solution.phase = RESTORATION;
 		DEBUG << solution;

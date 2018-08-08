@@ -56,7 +56,7 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, std::vector<doub
 					problem.number_eval_constraints,
 					problem.number_eval_jacobian,
 					problem.number_eval_hessian,
-					this->globalization_mechanism.globalization_strategy.local_approximation.number_subproblems_solved};
+					this->globalization_mechanism.globalization_strategy.subproblem.number_subproblems_solved};
 	return result;
 }
 

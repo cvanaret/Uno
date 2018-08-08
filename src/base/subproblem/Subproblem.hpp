@@ -1,5 +1,5 @@
-#ifndef LOCALAPPROXIMATION_H
-#define LOCALAPPROXIMATION_H
+#ifndef SUBPROBLEM_H
+#define SUBPROBLEM_H
 
 #include <vector>
 #include "Problem.hpp"
@@ -8,12 +8,12 @@
 #include "LocalSolution.hpp"
 #include "Constraint.hpp"
 
-/*! \class LocalApproximation
-* \brief Local approximation
+/*! \class Subproblem
+* \brief Subproblem
 *
-*  Local appromination of a nonlinear optimization problem (virtual class) 
+*  Local approximation of a nonlinear optimization problem (virtual class) 
 */
-class LocalApproximation {
+class Subproblem {
 	public:
 		/*!
          *  Constructor
@@ -21,8 +21,8 @@ class LocalApproximation {
          * \param solver: solver that solves the subproblem
          * \param name: name of the strategy
          */
-		LocalApproximation(std::string name);
-		virtual ~LocalApproximation();
+		Subproblem(std::string name);
+		virtual ~Subproblem();
 		
 		virtual LocalSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double objective_multiplier, double radius) = 0;
 		
@@ -36,4 +36,4 @@ class LocalApproximation {
 		int number_subproblems_solved;
 };
 
-#endif // LOCALAPPROXIMATION_H
+#endif // SUBPROBLEM_H

@@ -6,7 +6,7 @@
 #include <fstream>
 #include "AMPLModel.hpp"
 #include "QPSolverFactory.hpp"
-#include "LocalApproximationFactory.hpp"
+#include "SubproblemFactory.hpp"
 #include "GlobalizationStrategyFactory.hpp"
 #include "GlobalizationMechanismFactory.hpp"
 #include "Argonot.hpp"
@@ -19,11 +19,11 @@ void test_argonot(std::string problem_name, std::map<std::string, std::string> o
 	/* create the local solver */
 	std::shared_ptr<QPSolver> solver = QPSolverFactory::create("BQPD", problem, options);
 	
-	/* create the local approximation strategy */
-	std::shared_ptr<LocalApproximation> local_approximation = LocalApproximationFactory::create(options["local_approximation"], *solver, options);
+	/* create the subproblem strategy */
+	std::shared_ptr<Subproblem> subproblem = SubproblemFactory::create(options["subproblem"], *solver, options);
 	
 	/* create the globalization strategy */
-	std::shared_ptr<GlobalizationStrategy> strategy = GlobalizationStrategyFactory::create(options["strategy"], *local_approximation, options);
+	std::shared_ptr<GlobalizationStrategy> strategy = GlobalizationStrategyFactory::create(options["strategy"], *subproblem, options);
 	
 	/* create the globalization mechanism */
 	std::shared_ptr<GlobalizationMechanism> mechanism = GlobalizationMechanismFactory::create(options["mechanism"], *strategy, options);
@@ -113,7 +113,7 @@ std::map<std::string, std::string> get_default_values(std::string file_name) {
 
 void test_interior_point() {
 	/* test of hs015 */
-	AMPLModel problem = AMPLModel("../ampl_models/karmarkar");
+	AMPLModel problem = AMPLModel("../ampl_models/nactive");
 	
 	std::vector<double> x = problem.primal_initial_solution();
 	std::vector<double> multipliers = problem.dual_initial_solution();
