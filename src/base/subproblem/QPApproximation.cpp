@@ -8,7 +8,7 @@
 QPApproximation::QPApproximation(QPSolver& solver): Subproblem("QP"), solver(solver) {
 }
 
-void QPApproximation::initialize(Problem& problem, Iterate& current_iterate, int number_variables, int number_constraints, bool use_trust_region) {
+void QPApproximation::initialize(Problem& problem, Iterate& current_iterate, int number_variables, int number_constraints, double radius) {
 	this->solver.allocate(number_variables, number_constraints);
 }
 

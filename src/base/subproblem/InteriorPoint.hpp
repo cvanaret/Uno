@@ -16,7 +16,7 @@ class InteriorPoint: public Subproblem {
          */
 		InteriorPoint();
 		
-		void initialize(Problem& problem, Iterate& current_iterate, int number_variables, int number_constraints, bool use_trust_region);
+		void initialize(Problem& problem, Iterate& current_iterate, int number_variables, int number_constraints, double radius);
 		
 		LocalSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double objective_multiplier, double radius);
 		
@@ -25,12 +25,23 @@ class InteriorPoint: public Subproblem {
 		LocalSolution compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyDimensions penalty_dimensions);
 		
 		MA57Solver solver; /*!< Solver that solves the subproblem */
+		
+		double mu;
+		
+		/* slacks and multipliers */
+		std::vector<double> multipliers;
+		std::vector<double> slacks;
+		std::vector<ConstraintType> variable_status;
+		
+		/* constants */
 		double tau;
 		double default_multiplier;
 		double default_slack;
-		
+
 	private:
-		std::vector<double> compute_slack_displacements(Problem& problem, std::vector<ConstraintType>& variable_status, double mu, std::vector<double>& multipliers, std::vector<double>& slacks, std::vector<double>& solution);
+		COOMatrix generate_kkt_matrix(Problem& problem, Iterate& current_iterate, double objective_multiplier, std::vector<double> original_multipliers);
+		std::vector<double> generate_rhs(Problem& problem, Iterate& current_iterate, double objective_multiplier, std::vector<double>& original_multipliers, std::vector<double> variable_lb, std::vector<double> variable_ub);
+		std::vector<double> compute_slack_displacements(Problem& problem, double mu, std::vector<double>& solution);
 };
 
 #endif // INTERIORPOINT_H

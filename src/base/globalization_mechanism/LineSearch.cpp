@@ -59,7 +59,7 @@ bool LineSearch::termination(bool is_accepted, int iteration) {
 }
 
 void LineSearch::initialize(Problem& problem, Iterate& current_iterate) {
-	this->globalization_strategy.initialize(problem, current_iterate, true);
+	this->globalization_strategy.initialize(problem, current_iterate, false);
 	return;
 }
 

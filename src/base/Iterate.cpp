@@ -35,6 +35,15 @@ void Iterate::set_objective_gradient(std::map<int,double>& objective_gradient) {
 	return;
 }
 
+
+void Iterate::compute_objective_gradient(Problem& problem) {
+	if (!this->is_objective_gradient_computed) {
+		this->objective_gradient = problem.objective_sparse_gradient(this->x);
+		this->is_objective_gradient_computed = true;
+	}
+	return;
+}
+
 void Iterate::compute_constraints_jacobian(Problem& problem) {
 	if (!this->is_constraints_jacobian_computed) {
 		this->constraints_jacobian = problem.constraints_sparse_jacobian(this->x);
@@ -45,9 +54,6 @@ void Iterate::compute_constraints_jacobian(Problem& problem) {
 
 void Iterate::compute_hessian(Problem& problem, double objective_multiplier, std::vector<double>& constraint_multipliers) {
 	if (!this->is_hessian_computed) {
-		DEBUG << "\t\tMultipliers: " << objective_multiplier << " | ";
-		print_vector(DEBUG, constraint_multipliers, 20);
-		
 		this->hessian = problem.lagrangian_hessian(this->x, objective_multiplier, constraint_multipliers);
 		this->is_hessian_computed = true;
 	}
