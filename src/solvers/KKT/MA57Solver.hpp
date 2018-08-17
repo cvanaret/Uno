@@ -5,6 +5,14 @@
 #include "Matrix.hpp"
 #include "LocalSolution.hpp"
 
+struct MA57Data {
+	std::vector<double> fact;
+	int lfact;
+	std::vector<int> ifact;
+	int lifact;
+	std::vector<int> iwork;	
+};
+
 /*! \class MA57Solver
 * \brief Interface for MA57
 * see https://github.com/YimingYAN/linSolve
@@ -16,7 +24,10 @@ class MA57Solver {
 		MA57Solver();
 		
 		int use_fortran;
-		LocalSolution solve(COOMatrix& matrix, std::vector<double> rhs);
+		
+		MA57Data factorize(COOMatrix& matrix);
+		LocalSolution solve(COOMatrix& matrix, std::vector<double>& rhs, MA57Data& data);
+		int number_negative_eigenvalues();
 		
 	private:
 		/* for ma57id_ */

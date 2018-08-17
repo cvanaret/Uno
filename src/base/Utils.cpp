@@ -67,3 +67,15 @@ double dot(std::vector<double>& x, std::map<int,double>& y) {
 	}
 	return dot;
 }
+
+double sign(double x) {
+	if (x == 0.) {
+		return 0.;
+	}
+	else if (x < 0.) {
+		return -1.;
+	}
+	else {
+		return 1.;
+	}
+}

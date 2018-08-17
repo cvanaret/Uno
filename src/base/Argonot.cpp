@@ -8,7 +8,7 @@ Argonot::Argonot(GlobalizationMechanism& globalization_mechanism, int max_iterat
 		globalization_mechanism(globalization_mechanism), max_iterations(max_iterations) {
 }
 
-Result Argonot::solve(Problem& problem, std::vector<double>& x, std::vector<double>& multipliers) {
+Result Argonot::solve(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers) {
 	std::clock_t c_start = std::clock();
 	
 	int major_iterations = 0, minor_iterations = 0;
@@ -17,7 +17,7 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, std::vector<doub
 	INFO << problem.number_variables << " variables, " << problem.number_constraints << " constraints\n";
 
 	/* evaluate the initial point */
-	Iterate current_iterate(problem, x, multipliers);
+	Iterate current_iterate(problem, x, bound_multipliers, constraint_multipliers);
 	INFO << "Initial iterate\n" << current_iterate << "\n";
 	
 	/* use the evaluation of the current point to initialize the strategies */
@@ -94,8 +94,10 @@ void Result::display() {
 	std::cout << "Primal solution:\t";
 	print_vector(std::cout, this->solution.x);
 	
-	std::cout << "Dual solution:\t\t";
-	print_vector(std::cout, this->solution.multipliers);
+	std::cout << "Bound multipliers:\t\t";
+	print_vector(std::cout, this->solution.bound_multipliers);
+	std::cout << "Constraint multipliers:\t\t";
+	print_vector(std::cout, this->solution.constraint_multipliers);
 	
 	std::cout << "CPU time:\t\t" << this->cpu_time << "s\n";
 	std::cout << "Iterations:\t\t" << this->iteration << "\n";

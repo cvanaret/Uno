@@ -2,8 +2,8 @@
 #include "Utils.hpp"
 #include "Logger.hpp"
 
-Iterate::Iterate(Problem& problem, std::vector<double>& x, std::vector<double>& multipliers):
-		x(x), multipliers(multipliers) {
+Iterate::Iterate(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers):
+		x(x), bound_multipliers(bound_multipliers), constraint_multipliers(constraint_multipliers) {
 	
 	/* project point onto bounds */
 	for(int i = 0; i < problem.number_variables; i++) {
@@ -61,11 +61,14 @@ void Iterate::compute_hessian(Problem& problem, double objective_multiplier, std
 }
 
 std::ostream& operator<< (std::ostream &stream, Iterate& iterate) {
-	stream << "Primal: ";
+	stream << "x: ";
 	print_vector(stream, iterate.x, 50);
 	
-	stream << "Dual: ";
-	print_vector(stream, iterate.multipliers, 50);
+	stream << "Bound multipliers: ";
+	print_vector(stream, iterate.bound_multipliers, 50);
+	
+	stream << "Constraint multipliers: ";
+	print_vector(stream, iterate.constraint_multipliers, 50);
 	
 	stream << "Objective: " << iterate.objective << "\n";
 	

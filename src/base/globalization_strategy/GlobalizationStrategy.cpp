@@ -9,7 +9,8 @@ GlobalizationStrategy::GlobalizationStrategy(Subproblem& subproblem, double tole
 GlobalizationStrategy::~GlobalizationStrategy() {
 }
 
-std::vector<double> GlobalizationStrategy::compute_lagrangian_gradient(Problem& problem, Iterate& current_iterate, double objective_multiplier, std::vector<double>& multipliers) {
+std::vector<double> GlobalizationStrategy::compute_lagrangian_gradient(Problem& problem, Iterate& current_iterate, double objective_multiplier,
+		std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers) {
 	std::vector<double> lagrangian_gradient(problem.number_variables);
 	
 	/* objective gradient */
@@ -27,14 +28,13 @@ std::vector<double> GlobalizationStrategy::compute_lagrangian_gradient(Problem& 
 	}
 	/* bound constraints */
 	for (int i = 0; i < problem.number_variables; i++) {
-		double multiplier_i = multipliers[i];
-		lagrangian_gradient[i] -= multiplier_i;
+		lagrangian_gradient[i] -= bound_multipliers[i];
 	}
 	/* constraints */
 	current_iterate.compute_constraints_jacobian(problem);
 	
 	for (int j = 0; j < problem.number_constraints; j++) {
-		double multiplier_j = multipliers[problem.number_variables + j];
+		double multiplier_j = constraint_multipliers[j];
 		if (multiplier_j != 0.) {
 			for (std::map<int,double>::iterator it = current_iterate.constraints_jacobian[j].begin(); it != current_iterate.constraints_jacobian[j].end(); it++) {
 				int variable_index = it->first;
@@ -52,7 +52,7 @@ double GlobalizationStrategy::compute_complementarity_error(const Problem& probl
 	
 	/* bound constraints */
 	for (int i = 0; i < problem.number_variables; i++) {
-		double multiplier_i = current_iterate.multipliers[i];
+		double multiplier_i = current_iterate.bound_multipliers[i];
 		
 		if (multiplier_i > this->tolerance/10.) {
 			complementarity_error += std::abs(multiplier_i*(current_iterate.x[i] - problem.variable_lb[i]));
@@ -64,7 +64,7 @@ double GlobalizationStrategy::compute_complementarity_error(const Problem& probl
 	}
 	/* constraints */
 	for(int j = 0; j < problem.number_constraints; j++) {
-		double multiplier_j = current_iterate.multipliers[problem.number_variables + j];
+		double multiplier_j = current_iterate.constraint_multipliers[j];
 		
 		if (multiplier_j > this->tolerance/10.) {
 			complementarity_error += std::abs(multiplier_j*(current_iterate.constraints[j] - problem.constraint_lb[j]));

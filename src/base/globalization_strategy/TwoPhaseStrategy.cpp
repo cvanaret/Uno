@@ -7,9 +7,8 @@ TwoPhaseStrategy::TwoPhaseStrategy(Subproblem& subproblem, TwoPhaseConstants& co
 }
 
 LocalSolution TwoPhaseStrategy::compute_step(Problem& problem, Iterate& current_iterate, double radius) {
-	double objective_multiplier = problem.objective_sign;
 	//double objective_multiplier = (phase == OPTIMALITY) ? problem.obj_sign : 0.;
-	LocalSolution solution = this->subproblem.compute_optimality_step(problem, current_iterate, objective_multiplier, radius);
+	LocalSolution solution = this->subproblem.compute_optimality_step(problem, current_iterate, radius);
 	solution.phase = OPTIMALITY;
 	DEBUG << solution;
 	
@@ -33,14 +32,13 @@ LocalSolution TwoPhaseStrategy::compute_step(Problem& problem, Iterate& current_
 }
 
 void TwoPhaseStrategy::update_restoration_multipliers(Iterate& trial_iterate, ConstraintPartition& constraint_partition) {
-	int number_variables = trial_iterate.x.size();
 	for (unsigned int k = 0; k < constraint_partition.infeasible_set.size(); k++) {
 		int j = constraint_partition.infeasible_set[k];
 		if (constraint_partition.status[j] == INFEASIBLE_UPPER) {
-			trial_iterate.multipliers[number_variables + j] = -1.;
+			trial_iterate.constraint_multipliers[j] = -1.;
 		}
 		else {
-			trial_iterate.multipliers[number_variables + j] = 1.;
+			trial_iterate.constraint_multipliers[j] = 1.;
 		}
 	}
 	return;
@@ -48,7 +46,7 @@ void TwoPhaseStrategy::update_restoration_multipliers(Iterate& trial_iterate, Co
 
 double TwoPhaseStrategy::compute_KKT_error(Problem& problem, Iterate& current_iterate) {
 	double objective_multiplier = (this->phase == OPTIMALITY) ? 1. : 0.; 
-	std::vector<double> lagrangian_gradient = this->compute_lagrangian_gradient(problem, current_iterate, objective_multiplier, current_iterate.multipliers);
+	std::vector<double> lagrangian_gradient = this->compute_lagrangian_gradient(problem, current_iterate, objective_multiplier, current_iterate.bound_multipliers, current_iterate.constraint_multipliers);
 	double KKTerror = norm_2(lagrangian_gradient);
 	return KKTerror;
 }

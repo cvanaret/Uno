@@ -399,10 +399,9 @@ std::vector<double> AMPLModel::primal_initial_solution() {
 /* initial dual point */
 std::vector<double> AMPLModel::dual_initial_solution() {
 	double* ampl_multipliers0 = this->asl_->i.pi0_;
-	std::vector<double> multipliers(this->number_variables + this->number_constraints);
-	/* n first multipliers (related to bound constraints) are zero */
+	std::vector<double> multipliers(this->number_constraints);
 	for (int j = 0; j < this->number_constraints; j++) {
-		multipliers[this->number_variables + j] = ampl_multipliers0[j];
+		multipliers[j] = ampl_multipliers0[j];
 	}
 	return multipliers;
 }

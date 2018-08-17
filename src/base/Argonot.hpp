@@ -39,7 +39,7 @@ class Argonot {
          * \param x: primal variables
          * \param multipliers: Lagrange multipliers/dual variables
          */
-		Result solve(Problem& problem, std::vector<double>& x, std::vector<double>& multipliers);
+		Result solve(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers);
 		
 		GlobalizationMechanism& globalization_mechanism; /*!< Step control strategy (trust region or line-search) */
 		int max_iterations; /*!< Maximum number of iterations */

@@ -17,7 +17,16 @@ FilterStrategy::FilterStrategy(Subproblem& subproblem, std::shared_ptr<Filter> f
 bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, LocalSolution& solution, double step_length) {
 	/* assemble trial point: TODO do not reevaluate if ||d|| = 0 */
 	std::vector<double> x_trial = add_vectors(current_iterate.x, solution.x, step_length);
-	Iterate trial_iterate(problem, x_trial, solution.multipliers);
+	/* get the multipliers */
+	std::vector<double> bound_multipliers(problem.number_variables);
+	for (int i = 0; i < problem.number_variables; i++) {
+		bound_multipliers[i] = solution.multipliers[i];
+	}
+	std::vector<double> constraint_multipliers(problem.number_constraints);
+	for (int j = 0; j < problem.number_variables; j++) {
+		constraint_multipliers[j] = solution.multipliers[problem.number_variables + j];
+	}
+	Iterate trial_iterate(problem, x_trial, bound_multipliers, constraint_multipliers);
 	double step_norm = step_length*solution.norm;
 	
 	bool accept = false;

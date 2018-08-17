@@ -20,7 +20,6 @@ class COOMatrix: public Matrix {
 	/* Coordinate list */
 	public:
 		COOMatrix(unsigned int size, unsigned int number_nonzeros);
-		//COOMatrix(std::vector<double>& matrix, std::vector<int>& row_indices, std::vector<int>& column_indices);
 		
 		std::vector<double> matrix;
 		std::vector<int> row_indices;

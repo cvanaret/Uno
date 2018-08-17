@@ -20,6 +20,8 @@ double norm_2(std::vector<double>& x);
 double dot(std::vector<double>& x, std::vector<double>& y);
 double dot(std::vector<double>& x, std::map<int,double>& y);
 
+double sign(double x);
+
 template <typename T>
 void print_vector(std::ostream &stream, std::vector<T> x, unsigned int max_size = std::numeric_limits<unsigned int>::max()) {
 	for (unsigned int i = 0; i < std::min<unsigned int>(x.size(), max_size); i++) {

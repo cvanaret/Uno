@@ -18,9 +18,9 @@ class QPApproximation: public Subproblem {
          */
 		QPApproximation(QPSolver& solver);
 		
-		void initialize(Problem& problem, Iterate& current_iterate, int number_variables, int number_constraints, double radius);
+		void initialize(Problem& problem, Iterate& current_iterate, int number_variables, int number_constraints, bool use_trust_region);
 		
-		LocalSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double objective_multiplier, double radius);
+		LocalSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double radius);
 		
 		LocalSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, double radius, const std::vector<double>& d, ConstraintPartition& constraint_partition, std::vector<double>& multipliers);
 		
@@ -36,7 +36,7 @@ class QPApproximation: public Subproblem {
          * \param problem: optimization problem
          * \param current_iterate: current point and its evaluations
          */
-		QP generate_optimality_qp_(Problem& problem, Iterate& current_iterate, double objective_multiplier, double radius);
+		QP generate_optimality_qp_(Problem& problem, Iterate& current_iterate, double radius);
 		
 		QP generate_infeasibility_qp_(Problem& problem, Iterate& current_iterate, double radius, ConstraintPartition& constraint_partition, std::vector<double>& multipliers);
 		

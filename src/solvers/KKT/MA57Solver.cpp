@@ -15,7 +15,7 @@ extern "C" {
 MA57Solver::MA57Solver(): use_fortran(1), cntl_(5), icntl_(20), info_(40), rinfo_(20) {
 }
 
-LocalSolution MA57Solver::solve(COOMatrix& matrix, std::vector<double> rhs) {
+MA57Data MA57Solver::factorize(COOMatrix& matrix) {
 	int n = matrix.size;
 	int nnz = matrix.number_nonzeros;
 	
@@ -28,7 +28,7 @@ LocalSolution MA57Solver::solve(COOMatrix& matrix, std::vector<double> rhs) {
 	std::vector<int> iwork(5*n);
 	std::vector<int> row_indices(matrix.row_indices);
 	std::vector<int> column_indices(matrix.column_indices);
-	// shift the indices for Fortran
+	/* shift the indices for Fortran */
 	for (unsigned int k = 0; k < row_indices.size(); k++) {
 		row_indices[k] += this->use_fortran;
 	}
@@ -44,9 +44,16 @@ LocalSolution MA57Solver::solve(COOMatrix& matrix, std::vector<double> rhs) {
 	int lifact = 1.2*this->info_[9];
 	std::vector<int> ifact(lifact);
 	ma57bd_(&n, &nnz, matrix.matrix.data(), fact.data(), &lfact, ifact.data(), &lifact, &lkeep, keep.data(),
-		iwork.data(), this->icntl_.data(), this->cntl_.data(), this->info_.data(), this->rinfo_.data());;
-	
+		iwork.data(), this->icntl_.data(), this->cntl_.data(), this->info_.data(), this->rinfo_.data());
+	//print_vector(std::cout, this->info_);
+	std::cout << "The matrix has " << this->info_[23] << " negative eigenvalues\n";
+	//std::cout << "the matrix has rank " << this->info_[24] << "\n";
+	return {fact, lfact, ifact, lifact, iwork};
+}
+
+LocalSolution MA57Solver::solve(COOMatrix& matrix, std::vector<double>& rhs, MA57Data& data) {
 	/* solve */
+	int n = matrix.size;
 	int job = 1;
 	int nrhs = 1; // number of right hand side being solved
 	int lrhs = n; // integer, length of rhs
@@ -54,11 +61,15 @@ LocalSolution MA57Solver::solve(COOMatrix& matrix, std::vector<double> rhs) {
 	std::vector<double> work(lwork);
 	// copy the RHS in the solution
 	std::vector<double> x(rhs);
-	ma57cd_(&job, &n, fact.data(), &lfact, ifact.data(), &lifact, &nrhs, x.data(), &lrhs, work.data(),
-		&lwork, iwork.data(), this->icntl_.data(), this->info_.data());
+	ma57cd_(&job, &n, data.fact.data(), &data.lfact, data.ifact.data(), &data.lifact, &nrhs, x.data(), &lrhs, work.data(),
+		&lwork, data.iwork.data(), this->icntl_.data(), this->info_.data());
 	
 	LocalSolution solution(x, 1, 1);
 	return solution;
+}
+
+int MA57Solver::number_negative_eigenvalues() {
+	return this->info_[23];
 }
 
 void test() {
@@ -83,7 +94,8 @@ void test() {
 	std::vector<double> rhs = {8., 45., 31., 15., 17.};
 
 	MA57Solver s;
-	LocalSolution solution = s.solve(matrix, rhs);
+	MA57Data data = s.factorize(matrix);
+	LocalSolution solution = s.solve(matrix, rhs, data);
 
 	std::cout << "solution";
 	for (unsigned int k = 0; k < solution.x.size(); k++) {

@@ -36,7 +36,7 @@ class GlobalizationStrategy {
 		
 		virtual void initialize(Problem& problem, Iterate& current_iterate, bool use_trust_region) = 0;
 		
-		std::vector<double> compute_lagrangian_gradient(Problem& problem, Iterate& current_iterate, double objective_multiplier, std::vector<double>& multipliers);
+		std::vector<double> compute_lagrangian_gradient(Problem& problem, Iterate& current_iterate, double objective_multiplier, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers);
 		
 		virtual double compute_KKT_error(Problem& problem, Iterate& current_iterate) = 0;
 		

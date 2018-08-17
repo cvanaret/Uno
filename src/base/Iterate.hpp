@@ -26,10 +26,11 @@ class Iterate {
 		/*!
          *  Constructor
          */
-		Iterate(Problem& problem, std::vector<double>& x, std::vector<double>& multipliers);
+		Iterate(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers);
 		
 		std::vector<double> x; /*!< \f$\mathbb{R}^n\f$ primal variables */
-		std::vector<double> multipliers; /*!< \f$\mathbb{R}^{n+m}\f$ Lagrange multipliers/dual variables */
+		std::vector<double> bound_multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables for bound constraints */
+		std::vector<double> constraint_multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables for general constraints */
 		
 		double objective; /*!< Objective value */
 		std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */

@@ -40,9 +40,9 @@ class PenaltyStrategy: public GlobalizationStrategy {
 		
 		double compute_linear_model(Problem& problem, LocalSolution& solution);
 		
-		std::vector<double> compute_multipliers(Problem& problem, LocalSolution& solution);
+		std::vector<double> compute_original_multipliers(Problem& problem, LocalSolution& solution);
 		
-		double compute_error(Problem& problem, Iterate& current_iterate, std::vector<double>& multipliers, double penalty_parameter);
+		double compute_error(Problem& problem, Iterate& current_iterate, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers, double penalty_parameter);
 		
 		OptimalityStatus compute_status(Problem& problem, Iterate& current_iterate, double step_norm);
 };

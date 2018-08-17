@@ -33,9 +33,10 @@ void test_argonot(std::string problem_name, std::map<std::string, std::string> o
 	
 	/* initial primal and dual points */
 	std::vector<double> x = problem.primal_initial_solution();
-	std::vector<double> multipliers = problem.dual_initial_solution();
+	std::vector<double> constraint_multipliers = problem.dual_initial_solution();
+	std::vector<double> bound_multipliers(problem.number_variables);
 
-	Result result = argonot.solve(problem, x, multipliers);
+	Result result = argonot.solve(problem, x, bound_multipliers, constraint_multipliers);
 	result.display();
 	return;
 }
@@ -113,16 +114,17 @@ std::map<std::string, std::string> get_default_values(std::string file_name) {
 
 void test_interior_point() {
 	/* test of hs015 */
-	AMPLModel problem = AMPLModel("../ampl_models/hs015");
+	AMPLModel problem = AMPLModel("../ampl_models/hs015_slacks");
 	
 	std::vector<double> x = problem.primal_initial_solution();
-	std::vector<double> multipliers = problem.dual_initial_solution();
-	Iterate current_iterate(problem, x, multipliers);
+	std::vector<double> constraint_multipliers = problem.dual_initial_solution();
+	std::vector<double> bound_multipliers(problem.number_variables);
+	Iterate current_iterate(problem, x, bound_multipliers, constraint_multipliers);
 	
-	double radius = 10.;
+	double radius = INFINITY;
 	InteriorPoint ipm;
-	ipm.initialize(problem, current_iterate, problem.number_variables, problem.number_constraints, radius);
-	ipm.compute_optimality_step(problem, current_iterate, problem.objective_sign, radius);
+	ipm.initialize(problem, current_iterate, problem.number_variables, problem.number_constraints, radius < INFINITY);
+	ipm.compute_optimality_step(problem, current_iterate, radius);
 	
 	return;
 }
