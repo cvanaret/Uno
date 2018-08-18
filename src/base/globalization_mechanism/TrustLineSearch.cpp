@@ -43,10 +43,10 @@ Iterate TrustLineSearch::compute_iterate(Problem& problem, Iterate& current_iter
 					if (is_accepted) {
 						DEBUG << CYAN "TLS trial point accepted\n" RESET;
 						/* print summary */
-						INFO << "minor: " << std::fixed << this->number_iterations << "\t";
-						INFO << "radius: " << std::fixed << this->radius << "\t";
-						INFO << "step length: " << std::fixed << step_length << "\t";
-						INFO << "step norm: " << std::fixed << solution.norm << "\t";
+						INFO << "minor: " << this->number_iterations << "\t";
+						INFO << "radius: " << this->radius << "\t";
+						INFO << "step length: " << step_length << "\t";
+						INFO << "step norm: " << solution.norm << "\t";
 						
 						/* increase the radius if trust region is active, otherwise keep the same radius */
 						if (solution.norm >= this->radius - this->activity_tolerance_) {
@@ -83,14 +83,14 @@ Iterate TrustLineSearch::compute_iterate(Problem& problem, Iterate& current_iter
 void TrustLineSearch::correct_multipliers(Problem& problem, LocalSolution& solution) {
 	for (unsigned int k = 0; k < solution.active_set.at_upper_bound.size(); k++) {
 		int i = solution.active_set.at_upper_bound[k];
-		if (i < problem.number_variables && solution.primal[i] == this->radius) {
-			solution.dual[i] = 0.;
+        if (i < problem.number_variables && solution.x[i] == this->radius) {
+            solution.bound_multipliers[i] = 0.;
 		}
 	}
 	for (unsigned int k = 0; k < solution.active_set.at_lower_bound.size(); k++) {
 		int i = solution.active_set.at_lower_bound[k];
-		if (i < problem.number_variables && solution.primal[i] == -this->radius) {
-			solution.dual[i] = 0.;
+        if (i < problem.number_variables && solution.x[i] == -this->radius) {
+            solution.bound_multipliers[i] = 0.;
 		}
 	}
 	return;

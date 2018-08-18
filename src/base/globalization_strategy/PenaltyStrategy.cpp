@@ -61,15 +61,12 @@ LocalSolution PenaltyStrategy::compute_step(Problem& problem, Iterate& current_i
 			/* stage c: solve the ideal l1 penalty problem with a zero penalty (no objective) */
 			LocalSolution ideal_solution = this->subproblem.compute_l1_penalty_step(problem, current_iterate, radius, 0., this->penalty_dimensions);
 			DEBUG << ideal_solution;
-			
-			/* stage f: update the penalty parameter */
-			std::vector<double> ideal_bound_multipliers(problem.number_variables);
-			for (int i = 0; i < problem.number_variables; i++) {
-				ideal_bound_multipliers[i] = ideal_solution.dual[i];
-			}
-			std::vector<double> ideal_constraint_multipliers = this->compute_original_multipliers(problem, ideal_solution);
+
+            /* stage f: update the penalty parameter */
+            std::vector<double> ideal_bound_multipliers = this->compute_bound_multipliers(problem, ideal_solution);
+            std::vector<double> ideal_constraint_multipliers = this->compute_constraint_multipliers(problem, ideal_solution);
 			/* compute the ideal error (with a zero penalty parameter) */
-			double ideal_error = this->compute_error(problem, current_iterate, ideal_bound_multipliers, ideal_constraint_multipliers, 0.);
+            double ideal_error = this->compute_error(problem, current_iterate, ideal_bound_multipliers, ideal_constraint_multipliers, 0.);
 			
 			if (ideal_error == 0.) {
 				/* stage f: update the penalty parameter */
@@ -133,19 +130,15 @@ bool PenaltyStrategy::check_step(Problem& problem, Iterate& current_iterate, Loc
 	/* retrieve only original primal and dual variables from the step */
 	std::vector<double> d(problem.number_variables);
 	for (int i = 0; i < problem.number_variables; i++) {
-		d[i] = solution.primal[i];
-	}
-	
-	
+        d[i] = solution.x[i];
+    }
+    
 	/* generate the trial point */
 	std::vector<double> x_trial = add_vectors(current_iterate.x, d, step_length);
-	/* get the multipliers */
-	std::vector<double> bound_multipliers(problem.number_variables);
-	for (int i = 0; i < problem.number_variables; i++) {
-		bound_multipliers[i] = solution.dual[i];
-	}
-	std::vector<double> constraint_multipliers = this->compute_original_multipliers(problem, solution);
-	Iterate trial_iterate(problem, x_trial, bound_multipliers, constraint_multipliers);
+    /* get the multipliers */
+    std::vector<double> bound_multipliers = this->compute_bound_multipliers(problem, solution);
+    std::vector<double> constraint_multipliers = this->compute_constraint_multipliers(problem, solution);
+    Iterate trial_iterate(problem, x_trial, bound_multipliers, constraint_multipliers);
 	
 	/* compute current exact l1 penalty: rho f + sum max(0, c) */
 	double current_exact_l1_penalty = this->penalty_parameter*current_iterate.objective + current_iterate.residual;
@@ -167,8 +160,8 @@ bool PenaltyStrategy::check_step(Problem& problem, Iterate& current_iterate, Loc
 
 OptimalityStatus PenaltyStrategy::compute_status(Problem& problem, Iterate& trial_iterate, double step_norm) {
 	OptimalityStatus status = NOT_OPTIMAL;
-	
-	/* test for optimality */
+
+    /* test for optimality */
 	double optimality_error = this->compute_error(problem, trial_iterate, trial_iterate.bound_multipliers, trial_iterate.constraint_multipliers, this->penalty_parameter);
 	DEBUG << "Ek(lambda_k, rho_k) = " << optimality_error << "\n";
 	if (optimality_error <= this->tolerance && trial_iterate.residual <= this->tolerance*problem.number_constraints) {
@@ -204,24 +197,32 @@ OptimalityStatus PenaltyStrategy::compute_status(Problem& problem, Iterate& tria
 double PenaltyStrategy::compute_linear_model(Problem& problem, LocalSolution& solution) {
 	double linear_model = 0.;
 	for (int k = 0; k < this->penalty_dimensions.number_additional_variables; k++) {
-		linear_model += solution.primal[problem.number_variables + k];
+        linear_model += solution.x[problem.number_variables + k];
 	}
 	return linear_model;
 }
 
-std::vector<double> PenaltyStrategy::compute_original_multipliers(Problem& problem, LocalSolution& solution) {
+std::vector<double> PenaltyStrategy::compute_bound_multipliers(Problem& problem, LocalSolution& solution) {
+    std::vector<double> bound_multipliers(problem.number_variables);
+    for (int i = 0; i < problem.number_variables; i++) {
+        bound_multipliers[i] = solution.bound_multipliers[i];
+    }
+    return bound_multipliers;
+}
+
+std::vector<double> PenaltyStrategy::compute_constraint_multipliers(Problem& problem, LocalSolution& solution) {
 	std::vector<double> constraint_multipliers(problem.number_constraints);
-	int current_constraint = problem.number_variables + this->penalty_dimensions.number_additional_variables;
+    int current_constraint = 0;
 	for (int j = 0; j < problem.number_constraints; j++) {
 		if (problem.constraint_status[j] == BOUNDED_BOTH_SIDES) {
 			/* only case where 2 constraints were generated */
 			/* only one bound is active: one multiplier is > 0, the other is 0 */
-			constraint_multipliers[j] = solution.dual[current_constraint] + solution.dual[current_constraint+1];
+            constraint_multipliers[j] = solution.constraint_multipliers[current_constraint] + solution.constraint_multipliers[current_constraint + 1];
 			current_constraint += 2;
 		}
 		else {
 			/* only 1 constraint was generated */
-			constraint_multipliers[j] = solution.dual[current_constraint];
+            constraint_multipliers[j] = solution.constraint_multipliers[current_constraint];
 			current_constraint++;
 		}
 	}
@@ -231,15 +232,14 @@ std::vector<double> PenaltyStrategy::compute_original_multipliers(Problem& probl
 double PenaltyStrategy::compute_error(Problem& problem, Iterate& current_iterate, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers, double penalty_parameter) {
 	/* measure that combines KKT error and complementarity error */
 	double error = 0.;
-	
+
 	/* KKT error */
 	std::vector<double> lagrangian_gradient = this->compute_lagrangian_gradient(problem, current_iterate, penalty_parameter, bound_multipliers, constraint_multipliers);
-	/* compute 1-norm */
-	error += norm_1(lagrangian_gradient);
-		
-	/* complementarity error */
-	
-	/* bound constraints */
+    // compute 1-norm
+    error += norm_1(lagrangian_gradient);
+
+    /* complementarity error */
+    // bound constraints
 	for (int i = 0; i < problem.number_variables; i++) {
 		if (problem.variable_lb[i] < current_iterate.x[i] && current_iterate.x[i] < problem.variable_ub[i]) {
 			double multiplier_i = bound_multipliers[i];
@@ -250,9 +250,9 @@ double PenaltyStrategy::compute_error(Problem& problem, Iterate& current_iterate
 			else if (multiplier_i < 0.) {
 				error += std::abs(multiplier_i*(current_iterate.x[i] - problem.variable_ub[i]));
 			}
-		}
-	}
-	/* check if constraint is strictly satisfied or violated */
+        }
+    }
+    // check if constraint is strictly satisfied or violated
 	for (int j = 0; j < problem.number_constraints; j++) {
 		double multiplier_j = constraint_multipliers[j];
 		
@@ -272,8 +272,8 @@ double PenaltyStrategy::compute_error(Problem& problem, Iterate& current_iterate
 			else if (multiplier_j < 0.) {
 				error += std::abs(multiplier_j*(current_iterate.constraints[j] - problem.constraint_ub[j]));
 			}
-		}
-	}
+        }
+    }
 	return error;
 }
 

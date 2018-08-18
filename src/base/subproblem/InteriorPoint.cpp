@@ -84,10 +84,13 @@ LocalSolution InteriorPoint::compute_optimality_step(Problem& problem, Iterate& 
         variable_ub[i] = std::min(current_iterate.x[i] + radius, problem.variable_ub[i]);
     }
 
-    /* update mu */
+    /* update barrier parameter */
     // double k_mu = 0.2;
     // double theta_mu = 1.5;
     // this->mu = std::max(1e-7, std::min(k_mu * this->mu, std::pow(this->mu, theta_mu)));
+    // this->mu = this->update_barrier_parameter(problem, current_iterate);
+    // std::cout << "NEW mu VALUE: " << this->mu << "\n";
+
 
     /* summary */
     for (int i = 0; i < problem.number_variables; i++) {
@@ -128,85 +131,49 @@ LocalSolution InteriorPoint::compute_optimality_step(Problem& problem, Iterate& 
     /* solution */
     /************/
     /* compute the solution (Δx, -Δλ) */
-    LocalSolution solution = this->solver.solve(kkt_matrix, rhs, this->data);
+    std::vector<double> ipm_solution = this->solver.solve(kkt_matrix, rhs, this->data);
 
     /* retrieve +Δλ (Nocedal p590) */
     for (int j = 0; j < problem.number_constraints; j++) {
-        solution.primal[problem.number_variables + this->slacks.size() + j] = -solution.primal[problem.number_variables + this->slacks.size() + j];
+        ipm_solution[problem.number_variables + this->slacks.size() + j] = -ipm_solution[problem.number_variables + this->slacks.size() + j];
     }
 
     /* compute bound multiplier displacements Δz */
-    std::vector<double> delta_z = this->compute_bound_multiplier_displacements(problem, current_iterate, solution.primal, variable_lb, variable_ub);
+    std::vector<double> delta_z = this->compute_bound_multiplier_displacements(problem, current_iterate, ipm_solution, variable_lb, variable_ub);
 
     std::cout << "MA57 solution:\n";
     std::cout << "Δx: ";
-    print_vector(std::cout, solution.primal, 0, problem.number_variables);
+    print_vector(std::cout, ipm_solution, 0, problem.number_variables);
     std::cout << "Δs: ";
-    print_vector(std::cout, solution.primal, problem.number_variables, this->slacks.size());
-    std::cout << "Δλ: ";
-    print_vector(std::cout, solution.primal, problem.number_variables + this->slacks.size(), problem.number_constraints);
+    print_vector(std::cout, ipm_solution, problem.number_variables, this->slacks.size());
     std::cout << "Δz: ";
     print_vector(std::cout, delta_z);
+    std::cout << "Δλ: ";
+    print_vector(std::cout, ipm_solution, problem.number_variables + this->slacks.size(), problem.number_constraints);
 
-    /* fraction to boundary rule for variables */
+    /* "fraction to boundary" rule for variables and bound multipliers */
     double tau = std::max(this->tau_min, 1. - this->mu);
-    
-    double primal_length = 1.;
-    for (int i : this->variable_lb) {
-        double trial_alpha_xi = -tau * (current_iterate.x[i] - variable_lb[i]) / solution.primal[i];
-        if (0 < trial_alpha_xi && trial_alpha_xi <= 1.) {
-            primal_length = std::min(primal_length, trial_alpha_xi);
-        }
-    }
-    for (int i : this->variable_ub) {
-        double trial_alpha_xi = -tau * (current_iterate.x[i] - variable_ub[i]) / solution.primal[i];
-        if (0 < trial_alpha_xi && trial_alpha_xi <= 1.) {
-            primal_length = std::min(primal_length, trial_alpha_xi);
-        }
-    }
-    int current_slack = 0;
-    for (int j : this->slack_lb) {
-        double trial_primal_lengthj = -tau * (current_iterate.x[problem.number_variables + current_slack] - problem.constraint_lb[j]) / solution.primal[problem.number_variables + current_slack];
-        if (0 < trial_primal_lengthj && trial_primal_lengthj <= 1.) {
-            primal_length = std::min(primal_length, trial_primal_lengthj);
-        }
-        current_slack++;
-    }
-    for (int j : this->slack_ub) {
-        double trial_primal_lengthj = -tau * (current_iterate.x[problem.number_variables + current_slack] - problem.constraint_ub[j]) / solution.primal[problem.number_variables + current_slack];
-        if (0 < trial_primal_lengthj && trial_primal_lengthj <= 1.) {
-            primal_length = std::min(primal_length, trial_primal_lengthj);
-        }
-    }
+    double primal_length = this->compute_primal_length(problem, current_iterate, ipm_solution, tau, variable_lb, variable_ub);
     std::cout << "primal length = " << primal_length << "\n";
-
-    /* fraction to boundary rule for bound multipliers */
-    double dual_length = 1.;
-    for (unsigned int current_multiplier = 0; current_multiplier < current_iterate.bound_multipliers.size(); current_multiplier++) {
-        double trial_alpha_zj = -tau * current_iterate.bound_multipliers[current_multiplier] / delta_z[current_multiplier];
-        if (0 < trial_alpha_zj && trial_alpha_zj <= 1.) {
-            dual_length = std::min(dual_length, trial_alpha_zj);
-        }
-    }
+    double dual_length = this->compute_dual_length(current_iterate, tau, delta_z);
     std::cout << "dual length = " << dual_length << "\n\n";
 
-    /* update */
-    std::vector<double> trial_primal(current_iterate.x.size());
+    /* generate IPM direction */
+    std::vector<double> trial_x(current_iterate.x.size());
+    std::vector<double> trial_bound_multipliers(current_iterate.bound_multipliers.size());
+    std::vector<double> trial_constraint_multipliers(current_iterate.constraint_multipliers.size());
+
     for (int i = 0; i < problem.number_variables; i++) {
-        trial_primal[i] = current_iterate.x[i] + primal_length * solution.primal[i];
+        trial_x[i] = primal_length * ipm_solution[i];
     }
     for (unsigned int j = 0; j < this->slacks.size(); j++) {
-        trial_primal[problem.number_variables + j] = current_iterate.x[problem.number_variables + j] + primal_length * solution.primal[problem.number_variables + j];
+        trial_x[problem.number_variables + j] = primal_length * ipm_solution[problem.number_variables + j];
     }
-    std::cout << "New x/s: "; print_vector(std::cout, trial_primal);
-
-    for (int j = 0; j < problem.number_constraints; j++) {
-        current_iterate.constraint_multipliers[j] += primal_length * solution.primal[problem.number_variables + this->slacks.size() + j];
-    }
-    std::cout << "New λ: "; print_vector(std::cout, current_iterate.constraint_multipliers);
+    std::cout << "Scaled Δx/Δs: ";
+    print_vector(std::cout, trial_x);
 
     for (unsigned int j = 0; j < current_iterate.bound_multipliers.size(); j++) {
-        current_iterate.bound_multipliers[j] += dual_length * delta_z[j];
+        trial_bound_multipliers[j] = dual_length * delta_z[j];
     }
     /* reset z */
     //    current_multiplier = 0;
@@ -221,16 +188,20 @@ LocalSolution InteriorPoint::compute_optimality_step(Problem& problem, Iterate& 
     //        }
     //    }
     // TODO reset z for s
-    std::cout << "New z: "; print_vector(std::cout, current_iterate.bound_multipliers);
 
-    /*******************************/
-    /* update of barrier parameter */
-    /*******************************/
-    this->mu = this->update_barrier_parameter(problem, current_iterate);
-    std::cout << "NEW mu VALUE: " << this->mu << "\n";
+    for (int j = 0; j < problem.number_constraints; j++) {
+        trial_constraint_multipliers[j] = primal_length * ipm_solution[problem.number_variables + this->slacks.size() + j];
+    }
+    std::cout << "Scaled Δz: ";
+    print_vector(std::cout, trial_bound_multipliers);
 
-    LocalSolution sol(trial_primal, current_iterate.constraint_multipliers);
-    return sol;
+    std::cout << "Scaled Δλ: ";
+    print_vector(std::cout, trial_constraint_multipliers);
+
+    LocalSolution solution(trial_x, trial_bound_multipliers, trial_constraint_multipliers);
+    // TODO
+    solution.norm = 1234.;
+    return solution;
 }
 
 std::vector<double> InteriorPoint::estimate_initial_multipliers(Problem& problem, Iterate& current_iterate) {
@@ -295,12 +266,12 @@ std::vector<double> InteriorPoint::estimate_initial_multipliers(Problem& problem
     }
 
     MA57Data data = this->solver.factorize(matrix);
-    LocalSolution solution = this->solver.solve(matrix, rhs, data);
+    std::vector<double> solution = this->solver.solve(matrix, rhs, data);
 
     /* retrieve multipliers */
     std::vector<double> multipliers(problem.number_constraints);
     for (int j = 0; j < problem.number_constraints; j++) {
-        multipliers[j] = solution.primal[problem.number_variables + j];
+        multipliers[j] = solution[problem.number_variables + j];
     }
     return multipliers;
 }
@@ -316,18 +287,56 @@ double InteriorPoint::project_variable_in_bounds(double current_value, double lb
     return current_value;
 }
 
-LocalSolution InteriorPoint::compute_infeasibility_step(Problem& problem, Iterate& current_iterate, double radius, const std::vector<double>& d, ConstraintPartition& constraint_partition, std::vector<double>& multipliers) {
-    std::vector<double> x;
-    std::vector<double> constraint_multipliers;
-    LocalSolution solution(x, constraint_multipliers);
-    return solution;
+double InteriorPoint::compute_primal_length(Problem& problem, Iterate& current_iterate, std::vector<double>& ipm_solution, double tau, std::vector<double> variable_lb, std::vector<double> variable_ub) {
+    double primal_length = 1.;
+    for (int i : this->variable_lb) {
+        double trial_alpha_xi = -tau * (current_iterate.x[i] - variable_lb[i]) / ipm_solution[i];
+        if (0 < trial_alpha_xi && trial_alpha_xi <= 1.) {
+            primal_length = std::min(primal_length, trial_alpha_xi);
+        }
+    }
+    for (int i : this->variable_ub) {
+        double trial_alpha_xi = -tau * (current_iterate.x[i] - variable_ub[i]) / ipm_solution[i];
+        if (0 < trial_alpha_xi && trial_alpha_xi <= 1.) {
+            primal_length = std::min(primal_length, trial_alpha_xi);
+        }
+    }
+    int current_slack = 0;
+    for (int j : this->slack_lb) {
+        double trial_primal_lengthj = -tau * (current_iterate.x[problem.number_variables + current_slack] - problem.constraint_lb[j]) / ipm_solution[problem.number_variables + current_slack];
+        if (0 < trial_primal_lengthj && trial_primal_lengthj <= 1.) {
+            primal_length = std::min(primal_length, trial_primal_lengthj);
+        }
+        current_slack++;
+    }
+    for (int j : this->slack_ub) {
+        double trial_primal_lengthj = -tau * (current_iterate.x[problem.number_variables + current_slack] - problem.constraint_ub[j]) / ipm_solution[problem.number_variables + current_slack];
+        if (0 < trial_primal_lengthj && trial_primal_lengthj <= 1.) {
+            primal_length = std::min(primal_length, trial_primal_lengthj);
+        }
+    }
+    return primal_length;
+}
+
+double InteriorPoint::compute_dual_length(Iterate& current_iterate, double tau, std::vector<double>& delta_z) {
+    double dual_length = 1.;
+    for (unsigned int current_multiplier = 0; current_multiplier < current_iterate.bound_multipliers.size(); current_multiplier++) {
+        double trial_alpha_zj = -tau * current_iterate.bound_multipliers[current_multiplier] / delta_z[current_multiplier];
+        if (0 < trial_alpha_zj && trial_alpha_zj <= 1.) {
+            dual_length = std::min(dual_length, trial_alpha_zj);
+        }
+    }
+    return dual_length;
+}
+
+LocalSolution InteriorPoint::compute_infeasibility_step(Problem& problem, Iterate& current_iterate, double radius, LocalSolution& phase_II_solution) {
+    std::vector<double> x, z, l;
+    return LocalSolution(x, z, l);
 }
 
 LocalSolution InteriorPoint::compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyDimensions penalty_dimensions) {
-    std::vector<double> x;
-    std::vector<double> constraint_multipliers;
-    LocalSolution solution(x, constraint_multipliers);
-    return solution;
+    std::vector<double> x, z, l;
+    return LocalSolution(x, z, l);
 }
 
 COOMatrix InteriorPoint::generate_kkt_matrix(Problem& problem, Iterate& current_iterate, std::vector<double>& variable_lb, std::vector<double>& variable_ub) {
@@ -475,7 +484,7 @@ std::vector<double> InteriorPoint::generate_rhs(Problem& problem, Iterate& curre
     for (unsigned int current_slack = 0; current_slack < this->slacks.size(); current_slack++) {
         int j = this->slacks[current_slack];
         rhs[problem.number_variables + this->slacks.size() + j] += current_iterate.x[problem.number_variables + current_slack];
-        DEBUG << "rhs[" << problem.number_variables + this->slacks.size() + j << "] = " << rhs[problem.number_variables + this->slacks.size() + j] << "\n";
+        DEBUG << "rhs[" << (problem.number_variables + this->slacks.size() + j) << "] = " << rhs[problem.number_variables + this->slacks.size() + j] << "\n";
     }
     std::cout << "RHS: ";
     print_vector(std::cout, rhs);

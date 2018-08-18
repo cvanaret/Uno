@@ -33,12 +33,13 @@ struct ObjectiveTerms {
  */
 class LocalSolution {
     public:
-        LocalSolution(std::vector<double>& x, std::vector<double>& multipliers);
+        LocalSolution(std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers);
 
         Status status; /*!< Status of the solution */
         Phase phase;
-        std::vector<double> primal; /*!< Primal variables */
-        std::vector<double> dual; /*!< Dual variables of the subproblem */
+        std::vector<double> x; /*!< Primal variables */
+        std::vector<double> bound_multipliers; /*!< Multipliers of the bound constraints */
+        std::vector<double> constraint_multipliers; /*!< Multipliers of the general constraints */
         double norm; /*!< Norm of \f$x\f$ */
         double objective; /*!< Objective value */
         ObjectiveTerms objective_terms; /*!< Decomposition of the objective value in quadratic and linear terms */

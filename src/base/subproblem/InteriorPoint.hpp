@@ -20,7 +20,7 @@ class InteriorPoint : public Subproblem {
 
         LocalSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double radius) override;
 
-        LocalSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, double radius, const std::vector<double>& d, ConstraintPartition& constraint_partition, std::vector<double>& multipliers) override;
+        LocalSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, double radius, LocalSolution& phase_II_solution) override;
 
         LocalSolution compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyDimensions penalty_dimensions) override;
 
@@ -47,6 +47,8 @@ class InteriorPoint : public Subproblem {
     private:
         double project_variable_in_bounds(double current_value, double lb, double ub);
         std::vector<double> estimate_initial_multipliers(Problem& problem, Iterate& current_iterate);
+        double compute_primal_length(Problem& problem, Iterate& iterate, std::vector<double>& ipm_solution, double tau, std::vector<double> variable_lb, std::vector<double> variable_ub);
+        double compute_dual_length(Iterate& current_iterate, double tau, std::vector<double>& delta_z);
         COOMatrix generate_kkt_matrix(Problem& problem, Iterate& current_iterate, std::vector<double>& variable_lb, std::vector<double>& variable_ub);
         std::vector<double> generate_rhs(Problem& problem, Iterate& current_iterate, std::vector<double>& variable_lb, std::vector<double>& variable_ub);
         std::vector<double> compute_bound_multiplier_displacements(Problem& problem, Iterate& current_iterate, std::vector<double>& solution, std::vector<double>& variable_lb, std::vector<double>& variable_ub);

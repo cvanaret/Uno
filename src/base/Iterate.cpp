@@ -62,13 +62,13 @@ void Iterate::compute_hessian(Problem& problem, double objective_multiplier, std
 
 std::ostream& operator<< (std::ostream &stream, Iterate& iterate) {
 	stream << "x: ";
-	print_vector(stream, iterate.x, 50);
+    print_vector(stream, iterate.x, 0, 50);
 	
 	stream << "Bound multipliers: ";
-	print_vector(stream, iterate.bound_multipliers, 50);
+    print_vector(stream, iterate.bound_multipliers, 0, 50);
 	
 	stream << "Constraint multipliers: ";
-	print_vector(stream, iterate.constraint_multipliers, 50);
+    print_vector(stream, iterate.constraint_multipliers, 0, 50);
 	
 	stream << "Objective: " << iterate.objective << "\n";
 	

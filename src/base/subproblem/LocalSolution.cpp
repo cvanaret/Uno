@@ -1,7 +1,8 @@
 #include "LocalSolution.hpp"
 #include "Logger.hpp"
 
-LocalSolution::LocalSolution(std::vector<double>& x, std::vector<double>& multipliers) : primal(x), dual(multipliers) {
+LocalSolution::LocalSolution(std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers) :
+x(x), bound_multipliers(bound_multipliers), constraint_multipliers(constraint_multipliers) {
 }
 
 std::ostream& operator<<(std::ostream &stream, LocalSolution& solution) {
@@ -19,7 +20,7 @@ std::ostream& operator<<(std::ostream &stream, LocalSolution& solution) {
 
     stream << MAGENTA;
     stream << "d^* = ";
-    print_vector(stream, solution.primal, max_size);
+    print_vector(stream, solution.x, max_size);
 
     stream << "objective = " << solution.objective << "\n";
     stream << "norm = " << solution.norm << "\n";
@@ -27,11 +28,11 @@ std::ostream& operator<<(std::ostream &stream, LocalSolution& solution) {
     stream << "active set at upper bound =";
     for (unsigned int k = 0; k < solution.active_set.at_upper_bound.size(); k++) {
         unsigned int index = solution.active_set.at_upper_bound[k];
-        if (index < solution.primal.size()) {
+        if (index < solution.x.size()) {
             stream << " x" << index;
         }
         else {
-            stream << " c" << (index - solution.primal.size());
+            stream << " c" << (index - solution.x.size());
         }
     }
     stream << "\n";
@@ -39,11 +40,11 @@ std::ostream& operator<<(std::ostream &stream, LocalSolution& solution) {
     stream << "active set at lower bound =";
     for (unsigned int k = 0; k < solution.active_set.at_lower_bound.size(); k++) {
         unsigned int index = solution.active_set.at_lower_bound[k];
-        if (index < solution.primal.size()) {
+        if (index < solution.x.size()) {
             stream << " x" << index;
         }
         else {
-            stream << " c" << (index - solution.primal.size());
+            stream << " c" << (index - solution.x.size());
         }
     }
     stream << "\n";
@@ -68,8 +69,11 @@ std::ostream& operator<<(std::ostream &stream, LocalSolution& solution) {
     }
     stream << "\n";
 
-    stream << "multipliers = ";
-    print_vector(stream, solution.dual);
+    stream << "bound multipliers = ";
+    print_vector(stream, solution.bound_multipliers);
+
+    stream << "constraint multipliers = ";
+    print_vector(stream, solution.constraint_multipliers);
 
     stream << RESET;
 

@@ -24,28 +24,27 @@ LocalSolution QPApproximation::compute_optimality_step(Problem& problem, Iterate
     LocalSolution solution = this->solver.solve(qp, d0);
     this->number_subproblems_solved++;
 
-    double linear_term = dot(solution.primal, qp.objective);
-    double quadratic_term = current_iterate.hessian.quadratic_product(solution.primal, solution.primal) / 2.;
+    double linear_term = dot(solution.x, qp.objective);
+    double quadratic_term = current_iterate.hessian.quadratic_product(solution.x, solution.x) / 2.;
     solution.objective_terms = {linear_term, quadratic_term};
 
     return solution;
 }
 
-LocalSolution QPApproximation::compute_infeasibility_step(Problem& problem, Iterate& current_iterate, double radius,
-                                                          const std::vector<double>& d, ConstraintPartition& constraint_partition, std::vector<double>& multipliers) {
+LocalSolution QPApproximation::compute_infeasibility_step(Problem& problem, Iterate& current_iterate, double radius, LocalSolution& phase_II_solution) {
     /* generate the QP */
-    QP qp = this->generate_infeasibility_qp_(problem, current_iterate, radius, constraint_partition, multipliers);
+    QP qp = this->generate_infeasibility_qp_(problem, current_iterate, radius, phase_II_solution.constraint_partition);
     DEBUG << qp;
 
     /* generate the initial solution */
-    std::vector<double> d0 = d;
+    std::vector<double> d0 = phase_II_solution.x;
 
     /* solve the QP */
     LocalSolution solution = this->solver.solve(qp, d0);
     this->number_subproblems_solved++;
 
-    double linear_term = dot(solution.primal, qp.objective);
-    double quadratic_term = current_iterate.hessian.quadratic_product(solution.primal, solution.primal) / 2.;
+    double linear_term = dot(solution.x, qp.objective);
+    double quadratic_term = current_iterate.hessian.quadratic_product(solution.x, solution.x) / 2.;
     solution.objective_terms = {linear_term, quadratic_term};
 
     return solution;
@@ -64,8 +63,8 @@ LocalSolution QPApproximation::compute_l1_penalty_step(Problem& problem, Iterate
     LocalSolution solution = this->solver.solve(qp, d0);
     this->number_subproblems_solved++;
 
-    double linear_term = dot(solution.primal, qp.objective);
-    double quadratic_term = current_iterate.hessian.quadratic_product(solution.primal, solution.primal) / 2.;
+    double linear_term = dot(solution.x, qp.objective);
+    double quadratic_term = current_iterate.hessian.quadratic_product(solution.x, solution.x) / 2.;
     solution.objective_terms = {linear_term, quadratic_term};
 
     return solution;
@@ -108,7 +107,7 @@ QP QPApproximation::generate_optimality_qp_(Problem& problem, Iterate& current_i
     return qp;
 }
 
-QP QPApproximation::generate_infeasibility_qp_(Problem& problem, Iterate& current_iterate, double radius, ConstraintPartition& constraint_partition, std::vector<double>& multipliers) {
+QP QPApproximation::generate_infeasibility_qp_(Problem& problem, Iterate& current_iterate, double radius, ConstraintPartition& constraint_partition) {
     int number_infeasible = constraint_partition.infeasible_set.size();
     DEBUG << "Creating the restoration problem with " << number_infeasible << " infeasible constraints\n";
 

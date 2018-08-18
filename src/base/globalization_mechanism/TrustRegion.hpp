@@ -29,7 +29,7 @@ class TrustRegion : public GlobalizationMechanism {
         double activity_tolerance_;
 
         void correct_multipliers(Problem& problem, LocalSolution& solution);
-        bool termination(bool success, int iteration, double radius);
+        bool termination(bool is_accepted);
         void print_iteration();
         void print_acceptance(double solution_norm);
         void print_warning(const char* message);

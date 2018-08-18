@@ -15,8 +15,8 @@ void TrustRegion::initialize(Problem& problem, Iterate& current_iterate) {
 Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_iterate) {
 	bool is_accepted = false;
 	this->number_iterations = 0;
-	
-	while (!this->termination(is_accepted, this->number_iterations, this->radius)) {
+
+    while (!this->termination(is_accepted)) {
 		try {
             this->number_iterations++;
             this->print_iteration();
@@ -56,24 +56,24 @@ void TrustRegion::correct_multipliers(Problem& problem, LocalSolution& solution)
 	/* set multipliers for bound constraints active at trust region to 0 */
 	for (unsigned int k = 0; k < solution.active_set.at_upper_bound.size(); k++) {
 		int i = solution.active_set.at_upper_bound[k];
-        if (i < problem.number_variables && solution.primal[i] == this->radius) {
-            solution.dual[i] = 0.;
+        if (i < problem.number_variables && solution.x[i] == this->radius) {
+            solution.bound_multipliers[i] = 0.;
 		}
 	}
 	for (unsigned int k = 0; k < solution.active_set.at_lower_bound.size(); k++) {
 		int i = solution.active_set.at_lower_bound[k];
-        if (i < problem.number_variables && solution.primal[i] == -this->radius) {
-            solution.dual[i] = 0.;
+        if (i < problem.number_variables && solution.x[i] == -this->radius) {
+            solution.bound_multipliers[i] = 0.;
 		}
 	}
 	return;
 }
 
-bool TrustRegion::termination(bool is_accepted, int iteration, double radius) {
+bool TrustRegion::termination(bool is_accepted) {
 	if (is_accepted) {
 		return true;
-	}
-	else if (this->max_iterations < iteration) {
+    }
+    else if (this->max_iterations < this->number_iterations) {
 		throw std::out_of_range("Trust-region iteration limit reached");
 	}
 	/* radius gets too small */
@@ -90,9 +90,9 @@ void TrustRegion::print_iteration() {
 
 void TrustRegion::print_acceptance(double solution_norm) {
     DEBUG << CYAN "TR trial point accepted\n" RESET;
-    INFO << "minor: " << std::fixed << this->number_iterations << "\t";
-    INFO << "radius: " << std::fixed << this->radius << "\t";
-    INFO << "step norm: " << std::fixed << solution_norm << "\t";
+    INFO << "minor: " << this->number_iterations << "\t";
+    INFO << "radius: " << this->radius << "\t";
+    INFO << "step norm: " << solution_norm << "\t";
     return;
 }
 

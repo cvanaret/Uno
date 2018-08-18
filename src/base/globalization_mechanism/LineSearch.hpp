@@ -30,7 +30,7 @@ class LineSearch : public GlobalizationMechanism {
         double ratio;
 
     private:
-        bool termination(bool is_accepted, int iteration);
+        bool termination(bool is_accepted);
         void print_iteration();
         void print_acceptance(double step_length, double solution_norm);
         void print_warning(const char* message);

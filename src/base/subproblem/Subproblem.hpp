@@ -26,7 +26,7 @@ class Subproblem {
 
         virtual LocalSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double radius) = 0;
 
-        virtual LocalSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, double radius, const std::vector<double>& d, ConstraintPartition& constraint_partition, std::vector<double>& multipliers) = 0;
+        virtual LocalSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, double radius, LocalSolution& phase_II_solution) = 0;
 
         virtual LocalSolution compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyDimensions penalty_dimensions) = 0;
 

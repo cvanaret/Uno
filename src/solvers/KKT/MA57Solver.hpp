@@ -26,7 +26,7 @@ class MA57Solver {
 		int use_fortran;
 		
 		MA57Data factorize(COOMatrix& matrix);
-		LocalSolution solve(COOMatrix& matrix, std::vector<double>& rhs, MA57Data& data);
+		std::vector<double> solve(COOMatrix& matrix, std::vector<double>& rhs, MA57Data& data);
 		int number_negative_eigenvalues();
 		
 	private:

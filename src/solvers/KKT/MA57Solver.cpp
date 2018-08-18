@@ -50,7 +50,7 @@ MA57Data MA57Solver::factorize(COOMatrix& matrix) {
 	return {fact, lfact, ifact, lifact, iwork};
 }
 
-LocalSolution MA57Solver::solve(COOMatrix& matrix, std::vector<double>& rhs, MA57Data& data) {
+std::vector<double> MA57Solver::solve(COOMatrix& matrix, std::vector<double>& rhs, MA57Data& data) {
 	/* solve */
 	int n = matrix.size;
 	int job = 1;
@@ -61,12 +61,8 @@ LocalSolution MA57Solver::solve(COOMatrix& matrix, std::vector<double>& rhs, MA5
 	// copy the RHS in the solution
 	std::vector<double> x(rhs);
 	ma57cd_(&job, &n, data.fact.data(), &data.lfact, data.ifact.data(), &data.lifact, &nrhs, x.data(), &lrhs, work.data(),
-		&lwork, data.iwork.data(), this->icntl_.data(), this->info_.data());
-	
-	std::vector<double> multipliers;
-	
-	LocalSolution solution(x, multipliers);
-	return solution;
+            &lwork, data.iwork.data(), this->icntl_.data(), this->info_.data());
+    return x;
 }
 
 int MA57Solver::number_negative_eigenvalues() {
@@ -96,11 +92,11 @@ void test() {
 
 	MA57Solver s;
 	MA57Data data = s.factorize(matrix);
-	LocalSolution solution = s.solve(matrix, rhs, data);
+    std::vector<double> solution = s.solve(matrix, rhs, data);
 
 	std::cout << "solution";
-	for (unsigned int k = 0; k < solution.primal.size(); k++) {
-		std::cout << " " << solution.primal[k];
+    for (unsigned int k = 0; k < solution.size(); k++) {
+        std::cout << " " << solution[k];
 	}
 	std::cout << "\n";
 	return;
