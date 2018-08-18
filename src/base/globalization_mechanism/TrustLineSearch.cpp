@@ -83,14 +83,14 @@ Iterate TrustLineSearch::compute_iterate(Problem& problem, Iterate& current_iter
 void TrustLineSearch::correct_multipliers(Problem& problem, LocalSolution& solution) {
 	for (unsigned int k = 0; k < solution.active_set.at_upper_bound.size(); k++) {
 		int i = solution.active_set.at_upper_bound[k];
-		if (i < problem.number_variables && solution.x[i] == this->radius) {
-			solution.multipliers[i] = 0.;
+		if (i < problem.number_variables && solution.primal[i] == this->radius) {
+			solution.dual[i] = 0.;
 		}
 	}
 	for (unsigned int k = 0; k < solution.active_set.at_lower_bound.size(); k++) {
 		int i = solution.active_set.at_lower_bound[k];
-		if (i < problem.number_variables && solution.x[i] == -this->radius) {
-			solution.multipliers[i] = 0.;
+		if (i < problem.number_variables && solution.primal[i] == -this->radius) {
+			solution.dual[i] = 0.;
 		}
 	}
 	return;

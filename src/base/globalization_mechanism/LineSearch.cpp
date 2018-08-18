@@ -6,6 +6,11 @@ LineSearch::LineSearch(GlobalizationStrategy& globalization_strategy, int max_it
 		GlobalizationMechanism(globalization_strategy, max_iterations), ratio(ratio) {
 }
 
+void LineSearch::initialize(Problem& problem, Iterate& current_iterate) {
+    this->globalization_strategy.initialize(problem, current_iterate, false);
+    return;
+}
+
 Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_iterate) {
 	/* compute a trial direction */
 	LocalSolution solution = this->globalization_strategy.compute_step(problem, current_iterate, INFINITY);
@@ -16,25 +21,21 @@ Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_iterate) 
 	this->number_iterations = 0;
 	
 	while (!this->termination(is_accepted, this->number_iterations)) {
-		this->number_iterations++;
-		DEBUG << "\n\tLINE SEARCH iteration " << this->number_iterations << ", step_length " << this->step_length << "\n";
-			
+        this->number_iterations++;
+        this->print_iteration();
+
 		try {
 			/* check whether the trial step is accepted */
 			is_accepted = this->globalization_strategy.check_step(problem, current_iterate, solution, this->step_length);
-		}
-		catch (const std::invalid_argument& e) {
-			WARNING << RED << e.what() << RESET "\n";
+        }
+        catch (const std::invalid_argument& e) {
+            this->print_warning(e.what());
 			is_accepted = false;
 		}
 		
 		if (is_accepted) {
 			/* print summary */
-			DEBUG << CYAN "LS trial point accepted\n" RESET;
-			INFO << "minor: " << std::fixed << this->number_iterations << "\t";
-			INFO << "step length: " << step_length << "\t";
-			// TODO: if stragegy == penalty, the step norm has no meaning!
-			INFO << "step norm: " << std::fixed << (step_length*solution.norm) << "\t";
+            this->print_acceptance(step_length, step_length * solution.norm);
 		}
 		else {
 			/* decrease the step length */
@@ -58,9 +59,23 @@ bool LineSearch::termination(bool is_accepted, int iteration) {
 	return false;
 }
 
-void LineSearch::initialize(Problem& problem, Iterate& current_iterate) {
-	this->globalization_strategy.initialize(problem, current_iterate, false);
-	return;
+void LineSearch::print_iteration() {
+    DEBUG << "\n\tLINE SEARCH iteration " << this->number_iterations << ", step_length " << this->step_length << "\n";
+    return;
+}
+
+void LineSearch::print_acceptance(double step_length, double solution_norm) {
+    DEBUG << CYAN "LS trial point accepted\n" RESET;
+    INFO << "minor: " << std::fixed << this->number_iterations << "\t";
+    INFO << "step length: " << step_length << "\t";
+    // TODO: if stragegy == penalty, the step norm has no meaning!
+    INFO << "step norm: " << std::fixed << solution_norm << "\t";
+    return;
+}
+
+void LineSearch::print_warning(const char* message) {
+    WARNING << RED << message << RESET "\n";
+    return;
 }
 
 /*
