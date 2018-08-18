@@ -25,7 +25,7 @@ enum ConstraintFeasibility {FEASIBLE, INFEASIBLE_LOWER, INFEASIBLE_UPPER};
 struct ConstraintPartition {
 	std::vector<int> feasible_set; /*!< Indices of the feasible constraints */
 	std::vector<int> infeasible_set; /*!< Indices of the infeasible constraints */
-	std::vector<ConstraintFeasibility> status;
+	std::vector<ConstraintFeasibility> constraint_status;
 };
 
 #endif // CONSTRAINT_H

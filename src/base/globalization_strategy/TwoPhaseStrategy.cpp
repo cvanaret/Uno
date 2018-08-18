@@ -22,7 +22,7 @@ LocalSolution TwoPhaseStrategy::compute_step(Problem& problem, Iterate& current_
 		ConstraintPartition constraint_partition = solution.constraint_partition;
 		
 		/* compute the step in phase 1, starting from infeasible solution */
-		solution = this->subproblem.compute_infeasibility_step(problem, current_iterate, radius, solution.x, constraint_partition, solution.multipliers);
+		solution = this->subproblem.compute_infeasibility_step(problem, current_iterate, radius, solution.primal, constraint_partition, solution.dual);
 		solution.constraint_partition = constraint_partition;
 		solution.phase = RESTORATION;
 		DEBUG << solution;
@@ -34,7 +34,7 @@ LocalSolution TwoPhaseStrategy::compute_step(Problem& problem, Iterate& current_
 void TwoPhaseStrategy::update_restoration_multipliers(Iterate& trial_iterate, ConstraintPartition& constraint_partition) {
 	for (unsigned int k = 0; k < constraint_partition.infeasible_set.size(); k++) {
 		int j = constraint_partition.infeasible_set[k];
-		if (constraint_partition.status[j] == INFEASIBLE_UPPER) {
+		if (constraint_partition.constraint_status[j] == INFEASIBLE_UPPER) {
 			trial_iterate.constraint_multipliers[j] = -1.;
 		}
 		else {

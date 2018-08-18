@@ -216,53 +216,57 @@ LocalSolution BQPDSolver::solve(LP& lp, std::vector<double>& x) {
 }
 
 LocalSolution BQPDSolver::generate_solution(std::vector<double>& x) {
-	/* generate the result */
-	LocalSolution solution(x, this->n_, this->m_);
-	solution.status = int_to_status(this->ifail_);
-	solution.norm = norm_inf(x);
-	solution.objective = this->f_solution_;
-	std::vector<ConstraintFeasibility> status(this->m_);
-	
-	/* active constraints */
+    std::vector<double> multipliers(this->n_ + this->m_);
+    ConstraintActivity active_set;
+    std::vector<ConstraintFeasibility> constraint_status(this->m_);
+    ConstraintPartition constraint_partition;
+    /* active constraints */
+    
 	for (int j = 0; j < this->n_-this->k_; j++) {
 		int index = std::abs(this->ls_[j])-1;
 		
 		if (this->ls_[j] < 0) { /* upper bound active */
-			solution.multipliers[index] = -this->residuals_[index];
-			solution.active_set.at_upper_bound.push_back(index);
+            multipliers[index] = -this->residuals_[index];
+            active_set.at_upper_bound.push_back(index);
 		}
 		else { /* lower bound active */
-			solution.multipliers[index] = this->residuals_[index];
-			solution.active_set.at_lower_bound.push_back(index);
+            multipliers[index] = this->residuals_[index];
+            active_set.at_lower_bound.push_back(index);
 		}
 		if (this->n_ <= index) {
-			solution.constraint_partition.feasible_set.push_back(index - this->n_);
-			status[index - this->n_] = FEASIBLE;
+            constraint_partition.feasible_set.push_back(index - this->n_);
+            constraint_status[index - this->n_] = FEASIBLE;
 		}
 	}
 	
 	/* inactive constraints */
 	for (int j = this->n_-this->k_; j < this->n_+this->m_; j++) {
 		int index = std::abs(this->ls_[j])-1;
-		solution.multipliers[index] = 0.;
+        multipliers[index] = 0.;
 		
 		if (this->n_ <= index) { // general constraints
 			if (this->residuals_[index] < 0.) { // infeasible constraint
-				solution.constraint_partition.infeasible_set.push_back(index - this->n_);
+                constraint_partition.infeasible_set.push_back(index - this->n_);
 				if (this->ls_[j] < 0) { // upper bound violated
-					status[index - this->n_] = INFEASIBLE_UPPER;
+                    constraint_status[index - this->n_] = INFEASIBLE_UPPER;
 				}
 				else { // lower bound violated
-					status[index - this->n_] = INFEASIBLE_LOWER;
+                    constraint_status[index - this->n_] = INFEASIBLE_LOWER;
 				}
 			}
 			else { // feasible constraint
-				solution.constraint_partition.feasible_set.push_back(index - this->n_);
-				status[index - this->n_] = FEASIBLE;
+                constraint_partition.feasible_set.push_back(index - this->n_);
+                constraint_status[index - this->n_] = FEASIBLE;
 			}
-		}
-	}
-	solution.constraint_partition.status = status;
+        }
+    }
+
+    LocalSolution solution(x, multipliers);
+    solution.status = int_to_status(this->ifail_);
+    solution.norm = norm_inf(x);
+    solution.objective = this->f_solution_;
+    constraint_partition.constraint_status = constraint_status;
+    solution.constraint_partition = constraint_partition;
 
 	return solution;
 }

@@ -65,7 +65,7 @@ LocalSolution PenaltyStrategy::compute_step(Problem& problem, Iterate& current_i
 			/* stage f: update the penalty parameter */
 			std::vector<double> ideal_bound_multipliers(problem.number_variables);
 			for (int i = 0; i < problem.number_variables; i++) {
-				ideal_bound_multipliers[i] = ideal_solution.multipliers[i];
+				ideal_bound_multipliers[i] = ideal_solution.dual[i];
 			}
 			std::vector<double> ideal_constraint_multipliers = this->compute_original_multipliers(problem, ideal_solution);
 			/* compute the ideal error (with a zero penalty parameter) */
@@ -133,7 +133,7 @@ bool PenaltyStrategy::check_step(Problem& problem, Iterate& current_iterate, Loc
 	/* retrieve only original primal and dual variables from the step */
 	std::vector<double> d(problem.number_variables);
 	for (int i = 0; i < problem.number_variables; i++) {
-		d[i] = solution.x[i];
+		d[i] = solution.primal[i];
 	}
 	
 	
@@ -142,7 +142,7 @@ bool PenaltyStrategy::check_step(Problem& problem, Iterate& current_iterate, Loc
 	/* get the multipliers */
 	std::vector<double> bound_multipliers(problem.number_variables);
 	for (int i = 0; i < problem.number_variables; i++) {
-		bound_multipliers[i] = solution.multipliers[i];
+		bound_multipliers[i] = solution.dual[i];
 	}
 	std::vector<double> constraint_multipliers = this->compute_original_multipliers(problem, solution);
 	Iterate trial_iterate(problem, x_trial, bound_multipliers, constraint_multipliers);
@@ -204,7 +204,7 @@ OptimalityStatus PenaltyStrategy::compute_status(Problem& problem, Iterate& tria
 double PenaltyStrategy::compute_linear_model(Problem& problem, LocalSolution& solution) {
 	double linear_model = 0.;
 	for (int k = 0; k < this->penalty_dimensions.number_additional_variables; k++) {
-		linear_model += solution.x[problem.number_variables + k];
+		linear_model += solution.primal[problem.number_variables + k];
 	}
 	return linear_model;
 }
@@ -216,12 +216,12 @@ std::vector<double> PenaltyStrategy::compute_original_multipliers(Problem& probl
 		if (problem.constraint_status[j] == BOUNDED_BOTH_SIDES) {
 			/* only case where 2 constraints were generated */
 			/* only one bound is active: one multiplier is > 0, the other is 0 */
-			constraint_multipliers[j] = solution.multipliers[current_constraint] + solution.multipliers[current_constraint+1];
+			constraint_multipliers[j] = solution.dual[current_constraint] + solution.dual[current_constraint+1];
 			current_constraint += 2;
 		}
 		else {
 			/* only 1 constraint was generated */
-			constraint_multipliers[j] = solution.multipliers[current_constraint];
+			constraint_multipliers[j] = solution.dual[current_constraint];
 			current_constraint++;
 		}
 	}

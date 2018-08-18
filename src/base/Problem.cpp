@@ -17,7 +17,7 @@ double Problem::feasible_residual_norm(ConstraintPartition& constraint_partition
 	// TODO useful?
 	for (unsigned int k = 0; k < constraint_partition.infeasible_set.size(); k++) {
 		int j = constraint_partition.infeasible_set[k];
-		if (constraint_partition.status[j] == INFEASIBLE_LOWER) {
+		if (constraint_partition.constraint_status[j] == INFEASIBLE_LOWER) {
 			feasible_residual += std::max(0., constraints[j] - this->constraint_ub[j]);
 		}
 		else {
@@ -40,7 +40,7 @@ double Problem::infeasible_residual_norm(ConstraintPartition& constraint_partiti
 	/* compute residuals for infeasible constraints */
 	for (unsigned int k = 0; k < constraint_partition.infeasible_set.size(); k++) {
 		int j = constraint_partition.infeasible_set[k];
-		if (constraint_partition.status[j] == INFEASIBLE_LOWER) {
+		if (constraint_partition.constraint_status[j] == INFEASIBLE_LOWER) {
 			infeasible_residual += std::max(0., this->constraint_lb[j] - constraints[j]);
 		}
 		else {

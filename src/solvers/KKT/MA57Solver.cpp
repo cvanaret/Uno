@@ -46,7 +46,6 @@ MA57Data MA57Solver::factorize(COOMatrix& matrix) {
 	ma57bd_(&n, &nnz, matrix.matrix.data(), fact.data(), &lfact, ifact.data(), &lifact, &lkeep, keep.data(),
 		iwork.data(), this->icntl_.data(), this->cntl_.data(), this->info_.data(), this->rinfo_.data());
 	//print_vector(std::cout, this->info_);
-	std::cout << "The matrix has " << this->info_[23] << " negative eigenvalues\n";
 	//std::cout << "the matrix has rank " << this->info_[24] << "\n";
 	return {fact, lfact, ifact, lifact, iwork};
 }
@@ -64,7 +63,9 @@ LocalSolution MA57Solver::solve(COOMatrix& matrix, std::vector<double>& rhs, MA5
 	ma57cd_(&job, &n, data.fact.data(), &data.lfact, data.ifact.data(), &data.lifact, &nrhs, x.data(), &lrhs, work.data(),
 		&lwork, data.iwork.data(), this->icntl_.data(), this->info_.data());
 	
-	LocalSolution solution(x, 1, 1);
+	std::vector<double> multipliers;
+	
+	LocalSolution solution(x, multipliers);
 	return solution;
 }
 
@@ -98,8 +99,8 @@ void test() {
 	LocalSolution solution = s.solve(matrix, rhs, data);
 
 	std::cout << "solution";
-	for (unsigned int k = 0; k < solution.x.size(); k++) {
-		std::cout << " " << solution.x[k];
+	for (unsigned int k = 0; k < solution.primal.size(); k++) {
+		std::cout << " " << solution.primal[k];
 	}
 	std::cout << "\n";
 	return;

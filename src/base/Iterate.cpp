@@ -13,7 +13,7 @@ Iterate::Iterate(Problem& problem, std::vector<double>& x, std::vector<double>& 
 
 	/* objective */
 	this->objective = problem.objective(this->x);
-
+    
 	/* constraints */
 	this->constraints = problem.evaluate_constraints(this->x);
 	this->residual = problem.l1_inf_norm(this->constraints);
