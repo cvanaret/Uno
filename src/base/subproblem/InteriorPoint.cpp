@@ -173,7 +173,7 @@ LocalSolution InteriorPoint::compute_optimality_step(Problem& problem, Iterate& 
     print_vector(std::cout, trial_x);
 
     for (unsigned int j = 0; j < current_iterate.bound_multipliers.size(); j++) {
-        trial_bound_multipliers[j] = dual_length * delta_z[j];
+        trial_bound_multipliers[j] = current_iterate.bound_multipliers[j] + dual_length * delta_z[j];
     }
     /* reset z */
     //    current_multiplier = 0;
@@ -188,13 +188,12 @@ LocalSolution InteriorPoint::compute_optimality_step(Problem& problem, Iterate& 
     //        }
     //    }
     // TODO reset z for s
+    std::cout << "Scaled z: ";
+    print_vector(std::cout, trial_bound_multipliers);
 
     for (int j = 0; j < problem.number_constraints; j++) {
         trial_constraint_multipliers[j] = primal_length * ipm_solution[problem.number_variables + this->slacks.size() + j];
     }
-    std::cout << "Scaled Δz: ";
-    print_vector(std::cout, trial_bound_multipliers);
-
     std::cout << "Scaled Δλ: ";
     print_vector(std::cout, trial_constraint_multipliers);
 

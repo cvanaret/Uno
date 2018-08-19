@@ -27,8 +27,9 @@ void FilterStrategy::initialize(Problem& problem, Iterate& current_iterate, bool
  * */
 bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, LocalSolution& solution, double step_length) {
     /* assemble trial point: TODO do not reevaluate if ||d|| = 0 */
-    std::vector<double> x_trial = add_vectors(current_iterate.x, solution.x, step_length);
-    Iterate trial_iterate(problem, x_trial, solution.bound_multipliers, solution.constraint_multipliers);
+    std::vector<double> trial_x = add_vectors(current_iterate.x, solution.x, step_length);
+    std::vector<double> trial_constraint_multipliers = add_vectors(current_iterate.constraint_multipliers, solution.constraint_multipliers, step_length);
+    Iterate trial_iterate(problem, trial_x, solution.bound_multipliers, trial_constraint_multipliers);
     double step_norm = step_length * solution.norm;
 
     bool accept = false;

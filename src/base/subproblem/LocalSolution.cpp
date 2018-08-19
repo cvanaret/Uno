@@ -20,7 +20,7 @@ std::ostream& operator<<(std::ostream &stream, LocalSolution& solution) {
 
     stream << MAGENTA;
     stream << "d^* = ";
-    print_vector(stream, solution.x, max_size);
+    print_vector(stream, solution.x, 0, max_size);
 
     stream << "objective = " << solution.objective << "\n";
     stream << "norm = " << solution.norm << "\n";
