@@ -139,7 +139,9 @@ bool PenaltyStrategy::check_step(Problem& problem, Iterate& current_iterate, Loc
     std::vector<double> bound_multipliers = this->compute_bound_multipliers(problem, solution);
     std::vector<double> constraint_multipliers = this->compute_constraint_multipliers(problem, solution);
     std::vector<double> trial_constraint_multipliers = add_vectors(current_iterate.constraint_multipliers, constraint_multipliers, step_length);
+    /* generate the trial iterate */
     Iterate trial_iterate(problem, x_trial, bound_multipliers, trial_constraint_multipliers);
+    this->subproblem.compute_measures(problem, trial_iterate);
 	
 	/* compute current exact l1 penalty: rho f + sum max(0, c) */
 	double current_exact_l1_penalty = this->penalty_parameter*current_iterate.objective + current_iterate.residual;

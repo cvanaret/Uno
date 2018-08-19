@@ -8,7 +8,11 @@
 QPApproximation::QPApproximation(QPSolver& solver) : Subproblem("QP"), solver(solver) {
 }
 
-void QPApproximation::initialize(Problem& problem, Iterate& current_iterate, int number_variables, int number_constraints, bool use_trust_region) {
+void QPApproximation::initialize(Problem& problem, Iterate& first_iterate, int number_variables, int number_constraints, bool use_trust_region) {
+    /* compute the optimality and feasibility measures of the initial point */
+    this->compute_measures(problem, first_iterate);
+
+    /* allocate the QP solver */
     this->solver.allocate(number_variables, number_constraints);
 }
 
@@ -291,5 +295,11 @@ void QPApproximation::set_infeasibility_objective_(Problem& problem, QP& qp, Ite
     }
     current_iterate.set_objective_gradient(objective_gradient);
     qp.objective = current_iterate.objective_gradient;
+    return;
+}
+
+void QPApproximation::compute_measures(Problem& problem, Iterate& iterate) {
+    iterate.feasibility_measure = iterate.residual;
+    iterate.optimality_measure = iterate.objective;
     return;
 }

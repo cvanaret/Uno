@@ -17,8 +17,8 @@ Iterate::Iterate(Problem& problem, std::vector<double>& x, std::vector<double>& 
 	/* constraints */
 	this->constraints = problem.evaluate_constraints(this->x);
 	this->residual = problem.l1_inf_norm(this->constraints);
-	this->infeasibility_measure = this->residual;
-	this->feasibility_measure = this->objective;
+    //this->feasibility_measure = this->residual;
+    //this->optimality_measure = this->objective;
 	
 	/* Jacobian and Hessian will be evaluated only when necessary */
 	this->is_objective_gradient_computed = false;
@@ -77,9 +77,11 @@ std::ostream& operator<< (std::ostream &stream, Iterate& iterate) {
 	//	stream << " " << cj;
 	//}
 	//stream << "\n";
-	
-	stream << "Residual: " << iterate.residual << "\n";
-	
+
+    stream << "Residual: " << iterate.residual << "\n";
+
+    stream << "Optimality measure: " << iterate.optimality_measure << "\n";
+    stream << "Feasibility measure: " << iterate.feasibility_measure << "\n";
 	return stream;
 }
 

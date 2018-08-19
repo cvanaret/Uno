@@ -42,8 +42,8 @@ class Iterate {
         double KKTerror;
         double complementarity_error;
 
-        double infeasibility_measure;
         double feasibility_measure;
+        double optimality_measure;
 
         std::map<int, double> objective_gradient; /*!< Sparse Jacobian of the objective */
         std::vector<std::map<int, double> > constraints_jacobian; /*!< Sparse Jacobian of the constraints */

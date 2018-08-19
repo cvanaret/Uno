@@ -17,11 +17,10 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, std::vector<doub
 	INFO << problem.number_variables << " variables, " << problem.number_constraints << " constraints\n";
 
 	/* evaluate the initial point */
-	Iterate current_iterate(problem, x, bound_multipliers, constraint_multipliers);
-	INFO << "Initial iterate\n" << current_iterate << "\n";
-	
-	/* use the evaluation of the current point to initialize the strategies */
-	this->globalization_mechanism.initialize(problem, current_iterate);
+    Iterate current_iterate(problem, x, bound_multipliers, constraint_multipliers);
+    /* use the current point to initialize the strategies */
+    this->globalization_mechanism.initialize(problem, current_iterate);
+    INFO << "Initial iterate\n" << current_iterate << "\n";
 	
 	try {
 		/* check for convergence */
@@ -93,10 +92,10 @@ void Result::display() {
 
 	std::cout << "Primal solution:\t";
 	print_vector(std::cout, this->solution.x);
-	
-	std::cout << "Bound multipliers:\t\t";
+
+    std::cout << "Bound multipliers:\t";
 	print_vector(std::cout, this->solution.bound_multipliers);
-	std::cout << "Constraint multipliers:\t\t";
+    std::cout << "Constraint multipliers:\t";
 	print_vector(std::cout, this->solution.constraint_multipliers);
 	
 	std::cout << "CPU time:\t\t" << this->cpu_time << "s\n";

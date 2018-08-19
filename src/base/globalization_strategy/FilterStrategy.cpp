@@ -6,19 +6,18 @@
 /* TODO option to switch between filter or non-monotonic filter */
 FilterStrategy::FilterStrategy(Subproblem& subproblem, std::shared_ptr<Filter> filter_optimality,
                                std::shared_ptr<Filter> filter_restoration, TwoPhaseConstants& constants, double tolerance) :
-TwoPhaseStrategy(subproblem, constants, tolerance),
-filter_optimality(filter_optimality),
-filter_restoration(filter_restoration) {
+TwoPhaseStrategy(subproblem, constants, tolerance), filter_optimality(filter_optimality), filter_restoration(filter_restoration) {
 }
 
 void FilterStrategy::initialize(Problem& problem, Iterate& current_iterate, bool use_trust_region) {
+    /* initialize the subproblem */
+    this->subproblem.initialize(problem, current_iterate, problem.number_variables, problem.number_constraints, use_trust_region);
+
     /* set the filter upper bound */
-    double upper_bound = std::max(this->constants.ubd, this->constants.fact * current_iterate.residual);
+    // TODO check if residual or feasibility_measure
+    double upper_bound = std::max(this->constants.ubd, this->constants.fact * current_iterate.feasibility_measure);
     this->filter_optimality->upper_bound = upper_bound;
     this->filter_restoration->upper_bound = upper_bound;
-
-    /* allocate the subproblem solver */
-    this->subproblem.initialize(problem, current_iterate, problem.number_variables, problem.number_constraints, use_trust_region);
     return;
 }
 
@@ -30,8 +29,9 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Loca
     std::vector<double> trial_x = add_vectors(current_iterate.x, solution.x, step_length);
     std::vector<double> trial_constraint_multipliers = add_vectors(current_iterate.constraint_multipliers, solution.constraint_multipliers, step_length);
     Iterate trial_iterate(problem, trial_x, solution.bound_multipliers, trial_constraint_multipliers);
+    this->subproblem.compute_measures(problem, trial_iterate);
     double step_norm = step_length * solution.norm;
-
+    
     bool accept = false;
     /* check zero step */
     if (step_norm == 0.) {
@@ -43,27 +43,27 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Loca
 
         /* if RESTORATION phase, compute (in)feasibility measures of trial point */
         if (this->phase == RESTORATION) {
-            trial_iterate.infeasibility_measure = problem.feasible_residual_norm(solution.constraint_partition, trial_iterate.constraints);
-            trial_iterate.feasibility_measure = problem.infeasible_residual_norm(solution.constraint_partition, trial_iterate.constraints);
+            trial_iterate.feasibility_measure = problem.feasible_residual_norm(solution.constraint_partition, trial_iterate.constraints);
+            trial_iterate.optimality_measure = problem.infeasible_residual_norm(solution.constraint_partition, trial_iterate.constraints);
         }
 
-        DEBUG << "TESTING trial " << trial_iterate.infeasibility_measure << " " << trial_iterate.feasibility_measure << " against current ";
-        DEBUG << current_iterate.infeasibility_measure << " " << current_iterate.feasibility_measure << "\n";
+        DEBUG << "TESTING trial " << trial_iterate.feasibility_measure << " " << trial_iterate.optimality_measure << " against current ";
+        DEBUG << current_iterate.feasibility_measure << " " << current_iterate.optimality_measure << "\n";
 
         /* check acceptance */
         Filter& filter = (this->phase == OPTIMALITY) ? *(this->filter_optimality) : *(this->filter_restoration);
-        bool acceptable = filter.query(trial_iterate.infeasibility_measure, trial_iterate.feasibility_measure);
+        bool acceptable = filter.query(trial_iterate.feasibility_measure, trial_iterate.optimality_measure);
         if (acceptable) {
             // check acceptance wrt current x (h,f)
-            acceptable = filter.query_current_iterate(current_iterate.infeasibility_measure, current_iterate.feasibility_measure, trial_iterate.infeasibility_measure, trial_iterate.feasibility_measure);
+            acceptable = filter.query_current_iterate(current_iterate.feasibility_measure, current_iterate.optimality_measure, trial_iterate.feasibility_measure, trial_iterate.optimality_measure);
             if (acceptable) {
                 double predicted_reduction = this->compute_predicted_reduction(solution, step_length);
-                double actual_reduction = filter.compute_actual_reduction(current_iterate.feasibility_measure, current_iterate.infeasibility_measure, trial_iterate.feasibility_measure);
-                DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << current_iterate.feasibility_measure << "-" << trial_iterate.feasibility_measure << " = " << actual_reduction << "\n\n";
+                double actual_reduction = filter.compute_actual_reduction(current_iterate.optimality_measure, current_iterate.feasibility_measure, trial_iterate.optimality_measure);
+                DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << current_iterate.optimality_measure << "-" << trial_iterate.optimality_measure << " = " << actual_reduction << "\n\n";
 
                 /* switching condition */
-                if (predicted_reduction < this->constants.Delta * current_iterate.infeasibility_measure * current_iterate.infeasibility_measure) {
-                    filter.add(current_iterate.infeasibility_measure, current_iterate.feasibility_measure);
+                if (predicted_reduction < this->constants.Delta * current_iterate.feasibility_measure * current_iterate.feasibility_measure) {
+                    filter.add(current_iterate.feasibility_measure, current_iterate.optimality_measure);
                     accept = true;
                 }
                     /* sufficient decrease condition */
@@ -108,23 +108,23 @@ void FilterStrategy::switch_phase(Problem& problem, LocalSolution& solution, Ite
             DEBUG << "Switching from optimality to restoration phase\n";
             this->phase = RESTORATION;
             /* add [h,f] (c/s violation) to filter, entering restoration */
-            this->filter_optimality->add(current_iterate.infeasibility_measure, current_iterate.feasibility_measure);
+            this->filter_optimality->add(current_iterate.feasibility_measure, current_iterate.optimality_measure);
 
             /* re-initialize the restoration filter */
-            current_iterate.infeasibility_measure = problem.feasible_residual_norm(solution.constraint_partition, current_iterate.constraints);
-            current_iterate.feasibility_measure = problem.infeasible_residual_norm(solution.constraint_partition, current_iterate.constraints);
+            current_iterate.feasibility_measure = problem.feasible_residual_norm(solution.constraint_partition, current_iterate.constraints);
+            current_iterate.optimality_measure = problem.infeasible_residual_norm(solution.constraint_partition, current_iterate.constraints);
             current_iterate.is_hessian_computed = false;
             this->filter_restoration->reset();
             this->filter_restoration->upper_bound = this->filter_optimality->upper_bound;
-            this->filter_restoration->add(current_iterate.infeasibility_measure, current_iterate.feasibility_measure);
+            this->filter_restoration->add(current_iterate.feasibility_measure, current_iterate.optimality_measure);
         }
     }
         /* check whether we can switch from phase I (restoration) to II (optimality) */
-    else if (solution.phase == OPTIMALITY && this->filter_optimality->query(trial_iterate.infeasibility_measure, trial_iterate.feasibility_measure)) {
+    else if (solution.phase == OPTIMALITY && this->filter_optimality->query(trial_iterate.feasibility_measure, trial_iterate.optimality_measure)) {
         DEBUG << "Switching from restoration to optimality phase\n";
         this->phase = OPTIMALITY;
-        current_iterate.infeasibility_measure = current_iterate.residual;
-        current_iterate.feasibility_measure = current_iterate.objective;
+        current_iterate.feasibility_measure = current_iterate.residual;
+        current_iterate.optimality_measure = current_iterate.objective;
     }
     return;
 }
@@ -134,7 +134,7 @@ OptimalityStatus FilterStrategy::compute_status(Problem& problem, Iterate& curre
 
     /* TODO: check if test on residual can indeed be replaced by infeasibility_measure */
     if (current_iterate.residual <= this->tolerance * problem.number_constraints) {
-        if (current_iterate.KKTerror <= this->tolerance * sqrt(problem.number_variables) &&
+        if (current_iterate.KKTerror <= this->tolerance * std::sqrt(problem.number_variables) &&
                 current_iterate.complementarity_error <= this->tolerance * (problem.number_variables + problem.number_constraints)) {
             if (this->phase == OPTIMALITY) {
                 status = KKT_POINT;

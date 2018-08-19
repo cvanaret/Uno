@@ -18,14 +18,14 @@ class QPApproximation : public Subproblem {
          */
         QPApproximation(QPSolver& solver);
 
-        void initialize(Problem& problem, Iterate& current_iterate, int number_variables, int number_constraints, bool use_trust_region);
+        void initialize(Problem& problem, Iterate& first_iterate, int number_variables, int number_constraints, bool use_trust_region);
 
         LocalSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double radius);
-
         LocalSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, double radius, LocalSolution& phase_II_solution);
-
         LocalSolution compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyDimensions penalty_dimensions);
 
+        void compute_measures(Problem& problem, Iterate& iterate);
+        
         /* use a reference to allow polymorphism */
         QPSolver& solver; /*!< Solver that solves the subproblem */
 
