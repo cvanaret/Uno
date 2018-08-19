@@ -136,24 +136,24 @@ COOMatrix CSCMatrix::to_COO() {
 std::ostream& operator<< (std::ostream &stream, CSCMatrix& matrix) {
 	/* Hessian */
 	stream << "W = ";
-	print_vector(stream, matrix.matrix, 20);
+	print_vector(stream, matrix.matrix, 0, 20);
 	stream << "with column start: ";
 	// TODO handle the stream
-	print_vector(stream, matrix.column_start, 20);
+	print_vector(stream, matrix.column_start, 0, 20);
 	stream << "and row number: ";
-	print_vector(stream, matrix.row_number, 20);
+	print_vector(stream, matrix.row_number, 0, 20);
 	return stream;
 }
 
 std::ostream& operator<< (std::ostream &stream, const CSCMatrix& matrix) {
 	/* Hessian */
 	stream << "W = ";
-	print_vector(stream, matrix.matrix, 20);
+	print_vector(stream, matrix.matrix, 0, 20);
 	stream << "with column start: ";
 	// TODO handle the stream
-	print_vector(stream, matrix.column_start, 20);
+	print_vector(stream, matrix.column_start, 0, 20);
 	stream << "and row number: ";
-	print_vector(stream, matrix.row_number, 20);
+	print_vector(stream, matrix.row_number, 0, 20);
 	return stream;
 }
 
