@@ -9,7 +9,7 @@
 
 std::vector<double> add_vectors(std::vector<double>& x, std::vector<double>& y, double scaling_factor);
 
-double norm_inf(std::vector<double>& x);
+double norm_inf(std::vector<double>& x, unsigned int length = std::numeric_limits<unsigned int>::max());
 
 double norm_1(std::vector<double>& x);
 

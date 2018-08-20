@@ -123,6 +123,7 @@ void test_interior_point() {
 
     double radius = INFINITY;
     InteriorPoint ipm;
+    ipm.compute_measures(problem, current_iterate);
     ipm.initialize(problem, current_iterate, problem.number_variables, problem.number_constraints, radius < INFINITY);
     ipm.compute_optimality_step(problem, current_iterate, radius);
 

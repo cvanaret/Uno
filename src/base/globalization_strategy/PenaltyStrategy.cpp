@@ -15,7 +15,7 @@ PenaltyStrategy::PenaltyStrategy(Subproblem& subproblem, double tolerance):
 	this->epsilon2 = 0.1;
 }
 
-void PenaltyStrategy::initialize(Problem& problem, Iterate& current_iterate, bool use_trust_region) {
+void PenaltyStrategy::initialize(Problem& problem, Iterate& first_iterate, bool use_trust_region) {
 	/* compute the number of necessary additional variables and constraints */
 	this->penalty_dimensions.number_additional_variables = 0;
 	this->penalty_dimensions.number_constraints = 0;
@@ -42,7 +42,11 @@ void PenaltyStrategy::initialize(Problem& problem, Iterate& current_iterate, boo
 	/* allocate the subproblem solver */
 	int number_variables = problem.number_variables + this->penalty_dimensions.number_additional_variables;
 	int number_constraints = this->penalty_dimensions.number_constraints;
-	this->subproblem.initialize(problem, current_iterate, number_variables, number_constraints, use_trust_region);
+    this->subproblem.initialize(problem, first_iterate, number_variables, number_constraints, use_trust_region);
+
+    first_iterate.KKTerror = this->compute_KKT_error(problem, first_iterate);
+    first_iterate.complementarity_error = this->compute_complementarity_error(problem, first_iterate);
+
 	return;
 }
 

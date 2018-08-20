@@ -50,17 +50,20 @@ std::vector<double> GlobalizationStrategy::compute_lagrangian_gradient(Problem& 
 double GlobalizationStrategy::compute_complementarity_error(const Problem& problem, Iterate& current_iterate) {
     double complementarity_error = 0.;
 
+    std::cout << "complementarity error = 0";
+
     /* bound constraints */
     for (int i = 0; i < problem.number_variables; i++) {
         double multiplier_i = current_iterate.bound_multipliers[i];
 
         if (multiplier_i > this->tolerance / 10.) {
+            std::cout << " + abs(" << multiplier_i << "*(x[" << i << "] - " << problem.variable_lb[i] << "))";
             complementarity_error += std::abs(multiplier_i * (current_iterate.x[i] - problem.variable_lb[i]));
         }
         else if (multiplier_i < -this->tolerance / 10.) {
+            std::cout << " + abs(" << multiplier_i << "*(x[" << i << "] - " << problem.variable_ub[i] << "))";
             complementarity_error += std::abs(multiplier_i * (current_iterate.x[i] - problem.variable_ub[i]));
         }
-
     }
     /* constraints */
     for (int j = 0; j < problem.number_constraints; j++) {
@@ -73,5 +76,6 @@ double GlobalizationStrategy::compute_complementarity_error(const Problem& probl
             complementarity_error += std::abs(multiplier_j * (current_iterate.constraints[j] - problem.constraint_ub[j]));
         }
     }
+    std::cout << "\n";
     return complementarity_error;
 }

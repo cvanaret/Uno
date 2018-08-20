@@ -9,13 +9,16 @@ FilterStrategy::FilterStrategy(Subproblem& subproblem, std::shared_ptr<Filter> f
 TwoPhaseStrategy(subproblem, constants, tolerance), filter_optimality(filter_optimality), filter_restoration(filter_restoration) {
 }
 
-void FilterStrategy::initialize(Problem& problem, Iterate& current_iterate, bool use_trust_region) {
+void FilterStrategy::initialize(Problem& problem, Iterate& first_iterate, bool use_trust_region) {
     /* initialize the subproblem */
-    this->subproblem.initialize(problem, current_iterate, problem.number_variables, problem.number_constraints, use_trust_region);
+    this->subproblem.initialize(problem, first_iterate, problem.number_variables, problem.number_constraints, use_trust_region);
+
+    first_iterate.KKTerror = this->compute_KKT_error(problem, first_iterate);
+    first_iterate.complementarity_error = this->compute_complementarity_error(problem, first_iterate);
 
     /* set the filter upper bound */
     // TODO check if residual or feasibility_measure
-    double upper_bound = std::max(this->constants.ubd, this->constants.fact * current_iterate.feasibility_measure);
+    double upper_bound = std::max(this->constants.ubd, this->constants.fact * first_iterate.feasibility_measure);
     this->filter_optimality->upper_bound = upper_bound;
     this->filter_restoration->upper_bound = upper_bound;
     return;
@@ -62,7 +65,7 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Loca
                 DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << current_iterate.optimality_measure << "-" << trial_iterate.optimality_measure << " = " << actual_reduction << "\n\n";
 
                 /* switching condition */
-                if (predicted_reduction < this->constants.Delta * current_iterate.feasibility_measure * current_iterate.feasibility_measure) {
+                if (predicted_reduction < this->constants.Delta * std::pow(current_iterate.feasibility_measure, 2)) {
                     filter.add(current_iterate.feasibility_measure, current_iterate.optimality_measure);
                     accept = true;
                 }

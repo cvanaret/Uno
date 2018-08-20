@@ -42,9 +42,9 @@ double norm_2(std::vector<double>& x) {
 }
 
 /* compute ||x||_infty */
-double norm_inf(std::vector<double>& x) {
+double norm_inf(std::vector<double>& x, unsigned int length) {
     double norm = 0.;
-    for (unsigned int i = 0; i < x.size(); i++) {
+    for (unsigned int i = 0; i < std::min<unsigned int>(length, x.size()); i++) {
         norm = std::max(norm, std::abs(x[i]));
     }
     return norm;

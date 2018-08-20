@@ -35,7 +35,6 @@ void Iterate::set_objective_gradient(std::map<int,double>& objective_gradient) {
 	return;
 }
 
-
 void Iterate::compute_objective_gradient(Problem& problem) {
 	if (!this->is_objective_gradient_computed) {
 		this->objective_gradient = problem.objective_sparse_gradient(this->x);
@@ -82,6 +81,9 @@ std::ostream& operator<< (std::ostream &stream, Iterate& iterate) {
 
     stream << "Optimality measure: " << iterate.optimality_measure << "\n";
     stream << "Feasibility measure: " << iterate.feasibility_measure << "\n";
+
+    stream << "KKT error: " << iterate.KKTerror << "\n";
+    stream << "Complementarity error: " << iterate.complementarity_error << "\n";
 	return stream;
 }
 

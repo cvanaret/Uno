@@ -22,7 +22,10 @@ class InteriorPoint : public Subproblem {
         LocalSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, double radius, LocalSolution& phase_II_solution) override;
         LocalSolution compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyDimensions penalty_dimensions) override;
 
-        void compute_measures(Problem& problem, Iterate& iterate);
+        void compute_measures(Problem& problem, Iterate& iterate) override;
+        double objective(Problem& problem, Iterate& iterate);
+        double constraint_violation(Problem& problem, Iterate& iterate);
+        double evaluate_local_model(Problem& problem, Iterate& current_iterate, std::vector<double>& solution);
         
         MA57Solver solver; /*!< Solver that solves the subproblem */
 
@@ -31,11 +34,11 @@ class InteriorPoint : public Subproblem {
 
         /* data structures */
         std::vector<ConstraintType> variable_status;
-        std::vector<int> variable_lb; /* indices of the variables with lower bounds */
-        std::vector<int> variable_ub; /* indices of the variables with upper bounds */
-        std::vector<int> slacks; /* indices of the inequality constraints that need a slack variable */
-        std::vector<int> slack_lb; /* indices of the slacks with lower bounds */
-        std::vector<int> slack_ub; /* indices of the slacks with upper bounds */
+        std::vector<int> lower_bounded_variables; /* indices of the variables with lower bounds */
+        std::vector<int> upper_bounded_variables; /* indices of the variables with upper bounds */
+        std::vector<int> slacked_constraints; /* indices of the inequality constraints that need a slack variable */
+        std::vector<int> lower_bounded_slacks; /* indices of the slacks with lower bounds */
+        std::vector<int> upper_bounded_slacks; /* indices of the slacks with upper bounds */
         MA57Data data;
 
         /* constants */
