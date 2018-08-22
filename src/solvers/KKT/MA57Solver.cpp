@@ -39,9 +39,9 @@ MA57Data MA57Solver::factorize(COOMatrix& matrix) {
 		this->icntl_.data(), this->info_.data(), this->rinfo_.data());
 
 	/* factorize */
-	int lfact = 1.2*this->info_[8];
+    int lfact = 2 * this->info_[8];
 	std::vector<double> fact(lfact);
-	int lifact = 1.2*this->info_[9];
+    int lifact = 2 * this->info_[9];
 	std::vector<int> ifact(lifact);
 	ma57bd_(&n, &nnz, matrix.matrix.data(), fact.data(), &lfact, ifact.data(), &lifact, &lkeep, keep.data(),
 		iwork.data(), this->icntl_.data(), this->cntl_.data(), this->info_.data(), this->rinfo_.data());
@@ -67,6 +67,10 @@ std::vector<double> MA57Solver::solve(COOMatrix& matrix, std::vector<double>& rh
 
 int MA57Solver::number_negative_eigenvalues() {
 	return this->info_[23];
+}
+
+bool MA57Solver::matrix_is_singular() {
+    return (this->info_[0] == 4);
 }
 
 void test() {

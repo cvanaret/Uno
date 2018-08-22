@@ -43,10 +43,3 @@ void TwoPhaseStrategy::update_restoration_multipliers(Iterate& trial_iterate, Co
     }
     return;
 }
-
-double TwoPhaseStrategy::compute_KKT_error(Problem& problem, Iterate& current_iterate) {
-    double objective_multiplier = (this->phase == OPTIMALITY) ? 1. : 0.;
-    std::vector<double> lagrangian_gradient = this->compute_lagrangian_gradient(problem, current_iterate, objective_multiplier, current_iterate.bound_multipliers, current_iterate.constraint_multipliers);
-    double KKTerror = norm_2(lagrangian_gradient);
-    return KKTerror;
-}

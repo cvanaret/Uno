@@ -17,17 +17,15 @@ class PenaltyStrategy : public GlobalizationStrategy {
          */
         PenaltyStrategy(Subproblem& subproblem, double tolerance);
 
-        LocalSolution compute_step(Problem& problem, Iterate& current_iterate, double radius);
+        LocalSolution compute_step(Problem& problem, Iterate& current_iterate, double radius) override;
 
         /*!
          *  Check the validity of a step
          *  Implements the purely virtual method of the superclass
          */
-        bool check_step(Problem& problem, Iterate& current_iterate, LocalSolution& solution, double step_length);
-
-        double compute_KKT_error(Problem& problem, Iterate& current_iterate);
-
-        void initialize(Problem& problem, Iterate& current_iterate, bool use_trust_region);
+        bool check_step(Problem& problem, Iterate& current_iterate, LocalSolution& solution, double step_length) override;
+        void initialize(Problem& problem, Iterate& current_iterate, bool use_trust_region) override;
+        void compute_measures(Problem& problem, Iterate& iterate) override;
 
         double penalty_parameter; /*!< Penalty */
 

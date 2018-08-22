@@ -44,7 +44,7 @@ void PenaltyStrategy::initialize(Problem& problem, Iterate& first_iterate, bool 
 	int number_constraints = this->penalty_dimensions.number_constraints;
     this->subproblem.initialize(problem, first_iterate, number_variables, number_constraints, use_trust_region);
 
-    first_iterate.KKTerror = this->compute_KKT_error(problem, first_iterate);
+    first_iterate.KKTerror = this->compute_KKT_error(problem, first_iterate, this->penalty_parameter);
     first_iterate.complementarity_error = this->compute_complementarity_error(problem, first_iterate);
 
 	return;
@@ -145,7 +145,7 @@ bool PenaltyStrategy::check_step(Problem& problem, Iterate& current_iterate, Loc
     std::vector<double> trial_constraint_multipliers = add_vectors(current_iterate.constraint_multipliers, constraint_multipliers, step_length);
     /* generate the trial iterate */
     Iterate trial_iterate(problem, x_trial, bound_multipliers, trial_constraint_multipliers);
-    this->subproblem.compute_measures(problem, trial_iterate);
+    this->compute_measures(problem, trial_iterate);
 	
 	/* compute current exact l1 penalty: rho f + sum max(0, c) */
 	double current_exact_l1_penalty = this->penalty_parameter*current_iterate.objective + current_iterate.residual;
@@ -156,7 +156,7 @@ bool PenaltyStrategy::check_step(Problem& problem, Iterate& current_iterate, Loc
 	bool accept = false;
 	if (current_exact_l1_penalty - trial_exact_l1_penalty >= this->eta*step_length*(current_iterate.residual - solution.objective)) {
 		accept = true;
-		trial_iterate.KKTerror = this->compute_KKT_error(problem, trial_iterate);
+        trial_iterate.KKTerror = this->compute_KKT_error(problem, trial_iterate, this->penalty_parameter);
 		trial_iterate.complementarity_error = this->compute_complementarity_error(problem, trial_iterate);
 		double step_norm = step_length*norm_inf(d);
 		trial_iterate.status = this->compute_status(problem, trial_iterate, step_norm);
@@ -305,8 +305,8 @@ double PenaltyStrategy::compute_error(Problem& problem, Iterate& current_iterate
 		//}
 	//}
 
-double PenaltyStrategy::compute_KKT_error(Problem& problem, Iterate& current_iterate) {
-	std::vector<double> lagrangian_gradient = this->compute_lagrangian_gradient(problem, current_iterate, this->penalty_parameter, current_iterate.bound_multipliers, current_iterate.constraint_multipliers);
-	double KKTerror = norm_2(lagrangian_gradient);
-	return KKTerror;
+void PenaltyStrategy::compute_measures(Problem& problem, Iterate& iterate) {
+    this->subproblem.compute_measures(problem, iterate);
+    // TODO: add the penalized term to the optimality measure
+    return;
 }

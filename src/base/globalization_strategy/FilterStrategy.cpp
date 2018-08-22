@@ -13,11 +13,10 @@ void FilterStrategy::initialize(Problem& problem, Iterate& first_iterate, bool u
     /* initialize the subproblem */
     this->subproblem.initialize(problem, first_iterate, problem.number_variables, problem.number_constraints, use_trust_region);
 
-    first_iterate.KKTerror = this->compute_KKT_error(problem, first_iterate);
+    first_iterate.KKTerror = this->compute_KKT_error(problem, first_iterate, 1.);
     first_iterate.complementarity_error = this->compute_complementarity_error(problem, first_iterate);
 
     /* set the filter upper bound */
-    // TODO check if residual or feasibility_measure
     double upper_bound = std::max(this->constants.ubd, this->constants.fact * first_iterate.feasibility_measure);
     this->filter_optimality->upper_bound = upper_bound;
     this->filter_restoration->upper_bound = upper_bound;
@@ -32,7 +31,7 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Loca
     std::vector<double> trial_x = add_vectors(current_iterate.x, solution.x, step_length);
     std::vector<double> trial_constraint_multipliers = add_vectors(current_iterate.constraint_multipliers, solution.constraint_multipliers, step_length);
     Iterate trial_iterate(problem, trial_x, solution.bound_multipliers, trial_constraint_multipliers);
-    this->subproblem.compute_measures(problem, trial_iterate);
+    this->compute_measures(problem, trial_iterate);
     double step_norm = step_length * solution.norm;
     
     bool accept = false;
@@ -70,7 +69,7 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Loca
                     accept = true;
                 }
                     /* sufficient decrease condition */
-                    //else if (actual_reduction >= this->constants.Sigma*std::max(0., predicted_reduction-1e-9)) {
+                    //else if (actual_reduction >= this->constants.Sigma * std::max(0., predicted_reduction - 1e-9)) {
                 else if (actual_reduction >= this->constants.Sigma * predicted_reduction) {
                     accept = true;
                 }
@@ -84,7 +83,8 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Loca
             this->update_restoration_multipliers(trial_iterate, solution.constraint_partition);
         }
         current_iterate = trial_iterate;
-        current_iterate.KKTerror = this->compute_KKT_error(problem, current_iterate);
+        double objective_multiplier = (this->phase == OPTIMALITY) ? 1. : 0.;
+        current_iterate.KKTerror = this->compute_KKT_error(problem, current_iterate, objective_multiplier);
         current_iterate.complementarity_error = (this->phase == OPTIMALITY) ? this->compute_complementarity_error(problem, current_iterate) : 0.;
         current_iterate.status = this->compute_status(problem, current_iterate, step_norm);
         INFO << "phase: " << this->phase << "\t";
@@ -126,8 +126,7 @@ void FilterStrategy::switch_phase(Problem& problem, LocalSolution& solution, Ite
     else if (solution.phase == OPTIMALITY && this->filter_optimality->query(trial_iterate.feasibility_measure, trial_iterate.optimality_measure)) {
         DEBUG << "Switching from restoration to optimality phase\n";
         this->phase = OPTIMALITY;
-        current_iterate.feasibility_measure = current_iterate.residual;
-        current_iterate.optimality_measure = current_iterate.objective;
+        this->compute_measures(problem, current_iterate);
     }
     return;
 }
@@ -154,4 +153,9 @@ OptimalityStatus FilterStrategy::compute_status(Problem& problem, Iterate& curre
         status = INFEASIBLE_SMALL_STEP;
     }
     return status;
+}
+
+void FilterStrategy::compute_measures(Problem& problem, Iterate& iterate) {
+    this->subproblem.compute_measures(problem, iterate);
+    return;
 }

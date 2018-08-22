@@ -28,6 +28,7 @@ class MA57Solver {
 		MA57Data factorize(COOMatrix& matrix);
 		std::vector<double> solve(COOMatrix& matrix, std::vector<double>& rhs, MA57Data& data);
 		int number_negative_eigenvalues();
+                bool matrix_is_singular();
 		
 	private:
 		/* for ma57id_ */

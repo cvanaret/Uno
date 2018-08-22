@@ -33,7 +33,6 @@ class InteriorPoint : public Subproblem {
         double mu;
 
         /* data structures */
-        std::vector<ConstraintType> variable_status;
         std::vector<int> lower_bounded_variables; /* indices of the variables with lower bounds */
         std::vector<int> upper_bounded_variables; /* indices of the variables with upper bounds */
         std::vector<int> slacked_constraints; /* indices of the inequality constraints that need a slack variable */
@@ -41,21 +40,28 @@ class InteriorPoint : public Subproblem {
         std::vector<int> upper_bounded_slacks; /* indices of the slacks with upper bounds */
         MA57Data data;
 
-        /* constants */
-        double tau_min;
-        double default_multiplier;
-        double k_sigma;
-        double inertia_term;
-
     private:
         double project_variable_in_bounds(double current_value, double lb, double ub);
         std::vector<double> estimate_initial_multipliers(Problem& problem, Iterate& current_iterate);
         double compute_primal_length(Problem& problem, Iterate& iterate, std::vector<double>& ipm_solution, double tau, std::vector<double> variable_lb, std::vector<double> variable_ub);
         double compute_dual_length(Iterate& current_iterate, double tau, std::vector<double>& delta_z);
         COOMatrix generate_kkt_matrix(Problem& problem, Iterate& current_iterate, std::vector<double>& variable_lb, std::vector<double>& variable_ub);
+        void inertia_correction(Problem& problem, COOMatrix& kkt_matrix);
         std::vector<double> generate_rhs(Problem& problem, Iterate& current_iterate, std::vector<double>& variable_lb, std::vector<double>& variable_ub);
         std::vector<double> compute_bound_multiplier_displacements(Problem& problem, Iterate& current_iterate, std::vector<double>& solution, std::vector<double>& variable_lb, std::vector<double>& variable_ub);
         double update_barrier_parameter(Problem& problem, Iterate& current_iterate);
+        double compute_error(Problem& problem, Iterate& iterate);
+        
+        double inertia_hessian;
+        double inertia_hessian_last;
+        double inertia_constraints;
+        
+        /* constants */
+        double tau_min;
+        double default_multiplier;
+        double k_sigma;
+        
+        int iteration;
 };
 
 #endif // INTERIORPOINT_H

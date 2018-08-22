@@ -51,7 +51,7 @@ double Problem::infeasible_residual_norm(ConstraintPartition& constraint_partiti
 }
 
 /* compute ||c||_1 */
-double Problem::l1_inf_norm(std::vector<double>& constraints) {
+double Problem::l1_norm(std::vector<double>& constraints) {
 	double norm = 0.;
 
 	for (int j = 0; j < this->number_constraints; j++) {

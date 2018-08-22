@@ -39,8 +39,6 @@ class TwoPhaseStrategy: public GlobalizationStrategy {
 		
 		virtual void initialize(Problem& problem, Iterate& current_iterate, bool use_trust_region) = 0;
 		
-		double compute_KKT_error(Problem& problem, Iterate& current_iterate);
-		
 		Phase phase; /*!< Current phase (optimality or feasibility restoration) */
 		TwoPhaseConstants constants; /*!< Set of constants */
 	

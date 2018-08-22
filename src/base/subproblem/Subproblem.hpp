@@ -21,7 +21,7 @@ class Subproblem {
          * \param solver: solver that solves the subproblem
          * \param name: name of the strategy
          */
-        Subproblem(std::string name);
+        Subproblem();
         virtual ~Subproblem();
 
         virtual LocalSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double radius) = 0;
@@ -32,7 +32,6 @@ class Subproblem {
 
         virtual void initialize(Problem& problem, Iterate& first_iterate, int number_variables, int number_constraints, bool use_trust_region) = 0;
         virtual void compute_measures(Problem& problem, Iterate& iterate) = 0;
-        std::string name; /*!< Name of the strategy */
         int number_subproblems_solved;
 };
 
