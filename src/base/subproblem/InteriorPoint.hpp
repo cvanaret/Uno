@@ -47,7 +47,7 @@ class InteriorPoint : public Subproblem {
         double compute_dual_length(Iterate& current_iterate, double tau, std::vector<double>& delta_z);
         COOMatrix generate_kkt_matrix(Problem& problem, Iterate& current_iterate, std::vector<double>& variable_lb, std::vector<double>& variable_ub);
         void inertia_correction(Problem& problem, COOMatrix& kkt_matrix);
-        std::vector<double> generate_rhs(Problem& problem, Iterate& current_iterate, std::vector<double>& variable_lb, std::vector<double>& variable_ub);
+        std::vector<double> generate_kkt_rhs(Problem& problem, Iterate& current_iterate, std::vector<double>& variable_lb, std::vector<double>& variable_ub);
         std::vector<double> compute_bound_multiplier_displacements(Problem& problem, Iterate& current_iterate, std::vector<double>& solution, std::vector<double>& variable_lb, std::vector<double>& variable_ub);
         double update_barrier_parameter(Problem& problem, Iterate& current_iterate);
         double compute_error(Problem& problem, Iterate& iterate);

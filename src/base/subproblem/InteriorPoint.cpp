@@ -153,7 +153,7 @@ LocalSolution InteriorPoint::compute_optimality_step(Problem& problem, Iterate& 
     /*******************/
     /* right-hand side */
     /*******************/
-    std::vector<double> rhs = this->generate_rhs(problem, current_iterate, variable_lb, variable_ub);
+    std::vector<double> rhs = this->generate_kkt_rhs(problem, current_iterate, variable_lb, variable_ub);
 
     /************/
     /* solution */
@@ -497,7 +497,7 @@ void InteriorPoint::inertia_correction(Problem& problem, COOMatrix& kkt_matrix) 
     return;
 }
 
-std::vector<double> InteriorPoint::generate_rhs(Problem& problem, Iterate& current_iterate, std::vector<double>& variable_lb, std::vector<double>& variable_ub) {
+std::vector<double> InteriorPoint::generate_kkt_rhs(Problem& problem, Iterate& current_iterate, std::vector<double>& variable_lb, std::vector<double>& variable_ub) {
     /* generate the right-hand side */
     std::vector<double> rhs(problem.number_variables + this->slacked_constraints.size() + problem.number_constraints);
 
