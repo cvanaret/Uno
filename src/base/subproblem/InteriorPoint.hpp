@@ -16,7 +16,7 @@ class InteriorPoint : public Subproblem {
          */
         InteriorPoint();
 
-        void initialize(Problem& problem, Iterate& first_iterate, int number_variables, int number_constraints, bool use_trust_region) override;
+        Iterate initialize(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers, int number_variables, int number_constraints, bool use_trust_region) override;
 
         LocalSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double radius) override;
         LocalSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, double radius, LocalSolution& phase_II_solution) override;

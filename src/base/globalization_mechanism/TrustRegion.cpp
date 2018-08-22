@@ -7,9 +7,8 @@ TrustRegion::TrustRegion(GlobalizationStrategy& globalization_strategy, double i
 		GlobalizationMechanism(globalization_strategy, max_iterations), radius(initial_radius), activity_tolerance_(1e-6) {
 }
 
-void TrustRegion::initialize(Problem& problem, Iterate& current_iterate) {
-    this->globalization_strategy.initialize(problem, current_iterate, true);
-    return;
+Iterate TrustRegion::initialize(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers) {
+    return this->globalization_strategy.initialize(problem, x, bound_multipliers, constraint_multipliers, true);
 }
 
 Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_iterate) {

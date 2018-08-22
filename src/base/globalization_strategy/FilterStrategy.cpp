@@ -9,9 +9,9 @@ FilterStrategy::FilterStrategy(Subproblem& subproblem, std::shared_ptr<Filter> f
 TwoPhaseStrategy(subproblem, constants, tolerance), filter_optimality(filter_optimality), filter_restoration(filter_restoration) {
 }
 
-void FilterStrategy::initialize(Problem& problem, Iterate& first_iterate, bool use_trust_region) {
+Iterate FilterStrategy::initialize(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers, bool use_trust_region) {
     /* initialize the subproblem */
-    this->subproblem.initialize(problem, first_iterate, problem.number_variables, problem.number_constraints, use_trust_region);
+    Iterate first_iterate = this->subproblem.initialize(problem, x, bound_multipliers, constraint_multipliers, problem.number_variables, problem.number_constraints, use_trust_region);
 
     first_iterate.KKTerror = this->compute_KKT_error(problem, first_iterate, 1.);
     first_iterate.complementarity_error = this->compute_complementarity_error(problem, first_iterate);
@@ -20,7 +20,7 @@ void FilterStrategy::initialize(Problem& problem, Iterate& first_iterate, bool u
     double upper_bound = std::max(this->constants.ubd, this->constants.fact * first_iterate.feasibility_measure);
     this->filter_optimality->upper_bound = upper_bound;
     this->filter_restoration->upper_bound = upper_bound;
-    return;
+    return first_iterate;
 }
 
 /* check acceptability of step(s) (filter & sufficient reduction)

@@ -6,9 +6,8 @@ LineSearch::LineSearch(GlobalizationStrategy& globalization_strategy, int max_it
 GlobalizationMechanism(globalization_strategy, max_iterations), ratio(ratio) {
 }
 
-void LineSearch::initialize(Problem& problem, Iterate& current_iterate) {
-    this->globalization_strategy.initialize(problem, current_iterate, false);
-    return;
+Iterate LineSearch::initialize(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers) {
+    return this->globalization_strategy.initialize(problem, x, bound_multipliers, constraint_multipliers, false);
 }
 
 Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_iterate) {

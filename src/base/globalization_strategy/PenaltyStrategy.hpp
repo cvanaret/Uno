@@ -24,7 +24,7 @@ class PenaltyStrategy : public GlobalizationStrategy {
          *  Implements the purely virtual method of the superclass
          */
         bool check_step(Problem& problem, Iterate& current_iterate, LocalSolution& solution, double step_length) override;
-        void initialize(Problem& problem, Iterate& current_iterate, bool use_trust_region) override;
+        Iterate initialize(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers, bool use_trust_region) override;
         void compute_measures(Problem& problem, Iterate& iterate) override;
 
         double penalty_parameter; /*!< Penalty */

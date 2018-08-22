@@ -19,9 +19,8 @@ class TrustRegion : public GlobalizationMechanism {
          */
         TrustRegion(GlobalizationStrategy& globalization_strategy, double initial_radius, int max_iterations = 100);
 
-        Iterate compute_iterate(Problem& problem, Iterate& current_iterate);
-
-        void initialize(Problem& problem, Iterate& current_iterate);
+        Iterate compute_iterate(Problem& problem, Iterate& current_iterate) override;
+        Iterate initialize(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers) override;
 
         double radius; /*!< Current trust region radius */
 

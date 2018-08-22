@@ -5,7 +5,7 @@ InteriorPoint::InteriorPoint() : Subproblem(), mu(0.1), inertia_hessian(0.), ine
 tau_min(0.99), default_multiplier(1.), k_sigma(1e10), iteration(0) {
 }
 
-void InteriorPoint::initialize(Problem& problem, Iterate& first_iterate, int /*number_variables*/, int /*number_constraints*/, bool use_trust_region) {
+Iterate InteriorPoint::initialize(Problem& problem, std::vector<double>& x, std::vector<double>& /*bound_multipliers*/, std::vector<double>& constraint_multipliers, int /*number_variables*/, int /*number_constraints*/, bool use_trust_region) {
     /* identify the variables' bounds */
     for (int i = 0; i < problem.number_variables; i++) {
         if (use_trust_region || (problem.variable_status[i] == BOUNDED_LOWER || problem.variable_status[i] == BOUNDED_BOTH_SIDES)) {
@@ -28,7 +28,12 @@ void InteriorPoint::initialize(Problem& problem, Iterate& first_iterate, int /*n
         }
     }
 
-    /* initialize the slacks and multipliers */
+    /* make the initial point strictly feasible */
+    std::vector<double> projected_x(problem.number_variables);
+    for (int i = 0; i < problem.number_variables; i++) {
+        projected_x[i] = this->project_variable_in_bounds(x[i], problem.variable_lb[i], problem.variable_ub[i]);
+    }
+    /* initialize bound multipliers */
     std::vector<double> bound_multipliers;
     for (int i : this->lower_bounded_variables) {
         bound_multipliers.push_back(this->default_multiplier); // positive multiplier
@@ -38,16 +43,24 @@ void InteriorPoint::initialize(Problem& problem, Iterate& first_iterate, int /*n
     }
     for (int j : this->lower_bounded_slacks) {
         bound_multipliers.push_back(this->default_multiplier); // positive multiplier
+    }
+    for (int j : this->upper_bounded_slacks) {
+        bound_multipliers.push_back(-this->default_multiplier); // negative multiplier
+    }
+
+    /* generate the first iterate */
+    Iterate first_iterate(problem, projected_x, bound_multipliers, constraint_multipliers);
+
+    /* initialize the slacks */
+    for (int j : this->lower_bounded_slacks) {
         double slack_value = this->project_variable_in_bounds(first_iterate.constraints[j], problem.constraint_lb[j], problem.constraint_ub[j]);
         first_iterate.x.push_back(slack_value);
     }
     for (int j : this->upper_bounded_slacks) {
-        bound_multipliers.push_back(-this->default_multiplier); // negative multiplier
         double slack_value = this->project_variable_in_bounds(first_iterate.constraints[j], problem.constraint_lb[j], problem.constraint_ub[j]);
         first_iterate.x.push_back(slack_value);
     }
-    first_iterate.bound_multipliers = bound_multipliers;
-
+    
     /* compute first-order information */
     first_iterate.compute_objective_gradient(problem);
     first_iterate.compute_constraints_jacobian(problem);
@@ -71,7 +84,7 @@ void InteriorPoint::initialize(Problem& problem, Iterate& first_iterate, int /*n
     /* compute the optimality and feasibility measures of the initial point */
     this->compute_measures(problem, first_iterate);
 
-    return;
+    return first_iterate;
 }
 
 /* reduced primal-dual approach */

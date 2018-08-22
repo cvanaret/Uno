@@ -119,13 +119,11 @@ void test_interior_point() {
     std::vector<double> x = problem.primal_initial_solution();
     std::vector<double> constraint_multipliers = problem.dual_initial_solution();
     std::vector<double> bound_multipliers(problem.number_variables);
-    Iterate current_iterate(problem, x, bound_multipliers, constraint_multipliers);
 
     double radius = INFINITY;
     InteriorPoint ipm;
-    ipm.compute_measures(problem, current_iterate);
-    ipm.initialize(problem, current_iterate, problem.number_variables, problem.number_constraints, radius < INFINITY);
-    ipm.compute_optimality_step(problem, current_iterate, radius);
+    Iterate first_iterate = ipm.initialize(problem, x, bound_multipliers, constraint_multipliers, problem.number_variables, problem.number_constraints, radius < INFINITY);
+    ipm.compute_optimality_step(problem, first_iterate, radius);
 
     return;
 }

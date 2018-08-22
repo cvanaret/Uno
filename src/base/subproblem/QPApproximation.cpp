@@ -8,12 +8,14 @@
 QPApproximation::QPApproximation(QPSolver& solver) : Subproblem(), solver(solver) {
 }
 
-void QPApproximation::initialize(Problem& problem, Iterate& first_iterate, int number_variables, int number_constraints, bool use_trust_region) {
+Iterate QPApproximation::initialize(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers, int number_variables, int number_constraints, bool use_trust_region) {
+    Iterate first_iterate(problem, x, bound_multipliers, constraint_multipliers);
     /* compute the optimality and feasibility measures of the initial point */
     this->compute_measures(problem, first_iterate);
 
     /* allocate the QP solver */
     this->solver.allocate(number_variables, number_constraints);
+    return first_iterate;
 }
 
 LocalSolution QPApproximation::compute_optimality_step(Problem& problem, Iterate& current_iterate, double radius) {

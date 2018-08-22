@@ -15,7 +15,7 @@ PenaltyStrategy::PenaltyStrategy(Subproblem& subproblem, double tolerance):
 	this->epsilon2 = 0.1;
 }
 
-void PenaltyStrategy::initialize(Problem& problem, Iterate& first_iterate, bool use_trust_region) {
+Iterate PenaltyStrategy::initialize(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers, bool use_trust_region) {
 	/* compute the number of necessary additional variables and constraints */
 	this->penalty_dimensions.number_additional_variables = 0;
 	this->penalty_dimensions.number_constraints = 0;
@@ -42,12 +42,12 @@ void PenaltyStrategy::initialize(Problem& problem, Iterate& first_iterate, bool 
 	/* allocate the subproblem solver */
 	int number_variables = problem.number_variables + this->penalty_dimensions.number_additional_variables;
 	int number_constraints = this->penalty_dimensions.number_constraints;
-    this->subproblem.initialize(problem, first_iterate, number_variables, number_constraints, use_trust_region);
+    Iterate first_iterate = this->subproblem.initialize(problem, x, bound_multipliers, constraint_multipliers, number_variables, number_constraints, use_trust_region);
 
     first_iterate.KKTerror = this->compute_KKT_error(problem, first_iterate, this->penalty_parameter);
     first_iterate.complementarity_error = this->compute_complementarity_error(problem, first_iterate);
 
-	return;
+    return first_iterate;
 }
 
 LocalSolution PenaltyStrategy::compute_step(Problem& problem, Iterate& current_iterate, double radius) {

@@ -30,7 +30,7 @@ class Subproblem {
 
         virtual LocalSolution compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyDimensions penalty_dimensions) = 0;
 
-        virtual void initialize(Problem& problem, Iterate& first_iterate, int number_variables, int number_constraints, bool use_trust_region) = 0;
+        virtual Iterate initialize(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers, int number_variables, int number_constraints, bool use_trust_region) = 0;
         virtual void compute_measures(Problem& problem, Iterate& iterate) = 0;
         int number_subproblems_solved;
 };

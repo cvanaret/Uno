@@ -16,10 +16,8 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, std::vector<doub
 	INFO << "Problem " << problem.name << "\n";
 	INFO << problem.number_variables << " variables, " << problem.number_constraints << " constraints\n";
 
-	/* evaluate the initial point */
-    Iterate current_iterate(problem, x, bound_multipliers, constraint_multipliers);
-    /* use the current point to initialize the strategies */
-    this->globalization_mechanism.initialize(problem, current_iterate);
+    /* use the current point to initialize the strategies and generate the initial point */
+    Iterate current_iterate = this->globalization_mechanism.initialize(problem, x, bound_multipliers, constraint_multipliers);
     INFO << "Initial iterate\n" << current_iterate << "\n";
 	
 	try {
