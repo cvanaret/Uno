@@ -238,8 +238,10 @@ c     ************
 c-jlm-jn 
       integer   lws,lr,lz,lt,ld,lxp,lwa,
      +          lwy,lsy,lss,lwt,lwn,lsnd
-
-      if (task .eq. 'START') then
+      integer i
+      
+      if (task(1:5) .eq. 'START') then
+         print *, 'TASK = ',task
          isave(1)  = m*n
          isave(2)  = m**2
          isave(3)  = 4*m**2
@@ -257,6 +259,12 @@ c-jlm-jn
          isave(15) = isave(14) + n          ! wxp     n
          isave(16) = isave(15) + n          ! wa      8*m
       endif
+
+      print *, task
+      print *, "isave = "
+      print *, (isave(i),i=1,44)
+      print *, "n,m = ", n,m
+      
       lws  = isave(4)
       lwy  = isave(5)
       lsy  = isave(6)
@@ -494,7 +502,7 @@ c     ************
       double precision one,zero
       parameter        (one=1.0d0,zero=0.0d0)
       
-      if (task .eq. 'START') then
+      if (task(1:5) .eq. 'START') then
 
          epsmch = epsilon(one)
 

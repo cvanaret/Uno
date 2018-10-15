@@ -1,4 +1,5 @@
 FC = gfortran
+CPP = gcc
 
 FFLAGS = -O -Wall -fbounds-check -g -Wno-uninitialized 
 
@@ -43,6 +44,15 @@ lbfgsb_90_SL1 : $(DRIVERSL1_90) $(LBFGSB) $(LINPACK) $(BLAS) $(TIMER)
 
 lbfgsb_90_CR : $(DRIVERCR_90) $(LBFGSB) $(LINPACK) $(BLAS) $(TIMER)
 	$(FC) $(FFLAGS) $(DRIVERCR_90) $(LBFGSB) $(LINPACK) $(BLAS) $(TIMER) -o x.lbfgsb_90_CR
+
+driver1cpp : lbfgsb.o linpack.o blas.o timer.o driver1.o
+	$(CPP) driver1.o lbfgsb.o linpack.o blas.o timer.o -lf2c -lm -o driver1cpp 
+
+.f.o:
+	$(FC) $(FFLAGS) -c $< -o $@
+
+.cpp.o:
+	$(CPP) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -f *.o x.lbfgsb* *~

@@ -49,7 +49,8 @@ LocalSolution LBFGSB::solve(Problem& problem, Iterate& current_point) {
     }
 
     //! ... we start the iteration by initializing task.
-    strcpy(task, "START");
+    strcpy(task, "START\0");
+    std::cout << "task: " << task << "\n";
 
     double f;
     // gradient
@@ -65,9 +66,16 @@ LocalSolution LBFGSB::solve(Problem& problem, Iterate& current_point) {
         
         // evaluate objective and gradient
         if (strncmp(task, "FG", 2) == 0) {
-            std::cout << "COUCOU\n";
-            f = problem.objective(x);
-            g = problem.objective_dense_gradient(x);
+            f = 0.;
+            for (int i = 0; i < n-1; i++) {
+                f += 100 * std::pow(x[i + 1] - std::pow(x[i], 2), 2) + std::pow(1 - x[i], 2);
+            }
+
+            g[0] = -400 * (x[1] - std::pow(x[0], 2)) * x[0] - 2 * (1 - x[0]);
+            for (int i = 1; i < n - 1; i++) {
+                g[i] = -400 * (x[i + 1] - std::pow(x[i], 2)) * x[i] - 2 * (1 - x[i]) + 200 * (x[i] - std::pow(x[i - 1], 2));
+            }
+            g[n-1] = 200 * (x[n-1] - std::pow(x[n - 2], 2));
         }
     }
 

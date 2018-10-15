@@ -3,9 +3,13 @@ CFLAGS = -Wall -pedantic $(PROFILER)
 #-Weffc++
 
 # local directories & libraries (change appropriately)
-AMPL_DIR = ~/src/amplsolver
-BQPD_DIR = ~/Bureau/robust/software/bqpd
-MA57_DIR = ~/src/ma57-3.10.0
+#AMPL_DIR = ~/src/amplsolver
+AMPL_DIR = /home/leyffer/software/ampl/solvers
+#BQPD_DIR = ~/Bureau/robust/software/bqpd
+BQPD_DIR =  /home/leyffer/software/bqpd
+#MA57_DIR = ~/src/ma57-3.10.0
+MA57_DIR = /home/leyffer/software/MA57
 
 # local libraries
 LIBCOMPIL = -lgfortran
+METIS = 

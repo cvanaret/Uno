@@ -40,7 +40,7 @@ EXEC_NAME = argonot
 #solvers/KKT/MA57Solver.cpp
 
 DEFINES =# -D BQPD # https://stackoverflow.com/questions/10337248/what-does-the-g-d-flag-do
-LIBS = $(AMPL_DIR)/amplsolver.a $(BQPD_DIR)/libbqpd.a -L$(MA57_DIR) -lma57 -lfakemetis  -lf2c
+LIBS = $(AMPL_DIR)/amplsolver.a $(BQPD_DIR)/libbqpd.a -L$(MA57_DIR) -lma57 -L$(METIS)  -lf2c
 
 .cpp.o:
 	$(CPP) $(CFLAGS) $(DEFINES) $(INCLUDES) -c $< -o $@ ;
