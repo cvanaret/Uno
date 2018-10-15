@@ -14,7 +14,7 @@ L = -ldl
 LIBCOIN   = -lOsiClp -lClp -lCoinUtils -lOsi
 LIBLINALG = -lblas -llapack
 
-INCLUDES = -I base -I base/globalization_mechanism -I base/globalization_strategy -I base/subproblem -I logger -I interfaces/AMPL -I solvers/QP -I solvers/KKT -I $(AMPL_DIR)
+INCLUDES = -I base -I base/globalization_mechanism -I base/globalization_strategy -I base/subproblem -I logger -I interfaces/AMPL -I solvers/QP -I solvers/KKT -I solvers/NLP -I $(AMPL_DIR)
 
 SRC_FILES = main.cpp base/Argonot.cpp base/Iterate.cpp \
 	base/Problem.cpp interfaces/AMPL/AMPLModel.cpp \
@@ -26,7 +26,7 @@ SRC_FILES = main.cpp base/Argonot.cpp base/Iterate.cpp \
 	base/globalization_mechanism/LineSearch.cpp base/globalization_mechanism/TrustLineSearch.cpp \
 	base/globalization_mechanism/GlobalizationMechanismFactory.cpp \
 	base/subproblem/QP.cpp base/subproblem/LP.cpp \
-	base/subproblem/Subproblem.cpp base/subproblem/QPApproximation.cpp base/subproblem/InteriorPoint.cpp \
+	base/subproblem/Subproblem.cpp base/subproblem/QPApproximation.cpp base/subproblem/InteriorPoint.cpp base/subproblem/AugmentedLagrangian.cpp \
 	base/subproblem/SubproblemFactory.cpp base/subproblem/LocalSolution.cpp base/Utils.cpp \
 	solvers/QP/BQPDSolver.cpp solvers/QP/QPSolverFactory.cpp \
 	solvers/KKT/MA57Solver.cpp

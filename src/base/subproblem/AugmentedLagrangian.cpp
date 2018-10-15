@@ -3,17 +3,37 @@
 #include "AugmentedLagrangian.hpp"
 #include "Utils.hpp"
 
-AugmentedLagrangian::AugmentedLagrangian(QPSolver& solver): StepComputation("Augmented Lagrangian"), solver(solver) {
+AugmentedLagrangian::AugmentedLagrangian(): Subproblem() {
 }
 
-Step AugmentedLagrangian::compute_optimality_direction(Problem& problem, Iterate& current_iterate, double radius) {
-	Step direction;
+Iterate AugmentedLagrangian::initialize(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers, int number_variables, int number_constraints, bool use_trust_region) {
+    Iterate first_iterate(problem, x, bound_multipliers, constraint_multipliers);
+    /* compute the optimality and feasibility measures of the initial point */
+    this->compute_measures(problem, first_iterate);
 
-	return direction;
+    /* allocate the solver */
+    //this->solver.allocate(number_variables, number_constraints);
+    return first_iterate;
 }
 
-Step AugmentedLagrangian::compute_infeasibility_direction(Problem& problem, ConstraintPartition& constraint_partition, Iterate& current_iterate, double radius, std::vector<double>& d0) {
-	Step direction = this->solver.solve(qp, d0);
+LocalSolution AugmentedLagrangian::compute_optimality_step(Problem& problem, Iterate& current_iterate, double radius) {
+	std::vector<double> x;
+	LocalSolution solution(x, x, x);
+	return solution;
+}
 
-	return direction;
+LocalSolution AugmentedLagrangian::compute_infeasibility_step(Problem& problem, Iterate& current_iterate, double radius, LocalSolution& phase_II_solution) {
+	std::vector<double> x;
+	LocalSolution solution(x, x, x);
+	return solution;
+}
+
+LocalSolution AugmentedLagrangian::compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyDimensions penalty_dimensions) {
+	std::vector<double> x;
+	LocalSolution solution(x, x, x);
+	return solution;
+}
+
+void AugmentedLagrangian::compute_measures(Problem& problem, Iterate& iterate) {
+	return;
 }

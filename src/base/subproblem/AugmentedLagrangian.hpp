@@ -1,46 +1,31 @@
 #ifndef AUGMENTEDLAGRANGIAN_H
 #define AUGMENTEDLAGRANGIAN_H
 
-#include "StepComputation.hpp"
-#include "QPSolver.hpp"
+#include "Subproblem.hpp"
+#include "NonlinearSolver.hpp"
 
 /*! \class AugmentedLagrangian
 * \brief Augmented Lagrangian strategy
 *
 *  Strategy that computes a descent direction based on an augmented Lagrangian
 */
-class AugmentedLagrangian: public StepComputation {
+class AugmentedLagrangian: public Subproblem {
 	public:
 		/*!
          *  Constructor
          * 
          * \param solver: solver that computes the step
          */
-		AugmentedLagrangian(QPSolver& solver);
+		AugmentedLagrangian();
 		
-		/*!
-         *  Compute the descent direction for a given point and phase, with an zero initial solution
-         * 
-         * \param problem: optimization problem
-         * \param phase: current phase (optimality or feasibility restoration)
-         * \param current_iterate: current point and its evaluations
-         * \param radius: possible radius of the trust region
-         */
-		Step compute_optimality_direction(Problem& problem, Iterate& current_iterate, double radius);
+		Iterate initialize(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers, int number_variables, int number_constraints, bool use_trust_region) override;
+
+        LocalSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double radius) override;
+        LocalSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, double radius, LocalSolution& phase_II_solution) override;
+        LocalSolution compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyDimensions penalty_dimensions) override;
+        void compute_measures(Problem& problem, Iterate& iterate) override;
 		
-		/*!
-         *  Compute the descent direction for a given point and phase, with a given initial solution
-         * 
-         * \param problem: optimization problem
-         * \param phase: current phase (optimality or feasibility restoration)
-         * \param current_iterate: current point and its evaluations
-         * \param radius: possible radius of the trust region
-         * \param d0: initial solution
-         */
-		Step compute_infeasibility_direction(Problem& problem, ConstraintPartition& constraint_partition, Iterate& current_iterate, double radius, std::vector<double>& d0);
-		
-		/* use a reference to allow polymorphism */
-		QPSolver& solver; /*!< Solver that computes the step */
+		NonlinearSolver solver; /*!< Solver that computes the step */
 };
 
 #endif // AUGMENTEDLAGRANGIAN_H

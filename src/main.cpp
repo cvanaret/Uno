@@ -15,10 +15,10 @@
 
 void test_argonot(std::string problem_name, std::map<std::string, std::string> options) {
     AMPLModel problem = AMPLModel(problem_name);
-
-    /* create the local solver */
-    std::shared_ptr<QPSolver> solver = QPSolverFactory::create("BQPD", problem, options);
-
+	
+	/* create the local solver */
+	std::shared_ptr<QPSolver> solver = QPSolverFactory::create("BQPD", problem, options);
+	
     /* create the subproblem strategy */
     std::shared_ptr<Subproblem> subproblem = SubproblemFactory::create(options["subproblem"], *solver, options);
 
