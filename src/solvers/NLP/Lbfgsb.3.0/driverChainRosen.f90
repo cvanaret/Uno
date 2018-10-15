@@ -229,15 +229,10 @@
       allocate ( iwa(3*n) )
       allocate ( wa(2*m*n + 5*n + 11*m*m + 8*m) )
 ! 
-      do i=1, n , 2
+      do i=1, n
          nbd(i) = 2
-         l(i)   =  2.0d0
-         u(i)   =  4.0d0
-      end do
-      do i=2, n , 2
-         nbd(i) = 2
-         l(i)   =  -1.0d0
-         u(i)   =   1.0d0
+         l(i)   =  (-1)**2*0.2d0*i
+         u(i)   =  0.8d0*i
       end do
 
 !     We now define the starting point.
@@ -269,14 +264,14 @@
 
             f=0.0d0
             do i=1,n-1
-               f = f + 100*(x(i+1)-x(i)*82)**2 + (1 - x(i))**2
+               f = f + 100*(x(i+1)-x(i)**2)**2 + (1 - x(i))**2
             end do
 
 !     Compute gradient g for the sample problem.
 
             g(1) = - 400*(x(2) - x(1)**2)*x(1) - 2*(1-x(1))
             do i=2,n-1
-               g(i) = - 400*(x(i+1) - x(i)**2)*x(1) - 2*(1-x(i)) + 200*(x(i) - x(i-1)**2)
+               g(i) = - 400*(x(i+1) - x(i)**2)*x(i) - 2*(1-x(i)) + 200*(x(i) - x(i-1)**2)
             enddo
             g(n) = 200*(x(n) - x(n-1)**2)
 
