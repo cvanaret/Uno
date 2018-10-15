@@ -67,7 +67,7 @@ private:
     setulb_( &n, &m, x, l, u, nbd, f, g, factr, pgtol, 
 	     wa, iwa, task, iprint, csave, lsave, isave, dsave );
     
-    if (task(1:2) .eq. 'FG')
+    if (task[0:1]=="FG")
       {
 	//! ... compute gradient g for the sample problem.
 	f=0.0d0;
