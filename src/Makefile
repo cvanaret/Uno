@@ -10,11 +10,13 @@ include Makefile.local
 LFLAGS = $(PROFILER)
 
 # local libraries
-L = -ldl
+L = -ldl -lf2c
 LIBCOIN   = -lOsiClp -lClp -lCoinUtils -lOsi
 LIBLINALG = -lblas -llapack
 
-INCLUDES = -I base -I base/globalization_mechanism -I base/globalization_strategy -I base/subproblem -I logger -I interfaces/AMPL -I solvers/QP -I solvers/KKT -I solvers/NLP -I $(AMPL_DIR)
+BFGS_DIR = solvers/NLP/Lbfgsb.3.0
+
+INCLUDES = -I base -I base/globalization_mechanism -I base/globalization_strategy -I base/subproblem -I logger -I interfaces/AMPL -I solvers/QP -I solvers/KKT -I solvers/NLP -I $(BFGS_DIR) -I $(AMPL_DIR)
 
 SRC_FILES = main.cpp base/Argonot.cpp base/Iterate.cpp \
 	base/Problem.cpp interfaces/AMPL/AMPLModel.cpp \
@@ -29,8 +31,8 @@ SRC_FILES = main.cpp base/Argonot.cpp base/Iterate.cpp \
 	base/subproblem/Subproblem.cpp base/subproblem/QPApproximation.cpp base/subproblem/InteriorPoint.cpp base/subproblem/AugmentedLagrangian.cpp \
 	base/subproblem/SubproblemFactory.cpp base/subproblem/LocalSolution.cpp base/Utils.cpp \
 	solvers/QP/BQPDSolver.cpp solvers/QP/QPSolverFactory.cpp \
-	solvers/KKT/MA57Solver.cpp
-OBJ_FILES = $(subst .cpp,.o,$(SRC_FILES)) solvers/QP/wdotd.o
+	solvers/KKT/MA57Solver.cpp solvers/NLP/LBFGSB.cpp
+OBJ_FILES = $(subst .cpp,.o,$(SRC_FILES)) solvers/QP/wdotd.o $(BFGS_DIR)/lbfgsb.o $(BFGS_DIR)/timer.o $(BFGS_DIR)/blas.o $(BFGS_DIR)/linpack.o
 EXEC_NAME = argonot
 
 # base/globalization_strategy/Tube.cpp base/globalization_strategy/TubeStrategy.cpp
@@ -38,7 +40,7 @@ EXEC_NAME = argonot
 #solvers/KKT/MA57Solver.cpp
 
 DEFINES =# -D BQPD # https://stackoverflow.com/questions/10337248/what-does-the-g-d-flag-do
-LIBS = $(AMPL_DIR)/amplsolver.a $(BQPD_DIR)/libbqpd.a -L$(MA57_DIR) -lma57 -lfakemetis 
+LIBS = $(AMPL_DIR)/amplsolver.a $(BQPD_DIR)/libbqpd.a -L$(MA57_DIR) -lma57 -lfakemetis  -lf2c
 
 .cpp.o:
 	$(CPP) $(CFLAGS) $(DEFINES) $(INCLUDES) -c $< -o $@ ;
