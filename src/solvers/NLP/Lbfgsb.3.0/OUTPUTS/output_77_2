@@ -1,0 +1,57 @@
+
+     Solving sample problem.
+      (f = 0.0 at the optimal solution.)
+
+Iterate    1    nfg =    5    f = 2.39769D+03    |proj g| = 6.50700D+01
+Iterate    2    nfg =    6    f = 1.43806D+02    |proj g| = 3.64039D+01
+Iterate    3    nfg =    7    f = 7.28161D+01    |proj g| = 2.29042D+01
+Iterate    4    nfg =    8    f = 1.60308D+01    |proj g| = 6.95409D+00
+Iterate    5    nfg =    9    f = 5.18725D+00    |proj g| = 9.05481D+00
+Iterate    6    nfg =   10    f = 2.12716D+00    |proj g| = 1.96729D+01
+Iterate    7    nfg =   11    f = 2.07568D-01    |proj g| = 2.12849D+00
+Iterate    8    nfg =   12    f = 5.32739D-02    |proj g| = 8.32469D-01
+Iterate    9    nfg =   13    f = 1.30450D-02    |proj g| = 4.27926D-01
+Iterate   10    nfg =   14    f = 3.86031D-03    |proj g| = 2.00812D-01
+Iterate   11    nfg =   15    f = 7.45653D-04    |proj g| = 1.37723D-01
+Iterate   12    nfg =   16    f = 3.54016D-04    |proj g| = 1.21274D-01
+Iterate   13    nfg =   17    f = 7.42511D-05    |proj g| = 2.97814D-02
+Iterate   14    nfg =   18    f = 3.74062D-05    |proj g| = 1.72742D-02
+Iterate   15    nfg =   19    f = 1.09832D-05    |proj g| = 2.86815D-02
+Iterate   16    nfg =   21    f = 3.90757D-06    |proj g| = 8.08085D-03
+Iterate   17    nfg =   22    f = 1.99502D-06    |proj g| = 3.47648D-03
+Iterate   18    nfg =   23    f = 8.25796D-07    |proj g| = 2.25283D-03
+Iterate   19    nfg =   24    f = 1.99224D-07    |proj g| = 1.45773D-03
+Iterate   20    nfg =   25    f = 5.75772D-08    |proj g| = 1.48245D-03
+Iterate   21    nfg =   26    f = 1.46326D-08    |proj g| = 5.44304D-04
+Iterate   22    nfg =   27    f = 2.36329D-09    |proj g| = 2.25244D-04
+Iterate   23    nfg =   28    f = 1.08349D-09    |proj g| = 1.72052D-04
+Iterate   24    nfg =   29    f = 3.49043D-10    |proj g| = 5.78820D-05
+Iterate   25    nfg =   30    f = 8.43998D-11    |proj g| = 2.04504D-05
+Iterate   26    nfg =   31    f = 2.29812D-11    |proj g| = 1.74854D-05
+Iterate   27    nfg =   32    f = 5.56238D-12    |proj g| = 1.29349D-05
+Iterate   28    nfg =   33    f = 6.17073D-13    |proj g| = 3.52399D-06
+Iterate   29    nfg =   34    f = 2.06920D-13    |proj g| = 9.74653D-07
+Iterate   30    nfg =   35    f = 1.07949D-13    |proj g| = 6.84427D-07
+Iterate   31    nfg =   36    f = 3.27200D-14    |proj g| = 7.46523D-07
+Iterate   32    nfg =   38    f = 2.20380D-14    |proj g| = 6.32502D-07
+Iterate   33    nfg =   39    f = 1.37189D-14    |proj g| = 2.83064D-07
+Iterate   34    nfg =   40    f = 8.06341D-15    |proj g| = 1.25600D-07
+Iterate   35    nfg =   41    f = 6.30621D-15    |proj g| = 6.63279D-08
+Iterate   36    nfg =   42    f = 6.12906D-15    |proj g| = 9.93648D-08
+Iterate   37    nfg =   43    f = 5.83506D-15    |proj g| = 1.10012D-08
+Iterate   38    nfg =   44    f = 5.82125D-15    |proj g| = 8.09738D-09
+Iterate   39    nfg =   45    f = 5.81201D-15    |proj g| = 2.04600D-08
+Iterate   40    nfg =   47    f = 5.80895D-15    |proj g| = 4.71360D-09
+Iterate   41    nfg =   48    f = 5.80786D-15    |proj g| = 1.97091D-09
+Iterate   42    nfg =   49    f = 5.80716D-15    |proj g| = 1.10044D-09
+Iterate   43    nfg =   50    f = 5.80705D-15    |proj g| = 3.49651D-10
+Iterate   44    nfg =   51    f = 5.80703D-15    |proj g| = 2.29788D-10
+Iterate   45    nfg =   52    f = 5.80702D-15    |proj g| = 1.51178D-10
+Iterate   46    nfg =   53    f = 5.80702D-15    |proj g| = 6.61970D-11
+ STOP: THE PROJECTED GRADIENT IS SUFFICIENTLY SMALL          
+ Final X=
+   1.0000D+00  1.0000D+00  1.0000D+00  1.0000D+00  1.0000D+00  1.0000D+00
+   1.0000D+00  1.0000D+00  1.0000D+00  1.0000D+00  1.0001D+00  1.0002D+00
+   1.0003D+00  1.0006D+00  1.0013D+00  1.0026D+00  1.0052D+00  1.0105D+00
+   1.0210D+00  1.0425D+00  1.0867D+00  1.1810D+00  1.3947D+00  1.9452D+00
+   3.7837D+00
