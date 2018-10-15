@@ -208,7 +208,7 @@
 !
       integer,  parameter    :: n = 10, m = 5, iprint = 1
       integer,  parameter    :: dp = kind(1.0d0)
-      real(dp), parameter    :: factr  = 1.0d+7, pgtol  = 1.0d-5
+      real(dp), parameter    :: factr  = 1.0d+3, pgtol  = 1.0d-5
 !
       character(len=60)      :: task, csave
       logical                :: lsave(4)
@@ -231,7 +231,7 @@
 ! 
       do i=1, n
          nbd(i) = 2
-         l(i)   =  (-1)**2*0.2d0*i
+         l(i)   =  (-1)**i*0.2d0*i
          u(i)   =  0.8d0*i
       end do
 
