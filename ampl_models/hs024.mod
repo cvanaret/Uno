@@ -18,6 +18,7 @@ let x[2] := 1/2;
 solve;
 
 display x;
+display _conname, _con;
 
 display obj;
 
