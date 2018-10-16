@@ -241,7 +241,7 @@ c-jlm-jn
       integer i
       
       if (task(1:5) .eq. 'START') then
-         print *, 'TASK = ',task
+c         print *, 'TASK = ',task
          isave(1)  = m*n
          isave(2)  = m**2
          isave(3)  = 4*m**2
@@ -260,10 +260,10 @@ c-jlm-jn
          isave(16) = isave(15) + n          ! wa      8*m
       endif
 
-      print *, task
-      print *, "isave = "
-      print *, (isave(i),i=1,44)
-      print *, "n,m = ", n,m
+c      print *, task
+c      print *, "isave = "
+c      print *, (isave(i),i=1,44)
+c      print *, "n,m = ", n,m
       
       lws  = isave(4)
       lwy  = isave(5)
