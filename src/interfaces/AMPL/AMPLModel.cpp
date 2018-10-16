@@ -137,7 +137,7 @@ double AMPLModel::objective(std::vector<double>& x) {
 
 /* dense gradient */
 std::vector<double> AMPLModel::objective_dense_gradient(std::vector<double>& x) {
-	std::vector<double> gradient(x.size());
+	std::vector<double> gradient(this->number_variables);
 	int nerror = 0;
 	/* compute the AMPL gradient (always in dense format) */
 	(*((ASL*) this->asl_)->p.Objgrd)((ASL*) this->asl_, 0, x.data(), gradient.data(), &nerror);
@@ -147,7 +147,7 @@ std::vector<double> AMPLModel::objective_dense_gradient(std::vector<double>& x) 
 
 	/* if maximization, take the opposite */
 	if (this->objective_sign < 0.) {
-		for (unsigned int i = 0; i < x.size(); i++) {
+		for (int i = 0; i < this->number_variables; i++) {
 			gradient[i] = -gradient[i];
 		}
 	}
@@ -157,7 +157,7 @@ std::vector<double> AMPLModel::objective_dense_gradient(std::vector<double>& x) 
 /* sparse gradient */
 std::map<int,double> AMPLModel::objective_sparse_gradient(std::vector<double>& x) {
 	/* compute the AMPL gradient (always in dense format) */
-	std::vector<double> dense_gradient(x.size());
+	std::vector<double> dense_gradient(this->number_variables);
 	int nerror = 0;
 	(*((ASL*) this->asl_)->p.Objgrd)((ASL*) this->asl_, 0, x.data(), dense_gradient.data(), &nerror);
 	if (0 < nerror) {
@@ -210,7 +210,7 @@ std::vector<double> AMPLModel::constraint_dense_gradient(int j, std::vector<doub
 	this->asl_->i.congrd_mode = 0; // dense computation
 	
 	/* compute the AMPL gradient */
-	std::vector<double> gradient(x.size());
+	std::vector<double> gradient(this->number_variables);
 	int nerror = 0;
 	(*((ASL*) this->asl_)->p.Congrd)((ASL*) this->asl_, j, x.data(), gradient.data(), &nerror);
 	if (0 < nerror) {

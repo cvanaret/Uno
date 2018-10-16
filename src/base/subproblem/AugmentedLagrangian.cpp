@@ -11,8 +11,26 @@ Iterate AugmentedLagrangian::initialize(Problem& problem, std::vector<double>& x
 
     /* compute the optimality and feasibility measures of the initial point */
     this->compute_measures(problem, first_iterate);
-
-    /* allocate the solver */
+    
+    /* identify the inequality constraint slacks */
+    std::map<int,int> slacked_constraints;
+    int current_slack = 0;
+    for (int j = 0; j < problem.number_constraints; j++) {
+        if (problem.constraint_status[j] != EQUAL_BOUNDS) {
+            slacked_constraints[j] = current_slack;
+            current_slack++;
+            // add slack as a primal variable
+            first_iterate.x.push_back(first_iterate.constraints[j]);
+        }
+    }
+    
+    std::cout << "SLACKED CONSTRAINTS:\n";
+    for (std::pair<const int, int> element: slacked_constraints) {
+        std::cout << "c" << element.first << " has slack s" << element.second << std::endl;  // ? or is abc an iterator?
+    }
+    
+    /* TODO allocate the solver */
+    this->solver.initialize(slacked_constraints);
     //this->solver.allocate(number_variables, number_constraints);
     return first_iterate;
 }

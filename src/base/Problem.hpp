@@ -42,7 +42,7 @@ class Problem {
             std::vector<bool> variable_discrete;
             std::vector<double> variable_lb;
             std::vector<double> variable_ub;
-            std::vector<ConstraintType> variable_status; /*!< Status of the constraints (EQUALITY, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES) */
+            std::vector<ConstraintType> variable_status; /*!< Status of the variables (EQUALITY, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES) */
 
             /* constraints */
             std::vector<std::string> constraint_name;

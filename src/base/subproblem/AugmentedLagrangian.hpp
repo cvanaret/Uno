@@ -1,6 +1,7 @@
 #ifndef AUGMENTEDLAGRANGIAN_H
 #define AUGMENTEDLAGRANGIAN_H
 
+#include <map>
 #include "Subproblem.hpp"
 #include "LBFGSB.hpp"
 
@@ -26,9 +27,6 @@ class AugmentedLagrangian : public Subproblem {
         void compute_measures(Problem& problem, Iterate& iterate) override;
 
         LBFGSB solver; /*!< Solver that computes the step */
-
-        /* data structures */
-        std::vector<int> slacked_constraints;
 };
 
 #endif // AUGMENTEDLAGRANGIAN_H
