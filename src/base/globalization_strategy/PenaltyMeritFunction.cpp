@@ -1,5 +1,5 @@
 #include <cmath>
-#include "PenaltyStrategy.hpp"
+#include "PenaltyMeritFunction.hpp"
 #include "Logger.hpp"
 
 /*

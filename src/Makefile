@@ -23,7 +23,7 @@ SRC_FILES = main.cpp base/Argonot.cpp base/Iterate.cpp \
 	base/Matrix.cpp \
 	base/globalization_strategy/GlobalizationStrategy.cpp base/globalization_strategy/TwoPhaseStrategy.cpp \
 	base/globalization_strategy/Filter.cpp base/globalization_strategy/FilterStrategy.cpp \
-	base/globalization_strategy/PenaltyStrategy.cpp base/globalization_strategy/GlobalizationStrategyFactory.cpp \
+	base/globalization_strategy/PenaltyMeritFunction.cpp base/globalization_strategy/GlobalizationStrategyFactory.cpp \
 	base/globalization_mechanism/GlobalizationMechanism.cpp base/globalization_mechanism/TrustRegion.cpp \
 	base/globalization_mechanism/LineSearch.cpp base/globalization_mechanism/TrustLineSearch.cpp \
 	base/globalization_mechanism/GlobalizationMechanismFactory.cpp \

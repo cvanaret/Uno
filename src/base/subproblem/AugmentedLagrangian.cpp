@@ -34,7 +34,7 @@ LocalSolution AugmentedLagrangian::compute_optimality_step(Problem& problem, Ite
     LocalSolution solution = this->solver.solve(problem, current_iterate);
     /* the Augmented Lagrangian subproblem returns a new iterate. We should now compute the step */
     std::vector<double> step(solution.x);
-    for (int i = 0; i < current_iterate.x.size(); i++) {
+    for (unsigned int i = 0; i < current_iterate.x.size(); i++) {
         step[i] -= current_iterate.x[i];
     }
     solution.x = step;

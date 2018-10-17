@@ -191,7 +191,6 @@ double AMPLModel::evaluate_constraint(int j, std::vector<double>& x) {
 	if (0 < nerror) {
 		throw std::invalid_argument("IEEE error in constraint function " + j);
 	}
-	
 	return result;
 }
 
