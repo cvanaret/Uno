@@ -30,9 +30,9 @@ minimize obj:
 # subject to constr6: x[3] + x[4] + s[6] = 5;
 
 let x[1] := 0;
-let x[2] := 0;
+let x[2] := 2;
 let x[3] := 0;
-let x[4] := 0;
+let x[4] := 3;
 
 #printf "optimal solution as starting point \n";
 #let x[1] := 0;

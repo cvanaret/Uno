@@ -17,8 +17,8 @@ minimize obj:
 #subject to constr2: x[1] + x[2]^2 - s[2] = 0;
 subject to constr3: x[1] <= 1/2;
 
-let x[1] := -2;
-let x[2] :=  1;
+let x[1] := 0.45;
+let x[2] :=  1.9;
 
 solve;
 

@@ -1,4 +1,4 @@
-g3 0 1 0	# problem hs044AL
+g3 0 1 0	# problem rosenbrock
  10 0 1 0 0	# vars, constraints, objectives, ranges, eqns
  0 1	# nonlinear constraints, objectives
  0 0	# network constraints: nonlinear, linear
@@ -9,103 +9,155 @@ g3 0 1 0	# problem hs044AL
  0 0	# max name lengths: constraints, variables
  0 0 0 0 0	# common exprs: b,c,o,c1,o1
 b
-2 0
-2 0
-2 0
-2 0
-2 -8
-2 -12
-2 -12
-2 -8
-2 -8
-2 -5
-x4
-0 0
-1 2
-2 0
-3 3
+0 -0.2 0.8
+0 0.4 1.6
+0 -0.6000000000000001 2.4000000000000004
+0 0.8 3.2
+0 -1 4
+0 1.2000000000000002 4.800000000000001
+0 -1.4000000000000001 5.6000000000000005
+0 1.6 6.4
+0 -1.8 7.2
+0 2 8
+x10
+0 1
+1 1
+2 1
+3 1
+4 1
+5 1
+6 1
+7 1
+8 1
+9 1
 O0 0
 o54
-10
-o16
+18
 o2
-v0
-v2
-o2
-v0
-v3
-o2
-v1
-v2
-o16
-o2
-v1
-v3
-o2
-n1000
+n100
 o5
-o54
-3
-v0
-o2
-n2
+o1
 v1
+o5
+v0
+n2
+n2
+o5
+o1
+n1
+v0
+n2
+o2
+n100
+o5
+o1
+v2
+o5
+v1
+n2
+n2
+o5
+o1
+n1
+v1
+n2
+o2
+n100
+o5
+o1
+v3
+o5
+v2
+n2
+n2
+o5
+o1
+n1
+v2
+n2
+o2
+n100
+o5
+o1
+v4
+o5
+v3
+n2
+n2
+o5
+o1
+n1
+v3
+n2
+o2
+n100
+o5
+o1
+v5
+o5
+v4
+n2
+n2
+o5
+o1
+n1
 v4
 n2
 o2
-n1000
+n100
 o5
-o54
-3
-o2
-n4
-v0
-v1
+o1
+v6
+o5
+v5
+n2
+n2
+o5
+o1
+n1
 v5
 n2
 o2
-n1000
+n100
 o5
-o54
-3
-o2
-n3
-v0
-o2
-n4
-v1
+o1
+v7
+o5
+v6
+n2
+n2
+o5
+o1
+n1
 v6
 n2
 o2
-n1000
+n100
 o5
-o54
-3
-o2
+o1
+v8
+o5
+v7
 n2
-v2
-v3
+n2
+o5
+o1
+n1
 v7
 n2
 o2
-n1000
+n100
 o5
-o54
-3
-v2
-o2
-n2
-v3
+o1
+v9
+o5
 v8
 n2
-o2
-n1000
+n2
 o5
-o54
-3
-v2
-v3
-v9
+o1
+n1
+v8
 n2
 k9
 0
@@ -118,13 +170,13 @@ k9
 0
 0
 G0 10
-0 -2.75
-1 -6
-2 -2.5
-3 -3
+0 0
+1 0
+2 0
+3 0
 4 0
 5 0
-6 -1.25
+6 0
 7 0
-8 -1.5
+8 0
 9 0
