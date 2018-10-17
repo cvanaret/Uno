@@ -6,9 +6,9 @@
 #include "LBFGSB.hpp"
 
 /*! \class AugmentedLagrangian
- * \brief Augmented Lagrangian strategy
+ * \brief Augmented Lagrangian subproblem method
  *
- *  Strategy that computes a descent direction based on an augmented Lagrangian
+ *  Strategy that computes a (descend) direction by approx. minimization of the augmented Lagrangian
  */
 class AugmentedLagrangian : public Subproblem {
     public:

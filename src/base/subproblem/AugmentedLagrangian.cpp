@@ -13,7 +13,7 @@ Iterate AugmentedLagrangian::initialize(Problem& problem, std::vector<double>& x
     this->compute_measures(problem, first_iterate);
     
     /* identify the inequality constraint slacks */
-    std::map<int,int> slacked_constraints;
+    std::map<int,int> slacked_constraints;                     // sparse dictionary of inequality c/s
     int current_slack = 0;
     for (int j = 0; j < problem.number_constraints; j++) {
         if (problem.constraint_status[j] != EQUAL_BOUNDS) {
@@ -32,9 +32,10 @@ Iterate AugmentedLagrangian::initialize(Problem& problem, std::vector<double>& x
 }
 
 LocalSolution AugmentedLagrangian::compute_optimality_step(Problem& problem, Iterate& current_iterate, double radius) {
+    /* Solve (approx/exact) the augm. Lagrangian subproblem */ 
     LocalSolution solution = this->solver.solve(problem, current_iterate);
     /* the Augmented Lagrangian subproblem returns a new iterate. We should now compute the step */
-    std::vector<double> step(solution.x);
+    std::vector<double> step(solution.x); /* copy/contruct step := solution.x */
     for (unsigned int i = 0; i < current_iterate.x.size(); i++) {
         step[i] -= current_iterate.x[i];
     }

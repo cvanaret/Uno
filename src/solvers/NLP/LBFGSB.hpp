@@ -5,15 +5,20 @@
 #include "Iterate.hpp"
 #include "LocalSolution.hpp"
 
+/*! \class LBFGSB
+ * \brief Limited-memory BFGS for Bounds (L-BFGS-B)
+ *
+ *  interface to bound-constrained nonlinear optimization solver L-BFGS-B by Nocedal et al.
+ */
 class LBFGSB {
     public:
-        LBFGSB(int memory_size = 5);
+        LBFGSB(int limited_memory_size = 5);
         void initialize(std::map<int,int> slacked_constraints);
         LocalSolution solve(Problem& problem, Iterate& current_point);
         
-        // penalty parameter
+        // augmented Lagrangian penalty parameter
         double rho;
-        int memory_size;
+        int limited_memory_size;  // number limited memory vectors (=m in lbfgsb.f)
     
     private:
         double compute_augmented_lagrangian_(Problem& problem, std::vector<double>& x, std::vector<double>& constraints, std::vector<double>& constraint_multipliers);
@@ -22,7 +27,7 @@ class LBFGSB {
         /* map of (constraint index, slack index) */
         std::map<int,int> slacked_constraints_;
         
-        /* Fortran parameters */
+        /* Fortran parameters needed by lbfgsb.f */
         char task_[60];
         char csave_[60];
         int lsave_[4];
