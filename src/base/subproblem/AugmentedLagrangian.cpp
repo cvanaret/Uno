@@ -21,6 +21,7 @@ Iterate AugmentedLagrangian::initialize(Problem& problem, std::vector<double>& x
             current_slack++;
             // add slack as a primal variable
             first_iterate.x.push_back(first_iterate.constraints[j]);
+            //first_iterate.x.push_back(problem.constraint_lb[j]);
         }
     }
     

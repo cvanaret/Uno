@@ -129,16 +129,16 @@ LocalSolution PenaltyStrategy::compute_step(Problem& problem, Iterate& current_i
 }
 
 bool PenaltyStrategy::check_step(Problem& problem, Iterate& current_iterate, LocalSolution& solution, double step_length) {
-	/* stage g: line-search along fixed step */
+    /* stage g: line-search along fixed step */
 	
-	/* retrieve only original primal and dual variables from the step */
-	std::vector<double> d(problem.number_variables);
-	for (int i = 0; i < problem.number_variables; i++) {
+    /* retrieve only original primal and dual variables from the step */
+    std::vector<double> d(problem.number_variables);
+    for (int i = 0; i < problem.number_variables; i++) {
         d[i] = solution.x[i];
     }
     
-	/* generate the trial point */
-	std::vector<double> x_trial = add_vectors(current_iterate.x, d, step_length);
+    /* generate the trial point */
+    std::vector<double> x_trial = add_vectors(current_iterate.x, d, step_length);
     /* get the multipliers */
     std::vector<double> bound_multipliers = this->compute_bound_multipliers(problem, solution);
     std::vector<double> constraint_multipliers = this->compute_constraint_multipliers(problem, solution);
@@ -218,22 +218,22 @@ std::vector<double> PenaltyStrategy::compute_bound_multipliers(Problem& problem,
 }
 
 std::vector<double> PenaltyStrategy::compute_constraint_multipliers(Problem& problem, LocalSolution& solution) {
-	std::vector<double> constraint_multipliers(problem.number_constraints);
+    std::vector<double> constraint_multipliers(problem.number_constraints);
     int current_constraint = 0;
-	for (int j = 0; j < problem.number_constraints; j++) {
-		if (problem.constraint_status[j] == BOUNDED_BOTH_SIDES) {
-			/* only case where 2 constraints were generated */
-			/* only one bound is active: one multiplier is > 0, the other is 0 */
-            constraint_multipliers[j] = solution.constraint_multipliers[current_constraint] + solution.constraint_multipliers[current_constraint + 1];
-			current_constraint += 2;
-		}
-		else {
-			/* only 1 constraint was generated */
-            constraint_multipliers[j] = solution.constraint_multipliers[current_constraint];
-			current_constraint++;
-		}
-	}
-	return constraint_multipliers;
+    for (int j = 0; j < problem.number_constraints; j++) {
+            if (problem.constraint_status[j] == BOUNDED_BOTH_SIDES) {
+                    /* only case where 2 constraints were generated */
+                    /* only one bound is active: one multiplier is > 0, the other is 0 */
+        constraint_multipliers[j] = solution.constraint_multipliers[current_constraint] + solution.constraint_multipliers[current_constraint + 1];
+                    current_constraint += 2;
+            }
+            else {
+                    /* only 1 constraint was generated */
+        constraint_multipliers[j] = solution.constraint_multipliers[current_constraint];
+                    current_constraint++;
+            }
+    }
+    return constraint_multipliers;
 }
 
 double PenaltyStrategy::compute_error(Problem& problem, Iterate& current_iterate, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers, double penalty_parameter) {

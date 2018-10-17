@@ -46,14 +46,16 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, std::vector<doub
 	std::clock_t c_end = std::clock();
 	double cpu_time = (c_end-c_start) / (double) CLOCKS_PER_SEC;
 
-	Result result = {current_iterate,
-					major_iterations,
-					cpu_time,
-					problem.number_eval_objective,
-					problem.number_eval_constraints,
-					problem.number_eval_jacobian,
-					problem.number_eval_hessian,
-					this->globalization_mechanism.globalization_strategy.subproblem.number_subproblems_solved};
+	Result result = {problem.number_variables,
+                        problem.number_constraints,
+                        current_iterate,
+                        major_iterations,
+                        cpu_time,
+                        problem.number_eval_objective,
+                        problem.number_eval_constraints,
+                        problem.number_eval_jacobian,
+                        problem.number_eval_hessian,
+                        this->globalization_mechanism.globalization_strategy.subproblem.number_subproblems_solved};
 	return result;
 }
 
@@ -82,7 +84,7 @@ void Result::display() {
 	else { // NOT_OPTIMAL
 		std::cout << "Irregular termination\n";
 	}
-
+        
 	std::cout << "Objective value:\t" << this->solution.objective << "\n";
 	std::cout << "Constraint residual:\t" << this->solution.residual << "\n";
 	std::cout << "KKT residual:\t\t" << this->solution.KKTerror << "\n";

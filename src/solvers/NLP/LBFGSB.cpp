@@ -17,7 +17,7 @@ extern "C" {
             char *csave, int *lsave, int *isave, double *dsave);//, long int, long int);
 }
 
-LBFGSB::LBFGSB(int memory_size): rho(10.), memory_size(memory_size) {
+LBFGSB::LBFGSB(int memory_size): rho(200.), memory_size(memory_size) {
 }
 
 void LBFGSB::initialize(std::map<int,int> slacked_constraints) {
@@ -82,12 +82,16 @@ LocalSolution LBFGSB::solve(Problem& problem, Iterate& current_iterate) {
         setulb_(&n, &this->memory_size, x.data(), l.data(), u.data(), nbd.data(), &f, g.data(), &this->factr_, &this->pgtol_, wa.data(), iwa.data(),
                 this->task_, &this->iprint_, this->csave_, this->lsave_, this->isave_, this->dsave_);//, (long int) 60, (long int) 60);
         
+        std::cout << "Current task: " << this->task_ << "\n";
+        
         // evaluate Augmented Lagrangian and its gradient
         if (strncmp(this->task_, "FG", 2) == 0) {
             std::cout << "x: "; print_vector(std::cout, x);
             std::vector<double> constraints = problem.evaluate_constraints(x);
             f = this->compute_augmented_lagrangian_(problem, x, constraints, current_iterate.constraint_multipliers);
             g = this->compute_augmented_lagrangian_gradient_(problem, x, constraints, current_iterate.constraint_multipliers);
+            std::cout << "f is " << f << "\n";
+            std::cout << "g is "; print_vector(std::cout, g);
         }
     }
 
@@ -100,8 +104,23 @@ LocalSolution LBFGSB::solve(Problem& problem, Iterate& current_iterate) {
         reduced_gradient += std::abs(std::min(x[i] - l[i], u[i] - x[i]) * g[i]);
     }; // end for
     std::cout << "Reduced Gradient Norm = " << reduced_gradient << "\n";
-
-    std::vector<double> constraint_multipliers;
+    
+    /* compute the new multipliers */
+    std::vector<double> constraints = problem.evaluate_constraints(x);
+    std::vector<double> constraint_multipliers(current_iterate.constraint_multipliers);
+    for (int j = 0; j < problem.number_constraints; j++) {
+        double constraint_value;
+        try {
+            // inequality constraint
+            int current_slack = this->slacked_constraints_[j];
+            constraint_value = constraints[j] - x[problem.number_variables + current_slack];
+        }
+        catch (std::out_of_range) {
+            // equality constraint
+            constraint_value = constraints[j] - problem.constraint_lb[j];
+        }
+        constraint_multipliers[j] -= this->rho*constraint_value;
+    }
     LocalSolution solution(x, g, constraint_multipliers);
     solution.status = OPTIMAL;
 
@@ -132,7 +151,7 @@ double LBFGSB::compute_augmented_lagrangian_(Problem& problem, std::vector<doubl
 std::vector<double> LBFGSB::compute_augmented_lagrangian_gradient_(Problem& problem, std::vector<double>& x, std::vector<double>& constraints, std::vector<double>& constraint_multipliers) {
     // gradient of the objective
     std::vector<double> augmented_lagrangian_gradient = problem.objective_dense_gradient(x);
-    // gradient of the constraints wrt the variables
+    // gradient of the constraints wrt the variablescurrent_iterate
     for (int j = 0; j < problem.number_constraints; j++) {
         double constraint_value;
         try {

@@ -30,18 +30,18 @@ LocalSolution QPApproximation::compute_optimality_step(Problem& problem, Iterate
     LocalSolution solution = this->solver.solve(qp, d0);
     solution.phase_1_required = this->phase_1_required(solution);
     this->number_subproblems_solved++;
-
-    /* keep multipliers delta */
-    for (int j = 0; j < problem.number_constraints; j++) {
-        solution.constraint_multipliers[j] -= current_iterate.constraint_multipliers[j];
-    }
-
+    
     double linear_term = dot(solution.x, qp.objective);
     double quadratic_term = current_iterate.hessian.quadratic_product(solution.x, solution.x) / 2.;
     solution.objective_terms = {linear_term, quadratic_term};
 
     return solution;
 }
+
+/* compute Delta multipliers */
+    //for (int j = 0; j < problem.number_constraints; j++) {
+    //    solution.constraint_multipliers[j] -= current_iterate.constraint_multipliers[j];
+    //}
 
 LocalSolution QPApproximation::compute_infeasibility_step(Problem& problem, Iterate& current_iterate, double radius, LocalSolution& phase_II_solution) {
     /* generate the QP */
@@ -54,12 +54,7 @@ LocalSolution QPApproximation::compute_infeasibility_step(Problem& problem, Iter
     /* solve the QP */
     LocalSolution solution = this->solver.solve(qp, d0);
     this->number_subproblems_solved++;
-
-    /* keep multipliers delta */
-    for (int j = 0; j < problem.number_constraints; j++) {
-        solution.constraint_multipliers[j] -= current_iterate.constraint_multipliers[j];
-    }
-
+    
     double linear_term = dot(solution.x, qp.objective);
     double quadratic_term = current_iterate.hessian.quadratic_product(solution.x, solution.x) / 2.;
     solution.objective_terms = {linear_term, quadratic_term};
@@ -79,12 +74,7 @@ LocalSolution QPApproximation::compute_l1_penalty_step(Problem& problem, Iterate
     /* solve the QP */
     LocalSolution solution = this->solver.solve(qp, d0);
     this->number_subproblems_solved++;
-
-    /* keep multipliers delta */
-    for (int j = 0; j < problem.number_constraints; j++) {
-        solution.constraint_multipliers[j] -= current_iterate.constraint_multipliers[j];
-    }
-
+    
     double linear_term = dot(solution.x, qp.objective);
     double quadratic_term = current_iterate.hessian.quadratic_product(solution.x, solution.x) / 2.;
     solution.objective_terms = {linear_term, quadratic_term};

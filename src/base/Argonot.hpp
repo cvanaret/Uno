@@ -5,16 +5,18 @@
 #include "GlobalizationMechanism.hpp"
 
 struct Result {
-	Iterate solution;
-	int iteration;
-	double cpu_time;
-	int objective_evaluations;
-	int constraint_evaluations;
-	int jacobian_evaluations;
-	int hessian_evaluations;
-	int number_subproblems_solved;
-	
-	void display();
+    int number_variables;
+    int number_constraints;
+    Iterate solution;
+    int iteration;
+    double cpu_time;
+    int objective_evaluations;
+    int constraint_evaluations;
+    int jacobian_evaluations;
+    int hessian_evaluations;
+    int number_subproblems_solved;
+
+    void display();
 };
 
 /*! \class Argonot
