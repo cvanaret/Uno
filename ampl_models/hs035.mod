@@ -16,6 +16,7 @@ let x[3] := 0.5;
 #let x[2] := 7/9;
 #let x[3] := 4/9;
 
+let constr1 := 0.25;
 display obj;
 
 solve;

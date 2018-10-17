@@ -23,10 +23,12 @@ let x[4] := 0;
 #let x[4] := 4;
 
 display obj;
+let constr3 := 1.25;
+let constr5 := 1.5;
 
 solve;
 
-display x;
+display x, _con;
 
 display obj;
 

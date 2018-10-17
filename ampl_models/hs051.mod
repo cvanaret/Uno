@@ -20,7 +20,7 @@ option loqo_options $loqo_options" convex";
 
 solve;
 
-display x;
+display x, _con;
 
 display obj;
 
