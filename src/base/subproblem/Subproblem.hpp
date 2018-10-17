@@ -32,6 +32,7 @@ class Subproblem {
 
         virtual Iterate initialize(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers, int number_variables, int number_constraints, bool use_trust_region) = 0;
         virtual void compute_measures(Problem& problem, Iterate& iterate) = 0;
+        virtual bool phase_1_required(LocalSolution& solution) = 0;
         int number_subproblems_solved;
 };
 

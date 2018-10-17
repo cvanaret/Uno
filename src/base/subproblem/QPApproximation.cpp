@@ -28,6 +28,7 @@ LocalSolution QPApproximation::compute_optimality_step(Problem& problem, Iterate
 
     /* solve the QP */
     LocalSolution solution = this->solver.solve(qp, d0);
+    solution.phase_1_required = this->phase_1_required(solution);
     this->number_subproblems_solved++;
 
     /* keep multipliers delta */
@@ -106,6 +107,8 @@ QP QPApproximation::generate_qp_(Problem& problem, Iterate& current_iterate, dou
 
     return qp;
 }
+
+/* private methods */
 
 QP QPApproximation::generate_optimality_qp_(Problem& problem, Iterate& current_iterate, double radius) {
     DEBUG << "Creating the optimality problem\n";
@@ -304,4 +307,8 @@ void QPApproximation::compute_measures(Problem& problem, Iterate& iterate) {
     iterate.feasibility_measure = iterate.residual;
     iterate.optimality_measure = iterate.objective;
     return;
+}
+
+bool QPApproximation::phase_1_required(LocalSolution& solution) {
+    return solution.status == INFEASIBLE;
 }

@@ -24,6 +24,7 @@ class QPApproximation : public Subproblem {
         LocalSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, double radius, LocalSolution& phase_II_solution) override;
         LocalSolution compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyDimensions penalty_dimensions) override;
         void compute_measures(Problem& problem, Iterate& iterate) override;
+        bool phase_1_required(LocalSolution& solution) override;
 
         /* use a reference to allow polymorphism */
         QPSolver& solver; /*!< Solver that solves the subproblem */

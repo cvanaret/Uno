@@ -109,6 +109,7 @@ LocalSolution LBFGSB::solve(Problem& problem, Iterate& current_iterate) {
 
     std::vector<double> constraint_multipliers;
     LocalSolution solution(x, g, constraint_multipliers);
+    solution.status = OPTIMAL;
 
     return solution;
 }

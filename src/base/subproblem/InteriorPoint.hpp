@@ -23,6 +23,8 @@ class InteriorPoint : public Subproblem {
         LocalSolution compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyDimensions penalty_dimensions) override;
 
         void compute_measures(Problem& problem, Iterate& iterate) override;
+        bool phase_1_required(LocalSolution& solution) override;
+        
         double objective(Problem& problem, Iterate& iterate);
         double constraint_violation(Problem& problem, Iterate& iterate);
         double evaluate_local_model(Problem& problem, Iterate& current_iterate, std::vector<double>& solution);

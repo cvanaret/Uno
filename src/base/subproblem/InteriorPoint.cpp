@@ -710,3 +710,7 @@ LocalSolution InteriorPoint::compute_l1_penalty_step(Problem& problem, Iterate& 
     std::vector<double> x, z, l;
     return LocalSolution(x, z, l);
 }
+
+bool InteriorPoint::phase_1_required(LocalSolution& solution) {
+    return solution.status == INFEASIBLE;
+}

@@ -12,7 +12,7 @@ LocalSolution TwoPhaseStrategy::compute_step(Problem& problem, Iterate& current_
     solution.phase = OPTIMALITY;
     DEBUG << solution;
 
-    if (solution.status == INFEASIBLE) {
+    if (solution.phase_1_required) {
         /* infeasible subproblem during optimality phase */
         DEBUG << "Moving on to the feasibility step\n";
 

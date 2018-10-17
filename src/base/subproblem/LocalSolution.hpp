@@ -36,7 +36,8 @@ class LocalSolution {
         LocalSolution(std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers);
 
         Status status; /*!< Status of the solution */
-        Phase phase;
+        Phase phase; /*!< Current phase */
+        bool phase_1_required;
         std::vector<double> x; /*!< Primal variables */
         std::vector<double> bound_multipliers; /*!< Multipliers of the bound constraints */
         std::vector<double> constraint_multipliers; /*!< Multipliers of the general constraints */
