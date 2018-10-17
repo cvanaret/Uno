@@ -1,18 +1,20 @@
-param rho_ >= 0, default 10;
+param rho_ >= 0, default 1000;
 param l{1..3} default 0;
+param sl{1..3} default 0;
 let l[1] := 0.9;
 let l[3] := 0.5;
+let sl[3] := -6;
 
 var x {1..2};
-var s {1..3} >= 0;
+var s {i in 1..3} >= sl[i];
 
 
 minimize obj: 
   ((x[1] - 3)^2 - 9) * x[2]^3 / (27*sqrt(3))
--l[1]*(x[1]/sqrt(3) - x[2] - s[1] )
--l[2]*(x[1] + sqrt(3)*x[2] - s[2] )
--l[3]*(-x[1] - sqrt(3)*x[2] - s[3] + 6)
-+rho_/2*( (x[1]/sqrt(3) - x[2] - s[1] )^2 + (x[1] + sqrt(3)*x[2] - s[2] )^2 + (-x[1] - sqrt(3)*x[2] - s[3] + 6)^2 )
+-l[1]*( x[1]/sqrt(3) - x[2] - s[1] )
+-l[2]*( x[1] + sqrt(3)*x[2] - s[2] )
+-l[3]*(-x[1] - sqrt(3)*x[2] - s[3] )
++rho_/2*( (x[1]/sqrt(3) - x[2] - s[1] )^2 + (x[1] + sqrt(3)*x[2] - s[2] )^2 + (-x[1] - sqrt(3)*x[2] - s[3])^2 )
 ;
 
 let x[1] := 1;
@@ -35,7 +37,7 @@ let x[2] := 2;
 
 solve;
 
-display x;
+display x,s,l;
 
 display obj;
 

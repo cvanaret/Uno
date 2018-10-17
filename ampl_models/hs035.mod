@@ -21,6 +21,7 @@ display obj;
 solve;
 
 display x;
+display _con;
 
 display obj;
 

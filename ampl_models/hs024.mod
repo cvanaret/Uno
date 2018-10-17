@@ -15,6 +15,9 @@ let x[2] := 1/2;
 #let x[1] := 3;
 #let x[2] := 1.73205;
 
+let constr1 := 0.9;
+let constr3 := 0.5;
+
 solve;
 
 display x;

@@ -1,14 +1,14 @@
-param rho_ >= 0, default 100;
-param l := 1;
+param rho_ >= 0, default 10000;
+param l := 0.25;
 
 var x {1..3} >= 0;
-var s >= 0;
+var s >= -3;
 
 minimize obj: 
   9 - 8*x[1] - 6*x[2] - 4*x[3] + 2*x[1]^2 + 2*x[2]^2 + x[3]^2 
   + 2*x[1]*x[2] + 2*x[1]*x[3]
-  - l*(x[1] + x[2] + 2*x[3] + s - 3)
-  + rho_/2*(x[1] + x[2] + 2*x[3] + s - 3)^2
+  - l*(x[1] + x[2] + 2*x[3] + s)
+  + rho_/2*(x[1] + x[2] + 2*x[3] + s)^2
 ;
 
 ##subject to constr1: x[1] + x[2] + 2*x[3] + s = 3;
@@ -28,6 +28,8 @@ expand;
 solve;
 
 display x,s,l;
+
+display (x[1] + x[2] + 2*x[3] + s)^2;
 
 display obj;
 
