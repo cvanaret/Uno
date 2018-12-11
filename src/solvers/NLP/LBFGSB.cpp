@@ -29,7 +29,7 @@ LocalSolution LBFGSB::solve(Problem& problem, Iterate& current_iterate) {
     std::vector<int> nbd(n);
     std::vector<double> l(n);
     std::vector<double> u(n);
-    // copy bnds of primal variables to arrays for L-BFGS-B & set nbd (type of bnds)
+    // copy bounds of primal variables to arrays for L-BFGS-B & set nbd (type of bounds)
     for (int i = 0; i < problem.number_variables; i++) {
         l[i] = problem.variable_lb[i];
         u[i] = problem.variable_ub[i];
@@ -46,7 +46,7 @@ LocalSolution LBFGSB::solve(Problem& problem, Iterate& current_iterate) {
             nbd[i] = 2;
         }
     }
-    // copy bnds of slack variables to arrays for L-BFGS-B & set nbd (type of bnds)
+    // copy bounds of slack variables to arrays for L-BFGS-B & set nbd (type of bounds)
     for (std::pair<const int, int> element: this->slacked_constraints_) {
         int j = element.first;
         int current_slack = element.second;
@@ -73,7 +73,7 @@ LocalSolution LBFGSB::solve(Problem& problem, Iterate& current_iterate) {
     
     // optimization loop (lbfgsb.f uses reverse communication to get function & gradient values)
     double f;                   // objective (augmented Lagrangian)
-    std::vector<double> g;      // gradient (of f) wrt primal vars x and slacks s
+    std::vector<double> g;      // gradient (of f) wrt primal variables x and slacks s
     
     strcpy(this->task_, "START");
     while (strncmp(this->task_, "FG", 2) == 0 || strncmp(this->task_, "NEW_X", 5) == 0 || strncmp(this->task_, "START", 5) == 0) {
@@ -95,11 +95,10 @@ LocalSolution LBFGSB::solve(Problem& problem, Iterate& current_iterate) {
     }
 
     //! ... print final solution of L-BFGS-B \& compute the reduced gradient
-    std::cout << "Final L-BFGS-B Solution\n";
-    std::cout << "lower bound   x-value      upper bound  gradient\n";
+    std::cout << "Ended with ask: " << this->task_ << "\n";
     double reduced_gradient = 0.;
     for (int i = 0; i < n; i++) {
-        std::cout << x[i] << " in [" << l[i] << ", " << u[i] << "]\tderivative: " << g[i] << "\n";
+        std::cout << x[i] << " in [" << l[i] << ", " << u[i] << "]\tmultiplier: " << g[i] << "\n";
         reduced_gradient += std::abs(std::min(x[i] - l[i], u[i] - x[i]) * g[i]);
     }; // end for
     std::cout << "Reduced Gradient Norm = " << reduced_gradient << "\n";
@@ -175,7 +174,7 @@ std::vector<double> LBFGSB::compute_augmented_lagrangian_gradient_(Problem& prob
     // gradient of the constraints wrt the slacks
     for (std::pair<const int, int> element: slacked_constraints_) {
         int j = element.first;                // index of the constraint
-        int current_slack = element.second;   // index of the slack from 0 to number_of_slacks
+        int current_slack = element.second;   // index of the slack in [0, number_of_slacks[
         double constraint_value = constraints[j] - x[problem.number_variables + current_slack];
         double derivative = constraint_multipliers[j] - this->rho*constraint_value;
         augmented_lagrangian_gradient.push_back(derivative); // sticks gradient terms at end of n (number of vars) grad.
