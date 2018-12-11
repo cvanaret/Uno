@@ -18,7 +18,7 @@ BFGS_DIR = solvers/NLP/Lbfgsb.3.0
 
 INCLUDES = -I base -I base/globalization_mechanism -I base/globalization_strategy -I base/subproblem -I logger -I interfaces/AMPL -I solvers/QP -I solvers/KKT -I solvers/NLP -I $(BFGS_DIR) -I $(AMPL_DIR)
 
-SRC_FILES = main.cpp base/Argonot.cpp base/Iterate.cpp \
+SRC_FILES = base/Argonot.cpp base/Iterate.cpp \
 	base/Problem.cpp interfaces/AMPL/AMPLModel.cpp \
 	base/Matrix.cpp \
 	base/globalization_strategy/GlobalizationStrategy.cpp base/globalization_strategy/TwoPhaseStrategy.cpp \
@@ -56,8 +56,8 @@ LIBS = $(AMPL_DIR)/amplsolver.a $(BQPD_DIR)/libbqpd.a -L$(MA57_DIR) -lma57 -l$(M
 
 all: $(EXEC_NAME) $(AMPL_DIR)/amplsolver.a
 
-$(EXEC_NAME): $(OBJ_FILES) $(AMPL_DIR)/amplsolver.a
-	$(CPP) $(LFLAGS) -o $(EXEC_NAME) $(OBJ_FILES) $(LIBS) $(LIBLINALG) $(L) $(LIBCOMPIL)
+$(EXEC_NAME): main.o $(OBJ_FILES) $(AMPL_DIR)/amplsolver.a
+	$(CPP) $(LFLAGS) -o $(EXEC_NAME) main.o $(OBJ_FILES) $(LIBS) $(LIBLINALG) $(L) $(LIBCOMPIL)
 
 $(AMPL_DIR)/amplsolver.a:
 	cd $(AMPL_DIR); make amplsolver.a
@@ -70,3 +70,6 @@ cleanhere:
 xsum.out: $SRC_FILES
 	xsum $SRC_FILES >xsum1.out
 	cmp xsum0.out xsum1.out && mv xsum1.out xsum.out || diff xsum[01].out
+
+al: al.o $(OBJ_FILES) $(AMPL_DIR)/amplsolver.a
+	$(CPP) $(LFLAGS) -o al al.o $(OBJ_FILES) $(LIBS) $(LIBLINALG) $(L) $(LIBCOMPIL)
