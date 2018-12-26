@@ -15,15 +15,18 @@ class LBFGSB {
         LBFGSB(int limited_memory_size = 5);
         void initialize(std::map<int,int> slacked_constraints);
         LocalSolution solve(Problem& problem, Iterate& current_point);
+        LocalSolution solve(Problem& problem, Iterate& current_iterate,
+            double (*compute_augmented_lagrangian)(Problem&, std::map<int,int>&, std::vector<double>&, std::vector<double>&, std::vector<double>&, double),
+            std::vector<double> (*compute_augmented_lagrangian_gradient)(Problem&, std::map<int,int>&, std::vector<double>&, std::vector<double>&, std::vector<double>&, double));
         
         // augmented Lagrangian penalty parameter
         double rho;
         int limited_memory_size;  // number limited memory vectors (=m in lbfgsb.f)
     
     private:
+        // TODO move to AL
         double compute_augmented_lagrangian_(Problem& problem, std::vector<double>& x, std::vector<double>& constraints, std::vector<double>& constraint_multipliers);
         std::vector<double> compute_augmented_lagrangian_gradient_(Problem& problem, std::vector<double>& x, std::vector<double>& constraints, std::vector<double>& constraint_multipliers);
-        
         /* map of (constraint index, slack index) */
         std::map<int,int> slacked_constraints_;
         

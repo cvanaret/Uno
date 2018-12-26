@@ -126,6 +126,113 @@ LocalSolution LBFGSB::solve(Problem& problem, Iterate& current_iterate) {
     return solution;
 }
 
+LocalSolution LBFGSB::solve(Problem& problem, Iterate& current_iterate,
+        double (*compute_augmented_lagrangian)(Problem&, std::map<int,int>&, std::vector<double>&, std::vector<double>&, std::vector<double>&, double),
+        std::vector<double> (*compute_augmented_lagrangian_gradient)(Problem&, std::map<int,int>&, std::vector<double>&, std::vector<double>&, std::vector<double>&, double)) {
+    
+    std::vector<double> x(current_iterate.x);
+    /* determine the bounds of the variables + slacks */
+    int n = problem.number_variables + this->slacked_constraints_.size();
+    std::vector<int> nbd(n);
+    std::vector<double> l(n);
+    std::vector<double> u(n);
+    // copy bounds of primal variables to arrays for L-BFGS-B & set nbd (type of bounds)
+    for (int i = 0; i < problem.number_variables; i++) {
+        l[i] = problem.variable_lb[i];
+        u[i] = problem.variable_ub[i];
+        if (problem.variable_status[i] == UNBOUNDED) {
+            nbd[i] = 0;
+        }
+        else if (problem.variable_status[i] == BOUNDED_LOWER) {
+            nbd[i] = 1;
+        }
+        else if (problem.variable_status[i] == BOUNDED_UPPER) {
+            nbd[i] = 3;
+        }
+        else { // two bounds
+            nbd[i] = 2;
+        }
+    }
+    // copy bounds of slack variables to arrays for L-BFGS-B & set nbd (type of bounds)
+    for (std::pair<const int, int> element: this->slacked_constraints_) {
+        int j = element.first;
+        int current_slack = element.second;
+        l[problem.number_variables + current_slack] = problem.constraint_lb[j];
+        u[problem.number_variables + current_slack] = problem.constraint_ub[j];
+        
+        if (problem.constraint_status[j] == UNBOUNDED) {
+            nbd[problem.number_variables + current_slack] = 0;
+        }
+        else if (problem.constraint_status[j] == BOUNDED_LOWER) {
+            nbd[problem.number_variables + current_slack] = 1;
+        }
+        else if (problem.constraint_status[j] == BOUNDED_UPPER) {
+            nbd[problem.number_variables + current_slack] = 3;
+        }
+        else { // two bounds
+            nbd[problem.number_variables + current_slack] = 2;
+        }
+    }
+    
+    /* memory allocation for L-BFGS-B (limited memory & factors allocation) */
+    std::vector<double> wa(this->limited_memory_size*(2*n + 11*this->limited_memory_size + 8) + 5*n);
+    std::vector<int> iwa(3*n);
+    
+    // optimization loop (lbfgsb.f uses reverse communication to get function & gradient values)
+    double f;                   // objective (augmented Lagrangian)
+    std::vector<double> g;      // gradient (of f) wrt primal variables x and slacks s
+    
+    strcpy(this->task_, "START");
+    while (strncmp(this->task_, "FG", 2) == 0 || strncmp(this->task_, "NEW_X", 5) == 0 || strncmp(this->task_, "START", 5) == 0) {
+        /* call L-BFGS-B */
+        setulb_(&n, &this->limited_memory_size, x.data(), l.data(), u.data(), nbd.data(), &f, g.data(), &this->factr_, &this->pgtol_, wa.data(), iwa.data(),
+                this->task_, &this->iprint_, this->csave_, this->lsave_, this->isave_, this->dsave_);
+        
+        std::cout << "Current task: " << this->task_ << "\n";
+        
+        // evaluate Augmented Lagrangian and its gradient
+        if (strncmp(this->task_, "FG", 2) == 0) {
+            std::cout << "x: "; print_vector(std::cout, x);
+            std::vector<double> constraints = problem.evaluate_constraints(x);
+            f = compute_augmented_lagrangian(problem, this->slacked_constraints_, x, constraints, current_iterate.constraint_multipliers, this->rho);
+            g = compute_augmented_lagrangian_gradient(problem, this->slacked_constraints_, x, constraints, current_iterate.constraint_multipliers, this->rho);
+            std::cout << "f is " << f << "\n";
+            std::cout << "g is "; print_vector(std::cout, g);
+        }
+    }
+
+    //! ... print final solution of L-BFGS-B \& compute the reduced gradient
+    std::cout << "Ended with ask: " << this->task_ << "\n";
+    double reduced_gradient = 0.;
+    for (int i = 0; i < n; i++) {
+        std::cout << x[i] << " in [" << l[i] << ", " << u[i] << "]\tmultiplier: " << g[i] << "\n";
+        reduced_gradient += std::abs(std::min(x[i] - l[i], u[i] - x[i]) * g[i]);
+    }; // end for
+    std::cout << "Reduced Gradient Norm = " << reduced_gradient << "\n";
+    
+    /* compute the new multipliers: using first-order update form: y_new = y - rho*c */
+    std::vector<double> constraints = problem.evaluate_constraints(x);
+    std::vector<double> constraint_multipliers(current_iterate.constraint_multipliers);
+    for (int j = 0; j < problem.number_constraints; j++) {
+        double constraint_value;
+        try {
+            // inequality constraint: need to subtract slack values
+            int current_slack = this->slacked_constraints_[j];
+            constraint_value = constraints[j] - x[problem.number_variables + current_slack];
+        }
+        catch (std::out_of_range) {
+            // equality constraint
+            constraint_value = constraints[j] - problem.constraint_lb[j];
+        }
+        constraint_multipliers[j] -= this->rho*constraint_value;
+    }
+    // create local solution from primal and dual variables
+    LocalSolution solution(x, g, constraint_multipliers);
+    solution.status = OPTIMAL;
+
+    return solution;
+}
+
 // evaluate the augmented Lagrangian at x,y, where y=constraint_multipliers
 double LBFGSB::compute_augmented_lagrangian_(Problem& problem, std::vector<double>& x, std::vector<double>& constraints, std::vector<double>& constraint_multipliers) {
     // contribution of the objective
