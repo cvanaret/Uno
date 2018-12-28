@@ -14,19 +14,18 @@ class LBFGSB {
     public:
         LBFGSB(int limited_memory_size = 5);
         void initialize(std::map<int,int> slacked_constraints);
-        LocalSolution solve(Problem& problem, Iterate& current_point);
         LocalSolution solve(Problem& problem, Iterate& current_iterate,
-            double (*compute_augmented_lagrangian)(Problem&, std::map<int,int>&, std::vector<double>&, std::vector<double>&, std::vector<double>&, double),
-            std::vector<double> (*compute_augmented_lagrangian_gradient)(Problem&, std::map<int,int>&, std::vector<double>&, std::vector<double>&, std::vector<double>&, double));
+            double (*compute_objective)(Problem&, std::vector<double>&, std::vector<double>&, std::vector<double>&, double),
+            std::vector<double> (*compute_objective_gradient)(Problem&, std::map<int,int>&, std::vector<double>&, std::vector<double>&, std::vector<double>&, double),
+            std::vector<double> (*compute_constraints)(Problem& problem, std::map<int,int>& slacked_constraints, std::vector<double>& x),
+            std::vector<double>& l, std::vector<double>& u, std::vector<ConstraintType>& variable_status,
+            int max_iterations);
         
         // augmented Lagrangian penalty parameter
         double rho;
         int limited_memory_size;  // number limited memory vectors (=m in lbfgsb.f)
     
     private:
-        // TODO move to AL
-        double compute_augmented_lagrangian_(Problem& problem, std::vector<double>& x, std::vector<double>& constraints, std::vector<double>& constraint_multipliers);
-        std::vector<double> compute_augmented_lagrangian_gradient_(Problem& problem, std::vector<double>& x, std::vector<double>& constraints, std::vector<double>& constraint_multipliers);
         /* map of (constraint index, slack index) */
         std::map<int,int> slacked_constraints_;
         
@@ -36,7 +35,7 @@ class LBFGSB {
         int lsave_[4];
         int isave_[44];
         double dsave_[29];
-        int iprint_ = 1;
+        int iprint_ = 0;
         double factr_ = 1e5;
         double pgtol_ = 1e-5;
 };

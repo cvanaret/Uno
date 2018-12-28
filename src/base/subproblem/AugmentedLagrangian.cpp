@@ -31,6 +31,62 @@ Iterate AugmentedLagrangian::initialize(Problem& problem, std::vector<double>& x
     return first_iterate;
 }
 
+//// evaluate the augmented Lagrangian at x,y, where y=constraint_multipliers
+//double compute_augmented_lagrangian_(Problem& problem, std::vector<double>& x, std::vector<double>& constraints, std::vector<double>& constraint_multipliers) {
+    //// contribution of the objective
+    //double f = problem.objective(x);
+    //// contribution of the constraints
+    //for (int j = 0; j < problem.number_constraints; j++) {
+        //double constraint_value;
+        //try {
+            //// inequality constraint: need to subtract slack values
+            //int current_slack = this->slacked_constraints_[j];
+            //constraint_value = constraints[j] - x[problem.number_variables + current_slack];
+        //}
+        //catch (std::out_of_range) {
+            //// equality constraint
+            //constraint_value = constraints[j] - problem.constraint_lb[j];
+        //}
+        //f -= constraint_multipliers[j]*constraint_value;       // f = f - lambda[i]*c[i]
+        //f += this->rho/2.*constraint_value*constraint_value;   // f = f + rho/2*(c[i])^2 = augmented Lagrangian
+    //}
+    //return f;
+//}
+
+//// evaluate the gradient of the augmented Lagrangian at x,y, where y=constraint_multipliers
+//std::vector<double> compute_augmented_lagrangian_gradient_(Problem& problem, std::vector<double>& x, std::vector<double>& constraints, std::vector<double>& constraint_multipliers) {
+    //// start with gradient of the objective
+    //std::vector<double> augmented_lagrangian_gradient = problem.objective_dense_gradient(x);
+    //// gradient of the constraints wrt the variables
+    //for (int j = 0; j < problem.number_constraints; j++) {
+        //double constraint_value;
+        //try {
+            //// inequality constraint: need to subtract slacks
+            //int current_slack = this->slacked_constraints_[j];
+            //constraint_value = constraints[j] - x[problem.number_variables + current_slack];
+        //}
+        //catch (std::out_of_range) {
+            //// equality constraint
+            //constraint_value = constraints[j] - problem.constraint_lb[j];
+        //}
+        //double factor = constraint_multipliers[j] - this->rho*constraint_value;
+        //// add the gradient contribution from the constraints
+        //std::vector<double> constraint_gradient = problem.constraint_dense_gradient(j, x);
+        //for (int i = 0; i < problem.number_variables; i++) {
+            //augmented_lagrangian_gradient[i] -= factor*constraint_gradient[i];
+        //}
+    //}
+    //// gradient of the constraints wrt the slacks
+    //for (std::pair<const int, int> element: slacked_constraints_) {
+        //int j = element.first;                // index of the constraint
+        //int current_slack = element.second;   // index of the slack in [0, number_of_slacks[
+        //double constraint_value = constraints[j] - x[problem.number_variables + current_slack];
+        //double derivative = constraint_multipliers[j] - this->rho*constraint_value;
+        //augmented_lagrangian_gradient.push_back(derivative); // sticks gradient terms at end of n (number of vars) grad.
+    //}
+    //return augmented_lagrangian_gradient;
+//}
+
 LocalSolution AugmentedLagrangian::compute_optimality_step(Problem& problem, Iterate& current_iterate, double radius) {
     /* Solve (approx/exact) the augm. Lagrangian subproblem */ 
     LocalSolution solution = this->solver.solve(problem, current_iterate);

@@ -11,9 +11,9 @@ std::shared_ptr<Subproblem> SubproblemFactory::create(const std::string& type, Q
     else if (type == "IPM") {
         return std::make_shared<InteriorPoint>();
     }
-    else if (type == "AL") {
-        return std::make_shared<AugmentedLagrangian>();
-    }
+    //else if (type == "AL") {
+    //    return std::make_shared<AugmentedLagrangian>();
+    //}
     else {
         throw std::invalid_argument("LocalApproximation type " + type + " does not exist");
     }
