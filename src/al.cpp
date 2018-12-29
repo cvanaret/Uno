@@ -15,8 +15,8 @@ class FilterAugmentedLagrangian {
         FilterAugmentedLagrangian();
         
         double compute_eta(std::vector<double>& x, std::vector<double>& constraints);
-        double compute_omega(Problem& problem, std::vector<double>& x, std::vector<double>& constraints, std::vector<double>& constraint_multipliers);
-        std::vector<double> compute_multipliers(Problem& problem, std::vector<double>& x, std::vector<double>& constraints, std::vector<double>& constraint_multipliers);
+        double compute_omega(Problem& problem, std::vector<double>& x, std::vector<double>& constraints, std::vector<double>& constraint_multipliers, std::vector<double>& bound_multipliers);
+        std::vector<double> compute_constraint_multipliers(Problem& problem, std::vector<double>& x, std::vector<double>& constraints, std::vector<double>& constraint_multipliers);
         int solve(std::string problem_name);
 };
 
@@ -49,13 +49,13 @@ double compute_augmented_lagrangian2(double (*original_objective)(std::vector<do
 }
 
 // evaluate the gradient of the augmented Lagrangian at x,y, where y=constraint_multipliers
-std::vector<double> compute_augmented_lagrangian_gradient(Problem& problem, std::map<int,int>& slacked_constraints, std::vector<double>& x, std::vector<double>& constraints, std::vector<double>& constraint_multipliers, double penalty_parameter) {
+std::vector<double> compute_augmented_lagrangian_gradient(Problem& problem, std::map<int,int>& slacked_constraints, std::vector<double>& x, std::vector<double>& constraints, std::vector<double>& constraint_multipliers, std::vector<double>& bound_multipliers, double penalty_parameter) {
     // start with gradient of the objective
     std::vector<double> augmented_lagrangian_gradient = problem.objective_dense_gradient(x);
     // gradient of the constraints wrt the variables
     for (unsigned int j = 0; j < constraints.size(); j++) {
         double factor = constraint_multipliers[j] - penalty_parameter*constraints[j];
-        // add the gradient contribution from the constraints
+        // gradient contribution from the constraints
         std::vector<double> constraint_gradient = problem.constraint_dense_gradient(j, x);
         for (int i = 0; i < problem.number_variables; i++) {
             augmented_lagrangian_gradient[i] -= factor*constraint_gradient[i];
@@ -81,13 +81,30 @@ double FilterAugmentedLagrangian::compute_eta(std::vector<double>& x, std::vecto
 }
 
 // residual of first-order conditions
-double FilterAugmentedLagrangian::compute_omega(Problem& problem, std::vector<double>& x, std::vector<double>& constraints, std::vector<double>& constraint_multipliers) {
+double FilterAugmentedLagrangian::compute_omega(Problem& problem, std::vector<double>& x, std::vector<double>& constraints, std::vector<double>& constraint_multipliers, std::vector<double>& bound_multipliers) {
     // compute the AL gradient
-    std::vector<double> augmented_lagrangian_gradient = compute_augmented_lagrangian_gradient(problem, this->slacked_constraints, x, constraints, constraint_multipliers, this->penalty_parameter);
+    std::vector<double> augmented_lagrangian_gradient = compute_augmented_lagrangian_gradient(problem, this->slacked_constraints, x, constraints, constraint_multipliers, bound_multipliers, this->penalty_parameter);
     
+    // multipliers of the bound constraints
+    for (int i = 0; i < problem.number_variables; i++) {
+        augmented_lagrangian_gradient[i] -= bound_multipliers[i];
+    }
+    for (std::pair<const int, int> element: slacked_constraints) {
+        //int j = element.first; // index of the constraint
+        int current_slack = element.second;
+        augmented_lagrangian_gradient[problem.number_variables + current_slack] -= bound_multipliers[problem.number_variables + current_slack];
+    }
+    
+    // compute the residual
     double residual = 0.;
-    for (unsigned int i = 0; i < x.size(); i++) {
-        residual += std::abs(std::min(x[i], augmented_lagrangian_gradient[i]));
+    for (int i = 0; i < problem.number_variables; i++) {
+        residual += std::abs(std::min(problem.variable_ub[i] - x[i], std::min(x[i] - problem.variable_lb[i], augmented_lagrangian_gradient[i])));
+    }
+    for (std::pair<const int, int> element: slacked_constraints) {
+        int j = element.first; // index of the constraint
+        int current_slack = element.second;
+        double slack_value = x[problem.number_variables + current_slack];
+        residual += std::abs(std::min(problem.constraint_ub[j] - slack_value, std::min(slack_value - problem.constraint_lb[j], augmented_lagrangian_gradient[problem.number_variables + current_slack])));
     }
     return residual;
 }
@@ -109,7 +126,7 @@ std::vector<double> compute_constraints(Problem& problem, std::map<int,int>& sla
     return constraints;
 }
 
-std::vector<double> FilterAugmentedLagrangian::compute_multipliers(Problem& problem, std::vector<double>& x, std::vector<double>& constraints, std::vector<double>& constraint_multipliers) {
+std::vector<double> FilterAugmentedLagrangian::compute_constraint_multipliers(Problem& problem, std::vector<double>& x, std::vector<double>& constraints, std::vector<double>& constraint_multipliers) {
     /* compute the reduced gradient */
     //double reduced_gradient = 0.;
     //for (int i = 0; i < x.size(); i++) {
@@ -173,7 +190,7 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
     // initialize the filter with initial point's entries
     std::vector<double> constraints = compute_constraints(problem, this->slacked_constraints, current_iterate.x);
     double eta_0 = this->compute_eta(current_iterate.x, constraints);
-    double omega_0 = this->compute_omega(problem, current_iterate.x, constraints, constraint_multipliers);
+    double omega_0 = this->compute_omega(problem, current_iterate.x, constraints, constraint_multipliers, bound_multipliers);
     filter.add(eta_0, omega_0);
     std::cout << "Initial filter entries: " << eta_0 << " " << omega_0 << "\n";
     
@@ -197,6 +214,7 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
             LocalSolution solution = nlp_solver.solve(problem, current_iterate, compute_augmented_lagrangian, compute_augmented_lagrangian_gradient, compute_constraints, l, u, variable_status, 100);
             std::cout << "L-BFGS-B exited with solution\n";
             std::vector<double> trial_x = solution.x;
+            std::cout << "Bound multipliers: "; print_vector(std::cout, solution.bound_multipliers);
             
             if (false) { // restoration switching condition (3.14) or (3.15) holds
                 restoration_phase = true;
@@ -207,12 +225,12 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
                 std::vector<double> trial_constraints = compute_constraints(problem, this->slacked_constraints, current_iterate.x);
                 
                 // provisionally update multipliers
-                std::vector<double> trial_constraint_multipliers = this->compute_multipliers(problem, solution.x, trial_constraints, constraint_multipliers);
+                std::vector<double> trial_constraint_multipliers = this->compute_constraint_multipliers(problem, solution.x, trial_constraints, constraint_multipliers);
                 std::cout << "Trial constraint multipliers: "; print_vector(std::cout, trial_constraint_multipliers);
 
                 // compute filter entries
                 eta = compute_eta(trial_x, trial_constraints);
-                omega = compute_omega(problem, trial_x, trial_constraints, trial_constraint_multipliers);
+                omega = compute_omega(problem, trial_x, trial_constraints, trial_constraint_multipliers, solution.bound_multipliers);
                 std::cout << "Filter entries: " << eta << " " << omega << "\n";
                 
                 // test filter acceptance
@@ -236,7 +254,7 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
         }
         // TODO test optimality
         iterations++;
-        if (iterations == 5) {
+        if (eta <= 1e-3 && omega <= 1e-3) {
             std::cout << "x is optimal\n";
             optimal = true;
         }

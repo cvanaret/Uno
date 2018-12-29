@@ -37,7 +37,6 @@ EXEC_NAME = argonot
 
 # base/globalization_strategy/Tube.cpp base/globalization_strategy/TubeStrategy.cpp
 # base/direction_computation/LPApproximation.cpp \
-#solvers/KKT/MA57Solver.cpp
 # base/subproblem/AugmentedLagrangian.cpp \
 
 DEFINES =# -D BQPD # https://stackoverflow.com/questions/10337248/what-does-the-g-d-flag-do
@@ -74,3 +73,11 @@ xsum.out: $SRC_FILES
 
 al: al.o $(OBJ_FILES) $(AMPL_DIR)/amplsolver.a
 	$(CPP) $(LFLAGS) -o al al.o $(OBJ_FILES) $(LIBS) $(LIBLINALG) $(L) $(LIBCOMPIL)
+
+#depend: .depend
+
+#.depend: $(SOURCES)
+#	rm -f ./.depend
+#	$(CPP) $(CFLAGS) -MM $^>>./.depend;
+
+#include .depend
