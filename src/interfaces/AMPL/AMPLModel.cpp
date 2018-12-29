@@ -280,6 +280,7 @@ void AMPLModel::generate_constraints() {
 		this->constraint_is_uncertainty_set[j] = (uncertain_suffixes->u.i != NULL && uncertain_suffixes->u.i[j] == 1);
 	}
 	this->constraint_status = this->determine_constraints_types(this->constraint_lb, this->constraint_ub);
+    this->inequality_constraints = this->determine_inequality_constraints();
 	return;
 }
 

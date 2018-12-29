@@ -13,11 +13,10 @@
 class LBFGSB {
     public:
         LBFGSB(int limited_memory_size = 5);
-        void initialize(std::map<int,int> slacked_constraints);
         LocalSolution solve(Problem& problem, Iterate& current_iterate,
             double (*compute_objective)(Problem&, std::vector<double>&, std::vector<double>&, std::vector<double>&, double),
-            std::vector<double> (*compute_objective_gradient)(Problem&, std::map<int,int>&, std::vector<double>&, std::vector<double>&, std::vector<double>&, std::vector<double>&, double),
-            std::vector<double> (*compute_constraints)(Problem& problem, std::map<int,int>& slacked_constraints, std::vector<double>& x),
+            std::vector<double> (*compute_objective_gradient)(Problem&, std::vector<double>&, std::vector<double>&, std::vector<double>&, std::vector<double>&, double),
+            std::vector<double> (*compute_constraints)(Problem& problem, std::vector<double>& x),
             std::vector<double>& l, std::vector<double>& u, std::vector<ConstraintType>& variable_status,
             int max_iterations);
         
@@ -26,9 +25,6 @@ class LBFGSB {
         int limited_memory_size;  // number limited memory vectors (= m in lbfgsb.f)
     
     private:
-        /* TODO REMOVE map of (constraint index, slack index) */
-        std::map<int,int> inequality_constraints_;
-        
         /* Fortran parameters needed by lbfgsb.f */
         char task_[60];
         char csave_[60];

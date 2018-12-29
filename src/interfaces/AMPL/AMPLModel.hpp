@@ -45,7 +45,7 @@ class AMPLModel: public Problem {
 		std::vector<double> constraint_dense_gradient(int j, std::vector<double>& x);
 		std::map<int,double> constraint_sparse_gradient(int j, std::vector<double>& x);
 		std::vector<std::map<int,double> > constraints_sparse_jacobian(std::vector<double>& x);
-		
+        
 		/* Hessian */
 		CSCMatrix lagrangian_hessian(std::vector<double>& x, double objective_multiplier, std::vector<double>& multipliers);
 		

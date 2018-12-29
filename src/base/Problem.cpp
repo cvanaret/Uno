@@ -83,3 +83,15 @@ std::vector<ConstraintType> Problem::determine_constraints_types(std::vector<dou
 	}
 	return status;
 }
+
+std::map<int,int> Problem::determine_inequality_constraints() {
+    std::map<int,int> inequality_constraints;
+    int current_constraint = 0;
+    for (int j = 0; j < this->number_constraints; j++) {
+        if (this->constraint_status[j] != EQUAL_BOUNDS) {
+            inequality_constraints[j] = current_constraint;
+            current_constraint++;
+        }
+    }
+    return inequality_constraints;
+}

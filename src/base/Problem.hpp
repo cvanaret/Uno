@@ -56,6 +56,9 @@ class Problem {
             virtual std::vector<double> constraint_dense_gradient(int j, std::vector<double>& x) = 0;
             virtual std::map<int,double> constraint_sparse_gradient(int j, std::vector<double>& x) = 0;
             virtual std::vector<std::map<int,double> > constraints_sparse_jacobian(std::vector<double>& x) = 0;
+            std::vector<ConstraintType> determine_constraints_types(std::vector<double>& lb, std::vector<double>& ub);
+            std::map<int,int> inequality_constraints; /*!< inequality constraints */
+            std::map<int,int> determine_inequality_constraints();
 
             std::vector<int> jacobian_sparsity;
 
@@ -72,7 +75,6 @@ class Problem {
             double infeasible_residual_norm(ConstraintPartition& constraint_partition, std::vector<double>& constraints);
 
             double l1_norm(std::vector<double>& constraints);
-            std::vector<ConstraintType> determine_constraints_types(std::vector<double>& lb, std::vector<double>& ub);
 
             int number_eval_objective;
             int number_eval_constraints;

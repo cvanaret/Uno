@@ -1,7 +1,6 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
-#include <map>
 #include <string.h>
 #include "LBFGSB.hpp"
 #include "Utils.hpp"
@@ -16,16 +15,10 @@ extern "C" {
 LBFGSB::LBFGSB(int limited_memory_size): penalty_parameter(200.), limited_memory_size(limited_memory_size) {
 }
 
-// TODO remove
-void LBFGSB::initialize(std::map<int,int> slacked_constraints) {
-    this->inequality_constraints_ = slacked_constraints;
-    return;
-}
-
 LocalSolution LBFGSB::solve(Problem& problem, Iterate& current_iterate,
         double (*compute_objective)(Problem&, std::vector<double>&, std::vector<double>&, std::vector<double>&, double),
-        std::vector<double> (*compute_objective_gradient)(Problem&, std::map<int,int>&, std::vector<double>&, std::vector<double>&, std::vector<double>&, std::vector<double>&, double),
-        std::vector<double> (*compute_constraints)(Problem& problem, std::map<int,int>& slacked_constraints, std::vector<double>& x),
+        std::vector<double> (*compute_objective_gradient)(Problem&, std::vector<double>&, std::vector<double>&, std::vector<double>&, std::vector<double>&, double),
+        std::vector<double> (*compute_constraints)(Problem& problem, std::vector<double>& x),
         std::vector<double>& l, std::vector<double>& u, std::vector<ConstraintType>& variable_status,
         int max_iterations) {
 
@@ -67,9 +60,9 @@ LocalSolution LBFGSB::solve(Problem& problem, Iterate& current_iterate,
         // evaluate Augmented Lagrangian and its gradient
         if (strncmp(this->task_, "FG", 2) == 0) {
             std::cout << "x: "; print_vector(std::cout, x);
-            std::vector<double> constraints = compute_constraints(problem, this->inequality_constraints_, x);
+            std::vector<double> constraints = compute_constraints(problem, x);
             f = compute_objective(problem, x, constraints, current_iterate.constraint_multipliers, this->penalty_parameter);
-            g = compute_objective_gradient(problem, this->inequality_constraints_, x, constraints, current_iterate.constraint_multipliers, g, this->penalty_parameter);
+            g = compute_objective_gradient(problem, x, constraints, current_iterate.constraint_multipliers, g, this->penalty_parameter);
             std::cout << "f is " << f << "\n";
             std::cout << "g is "; print_vector(std::cout, g);
             iterations++;
