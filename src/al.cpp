@@ -255,6 +255,7 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
                     
                     // termination test
                     if (0 < bfgs_iteration) {
+                        // sufficient reduction (3.16)
                         if (initial_augmented_lagrangian - f >= sigma*initial_omega) {
                             stop = true;
                         }
@@ -319,6 +320,10 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
             optimal = true;
         }
     }
+    
+    std::cout << "\nSummary:\n";
+    std::cout << "Objective evaluations: " << problem.number_eval_objective << "\n";
+    std::cout << "Constraint evaluations: " << problem.number_eval_constraints << "\n";
     
     return 0;
 }
