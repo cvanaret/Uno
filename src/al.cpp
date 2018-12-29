@@ -218,7 +218,8 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
     double f; // objective
     std::vector<double> g(n); // gradient of f wrt primal variables
 
-    // optimization loop    
+    // optimization loop
+    double sigma = 0.01; // sufficient reduction
     bool optimal = false;
     int iterations = 0;
     while (!optimal) {
@@ -228,15 +229,21 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
         double eta = 0.;
         double omega = 0.;
         while (!filter_acceptable) {
+            std::vector<double> constraints = compute_constraints(problem, x);
+            double initial_augmented_lagrangian = compute_augmented_lagrangian(problem, x, constraints, constraint_multipliers, this->penalty_parameter);
+            double initial_omega = compute_omega(problem, x, constraints, constraint_multipliers, bound_multipliers);
+            
+            /************************start BFGS**********************/
             // approximately minimize Augmented Lagrangian subproblem
             strcpy(this->task_, "START");
             std::vector<double> x_bfgs(x);
-            
             bool stop = false;
+            int bfgs_iteration = 0;
             // optimization loop (lbfgsb.f uses reverse communication to get function and gradient values)
             while (!stop) {
                 /* call L-BFGS-B */
                 setulb_(&n, &this->limited_memory_size, x_bfgs.data(), l.data(), u.data(), nbd.data(), &f, g.data(), &this->factr_, &this->pgtol_, wa.data(), iwa.data(), this->task_, &this->iprint_, this->csave_, this->lsave_, this->isave_, this->dsave_);
+                
                 // evaluate Augmented Lagrangian and its gradient
                 if (strncmp(this->task_, "FG", 2) == 0) {
                     std::cout << "x: "; print_vector(std::cout, x_bfgs);
@@ -245,9 +252,18 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
                     g = compute_augmented_lagrangian_gradient(problem, x_bfgs, constraints_bfgs, constraint_multipliers, this->penalty_parameter);
                     std::cout << "f is " << f << "\n";
                     //std::cout << "g is "; print_vector(std::cout, g);
+                    
+                    // termination test
+                    if (0 < bfgs_iteration) {
+                        if (initial_augmented_lagrangian - f >= sigma*initial_omega) {
+                            stop = true;
+                        }
+                    }
+                    bfgs_iteration++;
                 }
-                stop = !(strncmp(this->task_, "FG", 2) == 0 || strncmp(this->task_, "NEW_X", 5) == 0 || strncmp(this->task_, "START", 5) == 0);
+                stop = stop || !(strncmp(this->task_, "FG", 2) == 0 || strncmp(this->task_, "NEW_X", 5) == 0 || strncmp(this->task_, "START", 5) == 0);
             }
+            /************************end BFGS**********************/
             
             // no constraint: empty constraint multipliers
             std::vector<double> solution_constraint_multipliers;
@@ -256,8 +272,6 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
             solution.status = OPTIMAL;
             
             std::cout << "L-BFGS-B exited with solution\n";
-            std::vector<double> trial_x = solution.x;
-            std::cout << "Bound multipliers: "; print_vector(std::cout, solution.bound_multipliers);
             
             if (false) { // restoration switching condition (3.14) or (3.15) holds
                 restoration_phase = true;
@@ -266,6 +280,7 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
             }
             else {
                 // compute trial multipliers
+                std::vector<double> trial_x = solution.x;
                 std::vector<double> trial_constraints = compute_constraints(problem, trial_x);
                 std::vector<double> trial_constraint_multipliers = this->compute_constraint_multipliers(problem, trial_x, trial_constraints, constraint_multipliers);
                 std::cout << "Trial constraint multipliers: "; print_vector(std::cout, trial_constraint_multipliers);
@@ -299,7 +314,7 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
         // TODO optimality test
         iterations++;
         optimal = true;
-        if (eta <= 1e-6 && omega <= 1e-6) {
+        if (eta <= 1e-6 && omega <= 1e-5) {
             std::cout << "x is optimal\n";
             optimal = true;
         }
