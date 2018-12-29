@@ -18,7 +18,7 @@ LBFGSB::LBFGSB(int limited_memory_size): penalty_parameter(200.), limited_memory
 
 // TODO remove
 void LBFGSB::initialize(std::map<int,int> slacked_constraints) {
-    this->slacked_constraints_ = slacked_constraints;
+    this->inequality_constraints_ = slacked_constraints;
     return;
 }
 
@@ -67,9 +67,9 @@ LocalSolution LBFGSB::solve(Problem& problem, Iterate& current_iterate,
         // evaluate Augmented Lagrangian and its gradient
         if (strncmp(this->task_, "FG", 2) == 0) {
             std::cout << "x: "; print_vector(std::cout, x);
-            std::vector<double> constraints = compute_constraints(problem, this->slacked_constraints_, x);
+            std::vector<double> constraints = compute_constraints(problem, this->inequality_constraints_, x);
             f = compute_objective(problem, x, constraints, current_iterate.constraint_multipliers, this->penalty_parameter);
-            g = compute_objective_gradient(problem, this->slacked_constraints_, x, constraints, current_iterate.constraint_multipliers, g, this->penalty_parameter);
+            g = compute_objective_gradient(problem, this->inequality_constraints_, x, constraints, current_iterate.constraint_multipliers, g, this->penalty_parameter);
             std::cout << "f is " << f << "\n";
             std::cout << "g is "; print_vector(std::cout, g);
             iterations++;

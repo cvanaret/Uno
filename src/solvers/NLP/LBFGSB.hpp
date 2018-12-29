@@ -27,7 +27,7 @@ class LBFGSB {
     
     private:
         /* TODO REMOVE map of (constraint index, slack index) */
-        std::map<int,int> slacked_constraints_;
+        std::map<int,int> inequality_constraints_;
         
         /* Fortran parameters needed by lbfgsb.f */
         char task_[60];
