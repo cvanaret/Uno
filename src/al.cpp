@@ -91,24 +91,26 @@ double FilterAugmentedLagrangian::compute_omega(Problem& problem, std::vector<do
     std::vector<double> augmented_lagrangian_gradient = compute_augmented_lagrangian_gradient(problem, x, constraints, constraint_multipliers, this->penalty_parameter);
     
     // multipliers of the bound constraints
-    for (int i = 0; i < problem.number_variables; i++) {
-        augmented_lagrangian_gradient[i] -= bound_multipliers[i];
-    }
-    for (std::pair<const int, int> element: problem.inequality_constraints) {
-        //int j = element.first; // index of the constraint
-        int current_slack = element.second;
-        augmented_lagrangian_gradient[problem.number_variables + current_slack] -= bound_multipliers[problem.number_variables + current_slack];
-    }
+    //for (int i = 0; i < problem.number_variables; i++) {
+        //augmented_lagrangian_gradient[i] -= bound_multipliers[i];
+    //}
+    //for (std::pair<const int, int> element: problem.inequality_constraints) {
+        ////int j = element.first; // index of the constraint
+        //int current_slack = element.second;
+        //augmented_lagrangian_gradient[problem.number_variables + current_slack] -= bound_multipliers[problem.number_variables + current_slack];
+    //}
     
     // compute the residual
     double residual = 0.;
     for (int i = 0; i < problem.number_variables; i++) {
+        std::cout << "x" << i << ": " << (problem.variable_ub[i] - x[i]) << ", " << (x[i] - problem.variable_lb[i]) << ", " << augmented_lagrangian_gradient[i] << "\n";
         residual += std::abs(std::min(problem.variable_ub[i] - x[i], std::min(x[i] - problem.variable_lb[i], augmented_lagrangian_gradient[i])));
     }
     for (std::pair<const int, int> element: problem.inequality_constraints) {
         int j = element.first; // index of the constraint
         int current_slack = element.second;
         double slack_value = x[problem.number_variables + current_slack];
+        std::cout << "s" << j << ": " << (problem.constraint_ub[j] - slack_value) << ", " << (slack_value - problem.constraint_lb[j]) << ", " << augmented_lagrangian_gradient[problem.number_variables + current_slack] << "\n";
         residual += std::abs(std::min(problem.constraint_ub[j] - slack_value, std::min(slack_value - problem.constraint_lb[j], augmented_lagrangian_gradient[problem.number_variables + current_slack])));
     }
     return residual;
