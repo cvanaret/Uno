@@ -60,7 +60,7 @@ double dot(std::vector<double>& x, std::vector<double>& y) {
 
 double dot(std::vector<double>& x, std::map<int, double>& y) {
     double dot = 0.;
-    for (std::pair<int, double> term : y) {
+    for (std::pair<int, double> term: y) {
         int i = term.first;
         double yi = term.second;
         dot += x[i] * yi;

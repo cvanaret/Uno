@@ -17,8 +17,10 @@ void Filter::reset() {
 	//this->upper_bound = std::numeric_limits<double>::infinity();
 
 	/* allocate storage for filter storage */
-	this->constraints.reserve(this->max_size);
-	this->objective.reserve(this->max_size);
+	//this->constraints.reserve(this->max_size);
+	//this->objective.reserve(this->max_size);
+    this->constraints = std::vector<double>(this->max_size);
+	this->objective = std::vector<double>(this->max_size);
 	return;
 }
 
@@ -72,6 +74,8 @@ void Filter::add(double infeasibility_measure, double objf) {
 
 	/* add new entry to filter in position index */
 	this->constraints[index] = infeasibility_measure;
+    std::cout << "constraints[" << index << "] <- " << infeasibility_measure << "\n";
+    std::cout << this->constraints.size() << "\n";
 	this->objective[index] = objf;
 	this->size = new_size + 1;
 
