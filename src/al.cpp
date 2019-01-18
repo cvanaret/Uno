@@ -20,7 +20,7 @@ class FilterAugmentedLagrangian {
         FilterAugmentedLagrangian();
         
         double compute_eta(std::vector<double>& x, std::vector<double>& constraints);
-        double compute_omega(Problem& problem, std::vector<double>& x, std::vector<double>& constraints, std::vector<double>& constraint_multipliers, std::vector<double>& bound_multipliers);
+        double compute_omega(Problem& problem, std::vector<double>& x, std::vector<double>& gradient);
         std::vector<double> compute_constraint_multipliers(Problem& problem, std::vector<double>& x, std::vector<double>& constraints, std::vector<double>& constraint_multipliers);
         int solve(std::string problem_name);
     
@@ -66,7 +66,7 @@ std::vector<double> compute_augmented_lagrangian_gradient(Problem& problem, std:
             augmented_lagrangian_gradient[i] -= factor*constraint_gradient[i];
         }
     }
-    // gradient of the constraints wrt the slacks
+    // gradient of the inequality constraints wrt the slacks
     for (std::pair<const int, int> element: problem.inequality_constraints) {
         int j = element.first; // index of the constraint
         double derivative = constraint_multipliers[j] - penalty_parameter*constraints[j];
@@ -86,20 +86,17 @@ double FilterAugmentedLagrangian::compute_eta(std::vector<double>& x, std::vecto
 }
 
 // residual of first-order conditions
-double FilterAugmentedLagrangian::compute_omega(Problem& problem, std::vector<double>& x, std::vector<double>& constraints, std::vector<double>& constraint_multipliers, std::vector<double>& bound_multipliers) {
-    // compute the AL gradient
-    std::vector<double> augmented_lagrangian_gradient = compute_augmented_lagrangian_gradient(problem, x, constraints, constraint_multipliers, this->penalty_parameter);
-    
+double FilterAugmentedLagrangian::compute_omega(Problem& problem, std::vector<double>& x, std::vector<double>& gradient) {
     // compute the residual
     double residual = 0.;
     for (int i = 0; i < problem.number_variables; i++) {
-        residual += std::abs(std::min(x[i] - problem.variable_lb[i], std::max(x[i] - problem.variable_ub[i], augmented_lagrangian_gradient[i])));
+        residual += std::abs(std::min(x[i] - problem.variable_lb[i], std::max(x[i] - problem.variable_ub[i], gradient[i])));
     }
     for (std::pair<const int, int> element: problem.inequality_constraints) {
         int j = element.first; // index of the constraint
         int slack_index = element.second;
         double slack_value = x[problem.number_variables + slack_index];
-        residual += std::abs(std::min(slack_value - problem.constraint_lb[j], std::max(slack_value - problem.constraint_ub[j], augmented_lagrangian_gradient[problem.number_variables + slack_index])));
+        residual += std::abs(std::min(slack_value - problem.constraint_lb[j], std::max(slack_value - problem.constraint_ub[j], gradient[problem.number_variables + slack_index])));
     }
     return residual;
 }
@@ -137,6 +134,35 @@ std::vector<double> FilterAugmentedLagrangian::compute_constraint_multipliers(Pr
     }
     return trial_constraint_multipliers;
 }
+
+//bool FilterAugmentedLagrangian::test_restoration(Problem& problem, std::vector<double>& trial_x, std::vector<double>& trial_constraints, double eta) {
+    //// first condition
+    //if (eta >= beta*filter.upper_bound) {
+        //return true;
+    //}
+    //// second condition
+    //std::vector<std::map<int, double> > constraints_jacobian = problem.constraints_sparse_jacobian(trial_x);
+    //std::vector<double> restoration_gradient(trial_x.size());
+    //for (int j = 0; j < problem.number_constraints; j++) {
+        //for (std::pair<const int, double> element: constraints_jacobian[j]) {
+            //int i = element.first; // index of the variable
+            //double derivative = element.second;
+            //std::cout << "restoration_gradient[" << i << "] += " << derivative << "*" << trial_constraints[j] << "\n";
+            //restoration_gradient[i] += derivative*trial_constraints[j];
+            //try {
+                //// inequality constraint: need to subtract slack values
+                //int slack_index = problem.inequality_constraints[j];
+                //restoration_gradient[i + slack_index] += -trial_constraints[j];
+            //}
+            //catch (std::out_of_range) {}
+        //}
+    //}
+    //std::cout << "Restoration gradient: "; print_vector(std::cout, restoration_gradient);
+    //double omega_restoration = this->compute_omega(problem, trial_x, restoration_gradient);
+    //std::cout << "Omega restoration: " << omega_restoration << "\n";
+    //std::cout << "Constraint violation: " << eta << "\n";
+    //return false;
+//}
 
 int FilterAugmentedLagrangian::solve(std::string problem_name) {
     // create the problem
@@ -196,8 +222,10 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
     Filter filter(filter_constants);
     // initialize the filter with initial point's entries
     std::vector<double> constraints = compute_constraints(problem, x);
+    // compute the AL gradient
+    std::vector<double> augmented_lagrangian_gradient = compute_augmented_lagrangian_gradient(problem, x, constraints, constraint_multipliers, this->penalty_parameter);
     double eta_0 = this->compute_eta(x, constraints);
-    double omega_0 = this->compute_omega(problem, x, constraints, constraint_multipliers, bound_multipliers);
+    double omega_0 = this->compute_omega(problem, x, augmented_lagrangian_gradient);
     filter.add(eta_0, omega_0);
     std::cout << "Initial filter entries: " << eta_0 << " " << omega_0 << "\n";
     double upper_bound = std::max(100., 1.25*eta_0); // first_iterate.feasibility_measure
@@ -221,23 +249,26 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
         double omega = 0.;
         bool filter_acceptable = false;
         while (!filter_acceptable) {
-            std::cout << "## Starting BFGS from "; print_vector(std::cout, x);
+            std::cout << "\n## Starting BFGS from "; print_vector(std::cout, x);
             std::cout << "Filter upper bound is " << filter.upper_bound << "\n";
+            //std::cout << "Filter.constraints: "; print_vector(std::cout, filter.constraints);
             std::cout << "Penalty parameter is " << this->penalty_parameter << "\n";
             std::cout << "Constraints multipliers: "; print_vector(std::cout, constraint_multipliers);
             
             std::vector<double> constraints = compute_constraints(problem, x);
             double initial_augmented_lagrangian = compute_augmented_lagrangian(problem, x, constraints, constraint_multipliers, this->penalty_parameter);
-            double initial_omega = compute_omega(problem, x, constraints, constraint_multipliers, bound_multipliers);
+             // compute the AL gradient
+            std::vector<double> augmented_lagrangian_gradient = compute_augmented_lagrangian_gradient(problem, x, constraints, constraint_multipliers, this->penalty_parameter);
+            double initial_omega = compute_omega(problem, x, augmented_lagrangian_gradient);
             
             /************************start BFGS**********************/
             // approximately minimize Augmented Lagrangian subproblem
             strcpy(this->task_, "START");
             std::vector<double> x_bfgs(x);
-            bool stop = false;
+            bool stop_bfgs = false;
             int bfgs_iteration = 0;
             // optimization loop (lbfgsb.f uses reverse communication to get function and gradient values)
-            while (!stop) {
+            while (!stop_bfgs) {
                 /* call L-BFGS-B */
                 setulb_(&n, &this->limited_memory_size, x_bfgs.data(), l.data(), u.data(), nbd.data(), &f, g.data(), &this->factr_, &this->pgtol_, wa.data(), iwa.data(), this->task_, &this->iprint_, this->csave_, this->lsave_, this->isave_, this->dsave_);
                 
@@ -255,12 +286,13 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
                     if (0 < bfgs_iteration) {
                         // sufficient reduction (3.16)
                         if (initial_augmented_lagrangian - f >= sigma*initial_omega) {
-                            stop = false;
+                            std::cout << "Sufficient reduction of AL\n";
+                            stop_bfgs = true;
                         }
                     }
                     bfgs_iteration++;
                 }
-                stop = stop || !(strncmp(this->task_, "FG", 2) == 0 || strncmp(this->task_, "NEW_X", 5) == 0 || strncmp(this->task_, "START", 5) == 0);
+                stop_bfgs = stop_bfgs || !(strncmp(this->task_, "FG", 2) == 0 || strncmp(this->task_, "NEW_X", 5) == 0 || strncmp(this->task_, "START", 5) == 0);
             }
             /************************end BFGS**********************/
             
@@ -269,14 +301,40 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
             // create local solution from primal and dual variables
             LocalSolution solution(x_bfgs, g, solution_constraint_multipliers);
             solution.status = OPTIMAL;
-            std::cout << "L-BFGS-B exited with solution\n";
+            std::cout << "L-BFGS-B exited with solution\n\n";
             
             std::vector<double>& trial_x = solution.x;
             std::vector<double> trial_constraints = compute_constraints(problem, trial_x);
             // compute filter entries
             eta = compute_eta(trial_x, trial_constraints);
+            // test restoration switching conditions
             bool switch_to_restoration = (eta >= beta*filter.upper_bound);
-            //std::cout << "Filter.constraints: "; print_vector(std::cout, filter.constraints);
+            if (!switch_to_restoration) {
+                // second condition
+                std::vector<std::map<int, double> > constraints_jacobian = problem.constraints_sparse_jacobian(trial_x);
+                std::vector<double> restoration_gradient(trial_x.size());
+                for (int j = 0; j < problem.number_constraints; j++) {
+                    for (std::pair<const int, double> element: constraints_jacobian[j]) {
+                        int i = element.first; // index of the variable
+                        double derivative = element.second;
+                        restoration_gradient[i] += 2.*derivative*trial_constraints[j];
+                    }
+                    try {
+                        // inequality constraint: need to subtract slack values
+                        int slack_index = problem.inequality_constraints[j];
+                        restoration_gradient[problem.number_variables + slack_index] = -2.*trial_constraints[j];
+                    }
+                    catch (std::out_of_range) {}
+                }
+                std::cout << "Restoration gradient: "; print_vector(std::cout, restoration_gradient);
+                double omega_restoration = this->compute_omega(problem, trial_x, restoration_gradient);
+                std::cout << "Omega restoration: " << omega_restoration << "\n";
+                std::cout << "Constraint violation: " << eta << "\n";
+                switch_to_restoration = (omega_restoration < 1e-3);
+            }
+
+
+
             
             if (switch_to_restoration) { // restoration switching condition (3.14) or (3.15) holds
                 restoration_phase = true;
@@ -290,7 +348,9 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
                 std::cout << "Trial constraint multipliers: "; print_vector(std::cout, trial_constraint_multipliers);
 
                 // compute filter entries
-                omega = compute_omega(problem, trial_x, trial_constraints, trial_constraint_multipliers, solution.bound_multipliers);
+                 // compute the AL gradient
+                std::vector<double> augmented_lagrangian_gradient = compute_augmented_lagrangian_gradient(problem, x, constraints, constraint_multipliers, this->penalty_parameter);
+                omega = compute_omega(problem, trial_x, augmented_lagrangian_gradient);
                 std::cout << "Filter entries: " << eta << " " << omega << "\n";
                 
                 // test filter acceptance
