@@ -19,8 +19,8 @@ class Filter {
 		Filter(FilterConstants& constants);
 		virtual ~Filter();
 		
-		std::vector<double> constraints; /*!< Array of constraint residuals */
-		std::vector<double> objective; /*!< Array of objective values */
+		std::vector<double> infeasibility_measures; /*!< Array of constraint residuals */
+		std::vector<double> optimality_measures; /*!< Array of objective values */
 		double upper_bound; /*!< Upper bound on constraint violation */
 		int size; /*!< Current filter size */
 		int max_size; /*!< Max filter size */
@@ -38,7 +38,7 @@ class Filter {
          * \param constraint: constraint value
          * \param objective: objective value
          */
-		virtual void add(double constraint, double objective);
+		virtual void add(double infeasibility_measure, double optimality_measure);
 		
 		/*!
          *  Check whether a point is acceptable
@@ -47,7 +47,7 @@ class Filter {
          * \param constraint: constraint value
          * \param objective: objective value
          */
-		virtual bool query(double constraint, double objective);
+		virtual bool query(double infeasibility_measure, double optimality_measure);
 
 		/*!
          *  Check if a point is acceptable wrt the current point
@@ -58,7 +58,7 @@ class Filter {
          * \param trial_constraint: trial objective value
          * \param trial_objective: trial objective value
          */
-		virtual bool query_current_iterate(double current_constraint, double current_objective, double trial_constraint, double trial_objective);
+		virtual bool query_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure, double trial_optimality_measure);
 		
 		/*!
          *  Compute the actual reduction resulting from taking the step
@@ -67,7 +67,7 @@ class Filter {
          * \param current_iterate: current iterate and its evaluations
          * \param trial_objective: objective value of the trial point
          */
-		virtual double compute_actual_reduction(double current_objective, double current_residual, double new_objective);
+		virtual double compute_actual_reduction(double current_objective, double current_residual, double trial_objective);
 
 		/*!
          *  Print the filter
@@ -107,7 +107,7 @@ class NonmonotoneFilter: public Filter {
          * \param constraint: constraint value
          * \param objective: objective value
          */  
-		void add(double constraint, double objective);    
+		void add(double infeasibility_measure, double optimality_measure); 
 		
 		/*!
          *  Check whether a point is acceptable
@@ -115,7 +115,7 @@ class NonmonotoneFilter: public Filter {
          * \param constraint: constraint value
          * \param objective: objective value
          */
-		bool query(double constraint, double objective);
+		bool query(double infeasibility_measure, double optimality_measure);
 		
 		/*!
          *  Check if a point is acceptable wrt the current point
@@ -125,7 +125,7 @@ class NonmonotoneFilter: public Filter {
          * \param trial_constraint: trial objective value
          * \param trial_objective: trial objective value
          */
-		bool query_current_iterate(double curc, double curf, double newc, double newf);
+		bool query_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure, double trial_optimality_measure);
 		
 		/*!
          *  Compute the actual reduction resulting from taking the step
@@ -133,7 +133,7 @@ class NonmonotoneFilter: public Filter {
          * \param current_iterate: current iterate and its evaluations
          * \param trial_objective: objective value of the trial point
          */
-		double compute_actual_reduction(double current_objective, double current_residual, double new_objective);
+		double compute_actual_reduction(double current_objective, double current_residual, double trial_objective);
 		
 		int number_dominated_entries; /*!< Memory of filter */
 };
