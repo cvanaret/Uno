@@ -40,7 +40,7 @@ Iterate AugmentedLagrangian::initialize(Problem& problem, std::vector<double>& x
         //double constraint_value;
         //try {
             //// inequality constraint: need to subtract slack values
-            //int current_slack = this->slacked_constraints_[j];
+            //int current_slack = this->slacked_constraints_.at(j);
             //constraint_value = constraints[j] - x[problem.number_variables + current_slack];
         //}
         //catch (std::out_of_range) {
@@ -62,7 +62,7 @@ Iterate AugmentedLagrangian::initialize(Problem& problem, std::vector<double>& x
         //double constraint_value;
         //try {
             //// inequality constraint: need to subtract slacks
-            //int current_slack = this->slacked_constraints_[j];
+            //int current_slack = this->slacked_constraints_.at(j);
             //constraint_value = constraints[j] - x[problem.number_variables + current_slack];
         //}
         //catch (std::out_of_range) {
