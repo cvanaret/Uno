@@ -133,7 +133,6 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
 
     // initial primal and dual points
     std::vector<double> x = problem.primal_initial_solution();
-    std::vector<double> bound_multipliers(problem.number_variables);
     std::vector<double> constraint_multipliers = problem.dual_initial_solution();
     
     // add slacks as primal variables
@@ -141,7 +140,6 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
     for (std::pair<const int, int> element: problem.inequality_constraints) {
         int j = element.first; // index of the constraint
         x.push_back(original_constraints[j]);
-        bound_multipliers.push_back(0.);
     }
 
     // compute bounds and variable status
@@ -190,7 +188,7 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
     std::cout << "Initial constraints: "; print_vector(std::cout, constraints);
     
     // compute the AL gradient
-    std::vector<double> augmented_lagrangian_gradient = compute_augmented_lagrangian_gradient(problem, x, constraints, constraint_multipliers, this->penalty_parameter);
+    std::vector<double> augmented_lagrangian_gradient = compute_augmented_lagrangian_gradient(problem, x, constraints, constraint_multipliers, this->penalty_parameter); // gradient of f wrt primal variables
     std::cout << "Initial AL gradient: "; print_vector(std::cout, augmented_lagrangian_gradient);
     double eta_0 = this->compute_eta(x, constraints);
     double omega_0 = this->compute_omega(problem, x, augmented_lagrangian_gradient);
@@ -203,14 +201,13 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
     /* memory allocation for L-BFGS-B (limited memory & factors allocation) */
     std::vector<double> wa(this->limited_memory_size*(2*n + 11*this->limited_memory_size + 8) + 5*n);
     std::vector<int> iwa(3*n);
-    double f; // objective
-    std::vector<double> g(n); // gradient of f wrt primal variables
+    double augmented_lagrangian; // objective
 
     // optimization loop
     double sigma = 0.1; // sufficient reduction
     bool optimal = false;
     int iterations = 0;
-    while (!optimal && iterations < 10) {
+    while (!optimal && iterations < 10000) {
         bool restoration_phase = false;
 
         double eta = 0.;
@@ -225,8 +222,8 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
             std::vector<double> constraints = compute_constraints(problem, x);
             double initial_augmented_lagrangian = compute_augmented_lagrangian(problem, x, constraints, constraint_multipliers, this->penalty_parameter);
              // compute the AL gradient
-            std::vector<double> augmented_lagrangian_gradient = compute_augmented_lagrangian_gradient(problem, x, constraints, constraint_multipliers, this->penalty_parameter);
-            double initial_omega = compute_omega(problem, x, augmented_lagrangian_gradient);
+            std::vector<double> initial_augmented_lagrangian_gradient = compute_augmented_lagrangian_gradient(problem, x, constraints, constraint_multipliers, this->penalty_parameter);
+            double initial_omega = compute_omega(problem, x, initial_augmented_lagrangian_gradient);
             
             /************************start BFGS**********************/
             // approximately minimize Augmented Lagrangian subproblem
@@ -237,22 +234,22 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
             // optimization loop (lbfgsb.f uses reverse communication to get function and gradient values)
             while (!stop_bfgs) {
                 /* call L-BFGS-B */
-                setulb_(&n, &this->limited_memory_size, trial_x.data(), l.data(), u.data(), nbd.data(), &f, g.data(), &this->factr_, &this->pgtol_, wa.data(), iwa.data(), this->task_, &this->iprint_, this->csave_, this->lsave_, this->isave_, this->dsave_);
+                setulb_(&n, &this->limited_memory_size, trial_x.data(), l.data(), u.data(), nbd.data(), &augmented_lagrangian, augmented_lagrangian_gradient.data(), &this->factr_, &this->pgtol_, wa.data(), iwa.data(), this->task_, &this->iprint_, this->csave_, this->lsave_, this->isave_, this->dsave_);
                 
                 // evaluate Augmented Lagrangian and its gradient
                 if (strncmp(this->task_, "FG", 2) == 0) {
                     std::cout << "x: "; print_vector(std::cout, trial_x);
                     std::vector<double> trial_constraints = compute_constraints(problem, trial_x);
                     //std::cout << "constraints: "; print_vector(std::cout, trial_constraints);
-                    f = compute_augmented_lagrangian(problem, trial_x, trial_constraints, constraint_multipliers, this->penalty_parameter);
-                    g = compute_augmented_lagrangian_gradient(problem, trial_x, trial_constraints, constraint_multipliers, this->penalty_parameter);
-                    std::cout << "f is " << f << "\n";
-                    std::cout << "g is "; print_vector(std::cout, g);
+                    augmented_lagrangian = compute_augmented_lagrangian(problem, trial_x, trial_constraints, constraint_multipliers, this->penalty_parameter);
+                    augmented_lagrangian_gradient = compute_augmented_lagrangian_gradient(problem, trial_x, trial_constraints, constraint_multipliers, this->penalty_parameter);
+                    std::cout << "f is " << augmented_lagrangian << "\n";
+                    std::cout << "g is "; print_vector(std::cout, augmented_lagrangian_gradient);
                     
                     // termination test
                     if (0 < bfgs_iteration) {
                         // sufficient reduction (3.16)
-                        if (initial_augmented_lagrangian - f >= sigma*initial_omega) {
+                        if (initial_augmented_lagrangian - augmented_lagrangian >= sigma*initial_omega) {
                             std::cout << "BFGS termination: sufficient reduction of AL\n";
                             stop_bfgs = true;
                         }
@@ -264,6 +261,7 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
             /************************end BFGS**********************/
             std::cout << "BFGS exited with solution x opt: "; print_vector(std::cout, trial_x);
             std::vector<double> trial_constraints = compute_constraints(problem, trial_x);
+            std::cout << "Trial constraints: "; print_vector(std::cout, trial_constraints);
             
             // compute eta
             eta = compute_eta(trial_x, trial_constraints);
@@ -315,10 +313,7 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
                 std::cout << "Filter acceptable? " << filter_acceptable << "\n";
                 // update
                 x = trial_x;
-                if (filter_acceptable) {
-                    bound_multipliers = g;
-                    constraint_multipliers = trial_constraint_multipliers;
-                }
+                constraint_multipliers = trial_constraint_multipliers;
             }
         }
         // optional: perform second-order correction + LS + recompute eta and omega
