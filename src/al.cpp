@@ -289,12 +289,13 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
                 double omega_restoration = this->compute_omega(problem, trial_x, restoration_gradient);
                 std::cout << "Restoration omega = " << omega_restoration << "\n";
                 std::cout << "Constraint violation eta = " << eta << "\n";
-                switch_to_restoration = (omega_restoration < 1e-3 && eta >= beta*filter.infeasibility_measures[0]);
+                switch_to_restoration = (omega_restoration < 1e-8 && eta >= beta*filter.infeasibility_measures[0]);
             }
             
             if (switch_to_restoration) { // restoration switching condition (3.14) or (3.15) holds
                 restoration_phase = true;
                 this->penalty_parameter *= 2.;
+                std::cout << "eta_min was " << filter.infeasibility_measures[0] << "\n";
                 // switch to restoration phase to find filter-acceptable point
                 throw std::logic_error("Switching to restoration phase");
             }
