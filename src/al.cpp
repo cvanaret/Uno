@@ -37,7 +37,7 @@ class FilterAugmentedLagrangian {
         double pgtol_ = 1e-5;
 };
 
-FilterAugmentedLagrangian::FilterAugmentedLagrangian(): penalty_parameter(200.), limited_memory_size(5) {
+FilterAugmentedLagrangian::FilterAugmentedLagrangian(): penalty_parameter(100.), limited_memory_size(5) {
 }
 
 // evaluate the augmented Lagrangian at x,y, where y=constraint_multipliers
@@ -47,8 +47,8 @@ double compute_augmented_lagrangian(Problem& problem, std::vector<double>& x, st
     
     // contribution of the constraints
     for (unsigned int j = 0; j < constraints.size(); j++) {
-        f -= constraint_multipliers[j]*constraints[j]; // f = f - lambda[i]*c[i]
-        f += penalty_parameter/2.*constraints[j]*constraints[j]; // f = f + rho/2*(c[i])^2 = augmented Lagrangian
+        f -= constraint_multipliers[j]*constraints[j]; // f = f - lambda[j]*c[j]
+        f += penalty_parameter/2.*constraints[j]*constraints[j]; // f = f + rho/2*(c[j])^2 = augmented Lagrangian
     }
     return f;
 }
@@ -77,8 +77,8 @@ std::vector<double> compute_augmented_lagrangian_gradient(Problem& problem, std:
 
 // constraint violation (infeasibility)
 double FilterAugmentedLagrangian::compute_eta(std::vector<double>& x, std::vector<double>& constraints) {
+    // compute the constraint violation
     double constraint_violation = 0.;
-   
     for (unsigned int j = 0; j < constraints.size(); j++) {
         constraint_violation += std::abs(constraints[j]);
     }
@@ -106,7 +106,7 @@ std::vector<double> compute_constraints(Problem& problem, std::vector<double>& x
     std::vector<double> constraints(problem.number_constraints);
     for (int j = 0; j < problem.number_constraints; j++) {
         try {
-            // inequality constraint: need to subtract slack values
+            // inequality constraint: need to subtract slack value
             int slack_index = problem.inequality_constraints.at(j);
             constraints[j] = original_constraints[j] - x[problem.number_variables + slack_index];
         }
