@@ -142,6 +142,7 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
         int j = element.first; // index of the constraint
         x.push_back(original_constraints[j]);
     }
+    std::vector<double> bound_multipliers = std::vector<double>(x.size());
 
     // compute bounds and variable status
     int n = x.size();
@@ -318,6 +319,7 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
                 // update
                 x = trial_x;
                 constraint_multipliers = trial_constraint_multipliers;
+                bound_multipliers = augmented_lagrangian_gradient;
             }
         }
         // optional: perform second-order correction + LS + recompute eta and omega
@@ -336,7 +338,10 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
         // TODO optimality test
         iterations++;
         if (eta <= 1e-6 && omega <= 1e-5) {
-            std::cout << "x is optimal: "; print_vector(std::cout, x);
+            std::cout << "\nOPTIMAL SOLUTION\n";
+            std::cout << "x = "; print_vector(std::cout, x);
+            std::cout << "constraint multipliers = "; print_vector(std::cout, constraint_multipliers);
+            std::cout << "bound multipliers = "; print_vector(std::cout, bound_multipliers);
             optimal = true;
         }
     }
