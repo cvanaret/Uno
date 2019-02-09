@@ -37,7 +37,7 @@ class FilterAugmentedLagrangian {
         double pgtol_ = 1e-5;
 };
 
-FilterAugmentedLagrangian::FilterAugmentedLagrangian(): penalty_parameter(200.), limited_memory_size(5) {
+FilterAugmentedLagrangian::FilterAugmentedLagrangian(): penalty_parameter(100.), limited_memory_size(5) {
 }
 
 // evaluate the augmented Lagrangian at x,y, where y=constraint_multipliers
@@ -193,7 +193,9 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
     std::cout << "Initial AL gradient: "; print_vector(std::cout, augmented_lagrangian_gradient);
     double eta_0 = this->compute_eta(x, constraints);
     double omega_0 = this->compute_omega(problem, x, augmented_lagrangian_gradient);
-    filter.add(eta_0, omega_0);
+    if (0. < eta_0) {
+        filter.add(eta_0, omega_0);
+    }
     std::cout << "Initial filter entries: " << eta_0 << " " << omega_0 << "\n";
     double upper_bound = std::max(100., 1.25*eta_0);
     filter.upper_bound = upper_bound;
