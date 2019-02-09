@@ -37,7 +37,7 @@ class FilterAugmentedLagrangian {
         double pgtol_ = 1e-5;
 };
 
-FilterAugmentedLagrangian::FilterAugmentedLagrangian(): penalty_parameter(100.), limited_memory_size(5) {
+FilterAugmentedLagrangian::FilterAugmentedLagrangian(): penalty_parameter(200.), limited_memory_size(5) {
 }
 
 // evaluate the augmented Lagrangian at x,y, where y=constraint_multipliers
@@ -55,13 +55,14 @@ double compute_augmented_lagrangian(Problem& problem, std::vector<double>& x, st
 
 // evaluate the gradient of the augmented Lagrangian at x,y, where y=constraint_multipliers
 std::vector<double> compute_augmented_lagrangian_gradient(Problem& problem, std::vector<double>& x, std::vector<double>& constraints, std::vector<double>& constraint_multipliers, double penalty_parameter) {
-    // start with gradient of the objective
+    // gradient of the objective
     std::vector<double> augmented_lagrangian_gradient = problem.objective_dense_gradient(x);
-    // gradient of the constraints wrt the variables
+    
+    // gradient of the constraints wrt original variables
     for (unsigned int j = 0; j < constraints.size(); j++) {
-        double factor = constraint_multipliers[j] - penalty_parameter*constraints[j];
-        // gradient contribution from the constraints
+        // dense gradient
         std::vector<double> constraint_gradient = problem.constraint_dense_gradient(j, x);
+        double factor = constraint_multipliers[j] - penalty_parameter*constraints[j];
         for (int i = 0; i < problem.number_variables; i++) {
             augmented_lagrangian_gradient[i] -= factor*constraint_gradient[i];
         }
@@ -196,12 +197,6 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
     std::cout << "Initial filter entries: " << eta_0 << " " << omega_0 << "\n";
     double upper_bound = std::max(100., 1.25*eta_0);
     filter.upper_bound = upper_bound;
-    
-    // create the NLP solver
-    /* memory allocation for L-BFGS-B (limited memory & factors allocation) */
-    std::vector<double> wa(this->limited_memory_size*(2*n + 11*this->limited_memory_size + 8) + 5*n);
-    std::vector<int> iwa(3*n);
-    double augmented_lagrangian; // objective
 
     // optimization loop
     double sigma = 0.1; // sufficient reduction
@@ -213,6 +208,7 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
         double eta = 0.;
         double omega = 0.;
         bool filter_acceptable = false;
+        strcpy(this->task_, "START");
         while (!filter_acceptable) {
             std::cout << "\n## Starting BFGS from "; print_vector(std::cout, x);
             std::cout << "Filter upper bound is " << filter.upper_bound << "\n";
@@ -225,12 +221,17 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
             std::vector<double> initial_augmented_lagrangian_gradient = compute_augmented_lagrangian_gradient(problem, x, constraints, constraint_multipliers, this->penalty_parameter);
             double initial_omega = compute_omega(problem, x, initial_augmented_lagrangian_gradient);
             
+            /* memory allocation for L-BFGS-B (limited memory & factors allocation) */
+            double augmented_lagrangian; // objective
+            std::vector<double> wa(this->limited_memory_size*(2*n + 11*this->limited_memory_size + 8) + 5*n);
+            std::vector<int> iwa(3*n);
             /************************start BFGS**********************/
             // approximately minimize Augmented Lagrangian subproblem
-            strcpy(this->task_, "START");
+            //strcpy(this->task_, "START");
             std::vector<double> trial_x(x);
             bool stop_bfgs = false;
             int bfgs_iteration = 0;
+            
             // optimization loop (lbfgsb.f uses reverse communication to get function and gradient values)
             while (!stop_bfgs) {
                 /* call L-BFGS-B */
