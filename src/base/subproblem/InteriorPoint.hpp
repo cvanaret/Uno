@@ -37,7 +37,6 @@ class InteriorPoint : public Subproblem {
         /* data structures */
         std::vector<int> lower_bounded_variables; /* indices of the variables with lower bounds */
         std::vector<int> upper_bounded_variables; /* indices of the variables with upper bounds */
-        std::vector<int> slacked_constraints; /* indices of the inequality constraints that need a slack variable */
         std::vector<int> lower_bounded_slacks; /* indices of the slacks with lower bounds */
         std::vector<int> upper_bounded_slacks; /* indices of the slacks with upper bounds */
         MA57Data data;

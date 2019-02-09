@@ -2,7 +2,7 @@
 #include "Logger.hpp"
 
 LocalSolution::LocalSolution(std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers) :
-x(x), bound_multipliers(bound_multipliers), constraint_multipliers(constraint_multipliers) {
+phase_1_required(false), x(x), bound_multipliers(bound_multipliers), constraint_multipliers(constraint_multipliers) {
 }
 
 std::ostream& operator<<(std::ostream &stream, LocalSolution& solution) {
