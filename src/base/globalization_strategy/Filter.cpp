@@ -41,41 +41,47 @@ void Filter::add(double infeasibility_measure, double optimality_measure) {
 	}
 	--end;
 
-	int trial_size = this->size;
+	int new_size = this->size;
 	/* remove entries [start:end] from filter */
 	int length = end - start + 1;
 	if (0 < length) {
 		this->shift_left(start, length);
-		trial_size -= length;
+		new_size -= length;
 	}
+    
+    for (std::list<FilterEntry>::iterator it = this->entries.begin(); it != this->entries.end(); it++){
+        //std::cout << it->infeasibility_measure;
+    }
+    FilterEntry new_entry{infeasibility_measure, optimality_measure};
+    this->entries.push_back(new_entry);
 
 	/* check sufficient space available for new entry (remove last entry, if not) */
 	if (this->max_size <= this->size) {
 		/* set upper bound */
 		this->upper_bound = this->constants.Beta*std::max(this->upper_bound, this->infeasibility_measures[this->size-1]);
 		/* create space in filter: remove entry this->size-1 */
-		trial_size--;
+		new_size--;
 	}
 
 	/* add new entry to the filter */
 
 	/*  find position of infeasibility_measure in filter (new entry will be index) */
 	int index = 0;
-	while (index < trial_size && infeasibility_measure >= this->constants.Beta*this->infeasibility_measures[index]) {
+	while (index < new_size && infeasibility_measure >= this->constants.Beta*this->infeasibility_measures[index]) {
 		index++;
 	}
 
 	/* shift entries by one to right to make room for new entry */
-	if (index < trial_size) {
+	if (index < new_size) {
 		int length = 1;
-		this->size = trial_size; // filter size changes above
+		this->size = new_size; // filter size changes above
 		this->shift_right(index, length);
 	}
 
 	/* add new entry to filter in position index */
 	this->infeasibility_measures[index] = infeasibility_measure;
 	this->optimality_measures[index] = optimality_measure;
-	this->size = trial_size + 1;
+	this->size = new_size + 1;
 
 	return;
 }
@@ -138,6 +144,12 @@ std::ostream& operator<< (std::ostream &stream, Filter& filter) {
 	}
 	//fprintf(stdout, "    Upper bound = %16.8g\n", this->upper_bound);
 	stream << "    Upper bound = " << filter.upper_bound << "\n";
+    
+    stream << "    Current LIST filter (constraint residual, objective):\n";
+    for (FilterEntry const& entry: filter.entries) {
+        stream << "\t" << entry.infeasibility_measure << "\t" << entry.optimality_measure << "\n";
+    }
+    
 	return stream;
 }
 
@@ -149,7 +161,7 @@ NonmonotoneFilter::NonmonotoneFilter(FilterConstants& constants, int number_domi
 
 //!  add (infeasibility_measure,optimality_measure) to the filter
 void NonmonotoneFilter::add(double infeasibility_measure, double optimality_measure) {
-	int trial_size = this->size;
+	int new_size = this->size;
 	int dominated_entries;
 	/* find entries in filter that are dominated by this->number_dominated_entries other entries */
 	for (int i = 0; i < this->size; i++) {
@@ -170,21 +182,21 @@ void NonmonotoneFilter::add(double infeasibility_measure, double optimality_meas
 		if (dominated_entries > this->number_dominated_entries) {
 			/* remove this entry */
 			this->shift_left(i, 1);
-			trial_size--;
+			new_size--;
 		}
 	}
 
 	/* check sufficient space available */
-	if (trial_size > this->max_size - 1) {
+	if (new_size > this->max_size - 1) {
 		/* create space in filter: remove entry 1 (oldest entry) */
 		this->shift_left(1, 1);
-		trial_size--;
+		new_size--;
 	}
 
-	/* add new entry to filter in position trial_size */
-	this->infeasibility_measures[trial_size] = infeasibility_measure;
-	this->optimality_measures[trial_size] = optimality_measure;
-	this->size = trial_size + 1;
+	/* add new entry to filter in position new_size */
+	this->infeasibility_measures[new_size] = infeasibility_measure;
+	this->optimality_measures[new_size] = optimality_measure;
+	this->size = new_size + 1;
 
 	return;
 }

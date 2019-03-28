@@ -3,10 +3,16 @@
 
 #include <ostream>
 #include <vector>
+#include <list>
 
 struct FilterConstants {
 	double Beta; /*!< Margin around filter */
 	double Gamma; /*!< Margin around filter (sloping margin) */
+};
+
+struct FilterEntry {
+    double infeasibility_measure;
+    double optimality_measure;
 };
 
 /*! \class Filter
@@ -21,6 +27,8 @@ class Filter {
 		
 		std::vector<double> infeasibility_measures; /*!< Array of constraint residuals */
 		std::vector<double> optimality_measures; /*!< Array of objective values */
+        std::list<FilterEntry> entries;
+        
 		double upper_bound; /*!< Upper bound on constraint violation */
 		int size; /*!< Current filter size */
 		int max_size; /*!< Max filter size */
