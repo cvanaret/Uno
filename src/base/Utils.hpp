@@ -15,6 +15,7 @@ double norm_1(std::vector<double>& x);
 
 double norm_1(std::map<int,double>& x);
 
+double norm_2_squared(std::vector<double>& x);
 double norm_2(std::vector<double>& x);
 
 double dot(std::vector<double>& x, std::vector<double>& y);

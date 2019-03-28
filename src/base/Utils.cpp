@@ -31,14 +31,18 @@ double norm_1(std::map<int, double>& x) {
     return norm;
 }
 
+/* compute ||x||^2_2 */
+double norm_2_squared(std::vector<double>& x) {
+    double norm_squared = 0.;
+    for (unsigned int i = 0; i < x.size(); i++) {
+        norm_squared += x[i] * x[i];
+    }
+    return norm_squared;
+}
+
 /* compute ||x||_2 */
 double norm_2(std::vector<double>& x) {
-    double norm = 0.;
-    for (unsigned int i = 0; i < x.size(); i++) {
-        norm += x[i] * x[i];
-    }
-    norm = std::sqrt(norm);
-    return norm;
+    return std::sqrt(norm_2_squared(x));
 }
 
 /* compute ||x||_infty */
