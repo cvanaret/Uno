@@ -25,11 +25,16 @@ class FilterAugmentedLagrangian {
     public:
         double penalty_parameter;
         double penalty_update_factor;
+        double epsilon = 1e-6;
+        int number_outer_iterations = 2000;
+        int number_inner_iterations = 1000;
+        int min_number_inner_iterations = 2;
+    
         FilterAugmentedLagrangian();
         
         double compute_eta(std::vector<double>& x, std::vector<double>& constraints);
         double compute_omega(Problem& problem, std::vector<double>& x, std::vector<double>& gradient);
-        std::vector<double> compute_constraint_multipliers(Problem& problem, std::vector<double>& trial_constraints, std::vector<double>& constraint_multipliers);
+        std::vector<double> update_multipliers(Problem& problem, std::vector<double>& trial_constraints, std::vector<double>& constraint_multipliers);
         std::vector<double> run_restoration_phase(Problem& problem, std::vector<double>& trial_x, double& restoration_objective, std::vector<double>& l, std::vector<double>& u, std::vector<int>& nbd, std::vector<double>& wa, std::vector<int>& iwa);
         int solve(std::string problem_name);
     
@@ -150,8 +155,8 @@ std::vector<double> compute_constraints(Problem& problem, std::vector<double>& x
     return constraints;
 }
 
-std::vector<double> FilterAugmentedLagrangian::compute_constraint_multipliers(Problem& problem, std::vector<double>& trial_constraints, std::vector<double>& constraint_multipliers) {
-    /* compute the new multipliers by using first-order update form: y_trial = y - rho*c */
+std::vector<double> FilterAugmentedLagrangian::update_multipliers(Problem& problem, std::vector<double>& trial_constraints, std::vector<double>& constraint_multipliers) {
+    /* compute the new multipliers by using first-order update formula: y_trial = y - rho*c */
     std::vector<double> trial_constraint_multipliers(problem.number_constraints);
     for (int j = 0; j < problem.number_constraints; j++) {
         trial_constraint_multipliers[j] = constraint_multipliers[j] - this->penalty_parameter*trial_constraints[j];
@@ -164,6 +169,7 @@ std::vector<double> FilterAugmentedLagrangian::run_restoration_phase(Problem& pr
     int n = trial_x_restoration.size();
     std::vector<double> restoration_objective_gradient;
     
+    int bfgs_iteration = 0;
     bool stop_bfgs_restoration = false;
     strcpy(this->task_, "START");
     
@@ -174,6 +180,7 @@ std::vector<double> FilterAugmentedLagrangian::run_restoration_phase(Problem& pr
         
         // evaluate Augmented Lagrangian and its gradient
         if (strncmp(this->task_, "FG", 2) == 0) {
+            std::cout << "Restoration iteration " << bfgs_iteration << "\n";
             std::cout << "x: "; print_vector(std::cout, trial_x_restoration);
             // compute constraint violation at the point trial_x_restoration
             std::vector<double> constraints = compute_constraints(problem, trial_x_restoration);
@@ -198,18 +205,23 @@ std::vector<double> FilterAugmentedLagrangian::run_restoration_phase(Problem& pr
             }
             std::cout << "f is " << restoration_objective << "\n";
             std::cout << "g is "; print_vector(std::cout, restoration_objective_gradient);
+            bfgs_iteration++;
         }
         // termination criteria
-        if (strncmp(this->task_, "ABNO", 4) == 0 || strncmp(this->task_, "ERROR", 5) == 0) {
-            std::cout << "Task: " << this->task_ << "\n";
-            throw std::logic_error("Error in BFGS");
-        }
-        else if (strncmp(this->task_, "CONV", 4) == 0) {
+        if (strncmp(this->task_, "CONV", 4) == 0) {
             std::cout << "BFGS converged with stationary point\n";
             stop_bfgs_restoration = true;
         }
+        else if (this->number_inner_iterations < bfgs_iteration) {
+            throw std::logic_error("BFGS reached max iter");
+        }
+        else if (strncmp(this->task_, "ABNO", 4) == 0 || strncmp(this->task_, "ERROR", 5) == 0) {
+            std::cout << "Task: " << this->task_ << "\n";
+            throw std::logic_error("Error in BFGS");
+        } 
     }
-    std::cout << "BFGS exited with solution x*: "; print_vector(std::cout, trial_x_restoration);
+    strcpy(this->task_, "START");
+    std::cout << "BFGS restoration phase exited with solution x*: "; print_vector(std::cout, trial_x_restoration);
     return trial_x_restoration;
 }
 
@@ -291,9 +303,6 @@ LocalSolution compute_eqp_step(Problem& problem, std::vector<double>& x, std::ve
 int FilterAugmentedLagrangian::solve(std::string problem_name) {
     // create the problem
     AMPLModel problem = AMPLModel(problem_name);
-    double epsilon = 1e-6;
-    int number_outer_iterations = 5000;
-    int min_number_inner_iterations = 2;
 
     // initial primal and dual points
     std::vector<double> x = problem.primal_initial_solution();
@@ -403,6 +412,7 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
                 
                 // evaluate Augmented Lagrangian and its gradient
                 if (strncmp(this->task_, "FG", 2) == 0) {
+                    std::cout << "Iteration " << bfgs_iteration << "\n";
                     std::cout << "x: "; print_vector(std::cout, trial_x);
                     trial_constraints = compute_constraints(problem, trial_x);
                     std::cout << "c(x): "; print_vector(std::cout, trial_constraints);
@@ -424,14 +434,23 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
                     
                     bfgs_iteration++;
                 }
-                // termination criteria
-                if (strncmp(this->task_, "CONV", 4) == 0) {
-                    std::cout << "BFGS converged with stationary point\n";
-                    stop_bfgs = true;
-                }
-                else if (strncmp(this->task_, "ABNO", 4) == 0 || strncmp(this->task_, "ERROR", 5) == 0) {
-                    std::cout << "Task: " << this->task_ << "\n";
-                    throw std::logic_error("Error in BFGS");
+                if (!stop_bfgs) {
+                    // termination criteria
+                    if (strncmp(this->task_, "CONV", 4) == 0) {
+                        std::cout << "BFGS converged with stationary point\n";
+                        stop_bfgs = true;
+                    }
+                    else if (strncmp(this->task_, "ERROR", 5) == 0) {
+                        throw std::logic_error("Error in BFGS");
+                    }
+                    else if (this->number_inner_iterations <= bfgs_iteration) {
+                        throw std::logic_error("BFGS reached max iter");
+                    }
+                    else if (strncmp(this->task_, "ABNO", 4) == 0) {
+                        //std::cout << "BFGS: abnormality in line-search, trying to reset Hessian approximation\n";
+                        //strcpy(this->task_, "START");
+                        throw std::logic_error("BFGS: abnormality in line-search");
+                    }
                 }
             }
             std::cout << "BFGS exited with solution x*: "; print_vector(std::cout, trial_x);
@@ -451,13 +470,14 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
             if (eta <= epsilon && (strncmp(this->task_, "CONV", 4) == 0 || omega <= epsilon)) {
                 // convergence towards a feasible point: check if dual infeasibility is <= epsilon
                 if (epsilon < omega) {
-                    termination_message = "Subsolver converged, but couldn't drive dual infeasibility below tolerance";
+                    termination_message = "Subsolver converged, but could not drive dual infeasibility below tolerance";
                 }
                 else {
                     termination_message = "Subsolver converged within given tolerance";
                 }
                 termination = true;
-                constraint_multipliers = this->compute_constraint_multipliers(problem, trial_constraints, constraint_multipliers);
+                x = trial_x;
+                constraint_multipliers = this->update_multipliers(problem, trial_constraints, constraint_multipliers);
                 bound_multipliers = augmented_lagrangian_gradient;
                 std::cout << "Updating multipliers: λ(x*) = "; print_vector(std::cout, constraint_multipliers);
             }
@@ -501,12 +521,12 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
                 x = trial_x;
                 if (filter_acceptable) {
                     // update multipliers
-                    std::vector<double> trial_constraint_multipliers = this->compute_constraint_multipliers(problem, trial_constraints, constraint_multipliers);
+                    std::vector<double> trial_constraint_multipliers = this->update_multipliers(problem, trial_constraints, constraint_multipliers);
                     constraint_multipliers = trial_constraint_multipliers;
                     bound_multipliers = augmented_lagrangian_gradient;
                     std::cout << "Updating multipliers: λ(x*) = "; print_vector(std::cout, constraint_multipliers);
                     // if no constraints, the problem hasn't changed
-                    if (0 < constraint_multipliers.size()) {
+                    if (0 < problem.number_constraints) {
                         strcpy(this->task_, "START");
                     }
                 }
@@ -532,7 +552,6 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
                     // take a step of length step_length along EQP step
                     std::vector<double> trial_x = add_vectors(x, eqp_step.x, step_length);
                     std::vector<double> trial_constraint_multipliers = add_vectors(constraint_multipliers, eqp_step.constraint_multipliers, step_length);
-                    std::vector<double> trial_bound_multipliers = add_vectors(bound_multipliers, eqp_step.bound_multipliers, step_length);
                     
                     // compute filter entries
                     std::vector<double> trial_constraints = compute_constraints(problem, trial_x);
@@ -544,14 +563,23 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
                     // accept the point if filter-acceptable
                     if (filter.query(eta_trial, omega_trial)) {
                         std::cout << "Accepting point with step length " << step_length << "\n";
+                        std::cout << "Filter entries: (η = " << eta_trial << ", ω = " << omega_trial << ")\n";
                         // update the primal-dual point
                         x = trial_x;
                         constraint_multipliers = trial_constraint_multipliers;
-                        bound_multipliers = trial_bound_multipliers;
+                        bound_multipliers = add_vectors(bound_multipliers, eqp_step.bound_multipliers, step_length);
                         std::cout << "Updating multipliers: λ(x*) = "; print_vector(std::cout, constraint_multipliers);
                         eta = eta_trial;
                         omega = omega_trial;
+                        if (0 < problem.number_constraints) {
+                            strcpy(this->task_, "START");
+                        }
                         line_search_stop = true;
+                        
+                        if (eta <= epsilon && omega <= epsilon) {
+                            termination = true;
+                            termination_message = "Subsolver converged within given tolerance";
+                        }
                     }
                     else if (step_length < min_step_length) {
                         std::cout << "Rejecting point in line-search\n";
@@ -575,9 +603,7 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
     if (iterations >= number_outer_iterations) {
         termination_message = "number_outer_iterations was reached";
     }
-    
-    //if (eta <= epsilon && omega <= epsilon) {
-            //std::cout << "\nOPTIMAL SOLUTION\n";
+
     std::cout << "\nOptimization summary:\n";
     std::cout << termination_message << "\n";
     std::cout << "x = "; print_vector(std::cout, x);
@@ -595,24 +621,3 @@ int main(int argc, char* argv[]) {
     FilterAugmentedLagrangian filter_al;
     return filter_al.solve(problem_name);
 }
-
-// second condition
-//std::vector<std::map<int, double> > constraints_jacobian = problem.constraints_sparse_jacobian(trial_x);
-//std::vector<double> restoration_gradient(trial_x.size());
-//for (int j = 0; j < problem.number_constraints; j++) {
-    //double constraint_value = trial_constraints[j];
-    //for (std::pair<const int, double> element: constraints_jacobian[j]) {
-        //int i = element.first; // index of the variable
-        //double derivative = element.second;
-        //restoration_gradient[i] += 2.*derivative*constraint_value;
-    //}
-    //try {
-        //// inequality constraint: need to subtract slack values
-        //int slack_index = problem.inequality_constraints.at(j);
-        //restoration_gradient[problem.number_variables + slack_index] = -2.*constraint_value;
-    //}
-    //catch (std::out_of_range) {}
-//}
-//std::cout << "Restoration gradient: "; print_vector(std::cout, restoration_gradient);
-//double omega_restoration = this->compute_omega(problem, trial_x, restoration_gradient);
-//std::cout << "Restoration omega = " << omega_restoration << "\n";
