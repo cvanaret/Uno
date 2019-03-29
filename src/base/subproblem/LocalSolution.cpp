@@ -9,16 +9,19 @@ std::ostream& operator<<(std::ostream &stream, LocalSolution& solution) {
     unsigned int max_size = 50;
 
     if (solution.status == OPTIMAL) {
-        stream << GREEN "Status: optimal\n" RESET;
+        //stream << GREEN "Status: optimal\n" RESET;
+        stream << "Status: optimal\n";
     }
     else if (solution.status == UNBOUNDED_PROBLEM) {
-        stream << GREEN "Status: unbounded\n" RESET;
+        //stream << GREEN "Status: unbounded\n" RESET;
+        stream << "Status: unbounded\n";
     }
     else {
-        stream << RED "Status " << solution.status << ": Beware peasant, something went wrong\n" RESET;
+        //stream << RED "Status " << solution.status << ": Beware peasant, something went wrong\n" RESET;
+        stream << "Status " << solution.status << ": Beware peasant, something went wrong\n";
     }
 
-    stream << MAGENTA;
+    //stream << MAGENTA;
     stream << "d^* = ";
     print_vector(stream, solution.x, 0, max_size);
 
@@ -75,7 +78,7 @@ std::ostream& operator<<(std::ostream &stream, LocalSolution& solution) {
     stream << "constraint multipliers = ";
     print_vector(stream, solution.constraint_multipliers);
 
-    stream << RESET;
+    //stream << RESET;
 
     return stream;
 }
