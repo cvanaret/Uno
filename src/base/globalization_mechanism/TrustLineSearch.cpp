@@ -6,8 +6,8 @@ TrustLineSearch::TrustLineSearch(GlobalizationStrategy& globalization_strategy, 
 		GlobalizationMechanism(globalization_strategy, max_iterations), ratio(ratio), radius(initial_radius), activity_tolerance_(1e-6) {
 }
 
-Iterate TrustLineSearch::initialize(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers) {
-    return this->globalization_strategy.initialize(problem, x, bound_multipliers, constraint_multipliers, true);
+Iterate TrustLineSearch::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+    return this->globalization_strategy.initialize(problem, x, multipliers, true);
 }
 
 Iterate TrustLineSearch::compute_iterate(Problem& problem, Iterate& current_iterate) {
@@ -18,7 +18,7 @@ Iterate TrustLineSearch::compute_iterate(Problem& problem, Iterate& current_iter
 	while (!this->termination(is_accepted, this->number_iterations)) {
 		try {
 			/* compute a trial direction */
-			LocalSolution solution = this->globalization_strategy.compute_step(problem, current_iterate, this->radius);
+			SubproblemSolution solution = this->globalization_strategy.compute_step(problem, current_iterate, this->radius);
 			
 			/* fail if direction is not a descent direction */
 			if (0. < solution.objective_terms.linear) {
@@ -84,18 +84,17 @@ Iterate TrustLineSearch::compute_iterate(Problem& problem, Iterate& current_iter
 	return current_iterate;
 }
 
-void TrustLineSearch::correct_multipliers(Problem& problem, LocalSolution& solution) {
-	for (unsigned int k = 0; k < solution.active_set.at_upper_bound.size(); k++) {
-		int i = solution.active_set.at_upper_bound[k];
-        if (i < problem.number_variables && solution.x[i] == this->radius) {
-            solution.bound_multipliers[i] = 0.;
-		}
+/* reset the bound multipliers active at the trust region */
+void TrustLineSearch::correct_multipliers(Problem& problem, SubproblemSolution& solution) {
+	for (int i: solution.active_set.at_upper_bound) {
+            if (i < problem.number_variables && solution.x[i] == this->radius) {
+                solution.multipliers.bounds[i] = 0.;
+            }
 	}
-	for (unsigned int k = 0; k < solution.active_set.at_lower_bound.size(); k++) {
-		int i = solution.active_set.at_lower_bound[k];
-        if (i < problem.number_variables && solution.x[i] == -this->radius) {
-            solution.bound_multipliers[i] = 0.;
-		}
+	for (int i: solution.active_set.at_lower_bound) {
+            if (i < problem.number_variables && solution.x[i] == -this->radius) {
+                solution.multipliers.bounds[i] = 0.;
+            }
 	}
 	return;
 }

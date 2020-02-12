@@ -3,7 +3,7 @@
 
 #include <vector>
 #include "Matrix.hpp"
-#include "LocalSolution.hpp"
+#include "SubproblemSolution.hpp"
 
 struct MA57Data {
 	std::vector<double> fact;

@@ -2,7 +2,7 @@
 #define QPSOLVER_H
 
 #include <vector>
-#include "LocalSolution.hpp"
+#include "SubproblemSolution.hpp"
 #include "QP.hpp"
 
 /*! \class QPSolver
@@ -18,7 +18,7 @@ class QPSolver {
          * \param d0: initial point
          */
         virtual ~QPSolver() {};
-		virtual LocalSolution solve(QP& qp, std::vector<double>& x0) = 0;
+		virtual SubproblemSolution solve(QP& qp, std::vector<double>& x0) = 0;
 		
 		virtual void allocate(int n, int m) = 0;
 };

@@ -6,9 +6,9 @@ TwoPhaseStrategy::TwoPhaseStrategy(Subproblem& subproblem, TwoPhaseConstants& co
 GlobalizationStrategy(subproblem, tolerance), phase(OPTIMALITY), constants(constants) {
 }
 
-LocalSolution TwoPhaseStrategy::compute_step(Problem& problem, Iterate& current_iterate, double radius) {
+SubproblemSolution TwoPhaseStrategy::compute_step(Problem& problem, Iterate& current_iterate, double radius) {
     //double objective_multiplier = (phase == OPTIMALITY) ? problem.obj_sign : 0.;
-    LocalSolution solution = this->subproblem.compute_optimality_step(problem, current_iterate, radius);
+    SubproblemSolution solution = this->subproblem.compute_optimality_step(problem, current_iterate, radius);
     solution.phase = OPTIMALITY;
     DEBUG << solution;
 
@@ -35,10 +35,10 @@ void TwoPhaseStrategy::update_restoration_multipliers(Iterate& trial_iterate, Co
     for (unsigned int k = 0; k < constraint_partition.infeasible_set.size(); k++) {
         int j = constraint_partition.infeasible_set[k];
         if (constraint_partition.constraint_status[j] == INFEASIBLE_UPPER) {
-            trial_iterate.constraint_multipliers[j] = -1.;
+            trial_iterate.multipliers.constraints[j] = -1.;
         }
         else {
-            trial_iterate.constraint_multipliers[j] = 1.;
+            trial_iterate.multipliers.constraints[j] = 1.;
         }
     }
     return;

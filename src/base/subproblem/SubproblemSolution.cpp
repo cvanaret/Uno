@@ -1,11 +1,11 @@
-#include "LocalSolution.hpp"
+#include "SubproblemSolution.hpp"
 #include "Logger.hpp"
 
-LocalSolution::LocalSolution(std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers) :
-phase_1_required(false), x(x), bound_multipliers(bound_multipliers), constraint_multipliers(constraint_multipliers) {
+SubproblemSolution::SubproblemSolution(std::vector<double>& x, Multipliers& multipliers) :
+phase_1_required(false), x(x), multipliers(multipliers) {
 }
 
-std::ostream& operator<<(std::ostream &stream, LocalSolution& solution) {
+std::ostream& operator<<(std::ostream &stream, SubproblemSolution& solution) {
     unsigned int max_size = 50;
 
     if (solution.status == OPTIMAL) {
@@ -73,10 +73,10 @@ std::ostream& operator<<(std::ostream &stream, LocalSolution& solution) {
     stream << "\n";
 
     stream << "bound multipliers = ";
-    print_vector(stream, solution.bound_multipliers);
+    print_vector(stream, solution.multipliers.bounds);
 
     stream << "constraint multipliers = ";
-    print_vector(stream, solution.constraint_multipliers);
+    print_vector(stream, solution.multipliers.constraints);
 
     //stream << RESET;
 

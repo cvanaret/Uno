@@ -28,4 +28,9 @@ struct ConstraintPartition {
 	std::vector<ConstraintFeasibility> constraint_status;
 };
 
+struct Multipliers {
+    std::vector<double> bounds; /*!< Multipliers of the bound constraints */
+    std::vector<double> constraints; /*!< Multipliers of the general constraints */
+};
+
 #endif // CONSTRAINT_H

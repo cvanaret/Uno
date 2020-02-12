@@ -87,9 +87,9 @@ Iterate AugmentedLagrangian::initialize(Problem& problem, std::vector<double>& x
     //return augmented_lagrangian_gradient;
 //}
 
-LocalSolution AugmentedLagrangian::compute_optimality_step(Problem& problem, Iterate& current_iterate, double radius) {
+SubproblemSolution AugmentedLagrangian::compute_optimality_step(Problem& problem, Iterate& current_iterate, double radius) {
     /* Solve (approx/exact) the augm. Lagrangian subproblem */ 
-    LocalSolution solution = this->solver.solve(problem, current_iterate);
+    SubproblemSolution solution = this->solver.solve(problem, current_iterate);
     /* the Augmented Lagrangian subproblem returns a new iterate. We should now compute the step */
     std::vector<double> step(solution.x); /* copy/contruct step := solution.x */
     for (unsigned int i = 0; i < current_iterate.x.size(); i++) {
@@ -100,12 +100,12 @@ LocalSolution AugmentedLagrangian::compute_optimality_step(Problem& problem, Ite
     return solution;
 }
 
-LocalSolution AugmentedLagrangian::compute_infeasibility_step(Problem& problem, Iterate& current_iterate, double radius, LocalSolution& phase_II_solution) {
+SubproblemSolution AugmentedLagrangian::compute_infeasibility_step(Problem& problem, Iterate& current_iterate, double radius, SubproblemSolution& phase_II_solution) {
     std::cout << "AugmentedLagrangian::compute_infeasibility_step not implemented yet\n";
     throw std::out_of_range("Not implemented yet.");
 }
 
-LocalSolution AugmentedLagrangian::compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyDimensions penalty_dimensions) {
+SubproblemSolution AugmentedLagrangian::compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyDimensions penalty_dimensions) {
     std::cout << "AugmentedLagrangian::compute_l1_penalty_step not implemented yet\n";
     throw std::out_of_range("Not implemented yet.");
 }
@@ -114,6 +114,6 @@ void AugmentedLagrangian::compute_measures(Problem& problem, Iterate& iterate) {
     return;
 }
 
-bool AugmentedLagrangian::phase_1_required(LocalSolution& solution) {
+bool AugmentedLagrangian::phase_1_required(SubproblemSolution& solution) {
     return solution.status == INFEASIBLE;
 }

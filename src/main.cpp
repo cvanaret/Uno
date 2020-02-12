@@ -13,12 +13,12 @@
 #include "Logger.hpp"
 #include "InteriorPoint.hpp"
 
-void test_argonot(std::string problem_name, std::map<std::string, std::string> options) {
+void run_argonot(std::string problem_name, std::map<std::string, std::string> options) {
     AMPLModel problem = AMPLModel(problem_name);
-	
-	/* create the local solver */
-	std::shared_ptr<QPSolver> solver = QPSolverFactory::create("BQPD", problem, options);
-	
+
+    /* create the local solver */
+    std::shared_ptr<QPSolver> solver = QPSolverFactory::create("BQPD", problem, options);
+
     /* create the subproblem strategy */
     std::shared_ptr<Subproblem> subproblem = SubproblemFactory::create(options["subproblem"], *solver, options);
 
@@ -33,10 +33,11 @@ void test_argonot(std::string problem_name, std::map<std::string, std::string> o
 
     /* initial primal and dual points */
     std::vector<double> x = problem.primal_initial_solution();
-    std::vector<double> constraint_multipliers = problem.dual_initial_solution();
     std::vector<double> bound_multipliers(problem.number_variables);
+    std::vector<double> constraint_multipliers = problem.dual_initial_solution();
+    Multipliers multipliers = {bound_multipliers, constraint_multipliers};
 
-    Result result = argonot.solve(problem, x, bound_multipliers, constraint_multipliers);
+    Result result = argonot.solve(problem, x, multipliers);
     result.display();
     return;
 }
@@ -92,8 +93,7 @@ void set_logger(std::map<std::string, std::string> options) {
         else if (logger_level.compare("DEBUG4") == 0) {
             Logger::logger_level = DEBUG4;
         }
-    }
-    catch (std::out_of_range) {
+    } catch (std::out_of_range) {
     }
     return;
 }
@@ -119,10 +119,11 @@ void test_interior_point() {
     std::vector<double> x = problem.primal_initial_solution();
     std::vector<double> constraint_multipliers = problem.dual_initial_solution();
     std::vector<double> bound_multipliers(problem.number_variables);
+    Multipliers multipliers = {bound_multipliers, constraint_multipliers};
 
     double radius = INFINITY;
     InteriorPoint ipm;
-    Iterate first_iterate = ipm.initialize(problem, x, bound_multipliers, constraint_multipliers, problem.number_variables, problem.number_constraints, radius < INFINITY);
+    Iterate first_iterate = ipm.initialize(problem, x, multipliers, problem.number_variables, problem.number_constraints, radius < INFINITY);
     ipm.compute_optimality_step(problem, first_iterate, radius);
 
     return;
@@ -134,15 +135,13 @@ int main(int argc, char* argv[]) {
         std::map<std::string, std::string> options = get_default_values("argonot.cfg");
         /* get the command line options */
         get_command_options(argc, argv, options);
-
         set_logger(options);
 
         if (std::string(argv[1]).compare("-v") == 0) {
             std::cout << "Welcome in Argonot\n";
-        }
-        else {
+        } else {
             std::string problem_name = std::string(argv[argc - 1]);
-            test_argonot(problem_name, options);
+            run_argonot(problem_name, options);
         }
     }
     else {

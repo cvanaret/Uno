@@ -15,7 +15,7 @@ extern "C" {
 LBFGSB::LBFGSB(int limited_memory_size): penalty_parameter(200.), limited_memory_size(limited_memory_size) {
 }
 
-LocalSolution LBFGSB::solve(Problem& problem, Iterate& current_iterate,
+SubproblemSolution LBFGSB::solve(Problem& problem, Iterate& current_iterate,
         double (*compute_objective)(Problem&, std::vector<double>&, std::vector<double>&, std::vector<double>&, double),
         std::vector<double> (*compute_objective_gradient)(Problem&, std::vector<double>&, std::vector<double>&, std::vector<double>&, std::vector<double>&, double),
         std::vector<double> (*compute_constraints)(Problem& problem, std::vector<double>& x),
@@ -61,8 +61,8 @@ LocalSolution LBFGSB::solve(Problem& problem, Iterate& current_iterate,
         if (strncmp(this->task_, "FG", 2) == 0) {
             std::cout << "x: "; print_vector(std::cout, x);
             std::vector<double> constraints = compute_constraints(problem, x);
-            f = compute_objective(problem, x, constraints, current_iterate.constraint_multipliers, this->penalty_parameter);
-            g = compute_objective_gradient(problem, x, constraints, current_iterate.constraint_multipliers, g, this->penalty_parameter);
+            f = compute_objective(problem, x, constraints, current_iterate.multipliers.constraints, this->penalty_parameter);
+            g = compute_objective_gradient(problem, x, constraints, current_iterate.multipliers.constraints, g, this->penalty_parameter);
             std::cout << "f is " << f << "\n";
             std::cout << "g is "; print_vector(std::cout, g);
             iterations++;
@@ -72,8 +72,9 @@ LocalSolution LBFGSB::solve(Problem& problem, Iterate& current_iterate,
     
     // no constraint: empty constraint multipliers
     std::vector<double> constraint_multipliers;
+    Multipliers multipliers = {g, constraint_multipliers};
     // create local solution from primal and dual variables
-    LocalSolution solution(x, g, constraint_multipliers);
+    SubproblemSolution solution(x, multipliers);
     solution.status = OPTIMAL;
 
     return solution;

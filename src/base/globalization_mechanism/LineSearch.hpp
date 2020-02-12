@@ -22,7 +22,7 @@ class LineSearch : public GlobalizationMechanism {
          * \param current_iterate: current point and its evaluations
          */
         Iterate compute_iterate(Problem& problem, Iterate& current_iterate) override;
-        Iterate initialize(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers) override;
+        Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
 
         double step_length;
         /* ratio of step length update in ]0, 1[ */

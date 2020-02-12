@@ -9,8 +9,7 @@ GlobalizationStrategy::GlobalizationStrategy(Subproblem& subproblem, double tole
 GlobalizationStrategy::~GlobalizationStrategy() {
 }
 
-std::vector<double> GlobalizationStrategy::compute_lagrangian_gradient(Problem& problem, Iterate& current_iterate, double objective_multiplier,
-                                                                       std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers) {
+std::vector<double> GlobalizationStrategy::compute_lagrangian_gradient(Problem& problem, Iterate& current_iterate, double objective_multiplier, Multipliers& multipliers) {
     std::vector<double> lagrangian_gradient(problem.number_variables);
 
     /* objective gradient */
@@ -26,13 +25,13 @@ std::vector<double> GlobalizationStrategy::compute_lagrangian_gradient(Problem& 
     }
     /* bound constraints */
     for (int i = 0; i < problem.number_variables; i++) {
-        lagrangian_gradient[i] -= bound_multipliers[i];
+        lagrangian_gradient[i] -= multipliers.bounds[i];
     }
     /* constraints */
     current_iterate.compute_constraints_jacobian(problem);
 
     for (int j = 0; j < problem.number_constraints; j++) {
-        double multiplier_j = constraint_multipliers[j];
+        double multiplier_j = multipliers.constraints[j];
         if (multiplier_j != 0.) {
             for (std::pair<int, double> term : current_iterate.constraints_jacobian[j]) {
                 int variable_index = term.first;
@@ -49,7 +48,7 @@ double GlobalizationStrategy::compute_complementarity_error(const Problem& probl
 	
     /* bound constraints */
     for (int i = 0; i < problem.number_variables; i++) {
-        double multiplier_i = iterate.bound_multipliers[i];
+        double multiplier_i = iterate.multipliers.bounds[i];
 
         if (multiplier_i > this->tolerance / 10.) {
             complementarity_error += std::abs(multiplier_i * (iterate.x[i] - problem.variable_lb[i]));
@@ -60,7 +59,7 @@ double GlobalizationStrategy::compute_complementarity_error(const Problem& probl
     }
     /* constraints */
     for (int j = 0; j < problem.number_constraints; j++) {
-        double multiplier_j = iterate.constraint_multipliers[j];
+        double multiplier_j = iterate.multipliers.constraints[j];
 
         if (multiplier_j > this->tolerance / 10.) {
             complementarity_error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraint_lb[j]));
@@ -73,7 +72,7 @@ double GlobalizationStrategy::compute_complementarity_error(const Problem& probl
 }
 
 double GlobalizationStrategy::compute_KKT_error(Problem& problem, Iterate& iterate, double objective_mutiplier) {
-    std::vector<double> lagrangian_gradient = this->compute_lagrangian_gradient(problem, iterate, objective_mutiplier, iterate.bound_multipliers, iterate.constraint_multipliers);
+    std::vector<double> lagrangian_gradient = this->compute_lagrangian_gradient(problem, iterate, objective_mutiplier, iterate.multipliers);
     double KKTerror = norm_2(lagrangian_gradient);
     return KKTerror;
 }

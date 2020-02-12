@@ -6,11 +6,11 @@
 LPApproximation::LPApproximation(LPSolver& solver): LocalApproximation("LP"), solver(solver) {
 }
 
-LocalSolution LPApproximation::compute_direction(Problem& problem, Phase& phase, Iterate& current_iterate) {
+SubproblemSolution LPApproximation::compute_direction(Problem& problem, Phase& phase, Iterate& current_iterate) {
 	// TODO check phase and generate the right suproblem
 	LP lp = this->generate_LP(problem, current_iterate);
 	std::vector<double> d0(lp.number_variables); // = {0.}
-	LocalSolution solution = this->solver.solve(lp, d0);
+	SubproblemSolution solution = this->solver.solve(lp, d0);
 	return solution;
 }
 

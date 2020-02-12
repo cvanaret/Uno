@@ -8,55 +8,55 @@ Argonot::Argonot(GlobalizationMechanism& globalization_mechanism, int max_iterat
 		globalization_mechanism(globalization_mechanism), max_iterations(max_iterations) {
 }
 
-Result Argonot::solve(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers) {
-	std::clock_t c_start = std::clock();
-	
-	int major_iterations = 0, minor_iterations = 0;
-	
-	INFO << "Problem " << problem.name << "\n";
-	INFO << problem.number_variables << " variables, " << problem.number_constraints << " constraints\n";
+Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+    std::clock_t c_start = std::clock();
+
+    int major_iterations = 0, minor_iterations = 0;
+
+    INFO << "Problem " << problem.name << "\n";
+    INFO << problem.number_variables << " variables, " << problem.number_constraints << " constraints\n";
 
     /* use the current point to initialize the strategies and generate the initial point */
-    Iterate current_iterate = this->globalization_mechanism.initialize(problem, x, bound_multipliers, constraint_multipliers);
+    Iterate current_iterate = this->globalization_mechanism.initialize(problem, x, multipliers);
     INFO << "Initial iterate\n" << current_iterate << "\n";
 	
-	try {
-		/* check for convergence */
-		while (!this->termination_criterion(current_iterate.status, major_iterations)) {
-			major_iterations++;
-			DEBUG << "\n\t\tARGONOT iteration " << major_iterations << "\n";
-			INFO << "major: " << major_iterations << "\t";
+    try {
+        /* check for convergence */
+        while (!this->termination_criterion(current_iterate.status, major_iterations)) {
+            major_iterations++;
+            DEBUG << "\n\t\tARGONOT iteration " << major_iterations << "\n";
+            INFO << "major: " << major_iterations << "\t";
 
-			/* update the current point */
-			
-			current_iterate = this->globalization_mechanism.compute_iterate(problem, current_iterate);
-			minor_iterations += this->globalization_mechanism.number_iterations;
-			
-			INFO << "constraints: " << current_iterate.residual << "\tobjective: " << current_iterate.objective << "\t";
-			INFO << "status: " << current_iterate.status << "\n";
-			DEBUG << "Next iterate\n" << current_iterate;
-		}
-	}
-	catch (std::out_of_range& exception) {
-		ERROR << exception.what();
-	}
-	catch (std::invalid_argument& exception) {
-		ERROR << exception.what();
-	}
-	std::clock_t c_end = std::clock();
-	double cpu_time = (c_end-c_start) / (double) CLOCKS_PER_SEC;
+            /* update the current point */
 
-	Result result = {problem.number_variables,
-                        problem.number_constraints,
-                        current_iterate,
-                        major_iterations,
-                        cpu_time,
-                        problem.number_eval_objective,
-                        problem.number_eval_constraints,
-                        problem.number_eval_jacobian,
-                        problem.number_eval_hessian,
-                        this->globalization_mechanism.globalization_strategy.subproblem.number_subproblems_solved};
-	return result;
+            current_iterate = this->globalization_mechanism.compute_iterate(problem, current_iterate);
+            minor_iterations += this->globalization_mechanism.number_iterations;
+
+            INFO << "constraints: " << current_iterate.residual << "\tobjective: " << current_iterate.objective << "\t";
+            INFO << "status: " << current_iterate.status << "\n";
+            DEBUG << "Next iterate\n" << current_iterate;
+        }
+    }
+    catch (std::out_of_range& exception) {
+        ERROR << exception.what();
+    }
+    catch (std::invalid_argument& exception) {
+        ERROR << exception.what();
+    }
+    std::clock_t c_end = std::clock();
+    double cpu_time = (c_end-c_start) / (double) CLOCKS_PER_SEC;
+
+    Result result = {problem.number_variables,
+                    problem.number_constraints,
+                    current_iterate,
+                    major_iterations,
+                    cpu_time,
+                    problem.number_eval_objective,
+                    problem.number_eval_constraints,
+                    problem.number_eval_jacobian,
+                    problem.number_eval_hessian,
+                    this->globalization_mechanism.globalization_strategy.subproblem.number_subproblems_solved};
+    return result;
 }
 
 bool Argonot::termination_criterion(OptimalityStatus current_status, int iteration) {
@@ -94,9 +94,9 @@ void Result::display() {
 	print_vector(std::cout, this->solution.x);
 
     std::cout << "Bound multipliers:\t";
-	print_vector(std::cout, this->solution.bound_multipliers);
+	print_vector(std::cout, this->solution.multipliers.bounds);
     std::cout << "Constraint multipliers:\t";
-	print_vector(std::cout, this->solution.constraint_multipliers);
+	print_vector(std::cout, this->solution.multipliers.constraints);
 	
 	std::cout << "CPU time:\t\t" << this->cpu_time << "s\n";
 	std::cout << "Iterations:\t\t" << this->iteration << "\n";

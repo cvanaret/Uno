@@ -9,8 +9,7 @@
 
 class GlobalizationMechanismFactory {
 	public:
-		static std::shared_ptr<GlobalizationMechanism> create(const std::string& type, GlobalizationStrategy& globalization_strategy,
-			std::map<std::string, std::string> default_values);
+		static std::shared_ptr<GlobalizationMechanism> create(const std::string& type, GlobalizationStrategy& globalization_strategy, std::map<std::string, std::string> default_values);
 };
 
 #endif // GLOBALIZATIONMECHANISMFACTORY_H

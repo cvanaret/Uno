@@ -2,8 +2,8 @@
 #include "Utils.hpp"
 #include "Logger.hpp"
 
-Iterate::Iterate(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers) :
-x(x), bound_multipliers(bound_multipliers), constraint_multipliers(constraint_multipliers) {
+Iterate::Iterate(Problem& problem, std::vector<double>& x, Multipliers& multipliers) :
+x(x), multipliers(multipliers) {
 
     /* project point onto bounds */
     for (int i = 0; i < problem.number_variables; i++) {
@@ -64,10 +64,10 @@ std::ostream& operator<<(std::ostream &stream, Iterate& iterate) {
     print_vector(stream, iterate.x, 0, 50);
 
     stream << "Bound multipliers: ";
-    print_vector(stream, iterate.bound_multipliers, 0, 50);
+    print_vector(stream, iterate.multipliers.bounds, 0, 50);
 
     stream << "Constraint multipliers: ";
-    print_vector(stream, iterate.constraint_multipliers, 0, 50);
+    print_vector(stream, iterate.multipliers.constraints, 0, 50);
 
     stream << "Objective: " << iterate.objective << "\n";
 

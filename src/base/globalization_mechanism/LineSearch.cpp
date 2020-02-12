@@ -6,13 +6,13 @@ LineSearch::LineSearch(GlobalizationStrategy& globalization_strategy, int max_it
 GlobalizationMechanism(globalization_strategy, max_iterations), ratio(ratio) {
 }
 
-Iterate LineSearch::initialize(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers) {
-    return this->globalization_strategy.initialize(problem, x, bound_multipliers, constraint_multipliers, false);
+Iterate LineSearch::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+    return this->globalization_strategy.initialize(problem, x, multipliers, false);
 }
 
 Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_iterate) {
     /* compute a trial direction */
-    LocalSolution solution = this->globalization_strategy.compute_step(problem, current_iterate, INFINITY);
+    SubproblemSolution solution = this->globalization_strategy.compute_step(problem, current_iterate, INFINITY);
     
     /* step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ... */
     this->step_length = 1.;
@@ -51,7 +51,6 @@ bool LineSearch::termination(bool is_accepted) {
     else if (this->max_iterations < this->number_iterations) {
         throw std::out_of_range("Line-search iteration limit reached");
     }
-    /* step length gets too small */
     if (this->step_length < 1e-16) {
         throw std::out_of_range("Step length became too small");
     }

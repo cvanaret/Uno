@@ -25,7 +25,7 @@ class LPApproximation: public LocalApproximation {
          * \param phase: current phase (optimality or feasibility restoration)
          * \param current_iterate: current point and its evaluations
          */
-		LocalSolution compute_direction(Problem& problem, Iterate& current_iterate, Phase& phase);
+		SubproblemSolution compute_direction(Problem& problem, Iterate& current_iterate, Phase& phase);
 		
 		// TODO static list of available solvers (BQPD)
 		

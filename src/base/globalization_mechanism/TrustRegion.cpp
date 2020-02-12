@@ -7,8 +7,8 @@ TrustRegion::TrustRegion(GlobalizationStrategy& globalization_strategy, double i
 GlobalizationMechanism(globalization_strategy, max_iterations), radius(initial_radius), activity_tolerance_(1e-6) {
 }
 
-Iterate TrustRegion::initialize(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers) {
-    return this->globalization_strategy.initialize(problem, x, bound_multipliers, constraint_multipliers, true);
+Iterate TrustRegion::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+    return this->globalization_strategy.initialize(problem, x, multipliers, true);
 }
 
 Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_iterate) {
@@ -21,7 +21,7 @@ Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_iterate)
             this->print_iteration();
 
             /* compute the step within trust region */
-            LocalSolution solution = this->globalization_strategy.compute_step(problem, current_iterate, this->radius);
+            SubproblemSolution solution = this->globalization_strategy.compute_step(problem, current_iterate, this->radius);
 
             /* set bound multipliers of active trust region to 0 */
             this->correct_multipliers(problem, solution);
@@ -41,7 +41,7 @@ Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_iterate)
                 /* decrease the radius */
                 this->radius = std::min(this->radius, solution.norm) / 2.;
             }
-        }        catch (const std::invalid_argument& e) {
+        } catch (const std::invalid_argument& e) {
             this->print_warning(e.what());
             this->radius /= 2.;
         }
@@ -49,18 +49,16 @@ Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_iterate)
     return current_iterate;
 }
 
-void TrustRegion::correct_multipliers(Problem& problem, LocalSolution& solution) {
+void TrustRegion::correct_multipliers(Problem& problem, SubproblemSolution& solution) {
     /* set multipliers for bound constraints active at trust region to 0 */
-    for (unsigned int k = 0; k < solution.active_set.at_upper_bound.size(); k++) {
-        int i = solution.active_set.at_upper_bound[k];
+    for (int i: solution.active_set.at_upper_bound) {
         if (i < problem.number_variables && solution.x[i] == this->radius) {
-            solution.bound_multipliers[i] = 0.;
+            solution.multipliers.bounds[i] = 0.;
         }
     }
-    for (unsigned int k = 0; k < solution.active_set.at_lower_bound.size(); k++) {
-        int i = solution.active_set.at_lower_bound[k];
+    for (int i: solution.active_set.at_lower_bound) {
         if (i < problem.number_variables && solution.x[i] == -this->radius) {
-            solution.bound_multipliers[i] = 0.;
+            solution.multipliers.bounds[i] = 0.;
         }
     }
     return;
@@ -71,7 +69,7 @@ bool TrustRegion::termination(bool is_accepted) {
         return true;
     } else if (this->max_iterations < this->number_iterations) {
         throw std::out_of_range("Trust-region iteration limit reached");
-    }        /* radius gets too small */
+    } /* radius gets too small */
     else if (this->radius < 1e-16) { /* 1e-16: something like machine precision */
         throw std::out_of_range("Trust-region radius became too small");
     }

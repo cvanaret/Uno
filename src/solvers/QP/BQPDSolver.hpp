@@ -32,7 +32,7 @@ class BQPDSolver: public QPSolver, public LPSolver {
          * \param qp: quadratic program
          * \param d0: initial point
          */
-		LocalSolution solve(QP& qp, std::vector<double>& x0);
+		SubproblemSolution solve(QP& qp, std::vector<double>& x0);
 		
 		/*!
          *  Solve an LP
@@ -40,7 +40,7 @@ class BQPDSolver: public QPSolver, public LPSolver {
          * \param lp: linear program
          * \param d0: initial point
          */
-		LocalSolution solve(LP& qp, std::vector<double>& x0);
+		SubproblemSolution solve(LP& qp, std::vector<double>& x0);
 
 		
 	private:
@@ -58,11 +58,11 @@ class BQPDSolver: public QPSolver, public LPSolver {
 		std::vector<int> hessian_column_start, hessian_row_number;
 		
 		/*!
-         *  Create a LocalSolution from BQPD's solution
+         *  Create a SubproblemSolution from BQPD's solution
          * 
          * \param d: optimal solution
          */
-		LocalSolution generate_solution(std::vector<double>& x);
+		SubproblemSolution generate_solution(std::vector<double>& x);
 		
 		void build_jacobian(std::vector<double>& full_jacobian, std::vector<int>& full_jacobian_sparsity, std::map<int,double>& jacobian);
 };

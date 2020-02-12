@@ -3,7 +3,7 @@
 
 #include "Problem.hpp"
 #include "Iterate.hpp"
-#include "LocalSolution.hpp"
+#include "SubproblemSolution.hpp"
 
 /*! \class LBFGSB
  * \brief Limited-memory BFGS for Bounds (L-BFGS-B)
@@ -13,7 +13,7 @@
 class LBFGSB {
     public:
         LBFGSB(int limited_memory_size = 5);
-        LocalSolution solve(Problem& problem, Iterate& current_iterate,
+        SubproblemSolution solve(Problem& problem, Iterate& current_iterate,
             double (*compute_objective)(Problem&, std::vector<double>&, std::vector<double>&, std::vector<double>&, double),
             std::vector<double> (*compute_objective_gradient)(Problem&, std::vector<double>&, std::vector<double>&, std::vector<double>&, std::vector<double>&, double),
             std::vector<double> (*compute_constraints)(Problem& problem, std::vector<double>& x),

@@ -1,5 +1,5 @@
-#ifndef LOCALSOLUTION_H
-#define LOCALSOLUTION_H
+#ifndef SUBPROBLEMSOLUTION_H
+#define SUBPROBLEMSOLUTION_H
 
 #include <ostream>
 #include <vector>
@@ -26,28 +26,29 @@ struct ObjectiveTerms {
     double quadratic;
 };
 
-/*! \struct LocalSolution
+/*! \struct SubproblemSolution
  * \brief Solution of a local subproblem
  *
  *  Description of a local solution
  */
-class LocalSolution {
+class SubproblemSolution {
     public:
-        LocalSolution(std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers);
+        SubproblemSolution(std::vector<double>& x, Multipliers& multipliers);
 
         Status status; /*!< Status of the solution */
         Phase phase; /*!< Current phase */
         bool phase_1_required;
+        
         std::vector<double> x; /*!< Primal variables */
-        std::vector<double> bound_multipliers; /*!< Multipliers of the bound constraints */
-        std::vector<double> constraint_multipliers; /*!< Multipliers of the general constraints */
+        Multipliers multipliers; /*!< Multipliers */
+        
         double norm; /*!< Norm of \f$x\f$ */
         double objective; /*!< Objective value */
         ObjectiveTerms objective_terms; /*!< Decomposition of the objective value in quadratic and linear terms */
         ConstraintActivity active_set; /*!< Active set */
         ConstraintPartition constraint_partition; /*!< Partition of feasible and infeasible constraints */
 
-        friend std::ostream& operator<<(std::ostream &stream, LocalSolution& step);
+        friend std::ostream& operator<<(std::ostream &stream, SubproblemSolution& step);
 };
 
-#endif // LOCALSOLUTION_H
+#endif // SUBPROBLEMSOLUTION_H

@@ -22,7 +22,7 @@ class TrustLineSearch : public GlobalizationMechanism {
          * \param current_iterate: current point and its evaluations
          */
         Iterate compute_iterate(Problem& problem, Iterate& current_iterate);
-        Iterate initialize(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers) override;
+        Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
 
         /* ratio of step length update in ]0, 1[ */
         double ratio;
@@ -31,7 +31,7 @@ class TrustLineSearch : public GlobalizationMechanism {
     private:
         bool termination(bool is_accepted, int iteration);
 
-        void correct_multipliers(Problem& problem, LocalSolution& solution);
+        void correct_multipliers(Problem& problem, SubproblemSolution& solution);
 
         double activity_tolerance_;
 };

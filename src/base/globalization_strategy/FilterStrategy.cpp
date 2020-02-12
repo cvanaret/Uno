@@ -9,9 +9,9 @@ FilterStrategy::FilterStrategy(Subproblem& subproblem, std::shared_ptr<Filter> f
 TwoPhaseStrategy(subproblem, constants, tolerance), filter_optimality(filter_optimality), filter_restoration(filter_restoration) {
 }
 
-Iterate FilterStrategy::initialize(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers, bool use_trust_region) {
+Iterate FilterStrategy::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) {
     /* initialize the subproblem */
-    Iterate first_iterate = this->subproblem.initialize(problem, x, bound_multipliers, constraint_multipliers, problem.number_variables, problem.number_constraints, use_trust_region);
+    Iterate first_iterate = this->subproblem.initialize(problem, x, multipliers, problem.number_variables, problem.number_constraints, use_trust_region);
 
     first_iterate.KKTerror = this->compute_KKT_error(problem, first_iterate, 1.);
     first_iterate.complementarity_error = this->compute_complementarity_error(problem, first_iterate);
@@ -26,10 +26,10 @@ Iterate FilterStrategy::initialize(Problem& problem, std::vector<double>& x, std
 /* check acceptability of step(s) (filter & sufficient reduction)
  * precondition: feasible step
  * */
-bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, LocalSolution& solution, double step_length) {
+bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
     /* assemble trial point: TODO do not reevaluate if ||d|| = 0 */
     std::vector<double> trial_x = add_vectors(current_iterate.x, solution.x, step_length);
-    Iterate trial_iterate(problem, trial_x, solution.bound_multipliers, solution.constraint_multipliers);
+    Iterate trial_iterate(problem, trial_x, solution.multipliers);
     this->compute_measures(problem, trial_iterate);
     double step_norm = step_length * solution.norm;
     
@@ -93,16 +93,16 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Loca
 }
 
 /* compute the predicted reduction, taking into account the step length */
-double FilterStrategy::compute_predicted_reduction(LocalSolution& solution, double step_length) {
+double FilterStrategy::compute_predicted_reduction(SubproblemSolution& solution, double step_length) {
     if (step_length == 1.) {
         return -solution.objective;
     }
     else {
-        return -(step_length * solution.objective_terms.linear + step_length * step_length * solution.objective_terms.quadratic);
+        return -step_length*(solution.objective_terms.linear + step_length * solution.objective_terms.quadratic);
     }
 }
 
-void FilterStrategy::switch_phase(Problem& problem, LocalSolution& solution, Iterate& current_iterate, Iterate& trial_iterate) {
+void FilterStrategy::switch_phase(Problem& problem, SubproblemSolution& solution, Iterate& current_iterate, Iterate& trial_iterate) {
     /* find out if transition of one phase to the other */
     if (this->phase == OPTIMALITY) {
         if (solution.phase == RESTORATION) {

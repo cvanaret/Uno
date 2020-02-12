@@ -27,13 +27,13 @@ class FilterStrategy : public TwoPhaseStrategy {
          *  Check the validity of a step
          *  Implements the purely virtual method of the superclass
          */
-        bool check_step(Problem& problem, Iterate& current_iterate, LocalSolution& solution, double step_length = 1.) override;
-        Iterate initialize(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers, bool use_trust_region) override;
+        bool check_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length = 1.) override;
+        Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) override;
         void compute_measures(Problem& problem, Iterate& iterate) override;
 
     private:
-        double compute_predicted_reduction(LocalSolution& solution, double step_length);
-        void switch_phase(Problem& problem, LocalSolution& solution, Iterate& current_iterate, Iterate& trial_iterate);
+        double compute_predicted_reduction(SubproblemSolution& solution, double step_length);
+        void switch_phase(Problem& problem, SubproblemSolution& solution, Iterate& current_iterate, Iterate& trial_iterate);
         OptimalityStatus compute_status(Problem& problem, Iterate& current_iterate, double step_norm);
 };
 

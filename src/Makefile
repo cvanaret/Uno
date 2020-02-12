@@ -29,7 +29,7 @@ SRC_FILES = base/Argonot.cpp base/Iterate.cpp \
 	base/globalization_mechanism/GlobalizationMechanismFactory.cpp \
 	base/subproblem/QP.cpp base/subproblem/LP.cpp \
 	base/subproblem/Subproblem.cpp base/subproblem/QPApproximation.cpp base/subproblem/InteriorPoint.cpp \
-	base/subproblem/SubproblemFactory.cpp base/subproblem/LocalSolution.cpp base/Utils.cpp \
+	base/subproblem/SubproblemFactory.cpp base/subproblem/SubproblemSolution.cpp base/Utils.cpp \
 	solvers/QP/BQPDSolver.cpp solvers/QP/QPSolverFactory.cpp \
 	solvers/KKT/MA57Solver.cpp solvers/NLP/LBFGSB.cpp
 OBJ_FILES = $(subst .cpp,.o,$(SRC_FILES)) solvers/QP/wdotd.o $(BFGS_DIR)/lbfgsb.o $(BFGS_DIR)/timer.o $(BFGS_DIR)/blas.o $(BFGS_DIR)/linpack.o

@@ -238,9 +238,9 @@ std::map<int, Activity> determine_active_set(std::vector<double>& x, std::vector
     return active_set;
 }
 
-LocalSolution compute_eqp_step(Problem& problem, std::vector<double>& x, std::vector<double>& bound_multipliers, std::vector<double>& constraint_multipliers, std::vector<double>& constraints, std::vector<double>& l, std::vector<double>& u, std::map<int, Activity> active_set) {
+SubproblemSolution compute_eqp_step(Problem& problem, std::vector<double>& x, Multipliers& multipliers, std::vector<double>& constraints, std::vector<double>& l, std::vector<double>& u, std::map<int, Activity> active_set) {
     // compute the Hessian of the Lagrangian
-    CSCMatrix hessian = problem.lagrangian_hessian(x, problem.objective_sign, constraint_multipliers);
+    CSCMatrix hessian = problem.lagrangian_hessian(x, problem.objective_sign, multipliers.constraints);
     
     // generate the QP
     QP qp(x.size(), problem.number_constraints, hessian);
@@ -287,14 +287,14 @@ LocalSolution compute_eqp_step(Problem& problem, std::vector<double>& x, std::ve
     BQPDSolver solver(problem.hessian_column_start, problem.hessian_row_number);
     solver.allocate(x.size(), problem.number_constraints);
     std::vector<double> d0(qp.number_variables);
-    LocalSolution eqp_step = solver.solve(qp, d0);
+    SubproblemSolution eqp_step = solver.solve(qp, d0);
     
     // compute multiplier step
     for (unsigned int i = 0; i < x.size(); i++) {
-        eqp_step.bound_multipliers[i] -= bound_multipliers[i];
+        eqp_step.multipliers.bounds[i] -= multipliers.bounds[i];
     }
     for (int j = 0; j < problem.number_constraints; j++) {
-        eqp_step.constraint_multipliers[j] -= constraint_multipliers[j];
+        eqp_step.multipliers.constraints[j] -= multipliers.constraints[j];
     }
     
     return eqp_step;
@@ -537,12 +537,13 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
         if (!termination) {
             // optional: perform second-order correction + LS + recompute eta and omega
             std::map<int, Activity> active_set = determine_active_set(x, l, u);
-            LocalSolution eqp_step = compute_eqp_step(problem, x, bound_multipliers, constraint_multipliers, trial_constraints, l, u, active_set);
+            Multipliers multipliers = {bound_multipliers, constraint_multipliers};
+            SubproblemSolution eqp_step = compute_eqp_step(problem, x, multipliers, trial_constraints, l, u, active_set);
             if (eqp_step.status == OPTIMAL) {
                 std::cout << "EQP step:\n";
                 std::cout << "x = "; print_vector(std::cout, eqp_step.x);
-                std::cout << "constraint_multipliers = "; print_vector(std::cout, eqp_step.constraint_multipliers);
-                std::cout << "bound_multipliers = "; print_vector(std::cout, eqp_step.bound_multipliers);
+                std::cout << "constraint_multipliers = "; print_vector(std::cout, eqp_step.multipliers.constraints);
+                std::cout << "bound_multipliers = "; print_vector(std::cout, eqp_step.multipliers.bounds);
                 
                 // run line search along EQP step
                 bool line_search_stop = false;
@@ -551,7 +552,7 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
                 while(!line_search_stop) {
                     // take a step of length step_length along EQP step
                     std::vector<double> trial_x = add_vectors(x, eqp_step.x, step_length);
-                    std::vector<double> trial_constraint_multipliers = add_vectors(constraint_multipliers, eqp_step.constraint_multipliers, step_length);
+                    std::vector<double> trial_constraint_multipliers = add_vectors(constraint_multipliers, eqp_step.multipliers.constraints, step_length);
                     
                     // compute filter entries
                     std::vector<double> trial_constraints = compute_constraints(problem, trial_x);
@@ -567,7 +568,7 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
                         // update the primal-dual point
                         x = trial_x;
                         constraint_multipliers = trial_constraint_multipliers;
-                        bound_multipliers = add_vectors(bound_multipliers, eqp_step.bound_multipliers, step_length);
+                        bound_multipliers = add_vectors(bound_multipliers, eqp_step.multipliers.bounds, step_length);
                         std::cout << "Updating multipliers: λ(x*) = "; print_vector(std::cout, constraint_multipliers);
                         eta = eta_trial;
                         omega = omega_trial;

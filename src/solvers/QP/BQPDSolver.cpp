@@ -89,7 +89,7 @@ Status int_to_status(int ifail) {
     return status;
 }
 
-LocalSolution BQPDSolver::solve(QP& qp, std::vector<double>& x) {
+SubproblemSolution BQPDSolver::solve(QP& qp, std::vector<double>& x) {
     /* Hessian */
     for (unsigned int i = 0; i < qp.hessian.number_nonzeros; i++) {
         this->ws_[i] = qp.hessian.matrix[i];
@@ -150,11 +150,11 @@ LocalSolution BQPDSolver::solve(QP& qp, std::vector<double>& x) {
         }
     }
 
-    LocalSolution solution = this->generate_solution(x);
+    SubproblemSolution solution = this->generate_solution(x);
     return solution;
 }
 
-LocalSolution BQPDSolver::solve(LP& lp, std::vector<double>& x) {
+SubproblemSolution BQPDSolver::solve(LP& lp, std::vector<double>& x) {
     int kmax = 0;
 
     /* Jacobian */
@@ -212,11 +212,11 @@ LocalSolution BQPDSolver::solve(LP& lp, std::vector<double>& x) {
         }
     }
 
-    LocalSolution solution = this->generate_solution(x);
+    SubproblemSolution solution = this->generate_solution(x);
     return solution;
 }
 
-LocalSolution BQPDSolver::generate_solution(std::vector<double>& x) {
+SubproblemSolution BQPDSolver::generate_solution(std::vector<double>& x) {
     std::vector<double> bound_multipliers(this->n_);
     std::vector<double> constraint_multipliers(this->m_);
     ConstraintActivity active_set;
@@ -235,13 +235,13 @@ LocalSolution BQPDSolver::generate_solution(std::vector<double>& x) {
         }
 
         if (index < this->n_) {
-            bound_multipliers[index] = (this->ls_[j] < 0) ? - this->residuals_[index] : this->residuals_[index];
+            bound_multipliers[index] = (this->ls_[j] < 0) ? -this->residuals_[index] : this->residuals_[index];
         }
         else {
             int constraint_index = index - this->n_;
             constraint_partition.feasible_set.push_back(constraint_index);
             constraint_status[constraint_index] = FEASIBLE;
-            constraint_multipliers[constraint_index] = (this->ls_[j] < 0) ? - this->residuals_[index] : this->residuals_[index];
+            constraint_multipliers[constraint_index] = (this->ls_[j] < 0) ? -this->residuals_[index] : this->residuals_[index];
         }
     }
 
@@ -267,7 +267,8 @@ LocalSolution BQPDSolver::generate_solution(std::vector<double>& x) {
         }
     }
 
-    LocalSolution solution(x, bound_multipliers, constraint_multipliers);
+    Multipliers multipliers = {bound_multipliers, constraint_multipliers};
+    SubproblemSolution solution(x, multipliers);
     solution.status = int_to_status(this->ifail_);
     solution.norm = norm_inf(x);
     solution.objective = this->f_solution_;
