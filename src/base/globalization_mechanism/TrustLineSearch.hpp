@@ -30,7 +30,7 @@ class TrustLineSearch : public GlobalizationMechanism {
 
     private:
         bool termination(bool is_accepted, int iteration);
-
+        std::vector<Range> compute_variables_bounds(Problem& problem, Iterate& current_iterate, double radius);
         void correct_multipliers(Problem& problem, SubproblemSolution& solution);
 
         double activity_tolerance_;

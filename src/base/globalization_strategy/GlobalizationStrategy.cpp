@@ -51,10 +51,10 @@ double GlobalizationStrategy::compute_complementarity_error(const Problem& probl
         double multiplier_i = iterate.multipliers.bounds[i];
 
         if (multiplier_i > this->tolerance / 10.) {
-            complementarity_error += std::abs(multiplier_i * (iterate.x[i] - problem.variable_lb[i]));
+            complementarity_error += std::abs(multiplier_i * (iterate.x[i] - problem.variables_bounds[i].lb));
         }
         else if (multiplier_i < -this->tolerance / 10.) {
-            complementarity_error += std::abs(multiplier_i * (iterate.x[i] - problem.variable_ub[i]));
+            complementarity_error += std::abs(multiplier_i * (iterate.x[i] - problem.variables_bounds[i].ub));
         }
     }
     /* constraints */
@@ -62,10 +62,10 @@ double GlobalizationStrategy::compute_complementarity_error(const Problem& probl
         double multiplier_j = iterate.multipliers.constraints[j];
 
         if (multiplier_j > this->tolerance / 10.) {
-            complementarity_error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraint_lb[j]));
+            complementarity_error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraints_bounds[j].lb));
         }
         else if (multiplier_j < -this->tolerance / 10.) {
-            complementarity_error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraint_ub[j]));
+            complementarity_error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraints_bounds[j].ub));
         }
     }
     return complementarity_error;

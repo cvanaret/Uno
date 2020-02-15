@@ -94,43 +94,45 @@ SubproblemSolution BQPDSolver::solve(QP& qp, std::vector<double>& x) {
     for (unsigned int i = 0; i < qp.hessian.number_nonzeros; i++) {
         this->ws_[i] = qp.hessian.matrix[i];
     }
-
+    
     /* Jacobian */
     // TODO preallocate
     std::vector<double> jacobian;
     std::vector<int> jacobian_sparsity;
     jacobian_sparsity.push_back(0); // header-related, will be modified later on
-    build_jacobian(jacobian, jacobian_sparsity, qp.objective);
-    for (int j = 0; j < qp.number_constraints; j++) {
+    build_jacobian(jacobian, jacobian_sparsity, qp.linear_objective);
+    for (int j = 0; j < qp.constraints.size(); j++) {
         build_jacobian(jacobian, jacobian_sparsity, qp.constraints[j]);
     }
     /* Jacobian header */
     jacobian_sparsity[0] = jacobian_sparsity.size();
     unsigned int total_size = 1;
     jacobian_sparsity.push_back(total_size);
-    total_size += qp.objective.size();
+    total_size += qp.linear_objective.size();
     jacobian_sparsity.push_back(total_size);
-    for (int j = 0; j < qp.number_constraints; j++) {
+    for (int j = 0; j < qp.constraints.size(); j++) {
         total_size += qp.constraints[j].size();
         jacobian_sparsity.push_back(total_size);
     }
 
     /* bounds */
-    std::vector<double> lb(qp.number_variables + qp.number_constraints);
-    std::vector<double> ub(qp.number_variables + qp.number_constraints);
-    for (int i = 0; i < qp.number_variables; i++) {
-        lb[i] = qp.variable_lb[i];
-        ub[i] = qp.variable_ub[i];
+    std::vector<double> lb(qp.variables_bounds.size() + qp.constraints.size());
+    std::vector<double> ub(qp.variables_bounds.size() + qp.constraints.size());
+    int i = 0;
+    for (Range& range: qp.variables_bounds) {
+        lb[i] = range.lb;
+        ub[i] = range.ub;
         if (lb[i] == -INFINITY) {
             lb[i] = -BIG;
         }
         if (ub[i] == INFINITY) {
             ub[i] = BIG;
         }
+        i++;
     }
-    for (int j = 0; j < qp.number_constraints; j++) {
-        lb[qp.number_variables + j] = qp.constraint_lb[j];
-        ub[qp.number_variables + j] = qp.constraint_ub[j];
+    for (int j = 0; j < qp.constraints.size(); j++) {
+        lb[qp.variables_bounds.size() + j] = qp.constraints_bounds[j].lb;
+        ub[qp.variables_bounds.size() + j] = qp.constraints_bounds[j].ub;
     }
 
     /* call BQPD */
@@ -142,11 +144,11 @@ SubproblemSolution BQPDSolver::solve(QP& qp, std::vector<double>& x) {
 
     /* project solution into bounds: it's a ray! */
     for (unsigned int i = 0; i < x.size(); i++) {
-        if (x[i] < qp.variable_lb[i]) {
-            x[i] = qp.variable_lb[i];
+        if (x[i] < qp.variables_bounds[i].lb) {
+            x[i] = qp.variables_bounds[i].lb;
         }
-        else if (qp.variable_ub[i] < x[i]) {
-            x[i] = qp.variable_ub[i];
+        else if (qp.variables_bounds[i].ub < x[i]) {
+            x[i] = qp.variables_bounds[i].ub;
         }
     }
 
@@ -180,15 +182,17 @@ SubproblemSolution BQPDSolver::solve(LP& lp, std::vector<double>& x) {
     /* bounds */
     std::vector<double> lb(lp.number_variables + lp.number_constraints);
     std::vector<double> ub(lp.number_variables + lp.number_constraints);
-    for (int i = 0; i < lp.number_variables; i++) {
-        lb[i] = lp.variable_lb[i];
-        ub[i] = lp.variable_ub[i];
+    int i = 0;
+    for (Range& range: lp.variables_bounds) {
+        lb[i] = range.lb;
+        ub[i] = range.ub;
         if (lb[i] == -INFINITY) {
             lb[i] = -BIG;
         }
         if (ub[i] == INFINITY) {
             ub[i] = BIG;
         }
+        i++;
     }
     for (int j = 0; j < lp.number_constraints; j++) {
         lb[lp.number_variables + j] = lp.constraint_lb[j];

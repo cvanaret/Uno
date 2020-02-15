@@ -85,18 +85,18 @@ void AMPLModel::generate_variables() {
 
 	this->variable_name.resize(this->number_variables);
 	this->variable_discrete.resize(this->number_variables);
-	this->variable_lb.resize(this->number_variables);
-	this->variable_ub.resize(this->number_variables);
+        this->variables_bounds.resize(this->number_variables);
 	this->variable_uncertain.resize(this->number_variables);
 	
 	for (int i = 0; i < this->number_variables; i++) {
 		this->variable_name.push_back(var_name_ASL((ASL*) this->asl_, i));
 		this->variable_discrete[i] = is_discrete(this->asl_, i);
-		this->variable_lb[i] = (this->asl_->i.LUv_ != NULL) ? this->asl_->i.LUv_[2*i] : -INFINITY;
-		this->variable_ub[i] = (this->asl_->i.LUv_ != NULL) ? this->asl_->i.LUv_[2*i+1] : INFINITY;
+		double lb = (this->asl_->i.LUv_ != NULL) ? this->asl_->i.LUv_[2*i] : -INFINITY;
+		double ub = (this->asl_->i.LUv_ != NULL) ? this->asl_->i.LUv_[2*i+1] : INFINITY;
+                this->variables_bounds[i] = {lb, ub};
 		this->variable_uncertain[i] = (uncertain_suffixes->u.i != NULL && uncertain_suffixes->u.i[i] == 1);
 	}
-	this->variable_status = this->determine_constraints_types(this->variable_lb, this->variable_ub);
+	this->variable_status = this->determine_constraints_types(this->variables_bounds);
 	return;
 }
 
@@ -267,19 +267,19 @@ void AMPLModel::generate_constraints() {
 	
 	this->constraint_name.reserve(this->number_constraints);
 	this->constraint_variables.reserve(this->number_constraints);
-	this->constraint_lb.resize(this->number_constraints);
-	this->constraint_ub.resize(this->number_constraints);
+	this->constraints_bounds.resize(this->number_constraints);
 	this->constraint_is_uncertainty_set.reserve(this->number_constraints);
 	this->constraint_status.reserve(this->number_constraints);
 	
 	for (int j = 0; j < this->number_constraints; j++) {
 		this->constraint_name.push_back(con_name_ASL((ASL*) this->asl_, j));
 		this->constraint_variables.push_back(create_cstr_variables(this->asl_->i.Cgrad_[j]));
-		this->constraint_lb[j] = (this->asl_->i.LUrhs_ != NULL) ? this->asl_->i.LUrhs_[2*j] : -INFINITY;
-		this->constraint_ub[j] = (this->asl_->i.LUrhs_ != NULL) ? this->asl_->i.LUrhs_[2*j+1] : INFINITY;
+		double lb = (this->asl_->i.LUrhs_ != NULL) ? this->asl_->i.LUrhs_[2*j] : -INFINITY;
+		double ub = (this->asl_->i.LUrhs_ != NULL) ? this->asl_->i.LUrhs_[2*j+1] : INFINITY;
+                this->constraints_bounds[j] = {lb, ub};
 		this->constraint_is_uncertainty_set[j] = (uncertain_suffixes->u.i != NULL && uncertain_suffixes->u.i[j] == 1);
 	}
-	this->constraint_status = this->determine_constraints_types(this->constraint_lb, this->constraint_ub);
+	this->constraint_status = this->determine_constraints_types(this->constraints_bounds);
     this->inequality_constraints = this->determine_inequality_constraints();
 	return;
 }

@@ -33,4 +33,9 @@ struct Multipliers {
     std::vector<double> constraints; /*!< Multipliers of the general constraints */
 };
 
+struct Range {
+	double lb;
+	double ub;
+};
+
 #endif // CONSTRAINT_H

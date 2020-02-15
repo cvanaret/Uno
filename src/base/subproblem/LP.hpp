@@ -4,6 +4,7 @@
 #include <ostream>
 #include <vector>
 #include <map>
+#include "Constraint.hpp"
 
 /*! \struct LP
 * \brief LP
@@ -16,6 +17,8 @@ struct LP {
 	int number_variables;
 	int number_constraints;
 	
+    std::vector<Range> variables_bounds;
+    std::vector<Range> constraints_bounds;
 	std::vector<double> variable_lb;
 	std::vector<double> variable_ub;
 	std::vector<double> constraint_lb;

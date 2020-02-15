@@ -7,8 +7,8 @@ x(x), multipliers(multipliers) {
 
     /* project point onto bounds */
     for (int i = 0; i < problem.number_variables; i++) {
-        this->x[i] = std::max(this->x[i], problem.variable_lb[i]);
-        this->x[i] = std::min(this->x[i], problem.variable_ub[i]);
+        this->x[i] = std::max(this->x[i], problem.variables_bounds[i].lb);
+        this->x[i] = std::min(this->x[i], problem.variables_bounds[i].ub);
     }
 
     /* objective */

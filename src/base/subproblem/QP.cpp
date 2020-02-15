@@ -1,12 +1,12 @@
 #include "QP.hpp"
 
 QP::QP(int number_variables, int number_constraints, const CSCMatrix& hessian) :
-variable_lb(number_variables), variable_ub(number_variables),
-constraint_lb(number_constraints), constraint_ub(number_constraints),
+variables_bounds(number_variables),
+constraints_bounds(number_constraints),
 constraints(number_constraints),
 hessian(hessian) {
-    this->number_variables = number_variables;
-    this->number_constraints = number_constraints;
+    //this->number_variables = number_variables;
+    //this->number_constraints = number_constraints;
 }
 
 std::ostream& operator<<(std::ostream &stream, QP& qp) {
@@ -14,15 +14,17 @@ std::ostream& operator<<(std::ostream &stream, QP& qp) {
     stream << " d\n";
 
     /* variables */
-    stream << qp.number_variables << " variables\n";
-    for (int i = 0; i < qp.number_variables; i++) {
-        stream << qp.variable_lb[i] << " <= " << "d" << i << " <= " << qp.variable_ub[i] << "\n";
+    stream << qp.variables_bounds.size() << " variables\n";
+    int i = 0;
+    for (Range& range: qp.variables_bounds) {
+        stream << range.lb << " <= " << "d" << i << " <= " << range.ub << "\n";
+        i++;
     }
 
     /* objective */
     stream << "g = ";
     int number_terms = 0;
-    for (std::pair<int, double> term : qp.objective) {
+    for (std::pair<int, double> term : qp.linear_objective) {
         int index = term.first;
         double value = term.second;
         if (0 < number_terms) {
@@ -34,9 +36,10 @@ std::ostream& operator<<(std::ostream &stream, QP& qp) {
     stream << "\n";
 
     /* constraints */
-    stream << qp.number_constraints << " constraints\n";
-    for (int j = 0; j < qp.number_constraints; j++) {
-        stream << qp.constraint_lb[j] << " <= ";
+    stream << qp.constraints.size() << " constraints\n";
+    int j = 0;
+    for (Range& range: qp.constraints_bounds) {
+        stream << range.lb << " <= ";
         int number_terms = 0;
         for (std::pair<int, double> term : qp.constraints[j]) {
             int index = term.first;
@@ -47,7 +50,8 @@ std::ostream& operator<<(std::ostream &stream, QP& qp) {
             stream << value << "*d" << index;
             number_terms++;
         }
-        stream << " <= " << qp.constraint_ub[j] << "\n";
+        stream << " <= " << range.ub << "\n";
+        j++;
     }
 
     /* Hessian */

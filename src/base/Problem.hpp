@@ -40,15 +40,13 @@ class Problem {
             /* variables */
             std::vector<std::string> variable_name;
             std::vector<bool> variable_discrete;
-            std::vector<double> variable_lb;
-            std::vector<double> variable_ub;
+            std::vector<Range> variables_bounds;
             std::vector<ConstraintType> variable_status; /*!< Status of the variables (EQUALITY, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES) */
 
             /* constraints */
             std::vector<std::string> constraint_name;
             std::vector<std::map<int,double> > constraint_variables;
-            std::vector<double> constraint_lb;
-            std::vector<double> constraint_ub;
+            std::vector<Range> constraints_bounds;
             std::vector<FunctionType> constraint_type; /*!< Types of the constraints (LINEAR, QUADRATIC, NONLINEAR) */
             std::vector<ConstraintType> constraint_status; /*!< Status of the constraints (EQUALITY, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES) */
             virtual double evaluate_constraint(int j, std::vector<double>& x) = 0;
@@ -56,7 +54,7 @@ class Problem {
             virtual std::vector<double> constraint_dense_gradient(int j, std::vector<double>& x) = 0;
             virtual std::map<int,double> constraint_sparse_gradient(int j, std::vector<double>& x) = 0;
             virtual std::vector<std::map<int,double> > constraints_sparse_jacobian(std::vector<double>& x) = 0;
-            std::vector<ConstraintType> determine_constraints_types(std::vector<double>& lb, std::vector<double>& ub);
+            std::vector<ConstraintType> determine_constraints_types(std::vector<Range>& variables_bounds);
             std::map<int,int> inequality_constraints; /*!< inequality constraints */
             std::map<int,int> determine_inequality_constraints();
 

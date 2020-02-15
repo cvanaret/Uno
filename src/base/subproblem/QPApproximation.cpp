@@ -18,34 +18,29 @@ Iterate QPApproximation::initialize(Problem& problem, std::vector<double>& x, Mu
     return first_iterate;
 }
 
-SubproblemSolution QPApproximation::compute_optimality_step(Problem& problem, Iterate& current_iterate, double radius) {
+SubproblemSolution QPApproximation::compute_optimality_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds) {
     /* generate the QP */
-    QP qp = this->generate_optimality_qp_(problem, current_iterate, radius);
+    QP qp = this->generate_optimality_qp_(problem, current_iterate, variables_bounds);
     DEBUG << qp;
 
     /* generate the initial solution */
-    std::vector<double> d0(qp.number_variables); // = {0.}
+    std::vector<double> d0(qp.variables_bounds.size()); // = {0.}
 
     /* solve the QP */
     SubproblemSolution solution = this->solver.solve(qp, d0);
     solution.phase_1_required = this->phase_1_required(solution);
     this->number_subproblems_solved++;
     
-    double linear_term = dot(solution.x, qp.objective);
+    double linear_term = dot(solution.x, qp.linear_objective);
     double quadratic_term = current_iterate.hessian.quadratic_product(solution.x, solution.x) / 2.;
     solution.objective_terms = {linear_term, quadratic_term};
 
     return solution;
 }
 
-/* compute Delta multipliers */
-    //for (int j = 0; j < problem.number_constraints; j++) {
-    //    solution.constraint_multipliers[j] -= current_iterate.constraint_multipliers[j];
-    //}
-
-SubproblemSolution QPApproximation::compute_infeasibility_step(Problem& problem, Iterate& current_iterate, double radius, SubproblemSolution& phase_II_solution) {
+SubproblemSolution QPApproximation::compute_infeasibility_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, SubproblemSolution& phase_II_solution) {
     /* generate the QP */
-    QP qp = this->generate_infeasibility_qp_(problem, current_iterate, radius, phase_II_solution.constraint_partition);
+    QP qp = this->generate_infeasibility_qp_(problem, current_iterate, variables_bounds, phase_II_solution.constraint_partition);
     DEBUG << qp;
 
     /* generate the initial solution */
@@ -55,7 +50,7 @@ SubproblemSolution QPApproximation::compute_infeasibility_step(Problem& problem,
     SubproblemSolution solution = this->solver.solve(qp, d0);
     this->number_subproblems_solved++;
     
-    double linear_term = dot(solution.x, qp.objective);
+    double linear_term = dot(solution.x, qp.linear_objective);
     double quadratic_term = current_iterate.hessian.quadratic_product(solution.x, solution.x) / 2.;
     solution.objective_terms = {linear_term, quadratic_term};
 
@@ -63,35 +58,29 @@ SubproblemSolution QPApproximation::compute_infeasibility_step(Problem& problem,
 }
 
 /* additional variables */
-SubproblemSolution QPApproximation::compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyDimensions penalty_dimensions) {
+SubproblemSolution QPApproximation::compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, double penalty_parameter, PenaltyDimensions penalty_dimensions) {
     /* generate the QP */
-    QP qp = this->generate_l1_penalty_qp_(problem, current_iterate, radius, penalty_parameter, penalty_dimensions);
+    QP qp = this->generate_l1_penalty_qp_(problem, current_iterate, variables_bounds, penalty_parameter, penalty_dimensions);
     DEBUG << qp;
 
     /* generate the initial solution */
-    std::vector<double> d0(qp.number_variables); // = {0.}
+    std::vector<double> d0(problem.number_variables); // = {0.}
 
     /* solve the QP */
     SubproblemSolution solution = this->solver.solve(qp, d0);
     this->number_subproblems_solved++;
     
-    double linear_term = dot(solution.x, qp.objective);
+    double linear_term = dot(solution.x, qp.linear_objective);
     double quadratic_term = current_iterate.hessian.quadratic_product(solution.x, solution.x) / 2.;
     solution.objective_terms = {linear_term, quadratic_term};
 
     return solution;
 }
 
-QP QPApproximation::generate_qp_(Problem& problem, Iterate& current_iterate, double radius) {
+QP QPApproximation::generate_qp_(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds) {
     /* initialize the QP */
     QP qp(problem.number_variables, problem.number_constraints, current_iterate.hessian);
-
-    /* bound constraints intersected with trust region  */
-    for (int i = 0; i < problem.number_variables; i++) {
-        qp.variable_lb[i] = std::max(-radius, problem.variable_lb[i] - current_iterate.x[i]);
-        qp.variable_ub[i] = std::min(radius, problem.variable_ub[i] - current_iterate.x[i]);
-    }
-
+    qp.variables_bounds = variables_bounds;
     /* compute the constraints */
     this->set_constraints_(problem, qp, current_iterate);
 
@@ -100,19 +89,20 @@ QP QPApproximation::generate_qp_(Problem& problem, Iterate& current_iterate, dou
 
 /* private methods */
 
-QP QPApproximation::generate_optimality_qp_(Problem& problem, Iterate& current_iterate, double radius) {
+QP QPApproximation::generate_optimality_qp_(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds) {
     DEBUG << "Creating the optimality problem\n";
 
     /* compute the Lagrangian Hessian */
     current_iterate.compute_hessian(problem, problem.objective_sign, current_iterate.multipliers.constraints);
 
     /* initialize the QP */
-    QP qp = this->generate_qp_(problem, current_iterate, radius);
+    QP qp = this->generate_qp_(problem, current_iterate, variables_bounds);
 
     /* bounds of the linearized constraints */
-    for (int j = 0; j < qp.number_constraints; j++) {
-        qp.constraint_lb[j] = problem.constraint_lb[j] - current_iterate.constraints[j];
-        qp.constraint_ub[j] = problem.constraint_ub[j] - current_iterate.constraints[j];
+    for (int j = 0; j < qp.constraints.size(); j++) {
+        double lb = problem.constraints_bounds[j].lb - current_iterate.constraints[j];
+        double ub = problem.constraints_bounds[j].ub - current_iterate.constraints[j];
+        qp.constraints_bounds[j] = {lb, ub};
     }
 
     /* compute the objective */
@@ -121,7 +111,7 @@ QP QPApproximation::generate_optimality_qp_(Problem& problem, Iterate& current_i
     return qp;
 }
 
-QP QPApproximation::generate_infeasibility_qp_(Problem& problem, Iterate& current_iterate, double radius, ConstraintPartition& constraint_partition) {
+QP QPApproximation::generate_infeasibility_qp_(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, ConstraintPartition& constraint_partition) {
     int number_infeasible = constraint_partition.infeasible_set.size();
     DEBUG << "Creating the restoration problem with " << number_infeasible << " infeasible constraints\n";
 
@@ -143,22 +133,25 @@ QP QPApproximation::generate_infeasibility_qp_(Problem& problem, Iterate& curren
     current_iterate.compute_hessian(problem, objective_multiplier, constraint_multipliers);
 
     /* initialize the QP */
-    QP qp = this->generate_qp_(problem, current_iterate, radius);
+    QP qp = this->generate_qp_(problem, current_iterate, variables_bounds);
 
     /* bounds of the linearized constraints */
-    for (int j = 0; j < qp.number_constraints; j++) {
+    for (int j = 0; j < qp.constraints.size(); j++) {
+        double lb, ub;
         if (constraint_partition.constraint_status[j] == INFEASIBLE_LOWER) {
-            qp.constraint_lb[j] = -INFINITY;
-            qp.constraint_ub[j] = problem.constraint_lb[j] - current_iterate.constraints[j];
+            lb = -INFINITY;
+            ub = problem.constraints_bounds[j].lb - current_iterate.constraints[j];
+            
         }
         else if (constraint_partition.constraint_status[j] == INFEASIBLE_UPPER) {
-            qp.constraint_lb[j] = problem.constraint_ub[j] - current_iterate.constraints[j];
-            qp.constraint_ub[j] = INFINITY;
+            lb = problem.constraints_bounds[j].ub - current_iterate.constraints[j];
+            ub = INFINITY;
         }
         else { // FEASIBLE
-            qp.constraint_lb[j] = problem.constraint_lb[j] - current_iterate.constraints[j];
-            qp.constraint_ub[j] = problem.constraint_ub[j] - current_iterate.constraints[j];
+            lb = problem.constraints_bounds[j].lb - current_iterate.constraints[j];
+            ub = problem.constraints_bounds[j].ub - current_iterate.constraints[j];
         }
+        qp.constraints_bounds[j] = {lb, ub};
     }
 
     /* compute the objective */
@@ -166,7 +159,7 @@ QP QPApproximation::generate_infeasibility_qp_(Problem& problem, Iterate& curren
     return qp;
 }
 
-QP QPApproximation::generate_l1_penalty_qp_(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyDimensions penalty_dimensions) {
+QP QPApproximation::generate_l1_penalty_qp_(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, double penalty_parameter, PenaltyDimensions penalty_dimensions) {
     int number_variables = problem.number_variables + penalty_dimensions.number_additional_variables;
     int number_constraints = penalty_dimensions.number_constraints;
 
@@ -177,16 +170,11 @@ QP QPApproximation::generate_l1_penalty_qp_(Problem& problem, Iterate& current_i
 
     /* initialize the QP */
     QP qp(number_variables, number_constraints, current_iterate.hessian);
-
-    /* bounds of original variables intersected with trust region  */
-    for (int i = 0; i < problem.number_variables; i++) {
-        qp.variable_lb[i] = std::max(-radius, problem.variable_lb[i] - current_iterate.x[i]);
-        qp.variable_ub[i] = std::min(radius, problem.variable_ub[i] - current_iterate.x[i]);
-    }
+    qp.variables_bounds = variables_bounds;
+    
     /* bounds of additional variables */
     for (int k = 0; k < penalty_dimensions.number_additional_variables; k++) {
-        qp.variable_lb[problem.number_variables + k] = 0.;
-        qp.variable_ub[problem.number_variables + k] = INFINITY;
+        qp.variables_bounds[problem.number_variables + k] = {0., (double) INFINITY};
     }
 
     /* apply the nonzero penalty parameter on the initial objective */
@@ -195,15 +183,15 @@ QP QPApproximation::generate_l1_penalty_qp_(Problem& problem, Iterate& current_i
             std::map<int, double> objective_gradient = problem.objective_sparse_gradient(current_iterate.x);
             current_iterate.set_objective_gradient(objective_gradient);
         }
-        qp.objective = current_iterate.objective_gradient;
-        for (std::pair<int, double> term : qp.objective) {
+        qp.linear_objective = current_iterate.objective_gradient;
+        for (std::pair<int, double> term: qp.linear_objective) {
             int index = term.first;
-            qp.objective[index] *= penalty_parameter;
+            qp.linear_objective[index] *= penalty_parameter;
         }
     }
     /* add additional variables to the objective */
     for (int k = 0; k < penalty_dimensions.number_additional_variables; k++) {
-        qp.objective[problem.number_variables + k] = 1.;
+        qp.linear_objective[problem.number_variables + k] = 1.;
     }
 
     /* compute the original constraint gradients */
@@ -220,8 +208,9 @@ QP QPApproximation::generate_l1_penalty_qp_(Problem& problem, Iterate& current_i
             gradient[current_additional_variable + 1] = 1.;
             qp.constraints[current_constraint] = gradient;
             /* identical bounds */
-            qp.constraint_lb[current_constraint] = problem.constraint_lb[j] - current_iterate.constraints[j];
-            qp.constraint_ub[current_constraint] = problem.constraint_ub[j] - current_iterate.constraints[j];
+            double lb = problem.constraints_bounds[j].lb - current_iterate.constraints[j];
+            double ub = problem.constraints_bounds[j].ub - current_iterate.constraints[j];
+            qp.constraints_bounds[current_constraint] = {lb, ub};
             current_additional_variable += 2;
             current_constraint++;
         }
@@ -231,8 +220,9 @@ QP QPApproximation::generate_l1_penalty_qp_(Problem& problem, Iterate& current_i
             gradient[current_additional_variable] = 1.;
             qp.constraints[current_constraint] = gradient;
             /* bounds */
-            qp.constraint_lb[current_constraint] = problem.constraint_lb[j] - current_iterate.constraints[j];
-            qp.constraint_ub[current_constraint] = INFINITY;
+            double lb = problem.constraints_bounds[j].lb - current_iterate.constraints[j];
+            double ub = INFINITY;
+            qp.constraints_bounds[current_constraint] = {lb, ub};
             current_additional_variable++;
             current_constraint++;
         }
@@ -242,8 +232,9 @@ QP QPApproximation::generate_l1_penalty_qp_(Problem& problem, Iterate& current_i
             gradient[current_additional_variable] = -1.;
             qp.constraints[current_constraint] = gradient;
             /* bounds */
-            qp.constraint_lb[current_constraint] = -INFINITY;
-            qp.constraint_ub[current_constraint] = problem.constraint_ub[j] - current_iterate.constraints[j];
+            double lb = -INFINITY;
+            double ub = problem.constraints_bounds[j].ub - current_iterate.constraints[j];
+            qp.constraints_bounds[current_constraint] = {lb, ub};
             current_additional_variable++;
             current_constraint++;
         }
@@ -264,7 +255,7 @@ void QPApproximation::set_optimality_objective_(Problem& problem, QP& qp, Iterat
         std::map<int, double> objective_gradient = problem.objective_sparse_gradient(current_iterate.x);
         current_iterate.set_objective_gradient(objective_gradient);
     }
-    qp.objective = current_iterate.objective_gradient;
+    qp.linear_objective = current_iterate.objective_gradient;
     return;
 }
 
@@ -289,7 +280,7 @@ void QPApproximation::set_infeasibility_objective_(Problem& problem, QP& qp, Ite
         }
     }
     current_iterate.set_objective_gradient(objective_gradient);
-    qp.objective = current_iterate.objective_gradient;
+    qp.linear_objective = current_iterate.objective_gradient;
     return;
 }
 

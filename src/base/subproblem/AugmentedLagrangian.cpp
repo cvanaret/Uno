@@ -87,7 +87,7 @@ Iterate AugmentedLagrangian::initialize(Problem& problem, std::vector<double>& x
     //return augmented_lagrangian_gradient;
 //}
 
-SubproblemSolution AugmentedLagrangian::compute_optimality_step(Problem& problem, Iterate& current_iterate, double radius) {
+SubproblemSolution AugmentedLagrangian::compute_optimality_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds) {
     /* Solve (approx/exact) the augm. Lagrangian subproblem */ 
     SubproblemSolution solution = this->solver.solve(problem, current_iterate);
     /* the Augmented Lagrangian subproblem returns a new iterate. We should now compute the step */
@@ -100,12 +100,12 @@ SubproblemSolution AugmentedLagrangian::compute_optimality_step(Problem& problem
     return solution;
 }
 
-SubproblemSolution AugmentedLagrangian::compute_infeasibility_step(Problem& problem, Iterate& current_iterate, double radius, SubproblemSolution& phase_II_solution) {
+SubproblemSolution AugmentedLagrangian::compute_infeasibility_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, SubproblemSolution& phase_II_solution) {
     std::cout << "AugmentedLagrangian::compute_infeasibility_step not implemented yet\n";
     throw std::out_of_range("Not implemented yet.");
 }
 
-SubproblemSolution AugmentedLagrangian::compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyDimensions penalty_dimensions) {
+SubproblemSolution AugmentedLagrangian::compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, double penalty_parameter, PenaltyDimensions penalty_dimensions) {
     std::cout << "AugmentedLagrangian::compute_l1_penalty_step not implemented yet\n";
     throw std::out_of_range("Not implemented yet.");
 }

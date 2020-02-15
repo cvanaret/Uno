@@ -27,6 +27,7 @@ class TrustRegion : public GlobalizationMechanism {
     private:
         double activity_tolerance_;
 
+        std::vector<Range> compute_variables_bounds(Problem& problem, Iterate& current_iterate, double radius);
         void correct_multipliers(Problem& problem, SubproblemSolution& solution);
         bool termination(bool is_accepted);
         void print_iteration();

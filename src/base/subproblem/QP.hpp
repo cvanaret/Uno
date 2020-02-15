@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include "Matrix.hpp"
+#include "Constraint.hpp"
 
 /*! \struct QP
 * \brief QP
@@ -20,15 +21,13 @@ struct QP {
 	 */
 	QP(int number_variables, int number_constraints, const CSCMatrix& hessian);
 
-	int number_variables;
-	int number_constraints;
+	//int number_variables;
+	//int number_constraints;
 	
-	std::vector<double> variable_lb;
-	std::vector<double> variable_ub;
-	std::vector<double> constraint_lb;
-	std::vector<double> constraint_ub;
+    std::vector<Range> variables_bounds;
+    std::vector<Range> constraints_bounds;
 	
-	std::map<int,double> objective;
+	std::map<int,double> linear_objective;
 	std::vector<std::map<int,double> > constraints;
 	const CSCMatrix& hessian; /*!< Sparse Hessian */
 	

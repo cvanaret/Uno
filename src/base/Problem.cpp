@@ -18,18 +18,18 @@ double Problem::feasible_residual_norm(ConstraintPartition& constraint_partition
 	for (unsigned int k = 0; k < constraint_partition.infeasible_set.size(); k++) {
 		int j = constraint_partition.infeasible_set[k];
 		if (constraint_partition.constraint_status[j] == INFEASIBLE_LOWER) {
-			feasible_residual += std::max(0., constraints[j] - this->constraint_ub[j]);
+			feasible_residual += std::max(0., constraints[j] - this->constraints_bounds[j].ub);
 		}
 		else {
-			feasible_residual += std::max(0., this->constraint_lb[j] - constraints[j]);
+			feasible_residual += std::max(0., this->constraints_bounds[j].lb - constraints[j]);
 		}
 	}
 
 	/* compute residuals for feasible constraints */
 	for (unsigned int k = 0; k < constraint_partition.feasible_set.size(); k++) {
 		int j = constraint_partition.feasible_set[k];
-		feasible_residual += std::max(0., this->constraint_lb[j] - constraints[j]);
-		feasible_residual += std::max(0., constraints[j] - this->constraint_ub[j]);
+		feasible_residual += std::max(0., this->constraints_bounds[j].lb - constraints[j]);
+		feasible_residual += std::max(0., constraints[j] - this->constraints_bounds[j].ub);
 	}
 	return feasible_residual;
 }
@@ -41,10 +41,10 @@ double Problem::infeasible_residual_norm(ConstraintPartition& constraint_partiti
 	for (unsigned int k = 0; k < constraint_partition.infeasible_set.size(); k++) {
 		int j = constraint_partition.infeasible_set[k];
 		if (constraint_partition.constraint_status[j] == INFEASIBLE_LOWER) {
-			infeasible_residual += std::max(0., this->constraint_lb[j] - constraints[j]);
+			infeasible_residual += std::max(0., this->constraints_bounds[j].lb - constraints[j]);
 		}
 		else {
-			infeasible_residual += std::max(0., constraints[j] - this->constraint_ub[j]);
+			infeasible_residual += std::max(0., constraints[j] - this->constraints_bounds[j].ub);
 		}
 	}
 	return infeasible_residual;
@@ -55,26 +55,26 @@ double Problem::l1_norm(std::vector<double>& constraints) {
 	double norm = 0.;
 
 	for (int j = 0; j < this->number_constraints; j++) {
-		double residual = std::max(constraints[j] - this->constraint_ub[j], this->constraint_lb[j] - constraints[j]);
+		double residual = std::max(constraints[j] - this->constraints_bounds[j].ub, this->constraints_bounds[j].lb - constraints[j]);
 		norm += std::max(0., residual);
 	}
 	return norm;
 }
 
-std::vector<ConstraintType> Problem::determine_constraints_types(std::vector<double>& lb, std::vector<double>& ub) {
-	std::vector<ConstraintType> status(lb.size());
+std::vector<ConstraintType> Problem::determine_constraints_types(std::vector<Range>& variables_bounds) {
+	std::vector<ConstraintType> status(variables_bounds.size());
 	
-	for (unsigned int i = 0; i < lb.size(); i++) {
-		if (lb[i] == ub[i]) {
+	for (unsigned int i = 0; i < variables_bounds.size(); i++) {
+		if (variables_bounds[i].lb == variables_bounds[i].ub) {
 			status[i] = EQUAL_BOUNDS;
 		}
-		else if (-INFINITY < lb[i] && ub[i] < INFINITY) {
+		else if (-INFINITY < variables_bounds[i].lb && variables_bounds[i].ub < INFINITY) {
 			status[i] = BOUNDED_BOTH_SIDES;
 		}
-		else if (-INFINITY < lb[i]) {
+		else if (-INFINITY < variables_bounds[i].lb) {
 			status[i] = BOUNDED_LOWER;
 		}
-		else if (ub[i] < INFINITY) {
+		else if (variables_bounds[i].ub < INFINITY) {
 			status[i] = BOUNDED_UPPER;
 		}
 		else {

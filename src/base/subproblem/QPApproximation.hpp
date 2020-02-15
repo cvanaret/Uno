@@ -20,9 +20,9 @@ class QPApproximation : public Subproblem {
 
         Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, int number_constraints, bool use_trust_region) override;
 
-        SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double radius) override;
-        SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, double radius, SubproblemSolution& phase_II_solution) override;
-        SubproblemSolution compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyDimensions penalty_dimensions) override;
+        SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds) override;
+        SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, SubproblemSolution& phase_II_solution) override;
+        SubproblemSolution compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, double penalty_parameter, PenaltyDimensions penalty_dimensions) override;
         void compute_measures(Problem& problem, Iterate& iterate) override;
         bool phase_1_required(SubproblemSolution& solution) override;
 
@@ -36,10 +36,10 @@ class QPApproximation : public Subproblem {
          * \param problem: optimization problem
          * \param current_iterate: current point and its evaluations
          */
-        QP generate_optimality_qp_(Problem& problem, Iterate& current_iterate, double radius);
-        QP generate_infeasibility_qp_(Problem& problem, Iterate& current_iterate, double radius, ConstraintPartition& constraint_partition);
-        QP generate_qp_(Problem& problem, Iterate& current_iterate, double radius);
-        QP generate_l1_penalty_qp_(Problem& problem, Iterate& current_iterate, double radius, double penalty_parameter, PenaltyDimensions penalty_dimensions);
+        QP generate_optimality_qp_(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds);
+        QP generate_infeasibility_qp_(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, ConstraintPartition& constraint_partition);
+        QP generate_qp_(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds);
+        QP generate_l1_penalty_qp_(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, double penalty_parameter, PenaltyDimensions penalty_dimensions);
         void set_constraints_(Problem& problem, QP& qp, Iterate& current_iterate);
         void set_optimality_objective_(Problem& problem, QP& qp, Iterate& current_iterate);
         void set_infeasibility_objective_(Problem& problem, QP& qp, Iterate& current_iterate, ConstraintPartition& constraint_partition);

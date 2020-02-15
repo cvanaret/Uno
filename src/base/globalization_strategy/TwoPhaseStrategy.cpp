@@ -6,9 +6,9 @@ TwoPhaseStrategy::TwoPhaseStrategy(Subproblem& subproblem, TwoPhaseConstants& co
 GlobalizationStrategy(subproblem, tolerance), phase(OPTIMALITY), constants(constants) {
 }
 
-SubproblemSolution TwoPhaseStrategy::compute_step(Problem& problem, Iterate& current_iterate, double radius) {
+SubproblemSolution TwoPhaseStrategy::compute_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds) {
     //double objective_multiplier = (phase == OPTIMALITY) ? problem.obj_sign : 0.;
-    SubproblemSolution solution = this->subproblem.compute_optimality_step(problem, current_iterate, radius);
+    SubproblemSolution solution = this->subproblem.compute_optimality_step(problem, current_iterate, variables_bounds);
     solution.phase = OPTIMALITY;
     DEBUG << solution;
 
@@ -22,7 +22,7 @@ SubproblemSolution TwoPhaseStrategy::compute_step(Problem& problem, Iterate& cur
         ConstraintPartition constraint_partition = solution.constraint_partition;
 
         /* compute the step in phase 1, starting from infeasible solution */
-        solution = this->subproblem.compute_infeasibility_step(problem, current_iterate, radius, solution);
+        solution = this->subproblem.compute_infeasibility_step(problem, current_iterate, variables_bounds, solution);
         solution.constraint_partition = constraint_partition;
         solution.phase = RESTORATION;
         DEBUG << solution;
