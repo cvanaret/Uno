@@ -1,5 +1,5 @@
-#ifndef INTERIORPOINT_H
-#define INTERIORPOINT_H
+#ifndef IPM_H
+#define IPM_H
 
 #include "Subproblem.hpp"
 #include "MA57Solver.hpp"
@@ -23,6 +23,7 @@ class InteriorPoint : public Subproblem {
         SubproblemSolution compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, double penalty_parameter, PenaltyDimensions penalty_dimensions) override;
 
         void compute_measures(Problem& problem, Iterate& iterate) override;
+        double compute_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
         bool phase_1_required(SubproblemSolution& solution) override;
         
         double objective(Problem& problem, Iterate& iterate);
@@ -65,4 +66,4 @@ class InteriorPoint : public Subproblem {
         int iteration;
 };
 
-#endif // INTERIORPOINT_H
+#endif // IPM_H

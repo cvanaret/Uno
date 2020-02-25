@@ -7,12 +7,15 @@ tau_min(0.99), default_multiplier(1.), k_sigma(1e10), iteration(0) {
 
 Iterate InteriorPoint::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int /*number_variables*/, int /*number_constraints*/, bool use_trust_region) {
     /* identify the variables' bounds */
+    std::vector<double> bound_multipliers;
     for (int i = 0; i < problem.number_variables; i++) {
         if (use_trust_region || (problem.variable_status[i] == BOUNDED_LOWER || problem.variable_status[i] == BOUNDED_BOTH_SIDES)) {
             this->lower_bounded_variables.push_back(i);
+            bound_multipliers.push_back(this->default_multiplier); // positive multiplier
         }
         if (use_trust_region || (problem.variable_status[i] == BOUNDED_UPPER || problem.variable_status[i] == BOUNDED_BOTH_SIDES)) {
             this->upper_bounded_variables.push_back(i);
+            bound_multipliers.push_back(-this->default_multiplier); // negative multiplier
         }
     }
     /* identify the inequality constraint slacks */
@@ -20,9 +23,11 @@ Iterate InteriorPoint::initialize(Problem& problem, std::vector<double>& x, Mult
         if (problem.constraint_status[j] != EQUAL_BOUNDS) {
             if (problem.constraint_status[j] == BOUNDED_LOWER || problem.constraint_status[j] == BOUNDED_BOTH_SIDES) {
                 this->lower_bounded_slacks.push_back(j);
+                bound_multipliers.push_back(this->default_multiplier); // positive multiplier
             }
             if (problem.constraint_status[j] == BOUNDED_UPPER || problem.constraint_status[j] == BOUNDED_BOTH_SIDES) {
                 this->upper_bounded_slacks.push_back(j);
+                bound_multipliers.push_back(-this->default_multiplier); // negative multiplier
             }
         }
     }
@@ -32,21 +37,7 @@ Iterate InteriorPoint::initialize(Problem& problem, std::vector<double>& x, Mult
     for (int i = 0; i < problem.number_variables; i++) {
         projected_x[i] = this->project_variable_in_bounds(x[i], problem.variables_bounds[i].lb, problem.variables_bounds[i].ub);
     }
-    /* initialize bound multipliers */
-    std::vector<double> bound_multipliers;
-    for (int i : this->lower_bounded_variables) {
-        bound_multipliers.push_back(this->default_multiplier); // positive multiplier
-    }
-    for (int i : this->upper_bounded_variables) {
-        bound_multipliers.push_back(-this->default_multiplier); // negative multiplier
-    }
-    for (int j : this->lower_bounded_slacks) {
-        bound_multipliers.push_back(this->default_multiplier); // positive multiplier
-    }
-    for (int j : this->upper_bounded_slacks) {
-        bound_multipliers.push_back(-this->default_multiplier); // negative multiplier
-    }
-
+    
     /* generate the first iterate */
     Iterate first_iterate(problem, projected_x, multipliers);
 
@@ -219,13 +210,13 @@ SubproblemSolution InteriorPoint::compute_optimality_step(Problem& problem, Iter
     print_vector(std::cout, trial_constraint_multipliers);
 
     Multipliers trial_multipliers = {trial_bound_multipliers, trial_constraint_multipliers};
-    SubproblemSolution solution(trial_x, trial_multipliers);
+    ActiveSet active_set;
+    ConstraintPartition constraint_partition;
+    SubproblemSolution solution(trial_x, trial_multipliers, active_set, constraint_partition);
     solution.status = OPTIMAL;
     solution.norm = norm_inf(solution.x, problem.number_variables);
     /* compute */
     solution.objective = this->evaluate_local_model(problem, current_iterate, trial_x);
-    solution.objective_terms.linear = solution.objective;
-    solution.objective_terms.quadratic = 0.;
     return solution;
 }
 
@@ -599,6 +590,11 @@ void InteriorPoint::compute_measures(Problem& problem, Iterate& iterate) {
     return;
 }
 
+double InteriorPoint::compute_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
+    // TODO
+    return 0.;
+}
+
 double InteriorPoint::constraint_violation(Problem& problem, Iterate& iterate) {
     double constraint_violation = 0.;
     int current_slack = 0;
@@ -695,13 +691,17 @@ double InteriorPoint::compute_error(Problem& problem, Iterate& iterate) {
 SubproblemSolution InteriorPoint::compute_infeasibility_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, SubproblemSolution& phase_II_solution) {
     std::vector<double> x, z, l;
     Multipliers multipliers = {z, l};
-    return SubproblemSolution(x, multipliers);
+    ActiveSet active_set;
+    ConstraintPartition constraint_partition;
+    return SubproblemSolution(x, multipliers, active_set, constraint_partition);
 }
 
 SubproblemSolution InteriorPoint::compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, double penalty_parameter, PenaltyDimensions penalty_dimensions) {
     std::vector<double> x, z, l;
     Multipliers multipliers = {z, l};
-    return SubproblemSolution(x, multipliers);
+    ActiveSet active_set;
+    ConstraintPartition constraint_partition;
+    return SubproblemSolution(x, multipliers, active_set, constraint_partition);
 }
 
 bool InteriorPoint::phase_1_required(SubproblemSolution& solution) {

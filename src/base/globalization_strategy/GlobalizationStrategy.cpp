@@ -16,10 +16,10 @@ std::vector<double> GlobalizationStrategy::compute_lagrangian_gradient(Problem& 
     if (objective_multiplier != 0.) {
         current_iterate.compute_objective_gradient(problem);
         
+        /* scale the objective gradient */
         for (std::pair<int, double> term : current_iterate.objective_gradient) {
             int variable_index = term.first;
             double derivative = term.second;
-            /* scale the objective gradient */
             lagrangian_gradient[variable_index] += objective_multiplier*derivative;
         }
     }
@@ -50,10 +50,10 @@ double GlobalizationStrategy::compute_complementarity_error(const Problem& probl
     for (int i = 0; i < problem.number_variables; i++) {
         double multiplier_i = iterate.multipliers.bounds[i];
 
-        if (multiplier_i > this->tolerance / 10.) {
+        if (multiplier_i > this->tolerance / 10. && -INFINITY < problem.variables_bounds[i].lb) {
             complementarity_error += std::abs(multiplier_i * (iterate.x[i] - problem.variables_bounds[i].lb));
         }
-        else if (multiplier_i < -this->tolerance / 10.) {
+        else if (multiplier_i < -this->tolerance / 10. && problem.variables_bounds[i].ub < INFINITY) {
             complementarity_error += std::abs(multiplier_i * (iterate.x[i] - problem.variables_bounds[i].ub));
         }
     }
@@ -61,10 +61,10 @@ double GlobalizationStrategy::compute_complementarity_error(const Problem& probl
     for (int j = 0; j < problem.number_constraints; j++) {
         double multiplier_j = iterate.multipliers.constraints[j];
 
-        if (multiplier_j > this->tolerance / 10.) {
+        if (multiplier_j > this->tolerance / 10. && -INFINITY < problem.constraints_bounds[j].lb) {
             complementarity_error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraints_bounds[j].lb));
         }
-        else if (multiplier_j < -this->tolerance / 10.) {
+        else if (multiplier_j < -this->tolerance / 10. && problem.constraints_bounds[j].ub < INFINITY) {
             complementarity_error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraints_bounds[j].ub));
         }
     }

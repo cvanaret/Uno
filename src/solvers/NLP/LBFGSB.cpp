@@ -74,7 +74,9 @@ SubproblemSolution LBFGSB::solve(Problem& problem, Iterate& current_iterate,
     std::vector<double> constraint_multipliers;
     Multipliers multipliers = {g, constraint_multipliers};
     // create local solution from primal and dual variables
-    SubproblemSolution solution(x, multipliers);
+    ActiveSet active_set;
+    ConstraintPartition constraint_partition;
+    SubproblemSolution solution(x, multipliers, active_set, constraint_partition);
     solution.status = OPTIMAL;
 
     return solution;

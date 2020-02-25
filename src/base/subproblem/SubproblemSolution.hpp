@@ -32,23 +32,23 @@ struct ObjectiveTerms {
  *  Description of a local solution
  */
 class SubproblemSolution {
-    public:
-        SubproblemSolution(std::vector<double>& x, Multipliers& multipliers);
+public:
+    //SubproblemSolution(std::vector<double>& x, Multipliers& multipliers, Status& status, Phase& phase, bool phase_1_required, double norm, double objective, ActiveSet& active_set, ConstraintPartition& constraint_partition);
+    SubproblemSolution(std::vector<double>& x, Multipliers& multipliers, ActiveSet& active_set, ConstraintPartition& constraint_partition);
+    std::vector<double> x; /*!< Primal variables */
+    Multipliers multipliers; /*!< Multipliers */
+    
+    Status status; /*!< Status of the solution */
+    Phase phase; /*!< Current phase */
+    bool phase_1_required;
 
-        Status status; /*!< Status of the solution */
-        Phase phase; /*!< Current phase */
-        bool phase_1_required;
-        
-        std::vector<double> x; /*!< Primal variables */
-        Multipliers multipliers; /*!< Multipliers */
-        
-        double norm; /*!< Norm of \f$x\f$ */
-        double objective; /*!< Objective value */
-        ObjectiveTerms objective_terms; /*!< Decomposition of the objective value in quadratic and linear terms */
-        ConstraintActivity active_set; /*!< Active set */
-        ConstraintPartition constraint_partition; /*!< Partition of feasible and infeasible constraints */
+    double norm; /*!< Norm of \f$x\f$ */
+    double objective; /*!< Objective value */
+    //ObjectiveTerms objective_terms; /*!< Decomposition of the objective value in quadratic and linear terms */
+    ActiveSet active_set; /*!< Active set */
+    ConstraintPartition constraint_partition; /*!< Partition of feasible and infeasible constraints */
 
-        friend std::ostream& operator<<(std::ostream &stream, SubproblemSolution& step);
+    friend std::ostream& operator<<(std::ostream &stream, SubproblemSolution& step);
 };
 
 #endif // SUBPROBLEMSOLUTION_H

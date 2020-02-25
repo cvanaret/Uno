@@ -21,16 +21,16 @@ struct TwoPhaseConstants {
  *  Strategy that accepts or declines a trial step (virtual class)
  */
 class TwoPhaseStrategy : public GlobalizationStrategy {
-    public:
-        TwoPhaseStrategy(Subproblem& subproblem, TwoPhaseConstants& constants, double tolerance);
+public:
+    TwoPhaseStrategy(Subproblem& subproblem, TwoPhaseConstants& constants, double tolerance);
 
-        SubproblemSolution compute_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds) override;
+    SubproblemSolution compute_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds) override;
 
-        Phase phase; /*!< Current phase (optimality or feasibility restoration) */
-        TwoPhaseConstants constants; /*!< Set of constants */
+    Phase phase; /*!< Current phase (optimality or feasibility restoration) */
+    TwoPhaseConstants constants; /*!< Set of constants */
 
-    protected:
-        void update_restoration_multipliers(Iterate& trial_iterate, ConstraintPartition& constraint_partition);
+protected:
+    void update_restoration_multipliers(Iterate& trial_iterate, ConstraintPartition& constraint_partition);
 };
 
 #endif // TWOPHASESTRATEGY_H

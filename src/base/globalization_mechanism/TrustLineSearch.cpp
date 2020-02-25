@@ -22,7 +22,7 @@ Iterate TrustLineSearch::compute_iterate(Problem& problem, Iterate& current_iter
             SubproblemSolution solution = this->globalization_strategy.compute_step(problem, current_iterate, variables_bounds);
 
             /* fail if direction is not a descent direction */
-            if (0. < solution.objective_terms.linear) {
+            if (0. < dot(solution.x, current_iterate.objective_gradient)) {
                 INFO << RED "Trust-line-search direction is not a descent direction\n" RESET;
                 linesearch_failed = true;
             } else {

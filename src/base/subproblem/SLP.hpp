@@ -1,45 +1,37 @@
-#ifndef LPAPPROXIMATION_H
-#define LPAPPROXIMATION_H
+#ifndef SLP_H
+#define SLP_H
 
-#include "LocalApproximation.hpp"
-#include "LPSolver.hpp"
+#include "Subproblem.hpp"
+#include "QPSolver.hpp"
 
-/*! \class LPApproximation
-* \brief LP local approximation
-*
-*  Linear approximation
-*/
-class LPApproximation: public LocalApproximation {
-	public:
-		/*!
-         *  Constructor
-         * 
-         * \param solver: solver that solves the subproblem
-         */
-		LPApproximation(LPSolver& solver);
-		
-		/*!
-         *  Compute the descent direction for a given point and phase
-         * 
-         * \param problem: optimization problem
-         * \param phase: current phase (optimality or feasibility restoration)
-         * \param current_iterate: current point and its evaluations
-         */
-		SubproblemSolution compute_direction(Problem& problem, Iterate& current_iterate, Phase& phase);
-		
-		// TODO static list of available solvers (BQPD)
-		
-		/* use a reference to allow polymorphism */
-		LPSolver& solver; /*!< Solver that solves the subproblem */
-	
-	private:
-		/*!
-         *  Generate a linear local approximation
-         * 
-         * \param problem: optimization problem
-         * \param current_iterate: current point and its evaluations
-         */
-		LP generate_LP(Problem& problem, Iterate& current_iterate) const;
+/*! \class SLP
+ * \brief LP local approximation
+ *
+ *  Linear approximation
+ */
+class SLP : public Subproblem {
+public:
+    /*!
+     *  Constructor
+     * 
+     * \param solver: solver that solves the subproblem
+     */
+    SLP(LPSolver& solver);
+
+    Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, int number_constraints, bool use_trust_region) override;
+
+    SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds) override;
+    SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, SubproblemSolution& phase_II_solution) override;
+    SubproblemSolution compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, double penalty_parameter, PenaltyDimensions penalty_dimensions) override;
+    void compute_measures(Problem& problem, Iterate& iterate) override;
+    double compute_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
+    bool phase_1_required(SubproblemSolution& solution) override;
+
+    /* use a reference to allow polymorphism */
+    LPSolver& solver; /*!< Solver that solves the subproblem */
+
+private:
+    void set_infeasibility_objective_(Problem& problem, Iterate& current_iterate, ConstraintPartition& constraint_partition);
 };
 
-#endif // LPAPPROXIMATION_H
+#endif // SLP_H

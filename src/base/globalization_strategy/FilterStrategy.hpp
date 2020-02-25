@@ -32,7 +32,6 @@ class FilterStrategy : public TwoPhaseStrategy {
         void compute_measures(Problem& problem, Iterate& iterate) override;
 
     private:
-        double compute_predicted_reduction(SubproblemSolution& solution, double step_length);
         void switch_phase(Problem& problem, SubproblemSolution& solution, Iterate& current_iterate, Iterate& trial_iterate);
         OptimalityStatus compute_status(Problem& problem, Iterate& current_iterate, double step_norm);
 };

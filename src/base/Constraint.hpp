@@ -15,7 +15,7 @@ struct PenaltyDimensions {
 *
 *  Description of the active or infeasible constraints: at lower or upper bound at the optimum solution
 */
-struct ConstraintActivity {
+struct ActiveSet {
 	std::vector<int> at_lower_bound; /*!< List of constraint indices at their lower bound */
 	std::vector<int> at_upper_bound; /*!< List of constraint indices at their upper bound */
 };

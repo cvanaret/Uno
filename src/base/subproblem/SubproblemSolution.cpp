@@ -1,8 +1,12 @@
 #include "SubproblemSolution.hpp"
 #include "Logger.hpp"
 
-SubproblemSolution::SubproblemSolution(std::vector<double>& x, Multipliers& multipliers) :
-phase_1_required(false), x(x), multipliers(multipliers) {
+//SubproblemSolution::SubproblemSolution(std::vector<double>& x, Multipliers& multipliers, Status& status, Phase& phase, bool phase_1_required, double norm, double objective, ConstraintActivity& active_set, ConstraintPartition& constraint_partition) :
+//x(x), multipliers(multipliers), status(status), phase(phase), phase_1_required(phase_1_required), norm(norm), objective(objective), active_set(active_set), constraint_partition(constraint_partition) {
+//}
+
+SubproblemSolution::SubproblemSolution(std::vector<double>& x, Multipliers& multipliers, ActiveSet& active_set, ConstraintPartition& constraint_partition) :
+x(x), multipliers(multipliers), phase_1_required(false), active_set(active_set), constraint_partition(constraint_partition) {
 }
 
 std::ostream& operator<<(std::ostream &stream, SubproblemSolution& solution) {

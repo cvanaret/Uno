@@ -1,5 +1,5 @@
-#ifndef QPAPPROXIMATION_H
-#define QPAPPROXIMATION_H
+#ifndef SQP_H
+#define SQP_H
 
 #include "Subproblem.hpp"
 #include "QPSolver.hpp"
@@ -9,56 +9,34 @@
  *
  *  Quadratic approximation
  */
-class QPApproximation : public Subproblem {
-    public:
-        /*!
-         *  Constructor
-         * 
-         * \param solver: solver that solves the subproblem
-         */
-        QPApproximation(QPSolver& solver);
+class SQP : public Subproblem {
+public:
+    /*!
+     *  Constructor
+     * 
+     * \param solver: solver that solves the subproblem
+     */
+    SQP(QPSolver& solver);
 
-        Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, int number_constraints, bool use_trust_region) override;
+    Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, int number_constraints, bool use_trust_region) override;
 
-        SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds) override;
-        SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, SubproblemSolution& phase_II_solution) override;
-        SubproblemSolution compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, double penalty_parameter, PenaltyDimensions penalty_dimensions) override;
-        void compute_measures(Problem& problem, Iterate& iterate) override;
-        bool phase_1_required(SubproblemSolution& solution) override;
+    SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds) override;
+    SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, SubproblemSolution& phase_II_solution) override;
+    SubproblemSolution compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, double penalty_parameter, PenaltyDimensions penalty_dimensions) override;
+    void compute_measures(Problem& problem, Iterate& iterate) override;
+    double compute_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
+    bool phase_1_required(SubproblemSolution& solution) override;
 
-        /* use a reference to allow polymorphism */
-        QPSolver& solver; /*!< Solver that solves the subproblem */
+    /* use a reference to allow polymorphism */
+    QPSolver& solver; /*!< Solver that solves the subproblem */
 
-    private:
-        /*!
-         *  Generate a quadratic local approximation
-         * 
-         * \param problem: optimization problem
-         * \param current_iterate: current point and its evaluations
-         */
-        QP generate_optimality_qp_(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds);
-        QP generate_infeasibility_qp_(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, ConstraintPartition& constraint_partition);
-        QP generate_qp_(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds);
-        QP generate_l1_penalty_qp_(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, double penalty_parameter, PenaltyDimensions penalty_dimensions);
-        void set_constraints_(Problem& problem, QP& qp, Iterate& current_iterate);
-        void set_optimality_objective_(Problem& problem, QP& qp, Iterate& current_iterate);
-        void set_infeasibility_objective_(Problem& problem, QP& qp, Iterate& current_iterate, ConstraintPartition& constraint_partition);
-
-        /*!
-         *  Generate a quadratic local approximation
-         * 
-         * \param problem: optimization problem
-         * \param current_iterate: current point and its evaluations
-         */
-        //QP generate_EQP(Problem& problem, Iterate& current_iterate);
-
-        /*!
-         *  Generate a quadratic local approximation
-         * 
-         * \param problem: optimization problem
-         * \param current_iterate: current point and its evaluations
-         */
-        //QP generate_EQPI(Problem& problem, Iterate& current_iterate);
+private:
+    // phase 2
+    std::vector<Range> generate_optimality_bounds(Problem& problem, std::vector<double>& current_constraints);
+    // phase 1
+    std::vector<double> generate_feasibility_multipliers(Problem& problem, std::vector<double>& current_constraint_multipliers, ConstraintPartition& constraint_partition);
+    std::vector<Range> generate_feasibility_bounds(Problem& problem, std::vector<double>& current_constraints, ConstraintPartition& constraint_partition);
+    void set_feasibility_objective_(Problem& problem, Iterate& current_iterate, ConstraintPartition& constraint_partition);
 };
 
-#endif // QPAPPROXIMATION_H
+#endif // SQP_H

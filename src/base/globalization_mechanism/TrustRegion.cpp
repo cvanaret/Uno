@@ -21,8 +21,8 @@ Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_iterate)
             this->print_iteration();
 
             /* compute the step within trust region */
-            std::vector<Range> variables_bounds = this->compute_variables_bounds(problem, current_iterate, this->radius);
-            SubproblemSolution solution = this->globalization_strategy.compute_step(problem, current_iterate, variables_bounds);
+            std::vector<Range> trust_region = this->compute_trust_region(problem, current_iterate, this->radius);
+            SubproblemSolution solution = this->globalization_strategy.compute_step(problem, current_iterate, trust_region);
 
             /* set bound multipliers of active trust region to 0 */
             this->correct_multipliers(problem, solution);
@@ -50,7 +50,7 @@ Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_iterate)
     return current_iterate;
 }
 
-std::vector<Range> TrustRegion::compute_variables_bounds(Problem& problem, Iterate& current_iterate, double radius) {
+std::vector<Range> TrustRegion::compute_trust_region(Problem& problem, Iterate& current_iterate, double radius) {
     std::vector<Range> variables_bounds(problem.number_variables);
     /* bound constraints intersected with trust region  */
     for (int i = 0; i < problem.number_variables; i++) {

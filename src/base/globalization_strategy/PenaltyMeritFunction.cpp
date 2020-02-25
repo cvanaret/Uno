@@ -179,7 +179,8 @@ OptimalityStatus PenaltyStrategy::compute_status(Problem& problem, Iterate& tria
                 trial_iterate.multipliers.constraints[j] /= this->penalty_parameter;
             }
         }
-    } else {
+    }
+    else {
         double infeasibility_error = this->compute_error(problem, trial_iterate, trial_iterate.multipliers, 0.);
         DEBUG << "Ek(lambda_k, 0.) = " << infeasibility_error << "\n";
         if (infeasibility_error <= this->tolerance && trial_iterate.residual > this->tolerance * problem.number_constraints) {

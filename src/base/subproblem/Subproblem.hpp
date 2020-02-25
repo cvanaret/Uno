@@ -32,6 +32,7 @@ class Subproblem {
 
         virtual Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, int number_constraints, bool use_trust_region) = 0;
         virtual void compute_measures(Problem& problem, Iterate& iterate) = 0;
+        virtual double compute_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution, double step_length) = 0;
         virtual bool phase_1_required(SubproblemSolution& solution) = 0;
         int number_subproblems_solved;
 };

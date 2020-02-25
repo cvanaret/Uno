@@ -22,6 +22,7 @@ SubproblemSolution TwoPhaseStrategy::compute_step(Problem& problem, Iterate& cur
         ConstraintPartition constraint_partition = solution.constraint_partition;
 
         /* compute the step in phase 1, starting from infeasible solution */
+        DEBUG << "Creating the restoration problem with " << solution.constraint_partition.infeasible_set.size() << " infeasible constraints\n";
         solution = this->subproblem.compute_infeasibility_step(problem, current_iterate, variables_bounds, solution);
         solution.constraint_partition = constraint_partition;
         solution.phase = RESTORATION;
@@ -32,8 +33,7 @@ SubproblemSolution TwoPhaseStrategy::compute_step(Problem& problem, Iterate& cur
 }
 
 void TwoPhaseStrategy::update_restoration_multipliers(Iterate& trial_iterate, ConstraintPartition& constraint_partition) {
-    for (unsigned int k = 0; k < constraint_partition.infeasible_set.size(); k++) {
-        int j = constraint_partition.infeasible_set[k];
+    for (int j: constraint_partition.infeasible_set) {
         if (constraint_partition.constraint_status[j] == INFEASIBLE_UPPER) {
             trial_iterate.multipliers.constraints[j] = -1.;
         }

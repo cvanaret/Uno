@@ -58,7 +58,7 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
             // check acceptance wrt current x (h,f)
             acceptable = filter.query_current_iterate(current_iterate.feasibility_measure, current_iterate.optimality_measure, trial_iterate.feasibility_measure, trial_iterate.optimality_measure);
             if (acceptable) {
-                double predicted_reduction = this->compute_predicted_reduction(solution, step_length);
+                double predicted_reduction = this->subproblem.compute_predicted_reduction(current_iterate, solution, step_length);
                 double actual_reduction = filter.compute_actual_reduction(current_iterate.optimality_measure, current_iterate.feasibility_measure, trial_iterate.optimality_measure);
                 DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << current_iterate.optimality_measure << "-" << trial_iterate.optimality_measure << " = " << actual_reduction << "\n\n";
 
@@ -90,16 +90,6 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
     }
 
     return accept;
-}
-
-/* compute the predicted reduction, taking into account the step length */
-double FilterStrategy::compute_predicted_reduction(SubproblemSolution& solution, double step_length) {
-    if (step_length == 1.) {
-        return -solution.objective;
-    }
-    else {
-        return -step_length*(solution.objective_terms.linear + step_length * solution.objective_terms.quadratic);
-    }
 }
 
 void FilterStrategy::switch_phase(Problem& problem, SubproblemSolution& solution, Iterate& current_iterate, Iterate& trial_iterate) {

@@ -1,12 +1,16 @@
 #include "SubproblemFactory.hpp"
-#include "QPApproximation.hpp"
+#include "SQP.hpp"
+#include "SLP.hpp"
 #include "InteriorPoint.hpp"
 #include "AugmentedLagrangian.hpp"
 #include "QPSolverFactory.hpp"
 
 std::shared_ptr<Subproblem> SubproblemFactory::create(const std::string& type, QPSolver& solver, std::map<std::string, std::string> default_values) {
-    if (type == "QP") {
-        return std::make_shared<QPApproximation>(solver);
+    if (type == "SQP") {
+        return std::make_shared<SQP>(solver);
+    }
+    else if (type == "SLP") {
+        return std::make_shared<SLP>(solver);
     }
     else if (type == "IPM") {
         return std::make_shared<InteriorPoint>();
