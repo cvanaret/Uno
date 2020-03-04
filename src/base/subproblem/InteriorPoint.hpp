@@ -44,18 +44,18 @@ class InteriorPoint : public Subproblem {
     private:
         double evaluate_local_model(Problem& problem, Iterate& current_iterate, std::vector<double>& solution);
         std::map<int, double> barrier_function_gradient(Problem& problem, Iterate& current_iterate);
-        double project_variable_in_bounds(double current_value, Range& variable_bounds);
+        double project_variable_in_bounds(double variable_value, Range& variable_bounds);
         std::vector<double> estimate_initial_multipliers(Problem& problem, Iterate& current_iterate);
         double compute_primal_length(Problem& problem, Iterate& iterate, std::vector<double>& ipm_solution, double tau, std::vector<Range>& variables_bounds);
         double compute_dual_length(Iterate& current_iterate, double tau, std::vector<double>& lower_delta_z, std::vector<double>& upper_delta_z);
         COOMatrix generate_kkt_matrix(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds);
-        void modify_inertia(Problem& problem, COOMatrix& kkt_matrix);
+        void modify_inertia(COOMatrix& kkt_matrix, int number_variables, int number_constraints);
         std::vector<double> generate_kkt_rhs(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds);
         std::vector<double> compute_lower_bound_multiplier_displacements(Problem& problem, Iterate& current_iterate, std::vector<double>& solution, std::vector<Range>& variables_bounds);
         std::vector<double> compute_upper_bound_multiplier_displacements(Problem& problem, Iterate& current_iterate, std::vector<double>& solution, std::vector<Range>& variables_bounds);
         SubproblemSolution generate_direction(Problem& problem, Iterate& current_iterate, std::vector<double>& solution_IPM, std::vector<Range>& variables_bounds);
         double update_barrier_parameter(Problem& problem, Iterate& current_iterate);
-        double compute_dual_error_scaling(Iterate& current_iterate);
+        double compute_KKT_error_scaling(Iterate& current_iterate);
         
         double inertia_hessian;
         double inertia_hessian_last;
