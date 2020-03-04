@@ -27,7 +27,7 @@ SRC_FILES = base/Argonot.cpp base/Iterate.cpp \
 	base/globalization_mechanism/GlobalizationMechanism.cpp base/globalization_mechanism/TrustRegion.cpp \
 	base/globalization_mechanism/LineSearch.cpp base/globalization_mechanism/TrustLineSearch.cpp \
 	base/globalization_mechanism/GlobalizationMechanismFactory.cpp \
-	base/subproblem/Subproblem.cpp base/subproblem/SQP.cpp base/subproblem/InteriorPoint.cpp base/subproblem/SLP.cpp \
+	base/subproblem/Subproblem.cpp base/subproblem/SQP.cpp base/subproblem/InteriorPoint.cpp base/subproblem/SLP.cpp base/subproblem/SLPEQP.cpp \
 	base/subproblem/SubproblemFactory.cpp base/subproblem/SubproblemSolution.cpp base/Utils.cpp \
 	solvers/QP/BQPDSolver.cpp solvers/QP/QPSolverFactory.cpp \
 	solvers/KKT/MA57Solver.cpp solvers/NLP/LBFGSB.cpp
