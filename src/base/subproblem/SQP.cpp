@@ -25,9 +25,9 @@ SubproblemSolution SQP::compute_optimality_step(Problem& problem, Iterate& curre
     current_iterate.compute_constraints_jacobian(problem);
     
     /* bounds of the linearized constraints */
-    std::vector<Range> constraints_bounds = this->generate_optimality_bounds(problem, current_iterate.constraints);
+    std::vector<Range> constraints_bounds = Subproblem::generate_constraints_bounds(problem, current_iterate.constraints);
 
-    /* generate the initial solution */
+    /* generate the initial point */
     std::vector<double> d0(variables_bounds.size()); // = {0.}
 
     /* solve the QP */
@@ -53,7 +53,7 @@ SubproblemSolution SQP::compute_infeasibility_step(Problem& problem, Iterate& cu
     /* compute the objective */
     this->set_feasibility_objective_(problem, current_iterate, phase_II_solution.constraint_partition);
 
-    /* generate the initial solution */
+    /* generate the initial point */
     std::vector<double> d0 = phase_II_solution.x;
 
     /* solve the QP */
@@ -62,7 +62,7 @@ SubproblemSolution SQP::compute_infeasibility_step(Problem& problem, Iterate& cu
     return solution;
 }
 
-double SQP::compute_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
+double SQP::compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
     if (step_length == 1.) {
         /* full step */
         return -solution.objective;
@@ -75,7 +75,6 @@ double SQP::compute_predicted_reduction(Iterate& current_iterate, SubproblemSolu
     } 
 }
 
-/* additional variables */
 SubproblemSolution SQP::compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, double penalty_parameter, PenaltyDimensions penalty_dimensions) {
     /* generate the initial solution */
     std::vector<double> d0(problem.number_variables); // = {0.}
@@ -88,16 +87,6 @@ SubproblemSolution SQP::compute_l1_penalty_step(Problem& problem, Iterate& curre
 }
 
 /* private methods */
-
-std::vector<Range> SQP::generate_optimality_bounds(Problem& problem, std::vector<double>& current_constraints) {
-    std::vector<Range> constraints_bounds(problem.number_constraints);
-    for (int j = 0; j < problem.number_constraints; j++) {
-        double lb = problem.constraints_bounds[j].lb - current_constraints[j];
-        double ub = problem.constraints_bounds[j].ub - current_constraints[j];
-        constraints_bounds[j] = {lb, ub};
-    }
-    return constraints_bounds;
-}
 
 std::vector<double> SQP::generate_feasibility_multipliers(Problem& problem, std::vector<double>& current_constraint_multipliers, ConstraintPartition& constraint_partition) {
     std::vector<double> constraint_multipliers(problem.number_constraints);

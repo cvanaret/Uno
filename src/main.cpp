@@ -33,9 +33,10 @@ void run_argonot(std::string problem_name, std::map<std::string, std::string> op
 
     /* initial primal and dual points */
     std::vector<double> x = problem.primal_initial_solution();
-    std::vector<double> bound_multipliers(problem.number_variables);
+    std::vector<double> lower_bound_multipliers(problem.number_variables);
+    std::vector<double> upper_bound_multipliers(problem.number_variables);
     std::vector<double> constraint_multipliers = problem.dual_initial_solution();
-    Multipliers multipliers = {bound_multipliers, constraint_multipliers};
+    Multipliers multipliers = {lower_bound_multipliers, upper_bound_multipliers, constraint_multipliers};
 
     Result result = argonot.solve(problem, x, multipliers);
     result.display();
@@ -65,7 +66,7 @@ std::map<std::string, std::string> get_command_options(int argc, char* argv[], s
 Level Logger::logger_level = INFO;
 
 void set_logger(std::map<std::string, std::string> options) {
-    Logger::logger_level = INFO;
+    Logger::logger_level = DEBUG;
 
     try {
         std::string logger_level = options.at("logger");

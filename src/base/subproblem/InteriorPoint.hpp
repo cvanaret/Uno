@@ -23,36 +23,39 @@ class InteriorPoint : public Subproblem {
         SubproblemSolution compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, double penalty_parameter, PenaltyDimensions penalty_dimensions) override;
 
         void compute_measures(Problem& problem, Iterate& iterate) override;
-        double compute_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
+        double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
         bool phase_1_required(SubproblemSolution& solution) override;
         
-        double objective(Problem& problem, Iterate& iterate);
+        double barrier_objective(Problem& problem, Iterate& iterate);
         double constraint_violation(Problem& problem, Iterate& iterate);
-        double evaluate_local_model(Problem& problem, Iterate& current_iterate, std::vector<double>& solution);
+        double compute_central_complementarity_error(const Problem& problem, Iterate& iterate, double mu);
         
         MA57Solver solver; /*!< Solver that solves the subproblem */
-
         /* barrier parameter */
         double mu;
 
         /* data structures */
-        std::vector<int> lower_bounded_variables; /* indices of the variables with lower bounds */
-        std::vector<int> upper_bounded_variables; /* indices of the variables with upper bounds */
-        std::vector<int> lower_bounded_slacks; /* indices of the slacks with lower bounds */
-        std::vector<int> upper_bounded_slacks; /* indices of the slacks with upper bounds */
-        MA57Data data;
+        std::vector<int> lower_bounded_variables; /* indices of the lower-bounded variables */
+        std::vector<int> upper_bounded_variables; /* indices of the upper-bounded variables */
+        std::map<int, int> lower_bounded_slacks; /* indices of the lower-bounded slacks */
+        std::map<int, int> upper_bounded_slacks; /* indices of the upper-bounded slacks */
+        MA57Data factorization_data;
 
     private:
-        double project_variable_in_bounds(double current_value, double lb, double ub);
+        double evaluate_local_model(Problem& problem, Iterate& current_iterate, std::vector<double>& solution);
+        std::map<int, double> barrier_function_gradient(Problem& problem, Iterate& current_iterate);
+        double project_variable_in_bounds(double current_value, Range& variable_bounds);
         std::vector<double> estimate_initial_multipliers(Problem& problem, Iterate& current_iterate);
         double compute_primal_length(Problem& problem, Iterate& iterate, std::vector<double>& ipm_solution, double tau, std::vector<Range>& variables_bounds);
-        double compute_dual_length(Iterate& current_iterate, double tau, std::vector<double>& delta_z);
+        double compute_dual_length(Iterate& current_iterate, double tau, std::vector<double>& lower_delta_z, std::vector<double>& upper_delta_z);
         COOMatrix generate_kkt_matrix(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds);
-        void inertia_correction(Problem& problem, COOMatrix& kkt_matrix);
+        void correct_inertia(Problem& problem, COOMatrix& kkt_matrix);
         std::vector<double> generate_kkt_rhs(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds);
-        std::vector<double> compute_bound_multiplier_displacements(Problem& problem, Iterate& current_iterate, std::vector<double>& solution, std::vector<Range>& variables_bounds);
+        std::vector<double> compute_lower_bound_multiplier_displacements(Problem& problem, Iterate& current_iterate, std::vector<double>& solution, std::vector<Range>& variables_bounds);
+        std::vector<double> compute_upper_bound_multiplier_displacements(Problem& problem, Iterate& current_iterate, std::vector<double>& solution, std::vector<Range>& variables_bounds);
+        SubproblemSolution generate_direction(Problem& problem, Iterate& current_iterate, std::vector<double>& solution_IPM, std::vector<Range>& variables_bounds);
         double update_barrier_parameter(Problem& problem, Iterate& current_iterate);
-        double compute_error(Problem& problem, Iterate& iterate);
+        double compute_dual_error_scaling(Iterate& current_iterate);
         
         double inertia_hessian;
         double inertia_hessian_last;
@@ -62,6 +65,9 @@ class InteriorPoint : public Subproblem {
         double tau_min;
         double default_multiplier;
         double k_sigma;
+        double smax;
+        double k_mu;
+        double theta_mu;
         
         int iteration;
 };

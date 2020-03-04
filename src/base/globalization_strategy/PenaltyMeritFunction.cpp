@@ -1,4 +1,5 @@
 #include <cmath>
+#include "Argonot.hpp"
 #include "PenaltyMeritFunction.hpp"
 #include "Logger.hpp"
 
@@ -7,7 +8,7 @@
  * http://epubs.siam.org/doi/pdf/10.1137/080738222
  */
 
-PenaltyStrategy::PenaltyStrategy(Subproblem& subproblem, double tolerance) :
+PenaltyMeritFunction::PenaltyMeritFunction(Subproblem& subproblem, double tolerance) :
 GlobalizationStrategy(subproblem, tolerance), penalty_parameter(1.) {
     this->tau = 0.5;
     this->eta = 1e-8;
@@ -15,7 +16,7 @@ GlobalizationStrategy(subproblem, tolerance), penalty_parameter(1.) {
     this->epsilon2 = 0.1;
 }
 
-Iterate PenaltyStrategy::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) {
+Iterate PenaltyMeritFunction::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) {
     /* compute the number of necessary additional variables and constraints */
     this->penalty_dimensions.number_additional_variables = 0;
     this->penalty_dimensions.number_constraints = 0;
@@ -41,13 +42,13 @@ Iterate PenaltyStrategy::initialize(Problem& problem, std::vector<double>& x, Mu
     int number_constraints = this->penalty_dimensions.number_constraints;
     Iterate first_iterate = this->subproblem.initialize(problem, x, multipliers, number_variables, number_constraints, use_trust_region);
 
-    first_iterate.KKTerror = this->compute_KKT_error(problem, first_iterate, this->penalty_parameter);
-    first_iterate.complementarity_error = this->compute_complementarity_error(problem, first_iterate);
+    first_iterate.KKTerror = Argonot::compute_KKT_error(problem, first_iterate, this->penalty_parameter);
+    first_iterate.complementarity_error = Argonot::compute_complementarity_error(problem, first_iterate);
 
     return first_iterate;
 }
 
-SubproblemSolution PenaltyStrategy::compute_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds) {
+SubproblemSolution PenaltyMeritFunction::compute_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds) {
     /* stage a: compute the step within trust region */
     SubproblemSolution solution = this->subproblem.compute_l1_penalty_step(problem, current_iterate, variables_bounds, this->penalty_parameter, this->penalty_dimensions);
     DEBUG << solution;
@@ -124,7 +125,7 @@ SubproblemSolution PenaltyStrategy::compute_step(Problem& problem, Iterate& curr
     return solution;
 }
 
-bool PenaltyStrategy::check_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
+bool PenaltyMeritFunction::check_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
     /* stage g: line-search along fixed step */
 
     /* retrieve only original primal and dual variables from the step */
@@ -153,8 +154,8 @@ bool PenaltyStrategy::check_step(Problem& problem, Iterate& current_iterate, Sub
     bool accept = false;
     if (current_exact_l1_penalty - trial_exact_l1_penalty >= this->eta * step_length * (current_iterate.residual - solution.objective)) {
         accept = true;
-        trial_iterate.KKTerror = this->compute_KKT_error(problem, trial_iterate, this->penalty_parameter);
-        trial_iterate.complementarity_error = this->compute_complementarity_error(problem, trial_iterate);
+        trial_iterate.KKTerror = Argonot::compute_KKT_error(problem, trial_iterate, this->penalty_parameter);
+        trial_iterate.complementarity_error = Argonot::compute_complementarity_error(problem, trial_iterate);
         double step_norm = step_length * norm_inf(d);
         trial_iterate.status = this->compute_status(problem, trial_iterate, step_norm);
         current_iterate = trial_iterate;
@@ -162,7 +163,7 @@ bool PenaltyStrategy::check_step(Problem& problem, Iterate& current_iterate, Sub
     return accept;
 }
 
-OptimalityStatus PenaltyStrategy::compute_status(Problem& problem, Iterate& trial_iterate, double step_norm) {
+OptimalityStatus PenaltyMeritFunction::compute_status(Problem& problem, Iterate& trial_iterate, double step_norm) {
     OptimalityStatus status = NOT_OPTIMAL;
 
     /* test for optimality */
@@ -173,7 +174,8 @@ OptimalityStatus PenaltyStrategy::compute_status(Problem& problem, Iterate& tria
         /* rescale the multipliers */
         if (0. < this->penalty_parameter) {
             for (int i = 0; i < problem.number_variables; i++) {
-                trial_iterate.multipliers.bounds[i] /= this->penalty_parameter;
+                trial_iterate.multipliers.lower_bounds[i] /= this->penalty_parameter;
+                trial_iterate.multipliers.upper_bounds[i] /= this->penalty_parameter;
             }
             for (int j = 0; j < problem.number_constraints; j++) {
                 trial_iterate.multipliers.constraints[j] /= this->penalty_parameter;
@@ -196,7 +198,7 @@ OptimalityStatus PenaltyStrategy::compute_status(Problem& problem, Iterate& tria
     return status;
 }
 
-double PenaltyStrategy::compute_linear_model(Problem& problem, SubproblemSolution& solution) {
+double PenaltyMeritFunction::compute_linear_model(Problem& problem, SubproblemSolution& solution) {
     double linear_model = 0.;
     for (int k = 0; k < this->penalty_dimensions.number_additional_variables; k++) {
         linear_model += solution.x[problem.number_variables + k];
@@ -204,15 +206,15 @@ double PenaltyStrategy::compute_linear_model(Problem& problem, SubproblemSolutio
     return linear_model;
 }
 
-std::vector<double> PenaltyStrategy::compute_bound_multipliers(Problem& problem, SubproblemSolution& solution) {
+std::vector<double> PenaltyMeritFunction::compute_bound_multipliers(Problem& problem, SubproblemSolution& solution) {
     std::vector<double> bound_multipliers(problem.number_variables);
     for (int i = 0; i < problem.number_variables; i++) {
-        bound_multipliers[i] = solution.multipliers.bounds[i];
+        bound_multipliers[i] = solution.multipliers.lower_bounds[i] + solution.multipliers.upper_bounds[i];
     }
     return bound_multipliers;
 }
 
-std::vector<double> PenaltyStrategy::compute_constraint_multipliers(Problem& problem, SubproblemSolution& solution) {
+std::vector<double> PenaltyMeritFunction::compute_constraint_multipliers(Problem& problem, SubproblemSolution& solution) {
     std::vector<double> constraint_multipliers(problem.number_constraints);
     int current_constraint = 0;
     for (int j = 0; j < problem.number_constraints; j++) {
@@ -230,12 +232,12 @@ std::vector<double> PenaltyStrategy::compute_constraint_multipliers(Problem& pro
     return constraint_multipliers;
 }
 
-double PenaltyStrategy::compute_error(Problem& problem, Iterate& current_iterate, Multipliers& multipliers, double penalty_parameter) {
+double PenaltyMeritFunction::compute_error(Problem& problem, Iterate& current_iterate, Multipliers& multipliers, double penalty_parameter) {
     /* measure that combines KKT error and complementarity error */
     double error = 0.;
 
     /* KKT error */
-    std::vector<double> lagrangian_gradient = this->compute_lagrangian_gradient(problem, current_iterate, penalty_parameter, multipliers);
+    std::vector<double> lagrangian_gradient = Argonot::compute_lagrangian_gradient(problem, current_iterate, penalty_parameter, multipliers);
     // compute 1-norm
     error += norm_1(lagrangian_gradient);
 
@@ -243,13 +245,8 @@ double PenaltyStrategy::compute_error(Problem& problem, Iterate& current_iterate
     // bound constraints
     for (int i = 0; i < problem.number_variables; i++) {
         if (problem.variables_bounds[i].lb < current_iterate.x[i] && current_iterate.x[i] < problem.variables_bounds[i].ub) {
-            double multiplier_i = multipliers.bounds[i];
-
-            if (multiplier_i > 0.) {
-                error += std::abs(multiplier_i * (current_iterate.x[i] - problem.variables_bounds[i].lb));
-            } else if (multiplier_i < 0.) {
-                error += std::abs(multiplier_i * (current_iterate.x[i] - problem.variables_bounds[i].ub));
-            }
+            error += std::abs(multipliers.lower_bounds[i] * (current_iterate.x[i] - problem.variables_bounds[i].lb));
+            error += std::abs(multipliers.upper_bounds[i] * (current_iterate.x[i] - problem.variables_bounds[i].ub));
         }
     }
     // check if constraint is strictly satisfied or violated
@@ -295,7 +292,7 @@ double PenaltyStrategy::compute_error(Problem& problem, Iterate& current_iterate
 //}
 //}
 
-void PenaltyStrategy::compute_measures(Problem& problem, Iterate& iterate) {
+void PenaltyMeritFunction::compute_measures(Problem& problem, Iterate& iterate) {
     this->subproblem.compute_measures(problem, iterate);
     // TODO: add the penalized term to the optimality measure
     return;

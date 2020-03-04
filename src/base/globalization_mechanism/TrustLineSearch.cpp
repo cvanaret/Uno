@@ -96,12 +96,12 @@ std::vector<Range> TrustLineSearch::compute_variables_bounds(Problem& problem, I
 void TrustLineSearch::correct_multipliers(Problem& problem, SubproblemSolution& solution) {
     for (int i : solution.active_set.at_upper_bound) {
         if (i < problem.number_variables && solution.x[i] == this->radius) {
-            solution.multipliers.bounds[i] = 0.;
+            solution.multipliers.upper_bounds[i] = 0.;
         }
     }
     for (int i : solution.active_set.at_lower_bound) {
         if (i < problem.number_variables && solution.x[i] == -this->radius) {
-            solution.multipliers.bounds[i] = 0.;
+            solution.multipliers.lower_bounds[i] = 0.;
         }
     }
     return;

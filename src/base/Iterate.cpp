@@ -60,16 +60,11 @@ void Iterate::compute_hessian(Problem& problem, double objective_multiplier, std
 }
 
 std::ostream& operator<<(std::ostream &stream, Iterate& iterate) {
-    stream << "x: ";
-    print_vector(stream, iterate.x, 0, 50);
-
-    stream << "Bound multipliers: ";
-    print_vector(stream, iterate.multipliers.bounds, 0, 50);
-
-    stream << "Constraint multipliers: ";
-    print_vector(stream, iterate.multipliers.constraints, 0, 50);
-
-    stream << "Objective: " << iterate.objective << "\n";
+    stream << "x: "; print_vector(stream, iterate.x, 0, 50);
+    stream << "Lower bound multipliers: "; print_vector(stream, iterate.multipliers.lower_bounds, 0, 50);
+    stream << "Upper bound multipliers: "; print_vector(stream, iterate.multipliers.upper_bounds, 0, 50);
+    stream << "Constraint multipliers: "; print_vector(stream, iterate.multipliers.constraints, 0, 50);
+    stream << "Objective value: " << iterate.objective << "\n";
 
     //stream << "Constraints:";
     //for (double cj: iterate.constraints) {
@@ -77,7 +72,7 @@ std::ostream& operator<<(std::ostream &stream, Iterate& iterate) {
     //}
     //stream << "\n";
 
-    stream << "Residual: " << iterate.residual << "\n";
+    stream << "Constraint residual: " << iterate.residual << "\n";
 
     stream << "Optimality measure: " << iterate.optimality_measure << "\n";
     stream << "Feasibility measure: " << iterate.feasibility_measure << "\n";

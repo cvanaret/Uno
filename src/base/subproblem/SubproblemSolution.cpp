@@ -76,11 +76,9 @@ std::ostream& operator<<(std::ostream &stream, SubproblemSolution& solution) {
     }
     stream << "\n";
 
-    stream << "bound multipliers = ";
-    print_vector(stream, solution.multipliers.bounds);
-
-    stream << "constraint multipliers = ";
-    print_vector(stream, solution.multipliers.constraints);
+    stream << "lower bound multipliers = "; print_vector(stream, solution.multipliers.lower_bounds);
+    stream << "upper bound multipliers = "; print_vector(stream, solution.multipliers.upper_bounds);
+    stream << "constraint multipliers = "; print_vector(stream, solution.multipliers.constraints);
 
     //stream << RESET;
 

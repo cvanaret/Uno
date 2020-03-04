@@ -29,7 +29,8 @@ struct ConstraintPartition {
 };
 
 struct Multipliers {
-    std::vector<double> bounds; /*!< Multipliers of the bound constraints */
+    std::vector<double> lower_bounds; /*!< Multipliers of the lower bound constraints */
+    std::vector<double> upper_bounds; /*!< Multipliers of the lower bound constraints */
     std::vector<double> constraints; /*!< Multipliers of the general constraints */
 };
 

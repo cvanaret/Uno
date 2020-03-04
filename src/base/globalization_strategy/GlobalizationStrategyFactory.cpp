@@ -8,7 +8,7 @@ std::shared_ptr<GlobalizationStrategy> GlobalizationStrategyFactory::create(cons
     double tolerance = stod(default_values["tolerance"]);
 
     if (type == "penalty") {
-            return std::make_shared<PenaltyStrategy>(subproblem, tolerance);
+            return std::make_shared<PenaltyMeritFunction>(subproblem, tolerance);
     }
     else if (type == "filter" || type == "nonmonotone_filter") {
             double Sigma = stod(default_values["Sigma"]);

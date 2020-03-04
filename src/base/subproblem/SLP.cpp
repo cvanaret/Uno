@@ -24,14 +24,9 @@ SubproblemSolution SLP::compute_optimality_step(Problem& problem, Iterate& curre
     current_iterate.compute_constraints_jacobian(problem);
 
     /* bounds of the linearized constraints */
-    std::vector<Range> constraints_bounds(problem.number_constraints);
-    for (int j = 0; j < problem.number_constraints; j++) {
-        double lb = problem.constraints_bounds[j].lb - current_iterate.constraints[j];
-        double ub = problem.constraints_bounds[j].ub - current_iterate.constraints[j];
-        constraints_bounds[j] = {lb, ub};
-    }
-
-    /* generate the initial solution */
+    std::vector<Range> constraints_bounds = Subproblem::generate_constraints_bounds(problem, current_iterate.constraints);
+    
+    /* generate the initial point */
     std::vector<double> d0(variables_bounds.size()); // = {0.}
 
     /* solve the QP */
@@ -79,7 +74,7 @@ SubproblemSolution SLP::compute_infeasibility_step(Problem& problem, Iterate& cu
     /* compute the objective */
     this->set_infeasibility_objective_(problem, current_iterate, phase_II_solution.constraint_partition);
 
-    /* generate the initial solution */
+    /* generate the initial point */
     std::vector<double> d0 = phase_II_solution.x;
 
     /* solve the QP */
@@ -88,7 +83,7 @@ SubproblemSolution SLP::compute_infeasibility_step(Problem& problem, Iterate& cu
     return solution;
 }
 
-double SLP::compute_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
+double SLP::compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
     if (step_length == 1.) {
         return -solution.objective;
     } else {
@@ -122,18 +117,15 @@ SubproblemSolution SLP::compute_l1_penalty_step(Problem& problem, Iterate& curre
 void SLP::set_infeasibility_objective_(Problem& problem, Iterate& current_iterate, ConstraintPartition& constraint_partition) {
     /* objective function: add the gradients of infeasible constraints */
     std::map<int, double> objective_gradient;
-
-    for (unsigned int k = 0; k < constraint_partition.infeasible_set.size(); k++) {
-        int j = constraint_partition.infeasible_set[k];
-        /* combine into objective_gradient */
-
+    for (int j: constraint_partition.infeasible_set) {
         for (std::pair<int, double> term : current_iterate.constraints_jacobian[j]) {
             int variable_index = term.first;
             double derivative = term.second;
 
             if (constraint_partition.constraint_status[j] == INFEASIBLE_LOWER) {
                 objective_gradient[variable_index] -= derivative;
-            } else {
+            }
+            else {
                 objective_gradient[variable_index] += derivative;
             }
         }

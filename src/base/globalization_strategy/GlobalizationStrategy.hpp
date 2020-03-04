@@ -37,10 +37,8 @@ class GlobalizationStrategy {
         
     protected:
         virtual void compute_measures(Problem& problem, Iterate& iterate) = 0;
-        std::vector<double> compute_lagrangian_gradient(Problem& problem, Iterate& current_iterate, double objective_multiplier, Multipliers& multipliers);
-        double compute_complementarity_error(const Problem& problem, Iterate& iterate);
         // specific to the strategy (objective multiplier depends on the strategy)
-        double compute_KKT_error(Problem& problem, Iterate& iterate, double objective_mutiplier);
+        double compute_KKT_error(Problem& problem, Iterate& iterate, double objective_mutiplier, std::string norm = "l2");
 };
 
 #endif // GLOBALIZATIONSTRATEGY_H

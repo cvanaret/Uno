@@ -10,12 +10,12 @@
  *
  *  Strategy that accepts or declines a trial step
  */
-class PenaltyStrategy : public GlobalizationStrategy {
+class PenaltyMeritFunction : public GlobalizationStrategy {
     public:
         /*!
          *  Constructor that takes an optimization problem and a set of constants
          */
-        PenaltyStrategy(Subproblem& subproblem, double tolerance);
+        PenaltyMeritFunction(Subproblem& subproblem, double tolerance);
 
         SubproblemSolution compute_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds) override;
 

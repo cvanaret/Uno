@@ -157,8 +157,6 @@ SubproblemSolution BQPDSolver::solve_QP(std::vector<Range>& variables_bounds, st
 }
 
 SubproblemSolution BQPDSolver::solve_LP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, std::vector<double>& x) {
-    int kmax = 0;
-
     /* Jacobian */
     // TODO preallocate
     std::vector<double> jacobian;
@@ -200,6 +198,7 @@ SubproblemSolution BQPDSolver::solve_LP(std::vector<Range>& variables_bounds, st
     }
 
     /* call BQPD */
+    int kmax = 0; // for LPs
     bqpd_(&this->n_, &this->m_, &this->k_, &kmax, jacobian.data(), jacobian_sparsity.data(), x.data(),
             lb.data(), ub.data(), &this->f_solution_, &this->fmin_, this->gradient_solution_.data(),
             this->residuals_.data(), this->w_.data(), this->e_.data(), this->ls_.data(), this->alp_.data(),
@@ -221,7 +220,8 @@ SubproblemSolution BQPDSolver::solve_LP(std::vector<Range>& variables_bounds, st
 }
 
 SubproblemSolution BQPDSolver::generate_solution(std::vector<double>& x) {
-    std::vector<double> bound_multipliers(this->n_);
+    std::vector<double> lower_bound_multipliers(this->n_);
+    std::vector<double> upper_bound_multipliers(this->n_);
     std::vector<double> constraint_multipliers(this->m_);
     ActiveSet active_set;
     active_set.at_lower_bound.reserve(this->n_ - this->k_);
@@ -243,7 +243,12 @@ SubproblemSolution BQPDSolver::generate_solution(std::vector<double>& x) {
         }
 
         if (index < this->n_) {
-            bound_multipliers[index] = (this->ls_[j] < 0) ? -this->residuals_[index] : this->residuals_[index];
+            if (this->ls_[j] < 0) { /* upper bound active */
+                upper_bound_multipliers[index] = -this->residuals_[index];
+            }
+            else { /* lower bound active */
+                lower_bound_multipliers[index] = this->residuals_[index];
+            }
         }
         else {
             int constraint_index = index - this->n_;
@@ -276,7 +281,7 @@ SubproblemSolution BQPDSolver::generate_solution(std::vector<double>& x) {
     }
     constraint_partition.constraint_status = constraint_status;
 
-    Multipliers multipliers = {bound_multipliers, constraint_multipliers};
+    Multipliers multipliers = {lower_bound_multipliers, upper_bound_multipliers, constraint_multipliers};
     SubproblemSolution solution(x, multipliers, active_set, constraint_partition);
     solution.status = int_to_status(this->ifail_);
     // phase

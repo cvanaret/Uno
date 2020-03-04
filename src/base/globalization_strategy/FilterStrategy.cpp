@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cmath>
+#include "Argonot.hpp"
 #include "FilterStrategy.hpp"
 #include "Utils.hpp"
 
@@ -13,9 +14,9 @@ Iterate FilterStrategy::initialize(Problem& problem, std::vector<double>& x, Mul
     /* initialize the subproblem */
     Iterate first_iterate = this->subproblem.initialize(problem, x, multipliers, problem.number_variables, problem.number_constraints, use_trust_region);
 
-    first_iterate.KKTerror = this->compute_KKT_error(problem, first_iterate, 1.);
-    first_iterate.complementarity_error = this->compute_complementarity_error(problem, first_iterate);
-
+    first_iterate.KKTerror = Argonot::compute_KKT_error(problem, first_iterate, 1.);
+    first_iterate.complementarity_error = Argonot::compute_complementarity_error(problem, first_iterate);
+    
     /* set the filter upper bound */
     double upper_bound = std::max(this->constants.ubd, this->constants.fact * first_iterate.feasibility_measure);
     this->filter_optimality->upper_bound = upper_bound;
@@ -48,8 +49,8 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
             trial_iterate.optimality_measure = problem.infeasible_residual_norm(solution.constraint_partition, trial_iterate.constraints);
         }
 
-        DEBUG << "TESTING trial " << trial_iterate.feasibility_measure << " " << trial_iterate.optimality_measure << " against current ";
-        DEBUG << current_iterate.feasibility_measure << " " << current_iterate.optimality_measure << "\n";
+        DEBUG << "TESTING trial (" << trial_iterate.feasibility_measure << ", " << trial_iterate.optimality_measure << ") against current (";
+        DEBUG << current_iterate.feasibility_measure << ", " << current_iterate.optimality_measure << ")\n";
 
         /* check acceptance */
         Filter& filter = (this->phase == OPTIMALITY) ? *(this->filter_optimality) : *(this->filter_restoration);
@@ -58,7 +59,7 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
             // check acceptance wrt current x (h,f)
             acceptable = filter.query_current_iterate(current_iterate.feasibility_measure, current_iterate.optimality_measure, trial_iterate.feasibility_measure, trial_iterate.optimality_measure);
             if (acceptable) {
-                double predicted_reduction = this->subproblem.compute_predicted_reduction(current_iterate, solution, step_length);
+                double predicted_reduction = this->subproblem.compute_predicted_reduction(problem, current_iterate, solution, step_length);
                 double actual_reduction = filter.compute_actual_reduction(current_iterate.optimality_measure, current_iterate.feasibility_measure, trial_iterate.optimality_measure);
                 DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << current_iterate.optimality_measure << "-" << trial_iterate.optimality_measure << " = " << actual_reduction << "\n\n";
 
@@ -69,7 +70,7 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
                 }
                     /* sufficient decrease condition */
                     //else if (actual_reduction >= this->constants.Sigma * std::max(0., predicted_reduction - 1e-9)) {
-                else if (actual_reduction >= this->constants.Sigma * predicted_reduction) {
+                else if (actual_reduction >= this->constants.Sigma * std::max(0., predicted_reduction - 1e-9)) {
                     accept = true;
                 }
             }
@@ -83,8 +84,8 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
         }
         current_iterate = trial_iterate;
         double objective_multiplier = (this->phase == OPTIMALITY) ? 1. : 0.;
-        current_iterate.KKTerror = this->compute_KKT_error(problem, current_iterate, objective_multiplier);
-        current_iterate.complementarity_error = (this->phase == OPTIMALITY) ? this->compute_complementarity_error(problem, current_iterate) : 0.;
+        current_iterate.KKTerror = Argonot::compute_KKT_error(problem, current_iterate, objective_multiplier);
+        current_iterate.complementarity_error = (this->phase == OPTIMALITY) ? Argonot::compute_complementarity_error(problem, current_iterate) : 0.;
         current_iterate.status = this->compute_status(problem, current_iterate, step_norm);
         INFO << "phase: " << this->phase << "\t";
     }

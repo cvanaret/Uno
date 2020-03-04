@@ -20,68 +20,72 @@ struct Result {
 };
 
 /*! \class Argonot
-* \brief Argonot
-*
-*  Argonot solver
-*/
+ * \brief Argonot
+ *
+ *  Argonot solver
+ */
 class Argonot {
-	public:
-		/*!
-         *  Constructor
-         * 
-         * \param globalization_strategy: strategy to promote global convergence
-         * \param tolerance: tolerance for termination criteria
-         */
-		Argonot(GlobalizationMechanism& globalization_mechanism, int max_iterations = 1000);
-		
-		/*!
-         *  Solve a given problem with initial primal and dual variables
-         * 
-         * \param problem: optimization problem
-         * \param x: primal variables
-         * \param multipliers: Lagrange multipliers/dual variables
-         */
-		Result solve(Problem& problem, std::vector<double>& x, Multipliers& multipliers);
-		
-		GlobalizationMechanism& globalization_mechanism; /*!< Step control strategy (trust region or line-search) */
-		int max_iterations; /*!< Maximum number of iterations */
-	
-	private:
-		/*!
-         *  Determine whether the optimization process is over
-         * 
-         * \param is_optimal: optimality status
-         * \param iteration: current iteration number
-         */
-		bool termination_criterion(OptimalityStatus is_optimal, int iteration);
-		
-		/*!
-         *  Determine if the current point satisfies optimality criteria
-         * 
-         * \param problem: optimization problem
-         * \param phase: current phase (optimality or feasibility restoration)
-         * \param current_iterate: current point and its evaluations
-         */
-		OptimalityStatus optimality_test(Problem& problem, Phase& phase, Iterate& current_iterate);
-		
-		/*!
-         *  Compute the KKT error
-         * 
-         * \param problem: optimization problem
-         * \param phase: current phase (optimality or feasibility restoration)
-         * \param current_iterate: current point and its evaluations
+public:
+    /*!
+     *  Constructor
+     * 
+     * \param globalization_strategy: strategy to promote global convergence
+     * \param tolerance: tolerance for termination criteria
+     */
+    Argonot(GlobalizationMechanism& globalization_mechanism, int max_iterations = 1000);
 
-         */
-		double compute_KKT_error(Problem& problem, Phase& phase, Iterate& current_iterate);
-			
-		/*!
-         *  Compute the complementarity error
-         * 
-         * \param problem: optimization problem
-         * \param phase: current phase (optimality or feasibility restoration)
-         * \param current_iterate: current point and its evaluations
-         */
-		double compute_complementarity_error(const Problem& problem, Phase& phase, Iterate& current_iterate);
+    /*!
+     *  Solve a given problem with initial primal and dual variables
+     * 
+     * \param problem: optimization problem
+     * \param x: primal variables
+     * \param multipliers: Lagrange multipliers/dual variables
+     */
+    Result solve(Problem& problem, std::vector<double>& x, Multipliers& multipliers);
+
+    static std::vector<double> compute_lagrangian_gradient(Problem& problem, Iterate& current_iterate, double objective_multiplier, Multipliers& multipliers);
+    static double compute_KKT_error(Problem& problem, Iterate& iterate, double objective_mutiplier, std::string norm = "l2");
+    static double compute_complementarity_error(const Problem& problem, Iterate& iterate);
+    
+    GlobalizationMechanism& globalization_mechanism; /*!< Step control strategy (trust region or line-search) */
+    int max_iterations; /*!< Maximum number of iterations */
+
+private:
+    /*!
+     *  Determine whether the optimization process is over
+     * 
+     * \param is_optimal: optimality status
+     * \param iteration: current iteration number
+     */
+    bool termination_criterion(OptimalityStatus is_optimal, int iteration);
+
+    /*!
+     *  Determine if the current point satisfies optimality criteria
+     * 
+     * \param problem: optimization problem
+     * \param phase: current phase (optimality or feasibility restoration)
+     * \param current_iterate: current point and its evaluations
+     */
+    OptimalityStatus optimality_test(Problem& problem, Phase& phase, Iterate& current_iterate);
+
+    /*!
+     *  Compute the KKT error
+     * 
+     * \param problem: optimization problem
+     * \param phase: current phase (optimality or feasibility restoration)
+     * \param current_iterate: current point and its evaluations
+
+     */
+    double compute_KKT_error(Problem& problem, Phase& phase, Iterate& current_iterate);
+
+    /*!
+     *  Compute the complementarity error
+     * 
+     * \param problem: optimization problem
+     * \param phase: current phase (optimality or feasibility restoration)
+     * \param current_iterate: current point and its evaluations
+     */
+    double compute_complementarity_error(const Problem& problem, Phase& phase, Iterate& current_iterate);
 };
 
 #endif // ARGONOT_H
