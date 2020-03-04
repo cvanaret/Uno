@@ -28,15 +28,17 @@ struct ConstraintPartition {
 	std::vector<ConstraintFeasibility> constraint_status;
 };
 
+struct Range {
+	double lb;
+	double ub;
+};
+
 struct Multipliers {
     std::vector<double> lower_bounds; /*!< Multipliers of the lower bound constraints */
     std::vector<double> upper_bounds; /*!< Multipliers of the lower bound constraints */
     std::vector<double> constraints; /*!< Multipliers of the general constraints */
-};
-
-struct Range {
-	double lb;
-	double ub;
+    
+    Multipliers(int number_variables, int number_constraints);
 };
 
 #endif // CONSTRAINT_H

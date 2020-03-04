@@ -65,9 +65,10 @@ SubproblemSolution PenaltyMeritFunction::compute_step(Problem& problem, Iterate&
             DEBUG << ideal_solution;
 
             /* stage f: update the penalty parameter */
-            std::vector<double> ideal_bound_multipliers = this->compute_bound_multipliers(problem, ideal_solution);
-            std::vector<double> ideal_constraint_multipliers = this->compute_constraint_multipliers(problem, ideal_solution);
-            Multipliers ideal_multipliers = {ideal_bound_multipliers, ideal_constraint_multipliers};
+            Multipliers ideal_multipliers(current_iterate.x.size(), current_iterate.constraints.size());
+            // TODO
+            //std::vector<double> ideal_bound_multipliers = this->compute_bound_multipliers(problem, ideal_solution);
+            //std::vector<double> ideal_constraint_multipliers = this->compute_constraint_multipliers(problem, ideal_solution);
             /* compute the ideal error (with a zero penalty parameter) */
             double ideal_error = this->compute_error(problem, current_iterate, ideal_multipliers, 0.);
 
@@ -137,10 +138,12 @@ bool PenaltyMeritFunction::check_step(Problem& problem, Iterate& current_iterate
     /* generate the trial point */
     std::vector<double> x_trial = add_vectors(current_iterate.x, d, step_length);
     /* get the multipliers */
-    std::vector<double> bound_multipliers = this->compute_bound_multipliers(problem, solution);
-    std::vector<double> constraint_multipliers = this->compute_constraint_multipliers(problem, solution);
-    std::vector<double> trial_constraint_multipliers = add_vectors(current_iterate.multipliers.constraints, constraint_multipliers, step_length);
-    Multipliers trial_multipliers = {bound_multipliers, trial_constraint_multipliers};
+    Multipliers trial_multipliers(current_iterate.x.size(), current_iterate.constraints.size());
+    // TODO
+    //std::vector<double> bound_multipliers = this->compute_bound_multipliers(problem, solution);
+    //std::vector<double> constraint_multipliers = this->compute_constraint_multipliers(problem, solution);
+    //std::vector<double> trial_constraint_multipliers = add_vectors(current_iterate.multipliers.constraints, constraint_multipliers, step_length);
+    //Multipliers trial_multipliers = {bound_multipliers, trial_constraint_multipliers};
     /* generate the trial iterate */
     Iterate trial_iterate(problem, x_trial, trial_multipliers);
     this->compute_measures(problem, trial_iterate);

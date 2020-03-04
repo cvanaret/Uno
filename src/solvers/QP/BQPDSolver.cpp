@@ -220,9 +220,7 @@ SubproblemSolution BQPDSolver::solve_LP(std::vector<Range>& variables_bounds, st
 }
 
 SubproblemSolution BQPDSolver::generate_solution(std::vector<double>& x) {
-    std::vector<double> lower_bound_multipliers(this->n_);
-    std::vector<double> upper_bound_multipliers(this->n_);
-    std::vector<double> constraint_multipliers(this->m_);
+    Multipliers multipliers(this->n_, this->m_);
     ActiveSet active_set;
     active_set.at_lower_bound.reserve(this->n_ - this->k_);
     active_set.at_upper_bound.reserve(this->n_ - this->k_);
@@ -244,17 +242,17 @@ SubproblemSolution BQPDSolver::generate_solution(std::vector<double>& x) {
 
         if (index < this->n_) {
             if (this->ls_[j] < 0) { /* upper bound active */
-                upper_bound_multipliers[index] = -this->residuals_[index];
+                multipliers.upper_bounds[index] = -this->residuals_[index];
             }
             else { /* lower bound active */
-                lower_bound_multipliers[index] = this->residuals_[index];
+                multipliers.lower_bounds[index] = this->residuals_[index];
             }
         }
         else {
             int constraint_index = index - this->n_;
             constraint_partition.feasible_set.push_back(constraint_index);
             constraint_status[constraint_index] = FEASIBLE;
-            constraint_multipliers[constraint_index] = (this->ls_[j] < 0) ? -this->residuals_[index] : this->residuals_[index];
+            multipliers.constraints[constraint_index] = (this->ls_[j] < 0) ? -this->residuals_[index] : this->residuals_[index];
         }
     }
 
@@ -281,7 +279,6 @@ SubproblemSolution BQPDSolver::generate_solution(std::vector<double>& x) {
     }
     constraint_partition.constraint_status = constraint_status;
 
-    Multipliers multipliers = {lower_bound_multipliers, upper_bound_multipliers, constraint_multipliers};
     SubproblemSolution solution(x, multipliers, active_set, constraint_partition);
     solution.status = int_to_status(this->ifail_);
     // phase

@@ -54,7 +54,6 @@ class InteriorPoint : public Subproblem {
         std::vector<double> compute_lower_bound_multiplier_displacements(Problem& problem, Iterate& current_iterate, std::vector<double>& solution, std::vector<Range>& variables_bounds);
         std::vector<double> compute_upper_bound_multiplier_displacements(Problem& problem, Iterate& current_iterate, std::vector<double>& solution, std::vector<Range>& variables_bounds);
         SubproblemSolution generate_direction(Problem& problem, Iterate& current_iterate, std::vector<double>& solution_IPM, std::vector<Range>& variables_bounds);
-        double update_barrier_parameter(Problem& problem, Iterate& current_iterate);
         double compute_KKT_error_scaling(Iterate& current_iterate);
         
         double inertia_hessian;

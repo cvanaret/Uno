@@ -69,10 +69,15 @@ SubproblemSolution LBFGSB::solve(Problem& problem, Iterate& current_iterate,
         }
         stop = (iterations >= max_iterations || !(strncmp(this->task_, "FG", 2) == 0 || strncmp(this->task_, "NEW_X", 5) == 0 || strncmp(this->task_, "START", 5) == 0));
     }
-    
-    // no constraint: empty constraint multipliers
-    std::vector<double> constraint_multipliers;
-    Multipliers multipliers = {g, constraint_multipliers};
+    Multipliers multipliers(g.size(), 0); // no constraint: empty constraint multipliers
+    for (unsigned int i = 0; i < g.size(); i++) {
+        if (g[i] >= 0.) { // lower bound
+            multipliers.lower_bounds[i] = g[i];      
+        }
+        else {
+            multipliers.upper_bounds[i] = g[i];      
+        }
+    }
     // create local solution from primal and dual variables
     ActiveSet active_set;
     ConstraintPartition constraint_partition;

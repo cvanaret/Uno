@@ -20,7 +20,7 @@ INCLUDES = -I base -I base/globalization_mechanism -I base/globalization_strateg
 
 SRC_FILES = base/Argonot.cpp base/Iterate.cpp \
 	base/Problem.cpp interfaces/AMPL/AMPLModel.cpp \
-	base/Matrix.cpp \
+	base/Matrix.cpp base/Constraint.cpp \
 	base/globalization_strategy/GlobalizationStrategy.cpp base/globalization_strategy/TwoPhaseStrategy.cpp \
 	base/globalization_strategy/Filter.cpp base/globalization_strategy/FilterStrategy.cpp \
 	base/globalization_strategy/PenaltyMeritFunction.cpp base/globalization_strategy/GlobalizationStrategyFactory.cpp \
