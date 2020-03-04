@@ -376,7 +376,7 @@ COOMatrix InteriorPoint::generate_kkt_matrix(Problem& problem, Iterate& current_
     }
 
     /* Inertia correction */
-    this->correct_inertia(problem, kkt_matrix);
+    this->modify_inertia(problem, kkt_matrix);
     
     DEBUG << "KKT matrix:\n";
     for (unsigned int k = 0; k < kkt_matrix.matrix.size(); k++) {
@@ -386,7 +386,7 @@ COOMatrix InteriorPoint::generate_kkt_matrix(Problem& problem, Iterate& current_
     return kkt_matrix;
 }
 
-void InteriorPoint::correct_inertia(Problem& problem, COOMatrix& kkt_matrix) {
+void InteriorPoint::modify_inertia(Problem& problem, COOMatrix& kkt_matrix) {
     this->inertia_hessian = 0.;
     this->inertia_constraints = 0.;
     std::cout << "Testing factorization with inertia term " << this->inertia_hessian << "\n";
