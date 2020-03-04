@@ -66,7 +66,7 @@ std::map<std::string, std::string> get_command_options(int argc, char* argv[], s
 Level Logger::logger_level = INFO;
 
 void set_logger(std::map<std::string, std::string> options) {
-    Logger::logger_level = DEBUG;
+    Logger::logger_level = INFO;
 
     try {
         std::string logger_level = options.at("logger");
@@ -113,23 +113,6 @@ std::map<std::string, std::string> get_default_values(std::string file_name) {
     return default_values;
 }
 
-void test_interior_point() {
-    /* test of hs015 */
-    AMPLModel problem = AMPLModel("../ampl_models/hs015");
-
-    std::vector<double> x = problem.primal_initial_solution();
-    std::vector<double> constraint_multipliers = problem.dual_initial_solution();
-    std::vector<double> bound_multipliers(problem.number_variables);
-    Multipliers multipliers = {bound_multipliers, constraint_multipliers};
-
-    double radius = INFINITY;
-    InteriorPoint ipm;
-    Iterate first_iterate = ipm.initialize(problem, x, multipliers, problem.number_variables, problem.number_constraints, radius < INFINITY);
-    ipm.compute_optimality_step(problem, first_iterate, problem.variables_bounds);
-
-    return;
-}
-
 int main(int argc, char* argv[]) {
     if (1 < argc) {
         /* get the default values */
@@ -144,9 +127,6 @@ int main(int argc, char* argv[]) {
             std::string problem_name = std::string(argv[argc - 1]);
             run_argonot(problem_name, options);
         }
-    }
-    else {
-        test_interior_point();
     }
     return 0;
 }
