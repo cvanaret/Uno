@@ -129,9 +129,9 @@ double FilterAugmentedLagrangian::compute_omega(Problem& problem, std::vector<do
     }
     for (std::pair<const int, int> element: problem.inequality_constraints) {
         int j = element.first; // index of the constraint
-        int slack_index = element.second;
-        double slack_value = x[problem.number_variables + slack_index];
-        double error = std::min(slack_value - problem.constraints_bounds[j].lb, std::max(slack_value - problem.constraints_bounds[j].ub, lagrangian_gradient[problem.number_variables + slack_index]));
+        int slack_index = problem.number_variables + element.second;
+        double slack_value = x[slack_index];
+        double error = std::min(slack_value - problem.constraints_bounds[j].lb, std::max(slack_value - problem.constraints_bounds[j].ub, lagrangian_gradient[slack_index]));
         residual += error*error;
     }
     return residual;
@@ -143,8 +143,8 @@ std::vector<double> compute_constraints(Problem& problem, std::vector<double>& x
     for (int j = 0; j < problem.number_constraints; j++) {
         try {
             // inequality constraint: subtract slack value
-            int slack_index = problem.inequality_constraints.at(j);
-            constraints[j] = original_constraints[j] - x[problem.number_variables + slack_index];
+            int slack_index = problem.number_variables + problem.inequality_constraints.at(j);
+            constraints[j] = original_constraints[j] - x[slack_index];
         }
         catch (std::out_of_range) {
             // equality constraint: subtract bound
@@ -266,8 +266,8 @@ SubproblemSolution compute_eqp_step(Problem& problem, std::vector<double>& x, Mu
     // add contribution of slacks
     for (std::pair<int, int> element: problem.inequality_constraints) {
         int j = element.first;
-        int slack_index = element.second;
-        constraints_jacobian[j][problem.number_variables + slack_index] = -1.;
+        int slack_index = problem.number_variables + element.second;
+        constraints_jacobian[j][slack_index] = -1.;
     }
     
     // set up bounds of linearized constraints
@@ -322,10 +322,10 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
     }
     for (std::pair<const int, int> element: problem.inequality_constraints) {
         int j = element.first;
-        int slack_index = element.second;
-        l[problem.number_variables + slack_index] = problem.constraints_bounds[j].lb;
-        u[problem.number_variables + slack_index] = problem.constraints_bounds[j].ub;
-        variable_status[problem.number_variables + slack_index] = problem.constraint_status[j];
+        int slack_index = problem.number_variables + element.second;
+        l[slack_index] = problem.constraints_bounds[j].lb;
+        u[slack_index] = problem.constraints_bounds[j].ub;
+        variable_status[slack_index] = problem.constraint_status[j];
     }
     // set the type of bounds
     std::vector<int> nbd(n);
