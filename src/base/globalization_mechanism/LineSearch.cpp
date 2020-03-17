@@ -13,6 +13,10 @@ Iterate LineSearch::initialize(Problem& problem, std::vector<double>& x, Multipl
 Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_iterate) {
     /* compute a trial direction */
     SubproblemSolution solution = this->globalization_strategy.compute_step(problem, current_iterate, problem.variables_bounds);
+    /* test if we computed a descent direction */
+    if (0. < dot(solution.x, current_iterate.objective_gradient)) {
+        //throw std::out_of_range("LineSearch::compute_iterate: this is not a descent direction");
+    }
     
     /* step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ... */
     this->step_length = 1.;
