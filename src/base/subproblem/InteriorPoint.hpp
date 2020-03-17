@@ -67,6 +67,8 @@ class InteriorPoint : public Subproblem {
         double smax;
         double k_mu;
         double theta_mu;
+        double k_epsilon;
+        double multipliers_max_size;
         
         int iteration;
 };

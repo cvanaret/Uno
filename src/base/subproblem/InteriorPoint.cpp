@@ -3,13 +3,14 @@
 #include "Argonot.hpp"
 
 InteriorPoint::InteriorPoint() : Subproblem(), mu(0.1), inertia_hessian(0.), inertia_hessian_last(0.), inertia_constraints(0.),
-tau_min(0.99), default_multiplier(1.), k_sigma(1e10), smax(100.), k_mu(0.2), theta_mu(1.5), iteration(0) {
+tau_min(0.99), default_multiplier(1.), k_sigma(1e10), smax(100.), k_mu(0.2), theta_mu(1.5), k_epsilon(10.), multipliers_max_size(1e3), iteration(0) {
 }
 
 Iterate InteriorPoint::initialize(Problem& problem, std::vector<double>& x, Multipliers& /* multipliers */, int /*number_variables*/, int /*number_constraints*/, bool use_trust_region) {
+    std::cout << "Point 1a\n";
     int number_variables = problem.number_variables + problem.inequality_constraints.size();
     Multipliers multipliers(number_variables, problem.number_constraints);
-    
+    std::cout << "Point 1b\n";
     /* identify the variables' bounds */
     for (int i = 0; i < problem.number_variables; i++) {
         if (use_trust_region || (problem.variable_status[i] == BOUNDED_LOWER || problem.variable_status[i] == BOUNDED_BOTH_SIDES)) {
@@ -21,10 +22,14 @@ Iterate InteriorPoint::initialize(Problem& problem, std::vector<double>& x, Mult
             multipliers.upper_bounds[i] = -this->default_multiplier; // negative multiplier
         }
     }
+    std::cout << "Point 1c\n";
+    std::cout << "There are " << problem.inequality_constraints.size() << " inequalities\n";
+    std::cout << "multipliers.lower_bounds has size " << multipliers.lower_bounds.size() << "\n";
     /* identify the inequality constraint slacks */
     for (std::pair<const int, int>& element: problem.inequality_constraints) {
-        int inequality_index = element.first;
-        int j = element.second;
+        int j = element.first;
+        int inequality_index = element.second;
+        std::cout << "Inequality " << inequality_index << " - constraint " << j << "\n";
         if (problem.constraint_status[j] == BOUNDED_LOWER || problem.constraint_status[j] == BOUNDED_BOTH_SIDES) {
             this->lower_bounded_slacks[problem.number_variables + inequality_index] = j;
             multipliers.lower_bounds[problem.number_variables + inequality_index] = this->default_multiplier; // positive multiplier
@@ -34,25 +39,31 @@ Iterate InteriorPoint::initialize(Problem& problem, std::vector<double>& x, Mult
             multipliers.upper_bounds[problem.number_variables + inequality_index] = -this->default_multiplier; // negative multiplier
         }
     }
-
+    std::cout << "Point 2\n";
+    
     /* make the initial point strictly feasible */
     std::vector<double> projected_x(number_variables);
     for (int i = 0; i < problem.number_variables; i++) {
         projected_x[i] = this->project_variable_in_bounds(x[i], problem.variables_bounds[i]);
     }
+    std::cout << "Point 3\n";
 
     /* generate the first iterate */
     Iterate first_iterate(problem, projected_x, multipliers);
 
+    std::cout << "Point 4\n";
+    
     /* initialize the slacks */
     for (std::pair<const int, int>& element : problem.inequality_constraints) {
-        int slack_index = problem.number_variables + element.first;
-        int j = element.second;
+        int j = element.first;
+        int slack_index = problem.number_variables + element.second;
         double slack_value = this->project_variable_in_bounds(first_iterate.constraints[j], problem.constraints_bounds[j]);
         first_iterate.x[slack_index] = slack_value;
     }
     /* compute least-square multipliers */
+    std::cout << "Point 5\n";
     first_iterate.multipliers.constraints = this->estimate_initial_multipliers(problem, first_iterate);
+    std::cout << "Point 6\n";
     
     DEBUG << problem.inequality_constraints.size() << " slacks\n";
     DEBUG << first_iterate.multipliers.lower_bounds.size() << " bound multipliers\n";
@@ -62,8 +73,7 @@ Iterate InteriorPoint::initialize(Problem& problem, std::vector<double>& x, Mult
     
     /* compute the optimality and feasibility measures of the initial point */
     this->compute_measures(problem, first_iterate);
-    //first_iterate.residual = first_iterate.feasibility_measure;
-
+    std::cout << "Point 7\n";
     return first_iterate;
 }
 
@@ -87,9 +97,10 @@ SubproblemSolution InteriorPoint::compute_optimality_step(Problem& problem, Iter
     
     /* update of the barrier problem */
     double error = std::max(KKTerror, std::max(central_complementarity_error, current_iterate.residual));
-    if (error <= 10.*this->mu) {
+    if (error <= this->k_epsilon*this->mu) {
         // TODO pass tolerance
-        this->mu = std::max(1e-8, std::min(this->k_mu * this->mu, std::pow(this->mu, this->theta_mu)));
+        double tolerance = 1e-8;
+        this->mu = std::max(tolerance/10., std::min(this->k_mu * this->mu, std::pow(this->mu, this->theta_mu)));
         DEBUG << "IPM: mu updated to " << this->mu << "\n";
     }
     DEBUG << "mu is " << this->mu << "\n";
@@ -250,7 +261,7 @@ std::vector<double> InteriorPoint::estimate_initial_multipliers(Problem& problem
         multipliers[j] = solution[problem.number_variables + j];
     }
     // if multipliers too big, discard them
-    if (norm_inf(multipliers) > 1e3) {
+    if (norm_inf(multipliers) > this->multipliers_max_size) {
         std::vector<double> empty_multipliers(problem.number_constraints);
         return empty_multipliers;
     }
@@ -285,17 +296,17 @@ double InteriorPoint::compute_primal_length(Problem& problem, Iterate& current_i
     for (std::pair<const int, int>& element: this->lower_bounded_slacks) {
         int slack_index = element.first;
         int j = element.second;
-        double trial_primal_lengthj = -tau * (current_iterate.x[slack_index] - problem.constraints_bounds[j].lb) / ipm_solution[slack_index];
-        if (0 < trial_primal_lengthj && trial_primal_lengthj <= 1.) {
-            primal_length = std::min(primal_length, trial_primal_lengthj);
+        double trial_primal_length_sj = -tau * (current_iterate.x[slack_index] - problem.constraints_bounds[j].lb) / ipm_solution[slack_index];
+        if (0 < trial_primal_length_sj && trial_primal_length_sj <= 1.) {
+            primal_length = std::min(primal_length, trial_primal_length_sj);
         }
     }
     for (std::pair<const int, int>& element: this->upper_bounded_slacks) {
         int slack_index = element.first;
         int j = element.second;
-        double trial_primal_lengthj = -tau * (current_iterate.x[slack_index] - problem.constraints_bounds[j].ub) / ipm_solution[slack_index];
-        if (0 < trial_primal_lengthj && trial_primal_lengthj <= 1.) {
-            primal_length = std::min(primal_length, trial_primal_lengthj);
+        double trial_primal_length_sj = -tau * (current_iterate.x[slack_index] - problem.constraints_bounds[j].ub) / ipm_solution[slack_index];
+        if (0 < trial_primal_length_sj && trial_primal_length_sj <= 1.) {
+            primal_length = std::min(primal_length, trial_primal_length_sj);
         }
     }
     return primal_length;
@@ -450,12 +461,11 @@ std::vector<double> InteriorPoint::generate_kkt_rhs(Problem& problem, Iterate& c
     }
     /* constraint gradients */
     for (int j = 0; j < problem.number_constraints; j++) {
-        double multiplier_j = current_iterate.multipliers.constraints[j];
-        if (multiplier_j != 0.) {
+        if (current_iterate.multipliers.constraints[j] != 0.) {
             for (std::pair<int, double> term : current_iterate.constraints_jacobian[j]) {
                 int variable_index = term.first;
                 double derivative = term.second;
-                rhs[variable_index] += multiplier_j*derivative;
+                rhs[variable_index] += current_iterate.multipliers.constraints[j]*derivative;
             }
         }
     }

@@ -2,16 +2,9 @@
 #include "Utils.hpp"
 #include "Logger.hpp"
 
-Iterate::Iterate(Problem& problem, std::vector<double>& x, Multipliers& multipliers) :
-x(x), multipliers(multipliers) {
-
-    /* project point onto bounds */
-    for (int i = 0; i < problem.number_variables; i++) {
-        this->x[i] = std::max(this->x[i], problem.variables_bounds[i].lb);
-        this->x[i] = std::min(this->x[i], problem.variables_bounds[i].ub);
-    }
-
+Iterate::Iterate(Problem& problem, std::vector<double>& x, Multipliers& multipliers) : x(x), multipliers(multipliers) {
     /* objective */
+    // TODO: do not evaluate
     this->objective = problem.objective(this->x);
 
     /* constraints */
@@ -20,7 +13,7 @@ x(x), multipliers(multipliers) {
     //this->feasibility_measure = this->residual;
     //this->optimality_measure = this->objective;
 
-    /* Jacobian and Hessian will be evaluated only when necessary */
+    /* evaluations will be performed only when necessary */
     this->is_objective_gradient_computed = false;
     this->is_constraints_jacobian_computed = false;
     this->is_hessian_computed = false;
