@@ -70,8 +70,8 @@ xsum.out: $SRC_FILES
 	xsum $SRC_FILES >xsum1.out
 	cmp xsum0.out xsum1.out && mv xsum1.out xsum.out || diff xsum[01].out
 
-al: al.o $(OBJ_FILES) $(AMPL_DIR)/amplsolver.a
-	$(CPP) $(LFLAGS) -o al al.o $(OBJ_FILES) $(LIBS) $(LIBLINALG) $(L) $(LIBCOMPIL)
+filter-al: filter-al.o $(OBJ_FILES) $(AMPL_DIR)/amplsolver.a
+	$(CPP) $(LFLAGS) -o filter-al filter-al.o $(OBJ_FILES) $(LIBS) $(LIBLINALG) $(L) $(LIBCOMPIL)
 
 #depend: .depend
 

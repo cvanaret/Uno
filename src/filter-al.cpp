@@ -4,7 +4,6 @@
 #include "Filter.hpp"
 #include "AMPLModel.hpp"
 #include "Utils.hpp"
-#include "QP.hpp"
 #include "BQPDSolver.hpp"
 
 Level Logger::logger_level = INFO;
@@ -125,14 +124,14 @@ double FilterAugmentedLagrangian::compute_omega(Problem& problem, std::vector<do
     // compute the residual
     double residual = 0.;
     for (int i = 0; i < problem.number_variables; i++) {
-        double error = std::min(x[i] - problem.variable_lb[i], std::max(x[i] - problem.variable_ub[i], lagrangian_gradient[i]));
+        double error = std::min(x[i] - problem.variables_bounds[i].lb, std::max(x[i] - problem.variables_bounds[i].ub, lagrangian_gradient[i]));
         residual += error*error;
     }
     for (std::pair<const int, int> element: problem.inequality_constraints) {
         int j = element.first; // index of the constraint
         int slack_index = element.second;
         double slack_value = x[problem.number_variables + slack_index];
-        double error = std::min(slack_value - problem.constraint_lb[j], std::max(slack_value - problem.constraint_ub[j], lagrangian_gradient[problem.number_variables + slack_index]));
+        double error = std::min(slack_value - problem.constraints_bounds[j].lb, std::max(slack_value - problem.constraints_bounds[j].ub, lagrangian_gradient[problem.number_variables + slack_index]));
         residual += error*error;
     }
     return residual;
@@ -149,7 +148,7 @@ std::vector<double> compute_constraints(Problem& problem, std::vector<double>& x
         }
         catch (std::out_of_range) {
             // equality constraint: subtract bound
-            constraints[j] = original_constraints[j] - problem.constraint_lb[j];
+            constraints[j] = original_constraints[j] - problem.constraints_bounds[j].lb;
         }
     }
     return constraints;
@@ -241,14 +240,11 @@ std::map<int, Activity> determine_active_set(std::vector<double>& x, std::vector
 SubproblemSolution compute_eqp_step(Problem& problem, std::vector<double>& x, Multipliers& multipliers, std::vector<double>& constraints, std::vector<double>& l, std::vector<double>& u, std::map<int, Activity> active_set) {
     // compute the Hessian of the Lagrangian
     CSCMatrix hessian = problem.lagrangian_hessian(x, problem.objective_sign, multipliers.constraints);
-    
-    // generate the QP
-    QP qp(x.size(), problem.number_constraints, hessian);
-    
+
     // set up bounds of primal variables
+    std::vector<Range> variables_bounds(x.size());
     for (unsigned int i = 0; i < x.size(); i++) {
-        qp.variable_lb[i] = l[i] - x[i];
-        qp.variable_ub[i] = u[i] - x[i];
+        variables_bounds[i] = {l[i] - x[i], u[i] - x[i]};
     }
     
     // fix bounds of variables in active set
@@ -256,42 +252,40 @@ SubproblemSolution compute_eqp_step(Problem& problem, std::vector<double>& x, Mu
         int i = element.first;
         Activity activity = element.second;
         if (activity == LOWER_BOUND) {
-            qp.variable_ub[i] = qp.variable_lb[i];
+            variables_bounds[i].ub = variables_bounds[i].lb;
         }
         else {
-            qp.variable_lb[i] = qp.variable_ub[i];
+            variables_bounds[i].lb = variables_bounds[i].ub;
         }
     }
     
     // set objective and constraints
-    qp.objective = problem.objective_sparse_gradient(x);
-    qp.constraints = problem.constraints_sparse_jacobian(x);
+    std::map<int, double> linear_objective = problem.objective_sparse_gradient(x);
+    std::vector<std::map<int, double> > constraints_jacobian = problem.constraints_sparse_jacobian(x);
     
     // add contribution of slacks
     for (std::pair<int, int> element: problem.inequality_constraints) {
         int j = element.first;
         int slack_index = element.second;
-        qp.constraints[j][problem.number_variables + slack_index] = -1.;
+        constraints_jacobian[j][problem.number_variables + slack_index] = -1.;
     }
     
     // set up bounds of linearized constraints
-    for (int j = 0; j < qp.number_constraints; j++) {
-        qp.constraint_lb[j] = -constraints[j];
-        qp.constraint_ub[j] = -constraints[j];
+    std::vector<Range> constraints_bounds(problem.number_constraints);
+    for (int j = 0; j < problem.number_constraints; j++) {
+        constraints_bounds[j] = {-constraints[j], -constraints[j]};
     }
-    
-    std::cout << "QP:\n";
-    std::cout << qp;
     
     // solve the QP
     BQPDSolver solver(problem.hessian_column_start, problem.hessian_row_number);
     solver.allocate(x.size(), problem.number_constraints);
-    std::vector<double> d0(qp.number_variables);
-    SubproblemSolution eqp_step = solver.solve(qp, d0);
+    std::vector<double> d0(x.size());
+    SubproblemSolution eqp_step = solver.solve_QP(variables_bounds, constraints_bounds, linear_objective, constraints_jacobian, hessian, d0);
     
     // compute multiplier step
-    for (unsigned int i = 0; i < x.size(); i++) {
-        eqp_step.multipliers.bounds[i] -= multipliers.bounds[i];
+    for (unsigned int i = 0; i < multipliers.lower_bounds.size(); i++) {
+        eqp_step.multipliers.lower_bounds[i] -= multipliers.lower_bounds[i];
+        eqp_step.multipliers.upper_bounds[i] -= multipliers.upper_bounds[i];
     }
     for (int j = 0; j < problem.number_constraints; j++) {
         eqp_step.multipliers.constraints[j] -= multipliers.constraints[j];
@@ -306,14 +300,14 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
 
     // initial primal and dual points
     std::vector<double> x = problem.primal_initial_solution();
-    std::vector<double> constraint_multipliers = problem.dual_initial_solution();
+    Multipliers multipliers(x.size(), problem.number_constraints);
+    multipliers.constraints = problem.dual_initial_solution();
     
     // add slacks as primal variables
     for (std::pair<const int, int> element: problem.inequality_constraints) {
         int j = element.first; // index of the constraint
         x.push_back(problem.evaluate_constraint(j, x));
     }
-    std::vector<double> bound_multipliers = std::vector<double>(x.size());
     
     // compute bounds and variable status
     int n = x.size();
@@ -322,15 +316,15 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
     std::vector<double> u(n);
     std::vector<ConstraintType> variable_status(n);
     for (int i = 0; i < problem.number_variables; i++) {
-        l[i] = problem.variable_lb[i];
-        u[i] = problem.variable_ub[i];
+        l[i] = problem.variables_bounds[i].lb;
+        u[i] = problem.variables_bounds[i].ub;
         variable_status[i] = problem.variable_status[i];
     }
     for (std::pair<const int, int> element: problem.inequality_constraints) {
         int j = element.first;
         int slack_index = element.second;
-        l[problem.number_variables + slack_index] = problem.constraint_lb[j];
-        u[problem.number_variables + slack_index] = problem.constraint_ub[j];
+        l[problem.number_variables + slack_index] = problem.constraints_bounds[j].lb;
+        u[problem.number_variables + slack_index] = problem.constraints_bounds[j].ub;
         variable_status[problem.number_variables + slack_index] = problem.constraint_status[j];
     }
     // set the type of bounds
@@ -362,7 +356,7 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
     std::cout << "Initial constraints: "; print_vector(std::cout, constraints);
     
     // compute the gradient of the augmented Lagrangian wrt primal variables
-    std::vector<double> lagrangian_gradient = compute_lagrangian_gradient(problem, x, constraint_multipliers);
+    std::vector<double> lagrangian_gradient = compute_lagrangian_gradient(problem, x, multipliers.constraints);
     double omega = this->compute_omega(problem, x, lagrangian_gradient);
     double eta = this->compute_eta(x, constraints);
     if (0. < eta) {
@@ -397,7 +391,7 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
             print_vector(std::cout, x);
             std::cout << "Filter upper bound is " << filter.upper_bound << "\n";
             std::cout << "Penalty parameter is " << this->penalty_parameter << "\n";
-            std::cout << "Current constraints multipliers: "; print_vector(std::cout, constraint_multipliers);
+            std::cout << "Current constraints multipliers: "; print_vector(std::cout, multipliers.constraints);
 
             /************************start BFGS**********************/
             // approximately minimize Augmented Lagrangian subproblem
@@ -417,8 +411,8 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
                     trial_constraints = compute_constraints(problem, trial_x);
                     std::cout << "c(x): "; print_vector(std::cout, trial_constraints);
                     // compute augmented Lagrangian and its gradient at the point (x_trial, y)
-                    augmented_lagrangian = compute_augmented_lagrangian(problem, trial_x, trial_constraints, constraint_multipliers, this->penalty_parameter);
-                    augmented_lagrangian_gradient = compute_augmented_lagrangian_gradient(problem, trial_x, trial_constraints, constraint_multipliers, this->penalty_parameter);
+                    augmented_lagrangian = compute_augmented_lagrangian(problem, trial_x, trial_constraints, multipliers.constraints, this->penalty_parameter);
+                    augmented_lagrangian_gradient = compute_augmented_lagrangian_gradient(problem, trial_x, trial_constraints, multipliers.constraints, this->penalty_parameter);
                     std::cout << "f is " << augmented_lagrangian << "\n";
                     std::cout << "g is "; print_vector(std::cout, augmented_lagrangian_gradient);
                     
@@ -477,13 +471,24 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
                 }
                 termination = true;
                 x = trial_x;
-                constraint_multipliers = this->update_multipliers(problem, trial_constraints, constraint_multipliers);
-                bound_multipliers = augmented_lagrangian_gradient;
-                std::cout << "Updating multipliers: λ(x*) = "; print_vector(std::cout, constraint_multipliers);
+                multipliers.constraints = this->update_multipliers(problem, trial_constraints, multipliers.constraints);
+                multipliers.lower_bounds.resize(augmented_lagrangian_gradient.size());
+                multipliers.upper_bounds.resize(augmented_lagrangian_gradient.size());
+                for (unsigned int i = 0; i < augmented_lagrangian_gradient.size(); i++) {
+                    if (0. < augmented_lagrangian_gradient[i]) { // lb
+                        multipliers.lower_bounds[i] = augmented_lagrangian_gradient[i];
+                        multipliers.upper_bounds[i] = 0.;
+                    }
+                    else { // ub
+                        multipliers.lower_bounds[i] = 0.;
+                        multipliers.upper_bounds[i] = augmented_lagrangian_gradient[i];
+                    }
+                }
+                std::cout << "Updating multipliers: λ(x*) = "; print_vector(std::cout, multipliers.constraints);
             }
             // restoration switching conditions (3.14) or (3.15)
             // omega <= epsilon
-            else if ((eta >= beta*filter.upper_bound) || (omega <= epsilon && filter.size > 0 && eta >= beta*std::max(filter.infeasibility_measures[0], epsilon))) { 
+            else if ((eta >= beta*filter.upper_bound) || (omega <= epsilon && filter.entries.size() > 0 && eta >= beta*std::max(filter.entries.front().infeasibility_measure, epsilon))) { 
                 std::cout << "  *** Switching to restoration phase\n";
                 // switch to restoration phase to find filter-acceptable point
                 double restoration_objective;
@@ -497,7 +502,7 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
                     std::vector<double> trial_constraints_restoration = compute_constraints(problem, trial_x_restoration);
                     std::cout << "c(x*) = "; print_vector(std::cout, trial_constraints_restoration);
                     // compute gradient of bound-constrained augmented Lagrangian at (x*, y)
-                    augmented_lagrangian_gradient = compute_augmented_lagrangian_gradient(problem, trial_x_restoration, trial_constraints_restoration, constraint_multipliers, this->penalty_parameter);
+                    augmented_lagrangian_gradient = compute_augmented_lagrangian_gradient(problem, trial_x_restoration, trial_constraints_restoration, multipliers.constraints, this->penalty_parameter);
                     // compute filter entries
                     eta = compute_eta(trial_x_restoration, trial_constraints_restoration);
                     omega = compute_omega(problem, trial_x_restoration, augmented_lagrangian_gradient);
@@ -521,10 +526,20 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
                 x = trial_x;
                 if (filter_acceptable) {
                     // update multipliers
-                    std::vector<double> trial_constraint_multipliers = this->update_multipliers(problem, trial_constraints, constraint_multipliers);
-                    constraint_multipliers = trial_constraint_multipliers;
-                    bound_multipliers = augmented_lagrangian_gradient;
-                    std::cout << "Updating multipliers: λ(x*) = "; print_vector(std::cout, constraint_multipliers);
+                    multipliers.constraints = this->update_multipliers(problem, trial_constraints, multipliers.constraints);
+                    multipliers.lower_bounds.resize(augmented_lagrangian_gradient.size());
+                    multipliers.upper_bounds.resize(augmented_lagrangian_gradient.size());
+                    for (unsigned int i = 0; i < augmented_lagrangian_gradient.size(); i++) {
+                        if (0. < augmented_lagrangian_gradient[i]) { // lb
+                            multipliers.lower_bounds[i] = augmented_lagrangian_gradient[i];
+                            multipliers.upper_bounds[i] = 0.;
+                        }
+                        else { // ub
+                            multipliers.lower_bounds[i] = 0.;
+                            multipliers.upper_bounds[i] = augmented_lagrangian_gradient[i];
+                        }
+                    }
+                    std::cout << "Updating multipliers: λ(x*) = "; print_vector(std::cout, multipliers.constraints);
                     // if no constraints, the problem hasn't changed
                     if (0 < problem.number_constraints) {
                         strcpy(this->task_, "START");
@@ -537,13 +552,14 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
         if (!termination) {
             // optional: perform second-order correction + LS + recompute eta and omega
             std::map<int, Activity> active_set = determine_active_set(x, l, u);
-            Multipliers multipliers = {bound_multipliers, constraint_multipliers};
+            //Multipliers multipliers = {bound_multipliers, constraint_multipliers};
             SubproblemSolution eqp_step = compute_eqp_step(problem, x, multipliers, trial_constraints, l, u, active_set);
             if (eqp_step.status == OPTIMAL) {
                 std::cout << "EQP step:\n";
                 std::cout << "x = "; print_vector(std::cout, eqp_step.x);
                 std::cout << "constraint_multipliers = "; print_vector(std::cout, eqp_step.multipliers.constraints);
-                std::cout << "bound_multipliers = "; print_vector(std::cout, eqp_step.multipliers.bounds);
+                std::cout << "lower bound_multipliers = "; print_vector(std::cout, eqp_step.multipliers.lower_bounds);
+                std::cout << "upper bound_multipliers = "; print_vector(std::cout, eqp_step.multipliers.upper_bounds);
                 
                 // run line search along EQP step
                 bool line_search_stop = false;
@@ -552,7 +568,7 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
                 while(!line_search_stop) {
                     // take a step of length step_length along EQP step
                     std::vector<double> trial_x = add_vectors(x, eqp_step.x, step_length);
-                    std::vector<double> trial_constraint_multipliers = add_vectors(constraint_multipliers, eqp_step.multipliers.constraints, step_length);
+                    std::vector<double> trial_constraint_multipliers = add_vectors(multipliers.constraints, eqp_step.multipliers.constraints, step_length);
                     
                     // compute filter entries
                     std::vector<double> trial_constraints = compute_constraints(problem, trial_x);
@@ -567,9 +583,10 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
                         std::cout << "Filter entries: (η = " << eta_trial << ", ω = " << omega_trial << ")\n";
                         // update the primal-dual point
                         x = trial_x;
-                        constraint_multipliers = trial_constraint_multipliers;
-                        bound_multipliers = add_vectors(bound_multipliers, eqp_step.multipliers.bounds, step_length);
-                        std::cout << "Updating multipliers: λ(x*) = "; print_vector(std::cout, constraint_multipliers);
+                        multipliers.constraints = trial_constraint_multipliers;
+                        multipliers.lower_bounds = add_vectors(multipliers.lower_bounds, eqp_step.multipliers.lower_bounds, step_length);
+                        multipliers.upper_bounds = add_vectors(multipliers.upper_bounds, eqp_step.multipliers.upper_bounds, step_length);
+                        std::cout << "Updating multipliers: λ(x*) = "; print_vector(std::cout, multipliers.constraints);
                         eta = eta_trial;
                         omega = omega_trial;
                         if (0 < problem.number_constraints) {
@@ -608,8 +625,9 @@ int FilterAugmentedLagrangian::solve(std::string problem_name) {
     std::cout << "\nOptimization summary:\n";
     std::cout << termination_message << "\n";
     std::cout << "x = "; print_vector(std::cout, x);
-    std::cout << "constraint multipliers = "; print_vector(std::cout, constraint_multipliers);
-    std::cout << "bound multipliers = "; print_vector(std::cout, bound_multipliers);
+    std::cout << "constraint multipliers = "; print_vector(std::cout, multipliers.constraints);
+    std::cout << "lower bound multipliers = "; print_vector(std::cout, multipliers.lower_bounds);
+    std::cout << "upper bound multipliers = "; print_vector(std::cout, multipliers.upper_bounds);
     std::cout << "Objective evaluations: " << problem.number_eval_objective << "\n";
     std::cout << "Constraint evaluations: " << problem.number_eval_constraints << "\n";
     std::cout << "Outer iterations: " << iterations << "\n";
