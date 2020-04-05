@@ -12,10 +12,10 @@ extern "C" {
             int* lrhs, double work[], int* lwork, int iwork[], int icntl[], int info[]);
 }
 
-MA57Solver::MA57Solver() : use_fortran(1), cntl_(5), icntl_(20), info_(40), rinfo_(20) {
+MA57Solver::MA57Solver() : use_fortran(1), cntl_(5), icntl_(20), rinfo_(20) {
 }
 
-MA57Data MA57Solver::factorize(COOMatrix& matrix) {
+MA57Factorization MA57Solver::factorize(COOMatrix& matrix) {
     int n = matrix.size;
     int nnz = matrix.number_nonzeros;
 
@@ -35,22 +35,24 @@ MA57Data MA57Solver::factorize(COOMatrix& matrix) {
     for (unsigned int k = 0; k < column_indices.size(); k++) {
         column_indices[k] += this->use_fortran;
     }
+    /* info vector*/
+    std::vector<int> info(40);
     ma57ad_(&n, &nnz, row_indices.data(), column_indices.data(), &lkeep, keep.data(), iwork.data(),
-            this->icntl_.data(), this->info_.data(), this->rinfo_.data());
+            this->icntl_.data(), info.data(), this->rinfo_.data());
 
     /* factorize */
-    int lfact = 2 * this->info_[8];
+    int lfact = 2 * info[8];
     std::vector<double> fact(lfact);
-    int lifact = 2 * this->info_[9];
+    int lifact = 2 * info[9];
     std::vector<int> ifact(lifact);
     ma57bd_(&n, &nnz, matrix.matrix.data(), fact.data(), &lfact, ifact.data(), &lifact, &lkeep, keep.data(),
-            iwork.data(), this->icntl_.data(), this->cntl_.data(), this->info_.data(), this->rinfo_.data());
+            iwork.data(), this->icntl_.data(), this->cntl_.data(), info.data(), this->rinfo_.data());
     //print_vector(std::cout, this->info_);
     //std::cout << "the matrix has rank " << this->info_[24] << "\n";
-    return {fact, lfact, ifact, lifact, iwork};
+    return {fact, lfact, ifact, lifact, iwork, info};
 }
 
-std::vector<double> MA57Solver::solve(COOMatrix& matrix, std::vector<double>& rhs, MA57Data& data) {
+std::vector<double> MA57Solver::solve(COOMatrix& matrix, std::vector<double>& rhs, MA57Factorization& factorization) {
     /* solve */
     int n = matrix.size;
     int job = 1;
@@ -60,17 +62,17 @@ std::vector<double> MA57Solver::solve(COOMatrix& matrix, std::vector<double>& rh
     std::vector<double> work(lwork);
     // copy the RHS in the solution
     std::vector<double> x(rhs);
-    ma57cd_(&job, &n, data.fact.data(), &data.lfact, data.ifact.data(), &data.lifact, &nrhs, x.data(), &lrhs, work.data(),
-            &lwork, data.iwork.data(), this->icntl_.data(), this->info_.data());
+    ma57cd_(&job, &n, factorization.fact.data(), &factorization.lfact, factorization.ifact.data(), &factorization.lifact, &nrhs, x.data(), &lrhs, work.data(),
+            &lwork, factorization.iwork.data(), this->icntl_.data(), factorization.info.data());
     return x;
 }
 
-int MA57Solver::number_negative_eigenvalues() {
-    return this->info_[23];
+int MA57Factorization::number_negative_eigenvalues() {
+    return this->info[23];
 }
 
-bool MA57Solver::matrix_is_singular() {
-    return (this->info_[0] == 4);
+bool MA57Factorization::matrix_is_singular() {
+    return (this->info[0] == 4);
 }
 
 void test() {
@@ -95,7 +97,7 @@ void test() {
     std::vector<double> rhs = {8., 45., 31., 15., 17.};
 
     MA57Solver s;
-    MA57Data data = s.factorize(matrix);
+    MA57Factorization data = s.factorize(matrix);
     std::vector<double> solution = s.solve(matrix, rhs, data);
 
     std::cout << "solution";

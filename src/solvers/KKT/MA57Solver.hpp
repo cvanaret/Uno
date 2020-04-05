@@ -5,12 +5,16 @@
 #include "Matrix.hpp"
 #include "SubproblemSolution.hpp"
 
-struct MA57Data {
+struct MA57Factorization {
 	std::vector<double> fact;
 	int lfact;
 	std::vector<int> ifact;
 	int lifact;
-	std::vector<int> iwork;	
+	std::vector<int> iwork;
+    std::vector<int> info;
+    
+    int number_negative_eigenvalues();
+    bool matrix_is_singular();
 };
 
 /*! \class MA57Solver
@@ -25,16 +29,13 @@ class MA57Solver {
 		
 		int use_fortran;
 		
-		MA57Data factorize(COOMatrix& matrix);
-		std::vector<double> solve(COOMatrix& matrix, std::vector<double>& rhs, MA57Data& data);
-		int number_negative_eigenvalues();
-                bool matrix_is_singular();
+		MA57Factorization factorize(COOMatrix& matrix);
+		std::vector<double> solve(COOMatrix& matrix, std::vector<double>& rhs, MA57Factorization& data);
 		
 	private:
 		/* for ma57id_ */
 		std::vector<double> cntl_;
 		std::vector<int> icntl_;
-		std::vector<int> info_;
 		std::vector<double> rinfo_;
 };
 

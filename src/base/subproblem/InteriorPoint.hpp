@@ -39,7 +39,7 @@ class InteriorPoint : public Subproblem {
         std::vector<int> upper_bounded_variables; /* indices of the upper-bounded variables */
         std::map<int, int> lower_bounded_slacks; /* indices of the lower-bounded slacks */
         std::map<int, int> upper_bounded_slacks; /* indices of the upper-bounded slacks */
-        MA57Data factorization_data;
+        MA57Factorization factorization;
 
     private:
         double evaluate_local_model(Problem& problem, Iterate& current_iterate, std::vector<double>& solution);

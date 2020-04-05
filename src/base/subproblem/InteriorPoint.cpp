@@ -52,7 +52,9 @@ Iterate InteriorPoint::initialize(Problem& problem, std::vector<double>& x, Mult
         first_iterate.x[slack_index] = slack_value;
     }
     /* compute least-square multipliers */
-    first_iterate.multipliers.constraints = this->estimate_initial_multipliers(problem, first_iterate);
+    if (0 < problem.number_constraints) {
+        first_iterate.multipliers.constraints = this->estimate_initial_multipliers(problem, first_iterate);
+    }
     
     DEBUG << problem.inequality_constraints.size() << " slacks\n";
     DEBUG << first_iterate.multipliers.lower_bounds.size() << " bound multipliers\n";
@@ -109,7 +111,7 @@ SubproblemSolution InteriorPoint::compute_optimality_step(Problem& problem, Iter
     std::vector<double> rhs = this->generate_kkt_rhs(problem, current_iterate, variables_bounds);
 
     /* compute the solution (Δx, -Δλ) */
-    std::vector<double> solution_IPM = this->solver.solve(kkt_matrix, rhs, this->factorization_data);
+    std::vector<double> solution_IPM = this->solver.solve(kkt_matrix, rhs, this->factorization);
     this->number_subproblems_solved++;
 
     /* generate IPM direction */
@@ -240,7 +242,7 @@ std::vector<double> InteriorPoint::estimate_initial_multipliers(Problem& problem
     
     DEBUG << "Multipliers RHS:\n"; print_vector(DEBUG, rhs);
     
-    MA57Data factorization_data = this->solver.factorize(matrix);
+    MA57Factorization factorization_data = this->solver.factorize(matrix);
     std::vector<double> solution = this->solver.solve(matrix, rhs, factorization_data);
     
     /* retrieve multipliers */
@@ -369,16 +371,16 @@ void InteriorPoint::modify_inertia(COOMatrix& kkt_matrix, int number_variables, 
     this->inertia_hessian = 0.;
     this->inertia_constraints = 0.;
     DEBUG << "Testing factorization with inertia term " << this->inertia_hessian << "\n";
-    this->factorization_data = this->solver.factorize(kkt_matrix);
+    this->factorization = this->solver.factorize(kkt_matrix);
 
     bool good_inertia = false;
-    if (!this->solver.matrix_is_singular() && this->solver.number_negative_eigenvalues() == number_constraints) {
+    if (!this->factorization.matrix_is_singular() && this->factorization.number_negative_eigenvalues() == number_constraints) {
         DEBUG << "Factorization was a success\n";
         good_inertia = true;
     }
     else {
         // inertia term for constraints
-        if (this->solver.matrix_is_singular()) {
+        if (this->factorization.matrix_is_singular()) {
             DEBUG << "Matrix is singular\n";
             this->inertia_constraints = 1e-8 * std::pow(this->mu, 0.25);
         }
@@ -405,9 +407,9 @@ void InteriorPoint::modify_inertia(COOMatrix& kkt_matrix, int number_variables, 
 
     while (!good_inertia) {
         DEBUG << "Testing factorization with inertia term " << this->inertia_hessian << "\n";
-        this->factorization_data = this->solver.factorize(kkt_matrix);
+        this->factorization = this->solver.factorize(kkt_matrix);
 
-        if (!this->solver.matrix_is_singular() && this->solver.number_negative_eigenvalues() == number_constraints) {
+        if (!this->factorization.matrix_is_singular() && this->factorization.number_negative_eigenvalues() == number_constraints) {
             good_inertia = true;
             DEBUG << "Factorization was a success\n";
             this->inertia_hessian_last = this->inertia_hessian;
