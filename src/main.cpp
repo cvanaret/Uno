@@ -4,6 +4,7 @@
 #include <memory>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include "AMPLModel.hpp"
 #include "QPSolverFactory.hpp"
 #include "SubproblemFactory.hpp"
@@ -64,7 +65,7 @@ std::map<std::string, std::string> get_command_options(int argc, char* argv[], s
 Level Logger::logger_level = INFO;
 
 void set_logger(std::map<std::string, std::string> options) {
-    Logger::logger_level = DEBUG;
+    Logger::logger_level = INFO;
 
     try {
         std::string logger_level = options.at("logger");
@@ -101,15 +102,37 @@ std::map<std::string, std::string> get_default_values(std::string file_name) {
     std::ifstream file;
     file.open(file_name);
 
+    /* register the default values */
     std::map<std::string, std::string> default_values;
     std::string key, value;
-    while (file >> key >> value) {
-        std::cout << "Default value " << key << " = " << value << "\n";
-        default_values[key] = value;
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.find("#") != 0) {
+            std::istringstream iss;
+            iss.str(line);
+            iss >> key >> value;
+            std::cout << "Default value " << key << " = " << value << "\n";
+            default_values[key] = value;
+        }
     }
     file.close();
     return default_values;
 }
+
+//std::map<std::string, std::string> get_default_values(std::string file_name) {
+//    std::ifstream file;
+//    file.open(file_name);
+//
+//    /* register the default values */
+//    std::map<std::string, std::string> default_values;
+//    std::string key, value;
+//    while (file >> key >> value) {
+//        std::cout << "Default value " << key << " = " << value << "\n";
+//        default_values[key] = value;
+//    }
+//    file.close();
+//    return default_values;
+//}
 
 int main(int argc, char* argv[]) {
     if (1 < argc) {
@@ -121,8 +144,10 @@ int main(int argc, char* argv[]) {
 
         if (std::string(argv[1]).compare("-v") == 0) {
             std::cout << "Welcome in Argonot\n";
-        } else {
+        }
+        else {
             std::string problem_name = std::string(argv[argc - 1]);
+            /* run Argonot */
             run_argonot(problem_name, options);
         }
     }
