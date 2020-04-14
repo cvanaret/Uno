@@ -7,10 +7,13 @@
 #include "Utils.hpp"
 #include "Logger.hpp"
 
-SLPEQP::SLPEQP(QPSolver& solver) : Subproblem(), solver(solver) {
+SLPEQP::SLPEQP(QPSolver& solver) : Subproblem(), solver(solver), lp_subproblem(SQP(solver)), eqp_subproblem(SQP(solver)) {
 }
 
-Iterate SLPEQP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, int number_constraints, bool use_trust_region) {
+Iterate SLPEQP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, int number_constraints, std::vector<Range>& variables_bounds, bool use_trust_region) {
+    // register the original bounds
+    this->reformulated_variables_bounds = variables_bounds;
+    
     Iterate first_iterate(problem, x, multipliers);
     /* compute the optimality and feasibility measures of the initial point */
     this->compute_measures(problem, first_iterate);
@@ -28,7 +31,6 @@ SubproblemSolution SLPEQP::compute_optimality_step(Problem& problem, Iterate& cu
     /***********/
     /* LP part */
     /***********/
-    
     
     //std::cout << "SOLVING SLPEQP.LP\n";
     /* bounds of the linearized constraints */
@@ -52,13 +54,15 @@ SubproblemSolution SLPEQP::compute_optimality_step(Problem& problem, Iterate& cu
     current_iterate.compute_hessian(problem, problem.objective_sign, current_iterate.multipliers.constraints);
     
     /* fix active constraints */
+    // TODO remove inactive constraints!!
+    // TODO reduced Hessian
     this->fix_active_constraints(problem, solution_LP.active_set, variables_bounds, constraints_bounds);
     
     /* generate the initial point */
     d0 = solution_LP.x;
     
     /* solve the EQP */
-    SubproblemSolution solution_EQP = this->solver.solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
+    SubproblemSolution solution_EQP = this->solver.solve_QP(problem.variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
     solution_EQP.phase_1_required = this->phase_1_required(solution_EQP);
     //print_vector(std::cout, solution_EQP.x);
     this->number_subproblems_solved++;
@@ -67,11 +71,6 @@ SubproblemSolution SLPEQP::compute_optimality_step(Problem& problem, Iterate& cu
 }
 
 SubproblemSolution SLPEQP::compute_infeasibility_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, SubproblemSolution& phase_II_solution) {
-    // TODO
-    return this->compute_optimality_step(problem, current_iterate, variables_bounds);
-}
-
-SubproblemSolution SLPEQP::compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, double penalty_parameter, PenaltyDimensions penalty_dimensions) {
     // TODO
     return this->compute_optimality_step(problem, current_iterate, variables_bounds);
 }
@@ -89,6 +88,16 @@ double SLPEQP::compute_predicted_reduction(Problem& problem, Iterate& current_it
     } 
 }
 
+void SLPEQP::compute_measures(Problem& problem, Iterate& iterate) {
+    iterate.feasibility_measure = iterate.residual;
+    iterate.optimality_measure = iterate.objective;
+    return;
+}
+
+bool SLPEQP::phase_1_required(SubproblemSolution& solution) {
+    return solution.status == INFEASIBLE;
+}
+
 /* private methods */
 
 void SLPEQP::fix_active_constraints(Problem& problem, ActiveSet& active_set, std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds) {
@@ -98,6 +107,7 @@ void SLPEQP::fix_active_constraints(Problem& problem, ActiveSet& active_set, std
             if (problem.variables_bounds[i].lb == variables_bounds[i].lb) { // bound constraint
                 variables_bounds[i].ub = variables_bounds[i].lb;
             }
+            // otherwise, trust region
         }
         else { // general constraint
             int j = i - problem.number_variables;
@@ -110,6 +120,7 @@ void SLPEQP::fix_active_constraints(Problem& problem, ActiveSet& active_set, std
             if (problem.variables_bounds[i].ub == variables_bounds[i].ub) { // bound constraint
                 variables_bounds[i].lb = variables_bounds[i].ub;
             }
+            // otherwise, trust region
         }
         else { // general constraint
             int j = i - problem.number_variables;
@@ -117,14 +128,4 @@ void SLPEQP::fix_active_constraints(Problem& problem, ActiveSet& active_set, std
         }
     }
     return;
-}
-
-void SLPEQP::compute_measures(Problem& problem, Iterate& iterate) {
-    iterate.feasibility_measure = iterate.residual;
-    iterate.optimality_measure = iterate.objective;
-    return;
-}
-
-bool SLPEQP::phase_1_required(SubproblemSolution& solution) {
-    return solution.status == INFEASIBLE;
 }

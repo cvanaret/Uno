@@ -3,7 +3,6 @@
 #include "SLP.hpp"
 #include "SLPEQP.hpp"
 #include "InteriorPoint.hpp"
-#include "AugmentedLagrangian.hpp"
 #include "QPSolverFactory.hpp"
 
 std::shared_ptr<Subproblem> SubproblemFactory::create(const std::string& type, QPSolver& solver, std::map<std::string, std::string> default_values) {

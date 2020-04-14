@@ -8,7 +8,10 @@
 SLP::SLP(LPSolver& solver) : Subproblem(), solver(solver) {
 }
 
-Iterate SLP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, int number_constraints, bool use_trust_region) {
+Iterate SLP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, int number_constraints, std::vector<Range>& variables_bounds, bool use_trust_region) {
+    // register the original bounds
+    this->reformulated_variables_bounds = variables_bounds;
+    
     Iterate first_iterate(problem, x, multipliers);
     /* compute the optimality and feasibility measures of the initial point */
     this->compute_measures(problem, first_iterate);
@@ -92,25 +95,25 @@ double SLP::compute_predicted_reduction(Problem& problem, Iterate& current_itera
     }
 }
 
-/* additional variables */
-SubproblemSolution SLP::compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, double penalty_parameter, PenaltyDimensions penalty_dimensions) {
-    /* generate the QP */
-    //QP qp = this->generate_l1_penalty_qp_(problem, current_iterate, variables_bounds, penalty_parameter, penalty_dimensions);
-
-    /* generate the initial solution */
-    //std::vector<double> d0(problem.number_variables); // = {0.}
-
-    /* solve the QP */
-    //SubproblemSolution solution = this->solver.solve(variables_bounds, qp.constraints_bounds, qp.linear_objective, qp.constraints, current_iterate.hessian, d0);
-
-
-    ActiveSet active_set;
-    ConstraintPartition constraint_partition;
-
-    SubproblemSolution solution(current_iterate.x, current_iterate.multipliers, active_set, constraint_partition);
-    this->number_subproblems_solved++;
-    return solution;
-}
+///* additional variables */
+//SubproblemSolution SLP::compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, double penalty_parameter, PenaltyDimensions penalty_dimensions) {
+//    /* generate the QP */
+//    //QP qp = this->generate_l1_penalty_qp_(problem, current_iterate, variables_bounds, penalty_parameter, penalty_dimensions);
+//
+//    /* generate the initial solution */
+//    //std::vector<double> d0(problem.number_variables); // = {0.}
+//
+//    /* solve the QP */
+//    //SubproblemSolution solution = this->solver.solve(variables_bounds, qp.constraints_bounds, qp.linear_objective, qp.constraints, current_iterate.hessian, d0);
+//
+//
+//    ActiveSet active_set;
+//    ConstraintPartition constraint_partition;
+//
+//    SubproblemSolution solution(current_iterate.x, current_iterate.multipliers, active_set, constraint_partition);
+//    this->number_subproblems_solved++;
+//    return solution;
+//}
 
 /* private methods */
 

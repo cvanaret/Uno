@@ -105,10 +105,10 @@ SubproblemSolution AugmentedLagrangian::compute_infeasibility_step(Problem& prob
     throw std::out_of_range("Not implemented yet.");
 }
 
-SubproblemSolution AugmentedLagrangian::compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, double penalty_parameter, PenaltyDimensions penalty_dimensions) {
-    std::cout << "AugmentedLagrangian::compute_l1_penalty_step not implemented yet\n";
-    throw std::out_of_range("Not implemented yet.");
-}
+//SubproblemSolution AugmentedLagrangian::compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, double penalty_parameter, PenaltyDimensions penalty_dimensions) {
+//    std::cout << "AugmentedLagrangian::compute_l1_penalty_step not implemented yet\n";
+//    throw std::out_of_range("Not implemented yet.");
+//}
 
 void AugmentedLagrangian::compute_measures(Problem& problem, Iterate& iterate) {
     return;

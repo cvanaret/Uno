@@ -8,13 +8,22 @@
 SQP::SQP(QPSolver& solver) : Subproblem(), solver(solver) {
 }
 
-Iterate SQP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, int number_constraints, bool use_trust_region) {
+Iterate SQP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, int number_constraints, std::vector<Range>& variables_bounds, bool /*use_trust_region*/) {
+    // register the original bounds
+    this->reformulated_variables_bounds = variables_bounds;
+    
     Iterate first_iterate(problem, x, multipliers);
     /* compute the optimality and feasibility measures of the initial point */
     this->compute_measures(problem, first_iterate);
 
     /* allocate the QP solver */
     this->solver.allocate(number_variables, number_constraints);
+    
+    /* compute least-square multipliers */
+    if (0 < problem.number_constraints) {
+        first_iterate.compute_constraints_jacobian(problem);
+        first_iterate.multipliers.constraints = Subproblem::compute_least_square_multipliers(problem, first_iterate, multipliers.constraints, 1e4);
+    }
     return first_iterate;
 }
 
@@ -28,7 +37,7 @@ SubproblemSolution SQP::compute_optimality_step(Problem& problem, Iterate& curre
     std::vector<Range> constraints_bounds = Subproblem::generate_constraints_bounds(problem, current_iterate.constraints);
 
     /* generate the initial point */
-    std::vector<double> d0(variables_bounds.size()); // = {0.}
+    std::vector<double> d0(current_iterate.x.size()); // = {0.}
 
     /* solve the QP */
     SubproblemSolution solution = this->solver.solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
@@ -51,7 +60,7 @@ SubproblemSolution SQP::compute_infeasibility_step(Problem& problem, Iterate& cu
     std::vector<Range> constraints_bounds = this->generate_feasibility_bounds(problem, current_iterate.constraints, phase_II_solution.constraint_partition);
 
     /* compute the objective */
-    this->set_feasibility_objective_(problem, current_iterate, phase_II_solution.constraint_partition);
+    this->set_feasibility_objective_(current_iterate, phase_II_solution.constraint_partition);
 
     /* generate the initial point */
     std::vector<double> d0 = phase_II_solution.x;
@@ -75,15 +84,14 @@ double SQP::compute_predicted_reduction(Problem& problem, Iterate& current_itera
     } 
 }
 
-SubproblemSolution SQP::compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, double penalty_parameter, PenaltyDimensions penalty_dimensions) {
-    /* generate the initial solution */
-    std::vector<double> d0(problem.number_variables); // = {0.}
+void SQP::compute_measures(Problem& problem, Iterate& iterate) {
+    iterate.feasibility_measure = iterate.residual;
+    iterate.optimality_measure = iterate.objective;
+    return;
+}
 
-    /* solve the QP */
-    // TODO constraints_bounds
-    SubproblemSolution solution = this->solver.solve_QP(variables_bounds, variables_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
-    this->number_subproblems_solved++;
-    return solution;
+bool SQP::phase_1_required(SubproblemSolution& solution) {
+    return (solution.status == INFEASIBLE);
 }
 
 /* private methods */
@@ -125,7 +133,7 @@ std::vector<Range> SQP::generate_feasibility_bounds(Problem& problem, std::vecto
     return constraints_bounds;
 }
 
-void SQP::set_feasibility_objective_(Problem& problem, Iterate& current_iterate, ConstraintPartition& constraint_partition) {
+void SQP::set_feasibility_objective_(Iterate& current_iterate, ConstraintPartition& constraint_partition) {
     /* objective function: add the gradients of infeasible constraints */
     std::map<int, double> objective_gradient;
     for (int j: constraint_partition.infeasible_set) {
@@ -144,17 +152,6 @@ void SQP::set_feasibility_objective_(Problem& problem, Iterate& current_iterate,
     current_iterate.set_objective_gradient(objective_gradient);
     return;
 }
-
-void SQP::compute_measures(Problem& problem, Iterate& iterate) {
-    iterate.feasibility_measure = iterate.residual;
-    iterate.optimality_measure = iterate.objective;
-    return;
-}
-
-bool SQP::phase_1_required(SubproblemSolution& solution) {
-    return solution.status == INFEASIBLE;
-}
-
 
 // TO MOVE
 
