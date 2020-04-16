@@ -25,8 +25,8 @@ kmax_(500), mlp_(1000), mxwk0_(2000000), mxiwk0_(500000), info_(100), alp_(mlp_)
 hessian_column_start(hessian_column_start), hessian_row_number(hessian_row_number) {
     /* preallocate a bunch of stuff */
     this->k_ = 0;
-    /* warm start: mode = 2 */
-    this->mode_ = 0;
+    /* warm start mode */
+    this->mode_ = COLD_START;
 
     this->iprint_ = 0;
     this->nout_ = 6;
@@ -43,10 +43,10 @@ hessian_column_start(hessian_column_start), hessian_row_number(hessian_row_numbe
 void BQPDSolver::allocate(int n, int m) {
     this->n_ = n;
     this->m_ = m;
-    this->ls_.resize(n + m);
+    this->ls_.resize(n + m); // active set
     this->w_.resize(n + m);
     this->gradient_solution_.resize(n);
-    this->residuals_.resize(n + m);
+    this->residuals_.resize(n + m); // multipliers
     this->e_.resize(n + m);
     this->nhi_ = hessian_nnz_ + n + 3;
     this->mxws_ = nhr_ + kmax_ * (kmax_ + 9) / 2 + 2 * n + m + mxwk0_;
@@ -91,72 +91,17 @@ Status int_to_status(int ifail) {
 
 SubproblemSolution BQPDSolver::solve_QP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, CSCMatrix& hessian, std::vector<double>& x) {
     /* Hessian */
-    for (unsigned int i = 0; i < hessian.number_nonzeros; i++) {
+    for (int i = 0; i < hessian.number_nonzeros(); i++) {
         this->ws_[i] = hessian.matrix[i];
     }
-
-    /* Jacobian */
-    // TODO preallocate
-    std::vector<double> jacobian;
-    std::vector<int> jacobian_sparsity;
-    jacobian_sparsity.push_back(0); // header-related, will be modified later on
-    build_jacobian(jacobian, jacobian_sparsity, linear_objective);
-    for (unsigned int j = 0; j < constraints_jacobian.size(); j++) {
-        build_jacobian(jacobian, jacobian_sparsity, constraints_jacobian[j]);
-    }
-    /* Jacobian header */
-    jacobian_sparsity[0] = jacobian_sparsity.size();
-    unsigned int total_size = 1;
-    jacobian_sparsity.push_back(total_size);
-    total_size += linear_objective.size();
-    jacobian_sparsity.push_back(total_size);
-    for (unsigned int j = 0; j < constraints_jacobian.size(); j++) {
-        total_size += constraints_jacobian[j].size();
-        jacobian_sparsity.push_back(total_size);
-    }
-
-    /* bounds */
-    std::vector<double> lb(variables_bounds.size() + constraints_jacobian.size());
-    std::vector<double> ub(variables_bounds.size() + constraints_jacobian.size());
-    int i = 0;
-    for (Range& range : variables_bounds) {
-        lb[i] = range.lb;
-        ub[i] = range.ub;
-        if (lb[i] == -INFINITY) {
-            lb[i] = -BIG;
-        }
-        if (ub[i] == INFINITY) {
-            ub[i] = BIG;
-        }
-        i++;
-    }
-    for (unsigned int j = 0; j < constraints_bounds.size(); j++) {
-        lb[variables_bounds.size() + j] = constraints_bounds[j].lb;
-        ub[variables_bounds.size() + j] = constraints_bounds[j].ub;
-    }
-
-    /* call BQPD */
-    bqpd_(&this->n_, &this->m_, &this->k_, &this->kmax_, jacobian.data(), jacobian_sparsity.data(), x.data(),
-            lb.data(), ub.data(), &this->f_solution_, &this->fmin_, this->gradient_solution_.data(),
-            this->residuals_.data(), this->w_.data(), this->e_.data(), this->ls_.data(), this->alp_.data(),
-            this->lp_.data(), &this->mlp_, &this->peq_solution_, this->ws_.data(), this->lws_.data(), &this->mode_,
-            &this->ifail_, this->info_.data(), &this->iprint_, &this->nout_);
-
-    /* project solution into bounds: it's a ray! */
-    for (unsigned int i = 0; i < x.size(); i++) {
-        if (x[i] < variables_bounds[i].lb) {
-            x[i] = variables_bounds[i].lb;
-        }
-        else if (variables_bounds[i].ub < x[i]) {
-            x[i] = variables_bounds[i].ub;
-        }
-    }
-
-    SubproblemSolution solution = this->generate_solution(x);
-    return solution;
+    return this->solve_subproblem(variables_bounds, constraints_bounds, linear_objective, constraints_jacobian, x, this->kmax_);
 }
 
 SubproblemSolution BQPDSolver::solve_LP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, std::vector<double>& x) {
+    return this->solve_subproblem(variables_bounds, constraints_bounds, linear_objective, constraints_jacobian, x, 0);
+}
+
+SubproblemSolution BQPDSolver::solve_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, std::vector<double>& x, int kmax) {
     /* Jacobian */
     // TODO preallocate
     std::vector<double> jacobian;
@@ -178,31 +123,23 @@ SubproblemSolution BQPDSolver::solve_LP(std::vector<Range>& variables_bounds, st
     }
 
     /* bounds */
-    std::vector<double> lb(variables_bounds.size() + constraints_jacobian.size());
-    std::vector<double> ub(variables_bounds.size() + constraints_jacobian.size());
-    int i = 0;
-    for (Range& range : variables_bounds) {
-        lb[i] = range.lb;
-        ub[i] = range.ub;
-        if (lb[i] == -INFINITY) {
-            lb[i] = -BIG;
-        }
-        if (ub[i] == INFINITY) {
-            ub[i] = BIG;
-        }
-        i++;
+    std::vector<double> lb(variables_bounds.size() + constraints_bounds.size());
+    std::vector<double> ub(variables_bounds.size() + constraints_bounds.size());
+    for (unsigned int i = 0; i < variables_bounds.size(); i++) {
+        lb[i] = (variables_bounds[i].lb == -INFINITY) ? -BIG : variables_bounds[i].lb;
+        ub[i] = (variables_bounds[i].ub == INFINITY) ? BIG : variables_bounds[i].ub;
     }
     for (unsigned int j = 0; j < constraints_bounds.size(); j++) {
         lb[variables_bounds.size() + j] = constraints_bounds[j].lb;
         ub[variables_bounds.size() + j] = constraints_bounds[j].ub;
     }
-
+    
     /* call BQPD */
-    int kmax = 0; // for LPs
+    int mode = (int) this->mode_;
     bqpd_(&this->n_, &this->m_, &this->k_, &kmax, jacobian.data(), jacobian_sparsity.data(), x.data(),
             lb.data(), ub.data(), &this->f_solution_, &this->fmin_, this->gradient_solution_.data(),
             this->residuals_.data(), this->w_.data(), this->e_.data(), this->ls_.data(), this->alp_.data(),
-            this->lp_.data(), &this->mlp_, &this->peq_solution_, this->ws_.data(), this->lws_.data(), &this->mode_,
+            this->lp_.data(), &this->mlp_, &this->peq_solution_, this->ws_.data(), this->lws_.data(), &mode,
             &this->ifail_, this->info_.data(), &this->iprint_, &this->nout_);
 
     /* project solution into bounds: it's a ray! */
@@ -285,8 +222,6 @@ SubproblemSolution BQPDSolver::generate_solution(std::vector<double>& x) {
     // phase_1_required
     solution.norm = norm_inf(x);
     solution.objective = this->f_solution_;
-    //solution.active_set = active_set;
-    //solution.constraint_partition = constraint_partition;
     return solution;
 }
 

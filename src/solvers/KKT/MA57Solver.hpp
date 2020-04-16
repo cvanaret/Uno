@@ -3,9 +3,9 @@
 
 #include <vector>
 #include "Matrix.hpp"
-#include "SubproblemSolution.hpp"
 
 struct MA57Factorization {
+    int size;
 	std::vector<double> fact;
 	int lfact;
 	std::vector<int> ifact;
@@ -15,6 +15,7 @@ struct MA57Factorization {
     
     int number_negative_eigenvalues();
     bool matrix_is_singular();
+    int rank();
 };
 
 /*! \class MA57Solver
@@ -30,7 +31,7 @@ class MA57Solver {
 		int use_fortran;
 		
 		MA57Factorization factorize(COOMatrix& matrix);
-		std::vector<double> solve(COOMatrix& matrix, std::vector<double>& rhs, MA57Factorization& data);
+		std::vector<double> solve(MA57Factorization& factorization, std::vector<double>& rhs);
 		
 	private:
 		/* for ma57id_ */

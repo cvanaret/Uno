@@ -17,7 +17,7 @@ MA57Solver::MA57Solver() : use_fortran(1), cntl_(5), icntl_(20), rinfo_(20) {
 
 MA57Factorization MA57Solver::factorize(COOMatrix& matrix) {
     int n = matrix.size;
-    int nnz = matrix.number_nonzeros;
+    int nnz = matrix.number_nonzeros();
 
     /* initialize */
     ma57id_(this->cntl_.data(), this->icntl_.data());
@@ -47,14 +47,12 @@ MA57Factorization MA57Solver::factorize(COOMatrix& matrix) {
     std::vector<int> ifact(lifact);
     ma57bd_(&n, &nnz, matrix.matrix.data(), fact.data(), &lfact, ifact.data(), &lifact, &lkeep, keep.data(),
             iwork.data(), this->icntl_.data(), this->cntl_.data(), info.data(), this->rinfo_.data());
-    //print_vector(std::cout, this->info_);
-    //std::cout << "the matrix has rank " << this->info_[24] << "\n";
-    return {fact, lfact, ifact, lifact, iwork, info};
+    return {n, fact, lfact, ifact, lifact, iwork, info};
 }
 
-std::vector<double> MA57Solver::solve(COOMatrix& matrix, std::vector<double>& rhs, MA57Factorization& factorization) {
+std::vector<double> MA57Solver::solve(MA57Factorization& factorization, std::vector<double>& rhs) {
     /* solve */
-    int n = matrix.size;
+    int n = factorization.size;
     int job = 1;
     int nrhs = 1; // number of right hand side being solved
     int lrhs = n; // integer, length of rhs
@@ -75,7 +73,12 @@ bool MA57Factorization::matrix_is_singular() {
     return (this->info[0] == 4);
 }
 
-void test() {
+int MA57Factorization::rank() {
+    return this->info[24];
+}
+
+
+//void test() {
     /*
     A[0][0] = 2; A[0][1] = 3;
     A[1][2] = 4; A[1][4] = 6;
@@ -83,27 +86,27 @@ void test() {
     A[4][4] = 1;
      */
 
-    int n = 5;
-    COOMatrix matrix(n, 0);
-    matrix.add_term(2., 0, 0);
-    matrix.add_term(3., 0, 1);
-    matrix.add_term(4., 1, 2);
-    matrix.add_term(6., 1, 4);
-    matrix.add_term(1., 2, 2);
-    matrix.add_term(5., 2, 3);
-    matrix.add_term(1., 4, 4);
+    //int n = 5;
+    //COOMatrix matrix(n, 0);
+    //matrix.add_term(2., 0, 0);
+    //matrix.add_term(3., 0, 1);
+    //matrix.add_term(4., 1, 2);
+    //matrix.add_term(6., 1, 4);
+    //matrix.add_term(1., 2, 2);
+    //matrix.add_term(5., 2, 3);
+    //matrix.add_term(1., 4, 4);
 
     /* right hand side */
-    std::vector<double> rhs = {8., 45., 31., 15., 17.};
+    //std::vector<double> rhs = {8., 45., 31., 15., 17.};
 
-    MA57Solver s;
-    MA57Factorization data = s.factorize(matrix);
-    std::vector<double> solution = s.solve(matrix, rhs, data);
+    //MA57Solver s;
+    //MA57Factorization data = s.factorize(matrix);
+    //std::vector<double> solution = s.solve(matrix, rhs, data);
 
-    std::cout << "solution";
-    for (unsigned int k = 0; k < solution.size(); k++) {
-        std::cout << " " << solution[k];
-    }
-    std::cout << "\n";
-    return;
-}
+    //std::cout << "solution";
+    //for (unsigned int k = 0; k < solution.size(); k++) {
+    //    std::cout << " " << solution[k];
+    //}
+    //std::cout << "\n";
+    //return;
+//}

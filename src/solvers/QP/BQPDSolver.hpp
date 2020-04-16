@@ -7,6 +7,14 @@
 #include "QPSolver.hpp"
 #include "LPSolver.hpp"
 
+enum BQPDMode {
+    COLD_START = 0,
+    ACTIVE_SET_EQUALITIES = 1,
+    USER_DEFINED = 2,
+    ACTIVE_SET_PREVIOUS_CALL = 3
+    // goes to 6
+};
+
 /*! \class BQPDSolver
  * \brief Interface for BQPD
  *
@@ -50,7 +58,9 @@ private:
     int hessian_nnz_, nhr_, nhi_, mxws_, mxlws_;
     std::vector<double> ws_;
     std::vector<int> lws_;
-    int n_, m_, k_, mode_, iprint_, nout_;
+    int n_, m_, k_;
+    BQPDMode mode_;
+    int iprint_, nout_;
     double fmin_, f_solution_;
     int peq_solution_, ifail_;
     std::vector<int> hessian_column_start, hessian_row_number;
@@ -61,7 +71,7 @@ private:
      * \param d: optimal solution
      */
     SubproblemSolution generate_solution(std::vector<double>& x);
-
+    SubproblemSolution solve_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, std::vector<double>& x, int kmax);
     void build_jacobian(std::vector<double>& full_jacobian, std::vector<int>& full_jacobian_sparsity, std::map<int, double>& jacobian);
 };
 
