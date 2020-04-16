@@ -8,17 +8,17 @@
 SQP::SQP(QPSolver& solver) : Subproblem(), solver(solver) {
 }
 
-Iterate SQP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, int number_constraints, std::vector<Range>& variables_bounds, bool /*use_trust_region*/) {
+Iterate SQP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, bool /*use_trust_region*/) {
     // register the original bounds
-    this->reformulated_variables_bounds = variables_bounds;
-    
+    this->subproblem_variables_bounds = problem.variables_bounds;
+
     Iterate first_iterate(problem, x, multipliers);
     /* compute the optimality and feasibility measures of the initial point */
     this->compute_measures(problem, first_iterate);
 
     /* allocate the QP solver */
-    this->solver.allocate(number_variables, number_constraints);
-    
+    this->solver.allocate(number_variables, problem.number_constraints);
+
     /* compute least-square multipliers */
     if (0 < problem.number_constraints) {
         first_iterate.compute_constraints_jacobian(problem);
@@ -27,12 +27,13 @@ Iterate SQP::initialize(Problem& problem, std::vector<double>& x, Multipliers& m
     return first_iterate;
 }
 
-SubproblemSolution SQP::compute_optimality_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds) {
-    /* compute first- and second-order information */
-    current_iterate.compute_hessian(problem, problem.objective_sign, current_iterate.multipliers.constraints);
-    current_iterate.compute_objective_gradient(problem);
-    current_iterate.compute_constraints_jacobian(problem);
-    
+SubproblemSolution SQP::compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+    /* evaluate the functions at the current iterate */
+    this->evaluate_optimality_iterate(problem, current_iterate);
+
+    /* bounds of the variables */
+    std::vector<Range> variables_bounds = this->generate_variables_bounds(current_iterate, trust_region_radius);
+
     /* bounds of the linearized constraints */
     std::vector<Range> constraints_bounds = Subproblem::generate_constraints_bounds(problem, current_iterate.constraints);
 
@@ -40,21 +41,20 @@ SubproblemSolution SQP::compute_optimality_step(Problem& problem, Iterate& curre
     std::vector<double> d0(current_iterate.x.size()); // = {0.}
 
     /* solve the QP */
-    SubproblemSolution solution = this->solver.solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
+    SubproblemSolution solution = this->solve_subproblem(variables_bounds, constraints_bounds, current_iterate, d0);
     solution.phase_1_required = this->phase_1_required(solution);
     this->number_subproblems_solved++;
     return solution;
 }
 
-SubproblemSolution SQP::compute_infeasibility_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, SubproblemSolution& phase_II_solution) {
-    /* update the multipliers of the general constraints */
-    std::vector<double> constraint_multipliers = this->generate_feasibility_multipliers(problem, current_iterate.multipliers.constraints, phase_II_solution.constraint_partition);
+SubproblemSolution SQP::compute_infeasibility_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) {
+    DEBUG << "Creating the restoration problem with " << phase_II_solution.constraint_partition.infeasible_set.size() << " infeasible constraints\n";
     
-    /* compute first- and second-order information */
-    double objective_multiplier = 0.;
-    current_iterate.compute_hessian(problem, objective_multiplier, constraint_multipliers);
-    current_iterate.compute_objective_gradient(problem);
-    current_iterate.compute_constraints_jacobian(problem);
+    /* evaluate the functions at the current iterate */
+    this->evaluate_feasibility_iterate(problem, current_iterate, phase_II_solution);
+
+    /* bounds of the variables */
+    std::vector<Range> variables_bounds = this->generate_variables_bounds(current_iterate, trust_region_radius);
 
     /* bounds of the linearized constraints */
     std::vector<Range> constraints_bounds = this->generate_feasibility_bounds(problem, current_iterate.constraints, phase_II_solution.constraint_partition);
@@ -66,7 +66,7 @@ SubproblemSolution SQP::compute_infeasibility_step(Problem& problem, Iterate& cu
     std::vector<double> d0 = phase_II_solution.x;
 
     /* solve the QP */
-    SubproblemSolution solution = this->solver.solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
+    SubproblemSolution solution = this->solve_subproblem(variables_bounds, constraints_bounds, current_iterate, d0);
     this->number_subproblems_solved++;
     return solution;
 }
@@ -80,8 +80,8 @@ double SQP::compute_predicted_reduction(Problem& problem, Iterate& current_itera
         /* the predicted reduction is a quadratic in the step length */
         double linear_term = dot(solution.x, current_iterate.objective_gradient);
         double quadratic_term = current_iterate.hessian.quadratic_product(solution.x, solution.x) / 2.;
-        return -step_length*(linear_term + step_length * quadratic_term);
-    } 
+        return -step_length * (linear_term + step_length * quadratic_term);
+    }
 }
 
 void SQP::compute_measures(Problem& problem, Iterate& iterate) {
@@ -95,6 +95,24 @@ bool SQP::phase_1_required(SubproblemSolution& solution) {
 }
 
 /* private methods */
+
+void SQP::evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate) {
+    /* compute first- and second-order information */
+    current_iterate.compute_hessian(problem, problem.objective_sign, current_iterate.multipliers.constraints);
+    current_iterate.compute_objective_gradient(problem);
+    current_iterate.compute_constraints_jacobian(problem);
+    return;
+}
+
+void SQP::evaluate_feasibility_iterate(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution) {
+    /* update the multipliers of the general constraints */
+    std::vector<double> constraint_multipliers = this->generate_feasibility_multipliers(problem, current_iterate.multipliers.constraints, phase_II_solution.constraint_partition);
+    /* compute first- and second-order information */
+    double objective_multiplier = 0.;
+    current_iterate.compute_hessian(problem, objective_multiplier, constraint_multipliers);
+    current_iterate.compute_constraints_jacobian(problem);
+    return;
+}
 
 std::vector<double> SQP::generate_feasibility_multipliers(Problem& problem, std::vector<double>& current_constraint_multipliers, ConstraintPartition& constraint_partition) {
     std::vector<double> constraint_multipliers(problem.number_constraints);
@@ -136,16 +154,16 @@ std::vector<Range> SQP::generate_feasibility_bounds(Problem& problem, std::vecto
 void SQP::set_feasibility_objective_(Iterate& current_iterate, ConstraintPartition& constraint_partition) {
     /* objective function: add the gradients of infeasible constraints */
     std::map<int, double> objective_gradient;
-    for (int j: constraint_partition.infeasible_set) {
+    for (int j : constraint_partition.infeasible_set) {
         for (std::pair<int, double> term : current_iterate.constraints_jacobian[j]) {
-            int variable_index = term.first;
+            int i = term.first;
             double derivative = term.second;
 
             if (constraint_partition.constraint_status[j] == INFEASIBLE_LOWER) {
-                objective_gradient[variable_index] -= derivative;
+                objective_gradient[i] -= derivative;
             }
             else {
-                objective_gradient[variable_index] += derivative;
+                objective_gradient[i] += derivative;
             }
         }
     }
@@ -153,87 +171,6 @@ void SQP::set_feasibility_objective_(Iterate& current_iterate, ConstraintPartiti
     return;
 }
 
-// TO MOVE
-
-//QP QPApproximation::generate_l1_penalty_qp_(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, double penalty_parameter, PenaltyDimensions penalty_dimensions) {
-//    int number_variables = problem.number_variables + penalty_dimensions.number_additional_variables;
-//    int number_constraints = penalty_dimensions.number_constraints;
-//
-//    /* compute the Lagrangian Hessian from scratch */
-//    current_iterate.is_hessian_computed = false;
-//    double objective_multiplier = penalty_parameter;
-//    current_iterate.compute_hessian(problem, objective_multiplier, current_iterate.multipliers.constraints);
-//
-//    /* initialize the QP */
-//    QP qp(number_variables, number_constraints);
-//    qp.variables_bounds = variables_bounds;
-//
-//    /* bounds of additional variables */
-//    for (int k = 0; k < penalty_dimensions.number_additional_variables; k++) {
-//        qp.variables_bounds[problem.number_variables + k] = {0., (double) INFINITY};
-//    }
-//
-//    /* apply the nonzero penalty parameter on the initial objective */
-//    if (penalty_parameter != 0.) {
-//        if (!current_iterate.is_objective_gradient_computed) {
-//            std::map<int, double> objective_gradient = problem.objective_sparse_gradient(current_iterate.x);
-//            current_iterate.set_objective_gradient(objective_gradient);
-//        }
-//        qp.linear_objective = current_iterate.objective_gradient;
-//        for (std::pair<int, double> term : qp.linear_objective) {
-//            int index = term.first;
-//            qp.linear_objective[index] *= penalty_parameter;
-//        }
-//    }
-//    /* add additional variables to the objective */
-//    for (int k = 0; k < penalty_dimensions.number_additional_variables; k++) {
-//        qp.linear_objective[problem.number_variables + k] = 1.;
-//    }
-//
-//    /* compute the original constraint gradients */
-//    current_iterate.compute_constraints_jacobian(problem);
-//
-//    /* add the constraints */
-//    int current_additional_variable = problem.number_variables;
-//    int current_constraint = 0;
-//    for (int j = 0; j < problem.number_constraints; j++) {
-//        if (problem.constraint_status[j] == EQUAL_BOUNDS) {
-//            /* a single constraint with both additional variables */
-//            std::map<int, double> gradient(current_iterate.constraints_jacobian[j]);
-//            gradient[current_additional_variable] = -1.;
-//            gradient[current_additional_variable + 1] = 1.;
-//            qp.constraints[current_constraint] = gradient;
-//            /* identical bounds */
-//            double lb = problem.constraints_bounds[j].lb - current_iterate.constraints[j];
-//            double ub = problem.constraints_bounds[j].ub - current_iterate.constraints[j];
-//            qp.constraints_bounds[current_constraint] = {lb, ub};
-//            current_additional_variable += 2;
-//            current_constraint++;
-//        }
-//        if (problem.constraint_status[j] == BOUNDED_BOTH_SIDES || problem.constraint_status[j] == BOUNDED_LOWER) {
-//            /* a single constraint with one additional variable */
-//            std::map<int, double> gradient(current_iterate.constraints_jacobian[j]);
-//            gradient[current_additional_variable] = 1.;
-//            qp.constraints[current_constraint] = gradient;
-//            /* bounds */
-//            double lb = problem.constraints_bounds[j].lb - current_iterate.constraints[j];
-//            double ub = INFINITY;
-//            qp.constraints_bounds[current_constraint] = {lb, ub};
-//            current_additional_variable++;
-//            current_constraint++;
-//        }
-//        if (problem.constraint_status[j] == BOUNDED_BOTH_SIDES || problem.constraint_status[j] == BOUNDED_UPPER) {
-//            /* a single constraint with one additional variable */
-//            std::map<int, double> gradient(current_iterate.constraints_jacobian[j]);
-//            gradient[current_additional_variable] = -1.;
-//            qp.constraints[current_constraint] = gradient;
-//            /* bounds */
-//            double lb = -INFINITY;
-//            double ub = problem.constraints_bounds[j].ub - current_iterate.constraints[j];
-//            qp.constraints_bounds[current_constraint] = {lb, ub};
-//            current_additional_variable++;
-//            current_constraint++;
-//        }
-//    }
-//    return qp;
-//}
+SubproblemSolution SQP::solve_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, Iterate& current_iterate, std::vector<double>& d0) {
+    return this->solver.solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
+}

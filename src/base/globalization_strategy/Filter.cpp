@@ -24,7 +24,8 @@ void Filter::add(double infeasibility_measure, double optimality_measure) {
     while (entry != this->entries.end()) {
         if (infeasibility_measure < entry->infeasibility_measure && optimality_measure <= entry->optimality_measure) {
             entry = this->entries.erase(entry);
-        } else {
+        }
+        else {
             entry++;
         }
     }
@@ -47,8 +48,21 @@ void Filter::add(double infeasibility_measure, double optimality_measure) {
     return;
 }
 
+// filter must be nonempty
+double Filter::eta_min() {
+    FilterEntry& last_element = this->entries.back();
+    return last_element.infeasibility_measure;
+}
+
+// filter must be nonempty
+double Filter::omega_min() {
+    FilterEntry& last_element = this->entries.back();
+    return last_element.optimality_measure;
+}
+
+
 /* query: return true if (infeasibility_measure, optimality_measure) acceptable, false otherwise */
-bool Filter::query(double infeasibility_measure, double optimality_measure) {
+bool Filter::accept(double infeasibility_measure, double optimality_measure) {
     /* check upper bound first */
     if (this->constants.Beta * this->upper_bound <= infeasibility_measure) {
         return false;
@@ -72,12 +86,11 @@ bool Filter::query(double infeasibility_measure, double optimality_measure) {
 }
 
 //! query_current_iterate: check acceptable wrt current point 
-
-bool Filter::query_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure, double trial_optimality_measure) {
-    return !((trial_optimality_measure > current_optimality_measure - this->constants.Gamma * trial_infeasibility_measure) && (trial_infeasibility_measure > this->constants.Beta * current_infeasibility_measure));
+bool Filter::improves_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure, double trial_optimality_measure) {
+    return (trial_optimality_measure <= current_optimality_measure - this->constants.Gamma * trial_infeasibility_measure) || (trial_infeasibility_measure < this->constants.Beta * current_infeasibility_measure);
 }
 
-double Filter::compute_actual_reduction(double current_objective, double current_residual, double trial_objective) {
+double Filter::compute_actual_reduction(double current_objective, double /*current_residual*/, double trial_objective) {
     return current_objective - trial_objective;
 }
 
@@ -142,7 +155,7 @@ void NonmonotoneFilter::add(double infeasibility_measure, double optimality_meas
 
 //! query: check if (infeasibility_measure,optimality_measure) acceptable; return 1 if yes, 0 if not
 
-bool NonmonotoneFilter::query(double infeasibility_measure, double optimality_measure) {
+bool NonmonotoneFilter::accept(double infeasibility_measure, double optimality_measure) {
     /* check upper bound first */
     if (infeasibility_measure >= this->constants.Beta * this->upper_bound) {
         return false;
@@ -162,7 +175,7 @@ bool NonmonotoneFilter::query(double infeasibility_measure, double optimality_me
 
 //! query_current_iterate: check acceptable wrt current point 
 
-bool NonmonotoneFilter::query_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure, double trial_optimality_measure) {
+bool NonmonotoneFilter::improves_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure, double trial_optimality_measure) {
     int dominated_entries;
 
     /* check acceptability wrt current point (non-monotone) */

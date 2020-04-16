@@ -6,6 +6,28 @@ Subproblem::Subproblem() : number_subproblems_solved(0) {
 Subproblem::~Subproblem() {
 }
 
+std::vector<Range> Subproblem::generate_variables_bounds(Iterate& current_iterate, double trust_region_radius) {
+    std::vector<Range> variables_bounds(current_iterate.x.size());
+    /* bounds intersected with trust region  */
+    for (unsigned int i = 0; i < current_iterate.x.size(); i++) {
+        double lb = std::max(-trust_region_radius, this->subproblem_variables_bounds[i].lb - current_iterate.x[i]);
+        double ub = std::min(trust_region_radius, this->subproblem_variables_bounds[i].ub - current_iterate.x[i]);
+        variables_bounds[i] = {lb, ub};
+    }
+    return variables_bounds;
+}
+
+double Subproblem::project_variable_in_bounds(double variable_value, Range& variable_bounds) {
+    double k1 = 1e-2;
+    double k2 = 1e-2;
+
+    double perturbation_lb = std::min(k1 * std::max(1., std::abs(variable_bounds.lb)), k2 * (variable_bounds.ub - variable_bounds.lb));
+    double perturbation_ub = std::min(k1 * std::max(1., std::abs(variable_bounds.ub)), k2 * (variable_bounds.ub - variable_bounds.lb));
+    variable_value = std::max(variable_value, variable_bounds.lb + perturbation_lb);
+    variable_value = std::min(variable_value, variable_bounds.ub - perturbation_ub);
+    return variable_value;
+}
+
 std::vector<Range> Subproblem::generate_constraints_bounds(Problem& problem, std::vector<double>& current_constraints) {
     std::vector<Range> constraints_bounds(problem.number_constraints);
     for (int j = 0; j < problem.number_constraints; j++) {
@@ -22,6 +44,9 @@ std::vector<double> Subproblem::compute_least_square_multipliers(Problem& proble
 }
 
 std::vector<double> Subproblem::compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, std::vector<double>& default_multipliers, MA57Solver& solver, double multipliers_max_size) {
+    current_iterate.compute_objective_gradient(problem);
+    current_iterate.compute_constraints_jacobian(problem);
+    
     /******************************/
     /* build the symmetric matrix */
     /******************************/
@@ -50,11 +75,10 @@ std::vector<double> Subproblem::compute_least_square_multipliers(Problem& proble
     std::vector<double> rhs(current_iterate.x.size() + problem.number_constraints);
 
     /* objective gradient */
-    current_iterate.compute_objective_gradient(problem);
     for (std::pair<int, double> term : current_iterate.objective_gradient) {
-        int variable_index = term.first;
+        int i = term.first;
         double derivative = term.second;
-        rhs[variable_index] += problem.objective_sign*derivative;
+        rhs[i] += problem.objective_sign*derivative;
     }
     /* variable bound constraints */
     for (unsigned int i = 0; i < current_iterate.x.size(); i++) {

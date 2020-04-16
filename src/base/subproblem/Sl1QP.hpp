@@ -18,23 +18,27 @@ public:
      */
     Sl1QP(QPSolver& solver);
 
-    Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, int number_constraints, std::vector<Range>& variables_bounds, bool use_trust_region) override;
+    Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, bool use_trust_region) override;
 
-    SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds) override;
-    SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, SubproblemSolution& phase_II_solution) override;
+    SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius = INFINITY) override;
+    SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius = INFINITY) override;
     void compute_measures(Problem& problem, Iterate& iterate) override;
     double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
     bool phase_1_required(SubproblemSolution& solution) override;
 
     /* use a reference to allow polymorphism */
     QPSolver& solver; /*!< Subproblem solver */
-    
+
+private:
     /* problem reformulation */
     // equality constraints c(x) = 0 are reformulated as c(x) = p - n
     // equality constraints l <= c(x) = u are reformulated as c(x) - s = p - n
     std::map<int, int> slack_variables; // s
     std::map<int, int> positive_part_variables; // p
     std::map<int, int> negative_part_variables; // n
+
+    std::vector<Range> generate_variables_bounds(Problem& problem, Iterate& current_iterate, double trust_region_radius);
+    void recover_active_set(SubproblemSolution& solution, std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds);
 };
 
 #endif // Sl1QP_H

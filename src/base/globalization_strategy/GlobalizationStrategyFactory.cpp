@@ -7,10 +7,10 @@ std::shared_ptr<GlobalizationStrategy> GlobalizationStrategyFactory::create(cons
             std::map<std::string, std::string> default_values) {
     double tolerance = stod(default_values["tolerance"]);
 
-    if (type == "penalty") {
+    /*if (type == "penalty") {
             return std::make_shared<PenaltyMeritFunction>(subproblem, tolerance);
     }
-    else if (type == "filter" || type == "nonmonotone_filter") {
+    else*/ if (type == "filter" || type == "nonmonotone_filter") {
             double Sigma = stod(default_values["Sigma"]);
             double Delta = stod(default_values["Delta"]);
             double ubd = stod(default_values["ubd"]);

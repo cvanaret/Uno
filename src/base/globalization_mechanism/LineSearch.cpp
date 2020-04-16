@@ -1,6 +1,7 @@
 #include <cmath>
 #include "LineSearch.hpp"
 #include "Logger.hpp"
+#include "AMPLModel.hpp"
 
 LineSearch::LineSearch(GlobalizationStrategy& globalization_strategy, int max_iterations, double ratio) :
 GlobalizationMechanism(globalization_strategy, max_iterations), ratio(ratio) {
@@ -11,13 +12,14 @@ Iterate LineSearch::initialize(Problem& problem, std::vector<double>& x, Multipl
 }
 
 Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_iterate) {
-    /* compute a trial direction */
-    SubproblemSolution solution = this->globalization_strategy.compute_step(problem, current_iterate, problem.variables_bounds);
+    /* compute the step within the bounds */
+    //std::vector<Range> variables_bounds = this->compute_subproblem_bounds(current_iterate);
+    SubproblemSolution solution = this->globalization_strategy.compute_step(problem, current_iterate);
     /* test if we computed a descent direction */
     if (0. < dot(solution.x, current_iterate.objective_gradient)) {
         //throw std::out_of_range("LineSearch::compute_iterate: this is not a descent direction");
     }
-    
+
     /* step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ... */
     this->step_length = 1.;
     bool is_accepted = false;
@@ -31,7 +33,7 @@ Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_iterate) 
             /* check whether the trial step is accepted */
             is_accepted = this->globalization_strategy.check_step(problem, current_iterate, solution, this->step_length);
         }
-        catch (const std::invalid_argument& e) {
+        catch (const IEEE_Error& e) {
             this->print_warning(e.what());
             is_accepted = false;
         }
@@ -53,10 +55,10 @@ bool LineSearch::termination(bool is_accepted) {
         return true;
     }
     else if (this->max_iterations < this->number_iterations) {
-        throw std::out_of_range("Line-search iteration limit reached");
+        throw std::runtime_error("Line-search iteration limit reached");
     }
     if (this->step_length < 1e-16) {
-        throw std::out_of_range("Step length became too small");
+        throw std::runtime_error("Step length became too small");
     }
     return false;
 }

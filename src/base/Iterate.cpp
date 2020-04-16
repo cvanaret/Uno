@@ -9,7 +9,7 @@ Iterate::Iterate(Problem& problem, std::vector<double>& x, Multipliers& multipli
 
     /* constraints */
     this->constraints = problem.evaluate_constraints(this->x);
-    this->residual = problem.l1_norm(this->constraints);
+    this->residual = problem.infeasible_residual_norm(this->constraints);
     //this->feasibility_measure = this->residual;
     //this->optimality_measure = this->objective;
 
@@ -50,6 +50,40 @@ void Iterate::compute_hessian(Problem& problem, double objective_multiplier, std
         this->is_hessian_computed = true;
     }
     return;
+}
+
+std::vector<double> Iterate::lagrangian_gradient(Problem& problem) {
+    std::vector<double> lagrangian_gradient(this->x.size());
+
+    /* objective gradient */
+    if (problem.objective_sign != 0.) {
+        this->compute_objective_gradient(problem);
+        
+        /* scale the objective gradient */
+        for (std::pair<int, double> term : this->objective_gradient) {
+            int variable_index = term.first;
+            double derivative = term.second;
+            lagrangian_gradient[variable_index] += problem.objective_sign*derivative;
+        }
+    }
+    /* bound constraints */
+    for (unsigned int i = 0; i < this->x.size(); i++) {
+        lagrangian_gradient[i] += - this->multipliers.lower_bounds[i] - this->multipliers.upper_bounds[i];
+    }
+    /* constraints */
+    this->compute_constraints_jacobian(problem);
+
+    for (int j = 0; j < problem.number_constraints; j++) {
+        double multiplier_j = this->multipliers.constraints[j];
+        if (multiplier_j != 0.) {
+            for (std::pair<int, double> term : this->constraints_jacobian[j]) {
+                int variable_index = term.first;
+                double derivative = term.second;
+                lagrangian_gradient[variable_index] -= multiplier_j*derivative;
+            }
+        }
+    }
+    return lagrangian_gradient;
 }
 
 std::ostream& operator<<(std::ostream &stream, Iterate& iterate) {

@@ -2,6 +2,7 @@
 #include "TrustRegion.hpp"
 #include "Utils.hpp"
 #include "Logger.hpp"
+#include "AMPLModel.hpp"
 
 TrustRegion::TrustRegion(GlobalizationStrategy& globalization_strategy, double initial_radius, int max_iterations) :
 GlobalizationMechanism(globalization_strategy, max_iterations), radius(initial_radius), activity_tolerance_(1e-6) {
@@ -21,8 +22,7 @@ Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_iterate)
             this->print_iteration();
 
             /* compute the step within trust region */
-            std::vector<Range> trust_region = this->compute_trust_region(problem, current_iterate, this->radius);
-            SubproblemSolution solution = this->globalization_strategy.compute_step(problem, current_iterate, trust_region);
+            SubproblemSolution solution = this->globalization_strategy.compute_step(problem, current_iterate, this->radius);
 
             /* set bound multipliers of active trust region to 0 */
             this->correct_multipliers(problem, solution);
@@ -38,11 +38,13 @@ Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_iterate)
                 if (solution.norm >= this->radius - this->activity_tolerance_) {
                     this->radius *= 2.;
                 }
-            } else {
+            }
+            else {
                 /* decrease the radius */
                 this->radius = std::min(this->radius, solution.norm) / 2.;
             }
-        } catch (const std::invalid_argument& e) {
+        }
+        catch (const IEEE_Error& e) {
             this->print_warning(e.what());
             this->radius /= 2.;
         }
@@ -50,12 +52,12 @@ Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_iterate)
     return current_iterate;
 }
 
-std::vector<Range> TrustRegion::compute_trust_region(Problem& problem, Iterate& current_iterate, double radius) {
-    std::vector<Range> variables_bounds(problem.number_variables);
-    /* bound constraints intersected with trust region  */
-    for (int i = 0; i < problem.number_variables; i++) {
-        double lb = std::max(-radius, problem.variables_bounds[i].lb - current_iterate.x[i]);
-        double ub = std::min(radius, problem.variables_bounds[i].ub - current_iterate.x[i]);
+std::vector<Range> TrustRegion::compute_trust_region(Iterate& current_iterate, double radius) {
+    std::vector<Range> variables_bounds(current_iterate.x.size());
+    /* bound constraints of the subproblem intersected with trust region  */
+    for (unsigned int i = 0; i < current_iterate.x.size(); i++) {
+        double lb = std::max(-radius, this->globalization_strategy.subproblem.subproblem_variables_bounds[i].lb - current_iterate.x[i]);
+        double ub = std::min(radius, this->globalization_strategy.subproblem.subproblem_variables_bounds[i].ub - current_iterate.x[i]);
         variables_bounds[i] = {lb, ub};
     }
     return variables_bounds;
@@ -63,12 +65,12 @@ std::vector<Range> TrustRegion::compute_trust_region(Problem& problem, Iterate& 
 
 void TrustRegion::correct_multipliers(Problem& problem, SubproblemSolution& solution) {
     /* set multipliers for bound constraints active at trust region to 0 */
-    for (int i: solution.active_set.at_upper_bound) {
+    for (int i : solution.active_set.at_upper_bound) {
         if (i < problem.number_variables && solution.x[i] == this->radius) {
             solution.multipliers.upper_bounds[i] = 0.;
         }
     }
-    for (int i: solution.active_set.at_lower_bound) {
+    for (int i : solution.active_set.at_lower_bound) {
         if (i < problem.number_variables && solution.x[i] == -this->radius) {
             solution.multipliers.lower_bounds[i] = 0.;
         }
@@ -79,11 +81,12 @@ void TrustRegion::correct_multipliers(Problem& problem, SubproblemSolution& solu
 bool TrustRegion::termination(bool is_accepted) {
     if (is_accepted) {
         return true;
-    } else if (this->max_iterations < this->number_iterations) {
-        throw std::out_of_range("Trust-region iteration limit reached");
+    }
+    else if (this->max_iterations < this->number_iterations) {
+        throw std::runtime_error("Trust-region iteration limit reached");
     } /* radius gets too small */
     else if (this->radius < 1e-16) { /* 1e-16: something like machine precision */
-        throw std::out_of_range("Trust-region radius became too small");
+        throw std::runtime_error("Trust-region radius became too small");
     }
     return false;
 }
@@ -102,6 +105,6 @@ void TrustRegion::print_acceptance(double solution_norm) {
 }
 
 void TrustRegion::print_warning(const char* message) {
-    WARNING << RED << message << RESET "\n";
+    WARNING << RED << message << RESET << "\n";
     return;
 }

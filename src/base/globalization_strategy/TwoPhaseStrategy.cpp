@@ -6,9 +6,9 @@ TwoPhaseStrategy::TwoPhaseStrategy(Subproblem& subproblem, TwoPhaseConstants& co
 GlobalizationStrategy(subproblem, tolerance), phase(OPTIMALITY), constants(constants) {
 }
 
-SubproblemSolution TwoPhaseStrategy::compute_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds) {
+SubproblemSolution TwoPhaseStrategy::compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
     //double objective_multiplier = (phase == OPTIMALITY) ? problem.obj_sign : 0.;
-    SubproblemSolution solution = this->subproblem.compute_optimality_step(problem, current_iterate, variables_bounds);
+    SubproblemSolution solution = this->subproblem.compute_optimality_step(problem, current_iterate, trust_region_radius);
     solution.phase = OPTIMALITY;
     DEBUG << solution;
 
@@ -23,7 +23,7 @@ SubproblemSolution TwoPhaseStrategy::compute_step(Problem& problem, Iterate& cur
 
         /* compute the step in phase 1, starting from infeasible solution */
         DEBUG << "Creating the restoration problem with " << solution.constraint_partition.infeasible_set.size() << " infeasible constraints\n";
-        solution = this->subproblem.compute_infeasibility_step(problem, current_iterate, variables_bounds, solution);
+        solution = this->subproblem.compute_infeasibility_step(problem, current_iterate, solution, trust_region_radius);
         solution.constraint_partition = constraint_partition;
         solution.phase = RESTORATION;
         DEBUG << solution;

@@ -41,6 +41,7 @@ EXEC_NAME = argonot
 DEFINES =# -D BQPD # https://stackoverflow.com/questions/10337248/what-does-the-g-d-flag-do
 LIBS = $(AMPL_DIR)/amplsolver.a $(BQPD_DIR)/libbqpd.a -L$(MA57_DIR) -lma57 -l$(METIS)  -lf2c
 
+#%.o: %.cpp %.hpp
 .cpp.o:
 	$(CPP) $(CFLAGS) $(DEFINES) $(INCLUDES) -c $< -o $@ ;
 

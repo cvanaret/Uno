@@ -37,9 +37,11 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& mul
             INFO << "status: " << current_iterate.status << "\n";
             DEBUG << "Next iterate\n" << current_iterate;
         }
-    }    catch (std::out_of_range& exception) {
+    }
+    catch (std::invalid_argument& exception) {
         ERROR << exception.what();
-    }    catch (std::invalid_argument& exception) {
+    }
+    catch (std::runtime_error& exception) {
         ERROR << exception.what();
     }
     std::clock_t c_end = std::clock();
@@ -62,42 +64,9 @@ bool Argonot::termination_criterion(OptimalityStatus current_status, int iterati
     return current_status != NOT_OPTIMAL || this->max_iterations <= iteration;
 }
 
-std::vector<double> Argonot::compute_lagrangian_gradient(Problem& problem, Iterate& current_iterate, double objective_multiplier, Multipliers& multipliers) {
-    std::vector<double> lagrangian_gradient(problem.number_variables);
-
-    /* objective gradient */
-    if (objective_multiplier != 0.) {
-        current_iterate.compute_objective_gradient(problem);
-        
-        /* scale the objective gradient */
-        for (std::pair<int, double> term : current_iterate.objective_gradient) {
-            int variable_index = term.first;
-            double derivative = term.second;
-            lagrangian_gradient[variable_index] += objective_multiplier*derivative;
-        }
-    }
-    /* bound constraints */
-    for (int i = 0; i < problem.number_variables; i++) {
-        lagrangian_gradient[i] += - multipliers.lower_bounds[i] - multipliers.upper_bounds[i];
-    }
-    /* constraints */
-    current_iterate.compute_constraints_jacobian(problem);
-
-    for (int j = 0; j < problem.number_constraints; j++) {
-        double multiplier_j = multipliers.constraints[j];
-        if (multiplier_j != 0.) {
-            for (std::pair<int, double> term : current_iterate.constraints_jacobian[j]) {
-                int variable_index = term.first;
-                double derivative = term.second;
-                lagrangian_gradient[variable_index] -= multiplier_j*derivative;
-            }
-        }
-    }
-    return lagrangian_gradient;
-}
-
 double Argonot::compute_KKT_error(Problem& problem, Iterate& iterate, double objective_mutiplier, std::string norm) {
-    std::vector<double> lagrangian_gradient = Argonot::compute_lagrangian_gradient(problem, iterate, objective_mutiplier, iterate.multipliers);
+    // TODO objective_mutiplier
+    std::vector<double> lagrangian_gradient = iterate.lagrangian_gradient(problem);
     if (norm == "inf") {
         return norm_inf(lagrangian_gradient);
     }
@@ -115,13 +84,13 @@ double Argonot::compute_KKT_error(Problem& problem, Iterate& iterate, double obj
 /* complementary slackness error. Use abs/1e-8 to safeguard */
 double Argonot::compute_complementarity_error(const Problem& problem, Iterate& iterate) {
     double complementarity_error = 0.;
-	
+
     /* bound constraints */
     for (int i = 0; i < problem.number_variables; i++) {
         if (-INFINITY < problem.variables_bounds[i].lb) {
             complementarity_error += std::abs(iterate.multipliers.lower_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].lb));
         }
-        else if (problem.variables_bounds[i].ub < INFINITY) {
+        if (problem.variables_bounds[i].ub < INFINITY) {
             complementarity_error += std::abs(iterate.multipliers.upper_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].ub));
         }
     }
@@ -129,10 +98,10 @@ double Argonot::compute_complementarity_error(const Problem& problem, Iterate& i
     for (int j = 0; j < problem.number_constraints; j++) {
         double multiplier_j = iterate.multipliers.constraints[j];
 
-        if (-INFINITY < problem.constraints_bounds[j].lb) {
+        if (-INFINITY < problem.constraints_bounds[j].lb && 0. < multiplier_j) {
             complementarity_error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraints_bounds[j].lb));
         }
-        else if (problem.constraints_bounds[j].ub < INFINITY) {
+        if (problem.constraints_bounds[j].ub < INFINITY && multiplier_j < 0.) {
             complementarity_error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraints_bounds[j].ub));
         }
     }
@@ -147,13 +116,17 @@ void Result::display() {
     std::cout << "Status:\t\t\t";
     if (this->solution.status == KKT_POINT) {
         std::cout << "Feasible KKT point found\n";
-    } else if (this->solution.status == FJ_POINT) {
+    }
+    else if (this->solution.status == FJ_POINT) {
         std::cout << "Infeasible FJ point found\n";
-    } else if (this->solution.status == FEASIBLE_SMALL_STEP) {
+    }
+    else if (this->solution.status == FEASIBLE_SMALL_STEP) {
         std::cout << "Feasible small step\n";
-    } else if (this->solution.status == INFEASIBLE_SMALL_STEP) {
+    }
+    else if (this->solution.status == INFEASIBLE_SMALL_STEP) {
         std::cout << "Infeasible small step\n";
-    } else { // NOT_OPTIMAL
+    }
+    else { // NOT_OPTIMAL
         std::cout << "Irregular termination\n";
     }
 

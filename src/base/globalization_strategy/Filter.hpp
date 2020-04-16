@@ -51,7 +51,7 @@ public:
      * \param constraint: constraint value
      * \param objective: objective value
      */
-    virtual bool query(double infeasibility_measure, double optimality_measure);
+    virtual bool accept(double infeasibility_measure, double optimality_measure);
 
     /*!
      *  Check if a point is acceptable wrt the current point
@@ -62,7 +62,7 @@ public:
      * \param trial_constraint: trial objective value
      * \param trial_objective: trial objective value
      */
-    virtual bool query_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure, double trial_optimality_measure);
+    virtual bool improves_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure, double trial_optimality_measure);
 
     /*!
      *  Compute the actual reduction resulting from taking the step
@@ -73,6 +73,9 @@ public:
      */
     virtual double compute_actual_reduction(double current_objective, double current_residual, double trial_objective);
 
+    double eta_min();
+    double omega_min();
+    
     /*!
      *  Print the filter
      */
@@ -102,7 +105,7 @@ public:
      * \param constraint: constraint value
      * \param objective: objective value
      */
-    bool query(double infeasibility_measure, double optimality_measure);
+    bool accept(double infeasibility_measure, double optimality_measure);
 
     /*!
      *  Check if a point is acceptable wrt the current point
@@ -112,7 +115,7 @@ public:
      * \param trial_constraint: trial objective value
      * \param trial_objective: trial objective value
      */
-    bool query_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure, double trial_optimality_measure);
+    bool improves_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure, double trial_optimality_measure);
 
     /*!
      *  Compute the actual reduction resulting from taking the step

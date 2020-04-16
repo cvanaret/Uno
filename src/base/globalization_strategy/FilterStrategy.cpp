@@ -6,17 +6,17 @@
 
 /* TODO option to switch between filter or non-monotonic filter */
 FilterStrategy::FilterStrategy(Subproblem& subproblem, std::shared_ptr<Filter> filter_optimality,
-                               std::shared_ptr<Filter> filter_restoration, TwoPhaseConstants& constants, double tolerance) :
+        std::shared_ptr<Filter> filter_restoration, TwoPhaseConstants& constants, double tolerance) :
 TwoPhaseStrategy(subproblem, constants, tolerance), filter_optimality(filter_optimality), filter_restoration(filter_restoration) {
 }
 
 Iterate FilterStrategy::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) {
     /* initialize the subproblem */
-    Iterate first_iterate = this->subproblem.initialize(problem, x, multipliers, problem.number_variables, problem.number_constraints, use_trust_region);
+    Iterate first_iterate = this->subproblem.initialize(problem, x, multipliers, problem.number_variables, use_trust_region);
 
     first_iterate.KKTerror = Argonot::compute_KKT_error(problem, first_iterate, 1.);
     first_iterate.complementarity_error = Argonot::compute_complementarity_error(problem, first_iterate);
-    
+
     /* set the filter upper bound */
     double upper_bound = std::max(this->constants.ubd, this->constants.fact * first_iterate.feasibility_measure);
     this->filter_optimality->upper_bound = upper_bound;
@@ -33,7 +33,7 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
     Iterate trial_iterate(problem, trial_x, solution.multipliers);
     this->compute_measures(problem, trial_iterate);
     double step_norm = step_length * solution.norm;
-    
+
     bool accept = false;
     /* check zero step */
     if (step_norm == 0.) {
@@ -54,10 +54,10 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
 
         /* check acceptance */
         Filter& filter = (this->phase == OPTIMALITY) ? *(this->filter_optimality) : *(this->filter_restoration);
-        bool acceptable = filter.query(trial_iterate.feasibility_measure, trial_iterate.optimality_measure);
+        bool acceptable = filter.accept(trial_iterate.feasibility_measure, trial_iterate.optimality_measure);
         if (acceptable) {
             // check acceptance wrt current x (h,f)
-            acceptable = filter.query_current_iterate(current_iterate.feasibility_measure, current_iterate.optimality_measure, trial_iterate.feasibility_measure, trial_iterate.optimality_measure);
+            acceptable = filter.improves_current_iterate(current_iterate.feasibility_measure, current_iterate.optimality_measure, trial_iterate.feasibility_measure, trial_iterate.optimality_measure);
             if (acceptable) {
                 double predicted_reduction = this->subproblem.compute_predicted_reduction(problem, current_iterate, solution, step_length);
                 double actual_reduction = filter.compute_actual_reduction(current_iterate.optimality_measure, current_iterate.feasibility_measure, trial_iterate.optimality_measure);
@@ -113,7 +113,7 @@ void FilterStrategy::switch_phase(Problem& problem, SubproblemSolution& solution
         }
     }
         /* check whether we can switch from phase I (restoration) to II (optimality) */
-    else if (solution.phase == OPTIMALITY && this->filter_optimality->query(trial_iterate.feasibility_measure, trial_iterate.optimality_measure)) {
+    else if (solution.phase == OPTIMALITY && this->filter_optimality->accept(trial_iterate.feasibility_measure, trial_iterate.optimality_measure)) {
         DEBUG << "Switching from restoration to optimality phase\n";
         this->phase = OPTIMALITY;
         this->compute_measures(problem, current_iterate);

@@ -1,6 +1,7 @@
 #include "Problem.hpp"
 #include <cmath>
 #include <iostream>
+#include "Utils.hpp"
 
 Problem::Problem(std::string name) : name(name) {
 }
@@ -51,7 +52,7 @@ double Problem::infeasible_residual_norm(ConstraintPartition& constraint_partiti
 }
 
 /* compute ||c||_1 */
-double Problem::l1_norm(std::vector<double>& constraints) {
+double Problem::infeasible_residual_norm(std::vector<double>& constraints) {
     double infeasible_residual = 0.;
 
     for (int j = 0; j < this->number_constraints; j++) {
@@ -61,20 +62,20 @@ double Problem::l1_norm(std::vector<double>& constraints) {
     return infeasible_residual;
 }
 
-std::vector<ConstraintType> Problem::determine_constraints_types(std::vector<Range>& variables_bounds) {
-    std::vector<ConstraintType> status(variables_bounds.size());
+std::vector<ConstraintType> Problem::determine_bounds_types(std::vector<Range>& bounds) {
+    std::vector<ConstraintType> status(bounds.size());
 
-    for (unsigned int i = 0; i < variables_bounds.size(); i++) {
-        if (variables_bounds[i].lb == variables_bounds[i].ub) {
+    for (unsigned int i = 0; i < bounds.size(); i++) {
+        if (bounds[i].lb == bounds[i].ub) {
             status[i] = EQUAL_BOUNDS;
         }
-        else if (-INFINITY < variables_bounds[i].lb && variables_bounds[i].ub < INFINITY) {
+        else if (-INFINITY < bounds[i].lb && bounds[i].ub < INFINITY) {
             status[i] = BOUNDED_BOTH_SIDES;
         }
-        else if (-INFINITY < variables_bounds[i].lb) {
+        else if (-INFINITY < bounds[i].lb) {
             status[i] = BOUNDED_LOWER;
         }
-        else if (variables_bounds[i].ub < INFINITY) {
+        else if (bounds[i].ub < INFINITY) {
             status[i] = BOUNDED_UPPER;
         }
         else {
@@ -84,14 +85,18 @@ std::vector<ConstraintType> Problem::determine_constraints_types(std::vector<Ran
     return status;
 }
 
-std::map<int, int> Problem::determine_inequality_constraints() {
-    std::map<int, int> inequality_constraints;
-    int current_constraint = 0;
+void Problem::determine_constraints() {
+    int current_equality_constraint = 0;
+    int current_inequality_constraint = 0;
     for (int j = 0; j < this->number_constraints; j++) {
-        if (this->constraint_status[j] != EQUAL_BOUNDS) {
-            inequality_constraints[j] = current_constraint;
-            current_constraint++;
+        if (this->constraint_status[j] == EQUAL_BOUNDS) {
+            this->equality_constraints[j] = current_equality_constraint;
+            current_equality_constraint++;
+        }
+        else {
+            this->inequality_constraints[j] = current_inequality_constraint;
+            current_inequality_constraint++;
         }
     }
-    return inequality_constraints;
+    return;
 }

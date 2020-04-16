@@ -35,7 +35,7 @@ class Iterate {
 
         double objective; /*!< Objective value */
         std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
-
+        
         OptimalityStatus status;
         double residual; /*!< Constraint residual */
         double KKTerror;
@@ -55,6 +55,7 @@ class Iterate {
         void set_objective_gradient(std::map<int, double>& objective_gradient);
         void compute_objective_gradient(Problem& problem);
         void compute_constraints_jacobian(Problem& problem);
+        std::vector<double> lagrangian_gradient(Problem& problem);
 
         /*!
          *  Compute the Hessian in a lazy way: the Hessian is computed only when required and stored

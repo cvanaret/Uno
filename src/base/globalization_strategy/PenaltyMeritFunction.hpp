@@ -17,7 +17,7 @@ class PenaltyMeritFunction : public GlobalizationStrategy {
          */
         PenaltyMeritFunction(Subproblem& subproblem, double tolerance);
 
-        SubproblemSolution compute_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds) override;
+        SubproblemSolution compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius=INFINITY) override;
 
         /*!
          *  Check the validity of a step

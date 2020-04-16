@@ -240,7 +240,7 @@ double PenaltyMeritFunction::compute_error(Problem& problem, Iterate& current_it
     double error = 0.;
 
     /* KKT error */
-    std::vector<double> lagrangian_gradient = Argonot::compute_lagrangian_gradient(problem, current_iterate, penalty_parameter, multipliers);
+    std::vector<double> lagrangian_gradient; // TODO = Argonot::compute_lagrangian_gradient(problem, current_iterate, penalty_parameter, multipliers);
     // compute 1-norm
     error += norm_1(lagrangian_gradient);
 

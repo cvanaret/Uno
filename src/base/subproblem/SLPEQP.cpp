@@ -10,20 +10,20 @@
 SLPEQP::SLPEQP(QPSolver& solver) : Subproblem(), solver(solver), lp_subproblem(SQP(solver)), eqp_subproblem(SQP(solver)) {
 }
 
-Iterate SLPEQP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, int number_constraints, std::vector<Range>& variables_bounds, bool use_trust_region) {
+Iterate SLPEQP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, bool use_trust_region) {
     // register the original bounds
-    this->reformulated_variables_bounds = variables_bounds;
+    this->subproblem_variables_bounds = problem.variables_bounds;
     
     Iterate first_iterate(problem, x, multipliers);
     /* compute the optimality and feasibility measures of the initial point */
     this->compute_measures(problem, first_iterate);
 
     /* allocate the QP solver */
-    this->solver.allocate(number_variables, number_constraints);
+    this->solver.allocate(number_variables, problem.number_constraints);
     return first_iterate;
 }
 
-SubproblemSolution SLPEQP::compute_optimality_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds) {
+SubproblemSolution SLPEQP::compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
     /* compute first-order information */
     current_iterate.compute_objective_gradient(problem);
     current_iterate.compute_constraints_jacobian(problem);
@@ -33,6 +33,10 @@ SubproblemSolution SLPEQP::compute_optimality_step(Problem& problem, Iterate& cu
     /***********/
     
     //std::cout << "SOLVING SLPEQP.LP\n";
+    
+    /* bounds of the variables */
+    std::vector<Range> variables_bounds = this->generate_variables_bounds(current_iterate, trust_region_radius);
+    
     /* bounds of the linearized constraints */
     std::vector<Range> constraints_bounds = Subproblem::generate_constraints_bounds(problem, current_iterate.constraints);
 
@@ -70,9 +74,9 @@ SubproblemSolution SLPEQP::compute_optimality_step(Problem& problem, Iterate& cu
     return solution_EQP;
 }
 
-SubproblemSolution SLPEQP::compute_infeasibility_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, SubproblemSolution& phase_II_solution) {
+SubproblemSolution SLPEQP::compute_infeasibility_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) {
     // TODO
-    return this->compute_optimality_step(problem, current_iterate, variables_bounds);
+    return this->compute_optimality_step(problem, current_iterate, trust_region_radius);
 }
 
 double SLPEQP::compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) {

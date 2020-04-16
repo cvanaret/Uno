@@ -24,7 +24,7 @@ class TwoPhaseStrategy : public GlobalizationStrategy {
 public:
     TwoPhaseStrategy(Subproblem& subproblem, TwoPhaseConstants& constants, double tolerance);
 
-    SubproblemSolution compute_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds) override;
+    SubproblemSolution compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius=INFINITY) override;
 
     Phase phase; /*!< Current phase (optimality or feasibility restoration) */
     TwoPhaseConstants constants; /*!< Set of constants */
