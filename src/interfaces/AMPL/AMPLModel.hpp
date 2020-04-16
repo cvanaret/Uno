@@ -14,6 +14,26 @@ extern "C" {
 #define UNCERTAIN_SUFFIX "uncertain"
 #define UNCERTAINTY_SET_SUFFIX "uncertainty_set"
 
+struct IEEE_Error : public std::exception {
+    virtual const char* what() const throw () = 0;
+};
+
+struct IEEE_HEssianError : IEEE_Error {
+    const char* what() const throw () {
+        return "An IEEE error was encountered while evaluating the Hessian";
+    }
+};
+struct IEEE_GradientError : IEEE_Error {
+    const char* what() const throw () {
+        return "An IEEE error was encountered while evaluating a gradient";
+    }
+};
+struct IEEE_FunctionError : IEEE_Error {
+    const char* what() const throw () {
+        return "An IEEE error was encountered while evaluating a function";
+    }
+};
+
 /*! \class AMPLModel
 * \brief AMPL model
 *

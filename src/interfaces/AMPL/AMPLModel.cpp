@@ -96,7 +96,7 @@ void AMPLModel::generate_variables() {
         this->variables_bounds[i] = {lb, ub};
         this->variable_uncertain[i] = (uncertain_suffixes->u.i != NULL && uncertain_suffixes->u.i[i] == 1);
     }
-    this->variable_status = this->determine_constraints_types(this->variables_bounds);
+    this->variable_status = this->determine_bounds_types(this->variables_bounds);
     return;
 }
 
@@ -131,7 +131,7 @@ double AMPLModel::objective(std::vector<double>& x) {
     int nerror = 0;
     double result = this->objective_sign * (*((ASL*) this->asl_)->p.Objval)((ASL*) this->asl_, 0, x.data(), &nerror);
     if (0 < nerror) {
-        throw std::invalid_argument("IEEE error in objective function");
+        throw IEEE_FunctionError();
     }
     return result;
 }
@@ -143,7 +143,7 @@ std::vector<double> AMPLModel::objective_dense_gradient(std::vector<double>& x) 
     /* compute the AMPL gradient (always in dense format) */
     (*((ASL*) this->asl_)->p.Objgrd)((ASL*) this->asl_, 0, x.data(), gradient.data(), &nerror);
     if (0 < nerror) {
-        throw std::invalid_argument("IEEE error in objective dense gradient");
+        throw IEEE_GradientError();
     }
 
     /* if maximization, take the opposite */
@@ -162,7 +162,7 @@ std::map<int, double> AMPLModel::objective_sparse_gradient(std::vector<double>& 
     int nerror = 0;
     (*((ASL*) this->asl_)->p.Objgrd)((ASL*) this->asl_, 0, x.data(), dense_gradient.data(), &nerror);
     if (0 < nerror) {
-        throw std::invalid_argument("IEEE error in objective sparse gradient");
+        throw IEEE_GradientError();
     }
 
     /* partial derivatives in same order as variables in this->asl_->i.Ograd_[0] */
@@ -190,7 +190,7 @@ double AMPLModel::evaluate_constraint(int j, std::vector<double>& x) {
     int nerror = 0;
     double result = (*((ASL*) this->asl_)->p.Conival)((ASL*) this->asl_, j, x.data(), &nerror);
     if (0 < nerror) {
-        throw std::invalid_argument("IEEE error in constraint function " + j);
+        throw IEEE_FunctionError();
     }
     return result;
 }
@@ -214,7 +214,7 @@ std::vector<double> AMPLModel::constraint_dense_gradient(int j, std::vector<doub
     int nerror = 0;
     (*((ASL*) this->asl_)->p.Congrd)((ASL*) this->asl_, j, x.data(), gradient.data(), &nerror);
     if (0 < nerror) {
-        throw std::invalid_argument("IEEE error in constraint dense gradient " + j);
+        throw IEEE_FunctionError();
     }
 
     this->asl_->i.congrd_mode = congrd_mode_backup;
@@ -233,7 +233,7 @@ std::map<int, double> AMPLModel::constraint_sparse_gradient(int j, std::vector<d
     int nerror = 0;
     (*((ASL*) this->asl_)->p.Congrd)((ASL*) this->asl_, j, x.data(), ampl_gradient.data(), &nerror);
     if (0 < nerror) {
-        throw std::invalid_argument("IEEE error in constraint sparse gradient " + j);
+        throw IEEE_GradientError();
     }
 
     /* partial derivatives in ampl_gradient in same order as variables in this->asl_->i.Cgrad_[j] */
@@ -280,8 +280,8 @@ void AMPLModel::generate_constraints() {
         this->constraints_bounds[j] = {lb, ub};
         this->constraint_is_uncertainty_set[j] = (uncertain_suffixes->u.i != NULL && uncertain_suffixes->u.i[j] == 1);
     }
-    this->constraint_status = this->determine_constraints_types(this->constraints_bounds);
-    this->inequality_constraints = this->determine_inequality_constraints();
+    this->constraint_status = this->determine_bounds_types(this->constraints_bounds);
+    this->determine_constraints();
     return;
 }
 
