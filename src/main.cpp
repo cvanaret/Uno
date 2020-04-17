@@ -108,7 +108,7 @@ std::map<std::string, std::string> get_default_values(std::string file_name) {
     std::string key, value;
     std::string line;
     while (std::getline(file, line)) {
-        if (line.find("#") != 0) {
+        if (line != "" && line.find("#") != 0) {
             std::istringstream iss;
             iss.str(line);
             iss >> key >> value;
