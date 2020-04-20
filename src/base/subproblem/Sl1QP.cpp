@@ -22,6 +22,7 @@ Iterate Sl1QP::initialize(Problem& problem, std::vector<double>& x, Multipliers&
     Iterate first_iterate(problem, reformulated_x, multipliers);
 
     // reformulate the problem by introducing slack and relaxation variables
+    // TODO relax only linear constraints?
     int current_index = problem.number_variables;
     for (int j = 0; j < problem.number_constraints; j++) {
         if (problem.constraint_status[j] != EQUAL_BOUNDS) {
@@ -118,7 +119,7 @@ SubproblemSolution Sl1QP::compute_optimality_step(Problem& problem, Iterate& cur
     /* solve the QP */
     SubproblemSolution solution = this->solver.solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
     // recompute active set: constraints are active when p-n = 0
-    this->recover_active_set(solution, variables_bounds, constraints_bounds);
+    //this->recover_active_set(solution, variables_bounds);
     
     solution.phase_1_required = this->phase_1_required(solution);
     this->number_subproblems_solved++;
@@ -152,6 +153,10 @@ bool Sl1QP::phase_1_required(SubproblemSolution& solution) {
     return false;
 }
 
+bool Sl1QP::is_descent_direction(Problem& problem, std::vector<double>& x, Iterate& current_iterate) {
+    return true;
+}
+
 /* private methods */
 
 std::vector<Range> Sl1QP::generate_variables_bounds(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
@@ -171,23 +176,23 @@ std::vector<Range> Sl1QP::generate_variables_bounds(Problem& problem, Iterate& c
     return variables_bounds;
 }
 
-void Sl1QP::recover_active_set(SubproblemSolution& solution, std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds) {
-    ActiveSet active_set;
+void Sl1QP::recover_active_set(SubproblemSolution& solution, std::vector<Range>& variables_bounds) {
+    solution.active_set.at_lower_bound.clear();
+    solution.active_set.at_upper_bound.clear();
     // variables
     for (unsigned int i = 0; i < solution.x.size(); i++) {
         if (solution.x[i] == variables_bounds[i].lb) {
-            active_set.at_lower_bound.push_back(i);
+            solution.active_set.at_lower_bound.insert(i);
         }
         else if (solution.x[i] == variables_bounds[i].ub) {
-            active_set.at_upper_bound.push_back(i);
+            solution.active_set.at_upper_bound.insert(i);
         }
     }
     // constraints: only when p-n = 0
     for (unsigned int j = 0; j < solution.multipliers.constraints.size(); j++) {
         if (solution.x[this->positive_part_variables[j]] + solution.x[this->negative_part_variables[j]] == 0.) {
-            active_set.at_lower_bound.push_back(solution.x.size() + j);
+            solution.active_set.at_lower_bound.insert(solution.x.size() + j);
         }
     }
-    solution.active_set = active_set;
     return;
 }

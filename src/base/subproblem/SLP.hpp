@@ -1,14 +1,14 @@
 #ifndef SLP_H
 #define SLP_H
 
-#include "SQP.hpp"
+#include "ActiveSetMethod.hpp"
 
 /*! \class SLP
  * \brief LP local approximation
  *
  *  Linear approximation
  */
-class SLP : public SQP {
+class SLP : public ActiveSetMethod {
 public:
     /*!
      *  Constructor
@@ -17,14 +17,16 @@ public:
      */
     SLP(QPSolver& solver);
 
-    double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
+    double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length);
+    bool phase_1_required(SubproblemSolution& solution);
+    bool is_descent_direction(Problem& problem, std::vector<double>& x, Iterate& current_iterate) override;
 
 private:
-    void evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate) override;
+    void evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate);
     // phase 1
-    void evaluate_feasibility_iterate(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution) override;
+    void evaluate_feasibility_iterate(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution);
     // call subproblem solver
-    SubproblemSolution solve_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, Iterate& current_iterate, std::vector<double>& d0) override;
+    SubproblemSolution solve_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, Iterate& current_iterate, std::vector<double>& d0);
 };
 
 #endif // SLP_H

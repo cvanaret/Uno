@@ -2,6 +2,7 @@
 #define CONSTRAINT_H
 
 #include <vector>
+#include <set>
 
 enum ConstraintType {EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES, UNBOUNDED};
 
@@ -16,16 +17,18 @@ struct PenaltyDimensions {
 *  Description of the active or infeasible constraints: at lower or upper bound at the optimum solution
 */
 struct ActiveSet {
-	std::vector<int> at_lower_bound; /*!< List of constraint indices at their lower bound */
-	std::vector<int> at_upper_bound; /*!< List of constraint indices at their upper bound */
+	std::set<int> at_lower_bound; /*!< List of constraint indices at their lower bound */
+	std::set<int> at_upper_bound; /*!< List of constraint indices at their upper bound */
 };
 
 enum ConstraintFeasibility {FEASIBLE, INFEASIBLE_LOWER, INFEASIBLE_UPPER};
 
 struct ConstraintPartition {
-	std::vector<int> feasible_set; /*!< Indices of the feasible constraints */
-	std::vector<int> infeasible_set; /*!< Indices of the infeasible constraints */
-	std::vector<ConstraintFeasibility> constraint_status;
+	std::set<int> feasible; /*!< Indices of the feasible constraints */
+	std::set<int> infeasible; /*!< Indices of the infeasible constraints */
+	std::vector<ConstraintFeasibility> constraint_feasibility;
+    
+    ConstraintPartition(int number_constraints);
 };
 
 struct Range {

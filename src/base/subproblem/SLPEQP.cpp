@@ -7,7 +7,8 @@
 #include "Utils.hpp"
 #include "Logger.hpp"
 
-SLPEQP::SLPEQP(QPSolver& solver) : Subproblem(), solver(solver), lp_subproblem(SQP(solver)), eqp_subproblem(SQP(solver)) {
+SLPEQP::SLPEQP(QPSolver& solver, HessianEvaluation& hessian_evaluation) :
+Subproblem(), solver(solver), lp_subproblem(SQP(solver, hessian_evaluation)), eqp_subproblem(SQP(solver, hessian_evaluation)) {
 }
 
 Iterate SLPEQP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, bool use_trust_region) {

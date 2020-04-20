@@ -1,5 +1,5 @@
 # specify local compilers and compiler flags
-PROFILER = #-pg
+PROFILER = -g #-pg
 CC     = gcc
 CPP    = g++ -std=c++11
 F77    = gfortran
@@ -20,20 +20,22 @@ INCLUDES = -I base -I base/globalization_mechanism -I base/globalization_strateg
 
 SRC_FILES = base/Argonot.cpp base/Iterate.cpp \
 	base/Problem.cpp interfaces/AMPL/AMPLModel.cpp \
-	base/Matrix.cpp base/Constraint.cpp \
+	base/Matrix.cpp base/HessianEvaluation.cpp base/Constraint.cpp \
 	base/globalization_strategy/GlobalizationStrategy.cpp base/globalization_strategy/TwoPhaseStrategy.cpp \
 	base/globalization_strategy/Filter.cpp base/globalization_strategy/FilterStrategy.cpp \
 	base/globalization_strategy/GlobalizationStrategyFactory.cpp \
 	base/globalization_mechanism/GlobalizationMechanism.cpp base/globalization_mechanism/TrustRegion.cpp \
 	base/globalization_mechanism/LineSearch.cpp base/globalization_mechanism/TrustLineSearch.cpp \
 	base/globalization_mechanism/GlobalizationMechanismFactory.cpp \
-	base/subproblem/Subproblem.cpp base/subproblem/SQP.cpp base/subproblem/InteriorPoint.cpp base/subproblem/SLP.cpp base/subproblem/Sl1QP.cpp base/subproblem/SLPEQP.cpp \
+	base/subproblem/Subproblem.cpp base/subproblem/ActiveSetMethod.cpp base/subproblem/SQP.cpp base/subproblem/SLP.cpp base/subproblem/Sl1QP.cpp base/subproblem/SLPEQP.cpp \
+	base/subproblem/InteriorPoint.cpp \
 	base/subproblem/SubproblemFactory.cpp base/subproblem/SubproblemSolution.cpp base/Utils.cpp \
 	solvers/QP/BQPDSolver.cpp solvers/QP/QPSolverFactory.cpp \
 	solvers/KKT/MA57Solver.cpp solvers/NLP/LBFGSB.cpp
 OBJ_FILES = $(subst .cpp,.o,$(SRC_FILES)) solvers/QP/wdotd.o $(BFGS_DIR)/lbfgsb.o $(BFGS_DIR)/timer.o $(BFGS_DIR)/blas.o $(BFGS_DIR)/linpack.o
 EXEC_NAME = argonot
 
+# 
 # base/globalization_strategy/Tube.cpp base/globalization_strategy/TubeStrategy.cpp
 # base/globalization_strategy/PenaltyMeritFunction.cpp \
 # base/subproblem/AugmentedLagrangian.cpp \

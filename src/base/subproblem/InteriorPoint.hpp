@@ -42,6 +42,7 @@ public:
     void compute_measures(Problem& problem, Iterate& iterate) override;
     double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
     bool phase_1_required(SubproblemSolution& solution) override;
+    bool is_descent_direction(Problem& problem, std::vector<double>& x, Iterate& current_iterate) override;
 
     double constraint_violation(Problem& problem, Iterate& iterate);
     double compute_central_complementarity_error(Iterate& iterate, double mu, std::vector<Range>& variables_bounds);
@@ -53,14 +54,12 @@ public:
     /* data structures */
     std::vector<int> lower_bounded_variables; /* indices of the lower-bounded variables */
     std::vector<int> upper_bounded_variables; /* indices of the upper-bounded variables */
-    //std::map<int, int> lower_bounded_slacks; /* indices of the lower-bounded slacks */
-    //std::map<int, int> upper_bounded_slacks; /* indices of the upper-bounded slacks */
     MA57Factorization factorization;
 
 private:
+    void evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate);
     double evaluate_local_model(Problem& problem, Iterate& current_iterate, std::vector<double>& solution);
     double barrier_function(Iterate& iterate, std::vector<Range>& variables_bounds);
-    std::map<int, double> barrier_function_gradient(Problem& problem, Iterate& current_iterate);
     double project_variable_in_bounds(double variable_value, Range& variable_bounds);
     //std::vector<double> estimate_initial_multipliers(Problem& problem, Iterate& current_iterate, std::vector<double>& default_multipliers);
     double compute_primal_length(Iterate& iterate, std::vector<double>& ipm_solution, std::vector<Range>& variables_bounds, double tau);

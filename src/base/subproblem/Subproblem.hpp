@@ -31,11 +31,11 @@ public:
     // TODO return a list of steps
     virtual SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius=INFINITY) = 0;
     virtual SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius=INFINITY) = 0;
-    //virtual SubproblemSolution compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, double penalty_parameter, PenaltyDimensions penalty_dimensions) = 0;
-
+    
     virtual void compute_measures(Problem& problem, Iterate& iterate) = 0;
     virtual double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) = 0;
     virtual bool phase_1_required(SubproblemSolution& solution) = 0;
+    virtual bool is_descent_direction(Problem& problem, std::vector<double>& x, Iterate& current_iterate) = 0;
 
     std::vector<Range> generate_variables_bounds(Iterate& current_iterate, double trust_region_radius);
     static double project_variable_in_bounds(double variable_value, Range& variable_bounds);

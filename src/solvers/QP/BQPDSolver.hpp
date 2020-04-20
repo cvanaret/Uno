@@ -31,7 +31,6 @@ public:
      */
     BQPDSolver(std::vector<int>& hessian_column_start, std::vector<int>& hessian_row_number);
 
-    int use_fortran;
     void allocate(int n, int m);
 
     /*!
@@ -50,6 +49,7 @@ public:
 
 
 private:
+    int use_fortran;
     int kmax_, mlp_, mxwk0_, mxiwk0_;
     std::vector<int> info_;
     std::vector<double> alp_;

@@ -1,12 +1,9 @@
 #include "SubproblemSolution.hpp"
 #include "Logger.hpp"
 
-//SubproblemSolution::SubproblemSolution(std::vector<double>& x, Multipliers& multipliers, Status& status, Phase& phase, bool phase_1_required, double norm, double objective, ConstraintActivity& active_set, ConstraintPartition& constraint_partition) :
-//x(x), multipliers(multipliers), status(status), phase(phase), phase_1_required(phase_1_required), norm(norm), objective(objective), active_set(active_set), constraint_partition(constraint_partition) {
-//}
-
-SubproblemSolution::SubproblemSolution(std::vector<double>& x, Multipliers& multipliers, ActiveSet& active_set, ConstraintPartition& constraint_partition) :
-x(x), multipliers(multipliers), phase_1_required(false), active_set(active_set), constraint_partition(constraint_partition) {
+SubproblemSolution::SubproblemSolution(std::vector<double>& x, Multipliers& multipliers):
+x(x), multipliers(multipliers), status(OPTIMAL), phase(OPTIMALITY), phase_1_required(false), norm(0.), objective(0.),
+is_descent_direction(true), constraint_partition(ConstraintPartition(multipliers.constraints.size())) {
 }
 
 std::ostream& operator<<(std::ostream &stream, SubproblemSolution& solution) {
@@ -33,8 +30,7 @@ std::ostream& operator<<(std::ostream &stream, SubproblemSolution& solution) {
     stream << "norm = " << solution.norm << "\n";
 
     stream << "active set at upper bound =";
-    for (unsigned int k = 0; k < solution.active_set.at_upper_bound.size(); k++) {
-        unsigned int index = solution.active_set.at_upper_bound[k];
+    for (int index: solution.active_set.at_upper_bound) {
         if (index < solution.x.size()) {
             stream << " x" << index;
         }
@@ -45,8 +41,7 @@ std::ostream& operator<<(std::ostream &stream, SubproblemSolution& solution) {
     stream << "\n";
 
     stream << "active set at lower bound =";
-    for (unsigned int k = 0; k < solution.active_set.at_lower_bound.size(); k++) {
-        unsigned int index = solution.active_set.at_lower_bound[k];
+    for (int index: solution.active_set.at_lower_bound) {
         if (index < solution.x.size()) {
             stream << " x" << index;
         }
@@ -57,28 +52,29 @@ std::ostream& operator<<(std::ostream &stream, SubproblemSolution& solution) {
     stream << "\n";
 
     stream << "general feasible =";
-    for (unsigned int k = 0; k < solution.constraint_partition.feasible_set.size(); k++) {
-        int index = solution.constraint_partition.feasible_set[k];
-        stream << " c" << index;
+    for (int j: solution.constraint_partition.feasible) {
+        stream << " c" << j;
     }
     stream << "\n";
 
     stream << "general infeasible =";
-    for (unsigned int k = 0; k < solution.constraint_partition.infeasible_set.size(); k++) {
-        int index = solution.constraint_partition.infeasible_set[k];
-        stream << " c" << index;
-        if (solution.constraint_partition.constraint_status[index] == INFEASIBLE_LOWER) {
+    for (int j: solution.constraint_partition.infeasible) {
+        stream << " c" << j;
+        if (solution.constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
             stream << " (lower)";
         }
-        else if (solution.constraint_partition.constraint_status[index] == INFEASIBLE_UPPER) {
+        else if (solution.constraint_partition.constraint_feasibility[j] == INFEASIBLE_UPPER) {
             stream << " (upper)";
         }
     }
     stream << "\n";
 
-    stream << "lower bound multipliers = "; print_vector(stream, solution.multipliers.lower_bounds);
-    stream << "upper bound multipliers = "; print_vector(stream, solution.multipliers.upper_bounds);
-    stream << "constraint multipliers = "; print_vector(stream, solution.multipliers.constraints);
+    stream << "lower bound multipliers = ";
+    print_vector(stream, solution.multipliers.lower_bounds);
+    stream << "upper bound multipliers = ";
+    print_vector(stream, solution.multipliers.upper_bounds);
+    stream << "constraint multipliers = ";
+    print_vector(stream, solution.multipliers.constraints);
 
     //stream << RESET;
 

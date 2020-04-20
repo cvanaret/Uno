@@ -16,9 +16,9 @@ Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_iterate) 
     //std::vector<Range> variables_bounds = this->compute_subproblem_bounds(current_iterate);
     SubproblemSolution solution = this->globalization_strategy.compute_step(problem, current_iterate);
     /* test if we computed a descent direction */
-    if (0. < dot(solution.x, current_iterate.objective_gradient)) {
+    //if (0. < dot(solution.x, current_iterate.objective_gradient)) {
         //throw std::out_of_range("LineSearch::compute_iterate: this is not a descent direction");
-    }
+    //}
 
     /* step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ... */
     this->step_length = 1.;
@@ -57,7 +57,8 @@ bool LineSearch::termination(bool is_accepted) {
     else if (this->max_iterations < this->number_iterations) {
         throw std::runtime_error("Line-search iteration limit reached");
     }
-    if (this->step_length < 1e-16) {
+    if (this->step_length < 1e-9) {
+        std::cout << "TODO: possibility of running the restoration phase here.\n";
         throw std::runtime_error("Step length became too small");
     }
     return false;

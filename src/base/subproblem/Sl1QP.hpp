@@ -25,6 +25,7 @@ public:
     void compute_measures(Problem& problem, Iterate& iterate) override;
     double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
     bool phase_1_required(SubproblemSolution& solution) override;
+    bool is_descent_direction(Problem& problem, std::vector<double>& x, Iterate& current_iterate) override;
 
     /* use a reference to allow polymorphism */
     QPSolver& solver; /*!< Subproblem solver */
@@ -38,7 +39,7 @@ private:
     std::map<int, int> negative_part_variables; // n
 
     std::vector<Range> generate_variables_bounds(Problem& problem, Iterate& current_iterate, double trust_region_radius);
-    void recover_active_set(SubproblemSolution& solution, std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds);
+    void recover_active_set(SubproblemSolution& solution, std::vector<Range>& variables_bounds);
 };
 
 #endif // Sl1QP_H

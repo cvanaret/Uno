@@ -33,8 +33,7 @@ struct ObjectiveTerms {
  */
 class SubproblemSolution {
 public:
-    //SubproblemSolution(std::vector<double>& x, Multipliers& multipliers, Status& status, Phase& phase, bool phase_1_required, double norm, double objective, ActiveSet& active_set, ConstraintPartition& constraint_partition);
-    SubproblemSolution(std::vector<double>& x, Multipliers& multipliers, ActiveSet& active_set, ConstraintPartition& constraint_partition);
+    SubproblemSolution(std::vector<double>& x, Multipliers& multipliers);
     std::vector<double> x; /*!< Primal variables */
     Multipliers multipliers; /*!< Multipliers */
     
@@ -44,7 +43,7 @@ public:
 
     double norm; /*!< Norm of \f$x\f$ */
     double objective; /*!< Objective value */
-    //ObjectiveTerms objective_terms; /*!< Decomposition of the objective value in quadratic and linear terms */
+    bool is_descent_direction;
     ActiveSet active_set; /*!< Active set */
     ConstraintPartition constraint_partition; /*!< Partition of feasible and infeasible constraints */
 

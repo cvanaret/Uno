@@ -18,7 +18,7 @@ public:
      * 
      * \param solver: solver that solves the subproblem
      */
-    SLPEQP(QPSolver& solver);
+    SLPEQP(QPSolver& solver, HessianEvaluation& hessian_evaluation);
 
     Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, bool use_trust_region) override;
 

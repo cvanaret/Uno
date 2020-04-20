@@ -20,24 +20,13 @@ extern "C" {
             int *mlp, int *peq, double *ws, int *lws, int *mode, int *ifail, int *info, int *iprint, int *nout);
 }
 
+/* preallocate a bunch of stuff */
 BQPDSolver::BQPDSolver(std::vector<int>& hessian_column_start, std::vector<int>& hessian_row_number) : QPSolver(),
-kmax_(500), mlp_(1000), mxwk0_(2000000), mxiwk0_(500000), info_(100), alp_(mlp_), lp_(mlp_),
+use_fortran(1), kmax_(500), mlp_(1000), mxwk0_(2000000), mxiwk0_(500000), info_(100), alp_(mlp_), lp_(mlp_),
+hessian_nnz_(hessian_row_number.size()), nhr_(hessian_row_number.size()), k_(0), mode_(COLD_START),
+iprint_(0), nout_(6), fmin_(-1e20),
 hessian_column_start(hessian_column_start), hessian_row_number(hessian_row_number) {
-    /* preallocate a bunch of stuff */
-    this->k_ = 0;
-    /* warm start mode */
-    this->mode_ = COLD_START;
-
-    this->iprint_ = 0;
-    this->nout_ = 6;
-
-    this->fmin_ = -1e20;
-
-    this->hessian_nnz_ = hessian_row_number.size();
-    this->nhr_ = this->hessian_nnz_;
-
     kktalphac_.alpha = 0;
-    this->use_fortran = 1;
 }
 
 void BQPDSolver::allocate(int n, int m) {
@@ -133,7 +122,7 @@ SubproblemSolution BQPDSolver::solve_subproblem(std::vector<Range>& variables_bo
         lb[variables_bounds.size() + j] = constraints_bounds[j].lb;
         ub[variables_bounds.size() + j] = constraints_bounds[j].ub;
     }
-    
+
     /* call BQPD */
     int mode = (int) this->mode_;
     bqpd_(&this->n_, &this->m_, &this->k_, &kmax, jacobian.data(), jacobian_sparsity.data(), x.data(),
@@ -158,38 +147,32 @@ SubproblemSolution BQPDSolver::solve_subproblem(std::vector<Range>& variables_bo
 
 SubproblemSolution BQPDSolver::generate_solution(std::vector<double>& x) {
     Multipliers multipliers(this->n_, this->m_);
-    ActiveSet active_set;
-    active_set.at_lower_bound.reserve(this->n_ - this->k_);
-    active_set.at_upper_bound.reserve(this->n_ - this->k_);
-    std::vector<ConstraintFeasibility> constraint_status(this->m_);
-    ConstraintPartition constraint_partition;
-    constraint_partition.feasible_set.reserve(this->m_);
-    constraint_partition.infeasible_set.reserve(this->m_);
-    
+    SubproblemSolution solution(x, multipliers);
+
     /* active constraints */
     for (int j = 0; j < this->n_ - this->k_; j++) {
         int index = std::abs(this->ls_[j]) - this->use_fortran;
 
         if (this->ls_[j] < 0) { /* upper bound active */
-            active_set.at_upper_bound.push_back(index);
+            solution.active_set.at_upper_bound.insert(index);
         }
         else { /* lower bound active */
-            active_set.at_lower_bound.push_back(index);
+            solution.active_set.at_lower_bound.insert(index);
         }
 
         if (index < this->n_) {
             if (this->ls_[j] < 0) { /* upper bound active */
-                multipliers.upper_bounds[index] = -this->residuals_[index];
+                solution.multipliers.upper_bounds[index] = -this->residuals_[index];
             }
             else { /* lower bound active */
-                multipliers.lower_bounds[index] = this->residuals_[index];
+                solution.multipliers.lower_bounds[index] = this->residuals_[index];
             }
         }
         else {
             int constraint_index = index - this->n_;
-            constraint_partition.feasible_set.push_back(constraint_index);
-            constraint_status[constraint_index] = FEASIBLE;
-            multipliers.constraints[constraint_index] = (this->ls_[j] < 0) ? -this->residuals_[index] : this->residuals_[index];
+            solution.constraint_partition.feasible.insert(constraint_index);
+            solution.constraint_partition.constraint_feasibility[constraint_index] = FEASIBLE;
+            solution.multipliers.constraints[constraint_index] = (this->ls_[j] < 0) ? - this->residuals_[index] : this->residuals_[index];
         }
     }
 
@@ -200,23 +183,20 @@ SubproblemSolution BQPDSolver::generate_solution(std::vector<double>& x) {
         if (this->n_ <= index) { // general constraints
             int constraint_index = index - this->n_;
             if (this->residuals_[index] < 0.) { // infeasible constraint
-                constraint_partition.infeasible_set.push_back(constraint_index);
+                solution.constraint_partition.infeasible.insert(constraint_index);
                 if (this->ls_[j] < 0) { // upper bound violated
-                    constraint_status[constraint_index] = INFEASIBLE_UPPER;
+                    solution.constraint_partition.constraint_feasibility[constraint_index] = INFEASIBLE_UPPER;
                 }
                 else { // lower bound violated
-                    constraint_status[constraint_index] = INFEASIBLE_LOWER;
+                    solution.constraint_partition.constraint_feasibility[constraint_index] = INFEASIBLE_LOWER;
                 }
             }
             else { // feasible constraint
-                constraint_partition.feasible_set.push_back(constraint_index);
-                constraint_status[constraint_index] = FEASIBLE;
+                solution.constraint_partition.feasible.insert(constraint_index);
+                solution.constraint_partition.constraint_feasibility[constraint_index] = FEASIBLE;
             }
         }
     }
-    constraint_partition.constraint_status = constraint_status;
-
-    SubproblemSolution solution(x, multipliers, active_set, constraint_partition);
     solution.status = int_to_status(this->ifail_);
     // phase
     // phase_1_required
@@ -227,11 +207,11 @@ SubproblemSolution BQPDSolver::generate_solution(std::vector<double>& x) {
 
 void BQPDSolver::build_jacobian(std::vector<double>& full_jacobian, std::vector<int>& full_jacobian_sparsity, std::map<int, double>& jacobian) {
     for (std::map<int, double>::iterator it = jacobian.begin(); it != jacobian.end(); it++) {
-        int variable_index = it->first;
+        int i = it->first;
         double derivative = it->second;
 
         full_jacobian.push_back(derivative);
-        full_jacobian_sparsity.push_back(variable_index + this->use_fortran);
+        full_jacobian_sparsity.push_back(i + this->use_fortran);
     }
     return;
 }

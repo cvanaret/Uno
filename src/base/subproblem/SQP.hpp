@@ -1,36 +1,35 @@
 #ifndef SQP_H
 #define SQP_H
 
-#include "Subproblem.hpp"
+#include "ActiveSetMethod.hpp"
 #include "QPSolver.hpp"
+#include "HessianEvaluation.hpp"
 
 /*! \class QPApproximation
  * \brief QP local approximation
  *
  *  Quadratic approximation
  */
-class SQP : public Subproblem {
+class SQP : public ActiveSetMethod {
 public:
     /*!
      *  Constructor
      * 
      * \param solver: solver that solves the subproblem
      */
-    SQP(QPSolver& solver);
+    SQP(QPSolver& solver, HessianEvaluation& hessian_evaluation);
 
     Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, bool use_trust_region) override;
 
-    SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius = INFINITY) override;
-    SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius = INFINITY) override;
-    void compute_measures(Problem& problem, Iterate& iterate) override;
-    virtual double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
+    double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length);
     bool phase_1_required(SubproblemSolution& solution) override;
+    bool is_descent_direction(Problem& problem, std::vector<double>& x, Iterate& current_iterate) override;
 
-    /* use a reference to allow polymorphism */
-    QPSolver& solver; /*!< Solver that solves the subproblem */
+    /* use references to allow polymorphism */
+    HessianEvaluation& hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
 
 protected:
-    virtual void evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate);
+    void evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate);
     // phase 1
     virtual void evaluate_feasibility_iterate(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution);
     std::vector<double> generate_feasibility_multipliers(Problem& problem, std::vector<double>& current_constraint_multipliers, ConstraintPartition& constraint_partition);

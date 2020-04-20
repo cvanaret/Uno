@@ -6,10 +6,10 @@
 #include "InteriorPoint.hpp"
 #include "QPSolverFactory.hpp"
 
-std::shared_ptr<Subproblem> SubproblemFactory::create(const std::string& type, QPSolver& solver, std::map<std::string, std::string> default_values) {
+std::shared_ptr<Subproblem> SubproblemFactory::create(const std::string& type, QPSolver& solver, HessianEvaluation& hessian_evaluation, std::map<std::string, std::string> default_values) {
     /* active-set methods */
     if (type == "SQP") {
-        return std::make_shared<SQP>(solver);
+        return std::make_shared<SQP>(solver, hessian_evaluation);
     }
     else if (type == "SLP") {
         return std::make_shared<SLP>(solver);
@@ -17,9 +17,9 @@ std::shared_ptr<Subproblem> SubproblemFactory::create(const std::string& type, Q
     /*else if (type == "Sl1QP") {
         return std::make_shared<Sl1QP>(solver);
     }*/
-    else if (type == "SLPEQP") {
+    /*else if (type == "SLPEQP") {
         return std::make_shared<SLPEQP>(solver);
-    }
+    }*/
     /* interior point method */
     else if (type == "IPM") {
         return std::make_shared<InteriorPoint>();
