@@ -13,6 +13,19 @@ std::vector<double> add_vectors(std::vector<double>& x, std::vector<double>& y, 
     return z;
 }
 
+double norm(std::vector<double>& x, double chosen_norm) {
+    /* choose the right norm */
+    if (chosen_norm == 1) {
+        return norm_1(x);
+    }
+    else if (chosen_norm == 2) {
+        return norm_2(x);
+    }
+    else {
+        return norm_inf(x);
+    }
+}
+
 /* compute ||x||_1 */
 double norm_1(std::vector<double>& x) {
     double norm = 0.;

@@ -9,6 +9,8 @@
 
 std::vector<double> add_vectors(std::vector<double>& x, std::vector<double>& y, double scaling_factor);
 
+double norm(std::vector<double>& x, double chosen_norm);
+
 double norm_1(std::vector<double>& x);
 double norm_1(std::map<int,double>& x);
 double norm_1(std::vector<std::map<int, double> >& m);
