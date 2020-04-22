@@ -4,7 +4,7 @@
 #include "AMPLModel.hpp"
 
 LineSearch::LineSearch(GlobalizationStrategy& globalization_strategy, int max_iterations, double ratio) :
-GlobalizationMechanism(globalization_strategy, max_iterations), ratio(ratio) {
+GlobalizationMechanism(globalization_strategy, max_iterations), ratio(ratio), min_step_length(1e-9) {
 }
 
 Iterate LineSearch::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
@@ -12,12 +12,12 @@ Iterate LineSearch::initialize(Problem& problem, std::vector<double>& x, Multipl
 }
 
 Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_iterate) {
-    /* compute the step within the bounds */
-    //std::vector<Range> variables_bounds = this->compute_subproblem_bounds(current_iterate);
+    /* compute the step */
     SubproblemSolution solution = this->globalization_strategy.compute_step(problem, current_iterate);
     /* test if we computed a descent direction */
-    //if (0. < dot(solution.x, current_iterate.objective_gradient)) {
-        //throw std::out_of_range("LineSearch::compute_iterate: this is not a descent direction");
+    //bool is_descent_direction = (dot(solution.x, current_iterate.objective_gradient) < 0.);
+    //if (!is_descent_direction) {
+    //    throw std::out_of_range("LineSearch::compute_iterate: this is not a descent direction");
     //}
 
     /* step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ... */
@@ -57,7 +57,7 @@ bool LineSearch::termination(bool is_accepted) {
     else if (this->max_iterations < this->number_iterations) {
         throw std::runtime_error("Line-search iteration limit reached");
     }
-    if (this->step_length < 1e-9) {
+    if (this->step_length < this->min_step_length) {
         std::cout << "TODO: possibility of running the restoration phase here.\n";
         throw std::runtime_error("Step length became too small");
     }
@@ -87,7 +87,7 @@ void LineSearch::print_warning(const char* message) {
  * Interpolation functions
  */
 
-double LineSearch::quadratic_interpolation(Problem& problem, Iterate& current_iterate, std::vector<double> direction, double steplength) {
+double LineSearch::quadratic_interpolation(Problem& problem, Iterate& current_iterate, std::vector<double> direction, double step_length) {
     std::cout << "Current point: ";
     print_vector(std::cout, current_iterate.x);
     std::cout << "Direction: ";
@@ -96,7 +96,7 @@ double LineSearch::quadratic_interpolation(Problem& problem, Iterate& current_it
     /* compute trial point */
     std::vector<double> trial_point(problem.number_variables);
     for (int i = 0; i < problem.number_variables; i++) {
-        trial_point[i] = current_iterate.x[i] + steplength * direction[i];
+        trial_point[i] = current_iterate.x[i] + step_length * direction[i];
     }
     /* evaluate trial point */
     double phi_alpha0 = problem.objective(trial_point);
@@ -110,7 +110,7 @@ double LineSearch::quadratic_interpolation(Problem& problem, Iterate& current_it
     std::cout << "phi'(0) = nabla f(x)^T p = " << phi_prime_0 << "\n";
 
     /* compute the minimum of the quadratic */
-    double a = (phi_alpha0 - current_iterate.objective - phi_prime_0 * steplength) / (steplength * steplength);
+    double a = (phi_alpha0 - current_iterate.objective - phi_prime_0 * step_length) / (step_length * step_length);
     double b = phi_prime_0;
     std::cout << "a = " << a << ", b = " << b << "\n";
     return this->minimize_quadratic(a, b);

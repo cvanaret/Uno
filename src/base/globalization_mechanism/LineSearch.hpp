@@ -29,6 +29,8 @@ public:
     double ratio;
 
 private:
+    double min_step_length;
+    
     std::vector<Range> compute_subproblem_bounds(Iterate& current_iterate);
     bool termination(bool is_accepted);
     void print_iteration();
