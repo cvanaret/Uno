@@ -5,6 +5,7 @@
 #include "QPSolver.hpp"
 #include "MA57Solver.hpp"
 #include "SQP.hpp"
+#include "SLP.hpp"
 
 /*! \class QPApproximation
  * \brief QP local approximation
@@ -30,7 +31,7 @@ public:
 
     /* use a reference to allow polymorphism */
     QPSolver& solver; /*!< Solver that solves the subproblem */
-    SQP lp_subproblem;
+    SLP lp_subproblem;
     SQP eqp_subproblem;
 
 private:

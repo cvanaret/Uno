@@ -150,11 +150,8 @@ void Sl1QP::compute_measures(Problem& problem, Iterate& iterate) {
 }
 
 bool Sl1QP::phase_1_required(SubproblemSolution& solution) {
+    //TODO
     return false;
-}
-
-bool Sl1QP::is_descent_direction(Problem& problem, std::vector<double>& x, Iterate& current_iterate) {
-    return true;
 }
 
 /* private methods */

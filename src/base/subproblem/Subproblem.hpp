@@ -35,7 +35,6 @@ public:
     virtual void compute_measures(Problem& problem, Iterate& iterate) = 0;
     virtual double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) = 0;
     virtual bool phase_1_required(SubproblemSolution& solution) = 0;
-    virtual bool is_descent_direction(Problem& problem, std::vector<double>& x, Iterate& current_iterate) = 0;
 
     std::vector<Range> generate_variables_bounds(Iterate& current_iterate, double trust_region_radius);
     static double project_variable_in_bounds(double variable_value, Range& variable_bounds);

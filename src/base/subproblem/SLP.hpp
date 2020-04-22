@@ -19,7 +19,6 @@ public:
 
     double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length);
     bool phase_1_required(SubproblemSolution& solution);
-    bool is_descent_direction(Problem& problem, std::vector<double>& x, Iterate& current_iterate) override;
 
 private:
     void evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate);

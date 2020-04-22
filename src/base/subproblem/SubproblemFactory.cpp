@@ -17,9 +17,9 @@ std::shared_ptr<Subproblem> SubproblemFactory::create(const std::string& type, Q
     /*else if (type == "Sl1QP") {
         return std::make_shared<Sl1QP>(solver);
     }*/
-    /*else if (type == "SLPEQP") {
-        return std::make_shared<SLPEQP>(solver);
-    }*/
+    else if (type == "SLPEQP") {
+        return std::make_shared<SLPEQP>(solver, hessian_evaluation);
+    }
     /* interior point method */
     else if (type == "IPM") {
         return std::make_shared<InteriorPoint>();

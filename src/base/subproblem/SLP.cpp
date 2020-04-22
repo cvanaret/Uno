@@ -22,10 +22,6 @@ bool SLP::phase_1_required(SubproblemSolution& solution) {
     return (solution.status == INFEASIBLE);
 }
 
-bool SLP::is_descent_direction(Problem& /*problem*/, std::vector<double>& x, Iterate& current_iterate) {
-    return (dot(x, current_iterate.objective_gradient) < 0.);
-}
-
 /* private methods */
 
 void SLP::evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate) {

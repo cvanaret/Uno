@@ -8,7 +8,7 @@
 #include "Logger.hpp"
 
 SLPEQP::SLPEQP(QPSolver& solver, HessianEvaluation& hessian_evaluation) :
-Subproblem(), solver(solver), lp_subproblem(SQP(solver, hessian_evaluation)), eqp_subproblem(SQP(solver, hessian_evaluation)) {
+Subproblem(), solver(solver), lp_subproblem(SLP(solver)), eqp_subproblem(SQP(solver, hessian_evaluation)) {
 }
 
 Iterate SLPEQP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, bool use_trust_region) {
@@ -36,19 +36,18 @@ SubproblemSolution SLPEQP::compute_optimality_step(Problem& problem, Iterate& cu
     //std::cout << "SOLVING SLPEQP.LP\n";
     
     /* bounds of the variables */
-    std::vector<Range> variables_bounds = this->generate_variables_bounds(current_iterate, trust_region_radius);
+    std::vector<Range> lp_variables_bounds = this->generate_variables_bounds(current_iterate, trust_region_radius);
     
     /* bounds of the linearized constraints */
     std::vector<Range> constraints_bounds = Subproblem::generate_constraints_bounds(problem, current_iterate.constraints);
 
     /* generate the initial point */
-    std::vector<double> d0(variables_bounds.size()); // = {0.}
+    std::vector<double> d0(lp_variables_bounds.size()); // = {0.}
 
     /* solve the LP */
-    SubproblemSolution solution_LP = this->solver.solve_LP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, d0);
+    SubproblemSolution solution_LP = this->solver.solve_LP(lp_variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, d0);
     solution_LP.phase_1_required = this->phase_1_required(solution_LP);
-    //print_vector(std::cout, solution_LP.x);
-    //this->number_subproblems_solved++;
+    print_vector(std::cout, solution_LP.x);
     
     /************/
     /* EQP part */
@@ -61,7 +60,7 @@ SubproblemSolution SLPEQP::compute_optimality_step(Problem& problem, Iterate& cu
     /* fix active constraints */
     // TODO remove inactive constraints!!
     // TODO reduced Hessian
-    this->fix_active_constraints(problem, solution_LP.active_set, variables_bounds, constraints_bounds);
+    this->fix_active_constraints(problem, solution_LP.active_set, lp_variables_bounds, constraints_bounds);
     
     /* generate the initial point */
     d0 = solution_LP.x;

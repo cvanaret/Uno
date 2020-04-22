@@ -145,9 +145,6 @@ SubproblemSolution InteriorPoint::compute_optimality_step(Problem& problem, Iter
 }
 
 void InteriorPoint::evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate) {
-    /* compute second-order information */
-    current_iterate.compute_hessian(problem, problem.objective_sign, current_iterate.multipliers.constraints);
-
     /* compute barrier gradient */
     current_iterate.compute_objective_gradient(problem);
     // contribution of bound constraints
@@ -166,6 +163,9 @@ void InteriorPoint::evaluate_optimality_iterate(Problem& problem, Iterate& curre
         int slack_index = problem.number_variables + element.second;
         current_iterate.constraints_jacobian[j][slack_index] = -1.;
     }
+    
+    /* compute second-order information */
+    current_iterate.compute_hessian(problem, problem.objective_sign, current_iterate.multipliers.constraints);
     return;
 }
 
@@ -213,7 +213,6 @@ SubproblemSolution InteriorPoint::generate_direction(Problem& problem, Iterate& 
     DEBUG << "dual length = " << dual_length << "\n\n";
 
     SubproblemSolution solution(trial_x, trial_multipliers);
-    solution.is_descent_direction = this->is_descent_direction(problem, solution.x, current_iterate);
     return solution;
 }
 
@@ -461,13 +460,6 @@ SubproblemSolution InteriorPoint::compute_infeasibility_step(Problem& problem, I
 
 bool InteriorPoint::phase_1_required(SubproblemSolution& solution) {
     return solution.status == INFEASIBLE;
-}
-
-bool InteriorPoint::is_descent_direction(Problem& problem, std::vector<double>& x, Iterate& current_iterate) {
-    //std::vector<double> gradient = this->barrier_function_gradient(problem, current_iterate);
-    //return (dot(x, current_iterate.objective_gradient) < 0.);
-    // TODO
-    return true;
 }
 
 double InteriorPoint::compute_central_complementarity_error(Iterate& iterate, double mu, std::vector<Range>& variables_bounds) {

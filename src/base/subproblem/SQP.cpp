@@ -37,17 +37,13 @@ bool SQP::phase_1_required(SubproblemSolution& solution) {
     return (solution.status == INFEASIBLE);
 }
 
-bool SQP::is_descent_direction(Problem& /*problem*/, std::vector<double>& x, Iterate& current_iterate) {
-    return (dot(x, current_iterate.objective_gradient) < 0.);
-}
-
 /* private methods */
 
 void SQP::evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate) {
     /* compute first- and second-order information */
-    this->hessian_evaluation.compute(problem, current_iterate);
     current_iterate.compute_objective_gradient(problem);
     current_iterate.compute_constraints_jacobian(problem);
+    this->hessian_evaluation.compute(problem, current_iterate);
     return;
 }
 
