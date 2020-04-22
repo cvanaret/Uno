@@ -18,6 +18,7 @@ class PenaltyMeritFunction : public GlobalizationStrategy {
         PenaltyMeritFunction(Subproblem& subproblem, double tolerance);
 
         SubproblemSolution compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius=INFINITY) override;
+        SubproblemSolution restore_feasibility(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius=INFINITY) override;
 
         /*!
          *  Check the validity of a step

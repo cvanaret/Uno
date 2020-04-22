@@ -6,7 +6,7 @@
 
 /* TODO option to switch between filter or non-monotonic filter */
 FilterStrategy::FilterStrategy(Subproblem& subproblem, std::shared_ptr<Filter> filter_optimality,
-        std::shared_ptr<Filter> filter_restoration, TwoPhaseConstants& constants, double tolerance) :
+        std::shared_ptr<Filter> filter_restoration, TwoPhaseConstants& constants, double tolerance):
 TwoPhaseStrategy(subproblem, constants, tolerance), filter_optimality(filter_optimality), filter_restoration(filter_restoration) {
 }
 
@@ -30,7 +30,7 @@ Iterate FilterStrategy::initialize(Problem& problem, std::vector<double>& x, Mul
 bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
     /* assemble trial point: TODO do not reevaluate if ||d|| = 0 */
     std::vector<double> trial_x = add_vectors(current_iterate.x, solution.x, step_length);
-    Iterate trial_iterate(problem, trial_x, solution.multipliers);
+    Iterate trial_iterate(problem, trial_x, solution.multipliers, this->subproblem.residual_norm);
     this->compute_measures(problem, trial_iterate);
     double step_norm = step_length * solution.norm;
 
@@ -43,10 +43,10 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
         /* possibly switch phase */
         this->switch_phase(problem, solution, current_iterate, trial_iterate);
 
-        /* if RESTORATION phase, compute (in)feasibility measures of trial point */
+        /* if RESTORATION phase, compute l1 (in)feasibility measures of trial point */
         if (this->phase == RESTORATION) {
-            trial_iterate.feasibility_measure = problem.feasible_residual_norm(solution.constraint_partition, trial_iterate.constraints);
-            trial_iterate.optimality_measure = problem.infeasible_residual_norm(solution.constraint_partition, trial_iterate.constraints);
+            trial_iterate.feasibility_measure = problem.feasible_residual_norm(solution.constraint_partition, trial_iterate.constraints, this->subproblem.residual_norm);
+            trial_iterate.optimality_measure = problem.infeasible_residual_norm(solution.constraint_partition, trial_iterate.constraints, this->subproblem.residual_norm);
         }
 
         DEBUG << "TESTING trial (" << trial_iterate.feasibility_measure << ", " << trial_iterate.optimality_measure << ") against current (";
@@ -69,7 +69,6 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
                     accept = true;
                 }
                     /* sufficient decrease condition */
-                    //else if (actual_reduction >= this->constants.Sigma * std::max(0., predicted_reduction - 1e-9)) {
                 else if (actual_reduction >= this->constants.Sigma * std::max(0., predicted_reduction - 1e-9)) {
                     accept = true;
                 }
@@ -104,8 +103,8 @@ void FilterStrategy::switch_phase(Problem& problem, SubproblemSolution& solution
             this->filter_optimality->add(current_iterate.feasibility_measure, current_iterate.optimality_measure);
 
             /* re-initialize the restoration filter */
-            current_iterate.feasibility_measure = problem.feasible_residual_norm(solution.constraint_partition, current_iterate.constraints);
-            current_iterate.optimality_measure = problem.infeasible_residual_norm(solution.constraint_partition, current_iterate.constraints);
+            current_iterate.feasibility_measure = problem.feasible_residual_norm(solution.constraint_partition, current_iterate.constraints, this->subproblem.residual_norm);
+            current_iterate.optimality_measure = problem.infeasible_residual_norm(solution.constraint_partition, current_iterate.constraints, this->subproblem.residual_norm);
             current_iterate.is_hessian_computed = false;
             this->filter_restoration->reset();
             this->filter_restoration->upper_bound = this->filter_optimality->upper_bound;

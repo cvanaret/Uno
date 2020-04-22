@@ -8,14 +8,14 @@
 #include "Logger.hpp"
 
 SLPEQP::SLPEQP(QPSolver& solver, HessianEvaluation& hessian_evaluation) :
-Subproblem(), solver(solver), lp_subproblem(SLP(solver)), eqp_subproblem(SQP(solver, hessian_evaluation)) {
+Subproblem(1), solver(solver), lp_subproblem(SLP(solver)), eqp_subproblem(SQP(solver, hessian_evaluation)) {
 }
 
 Iterate SLPEQP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, bool use_trust_region) {
     // register the original bounds
     this->subproblem_variables_bounds = problem.variables_bounds;
     
-    Iterate first_iterate(problem, x, multipliers);
+    Iterate first_iterate(problem, x, multipliers, this->residual_norm);
     /* compute the optimality and feasibility measures of the initial point */
     this->compute_measures(problem, first_iterate);
 

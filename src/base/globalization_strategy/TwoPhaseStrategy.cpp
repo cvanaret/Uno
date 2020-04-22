@@ -14,21 +14,23 @@ SubproblemSolution TwoPhaseStrategy::compute_step(Problem& problem, Iterate& cur
 
     if (solution.phase_1_required) {
         /* infeasible subproblem during optimality phase */
-        DEBUG << "Moving on to the feasibility step\n";
-
-        /* different Hessian, but same constraint Jacobian */
-        current_iterate.is_hessian_computed = false;
-        /* partition of feasible and infeasible phase II constraints */
-        ConstraintPartition constraint_partition = solution.constraint_partition;
-
-        /* compute the step in phase 1, starting from infeasible solution */
-        DEBUG << "Creating the restoration problem with " << solution.constraint_partition.infeasible.size() << " infeasible constraints\n";
-        solution = this->subproblem.compute_infeasibility_step(problem, current_iterate, solution, trust_region_radius);
-        solution.constraint_partition = constraint_partition;
-        solution.phase = RESTORATION;
-        DEBUG << solution;
+        solution = this->restore_feasibility(problem, current_iterate, solution, trust_region_radius);
     }
     /* from this point on, the step is feasible */
+    return solution;
+}
+
+SubproblemSolution TwoPhaseStrategy::restore_feasibility(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) {
+    /* different Hessian, but same constraint Jacobian */
+    current_iterate.is_hessian_computed = false;
+    /* partition of feasible and infeasible phase II constraints */
+    //ConstraintPartition constraint_partition = phase_II_solution.constraint_partition;
+
+    /* compute the step in phase 1, starting from infeasible solution */
+    DEBUG << "Creating the restoration problem\n";
+    SubproblemSolution solution = this->subproblem.compute_infeasibility_step(problem, current_iterate, phase_II_solution, trust_region_radius);
+    solution.phase = RESTORATION;
+    DEBUG << solution;
     return solution;
 }
 

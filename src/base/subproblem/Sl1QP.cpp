@@ -4,7 +4,7 @@
 #include "Constraint.hpp"
 #include "Utils.hpp"
 
-Sl1QP::Sl1QP(QPSolver& solver) : Subproblem(), solver(solver) {
+Sl1QP::Sl1QP(QPSolver& solver) : Subproblem(1), solver(solver) {
 }
 
 Iterate Sl1QP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int /*number_variables*/, bool use_trust_region) {
@@ -19,7 +19,7 @@ Iterate Sl1QP::initialize(Problem& problem, std::vector<double>& x, Multipliers&
     for (int i = 0; i < problem.number_variables; i++) {
         reformulated_x[i] = x[i];
     }
-    Iterate first_iterate(problem, reformulated_x, multipliers);
+    Iterate first_iterate(problem, reformulated_x, multipliers, this->residual_norm);
 
     // reformulate the problem by introducing slack and relaxation variables
     // TODO relax only linear constraints?

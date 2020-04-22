@@ -13,10 +13,10 @@ Iterate SQP::initialize(Problem& problem, std::vector<double>& x, Multipliers& m
     Iterate first_iterate = ActiveSetMethod::initialize(problem, x, multipliers, number_variables, use_trust_region);
 
     /* compute least-square multipliers */
-    if (0 < problem.number_constraints) {
-        first_iterate.compute_constraints_jacobian(problem);
-        first_iterate.multipliers.constraints = Subproblem::compute_least_square_multipliers(problem, first_iterate, multipliers.constraints, 1e4);
-    }
+    //if (0 < problem.number_constraints) {
+    //    first_iterate.compute_constraints_jacobian(problem);
+    //    first_iterate.multipliers.constraints = Subproblem::compute_least_square_multipliers(problem, first_iterate, multipliers.constraints, 1e4);
+    //}
     return first_iterate;
 }
 

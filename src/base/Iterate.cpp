@@ -2,14 +2,14 @@
 #include "Utils.hpp"
 #include "Logger.hpp"
 
-Iterate::Iterate(Problem& problem, std::vector<double>& x, Multipliers& multipliers) : x(x), multipliers(multipliers) {
+Iterate::Iterate(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int residual_norm) : x(x), multipliers(multipliers) {
     /* objective */
     // TODO: do not evaluate
     this->objective = problem.objective(this->x);
 
     /* constraints */
     this->constraints = problem.evaluate_constraints(this->x);
-    this->residual = problem.infeasible_residual_norm(this->constraints);
+    this->residual = problem.infeasible_residual_norm(this->constraints, residual_norm);
     //this->feasibility_measure = this->residual;
     //this->optimality_measure = this->objective;
 

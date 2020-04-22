@@ -23,7 +23,7 @@ public:
      * \param solver: solver that solves the subproblem
      * \param name: name of the strategy
      */
-    Subproblem();
+    Subproblem(double residual_norm);
     virtual ~Subproblem();
 
     virtual Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, bool use_trust_region) = 0;
@@ -42,6 +42,7 @@ public:
     static std::vector<double> compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, std::vector<double>& default_multipliers, MA57Solver& solver, double multipliers_max_size=1e3);
     static std::vector<double> compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, std::vector<double>& default_multipliers, double multipliers_max_size=1e3);
     
+    double residual_norm;
     // when the subproblem is reformulated (e.g. when slacks are introduced), the bounds may be altered as well
     std::vector<Range> subproblem_variables_bounds;
     int number_subproblems_solved;

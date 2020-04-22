@@ -30,6 +30,7 @@ public:
 
 private:
     double min_step_length;
+    bool restoration_phase;
     
     std::vector<Range> compute_subproblem_bounds(Iterate& current_iterate);
     bool termination(bool is_accepted);

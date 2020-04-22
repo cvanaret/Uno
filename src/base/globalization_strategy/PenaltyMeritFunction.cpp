@@ -126,6 +126,11 @@ SubproblemSolution PenaltyMeritFunction::compute_step(Problem& problem, Iterate&
     return solution;
 }
 
+SubproblemSolution PenaltyMeritFunction::restore_feasibility(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius=INFINITY) {
+    // TODO
+    return phase_II_solution;
+}
+
 bool PenaltyMeritFunction::check_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
     /* stage g: line-search along fixed step */
 

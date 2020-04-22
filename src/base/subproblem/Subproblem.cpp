@@ -1,6 +1,6 @@
 #include "Subproblem.hpp"
 
-Subproblem::Subproblem() : number_subproblems_solved(0) {
+Subproblem::Subproblem(double restoration_norm) : residual_norm(restoration_norm), number_subproblems_solved(0) {
 }
 
 Subproblem::~Subproblem() {

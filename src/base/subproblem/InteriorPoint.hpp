@@ -48,7 +48,8 @@ public:
 
     MA57Solver solver; /*!< Solver that solves the subproblem */
     /* barrier parameter */
-    double mu;
+    double mu_optimality;
+    double mu_feasibility;
 
     /* data structures */
     std::vector<int> lower_bounded_variables; /* indices of the lower-bounded variables */
@@ -63,11 +64,11 @@ private:
     //std::vector<double> estimate_initial_multipliers(Problem& problem, Iterate& current_iterate, std::vector<double>& default_multipliers);
     double compute_primal_length(Iterate& iterate, std::vector<double>& ipm_solution, std::vector<Range>& variables_bounds, double tau);
     double compute_dual_length(Iterate& current_iterate, double tau, std::vector<double>& lower_delta_z, std::vector<double>& upper_delta_z);
-    COOMatrix generate_kkt_matrix(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds);
+    COOMatrix generate_optimality_kkt_matrix(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds);
     void modify_inertia(COOMatrix& kkt_matrix, int number_variables, int number_constraints);
     std::vector<double> generate_kkt_rhs(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds);
-    std::vector<double> compute_lower_bound_multiplier_displacements(Iterate& current_iterate, std::vector<double>& solution, std::vector<Range>& variables_bounds);
-    std::vector<double> compute_upper_bound_multiplier_displacements(Iterate& current_iterate, std::vector<double>& solution, std::vector<Range>& variables_bounds);
+    std::vector<double> compute_lower_bound_multiplier_displacements(Iterate& current_iterate, std::vector<double>& solution, std::vector<Range>& variables_bounds, double mu);
+    std::vector<double> compute_upper_bound_multiplier_displacements(Iterate& current_iterate, std::vector<double>& solution, std::vector<Range>& variables_bounds, double mu);
     SubproblemSolution generate_direction(Problem& problem, Iterate& current_iterate, std::vector<double>& solution_IPM);
     double compute_KKT_error_scaling(Iterate& current_iterate);
 

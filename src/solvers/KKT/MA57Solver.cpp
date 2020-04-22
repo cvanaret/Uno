@@ -35,10 +35,10 @@ MA57Factorization MA57Solver::factorize(COOMatrix& matrix) {
     for (unsigned int k = 0; k < column_indices.size(); k++) {
         column_indices[k] += this->use_fortran;
     }
+    
     /* info vector*/
     std::vector<int> info(40);
-    ma57ad_(&n, &nnz, row_indices.data(), column_indices.data(), &lkeep, keep.data(), iwork.data(),
-            this->icntl_.data(), info.data(), this->rinfo_.data());
+    ma57ad_(&n, &nnz, row_indices.data(), column_indices.data(), &lkeep, keep.data(), iwork.data(), this->icntl_.data(), info.data(), this->rinfo_.data());
 
     /* factorize */
     int lfact = 2 * info[8];

@@ -28,7 +28,7 @@ class Iterate {
         /*!
          *  Constructor
          */
-        Iterate(Problem& problem, std::vector<double>& x, Multipliers& multipliers);
+        Iterate(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int residual_norm);
 
         std::vector<double> x; /*!< \f$\mathbb{R}^n\f$ primal variables */
         Multipliers multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */

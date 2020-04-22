@@ -2,10 +2,38 @@
 #include "Matrix.hpp"
 #include "Utils.hpp"
 
-Matrix::Matrix(int size) : size(size) {
+Matrix::Matrix(int size): size(size) {
 }
 
 Matrix::~Matrix() {
+}
+
+double Matrix::quadratic_product(std::vector<double>& x, std::vector<double>& y) {
+    if (x.size() != y.size()) {
+        throw std::length_error("COOMatrix::quadratic_product: x and y have different sizes");
+    }
+
+    std::vector<double> hy = this->product(y); // H*y
+    double product = dot(x, hy); // x^T*(H*y)
+    return product;
+}
+
+void Matrix::add_outer_product(std::map<int, double>& x, double scaling_factor) {
+    /* perform matrix addition: A + rho x x^T */
+    for (std::pair<const int, double> row_element: x) {
+        int row_index = row_element.first;
+        double row_term = row_element.second;
+        for (std::pair<const int, double> column_element: x) {
+            int column_index = column_element.first;
+            double column_term = column_element.second;
+            // upper triangular matrix
+            if (row_index <= column_index) {
+                // add product of components
+                this->add_term(scaling_factor*row_term*column_term, row_index, column_index);
+            }
+        }
+    }
+    return;
 }
 
 /* 
@@ -13,7 +41,7 @@ Matrix::~Matrix() {
  * https://en.wikipedia.org/wiki/Sparse_matrix#Coordinate_list_(COO)
  */
 
-COOMatrix::COOMatrix(int size) : Matrix(size) {
+COOMatrix::COOMatrix(int size): Matrix(size) {
 }
 
 int COOMatrix::number_nonzeros() {
@@ -49,11 +77,18 @@ double COOMatrix::norm_1() {
 }
 
 std::vector<double> COOMatrix::product(std::vector<double>& vector) {
-    throw std::runtime_error("COOMatrix::product not implemented");
-}
-
-double COOMatrix::quadratic_product(std::vector<double>& x, std::vector<double>& y) {
-    throw std::runtime_error("COOMatrix::quadratic_product not implemented");
+    std::vector<double> result(vector.size());
+    for (unsigned int k = 0; k < this->matrix.size(); k++) {
+        int i = this->row_indices[k];
+        int j = this->column_indices[k];
+        result[i] += this->matrix[k] * vector[j];
+        
+        // off-diagonal term
+        if (i != j) {
+            result[j] += this->matrix[k] * vector[i];
+        }
+    }
+    return result;
 }
 
 std::ostream& operator<<(std::ostream &stream, COOMatrix& matrix) {
@@ -75,15 +110,42 @@ std::ostream& operator<<(std::ostream &stream, const COOMatrix& matrix) {
  * https://en.wikipedia.org/wiki/Sparse_matrix#Compressed_sparse_column_(CSC_or_CCS)
  */
 
-CSCMatrix::CSCMatrix() : Matrix(0) {
+CSCMatrix::CSCMatrix(): Matrix(0) {
 }
 
-CSCMatrix::CSCMatrix(std::vector<double>& matrix, std::vector<int>& column_start, std::vector<int>& row_number) :
+CSCMatrix::CSCMatrix(std::vector<double>& matrix, std::vector<int>& column_start, std::vector<int>& row_number):
 Matrix(column_start.size() - 1), matrix(matrix), column_start(column_start), row_number(row_number) {
 }
 
 int CSCMatrix::number_nonzeros() {
     return this->matrix.size();
+}
+
+void CSCMatrix::add_term(double term, int row_index, int column_index) {
+    throw std::out_of_range("CSCMatrix::add_term is not implemented");
+}
+
+/* product of symmetric (n, n) matrix with (n, 1) vector */
+std::vector<double> CSCMatrix::product(std::vector<double>& vector) {
+    int n = this->column_start.size() - 1;
+    /* create (n, 1) result */
+    std::vector<double> result(n); // = {0.}
+    for (int i = 0; i < n; i++) {
+        result[i] = 0.;
+    }
+
+    for (int j = 0; j < n; j++) {
+        for (int k = this->column_start[j]; k < this->column_start[j + 1]; k++) {
+            int i = this->row_number[k];
+            result[i] += vector[j] * this->matrix[k];
+
+            /* non diagonal terms of the lower triangle */
+            if (i != j) {
+                result[j] += vector[i] * this->matrix[k];
+            }
+        }
+    }
+    return result;
 }
 
 CSCMatrix CSCMatrix::add_identity_multiple(double multiple) {
@@ -124,40 +186,6 @@ CSCMatrix CSCMatrix::add_identity_multiple(double multiple) {
     return CSCMatrix(damped_matrix, damped_column_start, damped_row_number);
 }
 
-/* product of symmetric (n, n) matrix with (n, 1) vector */
-std::vector<double> CSCMatrix::product(std::vector<double>& vector) {
-    int n = this->column_start.size() - 1;
-    /* create (n, 1) result */
-    std::vector<double> result(n); // = {0.}
-    for (int i = 0; i < n; i++) {
-        result[i] = 0.;
-    }
-
-    for (int j = 0; j < n; j++) {
-        for (int k = this->column_start[j]; k < this->column_start[j + 1]; k++) {
-            int i = this->row_number[k];
-            result[i] += vector[j] * this->matrix[k];
-
-            /* non diagonal terms of the lower triangle */
-            if (i != j) {
-                result[j] += vector[i] * this->matrix[k];
-            }
-        }
-    }
-    return result;
-}
-
-/* compute x^T H y */
-double CSCMatrix::quadratic_product(std::vector<double>& x, std::vector<double>& y) {
-    if (x.size() != y.size()) {
-        throw std::length_error("Matrix::quadratic_product: x and y have different sizes");
-    }
-
-    std::vector<double> hy = this->product(y); // H*y
-    double product = dot(x, hy); // x^T*(H*y)
-    return product;
-}
-
 COOMatrix CSCMatrix::to_COO() {
     COOMatrix coo_matrix(this->size);
 
@@ -172,7 +200,7 @@ COOMatrix CSCMatrix::to_COO() {
 
 ArgonotMatrix CSCMatrix::to_ArgonotMatrix(int argonot_matrix_size) {
     ArgonotMatrix argonot_matrix(argonot_matrix_size);
-    
+
     for (int j = 0; j < this->size; j++) {
         for (int k = this->column_start[j]; k < this->column_start[j + 1]; k++) {
             int i = this->row_number[k];
@@ -256,7 +284,7 @@ std::ostream& operator<<(std::ostream &stream, const CSCMatrix& matrix) {
  * Argonot matrix: bijection between indices and single key + sparse vector (map)
  */
 
-ArgonotMatrix::ArgonotMatrix(int size) : Matrix(size) {
+ArgonotMatrix::ArgonotMatrix(int size): Matrix(size) {
 }
 
 int ArgonotMatrix::number_nonzeros() {
@@ -265,7 +293,7 @@ int ArgonotMatrix::number_nonzeros() {
 
 void ArgonotMatrix::add_term(double term, int row_index, int column_index) {
     // generate the unique key
-    int key = column_index*this->size + row_index;
+    int key = column_index * this->size + row_index;
     // insert the element
     this->matrix[key] += term;
     return;
@@ -277,7 +305,7 @@ double ArgonotMatrix::norm_1() {
     for (std::pair<const unsigned int, double> element: this->matrix) {
         int key = element.first;
         // retrieve indices
-        int j = key/this->size;
+        int j = key / this->size;
         number_columns = std::max(number_columns, 1 + j);
     }
     // read the matrix and fill in the column_vectors norm vector
@@ -286,7 +314,7 @@ double ArgonotMatrix::norm_1() {
         int key = element.first;
         double value = element.second;
         // retrieve indices
-        int j = key/this->size;
+        int j = key / this->size;
         column_vectors[j] += std::abs(value);
     }
     // compute the maximal component of the column_vectors vector
@@ -298,14 +326,7 @@ double ArgonotMatrix::norm_1() {
 }
 
 std::vector<double> ArgonotMatrix::product(std::vector<double>& vector) {
-    std::vector<double> product;
-    // TODO
-    return product;
-}
-
-double ArgonotMatrix::quadratic_product(std::vector<double>& x, std::vector<double>& y) {
-    // TODO
-    return 0.;
+    throw std::out_of_range("ArgonotMatrix::product is not implemented");
 }
 
 COOMatrix ArgonotMatrix::to_COO() {
@@ -318,7 +339,7 @@ COOMatrix ArgonotMatrix::to_COO() {
         int i = key % this->size;
         int j = key / this->size;
         coo_matrix.add_term(value, i, j);
-    }    
+    }
     return coo_matrix;
 }
 
@@ -333,14 +354,14 @@ CSCMatrix ArgonotMatrix::to_CSC() {
         // retrieve indices
         int i = key % this->size;
         int j = key / this->size;
-        
+
         csc_matrix.matrix.push_back(value);
         if (previous_column < j) {
             csc_matrix.column_start.push_back(current_term);
             previous_column = j;
         }
         csc_matrix.row_number.push_back(i);
-        
+
         current_term++;
     }
     csc_matrix.column_start.push_back(current_term);
@@ -384,4 +405,4 @@ void test_matrix() {
     
     return;
 }
-*/
+ */
