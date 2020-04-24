@@ -33,7 +33,7 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& mul
             current_iterate = this->globalization_mechanism.compute_iterate(problem, current_iterate);
             minor_iterations += this->globalization_mechanism.number_iterations;
 
-            //INFO << "constraints: " << current_iterate.residual << "\tobjective: " << current_iterate.objective << "\t";
+            INFO << "constraints: " << current_iterate.residual << "\tobjective: " << current_iterate.objective << "\t";
             INFO << "status: " << current_iterate.status << "\n";
             DEBUG << "Next iterate\n" << current_iterate;
         }

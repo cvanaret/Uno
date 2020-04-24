@@ -6,6 +6,7 @@ CFLAGS = -Wall -pedantic $(PROFILER)
 AMPL_DIR = ~/src/amplsolver
 BQPD_DIR = /media/data/Bureau/robust/software/bqpd
 MA57_DIR = ~/src/ma57-3.10.0
+BFGS_DIR = solvers/NLP/Lbfgsb.3.0
 
 # local libraries
 LIBCOMPIL = -lgfortran

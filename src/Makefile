@@ -14,8 +14,6 @@ L = -ldl -lf2c
 LIBCOIN   = -lOsiClp -lClp -lCoinUtils -lOsi
 LIBLINALG = -lblas -llapack
 
-BFGS_DIR = solvers/NLP/Lbfgsb.3.0
-
 INCLUDES = -I base -I base/globalization_mechanism -I base/globalization_strategy -I base/subproblem -I logger -I interfaces/AMPL -I solvers/QP -I solvers/KKT -I solvers/NLP -I $(BFGS_DIR) -I $(AMPL_DIR)
 
 SRC_FILES = base/Argonot.cpp base/Iterate.cpp \
