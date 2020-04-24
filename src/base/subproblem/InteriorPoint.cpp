@@ -118,8 +118,9 @@ SubproblemSolution InteriorPoint::compute_optimality_step(Problem& problem, Iter
         // TODO pass tolerance
         double tolerance = 1e-8;
         this->mu_optimality = std::max(tolerance / 10., std::min(this->parameters.k_mu * this->mu_optimality, std::pow(this->mu_optimality, this->parameters.theta_mu)));
-        // TODO reset the filter
-        DEBUG << "IPM: mu updated to " << this->mu_optimality << "\n";
+        DEBUG << "IPM: mu updated to " << this->mu_optimality << " and filter reset\n";
+        // signal the redefinition of the problem to the globalization strategy
+        this->subproblem_definition_changed = true;
     }
     DEBUG << "mu is " << this->mu_optimality << "\n";
     this->iteration++;
@@ -430,20 +431,21 @@ void InteriorPoint::compute_infeasibility_measures(Problem& problem, Iterate& it
 
 double InteriorPoint::constraint_violation(Problem& problem, Iterate& iterate) {
     iterate.compute_constraints(problem);
-    double constraint_violation = 0.;
+    // compute l2 square norm
+    std::vector<double> residuals(problem.number_constraints);
     int slack_index = problem.number_variables;
     for (int j = 0; j < problem.number_constraints; j++) {
         if (problem.constraint_status[j] == EQUAL_BOUNDS) {
             double constraint_value = iterate.constraints[j] - problem.constraints_bounds[j].lb;
-            constraint_violation += std::abs(constraint_value);
+            residuals[j] = constraint_value;
         }
         else {
             double constraint_value = iterate.constraints[j] - iterate.x[slack_index];
-            constraint_violation += std::abs(constraint_value);
+            residuals[j] = constraint_value;
             slack_index++;
         }
     }
-    return constraint_violation;
+    return norm(residuals, "l2_squared");
 }
 
 double InteriorPoint::barrier_function(Problem& problem, Iterate& iterate, std::vector<Range>& variables_bounds) {
@@ -575,20 +577,22 @@ SubproblemSolution InteriorPoint::compute_infeasibility_step(Problem& problem, I
     solution.phase = RESTORATION;
     solution.norm = norm_inf(solution.x, problem.number_variables);
     
-    std::vector<double> nlp_constraints = problem.evaluate_constraints(solution.x);
-    for (int j = 0; j < problem.number_constraints; j++) {
-        if (nlp_constraints[j] < problem.constraints_bounds[j].lb) {
-            solution.constraint_partition.infeasible.insert(j);
-            solution.constraint_partition.constraint_feasibility[j] = INFEASIBLE_LOWER;
-        }
-        else if (problem.constraints_bounds[j].ub < nlp_constraints[j]) {
-            solution.constraint_partition.infeasible.insert(j);
-            solution.constraint_partition.constraint_feasibility[j] = INFEASIBLE_UPPER;
-        }
-        else {
-            solution.constraint_partition.feasible.insert(j);
-        }
-    }
+    // TODO what happens when
+//    std::vector<double> nlp_constraints = problem.evaluate_constraints(solution.x);
+//    for (int j = 0; j < problem.number_constraints; j++) {
+//        if (nlp_constraints[j] < problem.constraints_bounds[j].lb) {
+//            solution.constraint_partition.infeasible.insert(j);
+//            solution.constraint_partition.constraint_feasibility[j] = INFEASIBLE_LOWER;
+//        }
+//        else if (problem.constraints_bounds[j].ub < nlp_constraints[j]) {
+//            solution.constraint_partition.infeasible.insert(j);
+//            solution.constraint_partition.constraint_feasibility[j] = INFEASIBLE_UPPER;
+//        }
+//        else {
+//            solution.constraint_partition.feasible.insert(j);
+//        }
+//    }
+    std::cout << "Exiting restoration phase\n";
     return solution;
     //DEBUG << "InteriorPoint::compute_infeasibility_step must be implemented\n";
     //throw std::runtime_error("ENTERING IPM.compute_infeasibility_step, no implementation provided!");

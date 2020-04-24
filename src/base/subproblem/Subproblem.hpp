@@ -48,6 +48,8 @@ public:
     // when the subproblem is reformulated (e.g. when slacks are introduced), the bounds may be altered as well
     std::vector<Range> subproblem_variables_bounds;
     int number_subproblems_solved;
+    // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it
+    bool subproblem_definition_changed;
 };
 
 #endif // SUBPROBLEM_H

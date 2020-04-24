@@ -21,6 +21,9 @@ double norm(std::vector<double>& x, std::string norm_value) {
     else if (norm_value == "l2") {
         return norm_2(x);
     }
+    else if (norm_value == "l2_squared") {
+        return norm_2_squared(x);
+    }
     else if (norm_value == "l1") {
         return norm_1(x);
     }
