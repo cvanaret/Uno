@@ -33,7 +33,7 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& mul
             current_iterate = this->globalization_mechanism.compute_iterate(problem, current_iterate);
             minor_iterations += this->globalization_mechanism.number_iterations;
 
-            INFO << "constraints: " << current_iterate.residual << "\tobjective: " << current_iterate.objective << "\t";
+            //INFO << "constraints: " << current_iterate.residual << "\tobjective: " << current_iterate.objective << "\t";
             INFO << "status: " << current_iterate.status << "\n";
             DEBUG << "Next iterate\n" << current_iterate;
         }
@@ -64,21 +64,10 @@ bool Argonot::termination_criterion(OptimalityStatus current_status, int iterati
     return current_status != NOT_OPTIMAL || this->max_iterations <= iteration;
 }
 
-double Argonot::compute_KKT_error(Problem& problem, Iterate& iterate, double objective_mutiplier, std::string norm) {
+double Argonot::compute_KKT_error(Problem& problem, Iterate& iterate, double objective_mutiplier, std::string norm_value) {
     // TODO objective_mutiplier
     std::vector<double> lagrangian_gradient = iterate.lagrangian_gradient(problem);
-    if (norm == "inf") {
-        return norm_inf(lagrangian_gradient);
-    }
-    else if (norm == "l2") {
-        return norm_2(lagrangian_gradient);
-    }
-    else if (norm == "l1") {
-        return norm_1(lagrangian_gradient);
-    }
-    else {
-        throw std::out_of_range("The norm is not known");
-    }
+    return norm(lagrangian_gradient, norm_value);
 }
 
 /* complementary slackness error. Use abs/1e-8 to safeguard */

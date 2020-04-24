@@ -43,7 +43,7 @@ public:
      */
     Result solve(Problem& problem, std::vector<double>& x, Multipliers& multipliers);
 
-    static double compute_KKT_error(Problem& problem, Iterate& iterate, double objective_mutiplier, std::string norm = "l2");
+    static double compute_KKT_error(Problem& problem, Iterate& iterate, double objective_mutiplier, std::string norm_value = "l2");
     static double compute_complementarity_error(const Problem& problem, Iterate& iterate);
     
     GlobalizationMechanism& globalization_mechanism; /*!< Step control strategy (trust region or line-search) */

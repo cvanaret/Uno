@@ -10,7 +10,7 @@ Iterate AugmentedLagrangian::initialize(Problem& problem, std::vector<double>& x
     Iterate first_iterate(problem, x, bound_multipliers, constraint_multipliers);
 
     /* compute the optimality and feasibility measures of the initial point */
-    this->compute_measures(problem, first_iterate);
+    this->compute_optimality_measures(problem, first_iterate);
     
     /* identify the inequality constraint slacks */
     std::map<int,int> slacked_constraints;                     // sparse dictionary of inequality c/s
@@ -110,7 +110,7 @@ SubproblemSolution AugmentedLagrangian::compute_infeasibility_step(Problem& prob
 //    throw std::out_of_range("Not implemented yet.");
 //}
 
-void AugmentedLagrangian::compute_measures(Problem& problem, Iterate& iterate) {
+void AugmentedLagrangian::compute_optimality_measures(Problem& problem, Iterate& iterate) {
     return;
 }
 

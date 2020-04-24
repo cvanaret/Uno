@@ -9,7 +9,7 @@
 
 std::vector<double> add_vectors(std::vector<double>& x, std::vector<double>& y, double scaling_factor);
 
-double norm(std::vector<double>& x, double chosen_norm);
+double norm(std::vector<double>& x, std::string norm_value);
 
 double norm_1(std::vector<double>& x);
 double norm_1(std::map<int,double>& x);
@@ -36,7 +36,7 @@ void print_vector(std::ostream &stream, std::vector<T> x, unsigned int start = 0
 
 template <typename T>
 void print_vector(const Level& level, std::vector<T> x, unsigned int start = 0, unsigned int length = std::numeric_limits<unsigned int>::max()) {
-    for (unsigned int i = 0; i < std::min<unsigned int>(start + length, x.size()); i++) {
+    for (unsigned int i = start; i < std::min<unsigned int>(start + length, x.size()); i++) {
             level << x[i] << " ";
     }
     level << "\n";

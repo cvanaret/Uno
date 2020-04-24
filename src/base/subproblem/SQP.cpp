@@ -20,7 +20,7 @@ Iterate SQP::initialize(Problem& problem, std::vector<double>& x, Multipliers& m
     return first_iterate;
 }
 
-double SQP::compute_predicted_reduction(Problem& /*problem*/, Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
+double SQP::compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
     if (step_length == 1.) {
         /* full step */
         return -solution.objective;
@@ -51,9 +51,9 @@ void SQP::evaluate_feasibility_iterate(Problem& problem, Iterate& current_iterat
     /* update the multipliers of the general constraints */
     std::vector<double> constraint_multipliers = this->generate_feasibility_multipliers(problem, current_iterate.multipliers.constraints, phase_II_solution.constraint_partition);
     /* compute first- and second-order information */
+    current_iterate.compute_constraints_jacobian(problem);
     double objective_multiplier = 0.;
     current_iterate.compute_hessian(problem, objective_multiplier, constraint_multipliers);
-    current_iterate.compute_constraints_jacobian(problem);
     return;
 }
 

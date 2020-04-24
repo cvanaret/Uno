@@ -13,16 +13,19 @@ std::vector<double> add_vectors(std::vector<double>& x, std::vector<double>& y, 
     return z;
 }
 
-double norm(std::vector<double>& x, double chosen_norm) {
+double norm(std::vector<double>& x, std::string norm_value) {
     /* choose the right norm */
-    if (chosen_norm == 1) {
-        return norm_1(x);
+    if (norm_value == "inf") {
+        return norm_inf(x);
     }
-    else if (chosen_norm == 2) {
+    else if (norm_value == "l2") {
         return norm_2(x);
     }
+    else if (norm_value == "l1") {
+        return norm_1(x);
+    }
     else {
-        return norm_inf(x);
+        throw std::out_of_range("The norm is not known");
     }
 }
 

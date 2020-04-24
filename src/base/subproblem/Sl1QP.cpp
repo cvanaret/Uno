@@ -4,7 +4,7 @@
 #include "Constraint.hpp"
 #include "Utils.hpp"
 
-Sl1QP::Sl1QP(QPSolver& solver) : Subproblem(1), solver(solver) {
+Sl1QP::Sl1QP(QPSolver& solver) : Subproblem("l1"), solver(solver) {
 }
 
 Iterate Sl1QP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int /*number_variables*/, bool use_trust_region) {
@@ -19,10 +19,11 @@ Iterate Sl1QP::initialize(Problem& problem, std::vector<double>& x, Multipliers&
     for (int i = 0; i < problem.number_variables; i++) {
         reformulated_x[i] = x[i];
     }
-    Iterate first_iterate(problem, reformulated_x, multipliers, this->residual_norm);
+    Iterate first_iterate(reformulated_x, multipliers);
 
     // reformulate the problem by introducing slack and relaxation variables
     // TODO relax only linear constraints?
+    first_iterate.compute_constraints(problem);
     int current_index = problem.number_variables;
     for (int j = 0; j < problem.number_constraints; j++) {
         if (problem.constraint_status[j] != EQUAL_BOUNDS) {
@@ -46,7 +47,7 @@ Iterate Sl1QP::initialize(Problem& problem, std::vector<double>& x, Multipliers&
     }
 
     /* compute the optimality and feasibility measures of the initial point */
-    this->compute_measures(problem, first_iterate);
+    this->compute_optimality_measures(problem, first_iterate);
     
     /* allocate the QP solver */
     this->solver.allocate(number_variables, problem.number_constraints);
@@ -143,9 +144,20 @@ double Sl1QP::compute_predicted_reduction(Problem& problem, Iterate& current_ite
     } 
 }
 
-void Sl1QP::compute_measures(Problem& problem, Iterate& iterate) {
+void Sl1QP::compute_optimality_measures(Problem& problem, Iterate& iterate) {
+    // feasibility
+    iterate.compute_constraints_residual(problem, this->residual_norm);
     iterate.feasibility_measure = iterate.residual;
+    // optimality
+    iterate.compute_objective(problem);
     iterate.optimality_measure = iterate.objective;
+    return;
+}
+
+void Sl1QP::compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution) {
+    iterate.compute_constraints(problem);
+    iterate.feasibility_measure = problem.feasible_residual_norm(solution.constraint_partition, iterate.constraints, this->residual_norm);
+    iterate.optimality_measure = problem.infeasible_residual_norm(solution.constraint_partition, iterate.constraints, this->residual_norm);
     return;
 }
 

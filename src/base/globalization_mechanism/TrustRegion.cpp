@@ -29,7 +29,7 @@ Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_iterate)
 
             /* check whether the trial step is accepted */
             is_accepted = this->globalization_strategy.check_step(problem, current_iterate, solution);
-
+            
             if (is_accepted) {
                 /* print summary */
                 this->print_acceptance(solution.norm);
@@ -50,17 +50,6 @@ Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_iterate)
         }
     }
     return current_iterate;
-}
-
-std::vector<Range> TrustRegion::compute_trust_region(Iterate& current_iterate, double radius) {
-    std::vector<Range> variables_bounds(current_iterate.x.size());
-    /* bound constraints of the subproblem intersected with trust region  */
-    for (unsigned int i = 0; i < current_iterate.x.size(); i++) {
-        double lb = std::max(-radius, this->globalization_strategy.subproblem.subproblem_variables_bounds[i].lb - current_iterate.x[i]);
-        double ub = std::min(radius, this->globalization_strategy.subproblem.subproblem_variables_bounds[i].ub - current_iterate.x[i]);
-        variables_bounds[i] = {lb, ub};
-    }
-    return variables_bounds;
 }
 
 void TrustRegion::correct_multipliers(Problem& problem, SubproblemSolution& solution) {

@@ -30,7 +30,7 @@ std::ostream& operator<<(std::ostream &stream, SubproblemSolution& solution) {
     stream << "norm = " << solution.norm << "\n";
 
     stream << "active set at upper bound =";
-    for (int index: solution.active_set.at_upper_bound) {
+    for (unsigned int index: solution.active_set.at_upper_bound) {
         if (index < solution.x.size()) {
             stream << " x" << index;
         }
@@ -41,7 +41,7 @@ std::ostream& operator<<(std::ostream &stream, SubproblemSolution& solution) {
     stream << "\n";
 
     stream << "active set at lower bound =";
-    for (int index: solution.active_set.at_lower_bound) {
+    for (unsigned int index: solution.active_set.at_lower_bound) {
         if (index < solution.x.size()) {
             stream << " x" << index;
         }

@@ -27,7 +27,6 @@ public:
 private:
     double activity_tolerance_;
 
-    std::vector<Range> compute_trust_region(Iterate& current_iterate, double radius);
     void correct_multipliers(Problem& problem, SubproblemSolution& solution);
     bool termination(bool is_accepted);
     void print_iteration();

@@ -69,9 +69,9 @@ public:
     virtual std::vector<double> primal_initial_solution() = 0;
     virtual std::vector<double> dual_initial_solution() = 0;
 
-    double feasible_residual_norm(ConstraintPartition& constraint_partition, std::vector<double>& constraints, double chosen_norm);
-    double infeasible_residual_norm(ConstraintPartition& constraint_partition, std::vector<double>& constraints, double chosen_norm);
-    double infeasible_residual_norm(std::vector<double>& constraints, double chosen_norm);
+    double feasible_residual_norm(ConstraintPartition& constraint_partition, std::vector<double>& constraints, std::string norm_value);
+    double infeasible_residual_norm(ConstraintPartition& constraint_partition, std::vector<double>& constraints, std::string norm_value);
+    double infeasible_residual_norm(std::vector<double>& constraints, std::string norm_value);
 
     int number_eval_objective;
     int number_eval_constraints;

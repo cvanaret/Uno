@@ -37,9 +37,10 @@ public:
 
     SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius = INFINITY) override;
     SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius = INFINITY) override;
-    //SubproblemSolution compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, double penalty_parameter, PenaltyDimensions penalty_dimensions) override;
-
-    void compute_measures(Problem& problem, Iterate& iterate) override;
+    
+    void compute_optimality_measures(Problem& problem, Iterate& iterate) override;
+    void compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution) override;
+    
     double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
     bool phase_1_required(SubproblemSolution& solution) override;
 
@@ -59,14 +60,14 @@ public:
 private:
     void evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate);
     double evaluate_local_model(Problem& problem, Iterate& current_iterate, std::vector<double>& solution);
-    double barrier_function(Iterate& iterate, std::vector<Range>& variables_bounds);
+    double barrier_function(Problem& problem, Iterate& iterate, std::vector<Range>& variables_bounds);
     double project_variable_in_bounds(double variable_value, Range& variable_bounds);
     //std::vector<double> estimate_initial_multipliers(Problem& problem, Iterate& current_iterate, std::vector<double>& default_multipliers);
     double compute_primal_length(Iterate& iterate, std::vector<double>& ipm_solution, std::vector<Range>& variables_bounds, double tau);
     double compute_dual_length(Iterate& current_iterate, double tau, std::vector<double>& lower_delta_z, std::vector<double>& upper_delta_z);
     COOMatrix generate_optimality_kkt_matrix(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds);
     void modify_inertia(COOMatrix& kkt_matrix, int number_variables, int number_constraints);
-    std::vector<double> generate_kkt_rhs(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds);
+    std::vector<double> generate_kkt_rhs(Problem& problem, Iterate& current_iterate);
     std::vector<double> compute_lower_bound_multiplier_displacements(Iterate& current_iterate, std::vector<double>& solution, std::vector<Range>& variables_bounds, double mu);
     std::vector<double> compute_upper_bound_multiplier_displacements(Iterate& current_iterate, std::vector<double>& solution, std::vector<Range>& variables_bounds, double mu);
     SubproblemSolution generate_direction(Problem& problem, Iterate& current_iterate, std::vector<double>& solution_IPM);

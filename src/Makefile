@@ -1,5 +1,5 @@
 # specify local compilers and compiler flags
-PROFILER = #-pg
+PROFILER = -g#-pg
 CC     = gcc
 CPP    = g++ -std=c++11
 F77    = gfortran
@@ -35,7 +35,6 @@ SRC_FILES = base/Argonot.cpp base/Iterate.cpp \
 OBJ_FILES = $(subst .cpp,.o,$(SRC_FILES)) solvers/QP/wdotd.o $(BFGS_DIR)/lbfgsb.o $(BFGS_DIR)/timer.o $(BFGS_DIR)/blas.o $(BFGS_DIR)/linpack.o
 EXEC_NAME = argonot
 
-# 
 # base/globalization_strategy/Tube.cpp base/globalization_strategy/TubeStrategy.cpp
 # base/globalization_strategy/PenaltyMeritFunction.cpp \
 # base/subproblem/AugmentedLagrangian.cpp \

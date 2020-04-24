@@ -28,30 +28,42 @@ class Iterate {
         /*!
          *  Constructor
          */
-        Iterate(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int residual_norm);
+        Iterate(std::vector<double>& x, Multipliers& multipliers);
 
         std::vector<double> x; /*!< \f$\mathbb{R}^n\f$ primal variables */
         Multipliers multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
 
+        // functions
         double objective; /*!< Objective value */
-        std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
+        bool is_objective_computed;
         
-        OptimalityStatus status;
+        std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
+        bool are_constraints_computed;
+        
         double residual; /*!< Constraint residual */
-        double KKTerror;
-        double complementarity_error;
-
-        double feasibility_measure;
-        double optimality_measure;
-
+        bool is_constraints_residual_computed;
+        
         std::map<int, double> objective_gradient; /*!< Sparse Jacobian of the objective */
-        std::vector<std::map<int, double> > constraints_jacobian; /*!< Sparse Jacobian of the constraints */
         bool is_objective_gradient_computed; /*!< Flag that indicates if the objective gradient has already been computed */
+        
+        std::vector<std::map<int, double> > constraints_jacobian; /*!< Sparse Jacobian of the constraints */
         bool is_constraints_jacobian_computed; /*!< Flag that indicates if the constraint Jacobian has already been computed */
 
         CSCMatrix hessian; /*!< Sparse Lagrangian Hessian */
         bool is_hessian_computed; /*!< Flag that indicates if the Hessian has already been computed */
 
+        // status and measures
+        OptimalityStatus status;
+        
+        double KKTerror;
+        double complementarity_error;
+
+        double feasibility_measure;
+        double optimality_measure;
+        
+        void compute_objective(Problem& problem);
+        void compute_constraints(Problem& problem);
+        void compute_constraints_residual(Problem& problem, std::string residual_norm);
         void set_objective_gradient(std::map<int, double>& objective_gradient);
         void compute_objective_gradient(Problem& problem);
         void compute_constraints_jacobian(Problem& problem);

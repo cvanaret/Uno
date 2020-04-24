@@ -151,7 +151,8 @@ bool PenaltyMeritFunction::check_step(Problem& problem, Iterate& current_iterate
     //Multipliers trial_multipliers = {bound_multipliers, trial_constraint_multipliers};
     /* generate the trial iterate */
     Iterate trial_iterate(problem, x_trial, trial_multipliers);
-    this->compute_measures(problem, trial_iterate);
+    // TODO: add the penalized term to the optimality measure
+    this->subproblem.compute_measures(problem, trial_iterate);
 
     /* compute current exact l1 penalty: rho f + sum max(0, c) */
     double current_exact_l1_penalty = this->penalty_parameter * current_iterate.objective + current_iterate.residual;
@@ -299,9 +300,3 @@ double PenaltyMeritFunction::compute_error(Problem& problem, Iterate& current_it
 
 //}
 //}
-
-void PenaltyMeritFunction::compute_measures(Problem& problem, Iterate& iterate) {
-    this->subproblem.compute_measures(problem, iterate);
-    // TODO: add the penalized term to the optimality measure
-    return;
-}

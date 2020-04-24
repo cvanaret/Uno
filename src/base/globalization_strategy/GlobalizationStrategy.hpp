@@ -38,7 +38,6 @@ class GlobalizationStrategy {
         virtual Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) = 0;
         
     protected:
-        virtual void compute_measures(Problem& problem, Iterate& iterate) = 0;
         // specific to the strategy (objective multiplier depends on the strategy)
         double compute_KKT_error(Problem& problem, Iterate& iterate, double objective_mutiplier, std::string norm = "l2");
 };

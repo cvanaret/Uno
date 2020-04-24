@@ -3,7 +3,7 @@
 #include "Logger.hpp"
 
 TwoPhaseStrategy::TwoPhaseStrategy(Subproblem& subproblem, TwoPhaseConstants& constants, double tolerance) :
-GlobalizationStrategy(subproblem, tolerance), phase(OPTIMALITY), constants(constants) {
+GlobalizationStrategy(subproblem, tolerance), current_phase(OPTIMALITY), constants(constants) {
 }
 
 SubproblemSolution TwoPhaseStrategy::compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {

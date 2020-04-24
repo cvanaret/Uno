@@ -24,7 +24,7 @@ class AugmentedLagrangian : public Subproblem {
         SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds) override;
         SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, SubproblemSolution& phase_II_solution) override;
         //SubproblemSolution compute_l1_penalty_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, double penalty_parameter, PenaltyDimensions penalty_dimensions) override;
-        void compute_measures(Problem& problem, Iterate& iterate) override;
+        void compute_optimality_measures(Problem& problem, Iterate& iterate) override;
         bool phase_1_required(SubproblemSolution& solution) override;
 
         LBFGSB solver; /*!< Solver that computes the step */

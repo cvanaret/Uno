@@ -8,16 +8,16 @@
 #include "Logger.hpp"
 
 SLPEQP::SLPEQP(QPSolver& solver, HessianEvaluation& hessian_evaluation) :
-Subproblem(1), solver(solver), lp_subproblem(SLP(solver)), eqp_subproblem(SQP(solver, hessian_evaluation)) {
+Subproblem("l1"), solver(solver), lp_subproblem(SLP(solver)), eqp_subproblem(SQP(solver, hessian_evaluation)) {
 }
 
 Iterate SLPEQP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, bool use_trust_region) {
     // register the original bounds
     this->subproblem_variables_bounds = problem.variables_bounds;
     
-    Iterate first_iterate(problem, x, multipliers, this->residual_norm);
+    Iterate first_iterate(x, multipliers);
     /* compute the optimality and feasibility measures of the initial point */
-    this->compute_measures(problem, first_iterate);
+    this->compute_optimality_measures(problem, first_iterate);
 
     /* allocate the QP solver */
     this->solver.allocate(number_variables, problem.number_constraints);
@@ -27,13 +27,14 @@ Iterate SLPEQP::initialize(Problem& problem, std::vector<double>& x, Multipliers
 SubproblemSolution SLPEQP::compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
     /* compute first-order information */
     current_iterate.compute_objective_gradient(problem);
+     current_iterate.compute_constraints(problem);
     current_iterate.compute_constraints_jacobian(problem);
     
     /***********/
     /* LP part */
     /***********/
     
-    //std::cout << "SOLVING SLPEQP.LP\n";
+    //DEBUG << "SOLVING SLPEQP.LP\n";
     
     /* bounds of the variables */
     std::vector<Range> lp_variables_bounds = this->generate_variables_bounds(current_iterate, trust_region_radius);
@@ -47,13 +48,13 @@ SubproblemSolution SLPEQP::compute_optimality_step(Problem& problem, Iterate& cu
     /* solve the LP */
     SubproblemSolution solution_LP = this->solver.solve_LP(lp_variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, d0);
     solution_LP.phase_1_required = this->phase_1_required(solution_LP);
-    print_vector(std::cout, solution_LP.x);
+    print_vector(DEBUG, solution_LP.x);
     
     /************/
     /* EQP part */
     /************/
     
-    //std::cout << "SOLVING SLPEQP.EQP\n";
+    //DEBUG << "SOLVING SLPEQP.EQP\n";
     /* compute second-order information */
     current_iterate.compute_hessian(problem, problem.objective_sign, current_iterate.multipliers.constraints);
     
@@ -68,7 +69,7 @@ SubproblemSolution SLPEQP::compute_optimality_step(Problem& problem, Iterate& cu
     /* solve the EQP */
     SubproblemSolution solution_EQP = this->solver.solve_QP(problem.variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
     solution_EQP.phase_1_required = this->phase_1_required(solution_EQP);
-    //print_vector(std::cout, solution_EQP.x);
+    //print_vector(DEBUG, solution_EQP.x);
     this->number_subproblems_solved++;
     
     return solution_EQP;
@@ -92,9 +93,20 @@ double SLPEQP::compute_predicted_reduction(Problem& problem, Iterate& current_it
     } 
 }
 
-void SLPEQP::compute_measures(Problem& problem, Iterate& iterate) {
+void SLPEQP::compute_optimality_measures(Problem& problem, Iterate& iterate) {
+    // feasibility
+    iterate.compute_constraints_residual(problem, this->residual_norm);
     iterate.feasibility_measure = iterate.residual;
+    // optimality
+    iterate.compute_objective(problem);
     iterate.optimality_measure = iterate.objective;
+    return;
+}
+
+void SLPEQP::compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution) {
+    iterate.compute_constraints(problem);
+    iterate.feasibility_measure = problem.feasible_residual_norm(solution.constraint_partition, iterate.constraints, this->residual_norm);
+    iterate.optimality_measure = problem.infeasible_residual_norm(solution.constraint_partition, iterate.constraints, this->residual_norm);
     return;
 }
 

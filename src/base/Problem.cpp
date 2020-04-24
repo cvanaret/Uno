@@ -12,7 +12,7 @@ Problem::~Problem() {
 //! compute || c(feasible_constraints) ||_1 and || c(infeasible_constraints) ||_1 for index sets
 // feasible_constraints, infeasible_constraints (overall length m)
 
-double Problem::feasible_residual_norm(ConstraintPartition& constraint_partition, std::vector<double>& constraints, double chosen_norm) {
+double Problem::feasible_residual_norm(ConstraintPartition& constraint_partition, std::vector<double>& constraints, std::string norm_value) {
     std::vector<double> residuals(constraints.size());
     /* compute residuals for infeasible linear constraints */
     for (int j: constraint_partition.infeasible) {
@@ -27,25 +27,25 @@ double Problem::feasible_residual_norm(ConstraintPartition& constraint_partition
     for (int j: constraint_partition.feasible) {
         residuals[j] = std::max(std::max(0., this->constraints_bounds[j].lb - constraints[j]), constraints[j] - this->constraints_bounds[j].ub);
     }
-    return norm(residuals, chosen_norm);
+    return norm(residuals, norm_value);
 }
 
-double Problem::infeasible_residual_norm(ConstraintPartition& constraint_partition, std::vector<double>& constraints, double chosen_norm) {
+double Problem::infeasible_residual_norm(ConstraintPartition& constraint_partition, std::vector<double>& constraints, std::string norm_value) {
     std::vector<double> residuals(constraints.size());
     /* compute residuals for infeasible constraints */
     for (int j: constraint_partition.infeasible) {
         residuals[j] = std::max(std::max(0., this->constraints_bounds[j].lb - constraints[j]), constraints[j] - this->constraints_bounds[j].ub);
     }
-    return norm(residuals, chosen_norm);
+    return norm(residuals, norm_value);
 }
 
 /* compute ||c|| */
-double Problem::infeasible_residual_norm(std::vector<double>& constraints, double chosen_norm) {
+double Problem::infeasible_residual_norm(std::vector<double>& constraints, std::string norm_value) {
     std::vector<double> residuals(constraints.size());
     for (int j = 0; j < this->number_constraints; j++) {
         residuals[j] = std::max(std::max(0., this->constraints_bounds[j].lb - constraints[j]), constraints[j] - this->constraints_bounds[j].ub);
     }
-    return norm(residuals, chosen_norm);
+    return norm(residuals, norm_value);
 }
 
 std::vector<ConstraintType> Problem::determine_bounds_types(std::vector<Range>& bounds) {

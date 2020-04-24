@@ -22,7 +22,10 @@ public:
 
     SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius = INFINITY) override;
     SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius = INFINITY) override;
-    void compute_measures(Problem& problem, Iterate& iterate) override;
+    
+    void compute_optimality_measures(Problem& problem, Iterate& iterate) override;
+    void compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution);
+    
     double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
     bool phase_1_required(SubproblemSolution& solution) override;
 

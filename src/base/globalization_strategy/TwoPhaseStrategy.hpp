@@ -27,7 +27,7 @@ public:
     SubproblemSolution compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius=INFINITY) override;
     SubproblemSolution restore_feasibility(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius=INFINITY) override;
 
-    Phase phase; /*!< Current phase (optimality or feasibility restoration) */
+    Phase current_phase; /*!< Current phase (optimality or feasibility restoration) */
     TwoPhaseConstants constants; /*!< Set of constants */
 
 protected:

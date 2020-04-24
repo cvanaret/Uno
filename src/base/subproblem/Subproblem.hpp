@@ -23,7 +23,7 @@ public:
      * \param solver: solver that solves the subproblem
      * \param name: name of the strategy
      */
-    Subproblem(double residual_norm);
+    Subproblem(std::string residual_norm);
     virtual ~Subproblem();
 
     virtual Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, bool use_trust_region) = 0;
@@ -32,7 +32,9 @@ public:
     virtual SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius=INFINITY) = 0;
     virtual SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius=INFINITY) = 0;
     
-    virtual void compute_measures(Problem& problem, Iterate& iterate) = 0;
+    virtual void compute_optimality_measures(Problem& problem, Iterate& iterate) = 0;
+    virtual void compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution) = 0;
+    
     virtual double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) = 0;
     virtual bool phase_1_required(SubproblemSolution& solution) = 0;
 
@@ -42,7 +44,7 @@ public:
     static std::vector<double> compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, std::vector<double>& default_multipliers, MA57Solver& solver, double multipliers_max_size=1e3);
     static std::vector<double> compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, std::vector<double>& default_multipliers, double multipliers_max_size=1e3);
     
-    double residual_norm;
+    std::string residual_norm;
     // when the subproblem is reformulated (e.g. when slacks are introduced), the bounds may be altered as well
     std::vector<Range> subproblem_variables_bounds;
     int number_subproblems_solved;
