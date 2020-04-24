@@ -93,6 +93,9 @@ void AMPLModel::generate_variables() {
         this->variable_discrete[i] = is_discrete(this->asl_, i);
         double lb = (this->asl_->i.LUv_ != NULL) ? this->asl_->i.LUv_[2 * i] : -INFINITY;
         double ub = (this->asl_->i.LUv_ != NULL) ? this->asl_->i.LUv_[2 * i + 1] : INFINITY;
+        if (lb == ub) {
+            WARNING << "Variable x" << i << " has identical bounds\n";
+        }
         this->variables_bounds[i] = {lb, ub};
         this->variable_uncertain[i] = (uncertain_suffixes->u.i != NULL && uncertain_suffixes->u.i[i] == 1);
     }
