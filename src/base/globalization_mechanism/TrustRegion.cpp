@@ -22,7 +22,12 @@ Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_iterate)
             this->print_iteration();
 
             /* compute the step within trust region */
-            SubproblemSolution solution = this->globalization_strategy.compute_step(problem, current_iterate, this->radius);
+            //SubproblemSolution solution = this->globalization_strategy.compute_step(problem, current_iterate, this->radius);
+            SubproblemSolution solution = this->globalization_strategy.subproblem.compute_optimality_step(problem, current_iterate, this->radius);
+            if (solution.phase_1_required) {
+                /* infeasible subproblem during optimality phase */
+                solution = this->globalization_strategy.subproblem.compute_infeasibility_step(problem, current_iterate, solution, this->radius);
+            }
 
             /* set bound multipliers of active trust region to 0 */
             this->correct_multipliers(problem, solution);

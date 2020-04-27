@@ -19,8 +19,7 @@ INCLUDES = -I base -I base/globalization_mechanism -I base/globalization_strateg
 SRC_FILES = base/Argonot.cpp base/Iterate.cpp \
 	base/Problem.cpp interfaces/AMPL/AMPLModel.cpp \
 	base/Matrix.cpp base/HessianEvaluation.cpp base/Constraint.cpp \
-	base/globalization_strategy/GlobalizationStrategy.cpp base/globalization_strategy/TwoPhaseStrategy.cpp \
-	base/globalization_strategy/Filter.cpp base/globalization_strategy/FilterStrategy.cpp \
+	base/globalization_strategy/GlobalizationStrategy.cpp base/globalization_strategy/Filter.cpp base/globalization_strategy/FilterStrategy.cpp \
 	base/globalization_strategy/GlobalizationStrategyFactory.cpp \
 	base/globalization_mechanism/GlobalizationMechanism.cpp base/globalization_mechanism/TrustRegion.cpp \
 	base/globalization_mechanism/LineSearch.cpp base/globalization_mechanism/TrustLineSearch.cpp \
@@ -33,8 +32,8 @@ SRC_FILES = base/Argonot.cpp base/Iterate.cpp \
 OBJ_FILES = $(subst .cpp,.o,$(SRC_FILES)) solvers/QP/wdotd.o $(BFGS_DIR)/lbfgsb.o $(BFGS_DIR)/timer.o $(BFGS_DIR)/blas.o $(BFGS_DIR)/linpack.o
 EXEC_NAME = argonot
 
+# base/globalization_strategy/l1PenaltyMeritFunction.cpp
 # base/globalization_strategy/Tube.cpp base/globalization_strategy/TubeStrategy.cpp
-# base/globalization_strategy/PenaltyMeritFunction.cpp \
 # base/subproblem/AugmentedLagrangian.cpp \
 
 DEFINES =# -D BQPD # https://stackoverflow.com/questions/10337248/what-does-the-g-d-flag-do

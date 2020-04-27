@@ -12,6 +12,7 @@ struct InteriorPointParameters {
     double k_mu;
     double theta_mu;
     double k_epsilon;
+    double kappa;
 };
 
 struct UnstableInertiaCorrection : public std::exception {

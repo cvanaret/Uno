@@ -2,6 +2,7 @@
 #include "LineSearch.hpp"
 #include "Logger.hpp"
 #include "AMPLModel.hpp"
+#include "InteriorPoint.hpp"
 
 LineSearch::LineSearch(GlobalizationStrategy& globalization_strategy, int max_iterations, double ratio) :
 GlobalizationMechanism(globalization_strategy, max_iterations), ratio(ratio), min_step_length(1e-9), restoration_phase(false) {
@@ -14,7 +15,13 @@ Iterate LineSearch::initialize(Problem& problem, std::vector<double>& x, Multipl
 Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_iterate) {
     bool line_search_termination = false;
     /* compute the step */
-    SubproblemSolution solution = this->globalization_strategy.compute_step(problem, current_iterate);
+    SubproblemSolution solution = this->globalization_strategy.subproblem.compute_optimality_step(problem, current_iterate);
+    if (solution.phase_1_required) {
+        /* infeasible subproblem during optimality phase */
+        solution = this->globalization_strategy.subproblem.compute_infeasibility_step(problem, current_iterate, solution);
+        this->restoration_phase = true;
+    }
+    
     while (!line_search_termination) {
         /* test if we computed a descent direction */
         //bool is_descent_direction = (dot(solution.x, current_iterate.objective_gradient) < 0.);
@@ -52,7 +59,7 @@ Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_iterate) 
         // if step length is too small, run restoration phase
         if (this->step_length < this->min_step_length && !this->restoration_phase) {
             if (0. < current_iterate.feasibility_measure) {
-                solution = this->globalization_strategy.restore_feasibility(problem, current_iterate, solution);
+                solution = this->globalization_strategy.subproblem.compute_infeasibility_step(problem, current_iterate, solution);
                 this->restoration_phase = true;
                 this->step_length = 1.;
             }

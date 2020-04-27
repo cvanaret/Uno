@@ -2,7 +2,7 @@
 #include "Logger.hpp"
 
 SubproblemSolution::SubproblemSolution(std::vector<double>& x, Multipliers& multipliers):
-x(x), multipliers(multipliers), status(OPTIMAL), phase(OPTIMALITY), phase_1_required(false), norm(0.), objective(0.),
+x(x), multipliers(multipliers), objective_multiplier(1.), status(OPTIMAL), phase(OPTIMALITY), phase_1_required(false), norm(0.), objective(0.),
 is_descent_direction(true), constraint_partition(ConstraintPartition(multipliers.constraints.size())) {
 }
 

@@ -27,9 +27,6 @@ class GlobalizationStrategy {
         Subproblem& subproblem;
         double tolerance; /*!< Tolerance of the termination criteria */
 
-        virtual SubproblemSolution compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius=INFINITY) = 0;
-        virtual SubproblemSolution restore_feasibility(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius=INFINITY) = 0;
-
         /*!
          *  Check the validity of a step
          *  Purely virtual method (only implemented in subclasses)

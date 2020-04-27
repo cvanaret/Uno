@@ -36,6 +36,7 @@ public:
     SubproblemSolution(std::vector<double>& x, Multipliers& multipliers);
     std::vector<double> x; /*!< Primal variables */
     Multipliers multipliers; /*!< Multipliers */
+    double objective_multiplier; /*!< Objective multiplier */
     
     Status status; /*!< Status of the solution */
     Phase phase; /*!< Current phase */

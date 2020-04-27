@@ -5,9 +5,8 @@
 #include "Utils.hpp"
 
 /* TODO option to switch between filter or non-monotonic filter */
-FilterStrategy::FilterStrategy(Subproblem& subproblem, std::shared_ptr<Filter> filter_optimality,
-        std::shared_ptr<Filter> filter_restoration, TwoPhaseConstants& constants, double tolerance):
-TwoPhaseStrategy(subproblem, constants, tolerance), filter_optimality(filter_optimality), filter_restoration(filter_restoration) {
+FilterStrategy::FilterStrategy(Subproblem& subproblem, std::shared_ptr<Filter> filter_optimality, std::shared_ptr<Filter> filter_restoration, FilterStrategyConstants& constants, double tolerance):
+GlobalizationStrategy(subproblem, tolerance), filter_optimality(filter_optimality), filter_restoration(filter_restoration), current_phase(OPTIMALITY), constants(constants) {
 }
 
 Iterate FilterStrategy::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) {
@@ -34,7 +33,7 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
         this->subproblem.subproblem_definition_changed = false;
         this->subproblem.compute_optimality_measures(problem, current_iterate);
     }
-    
+
     /* assemble trial point: TODO do not reevaluate if ||d|| = 0 */
     std::vector<double> trial_x = add_vectors(current_iterate.x, solution.x, step_length);
     Iterate trial_iterate(trial_x, solution.multipliers);
@@ -81,13 +80,13 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
             }
         }
     }
-    
+
     /* correct multipliers for infeasibility problem */
     if (accept) {
         if (solution.phase == RESTORATION) {
             this->update_restoration_multipliers(trial_iterate, solution.constraint_partition);
         }
-        
+
         double objective_multiplier = (this->current_phase == OPTIMALITY) ? 1. : 0.;
         trial_iterate.KKTerror = Argonot::compute_KKT_error(problem, trial_iterate, objective_multiplier);
         trial_iterate.complementarity_error = (this->current_phase == OPTIMALITY) ? Argonot::compute_complementarity_error(problem, trial_iterate) : 0.;
@@ -110,11 +109,11 @@ void FilterStrategy::switch_phase(Problem& problem, SubproblemSolution& solution
             this->filter_optimality->add(current_iterate.feasibility_measure, current_iterate.optimality_measure);
 
             /* re-initialize the restoration filter */
-            this->subproblem.compute_infeasibility_measures(problem, current_iterate, solution);
-            current_iterate.is_hessian_computed = false;
             this->filter_restoration->reset();
             this->filter_restoration->upper_bound = this->filter_optimality->upper_bound;
+            this->subproblem.compute_infeasibility_measures(problem, current_iterate, solution);
             this->filter_restoration->add(current_iterate.feasibility_measure, current_iterate.optimality_measure);
+            current_iterate.is_hessian_computed = false;
         }
     }
         /* check whether we can switch from phase I (restoration) to II (optimality) */
@@ -125,6 +124,19 @@ void FilterStrategy::switch_phase(Problem& problem, SubproblemSolution& solution
     }
     return;
 }
+
+void FilterStrategy::update_restoration_multipliers(Iterate& trial_iterate, ConstraintPartition& constraint_partition) {
+    for (int j: constraint_partition.infeasible) {
+        if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_UPPER) {
+            trial_iterate.multipliers.constraints[j] = -1.;
+        }
+        else {
+            trial_iterate.multipliers.constraints[j] = 1.;
+        }
+    }
+    return;
+}
+
 
 OptimalityStatus FilterStrategy::compute_status(Problem& problem, Iterate& current_iterate, double step_norm) {
     OptimalityStatus status = NOT_OPTIMAL;

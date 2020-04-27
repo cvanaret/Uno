@@ -37,6 +37,7 @@ SubproblemSolution ActiveSetMethod::compute_optimality_step(Problem& problem, It
     /* solve the QP */
     SubproblemSolution solution = this->solve_subproblem(variables_bounds, constraints_bounds, current_iterate, d0);
     solution.phase_1_required = this->phase_1_required(solution);
+    solution.phase = OPTIMALITY;
     this->number_subproblems_solved++;
     return solution;
 }
@@ -45,6 +46,7 @@ SubproblemSolution ActiveSetMethod::compute_infeasibility_step(Problem& problem,
     DEBUG << "Creating the restoration problem with " << phase_II_solution.constraint_partition.infeasible.size() << " infeasible constraints\n";
     
     /* evaluate the functions at the current iterate */
+    current_iterate.is_hessian_computed = false;
     this->evaluate_feasibility_iterate(problem, current_iterate, phase_II_solution);
     /* compute the objective */
     this->compute_linear_feasibility_objective(current_iterate, phase_II_solution.constraint_partition);
@@ -60,6 +62,7 @@ SubproblemSolution ActiveSetMethod::compute_infeasibility_step(Problem& problem,
 
     /* solve the QP */
     SubproblemSolution solution = this->solve_subproblem(variables_bounds, constraints_bounds, current_iterate, d0);
+    solution.phase = RESTORATION;
     solution.constraint_partition = phase_II_solution.constraint_partition;
     this->number_subproblems_solved++;
     return solution;

@@ -1,10 +1,9 @@
 #include "GlobalizationStrategyFactory.hpp"
-#include "PenaltyMeritFunction.hpp"
+//#include "PenaltyMeritFunction.hpp"
 #include "Filter.hpp"
 #include "FilterStrategy.hpp"
 
-std::shared_ptr<GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& type, Subproblem& subproblem,
-            std::map<std::string, std::string> default_values) {
+std::shared_ptr<GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& type, Subproblem& subproblem, std::map<std::string, std::string> default_values) {
     double tolerance = stod(default_values["tolerance"]);
 
     /*if (type == "penalty") {
@@ -15,7 +14,7 @@ std::shared_ptr<GlobalizationStrategy> GlobalizationStrategyFactory::create(cons
             double Delta = stod(default_values["Delta"]);
             double ubd = stod(default_values["ubd"]);
             double fact = stod(default_values["fact"]);
-            TwoPhaseConstants constants = {Sigma, Delta, ubd, fact};
+            FilterStrategyConstants constants = {Sigma, Delta, ubd, fact};
 
             /* create both filters */
             double Beta = stod(default_values["Beta"]);
