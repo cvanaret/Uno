@@ -118,9 +118,11 @@ double dot(std::vector<double>& x, std::vector<double>& y) {
 double dot(std::vector<double>& x, std::map<int, double>& y) {
     double dot = 0.;
     for (std::pair<int, double> term: y) {
-        int i = term.first;
+        unsigned int i = term.first;
         double yi = term.second;
-        dot += x[i] * yi;
+        if (i < x.size()) {
+            dot += x[i] * yi;
+        }
     }
     return dot;
 }

@@ -29,11 +29,10 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& mul
             INFO << "major: " << major_iterations << "\t";
 
             /* update the current point */
-
-            current_iterate = this->globalization_mechanism.compute_iterate(problem, current_iterate);
+            current_iterate = this->globalization_mechanism.compute_acceptable_iterate(problem, current_iterate);
             minor_iterations += this->globalization_mechanism.number_iterations;
-
-            INFO << "constraints: " << current_iterate.residual << "\tobjective: " << current_iterate.objective << "\t";
+            
+            INFO << "||c||: " << current_iterate.constraint_residual << "\tobjective: " << current_iterate.objective << "\t";
             INFO << "status: " << current_iterate.status << "\n";
             DEBUG << "Next iterate\n" << current_iterate;
         }
@@ -66,14 +65,13 @@ bool Argonot::termination_criterion(OptimalityStatus current_status, int iterati
 
 double Argonot::compute_KKT_error(Problem& problem, Iterate& iterate, double objective_mutiplier, std::string norm_value) {
     // TODO objective_mutiplier
-    std::vector<double> lagrangian_gradient = iterate.lagrangian_gradient(problem);
+    std::vector<double> lagrangian_gradient = iterate.lagrangian_gradient(problem, objective_mutiplier);
     return norm(lagrangian_gradient, norm_value);
 }
 
 /* complementary slackness error. Use abs/1e-8 to safeguard */
-double Argonot::compute_complementarity_error(const Problem& problem, Iterate& iterate) {
+double Argonot::compute_complementarity_error(Problem& problem, Iterate& iterate) {
     double complementarity_error = 0.;
-
     /* bound constraints */
     for (int i = 0; i < problem.number_variables; i++) {
         if (-INFINITY < problem.variables_bounds[i].lb) {
@@ -84,9 +82,9 @@ double Argonot::compute_complementarity_error(const Problem& problem, Iterate& i
         }
     }
     /* constraints */
+    iterate.compute_constraints(problem);
     for (int j = 0; j < problem.number_constraints; j++) {
         double multiplier_j = iterate.multipliers.constraints[j];
-
         if (-INFINITY < problem.constraints_bounds[j].lb && 0. < multiplier_j) {
             complementarity_error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraints_bounds[j].lb));
         }
@@ -104,10 +102,10 @@ void Result::display() {
 
     std::cout << "Status:\t\t\t";
     if (this->solution.status == KKT_POINT) {
-        std::cout << "Feasible KKT point found\n";
+        std::cout << "KKT point found\n";
     }
     else if (this->solution.status == FJ_POINT) {
-        std::cout << "Infeasible FJ point found\n";
+        std::cout << "FJ point found\n";
     }
     else if (this->solution.status == FEASIBLE_SMALL_STEP) {
         std::cout << "Feasible small step\n";
@@ -120,9 +118,9 @@ void Result::display() {
     }
 
     std::cout << "Objective value:\t" << this->solution.objective << "\n";
-    std::cout << "Constraint residual:\t" << this->solution.residual << "\n";
-    std::cout << "KKT error:\t\t" << this->solution.KKTerror << "\n";
-    std::cout << "Complementarity error:\t" << this->solution.complementarity_error << "\n";
+    std::cout << "Constraint residual:\t" << this->solution.constraint_residual << "\n";
+    std::cout << "KKT residual:\t\t" << this->solution.KKT_residual << "\n";
+    std::cout << "Complementarity residual:\t" << this->solution.complementarity_residual << "\n";
 
     std::cout << "Primal solution:\t";
     print_vector(std::cout, this->solution.x);

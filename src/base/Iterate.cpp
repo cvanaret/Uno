@@ -2,7 +2,7 @@
 #include "Utils.hpp"
 #include "Logger.hpp"
 
-Iterate::Iterate(std::vector<double>& x, Multipliers& multipliers) : x(x), multipliers(multipliers), objective(0.), is_objective_computed(false), are_constraints_computed(false), residual(0.), is_constraints_residual_computed(false), is_objective_gradient_computed(false), is_constraints_jacobian_computed(false), is_hessian_computed(false), status(NOT_OPTIMAL), KKTerror(0.), complementarity_error(0.), feasibility_measure(0.), optimality_measure(0.) {
+Iterate::Iterate(std::vector<double>& x, Multipliers& multipliers) : x(x), multipliers(multipliers), objective(0.), is_objective_computed(false), are_constraints_computed(false), constraint_residual(0.), is_constraint_residual_computed(false), is_objective_gradient_computed(false), is_constraints_jacobian_computed(false), is_hessian_computed(false), status(NOT_OPTIMAL), KKT_residual(0.), complementarity_residual(0.), feasibility_measure(0.), optimality_measure(0.) {
 }
 
 void Iterate::compute_objective(Problem& problem) {
@@ -22,10 +22,10 @@ void Iterate::compute_constraints(Problem& problem) {
 }
 
 void Iterate::compute_constraints_residual(Problem& problem, std::string residual_norm) {
-    if (!this->is_constraints_residual_computed) {
+    if (!this->is_constraint_residual_computed) {
         this->compute_constraints(problem);
-        this->residual = problem.infeasible_residual_norm(this->constraints, residual_norm);
-        this->is_constraints_residual_computed = true;
+        this->constraint_residual = problem.infeasible_residual_norm(this->constraints, residual_norm);
+        this->is_constraint_residual_computed = true;
     }
     return;
 }
@@ -60,18 +60,18 @@ void Iterate::compute_hessian(Problem& problem, double objective_multiplier, std
     return;
 }
 
-std::vector<double> Iterate::lagrangian_gradient(Problem& problem) {
+std::vector<double> Iterate::lagrangian_gradient(Problem& problem, double objective_mutiplier) {
     std::vector<double> lagrangian_gradient(this->x.size());
 
     /* objective gradient */
-    if (problem.objective_sign != 0.) {
+    if (objective_mutiplier != 0.) {
         this->compute_objective_gradient(problem);
         
         /* scale the objective gradient */
         for (std::pair<int, double> term : this->objective_gradient) {
             int i = term.first;
             double derivative = term.second;
-            lagrangian_gradient[i] += problem.objective_sign*derivative;
+            lagrangian_gradient[i] += objective_mutiplier*derivative;
         }
     }
     /* bound constraints */

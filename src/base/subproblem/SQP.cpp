@@ -8,17 +8,11 @@
 SQP::SQP(QPSolver& solver, HessianEvaluation& hessian_evaluation) : ActiveSetMethod(solver), hessian_evaluation(hessian_evaluation) {
 }
 
-Iterate SQP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, bool use_trust_region) {
-    // call the superclass initialize() method
-    Iterate first_iterate = ActiveSetMethod::initialize(problem, x, multipliers, number_variables, use_trust_region);
-
-    /* compute least-square multipliers */
-    //if (0 < problem.number_constraints) {
-    //    first_iterate.compute_constraints_jacobian(problem);
-    //    first_iterate.multipliers.constraints = Subproblem::compute_least_square_multipliers(problem, first_iterate, multipliers.constraints, 1e4);
-    //}
-    return first_iterate;
-}
+/* compute least-square multipliers */
+//if (0 < problem.number_constraints) {
+//    first_iterate.compute_constraints_jacobian(problem);
+//    first_iterate.multipliers.constraints = Subproblem::compute_least_square_multipliers(problem, first_iterate, multipliers.constraints, 1e4);
+//}
 
 double SQP::compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
     if (step_length == 1.) {
@@ -43,7 +37,7 @@ void SQP::evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate
     /* compute first- and second-order information */
     current_iterate.compute_objective_gradient(problem);
     current_iterate.compute_constraints_jacobian(problem);
-    this->hessian_evaluation.compute(problem, current_iterate);
+    this->hessian_evaluation.compute(problem, current_iterate, problem.objective_sign, current_iterate.multipliers.constraints);
     return;
 }
 
@@ -52,8 +46,9 @@ void SQP::evaluate_feasibility_iterate(Problem& problem, Iterate& current_iterat
     std::vector<double> constraint_multipliers = this->generate_feasibility_multipliers(problem, current_iterate.multipliers.constraints, phase_II_solution.constraint_partition);
     /* compute first- and second-order information */
     current_iterate.compute_constraints_jacobian(problem);
+    current_iterate.is_hessian_computed = false;
     double objective_multiplier = 0.;
-    current_iterate.compute_hessian(problem, objective_multiplier, constraint_multipliers);
+    this->hessian_evaluation.compute(problem, current_iterate, objective_multiplier, constraint_multipliers);
     return;
 }
 

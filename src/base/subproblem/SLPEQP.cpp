@@ -11,7 +11,7 @@ SLPEQP::SLPEQP(QPSolver& solver, HessianEvaluation& hessian_evaluation) :
 Subproblem("l1"), solver(solver), lp_subproblem(SLP(solver)), eqp_subproblem(SQP(solver, hessian_evaluation)) {
 }
 
-Iterate SLPEQP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, bool use_trust_region) {
+Iterate SLPEQP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) {
     // register the original bounds
     this->subproblem_variables_bounds = problem.variables_bounds;
     
@@ -20,7 +20,7 @@ Iterate SLPEQP::initialize(Problem& problem, std::vector<double>& x, Multipliers
     this->compute_optimality_measures(problem, first_iterate);
 
     /* allocate the QP solver */
-    this->solver.allocate(number_variables, problem.number_constraints);
+    this->solver.allocate(problem.number_variables, problem.number_constraints);
     return first_iterate;
 }
 

@@ -26,7 +26,7 @@ public:
     Subproblem(std::string residual_norm);
     virtual ~Subproblem();
 
-    virtual Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, bool use_trust_region) = 0;
+    virtual Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) = 0;
     
     // TODO return a list of steps
     virtual SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius=INFINITY) = 0;

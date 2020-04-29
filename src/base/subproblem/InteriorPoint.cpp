@@ -6,7 +6,7 @@ InteriorPoint::InteriorPoint(): Subproblem("l2"), mu_optimality(0.1), mu_feasibi
 inertia_constraints(0.), default_multiplier(1.), iteration(0), parameters({0.99, 1e10, 100., 0.2, 1.5, 10., 1e10}) {
 }
 
-Iterate InteriorPoint::initialize(Problem& problem, std::vector<double>& x, Multipliers& default_multipliers, int /*number_variables*/, bool use_trust_region) {
+Iterate InteriorPoint::initialize(Problem& problem, std::vector<double>& x, Multipliers& default_multipliers, bool use_trust_region) {
     // register the original bounds
     this->subproblem_variables_bounds = problem.variables_bounds;
 
@@ -110,10 +110,10 @@ SubproblemSolution InteriorPoint::compute_optimality_step(Problem& problem, Iter
     double KKTerror = Argonot::compute_KKT_error(problem, current_iterate, 1., this->residual_norm) / sd;
     double central_complementarity_error = this->compute_central_complementarity_error(current_iterate, this->mu_optimality, this->subproblem_variables_bounds);
     current_iterate.compute_constraints_residual(problem, this->residual_norm);
-    DEBUG << "IPM error (KKT: " << KKTerror << ", cmpl: " << central_complementarity_error << ", feas: " << current_iterate.residual << ")\n";
+    DEBUG << "IPM error (KKT: " << KKTerror << ", cmpl: " << central_complementarity_error << ", feas: " << current_iterate.constraint_residual << ")\n";
 
     /* update of the barrier problem */
-    double error = std::max(KKTerror, std::max(central_complementarity_error, current_iterate.residual));
+    double error = std::max(KKTerror, std::max(central_complementarity_error, current_iterate.constraint_residual));
     if (error <= this->parameters.k_epsilon * this->mu_optimality) {
         // TODO pass tolerance
         double tolerance = 1e-8;

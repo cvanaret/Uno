@@ -8,7 +8,7 @@
 ActiveSetMethod::ActiveSetMethod(QPSolver& solver) : Subproblem("l1"), solver(solver) {
 }
 
-Iterate ActiveSetMethod::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, bool /*use_trust_region*/) {
+Iterate ActiveSetMethod::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool /*use_trust_region*/) {
     // register the original bounds
     this->subproblem_variables_bounds = problem.variables_bounds;
 
@@ -17,7 +17,7 @@ Iterate ActiveSetMethod::initialize(Problem& problem, std::vector<double>& x, Mu
     this->compute_optimality_measures(problem, first_iterate);
 
     /* allocate the QP solver */
-    this->solver.allocate(number_variables, problem.number_constraints);
+    this->solver.allocate(problem.number_variables, problem.number_constraints);
     return first_iterate;
 }
 
@@ -33,12 +33,29 @@ SubproblemSolution ActiveSetMethod::compute_optimality_step(Problem& problem, It
 
     /* generate the initial point */
     std::vector<double> d0(current_iterate.x.size()); // = {0.}
+    
+    DEBUG << "hessian: " << current_iterate.hessian;
+    DEBUG << "gradient obj: "; print_vector(DEBUG, current_iterate.objective_gradient);
+    for (int j = 0; j < problem.number_constraints; j++) {
+        DEBUG << "gradient c" << j << ": "; print_vector(DEBUG, current_iterate.constraints_jacobian[j]);
+    }
+    for (unsigned int i = 0; i < current_iterate.x.size(); i++) {
+        DEBUG << "x" << i << " in [" << this->subproblem_variables_bounds[i].lb << ", " << this->subproblem_variables_bounds[i].ub << "]\n";
+    }
+    for (unsigned int i = 0; i < variables_bounds.size(); i++) {
+        DEBUG << "delta x" << i << " in [" << variables_bounds[i].lb << ", " << variables_bounds[i].ub << "]\n";
+    }
+    for (int j = 0; j < problem.number_constraints; j++) {
+        DEBUG << "c" << j << " in [" << constraints_bounds[j].lb << ", " << constraints_bounds[j].ub << "]\n";
+    }
 
     /* solve the QP */
     SubproblemSolution solution = this->solve_subproblem(variables_bounds, constraints_bounds, current_iterate, d0);
+    solution.objective_multiplier = problem.objective_sign;
     solution.phase_1_required = this->phase_1_required(solution);
     solution.phase = OPTIMALITY;
     this->number_subproblems_solved++;
+    DEBUG << solution;
     return solution;
 }
 
@@ -62,9 +79,11 @@ SubproblemSolution ActiveSetMethod::compute_infeasibility_step(Problem& problem,
 
     /* solve the QP */
     SubproblemSolution solution = this->solve_subproblem(variables_bounds, constraints_bounds, current_iterate, d0);
+    solution.objective_multiplier = 0.;
     solution.phase = RESTORATION;
     solution.constraint_partition = phase_II_solution.constraint_partition;
     this->number_subproblems_solved++;
+    DEBUG << solution;
     return solution;
 }
 

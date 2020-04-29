@@ -13,8 +13,8 @@ HessianEvaluation::~HessianEvaluation() {
 ExactHessianEvaluation::ExactHessianEvaluation(int number_variables): HessianEvaluation(number_variables) {
 }
 
-void ExactHessianEvaluation::compute(Problem& problem, Iterate& iterate) {
-    iterate.compute_hessian(problem, problem.objective_sign, iterate.multipliers.constraints);
+void ExactHessianEvaluation::compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) {
+    iterate.compute_hessian(problem, objective_multiplier, constraint_multipliers);
     return;
 }
 
@@ -23,9 +23,7 @@ void ExactHessianEvaluation::compute(Problem& problem, Iterate& iterate) {
 BFGSHessianEvaluation::BFGSHessianEvaluation(int number_variables): HessianEvaluation(number_variables), previous_x(number_variables) {
 }
 
-void BFGSHessianEvaluation::compute(Problem& problem, Iterate& iterate) {
-    
-    
-    iterate.compute_hessian(problem, problem.objective_sign, iterate.multipliers.constraints);
+void BFGSHessianEvaluation::compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) {
+    iterate.compute_hessian(problem, objective_multiplier, constraint_multipliers);
     return;
 }

@@ -11,7 +11,7 @@ Iterate TrustLineSearch::initialize(Problem& problem, std::vector<double>& x, Mu
     return this->globalization_strategy.initialize(problem, x, multipliers, true);
 }
 
-Iterate TrustLineSearch::compute_iterate(Problem& problem, Iterate& current_iterate) {
+Iterate TrustLineSearch::compute_acceptable_iterate(Problem& problem, Iterate& current_iterate) {
     bool is_accepted = false;
     this->number_iterations = 0;
     bool linesearch_failed = false;

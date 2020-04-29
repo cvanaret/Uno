@@ -40,8 +40,8 @@ class Iterate {
         std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
         bool are_constraints_computed;
         
-        double residual; /*!< Constraint residual */
-        bool is_constraints_residual_computed;
+        double constraint_residual; /*!< Constraint residual */
+        bool is_constraint_residual_computed;
         
         std::map<int, double> objective_gradient; /*!< Sparse Jacobian of the objective */
         bool is_objective_gradient_computed; /*!< Flag that indicates if the objective gradient has already been computed */
@@ -55,8 +55,8 @@ class Iterate {
         // status and measures
         OptimalityStatus status;
         
-        double KKTerror;
-        double complementarity_error;
+        double KKT_residual;
+        double complementarity_residual;
 
         double feasibility_measure;
         double optimality_measure;
@@ -67,13 +67,13 @@ class Iterate {
         void set_objective_gradient(std::map<int, double>& objective_gradient);
         void compute_objective_gradient(Problem& problem);
         void compute_constraints_jacobian(Problem& problem);
-        std::vector<double> lagrangian_gradient(Problem& problem);
+        std::vector<double> lagrangian_gradient(Problem& problem, double objective_multiplier);
 
         /*!
          *  Compute the Hessian in a lazy way: the Hessian is computed only when required and stored
          *  in CSC (Compressed Sparse Column)
          */
-        void compute_hessian(Problem& problem, double obj_multiplier, std::vector<double>& constraint_multipliers);
+        void compute_hessian(Problem& problem, double objective_multiplier, std::vector<double>& constraint_multipliers);
 
         friend std::ostream& operator<<(std::ostream &stream, Iterate& iterate);
 };

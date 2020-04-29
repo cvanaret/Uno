@@ -21,7 +21,7 @@ public:
      * \param problem: optimization problem
      * \param current_iterate: current point and its evaluations
      */
-    Iterate compute_iterate(Problem& problem, Iterate& current_iterate) override;
+    Iterate compute_acceptable_iterate(Problem& problem, Iterate& current_iterate) override;
     Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
 
     double step_length;

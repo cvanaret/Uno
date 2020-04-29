@@ -19,7 +19,7 @@ public:
      */
     TrustRegion(GlobalizationStrategy& globalization_strategy, double initial_radius, int max_iterations = 100);
 
-    Iterate compute_iterate(Problem& problem, Iterate& current_iterate) override;
+    Iterate compute_acceptable_iterate(Problem& problem, Iterate& current_iterate) override;
     Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
 
     double radius; /*!< Current trust region radius */

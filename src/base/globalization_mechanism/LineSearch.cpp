@@ -12,7 +12,7 @@ Iterate LineSearch::initialize(Problem& problem, std::vector<double>& x, Multipl
     return this->globalization_strategy.initialize(problem, x, multipliers, false);
 }
 
-Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_iterate) {
+Iterate LineSearch::compute_acceptable_iterate(Problem& problem, Iterate& current_iterate) {
     bool line_search_termination = false;
     /* compute the step */
     SubproblemSolution solution = this->globalization_strategy.subproblem.compute_optimality_step(problem, current_iterate);
@@ -57,7 +57,7 @@ Iterate LineSearch::compute_iterate(Problem& problem, Iterate& current_iterate) 
             }
         }
         // if step length is too small, run restoration phase
-        if (this->step_length < this->min_step_length && !this->restoration_phase) {
+        if (!is_accepted && this->step_length < this->min_step_length && !this->restoration_phase) {
             if (0. < current_iterate.feasibility_measure) {
                 solution = this->globalization_strategy.subproblem.compute_infeasibility_step(problem, current_iterate, solution);
                 this->restoration_phase = true;

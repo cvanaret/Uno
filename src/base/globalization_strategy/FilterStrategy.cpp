@@ -11,10 +11,10 @@ GlobalizationStrategy(subproblem, tolerance), filter_optimality(filter_optimalit
 
 Iterate FilterStrategy::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) {
     /* initialize the subproblem */
-    Iterate first_iterate = this->subproblem.initialize(problem, x, multipliers, problem.number_variables, use_trust_region);
+    Iterate first_iterate = this->subproblem.initialize(problem, x, multipliers, use_trust_region);
 
-    first_iterate.KKTerror = Argonot::compute_KKT_error(problem, first_iterate, 1.);
-    first_iterate.complementarity_error = Argonot::compute_complementarity_error(problem, first_iterate);
+    first_iterate.KKT_residual = Argonot::compute_KKT_error(problem, first_iterate, 1.);
+    first_iterate.complementarity_residual = Argonot::compute_complementarity_error(problem, first_iterate);
 
     /* set the filter upper bound */
     double upper_bound = std::max(this->constants.ubd, this->constants.fact * first_iterate.feasibility_measure);
@@ -86,11 +86,10 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
         if (solution.phase == RESTORATION) {
             this->update_restoration_multipliers(trial_iterate, solution.constraint_partition);
         }
-
-        double objective_multiplier = (this->current_phase == OPTIMALITY) ? 1. : 0.;
-        trial_iterate.KKTerror = Argonot::compute_KKT_error(problem, trial_iterate, objective_multiplier);
-        trial_iterate.complementarity_error = (this->current_phase == OPTIMALITY) ? Argonot::compute_complementarity_error(problem, trial_iterate) : 0.;
+        trial_iterate.compute_objective(problem);
         trial_iterate.compute_constraints_residual(problem, this->subproblem.residual_norm);
+        trial_iterate.KKT_residual = Argonot::compute_KKT_error(problem, trial_iterate, solution.objective_multiplier);
+        trial_iterate.complementarity_residual = (this->current_phase == OPTIMALITY) ? Argonot::compute_complementarity_error(problem, trial_iterate) : 0.;
         trial_iterate.status = this->compute_status(problem, trial_iterate, step_norm);
         INFO << "phase: " << this->current_phase << "\t";
         current_iterate = trial_iterate;
@@ -137,13 +136,12 @@ void FilterStrategy::update_restoration_multipliers(Iterate& trial_iterate, Cons
     return;
 }
 
-
 OptimalityStatus FilterStrategy::compute_status(Problem& problem, Iterate& current_iterate, double step_norm) {
     OptimalityStatus status = NOT_OPTIMAL;
 
     /* TODO: check if test on residual can indeed be replaced by infeasibility_measure */
-    if (current_iterate.residual <= this->tolerance * problem.number_constraints) {
-        if (current_iterate.KKTerror <= this->tolerance * std::sqrt(problem.number_variables) && current_iterate.complementarity_error <= this->tolerance * (problem.number_variables + problem.number_constraints)) {
+    if (current_iterate.constraint_residual <= this->tolerance * problem.number_constraints) {
+        if (current_iterate.KKT_residual <= this->tolerance * std::sqrt(problem.number_variables) && current_iterate.complementarity_residual <= this->tolerance * (problem.number_variables + problem.number_constraints)) {
             if (this->current_phase == OPTIMALITY) {
                 status = KKT_POINT;
             }

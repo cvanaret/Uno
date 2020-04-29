@@ -15,7 +15,7 @@ public:
     virtual ~HessianEvaluation();
 
     int size;
-    virtual void compute(Problem& problem, Iterate& iterate) = 0;
+    virtual void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) = 0;
 };
 
 class ExactHessianEvaluation : public HessianEvaluation {
@@ -23,7 +23,7 @@ class ExactHessianEvaluation : public HessianEvaluation {
 public:
     ExactHessianEvaluation(int size);
 
-    void compute(Problem& problem, Iterate& iterate);
+    void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers);
 };
 
 class BFGSHessianEvaluation : public HessianEvaluation {
@@ -31,7 +31,7 @@ class BFGSHessianEvaluation : public HessianEvaluation {
 public:
     BFGSHessianEvaluation(int size);
 
-    void compute(Problem& problem, Iterate& iterate);
+    void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers);
     
 private:
     CSCMatrix previous_hessian;

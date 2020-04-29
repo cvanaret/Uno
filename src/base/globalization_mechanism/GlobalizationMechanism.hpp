@@ -20,7 +20,7 @@ class GlobalizationMechanism {
         GlobalizationMechanism(GlobalizationStrategy& globalization_strategy, int max_iterations);
         virtual ~GlobalizationMechanism();
 
-        virtual Iterate compute_iterate(Problem& problem, Iterate& current_iterate) = 0;
+        virtual Iterate compute_acceptable_iterate(Problem& problem, Iterate& current_iterate) = 0;
         virtual Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
 
         /* references to allow polymorphism */

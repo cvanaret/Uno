@@ -12,7 +12,7 @@ Iterate TrustRegion::initialize(Problem& problem, std::vector<double>& x, Multip
     return this->globalization_strategy.initialize(problem, x, multipliers, true);
 }
 
-Iterate TrustRegion::compute_iterate(Problem& problem, Iterate& current_iterate) {
+Iterate TrustRegion::compute_acceptable_iterate(Problem& problem, Iterate& current_iterate) {
     bool is_accepted = false;
     this->number_iterations = 0;
 

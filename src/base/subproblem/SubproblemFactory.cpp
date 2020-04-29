@@ -15,7 +15,7 @@ std::shared_ptr<Subproblem> SubproblemFactory::create(const std::string& type, Q
         return std::make_shared<SLP>(solver);
     }
     else if (type == "Sl1QP") {
-        return std::make_shared<Sl1QP>(solver);
+        return std::make_shared<Sl1QP>(solver, hessian_evaluation);
     }
     else if (type == "SLPEQP") {
         return std::make_shared<SLPEQP>(solver, hessian_evaluation);
