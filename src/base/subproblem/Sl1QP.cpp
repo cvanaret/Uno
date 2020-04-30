@@ -202,7 +202,6 @@ SubproblemSolution Sl1QP::solve_subproblem(Problem& problem, Iterate& current_it
     // Hessian
     current_iterate.is_hessian_computed = false;
     this->hessian_evaluation.compute(problem, current_iterate, penalty_parameter, current_iterate.multipliers.constraints);
-    current_iterate.hessian = current_iterate.hessian.add_identity_multiple(1.);
 
     /* bounds of the variables */
     std::vector<Range> variables_bounds = this->generate_variables_bounds(problem, current_iterate, trust_region_radius);
