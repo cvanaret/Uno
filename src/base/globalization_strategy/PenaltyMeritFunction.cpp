@@ -15,8 +15,8 @@ Iterate PenaltyMeritFunction::initialize(Problem& problem, std::vector<double>& 
     /* initialize the subproblem */
     Iterate first_iterate = this->subproblem.initialize(problem, x, multipliers, use_trust_region);
 
-    first_iterate.KKTerror = Argonot::compute_KKT_error(problem, first_iterate, 1.);
-    first_iterate.complementarity_error = Argonot::compute_complementarity_error(problem, first_iterate);
+    first_iterate.KKT_residual = Argonot::compute_KKT_error(problem, first_iterate, 1.);
+    first_iterate.complementarity_residual = Argonot::compute_complementarity_error(problem, first_iterate);
 
     return first_iterate;
 }
@@ -43,7 +43,7 @@ bool PenaltyMeritFunction::check_step(Problem& problem, Iterate& current_iterate
 
         // TODO: add the penalized term to the optimality measure
         this->subproblem.compute_optimality_measures(problem, trial_iterate);
-        /* compute current exact l1 penalty: rho f + sum max(0, c) */
+        /* compute current exact l1 penalty: rho f + ||c|| */
         double current_exact_l1_penalty = solution.objective_multiplier * current_iterate.optimality_measure + current_iterate.feasibility_measure;
         /* compute trial exact l1 penalty */
         double trial_exact_l1_penalty = solution.objective_multiplier * trial_iterate.optimality_measure + trial_iterate.feasibility_measure;
@@ -56,9 +56,9 @@ bool PenaltyMeritFunction::check_step(Problem& problem, Iterate& current_iterate
     
     if (accept) {
         trial_iterate.compute_objective(problem);
-        trial_iterate.compute_constraints_residual(problem, this->subproblem.residual_norm);
-        trial_iterate.KKTerror = Argonot::compute_KKT_error(problem, trial_iterate, solution.objective_multiplier);
-        trial_iterate.complementarity_error = Argonot::compute_complementarity_error(problem, trial_iterate);
+        trial_iterate.compute_constraint_residual(problem, this->subproblem.residual_norm);
+        trial_iterate.KKT_residual = Argonot::compute_KKT_error(problem, trial_iterate, solution.objective_multiplier);
+        trial_iterate.complementarity_residual = Argonot::compute_complementarity_error(problem, trial_iterate);
         double step_norm = step_length * solution.norm;
         trial_iterate.status = this->compute_status(problem, trial_iterate, step_norm, solution.objective_multiplier);
         current_iterate = trial_iterate;
@@ -69,9 +69,8 @@ bool PenaltyMeritFunction::check_step(Problem& problem, Iterate& current_iterate
 OptimalityStatus PenaltyMeritFunction::compute_status(Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier) {
     OptimalityStatus status = NOT_OPTIMAL;
 
-    /* TODO: check if test on residual can indeed be replaced by infeasibility_measure */
-    if (current_iterate.residual <= this->tolerance * problem.number_constraints) {
-        if (current_iterate.KKTerror <= this->tolerance * std::sqrt(problem.number_variables) && current_iterate.complementarity_error <= this->tolerance * (problem.number_variables + problem.number_constraints)) {
+    if (current_iterate.constraint_residual <= this->tolerance * current_iterate.x.size()) {
+        if (current_iterate.KKT_residual <= this->tolerance * std::sqrt(current_iterate.x.size()) && current_iterate.complementarity_residual <= this->tolerance * (current_iterate.x.size() + problem.number_constraints)) {
             if (0. < objective_multiplier) {
                 status = KKT_POINT;
             }
@@ -86,13 +85,16 @@ OptimalityStatus PenaltyMeritFunction::compute_status(Problem& problem, Iterate&
     else if (step_norm <= this->tolerance / 100.) {
         status = INFEASIBLE_SMALL_STEP;
     }
-    return status;
-}
-
-std::vector<double> PenaltyMeritFunction::compute_bound_multipliers(Problem& problem, SubproblemSolution& solution) {
-    std::vector<double> bound_multipliers(problem.number_variables);
-    for (int i = 0; i < problem.number_variables; i++) {
-        bound_multipliers[i] = solution.multipliers.lower_bounds[i] + solution.multipliers.upper_bounds[i];
+    
+    // if convergence, correct the multipliers
+    if (status != NOT_OPTIMAL && 0. < objective_multiplier) {
+        for (int j = 0; j < problem.number_constraints; j++) {
+            current_iterate.multipliers.constraints[j] /= objective_multiplier;
+        }
+        for (unsigned int i = 0; i < current_iterate.x.size(); i++) {
+            current_iterate.multipliers.lower_bounds[i] /= objective_multiplier;
+            current_iterate.multipliers.upper_bounds[i] /= objective_multiplier;
+        }
     }
-    return bound_multipliers;
+    return status;
 }

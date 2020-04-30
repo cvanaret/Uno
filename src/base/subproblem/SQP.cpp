@@ -13,6 +13,15 @@ SQP::SQP(QPSolver& solver, HessianEvaluation& hessian_evaluation) : ActiveSetMet
 //    first_iterate.compute_constraints_jacobian(problem);
 //    first_iterate.multipliers.constraints = Subproblem::compute_least_square_multipliers(problem, first_iterate, multipliers.constraints, 1e4);
 //}
+Iterate SQP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) {
+    /* call superclass initialize() */
+    Iterate first_iterate = ActiveSetMethod::initialize(problem, x, multipliers, use_trust_region);
+    
+    /* if no trust region is used, the matrix should be convexified */
+    this->hessian_evaluation.convexify = !use_trust_region;
+    
+    return first_iterate;
+}
 
 double SQP::compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
     if (step_length == 1.) {

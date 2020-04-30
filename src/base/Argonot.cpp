@@ -64,8 +64,7 @@ bool Argonot::termination_criterion(OptimalityStatus current_status, int iterati
 }
 
 double Argonot::compute_KKT_error(Problem& problem, Iterate& iterate, double objective_mutiplier, std::string norm_value) {
-    // TODO objective_mutiplier
-    std::vector<double> lagrangian_gradient = iterate.lagrangian_gradient(problem, objective_mutiplier);
+    std::vector<double> lagrangian_gradient = iterate.lagrangian_gradient(problem, objective_mutiplier, iterate.multipliers);
     return norm(lagrangian_gradient, norm_value);
 }
 

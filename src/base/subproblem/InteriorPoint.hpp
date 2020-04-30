@@ -4,6 +4,7 @@
 #include <exception>
 #include "Subproblem.hpp"
 #include "MA57Solver.hpp"
+#include "HessianEvaluation.hpp"
 
 struct InteriorPointParameters {
     double tau_min;
@@ -32,7 +33,7 @@ public:
     /*!
      *  Constructor
      */
-    InteriorPoint();
+    InteriorPoint(HessianEvaluation& hessian_evaluation);
 
     Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& default_multipliers, bool use_trust_region) override;
 
@@ -48,6 +49,7 @@ public:
     double constraint_violation(Problem& problem, Iterate& iterate);
     double compute_central_complementarity_error(Iterate& iterate, double mu, std::vector<Range>& variables_bounds);
 
+    HessianEvaluation& hessian_evaluation;
     MA57Solver solver; /*!< Solver that solves the subproblem */
     /* barrier parameter */
     double mu_optimality;
@@ -56,7 +58,7 @@ public:
     /* data structures */
     std::vector<int> lower_bounded_variables; /* indices of the lower-bounded variables */
     std::vector<int> upper_bounded_variables; /* indices of the upper-bounded variables */
-    MA57Factorization factorization;
+    //MA57Factorization factorization;
 
 private:
     void evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate);
@@ -67,7 +69,7 @@ private:
     double compute_primal_length(Iterate& iterate, std::vector<double>& ipm_solution, std::vector<Range>& variables_bounds, double tau);
     double compute_dual_length(Iterate& current_iterate, double tau, std::vector<double>& lower_delta_z, std::vector<double>& upper_delta_z);
     COOMatrix generate_optimality_kkt_matrix(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds);
-    void modify_inertia(COOMatrix& kkt_matrix, int number_variables, int number_constraints);
+    MA57Factorization modify_inertia(COOMatrix& kkt_matrix, int size_first_block, int size_second_block);
     std::vector<double> generate_kkt_rhs(Problem& problem, Iterate& current_iterate);
     std::vector<double> compute_lower_bound_multiplier_displacements(Iterate& current_iterate, std::vector<double>& solution, std::vector<Range>& variables_bounds, double mu);
     std::vector<double> compute_upper_bound_multiplier_displacements(Iterate& current_iterate, std::vector<double>& solution, std::vector<Range>& variables_bounds, double mu);

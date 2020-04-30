@@ -2,7 +2,7 @@
 #include "InteriorPoint.hpp"
 #include "Argonot.hpp"
 
-InteriorPoint::InteriorPoint(): Subproblem("l2"), mu_optimality(0.1), mu_feasibility(mu_optimality), inertia_hessian(0.), inertia_hessian_last(0.),
+InteriorPoint::InteriorPoint(HessianEvaluation& hessian_evaluation): Subproblem("l2"), hessian_evaluation(hessian_evaluation), mu_optimality(0.1), mu_feasibility(mu_optimality), inertia_hessian(0.), inertia_hessian_last(0.),
 inertia_constraints(0.), default_multiplier(1.), iteration(0), parameters({0.99, 1e10, 100., 0.2, 1.5, 10., 1e10}) {
 }
 
@@ -109,7 +109,7 @@ SubproblemSolution InteriorPoint::compute_optimality_step(Problem& problem, Iter
     double sd = this->compute_KKT_error_scaling(current_iterate);
     double KKTerror = Argonot::compute_KKT_error(problem, current_iterate, 1., this->residual_norm) / sd;
     double central_complementarity_error = this->compute_central_complementarity_error(current_iterate, this->mu_optimality, this->subproblem_variables_bounds);
-    current_iterate.compute_constraints_residual(problem, this->residual_norm);
+    current_iterate.compute_constraint_residual(problem, this->residual_norm);
     DEBUG << "IPM error (KKT: " << KKTerror << ", cmpl: " << central_complementarity_error << ", feas: " << current_iterate.constraint_residual << ")\n";
 
     /* update of the barrier problem */
@@ -135,14 +135,14 @@ SubproblemSolution InteriorPoint::compute_optimality_step(Problem& problem, Iter
     COOMatrix kkt_matrix = this->generate_optimality_kkt_matrix(problem, current_iterate, this->subproblem_variables_bounds);
 
     /* inertia correction */
-    this->modify_inertia(kkt_matrix, current_iterate.x.size(), problem.number_constraints);
+    MA57Factorization factorization = this->modify_inertia(kkt_matrix, current_iterate.x.size(), problem.number_constraints);
     DEBUG << "KKT matrix:\n" << kkt_matrix << "\n";
 
     /* right-hand side */
     std::vector<double> rhs = this->generate_kkt_rhs(problem, current_iterate);
 
     /* compute the solution (Δx, -Δλ) */
-    std::vector<double> solution_IPM = this->solver.solve(this->factorization, rhs);
+    std::vector<double> solution_IPM = this->solver.solve(factorization, rhs);
     this->number_subproblems_solved++;
 
     /* generate IPM direction */
@@ -176,7 +176,7 @@ void InteriorPoint::evaluate_optimality_iterate(Problem& problem, Iterate& curre
     }
     
     /* compute second-order information */
-    current_iterate.compute_hessian(problem, problem.objective_sign, current_iterate.multipliers.constraints);
+    this->hessian_evaluation.compute(problem, current_iterate, problem.objective_sign, current_iterate.multipliers.constraints);
     return;
 }
 
@@ -264,7 +264,6 @@ COOMatrix InteriorPoint::generate_optimality_kkt_matrix(Problem& problem, Iterat
     int number_variables = problem.number_variables + problem.inequality_constraints.size();
 
     /* compute the Lagrangian Hessian */
-    current_iterate.compute_hessian(problem, problem.objective_sign, current_iterate.multipliers.constraints);
     COOMatrix kkt_matrix = current_iterate.hessian.to_COO();
     kkt_matrix.size = number_variables + problem.number_constraints;
 
@@ -287,20 +286,20 @@ COOMatrix InteriorPoint::generate_optimality_kkt_matrix(Problem& problem, Iterat
     return kkt_matrix;
 }
 
-void InteriorPoint::modify_inertia(COOMatrix& kkt_matrix, int number_variables, int number_constraints) {
+MA57Factorization InteriorPoint::modify_inertia(COOMatrix& kkt_matrix, int size_first_block, int size_second_block) {
     this->inertia_hessian = 0.;
     this->inertia_constraints = 0.;
     DEBUG << "Testing factorization with inertia term " << this->inertia_hessian << "\n";
-    this->factorization = this->solver.factorize(kkt_matrix);
+    MA57Factorization factorization = this->solver.factorize(kkt_matrix);
 
     bool good_inertia = false;
-    if (!this->factorization.matrix_is_singular() && this->factorization.number_negative_eigenvalues() == number_constraints) {
+    if (!factorization.matrix_is_singular() && factorization.number_negative_eigenvalues() == size_second_block) {
         DEBUG << "Factorization was a success\n";
         good_inertia = true;
     }
     else {
         // inertia term for constraints
-        if (this->factorization.matrix_is_singular()) {
+        if (factorization.matrix_is_singular()) {
             DEBUG << "Matrix is singular\n";
             this->inertia_constraints = 1e-8 * std::pow(this->mu_optimality, 0.25);
         }
@@ -318,19 +317,19 @@ void InteriorPoint::modify_inertia(COOMatrix& kkt_matrix, int number_variables, 
 
     int current_matrix_size = kkt_matrix.matrix.size();
     if (!good_inertia) {
-        for (int i = 0; i < number_variables; i++) {
+        for (int i = 0; i < size_first_block; i++) {
             kkt_matrix.add_term(this->inertia_hessian, i, i);
         }
-        for (int j = number_variables; j < number_variables + number_constraints; j++) {
+        for (int j = size_first_block; j < size_first_block + size_second_block; j++) {
             kkt_matrix.add_term(-this->inertia_constraints, j, j);
         }
     }
 
     while (!good_inertia) {
         DEBUG << "Testing factorization with inertia term " << this->inertia_hessian << "\n";
-        this->factorization = this->solver.factorize(kkt_matrix);
+        factorization = this->solver.factorize(kkt_matrix);
 
-        if (!this->factorization.matrix_is_singular() && this->factorization.number_negative_eigenvalues() == number_constraints) {
+        if (!factorization.matrix_is_singular() && factorization.number_negative_eigenvalues() == size_second_block) {
             good_inertia = true;
             DEBUG << "Factorization was a success\n";
             this->inertia_hessian_last = this->inertia_hessian;
@@ -346,16 +345,16 @@ void InteriorPoint::modify_inertia(COOMatrix& kkt_matrix, int number_variables, 
                 throw UnstableInertiaCorrection();
             }
             else {
-                for (int i = 0; i < number_variables; i++) {
+                for (int i = 0; i < size_first_block; i++) {
                     kkt_matrix.matrix[current_matrix_size + i] = this->inertia_hessian;
                 }
-                for (int j = number_variables; j < number_variables + number_constraints; j++) {
+                for (int j = size_first_block; j < size_first_block + size_second_block; j++) {
                     kkt_matrix.matrix[current_matrix_size + j] = -this->inertia_constraints;
                 }
             }
         }
     }
-    return;
+    return factorization;
 }
 
 std::vector<double> InteriorPoint::generate_kkt_rhs(Problem& problem, Iterate& current_iterate) {
@@ -495,7 +494,7 @@ SubproblemSolution InteriorPoint::compute_infeasibility_step(Problem& problem, I
     }
     
     /* compute the Lagrangian Hessian */
-    current_iterate.compute_hessian(problem, 0., restoration_multipliers);
+    this->hessian_evaluation.compute(problem, current_iterate, 0., restoration_multipliers);
     ArgonotMatrix kkt_matrix = current_iterate.hessian.to_ArgonotMatrix(number_variables);
     // contribution of 2 \nabla c \nabla c^T
     for (int j = 0; j < problem.number_constraints; j++) {
@@ -514,10 +513,9 @@ SubproblemSolution InteriorPoint::compute_infeasibility_step(Problem& problem, I
     COOMatrix coo_matrix = kkt_matrix.to_COO();
     
     /* inertia correction */
-    this->modify_inertia(coo_matrix, current_iterate.x.size(), 0);
+    MA57Factorization factorization = this->modify_inertia(coo_matrix, current_iterate.x.size(), 0);
     
     DEBUG << "restoration KKT matrix:\n" << coo_matrix;
-    this->factorization = this->solver.factorize(coo_matrix);
     
     /* right-hand side */
     std::vector<double> rhs(number_variables);
@@ -541,7 +539,7 @@ SubproblemSolution InteriorPoint::compute_infeasibility_step(Problem& problem, I
     DEBUG << "restoration RHS: "; print_vector(DEBUG, rhs); DEBUG << "\n";
     
     /* compute the solution Δx */
-    std::vector<double> solution_IPM = this->solver.solve(this->factorization, rhs);
+    std::vector<double> solution_IPM = this->solver.solve(factorization, rhs);
     this->number_subproblems_solved++;
     
     /* compute bound multiplier displacements Δz */

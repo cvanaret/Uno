@@ -95,8 +95,8 @@ double SLPEQP::compute_predicted_reduction(Problem& problem, Iterate& current_it
 
 void SLPEQP::compute_optimality_measures(Problem& problem, Iterate& iterate) {
     // feasibility
-    iterate.compute_constraints_residual(problem, this->residual_norm);
-    iterate.feasibility_measure = iterate.residual;
+    iterate.compute_constraint_residual(problem, this->residual_norm);
+    iterate.feasibility_measure = iterate.constraint_residual;
     // optimality
     iterate.compute_objective(problem);
     iterate.optimality_measure = iterate.objective;

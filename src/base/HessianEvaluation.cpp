@@ -2,7 +2,7 @@
 #include "HessianEvaluation.hpp"
 #include "Utils.hpp"
 
-HessianEvaluation::HessianEvaluation(int number_variables) : size(number_variables) {
+HessianEvaluation::HessianEvaluation(int number_variables) : size(number_variables), convexify(false) {
 }
 
 HessianEvaluation::~HessianEvaluation() {
@@ -14,7 +14,12 @@ ExactHessianEvaluation::ExactHessianEvaluation(int number_variables): HessianEva
 }
 
 void ExactHessianEvaluation::compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) {
-    iterate.compute_hessian(problem, objective_multiplier, constraint_multipliers);
+    //if (this->convexify) {
+    //    throw std::runtime_error("ExactHessianEvaluation::compute should convexify");
+    //}
+    //else {
+        iterate.compute_hessian(problem, objective_multiplier, constraint_multipliers);
+    //}
     return;
 }
 
@@ -24,6 +29,7 @@ BFGSHessianEvaluation::BFGSHessianEvaluation(int number_variables): HessianEvalu
 }
 
 void BFGSHessianEvaluation::compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) {
+    // the BFGS Hessian is already positive definite, do not convexify
     iterate.compute_hessian(problem, objective_multiplier, constraint_multipliers);
     return;
 }

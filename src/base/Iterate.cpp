@@ -21,12 +21,18 @@ void Iterate::compute_constraints(Problem& problem) {
     return;
 }
 
-void Iterate::compute_constraints_residual(Problem& problem, std::string residual_norm) {
+void Iterate::compute_constraint_residual(Problem& problem, std::string residual_norm) {
     if (!this->is_constraint_residual_computed) {
         this->compute_constraints(problem);
         this->constraint_residual = problem.infeasible_residual_norm(this->constraints, residual_norm);
         this->is_constraint_residual_computed = true;
     }
+    return;
+}
+
+void Iterate::set_constraint_residual(double constraint_residual) {
+    this->constraint_residual = constraint_residual;
+    this->is_constraint_residual_computed = true;
     return;
 }
 
@@ -60,7 +66,7 @@ void Iterate::compute_hessian(Problem& problem, double objective_multiplier, std
     return;
 }
 
-std::vector<double> Iterate::lagrangian_gradient(Problem& problem, double objective_mutiplier) {
+std::vector<double> Iterate::lagrangian_gradient(Problem& problem, double objective_mutiplier, Multipliers& multipliers) {
     std::vector<double> lagrangian_gradient(this->x.size());
 
     /* objective gradient */
@@ -76,13 +82,13 @@ std::vector<double> Iterate::lagrangian_gradient(Problem& problem, double object
     }
     /* bound constraints */
     for (unsigned int i = 0; i < this->x.size(); i++) {
-        lagrangian_gradient[i] -= this->multipliers.lower_bounds[i] + this->multipliers.upper_bounds[i];
+        lagrangian_gradient[i] -= multipliers.lower_bounds[i] + multipliers.upper_bounds[i];
     }
     /* constraints */
     this->compute_constraints_jacobian(problem);
 
     for (int j = 0; j < problem.number_constraints; j++) {
-        double multiplier_j = this->multipliers.constraints[j];
+        double multiplier_j = multipliers.constraints[j];
         if (multiplier_j != 0.) {
             for (std::pair<int, double> term : this->constraints_jacobian[j]) {
                 int i = term.first;

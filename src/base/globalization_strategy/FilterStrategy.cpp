@@ -87,7 +87,7 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
             this->update_restoration_multipliers(trial_iterate, solution.constraint_partition);
         }
         trial_iterate.compute_objective(problem);
-        trial_iterate.compute_constraints_residual(problem, this->subproblem.residual_norm);
+        trial_iterate.compute_constraint_residual(problem, this->subproblem.residual_norm);
         trial_iterate.KKT_residual = Argonot::compute_KKT_error(problem, trial_iterate, solution.objective_multiplier);
         trial_iterate.complementarity_residual = (this->current_phase == OPTIMALITY) ? Argonot::compute_complementarity_error(problem, trial_iterate) : 0.;
         trial_iterate.status = this->compute_status(problem, trial_iterate, step_norm);

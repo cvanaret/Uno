@@ -15,6 +15,8 @@ public:
     virtual ~HessianEvaluation();
 
     int size;
+    bool convexify;
+    
     virtual void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) = 0;
 };
 

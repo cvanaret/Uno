@@ -69,7 +69,7 @@ std::map<std::string, std::string> get_command_options(int argc, char* argv[], s
 Level Logger::logger_level = INFO;
 
 void set_logger(std::map<std::string, std::string> options) {
-    Logger::logger_level = DEBUG;
+    Logger::logger_level = INFO;
 
     try {
         std::string logger_level = options.at("logger");

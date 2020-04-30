@@ -22,7 +22,7 @@ std::shared_ptr<Subproblem> SubproblemFactory::create(const std::string& type, Q
     }
     /* interior point method */
     else if (type == "IPM") {
-        return std::make_shared<InteriorPoint>();
+        return std::make_shared<InteriorPoint>(hessian_evaluation);
     }
     //else if (type == "AL") {
     //    return std::make_shared<AugmentedLagrangian>();

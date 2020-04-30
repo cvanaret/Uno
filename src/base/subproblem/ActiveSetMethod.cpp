@@ -89,8 +89,8 @@ SubproblemSolution ActiveSetMethod::compute_infeasibility_step(Problem& problem,
 
 void ActiveSetMethod::compute_optimality_measures(Problem& problem, Iterate& iterate) {
     // feasibility
-    iterate.compute_constraints_residual(problem, this->residual_norm);
-    iterate.feasibility_measure = iterate.residual;
+    iterate.compute_constraint_residual(problem, this->residual_norm);
+    iterate.feasibility_measure = iterate.constraint_residual;
     // optimality
     iterate.compute_objective(problem);
     iterate.optimality_measure = iterate.objective;
