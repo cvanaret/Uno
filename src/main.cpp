@@ -22,7 +22,7 @@ void run_argonot(std::string problem_name, std::map<std::string, std::string> op
     std::shared_ptr<QPSolver> solver = QPSolverFactory::create("BQPD", problem, options);
     
     /* Hessian approximation */
-    std::shared_ptr<HessianEvaluation> hessian_evaluation = std::make_shared<ExactHessianEvaluation>(2);
+    std::shared_ptr<HessianEvaluation> hessian_evaluation = std::make_shared<ExactHessianEvaluation>(problem.number_variables);
 
     /* create the subproblem strategy */
     std::shared_ptr<Subproblem> subproblem = SubproblemFactory::create(options["subproblem"], *solver, *hessian_evaluation, options);
