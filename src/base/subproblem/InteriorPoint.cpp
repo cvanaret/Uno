@@ -74,13 +74,15 @@ Iterate InteriorPoint::initialize(Problem& problem, std::vector<double>& x, Mult
     DEBUG << problem.inequality_constraints.size() << " slacks\n";
     DEBUG << first_iterate.multipliers.lower_bounds.size() << " bound multipliers\n";
     DEBUG << first_iterate.multipliers.constraints.size() << " constraint multipliers\n";
-    DEBUG << "variable lb: ";
-    print_vector(DEBUG, this->lower_bounded_variables);
-    DEBUG << "variable ub: ";
-    print_vector(DEBUG, this->upper_bounded_variables);
+    DEBUG << "variable lb: "; print_vector(DEBUG, this->lower_bounded_variables);
+    DEBUG << "variable ub: "; print_vector(DEBUG, this->upper_bounded_variables);
 
     /* compute the optimality and feasibility measures of the initial point */
     this->compute_optimality_measures(problem, first_iterate);
+    
+    /* if no trust region is used, the problem should be convexified. The inertia of the augmented matrix will be corrected later */
+    this->hessian_evaluation.convexify = false;
+    
     return first_iterate;
 }
 

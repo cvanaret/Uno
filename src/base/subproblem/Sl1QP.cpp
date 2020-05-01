@@ -56,7 +56,7 @@ Iterate Sl1QP::initialize(Problem& problem, std::vector<double>& x, Multipliers&
     int number_variables_qp = number_variables + 2 * problem.number_constraints;
     this->solver.allocate(number_variables_qp, problem.number_constraints);
     
-    // if no trust region is used, the matrix should be convexified
+    /* if no trust region is used, the problem should be convexified by changing the inertia of the Hessian */
     this->hessian_evaluation.convexify = !use_trust_region;
     
     return first_iterate;

@@ -17,7 +17,7 @@ Iterate SQP::initialize(Problem& problem, std::vector<double>& x, Multipliers& m
     /* call superclass initialize() */
     Iterate first_iterate = ActiveSetMethod::initialize(problem, x, multipliers, use_trust_region);
     
-    /* if no trust region is used, the matrix should be convexified */
+    /* if no trust region is used, the problem should be convexified by changing the inertia of the Hessian */
     this->hessian_evaluation.convexify = !use_trust_region;
     
     return first_iterate;
