@@ -128,13 +128,10 @@ SubproblemSolution Sl1QP::compute_optimality_step(Problem& problem, Iterate& cur
     //INFO << "penalty parameter: " << this->penalty_parameter << "\t";
 
     /* remove p and n */
-    std::vector<double> filtered_x(solution.x.begin(), solution.x.begin() + current_iterate.x.size());
-    std::vector<double> filtered_lb_multipliers(solution.multipliers.lower_bounds.begin(), solution.multipliers.lower_bounds.begin() + current_iterate.x.size());
-    std::vector<double> filtered_ub_multipliers(solution.multipliers.upper_bounds.begin(), solution.multipliers.upper_bounds.begin() + current_iterate.x.size());
-    solution.x = filtered_x;
-    solution.norm = norm_inf(filtered_x);
-    solution.multipliers.lower_bounds = filtered_lb_multipliers;
-    solution.multipliers.upper_bounds = filtered_ub_multipliers;
+    solution.x.resize(current_iterate.x.size());
+    solution.multipliers.lower_bounds.resize(current_iterate.x.size());
+    solution.multipliers.upper_bounds.resize(current_iterate.x.size());
+    solution.norm = norm_inf(solution.x);
     
     /* remove contribution of positive part variables */
     for (std::pair<const int, int>& element: this->positive_part_variables) {
