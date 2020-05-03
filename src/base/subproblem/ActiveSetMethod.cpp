@@ -17,7 +17,7 @@ Iterate ActiveSetMethod::initialize(Problem& problem, std::vector<double>& x, Mu
     this->compute_optimality_measures(problem, first_iterate);
 
     /* allocate the QP solver */
-    this->solver.allocate(problem.number_variables, problem.number_constraints);
+    //this->solver.allocate(problem.number_variables, problem.number_constraints);
     return first_iterate;
 }
 
@@ -60,7 +60,7 @@ SubproblemSolution ActiveSetMethod::compute_optimality_step(Problem& problem, It
 }
 
 SubproblemSolution ActiveSetMethod::compute_infeasibility_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) {
-    DEBUG << "Creating the restoration problem with " << phase_II_solution.constraint_partition.infeasible.size() << " infeasible constraints\n";
+    DEBUG << "\nCreating the restoration problem with " << phase_II_solution.constraint_partition.infeasible.size() << " infeasible constraints\n";
     
     /* evaluate the functions at the current iterate */
     current_iterate.is_hessian_computed = false;

@@ -34,7 +34,6 @@ bool PenaltyMeritFunction::check_step(Problem& problem, Iterate& current_iterate
         accept = true;
     }
     else {
-
         /* check if subproblem definition changed */
         if (this->subproblem.subproblem_definition_changed) {
             this->subproblem.subproblem_definition_changed = false;
@@ -44,12 +43,18 @@ bool PenaltyMeritFunction::check_step(Problem& problem, Iterate& current_iterate
         // TODO: add the penalized term to the optimality measure
         this->subproblem.compute_optimality_measures(problem, trial_iterate);
         /* compute current exact l1 penalty: rho f + ||c|| */
+        DEBUG << "Current: ||c|| = " << current_iterate.feasibility_measure << ", f = " << current_iterate.optimality_measure << "\n";
         double current_exact_l1_penalty = solution.objective_multiplier * current_iterate.optimality_measure + current_iterate.feasibility_measure;
         /* compute trial exact l1 penalty */
+        DEBUG << "Trial: ||c|| = " << trial_iterate.feasibility_measure << ", f = " << trial_iterate.optimality_measure << "\n";
         double trial_exact_l1_penalty = solution.objective_multiplier * trial_iterate.optimality_measure + trial_iterate.feasibility_measure;
         /* check the validity of the trial step */
+        double predicted_reduction = this->subproblem.compute_predicted_reduction(problem, current_iterate, solution);
+        double actual_reduction = current_exact_l1_penalty - trial_exact_l1_penalty;
+        DEBUG << "Predicted reduction: " << step_length*predicted_reduction << ", actual: " << actual_reduction << "\n\n";
         accept = false;
-        if (current_exact_l1_penalty - trial_exact_l1_penalty >= this->eta * step_length * (current_iterate.feasibility_measure - solution.objective)) {
+        // Armijo sufficient decrease condition
+        if (actual_reduction >= this->eta*step_length*predicted_reduction) {
             accept = true;
         }
     }

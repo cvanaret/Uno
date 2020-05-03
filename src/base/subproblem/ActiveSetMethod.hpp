@@ -15,7 +15,7 @@ public:
     SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius = INFINITY);
     void compute_optimality_measures(Problem& problem, Iterate& iterate);
     void compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution);
-    virtual double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) = 0;
+    virtual double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution) = 0;
     virtual bool phase_1_required(SubproblemSolution& solution) = 0;
 
     /* use references to allow polymorphism */

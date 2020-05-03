@@ -20,7 +20,7 @@ Iterate SLPEQP::initialize(Problem& problem, std::vector<double>& x, Multipliers
     this->compute_optimality_measures(problem, first_iterate);
 
     /* allocate the QP solver */
-    this->solver.allocate(problem.number_variables, problem.number_constraints);
+    //this->solver.allocate(problem.number_variables, problem.number_constraints);
     return first_iterate;
 }
 
@@ -80,17 +80,8 @@ SubproblemSolution SLPEQP::compute_infeasibility_step(Problem& problem, Iterate&
     return this->compute_optimality_step(problem, current_iterate, trust_region_radius);
 }
 
-double SLPEQP::compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
-    if (step_length == 1.) {
-        /* full step */
-        return -solution.objective;
-    }
-    else {
-        /* the predicted reduction is a quadratic in the step length */
-        double linear_term = dot(solution.x, current_iterate.objective_gradient);
-        double quadratic_term = current_iterate.hessian.quadratic_product(solution.x, solution.x) / 2.;
-        return -step_length*(linear_term + step_length * quadratic_term);
-    } 
+double SLPEQP::compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution) {
+    return -solution.objective;
 }
 
 void SLPEQP::compute_optimality_measures(Problem& problem, Iterate& iterate) {

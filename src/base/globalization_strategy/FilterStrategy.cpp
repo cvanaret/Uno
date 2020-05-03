@@ -64,17 +64,18 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
             // check acceptance wrt current x (h,f)
             acceptable = filter.improves_current_iterate(current_iterate.feasibility_measure, current_iterate.optimality_measure, trial_iterate.feasibility_measure, trial_iterate.optimality_measure);
             if (acceptable) {
-                double predicted_reduction = this->subproblem.compute_predicted_reduction(problem, current_iterate, solution, step_length);
+                double predicted_reduction = this->subproblem.compute_predicted_reduction(problem, current_iterate, solution);
                 double actual_reduction = filter.compute_actual_reduction(current_iterate.optimality_measure, current_iterate.feasibility_measure, trial_iterate.optimality_measure);
-                DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << current_iterate.optimality_measure << "-" << trial_iterate.optimality_measure << " = " << actual_reduction << "\n\n";
+                DEBUG << "Predicted reduction: " << step_length*predicted_reduction << ", actual: " << actual_reduction << "\n\n";
 
                 /* switching condition */
-                if (predicted_reduction < this->constants.Delta * std::pow(current_iterate.feasibility_measure, 2)) {
+                if (step_length*predicted_reduction < this->constants.Delta * std::pow(current_iterate.feasibility_measure, 2)) {
                     filter.add(current_iterate.feasibility_measure, current_iterate.optimality_measure);
                     accept = true;
                 }
-                    /* sufficient decrease condition */
-                else if (actual_reduction >= this->constants.Sigma * std::max(0., predicted_reduction - 1e-9)) {
+                    /* Armijo sufficient decrease condition */
+                // else if (actual_reduction >= this->constants.Sigma*step_length*std::max(0., predicted_reduction - 1e-9)) {
+                else if (actual_reduction >= this->constants.Sigma*step_length*predicted_reduction) {
                     accept = true;
                 }
             }
@@ -90,7 +91,7 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
         trial_iterate.compute_constraint_residual(problem, this->subproblem.residual_norm);
         trial_iterate.KKT_residual = Argonot::compute_KKT_error(problem, trial_iterate, solution.objective_multiplier);
         trial_iterate.complementarity_residual = (this->current_phase == OPTIMALITY) ? Argonot::compute_complementarity_error(problem, trial_iterate) : 0.;
-        trial_iterate.status = this->compute_status(problem, trial_iterate, step_norm);
+        trial_iterate.status = this->compute_status(problem, trial_iterate, step_norm, solution.objective_multiplier);
         INFO << "phase: " << this->current_phase << "\t";
         current_iterate = trial_iterate;
     }
@@ -136,7 +137,7 @@ void FilterStrategy::update_restoration_multipliers(Iterate& trial_iterate, Cons
     return;
 }
 
-OptimalityStatus FilterStrategy::compute_status(Problem& problem, Iterate& current_iterate, double step_norm) {
+OptimalityStatus FilterStrategy::compute_status(Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier) {
     OptimalityStatus status = NOT_OPTIMAL;
 
     /* TODO: check if test on residual can indeed be replaced by infeasibility_measure */
@@ -155,6 +156,17 @@ OptimalityStatus FilterStrategy::compute_status(Problem& problem, Iterate& curre
     }
     else if (step_norm <= this->tolerance / 100.) {
         status = INFEASIBLE_SMALL_STEP;
+    }
+    
+    // if convergence, correct the multipliers
+    if (status != NOT_OPTIMAL && 0. < objective_multiplier) {
+        for (int j = 0; j < problem.number_constraints; j++) {
+            current_iterate.multipliers.constraints[j] /= objective_multiplier;
+        }
+        for (unsigned int i = 0; i < current_iterate.x.size(); i++) {
+            current_iterate.multipliers.lower_bounds[i] /= objective_multiplier;
+            current_iterate.multipliers.upper_bounds[i] /= objective_multiplier;
+        }
     }
     return status;
 }

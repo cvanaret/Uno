@@ -35,7 +35,7 @@ public:
     virtual void compute_optimality_measures(Problem& problem, Iterate& iterate) = 0;
     virtual void compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution) = 0;
     
-    virtual double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) = 0;
+    virtual double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution) = 0;
     virtual bool phase_1_required(SubproblemSolution& solution) = 0;
 
     std::vector<Range> generate_variables_bounds(Iterate& current_iterate, double trust_region_radius);

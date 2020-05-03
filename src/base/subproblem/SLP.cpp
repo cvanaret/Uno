@@ -8,14 +8,8 @@
 SLP::SLP(QPSolver& solver) : ActiveSetMethod(solver) {
 }
 
-double SLP::compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
-    if (step_length == 1.) {
-        return -solution.objective;
-    }
-    else {
-        double linear_term = dot(solution.x, current_iterate.objective_gradient);
-        return -step_length*linear_term;
-    }
+double SLP::compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution) {
+    return -solution.objective;
 }
 
 bool SLP::phase_1_required(SubproblemSolution& solution) {

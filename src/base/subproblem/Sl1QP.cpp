@@ -10,35 +10,9 @@ Sl1QP::Sl1QP(QPSolver& solver, HessianEvaluation& hessian_evaluation): Subproble
 Iterate Sl1QP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) {
     // register the original bounds
     this->subproblem_variables_bounds = problem.variables_bounds;
-
-    // number of variables in the reformulated problem: |x| + |s|
-    int number_variables = problem.number_variables + problem.inequality_constraints.size();
-    this->subproblem_variables_bounds.resize(number_variables);
-
-    std::vector<double> reformulated_x(number_variables);
-    for (int i = 0; i < problem.number_variables; i++) {
-        reformulated_x[i] = x[i];
-    }
-    Iterate first_iterate(reformulated_x, multipliers);
-    first_iterate.multipliers.lower_bounds.resize(number_variables);
-    first_iterate.multipliers.upper_bounds.resize(number_variables);
-
-    // reformulate the problem by introducing slack and relaxation variables. TODO relax only linear constraints?
-    first_iterate.compute_constraints(problem);
-    for (std::pair<int, int> element: problem.inequality_constraints) {
-        int j = element.first;
-        int slack_index = problem.number_variables + element.second;
-
-        this->slack_variables[j] = slack_index;
-        first_iterate.x[slack_index] = Subproblem::project_variable_in_bounds(first_iterate.constraints[j], problem.constraints_bounds[j]);
-        this->subproblem_variables_bounds[slack_index] = problem.constraints_bounds[j];
-        first_iterate.multipliers.lower_bounds[slack_index] = 0.;
-        first_iterate.multipliers.upper_bounds[slack_index] = 0.;
-    }
-    // from now on, all constraints are handled as equalities
-
+    
     // p and n are generated on the fly to solve the QP, but are not kept
-    int current_index = number_variables;
+    int current_index = problem.number_variables;
     for (int j = 0; j < problem.number_constraints; j++) {
         // nonnegative variable p that captures the positive part of an equality
         this->positive_part_variables[j] = current_index;
@@ -49,12 +23,13 @@ Iterate Sl1QP::initialize(Problem& problem, std::vector<double>& x, Multipliers&
     }
 
     /* compute the optimality and feasibility measures of the initial point */
+    Iterate first_iterate(x, multipliers);
     this->compute_optimality_measures(problem, first_iterate);
 
     /* allocate the QP solver */
     // p and n are generated on the fly to solve the QP, but are not kept
-    int number_variables_qp = number_variables + 2 * problem.number_constraints;
-    this->solver.allocate(number_variables_qp, problem.number_constraints);
+    //int number_variables_qp = problem.number_variables + 2 * problem.number_constraints;
+    //this->solver.allocate(number_variables_qp, problem.number_constraints);
     
     /* if no trust region is used, the problem should be convexified by changing the inertia of the Hessian */
     this->hessian_evaluation.convexify = !use_trust_region;
@@ -67,31 +42,15 @@ SubproblemSolution Sl1QP::compute_optimality_step(Problem& problem, Iterate& cur
 
     // evaluate constraints
     current_iterate.compute_constraints(problem);
-    std::vector<double> constraints(current_iterate.constraints);
-    for (std::pair<const int, int>& element: this->slack_variables) {
-        int j = element.first;
-        int slack_index = element.second;
-        constraints[j] -= current_iterate.x[slack_index];
-    }
-    for (std::pair<const int, int>& element: problem.equality_constraints) {
-        int j = element.first;
-        constraints[j] -= problem.constraints_bounds[j].lb;
-    }
-    // evaluate constraint Jacobian
-    for (std::pair<const int, int>& element: this->slack_variables) {
-        int j = element.first;
-        int i = element.second;
-        current_iterate.constraints_jacobian[j][i] = -1.;
-    }
 
     /* stage a: compute the step within trust region */
-    SubproblemSolution solution = this->solve_subproblem(problem, current_iterate, constraints, trust_region_radius, this->penalty_parameter);
+    SubproblemSolution solution = this->solve_subproblem(problem, current_iterate, trust_region_radius, this->penalty_parameter);
     DEBUG << solution;
 
     /* penalty update: if penalty parameter is already 0, no need to decrease it */
     if (0. < this->penalty_parameter) {
         /* check infeasibility */
-        double linearized_residual = this->compute_linearized_constraint_residual(constraints, current_iterate.constraints_jacobian, solution.x);
+        double linearized_residual = this->compute_linearized_constraint_residual(problem, solution.x);
         DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
 
         // if problem had to be relaxed
@@ -100,11 +59,11 @@ SubproblemSolution Sl1QP::compute_optimality_step(Problem& problem, Iterate& cur
 
             /* stage c: solve the ideal l1 penalty problem with a zero penalty (no objective) */
             DEBUG << "Compute ideal solution:\n";
-            SubproblemSolution ideal_solution = this->solve_subproblem(problem, current_iterate, constraints, trust_region_radius, 0.);
+            SubproblemSolution ideal_solution = this->solve_subproblem(problem, current_iterate, trust_region_radius, 0.);
             DEBUG << ideal_solution;
 
             /* compute the ideal error (with a zero penalty parameter) */
-            double ideal_error = this->compute_error(problem, current_iterate, constraints, ideal_solution.multipliers, 0.);
+            double ideal_error = this->compute_error(problem, current_iterate, ideal_solution.multipliers, 0.);
             DEBUG << "Ideal error: " << ideal_error << "\n";
 
 //            /* stage f: update the penalty parameter */
@@ -116,7 +75,7 @@ SubproblemSolution Sl1QP::compute_optimality_step(Problem& problem, Iterate& cur
                 this->penalty_parameter = 0.;
             }
             else {
-                double ideal_linearized_residual = this->compute_linearized_constraint_residual(constraints, current_iterate.constraints_jacobian, ideal_solution.x);
+                double ideal_linearized_residual = this->compute_linearized_constraint_residual(problem, ideal_solution.x);
                 DEBUG << "Linearized residual mk(dk): " << ideal_linearized_residual << "\n\n";
 
                 /* decrease penalty parameter to satisfy 2 conditions */
@@ -142,10 +101,10 @@ SubproblemSolution Sl1QP::compute_optimality_step(Problem& problem, Iterate& cur
                         }
                         else {
                             DEBUG << "\nAttempting to solve with penalty parameter " << this->penalty_parameter << "\n";
-                            solution = this->solve_subproblem(problem, current_iterate, constraints, trust_region_radius, this->penalty_parameter);
+                            solution = this->solve_subproblem(problem, current_iterate, trust_region_radius, this->penalty_parameter);
                             DEBUG << solution;
 
-                            linearized_residual = this->compute_linearized_constraint_residual(constraints, current_iterate.constraints_jacobian, solution.x);
+                            linearized_residual = this->compute_linearized_constraint_residual(problem, solution.x);
                             DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
                         }
                     }
@@ -168,12 +127,32 @@ SubproblemSolution Sl1QP::compute_optimality_step(Problem& problem, Iterate& cur
     }
     //INFO << "penalty parameter: " << this->penalty_parameter << "\t";
 
+    /* remove p and n */
+    std::vector<double> filtered_x(solution.x.begin(), solution.x.begin() + current_iterate.x.size());
+    std::vector<double> filtered_lb_multipliers(solution.multipliers.lower_bounds.begin(), solution.multipliers.lower_bounds.begin() + current_iterate.x.size());
+    std::vector<double> filtered_ub_multipliers(solution.multipliers.upper_bounds.begin(), solution.multipliers.upper_bounds.begin() + current_iterate.x.size());
+    solution.x = filtered_x;
+    solution.norm = norm_inf(filtered_x);
+    solution.multipliers.lower_bounds = filtered_lb_multipliers;
+    solution.multipliers.upper_bounds = filtered_ub_multipliers;
+    
+    /* remove contribution of positive part variables */
+    for (std::pair<const int, int>& element: this->positive_part_variables) {
+        int j = element.first;
+        int i = element.second;
+        current_iterate.constraints_jacobian[j].erase(i);
+    }
+    /* remove contribution of negative part variables */
+    for (std::pair<const int, int>& element: this->negative_part_variables) {
+        int j = element.first;
+        int i = element.second;
+        current_iterate.constraints_jacobian[j].erase(i);
+    }
     return solution;
 }
 
-SubproblemSolution Sl1QP::solve_subproblem(Problem& problem, Iterate& current_iterate, std::vector<double>& constraints, double trust_region_radius, double penalty_parameter) {
-    DEBUG << "Current point: ";
-    print_vector(DEBUG, current_iterate.x);
+SubproblemSolution Sl1QP::solve_subproblem(Problem& problem, Iterate& current_iterate, double trust_region_radius, double penalty_parameter) {
+    DEBUG << "Current point: "; print_vector(DEBUG, current_iterate.x);
 
     /* compute first- and second-order information */
     current_iterate.compute_objective_gradient(problem);
@@ -207,10 +186,8 @@ SubproblemSolution Sl1QP::solve_subproblem(Problem& problem, Iterate& current_it
     std::vector<Range> variables_bounds = this->generate_variables_bounds(problem, current_iterate, trust_region_radius);
 
     /* bounds of the linearized equality constraints */
-    std::vector<Range> constraints_bounds(problem.number_constraints);
-    for (int j = 0; j < problem.number_constraints; j++) {
-        constraints_bounds[j] = {-constraints[j], -constraints[j]};
-    }
+    std::vector<Range> constraints_bounds = Subproblem::generate_constraints_bounds(problem, current_iterate.constraints);
+    
     DEBUG << "hessian: " << current_iterate.hessian;
     DEBUG << "gradient obj: ";
     print_vector(DEBUG, objective_gradient);
@@ -240,28 +217,6 @@ SubproblemSolution Sl1QP::solve_subproblem(Problem& problem, Iterate& current_it
     solution.phase_1_required = this->phase_1_required(solution);
     solution.objective_multiplier = penalty_parameter;
     this->number_subproblems_solved++;
-
-    /* remove p and n */
-    std::vector<double> filtered_x(solution.x.begin(), solution.x.begin() + current_iterate.x.size());
-    std::vector<double> filtered_lb_multipliers(solution.multipliers.lower_bounds.begin(), solution.multipliers.lower_bounds.begin() + current_iterate.x.size());
-    std::vector<double> filtered_ub_multipliers(solution.multipliers.upper_bounds.begin(), solution.multipliers.upper_bounds.begin() + current_iterate.x.size());
-    solution.x = filtered_x;
-    solution.norm = norm_inf(filtered_x);
-    solution.multipliers.lower_bounds = filtered_lb_multipliers;
-    solution.multipliers.upper_bounds = filtered_ub_multipliers;
-
-    /* remove contribution of positive part variables */
-    for (std::pair<const int, int>& element: this->positive_part_variables) {
-        int j = element.first;
-        int i = element.second;
-        current_iterate.constraints_jacobian[j].erase(i);
-    }
-    /* remove contribution of negative part variables */
-    for (std::pair<const int, int>& element: this->negative_part_variables) {
-        int j = element.first;
-        int i = element.second;
-        current_iterate.constraints_jacobian[j].erase(i);
-    }
     
     return solution;
 }
@@ -270,35 +225,14 @@ SubproblemSolution Sl1QP::compute_infeasibility_step(Problem& problem, Iterate& 
     throw std::out_of_range("Sl1QP.compute_infeasibility_step is not implemented, since l1QP are always feasible");
 }
 
-double Sl1QP::compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
-    if (step_length == 1.) {
-        /* full step */
-        return -solution.objective;
-    }
-    else {
-        /* the predicted reduction is a quadratic in the step length */
-        double linear_term = dot(solution.x, current_iterate.objective_gradient);
-        double quadratic_term = current_iterate.hessian.quadratic_product(solution.x, solution.x) / 2.;
-        return -step_length * (linear_term + step_length * quadratic_term);
-    }
+double Sl1QP::compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution) {
+    return current_iterate.feasibility_measure - solution.objective;
 }
 
 void Sl1QP::compute_optimality_measures(Problem& problem, Iterate& iterate) {
     /* feasibility */
-    iterate.compute_constraints(problem);
-    // evaluate the constraints as equalities
-    std::vector<double> constraints(iterate.constraints);
-    for (std::pair<const int, int>& element: this->slack_variables) {
-        int j = element.first;
-        int slack_index = element.second;
-        constraints[j] -= iterate.x[slack_index];
-    }
-    for (std::pair<const int, int>& element: problem.equality_constraints) {
-        int j = element.first;
-        constraints[j] -= problem.constraints_bounds[j].lb;
-    }
-    iterate.feasibility_measure = norm(constraints, this->residual_norm);
-    iterate.set_constraint_residual(iterate.feasibility_measure);
+    iterate.compute_constraint_residual(problem, this->residual_norm);
+    iterate.feasibility_measure = iterate.constraint_residual;
     /* optimality */
     iterate.compute_objective(problem);
     iterate.optimality_measure = iterate.objective;
@@ -318,7 +252,7 @@ bool Sl1QP::phase_1_required(SubproblemSolution& solution) {
 
 std::vector<Range> Sl1QP::generate_variables_bounds(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
     std::vector<Range> variables_bounds(current_iterate.x.size() + 2 * problem.number_constraints);
-    /* original bounds and slacks intersected with trust region  */
+    /* original bounds intersected with trust region  */
     for (unsigned int i = 0; i < current_iterate.x.size(); i++) {
         double lb = std::max(-trust_region_radius, this->subproblem_variables_bounds[i].lb - current_iterate.x[i]);
         double ub = std::min(trust_region_radius, this->subproblem_variables_bounds[i].ub - current_iterate.x[i]);
@@ -331,16 +265,16 @@ std::vector<Range> Sl1QP::generate_variables_bounds(Problem& problem, Iterate& c
     return variables_bounds;
 }
 
-double Sl1QP::compute_linearized_constraint_residual(std::vector<double>& equality_constraints, std::vector<std::map<int, double> >& constraints_jacobian, std::vector<double>& d) {
+double Sl1QP::compute_linearized_constraint_residual(Problem& problem, std::vector<double>& x) {
     double residual = 0.;
     // l1 residual of the linearized constraints
-    for (unsigned int j = 0; j < equality_constraints.size(); j++) {
-        residual += std::abs(equality_constraints[j] + dot(d, constraints_jacobian[j]));
+    for (int j = 0; j < problem.number_constraints; j++) {
+        residual += x[this->positive_part_variables[j]] + x[this->negative_part_variables[j]];
     }
     return residual;
 }
 
-double Sl1QP::compute_error(Problem& problem, Iterate& current_iterate, std::vector<double>& equality_constraints, Multipliers& multipliers, double penalty_parameter) {
+double Sl1QP::compute_error(Problem& problem, Iterate& current_iterate, Multipliers& multipliers, double penalty_parameter) {
     /* measure that combines KKT error and complementarity error */
     double error = 0.;
 
@@ -361,18 +295,17 @@ double Sl1QP::compute_error(Problem& problem, Iterate& current_iterate, std::vec
         }
         else {
             // strictly satisfied: the multiplier is 0 at optimum
-            error += std::abs(multipliers.constraints[j]*equality_constraints[j]);
+            error += std::abs(multipliers.constraints[j]*current_iterate.constraints[j]);
         }
     }
     return error;
 }
 
 void Sl1QP::recover_active_set(Problem& problem, SubproblemSolution& solution, std::vector<Range>& variables_bounds) {
-    int number_variables = problem.number_variables + problem.inequality_constraints.size();
     solution.active_set.at_lower_bound.clear();
     solution.active_set.at_upper_bound.clear();
     // variables
-    for (int i = 0; i < number_variables; i++) {
+    for (int i = 0; i < problem.number_variables; i++) {
         if (solution.x[i] == variables_bounds[i].lb) {
             solution.active_set.at_lower_bound.insert(i);
         }
@@ -383,7 +316,7 @@ void Sl1QP::recover_active_set(Problem& problem, SubproblemSolution& solution, s
     // constraints: only when p-n = 0
     for (unsigned int j = 0; j < solution.multipliers.constraints.size(); j++) {
         if (solution.x[this->positive_part_variables[j]] + solution.x[this->negative_part_variables[j]] == 0.) {
-            solution.active_set.at_lower_bound.insert(number_variables + j);
+            solution.active_set.at_lower_bound.insert(problem.number_variables + j);
         }
     }
     return;

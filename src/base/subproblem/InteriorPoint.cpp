@@ -470,9 +470,10 @@ double InteriorPoint::evaluate_local_model(Problem& /*problem*/, Iterate& curren
     return subproblem_objective;
 }
 
-double InteriorPoint::compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
-    double subproblem_objective = this->evaluate_local_model(problem, current_iterate, solution.x);
-    return -step_length*subproblem_objective;
+double InteriorPoint::compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution) {
+    //double subproblem_objective = this->evaluate_local_model(problem, current_iterate, solution.x);
+    //return -step_length*subproblem_objective;
+    return -solution.objective;
 }
 
 SubproblemSolution InteriorPoint::compute_infeasibility_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) {

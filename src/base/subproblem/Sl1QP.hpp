@@ -33,7 +33,7 @@ public:
     void compute_optimality_measures(Problem& problem, Iterate& iterate) override;
     void compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution);
     
-    double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
+    double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution) override;
     bool phase_1_required(SubproblemSolution& solution) override;
 
     /* use references to allow polymorphism */
@@ -44,16 +44,14 @@ public:
 
 private:
     /* problem reformulation */
-    // equality constraints c(x) = 0 are reformulated as c(x) = p - n
-    // equality constraints l <= c(x) = u are reformulated as c(x) - s = p - n
-    std::map<int, int> slack_variables; // s
+    // constraints l <= c(x) = u are reformulated as c(x) - p + n
     std::map<int, int> positive_part_variables; // p
     std::map<int, int> negative_part_variables; // n
 
     std::vector<Range> generate_variables_bounds(Problem& problem, Iterate& current_iterate, double trust_region_radius);
-    SubproblemSolution solve_subproblem(Problem& problem, Iterate& current_iterate, std::vector<double>& constraints, double trust_region_radius, double penalty_parameter);
-    double compute_linearized_constraint_residual(std::vector<double>& constraints, std::vector<std::map<int, double> >& constraints_jacobian, std::vector<double>& d);
-    double compute_error(Problem& problem, Iterate& current_iterate, std::vector<double>& constraints, Multipliers& multipliers, double penalty_parameter);
+    SubproblemSolution solve_subproblem(Problem& problem, Iterate& current_iterate, double trust_region_radius, double penalty_parameter);
+    double compute_linearized_constraint_residual(Problem& problem, std::vector<double>& x);
+    double compute_error(Problem& problem, Iterate& current_iterate, Multipliers& multipliers, double penalty_parameter);
     void recover_active_set(Problem& problem, SubproblemSolution& solution, std::vector<Range>& variables_bounds);
 };
 

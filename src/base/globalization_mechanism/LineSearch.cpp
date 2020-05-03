@@ -88,7 +88,7 @@ bool LineSearch::termination(bool is_accepted) {
 }
 
 void LineSearch::print_iteration() {
-    DEBUG << "\n\tLINE SEARCH iteration " << this->number_iterations << ", step_length " << this->step_length << "\n";
+    DEBUG << "\tLINE SEARCH iteration " << this->number_iterations << ", step_length " << this->step_length << "\n";
     return;
 }
 

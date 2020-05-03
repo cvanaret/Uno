@@ -27,6 +27,7 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& mul
             major_iterations++;
             DEBUG << "\n\t\tARGONOT iteration " << major_iterations << "\n";
             INFO << "major: " << major_iterations << "\t";
+            DEBUG << "Current point: "; print_vector(DEBUG, current_iterate.x);
 
             /* update the current point */
             current_iterate = this->globalization_mechanism.compute_acceptable_iterate(problem, current_iterate);
@@ -101,16 +102,16 @@ void Result::display() {
 
     std::cout << "Status:\t\t\t";
     if (this->solution.status == KKT_POINT) {
-        std::cout << "KKT point found\n";
+        std::cout << "Converged with KKT point\n";
     }
     else if (this->solution.status == FJ_POINT) {
-        std::cout << "FJ point found\n";
+        std::cout << "Converged with FJ point\n";
     }
     else if (this->solution.status == FEASIBLE_SMALL_STEP) {
-        std::cout << "Feasible small step\n";
+        std::cout << "Converged with feasible small step\n";
     }
     else if (this->solution.status == INFEASIBLE_SMALL_STEP) {
-        std::cout << "Infeasible small step\n";
+        std::cout << "Converged with infeasible small step\n";
     }
     else { // NOT_OPTIMAL
         std::cout << "Irregular termination\n";

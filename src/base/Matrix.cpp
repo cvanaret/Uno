@@ -213,24 +213,24 @@ ArgonotMatrix CSCMatrix::to_ArgonotMatrix(int argonot_matrix_size) {
 std::ostream& operator<<(std::ostream &stream, CSCMatrix& matrix) {
     /* Hessian */
     stream << "W = ";
-    print_vector(stream, matrix.matrix, 0, 20);
+    print_vector(stream, matrix.matrix);
     stream << "with column start: ";
     // TODO handle the stream
-    print_vector(stream, matrix.column_start, 0, 20);
+    print_vector(stream, matrix.column_start);
     stream << "and row number: ";
-    print_vector(stream, matrix.row_number, 0, 20);
+    print_vector(stream, matrix.row_number);
     return stream;
 }
 
 std::ostream& operator<<(std::ostream &stream, const CSCMatrix& matrix) {
     /* Hessian */
     stream << "W = ";
-    print_vector(stream, matrix.matrix, 0, 20);
+    print_vector(stream, matrix.matrix);
     stream << "with column start: ";
     // TODO handle the stream
-    print_vector(stream, matrix.column_start, 0, 20);
+    print_vector(stream, matrix.column_start);
     stream << "and row number: ";
-    print_vector(stream, matrix.row_number, 0, 20);
+    print_vector(stream, matrix.row_number);
     return stream;
 }
 
@@ -349,19 +349,18 @@ CSCMatrix ArgonotMatrix::to_CSC() {
     int previous_column = -1;
     int current_term = 0;
     for (std::pair<const int, double> element: this->matrix) {
-        int key = element.first;
         double value = element.second;
+        csc_matrix.matrix.push_back(value);
         // retrieve indices
+        int key = element.first;
         int i = key % this->size;
         int j = key / this->size;
 
-        csc_matrix.matrix.push_back(value);
         if (previous_column < j) {
             csc_matrix.column_start.push_back(current_term);
             previous_column = j;
         }
         csc_matrix.row_number.push_back(i);
-
         current_term++;
     }
     csc_matrix.column_start.push_back(current_term);

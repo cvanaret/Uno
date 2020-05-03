@@ -46,7 +46,7 @@ private:
     
     void switch_phase(Problem& problem, SubproblemSolution& solution, Iterate& current_iterate, Iterate& trial_iterate);
     void update_restoration_multipliers(Iterate& trial_iterate, ConstraintPartition& constraint_partition);
-    OptimalityStatus compute_status(Problem& problem, Iterate& current_iterate, double step_norm);
+    OptimalityStatus compute_status(Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier);
 };
 
 #endif // FILTERSTRATEGY_H
