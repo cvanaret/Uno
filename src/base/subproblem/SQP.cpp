@@ -23,7 +23,7 @@ Iterate SQP::initialize(Problem& problem, std::vector<double>& x, Multipliers& m
     return first_iterate;
 }
 
-double SQP::compute_predicted_reduction(Problem& /*problem*/, Iterate& /*current_iterate*/, SubproblemSolution& solution) {
+double SQP::compute_predicted_reduction(Iterate& /*current_iterate*/, SubproblemSolution& solution) {
     return -solution.objective;
 }
 

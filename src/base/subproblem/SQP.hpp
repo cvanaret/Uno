@@ -20,7 +20,7 @@ public:
     SQP(QPSolver& solver, HessianEvaluation& hessian_evaluation);
     
     Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) override;
-    double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution);
+    double compute_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution);
     bool phase_1_required(SubproblemSolution& solution) override;
 
     /* use references to allow polymorphism */

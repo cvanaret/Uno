@@ -225,7 +225,7 @@ SubproblemSolution Sl1QP::compute_infeasibility_step(Problem& problem, Iterate& 
     throw std::out_of_range("Sl1QP.compute_infeasibility_step is not implemented, since l1QP are always feasible");
 }
 
-double Sl1QP::compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution) {
+double Sl1QP::compute_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution) {
     return current_iterate.feasibility_measure - solution.objective;
 }
 

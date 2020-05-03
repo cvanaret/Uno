@@ -49,7 +49,7 @@ bool PenaltyMeritFunction::check_step(Problem& problem, Iterate& current_iterate
         DEBUG << "Trial: ||c|| = " << trial_iterate.feasibility_measure << ", f = " << trial_iterate.optimality_measure << "\n";
         double trial_exact_l1_penalty = solution.objective_multiplier * trial_iterate.optimality_measure + trial_iterate.feasibility_measure;
         /* check the validity of the trial step */
-        double predicted_reduction = this->subproblem.compute_predicted_reduction(problem, current_iterate, solution);
+        double predicted_reduction = this->subproblem.compute_predicted_reduction(current_iterate, solution);
         double actual_reduction = current_exact_l1_penalty - trial_exact_l1_penalty;
         DEBUG << "Predicted reduction: " << step_length*predicted_reduction << ", actual: " << actual_reduction << "\n\n";
         accept = false;

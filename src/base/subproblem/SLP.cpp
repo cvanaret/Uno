@@ -8,7 +8,7 @@
 SLP::SLP(QPSolver& solver) : ActiveSetMethod(solver) {
 }
 
-double SLP::compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution) {
+double SLP::compute_predicted_reduction(Iterate& /*current_iterate*/, SubproblemSolution& solution) {
     return -solution.objective;
 }
 
