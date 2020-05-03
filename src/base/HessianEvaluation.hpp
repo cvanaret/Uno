@@ -16,8 +16,6 @@ public:
 
     int size;
     bool convexify;
-    double inertia;
-    double inertia_last;
     
     virtual void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) = 0;
     CSCMatrix modify_inertia(CSCMatrix& hessian);

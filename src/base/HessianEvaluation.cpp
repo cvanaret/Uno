@@ -3,7 +3,7 @@
 #include "MA57Solver.hpp"
 #include "Utils.hpp"
 
-HessianEvaluation::HessianEvaluation(int number_variables) : size(number_variables), convexify(false), inertia(0.), inertia_last(0.) {
+HessianEvaluation::HessianEvaluation(int number_variables) : size(number_variables), convexify(false) {
 }
 
 HessianEvaluation::~HessianEvaluation() {
@@ -12,31 +12,31 @@ HessianEvaluation::~HessianEvaluation() {
 CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& hessian) {
     MA57Solver solver;
     
-    this->inertia = 0.;
+    double inertia = 0.;
     COOMatrix coo_hessian = hessian.to_COO();
     MA57Factorization factorization = solver.factorize(coo_hessian);
     
     bool good_inertia = false;
     while (!good_inertia) {
-        DEBUG << "Testing factorization with inertia term " << this->inertia << "\n";
+        DEBUG << "Testing factorization with inertia term " << inertia << "\n";
         
         if (!factorization.matrix_is_singular() && factorization.number_negative_eigenvalues() == 0) {
             good_inertia = true;
             DEBUG << "Factorization was a success\n";
         }
         else {
-            if (this->inertia == 0.) {
-                this->inertia = 1e-4;
+            if (inertia == 0.) {
+                inertia = 1e-4;
             }
             else {
-                this->inertia *= 100.;
+                inertia *= 100.;
             }
-            hessian = hessian.add_identity_multiple(this->inertia);
+            hessian = hessian.add_identity_multiple(inertia);
             coo_hessian = hessian.to_COO();
             factorization = solver.factorize(coo_hessian);
         }
     }
-    DEBUG << "Final inertia: " << this->inertia << "\n";
+    DEBUG << "Final inertia: " << inertia << "\n";
     DEBUG << "Negative eigenvalues: " << factorization.number_negative_eigenvalues() << "\n";
     return hessian;
 }
