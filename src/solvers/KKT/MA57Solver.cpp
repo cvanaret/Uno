@@ -36,6 +36,9 @@ MA57Factorization MA57Solver::factorize(COOMatrix& matrix) {
         column_indices[k] += this->use_fortran;
     }
     
+    // suppress warning messages
+    this->icntl_[4] = 0;
+    
     /* info vector*/
     std::vector<int> info(40);
     ma57ad_(&n, &nnz, row_indices.data(), column_indices.data(), &lkeep, keep.data(), iwork.data(), this->icntl_.data(), info.data(), this->rinfo_.data());
