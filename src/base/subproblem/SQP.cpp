@@ -23,13 +23,17 @@ Iterate SQP::initialize(Problem& problem, std::vector<double>& x, Multipliers& m
     return first_iterate;
 }
 
-double SQP::compute_predicted_reduction(Iterate& /*current_iterate*/, SubproblemSolution& solution) {
-    return -solution.objective;
+double SQP::compute_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
+    // the predicted reduction is quadratic
+    if (step_length == 1.) {
+        return -solution.objective;
+    }
+    else {
+        double linear_term = dot(solution.x, current_iterate.objective_gradient);
+        double quadratic_term = current_iterate.hessian.quadratic_product(solution.x, solution.x) / 2.;
+        return -step_length * (linear_term + step_length * quadratic_term);
+    }
 }
-
-//double linear_term = dot(solution.x, current_iterate.objective_gradient);
-//double quadratic_term = current_iterate.hessian.quadratic_product(solution.x, solution.x) / 2.;
-//return -step_length * (linear_term + step_length * quadratic_term);
 
 bool SQP::phase_1_required(SubproblemSolution& solution) {
     return (solution.status == INFEASIBLE);

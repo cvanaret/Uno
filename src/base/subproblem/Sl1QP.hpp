@@ -33,8 +33,9 @@ public:
     void compute_optimality_measures(Problem& problem, Iterate& iterate) override;
     void compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution);
     
-    double compute_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution) override;
+    double compute_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
     bool phase_1_required(SubproblemSolution& solution) override;
+    double compute_complementarity_error(Problem& problem, Iterate& iterate, Multipliers& multipliers) override;
 
     /* use references to allow polymorphism */
     QPSolver& solver; /*!< Subproblem solver */
@@ -51,7 +52,7 @@ private:
     std::vector<Range> generate_variables_bounds(Problem& problem, Iterate& current_iterate, double trust_region_radius);
     SubproblemSolution solve_subproblem(Problem& problem, Iterate& current_iterate, double trust_region_radius, double penalty_parameter);
     double compute_linearized_constraint_residual(Problem& problem, std::vector<double>& x);
-    double compute_error(Problem& problem, Iterate& current_iterate, Multipliers& multipliers, double penalty_parameter);
+    double compute_error(Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter);
     void recover_active_set(Problem& problem, SubproblemSolution& solution, std::vector<Range>& variables_bounds);
 };
 

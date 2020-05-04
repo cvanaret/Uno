@@ -14,7 +14,7 @@ Iterate FilterStrategy::initialize(Problem& problem, std::vector<double>& x, Mul
     Iterate first_iterate = this->subproblem.initialize(problem, x, multipliers, use_trust_region);
 
     first_iterate.KKT_residual = Argonot::compute_KKT_error(problem, first_iterate, 1.);
-    first_iterate.complementarity_residual = Argonot::compute_complementarity_error(problem, first_iterate);
+    first_iterate.complementarity_residual = this->subproblem.compute_complementarity_error(problem, first_iterate, first_iterate.multipliers);
 
     /* set the filter upper bound */
     double upper_bound = std::max(this->constants.ubd, this->constants.fact * first_iterate.feasibility_measure);
@@ -64,18 +64,18 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
             // check acceptance wrt current x (h,f)
             acceptable = filter.improves_current_iterate(current_iterate.feasibility_measure, current_iterate.optimality_measure, trial_iterate.feasibility_measure, trial_iterate.optimality_measure);
             if (acceptable) {
-                double predicted_reduction = this->subproblem.compute_predicted_reduction(current_iterate, solution);
+                double predicted_reduction = this->subproblem.compute_predicted_reduction(current_iterate, solution, step_length);
                 double actual_reduction = filter.compute_actual_reduction(current_iterate.optimality_measure, current_iterate.feasibility_measure, trial_iterate.optimality_measure);
-                DEBUG << "Predicted reduction: " << step_length*predicted_reduction << ", actual: " << actual_reduction << "\n\n";
+                DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << actual_reduction << "\n\n";
 
                 /* switching condition */
-                if (step_length*predicted_reduction < this->constants.Delta * std::pow(current_iterate.feasibility_measure, 2)) {
+                if (predicted_reduction < this->constants.Delta * std::pow(current_iterate.feasibility_measure, 2)) {
                     filter.add(current_iterate.feasibility_measure, current_iterate.optimality_measure);
                     accept = true;
                 }
                     /* Armijo sufficient decrease condition */
                 // else if (actual_reduction >= this->constants.Sigma*step_length*std::max(0., predicted_reduction - 1e-9)) {
-                else if (actual_reduction >= this->constants.Sigma*step_length*predicted_reduction) {
+                else if (actual_reduction >= this->constants.Sigma*predicted_reduction) {
                     accept = true;
                 }
             }
@@ -90,10 +90,11 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
         trial_iterate.compute_objective(problem);
         trial_iterate.compute_constraint_residual(problem, this->subproblem.residual_norm);
         trial_iterate.KKT_residual = Argonot::compute_KKT_error(problem, trial_iterate, solution.objective_multiplier);
-        trial_iterate.complementarity_residual = (this->current_phase == OPTIMALITY) ? Argonot::compute_complementarity_error(problem, trial_iterate) : 0.;
+        trial_iterate.complementarity_residual = (this->current_phase == OPTIMALITY) ? this->subproblem.compute_complementarity_error(problem, trial_iterate, trial_iterate.multipliers) : 0.;
         trial_iterate.status = this->compute_status(problem, trial_iterate, step_norm, solution.objective_multiplier);
         INFO << "phase: " << this->current_phase << "\t";
         current_iterate = trial_iterate;
+        DEBUG << "Residuals: ||c|| = " << current_iterate.constraint_residual << ", KKT = " << current_iterate.KKT_residual << ", cmpl = " << current_iterate.complementarity_residual << "\n";
     }
     return accept;
 }

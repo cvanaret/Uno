@@ -35,7 +35,7 @@ public:
     virtual void compute_optimality_measures(Problem& problem, Iterate& iterate) = 0;
     virtual void compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution) = 0;
     
-    virtual double compute_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution) = 0;
+    virtual double compute_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution, double step_length) = 0;
     virtual bool phase_1_required(SubproblemSolution& solution) = 0;
 
     std::vector<Range> generate_variables_bounds(Iterate& current_iterate, double trust_region_radius);
@@ -43,6 +43,7 @@ public:
     static std::vector<Range> generate_constraints_bounds(Problem& problem, std::vector<double>& current_constraints);
     static std::vector<double> compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, std::vector<double>& default_multipliers, MA57Solver& solver, double multipliers_max_size=1e3);
     static std::vector<double> compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, std::vector<double>& default_multipliers, double multipliers_max_size=1e3);
+    virtual double compute_complementarity_error(Problem& problem, Iterate& iterate, Multipliers& multipliers);
     
     std::string residual_norm;
     // when the subproblem is reformulated (e.g. when slacks are introduced), the bounds may be altered as well

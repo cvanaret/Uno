@@ -17,7 +17,7 @@ public:
      */
     SLP(QPSolver& solver);
 
-    double compute_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution);
+    double compute_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution, double step_length);
     bool phase_1_required(SubproblemSolution& solution);
 
 private:

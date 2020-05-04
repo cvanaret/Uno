@@ -222,8 +222,16 @@ SubproblemSolution Sl1QP::compute_infeasibility_step(Problem& problem, Iterate& 
     throw std::out_of_range("Sl1QP.compute_infeasibility_step is not implemented, since l1QP are always feasible");
 }
 
-double Sl1QP::compute_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution) {
-    return current_iterate.feasibility_measure - solution.objective;
+double Sl1QP::compute_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
+    // the predicted reduction is quadratic
+    if (step_length == 1.) {
+        return current_iterate.feasibility_measure - solution.objective;
+    }
+    else {
+        double linear_term = dot(solution.x, current_iterate.objective_gradient);
+        double quadratic_term = current_iterate.hessian.quadratic_product(solution.x, solution.x) / 2.;
+        return current_iterate.feasibility_measure - step_length * (linear_term + step_length * quadratic_term);
+    }
 }
 
 void Sl1QP::compute_optimality_measures(Problem& problem, Iterate& iterate) {
@@ -256,8 +264,8 @@ std::vector<Range> Sl1QP::generate_variables_bounds(Problem& problem, Iterate& c
         variables_bounds[i] = {lb, ub};
     }
     /* p and n are non-negative */
-    for (unsigned int i = current_iterate.x.size(); i < current_iterate.x.size() + 2 * problem.number_constraints; i++) {
-        variables_bounds[i] = {0., INFINITY};
+    for (int i = 0; i < 2 * problem.number_constraints; i++) {
+        variables_bounds[current_iterate.x.size() + i] = {0., INFINITY};
     }
     return variables_bounds;
 }
@@ -271,28 +279,43 @@ double Sl1QP::compute_linearized_constraint_residual(Problem& problem, std::vect
     return residual;
 }
 
-double Sl1QP::compute_error(Problem& problem, Iterate& current_iterate, Multipliers& multipliers, double penalty_parameter) {
+double Sl1QP::compute_error(Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter) {
     /* measure that combines KKT error and complementarity error */
     double error = 0.;
 
     /* KKT error */
-    std::vector<double> lagrangian_gradient = current_iterate.lagrangian_gradient(problem, penalty_parameter, multipliers);
-    // compute 1-norm
+    std::vector<double> lagrangian_gradient = iterate.lagrangian_gradient(problem, penalty_parameter, multipliers);
     error += norm_1(lagrangian_gradient);
+    /* complementarity error */
+    error += this->compute_complementarity_error(problem, iterate, multipliers);
+    return error;
+}
 
-    /* complementarity error of bound constraints */
-    for (int j = 0; j < problem.number_constraints; j++) {
-        if (current_iterate.constraints[j] < problem.constraints_bounds[j].lb) {
-            // violated lower: the multiplier is 1 at optimum
-            error += std::abs((1. - multipliers.constraints[j]) * (problem.constraints_bounds[j].lb - current_iterate.constraints[j]));
+/* complementary slackness error. Use abs/1e-8 to safeguard */
+double Sl1QP::compute_complementarity_error(Problem& problem, Iterate& iterate, Multipliers& multipliers) {
+    double error = 0.;
+    /* bound constraints */
+    for (int i = 0; i < problem.number_variables; i++) {
+        if (-INFINITY < problem.variables_bounds[i].lb) {
+            error += std::abs(iterate.multipliers.lower_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].lb));
         }
-        else if (problem.constraints_bounds[j].ub < current_iterate.constraints[j]) {
+        if (problem.variables_bounds[i].ub < INFINITY) {
+            error += std::abs(iterate.multipliers.upper_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].ub));
+        }
+    }
+    /* general constraints */
+    for (int j = 0; j < problem.number_constraints; j++) {
+        if (iterate.constraints[j] < problem.constraints_bounds[j].lb) {
+            // violated lower: the multiplier is 1 at optimum
+            error += std::abs((1. - multipliers.constraints[j]) * (problem.constraints_bounds[j].lb - iterate.constraints[j]));
+        }
+        else if (problem.constraints_bounds[j].ub < iterate.constraints[j]) {
             // violated upper: the multiplier is -1 at optimum
-            error += std::abs((1. + multipliers.constraints[j]) * (current_iterate.constraints[j] - problem.constraints_bounds[j].ub));
+            error += std::abs((1. + multipliers.constraints[j]) * (iterate.constraints[j] - problem.constraints_bounds[j].ub));
         }
         else {
             // strictly satisfied: the multiplier is 0 at optimum
-            error += std::abs(multipliers.constraints[j]*current_iterate.constraints[j]);
+            error += std::abs(multipliers.constraints[j]*iterate.constraints[j]);
         }
     }
     return error;

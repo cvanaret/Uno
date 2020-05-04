@@ -102,3 +102,30 @@ std::vector<double> Subproblem::compute_least_square_multipliers(Problem& proble
     }
     return multipliers;
 }
+
+/* complementary slackness error. Use abs/1e-8 to safeguard */
+double Subproblem::compute_complementarity_error(Problem& problem, Iterate& iterate, Multipliers& multipliers) {
+    std::cout << "Calling Subproblem::compute_complementarity_error\n";
+    double complementarity_error = 0.;
+    /* bound constraints */
+    for (int i = 0; i < problem.number_variables; i++) {
+        if (-INFINITY < problem.variables_bounds[i].lb) {
+            complementarity_error += std::abs(multipliers.lower_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].lb));
+        }
+        if (problem.variables_bounds[i].ub < INFINITY) {
+            complementarity_error += std::abs(multipliers.upper_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].ub));
+        }
+    }
+    /* constraints */
+    iterate.compute_constraints(problem);
+    for (int j = 0; j < problem.number_constraints; j++) {
+        double multiplier_j = multipliers.constraints[j];
+        if (-INFINITY < problem.constraints_bounds[j].lb && 0. < multiplier_j) {
+            complementarity_error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraints_bounds[j].lb));
+        }
+        if (problem.constraints_bounds[j].ub < INFINITY && multiplier_j < 0.) {
+            complementarity_error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraints_bounds[j].ub));
+        }
+    }
+    return complementarity_error;
+}

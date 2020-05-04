@@ -80,7 +80,7 @@ SubproblemSolution SLPEQP::compute_infeasibility_step(Problem& problem, Iterate&
     return this->compute_optimality_step(problem, current_iterate, trust_region_radius);
 }
 
-double SLPEQP::compute_predicted_reduction(Iterate& /*current_iterate*/, SubproblemSolution& solution) {
+double SLPEQP::compute_predicted_reduction(Iterate& /*current_iterate*/, SubproblemSolution& solution, double step_length) {
     return -solution.objective;
 }
 

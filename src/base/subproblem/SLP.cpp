@@ -8,8 +8,9 @@
 SLP::SLP(QPSolver& solver) : ActiveSetMethod(solver) {
 }
 
-double SLP::compute_predicted_reduction(Iterate& /*current_iterate*/, SubproblemSolution& solution) {
-    return -solution.objective;
+double SLP::compute_predicted_reduction(Iterate& /*current_iterate*/, SubproblemSolution& solution, double step_length) {
+    // the predicted reduction is linear
+    return -step_length*solution.objective;
 }
 
 bool SLP::phase_1_required(SubproblemSolution& solution) {

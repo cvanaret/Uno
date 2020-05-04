@@ -470,8 +470,9 @@ double InteriorPoint::evaluate_local_model(Problem& /*problem*/, Iterate& curren
     return subproblem_objective;
 }
 
-double InteriorPoint::compute_predicted_reduction(Iterate& /*current_iterate*/, SubproblemSolution& solution) {
-    return -solution.objective;
+double InteriorPoint::compute_predicted_reduction(Iterate& /*current_iterate*/, SubproblemSolution& solution, double step_length) {
+    // the predicted reduction is linear
+    return -step_length*solution.objective;
 }
 
 SubproblemSolution InteriorPoint::compute_infeasibility_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) {
