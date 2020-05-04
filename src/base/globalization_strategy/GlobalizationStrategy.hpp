@@ -37,6 +37,7 @@ class GlobalizationStrategy {
     protected:
         // specific to the strategy (objective multiplier depends on the strategy)
         double compute_KKT_error(Problem& problem, Iterate& iterate, double objective_mutiplier, std::string norm = "l2");
+        OptimalityStatus compute_status(Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier);
 };
 
 #endif // GLOBALIZATIONSTRATEGY_H

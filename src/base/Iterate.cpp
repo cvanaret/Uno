@@ -80,7 +80,6 @@ std::vector<double> Iterate::lagrangian_gradient(Problem& problem, double object
             lagrangian_gradient[i] += objective_mutiplier*derivative;
         }
     }
-
     /* bound constraints */
     for (unsigned int i = 0; i < this->x.size(); i++) {
         lagrangian_gradient[i] -= multipliers.lower_bounds[i] + multipliers.upper_bounds[i];

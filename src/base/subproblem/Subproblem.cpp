@@ -105,7 +105,6 @@ std::vector<double> Subproblem::compute_least_square_multipliers(Problem& proble
 
 /* complementary slackness error. Use abs/1e-8 to safeguard */
 double Subproblem::compute_complementarity_error(Problem& problem, Iterate& iterate, Multipliers& multipliers) {
-    std::cout << "Calling Subproblem::compute_complementarity_error\n";
     double complementarity_error = 0.;
     /* bound constraints */
     for (int i = 0; i < problem.number_variables; i++) {
