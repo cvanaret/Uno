@@ -1,6 +1,6 @@
 #include "Subproblem.hpp"
 
-Subproblem::Subproblem(std::string restoration_norm) : residual_norm(restoration_norm), number_subproblems_solved(0), subproblem_definition_changed(false) {
+Subproblem::Subproblem(std::string residual_norm): residual_norm(residual_norm), number_subproblems_solved(0), subproblem_definition_changed(false) {
 }
 
 Subproblem::~Subproblem() {
@@ -46,19 +46,19 @@ std::vector<double> Subproblem::compute_least_square_multipliers(Problem& proble
 std::vector<double> Subproblem::compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, std::vector<double>& default_multipliers, MA57Solver& solver, double multipliers_max_size) {
     current_iterate.compute_objective_gradient(problem);
     current_iterate.compute_constraints_jacobian(problem);
-    
+
     /******************************/
     /* build the symmetric matrix */
     /******************************/
-    COOMatrix matrix(current_iterate.x.size() + problem.number_constraints);
-    
+    COOMatrix matrix(current_iterate.x.size() + problem.number_constraints, 1);
+
     /* identity blocks */
     for (unsigned int i = 0; i < current_iterate.x.size(); i++) {
         matrix.add_term(1., i, i);
     }
     /* Jacobian of general constraints */
     for (int j = 0; j < problem.number_constraints; j++) {
-        for (std::pair<const int, double>& term : current_iterate.constraints_jacobian[j]) {
+        for (std::pair<const int, double>& term: current_iterate.constraints_jacobian[j]) {
             int variable_index = term.first;
             double derivative = term.second;
             matrix.add_term(derivative, variable_index, current_iterate.x.size() + j);
@@ -68,14 +68,14 @@ std::vector<double> Subproblem::compute_least_square_multipliers(Problem& proble
     for (unsigned int k = 0; k < matrix.matrix.size(); k++) {
         DEBUG << "m(" << matrix.row_indices[k] << ", " << matrix.column_indices[k] << ") = " << matrix.matrix[k] << "\n";
     }
-    
+
     /********************************/
     /* generate the right-hand side */
     /********************************/
     std::vector<double> rhs(current_iterate.x.size() + problem.number_constraints);
 
     /* objective gradient */
-    for (std::pair<int, double> term : current_iterate.objective_gradient) {
+    for (std::pair<int, double> term: current_iterate.objective_gradient) {
         int i = term.first;
         double derivative = term.second;
         rhs[i] += problem.objective_sign*derivative;
@@ -84,13 +84,15 @@ std::vector<double> Subproblem::compute_least_square_multipliers(Problem& proble
     for (unsigned int i = 0; i < current_iterate.x.size(); i++) {
         rhs[i] -= current_iterate.multipliers.lower_bounds[i];
         rhs[i] -= current_iterate.multipliers.upper_bounds[i];
-    }    
-    DEBUG << "Multipliers RHS:\n"; print_vector(DEBUG, rhs);
-    
+    }
+    DEBUG << "Multipliers RHS:\n";
+    print_vector(DEBUG, rhs);
+
     MA57Factorization factorization = solver.factorize(matrix);
     std::vector<double> solution = solver.solve(factorization, rhs);
-    DEBUG << "Solution: "; print_vector(DEBUG, solution);
-    
+    DEBUG << "Solution: ";
+    print_vector(DEBUG, solution);
+
     /* retrieve multipliers */
     std::vector<double> multipliers(problem.number_constraints);
     for (int j = 0; j < problem.number_constraints; j++) {
@@ -107,12 +109,12 @@ std::vector<double> Subproblem::compute_least_square_multipliers(Problem& proble
 double Subproblem::compute_complementarity_error(Problem& problem, Iterate& iterate, Multipliers& multipliers) {
     double complementarity_error = 0.;
     /* bound constraints */
-    for (int i = 0; i < problem.number_variables; i++) {
-        if (-INFINITY < problem.variables_bounds[i].lb) {
-            complementarity_error += std::abs(multipliers.lower_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].lb));
+    for (unsigned int i = 0; i < iterate.x.size(); i++) {
+        if (-INFINITY < this->subproblem_variables_bounds[i].lb) {
+            complementarity_error += std::abs(multipliers.lower_bounds[i] * (iterate.x[i] - this->subproblem_variables_bounds[i].lb));
         }
-        if (problem.variables_bounds[i].ub < INFINITY) {
-            complementarity_error += std::abs(multipliers.upper_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].ub));
+        if (this->subproblem_variables_bounds[i].ub < INFINITY) {
+            complementarity_error += std::abs(multipliers.upper_bounds[i] * (iterate.x[i] - this->subproblem_variables_bounds[i].ub));
         }
     }
     /* constraints */
