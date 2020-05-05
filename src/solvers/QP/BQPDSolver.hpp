@@ -27,12 +27,8 @@ public:
      * 
      * \param n: number of variables
      * \param m: number of constraints
-     * \param hessian_nnz: number of nonzero terms in the Hessian
      */
-    BQPDSolver();
-    //BQPDSolver(std::vector<int>& hessian_column_start, std::vector<int>& hessian_row_number);
-
-    //void allocate(int n, int m);
+    BQPDSolver(int number_variables, int number_constraints, int max_number_nonzeros);
 
     /*!
      *  Solve a QP
@@ -50,29 +46,31 @@ public:
 
 
 private:
+    int n_, m_;
+    int maximum_number_nonzeros;
     int use_fortran;
     int kmax_, mlp_, mxwk0_, mxiwk0_;
     std::vector<int> info_;
     std::vector<double> alp_;
     std::vector<int> lp_, ls_;
     std::vector<double> w_, gradient_solution_, residuals_, e_;
-    int hessian_nnz_, nhr_, nhi_, mxws_, mxlws_;
+    int nhr_, nhi_, mxws_, mxlws_;
     std::vector<double> ws_;
-    //std::vector<int> lws_;
+    std::vector<int> lws_;
     int k_;
     BQPDMode mode_;
     int iprint_, nout_;
     double fmin_, f_solution_;
     int peq_solution_, ifail_;
-    std::vector<int> hessian_column_start, hessian_row_number;
+    //std::vector<int> hessian_column_start, hessian_row_number;
 
     /*!
      *  Create a SubproblemSolution from BQPD's solution
      * 
      * \param d: optimal solution
      */
-    SubproblemSolution generate_solution(std::vector<double>& x, int n, int m);
-    SubproblemSolution solve_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, std::vector<double>& x, int kmax, std::vector<int>& lws_);
+    SubproblemSolution generate_solution(std::vector<double>& x);
+    SubproblemSolution solve_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, std::vector<double>& x, int kmax);
     void build_jacobian(std::vector<double>& full_jacobian, std::vector<int>& full_jacobian_sparsity, std::map<int, double>& jacobian);
 };
 

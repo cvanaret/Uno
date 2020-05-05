@@ -5,7 +5,7 @@
 #include "Matrix.hpp"
 
 struct MA57Factorization {
-    int size;
+    int dimension;
 	std::vector<double> fact;
 	int lfact;
 	std::vector<int> ifact;
@@ -28,7 +28,7 @@ class MA57Solver {
 	public:
 		MA57Solver();
 		
-		int use_fortran;
+		int fortran_indexing;
 		
 		MA57Factorization factorize(COOMatrix& matrix);
 		std::vector<double> solve(MA57Factorization& factorization, std::vector<double>& rhs);

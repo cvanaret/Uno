@@ -7,10 +7,11 @@
 
 class Matrix {
 public:
-    Matrix(int size);
+    Matrix(int dimension, int fortran_indexing);
     virtual ~Matrix();
 
-    int size;
+    int dimension;
+    int fortran_indexing;
 
     virtual int number_nonzeros() = 0;
     /* build the matrix incrementally */
@@ -24,7 +25,7 @@ public:
 class COOMatrix : public Matrix {
     /* Coordinate list */
 public:
-    COOMatrix(int size);
+    COOMatrix(int dimension, int fortran_indexing);
 
     std::vector<double> matrix;
     std::vector<int> row_indices;
@@ -48,7 +49,7 @@ class CSCMatrix : public Matrix {
     /* Compressed Sparse Column */
 public:
     CSCMatrix();
-    CSCMatrix(std::vector<double>& matrix, std::vector<int>& column_start, std::vector<int>& row_number);
+    CSCMatrix(std::vector<double>& matrix, std::vector<int>& column_start, std::vector<int>& row_number, int fortran_indexing);
 
     std::vector<double> matrix;
     std::vector<int> column_start;
@@ -59,6 +60,7 @@ public:
     std::vector<double> product(std::vector<double>& vector) override;
     
     CSCMatrix add_identity_multiple(double multiple);
+    double smallest_diagonal_entry();
     COOMatrix to_COO();
     ArgonotMatrix to_ArgonotMatrix(int argonot_matrix_size);
 
@@ -69,7 +71,7 @@ public:
 class ArgonotMatrix : public Matrix {
     /* Coordinate list */
 public:
-    ArgonotMatrix(int size);
+    ArgonotMatrix(int dimension, int fortran_indexing);
 
     std::map<int, double> matrix;
 

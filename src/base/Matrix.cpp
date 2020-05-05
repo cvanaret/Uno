@@ -1,8 +1,10 @@
 #include <exception>
+#include <cmath>
 #include "Matrix.hpp"
 #include "Utils.hpp"
+#include "SubproblemSolution.hpp"
 
-Matrix::Matrix(int size): size(size) {
+Matrix::Matrix(int dimension, int fortran_indexing): dimension(dimension), fortran_indexing(fortran_indexing) {
 }
 
 Matrix::~Matrix() {
@@ -29,7 +31,7 @@ void Matrix::add_outer_product(std::map<int, double>& x, double scaling_factor) 
             // upper triangular matrix
             if (row_index <= column_index) {
                 // add product of components
-                this->add_term(scaling_factor*row_term*column_term, row_index, column_index);
+                this->add_term(scaling_factor * row_term*column_term, row_index, column_index);
             }
         }
     }
@@ -41,7 +43,7 @@ void Matrix::add_outer_product(std::map<int, double>& x, double scaling_factor) 
  * https://en.wikipedia.org/wiki/Sparse_matrix#Coordinate_list_(COO)
  */
 
-COOMatrix::COOMatrix(int size): Matrix(size) {
+COOMatrix::COOMatrix(int dimension, int fortran_indexing): Matrix(dimension, fortran_indexing) {
 }
 
 int COOMatrix::number_nonzeros() {
@@ -51,8 +53,8 @@ int COOMatrix::number_nonzeros() {
 void COOMatrix::add_term(double term, int row_index, int column_index) {
     /* TODO: check matrix size */
     this->matrix.push_back(term);
-    this->row_indices.push_back(row_index);
-    this->column_indices.push_back(column_index);
+    this->row_indices.push_back(row_index + this->fortran_indexing);
+    this->column_indices.push_back(column_index + this->fortran_indexing);
     return;
 }
 
@@ -60,12 +62,12 @@ double COOMatrix::norm_1() {
     // compute maximum column index
     int number_columns = 0;
     for (unsigned int k = 0; k < this->column_indices.size(); k++) {
-        number_columns = std::max(number_columns, 1 + this->column_indices[k]);
+        number_columns = std::max(number_columns, 1 + this->column_indices[k] - this->fortran_indexing);
     }
     // read the matrix and fill in the column_vectors norm vector
     std::vector<double> column_vectors(number_columns);
     for (unsigned int k = 0; k < this->matrix.size(); k++) {
-        int j = this->column_indices[k];
+        int j = this->column_indices[k] - this->fortran_indexing;
         column_vectors[j] += std::abs(this->matrix[k]);
     }
     // compute the maximal component of the column_vectors vector
@@ -79,10 +81,10 @@ double COOMatrix::norm_1() {
 std::vector<double> COOMatrix::product(std::vector<double>& vector) {
     std::vector<double> result(vector.size());
     for (unsigned int k = 0; k < this->matrix.size(); k++) {
-        int i = this->row_indices[k];
-        int j = this->column_indices[k];
+        int i = this->row_indices[k] - this->fortran_indexing;
+        int j = this->column_indices[k] - this->fortran_indexing;
         result[i] += this->matrix[k] * vector[j];
-        
+
         // off-diagonal term
         if (i != j) {
             result[j] += this->matrix[k] * vector[i];
@@ -110,18 +112,18 @@ std::ostream& operator<<(std::ostream &stream, const COOMatrix& matrix) {
  * https://en.wikipedia.org/wiki/Sparse_matrix#Compressed_sparse_column_(CSC_or_CCS)
  */
 
-CSCMatrix::CSCMatrix(): Matrix(0) {
+CSCMatrix::CSCMatrix(): Matrix(0, 0) {
 }
 
-CSCMatrix::CSCMatrix(std::vector<double>& matrix, std::vector<int>& column_start, std::vector<int>& row_number):
-Matrix(column_start.size() - 1), matrix(matrix), column_start(column_start), row_number(row_number) {
+CSCMatrix::CSCMatrix(std::vector<double>& matrix, std::vector<int>& column_start, std::vector<int>& row_number, int fortran_indexing):
+Matrix(column_start.size() - 1, fortran_indexing), matrix(matrix), column_start(column_start), row_number(row_number) {
 }
 
 int CSCMatrix::number_nonzeros() {
     return this->matrix.size();
 }
 
-void CSCMatrix::add_term(double term, int row_index, int column_index) {
+void CSCMatrix::add_term(double /*term*/, int /*row_index*/, int /*column_index*/) {
     throw std::out_of_range("CSCMatrix::add_term is not implemented");
 }
 
@@ -130,13 +132,10 @@ std::vector<double> CSCMatrix::product(std::vector<double>& vector) {
     int n = this->column_start.size() - 1;
     /* create (n, 1) result */
     std::vector<double> result(n); // = {0.}
-    for (int i = 0; i < n; i++) {
-        result[i] = 0.;
-    }
 
     for (int j = 0; j < n; j++) {
-        for (int k = this->column_start[j]; k < this->column_start[j + 1]; k++) {
-            int i = this->row_number[k];
+        for (int k = this->column_start[j] - this->fortran_indexing; k < this->column_start[j + 1] - this->fortran_indexing; k++) {
+            int i = this->row_number[k] - this->fortran_indexing;
             result[i] += vector[j] * this->matrix[k];
 
             /* non diagonal terms of the lower triangle */
@@ -155,15 +154,15 @@ CSCMatrix CSCMatrix::add_identity_multiple(double multiple) {
     std::vector<int> damped_row_number;
 
     int current_number_nonzeros = 0;
-    damped_column_start.push_back(current_number_nonzeros);
+    damped_column_start.push_back(current_number_nonzeros + this->fortran_indexing);
 
     /* go through the columns */
-    for (int j = 0; j < this->size; j++) {
+    for (int j = 0; j < this->dimension; j++) {
         bool diagonal_term_updated = false;
 
-        for (int k = this->column_start[j]; k < this->column_start[j + 1]; k++) {
+        for (int k = this->column_start[j] - this->fortran_indexing; k < this->column_start[j + 1] - this->fortran_indexing; k++) {
             /* compute row number */
-            int i = this->row_number[k];
+            int i = this->row_number[k] - this->fortran_indexing;
 
             if (i == j) { /* update diagonal term */
                 damped_matrix.push_back(this->matrix[k] + multiple);
@@ -172,38 +171,58 @@ CSCMatrix CSCMatrix::add_identity_multiple(double multiple) {
             else { /* keep off-diagonal term */
                 damped_matrix.push_back(this->matrix[k]);
             }
-            damped_row_number.push_back(i);
+            damped_row_number.push_back(i + this->fortran_indexing);
             current_number_nonzeros++;
         }
         /* add diagonal term at end of column if not present */
         if (!diagonal_term_updated) {
             damped_matrix.push_back(multiple);
-            damped_row_number.push_back(j);
+            damped_row_number.push_back(j + this->fortran_indexing);
             current_number_nonzeros++;
         }
-        damped_column_start.push_back(current_number_nonzeros);
+        damped_column_start.push_back(current_number_nonzeros + this->fortran_indexing);
     }
-    return CSCMatrix(damped_matrix, damped_column_start, damped_row_number);
+    return CSCMatrix(damped_matrix, damped_column_start, damped_row_number, this->fortran_indexing);
+}
+
+double CSCMatrix::smallest_diagonal_entry() {
+    double smallest_entry = INFINITY;
+
+    for (int j = 0; j < this->dimension; j++) {
+        for (int k = this->column_start[j] - this->fortran_indexing; k < this->column_start[j + 1] - this->fortran_indexing; k++) {
+            /* compute row number */
+            int i = this->row_number[k] - this->fortran_indexing;
+            
+            if (i == j) {
+                smallest_entry = std::min(smallest_entry, this->matrix[k]);
+            }
+        }
+    }
+
+    if (smallest_entry == INFINITY) {
+        smallest_entry = 0.;
+    }
+    return smallest_entry;
 }
 
 COOMatrix CSCMatrix::to_COO() {
-    COOMatrix coo_matrix(this->size);
+    COOMatrix coo_matrix(this->dimension, this->fortran_indexing);
 
-    for (int j = 0; j < this->size; j++) {
-        for (int k = this->column_start[j]; k < this->column_start[j + 1]; k++) {
-            int i = this->row_number[k];
+    for (int j = 0; j < this->dimension; j++) {
+        for (int k = this->column_start[j] - this->fortran_indexing; k < this->column_start[j + 1] - this->fortran_indexing; k++) {
+            int i = this->row_number[k] - this->fortran_indexing;
             coo_matrix.add_term(this->matrix[k], i, j);
         }
     }
     return coo_matrix;
 }
 
-ArgonotMatrix CSCMatrix::to_ArgonotMatrix(int argonot_matrix_size) {
-    ArgonotMatrix argonot_matrix(argonot_matrix_size);
+ArgonotMatrix CSCMatrix::to_ArgonotMatrix(int argonot_matrix_dimension) {
+    ArgonotMatrix argonot_matrix(argonot_matrix_dimension, this->fortran_indexing);
 
-    for (int j = 0; j < this->size; j++) {
-        for (int k = this->column_start[j]; k < this->column_start[j + 1]; k++) {
-            int i = this->row_number[k];
+    for (int j = 0; j < this->dimension; j++) {
+        for (int k = this->column_start[j] - this->fortran_indexing; k < this->column_start[j + 1] - this->fortran_indexing; k++) {
+            int i = this->row_number[k] - this->fortran_indexing;
             argonot_matrix.add_term(this->matrix[k], i, j);
         }
     }
@@ -284,7 +303,7 @@ std::ostream& operator<<(std::ostream &stream, const CSCMatrix& matrix) {
  * Argonot matrix: bijection between indices and single key + sparse vector (map)
  */
 
-ArgonotMatrix::ArgonotMatrix(int size): Matrix(size) {
+ArgonotMatrix::ArgonotMatrix(int dimension, int fortran_indexing): Matrix(dimension, fortran_indexing) {
 }
 
 int ArgonotMatrix::number_nonzeros() {
@@ -293,7 +312,7 @@ int ArgonotMatrix::number_nonzeros() {
 
 void ArgonotMatrix::add_term(double term, int row_index, int column_index) {
     // generate the unique key
-    int key = column_index * this->size + row_index;
+    int key = column_index * this->dimension + row_index;
     // insert the element
     this->matrix[key] += term;
     return;
@@ -305,7 +324,7 @@ double ArgonotMatrix::norm_1() {
     for (std::pair<const unsigned int, double> element: this->matrix) {
         int key = element.first;
         // retrieve indices
-        int j = key / this->size;
+        int j = key / this->dimension;
         number_columns = std::max(number_columns, 1 + j);
     }
     // read the matrix and fill in the column_vectors norm vector
@@ -314,7 +333,7 @@ double ArgonotMatrix::norm_1() {
         int key = element.first;
         double value = element.second;
         // retrieve indices
-        int j = key / this->size;
+        int j = key / this->dimension;
         column_vectors[j] += std::abs(value);
     }
     // compute the maximal component of the column_vectors vector
@@ -330,14 +349,14 @@ std::vector<double> ArgonotMatrix::product(std::vector<double>& vector) {
 }
 
 COOMatrix ArgonotMatrix::to_COO() {
-    COOMatrix coo_matrix(this->size);
+    COOMatrix coo_matrix(this->dimension, this->fortran_indexing);
 
     for (std::pair<const int, double> element: this->matrix) {
         int key = element.first;
         double value = element.second;
         // retrieve indices
-        int i = key % this->size;
-        int j = key / this->size;
+        int i = key % this->dimension;
+        int j = key / this->dimension;
         coo_matrix.add_term(value, i, j);
     }
     return coo_matrix;
@@ -353,8 +372,8 @@ CSCMatrix ArgonotMatrix::to_CSC() {
         csc_matrix.matrix.push_back(value);
         // retrieve indices
         int key = element.first;
-        int i = key % this->size;
-        int j = key / this->size;
+        int i = key % this->dimension;
+        int j = key / this->dimension;
 
         if (previous_column < j) {
             csc_matrix.column_start.push_back(current_term);
@@ -372,8 +391,8 @@ std::ostream& operator<<(std::ostream &stream, ArgonotMatrix& matrix) {
         int key = element.first;
         double value = element.second;
         // retrieve indices
-        int i = key % matrix.size;
-        int j = key / matrix.size;
+        int i = key % matrix.dimension;
+        int j = key / matrix.dimension;
         stream << "m[" << i << ", " << j << "] = " << value << ", ";
     }
     return stream;

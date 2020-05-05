@@ -31,7 +31,7 @@ ASL_pfgh* generate_asl(std::string file_name, Option_Info* option_info) {
     return asl;
 }
 
-AMPLModel::AMPLModel(std::string file_name) : Problem(file_name) {
+AMPLModel::AMPLModel(std::string file_name, int fortran_indexing): Problem(file_name), fortran_indexing(fortran_indexing) {
     /* TODO: avoid using implicit AMPL macros */
     keyword keywords[1];
     int size_keywords = sizeof (keywords) / sizeof (keyword);
@@ -347,21 +347,21 @@ void AMPLModel::initialize_lagrangian_hessian() {
     /* fint (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri); */
     int obj_number = 0;
     int upper_triangular = 1;
-    this->hessian_maximum_number_nonzero = (*((ASL*) this->asl_)->p.Sphset)((ASL*) this->asl_, NULL, obj_number, 1, 1, upper_triangular);
+    this->hessian_maximum_number_nonzeros = (*((ASL*) this->asl_)->p.Sphset)((ASL*) this->asl_, NULL, obj_number, 1, 1, upper_triangular);
 
     /* build sparse description */
     this->hessian_column_start.resize(this->number_variables + 1);
     int* ampl_column_start = this->asl_->i.sputinfo_->hcolstarts;
     for (int k = 0; k < this->number_variables + 1; k++) {
-        this->hessian_column_start[k] = ampl_column_start[k];
+        this->hessian_column_start[k] = ampl_column_start[k] + this->fortran_indexing;
     }
 
-    this->hessian_row_number.resize(this->hessian_maximum_number_nonzero);
+    this->hessian_row_number.resize(this->hessian_maximum_number_nonzeros);
     int* ampl_row_number = this->asl_->i.sputinfo_->hrownos;
-    for (int k = 0; k < this->hessian_maximum_number_nonzero; k++) {
-        this->hessian_row_number[k] = ampl_row_number[k];
+    for (int k = 0; k < this->hessian_maximum_number_nonzeros; k++) {
+        this->hessian_row_number[k] = ampl_row_number[k] + this->fortran_indexing;
     }
-    
+
     // use Lagrangian scale: in AMPL, the Lagrangian is f + lambda.g, while Argonot uses f - lambda.g
     int nerror;
     lagscale_ASL((ASL*) this->asl_, -1., &nerror);
@@ -376,15 +376,15 @@ CSCMatrix AMPLModel::lagrangian_hessian(std::vector<double>& x, double objective
     /* set the multiplier for the objective function */
     int obj_number = (objective_multiplier != 0.) ? 0 : -1;
     double* obj_multiplier = (objective_multiplier != 0.) ? &objective_multiplier : NULL;
-    
+
     /* compute the Hessian */
-    std::vector<double> hessian(this->hessian_maximum_number_nonzero);
+    std::vector<double> hessian(this->hessian_maximum_number_nonzeros);
     (*((ASL*) this->asl_)->p.Sphes)((ASL*) this->asl_, 0, hessian.data(), obj_number, obj_multiplier, multipliers.data());
 
     /* unregister the vector of variables */
     this->asl_->i.x_known = 0;
 
-    return CSCMatrix(hessian, this->hessian_column_start, this->hessian_row_number);
+    return CSCMatrix(hessian, this->hessian_column_start, this->hessian_row_number, this->fortran_indexing);
 }
 
 /* initial primal point */

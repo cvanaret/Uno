@@ -12,11 +12,11 @@ extern "C" {
             int* lrhs, double work[], int* lwork, int iwork[], int icntl[], int info[]);
 }
 
-MA57Solver::MA57Solver() : use_fortran(1), cntl_(5), icntl_(20), rinfo_(20) {
+MA57Solver::MA57Solver(): fortran_indexing(1), cntl_(5), icntl_(20), rinfo_(20) {
 }
 
 MA57Factorization MA57Solver::factorize(COOMatrix& matrix) {
-    int n = matrix.size;
+    int n = matrix.dimension;
     int nnz = matrix.number_nonzeros();
 
     /* initialize */
@@ -26,22 +26,17 @@ MA57Factorization MA57Solver::factorize(COOMatrix& matrix) {
     int lkeep = 5 * n + nnz + std::max(n, nnz) + 42;
     std::vector<int> keep(lkeep);
     std::vector<int> iwork(5 * n);
-    std::vector<int> row_indices(matrix.row_indices);
-    std::vector<int> column_indices(matrix.column_indices);
-    /* shift the indices for Fortran */
-    for (unsigned int k = 0; k < row_indices.size(); k++) {
-        row_indices[k] += this->use_fortran;
+
+    if (matrix.fortran_indexing != this->fortran_indexing) {
+        throw std::runtime_error("MA57Solver::factorize: please use the correct Fortran indexing");
     }
-    for (unsigned int k = 0; k < column_indices.size(); k++) {
-        column_indices[k] += this->use_fortran;
-    }
-    
+
     // suppress warning messages
     this->icntl_[4] = 0;
-    
+
     /* info vector*/
     std::vector<int> info(40);
-    ma57ad_(&n, &nnz, row_indices.data(), column_indices.data(), &lkeep, keep.data(), iwork.data(), this->icntl_.data(), info.data(), this->rinfo_.data());
+    ma57ad_(&n, &nnz, matrix.row_indices.data(), matrix.column_indices.data(), &lkeep, keep.data(), iwork.data(), this->icntl_.data(), info.data(), this->rinfo_.data());
 
     /* factorize */
     int lfact = 2 * info[8];
@@ -55,7 +50,7 @@ MA57Factorization MA57Solver::factorize(COOMatrix& matrix) {
 
 std::vector<double> MA57Solver::solve(MA57Factorization& factorization, std::vector<double>& rhs) {
     /* solve */
-    int n = factorization.size;
+    int n = factorization.dimension;
     int job = 1;
     int nrhs = 1; // number of right hand side being solved
     int lrhs = n; // integer, length of rhs
@@ -82,34 +77,34 @@ int MA57Factorization::rank() {
 
 
 //void test() {
-    /*
-    A[0][0] = 2; A[0][1] = 3;
-    A[1][2] = 4; A[1][4] = 6;
-    A[2][2] = 1; A[2][3] = 5;
-    A[4][4] = 1;
-     */
+/*
+A[0][0] = 2; A[0][1] = 3;
+A[1][2] = 4; A[1][4] = 6;
+A[2][2] = 1; A[2][3] = 5;
+A[4][4] = 1;
+ */
 
-    //int n = 5;
-    //COOMatrix matrix(n, 0);
-    //matrix.add_term(2., 0, 0);
-    //matrix.add_term(3., 0, 1);
-    //matrix.add_term(4., 1, 2);
-    //matrix.add_term(6., 1, 4);
-    //matrix.add_term(1., 2, 2);
-    //matrix.add_term(5., 2, 3);
-    //matrix.add_term(1., 4, 4);
+//int n = 5;
+//COOMatrix matrix(n, 0);
+//matrix.add_term(2., 0, 0);
+//matrix.add_term(3., 0, 1);
+//matrix.add_term(4., 1, 2);
+//matrix.add_term(6., 1, 4);
+//matrix.add_term(1., 2, 2);
+//matrix.add_term(5., 2, 3);
+//matrix.add_term(1., 4, 4);
 
-    /* right hand side */
-    //std::vector<double> rhs = {8., 45., 31., 15., 17.};
+/* right hand side */
+//std::vector<double> rhs = {8., 45., 31., 15., 17.};
 
-    //MA57Solver s;
-    //MA57Factorization data = s.factorize(matrix);
-    //std::vector<double> solution = s.solve(matrix, rhs, data);
+//MA57Solver s;
+//MA57Factorization data = s.factorize(matrix);
+//std::vector<double> solution = s.solve(matrix, rhs, data);
 
-    //std::cout << "solution";
-    //for (unsigned int k = 0; k < solution.size(); k++) {
-    //    std::cout << " " << solution[k];
-    //}
-    //std::cout << "\n";
-    //return;
+//std::cout << "solution";
+//for (unsigned int k = 0; k < solution.size(); k++) {
+//    std::cout << " " << solution[k];
+//}
+//std::cout << "\n";
+//return;
 //}

@@ -44,11 +44,13 @@ class AMPLModel: public Problem {
 		/*!
          *  Constructor that takes the list of arguments of the command line
          */
-		AMPLModel(std::string file_name);
+		AMPLModel(std::string file_name, int fortran_indexing);
 		/*!
          *  Destructor
          */
 		~AMPLModel();
+        
+        int fortran_indexing;
 		
 		/* objective */
 		double objective(std::vector<double>& x);
