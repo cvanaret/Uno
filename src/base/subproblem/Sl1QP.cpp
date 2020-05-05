@@ -7,11 +7,12 @@
 #include "BQPDSolver.hpp"
 #include "QPSolverFactory.hpp"
 
-Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, HessianEvaluation& hessian_evaluation):
+Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method):
 Subproblem("l1"),
 // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
 solver(QPSolverFactory::create(QP_solver, problem.number_variables + 2*problem.number_constraints, problem.number_constraints, problem.hessian_maximum_number_nonzeros + problem.number_variables)),
-hessian_evaluation(hessian_evaluation), penalty_parameter(1.), parameters({10., 0.1, 0.1}) {
+hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables)),
+penalty_parameter(1.), parameters({10., 0.1, 0.1}) {
 }
 
 Iterate Sl1QP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) {
@@ -34,7 +35,7 @@ Iterate Sl1QP::initialize(Problem& problem, std::vector<double>& x, Multipliers&
     this->compute_optimality_measures(problem, first_iterate);
     
     /* if no trust region is used, the problem should be convexified by changing the inertia of the Hessian */
-    this->hessian_evaluation.convexify = !use_trust_region;
+    this->hessian_evaluation->convexify = !use_trust_region;
 
     return first_iterate;
 }
@@ -175,7 +176,7 @@ SubproblemSolution Sl1QP::solve_subproblem(Problem& problem, Iterate& current_it
     }
     // Hessian
     current_iterate.is_hessian_computed = false;
-    this->hessian_evaluation.compute(problem, current_iterate, penalty_parameter, current_iterate.multipliers.constraints);
+    this->hessian_evaluation->compute(problem, current_iterate, penalty_parameter, current_iterate.multipliers.constraints);
 
     /* bounds of the variables */
     std::vector<Range> variables_bounds = this->generate_variables_bounds(problem, current_iterate, trust_region_radius);

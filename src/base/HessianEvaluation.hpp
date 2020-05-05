@@ -3,6 +3,7 @@
 
 #include <ostream>
 #include <map>
+#include <memory>
 #include <vector>
 #include "Problem.hpp"
 #include "Iterate.hpp"
@@ -11,10 +12,10 @@
 // virtual (abstract) class
 class HessianEvaluation {
 public:
-    HessianEvaluation(int size);
+    HessianEvaluation(int dimension);
     virtual ~HessianEvaluation();
 
-    int size;
+    int dimension;
     bool convexify;
     
     virtual void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) = 0;
@@ -24,7 +25,7 @@ public:
 class ExactHessianEvaluation : public HessianEvaluation {
     /* Coordinate list */
 public:
-    ExactHessianEvaluation(int size);
+    ExactHessianEvaluation(int dimension);
 
     void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers);
 };
@@ -32,7 +33,7 @@ public:
 class BFGSHessianEvaluation : public HessianEvaluation {
     /* Coordinate list */
 public:
-    BFGSHessianEvaluation(int size);
+    BFGSHessianEvaluation(int dimension);
 
     void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers);
     
@@ -41,4 +42,8 @@ private:
     std::vector<double> previous_x;
 };
 
+class HessianEvaluationFactory {
+    public:
+		static std::shared_ptr<HessianEvaluation> create(std::string hessian_evaluation_method, int dimension);
+};
 #endif // HESSIANEVALUATION_H

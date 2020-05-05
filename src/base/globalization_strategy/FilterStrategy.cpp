@@ -5,8 +5,8 @@
 #include "Utils.hpp"
 
 /* TODO option to switch between filter or non-monotonic filter */
-FilterStrategy::FilterStrategy(Subproblem& subproblem, std::shared_ptr<Filter> filter_optimality, std::shared_ptr<Filter> filter_restoration, FilterStrategyConstants& constants, double tolerance):
-GlobalizationStrategy(subproblem, tolerance), filter_optimality(filter_optimality), filter_restoration(filter_restoration), current_phase(OPTIMALITY), constants(constants) {
+FilterStrategy::FilterStrategy(Subproblem& subproblem, std::shared_ptr<Filter> filter_optimality, std::shared_ptr<Filter> filter_restoration, FilterStrategyParameters& strategy_parameters, double tolerance):
+GlobalizationStrategy(subproblem, tolerance), filter_optimality(filter_optimality), filter_restoration(filter_restoration), current_phase(OPTIMALITY), parameters(strategy_parameters) {
 }
 
 Iterate FilterStrategy::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) {
@@ -17,7 +17,7 @@ Iterate FilterStrategy::initialize(Problem& problem, std::vector<double>& x, Mul
     first_iterate.complementarity_residual = this->subproblem.compute_complementarity_error(problem, first_iterate, first_iterate.multipliers);
 
     /* set the filter upper bound */
-    double upper_bound = std::max(this->constants.ubd, this->constants.fact * first_iterate.feasibility_measure);
+    double upper_bound = std::max(this->parameters.ubd, this->parameters.fact * first_iterate.feasibility_measure);
     this->filter_optimality->upper_bound = upper_bound;
     this->filter_restoration->upper_bound = upper_bound;
     return first_iterate;
@@ -64,18 +64,18 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
             // check acceptance wrt current x (h,f)
             acceptable = filter.improves_current_iterate(current_iterate.feasibility_measure, current_iterate.optimality_measure, trial_iterate.feasibility_measure, trial_iterate.optimality_measure);
             if (acceptable) {
-                double predicted_reduction = this->subproblem.compute_predicted_reduction(current_iterate, solution, step_length);
+                double predicted_reduction = this->subproblem.compute_predicted_reduction(problem, current_iterate, solution, step_length);
                 double actual_reduction = filter.compute_actual_reduction(current_iterate.optimality_measure, current_iterate.feasibility_measure, trial_iterate.optimality_measure);
                 DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << actual_reduction << "\n\n";
 
                 /* switching condition */
-                if (predicted_reduction < this->constants.Delta * std::pow(current_iterate.feasibility_measure, 2)) {
+                if (predicted_reduction < this->parameters.Delta * std::pow(current_iterate.feasibility_measure, 2)) {
                     filter.add(current_iterate.feasibility_measure, current_iterate.optimality_measure);
                     accept = true;
                 }
                     /* Armijo sufficient decrease condition */
                 // else if (actual_reduction >= this->constants.Sigma*step_length*std::max(0., predicted_reduction - 1e-9)) {
-                else if (actual_reduction >= this->constants.Sigma*predicted_reduction) {
+                else if (actual_reduction >= this->parameters.Sigma*predicted_reduction) {
                     accept = true;
                 }
             }

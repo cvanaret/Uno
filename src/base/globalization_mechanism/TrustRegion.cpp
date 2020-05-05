@@ -4,7 +4,7 @@
 #include "Logger.hpp"
 #include "AMPLModel.hpp"
 
-TrustRegion::TrustRegion(GlobalizationStrategy& globalization_strategy, double initial_radius, int max_iterations) :
+TrustRegion::TrustRegion(GlobalizationStrategy& globalization_strategy, double initial_radius, int max_iterations):
 GlobalizationMechanism(globalization_strategy, max_iterations), radius(initial_radius), activity_tolerance_(1e-6) {
 }
 
@@ -22,7 +22,6 @@ Iterate TrustRegion::compute_acceptable_iterate(Problem& problem, Iterate& curre
             this->print_iteration();
 
             /* compute the step within trust region */
-            //SubproblemSolution solution = this->globalization_strategy.compute_step(problem, current_iterate, this->radius);
             SubproblemSolution solution = this->globalization_strategy.subproblem.compute_optimality_step(problem, current_iterate, this->radius);
             if (solution.phase_1_required) {
                 /* infeasible subproblem during optimality phase */
@@ -34,7 +33,7 @@ Iterate TrustRegion::compute_acceptable_iterate(Problem& problem, Iterate& curre
 
             /* check whether the trial step is accepted */
             is_accepted = this->globalization_strategy.check_step(problem, current_iterate, solution);
-            
+
             if (is_accepted) {
                 /* print summary */
                 this->print_acceptance(solution.norm);
@@ -45,12 +44,13 @@ Iterate TrustRegion::compute_acceptable_iterate(Problem& problem, Iterate& curre
                 }
             }
             else {
-                /* decrease the radius */
+                /* if the step is rejected, decrease the radius */
                 this->radius = std::min(this->radius, solution.norm) / 2.;
             }
         }
         catch (const IEEE_Error& e) {
             this->print_warning(e.what());
+            /* if an evaluation error occurs, decrease the radius */
             this->radius /= 2.;
         }
     }
@@ -59,12 +59,12 @@ Iterate TrustRegion::compute_acceptable_iterate(Problem& problem, Iterate& curre
 
 void TrustRegion::correct_multipliers(Problem& problem, SubproblemSolution& solution) {
     /* set multipliers for bound constraints active at trust region to 0 */
-    for (int i : solution.active_set.at_upper_bound) {
+    for (int i: solution.active_set.at_upper_bound) {
         if (i < problem.number_variables && solution.x[i] == this->radius) {
             solution.multipliers.upper_bounds[i] = 0.;
         }
     }
-    for (int i : solution.active_set.at_lower_bound) {
+    for (int i: solution.active_set.at_lower_bound) {
         if (i < problem.number_variables && solution.x[i] == -this->radius) {
             solution.multipliers.lower_bounds[i] = 0.;
         }

@@ -16,16 +16,12 @@
 #include "BQPDSolver.hpp"
 
 void run_argonot(std::string problem_name, std::map<std::string, std::string> options) {
-    AMPLModel problem = AMPLModel(problem_name);
-
-    /* create the local solver */
-    std::shared_ptr<QPSolver> solver = QPSolverFactory::create("BQPD", problem, options);
+    // generate Hessians with a Fortran indexing (starting at 1) that is supported by solvers
+    int fortran_indexing = 1;
+    AMPLModel problem = AMPLModel(problem_name, fortran_indexing);
     
-    /* Hessian approximation */
-    std::shared_ptr<HessianEvaluation> hessian_evaluation = std::make_shared<ExactHessianEvaluation>(problem.number_variables);
-
     /* create the subproblem strategy */
-    std::shared_ptr<Subproblem> subproblem = SubproblemFactory::create(options["subproblem"], *solver, *hessian_evaluation, options);
+    std::shared_ptr<Subproblem> subproblem = SubproblemFactory::create(problem, options["subproblem"], options);
 
     /* create the globalization strategy */
     std::shared_ptr<GlobalizationStrategy> strategy = GlobalizationStrategyFactory::create(options["strategy"], *subproblem, options);
@@ -42,6 +38,10 @@ void run_argonot(std::string problem_name, std::map<std::string, std::string> op
     multipliers.constraints = problem.dual_initial_solution();
 
     Result result = argonot.solve(problem, x, multipliers);
+    /* remove auxiliary variables */
+    result.solution.x.resize(problem.number_variables);
+    result.solution.multipliers.lower_bounds.resize(problem.number_variables);
+    result.solution.multipliers.upper_bounds.resize(problem.number_variables);
     result.display();
     return;
 }
@@ -73,6 +73,7 @@ void set_logger(std::map<std::string, std::string> options) {
 
     try {
         std::string logger_level = options.at("logger");
+        
         if (logger_level.compare("ERROR") == 0) {
             Logger::logger_level = ERROR;
         }

@@ -10,7 +10,7 @@
  *
  *  Set of constants to control the filter and tube strategies
  */
-struct FilterStrategyConstants {
+struct FilterStrategyParameters {
     double Sigma; /*!< Sufficient reduction constant */
     double Delta; /*!< Switching constant */
     double ubd;
@@ -27,7 +27,7 @@ public:
     /*!
      *  Constructor that takes an optimization problem, filters for restoration and optimality, and a set of constants
      */
-    FilterStrategy(Subproblem& subproblem, std::shared_ptr<Filter> filter_optimality, std::shared_ptr<Filter> filter_restoration, FilterStrategyConstants& constants, double tolerance);
+    FilterStrategy(Subproblem& subproblem, std::shared_ptr<Filter> filter_optimality, std::shared_ptr<Filter> filter_restoration, FilterStrategyParameters& strategy_parameters, double tolerance);
 
     /* use pointers to allow polymorphism */
     std::shared_ptr<Filter> filter_optimality; /*!< Filter for the optimality phase */
@@ -42,7 +42,7 @@ public:
     
 private:
     Phase current_phase; /*!< Current phase (optimality or feasibility restoration) */
-    FilterStrategyConstants constants; /*!< Set of constants */
+    FilterStrategyParameters parameters; /*!< Set of constants */
     
     void switch_phase(Problem& problem, SubproblemSolution& solution, Iterate& current_iterate, Iterate& trial_iterate);
     void update_restoration_multipliers(Iterate& trial_iterate, ConstraintPartition& constraint_partition);

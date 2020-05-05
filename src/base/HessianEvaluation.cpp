@@ -3,7 +3,7 @@
 #include "MA57Solver.hpp"
 #include "Utils.hpp"
 
-HessianEvaluation::HessianEvaluation(int number_variables) : size(number_variables), convexify(false) {
+HessianEvaluation::HessianEvaluation(int dimension) : dimension(dimension), convexify(false) {
 }
 
 HessianEvaluation::~HessianEvaluation() {
@@ -55,17 +55,16 @@ CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& hessian) {
 
 /* Exact Hessian */
 
-ExactHessianEvaluation::ExactHessianEvaluation(int number_variables): HessianEvaluation(number_variables) {
+ExactHessianEvaluation::ExactHessianEvaluation(int dimension): HessianEvaluation(dimension) {
 }
 
 void ExactHessianEvaluation::compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) {
     /* compute Hessian */
     iterate.compute_hessian(problem, objective_multiplier, constraint_multipliers);
     
-    DEBUG << "hessian before convexification: " << iterate.hessian;
-    
     if (this->convexify) {
-        /* modify the inerta to make*/
+        DEBUG << "hessian before convexification: " << iterate.hessian;
+        /* modify the inertia to make the problem strictly convex */
         iterate.hessian = this->modify_inertia(iterate.hessian);
     }
     return;
@@ -73,11 +72,25 @@ void ExactHessianEvaluation::compute(Problem& problem, Iterate& iterate, double 
 
 /* BFGS Hessian */
 
-BFGSHessianEvaluation::BFGSHessianEvaluation(int number_variables): HessianEvaluation(number_variables), previous_x(number_variables) {
+BFGSHessianEvaluation::BFGSHessianEvaluation(int dimension): HessianEvaluation(dimension), previous_x(dimension) {
 }
 
 void BFGSHessianEvaluation::compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) {
     // the BFGS Hessian is already positive definite, do not convexify
     iterate.compute_hessian(problem, objective_multiplier, constraint_multipliers);
     return;
+}
+
+/* Factory */
+
+std::shared_ptr<HessianEvaluation> HessianEvaluationFactory::create(std::string hessian_evaluation_method, int dimension) {
+    if (hessian_evaluation_method == "exact") {
+        return std::make_shared<ExactHessianEvaluation>(dimension);
+    }
+//    else if (hessian_evaluation_method == "BFGS") {
+//        return std::make_shared<BFGSHessianEvaluation>(dimension);
+//    }
+    else {
+        throw std::invalid_argument("Hessian evaluation method " + hessian_evaluation_method + " does not exist");
+    }
 }

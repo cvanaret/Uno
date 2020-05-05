@@ -17,14 +17,14 @@ public:
      * 
      * \param solver: solver that solves the subproblem
      */
-    SQP(QPSolver& solver, HessianEvaluation& hessian_evaluation);
+    SQP(Problem& problem, std::string QP_solver_name, std::string hessian_evaluation_method);
     
     Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) override;
-    double compute_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution, double step_length);
+    double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length);
     bool phase_1_required(SubproblemSolution& solution) override;
 
     /* use references to allow polymorphism */
-    HessianEvaluation& hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
+    std::shared_ptr<HessianEvaluation> hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
 
 protected:
     void evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate);

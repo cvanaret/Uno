@@ -23,7 +23,7 @@ public:
      * 
      * \param solver: solver that solves the subproblem
      */
-    Sl1QP(QPSolver& solver, HessianEvaluation& hessian_evaluation);
+    Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method);
 
     Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) override;
 
@@ -33,13 +33,13 @@ public:
     void compute_optimality_measures(Problem& problem, Iterate& iterate) override;
     void compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution);
     
-    double compute_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
+    double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
     bool phase_1_required(SubproblemSolution& solution) override;
     double compute_complementarity_error(Problem& problem, Iterate& iterate, Multipliers& multipliers) override;
 
-    /* use references to allow polymorphism */
-    QPSolver& solver; /*!< Subproblem solver */
-    HessianEvaluation& hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
+    /* use pointers to allow polymorphism */
+    std::shared_ptr<QPSolver> solver; /*!< Subproblem solver */
+    std::shared_ptr<HessianEvaluation> hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
     double penalty_parameter;
     Sl1QPParameters parameters;
 

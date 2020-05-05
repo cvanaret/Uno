@@ -2,7 +2,10 @@
 #include "InteriorPoint.hpp"
 #include "Argonot.hpp"
 
-InteriorPoint::InteriorPoint(HessianEvaluation& hessian_evaluation): Subproblem("l2"), hessian_evaluation(hessian_evaluation), mu_optimality(0.1), mu_feasibility(mu_optimality), inertia_hessian(0.), inertia_hessian_last(0.),
+InteriorPoint::InteriorPoint(Problem& problem, std::string hessian_evaluation_method):
+Subproblem("l2"),
+hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables)),
+mu_optimality(0.1), mu_feasibility(mu_optimality), inertia_hessian(0.), inertia_hessian_last(0.),
 inertia_constraints(0.), default_multiplier(1.), iteration(0), parameters({0.99, 1e10, 100., 0.2, 1.5, 10., 1e10}) {
 }
 
@@ -81,7 +84,7 @@ Iterate InteriorPoint::initialize(Problem& problem, std::vector<double>& x, Mult
     this->compute_optimality_measures(problem, first_iterate);
     
     /* if no trust region is used, the problem should be convexified. The inertia of the augmented matrix will be corrected later */
-    this->hessian_evaluation.convexify = false;
+    this->hessian_evaluation->convexify = false;
     
     return first_iterate;
 }
@@ -178,7 +181,7 @@ void InteriorPoint::evaluate_optimality_iterate(Problem& problem, Iterate& curre
     }
     
     /* compute second-order information */
-    this->hessian_evaluation.compute(problem, current_iterate, problem.objective_sign, current_iterate.multipliers.constraints);
+    this->hessian_evaluation->compute(problem, current_iterate, problem.objective_sign, current_iterate.multipliers.constraints);
     return;
 }
 
@@ -267,7 +270,7 @@ COOMatrix InteriorPoint::generate_optimality_kkt_matrix(Problem& problem, Iterat
 
     /* compute the Lagrangian Hessian */
     COOMatrix kkt_matrix = current_iterate.hessian.to_COO();
-    kkt_matrix.size = number_variables + problem.number_constraints;
+    kkt_matrix.dimension = number_variables + problem.number_constraints;
 
     /* variable bound constraints */
     for (int i: this->lower_bounded_variables) {
@@ -470,7 +473,7 @@ double InteriorPoint::evaluate_local_model(Problem& /*problem*/, Iterate& curren
     return subproblem_objective;
 }
 
-double InteriorPoint::compute_predicted_reduction(Iterate& /*current_iterate*/, SubproblemSolution& solution, double step_length) {
+double InteriorPoint::compute_predicted_reduction(Problem& /*problem*/, Iterate& /*current_iterate*/, SubproblemSolution& solution, double step_length) {
     // the predicted reduction is linear
     return -step_length*solution.objective;
 }
@@ -496,7 +499,7 @@ SubproblemSolution InteriorPoint::compute_infeasibility_step(Problem& problem, I
     }
     
     /* compute the Lagrangian Hessian */
-    this->hessian_evaluation.compute(problem, current_iterate, 0., restoration_multipliers);
+    this->hessian_evaluation->compute(problem, current_iterate, 0., restoration_multipliers);
     ArgonotMatrix kkt_matrix = current_iterate.hessian.to_ArgonotMatrix(number_variables);
     // contribution of 2 \nabla c \nabla c^T
     for (int j = 0; j < problem.number_constraints; j++) {

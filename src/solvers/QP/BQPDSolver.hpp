@@ -12,7 +12,7 @@ enum BQPDMode {
     ACTIVE_SET_EQUALITIES = 1,
     USER_DEFINED = 2,
     ACTIVE_SET_PREVIOUS_CALL = 3
-    // goes to 6
+    // goes up to 6
 };
 
 /*! \class BQPDSolver
@@ -70,6 +70,7 @@ private:
      * \param d: optimal solution
      */
     SubproblemSolution generate_solution(std::vector<double>& x);
+    Status int_to_status(int ifail);
     SubproblemSolution solve_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, std::vector<double>& x, int kmax);
     void build_jacobian(std::vector<double>& full_jacobian, std::vector<int>& full_jacobian_sparsity, std::map<int, double>& jacobian);
 };

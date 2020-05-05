@@ -5,20 +5,18 @@
 #include "Iterate.hpp"
 #include "Logger.hpp"
 
-Argonot::Argonot(GlobalizationMechanism& globalization_mechanism, int max_iterations) :
-globalization_mechanism(globalization_mechanism), max_iterations(max_iterations) {
+Argonot::Argonot(GlobalizationMechanism& globalization_mechanism, int max_iterations): globalization_mechanism(globalization_mechanism), max_iterations(max_iterations) {
 }
 
 Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
     std::clock_t c_start = std::clock();
-
     int major_iterations = 0, minor_iterations = 0;
-
-    INFO << "Problem " << problem.name << "\n";
-    INFO << problem.number_variables << " variables, " << problem.number_constraints << " constraints\n";
 
     /* use the current point to initialize the strategies and generate the initial point */
     Iterate current_iterate = this->globalization_mechanism.initialize(problem, x, multipliers);
+    
+    INFO << "Problem " << problem.name << "\n";
+    INFO << problem.number_variables << " variables, " << problem.number_constraints << " constraints\n";
     INFO << "Initial iterate\n" << current_iterate << "\n";
 
     try {
@@ -27,14 +25,13 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& mul
             major_iterations++;
             DEBUG << "\n\t\tARGONOT iteration " << major_iterations << "\n";
             INFO << "major: " << major_iterations << "\t";
+            
             DEBUG << "Current point: "; print_vector(DEBUG, current_iterate.x);
-
             /* update the current point */
             current_iterate = this->globalization_mechanism.compute_acceptable_iterate(problem, current_iterate);
             minor_iterations += this->globalization_mechanism.number_iterations;
-            
-            INFO << "||c||: " << current_iterate.constraint_residual << "\tobjective: " << current_iterate.objective << "\t";
-            INFO << "status: " << current_iterate.status << "\n";
+            INFO << "||c||: " << current_iterate.constraint_residual << "\tobjective: " << current_iterate.objective << "\n";
+
             DEBUG << "Next iterate\n" << current_iterate;
         }
     }
@@ -96,15 +93,10 @@ void Result::display() {
     std::cout << "KKT residual:\t\t" << this->solution.KKT_residual << "\n";
     std::cout << "Complementarity residual:\t" << this->solution.complementarity_residual << "\n";
 
-    std::cout << "Primal solution:\t";
-    print_vector(std::cout, this->solution.x);
-
-    std::cout << "Lower bound multipliers:\t";
-    print_vector(std::cout, this->solution.multipliers.lower_bounds);
-    std::cout << "Upper bound multipliers:\t";
-    print_vector(std::cout, this->solution.multipliers.upper_bounds);
-    std::cout << "Constraint multipliers:\t";
-    print_vector(std::cout, this->solution.multipliers.constraints);
+    std::cout << "Primal solution:\t"; print_vector(std::cout, this->solution.x);
+    std::cout << "Lower bound multipliers:\t"; print_vector(std::cout, this->solution.multipliers.lower_bounds);
+    std::cout << "Upper bound multipliers:\t"; print_vector(std::cout, this->solution.multipliers.upper_bounds);
+    std::cout << "Constraint multipliers:\t"; print_vector(std::cout, this->solution.multipliers.constraints);
 
     std::cout << "CPU time:\t\t" << this->cpu_time << "s\n";
     std::cout << "Iterations:\t\t" << this->iteration << "\n";

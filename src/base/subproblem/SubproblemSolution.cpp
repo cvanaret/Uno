@@ -10,15 +10,33 @@ std::ostream& operator<<(std::ostream &stream, SubproblemSolution& solution) {
     unsigned int max_size = 50;
 
     if (solution.status == OPTIMAL) {
-        //stream << GREEN "Status: optimal\n" RESET;
         stream << "Status: optimal\n";
     }
     else if (solution.status == UNBOUNDED_PROBLEM) {
-        //stream << GREEN "Status: unbounded\n" RESET;
         stream << "Status: unbounded\n";
     }
+    else if (solution.status == BOUND_INCONSISTENCY) {
+        stream << "Status: bound inconsistency\n";
+    }
+    else if (solution.status == INFEASIBLE) {
+        stream << "Status: infeasible subproblem\n";
+    }
+    else if (solution.status == INCORRECT_PARAMETER) {
+        stream << "Status: incorrect parameter\n";
+    }
+    else if (solution.status == LP_INSUFFICIENT_SPACE) {
+        stream << "Status: insufficient space for the LP\n";
+    }
+    else if (solution.status == HESSIAN_INSUFFICIENT_SPACE) {
+        stream << "Status: insufficient space for the Hessian\n";
+    }
+    else if (solution.status == SPARSE_INSUFFICIENT_SPACE) {
+        stream << "Status: insufficient space for the sparsity pattern\n";
+    }
+    else if (solution.status == MAX_RESTARTS_REACHED) {
+        stream << "Status: maximum number of restarts reached\n";
+    }
     else {
-        //stream << RED "Status " << solution.status << ": Beware peasant, something went wrong\n" RESET;
         stream << "Status " << solution.status << ": Beware peasant, something went wrong\n";
     }
 

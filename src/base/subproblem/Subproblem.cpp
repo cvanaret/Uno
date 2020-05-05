@@ -6,6 +6,12 @@ Subproblem::Subproblem(std::string residual_norm): residual_norm(residual_norm),
 Subproblem::~Subproblem() {
 }
 
+/* compute least-square multipliers */
+//if (0 < problem.number_constraints) {
+//    first_iterate.compute_constraints_jacobian(problem);
+//    first_iterate.multipliers.constraints = Subproblem::compute_least_square_multipliers(problem, first_iterate, multipliers.constraints, 1e4);
+//}
+
 std::vector<Range> Subproblem::generate_variables_bounds(Iterate& current_iterate, double trust_region_radius) {
     std::vector<Range> variables_bounds(current_iterate.x.size());
     /* bounds intersected with trust region  */

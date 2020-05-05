@@ -30,7 +30,7 @@ public:
     void compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution) override;
     
     bool phase_1_required(SubproblemSolution& solution) override;
-    double compute_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
+    double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
 
     /* use a reference to allow polymorphism */
     QPSolver& solver; /*!< Solver that solves the subproblem */

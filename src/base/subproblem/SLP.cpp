@@ -4,11 +4,13 @@
 #include "Constraint.hpp"
 #include "Utils.hpp"
 #include "Logger.hpp"
+#include "QPSolverFactory.hpp"
 
-SLP::SLP(QPSolver& solver) : ActiveSetMethod(solver) {
+SLP::SLP(Problem& problem, std::string QP_solver):
+ActiveSetMethod(QPSolverFactory::create(QP_solver, problem.number_variables, problem.number_constraints, 0)) {
 }
 
-double SLP::compute_predicted_reduction(Iterate& /*current_iterate*/, SubproblemSolution& solution, double step_length) {
+double SLP::compute_predicted_reduction(Problem& /*problem*/, Iterate& /*current_iterate*/, SubproblemSolution& solution, double step_length) {
     // the predicted reduction is linear
     return -step_length*solution.objective;
 }
@@ -31,5 +33,5 @@ void SLP::evaluate_feasibility_iterate(Problem& problem, Iterate& current_iterat
 }
 
 SubproblemSolution SLP::solve_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, Iterate& current_iterate, std::vector<double>& d0) {
-    return this->solver.solve_LP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, d0);
+    return this->solver->solve_LP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, d0);
 }

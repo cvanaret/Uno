@@ -12,7 +12,7 @@ extern "C" {
             int* lrhs, double work[], int* lwork, int iwork[], int icntl[], int info[]);
 }
 
-MA57Solver::MA57Solver(): fortran_indexing(1), cntl_(5), icntl_(20), rinfo_(20) {
+MA57Solver::MA57Solver(): use_fortran(1), cntl_(5), icntl_(20), rinfo_(20) {
 }
 
 MA57Factorization MA57Solver::factorize(COOMatrix& matrix) {
@@ -27,7 +27,7 @@ MA57Factorization MA57Solver::factorize(COOMatrix& matrix) {
     std::vector<int> keep(lkeep);
     std::vector<int> iwork(5 * n);
 
-    if (matrix.fortran_indexing != this->fortran_indexing) {
+    if (matrix.fortran_indexing != this->use_fortran) {
         throw std::runtime_error("MA57Solver::factorize: please use the correct Fortran indexing");
     }
 

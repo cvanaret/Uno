@@ -15,9 +15,9 @@ public:
      * 
      * \param solver: solver that solves the subproblem
      */
-    SLP(QPSolver& solver);
+    SLP(Problem& problem, std::string QP_solver);
 
-    double compute_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution, double step_length);
+    double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length);
     bool phase_1_required(SubproblemSolution& solution);
 
 private:

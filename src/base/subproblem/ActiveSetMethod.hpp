@@ -1,13 +1,14 @@
 #ifndef ACTIVESETMETHOD_H
 #define ACTIVESETMETHOD_H
 
+#include <memory>
 #include "Subproblem.hpp"
 #include "QPSolver.hpp"
 #include "HessianEvaluation.hpp"
 
 class ActiveSetMethod : public Subproblem {
 public:
-    ActiveSetMethod(QPSolver& solver);
+    ActiveSetMethod(std::shared_ptr<QPSolver> solver);
 
     virtual Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region);
 
@@ -15,11 +16,11 @@ public:
     SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius = INFINITY);
     void compute_optimality_measures(Problem& problem, Iterate& iterate);
     void compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution);
-    virtual double compute_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution, double step_length) = 0;
+    virtual double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) = 0;
     virtual bool phase_1_required(SubproblemSolution& solution) = 0;
 
-    /* use references to allow polymorphism */
-    QPSolver& solver; /*!< Solver that solves the subproblem */
+    /* use pointer to allow polymorphism */
+    std::shared_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
 
 protected:
     virtual void evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate) = 0;
