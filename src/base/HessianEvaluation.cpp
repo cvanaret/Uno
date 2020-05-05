@@ -11,8 +11,18 @@ HessianEvaluation::~HessianEvaluation() {
 
 CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& hessian) {
     MA57Solver solver;
+    double beta = 1e-4;
+    
+    // Nocedal and Wright, p51
+    double smallest_diagonal_entry = hessian.smallest_diagonal_entry();
+    DEBUG << "The minimal diagonal entry of the Hessian is " << hessian.smallest_diagonal_entry() << "\n";
     
     double inertia = 0.;
+    double previous_inertia = 0.;
+    if (smallest_diagonal_entry <= 0.) {
+        inertia = beta - smallest_diagonal_entry;
+    }
+    
     COOMatrix coo_hessian = hessian.to_COO();
     MA57Factorization factorization = solver.factorize(coo_hessian);
     
@@ -26,12 +36,14 @@ CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& hessian) {
         }
         else {
             if (inertia == 0.) {
-                inertia = 1e-4;
+                inertia = beta;
+                previous_inertia = 0.;
             }
             else {
-                inertia *= 100.;
+                previous_inertia = inertia;
+                inertia *= 10.;
             }
-            hessian = hessian.add_identity_multiple(inertia);
+            hessian = hessian.add_identity_multiple(inertia - previous_inertia);
             coo_hessian = hessian.to_COO();
             factorization = solver.factorize(coo_hessian);
         }
