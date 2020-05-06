@@ -37,8 +37,8 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
     /* assemble trial point: TODO do not reevaluate if ||d|| = 0 */
     std::vector<double> trial_x = add_vectors(current_iterate.x, solution.x, step_length);
     Iterate trial_iterate(trial_x, solution.multipliers);
-    this->subproblem.compute_optimality_measures(problem, trial_iterate);
     double step_norm = step_length * solution.norm;
+    this->subproblem.compute_optimality_measures(problem, trial_iterate);
 
     bool accept = false;
     /* check zero step */

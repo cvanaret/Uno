@@ -27,6 +27,7 @@ bool PenaltyMeritFunction::check_step(Problem& problem, Iterate& current_iterate
     std::vector<double> trial_x = add_vectors(current_iterate.x, solution.x, step_length);
     Iterate trial_iterate(trial_x, solution.multipliers);
     double step_norm = step_length * solution.norm;
+    this->subproblem.compute_optimality_measures(problem, trial_iterate);
     
     bool accept = false;
     /* check zero step */
@@ -39,9 +40,6 @@ bool PenaltyMeritFunction::check_step(Problem& problem, Iterate& current_iterate
             this->subproblem.subproblem_definition_changed = false;
             this->subproblem.compute_optimality_measures(problem, current_iterate);
         }
-
-        // TODO: add the penalized term to the optimality measure
-        this->subproblem.compute_optimality_measures(problem, trial_iterate);
         
         /* compute current exact l1 penalty: rho f + ||c|| */ 
         double current_exact_l1_penalty = solution.objective_multiplier * current_iterate.optimality_measure + current_iterate.feasibility_measure;
