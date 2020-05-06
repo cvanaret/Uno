@@ -1,5 +1,5 @@
 # specify local compilers and compiler flags
-PROFILER = #-pg
+PROFILER =#-pg
 CC     = gcc
 CPP    = g++ -std=c++11
 F77    = gfortran

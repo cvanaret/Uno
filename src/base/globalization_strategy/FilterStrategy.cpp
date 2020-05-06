@@ -54,8 +54,8 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
             this->subproblem.compute_infeasibility_measures(problem, trial_iterate, solution);
         }
 
-        DEBUG << "TESTING trial (" << trial_iterate.feasibility_measure << ", " << trial_iterate.optimality_measure << ") against current (";
-        DEBUG << current_iterate.feasibility_measure << ", " << current_iterate.optimality_measure << ")\n";
+        DEBUG << "Current: η = " << current_iterate.feasibility_measure << ", ω = " << current_iterate.optimality_measure << "\n";
+        DEBUG << "Trial: η = " << trial_iterate.feasibility_measure << ", ω = " << trial_iterate.optimality_measure << "\n";
 
         /* check acceptance */
         Filter& filter = (this->current_phase == OPTIMALITY) ? *(this->filter_optimality) : *(this->filter_restoration);

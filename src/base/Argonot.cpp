@@ -15,6 +15,9 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& mul
     /* use the current point to initialize the strategies and generate the initial point */
     Iterate current_iterate = this->globalization_mechanism.initialize(problem, x, multipliers);
     
+    /* preprocessing phase: satisfy linear constraints */
+    this->preprocessing(problem, current_iterate);
+    
     INFO << "Problem " << problem.name << "\n";
     INFO << problem.number_variables << " variables, " << problem.number_constraints << " constraints\n";
     INFO << "Initial iterate\n" << current_iterate << "\n";
@@ -30,7 +33,8 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& mul
             /* update the current point */
             current_iterate = this->globalization_mechanism.compute_acceptable_iterate(problem, current_iterate);
             minor_iterations += this->globalization_mechanism.number_iterations;
-            INFO << "||c||: " << current_iterate.constraint_residual << "\tobjective: " << current_iterate.objective << "\n";
+            INFO << "||c|| = " << current_iterate.constraint_residual << "\tf = " << current_iterate.objective << "\t";
+            INFO << "η = " << current_iterate.feasibility_measure << "\tω = " << current_iterate.optimality_measure << "\n";
 
             DEBUG << "Next iterate\n" << current_iterate;
         }
@@ -66,12 +70,16 @@ double Argonot::compute_KKT_error(Problem& problem, Iterate& iterate, double obj
     return norm(lagrangian_gradient, norm_value);
 }
 
+void Argonot::preprocessing(Problem& problem, Iterate& iterate) {
+    std::cout << "Preprocessing phase: nothing implemented\n";
+}
+
 void Result::display() {
     std::cout << "\n";
     std::cout << "ARGONOT v1: optimization summary\n";
     std::cout << "==============================\n";
 
-    std::cout << "Status:\t\t\t";
+    std::cout << "Status:\t\t\t\t";
     if (this->solution.status == KKT_POINT) {
         std::cout << "Converged with KKT point\n";
     }
@@ -88,22 +96,25 @@ void Result::display() {
         std::cout << "Irregular termination\n";
     }
 
-    std::cout << "Objective value:\t" << this->solution.objective << "\n";
-    std::cout << "Constraint residual:\t" << this->solution.constraint_residual << "\n";
-    std::cout << "KKT residual:\t\t" << this->solution.KKT_residual << "\n";
+    std::cout << "Objective value:\t\t" << this->solution.objective << "\n";
+    std::cout << "Constraint residual:\t\t" << this->solution.constraint_residual << "\n";
+    std::cout << "KKT residual:\t\t\t" << this->solution.KKT_residual << "\n";
     std::cout << "Complementarity residual:\t" << this->solution.complementarity_residual << "\n";
 
-    std::cout << "Primal solution:\t"; print_vector(std::cout, this->solution.x);
+    std::cout << "Feasibility measure:\t\t" << this->solution.feasibility_measure << "\n";
+    std::cout << "Optimality measure:\t\t" << this->solution.optimality_measure << "\n";
+    
+    std::cout << "Primal solution:\t\t"; print_vector(std::cout, this->solution.x);
     std::cout << "Lower bound multipliers:\t"; print_vector(std::cout, this->solution.multipliers.lower_bounds);
     std::cout << "Upper bound multipliers:\t"; print_vector(std::cout, this->solution.multipliers.upper_bounds);
-    std::cout << "Constraint multipliers:\t"; print_vector(std::cout, this->solution.multipliers.constraints);
+    std::cout << "Constraint multipliers:\t\t"; print_vector(std::cout, this->solution.multipliers.constraints);
 
-    std::cout << "CPU time:\t\t" << this->cpu_time << "s\n";
-    std::cout << "Iterations:\t\t" << this->iteration << "\n";
+    std::cout << "CPU time:\t\t\t" << this->cpu_time << "s\n";
+    std::cout << "Iterations:\t\t\t" << this->iteration << "\n";
     std::cout << "Objective evaluations:\t\t" << this->objective_evaluations << "\n";
-    std::cout << "Constraints evaluations:\t\t" << this->constraint_evaluations << "\n";
+    std::cout << "Constraints evaluations:\t" << this->constraint_evaluations << "\n";
     std::cout << "Jacobian evaluations:\t\t" << this->jacobian_evaluations << "\n";
     std::cout << "Hessian evaluations:\t\t" << this->hessian_evaluations << "\n";
-    std::cout << "Number of subproblems solved:\t\t" << this->number_subproblems_solved << "\n";
+    std::cout << "Number of subproblems solved:\t" << this->number_subproblems_solved << "\n";
     return;
 }

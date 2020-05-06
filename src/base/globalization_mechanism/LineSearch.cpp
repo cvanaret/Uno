@@ -4,8 +4,8 @@
 #include "AMPLModel.hpp"
 #include "InteriorPoint.hpp"
 
-LineSearch::LineSearch(GlobalizationStrategy& globalization_strategy, int max_iterations, double ratio) :
-GlobalizationMechanism(globalization_strategy, max_iterations), ratio(ratio), min_step_length(1e-9), restoration_phase(false) {
+LineSearch::LineSearch(GlobalizationStrategy& globalization_strategy, int max_iterations, double backtracking_ratio) :
+GlobalizationMechanism(globalization_strategy, max_iterations), backtracking_ratio(backtracking_ratio), min_step_length(1e-9), restoration_phase(false) {
 }
 
 Iterate LineSearch::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
@@ -23,12 +23,6 @@ Iterate LineSearch::compute_acceptable_iterate(Problem& problem, Iterate& curren
     }
     
     while (!line_search_termination) {
-        /* test if we computed a descent direction */
-        //bool is_descent_direction = (dot(solution.x, current_iterate.objective_gradient) < 0.);
-        //if (!is_descent_direction) {
-        //    throw std::out_of_range("LineSearch::compute_iterate: this is not a descent direction");
-        //}
-
         /* step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ... */
         this->step_length = 1.;
         bool is_accepted = false;
@@ -53,7 +47,7 @@ Iterate LineSearch::compute_acceptable_iterate(Problem& problem, Iterate& curren
             }
             else {
                 /* decrease the step length */
-                this->step_length *= this->ratio;
+                this->step_length *= this->backtracking_ratio;
             }
         }
         // if step length is too small, run restoration phase

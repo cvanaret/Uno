@@ -23,6 +23,9 @@ CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& hessian) {
         inertia = beta - smallest_diagonal_entry;
     }
     
+    if (0. < inertia) {
+        hessian = hessian.add_identity_multiple(inertia - previous_inertia);
+    }
     COOMatrix coo_hessian = hessian.to_COO();
     MA57Factorization factorization = solver.factorize(coo_hessian);
     
@@ -41,7 +44,7 @@ CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& hessian) {
             }
             else {
                 previous_inertia = inertia;
-                inertia *= 10.;
+                inertia *= 2.;
             }
             hessian = hessian.add_identity_multiple(inertia - previous_inertia);
             coo_hessian = hessian.to_COO();
@@ -63,6 +66,7 @@ void ExactHessianEvaluation::compute(Problem& problem, Iterate& iterate, double 
     iterate.compute_hessian(problem, objective_multiplier, constraint_multipliers);
     
     if (this->convexify) {
+        //std::cout.precision(17);
         DEBUG << "hessian before convexification: " << iterate.hessian;
         /* modify the inertia to make the problem strictly convex */
         iterate.hessian = this->modify_inertia(iterate.hessian);

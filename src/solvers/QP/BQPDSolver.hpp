@@ -48,7 +48,9 @@ public:
 private:
     int n_, m_;
     int maximum_number_nonzeros;
+    std::vector<double> lb, ub; // lower and upper bounds of variables and constraints
     int use_fortran;
+    
     int kmax_, mlp_, mxwk0_, mxiwk0_;
     std::vector<int> info_;
     std::vector<double> alp_;
@@ -62,7 +64,6 @@ private:
     int iprint_, nout_;
     double fmin_, f_solution_;
     int peq_solution_, ifail_;
-    //std::vector<int> hessian_column_start, hessian_row_number;
 
     /*!
      *  Create a SubproblemSolution from BQPD's solution

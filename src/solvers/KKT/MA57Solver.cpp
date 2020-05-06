@@ -37,7 +37,7 @@ MA57Factorization MA57Solver::factorize(COOMatrix& matrix) {
     /* info vector*/
     std::vector<int> info(40);
     ma57ad_(&n, &nnz, matrix.row_indices.data(), matrix.column_indices.data(), &lkeep, keep.data(), iwork.data(), this->icntl_.data(), info.data(), this->rinfo_.data());
-
+    
     /* factorize */
     int lfact = 2 * info[8];
     std::vector<double> fact(lfact);

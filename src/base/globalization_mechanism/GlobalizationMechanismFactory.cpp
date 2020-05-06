@@ -12,8 +12,8 @@ std::shared_ptr<GlobalizationMechanism> GlobalizationMechanismFactory::create(co
     }
     else if (type == "LS") {
         int max_iterations = stoi(default_values["LS_max_iterations"]);
-        double ratio = stod(default_values["LS_ratio"]);
-        return std::make_shared<LineSearch>(globalization_strategy, max_iterations, ratio);
+        double backtracking_ratio = stod(default_values["LS_backtracking_ratio"]);
+        return std::make_shared<LineSearch>(globalization_strategy, max_iterations, backtracking_ratio);
     }
     else if (type == "TLS") {
         double radius = INFINITY;

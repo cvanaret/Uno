@@ -22,7 +22,12 @@ Iterate PenaltyMeritFunction::initialize(Problem& problem, std::vector<double>& 
 }
 
 bool PenaltyMeritFunction::check_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
-    /* stage g: line-search along fixed step */
+    /* check if subproblem definition changed */
+    if (this->subproblem.subproblem_definition_changed) {
+        this->subproblem.subproblem_definition_changed = false;
+        this->subproblem.compute_optimality_measures(problem, current_iterate);
+    }
+    
     /* generate the trial point */
     std::vector<double> trial_x = add_vectors(current_iterate.x, solution.x, step_length);
     Iterate trial_iterate(trial_x, solution.multipliers);
@@ -35,22 +40,16 @@ bool PenaltyMeritFunction::check_step(Problem& problem, Iterate& current_iterate
         accept = true;
     }
     else {
-        /* check if subproblem definition changed */
-        if (this->subproblem.subproblem_definition_changed) {
-            this->subproblem.subproblem_definition_changed = false;
-            this->subproblem.compute_optimality_measures(problem, current_iterate);
-        }
-        
         /* compute current exact l1 penalty: rho f + ||c|| */ 
         double current_exact_l1_penalty = solution.objective_multiplier * current_iterate.optimality_measure + current_iterate.feasibility_measure;
-        /* compute trial exact l1 penalty */
         double trial_exact_l1_penalty = solution.objective_multiplier * trial_iterate.optimality_measure + trial_iterate.feasibility_measure;
+        
         /* check the validity of the trial step */
         double predicted_reduction = this->subproblem.compute_predicted_reduction(problem, current_iterate, solution, step_length);
         double actual_reduction = current_exact_l1_penalty - trial_exact_l1_penalty;
         
-        DEBUG << "Current: ||c|| = " << current_iterate.feasibility_measure << ", f = " << current_iterate.optimality_measure << "\n";
-        DEBUG << "Trial: ||c|| = " << trial_iterate.feasibility_measure << ", f = " << trial_iterate.optimality_measure << "\n";
+        DEBUG << "Current: η = " << current_iterate.feasibility_measure << ", ω = " << current_iterate.optimality_measure << "\n";
+        DEBUG << "Trial: η = " << trial_iterate.feasibility_measure << ", ω = " << trial_iterate.optimality_measure << "\n";
         DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << actual_reduction << "\n\n";
         
         accept = false;

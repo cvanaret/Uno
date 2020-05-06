@@ -13,7 +13,7 @@ public:
     /*!
      *  Constructor
      */
-    LineSearch(GlobalizationStrategy& globalization_strategy, int max_iterations = 30, double ratio = 0.5);
+    LineSearch(GlobalizationStrategy& globalization_strategy, int max_iterations = 30, double backtracking_ratio = 0.5);
 
     /*!
      *  Compute the next iterate from a given point
@@ -26,7 +26,7 @@ public:
 
     double step_length;
     /* ratio of step length update in ]0, 1[ */
-    double ratio;
+    double backtracking_ratio;
 
 private:
     double min_step_length;
