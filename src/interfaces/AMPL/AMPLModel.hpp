@@ -82,6 +82,7 @@ class AMPLModel: public Problem {
 		void generate_variables();
 		void initialize_objective();
 		void generate_constraints();
+        void create_objective_variables(ograd* ampl_variables);
         void create_constraint_variables(int j, cgrad* ampl_variables);
 		void set_function_types(std::string file_name, Option_Info* option_info);
 		void initialize_lagrangian_hessian();

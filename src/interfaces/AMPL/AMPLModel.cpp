@@ -101,17 +101,14 @@ void AMPLModel::generate_variables() {
 }
 
 // TODO: fix this duplication!
-
-std::map<int, double> create_objective_variables(ograd* ampl_variables) {
+void AMPLModel::create_objective_variables(ograd* ampl_variables) {
     /* create the dependency pattern as an associative table (variable index, coefficient) */
-    std::map<int, double> variables;
-
     ograd* ampl_variables_tmp = ampl_variables;
     while (ampl_variables_tmp != NULL) {
-        variables[ampl_variables_tmp->varno] = ampl_variables_tmp->coef;
+        this->objective_variables[ampl_variables_tmp->varno] = ampl_variables_tmp->coef;
         ampl_variables_tmp = ampl_variables_tmp->next;
     }
-    return variables;
+    return;
 }
 
 void AMPLModel::create_constraint_variables(int j, cgrad* ampl_variables) {
@@ -180,7 +177,7 @@ std::map<int, double> AMPLModel::objective_sparse_gradient(std::vector<double>& 
 
 void AMPLModel::initialize_objective() {
     this->objective_name = obj_name_ASL((ASL*) this->asl_, 0);
-    this->objective_variables = create_objective_variables(this->asl_->i.Ograd_[0]);
+    this->create_objective_variables(this->asl_->i.Ograd_[0]);
     return;
 }
 
