@@ -1,7 +1,7 @@
 #include "AMPLModel.hpp"
 #include "Logger.hpp"
 
-ASL_pfgh* generate_asl(std::string file_name, Option_Info* option_info) {
+ASL_pfgh* generate_asl(std::string file_name) {
     SufDecl suffixes[] = {
         /* suffix "uncertain" for variables or constraints */
         {const_cast<char*> (UNCERTAIN_SUFFIX), 0, ASL_Sufkind_var},
@@ -31,7 +31,11 @@ ASL_pfgh* generate_asl(std::string file_name, Option_Info* option_info) {
     return asl;
 }
 
-AMPLModel::AMPLModel(std::string file_name, int fortran_indexing): Problem(file_name), fortran_indexing(fortran_indexing) {
+// generate the ASL object and call the private constructor
+AMPLModel::AMPLModel(std::string file_name, int fortran_indexing): AMPLModel(file_name, generate_asl(file_name), fortran_indexing) {
+}
+
+AMPLModel::AMPLModel(std::string file_name, ASL_pfgh* asl, int fortran_indexing): Problem(file_name, asl->i.n_var_, asl->i.n_con_), variable_uncertain(asl->i.n_var_), constraint_is_uncertainty_set(asl->i.n_con_), asl_(asl), fortran_indexing(fortran_indexing) {
     /* TODO: avoid using implicit AMPL macros */
     keyword keywords[1];
     int size_keywords = sizeof (keywords) / sizeof (keyword);
@@ -41,12 +45,10 @@ AMPLModel::AMPLModel(std::string file_name, int fortran_indexing): Problem(file_
         const_cast<char*> ("argonot_options"),
         keywords, size_keywords};
 
-    this->asl_ = generate_asl(file_name, &info);
+    //this->asl_ = generate_asl(file_name, &info);
     this->asl_->i.congrd_mode = 0;
 
     /* dimensions */
-    this->number_variables = this->asl_->i.n_var_;
-    this->number_constraints = this->asl_->i.n_con_;
     this->objective_sign = (this->asl_->i.objtype_[0] == 1) ? -1. : 1.;
 
     /* variables */
@@ -82,14 +84,9 @@ bool is_discrete(ASL_pfgh* asl, int index) {
 
 void AMPLModel::generate_variables() {
     SufDesc* uncertain_suffixes = suf_get_ASL((ASL*) this->asl_, UNCERTAIN_SUFFIX, ASL_Sufkind_var);
-
-    this->variable_name.resize(this->number_variables);
-    this->variable_discrete.resize(this->number_variables);
-    this->variables_bounds.resize(this->number_variables);
-    this->variable_uncertain.resize(this->number_variables);
-
+    
     for (int i = 0; i < this->number_variables; i++) {
-        this->variable_name.push_back(var_name_ASL((ASL*) this->asl_, i));
+        this->variable_name[i] = var_name_ASL((ASL*) this->asl_, i);
         this->variable_discrete[i] = is_discrete(this->asl_, i);
         double lb = (this->asl_->i.LUv_ != NULL) ? this->asl_->i.LUv_[2 * i] : -INFINITY;
         double ub = (this->asl_->i.LUv_ != NULL) ? this->asl_->i.LUv_[2 * i + 1] : INFINITY;
@@ -99,13 +96,13 @@ void AMPLModel::generate_variables() {
         this->variables_bounds[i] = {lb, ub};
         this->variable_uncertain[i] = (uncertain_suffixes->u.i != NULL && uncertain_suffixes->u.i[i] == 1);
     }
-    this->variable_status = this->determine_bounds_types(this->variables_bounds);
+    this->determine_bounds_types(this->variables_bounds, this->variable_status);
     return;
 }
 
 // TODO: fix this duplication!
 
-std::map<int, double> create_obj_variables(ograd* ampl_variables) {
+std::map<int, double> create_objective_variables(ograd* ampl_variables) {
     /* create the dependency pattern as an associative table (variable index, coefficient) */
     std::map<int, double> variables;
 
@@ -117,16 +114,14 @@ std::map<int, double> create_obj_variables(ograd* ampl_variables) {
     return variables;
 }
 
-std::map<int, double> create_cstr_variables(cgrad* ampl_variables) {
+void AMPLModel::create_constraint_variables(int j, cgrad* ampl_variables) {
     /* create the dependency pattern as an associative table (variable index, coefficient) */
-    std::map<int, double> variables;
-
     cgrad* ampl_variables_tmp = ampl_variables;
     while (ampl_variables_tmp != NULL) {
-        variables[ampl_variables_tmp->varno] = ampl_variables_tmp->coef;
+        this->constraint_variables[j][ampl_variables_tmp->varno] = ampl_variables_tmp->coef;
         ampl_variables_tmp = ampl_variables_tmp->next;
     }
-    return variables;
+    return;
 }
 
 double AMPLModel::objective(std::vector<double>& x) {
@@ -185,7 +180,7 @@ std::map<int, double> AMPLModel::objective_sparse_gradient(std::vector<double>& 
 
 void AMPLModel::initialize_objective() {
     this->objective_name = obj_name_ASL((ASL*) this->asl_, 0);
-    this->objective_variables = create_obj_variables(this->asl_->i.Ograd_[0]);
+    this->objective_variables = create_objective_variables(this->asl_->i.Ograd_[0]);
     return;
 }
 
@@ -268,22 +263,16 @@ std::vector<std::map<int, double> > AMPLModel::constraints_sparse_jacobian(std::
 
 void AMPLModel::generate_constraints() {
     SufDesc* uncertain_suffixes = suf_get_ASL((ASL*) this->asl_, UNCERTAINTY_SET_SUFFIX, ASL_Sufkind_con);
-
-    this->constraint_name.reserve(this->number_constraints);
-    this->constraint_variables.reserve(this->number_constraints);
-    this->constraints_bounds.resize(this->number_constraints);
-    this->constraint_is_uncertainty_set.reserve(this->number_constraints);
-    this->constraint_status.reserve(this->number_constraints);
-
+    
     for (int j = 0; j < this->number_constraints; j++) {
-        this->constraint_name.push_back(con_name_ASL((ASL*) this->asl_, j));
-        this->constraint_variables.push_back(create_cstr_variables(this->asl_->i.Cgrad_[j]));
+        this->constraint_name[j] = con_name_ASL((ASL*) this->asl_, j);
+        this->create_constraint_variables(j, this->asl_->i.Cgrad_[j]);
         double lb = (this->asl_->i.LUrhs_ != NULL) ? this->asl_->i.LUrhs_[2 * j] : -INFINITY;
         double ub = (this->asl_->i.LUrhs_ != NULL) ? this->asl_->i.LUrhs_[2 * j + 1] : INFINITY;
         this->constraints_bounds[j] = {lb, ub};
         this->constraint_is_uncertainty_set[j] = (uncertain_suffixes->u.i != NULL && uncertain_suffixes->u.i[j] == 1);
     }
-    this->constraint_status = this->determine_bounds_types(this->constraints_bounds);
+    this->determine_bounds_types(this->constraints_bounds, this->constraint_status);
     this->determine_constraints();
     return;
 }
@@ -310,6 +299,7 @@ void AMPLModel::set_function_types(std::string file_name, Option_Info* option_in
     }
     this->constraint_type.reserve(this->number_constraints);
 
+    int current_linear_constraint = 0;
     for (int j = 0; j < this->number_constraints; j++) {
         fint qp = nqpcheck_ASL((ASL*) asl, -(j + 1), &rowq, &colqp, &delsqp);
 
@@ -318,6 +308,8 @@ void AMPLModel::set_function_types(std::string file_name, Option_Info* option_in
         }
         else if (qp == 0) {
             this->constraint_type[j] = LINEAR;
+            this->linear_constraints[j] = current_linear_constraint;
+            current_linear_constraint++;
         }
         else {
             this->constraint_type[j] = NONLINEAR;

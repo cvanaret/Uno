@@ -3,7 +3,12 @@
 #include <iostream>
 #include "Utils.hpp"
 
-Problem::Problem(std::string name): name(name) {
+Problem::Problem(std::string name, int number_variables, int number_constraints):
+name(name), number_variables(number_variables), number_constraints(number_constraints),
+// allocate all vectors
+variable_name(number_variables), variable_discrete(number_variables), variables_bounds(number_variables), variable_status(number_variables),
+constraint_name(number_constraints), constraint_variables(number_constraints), constraints_bounds(number_constraints), constraint_type(number_constraints), constraint_status(number_constraints)
+{
 }
 
 Problem::~Problem() {
@@ -48,9 +53,7 @@ double Problem::infeasible_residual_norm(std::vector<double>& constraints, std::
     return norm(residuals, norm_value);
 }
 
-std::vector<ConstraintType> Problem::determine_bounds_types(std::vector<Range>& bounds) {
-    std::vector<ConstraintType> status(bounds.size());
-
+void Problem::determine_bounds_types(std::vector<Range>& bounds, std::vector<ConstraintType>& status) {
     for (unsigned int i = 0; i < bounds.size(); i++) {
         if (bounds[i].lb == bounds[i].ub) {
             status[i] = EQUAL_BOUNDS;
@@ -68,7 +71,7 @@ std::vector<ConstraintType> Problem::determine_bounds_types(std::vector<Range>& 
             status[i] = UNBOUNDED;
         }
     }
-    return status;
+    return;
 }
 
 void Problem::determine_constraints() {

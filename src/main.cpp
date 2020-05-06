@@ -33,6 +33,7 @@ void run_argonot(std::string problem_name, std::map<std::string, std::string> op
     Argonot argonot = Argonot(*mechanism, max_iterations);
 
     /* initial primal and dual points */
+    //std::cout << "Getting the initial point\n";
     std::vector<double> x = problem.primal_initial_solution();
     Multipliers multipliers(problem.number_variables, problem.number_constraints);
     multipliers.constraints = problem.dual_initial_solution();

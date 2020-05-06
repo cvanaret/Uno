@@ -20,14 +20,13 @@ enum FunctionType {
  */
 class Problem {
 public:
-    Problem(std::string name);
+    Problem(std::string name, int number_variables, int number_constraints);
     virtual ~Problem();
 
+    std::string name;
     int number_variables; /*!< Number of variables */
     int number_constraints; /*!< Number of constraints */
-
-    std::string name;
-
+    
     /* objective */
     double objective_sign; /*!< Sign of the objective function (1: minimization, -1: maximization) */
     std::string objective_name;
@@ -54,9 +53,10 @@ public:
     virtual std::vector<double> constraint_dense_gradient(int j, std::vector<double>& x) = 0;
     virtual std::map<int, double> constraint_sparse_gradient(int j, std::vector<double>& x) = 0;
     virtual std::vector<std::map<int, double> > constraints_sparse_jacobian(std::vector<double>& x) = 0;
-    std::vector<ConstraintType> determine_bounds_types(std::vector<Range>& variables_bounds);
+    void determine_bounds_types(std::vector<Range>& variables_bounds, std::vector<ConstraintType>& status);
     std::map<int, int> equality_constraints; /*!< inequality constraints */
     std::map<int, int> inequality_constraints; /*!< inequality constraints */
+    std::map<int, int> linear_constraints;
 
     std::vector<int> jacobian_sparsity;
 

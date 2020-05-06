@@ -11,16 +11,16 @@ Argonot::Argonot(GlobalizationMechanism& globalization_mechanism, int max_iterat
 Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
     std::clock_t c_start = std::clock();
     int major_iterations = 0, minor_iterations = 0;
-
-    /* use the current point to initialize the strategies and generate the initial point */
-    Iterate current_iterate = this->globalization_mechanism.initialize(problem, x, multipliers);
-    
-    /* preprocessing phase: satisfy linear constraints */
-    this->preprocessing(problem, current_iterate);
     
     INFO << "Problem " << problem.name << "\n";
     INFO << problem.number_variables << " variables, " << problem.number_constraints << " constraints\n";
+    
+    /* use the current point to initialize the strategies and generate the initial point */
+    Iterate current_iterate = this->globalization_mechanism.initialize(problem, x, multipliers);
     INFO << "Initial iterate\n" << current_iterate << "\n";
+    
+    /* preprocessing phase: satisfy linear constraints */
+    this->preprocessing(problem, current_iterate);
 
     try {
         /* check for convergence */
@@ -71,7 +71,8 @@ double Argonot::compute_KKT_error(Problem& problem, Iterate& iterate, double obj
 }
 
 void Argonot::preprocessing(Problem& problem, Iterate& iterate) {
-    std::cout << "Preprocessing phase: nothing implemented\n";
+    std::cout << "Preprocessing phase:\n";
+    std::cout << "The problem has " << problem.linear_constraints.size() << " linear constraints\n";
 }
 
 void Result::display() {

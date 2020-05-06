@@ -105,18 +105,18 @@ std::vector<double> Iterate::lagrangian_gradient(Problem& problem, double object
 }
 
 std::ostream& operator<<(std::ostream &stream, Iterate& iterate) {
-    /*stream << "x: "; print_vector(stream, iterate.x, 0, 50);
+    stream << "x: "; print_vector(stream, iterate.x, 0, 50);
     stream << "Lower bound multipliers: "; print_vector(stream, iterate.multipliers.lower_bounds, 0, 50);
     stream << "Upper bound multipliers: "; print_vector(stream, iterate.multipliers.upper_bounds, 0, 50);
     stream << "Constraint multipliers: "; print_vector(stream, iterate.multipliers.constraints, 0, 50);
     stream << "Objective value: " << iterate.objective << "\n";
 
+    stream << "Constraint residual: " << iterate.constraint_residual << "\n";
+    stream << "KKT error: " << iterate.KKT_residual << "\n";
+    stream << "Complementarity error: " << iterate.complementarity_residual << "\n";
+    
     stream << "Optimality measure: " << iterate.optimality_measure << "\n";
     stream << "Feasibility measure: " << iterate.feasibility_measure << "\n";
-
-    stream << "KKT error: " << iterate.KKTerror << "\n";
-    stream << "Complementarity error: " << iterate.complementarity_error << "\n";
-    stream << "Constraint residual: " << iterate.residual << "\n";*/
     return stream;
 }
 

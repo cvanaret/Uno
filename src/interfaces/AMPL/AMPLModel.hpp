@@ -50,8 +50,6 @@ class AMPLModel: public Problem {
          */
 		~AMPLModel();
         
-        int fortran_indexing;
-		
 		/* objective */
 		double objective(std::vector<double>& x);
 		std::vector<double> objective_dense_gradient(std::vector<double>& x);
@@ -75,47 +73,18 @@ class AMPLModel: public Problem {
 		std::vector<double> dual_initial_solution();
 		
 	private:
+        // private constructor to pass the dimensions to the Problem base constructor
+        AMPLModel(std::string file_name, ASL_pfgh* asl, int fortran_indexing);
+        
 		ASL_pfgh* asl_; /*!< Instance of the AMPL Solver Library class */
-		
-		/*!
-         *  Generate the variables
-         */
+        int fortran_indexing;
+
 		void generate_variables();
-		
-		/*!
-         *  Generate the objective function
-         */
 		void initialize_objective();
-		
-		/*!
-         *  Generate the constraints
-         */
 		void generate_constraints();
-		
-		/*!
-         *  Determine the type (linear, quadratic, nonlinear) of the AMPL functions
-         * 
-         * \param file_name: list of arguments of the command line
-         * \param option_info: AMPL options
-         */
+        void create_constraint_variables(int j, cgrad* ampl_variables);
 		void set_function_types(std::string file_name, Option_Info* option_info);
-		
-		/*!
-         *  Generate the Hessian of the Lagrangian
-         */
 		void initialize_lagrangian_hessian();
-		
-		//template <typename T>
-		//void print_vector(std::ostream &stream, std::vector<T> x, unsigned int max_size = std::numeric_limits<unsigned int>::max()) {
-			//for (unsigned int i = 0; i < std::min<unsigned int>(x.size(), max_size); i++) {
-				//stream << x[i] << " ";
-			//}
-			//if (max_size < x.size()) {
-				//stream << "...";
-			//}
-			//stream << "\n";
-			//return;
-		//}
 };
 
 #endif // AMPLMODEL_H
