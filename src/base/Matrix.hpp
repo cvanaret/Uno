@@ -63,6 +63,8 @@ public:
     double smallest_diagonal_entry();
     COOMatrix to_COO();
     ArgonotMatrix to_ArgonotMatrix(int argonot_matrix_size);
+    
+    static CSCMatrix identity(int dimension, int fortran_indexing);
 
     friend std::ostream& operator<<(std::ostream &stream, CSCMatrix& matrix);
     friend std::ostream& operator<<(std::ostream &stream, const CSCMatrix& matrix);

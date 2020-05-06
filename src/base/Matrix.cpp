@@ -116,6 +116,8 @@ CSCMatrix::CSCMatrix(): Matrix(0, 0) {
 }
 
 CSCMatrix::CSCMatrix(std::vector<double>& matrix, std::vector<int>& column_start, std::vector<int>& row_number, int fortran_indexing):
+// matrix and row_number have nnz elements
+// column_start has dimension+1 elements
 Matrix(column_start.size() - 1, fortran_indexing), matrix(matrix), column_start(column_start), row_number(row_number) {
 }
 
@@ -154,7 +156,7 @@ CSCMatrix CSCMatrix::add_identity_multiple(double multiple) {
     std::vector<int> damped_row_number;
 
     int current_number_nonzeros = 0;
-    damped_column_start.push_back(current_number_nonzeros + this->fortran_indexing);
+    damped_column_start.push_back(this->fortran_indexing);
 
     /* go through the columns */
     for (int j = 0; j < this->dimension; j++) {
@@ -168,13 +170,20 @@ CSCMatrix CSCMatrix::add_identity_multiple(double multiple) {
                 damped_matrix.push_back(this->matrix[k] + multiple);
                 diagonal_term_updated = true;
             }
+            else if (j < i && !diagonal_term_updated) { /* we passed the diagonal (j, j) */
+                damped_matrix.push_back(multiple);
+                damped_matrix.push_back(this->matrix[k]);
+                damped_row_number.push_back(j + this->fortran_indexing); // diagonal term
+                current_number_nonzeros++;
+                diagonal_term_updated = true;
+            }
             else { /* keep off-diagonal term */
                 damped_matrix.push_back(this->matrix[k]);
             }
             damped_row_number.push_back(i + this->fortran_indexing);
             current_number_nonzeros++;
         }
-        /* add diagonal term at end of column if not present */
+        /* add diagonal term in column j if not present */
         if (!diagonal_term_updated) {
             damped_matrix.push_back(multiple);
             damped_row_number.push_back(j + this->fortran_indexing);
@@ -229,27 +238,35 @@ ArgonotMatrix CSCMatrix::to_ArgonotMatrix(int argonot_matrix_dimension) {
     return argonot_matrix;
 }
 
+CSCMatrix CSCMatrix::identity(int dimension, int fortran_indexing) {
+    /* initialize the identity matrix */
+    std::vector<double> matrix(dimension);
+    std::vector<int> column_start(dimension + 1);
+    std::vector<int> row_number(dimension);
+    
+    for (int i = 0; i < dimension; i++) {
+        matrix[i] = 1.;
+        row_number[i] = i + fortran_indexing;
+        column_start[dimension] = i + fortran_indexing;
+    }
+    column_start[dimension] = dimension + fortran_indexing;
+    
+    return CSCMatrix(matrix, column_start, row_number, fortran_indexing);
+}
+
 std::ostream& operator<<(std::ostream &stream, CSCMatrix& matrix) {
     /* Hessian */
-    stream << "W = ";
-    print_vector(stream, matrix.matrix);
-    stream << "with column start: ";
-    // TODO handle the stream
-    print_vector(stream, matrix.column_start);
-    stream << "and row number: ";
-    print_vector(stream, matrix.row_number);
+    stream << "W = "; print_vector(stream, matrix.matrix);
+    stream << "with column start: "; print_vector(stream, matrix.column_start);
+    stream << "and row number: "; print_vector(stream, matrix.row_number);
     return stream;
 }
 
 std::ostream& operator<<(std::ostream &stream, const CSCMatrix& matrix) {
     /* Hessian */
-    stream << "W = ";
-    print_vector(stream, matrix.matrix);
-    stream << "with column start: ";
-    // TODO handle the stream
-    print_vector(stream, matrix.column_start);
-    stream << "and row number: ";
-    print_vector(stream, matrix.row_number);
+    stream << "W = "; print_vector(stream, matrix.matrix);
+    stream << "with column start: "; print_vector(stream, matrix.column_start);
+    stream << "and row number: "; print_vector(stream, matrix.row_number);
     return stream;
 }
 
@@ -364,25 +381,28 @@ COOMatrix ArgonotMatrix::to_COO() {
 
 CSCMatrix ArgonotMatrix::to_CSC() {
     CSCMatrix csc_matrix;
-
-    int previous_column = -1;
-    int current_term = 0;
+    
+    int current_column = this->fortran_indexing;
+    int number_terms = this->fortran_indexing;
+    csc_matrix.column_start.push_back(this->fortran_indexing);
     for (std::pair<const int, double> element: this->matrix) {
         double value = element.second;
         csc_matrix.matrix.push_back(value);
         // retrieve indices
         int key = element.first;
-        int i = key % this->dimension;
-        int j = key / this->dimension;
+        int i = key % this->dimension + this->fortran_indexing;
+        int j = key / this->dimension + this->fortran_indexing;
 
-        if (previous_column < j) {
-            csc_matrix.column_start.push_back(current_term);
-            previous_column = j;
-        }
         csc_matrix.row_number.push_back(i);
-        current_term++;
+        for (int column = current_column; column < j; column++) {
+            csc_matrix.column_start.push_back(number_terms);
+        }
+        current_column = j;
+        number_terms++;
     }
-    csc_matrix.column_start.push_back(current_term);
+    csc_matrix.column_start.push_back(number_terms);
+    csc_matrix.dimension = this->dimension;
+    csc_matrix.fortran_indexing = this->fortran_indexing;
     return csc_matrix;
 }
 
