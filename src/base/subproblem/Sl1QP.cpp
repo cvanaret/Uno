@@ -9,10 +9,24 @@
 
 Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method):
 Subproblem("l1"),
+number_variables(this->determine_additional_variables(problem)),
 // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
-solver(QPSolverFactory::create(QP_solver, problem.number_variables + 2*problem.number_constraints, problem.number_constraints, problem.hessian_maximum_number_nonzeros + problem.number_variables)),
+solver(QPSolverFactory::create(QP_solver, number_variables, problem.number_constraints, problem.hessian_maximum_number_nonzeros + problem.number_variables)),
 hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables)),
 penalty_parameter(1.), parameters({10., 0.1, 0.1}) {
+}
+
+int Sl1QP::determine_additional_variables(Problem& problem) {
+    int number_variables = problem.number_variables;
+    for (int j = 0; j < problem.number_constraints; j++) {
+        if (-INFINITY < problem.constraints_bounds[j].lb) {
+            number_variables++;
+        }
+        if (problem.constraints_bounds[j].ub < INFINITY) {
+            number_variables++;
+        }
+    }
+    return number_variables;
 }
 
 Iterate Sl1QP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) {
@@ -22,14 +36,18 @@ Iterate Sl1QP::initialize(Problem& problem, std::vector<double>& x, Multipliers&
     // p and n are generated on the fly to solve the QP, but are not kept
     int current_index = problem.number_variables;
     for (int j = 0; j < problem.number_constraints; j++) {
-        // nonnegative variable p that captures the positive part of an equality
-        this->positive_part_variables[j] = current_index;
-        current_index++;
-        // nonnegative variable p that captures the positive part of an equality
-        this->negative_part_variables[j] = current_index;
-        current_index++;
+        if (-INFINITY < problem.constraints_bounds[j].lb) {
+            // nonnegative variable p that captures the positive part of the constraint violation
+            this->negative_part_variables[j] = current_index;
+            current_index++;
+        }
+        if (problem.constraints_bounds[j].ub < INFINITY) {
+            // nonnegative variable p that captures the positive part of the constraint violation
+            this->positive_part_variables[j] = current_index;
+            current_index++;
+        }
     }
-
+    
     /* compute the optimality and feasibility measures of the initial point */
     Iterate first_iterate(x, multipliers);
     this->compute_optimality_measures(problem, first_iterate);
@@ -244,16 +262,17 @@ bool Sl1QP::phase_1_required(SubproblemSolution& solution) {
 /* private methods */
 
 std::vector<Range> Sl1QP::generate_variables_bounds(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
-    std::vector<Range> variables_bounds(current_iterate.x.size() + 2 * problem.number_constraints);
+    std::vector<Range> variables_bounds(this->number_variables);
+
     /* original bounds intersected with trust region  */
-    for (unsigned int i = 0; i < current_iterate.x.size(); i++) {
+    for (int i = 0; i < problem.number_variables; i++) {
         double lb = std::max(-trust_region_radius, this->subproblem_variables_bounds[i].lb - current_iterate.x[i]);
         double ub = std::min(trust_region_radius, this->subproblem_variables_bounds[i].ub - current_iterate.x[i]);
         variables_bounds[i] = {lb, ub};
     }
     /* p and n are non-negative */
-    for (int i = 0; i < 2 * problem.number_constraints; i++) {
-        variables_bounds[current_iterate.x.size() + i] = {0., INFINITY};
+    for (unsigned int i = 0; i < this->positive_part_variables.size() + this->negative_part_variables.size(); i++) {
+        variables_bounds[problem.number_variables + i] = {0., INFINITY};
     }
     return variables_bounds;
 }
@@ -261,8 +280,13 @@ std::vector<Range> Sl1QP::generate_variables_bounds(Problem& problem, Iterate& c
 double Sl1QP::compute_linearized_constraint_residual(Problem& problem, std::vector<double>& d) {
     double residual = 0.;
     // l1 residual of the linearized constraints
-    for (int j = 0; j < problem.number_constraints; j++) {
-        residual += d[this->positive_part_variables[j]] + d[this->negative_part_variables[j]];
+    for (std::pair<const int, int>& element: this->positive_part_variables) {
+        int i = element.second;
+        residual += d[i];
+    }
+    for (std::pair<const int, int>& element: this->negative_part_variables) {
+        int i = element.second;
+        residual += d[i];
     }
     return residual;
 }
@@ -326,7 +350,14 @@ void Sl1QP::recover_active_set(Problem& problem, SubproblemSolution& solution, s
     }
     // constraints: only when p-n = 0
     for (unsigned int j = 0; j < solution.multipliers.constraints.size(); j++) {
-        if (solution.x[this->positive_part_variables[j]] + solution.x[this->negative_part_variables[j]] == 0.) {
+        double constraint_violation = 0.;
+        if (positive_part_variables.find(j) != positive_part_variables.end()) {
+            constraint_violation += solution.x[this->positive_part_variables[j]];
+        }
+        if (negative_part_variables.find(j) != negative_part_variables.end()) {
+            constraint_violation += solution.x[this->negative_part_variables[j]];
+        }
+        if (constraint_violation == 0.) {
             solution.active_set.at_lower_bound.insert(problem.number_variables + j);
         }
     }

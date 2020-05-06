@@ -25,6 +25,7 @@ public:
      */
     Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method);
 
+    int determine_additional_variables(Problem& problem);
     Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) override;
 
     SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius = INFINITY) override;
@@ -37,6 +38,7 @@ public:
     bool phase_1_required(SubproblemSolution& solution) override;
     double compute_complementarity_error(Problem& problem, Iterate& iterate, Multipliers& multipliers) override;
 
+    int number_variables;
     /* use pointers to allow polymorphism */
     std::shared_ptr<QPSolver> solver; /*!< Subproblem solver */
     std::shared_ptr<HessianEvaluation> hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
