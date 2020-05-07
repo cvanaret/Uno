@@ -3,6 +3,7 @@
 #include "Utils.hpp"
 
 extern "C" {
+    // MA57
     extern void ma57id_(double cntl[], int icntl[]);
     extern void ma57ad_(int* n, int* ne, int irn[], int jcn[], int* lkeep, int keep[], int iwork[], int icntl[],
             int info[], double rinfo[]);
@@ -22,7 +23,7 @@ MA57Factorization MA57Solver::factorize(COOMatrix& matrix) {
     
     int n = matrix.dimension;
     int nnz = matrix.number_nonzeros();
-
+    
     /* initialize */
     ma57id_(this->cntl_.data(), this->icntl_.data());
     // suppress warning messages

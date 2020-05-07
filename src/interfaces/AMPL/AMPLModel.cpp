@@ -266,10 +266,10 @@ void AMPLModel::generate_constraints() {
         this->create_constraint_variables(j, this->asl_->i.Cgrad_[j]);
         double lb = (this->asl_->i.LUrhs_ != NULL) ? this->asl_->i.LUrhs_[2 * j] : -INFINITY;
         double ub = (this->asl_->i.LUrhs_ != NULL) ? this->asl_->i.LUrhs_[2 * j + 1] : INFINITY;
-        this->constraints_bounds[j] = {lb, ub};
+        this->constraint_bounds[j] = {lb, ub};
         this->constraint_is_uncertainty_set[j] = (uncertain_suffixes->u.i != NULL && uncertain_suffixes->u.i[j] == 1);
     }
-    this->determine_bounds_types(this->constraints_bounds, this->constraint_status);
+    this->determine_bounds_types(this->constraint_bounds, this->constraint_status);
     this->determine_constraints();
     return;
 }

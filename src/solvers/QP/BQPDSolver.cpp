@@ -138,7 +138,7 @@ SubproblemSolution BQPDSolver::solve_subproblem(std::vector<Range>& variables_bo
 SubproblemSolution BQPDSolver::generate_solution(std::vector<double>& x) {
     Multipliers multipliers(this->n_, this->m_);
     SubproblemSolution solution(x, multipliers);
-
+    
     /* active constraints */
     for (int j = 0; j < this->n_ - this->k_; j++) {
         int index = std::abs(this->ls_[j]) - this->use_fortran;
@@ -151,6 +151,7 @@ SubproblemSolution BQPDSolver::generate_solution(std::vector<double>& x) {
         }
 
         if (index < this->n_) {
+            // bound constraint
             if (this->ls_[j] < 0) { /* upper bound active */
                 solution.multipliers.upper_bounds[index] = -this->residuals_[index];
             }
@@ -159,6 +160,7 @@ SubproblemSolution BQPDSolver::generate_solution(std::vector<double>& x) {
             }
         }
         else {
+            // general constraint
             int constraint_index = index - this->n_;
             solution.constraint_partition.feasible.insert(constraint_index);
             solution.constraint_partition.constraint_feasibility[constraint_index] = FEASIBLE;
