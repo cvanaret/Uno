@@ -6,6 +6,7 @@ CFLAGS = -Wall -pedantic $(PROFILER)
 AMPL_DIR = ~/src/amplsolver
 BQPD_DIR = /media/data/Bureau/robust/software/bqpd
 MA57_DIR = ~/src/ma57-3.10.0
+#MA57_DIR = ~/src/hsl_ma57-5.2.0
 BFGS_DIR = solvers/NLP/Lbfgsb.3.0
 METIS = fakemetis
 

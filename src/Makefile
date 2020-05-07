@@ -24,19 +24,19 @@ SRC_FILES = base/Argonot.cpp base/Iterate.cpp \
 	base/globalization_mechanism/GlobalizationMechanism.cpp base/globalization_mechanism/TrustRegion.cpp \
 	base/globalization_mechanism/LineSearch.cpp base/globalization_mechanism/TrustLineSearch.cpp \
 	base/globalization_mechanism/GlobalizationMechanismFactory.cpp \
-	base/subproblem/Subproblem.cpp base/subproblem/ActiveSetMethod.cpp base/subproblem/SQP.cpp base/subproblem/Sl1QP.cpp base/subproblem/SLP.cpp base/subproblem/InteriorPoint.cpp \
+	base/subproblem/Subproblem.cpp base/subproblem/ActiveSetMethod.cpp base/subproblem/SQP.cpp base/subproblem/Sl1QP.cpp base/subproblem/SLP.cpp  base/subproblem/InteriorPoint.cpp \
 	base/subproblem/SubproblemFactory.cpp base/subproblem/SubproblemSolution.cpp base/Utils.cpp \
 	solvers/QP/BQPDSolver.cpp solvers/QP/QPSolverFactory.cpp \
 	solvers/KKT/MA57Solver.cpp solvers/NLP/LBFGSB.cpp
 OBJ_FILES = $(subst .cpp,.o,$(SRC_FILES)) solvers/QP/wdotd.o $(BFGS_DIR)/lbfgsb.o $(BFGS_DIR)/timer.o $(BFGS_DIR)/blas.o $(BFGS_DIR)/linpack.o
 EXEC_NAME = argonot
 
-#   base/subproblem/SLPEQP.cpp  
+# base/subproblem/SLPEQP.cpp
 # base/globalization_strategy/Tube.cpp base/globalization_strategy/TubeStrategy.cpp
 # base/subproblem/AugmentedLagrangian.cpp \
 
 DEFINES =# -D BQPD # https://stackoverflow.com/questions/10337248/what-does-the-g-d-flag-do
-LIBS = $(AMPL_DIR)/amplsolver.a $(BQPD_DIR)/libbqpd.a -L$(MA57_DIR) -lma57 -l$(METIS)  -lf2c
+LIBS = $(AMPL_DIR)/amplsolver.a $(BQPD_DIR)/libbqpd.a -L$(MA57_DIR) -lma57 -l$(METIS) -lf2c
 
 #%.o: %.cpp %.hpp
 .cpp.o:
