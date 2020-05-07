@@ -12,17 +12,6 @@ Subproblem::~Subproblem() {
 //    first_iterate.multipliers.constraints = Subproblem::compute_least_square_multipliers(problem, first_iterate, multipliers.constraints, 1e4);
 //}
 
-std::vector<Range> Subproblem::generate_variables_bounds(std::vector<double>& current_x, std::vector<Range>& variables_bounds, double trust_region_radius) {
-    std::vector<Range> bounds(current_x.size());
-    /* bounds intersected with trust region  */
-    for (unsigned int i = 0; i < current_x.size(); i++) {
-        double lb = std::max(-trust_region_radius, variables_bounds[i].lb - current_x[i]);
-        double ub = std::min(trust_region_radius, variables_bounds[i].ub - current_x[i]);
-        bounds[i] = {lb, ub};
-    }
-    return bounds;
-}
-
 double Subproblem::project_variable_in_bounds(double variable_value, Range& variable_bounds) {
     double k1 = 1e-2;
     double k2 = 1e-2;

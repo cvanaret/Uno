@@ -42,6 +42,17 @@ SubproblemSolution ActiveSetMethod::compute_optimality_step(Problem& problem, It
     return solution;
 }
 
+std::vector<Range> ActiveSetMethod::generate_variables_bounds(std::vector<double>& current_x, std::vector<Range>& variables_bounds, double trust_region_radius) {
+    std::vector<Range> bounds(current_x.size());
+    /* bounds intersected with trust region  */
+    for (unsigned int i = 0; i < current_x.size(); i++) {
+        double lb = std::max(-trust_region_radius, variables_bounds[i].lb - current_x[i]);
+        double ub = std::min(trust_region_radius, variables_bounds[i].ub - current_x[i]);
+        bounds[i] = {lb, ub};
+    }
+    return bounds;
+}
+
 SubproblemSolution ActiveSetMethod::compute_infeasibility_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) {
     DEBUG << "\nCreating the restoration problem with " << phase_II_solution.constraint_partition.infeasible.size() << " infeasible constraints\n";
 
