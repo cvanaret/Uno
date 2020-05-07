@@ -89,9 +89,9 @@ void LineSearch::print_iteration() {
 void LineSearch::print_acceptance(double step_length, double solution_norm) {
     DEBUG << CYAN "LS trial point accepted\n" RESET;
     INFO << "minor: " << this->number_iterations << "\t";
-    INFO << "step length: " << step_length << "\t";
+    INFO << "step length: " << step_length << "\t\t";
     // TODO: if stragegy == penalty, the step norm has no meaning!
-    INFO << "step norm: " << solution_norm << "\t";
+    INFO << "step norm: " << solution_norm << "\t\t";
     return;
 }
 

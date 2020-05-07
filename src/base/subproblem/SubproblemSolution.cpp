@@ -7,8 +7,6 @@ is_descent_direction(true), constraint_partition(ConstraintPartition(multipliers
 }
 
 std::ostream& operator<<(std::ostream &stream, SubproblemSolution& solution) {
-    unsigned int max_size = 50;
-
     if (solution.status == OPTIMAL) {
         stream << "Status: optimal\n";
     }
@@ -42,7 +40,7 @@ std::ostream& operator<<(std::ostream &stream, SubproblemSolution& solution) {
 
     //stream << MAGENTA;
     stream << "d^* = ";
-    print_vector(stream, solution.x, 0, max_size);
+    print_vector(stream, solution.x);
 
     stream << "objective = " << solution.objective << "\n";
     stream << "norm = " << solution.norm << "\n";

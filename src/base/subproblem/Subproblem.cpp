@@ -12,15 +12,15 @@ Subproblem::~Subproblem() {
 //    first_iterate.multipliers.constraints = Subproblem::compute_least_square_multipliers(problem, first_iterate, multipliers.constraints, 1e4);
 //}
 
-std::vector<Range> Subproblem::generate_variables_bounds(Iterate& current_iterate, double trust_region_radius) {
-    std::vector<Range> variables_bounds(current_iterate.x.size());
+std::vector<Range> Subproblem::generate_variables_bounds(std::vector<double>& current_x, std::vector<Range>& variables_bounds, double trust_region_radius) {
+    std::vector<Range> bounds(current_x.size());
     /* bounds intersected with trust region  */
-    for (unsigned int i = 0; i < current_iterate.x.size(); i++) {
-        double lb = std::max(-trust_region_radius, this->subproblem_variables_bounds[i].lb - current_iterate.x[i]);
-        double ub = std::min(trust_region_radius, this->subproblem_variables_bounds[i].ub - current_iterate.x[i]);
-        variables_bounds[i] = {lb, ub};
+    for (unsigned int i = 0; i < current_x.size(); i++) {
+        double lb = std::max(-trust_region_radius, variables_bounds[i].lb - current_x[i]);
+        double ub = std::min(trust_region_radius, variables_bounds[i].ub - current_x[i]);
+        bounds[i] = {lb, ub};
     }
-    return variables_bounds;
+    return bounds;
 }
 
 double Subproblem::project_variable_in_bounds(double variable_value, Range& variable_bounds) {
@@ -37,8 +37,8 @@ double Subproblem::project_variable_in_bounds(double variable_value, Range& vari
 std::vector<Range> Subproblem::generate_constraints_bounds(Problem& problem, std::vector<double>& current_constraints) {
     std::vector<Range> constraints_bounds(problem.number_constraints);
     for (int j = 0; j < problem.number_constraints; j++) {
-        double lb = problem.constraints_bounds[j].lb - current_constraints[j];
-        double ub = problem.constraints_bounds[j].ub - current_constraints[j];
+        double lb = problem.constraint_bounds[j].lb - current_constraints[j];
+        double ub = problem.constraint_bounds[j].ub - current_constraints[j];
         constraints_bounds[j] = {lb, ub};
     }
     return constraints_bounds;
@@ -95,8 +95,9 @@ std::vector<double> Subproblem::compute_least_square_multipliers(Problem& proble
     print_vector(DEBUG, rhs);
 
     MA57Factorization factorization = solver.factorize(matrix);
-    std::vector<double> solution = solver.solve(factorization, rhs);
+    solver.solve(factorization, rhs);
     DEBUG << "Solution: ";
+    std::vector<double>& solution = rhs;
     print_vector(DEBUG, solution);
 
     /* retrieve multipliers */
@@ -109,6 +110,12 @@ std::vector<double> Subproblem::compute_least_square_multipliers(Problem& proble
         return default_multipliers;
     }
     return multipliers;
+}
+
+
+double Subproblem::compute_KKT_error(Problem& problem, Iterate& iterate, double objective_mutiplier) {
+    std::vector<double> lagrangian_gradient = iterate.lagrangian_gradient(problem, objective_mutiplier, iterate.multipliers);
+    return norm(lagrangian_gradient, this->residual_norm);
 }
 
 /* complementary slackness error. Use abs/1e-8 to safeguard */
@@ -127,12 +134,20 @@ double Subproblem::compute_complementarity_error(Problem& problem, Iterate& iter
     iterate.compute_constraints(problem);
     for (int j = 0; j < problem.number_constraints; j++) {
         double multiplier_j = multipliers.constraints[j];
-        if (-INFINITY < problem.constraints_bounds[j].lb && 0. < multiplier_j) {
-            complementarity_error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraints_bounds[j].lb));
+        if (-INFINITY < problem.constraint_bounds[j].lb && 0. < multiplier_j) {
+            complementarity_error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraint_bounds[j].lb));
         }
-        if (problem.constraints_bounds[j].ub < INFINITY && multiplier_j < 0.) {
-            complementarity_error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraints_bounds[j].ub));
+        if (problem.constraint_bounds[j].ub < INFINITY && multiplier_j < 0.) {
+            complementarity_error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraint_bounds[j].ub));
         }
     }
     return complementarity_error;
+}
+
+void Subproblem::compute_residuals(Problem& problem, Iterate& iterate, Multipliers& multipliers, double objective_multiplier) {
+    iterate.compute_constraints(problem);
+    iterate.residuals.constraints = problem.compute_constraint_residual(iterate.constraints, this->residual_norm);
+    iterate.residuals.KKT = Subproblem::compute_KKT_error(problem, iterate, objective_multiplier);
+    iterate.residuals.complementarity = this->compute_complementarity_error(problem, iterate, multipliers);
+    return;
 }

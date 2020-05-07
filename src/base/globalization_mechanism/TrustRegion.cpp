@@ -93,8 +93,8 @@ void TrustRegion::print_iteration() {
 void TrustRegion::print_acceptance(double solution_norm) {
     DEBUG << CYAN "TR trial point accepted\n" RESET;
     INFO << "minor: " << this->number_iterations << "\t";
-    INFO << "radius: " << this->radius << "\t";
-    INFO << "step norm: " << solution_norm << "\t";
+    INFO << "radius: " << this->radius << "\t\t";
+    INFO << "step norm: " << solution_norm << "\t\t";
     return;
 }
 

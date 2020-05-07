@@ -9,20 +9,20 @@
 
 Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method):
 Subproblem("l1"),
-number_variables(this->determine_additional_variables(problem)),
+number_variables(this->count_additional_variables(problem)),
 // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
 solver(QPSolverFactory::create(QP_solver, number_variables, problem.number_constraints, problem.hessian_maximum_number_nonzeros + problem.number_variables)),
 hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables)),
 penalty_parameter(1.), parameters({10., 0.1, 0.1}) {
 }
 
-int Sl1QP::determine_additional_variables(Problem& problem) {
+int Sl1QP::count_additional_variables(Problem& problem) {
     int number_variables = problem.number_variables;
     for (int j = 0; j < problem.number_constraints; j++) {
-        if (-INFINITY < problem.constraints_bounds[j].lb) {
+        if (-INFINITY < problem.constraint_bounds[j].lb) {
             number_variables++;
         }
-        if (problem.constraints_bounds[j].ub < INFINITY) {
+        if (problem.constraint_bounds[j].ub < INFINITY) {
             number_variables++;
         }
     }
@@ -36,12 +36,12 @@ Iterate Sl1QP::initialize(Problem& problem, std::vector<double>& x, Multipliers&
     // p and n are generated on the fly to solve the QP, but are not kept
     int current_index = problem.number_variables;
     for (int j = 0; j < problem.number_constraints; j++) {
-        if (-INFINITY < problem.constraints_bounds[j].lb) {
+        if (-INFINITY < problem.constraint_bounds[j].lb) {
             // nonnegative variable p that captures the positive part of the constraint violation
             this->negative_part_variables[j] = current_index;
             current_index++;
         }
-        if (problem.constraints_bounds[j].ub < INFINITY) {
+        if (problem.constraint_bounds[j].ub < INFINITY) {
             // nonnegative variable p that captures the positive part of the constraint violation
             this->positive_part_variables[j] = current_index;
             current_index++;
@@ -235,15 +235,15 @@ double Sl1QP::compute_predicted_reduction(Problem& problem, Iterate& current_ite
         for (unsigned int j = 0; j < current_iterate.constraints.size(); j++) {
             scaled_constraints[j] += step_length * dot(solution.x, current_iterate.constraints_jacobian[j]);
         }
-        double constraint_violation = problem.infeasible_residual_norm(scaled_constraints, this->residual_norm);
+        double constraint_violation = problem.compute_constraint_residual(scaled_constraints, this->residual_norm);
         return current_iterate.feasibility_measure - (step_length * (linear_term + step_length * quadratic_term) + constraint_violation);
     }
 }
 
 void Sl1QP::compute_optimality_measures(Problem& problem, Iterate& iterate) {
     /* feasibility */
-    iterate.compute_constraint_residual(problem, this->residual_norm);
-    iterate.feasibility_measure = iterate.constraint_residual;
+    this->compute_residuals(problem, iterate, iterate.multipliers, 1.);
+    iterate.feasibility_measure = iterate.residuals.constraints;
     /* optimality */
     iterate.compute_objective(problem);
     iterate.optimality_measure = iterate.objective;
@@ -318,19 +318,19 @@ double Sl1QP::compute_complementarity_error(Problem& problem, Iterate& iterate, 
     /* general constraints */
     for (int j = 0; j < problem.number_constraints; j++) {
         double multiplier_j = multipliers.constraints[j];
-        if (iterate.constraints[j] < problem.constraints_bounds[j].lb) {
+        if (iterate.constraints[j] < problem.constraint_bounds[j].lb) {
             // violated lower: the multiplier is 1 at optimum
-            error += std::abs((1. - multiplier_j) * (problem.constraints_bounds[j].lb - iterate.constraints[j]));
+            error += std::abs((1. - multiplier_j) * (problem.constraint_bounds[j].lb - iterate.constraints[j]));
         }
-        else if (problem.constraints_bounds[j].ub < iterate.constraints[j]) {
+        else if (problem.constraint_bounds[j].ub < iterate.constraints[j]) {
             // violated upper: the multiplier is -1 at optimum
-            error += std::abs((1. + multiplier_j) * (iterate.constraints[j] - problem.constraints_bounds[j].ub));
+            error += std::abs((1. + multiplier_j) * (iterate.constraints[j] - problem.constraint_bounds[j].ub));
         }
-        else if (-INFINITY < problem.constraints_bounds[j].lb && 0. < multiplier_j) {
-            error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraints_bounds[j].lb));
+        else if (-INFINITY < problem.constraint_bounds[j].lb && 0. < multiplier_j) {
+            error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraint_bounds[j].lb));
         }
-        else if (problem.constraints_bounds[j].ub < INFINITY && multiplier_j < 0.) {
-            error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraints_bounds[j].ub));
+        else if (problem.constraint_bounds[j].ub < INFINITY && multiplier_j < 0.) {
+            error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraint_bounds[j].ub));
         }
     }
     return error;

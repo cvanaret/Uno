@@ -12,9 +12,7 @@ GlobalizationStrategy(subproblem, tolerance), filter_optimality(filter_optimalit
 Iterate FilterStrategy::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) {
     /* initialize the subproblem */
     Iterate first_iterate = this->subproblem.initialize(problem, x, multipliers, use_trust_region);
-
-    first_iterate.KKT_residual = Argonot::compute_KKT_error(problem, first_iterate, 1., this->subproblem.residual_norm);
-    first_iterate.complementarity_residual = this->subproblem.compute_complementarity_error(problem, first_iterate, first_iterate.multipliers);
+    this->subproblem.compute_residuals(problem, first_iterate, first_iterate.multipliers, 1.);
 
     /* set the filter upper bound */
     double upper_bound = std::max(this->parameters.ubd, this->parameters.fact * first_iterate.feasibility_measure);
@@ -88,13 +86,11 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
             this->update_restoration_multipliers(trial_iterate, solution.constraint_partition);
         }
         trial_iterate.compute_objective(problem);
-        trial_iterate.compute_constraint_residual(problem, this->subproblem.residual_norm);
-        trial_iterate.KKT_residual = Argonot::compute_KKT_error(problem, trial_iterate, solution.objective_multiplier, this->subproblem.residual_norm);
-        trial_iterate.complementarity_residual = (this->current_phase == OPTIMALITY) ? this->subproblem.compute_complementarity_error(problem, trial_iterate, trial_iterate.multipliers) : 0.;
+        this->subproblem.compute_residuals(problem, trial_iterate, trial_iterate.multipliers, solution.objective_multiplier);
         trial_iterate.status = this->compute_status(problem, trial_iterate, step_norm, solution.objective_multiplier);
         INFO << "phase: " << this->current_phase << "\t";
         current_iterate = trial_iterate;
-        DEBUG << "Residuals: ||c|| = " << current_iterate.constraint_residual << ", KKT = " << current_iterate.KKT_residual << ", cmpl = " << current_iterate.complementarity_residual << "\n";
+        DEBUG << "Residuals: ||c|| = " << current_iterate.residuals.constraints << ", KKT = " << current_iterate.residuals.KKT << ", cmpl = " << current_iterate.residuals.complementarity << "\n";
     }
     return accept;
 }

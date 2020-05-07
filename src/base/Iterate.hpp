@@ -16,6 +16,12 @@ enum OptimalityStatus {
     INFEASIBLE_SMALL_STEP
 };
 
+struct Residuals {
+    double constraints;
+    double KKT;
+    double complementarity;
+};
+
 std::ostream& operator<<(std::ostream &stream, OptimalityStatus& status);
 
 /*! \class Iterate
@@ -39,10 +45,7 @@ public:
 
     std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
     bool are_constraints_computed;
-
-    double constraint_residual; /*!< Constraint residual */
-    bool is_constraint_residual_computed;
-
+    
     std::map<int, double> objective_gradient; /*!< Sparse Jacobian of the objective */
     bool is_objective_gradient_computed; /*!< Flag that indicates if the objective gradient has already been computed */
 
@@ -55,15 +58,17 @@ public:
     // status and measures
     OptimalityStatus status;
 
-    double KKT_residual;
-    double complementarity_residual;
+    //double constraint_residual; /*!< Constraint residual */
+    //double KKT_residual;
+    //double complementarity_residual;
+    Residuals residuals;
+    //bool are_residuals_computed;
 
     double feasibility_measure;
     double optimality_measure;
 
     void compute_objective(Problem& problem);
     void compute_constraints(Problem& problem);
-    void compute_constraint_residual(Problem& problem, std::string residual_norm);
     void set_constraint_residual(double constraint_residual);
     void compute_objective_gradient(Problem& problem);
     void set_objective_gradient(std::map<int, double>& objective_gradient);

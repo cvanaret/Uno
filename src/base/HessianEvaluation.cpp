@@ -27,15 +27,15 @@ CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& hessian) {
         hessian = hessian.add_identity_multiple(inertia - previous_inertia);
     }
     COOMatrix coo_hessian = hessian.to_COO();
+    DEBUG << "Testing factorization with inertia term " << inertia << "\n";
     MA57Factorization factorization = solver.factorize(coo_hessian);
     
     bool good_inertia = false;
     while (!good_inertia) {
-        DEBUG << "Testing factorization with inertia term " << inertia << "\n";
-        
+        DEBUG << factorization.number_negative_eigenvalues() << " negative eigenvalues\n";
         if (!factorization.matrix_is_singular() && factorization.number_negative_eigenvalues() == 0) {
             good_inertia = true;
-            DEBUG << "Factorization was a success\n";
+            DEBUG << "Factorization was a success with inertia " << inertia << "\n";
         }
         else {
             if (inertia == 0.) {
@@ -48,11 +48,10 @@ CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& hessian) {
             }
             hessian = hessian.add_identity_multiple(inertia - previous_inertia);
             coo_hessian = hessian.to_COO();
+            DEBUG << "Testing factorization with inertia term " << inertia << "\n";
             factorization = solver.factorize(coo_hessian);
         }
     }
-    DEBUG << "Final inertia: " << inertia << "\n";
-    DEBUG << "Negative eigenvalues: " << factorization.number_negative_eigenvalues() << "\n";
     return hessian;
 }
 
@@ -76,7 +75,7 @@ void ExactHessianEvaluation::compute(Problem& problem, Iterate& iterate, double 
 
 /* BFGS Hessian */
 
-BFGSHessianEvaluation::BFGSHessianEvaluation(int dimension): HessianEvaluation(dimension), previous_x(dimension) {
+BFGSHessianEvaluation::BFGSHessianEvaluation(int dimension): HessianEvaluation(dimension), previous_hessian(dimension, 1), previous_x(dimension) {
 }
 
 void BFGSHessianEvaluation::compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) {

@@ -45,7 +45,7 @@ public:
     /* constraints */
     std::vector<std::string> constraint_name;
     std::vector<std::map<int, double> > constraint_variables;
-    std::vector<Range> constraints_bounds;
+    std::vector<Range> constraint_bounds;
     std::vector<FunctionType> constraint_type; /*!< Types of the constraints (LINEAR, QUADRATIC, NONLINEAR) */
     std::vector<ConstraintType> constraint_status; /*!< Status of the constraints (EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES, UNBOUNDED) */
     virtual double evaluate_constraint(int j, std::vector<double>& x) = 0;
@@ -69,9 +69,10 @@ public:
     virtual std::vector<double> primal_initial_solution() = 0;
     virtual std::vector<double> dual_initial_solution() = 0;
 
-    double feasible_residual_norm(ConstraintPartition& constraint_partition, std::vector<double>& constraints, std::string norm_value);
-    double infeasible_residual_norm(ConstraintPartition& constraint_partition, std::vector<double>& constraints, std::string norm_value);
-    double infeasible_residual_norm(std::vector<double>& constraints, std::string norm_value);
+    //double compute_constraint_residual(ConstraintPartition& constraint_partition, std::vector<double>& constraints, std::string norm_value);
+    //double compute_constraint_residual(ConstraintPartition& constraint_partition, std::vector<double>& constraints, std::string norm_value);
+    double compute_constraint_residual(std::vector<double>& constraints, std::string norm_value);
+    double compute_constraint_residual(std::vector<double>& constraints, std::set<int> constraint_set, std::string norm_value);
 
     int number_eval_objective;
     int number_eval_constraints;

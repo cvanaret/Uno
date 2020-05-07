@@ -56,9 +56,9 @@ Iterate InteriorPoint::initialize(Problem& problem, std::vector<double>& x, Mult
     for (std::pair<const int, int>& element: problem.inequality_constraints) {
         int j = element.first;
         int slack_index = problem.number_variables + element.second;
-        double slack_value = Subproblem::project_variable_in_bounds(first_iterate.constraints[j], problem.constraints_bounds[j]);
+        double slack_value = Subproblem::project_variable_in_bounds(first_iterate.constraints[j], problem.constraint_bounds[j]);
         first_iterate.x[slack_index] = slack_value;
-        this->subproblem_variables_bounds[slack_index] = problem.constraints_bounds[j];
+        this->subproblem_variables_bounds[slack_index] = problem.constraint_bounds[j];
     }
 
     /* evaluate the constraint Jacobian */
@@ -111,14 +111,14 @@ SubproblemSolution InteriorPoint::compute_optimality_step(Problem& problem, Iter
     }
     
     /* scaled error terms */
+    this->compute_residuals(problem, current_iterate, current_iterate.multipliers, 1.);
     double sd = this->compute_KKT_error_scaling(current_iterate);
-    double KKTerror = Argonot::compute_KKT_error(problem, current_iterate, 1., this->residual_norm) / sd;
+    double KKTerror = current_iterate.residuals.KKT / sd;
     double central_complementarity_error = this->compute_central_complementarity_error(current_iterate, this->mu_optimality, this->subproblem_variables_bounds);
-    current_iterate.compute_constraint_residual(problem, this->residual_norm);
-    DEBUG << "IPM error (KKT: " << KKTerror << ", cmpl: " << central_complementarity_error << ", feas: " << current_iterate.constraint_residual << ")\n";
+    DEBUG << "IPM error (KKT: " << KKTerror << ", cmpl: " << central_complementarity_error << ", feas: " << current_iterate.residuals.constraints << ")\n";
 
     /* update of the barrier problem */
-    double error = std::max(KKTerror, std::max(central_complementarity_error, current_iterate.constraint_residual));
+    double error = std::max(KKTerror, std::max(central_complementarity_error, current_iterate.residuals.constraints));
     if (error <= this->parameters.k_epsilon * this->mu_optimality) {
         // TODO pass tolerance
         double tolerance = 1e-8;
@@ -147,8 +147,9 @@ SubproblemSolution InteriorPoint::compute_optimality_step(Problem& problem, Iter
     std::vector<double> rhs = this->generate_kkt_rhs(problem, current_iterate);
 
     /* compute the solution (Δx, -Δλ) */
-    std::vector<double> solution_IPM = this->solver.solve(factorization, rhs);
+    this->solver.solve(factorization, rhs);
     this->number_subproblems_solved++;
+    std::vector<double>& solution_IPM = rhs;
 
     /* generate IPM direction */
     SubproblemSolution solution = this->generate_direction(problem, current_iterate, solution_IPM);
@@ -391,7 +392,7 @@ std::vector<double> InteriorPoint::generate_kkt_rhs(Problem& problem, Iterate& c
     for (int j = 0; j < problem.number_constraints; j++) {
         if (problem.constraint_status[j] == EQUAL_BOUNDS) {
             // add the bound
-            rhs[number_variables + j] = -(current_iterate.constraints[j] - problem.constraints_bounds[j].lb);
+            rhs[number_variables + j] = -(current_iterate.constraints[j] - problem.constraint_bounds[j].lb);
         }
         else {
             // add the slack
@@ -441,7 +442,7 @@ double InteriorPoint::constraint_violation(Problem& problem, Iterate& iterate) {
     int slack_index = problem.number_variables;
     for (int j = 0; j < problem.number_constraints; j++) {
         if (problem.constraint_status[j] == EQUAL_BOUNDS) {
-            double constraint_value = iterate.constraints[j] - problem.constraints_bounds[j].lb;
+            double constraint_value = iterate.constraints[j] - problem.constraint_bounds[j].lb;
             residuals[j] = constraint_value;
         }
         else {
@@ -489,7 +490,7 @@ SubproblemSolution InteriorPoint::compute_infeasibility_step(Problem& problem, I
     for (int j = 0; j < problem.number_constraints; j++) {
         if (problem.constraint_status[j] == EQUAL_BOUNDS) {
             // add the bound
-            restoration_multipliers[j] = 2*(current_iterate.constraints[j] - problem.constraints_bounds[j].lb);
+            restoration_multipliers[j] = 2*(current_iterate.constraints[j] - problem.constraint_bounds[j].lb);
         }
         else {
             // add the slack
@@ -544,8 +545,9 @@ SubproblemSolution InteriorPoint::compute_infeasibility_step(Problem& problem, I
     DEBUG << "restoration RHS: "; print_vector(DEBUG, rhs); DEBUG << "\n";
     
     /* compute the solution Δx */
-    std::vector<double> solution_IPM = this->solver.solve(factorization, rhs);
+    this->solver.solve(factorization, rhs);
     this->number_subproblems_solved++;
+    std::vector<double>& solution_IPM = rhs;
     
     /* compute bound multiplier displacements Δz */
     std::vector<double> lower_delta_z = this->compute_lower_bound_multiplier_displacements(current_iterate, solution_IPM, subproblem_variables_bounds, this->mu_feasibility);

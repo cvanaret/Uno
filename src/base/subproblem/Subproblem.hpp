@@ -38,12 +38,15 @@ public:
     virtual double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) = 0;
     virtual bool phase_1_required(SubproblemSolution& solution) = 0;
 
-    std::vector<Range> generate_variables_bounds(Iterate& current_iterate, double trust_region_radius);
+    std::vector<Range> generate_variables_bounds(std::vector<double>& current_x, std::vector<Range>& variables_bounds, double trust_region_radius);
     static double project_variable_in_bounds(double variable_value, Range& variable_bounds);
     static std::vector<Range> generate_constraints_bounds(Problem& problem, std::vector<double>& current_constraints);
     static std::vector<double> compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, std::vector<double>& default_multipliers, MA57Solver& solver, double multipliers_max_size=1e3);
     static std::vector<double> compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, std::vector<double>& default_multipliers, double multipliers_max_size=1e3);
+    
+    double compute_KKT_error(Problem& problem, Iterate& iterate, double objective_mutiplier);
     virtual double compute_complementarity_error(Problem& problem, Iterate& iterate, Multipliers& multipliers);
+    void compute_residuals(Problem& problem, Iterate& iterate, Multipliers& multipliers, double objective_multiplier);
     
     std::string residual_norm;
     // when the subproblem is reformulated (e.g. when slacks are introduced), the bounds may be altered as well

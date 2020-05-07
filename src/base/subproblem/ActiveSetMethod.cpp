@@ -24,7 +24,7 @@ SubproblemSolution ActiveSetMethod::compute_optimality_step(Problem& problem, It
     this->evaluate_optimality_iterate(problem, current_iterate);
 
     /* bounds of the variables */
-    std::vector<Range> variables_bounds = this->generate_variables_bounds(current_iterate, trust_region_radius);
+    std::vector<Range> variables_bounds = this->generate_variables_bounds(current_iterate.x, this->subproblem_variables_bounds, trust_region_radius);
 
     /* bounds of the linearized constraints */
     std::vector<Range> constraints_bounds = Subproblem::generate_constraints_bounds(problem, current_iterate.constraints);
@@ -33,7 +33,7 @@ SubproblemSolution ActiveSetMethod::compute_optimality_step(Problem& problem, It
     std::vector<double> d0(current_iterate.x.size()); // = {0.}
 
     /* solve the QP */
-    SubproblemSolution solution = this->solve_subproblem(variables_bounds, constraints_bounds, current_iterate, d0);
+    SubproblemSolution solution = this->solve_optimality_subproblem(variables_bounds, constraints_bounds, current_iterate, d0);
     solution.objective_multiplier = problem.objective_sign;
     solution.phase_1_required = this->phase_1_required(solution);
     solution.phase = OPTIMALITY;
@@ -46,14 +46,14 @@ SubproblemSolution ActiveSetMethod::compute_infeasibility_step(Problem& problem,
     DEBUG << "\nCreating the restoration problem with " << phase_II_solution.constraint_partition.infeasible.size() << " infeasible constraints\n";
 
     /* evaluate the functions at the current iterate */
-    current_iterate.is_hessian_computed = false;
-    this->evaluate_feasibility_iterate(problem, current_iterate, phase_II_solution);
+    //current_iterate.is_hessian_computed = false;
+    //this->evaluate_feasibility_iterate(problem, current_iterate, phase_II_solution);
     
     /* compute the objective */
     this->compute_linear_feasibility_objective(current_iterate, phase_II_solution.constraint_partition);
 
     /* bounds of the variables */
-    std::vector<Range> variables_bounds = this->generate_variables_bounds(current_iterate, trust_region_radius);
+    std::vector<Range> variables_bounds = this->generate_variables_bounds(current_iterate.x, this->subproblem_variables_bounds, trust_region_radius);
 
     /* bounds of the linearized constraints */
     std::vector<Range> constraints_bounds = this->generate_feasibility_bounds(problem, current_iterate.constraints, phase_II_solution.constraint_partition);
@@ -62,7 +62,7 @@ SubproblemSolution ActiveSetMethod::compute_infeasibility_step(Problem& problem,
     std::vector<double> d0 = phase_II_solution.x;
 
     /* solve the QP */
-    SubproblemSolution solution = this->solve_subproblem(variables_bounds, constraints_bounds, current_iterate, d0);
+    SubproblemSolution solution = this->solve_feasibility_subproblem(variables_bounds, constraints_bounds, current_iterate, d0);
     solution.objective_multiplier = 0.;
     solution.phase = RESTORATION;
     solution.constraint_partition = phase_II_solution.constraint_partition;
@@ -73,8 +73,8 @@ SubproblemSolution ActiveSetMethod::compute_infeasibility_step(Problem& problem,
 
 void ActiveSetMethod::compute_optimality_measures(Problem& problem, Iterate& iterate) {
     // feasibility
-    iterate.compute_constraint_residual(problem, this->residual_norm);
-    iterate.feasibility_measure = iterate.constraint_residual;
+    this->compute_residuals(problem, iterate, iterate.multipliers, 1.);
+    iterate.feasibility_measure = iterate.residuals.constraints;
     // optimality
     iterate.compute_objective(problem);
     iterate.optimality_measure = iterate.objective;
@@ -83,8 +83,10 @@ void ActiveSetMethod::compute_optimality_measures(Problem& problem, Iterate& ite
 
 void ActiveSetMethod::compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution) {
     iterate.compute_constraints(problem);
-    iterate.feasibility_measure = problem.feasible_residual_norm(solution.constraint_partition, iterate.constraints, this->residual_norm);
-    iterate.optimality_measure = problem.infeasible_residual_norm(solution.constraint_partition, iterate.constraints, this->residual_norm);
+    // feasibility measure: residual of all constraints
+    iterate.feasibility_measure = problem.compute_constraint_residual(iterate.constraints, this->residual_norm);
+    // optimality measure: residual of linearly infeasible constraints
+    iterate.optimality_measure = problem.compute_constraint_residual(iterate.constraints, solution.constraint_partition.infeasible, this->residual_norm);
     return;
 }
 
@@ -96,15 +98,15 @@ std::vector<Range> ActiveSetMethod::generate_feasibility_bounds(Problem& problem
         double lb, ub;
         if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
             lb = -INFINITY;
-            ub = problem.constraints_bounds[j].lb - current_constraints[j];
+            ub = problem.constraint_bounds[j].lb - current_constraints[j];
         }
         else if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_UPPER) {
-            lb = problem.constraints_bounds[j].ub - current_constraints[j];
+            lb = problem.constraint_bounds[j].ub - current_constraints[j];
             ub = INFINITY;
         }
         else { // FEASIBLE
-            lb = problem.constraints_bounds[j].lb - current_constraints[j];
-            ub = problem.constraints_bounds[j].ub - current_constraints[j];
+            lb = problem.constraint_bounds[j].lb - current_constraints[j];
+            ub = problem.constraint_bounds[j].ub - current_constraints[j];
         }
         constraints_bounds[j] = {lb, ub};
     }

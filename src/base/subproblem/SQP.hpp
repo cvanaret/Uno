@@ -34,7 +34,8 @@ protected:
     std::vector<Range> generate_feasibility_bounds(Problem& problem, std::vector<double>& current_constraints, ConstraintPartition& constraint_partition);
     void set_feasibility_objective_(Iterate& current_iterate, ConstraintPartition& constraint_partition);
     // call subproblem solver
-    virtual SubproblemSolution solve_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, Iterate& current_iterate, std::vector<double>& d0);
+    virtual SubproblemSolution solve_optimality_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, Iterate& current_iterate, std::vector<double>& d0);
+    virtual SubproblemSolution solve_feasibility_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, Iterate& current_iterate, std::vector<double>& d0);
 };
 
 #endif // SQP_H

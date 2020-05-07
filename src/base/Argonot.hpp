@@ -41,49 +41,15 @@ public:
      * \param x: primal variables
      * \param multipliers: Lagrange multipliers/dual variables
      */
-    Result solve(Problem& problem, std::vector<double>& x, Multipliers& multipliers);
-    void preprocessing(Problem& problem, Iterate& iterate);
-    static double compute_KKT_error(Problem& problem, Iterate& iterate, double objective_mutiplier, std::string norm_value);
-    
+    Result solve(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool preprocessing);
+    void preprocessing(Problem& problem, std::vector<double>& x, Multipliers& multipliers);
+
     GlobalizationMechanism& globalization_mechanism; /*!< Step control strategy (trust region or line-search) */
     int max_iterations; /*!< Maximum number of iterations */
 
 private:
-    /*!
-     *  Determine whether the optimization process is over
-     * 
-     * \param is_optimal: optimality status
-     * \param iteration: current iteration number
-     */
     bool termination_criterion(OptimalityStatus is_optimal, int iteration);
-
-    /*!
-     *  Determine if the current point satisfies optimality criteria
-     * 
-     * \param problem: optimization problem
-     * \param phase: current phase (optimality or feasibility restoration)
-     * \param current_iterate: current point and its evaluations
-     */
     OptimalityStatus optimality_test(Problem& problem, Phase& phase, Iterate& current_iterate);
-
-    /*!
-     *  Compute the KKT error
-     * 
-     * \param problem: optimization problem
-     * \param phase: current phase (optimality or feasibility restoration)
-     * \param current_iterate: current point and its evaluations
-
-     */
-    double compute_KKT_error(Problem& problem, Phase& phase, Iterate& current_iterate);
-
-    /*!
-     *  Compute the complementarity error
-     * 
-     * \param problem: optimization problem
-     * \param phase: current phase (optimality or feasibility restoration)
-     * \param current_iterate: current point and its evaluations
-     */
-    double compute_complementarity_error(const Problem& problem, Phase& phase, Iterate& current_iterate);
 };
 
 #endif // ARGONOT_H

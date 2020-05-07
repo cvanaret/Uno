@@ -19,7 +19,7 @@ public:
      * 
      * \param solver: solver that solves the subproblem
      */
-    SLPEQP(QPSolver& solver, HessianEvaluation& hessian_evaluation);
+    SLPEQP(Problem& problem, std::string QP_solver_name, std::string hessian_evaluation_method);
 
     Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) override;
 
@@ -33,7 +33,6 @@ public:
     double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
 
     /* use a reference to allow polymorphism */
-    QPSolver& solver; /*!< Solver that solves the subproblem */
     SLP lp_subproblem;
     SQP eqp_subproblem;
 

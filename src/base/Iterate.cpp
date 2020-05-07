@@ -2,7 +2,7 @@
 #include "Utils.hpp"
 #include "Logger.hpp"
 
-Iterate::Iterate(std::vector<double>& x, Multipliers& multipliers) : x(x), multipliers(multipliers), objective(0.), is_objective_computed(false), are_constraints_computed(false), constraint_residual(0.), is_constraint_residual_computed(false), is_objective_gradient_computed(false), is_constraints_jacobian_computed(false), is_hessian_computed(false), status(NOT_OPTIMAL), KKT_residual(0.), complementarity_residual(0.), feasibility_measure(0.), optimality_measure(0.) {
+Iterate::Iterate(std::vector<double>& x, Multipliers& multipliers) : x(x), multipliers(multipliers), objective(0.), is_objective_computed(false), are_constraints_computed(false), is_objective_gradient_computed(false), is_constraints_jacobian_computed(false), hessian(x.size(), 1), is_hessian_computed(false), status(NOT_OPTIMAL), residuals({0., 0., 0.}), feasibility_measure(0.), optimality_measure(0.) {
 }
 
 void Iterate::compute_objective(Problem& problem) {
@@ -18,21 +18,6 @@ void Iterate::compute_constraints(Problem& problem) {
         this->constraints = problem.evaluate_constraints(this->x);
         this->are_constraints_computed = true;
     }
-    return;
-}
-
-void Iterate::compute_constraint_residual(Problem& problem, std::string residual_norm) {
-    if (!this->is_constraint_residual_computed) {
-        this->compute_constraints(problem);
-        this->constraint_residual = problem.infeasible_residual_norm(this->constraints, residual_norm);
-        this->is_constraint_residual_computed = true;
-    }
-    return;
-}
-
-void Iterate::set_constraint_residual(double constraint_residual) {
-    this->constraint_residual = constraint_residual;
-    this->is_constraint_residual_computed = true;
     return;
 }
 
@@ -105,15 +90,15 @@ std::vector<double> Iterate::lagrangian_gradient(Problem& problem, double object
 }
 
 std::ostream& operator<<(std::ostream &stream, Iterate& iterate) {
-    stream << "x: "; print_vector(stream, iterate.x, 0, 50);
-    stream << "Lower bound multipliers: "; print_vector(stream, iterate.multipliers.lower_bounds, 0, 50);
-    stream << "Upper bound multipliers: "; print_vector(stream, iterate.multipliers.upper_bounds, 0, 50);
-    stream << "Constraint multipliers: "; print_vector(stream, iterate.multipliers.constraints, 0, 50);
+    stream << "x: "; print_vector(stream, iterate.x);
+    stream << "Lower bound multipliers: "; print_vector(stream, iterate.multipliers.lower_bounds);
+    stream << "Upper bound multipliers: "; print_vector(stream, iterate.multipliers.upper_bounds);
+    stream << "Constraint multipliers: "; print_vector(stream, iterate.multipliers.constraints);
     stream << "Objective value: " << iterate.objective << "\n";
 
-    stream << "Constraint residual: " << iterate.constraint_residual << "\n";
-    stream << "KKT error: " << iterate.KKT_residual << "\n";
-    stream << "Complementarity error: " << iterate.complementarity_residual << "\n";
+    stream << "Constraint residual: " << iterate.residuals.constraints << "\n";
+    stream << "KKT residual: " << iterate.residuals.KKT << "\n";
+    stream << "Complementarity residual: " << iterate.residuals.complementarity << "\n";
     
     stream << "Optimality measure: " << iterate.optimality_measure << "\n";
     stream << "Feasibility measure: " << iterate.feasibility_measure << "\n";

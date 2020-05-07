@@ -13,25 +13,6 @@ std::vector<double> add_vectors(std::vector<double>& x, std::vector<double>& y, 
     return z;
 }
 
-double norm(std::vector<double>& x, std::string norm_value) {
-    /* choose the right norm */
-    if (norm_value == "inf") {
-        return norm_inf(x);
-    }
-    else if (norm_value == "l2") {
-        return norm_2(x);
-    }
-    else if (norm_value == "l2_squared") {
-        return norm_2_squared(x);
-    }
-    else if (norm_value == "l1") {
-        return norm_1(x);
-    }
-    else {
-        throw std::out_of_range("The norm is not known");
-    }
-}
-
 /* compute ||x||_1 */
 double norm_1(std::vector<double>& x) {
     double norm = 0.;
@@ -69,8 +50,21 @@ double norm_2_squared(std::vector<double>& x) {
     return norm_squared;
 }
 
+double norm_2_squared(std::map<int, double>& x) {
+    double norm_squared = 0.;
+    for (std::pair<int, double> term: x) {
+        double xi = term.second;
+        norm_squared += xi*xi;
+    }
+    return norm_squared;
+}
+
 /* compute ||x||_2 */
 double norm_2(std::vector<double>& x) {
+    return std::sqrt(norm_2_squared(x));
+}
+
+double norm_2(std::map<int, double>& x) {
     return std::sqrt(norm_2_squared(x));
 }
 
@@ -79,6 +73,15 @@ double norm_inf(std::vector<double>& x, unsigned int length) {
     double norm = 0.;
     for (unsigned int i = 0; i < std::min<unsigned int>(length, x.size()); i++) {
         norm = std::max(norm, std::abs(x[i]));
+    }
+    return norm;
+}
+
+double norm_inf(std::map<int, double>& x) {
+    double norm = 0.;
+    for (std::pair<int, double> term: x) {
+        double xi = term.second;
+        norm = std::max(norm, std::abs(xi));
     }
     return norm;
 }

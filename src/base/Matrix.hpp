@@ -48,7 +48,7 @@ class ArgonotMatrix;
 class CSCMatrix : public Matrix {
     /* Compressed Sparse Column */
 public:
-    CSCMatrix();
+    CSCMatrix(int dimension, int fortran_indexing);
     CSCMatrix(std::vector<double>& matrix, std::vector<int>& column_start, std::vector<int>& row_number, int fortran_indexing);
 
     std::vector<double> matrix;

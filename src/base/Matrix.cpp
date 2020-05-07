@@ -112,7 +112,7 @@ std::ostream& operator<<(std::ostream &stream, const COOMatrix& matrix) {
  * https://en.wikipedia.org/wiki/Sparse_matrix#Compressed_sparse_column_(CSC_or_CCS)
  */
 
-CSCMatrix::CSCMatrix(): Matrix(0, 0) {
+CSCMatrix::CSCMatrix(int dimension, int fortran_indexing): Matrix(dimension, fortran_indexing), column_start(dimension+1) {
 }
 
 CSCMatrix::CSCMatrix(std::vector<double>& matrix, std::vector<int>& column_start, std::vector<int>& row_number, int fortran_indexing):
@@ -380,7 +380,7 @@ COOMatrix ArgonotMatrix::to_COO() {
 }
 
 CSCMatrix ArgonotMatrix::to_CSC() {
-    CSCMatrix csc_matrix;
+    CSCMatrix csc_matrix(this->dimension, this->fortran_indexing);
     
     int current_column = this->fortran_indexing;
     int number_terms = this->fortran_indexing;
@@ -401,8 +401,6 @@ CSCMatrix ArgonotMatrix::to_CSC() {
         number_terms++;
     }
     csc_matrix.column_start.push_back(number_terms);
-    csc_matrix.dimension = this->dimension;
-    csc_matrix.fortran_indexing = this->fortran_indexing;
     return csc_matrix;
 }
 

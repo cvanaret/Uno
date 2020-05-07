@@ -7,71 +7,61 @@
 #include "Utils.hpp"
 #include "Logger.hpp"
 
-SLPEQP::SLPEQP(QPSolver& solver, HessianEvaluation& hessian_evaluation) :
-Subproblem("l1"), solver(solver), lp_subproblem(SLP(solver)), eqp_subproblem(SQP(solver, hessian_evaluation)) {
+SLPEQP::SLPEQP(Problem& problem, std::string QP_solver_name, std::string hessian_evaluation_method):
+Subproblem("l1"),
+lp_subproblem(SLP(problem, QP_solver_name)),
+eqp_subproblem(SQP(problem, QP_solver_name, hessian_evaluation_method)) {
 }
 
 Iterate SLPEQP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) {
     // register the original bounds
     this->subproblem_variables_bounds = problem.variables_bounds;
     
+    this->lp_subproblem.initialize(problem, x, multipliers, use_trust_region);
+    this->eqp_subproblem.initialize(problem, x, multipliers, use_trust_region);
+
     Iterate first_iterate(x, multipliers);
     /* compute the optimality and feasibility measures of the initial point */
     this->compute_optimality_measures(problem, first_iterate);
-
-    /* allocate the QP solver */
-    //this->solver.allocate(problem.number_variables, problem.number_constraints);
+    
     return first_iterate;
 }
 
 SubproblemSolution SLPEQP::compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
     /* compute first-order information */
     current_iterate.compute_objective_gradient(problem);
-     current_iterate.compute_constraints(problem);
+    current_iterate.compute_constraints(problem);
     current_iterate.compute_constraints_jacobian(problem);
-    
+
     /***********/
     /* LP part */
     /***********/
-    
-    //DEBUG << "SOLVING SLPEQP.LP\n";
-    
-    /* bounds of the variables */
-    std::vector<Range> lp_variables_bounds = this->generate_variables_bounds(current_iterate, trust_region_radius);
-    
-    /* bounds of the linearized constraints */
-    std::vector<Range> constraints_bounds = Subproblem::generate_constraints_bounds(problem, current_iterate.constraints);
-
-    /* generate the initial point */
-    std::vector<double> d0(lp_variables_bounds.size()); // = {0.}
+    DEBUG << "SOLVING SLPEQP.LP\n";
 
     /* solve the LP */
-    SubproblemSolution solution_LP = this->solver.solve_LP(lp_variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, d0);
+    SubproblemSolution solution_LP = this->lp_subproblem.compute_optimality_step(problem, current_iterate, trust_region_radius);
     solution_LP.phase_1_required = this->phase_1_required(solution_LP);
     print_vector(DEBUG, solution_LP.x);
-    
+
     /************/
     /* EQP part */
     /************/
-    
-    //DEBUG << "SOLVING SLPEQP.EQP\n";
-    /* compute second-order information */
-    current_iterate.compute_hessian(problem, problem.objective_sign, current_iterate.multipliers.constraints);
-    
+    DEBUG << "SOLVING SLPEQP.EQP\n";
+
     /* fix active constraints */
     // TODO remove inactive constraints!!
     // TODO reduced Hessian
     this->fix_active_constraints(problem, solution_LP.active_set, lp_variables_bounds, constraints_bounds);
-    
+
     /* generate the initial point */
     d0 = solution_LP.x;
-    
+
     /* solve the EQP */
     SubproblemSolution solution_EQP = this->solver.solve_QP(problem.variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
     solution_EQP.phase_1_required = this->phase_1_required(solution_EQP);
     //print_vector(DEBUG, solution_EQP.x);
     this->number_subproblems_solved++;
-    
+
     return solution_EQP;
 }
 
@@ -96,8 +86,8 @@ void SLPEQP::compute_optimality_measures(Problem& problem, Iterate& iterate) {
 
 void SLPEQP::compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution) {
     iterate.compute_constraints(problem);
-    iterate.feasibility_measure = problem.feasible_residual_norm(solution.constraint_partition, iterate.constraints, this->residual_norm);
-    iterate.optimality_measure = problem.infeasible_residual_norm(solution.constraint_partition, iterate.constraints, this->residual_norm);
+    iterate.feasibility_measure = problem.compute_constraint_residual(solution.constraint_partition, iterate.constraints, this->residual_norm);
+    iterate.optimality_measure = problem.compute_constraint_residual(solution.constraint_partition, iterate.constraints, this->residual_norm);
     return;
 }
 

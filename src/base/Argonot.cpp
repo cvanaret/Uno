@@ -4,24 +4,27 @@
 #include "Argonot.hpp"
 #include "Iterate.hpp"
 #include "Logger.hpp"
+#include "BQPDSolver.hpp"
 
 Argonot::Argonot(GlobalizationMechanism& globalization_mechanism, int max_iterations): globalization_mechanism(globalization_mechanism), max_iterations(max_iterations) {
 }
 
-Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool preprocessing) {
     std::clock_t c_start = std::clock();
     int major_iterations = 0, minor_iterations = 0;
     
     INFO << "Problem " << problem.name << "\n";
     INFO << problem.number_variables << " variables, " << problem.number_constraints << " constraints\n";
     
+    if (preprocessing) {
+        /* preprocessing phase: satisfy linear constraints */
+        this->preprocessing(problem, x, multipliers);
+    }
+    
     /* use the current point to initialize the strategies and generate the initial point */
     Iterate current_iterate = this->globalization_mechanism.initialize(problem, x, multipliers);
-    INFO << "Initial iterate\n" << current_iterate << "\n";
+    DEBUG << "Initial iterate\n" << current_iterate << "\n";
     
-    /* preprocessing phase: satisfy linear constraints */
-    this->preprocessing(problem, current_iterate);
-
     try {
         /* check for convergence */
         while (!this->termination_criterion(current_iterate.status, major_iterations)) {
@@ -33,7 +36,7 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& mul
             /* update the current point */
             current_iterate = this->globalization_mechanism.compute_acceptable_iterate(problem, current_iterate);
             minor_iterations += this->globalization_mechanism.number_iterations;
-            INFO << "||c|| = " << current_iterate.constraint_residual << "\tf = " << current_iterate.objective << "\t";
+            INFO << "||c|| = " << current_iterate.residuals.constraints << "\tf = " << current_iterate.objective << "\t";
             INFO << "η = " << current_iterate.feasibility_measure << "\tω = " << current_iterate.optimality_measure << "\n";
 
             DEBUG << "Next iterate\n" << current_iterate;
@@ -65,57 +68,116 @@ bool Argonot::termination_criterion(OptimalityStatus current_status, int iterati
     return current_status != NOT_OPTIMAL || this->max_iterations <= iteration;
 }
 
-double Argonot::compute_KKT_error(Problem& problem, Iterate& iterate, double objective_mutiplier, std::string norm_value) {
-    std::vector<double> lagrangian_gradient = iterate.lagrangian_gradient(problem, objective_mutiplier, iterate.multipliers);
-    return norm(lagrangian_gradient, norm_value);
-}
-
-void Argonot::preprocessing(Problem& problem, Iterate& iterate) {
-    std::cout << "Preprocessing phase:\n";
-    std::cout << "The problem has " << problem.linear_constraints.size() << " linear constraints\n";
+void Argonot::preprocessing(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+    INFO << "Preprocessing phase:\n";
+    
+    /* linear constraints */
+    INFO << "The problem has " << problem.linear_constraints.size() << " linear constraints\n";
+    if (0 < problem.linear_constraints.size()) {
+        std::vector<double> constraints = problem.evaluate_constraints(x);
+        
+        int infeasible_linear_constraints = 0;
+        for (std::pair<int, int> element: problem.linear_constraints) {
+            int j = element.first;
+            if (constraints[j] < problem.constraint_bounds[j].lb || problem.constraint_bounds[j].ub < constraints[j]) {
+                infeasible_linear_constraints++;
+            } 
+        }
+        INFO << "There are " << infeasible_linear_constraints << " infeasible linear constraints at the initial point\n";
+        
+        if (0 < infeasible_linear_constraints) {
+            INFO << "Current point: "; print_vector(INFO, x);
+            int number_constraints = (int) problem.linear_constraints.size();
+            BQPDSolver solver(problem.number_variables, number_constraints, problem.number_variables);
+            
+            int fortran_indexing = 1;
+            CSCMatrix hessian = CSCMatrix::identity(problem.number_variables, fortran_indexing);
+            std::map<int, double> linear_objective; // empty
+            std::vector<double> d0(problem.number_variables);
+            // constraints Jacobian
+            std::vector<std::map<int, double> > constraints_jacobian(number_constraints);
+            for (std::pair<int, int> element: problem.linear_constraints) {
+                int j = element.first;
+                int linear_constraint_index = element.second;
+                constraints_jacobian[linear_constraint_index] = problem.constraint_sparse_gradient(j, x);
+            }
+            // variables bounds
+            std::vector<Range> variables_bounds(problem.number_variables);
+            for (int i = 0; i < problem.number_variables; i++) {
+                variables_bounds[i] = {problem.variables_bounds[i].lb - x[i], problem.variables_bounds[i].ub - x[i]};
+            }
+            // constraints bounds
+            std::vector<Range> constraints_bounds(number_constraints);
+            for (std::pair<int, int> element: problem.linear_constraints) {
+                int j = element.first;
+                int linear_constraint_index = element.second;
+                constraints_bounds[linear_constraint_index] = {problem.constraint_bounds[j].lb - constraints[j], problem.constraint_bounds[j].ub - constraints[j]};
+            }
+            SubproblemSolution solution = solver.solve_QP(variables_bounds, constraints_bounds, linear_objective, constraints_jacobian, hessian, d0);
+            if (solution.status == INFEASIBLE) {
+                throw std::runtime_error("Linear constraints cannot be satisfied");
+            }
+            
+            std::vector<double> feasible_x = add_vectors(x, solution.x, 1.);
+            x = feasible_x;
+            // copy bound multipliers
+            multipliers.lower_bounds = solution.multipliers.lower_bounds;
+            multipliers.upper_bounds = solution.multipliers.upper_bounds;
+            // copy constraint multipliers
+            for (std::pair<int, int> element: problem.linear_constraints) {
+                int j = element.first;
+                int linear_constraint_index = element.second;
+                multipliers.constraints[j] = solution.multipliers.constraints[linear_constraint_index];
+            }
+            INFO << "Linear feasible initial point: "; print_vector(INFO, x);
+            INFO << "\n";
+        }
+    }
+    //throw std::runtime_error("TEST");
+    return;
 }
 
 void Result::display() {
-    std::cout << "\n";
-    std::cout << "ARGONOT v1: optimization summary\n";
-    std::cout << "==============================\n";
+    INFO << "\n";
+    INFO << "ARGONOT v1: optimization summary\n";
+    INFO << "==============================\n";
 
-    std::cout << "Status:\t\t\t\t";
+    INFO << "Status:\t\t\t\t";
     if (this->solution.status == KKT_POINT) {
-        std::cout << "Converged with KKT point\n";
+        INFO << "Converged with KKT point\n";
     }
     else if (this->solution.status == FJ_POINT) {
-        std::cout << "Converged with FJ point\n";
+        INFO << "Converged with FJ point\n";
     }
     else if (this->solution.status == FEASIBLE_SMALL_STEP) {
-        std::cout << "Converged with feasible small step\n";
+        INFO << "Converged with feasible small step\n";
     }
     else if (this->solution.status == INFEASIBLE_SMALL_STEP) {
-        std::cout << "Converged with infeasible small step\n";
+        INFO << "Converged with infeasible small step\n";
     }
     else { // NOT_OPTIMAL
-        std::cout << "Irregular termination\n";
+        INFO << "Irregular termination\n";
     }
 
-    std::cout << "Objective value:\t\t" << this->solution.objective << "\n";
-    std::cout << "Constraint residual:\t\t" << this->solution.constraint_residual << "\n";
-    std::cout << "KKT residual:\t\t\t" << this->solution.KKT_residual << "\n";
-    std::cout << "Complementarity residual:\t" << this->solution.complementarity_residual << "\n";
+    INFO << "Objective value:\t\t" << this->solution.objective << "\n";
+    INFO << "Constraint residual:\t\t" << this->solution.residuals.constraints << "\n";
+    INFO << "KKT residual:\t\t\t" << this->solution.residuals.KKT << "\n";
+    INFO << "Complementarity residual:\t" << this->solution.residuals.complementarity << "\n";
 
-    std::cout << "Feasibility measure:\t\t" << this->solution.feasibility_measure << "\n";
-    std::cout << "Optimality measure:\t\t" << this->solution.optimality_measure << "\n";
+    INFO << "Feasibility measure:\t\t" << this->solution.feasibility_measure << "\n";
+    INFO << "Optimality measure:\t\t" << this->solution.optimality_measure << "\n";
     
-    std::cout << "Primal solution:\t\t"; print_vector(std::cout, this->solution.x);
-    std::cout << "Lower bound multipliers:\t"; print_vector(std::cout, this->solution.multipliers.lower_bounds);
-    std::cout << "Upper bound multipliers:\t"; print_vector(std::cout, this->solution.multipliers.upper_bounds);
-    std::cout << "Constraint multipliers:\t\t"; print_vector(std::cout, this->solution.multipliers.constraints);
+    INFO << "Primal solution:\t\t"; print_vector(INFO, this->solution.x);
+    INFO << "Lower bound multipliers:\t"; print_vector(INFO, this->solution.multipliers.lower_bounds);
+    INFO << "Upper bound multipliers:\t"; print_vector(INFO, this->solution.multipliers.upper_bounds);
+    INFO << "Constraint multipliers:\t\t"; print_vector(INFO, this->solution.multipliers.constraints);
 
-    std::cout << "CPU time:\t\t\t" << this->cpu_time << "s\n";
-    std::cout << "Iterations:\t\t\t" << this->iteration << "\n";
-    std::cout << "Objective evaluations:\t\t" << this->objective_evaluations << "\n";
-    std::cout << "Constraints evaluations:\t" << this->constraint_evaluations << "\n";
-    std::cout << "Jacobian evaluations:\t\t" << this->jacobian_evaluations << "\n";
-    std::cout << "Hessian evaluations:\t\t" << this->hessian_evaluations << "\n";
-    std::cout << "Number of subproblems solved:\t" << this->number_subproblems_solved << "\n";
+    INFO << "CPU time:\t\t\t" << this->cpu_time << "s\n";
+    INFO << "Iterations:\t\t\t" << this->iteration << "\n";
+    INFO << "Objective evaluations:\t\t" << this->objective_evaluations << "\n";
+    INFO << "Constraints evaluations:\t" << this->constraint_evaluations << "\n";
+    INFO << "Jacobian evaluations:\t\t" << this->jacobian_evaluations << "\n";
+    INFO << "Hessian evaluations:\t\t" << this->hessian_evaluations << "\n";
+    INFO << "Number of subproblems solved:\t" << this->number_subproblems_solved << "\n";
     return;
 }

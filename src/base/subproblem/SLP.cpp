@@ -6,8 +6,8 @@
 #include "Logger.hpp"
 #include "QPSolverFactory.hpp"
 
-SLP::SLP(Problem& problem, std::string QP_solver):
-ActiveSetMethod(QPSolverFactory::create(QP_solver, problem.number_variables, problem.number_constraints, 0)) {
+SLP::SLP(Problem& problem, std::string QP_solver_name):
+ActiveSetMethod(QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints, 0)) {
 }
 
 double SLP::compute_predicted_reduction(Problem& /*problem*/, Iterate& /*current_iterate*/, SubproblemSolution& solution, double step_length) {
@@ -32,6 +32,10 @@ void SLP::evaluate_feasibility_iterate(Problem& problem, Iterate& current_iterat
     current_iterate.compute_constraints_jacobian(problem);
 }
 
-SubproblemSolution SLP::solve_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, Iterate& current_iterate, std::vector<double>& d0) {
+SubproblemSolution SLP::solve_optimality_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, Iterate& current_iterate, std::vector<double>& d0) {
+    return this->solver->solve_LP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, d0);
+}
+
+SubproblemSolution SLP::solve_feasibility_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, Iterate& current_iterate, std::vector<double>& d0) {
     return this->solver->solve_LP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, d0);
 }
