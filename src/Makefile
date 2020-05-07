@@ -14,16 +14,16 @@ L = -ldl -lf2c
 LIBCOIN   = -lOsiClp -lClp -lCoinUtils -lOsi
 LIBLINALG = -lblas -llapack
 
-INCLUDES = -I base -I base/globalization_mechanism -I base/globalization_strategy -I base/subproblem -I logger -I interfaces/AMPL -I solvers/QP -I solvers/KKT -I solvers/NLP -I $(BFGS_DIR) -I $(AMPL_DIR)
+INCLUDES = -I base -I base/mechanism -I base/strategy -I base/subproblem -I logger -I interfaces/AMPL -I solvers/QP -I solvers/KKT -I solvers/NLP -I $(BFGS_DIR) -I $(AMPL_DIR)
 
 SRC_FILES = base/Argonot.cpp base/Iterate.cpp \
 	base/Problem.cpp interfaces/AMPL/AMPLModel.cpp \
 	base/Matrix.cpp base/HessianEvaluation.cpp base/Constraint.cpp \
-	base/globalization_strategy/GlobalizationStrategy.cpp base/globalization_strategy/Filter.cpp base/globalization_strategy/FilterStrategy.cpp base/globalization_strategy/PenaltyMeritFunction.cpp \
-	base/globalization_strategy/GlobalizationStrategyFactory.cpp \
-	base/globalization_mechanism/GlobalizationMechanism.cpp base/globalization_mechanism/TrustRegion.cpp \
-	base/globalization_mechanism/LineSearch.cpp base/globalization_mechanism/TrustLineSearch.cpp \
-	base/globalization_mechanism/GlobalizationMechanismFactory.cpp \
+	base/strategy/GlobalizationStrategy.cpp base/strategy/Filter.cpp base/strategy/FilterStrategy.cpp base/strategy/PenaltyMeritFunction.cpp \
+	base/strategy/GlobalizationStrategyFactory.cpp \
+	base/mechanism/GlobalizationMechanism.cpp base/mechanism/TrustRegion.cpp \
+	base/mechanism/LineSearch.cpp base/mechanism/TrustLineSearch.cpp \
+	base/mechanism/GlobalizationMechanismFactory.cpp \
 	base/subproblem/Subproblem.cpp base/subproblem/ActiveSetMethod.cpp base/subproblem/SQP.cpp base/subproblem/Sl1QP.cpp base/subproblem/SLP.cpp  base/subproblem/InteriorPoint.cpp \
 	base/subproblem/SubproblemFactory.cpp base/subproblem/SubproblemSolution.cpp base/Utils.cpp \
 	solvers/QP/BQPDSolver.cpp solvers/QP/QPSolverFactory.cpp \
@@ -32,7 +32,7 @@ OBJ_FILES = $(subst .cpp,.o,$(SRC_FILES)) solvers/QP/wdotd.o $(BFGS_DIR)/lbfgsb.
 EXEC_NAME = argonot
 
 # base/subproblem/SLPEQP.cpp
-# base/globalization_strategy/Tube.cpp base/globalization_strategy/TubeStrategy.cpp
+# base/strategy/Tube.cpp base/strategy/TubeStrategy.cpp
 # base/subproblem/AugmentedLagrangian.cpp \
 
 DEFINES =# -D BQPD # https://stackoverflow.com/questions/10337248/what-does-the-g-d-flag-do
