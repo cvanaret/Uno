@@ -16,39 +16,38 @@ MA57Solver::MA57Solver(): use_fortran(1), cntl_(5), icntl_(20), rinfo_(20) {
 }
 
 MA57Factorization MA57Solver::factorize(COOMatrix& matrix) {
+    if (matrix.fortran_indexing != this->use_fortran) {
+        throw std::runtime_error("MA57Solver::factorize: please use the correct Fortran indexing");
+    }
+    
     int n = matrix.dimension;
     int nnz = matrix.number_nonzeros();
 
     /* initialize */
     ma57id_(this->cntl_.data(), this->icntl_.data());
-
+    // suppress warning messages
+    this->icntl_[4] = 0;
+    
     /* analyze sparsity pattern */
     int lkeep = 5 * n + nnz + std::max(n, nnz) + 42;
     std::vector<int> keep(lkeep);
     std::vector<int> iwork(5 * n);
-
-    if (matrix.fortran_indexing != this->use_fortran) {
-        throw std::runtime_error("MA57Solver::factorize: please use the correct Fortran indexing");
-    }
-
-    // suppress warning messages
-    this->icntl_[4] = 0;
-
+    
     /* info vector*/
     std::vector<int> info(40);
     ma57ad_(&n, &nnz, matrix.row_indices.data(), matrix.column_indices.data(), &lkeep, keep.data(), iwork.data(), this->icntl_.data(), info.data(), this->rinfo_.data());
     
-    /* factorize */
     int lfact = 2 * info[8];
     std::vector<double> fact(lfact);
     int lifact = 2 * info[9];
     std::vector<int> ifact(lifact);
-    ma57bd_(&n, &nnz, matrix.matrix.data(), fact.data(), &lfact, ifact.data(), &lifact, &lkeep, keep.data(),
-            iwork.data(), this->icntl_.data(), this->cntl_.data(), info.data(), this->rinfo_.data());
+    /* factorize */
+    ma57bd_(&n, &nnz, matrix.matrix.data(), fact.data(), &lfact, ifact.data(), &lifact, &lkeep, keep.data(), iwork.data(), this->icntl_.data(), this->cntl_.data(), info.data(), this->rinfo_.data());
+    
     return {n, fact, lfact, ifact, lifact, iwork, info};
 }
 
-std::vector<double> MA57Solver::solve(MA57Factorization& factorization, std::vector<double>& rhs) {
+void MA57Solver::solve(MA57Factorization& factorization, std::vector<double>& rhs) {
     /* solve */
     int n = factorization.dimension;
     int job = 1;
@@ -56,11 +55,11 @@ std::vector<double> MA57Solver::solve(MA57Factorization& factorization, std::vec
     int lrhs = n; // integer, length of rhs
     int lwork = 1.2 * n*nrhs; // length of w; lw>=n*nrhs
     std::vector<double> work(lwork);
-    // copy the RHS in the solution
-    std::vector<double> x(rhs);
-    ma57cd_(&job, &n, factorization.fact.data(), &factorization.lfact, factorization.ifact.data(), &factorization.lifact, &nrhs, x.data(), &lrhs, work.data(),
+    // solve the linear system
+    ma57cd_(&job, &n, factorization.fact.data(), &factorization.lfact, factorization.ifact.data(), &factorization.lifact, &nrhs, rhs.data(), &lrhs, work.data(),
             &lwork, factorization.iwork.data(), this->icntl_.data(), factorization.info.data());
-    return x;
+    // the solution is copied in rhs
+    return;
 }
 
 int MA57Factorization::number_negative_eigenvalues() {

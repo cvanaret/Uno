@@ -31,7 +31,7 @@ class MA57Solver {
 		int use_fortran;
 		
 		MA57Factorization factorize(COOMatrix& matrix);
-		std::vector<double> solve(MA57Factorization& factorization, std::vector<double>& rhs);
+		void solve(MA57Factorization& factorization, std::vector<double>& rhs);
 		
 	private:
 		/* for ma57id_ */
