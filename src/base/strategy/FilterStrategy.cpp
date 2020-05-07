@@ -71,9 +71,9 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
                     filter.add(current_iterate.feasibility_measure, current_iterate.optimality_measure);
                     accept = true;
                 }
-                    /* Armijo sufficient decrease condition */
-                // else if (actual_reduction >= this->constants.Sigma*step_length*std::max(0., predicted_reduction - 1e-9)) {
-                else if (actual_reduction >= this->parameters.Sigma*predicted_reduction) {
+                /* Armijo sufficient decrease condition: predicted_reduction should be positive */
+                else if (actual_reduction >= this->parameters.Sigma*step_length*std::max(0., predicted_reduction - 1e-9)) {
+                //else if (predicted_reduction > 0. && actual_reduction >= this->parameters.Sigma*predicted_reduction) {
                     accept = true;
                 }
             }
