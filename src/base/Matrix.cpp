@@ -247,7 +247,7 @@ CSCMatrix CSCMatrix::identity(int dimension, int fortran_indexing) {
     for (int i = 0; i < dimension; i++) {
         matrix[i] = 1.;
         row_number[i] = i + fortran_indexing;
-        column_start[dimension] = i + fortran_indexing;
+        column_start[i] = i + fortran_indexing;
     }
     column_start[dimension] = dimension + fortran_indexing;
     
