@@ -1,5 +1,6 @@
 #include "AMPLModel.hpp"
 #include "Logger.hpp"
+#include "Utils.hpp"
 
 ASL_pfgh* generate_asl(std::string file_name) {
     SufDecl suffixes[] = {
@@ -155,6 +156,7 @@ std::map<int, double> AMPLModel::objective_sparse_gradient(std::vector<double>& 
     /* compute the AMPL gradient (always in dense format) */
     std::vector<double> dense_gradient(this->number_variables);
     int nerror = 0;
+    std::cout << "AMPLModel::objective_sparse_gradient for "; print_vector(std::cout, x);
     (*((ASL*) this->asl_)->p.Objgrd)((ASL*) this->asl_, 0, x.data(), dense_gradient.data(), &nerror);
     if (0 < nerror) {
         throw IEEE_GradientError();
@@ -193,8 +195,13 @@ double AMPLModel::evaluate_constraint(int j, std::vector<double>& x) {
 std::vector<double> AMPLModel::evaluate_constraints(std::vector<double>& x) {
     this->number_eval_constraints++;
     std::vector<double> constraints(this->number_constraints);
-    for (int j = 0; j < this->number_constraints; j++) {
-        constraints[j] = this->evaluate_constraint(j, x);
+    //for (int j = 0; j < this->number_constraints; j++) {
+    //    constraints[j] = this->evaluate_constraint(j, x);
+    //}
+    int nerror = 0;
+    (*((ASL*) this->asl_)->p.Conval)((ASL*) this->asl_, x.data(), constraints.data(), &nerror);
+    if (0 < nerror) {
+        throw IEEE_FunctionError();
     }
     return constraints;
 }
