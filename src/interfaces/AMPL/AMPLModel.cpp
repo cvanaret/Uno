@@ -156,7 +156,6 @@ std::map<int, double> AMPLModel::objective_sparse_gradient(std::vector<double>& 
     /* compute the AMPL gradient (always in dense format) */
     std::vector<double> dense_gradient(this->number_variables);
     int nerror = 0;
-    std::cout << "AMPLModel::objective_sparse_gradient for "; print_vector(std::cout, x);
     (*((ASL*) this->asl_)->p.Objgrd)((ASL*) this->asl_, 0, x.data(), dense_gradient.data(), &nerror);
     if (0 < nerror) {
         throw IEEE_GradientError();
