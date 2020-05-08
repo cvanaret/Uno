@@ -15,7 +15,7 @@ public:
      * 
      * \param solver: solver that solves the subproblem
      */
-    SLP(Problem& problem, std::string QP_solver_name);
+    SLP(Problem& problem, std::string QP_solver_name, bool use_trust_region);
 
     double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length);
     bool phase_1_required(SubproblemSolution& solution);

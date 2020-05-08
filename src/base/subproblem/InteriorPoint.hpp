@@ -2,6 +2,7 @@
 #define IPM_H
 
 #include <exception>
+#include <set>
 #include "Subproblem.hpp"
 #include "MA57Solver.hpp"
 #include "HessianEvaluation.hpp"
@@ -33,9 +34,9 @@ public:
     /*!
      *  Constructor
      */
-    InteriorPoint(Problem& problem, std::string hessian_evaluation_method);
+    InteriorPoint(Problem& problem, std::string hessian_evaluation_method, bool use_trust_region);
 
-    Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& default_multipliers, bool use_trust_region) override;
+    Iterate evaluate_initial_point(Problem& problem, std::vector<double>& x, Multipliers& default_multipliers) override;
 
     SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius = INFINITY) override;
     SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius = INFINITY) override;
@@ -56,8 +57,8 @@ public:
     double mu_feasibility;
 
     /* data structures */
-    std::vector<int> lower_bounded_variables; /* indices of the lower-bounded variables */
-    std::vector<int> upper_bounded_variables; /* indices of the upper-bounded variables */
+    std::set<int> lower_bounded_variables; /* indices of the lower-bounded variables */
+    std::set<int> upper_bounded_variables; /* indices of the upper-bounded variables */
     //MA57Factorization factorization;
 
 private:

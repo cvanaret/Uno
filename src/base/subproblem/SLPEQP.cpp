@@ -7,24 +7,10 @@
 #include "Utils.hpp"
 #include "Logger.hpp"
 
-SLPEQP::SLPEQP(Problem& problem, std::string QP_solver_name, std::string hessian_evaluation_method):
-Subproblem("l1"),
-lp_subproblem(SLP(problem, QP_solver_name)),
-eqp_subproblem(SQP(problem, QP_solver_name, hessian_evaluation_method)) {
-}
-
-Iterate SLPEQP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) {
-    // register the original bounds
-    this->subproblem_variables_bounds = problem.variables_bounds;
-    
-    this->lp_subproblem.initialize(problem, x, multipliers, use_trust_region);
-    this->eqp_subproblem.initialize(problem, x, multipliers, use_trust_region);
-
-    Iterate first_iterate(x, multipliers);
-    /* compute the optimality and feasibility measures of the initial point */
-    this->compute_optimality_measures(problem, first_iterate);
-    
-    return first_iterate;
+SLPEQP::SLPEQP(Problem& problem, std::string QP_solver_name, std::string hessian_evaluation_method, bool use_trust_region):
+Subproblem("l1", problem.variables_bounds),
+lp_subproblem(SLP(problem, QP_solver_name, use_trust_region)),
+eqp_subproblem(SQP(problem, QP_solver_name, hessian_evaluation_method, use_trust_region)) {
 }
 
 SubproblemSolution SLPEQP::compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {

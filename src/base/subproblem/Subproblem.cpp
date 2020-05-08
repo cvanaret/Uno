@@ -1,6 +1,9 @@
 #include "Subproblem.hpp"
 
-Subproblem::Subproblem(std::string residual_norm): residual_norm(residual_norm), number_subproblems_solved(0), subproblem_definition_changed(false) {
+Subproblem::Subproblem(std::string residual_norm, std::vector<Range>& variables_bounds):
+residual_norm(residual_norm),
+subproblem_variables_bounds(variables_bounds), // register the original bounds
+number_subproblems_solved(0), subproblem_definition_changed(false) {
 }
 
 Subproblem::~Subproblem() {

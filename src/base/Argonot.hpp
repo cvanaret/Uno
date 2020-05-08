@@ -16,7 +16,7 @@ struct Result {
     int hessian_evaluations;
     int number_subproblems_solved;
 
-    void display();
+    void display(bool print_solution);
 };
 
 /*! \class Argonot

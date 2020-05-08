@@ -190,7 +190,6 @@ SubproblemSolution BQPDSolver::generate_solution(std::vector<double>& x) {
         }
     }
     solution.status = this->int_to_status(this->ifail_);
-    // phase
     // phase_1_required
     solution.norm = norm_inf(x);
     solution.objective = this->f_solution_;

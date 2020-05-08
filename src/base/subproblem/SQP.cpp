@@ -6,19 +6,12 @@
 #include "Logger.hpp"
 #include "QPSolverFactory.hpp"
 
-SQP::SQP(Problem& problem, std::string QP_solver_name, std::string hessian_evaluation_method):
+SQP::SQP(Problem& problem, std::string QP_solver_name, std::string hessian_evaluation_method, bool use_trust_region):
 // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
-ActiveSetMethod(QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints, problem.hessian_maximum_number_nonzeros + problem.number_variables)),
+ActiveSetMethod(problem, QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints, problem.hessian_maximum_number_nonzeros + problem.number_variables)),
 hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables)) {
-}
-
-Iterate SQP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) {
     /* if no trust region is used, the problem should be convexified by controlling the inertia of the Hessian */
     this->hessian_evaluation->convexify = !use_trust_region;
-    
-    /* call superclass initialize() */
-    Iterate first_iterate = ActiveSetMethod::initialize(problem, x, multipliers, use_trust_region);
-    return first_iterate;
 }
 
 double SQP::compute_predicted_reduction(Problem& /*problem*/, Iterate& current_iterate, SubproblemSolution& solution, double step_length) {

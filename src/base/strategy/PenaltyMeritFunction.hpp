@@ -21,7 +21,7 @@ class PenaltyMeritFunction : public GlobalizationStrategy {
          *  Check the validity of a step
          */
         bool check_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
-        Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) override;
+        Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
 
     private:
         double eta;

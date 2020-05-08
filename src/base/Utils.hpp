@@ -5,6 +5,7 @@
 #include <limits>
 #include <map>
 #include <vector>
+#include <set>
 #include "Logger.hpp"
 
 std::vector<double> add_vectors(std::vector<double>& x, std::vector<double>& y, double scaling_factor = 1.);
@@ -59,6 +60,15 @@ template <typename T>
 void print_vector(const Level& level, std::vector<T> x, unsigned int start = 0, unsigned int length = std::numeric_limits<unsigned int>::max()) {
     for (unsigned int i = start; i < std::min<unsigned int>(start + length, x.size()); i++) {
         level << x[i] << " ";
+    }
+    level << "\n";
+    return;
+}
+
+template <typename T>
+void print_vector(const Level& level, std::set<T> x) {
+    for (T xi: x) {
+        level << xi << " ";
     }
     level << "\n";
     return;

@@ -32,7 +32,7 @@ class GlobalizationStrategy {
          *  Purely virtual method (only implemented in subclasses)
          */
         virtual bool check_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length = 1.) = 0;
-        virtual Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) = 0;
+        virtual Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
         
     protected:
         // specific to the strategy (objective multiplier depends on the strategy)

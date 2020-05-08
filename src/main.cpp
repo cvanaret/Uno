@@ -18,10 +18,11 @@
 void run_argonot(std::string problem_name, std::map<std::string, std::string> options) {
     // generate Hessians with a Fortran indexing (starting at 1) that is supported by solvers
     int fortran_indexing = 1;
+    std::cout.precision(17);
     AMPLModel problem = AMPLModel(problem_name, fortran_indexing);
     
     /* create the subproblem strategy */
-    std::shared_ptr<Subproblem> subproblem = SubproblemFactory::create(problem, options["subproblem"], options);
+    std::shared_ptr<Subproblem> subproblem = SubproblemFactory::create(problem, options["subproblem"], options, (options["mechanism"] == "TR"));
 
     /* create the globalization strategy */
     std::shared_ptr<GlobalizationStrategy> strategy = GlobalizationStrategyFactory::create(options["strategy"], *subproblem, options);
@@ -37,13 +38,14 @@ void run_argonot(std::string problem_name, std::map<std::string, std::string> op
     Multipliers multipliers(problem.number_variables, problem.number_constraints);
     multipliers.constraints = problem.dual_initial_solution();
 
-    bool preprocessing = (options["preprocessing"] == "1");
+    bool preprocessing = (options["preprocessing"] == "yes");
     Result result = argonot.solve(problem, x, multipliers, preprocessing);
     /* remove auxiliary variables */
     result.solution.x.resize(problem.number_variables);
     result.solution.multipliers.lower_bounds.resize(problem.number_variables);
     result.solution.multipliers.upper_bounds.resize(problem.number_variables);
-    result.display();
+    bool print_solution = (options["print_solution"] == "yes");
+    result.display(print_solution);
     return;
 }
 

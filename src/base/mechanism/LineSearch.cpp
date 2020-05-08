@@ -9,7 +9,7 @@ GlobalizationMechanism(globalization_strategy, max_iterations), backtracking_rat
 }
 
 Iterate LineSearch::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
-    return this->globalization_strategy.initialize(problem, x, multipliers, false);
+    return this->globalization_strategy.initialize(problem, x, multipliers);
 }
 
 Iterate LineSearch::compute_acceptable_iterate(Problem& problem, Iterate& current_iterate) {

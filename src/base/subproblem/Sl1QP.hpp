@@ -23,11 +23,10 @@ public:
      * 
      * \param solver: solver that solves the subproblem
      */
-    Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method);
+    Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method, bool use_trust_region);
 
-    int count_additional_variables(Problem& problem);
-    Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) override;
-
+    Iterate evaluate_initial_point(Problem& problem, std::vector<double>& x, Multipliers& multipliers);
+    
     SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius = INFINITY) override;
     SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius = INFINITY) override;
     
@@ -51,6 +50,7 @@ private:
     std::map<int, int> positive_part_variables; // p
     std::map<int, int> negative_part_variables; // n
 
+    int count_additional_variables(Problem& problem);
     std::vector<Range> generate_variables_bounds(Problem& problem, Iterate& current_iterate, double trust_region_radius);
     SubproblemSolution solve_subproblem(Problem& problem, Iterate& current_iterate, double trust_region_radius, double penalty_parameter);
     double compute_linearized_constraint_residual(Problem& problem, std::vector<double>& x);

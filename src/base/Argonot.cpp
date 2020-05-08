@@ -142,7 +142,7 @@ void Argonot::preprocessing(Problem& problem, std::vector<double>& x, Multiplier
     return;
 }
 
-void Result::display() {
+void Result::display(bool print_solution) {
     INFO << "\n";
     INFO << "ARGONOT v1: optimization summary\n";
     INFO << "==============================\n";
@@ -172,10 +172,12 @@ void Result::display() {
     INFO << "Feasibility measure:\t\t" << this->solution.feasibility_measure << "\n";
     INFO << "Optimality measure:\t\t" << this->solution.optimality_measure << "\n";
     
-    INFO << "Primal solution:\t\t"; print_vector(INFO, this->solution.x);
-    INFO << "Lower bound multipliers:\t"; print_vector(INFO, this->solution.multipliers.lower_bounds);
-    INFO << "Upper bound multipliers:\t"; print_vector(INFO, this->solution.multipliers.upper_bounds);
-    INFO << "Constraint multipliers:\t\t"; print_vector(INFO, this->solution.multipliers.constraints);
+    if (print_solution) {
+        INFO << "Primal solution:\t\t"; print_vector(INFO, this->solution.x);
+        INFO << "Lower bound multipliers:\t"; print_vector(INFO, this->solution.multipliers.lower_bounds);
+        INFO << "Upper bound multipliers:\t"; print_vector(INFO, this->solution.multipliers.upper_bounds);
+        INFO << "Constraint multipliers:\t\t"; print_vector(INFO, this->solution.multipliers.constraints);
+    }
 
     INFO << "CPU time:\t\t\t" << this->cpu_time << "s\n";
     INFO << "Iterations:\t\t\t" << this->iteration << "\n";

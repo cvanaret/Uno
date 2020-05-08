@@ -53,7 +53,7 @@ void Iterate::compute_hessian(Problem& problem, double objective_multiplier, std
 
 std::vector<double> Iterate::lagrangian_gradient(Problem& problem, double objective_mutiplier, Multipliers& multipliers) {
     std::vector<double> lagrangian_gradient(problem.number_variables);
-    
+
     /* objective gradient */
     if (objective_mutiplier != 0.) {
         this->compute_objective_gradient(problem);
@@ -71,9 +71,9 @@ std::vector<double> Iterate::lagrangian_gradient(Problem& problem, double object
     for (int i = 0; i < problem.number_variables; i++) {
         lagrangian_gradient[i] -= multipliers.lower_bounds[i] + multipliers.upper_bounds[i];
     }
+    
     /* constraints */
     this->compute_constraints_jacobian(problem);
-
     for (int j = 0; j < problem.number_constraints; j++) {
         double multiplier_j = multipliers.constraints[j];
         if (multiplier_j != 0.) {

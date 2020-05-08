@@ -7,32 +7,13 @@
 #include "BQPDSolver.hpp"
 #include "QPSolverFactory.hpp"
 
-Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method):
-Subproblem("l1"),
+Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method, bool use_trust_region):
+Subproblem("l1", problem.variables_bounds),
 number_variables(this->count_additional_variables(problem)),
 // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
 solver(QPSolverFactory::create(QP_solver, number_variables, problem.number_constraints, problem.hessian_maximum_number_nonzeros + problem.number_variables)),
 hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables)),
 penalty_parameter(1.), parameters({10., 0.1, 0.1}) {
-}
-
-int Sl1QP::count_additional_variables(Problem& problem) {
-    int number_variables = problem.number_variables;
-    for (int j = 0; j < problem.number_constraints; j++) {
-        if (-INFINITY < problem.constraint_bounds[j].lb) {
-            number_variables++;
-        }
-        if (problem.constraint_bounds[j].ub < INFINITY) {
-            number_variables++;
-        }
-    }
-    return number_variables;
-}
-
-Iterate Sl1QP::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) {
-    // register the original bounds
-    this->subproblem_variables_bounds = problem.variables_bounds;
-
     // p and n are generated on the fly to solve the QP, but are not kept
     int current_index = problem.number_variables;
     for (int j = 0; j < problem.number_constraints; j++) {
@@ -48,13 +29,27 @@ Iterate Sl1QP::initialize(Problem& problem, std::vector<double>& x, Multipliers&
         }
     }
     
-    /* compute the optimality and feasibility measures of the initial point */
-    Iterate first_iterate(x, multipliers);
-    this->compute_optimality_measures(problem, first_iterate);
-    
     /* if no trust region is used, the problem should be convexified by changing the inertia of the Hessian */
     this->hessian_evaluation->convexify = !use_trust_region;
+}
 
+int Sl1QP::count_additional_variables(Problem& problem) {
+    int number_variables = problem.number_variables;
+    for (int j = 0; j < problem.number_constraints; j++) {
+        if (-INFINITY < problem.constraint_bounds[j].lb) {
+            number_variables++;
+        }
+        if (problem.constraint_bounds[j].ub < INFINITY) {
+            number_variables++;
+        }
+    }
+    return number_variables;
+}
+
+Iterate Sl1QP::evaluate_initial_point(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+    Iterate first_iterate(x, multipliers);
+    /* compute the optimality and feasibility measures of the initial point */
+    this->compute_optimality_measures(problem, first_iterate);
     return first_iterate;
 }
 
@@ -112,18 +107,18 @@ SubproblemSolution Sl1QP::compute_optimality_step(Problem& problem, Iterate& cur
                     }
                     if (!condition2) {
                         this->penalty_parameter /= this->parameters.tau;
-                        if (this->penalty_parameter < 1e-10) {
-                            this->penalty_parameter = 0.;
-                            condition2 = true;
-                        }
-                        else {
+//                        if (this->penalty_parameter < 1e-10) {
+//                            this->penalty_parameter = 0.;
+//                            condition2 = true;
+//                        }
+//                        else {
                             DEBUG << "\nAttempting to solve with penalty parameter " << this->penalty_parameter << "\n";
                             solution = this->solve_subproblem(problem, current_iterate, trust_region_radius, this->penalty_parameter);
                             DEBUG << solution;
 
                             linearized_residual = this->compute_linearized_constraint_residual(problem, solution.x);
                             DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
-                        }
+//                        }
                     }
                 }
 
@@ -174,7 +169,7 @@ SubproblemSolution Sl1QP::solve_subproblem(Problem& problem, Iterate& current_it
     if (penalty_parameter != 0.) {
         for (std::pair<const int, double>& element: current_iterate.objective_gradient) {
             int i = element.first;
-            int derivative = element.second;
+            double derivative = element.second;
             objective_gradient[i] = penalty_parameter*derivative;
         }
     }

@@ -11,9 +11,9 @@
 PenaltyMeritFunction::PenaltyMeritFunction(Subproblem& subproblem, double tolerance): GlobalizationStrategy(subproblem, tolerance), eta(1e-8) {
 }
 
-Iterate PenaltyMeritFunction::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) {
+Iterate PenaltyMeritFunction::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
     /* initialize the subproblem */
-    Iterate first_iterate = this->subproblem.initialize(problem, x, multipliers, use_trust_region);
+    Iterate first_iterate = this->subproblem.evaluate_initial_point(problem, x, multipliers);
     this->subproblem.compute_residuals(problem, first_iterate, first_iterate.multipliers, 1.);
     return first_iterate;
 }

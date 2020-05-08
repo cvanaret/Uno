@@ -2,29 +2,23 @@
 #include "InteriorPoint.hpp"
 #include "Argonot.hpp"
 
-InteriorPoint::InteriorPoint(Problem& problem, std::string hessian_evaluation_method):
-Subproblem("l2"),
+InteriorPoint::InteriorPoint(Problem& problem, std::string hessian_evaluation_method, bool use_trust_region):
+Subproblem("l2", problem.variables_bounds), // use the l2 norm to compute residuals
 hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables)),
 mu_optimality(0.1), mu_feasibility(mu_optimality), inertia_hessian(0.), inertia_hessian_last(0.),
-inertia_constraints(0.), default_multiplier(1.), iteration(0), parameters({0.99, 1e10, 100., 0.2, 1.5, 10., 1e10}) {
-}
-
-Iterate InteriorPoint::initialize(Problem& problem, std::vector<double>& x, Multipliers& default_multipliers, bool use_trust_region) {
-    // register the original bounds
-    this->subproblem_variables_bounds = problem.variables_bounds;
-
+inertia_constraints(0.), default_multiplier(1.), iteration(0),
+parameters({0.99, 1e10, 100., 0.2, 1.5, 10., 1e10}) {
+    /* the subproblem optimizes the original variables and slacks for inequality constraints */
     int number_variables = problem.number_variables + problem.inequality_constraints.size();
-    Multipliers multipliers(number_variables, problem.number_constraints);
-
-    /* generate the bound multipliers */
+    this->subproblem_variables_bounds.resize(number_variables);
+    
+    /* identify the bounded variables */
     for (int i = 0; i < problem.number_variables; i++) {
         if (use_trust_region || (problem.variable_status[i] == BOUNDED_LOWER || problem.variable_status[i] == BOUNDED_BOTH_SIDES)) {
-            this->lower_bounded_variables.push_back(i);
-            multipliers.lower_bounds[i] = this->default_multiplier; // positive multiplier
+            this->lower_bounded_variables.insert(i);
         }
         if (use_trust_region || (problem.variable_status[i] == BOUNDED_UPPER || problem.variable_status[i] == BOUNDED_BOTH_SIDES)) {
-            this->upper_bounded_variables.push_back(i);
-            multipliers.upper_bounds[i] = -this->default_multiplier; // negative multiplier
+            this->upper_bounded_variables.insert(i);
         }
     }
     /* identify the inequality constraint slacks */
@@ -32,24 +26,36 @@ Iterate InteriorPoint::initialize(Problem& problem, std::vector<double>& x, Mult
         int j = element.first;
         int slack_index = problem.number_variables + element.second;
         if (problem.constraint_status[j] == BOUNDED_LOWER || problem.constraint_status[j] == BOUNDED_BOTH_SIDES) {
-            this->lower_bounded_variables.push_back(slack_index);
-            multipliers.lower_bounds[slack_index] = this->default_multiplier; // positive multiplier
+            this->lower_bounded_variables.insert(slack_index);
         }
         if (problem.constraint_status[j] == BOUNDED_UPPER || problem.constraint_status[j] == BOUNDED_BOTH_SIDES) {
-            this->upper_bounded_variables.push_back(slack_index);
-            multipliers.upper_bounds[slack_index] = -this->default_multiplier; // negative multiplier
+            this->upper_bounded_variables.insert(slack_index);
         }
+        // register the bounds of the slacks
+        this->subproblem_variables_bounds[slack_index] = problem.constraint_bounds[j];
     }
+}
 
+Iterate InteriorPoint::evaluate_initial_point(Problem& problem, std::vector<double>& x, Multipliers& default_multipliers) {
+    int number_variables = problem.number_variables + problem.inequality_constraints.size();
+    
     /* make the initial point strictly feasible */
     std::vector<double> reformulated_x(number_variables);
     for (int i = 0; i < problem.number_variables; i++) {
         reformulated_x[i] = Subproblem::project_variable_in_bounds(x[i], problem.variables_bounds[i]);
     }
-
+    
+    Multipliers multipliers(number_variables, problem.number_constraints);
+    /* generate the bound multipliers */
+    for (int i: this->lower_bounded_variables) {
+        multipliers.lower_bounds[i] = this->default_multiplier; // positive multiplier
+    }
+    for (int i: this->upper_bounded_variables) {
+        multipliers.upper_bounds[i] = -this->default_multiplier; // negative multiplier
+    }
+    
     /* generate the first iterate */
     Iterate first_iterate(reformulated_x, multipliers);
-    this->subproblem_variables_bounds.resize(number_variables);
 
     /* initialize the slacks */
     first_iterate.compute_constraints(problem);
@@ -58,7 +64,6 @@ Iterate InteriorPoint::initialize(Problem& problem, std::vector<double>& x, Mult
         int slack_index = problem.number_variables + element.second;
         double slack_value = Subproblem::project_variable_in_bounds(first_iterate.constraints[j], problem.constraint_bounds[j]);
         first_iterate.x[slack_index] = slack_value;
-        this->subproblem_variables_bounds[slack_index] = problem.constraint_bounds[j];
     }
 
     /* evaluate the constraint Jacobian */

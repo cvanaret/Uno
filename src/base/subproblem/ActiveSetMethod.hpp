@@ -8,9 +8,9 @@
 
 class ActiveSetMethod : public Subproblem {
 public:
-    ActiveSetMethod(std::shared_ptr<QPSolver> solver);
+    ActiveSetMethod(Problem& problem, std::shared_ptr<QPSolver> solver);
 
-    virtual Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region);
+    virtual Iterate evaluate_initial_point(Problem& problem, std::vector<double>& x, Multipliers& multipliers);
 
     SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius = INFINITY);
     SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius = INFINITY);

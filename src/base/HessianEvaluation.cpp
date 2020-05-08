@@ -38,12 +38,11 @@ CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& hessian) {
             DEBUG << "Factorization was a success with inertia " << inertia << "\n";
         }
         else {
+            previous_inertia = inertia;
             if (inertia == 0.) {
                 inertia = beta;
-                previous_inertia = 0.;
             }
             else {
-                previous_inertia = inertia;
                 inertia *= 2.;
             }
             hessian = hessian.add_identity_multiple(inertia - previous_inertia);
@@ -65,7 +64,6 @@ void ExactHessianEvaluation::compute(Problem& problem, Iterate& iterate, double 
     iterate.compute_hessian(problem, objective_multiplier, constraint_multipliers);
     
     if (this->convexify) {
-        //std::cout.precision(17);
         DEBUG << "hessian before convexification: " << iterate.hessian;
         /* modify the inertia to make the problem strictly convex */
         iterate.hessian = this->modify_inertia(iterate.hessian);

@@ -9,7 +9,7 @@ GlobalizationMechanism(globalization_strategy, max_iterations), radius(initial_r
 }
 
 Iterate TrustRegion::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
-    return this->globalization_strategy.initialize(problem, x, multipliers, true);
+    return this->globalization_strategy.initialize(problem, x, multipliers);
 }
 
 Iterate TrustRegion::compute_acceptable_iterate(Problem& problem, Iterate& current_iterate) {
@@ -27,13 +27,13 @@ Iterate TrustRegion::compute_acceptable_iterate(Problem& problem, Iterate& curre
                 /* infeasible subproblem during optimality phase */
                 solution = this->globalization_strategy.subproblem.compute_infeasibility_step(problem, current_iterate, solution, this->radius);
             }
-
+            
             /* set bound multipliers of active trust region to 0 */
             this->correct_multipliers(problem, solution);
-
+            
             /* check whether the trial step is accepted */
             is_accepted = this->globalization_strategy.check_step(problem, current_iterate, solution);
-
+            
             if (is_accepted) {
                 /* print summary */
                 this->print_acceptance(solution.norm);

@@ -6,8 +6,8 @@
 #include "Logger.hpp"
 #include "QPSolverFactory.hpp"
 
-SLP::SLP(Problem& problem, std::string QP_solver_name):
-ActiveSetMethod(QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints, 0)) {
+SLP::SLP(Problem& problem, std::string QP_solver_name, bool /*use_trust_region*/):
+ActiveSetMethod(problem, QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints, 0)) {
 }
 
 double SLP::compute_predicted_reduction(Problem& /*problem*/, Iterate& /*current_iterate*/, SubproblemSolution& solution, double step_length) {

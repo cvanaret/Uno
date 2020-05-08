@@ -8,7 +8,7 @@ GlobalizationMechanism(globalization_strategy, max_iterations), ratio(ratio), ra
 }
 
 Iterate TrustLineSearch::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
-    return this->globalization_strategy.initialize(problem, x, multipliers, true);
+    return this->globalization_strategy.initialize(problem, x, multipliers);
 }
 
 Iterate TrustLineSearch::compute_acceptable_iterate(Problem& problem, Iterate& current_iterate) {

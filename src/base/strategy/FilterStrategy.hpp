@@ -38,7 +38,7 @@ public:
      *  Implements the purely virtual method of the superclass
      */
     bool check_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length = 1.) override;
-    Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) override;
+    Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
     
 private:
     Phase current_phase; /*!< Current phase (optimality or feasibility restoration) */

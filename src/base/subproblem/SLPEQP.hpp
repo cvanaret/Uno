@@ -19,9 +19,7 @@ public:
      * 
      * \param solver: solver that solves the subproblem
      */
-    SLPEQP(Problem& problem, std::string QP_solver_name, std::string hessian_evaluation_method);
-
-    Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) override;
+    SLPEQP(Problem& problem, std::string QP_solver_name, std::string hessian_evaluation_method, bool use_trust_region);
 
     SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius=INFINITY) override;
     SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius=INFINITY) override;

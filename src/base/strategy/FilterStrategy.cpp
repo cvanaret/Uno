@@ -9,9 +9,9 @@ FilterStrategy::FilterStrategy(Subproblem& subproblem, std::shared_ptr<Filter> f
 GlobalizationStrategy(subproblem, tolerance), filter_optimality(filter_optimality), filter_restoration(filter_restoration), current_phase(OPTIMALITY), parameters(strategy_parameters) {
 }
 
-Iterate FilterStrategy::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) {
+Iterate FilterStrategy::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
     /* initialize the subproblem */
-    Iterate first_iterate = this->subproblem.initialize(problem, x, multipliers, use_trust_region);
+    Iterate first_iterate = this->subproblem.evaluate_initial_point(problem, x, multipliers);
     this->subproblem.compute_residuals(problem, first_iterate, first_iterate.multipliers, 1.);
 
     /* set the filter upper bound */
@@ -37,7 +37,7 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
     Iterate trial_iterate(trial_x, solution.multipliers);
     double step_norm = step_length * solution.norm;
     this->subproblem.compute_optimality_measures(problem, trial_iterate);
-
+    
     bool accept = false;
     /* check zero step */
     if (step_norm == 0.) {

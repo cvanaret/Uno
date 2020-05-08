@@ -17,9 +17,8 @@ public:
      * 
      * \param solver: solver that solves the subproblem
      */
-    SQP(Problem& problem, std::string QP_solver_name, std::string hessian_evaluation_method);
+    SQP(Problem& problem, std::string QP_solver_name, std::string hessian_evaluation_method, bool use_trust_region);
     
-    Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) override;
     double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length);
     bool phase_1_required(SubproblemSolution& solution) override;
 

@@ -5,17 +5,13 @@
 #include "Utils.hpp"
 #include "Logger.hpp"
 
-ActiveSetMethod::ActiveSetMethod(std::shared_ptr<QPSolver> solver): Subproblem("l1"), solver(solver) {
+ActiveSetMethod::ActiveSetMethod(Problem& problem, std::shared_ptr<QPSolver> solver): Subproblem("l1", problem.variables_bounds), solver(solver) {
 }
 
-Iterate ActiveSetMethod::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool /*use_trust_region*/) {
-    // register the original bounds
-    this->subproblem_variables_bounds = problem.variables_bounds;
-
+Iterate ActiveSetMethod::evaluate_initial_point(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
     Iterate first_iterate(x, multipliers);
     /* compute the optimality and feasibility measures of the initial point */
     this->compute_optimality_measures(problem, first_iterate);
-    
     return first_iterate;
 }
 

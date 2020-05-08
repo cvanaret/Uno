@@ -23,10 +23,10 @@ public:
      * \param solver: solver that solves the subproblem
      * \param name: name of the strategy
      */
-    Subproblem(std::string residual_norm);
+    Subproblem(std::string residual_norm, std::vector<Range>& subproblem_variables_bounds);
     virtual ~Subproblem();
 
-    virtual Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_trust_region) = 0;
+    virtual Iterate evaluate_initial_point(Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
     
     // TODO return a list of steps
     virtual SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius=INFINITY) = 0;
