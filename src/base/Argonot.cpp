@@ -56,9 +56,9 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& mul
     double cpu_time = (c_end - c_start) / (double) CLOCKS_PER_SEC;
     
     int number_subproblems_solved = this->globalization_mechanism.globalization_strategy.subproblem.number_subproblems_solved;
-    Result result = {problem.number_variables,
+    Result result = {current_iterate,
+        problem.number_variables,
         problem.number_constraints,
-        current_iterate,
         major_iterations,
         cpu_time,
         problem.number_eval_objective,

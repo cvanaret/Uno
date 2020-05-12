@@ -202,9 +202,9 @@ SubproblemSolution Sl1QP::solve_subproblem(Problem& problem, Iterate& current_it
     
     /* solve the QP */
     SubproblemSolution solution = this->solver->solve_QP(variables_bounds, constraints_bounds, objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
-
+    
     // recompute active set: constraints are active when p-n = 0
-    this->recover_active_set(problem, solution, variables_bounds);
+    //this->recover_active_set(problem, solution, variables_bounds);
 
     solution.phase_1_required = this->phase_1_required(solution);
     solution.objective_multiplier = penalty_parameter;

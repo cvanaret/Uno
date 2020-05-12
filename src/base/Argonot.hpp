@@ -5,9 +5,9 @@
 #include "GlobalizationMechanism.hpp"
 
 struct Result {
+    Iterate solution;
     int number_variables;
     int number_constraints;
-    Iterate solution;
     int iteration;
     double cpu_time;
     int objective_evaluations;

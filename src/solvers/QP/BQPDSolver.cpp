@@ -129,7 +129,7 @@ SubproblemSolution BQPDSolver::solve_subproblem(std::vector<Range>& variables_bo
         this->lb[this->n_ + j] = (constraints_bounds[j].lb == -INFINITY) ? -BIG : constraints_bounds[j].lb;
         this->ub[this->n_ + j] = (constraints_bounds[j].ub == INFINITY) ? BIG : constraints_bounds[j].ub;
     }
-
+    
     /* call BQPD */
     int mode = (int) this->mode_;
     bqpd_(&this->n_, &this->m_, &this->k_, &kmax, this->jacobian.data(), this->jacobian_sparsity.data(), x.data(),
