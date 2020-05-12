@@ -166,6 +166,15 @@ SubproblemSolution InteriorPoint::compute_optimality_step(Problem& problem, Iter
 
     /* evaluate the barrier objective */
     solution.objective = this->evaluate_local_model(problem, current_iterate, solution.x);
+    
+    /* determine violated constraints */
+//    for (int j = 0; j < problem.number_constraints; j++) {
+//        double constraint_value = current_iterate.constraints[j] + dot(solution.x, current_iterate.constraints_jacobian[j]);
+//        if (constraint_value < problem.constraint_bounds[j].lb || problem.constraint_bounds[j].ub < constraint_value) {
+//            std::cout << "Linearized constraint c" << j << " is violated\n";
+//        }
+//    }
+    
     return solution;
 }
 
