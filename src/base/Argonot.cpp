@@ -11,7 +11,7 @@ Argonot::Argonot(GlobalizationMechanism& globalization_mechanism, int max_iterat
 
 Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool preprocessing) {
     std::clock_t c_start = std::clock();
-    int major_iterations = 0, minor_iterations = 0;
+    int major_iterations = 0;
     
     INFO << "Problem " << problem.name << "\n";
     INFO << problem.number_variables << " variables, " << problem.number_constraints << " constraints\n";
@@ -40,7 +40,6 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& mul
             DEBUG << "Current point: "; print_vector(DEBUG, current_iterate.x);
             /* update the current point */
             current_iterate = this->globalization_mechanism.compute_acceptable_iterate(problem, current_iterate);
-            minor_iterations += this->globalization_mechanism.number_iterations;
             INFO << "||c|| = " << current_iterate.residuals.constraints << "\tf = " << current_iterate.objective << "\t";
             INFO << "η = " << current_iterate.feasibility_measure << "\tω = " << current_iterate.optimality_measure << "\n";
 
@@ -55,7 +54,8 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& mul
     }
     std::clock_t c_end = std::clock();
     double cpu_time = (c_end - c_start) / (double) CLOCKS_PER_SEC;
-
+    
+    int number_subproblems_solved = this->globalization_mechanism.globalization_strategy.subproblem.number_subproblems_solved;
     Result result = {problem.number_variables,
         problem.number_constraints,
         current_iterate,
@@ -65,7 +65,7 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& mul
         problem.number_eval_constraints,
         problem.number_eval_jacobian,
         problem.number_eval_hessian,
-        this->globalization_mechanism.globalization_strategy.subproblem.number_subproblems_solved};
+        number_subproblems_solved};
     return result;
 }
 
@@ -138,7 +138,6 @@ void Argonot::preprocessing(Problem& problem, std::vector<double>& x, Multiplier
             INFO << "\n";
         }
     }
-    //throw std::runtime_error("TEST");
     return;
 }
 
@@ -167,6 +166,7 @@ void Result::display(bool print_solution) {
     INFO << "Objective value:\t\t" << this->solution.objective << "\n";
     INFO << "Constraint residual:\t\t" << this->solution.residuals.constraints << "\n";
     INFO << "KKT residual:\t\t\t" << this->solution.residuals.KKT << "\n";
+    INFO << "FJ residual:\t\t\t" << this->solution.residuals.FJ << "\n";
     INFO << "Complementarity residual:\t" << this->solution.residuals.complementarity << "\n";
 
     INFO << "Feasibility measure:\t\t" << this->solution.feasibility_measure << "\n";

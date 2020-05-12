@@ -17,9 +17,7 @@ public:
      * 
      * \param solver: solver that solves the subproblem
      */
-    SQP(Problem& problem, std::string QP_solver_name, std::string hessian_evaluation_method, bool use_trust_region);
-    
-    double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length);
+    SQP(Problem& problem, std::string QP_solver_name, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals);
     bool phase_1_required(SubproblemSolution& solution) override;
 
     /* use references to allow polymorphism */
@@ -35,6 +33,7 @@ protected:
     // call subproblem solver
     virtual SubproblemSolution solve_optimality_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, Iterate& current_iterate, std::vector<double>& d0);
     virtual SubproblemSolution solve_feasibility_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, Iterate& current_iterate, std::vector<double>& d0);
+    double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length);
 };
 
 #endif // SQP_H

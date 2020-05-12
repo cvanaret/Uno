@@ -19,6 +19,7 @@ enum OptimalityStatus {
 struct Residuals {
     double constraints;
     double KKT;
+    double FJ;
     double complementarity;
 };
 

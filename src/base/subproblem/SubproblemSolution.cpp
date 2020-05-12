@@ -3,7 +3,8 @@
 
 SubproblemSolution::SubproblemSolution(std::vector<double>& x, Multipliers& multipliers):
 x(x), multipliers(multipliers), objective_multiplier(1.), status(OPTIMAL), phase(OPTIMALITY), phase_1_required(false), norm(0.), objective(0.),
-is_descent_direction(true), constraint_partition(ConstraintPartition(multipliers.constraints.size())) {
+is_descent_direction(true), constraint_partition(ConstraintPartition(multipliers.constraints.size())),
+predicted_reduction([&](double step_length) { return 0.; }) {
 }
 
 std::ostream& operator<<(std::ostream &stream, SubproblemSolution& solution) {

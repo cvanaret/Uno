@@ -23,7 +23,7 @@ public:
      * 
      * \param solver: solver that solves the subproblem
      */
-    Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method, bool use_trust_region);
+    Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals);
 
     Iterate evaluate_initial_point(Problem& problem, std::vector<double>& x, Multipliers& multipliers);
     
@@ -32,8 +32,7 @@ public:
     
     void compute_optimality_measures(Problem& problem, Iterate& iterate) override;
     void compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution);
-    
-    double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
+
     bool phase_1_required(SubproblemSolution& solution) override;
     double compute_complementarity_error(Problem& problem, Iterate& iterate, Multipliers& multipliers) override;
 
@@ -53,6 +52,7 @@ private:
     int count_additional_variables(Problem& problem);
     std::vector<Range> generate_variables_bounds(Problem& problem, Iterate& current_iterate, double trust_region_radius);
     SubproblemSolution solve_subproblem(Problem& problem, Iterate& current_iterate, double trust_region_radius, double penalty_parameter);
+    double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length);
     double compute_linearized_constraint_residual(Problem& problem, std::vector<double>& x);
     double compute_error(Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter);
     void recover_active_set(Problem& problem, SubproblemSolution& solution, std::vector<Range>& variables_bounds);

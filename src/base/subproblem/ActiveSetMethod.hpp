@@ -8,7 +8,7 @@
 
 class ActiveSetMethod : public Subproblem {
 public:
-    ActiveSetMethod(Problem& problem, std::shared_ptr<QPSolver> solver);
+    ActiveSetMethod(Problem& problem, std::shared_ptr<QPSolver> solver, bool scale_residuals);
 
     virtual Iterate evaluate_initial_point(Problem& problem, std::vector<double>& x, Multipliers& multipliers);
 

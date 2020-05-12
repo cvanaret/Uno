@@ -34,7 +34,7 @@ public:
     /*!
      *  Constructor
      */
-    InteriorPoint(Problem& problem, std::string hessian_evaluation_method, bool use_trust_region);
+    InteriorPoint(Problem& problem, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals);
 
     Iterate evaluate_initial_point(Problem& problem, std::vector<double>& x, Multipliers& default_multipliers) override;
 
@@ -43,8 +43,7 @@ public:
     
     void compute_optimality_measures(Problem& problem, Iterate& iterate) override;
     void compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution) override;
-    
-    double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
+
     bool phase_1_required(SubproblemSolution& solution) override;
 
     double constraint_violation(Problem& problem, Iterate& iterate);
@@ -76,6 +75,7 @@ private:
     std::vector<double> compute_upper_bound_multiplier_displacements(Iterate& current_iterate, std::vector<double>& solution, std::vector<Range>& variables_bounds, double mu);
     SubproblemSolution generate_direction(Problem& problem, Iterate& current_iterate, std::vector<double>& solution_IPM);
     double compute_KKT_error_scaling(Iterate& current_iterate);
+    double compute_predicted_reduction(SubproblemSolution& solution, double step_length);
 
     double inertia_hessian;
     double inertia_hessian_last;

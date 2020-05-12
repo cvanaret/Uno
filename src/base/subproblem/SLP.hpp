@@ -15,9 +15,8 @@ public:
      * 
      * \param solver: solver that solves the subproblem
      */
-    SLP(Problem& problem, std::string QP_solver_name, bool use_trust_region);
+    SLP(Problem& problem, std::string QP_solver_name, bool use_trust_region, bool scale_residuals);
 
-    double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length);
     bool phase_1_required(SubproblemSolution& solution);
 
 private:
@@ -27,6 +26,7 @@ private:
     // call subproblem solver
     SubproblemSolution solve_optimality_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, Iterate& current_iterate, std::vector<double>& d0);
     SubproblemSolution solve_feasibility_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, Iterate& current_iterate, std::vector<double>& d0);
+    double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length);
 };
 
 #endif // SLP_H

@@ -7,8 +7,8 @@
 #include "Utils.hpp"
 #include "Logger.hpp"
 
-SLPEQP::SLPEQP(Problem& problem, std::string QP_solver_name, std::string hessian_evaluation_method, bool use_trust_region):
-Subproblem("l1", problem.variables_bounds),
+SLPEQP::SLPEQP(Problem& problem, std::string QP_solver_name, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals):
+Subproblem("l1", problem.variables_bounds, scale_residuals),
 lp_subproblem(SLP(problem, QP_solver_name, use_trust_region)),
 eqp_subproblem(SQP(problem, QP_solver_name, hessian_evaluation_method, use_trust_region)) {
 }

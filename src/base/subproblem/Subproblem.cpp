@@ -1,9 +1,10 @@
 #include "Subproblem.hpp"
 
-Subproblem::Subproblem(std::string residual_norm, std::vector<Range>& variables_bounds):
+Subproblem::Subproblem(std::string residual_norm, std::vector<Range>& variables_bounds, bool scale_residuals):
 residual_norm(residual_norm),
 subproblem_variables_bounds(variables_bounds), // register the original bounds
-number_subproblems_solved(0), subproblem_definition_changed(false) {
+number_subproblems_solved(0), subproblem_definition_changed(false),
+scale_residuals(scale_residuals) {
 }
 
 Subproblem::~Subproblem() {
@@ -140,6 +141,10 @@ void Subproblem::compute_residuals(Problem& problem, Iterate& iterate, Multiplie
     iterate.compute_constraints(problem);
     iterate.residuals.constraints = problem.compute_constraint_residual(iterate.constraints, this->residual_norm);
     iterate.residuals.KKT = Subproblem::compute_KKT_error(problem, iterate, objective_multiplier);
+    iterate.residuals.FJ = Subproblem::compute_KKT_error(problem, iterate, 0.);
     iterate.residuals.complementarity = this->compute_complementarity_error(problem, iterate, multipliers);
+    if (this->scale_residuals) {
+        // TODO scale the residuals
+    }
     return;
 }

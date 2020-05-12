@@ -98,6 +98,7 @@ std::ostream& operator<<(std::ostream &stream, Iterate& iterate) {
 
     stream << "Constraint residual: " << iterate.residuals.constraints << "\n";
     stream << "KKT residual: " << iterate.residuals.KKT << "\n";
+    stream << "FJ residual: " << iterate.residuals.KKT << "\n";
     stream << "Complementarity residual: " << iterate.residuals.complementarity << "\n";
     
     stream << "Optimality measure: " << iterate.optimality_measure << "\n";

@@ -19,7 +19,7 @@ public:
      * 
      * \param solver: solver that solves the subproblem
      */
-    SLPEQP(Problem& problem, std::string QP_solver_name, std::string hessian_evaluation_method, bool use_trust_region);
+    SLPEQP(Problem& problem, std::string QP_solver_name, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals);
 
     SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius=INFINITY) override;
     SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius=INFINITY) override;
@@ -28,7 +28,6 @@ public:
     void compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution) override;
     
     bool phase_1_required(SubproblemSolution& solution) override;
-    double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
 
     /* use a reference to allow polymorphism */
     SLP lp_subproblem;
@@ -36,6 +35,7 @@ public:
 
 private:
     void fix_active_constraints(Problem& problem, ActiveSet& active_set, std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds);
+    double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length);
 };
 
 //class SLPEQP_l2 : public SLPEQP {

@@ -2,8 +2,8 @@
 #include "InteriorPoint.hpp"
 #include "Argonot.hpp"
 
-InteriorPoint::InteriorPoint(Problem& problem, std::string hessian_evaluation_method, bool use_trust_region):
-Subproblem("l2", problem.variables_bounds), // use the l2 norm to compute residuals
+InteriorPoint::InteriorPoint(Problem& problem, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals):
+Subproblem("l2", problem.variables_bounds, scale_residuals), // use the l2 norm to compute residuals
 hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables)),
 mu_optimality(0.1), mu_feasibility(mu_optimality), inertia_hessian(0.), inertia_hessian_last(0.),
 inertia_constraints(0.), default_multiplier(1.), iteration(0),
@@ -160,6 +160,9 @@ SubproblemSolution InteriorPoint::compute_optimality_step(Problem& problem, Iter
     SubproblemSolution solution = this->generate_direction(problem, current_iterate, solution_IPM);
     solution.status = OPTIMAL;
     solution.norm = norm_inf(solution.x, problem.number_variables);
+    solution.predicted_reduction = [&](double step_length) {
+        return this->compute_predicted_reduction(solution, step_length);
+    };
 
     /* evaluate the barrier objective */
     solution.objective = this->evaluate_local_model(problem, current_iterate, solution.x);
@@ -479,7 +482,7 @@ double InteriorPoint::evaluate_local_model(Problem& /*problem*/, Iterate& curren
     return subproblem_objective;
 }
 
-double InteriorPoint::compute_predicted_reduction(Problem& /*problem*/, Iterate& /*current_iterate*/, SubproblemSolution& solution, double step_length) {
+double InteriorPoint::compute_predicted_reduction(SubproblemSolution& solution, double step_length) {
     // the predicted reduction is linear
     return -step_length*solution.objective;
 }
@@ -587,7 +590,9 @@ SubproblemSolution InteriorPoint::compute_infeasibility_step(Problem& problem, I
     solution.status = INFEASIBLE;
     solution.phase = RESTORATION;
     solution.norm = norm_inf(solution.x, problem.number_variables);
-
+    solution.predicted_reduction = [&](double step_length) {
+        return this->compute_predicted_reduction(solution, step_length);
+    };
     return solution;
 }
 

@@ -5,7 +5,8 @@
 #include "Utils.hpp"
 #include "Logger.hpp"
 
-ActiveSetMethod::ActiveSetMethod(Problem& problem, std::shared_ptr<QPSolver> solver): Subproblem("l1", problem.variables_bounds), solver(solver) {
+ActiveSetMethod::ActiveSetMethod(Problem& problem, std::shared_ptr<QPSolver> solver, bool scale_residuals):
+Subproblem("l1", problem.variables_bounds, scale_residuals), solver(solver) {
 }
 
 Iterate ActiveSetMethod::evaluate_initial_point(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
@@ -33,6 +34,9 @@ SubproblemSolution ActiveSetMethod::compute_optimality_step(Problem& problem, It
     solution.objective_multiplier = problem.objective_sign;
     solution.phase_1_required = this->phase_1_required(solution);
     solution.phase = OPTIMALITY;
+    solution.predicted_reduction = [&](double step_length) {
+        return this->compute_predicted_reduction(problem, current_iterate, solution, step_length);
+    };
     this->number_subproblems_solved++;
     DEBUG << solution;
     return solution;
@@ -73,6 +77,9 @@ SubproblemSolution ActiveSetMethod::compute_infeasibility_step(Problem& problem,
     solution.objective_multiplier = 0.;
     solution.phase = RESTORATION;
     solution.constraint_partition = phase_II_solution.constraint_partition;
+    solution.predicted_reduction = [&](double step_length) {
+        return this->compute_predicted_reduction(problem, current_iterate, solution, step_length);
+    };
     this->number_subproblems_solved++;
     DEBUG << solution;
     return solution;

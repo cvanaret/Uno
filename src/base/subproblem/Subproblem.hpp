@@ -23,7 +23,7 @@ public:
      * \param solver: solver that solves the subproblem
      * \param name: name of the strategy
      */
-    Subproblem(std::string residual_norm, std::vector<Range>& subproblem_variables_bounds);
+    Subproblem(std::string residual_norm, std::vector<Range>& subproblem_variables_bounds, bool scale_residuals);
     virtual ~Subproblem();
 
     virtual Iterate evaluate_initial_point(Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
@@ -35,7 +35,6 @@ public:
     virtual void compute_optimality_measures(Problem& problem, Iterate& iterate) = 0;
     virtual void compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution) = 0;
     
-    virtual double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) = 0;
     virtual bool phase_1_required(SubproblemSolution& solution) = 0;
 
     static double project_variable_in_bounds(double variable_value, Range& variable_bounds);
@@ -53,6 +52,7 @@ public:
     int number_subproblems_solved;
     // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it
     bool subproblem_definition_changed;
+    bool scale_residuals;
 };
 
 #endif // SUBPROBLEM_H

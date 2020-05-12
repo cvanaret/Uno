@@ -3,6 +3,7 @@
 
 #include <ostream>
 #include <vector>
+#include <functional>
 #include "Utils.hpp"
 #include "Constraint.hpp"
 #include "Phase.hpp"
@@ -47,6 +48,9 @@ public:
     bool is_descent_direction;
     ActiveSet active_set; /*!< Active set */
     ConstraintPartition constraint_partition; /*!< Partition of feasible and infeasible constraints */
+    
+    // lambda test
+    std::function<double(double)> predicted_reduction;
 
     friend std::ostream& operator<<(std::ostream &stream, SubproblemSolution& step);
 };

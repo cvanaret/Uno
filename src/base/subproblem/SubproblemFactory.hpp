@@ -8,7 +8,7 @@
 
 class SubproblemFactory {
 	public:
-		static std::shared_ptr<Subproblem> create(Problem& problem, const std::string& type, std::map<std::string, std::string> default_values, bool use_trust_region);
+		static std::shared_ptr<Subproblem> create(Problem& problem, const std::string& type, std::map<std::string, std::string> default_values, bool use_trust_region, bool scale_residuals);
 };
 
 #endif // SUBPROBLEMFACTORY_H

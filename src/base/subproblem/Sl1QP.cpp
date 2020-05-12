@@ -7,8 +7,8 @@
 #include "BQPDSolver.hpp"
 #include "QPSolverFactory.hpp"
 
-Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method, bool use_trust_region):
-Subproblem("l1", problem.variables_bounds),
+Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals):
+Subproblem("l1", problem.variables_bounds, scale_residuals),
 number_variables(this->count_additional_variables(problem)),
 // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
 solver(QPSolverFactory::create(QP_solver, number_variables, problem.number_constraints, problem.hessian_maximum_number_nonzeros + problem.number_variables)),
@@ -107,18 +107,18 @@ SubproblemSolution Sl1QP::compute_optimality_step(Problem& problem, Iterate& cur
                     }
                     if (!condition2) {
                         this->penalty_parameter /= this->parameters.tau;
-//                        if (this->penalty_parameter < 1e-10) {
-//                            this->penalty_parameter = 0.;
-//                            condition2 = true;
-//                        }
-//                        else {
+                        if (this->penalty_parameter < 1e-10) {
+                            this->penalty_parameter = 0.;
+                            condition2 = true;
+                        }
+                        else {
                             DEBUG << "\nAttempting to solve with penalty parameter " << this->penalty_parameter << "\n";
                             solution = this->solve_subproblem(problem, current_iterate, trust_region_radius, this->penalty_parameter);
                             DEBUG << solution;
 
                             linearized_residual = this->compute_linearized_constraint_residual(problem, solution.x);
                             DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
-//                        }
+                        }
                     }
                 }
 
@@ -208,8 +208,10 @@ SubproblemSolution Sl1QP::solve_subproblem(Problem& problem, Iterate& current_it
 
     solution.phase_1_required = this->phase_1_required(solution);
     solution.objective_multiplier = penalty_parameter;
+    solution.predicted_reduction = [&](double step_length) {
+        return this->compute_predicted_reduction(problem, current_iterate, solution, step_length);
+    };
     this->number_subproblems_solved++;
-
     return solution;
 }
 
