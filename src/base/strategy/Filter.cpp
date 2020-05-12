@@ -105,7 +105,7 @@ std::ostream& operator<<(std::ostream &stream, Filter& filter) {
     return stream;
 }
 
-/* NonmonotoneFilter class*/
+/* NonmonotoneFilter class */
 
 NonmonotoneFilter::NonmonotoneFilter(FilterConstants& constants, int number_dominated_entries) : Filter(constants), number_dominated_entries(number_dominated_entries) {
 }
@@ -217,4 +217,24 @@ double NonmonotoneFilter::compute_actual_reduction(double current_objective, dou
     }
     /* non-monotone actual reduction */
     return max_objective - trial_objective;
+}
+
+/* FilterFactory class */
+
+std::shared_ptr<Filter> FilterFactory::create(std::map<std::string, std::string> options) {
+    double Beta = stod(options["Beta"]);
+    double Gamma = stod(options["Gamma"]);
+    FilterConstants filter_constants = {Beta, Gamma};
+    std::string filter_type = options["strategy"];
+    
+    if (filter_type == "filter") {
+        return std::make_shared<Filter>(filter_constants);
+    }
+    else if (filter_type == "nonmonotone-filter") {
+        int number_dominated_entries = stoi(options["number_dominated_entries"]);
+        return std::make_shared<NonmonotoneFilter>(filter_constants, number_dominated_entries);
+    }
+    else {
+        throw std::invalid_argument("Filter type " + filter_type + " does not exist");
+    }
 }

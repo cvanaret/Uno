@@ -24,10 +24,7 @@ struct FilterStrategyParameters {
  */
 class FilterStrategy : public GlobalizationStrategy {
 public:
-    /*!
-     *  Constructor that takes an optimization problem, filters for restoration and optimality, and a set of constants
-     */
-    FilterStrategy(Subproblem& subproblem, std::shared_ptr<Filter> filter_optimality, std::shared_ptr<Filter> filter_restoration, FilterStrategyParameters& strategy_parameters, double tolerance);
+    FilterStrategy(Subproblem& subproblem, FilterStrategyParameters strategy_constants, double tolerance, std::map<std::string, std::string> options);
 
     /* use pointers to allow polymorphism */
     std::shared_ptr<Filter> filter_optimality; /*!< Filter for the optimality phase */

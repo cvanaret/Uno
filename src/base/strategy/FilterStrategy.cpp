@@ -4,9 +4,11 @@
 #include "FilterStrategy.hpp"
 #include "Utils.hpp"
 
-/* TODO option to switch between filter or non-monotonic filter */
-FilterStrategy::FilterStrategy(Subproblem& subproblem, std::shared_ptr<Filter> filter_optimality, std::shared_ptr<Filter> filter_restoration, FilterStrategyParameters& strategy_parameters, double tolerance):
-GlobalizationStrategy(subproblem, tolerance), filter_optimality(filter_optimality), filter_restoration(filter_restoration), current_phase(OPTIMALITY), parameters(strategy_parameters) {
+FilterStrategy::FilterStrategy(Subproblem& subproblem, FilterStrategyParameters strategy_parameters, double tolerance, std::map<std::string, std::string> options):
+GlobalizationStrategy(subproblem, tolerance),
+filter_optimality(FilterFactory::create(options)),
+filter_restoration(FilterFactory::create(options)),
+current_phase(OPTIMALITY), parameters(strategy_parameters) {
 }
 
 Iterate FilterStrategy::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {

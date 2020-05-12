@@ -4,6 +4,8 @@
 #include <ostream>
 #include <vector>
 #include <list>
+#include <map>
+#include <memory>
 
 struct FilterConstants {
     double Beta; /*!< Margin around filter */
@@ -142,6 +144,11 @@ public:
     void shift_right(int start, int length);
 
     int number_dominated_entries; /*!< Memory of filter */
+};
+
+class FilterFactory {
+public:
+    static std::shared_ptr<Filter> create(std::map<std::string, std::string> options);
 };
 
 #endif // FILTER_H

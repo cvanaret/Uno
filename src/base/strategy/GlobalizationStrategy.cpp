@@ -11,12 +11,18 @@ GlobalizationStrategy::~GlobalizationStrategy() {
 OptimalityStatus GlobalizationStrategy::compute_status(Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier) {
     OptimalityStatus status = NOT_OPTIMAL;
     
-    if (current_iterate.residuals.KKT <= this->tolerance * std::sqrt(current_iterate.x.size()) && current_iterate.residuals.complementarity <= this->tolerance * (current_iterate.x.size() + problem.number_constraints)) {
+    if (current_iterate.residuals.complementarity <= this->tolerance * (current_iterate.x.size() + problem.number_constraints)) {
+        // feasible and KKT point
         if (current_iterate.residuals.constraints <= this->tolerance * current_iterate.x.size()) {
-            status = KKT_POINT;
+            if (current_iterate.residuals.KKT <= this->tolerance * std::sqrt(current_iterate.x.size())) {
+                status = KKT_POINT;
+            }
         }
+        // infeasible and FJ point
         else {
-             status = FJ_POINT;
+            if (current_iterate.residuals.FJ <= this->tolerance * std::sqrt(current_iterate.x.size())) {
+                status = FJ_POINT;
+            }
         }
     }
     else if (step_norm <= this->tolerance / 100.) {
