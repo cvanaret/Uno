@@ -49,8 +49,8 @@ public:
     ActiveSet active_set; /*!< Active set */
     ConstraintPartition constraint_partition; /*!< Partition of feasible and infeasible constraints */
     
-    // lambda test
-    std::function<double(double)> predicted_reduction;
+    // this function computes the predicted reduction of the direction for a given step length
+    std::function<double(double step_length)> predicted_reduction;
 
     friend std::ostream& operator<<(std::ostream &stream, SubproblemSolution& step);
 };
