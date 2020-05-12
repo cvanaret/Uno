@@ -51,6 +51,8 @@ private:
     std::vector<double> lb, ub; // lower and upper bounds of variables and constraints
     int use_fortran;
     
+    std::vector<double> jacobian;
+    std::vector<int> jacobian_sparsity;
     int kmax_, mlp_, mxwk0_, mxiwk0_;
     std::vector<int> info_;
     std::vector<double> alp_;
@@ -73,7 +75,7 @@ private:
     SubproblemSolution generate_solution(std::vector<double>& x);
     Status int_to_status(int ifail);
     SubproblemSolution solve_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, std::vector<double>& x, int kmax);
-    void build_jacobian(std::vector<double>& full_jacobian, std::vector<int>& full_jacobian_sparsity, std::map<int, double>& jacobian);
+    void build_jacobian(std::vector<double>& full_jacobian, std::vector<int>& full_jacobian_sparsity, std::map<int, double>& vector);
 };
 
 #endif // BQPDSOLVER_H
