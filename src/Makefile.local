@@ -1,9 +1,11 @@
 # specify local compilers and compiler flags
 CFLAGS = -Wall -pedantic $(PROFILER)
+#CFLAGS = -Wall -Wextra -Werror $(PROFILER)
 #-Weffc++
 
 # local directories & libraries (change appropriately)
 AMPL_DIR = ~/src/amplsolver
+AMPL2_DIR = ~/src/amplsolver2
 BQPD_DIR = /media/data/Bureau/robust/software/bqpd
 MA57_DIR = ~/src/ma57-3.10.0
 #MA57_DIR = ~/src/hsl_ma57-5.2.0

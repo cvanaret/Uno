@@ -1,5 +1,5 @@
 # specify local compilers and compiler flags
-PROFILER =#-pg
+PROFILER = #-pg
 CC     = gcc
 CPP    = g++ -std=c++11
 F77    = gfortran
@@ -14,7 +14,8 @@ L = -ldl -lf2c
 LIBCOIN   = -lOsiClp -lClp -lCoinUtils -lOsi
 LIBLINALG = -lblas -llapack
 
-INCLUDES = -I base -I base/mechanism -I base/strategy -I base/subproblem -I logger -I interfaces/AMPL -I solvers/QP -I solvers/KKT -I solvers/NLP -I $(BFGS_DIR) -I $(AMPL_DIR)
+INCLUDES = -I base -I base/mechanism -I base/strategy -I base/subproblem -I logger -I interfaces/AMPL -I solvers/QP -I solvers/KKT -I solvers/NLP -I $(AMPL_DIR)
+# -I $(BFGS_DIR)
 
 SRC_FILES = base/Argonot.cpp base/Iterate.cpp \
 	base/Problem.cpp interfaces/AMPL/AMPLModel.cpp \

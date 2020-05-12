@@ -18,11 +18,13 @@
 void run_argonot(std::string problem_name, std::map<std::string, std::string> options) {
     // generate Hessians with a Fortran indexing (starting at 1) that is supported by solvers
     int fortran_indexing = 1;
-    std::cout.precision(17);
+    //std::cout.precision(17);
     AMPLModel problem = AMPLModel(problem_name, fortran_indexing);
     
     /* create the subproblem strategy */
-    std::shared_ptr<Subproblem> subproblem = SubproblemFactory::create(problem, options["subproblem"], options, (options["mechanism"] == "TR"));
+    bool use_trust_region = (options["mechanism"] == "TR");
+    bool scale_residuals = (options["scale_residuals"] == "yes");
+    std::shared_ptr<Subproblem> subproblem = SubproblemFactory::create(problem, options["subproblem"], options, use_trust_region, scale_residuals);
 
     /* create the globalization strategy */
     std::shared_ptr<GlobalizationStrategy> strategy = GlobalizationStrategyFactory::create(options["strategy"], *subproblem, options);
