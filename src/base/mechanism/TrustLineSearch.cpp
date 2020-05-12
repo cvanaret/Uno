@@ -3,8 +3,8 @@
 #include "TrustLineSearch.hpp"
 #include "AMPLModel.hpp"
 
-TrustLineSearch::TrustLineSearch(GlobalizationStrategy& globalization_strategy, double initial_radius, int max_iterations, double ratio) :
-GlobalizationMechanism(globalization_strategy, max_iterations), ratio(ratio), radius(initial_radius), activity_tolerance_(1e-6) {
+TrustLineSearch::TrustLineSearch(GlobalizationStrategy& globalization_strategy, double tolerance, double initial_radius, int max_iterations, double ratio) :
+GlobalizationMechanism(globalization_strategy, tolerance, max_iterations), ratio(ratio), radius(initial_radius), activity_tolerance_(1e-6) {
 }
 
 Iterate TrustLineSearch::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
@@ -51,6 +51,7 @@ Iterate TrustLineSearch::compute_acceptable_iterate(Problem& problem, Iterate& c
 
                     if (is_accepted) {
                         DEBUG << CYAN "TLS trial point accepted\n" RESET;
+                        current_iterate.status = this->compute_status(problem, current_iterate, step_length*solution.norm, solution.objective_multiplier);
                         /* print summary */
                         INFO << "minor: " << this->number_iterations << "\t";
                         INFO << "radius: " << this->radius << "\t";

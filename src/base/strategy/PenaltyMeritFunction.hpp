@@ -15,7 +15,7 @@ class PenaltyMeritFunction : public GlobalizationStrategy {
         /*!
          *  Constructor that takes an optimization problem and a set of constants
          */
-        PenaltyMeritFunction(Subproblem& subproblem, double tolerance);
+        PenaltyMeritFunction(Subproblem& subproblem);
 
         /*!
          *  Check the validity of a step

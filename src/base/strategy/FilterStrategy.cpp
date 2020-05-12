@@ -4,8 +4,8 @@
 #include "FilterStrategy.hpp"
 #include "Utils.hpp"
 
-FilterStrategy::FilterStrategy(Subproblem& subproblem, FilterStrategyParameters strategy_parameters, double tolerance, std::map<std::string, std::string> options):
-GlobalizationStrategy(subproblem, tolerance),
+FilterStrategy::FilterStrategy(Subproblem& subproblem, FilterStrategyParameters strategy_parameters, std::map<std::string, std::string> options):
+GlobalizationStrategy(subproblem),
 filter_optimality(FilterFactory::create(options)),
 filter_restoration(FilterFactory::create(options)),
 current_phase(OPTIMALITY), parameters(strategy_parameters) {
@@ -89,7 +89,7 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
         }
         trial_iterate.compute_objective(problem);
         this->subproblem.compute_residuals(problem, trial_iterate, trial_iterate.multipliers, solution.objective_multiplier);
-        trial_iterate.status = this->compute_status(problem, trial_iterate, step_norm, solution.objective_multiplier);
+        //trial_iterate.status = this->compute_status(problem, trial_iterate, step_norm, solution.objective_multiplier);
         INFO << "phase: " << this->current_phase << "\t";
         current_iterate = trial_iterate;
         DEBUG << "Residuals: ||c|| = " << current_iterate.residuals.constraints << ", KKT = " << current_iterate.residuals.KKT << ", cmpl = " << current_iterate.residuals.complementarity << "\n";

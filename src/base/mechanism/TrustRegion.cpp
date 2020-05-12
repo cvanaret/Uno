@@ -4,8 +4,8 @@
 #include "Logger.hpp"
 #include "AMPLModel.hpp"
 
-TrustRegion::TrustRegion(GlobalizationStrategy& globalization_strategy, double initial_radius, int max_iterations):
-GlobalizationMechanism(globalization_strategy, max_iterations), radius(initial_radius), activity_tolerance_(1e-6) {
+TrustRegion::TrustRegion(GlobalizationStrategy& globalization_strategy, double tolerance, double initial_radius, int max_iterations):
+GlobalizationMechanism(globalization_strategy, tolerance, max_iterations), radius(initial_radius), activity_tolerance_(1e-6) {
 }
 
 Iterate TrustRegion::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
@@ -35,6 +35,7 @@ Iterate TrustRegion::compute_acceptable_iterate(Problem& problem, Iterate& curre
             is_accepted = this->globalization_strategy.check_step(problem, current_iterate, solution);
             
             if (is_accepted) {
+                current_iterate.status = this->compute_status(problem, current_iterate, solution.norm, solution.objective_multiplier);
                 /* print summary */
                 this->print_acceptance(solution.norm);
 

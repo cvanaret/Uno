@@ -4,8 +4,8 @@
 #include "AMPLModel.hpp"
 #include "InteriorPoint.hpp"
 
-LineSearch::LineSearch(GlobalizationStrategy& globalization_strategy, int max_iterations, double backtracking_ratio) :
-GlobalizationMechanism(globalization_strategy, max_iterations), backtracking_ratio(backtracking_ratio), min_step_length(1e-9), restoration_phase(false) {
+LineSearch::LineSearch(GlobalizationStrategy& globalization_strategy, double tolerance, int max_iterations, double backtracking_ratio) :
+GlobalizationMechanism(globalization_strategy, tolerance, max_iterations), backtracking_ratio(backtracking_ratio), min_step_length(1e-9), restoration_phase(false) {
 }
 
 Iterate LineSearch::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
@@ -42,6 +42,7 @@ Iterate LineSearch::compute_acceptable_iterate(Problem& problem, Iterate& curren
             }
 
             if (is_accepted) {
+                current_iterate.status = this->compute_status(problem, current_iterate, this->step_length*solution.norm, solution.objective_multiplier);
                 /* print summary */
                 this->print_acceptance(step_length, step_length * solution.norm);
             }

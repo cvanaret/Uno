@@ -8,7 +8,7 @@
  * http://epubs.siam.org/doi/pdf/10.1137/080738222
  */
 
-PenaltyMeritFunction::PenaltyMeritFunction(Subproblem& subproblem, double tolerance): GlobalizationStrategy(subproblem, tolerance), eta(1e-8) {
+PenaltyMeritFunction::PenaltyMeritFunction(Subproblem& subproblem): GlobalizationStrategy(subproblem), eta(1e-8) {
 }
 
 Iterate PenaltyMeritFunction::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
@@ -59,8 +59,7 @@ bool PenaltyMeritFunction::check_step(Problem& problem, Iterate& current_iterate
     if (accept) {
         trial_iterate.compute_objective(problem);
         this->subproblem.compute_residuals(problem, trial_iterate, trial_iterate.multipliers, solution.objective_multiplier);
-        double step_norm = step_length * solution.norm;
-        trial_iterate.status = this->compute_status(problem, trial_iterate, step_norm, solution.objective_multiplier);
+        //trial_iterate.status = this->compute_status(problem, trial_iterate, step_norm, solution.objective_multiplier);
         current_iterate = trial_iterate;
         DEBUG << "Residuals: ||c|| = " << current_iterate.residuals.constraints << ", KKT = " << current_iterate.residuals.KKT << ", cmpl = " << current_iterate.residuals.complementarity << "\n";
     }

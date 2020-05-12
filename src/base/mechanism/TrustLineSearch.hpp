@@ -13,7 +13,7 @@ class TrustLineSearch : public GlobalizationMechanism {
         /*!
          *  Constructor
          */
-        TrustLineSearch(GlobalizationStrategy& globalization_strategy, double initial_radius, int max_iterations = 30, double ratio = 0.5);
+        TrustLineSearch(GlobalizationStrategy& globalization_strategy, double tolerance, double initial_radius, int max_iterations = 30, double ratio = 0.5);
 
         /*!
          *  Compute the next iterate from a given point
