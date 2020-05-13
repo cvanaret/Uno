@@ -75,7 +75,6 @@ private:
     SubproblemSolution generate_solution(std::vector<double>& x);
     Status int_to_status(int ifail);
     SubproblemSolution solve_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, std::vector<double>& x, int kmax);
-    void build_jacobian(std::vector<double>& full_jacobian, std::vector<int>& full_jacobian_sparsity, std::map<int, double>& vector);
 };
 
 #endif // BQPDSOLVER_H

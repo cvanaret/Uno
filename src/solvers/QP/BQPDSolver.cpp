@@ -84,10 +84,6 @@ SubproblemSolution BQPDSolver::solve_subproblem(std::vector<Range>& variables_bo
     }
 
     /* Jacobian */
-    build_jacobian(this->jacobian, this->jacobian_sparsity, linear_objective);
-    for (int j = 0; j < this->m_; j++) {
-        build_jacobian(this->jacobian, this->jacobian_sparsity, constraints_jacobian[j]);
-    }
     int current_index = 0;
     for (std::pair<int, double> element: linear_objective) {
         int i = element.first;
@@ -119,7 +115,7 @@ SubproblemSolution BQPDSolver::solve_subproblem(std::vector<Range>& variables_bo
         this->jacobian_sparsity[current_index] = size;
         current_index++;
     }
-
+    
     /* bounds */
     for (int i = 0; i < this->n_; i++) {
         this->lb[i] = (variables_bounds[i].lb == -INFINITY) ? -BIG : variables_bounds[i].lb;
@@ -219,14 +215,4 @@ Status BQPDSolver::int_to_status(int ifail) {
     }
     Status status = static_cast<Status> (ifail);
     return status;
-}
-
-void BQPDSolver::build_jacobian(std::vector<double>& full_jacobian, std::vector<int>& full_jacobian_sparsity, std::map<int, double>& vector) {
-    for (std::pair<int, double> element: vector) {
-        int i = element.first;
-        double derivative = element.second;
-        full_jacobian.push_back(derivative);
-        full_jacobian_sparsity.push_back(i + this->use_fortran);
-    }
-    return;
 }
