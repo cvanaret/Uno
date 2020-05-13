@@ -63,7 +63,7 @@ class AMPLModel: public Problem {
 		double evaluate_constraint(int j, std::vector<double>& x);
 		std::vector<double> evaluate_constraints(std::vector<double>& x);
 		std::vector<double> constraint_dense_gradient(int j, std::vector<double>& x);
-		std::map<int,double> constraint_sparse_gradient(int j, std::vector<double>& x);
+		void constraint_sparse_gradient(std::vector<double>& x, int j, std::map<int,double>& gradient);
 		std::vector<std::map<int,double> > constraints_sparse_jacobian(std::vector<double>& x);
         
 		/* Hessian */
@@ -78,6 +78,7 @@ class AMPLModel: public Problem {
         
 		ASL_pfgh* asl_; /*!< Instance of the AMPL Solver Library class */
         int fortran_indexing;
+        std::vector<double> ampl_tmp_gradient;
 
 		void generate_variables();
 		void initialize_objective();

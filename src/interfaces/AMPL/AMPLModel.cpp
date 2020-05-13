@@ -1,6 +1,7 @@
 #include "AMPLModel.hpp"
 #include "Logger.hpp"
 #include "Utils.hpp"
+#include "Parallel.hpp"
 
 ASL_pfgh* generate_asl(std::string file_name) {
     SufDecl suffixes[] = {
@@ -36,7 +37,7 @@ ASL_pfgh* generate_asl(std::string file_name) {
 AMPLModel::AMPLModel(std::string file_name, int fortran_indexing): AMPLModel(file_name, generate_asl(file_name), fortran_indexing) {
 }
 
-AMPLModel::AMPLModel(std::string file_name, ASL_pfgh* asl, int fortran_indexing): Problem(file_name, asl->i.n_var_, asl->i.n_con_), variable_uncertain(asl->i.n_var_), constraint_is_uncertainty_set(asl->i.n_con_), asl_(asl), fortran_indexing(fortran_indexing) {
+AMPLModel::AMPLModel(std::string file_name, ASL_pfgh* asl, int fortran_indexing): Problem(file_name, asl->i.n_var_, asl->i.n_con_), variable_uncertain(asl->i.n_var_), constraint_is_uncertainty_set(asl->i.n_con_), asl_(asl), fortran_indexing(fortran_indexing), ampl_tmp_gradient(asl->i.n_var_) {
     /* TODO: avoid using implicit AMPL macros */
     keyword keywords[1];
     int size_keywords = sizeof (keywords) / sizeof (keyword);
@@ -154,9 +155,8 @@ std::vector<double> AMPLModel::objective_dense_gradient(std::vector<double>& x) 
 /* sparse gradient */
 std::map<int, double> AMPLModel::objective_sparse_gradient(std::vector<double>& x) {
     /* compute the AMPL gradient (always in dense format) */
-    std::vector<double> dense_gradient(this->number_variables);
     int nerror = 0;
-    (*((ASL*) this->asl_)->p.Objgrd)((ASL*) this->asl_, 0, x.data(), dense_gradient.data(), &nerror);
+    (*((ASL*) this->asl_)->p.Objgrd)((ASL*) this->asl_, 0, x.data(), this->ampl_tmp_gradient.data(), &nerror);
     if (0 < nerror) {
         throw IEEE_GradientError();
     }
@@ -165,7 +165,7 @@ std::map<int, double> AMPLModel::objective_sparse_gradient(std::vector<double>& 
     std::map<int, double> gradient;
     ograd* ampl_variables_tmp = this->asl_->i.Ograd_[0];
     while (ampl_variables_tmp != NULL) {
-        double partial_derivative = dense_gradient[ampl_variables_tmp->varno];
+        double partial_derivative = this->ampl_tmp_gradient[ampl_variables_tmp->varno];
         /* if maximization, take the opposite */
         if (this->objective_sign < 0.) {
             partial_derivative = -partial_derivative;
@@ -224,42 +224,38 @@ std::vector<double> AMPLModel::constraint_dense_gradient(int j, std::vector<doub
 }
 
 /* sparse gradient */
-std::map<int, double> AMPLModel::constraint_sparse_gradient(int j, std::vector<double>& x) {
-    int number_variables = this->constraint_variables[j].size(); // <= size(x)
+void AMPLModel::constraint_sparse_gradient(std::vector<double>& x, int j, std::map<int, double>& gradient) {
     int congrd_mode_backup = this->asl_->i.congrd_mode;
     this->asl_->i.congrd_mode = 1; // sparse computation
 
     /* compute the AMPL gradient */
-    std::vector<double> ampl_gradient(number_variables);
     int nerror = 0;
-    (*((ASL*) this->asl_)->p.Congrd)((ASL*) this->asl_, j, x.data(), ampl_gradient.data(), &nerror);
+    (*((ASL*) this->asl_)->p.Congrd)((ASL*) this->asl_, j, x.data(), this->ampl_tmp_gradient.data(), &nerror);
     if (0 < nerror) {
         throw IEEE_GradientError();
     }
 
     /* partial derivatives in ampl_gradient in same order as variables in this->asl_->i.Cgrad_[j] */
-    std::map<int, double> gradient;
     cgrad* ampl_variables_tmp = this->asl_->i.Cgrad_[j];
     int cpt = 0;
     while (ampl_variables_tmp != NULL) {
         /* keep the gradient sparse */
-        if (ampl_gradient[cpt] != 0.) {
-            gradient[ampl_variables_tmp->varno] = ampl_gradient[cpt];
+        if (this->ampl_tmp_gradient[cpt] != 0.) {
+            gradient[ampl_variables_tmp->varno] = this->ampl_tmp_gradient[cpt];
         }
         ampl_variables_tmp = ampl_variables_tmp->next;
         cpt++;
     }
 
     this->asl_->i.congrd_mode = congrd_mode_backup;
-
-    return gradient;
+    return;
 }
 
 std::vector<std::map<int, double> > AMPLModel::constraints_sparse_jacobian(std::vector<double>& x) {
     this->number_eval_jacobian++;
     std::vector<std::map<int, double> > constraints_jacobian(this->number_constraints);
     for (int j = 0; j < this->number_constraints; j++) {
-        constraints_jacobian[j] = this->constraint_sparse_gradient(j, x);
+        this->constraint_sparse_gradient(x, j, constraints_jacobian[j]);
     }
     return constraints_jacobian;
 }

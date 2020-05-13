@@ -104,7 +104,7 @@ void Argonot::preprocessing(Problem& problem, std::vector<double>& x, Multiplier
             for (std::pair<int, int> element: problem.linear_constraints) {
                 int j = element.first;
                 int linear_constraint_index = element.second;
-                constraints_jacobian[linear_constraint_index] = problem.constraint_sparse_gradient(j, x);
+                problem.constraint_sparse_gradient(x, j, constraints_jacobian[linear_constraint_index]);
             }
             // variables bounds
             std::vector<Range> variables_bounds(problem.number_variables);
