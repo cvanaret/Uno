@@ -162,6 +162,9 @@ SubproblemSolution Sl1QP::compute_optimality_step(Problem& problem, Iterate& cur
 
 SubproblemSolution Sl1QP::solve_subproblem(Problem& problem, Iterate& current_iterate, double trust_region_radius, double penalty_parameter) {
     DEBUG << "Current point: "; print_vector(DEBUG, current_iterate.x);
+    DEBUG << "Current constraint multipliers: "; print_vector(DEBUG, current_iterate.multipliers.constraints);
+    DEBUG << "Current lb multipliers: "; print_vector(DEBUG, current_iterate.multipliers.lower_bounds);
+    DEBUG << "Current ub multipliers: "; print_vector(DEBUG, current_iterate.multipliers.upper_bounds);
 
     /* compute first- and second-order information */
     current_iterate.compute_objective_gradient(problem);
