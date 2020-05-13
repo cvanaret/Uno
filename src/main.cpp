@@ -12,8 +12,7 @@
 #include "GlobalizationMechanismFactory.hpp"
 #include "Argonot.hpp"
 #include "Logger.hpp"
-#include "Sl1QP.hpp"
-#include "BQPDSolver.hpp"
+#include "Filter.hpp"
 
 void run_argonot(std::string problem_name, std::map<std::string, std::string> options) {
     // generate Hessians with a Fortran indexing (starting at 1) that is supported by solvers
@@ -155,39 +154,39 @@ std::map<std::string, std::string> get_default_values(std::string file_name) {
 //    std::cout << "Value of constraints: " << c1 << " and " << c2 << "\n";
 //}
 
-void test_matrix() {
-    int fortran_indexing = 0;
-    ArgonotMatrix matrix(3, fortran_indexing);
-    matrix.add_term(1., 0, 0);
-    matrix.add_term(2., 0, 2);
-    matrix.add_term(3., 1, 2);
-    matrix.add_term(4., 2, 0);
-    matrix.add_term(5., 2, 1);
-    matrix.add_term(6., 2, 2);
-    CSCMatrix csc_matrix = matrix.to_CSC();
-    std::cout << "Before\n" << csc_matrix;
-    
-    csc_matrix = csc_matrix.add_identity_multiple(100.);
-    
-    std::cout << "After\n" << csc_matrix;
-}
+//void test_matrix() {
+//    int fortran_indexing = 0;
+//    ArgonotMatrix matrix(3, fortran_indexing);
+//    matrix.add_term(1., 0, 0);
+//    matrix.add_term(2., 0, 2);
+//    matrix.add_term(3., 1, 2);
+//    matrix.add_term(4., 2, 0);
+//    matrix.add_term(5., 2, 1);
+//    matrix.add_term(6., 2, 2);
+//    CSCMatrix csc_matrix = matrix.to_CSC();
+//    std::cout << "Before\n" << csc_matrix;
+//    
+//    csc_matrix = csc_matrix.add_identity_multiple(100.);
+//    
+//    std::cout << "After\n" << csc_matrix;
+//}
 
-void test_factorization() {
-    int fortran_indexing = 1;
-    int n = 2;
-    COOMatrix coo_matrix(n, fortran_indexing);
-    coo_matrix.add_term(6050.0001, 0, 0);
-    coo_matrix.add_term(-2774, 0, 1);
-    coo_matrix.add_term(1e-4, 1, 1);
-    
-    MA57Solver solver;
-    MA57Factorization factorization = solver.factorize(coo_matrix);
-    std::cout << "Dimension: " << coo_matrix.dimension << "\n";
-    std::cout << "Singular ? " << factorization.matrix_is_singular() << "\n";
-    std::cout << "Rank ? " << factorization.rank() << "\n";
-    std::cout << "Negative eigenvalues ? " << factorization.number_negative_eigenvalues() << "\n";
-    return;
-}
+//void test_factorization() {
+//    int fortran_indexing = 1;
+//    int n = 2;
+//    COOMatrix coo_matrix(n, fortran_indexing);
+//    coo_matrix.add_term(6050.0001, 0, 0);
+//    coo_matrix.add_term(-2774, 0, 1);
+//    coo_matrix.add_term(1e-4, 1, 1);
+//    
+//    MA57Solver solver;
+//    MA57Factorization factorization = solver.factorize(coo_matrix);
+//    std::cout << "Dimension: " << coo_matrix.dimension << "\n";
+//    std::cout << "Singular ? " << factorization.matrix_is_singular() << "\n";
+//    std::cout << "Rank ? " << factorization.rank() << "\n";
+//    std::cout << "Negative eigenvalues ? " << factorization.number_negative_eigenvalues() << "\n";
+//    return;
+//}
 
 int main(int argc, char* argv[]) {
     if (1 < argc) {
