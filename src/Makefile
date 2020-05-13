@@ -10,7 +10,7 @@ include Makefile.local
 LFLAGS = $(PROFILER)
 
 # local libraries
-L = -ldl -lf2c
+L = -pthread -ldl -lf2c
 LIBCOIN   = -lOsiClp -lClp -lCoinUtils -lOsi
 LIBLINALG = -lblas -llapack
 
