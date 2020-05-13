@@ -11,6 +11,7 @@
 #include "GlobalizationMechanismFactory.hpp"
 #include "Argonot.hpp"
 #include "Logger.hpp"
+#include "Parallel.hpp"
 
 void run_argonot(std::string problem_name, std::map<std::string, std::string> options) {
     // generate Hessians with a Fortran indexing (starting at 1) that is supported by solvers
