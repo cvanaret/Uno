@@ -2,7 +2,7 @@
 #include <cmath>
 #include "Filter.hpp"
 
-Filter::Filter(FilterConstants& constants) : constants(constants) {
+Filter::Filter(FilterConstants& constants): constants(constants) {
     this->reset();
 }
 
@@ -49,17 +49,18 @@ void Filter::add(double infeasibility_measure, double optimality_measure) {
 }
 
 // filter must be nonempty
+
 double Filter::eta_min() {
     FilterEntry& last_element = this->entries.back();
     return last_element.infeasibility_measure;
 }
 
 // filter must be nonempty
+
 double Filter::omega_min() {
     FilterEntry& last_element = this->entries.back();
     return last_element.optimality_measure;
 }
-
 
 /* query: return true if (infeasibility_measure, optimality_measure) acceptable, false otherwise */
 bool Filter::accept(double infeasibility_measure, double optimality_measure) {
@@ -85,7 +86,8 @@ bool Filter::accept(double infeasibility_measure, double optimality_measure) {
     }
 }
 
-//! query_current_iterate: check acceptable wrt current point 
+//! improves_current_iterate: check acceptable wrt current point 
+
 bool Filter::improves_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure, double trial_optimality_measure) {
     return (trial_optimality_measure <= current_optimality_measure - this->constants.Gamma * trial_infeasibility_measure) || (trial_infeasibility_measure < this->constants.Beta * current_infeasibility_measure);
 }
@@ -95,10 +97,11 @@ double Filter::compute_actual_reduction(double current_objective, double /*curre
 }
 
 //! print: print the content of the filter
+
 std::ostream& operator<<(std::ostream &stream, Filter& filter) {
     stream << "************\n";
     stream << "  Current filter (constraint residual, objective):\n";
-    for (FilterEntry const& entry : filter.entries) {
+    for (FilterEntry const& entry: filter.entries) {
         stream << "\t" << entry.infeasibility_measure << "\t" << entry.optimality_measure << "\n";
     }
     stream << "************\n";
@@ -107,54 +110,53 @@ std::ostream& operator<<(std::ostream &stream, Filter& filter) {
 
 /* NonmonotoneFilter class */
 
-NonmonotoneFilter::NonmonotoneFilter(FilterConstants& constants, int number_dominated_entries) : Filter(constants), number_dominated_entries(number_dominated_entries) {
+NonmonotoneFilter::NonmonotoneFilter(FilterConstants& constants, int number_dominated_entries): Filter(constants), number_dominated_entries(number_dominated_entries) {
 }
 
-//!  add (infeasibility_measure,optimality_measure) to the filter
-
+//! add (infeasibility_measure, optimality_measure) to the filter
 void NonmonotoneFilter::add(double infeasibility_measure, double optimality_measure) {
-//    int new_size = this->entries.size();
-//    int dominated_entries;
-//    /* find entries in filter that are dominated by "number_dominated_entries" other entries */
-//    for (int i = 0; i < this->size; i++) {
-//        /* check whether ith entry dominated by (infeasibility_measure, optimality_measure) */
-//        if ((this->optimality_measures[i] > optimality_measure) && (this->infeasibility_measures[i] > infeasibility_measure)) {
-//            dominated_entries = 1;
-//        }
-//        else {
-//            dominated_entries = 0;
-//        }
-//
-//        /* find other filter entries that dominate ith entry */
-//        for (int j = 0; j < this->size; j++) {
-//            if ((this->optimality_measures[i] > this->optimality_measures[j]) && (this->infeasibility_measures[i] > this->infeasibility_measures[j])) {
-//                dominated_entries++;
-//            }
-//        }
-//        if (dominated_entries > this->number_dominated_entries) {
-//            /* remove this entry */
-//            this->shift_left(i, 1);
-//            new_size--;
-//        }
-//    }
-//
-//    /* check sufficient space available */
-//    if (new_size >= this->max_size) {
-//        /* create space in filter: remove entry 1 (oldest entry) */
-//        this->shift_left(1, 1);
-//        new_size--;
-//    }
-//
-//    /* add new entry to filter in position new_size */
-//    this->infeasibility_measures[new_size] = infeasibility_measure;
-//    this->optimality_measures[new_size] = optimality_measure;
-//    this->size = new_size + 1;
+    int dominated_entries;
+    /* find entries in filter that are dominated by "number_dominated_entries" other entries */
+    std::list<FilterEntry>::iterator entry = this->entries.begin();
+    std::list<FilterEntry>::iterator position = this->entries.end();
+    while (entry != this->entries.end()) {
+        /* check whether ith entry dominated by (infeasibility_measure, optimality_measure) */
+        if ((optimality_measure < entry->optimality_measure) && (infeasibility_measure < entry->infeasibility_measure)) {
+            dominated_entries = 1;
+        }
+        else {
+            dominated_entries = 0;
+        }
 
+        /* find other filter entries that dominate ith entry */
+        for (FilterEntry const& other_entry: this->entries) {
+            if ((other_entry.optimality_measure < entry->optimality_measure) && (other_entry.infeasibility_measure < entry->infeasibility_measure)) {
+                dominated_entries++;
+            }
+        }
+        if (dominated_entries > this->number_dominated_entries) {
+            /* remove this entry */
+            entry = this->entries.erase(entry);
+            position--;
+        }
+        else {
+            entry++;
+        }
+    }
+
+    /* check sufficient space available */
+    if (this->max_size <= this->entries.size()) {
+        /* create space in filter: remove entry 1 (oldest entry) */
+        this->entries.pop_front();
+    }
+
+    /* add new entry to the filter */
+    FilterEntry new_entry{infeasibility_measure, optimality_measure};
+    this->entries.insert(position, new_entry);
     return;
 }
 
-//! query: check if (infeasibility_measure,optimality_measure) acceptable; return 1 if yes, 0 if not
-
+//! accept: check if (infeasibility_measure, optimality_measure) acceptable
 bool NonmonotoneFilter::accept(double infeasibility_measure, double optimality_measure) {
     /* check upper bound first */
     if (infeasibility_measure >= this->constants.Beta * this->upper_bound) {
@@ -163,9 +165,11 @@ bool NonmonotoneFilter::accept(double infeasibility_measure, double optimality_m
 
     /* check acceptability by counting how many entries dominate */
     int dominated_entries = 0;
-    for (FilterEntry const& entry : this->entries) {
-        if (((optimality_measure > entry.optimality_measure - this->constants.Gamma * infeasibility_measure) && (infeasibility_measure >= this->constants.Beta * entry.infeasibility_measure)) ||
-                ((optimality_measure >= entry.optimality_measure - this->constants.Gamma * infeasibility_measure) && (infeasibility_measure > this->constants.Beta * entry.infeasibility_measure))) {
+    for (FilterEntry const& entry: this->entries) {
+        if ((optimality_measure > entry.optimality_measure - this->constants.Gamma * infeasibility_measure) && (infeasibility_measure >= this->constants.Beta * entry.infeasibility_measure)) {
+            dominated_entries++;
+        }
+        else if ((optimality_measure >= entry.optimality_measure - this->constants.Gamma * infeasibility_measure) && (infeasibility_measure > this->constants.Beta * entry.infeasibility_measure)) {
             dominated_entries++;
         }
     }
@@ -173,8 +177,7 @@ bool NonmonotoneFilter::accept(double infeasibility_measure, double optimality_m
     return (dominated_entries <= this->number_dominated_entries); // point acceptable (dominated by <= this->number_dominated_entries)
 }
 
-//! query_current_iterate: check acceptable wrt current point 
-
+//! improves_current_iterate: check acceptable wrt current point
 bool NonmonotoneFilter::improves_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure, double trial_optimality_measure) {
     int dominated_entries;
 
@@ -186,22 +189,22 @@ bool NonmonotoneFilter::improves_current_iterate(double current_infeasibility_me
         dominated_entries = 0;
     }
 
-    for (FilterEntry const& entry : this->entries) {
-        if (((trial_optimality_measure > entry.optimality_measure - this->constants.Gamma * trial_infeasibility_measure) &&
-                (trial_infeasibility_measure >= this->constants.Beta * entry.infeasibility_measure)) ||
-                ((trial_optimality_measure >= entry.optimality_measure - this->constants.Gamma * trial_infeasibility_measure) &&
-                (trial_infeasibility_measure > this->constants.Beta * entry.infeasibility_measure))) {
+    for (FilterEntry const& entry: this->entries) {
+        if ((trial_optimality_measure > entry.optimality_measure - this->constants.Gamma * trial_infeasibility_measure) && (trial_infeasibility_measure >= this->constants.Beta * entry.infeasibility_measure)) {
+            dominated_entries++;
+        }
+        else if ((trial_optimality_measure >= entry.optimality_measure - this->constants.Gamma * trial_infeasibility_measure) && (trial_infeasibility_measure > this->constants.Beta * entry.infeasibility_measure)) {
             dominated_entries++;
         }
     }
     return (dominated_entries <= this->number_dominated_entries); // point acceptable (dominated by <= this->number_dominated_entries)
 }
 
-/* check NON-MONOTONE sufficient reduction condition */
+/* compute_actual_reduction: check nonmonotone sufficient reduction condition */
 double NonmonotoneFilter::compute_actual_reduction(double current_objective, double current_residual, double trial_objective) {
     /* max penalty among most recent entries */
     double max_objective = current_objective;
-    
+
     std::list<FilterEntry>::iterator position = this->entries.end();
     for (int i = 0; i < this->number_dominated_entries; i++) {
         double gamma;
@@ -226,7 +229,7 @@ std::shared_ptr<Filter> FilterFactory::create(std::map<std::string, std::string>
     double Gamma = stod(options["Gamma"]);
     FilterConstants filter_constants = {Beta, Gamma};
     std::string filter_type = options["strategy"];
-    
+
     if (filter_type == "filter") {
         return std::make_shared<Filter>(filter_constants);
     }
