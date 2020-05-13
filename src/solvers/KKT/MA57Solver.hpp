@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "Matrix.hpp"
+#include "LinearSolver.hpp"
 
 struct MA57Factorization {
     int dimension;
@@ -24,14 +25,15 @@ struct MA57Factorization {
 *
 *  Interface to the sparse symmetric linear solver MA57
 */
-class MA57Solver {
+class MA57Solver: public LinearSolver {
 	public:
 		MA57Solver();
 		
 		int use_fortran;
 		
-		MA57Factorization factorize(COOMatrix& matrix);
+        void solve(COOMatrix& matrix, std::vector<double>& rhs) override;
 		void solve(MA57Factorization& factorization, std::vector<double>& rhs);
+        MA57Factorization factorize(COOMatrix& matrix);
 		
 	private:
 		/* for ma57id_ */
