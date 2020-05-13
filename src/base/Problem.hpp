@@ -51,7 +51,7 @@ public:
     virtual double evaluate_constraint(int j, std::vector<double>& x) = 0;
     virtual std::vector<double> evaluate_constraints(std::vector<double>& x) = 0;
     virtual std::vector<double> constraint_dense_gradient(int j, std::vector<double>& x) = 0;
-    virtual std::map<int, double> constraint_sparse_gradient(int j, std::vector<double>& x) = 0;
+    virtual void constraint_sparse_gradient(std::vector<double>& x, int j, std::map<int, double>& gradient) = 0;
     virtual std::vector<std::map<int, double> > constraints_sparse_jacobian(std::vector<double>& x) = 0;
     void determine_bounds_types(std::vector<Range>& variables_bounds, std::vector<ConstraintType>& status);
     std::map<int, int> equality_constraints; /*!< inequality constraints */
