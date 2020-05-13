@@ -22,7 +22,7 @@ extern "C" {
 
 /* preallocate a bunch of stuff */
 BQPDSolver::BQPDSolver(int number_variables, int number_constraints, int maximum_number_nonzeros):
-QPSolver(), n_(number_variables), m_(number_constraints), maximum_number_nonzeros(maximum_number_nonzeros), lb(n_ + m_), ub(n_ + m_), use_fortran(1), jacobian(n_*(m_ + 1)), jacobian_sparsity(n_*(m_ + 1) + m_ + 3), kmax_(500), mlp_(1000), mxwk0_(2000000), mxiwk0_(500000), info_(100), alp_(mlp_), lp_(mlp_), ls_(n_ + m_), w_(n_ + m_), gradient_solution_(n_), residuals_(n_ + m_), e_(n_ + m_), nhr_(maximum_number_nonzeros), nhi_(maximum_number_nonzeros + n_ + 3), mxws_(nhr_ + kmax_ * (kmax_ + 9) / 2 + 2 * n_ + m_ + mxwk0_), mxlws_(nhi_ + kmax_ + mxiwk0_), ws_(mxws_), lws_(mxlws_), k_(0), mode_(COLD_START), iprint_(0), nout_(6), fmin_(-1e20) {
+QPSolver(), n_(number_variables), m_(number_constraints), maximum_number_nonzeros(maximum_number_nonzeros), lb(n_ + m_), ub(n_ + m_), use_fortran(1), jacobian_(n_*(m_ + 1)), jacobian_sparsity_(n_*(m_ + 1) + m_ + 3), kmax_(500), mlp_(1000), mxwk0_(2000000), mxiwk0_(500000), info_(100), alp_(mlp_), lp_(mlp_), ls_(n_ + m_), w_(n_ + m_), gradient_solution_(n_), residuals_(n_ + m_), e_(n_ + m_), nhr_(maximum_number_nonzeros), nhi_(maximum_number_nonzeros + n_ + 3), mxws_(nhr_ + kmax_ * (kmax_ + 9) / 2 + 2 * n_ + m_ + mxwk0_), mxlws_(nhi_ + kmax_ + mxiwk0_), hessian(mxws_), hessian_sparsity(mxlws_), k_(0), mode_(COLD_START), iprint_(0), nout_(6), fmin_(-1e20) {
     // active set
     for (int i = 0; i < this->n_ + this->m_; i++) {
         this->ls_[i] = i + this->use_fortran;
@@ -40,27 +40,27 @@ SubproblemSolution BQPDSolver::solve_QP(std::vector<Range>& variables_bounds, st
 
     /* Hessian */
     for (int i = 0; i < hessian.number_nonzeros(); i++) {
-        this->ws_[i] = hessian.matrix[i];
+        this->hessian[i] = hessian.matrix[i];
     }
     /* Hessian sparsity */
-    this->lws_[0] = hessian.number_nonzeros() + 1;
+    this->hessian_sparsity[0] = hessian.number_nonzeros() + 1;
     for (int i = 0; i < hessian.number_nonzeros(); i++) {
-        this->lws_[i + 1] = hessian.row_number[i] + (hessian.fortran_indexing ? 0 : this->use_fortran);
+        this->hessian_sparsity[i + 1] = hessian.row_number[i] + (hessian.fortran_indexing ? 0 : this->use_fortran);
     }
     for (unsigned int i = 0; i < hessian.column_start.size(); i++) {
-        this->lws_[hessian.number_nonzeros() + i + 1] = hessian.column_start[i] + (hessian.fortran_indexing ? 0 : this->use_fortran);
+        this->hessian_sparsity[hessian.number_nonzeros() + i + 1] = hessian.column_start[i] + (hessian.fortran_indexing ? 0 : this->use_fortran);
     }
 
     // if extra variables have been introduced, correct hessian.column_start
     int i = hessian.number_nonzeros() + hessian.column_start.size() + 1;
     int last_value = hessian.column_start[hessian.column_start.size() - 1];
     for (int j = hessian.dimension; j < this->n_; j++) {
-        this->lws_[i] = last_value + (hessian.fortran_indexing ? 0 : this->use_fortran);
+        this->hessian_sparsity[i] = last_value + (hessian.fortran_indexing ? 0 : this->use_fortran);
         i++;
     }
 
     DEBUG1 << "hessian with " << hessian.number_nonzeros() << " terms:\n" << hessian;
-    print_vector(DEBUG1, this->lws_, 0, i);
+    print_vector(DEBUG1, this->hessian_sparsity, 0, i);
     return this->solve_subproblem(variables_bounds, constraints_bounds, linear_objective, constraints_jacobian, x, this->kmax_);
 }
 
@@ -88,31 +88,31 @@ SubproblemSolution BQPDSolver::solve_subproblem(std::vector<Range>& variables_bo
     for (std::pair<int, double> element: linear_objective) {
         int i = element.first;
         double derivative = element.second;
-        this->jacobian[current_index] = derivative;
-        this->jacobian_sparsity[current_index + 1] = i + this->use_fortran;
+        this->jacobian_[current_index] = derivative;
+        this->jacobian_sparsity_[current_index + 1] = i + this->use_fortran;
         current_index++;
     }
     for (int j = 0; j < this->m_; j++) {
         for (std::pair<int, double> element: constraints_jacobian[j]) {
             int i = element.first;
             double derivative = element.second;
-            this->jacobian[current_index] = derivative;
-            this->jacobian_sparsity[current_index + 1] = i + this->use_fortran;
+            this->jacobian_[current_index] = derivative;
+            this->jacobian_sparsity_[current_index + 1] = i + this->use_fortran;
             current_index++;
         }
     }
     current_index++;
-    this->jacobian_sparsity[0] = current_index;
+    this->jacobian_sparsity_[0] = current_index;
     // header
     int size = 1;
-    this->jacobian_sparsity[current_index] = size;
+    this->jacobian_sparsity_[current_index] = size;
     current_index++;
     size += linear_objective.size();
-    this->jacobian_sparsity[current_index] = size;
+    this->jacobian_sparsity_[current_index] = size;
     current_index++;
     for (int j = 0; j < this->m_; j++) {
         size += constraints_jacobian[j].size();
-        this->jacobian_sparsity[current_index] = size;
+        this->jacobian_sparsity_[current_index] = size;
         current_index++;
     }
     
@@ -128,10 +128,10 @@ SubproblemSolution BQPDSolver::solve_subproblem(std::vector<Range>& variables_bo
     
     /* call BQPD */
     int mode = (int) this->mode_;
-    bqpd_(&this->n_, &this->m_, &this->k_, &kmax, this->jacobian.data(), this->jacobian_sparsity.data(), x.data(),
+    bqpd_(&this->n_, &this->m_, &this->k_, &kmax, this->jacobian_.data(), this->jacobian_sparsity_.data(), x.data(),
             this->lb.data(), this->ub.data(), &this->f_solution_, &this->fmin_, this->gradient_solution_.data(),
             this->residuals_.data(), this->w_.data(), this->e_.data(), this->ls_.data(), this->alp_.data(),
-            this->lp_.data(), &this->mlp_, &this->peq_solution_, this->ws_.data(), this->lws_.data(), &mode,
+            this->lp_.data(), &this->mlp_, &this->peq_solution_, this->hessian.data(), this->hessian_sparsity.data(), &mode,
             &this->ifail_, this->info_.data(), &this->iprint_, &this->nout_);
 
     /* project solution into bounds: it's a ray! */
