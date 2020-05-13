@@ -359,7 +359,7 @@ void AMPLModel::initialize_lagrangian_hessian() {
     return;
 }
 
-CSCMatrix AMPLModel::lagrangian_hessian(std::vector<double>& x, double objective_multiplier, std::vector<double>& multipliers) {
+CSCMatrix AMPLModel::lagrangian_hessian(std::vector<double>& x, double objective_multiplier, std::vector<double>& multipliers, std::vector<double>& hessian) {
     this->number_eval_hessian++;
     /* register the vector of variables */
     (*((ASL*) this->asl_)->p.Xknown)((ASL*) this->asl_, x.data(), 0);
@@ -368,14 +368,18 @@ CSCMatrix AMPLModel::lagrangian_hessian(std::vector<double>& x, double objective
     int obj_number = (objective_multiplier != 0.) ? 0 : -1;
     double* obj_multiplier = (objective_multiplier != 0.) ? &objective_multiplier : NULL;
 
-    /* compute the Hessian */
-    std::vector<double> hessian(this->hessian_maximum_number_nonzeros);
+    /* evaluate the Hessian */
     (*((ASL*) this->asl_)->p.Sphes)((ASL*) this->asl_, 0, hessian.data(), obj_number, obj_multiplier, multipliers.data());
 
     /* unregister the vector of variables */
     this->asl_->i.x_known = 0;
 
     return CSCMatrix(hessian, this->hessian_column_start, this->hessian_row_number, this->fortran_indexing);
+}
+
+CSCMatrix AMPLModel::lagrangian_hessian(std::vector<double>& x, double objective_multiplier, std::vector<double>& multipliers) {
+    std::vector<double> hessian(this->hessian_maximum_number_nonzeros);
+    return this->lagrangian_hessian(x, objective_multiplier, multipliers, hessian);
 }
 
 /* initial primal point */

@@ -68,6 +68,7 @@ class AMPLModel: public Problem {
         
 		/* Hessian */
 		CSCMatrix lagrangian_hessian(std::vector<double>& x, double objective_multiplier, std::vector<double>& multipliers);
+        CSCMatrix lagrangian_hessian(std::vector<double>& x, double objective_multiplier, std::vector<double>& multipliers, std::vector<double>& hessian);
 		
 		std::vector<double> primal_initial_solution();
 		std::vector<double> dual_initial_solution();
