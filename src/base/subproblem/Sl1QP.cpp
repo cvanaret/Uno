@@ -53,7 +53,7 @@ Iterate Sl1QP::evaluate_initial_point(Problem& problem, std::vector<double>& x, 
     return first_iterate;
 }
 
-SubproblemSolution Sl1QP::compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+SubproblemSolution Sl1QP::compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
     DEBUG << "penalty parameter: " << this->penalty_parameter << "\n";
 
     // evaluate constraints
@@ -209,7 +209,6 @@ SubproblemSolution Sl1QP::solve_subproblem(Problem& problem, Iterate& current_it
     // recompute active set: constraints are active when p-n = 0
     //this->recover_active_set(problem, solution, variables_bounds);
 
-    solution.phase_1_required = this->phase_1_required(solution);
     solution.objective_multiplier = penalty_parameter;
     solution.predicted_reduction = [&](double step_length) {
         return this->compute_predicted_reduction(problem, current_iterate, solution, step_length);
@@ -218,7 +217,7 @@ SubproblemSolution Sl1QP::solve_subproblem(Problem& problem, Iterate& current_it
     return solution;
 }
 
-SubproblemSolution Sl1QP::compute_infeasibility_step(Problem&, Iterate&, SubproblemSolution&, double) {
+SubproblemSolution Sl1QP::restore_feasibility(Problem&, Iterate&, SubproblemSolution&, double) {
     throw std::out_of_range("Sl1QP.compute_infeasibility_step is not implemented, since l1QP are always feasible");
 }
 
@@ -252,11 +251,6 @@ void Sl1QP::compute_optimality_measures(Problem& problem, Iterate& iterate) {
 
 void Sl1QP::compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution) {
     throw std::out_of_range("Sl1QP.compute_infeasibility_measures is not implemented, since l1QP are always feasible");
-}
-
-bool Sl1QP::phase_1_required(SubproblemSolution& solution) {
-    //TODO
-    return false;
 }
 
 /* private methods */

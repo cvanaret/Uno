@@ -29,14 +29,12 @@ public:
     virtual Iterate evaluate_initial_point(Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
     
     // TODO return a list of steps
-    virtual SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius=INFINITY) = 0;
-    virtual SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius=INFINITY) = 0;
+    virtual SubproblemSolution compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius=INFINITY) = 0;
+    virtual SubproblemSolution restore_feasibility(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius=INFINITY) = 0;
     
     virtual void compute_optimality_measures(Problem& problem, Iterate& iterate) = 0;
     virtual void compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution) = 0;
     
-    virtual bool phase_1_required(SubproblemSolution& solution) = 0;
-
     static void project_point_in_bounds(std::vector<double>& x, std::vector<Range>& variables_bounds);
     static double project_strictly_variable_in_bounds(double variable_value, Range& variable_bounds);
     static std::vector<Range> generate_constraints_bounds(Problem& problem, std::vector<double>& current_constraints);

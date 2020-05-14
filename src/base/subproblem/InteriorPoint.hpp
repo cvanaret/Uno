@@ -38,14 +38,12 @@ public:
 
     Iterate evaluate_initial_point(Problem& problem, std::vector<double>& x, Multipliers& default_multipliers) override;
 
-    SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius = INFINITY) override;
-    SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius = INFINITY) override;
-    
+    SubproblemSolution compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius = INFINITY) override;
+    SubproblemSolution restore_feasibility(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius = INFINITY) override;
+
     void compute_optimality_measures(Problem& problem, Iterate& iterate) override;
     void compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution) override;
-
-    bool phase_1_required(SubproblemSolution& solution) override;
-
+    
     double constraint_violation(Problem& problem, Iterate& iterate);
     double compute_central_complementarity_error(Iterate& iterate, double mu, std::vector<Range>& variables_bounds);
 

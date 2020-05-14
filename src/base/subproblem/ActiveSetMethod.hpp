@@ -12,14 +12,13 @@ public:
 
     virtual Iterate evaluate_initial_point(Problem& problem, std::vector<double>& x, Multipliers& multipliers);
 
-    SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius = INFINITY);
-    SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius = INFINITY);
+    SubproblemSolution compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius = INFINITY);
+    SubproblemSolution restore_feasibility(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius = INFINITY);
     void compute_optimality_measures(Problem& problem, Iterate& iterate);
     void compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution);
     virtual double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) = 0;
     std::vector<Range> generate_variables_bounds(std::vector<double>& current_x, std::vector<Range>& variables_bounds, double trust_region_radius);
-    virtual bool phase_1_required(SubproblemSolution& solution) = 0;
-
+    
     /* use pointer to allow polymorphism */
     std::shared_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
 

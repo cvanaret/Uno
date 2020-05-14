@@ -13,7 +13,7 @@ lp_subproblem(SLP(problem, QP_solver_name, use_trust_region)),
 eqp_subproblem(SQP(problem, QP_solver_name, hessian_evaluation_method, use_trust_region)) {
 }
 
-SubproblemSolution SLPEQP::compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+SubproblemSolution SLPEQP::compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
     /* compute first-order information */
     current_iterate.compute_objective_gradient(problem);
     current_iterate.compute_constraints(problem);
@@ -25,7 +25,7 @@ SubproblemSolution SLPEQP::compute_optimality_step(Problem& problem, Iterate& cu
     DEBUG << "SOLVING SLPEQP.LP\n";
 
     /* solve the LP */
-    SubproblemSolution solution_LP = this->lp_subproblem.compute_optimality_step(problem, current_iterate, trust_region_radius);
+    SubproblemSolution solution_LP = this->lp_subproblem.compute_step(problem, current_iterate, trust_region_radius);
     solution_LP.phase_1_required = this->phase_1_required(solution_LP);
     print_vector(DEBUG, solution_LP.x);
 
@@ -51,9 +51,9 @@ SubproblemSolution SLPEQP::compute_optimality_step(Problem& problem, Iterate& cu
     return solution_EQP;
 }
 
-SubproblemSolution SLPEQP::compute_infeasibility_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) {
+SubproblemSolution SLPEQP::restore_feasibility(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) {
     // TODO
-    return this->compute_optimality_step(problem, current_iterate, trust_region_radius);
+    return this->compute_step(problem, current_iterate, trust_region_radius);
 }
 
 double SLPEQP::compute_predicted_reduction(Problem& /*problem*/, Iterate& /*current_iterate*/, SubproblemSolution& solution, double step_length) {

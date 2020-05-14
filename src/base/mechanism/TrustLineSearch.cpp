@@ -19,11 +19,7 @@ Iterate TrustLineSearch::compute_acceptable_iterate(Problem& problem, Iterate& c
     while (!this->termination(is_accepted, this->number_iterations)) {
         try {
             /* compute a trial direction */
-            SubproblemSolution solution = this->globalization_strategy.subproblem.compute_optimality_step(problem, current_iterate, this->radius);
-            if (solution.phase_1_required) {
-                /* infeasible subproblem during optimality phase */
-                solution = this->globalization_strategy.subproblem.compute_infeasibility_step(problem, current_iterate, solution, this->radius);
-            }
+            SubproblemSolution solution = this->globalization_strategy.subproblem.compute_step(problem, current_iterate, this->radius);
             
             /* fail if direction is not a descent direction */
             if (0. < dot(solution.x, current_iterate.objective_gradient)) {

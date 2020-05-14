@@ -26,10 +26,6 @@ double SQP::compute_predicted_reduction(Problem& /*problem*/, Iterate& current_i
     }
 }
 
-bool SQP::phase_1_required(SubproblemSolution& solution) {
-    return (solution.status == INFEASIBLE);
-}
-
 /* private methods */
 
 void SQP::evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate) {

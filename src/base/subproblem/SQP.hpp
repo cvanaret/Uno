@@ -18,7 +18,6 @@ public:
      * \param solver: solver that solves the subproblem
      */
     SQP(Problem& problem, std::string QP_solver_name, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals);
-    bool phase_1_required(SubproblemSolution& solution) override;
 
     /* use references to allow polymorphism */
     std::shared_ptr<HessianEvaluation> hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */

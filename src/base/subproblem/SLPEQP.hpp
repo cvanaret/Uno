@@ -21,8 +21,8 @@ public:
      */
     SLPEQP(Problem& problem, std::string QP_solver_name, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals);
 
-    SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius=INFINITY) override;
-    SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius=INFINITY) override;
+    SubproblemSolution compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius=INFINITY) override;
+    SubproblemSolution restore_feasibility(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius=INFINITY) override;
     
     void compute_optimality_measures(Problem& problem, Iterate& iterate) override;
     void compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution) override;

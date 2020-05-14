@@ -17,8 +17,6 @@ public:
      */
     SLP(Problem& problem, std::string QP_solver_name, bool use_trust_region, bool scale_residuals);
 
-    bool phase_1_required(SubproblemSolution& solution);
-
 private:
     void evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate);
     // phase 1

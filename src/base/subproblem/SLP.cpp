@@ -15,10 +15,6 @@ double SLP::compute_predicted_reduction(Problem& /*problem*/, Iterate& /*current
     return -step_length*solution.objective;
 }
 
-bool SLP::phase_1_required(SubproblemSolution& solution) {
-    return (solution.status == INFEASIBLE);
-}
-
 /* private methods */
 
 void SLP::evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate) {

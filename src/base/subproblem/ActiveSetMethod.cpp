@@ -16,7 +16,7 @@ Iterate ActiveSetMethod::evaluate_initial_point(Problem& problem, std::vector<do
     return first_iterate;
 }
 
-SubproblemSolution ActiveSetMethod::compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+SubproblemSolution ActiveSetMethod::compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
     DEBUG << "Current point: "; print_vector(DEBUG, current_iterate.x);
     DEBUG << "Current constraint multipliers: "; print_vector(DEBUG, current_iterate.multipliers.constraints);
     DEBUG << "Current lb multipliers: "; print_vector(DEBUG, current_iterate.multipliers.lower_bounds);
@@ -37,13 +37,17 @@ SubproblemSolution ActiveSetMethod::compute_optimality_step(Problem& problem, It
     /* solve the QP */
     SubproblemSolution solution = this->solve_optimality_subproblem(variables_bounds, constraints_bounds, current_iterate, d0);
     solution.objective_multiplier = problem.objective_sign;
-    solution.phase_1_required = this->phase_1_required(solution);
     solution.phase = OPTIMALITY;
     solution.predicted_reduction = [&](double step_length) {
         return this->compute_predicted_reduction(problem, current_iterate, solution, step_length);
     };
     this->number_subproblems_solved++;
     DEBUG << solution;
+    
+    if (solution.status == INFEASIBLE) {
+        /* infeasible subproblem during optimality phase */
+        solution = this->restore_feasibility(problem, current_iterate, solution, trust_region_radius);
+    }
     return solution;
 }
 
@@ -58,7 +62,7 @@ std::vector<Range> ActiveSetMethod::generate_variables_bounds(std::vector<double
     return bounds;
 }
 
-SubproblemSolution ActiveSetMethod::compute_infeasibility_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) {
+SubproblemSolution ActiveSetMethod::restore_feasibility(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) {
     DEBUG << "\nCreating the restoration problem with " << phase_II_solution.constraint_partition.infeasible.size() << " infeasible constraints\n";
 
     /* evaluate the functions at the current iterate */

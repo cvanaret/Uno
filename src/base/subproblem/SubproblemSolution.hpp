@@ -41,7 +41,6 @@ public:
     
     Status status; /*!< Status of the solution */
     Phase phase; /*!< Current phase */
-    bool phase_1_required;
 
     double norm; /*!< Norm of \f$x\f$ */
     double objective; /*!< Objective value */
