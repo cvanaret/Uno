@@ -62,8 +62,8 @@ public:
 
     /* Hessian */
     int hessian_maximum_number_nonzeros; /*!< Number of nonzero elements in the Hessian */
-    std::vector<int> hessian_column_start; /*!< Column description of sparse Hessian */
-    std::vector<int> hessian_row_number; /*!< Row description of sparse Hessian */
+    //std::vector<int> hessian_column_start; /*!< Column description of sparse Hessian */
+    //std::vector<int> hessian_row_number; /*!< Row description of sparse Hessian */
     virtual CSCMatrix lagrangian_hessian(std::vector<double>& x, double objective_multiplier, std::vector<double>& multipliers) = 0;
 
     virtual std::vector<double> primal_initial_solution() = 0;

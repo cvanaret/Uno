@@ -336,22 +336,22 @@ void AMPLModel::set_function_types(std::string file_name, Option_Info* option_in
 void AMPLModel::initialize_lagrangian_hessian() {
     /* compute the maximum number of nonzero elements, provided that all multipliers are non-zero */
     /* fint (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri); */
-    int obj_number = 0;
+    int objective_number = 0;
     int upper_triangular = 1;
-    this->hessian_maximum_number_nonzeros = (*((ASL*) this->asl_)->p.Sphset)((ASL*) this->asl_, NULL, obj_number, 1, 1, upper_triangular);
+    this->hessian_maximum_number_nonzeros = (*((ASL*) this->asl_)->p.Sphset)((ASL*) this->asl_, NULL, objective_number, 1, 1, upper_triangular);
 
-    /* build sparse description */
-    this->hessian_column_start.resize(this->number_variables + 1);
-    int* ampl_column_start = this->asl_->i.sputinfo_->hcolstarts;
-    for (int k = 0; k < this->number_variables + 1; k++) {
-        this->hessian_column_start[k] = ampl_column_start[k] + this->fortran_indexing;
-    }
-
-    this->hessian_row_number.resize(this->hessian_maximum_number_nonzeros);
-    int* ampl_row_number = this->asl_->i.sputinfo_->hrownos;
-    for (int k = 0; k < this->hessian_maximum_number_nonzeros; k++) {
-        this->hessian_row_number[k] = ampl_row_number[k] + this->fortran_indexing;
-    }
+//    /* build sparse description */
+//    this->hessian_column_start.resize(this->number_variables + 1);
+//    int* ampl_column_start = this->asl_->i.sputinfo_->hcolstarts;
+//    for (int k = 0; k < this->number_variables + 1; k++) {
+//        this->hessian_column_start[k] = ampl_column_start[k] + this->fortran_indexing;
+//    }
+//
+//    this->hessian_row_number.resize(this->hessian_maximum_number_nonzeros);
+//    int* ampl_row_number = this->asl_->i.sputinfo_->hrownos;
+//    for (int k = 0; k < this->hessian_maximum_number_nonzeros; k++) {
+//        this->hessian_row_number[k] = ampl_row_number[k] + this->fortran_indexing;
+//    }
 
     // use Lagrangian scale: in AMPL, the Lagrangian is f + lambda.g, while Argonot uses f - lambda.g
     int nerror;
@@ -365,16 +365,32 @@ CSCMatrix AMPLModel::lagrangian_hessian(std::vector<double>& x, double objective
     (*((ASL*) this->asl_)->p.Xknown)((ASL*) this->asl_, x.data(), 0);
 
     /* set the multiplier for the objective function */
-    int obj_number = (objective_multiplier != 0.) ? 0 : -1;
-    double* obj_multiplier = (objective_multiplier != 0.) ? &objective_multiplier : NULL;
+    int objective_number = (objective_multiplier != 0.) ? 0 : -1;
+    double* objective_multiplier_pointer = (objective_multiplier != 0.) ? &objective_multiplier : NULL;
+    int upper_triangular = 1;
 
+    (*((ASL*) this->asl_)->p.Sphset)((ASL*) this->asl_, NULL, objective_number, (objective_multiplier > 0.), 1, upper_triangular);
+    
     /* evaluate the Hessian */
-    (*((ASL*) this->asl_)->p.Sphes)((ASL*) this->asl_, 0, hessian.data(), obj_number, obj_multiplier, multipliers.data());
+    (*((ASL*) this->asl_)->p.Sphes)((ASL*) this->asl_, 0, hessian.data(), objective_number, objective_multiplier_pointer, multipliers.data());
 
+    /* build sparse description */
+    std::vector<int> column_start(this->number_variables + 1);
+    int* ampl_column_start = this->asl_->i.sputinfo_->hcolstarts;
+    for (int k = 0; k < this->number_variables + 1; k++) {
+        column_start[k] = ampl_column_start[k] + this->fortran_indexing;
+    }
+
+    std::vector<int> row_number(this->hessian_maximum_number_nonzeros);
+    int* ampl_row_number = this->asl_->i.sputinfo_->hrownos;
+    for (int k = 0; k < this->hessian_maximum_number_nonzeros; k++) {
+        row_number[k] = ampl_row_number[k] + this->fortran_indexing;
+    }
+    
     /* unregister the vector of variables */
     this->asl_->i.x_known = 0;
 
-    return CSCMatrix(hessian, this->hessian_column_start, this->hessian_row_number, this->fortran_indexing);
+    return CSCMatrix(hessian, column_start, row_number, this->fortran_indexing);
 }
 
 CSCMatrix AMPLModel::lagrangian_hessian(std::vector<double>& x, double objective_multiplier, std::vector<double>& multipliers) {

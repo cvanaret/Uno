@@ -17,6 +17,11 @@ Iterate ActiveSetMethod::evaluate_initial_point(Problem& problem, std::vector<do
 }
 
 SubproblemSolution ActiveSetMethod::compute_optimality_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+    DEBUG << "Current point: "; print_vector(DEBUG, current_iterate.x);
+    DEBUG << "Current constraint multipliers: "; print_vector(DEBUG, current_iterate.multipliers.constraints);
+    DEBUG << "Current lb multipliers: "; print_vector(DEBUG, current_iterate.multipliers.lower_bounds);
+    DEBUG << "Current ub multipliers: "; print_vector(DEBUG, current_iterate.multipliers.upper_bounds);
+    
     /* evaluate the functions at the current iterate */
     this->evaluate_optimality_iterate(problem, current_iterate);
 
