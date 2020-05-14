@@ -22,7 +22,7 @@ extern "C" {
 
 /* preallocate a bunch of stuff */
 BQPDSolver::BQPDSolver(int number_variables, int number_constraints, int maximum_number_nonzeros):
-QPSolver(), n_(number_variables), m_(number_constraints), maximum_number_nonzeros(maximum_number_nonzeros), lb(n_ + m_), ub(n_ + m_), use_fortran(1), jacobian_(n_*(m_ + 1)), jacobian_sparsity_(n_*(m_ + 1) + m_ + 3), kmax_(500), mlp_(1000), mxwk0_(2000000), mxiwk0_(500000), info_(100), alp_(mlp_), lp_(mlp_), ls_(n_ + m_), w_(n_ + m_), gradient_solution_(n_), residuals_(n_ + m_), e_(n_ + m_), nhr_(maximum_number_nonzeros), nhi_(maximum_number_nonzeros + n_ + 3), mxws_(nhr_ + kmax_ * (kmax_ + 9) / 2 + 2 * n_ + m_ + mxwk0_), mxlws_(nhi_ + kmax_ + mxiwk0_), hessian(mxws_), hessian_sparsity(mxlws_), k_(0), mode_(COLD_START), iprint_(0), nout_(6), fmin_(-1e20) {
+QPSolver(), n_(number_variables), m_(number_constraints), maximum_number_nonzeros(maximum_number_nonzeros), lb(n_ + m_), ub(n_ + m_), use_fortran(1), jacobian_(n_*(m_ + 1)), jacobian_sparsity_(n_*(m_ + 1) + m_ + 3), kmax_(500), mlp_(1000), mxwk0_(2000000), mxiwk0_(500000), info_(100), alp_(mlp_), lp_(mlp_), ls_(n_ + m_), w_(n_ + m_), gradient_solution_(n_), residuals_(n_ + m_), e_(n_ + m_), maximum_number_nonzeros_(maximum_number_nonzeros), size_hessian_sparsity_(maximum_number_nonzeros + n_ + 3), size_hessian_workspace_(maximum_number_nonzeros_ + kmax_ * (kmax_ + 9) / 2 + 2 * n_ + m_ + mxwk0_), size_hessian_sparsity_workspace_(size_hessian_sparsity_ + kmax_ + mxiwk0_), hessian(size_hessian_workspace_), hessian_sparsity(size_hessian_sparsity_workspace_), k_(0), mode_(COLD_START), iprint_(0), nout_(6), fmin_(-1e20) {
     // active set
     for (int i = 0; i < this->n_ + this->m_; i++) {
         this->ls_[i] = i + this->use_fortran;
@@ -32,11 +32,11 @@ QPSolver(), n_(number_variables), m_(number_constraints), maximum_number_nonzero
 SubproblemSolution BQPDSolver::solve_QP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, CSCMatrix& hessian, std::vector<double>& x) {
     /* initialize wsc_ common block (Hessian & workspace for bqpd) */
     // setting the common block here ensures that several instances of BQPD can run simultaneously
-    wsc_.kk = this->nhr_;
-    wsc_.ll = this->nhi_;
-    wsc_.mxws = this->mxws_;
-    wsc_.mxlws = this->mxlws_;
-    kktalphac_.alpha = 0;
+    wsc_.kk = this->maximum_number_nonzeros_;
+    wsc_.ll = this->size_hessian_sparsity_;
+    wsc_.mxws = this->size_hessian_workspace_;
+    wsc_.mxlws = this->size_hessian_sparsity_workspace_;
+    kktalphac_.alpha = 0; // inertia control
 
     /* Hessian */
     for (int i = 0; i < hessian.number_nonzeros(); i++) {

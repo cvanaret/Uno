@@ -50,7 +50,7 @@ private:
     int n_, m_;
     int maximum_number_nonzeros;
     std::vector<double> lb, ub; // lower and upper bounds of variables and constraints
-    int use_fortran;
+    short use_fortran;
     
     std::vector<double> jacobian_;
     std::vector<int> jacobian_sparsity_;
@@ -59,7 +59,7 @@ private:
     std::vector<double> alp_;
     std::vector<int> lp_, ls_;
     std::vector<double> w_, gradient_solution_, residuals_, e_;
-    int nhr_, nhi_, mxws_, mxlws_;
+    int maximum_number_nonzeros_, size_hessian_sparsity_, size_hessian_workspace_, size_hessian_sparsity_workspace_;
     std::vector<double> hessian;
     std::vector<int> hessian_sparsity;
     int k_;
