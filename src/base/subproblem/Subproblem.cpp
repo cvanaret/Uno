@@ -16,7 +16,19 @@ Subproblem::~Subproblem() {
 //    first_iterate.multipliers.constraints = Subproblem::compute_least_square_multipliers(problem, first_iterate, multipliers.constraints, 1e4);
 //}
 
-double Subproblem::project_variable_in_bounds(double variable_value, Range& variable_bounds) {
+void Subproblem::project_point_in_bounds(std::vector<double>& x, std::vector<Range>& variables_bounds) {
+    for (unsigned int i = 0; i < x.size(); i++) {
+        if (x[i] < variables_bounds[i].lb) {
+            x[i] = variables_bounds[i].lb;
+        }
+        else if (variables_bounds[i].ub < x[i]) {
+            x[i] = variables_bounds[i].ub;
+        }
+    }
+    return;
+}
+
+double Subproblem::project_strictly_variable_in_bounds(double variable_value, Range& variable_bounds) {
     double k1 = 1e-2;
     double k2 = 1e-2;
 

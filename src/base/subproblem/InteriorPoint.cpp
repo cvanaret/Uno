@@ -42,7 +42,7 @@ Iterate InteriorPoint::evaluate_initial_point(Problem& problem, std::vector<doub
     /* make the initial point strictly feasible */
     std::vector<double> reformulated_x(number_variables);
     for (int i = 0; i < problem.number_variables; i++) {
-        reformulated_x[i] = Subproblem::project_variable_in_bounds(x[i], problem.variables_bounds[i]);
+        reformulated_x[i] = Subproblem::project_strictly_variable_in_bounds(x[i], problem.variables_bounds[i]);
     }
     
     Multipliers multipliers(number_variables, problem.number_constraints);
@@ -62,7 +62,7 @@ Iterate InteriorPoint::evaluate_initial_point(Problem& problem, std::vector<doub
     for (std::pair<const int, int>& element: problem.inequality_constraints) {
         int j = element.first;
         int slack_index = problem.number_variables + element.second;
-        double slack_value = Subproblem::project_variable_in_bounds(first_iterate.constraints[j], problem.constraint_bounds[j]);
+        double slack_value = Subproblem::project_strictly_variable_in_bounds(first_iterate.constraints[j], problem.constraint_bounds[j]);
         first_iterate.x[slack_index] = slack_value;
     }
 

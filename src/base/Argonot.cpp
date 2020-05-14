@@ -17,9 +17,7 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& mul
     INFO << problem.number_variables << " variables, " << problem.number_constraints << " constraints\n";
     
     /* project x into the bounds */
-    for (int i = 0; i < problem.number_variables; i++) {
-        x[i] = Subproblem::project_variable_in_bounds(x[i], problem.variables_bounds[i]);
-    }
+    Subproblem::project_point_in_bounds(x, problem.variables_bounds);
     
     if (preprocessing) {
         /* preprocessing phase: satisfy linear constraints */

@@ -37,7 +37,8 @@ public:
     
     virtual bool phase_1_required(SubproblemSolution& solution) = 0;
 
-    static double project_variable_in_bounds(double variable_value, Range& variable_bounds);
+    static void project_point_in_bounds(std::vector<double>& x, std::vector<Range>& variables_bounds);
+    static double project_strictly_variable_in_bounds(double variable_value, Range& variable_bounds);
     static std::vector<Range> generate_constraints_bounds(Problem& problem, std::vector<double>& current_constraints);
     static std::vector<double> compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, std::vector<double>& default_multipliers, MA57Solver& solver, double multipliers_max_size=1e3);
     static std::vector<double> compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, std::vector<double>& default_multipliers, double multipliers_max_size=1e3);
