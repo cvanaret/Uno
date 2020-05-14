@@ -15,15 +15,9 @@ let x[2] :=  1;
 #let x[1] := 0.5;
 #let x[2] := 2;
 
-let constr1 := 700;
-let constr2 := 0;
-
-display _sconname, _scon;
 solve;
 
 display x;
-
-display _conname, _con;
 
 display obj;
 
