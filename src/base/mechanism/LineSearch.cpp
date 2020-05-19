@@ -49,6 +49,7 @@ Iterate LineSearch::compute_acceptable_iterate(Problem& problem, Iterate& curren
         // if step length is too small, run restoration phase
         if (!is_accepted && this->step_length < this->min_step_length && solution.phase == OPTIMALITY) {
             if (0. < current_iterate.feasibility_measure) {
+                // reset the line search with the restoration solution
                 solution = this->globalization_strategy.subproblem.restore_feasibility(problem, current_iterate, solution);
                 this->step_length = 1.;
             }
@@ -68,7 +69,7 @@ bool LineSearch::termination(bool is_accepted) {
         return true;
     }
     else if (this->max_iterations < this->number_iterations) {
-        throw std::runtime_error("Line-search iteration limit reached");
+        return true;
     }
     return false;
 }

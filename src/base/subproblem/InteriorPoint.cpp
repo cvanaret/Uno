@@ -160,6 +160,7 @@ SubproblemSolution InteriorPoint::compute_step(Problem& problem, Iterate& curren
         /* generate IPM direction */
         SubproblemSolution solution = this->generate_direction(problem, current_iterate, solution_IPM);
         solution.status = OPTIMAL;
+        solution.phase = OPTIMALITY;
         solution.norm = norm_inf(solution.x, problem.number_variables);
         solution.predicted_reduction = [&](double step_length) {
             return this->compute_predicted_reduction(solution, step_length);
