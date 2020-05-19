@@ -39,7 +39,6 @@ SubproblemSolution ActiveSetMethod::compute_step(Problem& problem, Iterate& curr
     solution.objective_multiplier = problem.objective_sign;
     solution.phase = OPTIMALITY;
     solution.predicted_reduction = [&](double step_length) {
-        print_vector(std::cout, solution.x);
         return this->compute_predicted_reduction(problem, current_iterate, solution, step_length);
     };
     this->number_subproblems_solved++;
