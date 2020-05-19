@@ -5,7 +5,7 @@
 #include "InteriorPoint.hpp"
 
 LineSearch::LineSearch(GlobalizationStrategy& globalization_strategy, double tolerance, int max_iterations, double backtracking_ratio) :
-GlobalizationMechanism(globalization_strategy, tolerance, max_iterations), backtracking_ratio(backtracking_ratio), min_step_length(1e-9), restoration_phase(false) {
+GlobalizationMechanism(globalization_strategy, tolerance, max_iterations), backtracking_ratio(backtracking_ratio), min_step_length(1e-9) {
 }
 
 Iterate LineSearch::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
@@ -47,10 +47,9 @@ Iterate LineSearch::compute_acceptable_iterate(Problem& problem, Iterate& curren
             }
         }
         // if step length is too small, run restoration phase
-        if (!is_accepted && this->step_length < this->min_step_length && !this->restoration_phase) {
+        if (!is_accepted && this->step_length < this->min_step_length && solution.phase == OPTIMALITY) {
             if (0. < current_iterate.feasibility_measure) {
                 solution = this->globalization_strategy.subproblem.restore_feasibility(problem, current_iterate, solution);
-                this->restoration_phase = true;
                 this->step_length = 1.;
             }
             else {
@@ -70,9 +69,6 @@ bool LineSearch::termination(bool is_accepted) {
     }
     else if (this->max_iterations < this->number_iterations) {
         throw std::runtime_error("Line-search iteration limit reached");
-    }
-    if (this->step_length < this->min_step_length && !this->restoration_phase) {
-        return true;
     }
     return false;
 }
