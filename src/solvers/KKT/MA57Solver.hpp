@@ -29,7 +29,7 @@ class MA57Solver: public LinearSolver {
 	public:
 		MA57Solver();
 		
-		int use_fortran;
+		short use_fortran;
 		
         void solve(COOMatrix& matrix, std::vector<double>& rhs) override;
 		void solve(MA57Factorization& factorization, std::vector<double>& rhs);

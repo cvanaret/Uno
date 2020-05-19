@@ -5,7 +5,6 @@ std::vector<double> add_vectors(std::vector<double>& x, std::vector<double>& y, 
     if (x.size() != y.size()) {
         throw std::length_error("Utils.add_vectors: x and y have different sizes");
     }
-
     std::vector<double> z(x.size());
     for (unsigned int i = 0; i < x.size(); i++) {
         z[i] = x[i] + scaling_factor * y[i];

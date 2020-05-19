@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 # specify local compilers and compiler flags
 PROFILER = #-pg
 CC     = gcc
@@ -25,7 +27,7 @@ SRC_FILES = base/Argonot.cpp base/Iterate.cpp \
 	base/mechanism/GlobalizationMechanism.cpp base/mechanism/TrustRegion.cpp \
 	base/mechanism/LineSearch.cpp base/mechanism/TrustLineSearch.cpp \
 	base/mechanism/GlobalizationMechanismFactory.cpp \
-	base/subproblem/Subproblem.cpp base/subproblem/ActiveSetMethod.cpp base/subproblem/SQP.cpp base/subproblem/Sl1QP.cpp base/subproblem/SLP.cpp  base/subproblem/InteriorPoint.cpp \
+	base/subproblem/Subproblem.cpp base/subproblem/ActiveSetMethod.cpp base/subproblem/SQP.cpp base/subproblem/Sl1QP.cpp base/subproblem/SLP.cpp base/subproblem/InteriorPoint.cpp \
 	base/subproblem/SubproblemFactory.cpp base/subproblem/SubproblemSolution.cpp base/Utils.cpp \
 	solvers/QP/BQPDSolver.cpp solvers/QP/QPSolverFactory.cpp \
 	solvers/KKT/MA57Solver.cpp solvers/NLP/LBFGSB.cpp
