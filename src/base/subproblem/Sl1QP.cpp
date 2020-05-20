@@ -11,7 +11,7 @@ Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evalua
 Subproblem("l1", problem.variables_bounds, scale_residuals),
 number_variables(this->count_additional_variables(problem)),
 // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
-solver(QPSolverFactory::create(QP_solver, number_variables, problem.number_constraints, problem.hessian_maximum_number_nonzeros + problem.number_variables)),
+solver(QPSolverFactory::create(QP_solver, number_variables, problem.number_constraints, problem.hessian_maximum_number_nonzeros + problem.number_variables, true)),
 hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables)),
 penalty_parameter(1.), parameters({10., 0.1, 0.1}) {
     // p and n are generated on the fly to solve the QP, but are not kept

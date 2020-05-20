@@ -30,7 +30,7 @@ public:
      * \param n: number of variables
      * \param m: number of constraints
      */
-    BQPDSolver(int number_variables, int number_constraints, int max_number_nonzeros);
+    BQPDSolver(int number_variables, int number_constraints, int max_number_nonzeros, bool quadratic_programming);
 
     /*!
      *  Solve a QP
@@ -75,7 +75,7 @@ private:
      */
     SubproblemSolution generate_solution(std::vector<double>& x);
     Status int_to_status(int ifail);
-    SubproblemSolution solve_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, std::vector<double>& x, int kmax);
+    SubproblemSolution solve_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, std::vector<double>& x);
 };
 
 #endif // BQPDSOLVER_H

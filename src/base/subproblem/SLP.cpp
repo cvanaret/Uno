@@ -7,7 +7,7 @@
 #include "QPSolverFactory.hpp"
 
 SLP::SLP(Problem& problem, std::string QP_solver_name, bool /*use_trust_region*/, bool scale_residuals):
-ActiveSetMethod(problem, QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints, 0), scale_residuals) {
+ActiveSetMethod(problem, QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints, 0, false), scale_residuals) {
 }
 
 double SLP::compute_predicted_reduction(Problem& /*problem*/, Iterate& /*current_iterate*/, SubproblemSolution& solution, double step_length) {

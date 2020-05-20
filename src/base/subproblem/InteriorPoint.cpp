@@ -170,8 +170,8 @@ SubproblemSolution InteriorPoint::compute_step(Problem& problem, Iterate& curren
         return solution;
     }
     catch (const UnstableInertiaCorrection& e) {
-        /* unstable subproblem during optimality phase */
-        SubproblemSolution solution(current_iterate.x, current_iterate.multipliers);
+        /* unstable factorization during optimality phase */
+        SubproblemSolution solution(current_iterate.x, current_iterate.multipliers); // dummy solution
         return this->restore_feasibility(problem, current_iterate, solution, trust_region_radius);
     }
 }

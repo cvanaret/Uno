@@ -8,7 +8,7 @@
 
 SQP::SQP(Problem& problem, std::string QP_solver_name, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals):
 // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
-ActiveSetMethod(problem, QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints, problem.hessian_maximum_number_nonzeros + problem.number_variables), scale_residuals),
+ActiveSetMethod(problem, QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints, problem.hessian_maximum_number_nonzeros + problem.number_variables, true), scale_residuals),
 hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables)) {
     /* if no trust region is used, the problem should be convexified by controlling the inertia of the Hessian */
     this->hessian_evaluation->convexify = !use_trust_region;

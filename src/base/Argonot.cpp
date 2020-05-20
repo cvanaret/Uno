@@ -91,7 +91,7 @@ void Argonot::preprocessing(Problem& problem, std::vector<double>& x, Multiplier
         if (0 < infeasible_linear_constraints) {
             INFO << "Current point: "; print_vector(INFO, x);
             int number_constraints = (int) problem.linear_constraints.size();
-            BQPDSolver solver(problem.number_variables, number_constraints, problem.number_variables);
+            BQPDSolver solver(problem.number_variables, number_constraints, problem.number_variables, true);
             
             int fortran_indexing = 1;
             CSCMatrix hessian = CSCMatrix::identity(problem.number_variables, fortran_indexing);
