@@ -126,7 +126,7 @@ double dot(std::vector<double>& x, std::map<int, double>& y) {
             dot += x[i] * yi;
         }
         else {
-            throw std::length_error("Utils.add_vectors: x and y have different sizes");
+            throw std::length_error("Utils.dot: x and y have different sizes");
         }
     }
     return dot;
