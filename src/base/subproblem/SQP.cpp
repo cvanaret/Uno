@@ -14,16 +14,27 @@ hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, p
     this->hessian_evaluation->convexify = !use_trust_region;
 }
 
-double SQP::compute_predicted_reduction(Problem& /*problem*/, Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
-    // the predicted reduction is quadratic
-    if (step_length == 1.) {
-        return -solution.objective;
+SubproblemSolution SQP::compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+    /* compute optimality step */
+    this->evaluate_optimality_iterate(problem, current_iterate);
+    SubproblemSolution solution = this->compute_qp_step(problem, current_iterate, trust_region_radius);
+    
+    if (solution.status == INFEASIBLE) {
+        /* infeasible subproblem during optimality phase */
+        solution = this->restore_feasibility(problem, current_iterate, solution, trust_region_radius);
     }
-    else {
-        double linear_term = dot(solution.x, current_iterate.objective_gradient);
-        double quadratic_term = current_iterate.hessian.quadratic_product(solution.x, solution.x) / 2.;
-        return -step_length * (linear_term + step_length * quadratic_term);
-    }
+    // the solution is now feasible
+    
+    solution.objective_multiplier = problem.objective_sign;
+    solution.predicted_reduction = [&](double step_length) {
+        return this->compute_qp_predicted_reduction(current_iterate, solution, step_length);
+    };
+    return solution;
+}
+
+SubproblemSolution SQP::restore_feasibility(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) {
+    this->evaluate_feasibility_iterate(problem, current_iterate, phase_II_solution.constraint_partition);
+   return this->compute_feasibility_qp_step(problem, current_iterate, phase_II_solution, trust_region_radius); 
 }
 
 /* private methods */
@@ -36,38 +47,13 @@ void SQP::evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate
     return;
 }
 
-void SQP::evaluate_feasibility_iterate(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution) {
+void SQP::evaluate_feasibility_iterate(Problem& problem, Iterate& current_iterate, ConstraintPartition& constraint_partition) {
     /* update the multipliers of the general constraints */
-    std::vector<double> constraint_multipliers = this->generate_feasibility_multipliers(problem, current_iterate.multipliers.constraints, phase_II_solution.constraint_partition);
+    std::vector<double> constraint_multipliers = this->generate_feasibility_multipliers(problem, current_iterate.multipliers.constraints, constraint_partition);
     /* compute first- and second-order information */
     current_iterate.compute_constraints_jacobian(problem);
     current_iterate.is_hessian_computed = false;
     double objective_multiplier = 0.;
     this->hessian_evaluation->compute(problem, current_iterate, objective_multiplier, constraint_multipliers);
     return;
-}
-
-std::vector<double> SQP::generate_feasibility_multipliers(Problem& problem, std::vector<double>& current_constraint_multipliers, ConstraintPartition& constraint_partition) {
-    std::vector<double> constraint_multipliers(problem.number_constraints);
-    for (int j = 0; j < problem.number_constraints; j++) {
-        if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
-            constraint_multipliers[j] = 1.;
-        }
-        else if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_UPPER) {
-            constraint_multipliers[j] = -1.;
-        }
-        else {
-            constraint_multipliers[j] = current_constraint_multipliers[j];
-        }
-    }
-    return constraint_multipliers;
-}
-
-SubproblemSolution SQP::solve_optimality_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, Iterate& current_iterate, std::vector<double>& d0) {
-    return this->solver->solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
-}
-
-SubproblemSolution SQP::solve_feasibility_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, Iterate& current_iterate, std::vector<double>& d0) {
-    //return this->solver->solve_LP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, d0);
-    return this->solver->solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
 }

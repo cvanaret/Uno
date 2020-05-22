@@ -10,9 +10,17 @@ SLP::SLP(Problem& problem, std::string QP_solver_name, bool /*use_trust_region*/
 ActiveSetMethod(problem, QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints, 0, false), scale_residuals) {
 }
 
-double SLP::compute_predicted_reduction(Problem& /*problem*/, Iterate& /*current_iterate*/, SubproblemSolution& solution, double step_length) {
-    // the predicted reduction is linear
-    return -step_length*solution.objective;
+SubproblemSolution SLP::compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+    SubproblemSolution solution = this->compute_lp_step(problem, current_iterate, trust_region_radius);
+    if (solution.status == INFEASIBLE) {
+        /* infeasible subproblem during optimality phase */
+        solution = this->restore_feasibility(problem, current_iterate, solution, trust_region_radius);
+    }
+    return solution;
+}
+
+SubproblemSolution SLP::restore_feasibility(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) {
+   return this->compute_feasibility_lp_step(problem, current_iterate, phase_II_solution, trust_region_radius); 
 }
 
 /* private methods */
@@ -26,12 +34,4 @@ void SLP::evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate
 void SLP::evaluate_feasibility_iterate(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution) {
     /* compute first-order information */
     current_iterate.compute_constraints_jacobian(problem);
-}
-
-SubproblemSolution SLP::solve_optimality_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, Iterate& current_iterate, std::vector<double>& d0) {
-    return this->solver->solve_LP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, d0);
-}
-
-SubproblemSolution SLP::solve_feasibility_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, Iterate& current_iterate, std::vector<double>& d0) {
-    return this->solver->solve_LP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, d0);
 }

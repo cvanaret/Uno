@@ -4,7 +4,6 @@
 #include <iostream>
 #include <memory>
 #include "Subproblem.hpp"
-#include "HessianEvaluation.hpp"
 
 class SubproblemFactory {
 	public:

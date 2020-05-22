@@ -27,14 +27,14 @@ SRC_FILES = base/Argonot.cpp base/Iterate.cpp \
 	base/mechanism/GlobalizationMechanism.cpp base/mechanism/TrustRegion.cpp \
 	base/mechanism/LineSearch.cpp base/mechanism/TrustLineSearch.cpp \
 	base/mechanism/GlobalizationMechanismFactory.cpp \
-	base/subproblem/Subproblem.cpp base/subproblem/ActiveSetMethod.cpp base/subproblem/SQP.cpp base/subproblem/Sl1QP.cpp base/subproblem/SLP.cpp base/subproblem/InteriorPoint.cpp \
+	base/subproblem/Subproblem.cpp base/subproblem/ActiveSetMethod.cpp base/subproblem/SQP.cpp base/subproblem/SLP.cpp base/subproblem/Sl1QP.cpp base/subproblem/InteriorPoint.cpp \
 	base/subproblem/SubproblemFactory.cpp base/subproblem/SubproblemSolution.cpp base/Utils.cpp \
 	solvers/QP/BQPDSolver.cpp solvers/QP/QPSolverFactory.cpp \
 	solvers/KKT/MA57Solver.cpp solvers/NLP/LBFGSB.cpp
 OBJ_FILES = $(subst .cpp,.o,$(SRC_FILES)) solvers/QP/wdotd.o $(BFGS_DIR)/lbfgsb.o $(BFGS_DIR)/timer.o $(BFGS_DIR)/blas.o $(BFGS_DIR)/linpack.o
 EXEC_NAME = argonot
 
-# base/subproblem/SLPEQP.cpp
+#   base/subproblem/SLPEQP.cpp
 # base/strategy/Tube.cpp base/strategy/TubeStrategy.cpp
 # base/subproblem/AugmentedLagrangian.cpp \
 
