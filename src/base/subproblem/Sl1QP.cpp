@@ -12,33 +12,6 @@ Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evalua
 Sl1QP(problem, QP_solver, hessian_evaluation_method, use_trust_region, scale_residuals, this->count_additional_variables(problem)) {
 }
 
-Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals, int number_variables):
-ActiveSetMethod(problem, QPSolverFactory::create(QP_solver, number_variables, problem.number_constraints, problem.hessian_maximum_number_nonzeros + problem.number_variables, true), scale_residuals),
-// maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
-hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables)),
-penalty_parameter(1.),
-parameters({10., 0.1, 0.1}),
-number_variables(number_variables) {
-    // p and n are generated on the fly to solve the QP, but are not kept
-    int current_index = problem.number_variables;
-    for (int j = 0; j < problem.number_constraints; j++) {
-        if (-INFINITY < problem.constraint_bounds[j].lb) {
-            // nonnegative variable p that captures the positive part of the constraint violation
-            this->negative_part_variables[j] = current_index;
-            current_index++;
-        }
-        if (problem.constraint_bounds[j].ub < INFINITY) {
-            // nonnegative variable p that captures the positive part of the constraint violation
-            this->positive_part_variables[j] = current_index;
-            current_index++;
-        }
-    }
-    
-    /* if no trust region is used, the problem should be convexified by changing the inertia of the Hessian */
-    this->hessian_evaluation->convexify = !use_trust_region;
-}
-
-
 int Sl1QP::count_additional_variables(Problem& problem) {
     int number_variables = problem.number_variables;
     for (int j = 0; j < problem.number_constraints; j++) {
@@ -50,6 +23,32 @@ int Sl1QP::count_additional_variables(Problem& problem) {
         }
     }
     return number_variables;
+}
+
+Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals, int number_variables):
+ActiveSetMethod(problem, QPSolverFactory::create(QP_solver, number_variables, problem.number_constraints, problem.hessian_maximum_number_nonzeros + problem.number_variables, true), scale_residuals),
+// maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
+hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables)),
+penalty_parameter(1.),
+parameters({10., 0.1, 0.1}),
+number_variables(number_variables) {
+    // p and n are generated on the fly to solve the QP
+    int current_index = problem.number_variables;
+    for (int j = 0; j < problem.number_constraints; j++) {
+        if (-INFINITY < problem.constraint_bounds[j].lb) {
+            // nonnegative variable p that captures the positive part of the constraint violation
+            this->negative_part_variables[j] = current_index;
+            current_index++;
+        }
+        if (problem.constraint_bounds[j].ub < INFINITY) {
+            // nonnegative variable p that captures the negative part of the constraint violation
+            this->positive_part_variables[j] = current_index;
+            current_index++;
+        }
+    }
+    
+    /* if no trust region is used, the problem should be convexified by changing the inertia of the Hessian */
+    this->hessian_evaluation->convexify = !use_trust_region;
 }
 
 SubproblemSolution Sl1QP::compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
@@ -228,34 +227,17 @@ double Sl1QP::compute_predicted_reduction(Problem& problem, Iterate& current_ite
     }
 }
 
-void Sl1QP::compute_optimality_measures(Problem& problem, Iterate& iterate) {
-    /* feasibility */
-    this->compute_residuals(problem, iterate, iterate.multipliers, 1.);
-    iterate.feasibility_measure = iterate.residuals.constraints;
-    /* optimality */
-    iterate.compute_objective(problem);
-    iterate.optimality_measure = iterate.objective;
-    return;
-}
-
-void Sl1QP::compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution) {
-    throw std::out_of_range("Sl1QP.compute_infeasibility_measures is not implemented, since l1QP are always feasible");
-}
-
 /* private methods */
 
 std::vector<Range> Sl1QP::generate_variables_bounds(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
-    std::vector<Range> variables_bounds(this->number_variables);
+    // p and n are nonnegative
+    std::vector<Range> variables_bounds(this->number_variables, {0., INFINITY});
 
     /* original bounds intersected with trust region  */
     for (int i = 0; i < problem.number_variables; i++) {
         double lb = std::max(-trust_region_radius, this->subproblem_variables_bounds[i].lb - current_iterate.x[i]);
         double ub = std::min(trust_region_radius, this->subproblem_variables_bounds[i].ub - current_iterate.x[i]);
         variables_bounds[i] = {lb, ub};
-    }
-    /* p and n are non-negative */
-    for (unsigned int i = 0; i < this->positive_part_variables.size() + this->negative_part_variables.size(); i++) {
-        variables_bounds[problem.number_variables + i] = {0., INFINITY};
     }
     return variables_bounds;
 }

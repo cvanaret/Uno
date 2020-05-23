@@ -29,9 +29,6 @@ public:
     SubproblemSolution compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius = INFINITY) override;
     SubproblemSolution restore_feasibility(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius = INFINITY) override;
     
-    void compute_optimality_measures(Problem& problem, Iterate& iterate) override;
-    void compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution);
-    
     void evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate, double penalty_parameter);
     
     double compute_complementarity_error(Problem& problem, Iterate& iterate, Multipliers& multipliers) override;
