@@ -103,9 +103,6 @@ SubproblemSolution ActiveSetMethod::compute_feasibility_qp_step(Problem& problem
     solution.objective_multiplier = 0.;
     solution.phase = RESTORATION;
     solution.constraint_partition = phase_II_solution.constraint_partition;
-    solution.predicted_reduction = [&](double step_length) {
-        return this->compute_qp_predicted_reduction(current_iterate, solution, step_length);
-    };
     this->number_subproblems_solved++;
     DEBUG << solution;
     return solution;

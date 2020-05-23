@@ -29,9 +29,7 @@ protected:
     void compute_linear_feasibility_objective(Iterate& current_iterate, ConstraintPartition& constraint_partition);
     std::vector<double> generate_feasibility_multipliers(Problem& problem, std::vector<double>& current_constraint_multipliers, ConstraintPartition& constraint_partition);
     std::vector<Range> generate_feasibility_bounds(Problem& problem, std::vector<double>& current_constraints, ConstraintPartition& constraint_partition);
-    //virtual void evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate) = 0;
-    //virtual void evaluate_feasibility_iterate(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution) = 0;
-    
+
     /* LP subproblems */
     SubproblemSolution compute_lp_step(Problem& problem, Iterate& current_iterate, double trust_region_radius);
     double compute_lp_predicted_reduction(SubproblemSolution& solution, double step_length);
