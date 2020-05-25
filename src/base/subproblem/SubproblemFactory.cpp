@@ -18,7 +18,12 @@ std::shared_ptr<Subproblem> SubproblemFactory::create(Problem& problem, const st
         return std::make_shared<Sl1QP>(problem, default_values["QP_solver"], default_values["hessian"], use_trust_region, scale_residuals);
     }
 //    else if (type == "SLPEQP") {
-//        return std::make_shared<SLPEQP>(problem, default_values["QP_solver"], default_values["hessian"], use_trust_region, scale_residuals);
+//          if (use_trust_region) {
+//             return std::make_shared<SLPEQP_TR>(problem, default_values["QP_solver"], default_values["hessian"], use_trust_region, scale_residuals);
+//          }
+//          else {
+//             return std::make_shared<SLPEQP_l2>(problem, default_values["hessian"], use_trust_region, scale_residuals);
+//          }
 //    }
     /* interior point method */
     else if (type == "IPM") {

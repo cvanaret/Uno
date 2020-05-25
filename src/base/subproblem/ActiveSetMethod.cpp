@@ -5,8 +5,8 @@
 #include "Utils.hpp"
 #include "Logger.hpp"
 
-ActiveSetMethod::ActiveSetMethod(Problem& problem, std::shared_ptr<QPSolver> solver, bool scale_residuals):
-Subproblem("l1", problem.variables_bounds, scale_residuals), solver(solver) {
+ActiveSetMethod::ActiveSetMethod(Problem& problem, bool scale_residuals):
+Subproblem("l1", problem.variables_bounds, scale_residuals) {
 }
 
 Iterate ActiveSetMethod::evaluate_initial_point(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
@@ -48,7 +48,7 @@ void ActiveSetMethod::compute_infeasibility_measures(Problem& problem, Iterate& 
 
 /* QP */
 
-SubproblemSolution ActiveSetMethod::compute_qp_step_(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+SubproblemSolution ActiveSetMethod::compute_qp_step_(Problem& problem, std::shared_ptr<QPSolver> solver, Iterate& current_iterate, double trust_region_radius) {
     DEBUG << "Current point: "; print_vector(DEBUG, current_iterate.x);
     DEBUG << "Current constraint multipliers: "; print_vector(DEBUG, current_iterate.multipliers.constraints);
     DEBUG << "Current lb multipliers: "; print_vector(DEBUG, current_iterate.multipliers.lower_bounds);
@@ -64,7 +64,7 @@ SubproblemSolution ActiveSetMethod::compute_qp_step_(Problem& problem, Iterate& 
     std::vector<double> d0(variables_bounds.size()); // = {0.}
 
     /* solve the QP */
-    SubproblemSolution solution = this->solver->solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
+    SubproblemSolution solution = solver->solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
     solution.phase = OPTIMALITY;
     this->number_subproblems_solved++;
     DEBUG << solution;
@@ -83,7 +83,7 @@ double ActiveSetMethod::compute_qp_predicted_reduction_(Iterate& current_iterate
     }
 }
 
-SubproblemSolution ActiveSetMethod::compute_feasibility_qp_step_(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) {
+SubproblemSolution ActiveSetMethod::compute_feasibility_qp_step_(Problem& problem, std::shared_ptr<QPSolver> solver, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) {
     DEBUG << "\nCreating the restoration problem with " << phase_II_solution.constraint_partition.infeasible.size() << " infeasible constraints\n";
 
     /* compute the objective */
@@ -99,7 +99,7 @@ SubproblemSolution ActiveSetMethod::compute_feasibility_qp_step_(Problem& proble
     std::vector<double> d0 = phase_II_solution.x;
 
     /* solve the QP */
-    SubproblemSolution solution = this->solver->solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
+    SubproblemSolution solution = solver->solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
     solution.objective_multiplier = 0.;
     solution.phase = RESTORATION;
     solution.constraint_partition = phase_II_solution.constraint_partition;
@@ -167,7 +167,7 @@ std::vector<Range> ActiveSetMethod::generate_feasibility_bounds_(Problem& proble
 
 /* LP */
 
-SubproblemSolution ActiveSetMethod::compute_lp_step_(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+SubproblemSolution ActiveSetMethod::compute_lp_step_(Problem& problem, std::shared_ptr<QPSolver> solver, Iterate& current_iterate, double trust_region_radius) {
     DEBUG << "Current point: "; print_vector(DEBUG, current_iterate.x);
     DEBUG << "Current constraint multipliers: "; print_vector(DEBUG, current_iterate.multipliers.constraints);
     DEBUG << "Current lb multipliers: "; print_vector(DEBUG, current_iterate.multipliers.lower_bounds);
@@ -183,7 +183,7 @@ SubproblemSolution ActiveSetMethod::compute_lp_step_(Problem& problem, Iterate& 
     std::vector<double> d0(current_iterate.x.size()); // = {0.}
 
     /* solve the QP */
-    SubproblemSolution solution = this->solver->solve_LP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, d0);
+    SubproblemSolution solution = solver->solve_LP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, d0);
     solution.objective_multiplier = problem.objective_sign;
     solution.phase = OPTIMALITY;
     solution.predicted_reduction = [&](double step_length) {
@@ -199,7 +199,7 @@ double ActiveSetMethod::compute_lp_predicted_reduction_(SubproblemSolution& solu
     return -step_length*solution.objective;
 }
 
-SubproblemSolution ActiveSetMethod::compute_feasibility_lp_step_(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) {
+SubproblemSolution ActiveSetMethod::compute_feasibility_lp_step_(Problem& problem, std::shared_ptr<QPSolver> solver, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) {
     DEBUG << "\nCreating the restoration problem with " << phase_II_solution.constraint_partition.infeasible.size() << " infeasible constraints\n";
     
     /* compute the objective */
@@ -215,7 +215,7 @@ SubproblemSolution ActiveSetMethod::compute_feasibility_lp_step_(Problem& proble
     std::vector<double> d0 = phase_II_solution.x;
 
     /* solve the QP */
-    SubproblemSolution solution = this->solver->solve_LP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, d0);
+    SubproblemSolution solution = solver->solve_LP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, d0);
     solution.objective_multiplier = 0.;
     solution.phase = RESTORATION;
     solution.constraint_partition = phase_II_solution.constraint_partition;

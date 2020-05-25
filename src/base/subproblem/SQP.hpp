@@ -12,6 +12,7 @@ public:
     SubproblemSolution restore_feasibility(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius = INFINITY) override;
     
     /* use references to allow polymorphism */
+    std::shared_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
     std::shared_ptr<HessianEvaluation> hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
 
 protected:

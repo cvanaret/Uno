@@ -26,7 +26,8 @@ int Sl1QP::count_additional_variables_(Problem& problem) {
 }
 
 Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals, int number_variables):
-ActiveSetMethod(problem, QPSolverFactory::create(QP_solver, number_variables, problem.number_constraints, problem.hessian_maximum_number_nonzeros + problem.number_variables, true), scale_residuals),
+ActiveSetMethod(problem, scale_residuals),
+solver(QPSolverFactory::create(QP_solver, number_variables, problem.number_constraints, problem.hessian_maximum_number_nonzeros + problem.number_variables, true)),
 // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
 hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables)),
 penalty_parameter(1.),
@@ -162,7 +163,7 @@ SubproblemSolution Sl1QP::compute_step(Problem& problem, Iterate& current_iterat
 SubproblemSolution Sl1QP::solve_l1qp_subproblem_(Problem& problem, Iterate& current_iterate, double trust_region_radius, double penalty_parameter) {
     /* compute l1QP step */
     this->evaluate_optimality_iterate_(problem, current_iterate, penalty_parameter);
-    SubproblemSolution solution = this->compute_qp_step_(problem, current_iterate, trust_region_radius);
+    SubproblemSolution solution = this->compute_qp_step_(problem, this->solver, current_iterate, trust_region_radius);
     
     solution.objective_multiplier = penalty_parameter;
     solution.predicted_reduction = [&](double step_length) {
