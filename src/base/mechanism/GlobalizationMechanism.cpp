@@ -7,7 +7,7 @@ globalization_strategy(globalization_strategy), tolerance(tolerance), max_iterat
 GlobalizationMechanism::~GlobalizationMechanism() {
 }
 
-OptimalityStatus GlobalizationMechanism::compute_status(Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier) {
+OptimalityStatus GlobalizationMechanism::compute_status_(Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier) {
     OptimalityStatus status = NOT_OPTIMAL;
 
     if (current_iterate.residuals.complementarity <= this->tolerance * (current_iterate.x.size() + problem.number_constraints)) {

@@ -80,7 +80,7 @@ public:
     int number_eval_hessian;
 
 protected:
-    void determine_constraints();
+    void determine_constraints_();
 };
 
 #endif // PROBLEM_H

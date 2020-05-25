@@ -124,7 +124,7 @@ double Subproblem::compute_KKT_error(Problem& problem, Iterate& iterate, double 
 }
 
 /* complementary slackness error. Use abs/1e-8 to safeguard */
-double Subproblem::compute_complementarity_error(Problem& problem, Iterate& iterate, Multipliers& multipliers) {
+double Subproblem::compute_complementarity_error_(Problem& problem, Iterate& iterate, Multipliers& multipliers) {
     double complementarity_error = 0.;
     /* bound constraints */
     for (unsigned int i = 0; i < iterate.x.size(); i++) {
@@ -154,7 +154,7 @@ void Subproblem::compute_residuals(Problem& problem, Iterate& iterate, Multiplie
     iterate.residuals.constraints = problem.compute_constraint_residual(iterate.constraints, this->residual_norm);
     iterate.residuals.KKT = Subproblem::compute_KKT_error(problem, iterate, objective_multiplier);
     iterate.residuals.FJ = Subproblem::compute_KKT_error(problem, iterate, 0.);
-    iterate.residuals.complementarity = this->compute_complementarity_error(problem, iterate, multipliers);
+    iterate.residuals.complementarity = this->compute_complementarity_error_(problem, iterate, multipliers);
     if (this->scale_residuals) {
         // TODO scale the residuals
     }

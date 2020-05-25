@@ -31,16 +31,16 @@ public:
 private:
     double min_step_length;
     
-    std::vector<Range> compute_subproblem_bounds(Iterate& current_iterate);
-    bool termination(bool is_accepted);
-    void print_iteration();
-    void print_acceptance(double step_length, double solution_norm);
-    void print_warning(const char* message);
+    std::vector<Range> compute_subproblem_bounds_(Iterate& current_iterate);
+    bool termination_(bool is_accepted);
+    void print_iteration_();
+    void print_acceptance_(double step_length, double solution_norm);
+    void print_warning_(const char* message);
 
-    double quadratic_interpolation(Problem& problem, Iterate& current_iterate, std::vector<double> direction, double steplength = 1.);
-    double cubic_interpolation(Problem& problem, Iterate& current_iterate, std::vector<double> direction, double steplength1, double steplength2);
-    double minimize_quadratic(double a, double b);
-    double minimize_cubic(double a, double b, double c);
+    double quadratic_interpolation_(Problem& problem, Iterate& current_iterate, std::vector<double> direction, double steplength = 1.);
+    double cubic_interpolation_(Problem& problem, Iterate& current_iterate, std::vector<double> direction, double steplength1, double steplength2);
+    double minimize_quadratic_(double a, double b);
+    double minimize_cubic_(double a, double b, double c);
 };
 
 #endif // LINESEARCH_H

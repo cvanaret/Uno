@@ -8,7 +8,7 @@
  * http://epubs.siam.org/doi/pdf/10.1137/080738222
  */
 
-PenaltyMeritFunction::PenaltyMeritFunction(Subproblem& subproblem): GlobalizationStrategy(subproblem), eta(1e-8) {
+PenaltyMeritFunction::PenaltyMeritFunction(Subproblem& subproblem): GlobalizationStrategy(subproblem), decrease_fraction_(1e-8) {
 }
 
 Iterate PenaltyMeritFunction::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
@@ -51,7 +51,7 @@ bool PenaltyMeritFunction::check_step(Problem& problem, Iterate& current_iterate
         
         accept = false;
         // Armijo sufficient decrease condition
-        if (actual_reduction >= this->eta*predicted_reduction) {
+        if (actual_reduction >= this->decrease_fraction_*predicted_reduction) {
             accept = true;
         }
     }

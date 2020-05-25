@@ -16,7 +16,7 @@ Iterate TrustLineSearch::compute_acceptable_iterate(Problem& problem, Iterate& c
     this->number_iterations = 0;
     bool linesearch_failed = false;
 
-    while (!this->termination(is_accepted, this->number_iterations)) {
+    while (!this->termination_(is_accepted, this->number_iterations)) {
         try {
             /* compute a trial direction */
             SubproblemSolution solution = this->globalization_strategy.subproblem.compute_step(problem, current_iterate, this->radius);
@@ -28,11 +28,11 @@ Iterate TrustLineSearch::compute_acceptable_iterate(Problem& problem, Iterate& c
             }
             else {
                 /* set multipliers of active trust region to 0 */
-                this->correct_multipliers(problem, solution);
+                this->correct_multipliers_(problem, solution);
 
                 /* length follows the following sequence: 1, ratio, ratio^2, ratio^3, ... */
                 double step_length = 1.;
-                while (!this->termination(is_accepted, this->number_iterations)) {
+                while (!this->termination_(is_accepted, this->number_iterations)) {
                     this->number_iterations++;
                     DEBUG << "\n\tTRUST LINE SEARCH iteration " << this->number_iterations << ", radius " << this->radius << ", step_length " << step_length << "\n";
 
@@ -47,7 +47,7 @@ Iterate TrustLineSearch::compute_acceptable_iterate(Problem& problem, Iterate& c
 
                     if (is_accepted) {
                         DEBUG << CYAN "TLS trial point accepted\n" RESET;
-                        current_iterate.status = this->compute_status(problem, current_iterate, step_length*solution.norm, solution.objective_multiplier);
+                        current_iterate.status = this->compute_status_(problem, current_iterate, step_length*solution.norm, solution.objective_multiplier);
                         /* print summary */
                         INFO << "minor: " << this->number_iterations << "\t";
                         INFO << "radius: " << this->radius << "\t";
@@ -87,7 +87,7 @@ Iterate TrustLineSearch::compute_acceptable_iterate(Problem& problem, Iterate& c
 }
 
 /* reset the bound multipliers active at the trust region */
-void TrustLineSearch::correct_multipliers(Problem& problem, SubproblemSolution& solution) {
+void TrustLineSearch::correct_multipliers_(Problem& problem, SubproblemSolution& solution) {
     for (int i : solution.active_set.at_upper_bound) {
         if (i < problem.number_variables && solution.x[i] == this->radius) {
             solution.multipliers.upper_bounds[i] = 0.;
@@ -101,7 +101,7 @@ void TrustLineSearch::correct_multipliers(Problem& problem, SubproblemSolution& 
     return;
 }
 
-bool TrustLineSearch::termination(bool is_accepted, int iteration) {
+bool TrustLineSearch::termination_(bool is_accepted, int iteration) {
     if (is_accepted) {
         return true;
     }

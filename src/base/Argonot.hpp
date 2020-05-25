@@ -48,8 +48,8 @@ public:
     int max_iterations; /*!< Maximum number of iterations */
 
 private:
-    bool termination_criterion(OptimalityStatus is_optimal, int iteration);
-    OptimalityStatus optimality_test(Problem& problem, Phase& phase, Iterate& current_iterate);
+    bool termination_criterion_(OptimalityStatus is_optimal, int iteration);
+    OptimalityStatus optimality_test_(Problem& problem, Phase& phase, Iterate& current_iterate);
 };
 
 #endif // ARGONOT_H

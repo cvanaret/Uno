@@ -8,7 +8,7 @@ FilterStrategy::FilterStrategy(Subproblem& subproblem, FilterStrategyParameters 
 GlobalizationStrategy(subproblem),
 filter_optimality(FilterFactory::create(options)),
 filter_restoration(FilterFactory::create(options)),
-current_phase(OPTIMALITY), parameters(strategy_parameters) {
+current_phase_(OPTIMALITY), parameters_(strategy_parameters) {
 }
 
 Iterate FilterStrategy::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
@@ -17,7 +17,7 @@ Iterate FilterStrategy::initialize(Problem& problem, std::vector<double>& x, Mul
     this->subproblem.compute_residuals(problem, first_iterate, first_iterate.multipliers, 1.);
 
     /* set the filter upper bound */
-    double upper_bound = std::max(this->parameters.ubd, this->parameters.fact * first_iterate.feasibility_measure);
+    double upper_bound = std::max(this->parameters_.ubd, this->parameters_.fact * first_iterate.feasibility_measure);
     this->filter_optimality->upper_bound = upper_bound;
     this->filter_restoration->upper_bound = upper_bound;
     return first_iterate;
@@ -47,10 +47,10 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
     }
     else {
         /* possibly switch phase */
-        this->switch_phase(problem, solution, current_iterate, trial_iterate);
+        this->switch_phase_(problem, solution, current_iterate, trial_iterate);
 
         /* if RESTORATION phase, compute (in)feasibility measures of trial point */
-        if (this->current_phase == RESTORATION) {
+        if (this->current_phase_ == RESTORATION) {
             this->subproblem.compute_infeasibility_measures(problem, trial_iterate, solution);
         }
 
@@ -58,7 +58,7 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
         DEBUG << "Trial: η = " << trial_iterate.feasibility_measure << ", ω = " << trial_iterate.optimality_measure << "\n";
 
         /* check acceptance */
-        Filter& filter = (this->current_phase == OPTIMALITY) ? *(this->filter_optimality) : *(this->filter_restoration);
+        Filter& filter = (this->current_phase_ == OPTIMALITY) ? *(this->filter_optimality) : *(this->filter_restoration);
         bool acceptable = filter.accept(trial_iterate.feasibility_measure, trial_iterate.optimality_measure);
         if (acceptable) {
             // check acceptance wrt current x (h,f)
@@ -69,12 +69,12 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
                 DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << actual_reduction << "\n\n";
 
                 /* switching condition */
-                if (predicted_reduction < this->parameters.Delta * std::pow(current_iterate.feasibility_measure, 2)) {
+                if (predicted_reduction < this->parameters_.Delta * std::pow(current_iterate.feasibility_measure, 2)) {
                     filter.add(current_iterate.feasibility_measure, current_iterate.optimality_measure);
                     accept = true;
                 }
                 /* Armijo sufficient decrease condition: predicted_reduction should be positive */
-                else if (actual_reduction >= this->parameters.Sigma*step_length*std::max(0., predicted_reduction - 1e-9)) {
+                else if (actual_reduction >= this->parameters_.Sigma*step_length*std::max(0., predicted_reduction - 1e-9)) {
                 //else if (predicted_reduction > 0. && actual_reduction >= this->parameters.Sigma*predicted_reduction) {
                     accept = true;
                 }
@@ -85,25 +85,25 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
     /* correct multipliers for infeasibility problem */
     if (accept) {
         if (solution.phase == RESTORATION) {
-            this->update_restoration_multipliers(trial_iterate, solution.constraint_partition);
+            this->update_restoration_multipliers_(trial_iterate, solution.constraint_partition);
         }
         trial_iterate.compute_objective(problem);
         this->subproblem.compute_residuals(problem, trial_iterate, trial_iterate.multipliers, solution.objective_multiplier);
         //trial_iterate.status = this->compute_status(problem, trial_iterate, step_norm, solution.objective_multiplier);
-        INFO << "phase: " << this->current_phase << "\t";
+        INFO << "phase: " << this->current_phase_ << "\t";
         current_iterate = trial_iterate;
         DEBUG << "Residuals: ||c|| = " << current_iterate.residuals.constraints << ", KKT = " << current_iterate.residuals.KKT << ", cmpl = " << current_iterate.residuals.complementarity << "\n";
     }
     return accept;
 }
 
-void FilterStrategy::switch_phase(Problem& problem, SubproblemSolution& solution, Iterate& current_iterate, Iterate& trial_iterate) {
+void FilterStrategy::switch_phase_(Problem& problem, SubproblemSolution& solution, Iterate& current_iterate, Iterate& trial_iterate) {
     /* find out if transition of one phase to the other */
-    if (this->current_phase == OPTIMALITY) {
+    if (this->current_phase_ == OPTIMALITY) {
         if (solution.phase == RESTORATION) {
             /* infeasible QP: go from phase II (optimality) to I (restoration) */
             DEBUG << "Switching from optimality to restoration phase\n";
-            this->current_phase = RESTORATION;
+            this->current_phase_ = RESTORATION;
             /* add [h,f] (c/s violation) to filter, entering restoration */
             this->filter_optimality->add(current_iterate.feasibility_measure, current_iterate.optimality_measure);
 
@@ -118,13 +118,13 @@ void FilterStrategy::switch_phase(Problem& problem, SubproblemSolution& solution
         /* check whether we can switch from phase I (restoration) to II (optimality) */
     else if (solution.phase == OPTIMALITY && this->filter_optimality->accept(trial_iterate.feasibility_measure, trial_iterate.optimality_measure)) {
         DEBUG << "Switching from restoration to optimality phase\n";
-        this->current_phase = OPTIMALITY;
+        this->current_phase_ = OPTIMALITY;
         this->subproblem.compute_optimality_measures(problem, current_iterate);
     }
     return;
 }
 
-void FilterStrategy::update_restoration_multipliers(Iterate& trial_iterate, ConstraintPartition& constraint_partition) {
+void FilterStrategy::update_restoration_multipliers_(Iterate& trial_iterate, ConstraintPartition& constraint_partition) {
     for (int j: constraint_partition.infeasible) {
         if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_UPPER) {
             trial_iterate.multipliers.constraints[j] = -1.;

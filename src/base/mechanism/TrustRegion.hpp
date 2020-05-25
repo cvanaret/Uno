@@ -27,11 +27,11 @@ public:
 private:
     double activity_tolerance_;
 
-    void correct_multipliers(Problem& problem, SubproblemSolution& solution);
-    bool termination(bool is_accepted);
-    void print_iteration();
-    void print_acceptance(double solution_norm);
-    void print_warning(const char* message);
+    void correct_multipliers_(Problem& problem, SubproblemSolution& solution);
+    bool termination_(bool is_accepted);
+    void print_iteration_();
+    void print_acceptance_(double solution_norm);
+    void print_warning_(const char* message);
 };
 
 #endif // TRUSTREGION_H

@@ -21,19 +21,19 @@ public:
 protected:
     /* QP subproblems */
     // optimality QP
-    SubproblemSolution compute_qp_step(Problem& problem, Iterate& current_iterate, double trust_region_radius = INFINITY);
-    double compute_qp_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution, double step_length);
-    virtual std::vector<Range> generate_variables_bounds(Problem& problem, Iterate& current_iterate, double trust_region_radius);
+    SubproblemSolution compute_qp_step_(Problem& problem, Iterate& current_iterate, double trust_region_radius = INFINITY);
+    double compute_qp_predicted_reduction_(Iterate& current_iterate, SubproblemSolution& solution, double step_length);
+    virtual std::vector<Range> generate_variables_bounds_(Problem& problem, Iterate& current_iterate, double trust_region_radius);
     // feasibility QP
-    SubproblemSolution compute_feasibility_qp_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius);
-    void compute_linear_feasibility_objective(Iterate& current_iterate, ConstraintPartition& constraint_partition);
-    std::vector<double> generate_feasibility_multipliers(Problem& problem, std::vector<double>& current_constraint_multipliers, ConstraintPartition& constraint_partition);
-    std::vector<Range> generate_feasibility_bounds(Problem& problem, std::vector<double>& current_constraints, ConstraintPartition& constraint_partition);
+    SubproblemSolution compute_feasibility_qp_step_(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius);
+    void compute_linear_feasibility_objective_(Iterate& current_iterate, ConstraintPartition& constraint_partition);
+    std::vector<double> generate_feasibility_multipliers_(Problem& problem, std::vector<double>& current_constraint_multipliers, ConstraintPartition& constraint_partition);
+    std::vector<Range> generate_feasibility_bounds_(Problem& problem, std::vector<double>& current_constraints, ConstraintPartition& constraint_partition);
 
     /* LP subproblems */
-    SubproblemSolution compute_lp_step(Problem& problem, Iterate& current_iterate, double trust_region_radius);
-    double compute_lp_predicted_reduction(SubproblemSolution& solution, double step_length);
-    SubproblemSolution compute_feasibility_lp_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius);
+    SubproblemSolution compute_lp_step_(Problem& problem, Iterate& current_iterate, double trust_region_radius);
+    double compute_lp_predicted_reduction_(SubproblemSolution& solution, double step_length);
+    SubproblemSolution compute_feasibility_lp_step_(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius);
 };
 
 #endif // ACTIVESETMETHOD_H

@@ -16,24 +16,24 @@ Iterate TrustRegion::compute_acceptable_iterate(Problem& problem, Iterate& curre
     bool is_accepted = false;
     this->number_iterations = 0;
 
-    while (!this->termination(is_accepted)) {
+    while (!this->termination_(is_accepted)) {
         try {
             this->number_iterations++;
-            this->print_iteration();
+            this->print_iteration_();
 
             /* compute the step within trust region */
             SubproblemSolution solution = this->globalization_strategy.subproblem.compute_step(problem, current_iterate, this->radius);
             
             /* set bound multipliers of active trust region to 0 */
-            this->correct_multipliers(problem, solution);
+            this->correct_multipliers_(problem, solution);
             
             /* check whether the trial step is accepted */
             is_accepted = this->globalization_strategy.check_step(problem, current_iterate, solution);
             
             if (is_accepted) {
-                current_iterate.status = this->compute_status(problem, current_iterate, solution.norm, solution.objective_multiplier);
+                current_iterate.status = this->compute_status_(problem, current_iterate, solution.norm, solution.objective_multiplier);
                 /* print summary */
-                this->print_acceptance(solution.norm);
+                this->print_acceptance_(solution.norm);
 
                 /* increase the radius if trust region is active, otherwise keep the same radius */
                 if (solution.norm >= this->radius - this->activity_tolerance_) {
@@ -46,7 +46,7 @@ Iterate TrustRegion::compute_acceptable_iterate(Problem& problem, Iterate& curre
             }
         }
         catch (const IEEE_Error& e) {
-            this->print_warning(e.what());
+            this->print_warning_(e.what());
             /* if an evaluation error occurs, decrease the radius */
             this->radius /= 2.;
         }
@@ -54,7 +54,7 @@ Iterate TrustRegion::compute_acceptable_iterate(Problem& problem, Iterate& curre
     return current_iterate;
 }
 
-void TrustRegion::correct_multipliers(Problem& problem, SubproblemSolution& solution) {
+void TrustRegion::correct_multipliers_(Problem& problem, SubproblemSolution& solution) {
     /* set multipliers for bound constraints active at trust region to 0 */
     for (int i: solution.active_set.at_upper_bound) {
         if (i < problem.number_variables && solution.x[i] == this->radius) {
@@ -69,7 +69,7 @@ void TrustRegion::correct_multipliers(Problem& problem, SubproblemSolution& solu
     return;
 }
 
-bool TrustRegion::termination(bool is_accepted) {
+bool TrustRegion::termination_(bool is_accepted) {
     if (is_accepted) {
         return true;
     }
@@ -82,12 +82,12 @@ bool TrustRegion::termination(bool is_accepted) {
     return false;
 }
 
-void TrustRegion::print_iteration() {
+void TrustRegion::print_iteration_() {
     DEBUG << "\n\tTRUST REGION iteration " << this->number_iterations << ", radius " << this->radius << "\n";
     return;
 }
 
-void TrustRegion::print_acceptance(double solution_norm) {
+void TrustRegion::print_acceptance_(double solution_norm) {
     DEBUG << CYAN "TR trial point accepted\n" RESET;
     INFO << "minor: " << this->number_iterations << "\t";
     INFO << "radius: " << this->radius << "\t\t";
@@ -95,7 +95,7 @@ void TrustRegion::print_acceptance(double solution_norm) {
     return;
 }
 
-void TrustRegion::print_warning(const char* message) {
+void TrustRegion::print_warning_(const char* message) {
     WARNING << RED << message << RESET << "\n";
     return;
 }

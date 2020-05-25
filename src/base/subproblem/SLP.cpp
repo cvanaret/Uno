@@ -11,7 +11,7 @@ ActiveSetMethod(problem, QPSolverFactory::create(QP_solver_name, problem.number_
 }
 
 SubproblemSolution SLP::compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
-    SubproblemSolution solution = this->compute_lp_step(problem, current_iterate, trust_region_radius);
+    SubproblemSolution solution = this->compute_lp_step_(problem, current_iterate, trust_region_radius);
     if (solution.status == INFEASIBLE) {
         /* infeasible subproblem during optimality phase */
         solution = this->restore_feasibility(problem, current_iterate, solution, trust_region_radius);
@@ -20,18 +20,18 @@ SubproblemSolution SLP::compute_step(Problem& problem, Iterate& current_iterate,
 }
 
 SubproblemSolution SLP::restore_feasibility(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) {
-   return this->compute_feasibility_lp_step(problem, current_iterate, phase_II_solution, trust_region_radius); 
+   return this->compute_feasibility_lp_step_(problem, current_iterate, phase_II_solution, trust_region_radius); 
 }
 
 /* private methods */
 
-void SLP::evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate) {
+void SLP::evaluate_optimality_iterate_(Problem& problem, Iterate& current_iterate) {
     /* compute first-order information */
     current_iterate.compute_objective_gradient(problem);
     current_iterate.compute_constraints_jacobian(problem);
 }
 
-void SLP::evaluate_feasibility_iterate(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution) {
+void SLP::evaluate_feasibility_iterate_(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution) {
     /* compute first-order information */
     current_iterate.compute_constraints_jacobian(problem);
 }

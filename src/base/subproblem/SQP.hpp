@@ -15,8 +15,8 @@ public:
     std::shared_ptr<HessianEvaluation> hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
 
 protected:
-    void evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate);
-    void evaluate_feasibility_iterate(Problem& problem, Iterate& current_iterate, ConstraintPartition& constraint_partition);
+    void evaluate_optimality_iterate_(Problem& problem, Iterate& current_iterate);
+    void evaluate_feasibility_iterate_(Problem& problem, Iterate& current_iterate, ConstraintPartition& constraint_partition);
 };
 
 #endif // SQP_H

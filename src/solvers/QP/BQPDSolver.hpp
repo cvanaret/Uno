@@ -48,9 +48,9 @@ public:
     
 private:
     int n_, m_;
-    int maximum_number_nonzeros;
-    std::vector<double> lb, ub; // lower and upper bounds of variables and constraints
-    short use_fortran;
+    int maximum_number_nonzeros_;
+    std::vector<double> lb_, ub_; // lower and upper bounds of variables and constraints
+    short use_fortran_;
     
     std::vector<double> jacobian_;
     std::vector<int> jacobian_sparsity_;
@@ -59,9 +59,9 @@ private:
     std::vector<double> alp_;
     std::vector<int> lp_, ls_;
     std::vector<double> w_, gradient_solution_, residuals_, e_;
-    int maximum_number_nonzeros_, size_hessian_sparsity_, size_hessian_workspace_, size_hessian_sparsity_workspace_;
-    std::vector<double> hessian;
-    std::vector<int> hessian_sparsity;
+    int size_hessian_sparsity_, size_hessian_workspace_, size_hessian_sparsity_workspace_;
+    std::vector<double> hessian_;
+    std::vector<int> hessian_sparsity_;
     int k_;
     BQPDMode mode_;
     int iprint_, nout_;
@@ -73,9 +73,9 @@ private:
      * 
      * \param d: optimal solution
      */
-    SubproblemSolution generate_solution(std::vector<double>& x);
-    Status int_to_status(int ifail);
-    SubproblemSolution solve_subproblem(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, std::vector<double>& x);
+    SubproblemSolution generate_solution_(std::vector<double>& x);
+    Status int_to_status_(int ifail);
+    SubproblemSolution solve_subproblem_(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, std::vector<double>& x);
 };
 
 #endif // BQPDSOLVER_H

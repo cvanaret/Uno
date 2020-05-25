@@ -16,7 +16,7 @@ Iterate ActiveSetMethod::evaluate_initial_point(Problem& problem, std::vector<do
     return first_iterate;
 }
 
-std::vector<Range> ActiveSetMethod::generate_variables_bounds(Problem& /*problem*/, Iterate& current_iterate, double trust_region_radius) {
+std::vector<Range> ActiveSetMethod::generate_variables_bounds_(Problem& /*problem*/, Iterate& current_iterate, double trust_region_radius) {
     std::vector<Range> bounds(current_iterate.x.size());
     /* bounds intersected with trust region  */
     for (unsigned int i = 0; i < current_iterate.x.size(); i++) {
@@ -48,14 +48,14 @@ void ActiveSetMethod::compute_infeasibility_measures(Problem& problem, Iterate& 
 
 /* QP */
 
-SubproblemSolution ActiveSetMethod::compute_qp_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+SubproblemSolution ActiveSetMethod::compute_qp_step_(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
     DEBUG << "Current point: "; print_vector(DEBUG, current_iterate.x);
     DEBUG << "Current constraint multipliers: "; print_vector(DEBUG, current_iterate.multipliers.constraints);
     DEBUG << "Current lb multipliers: "; print_vector(DEBUG, current_iterate.multipliers.lower_bounds);
     DEBUG << "Current ub multipliers: "; print_vector(DEBUG, current_iterate.multipliers.upper_bounds);
     
     /* bounds of the variables */
-    std::vector<Range> variables_bounds = this->generate_variables_bounds(problem, current_iterate, trust_region_radius);
+    std::vector<Range> variables_bounds = this->generate_variables_bounds_(problem, current_iterate, trust_region_radius);
 
     /* bounds of the linearized constraints */
     std::vector<Range> constraints_bounds = Subproblem::generate_constraints_bounds(problem, current_iterate.constraints);
@@ -71,7 +71,7 @@ SubproblemSolution ActiveSetMethod::compute_qp_step(Problem& problem, Iterate& c
     return solution;
 }
 
-double ActiveSetMethod::compute_qp_predicted_reduction(Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
+double ActiveSetMethod::compute_qp_predicted_reduction_(Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
     // the predicted reduction is quadratic in the step length
     if (step_length == 1.) {
         return -solution.objective;
@@ -83,17 +83,17 @@ double ActiveSetMethod::compute_qp_predicted_reduction(Iterate& current_iterate,
     }
 }
 
-SubproblemSolution ActiveSetMethod::compute_feasibility_qp_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) {
+SubproblemSolution ActiveSetMethod::compute_feasibility_qp_step_(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) {
     DEBUG << "\nCreating the restoration problem with " << phase_II_solution.constraint_partition.infeasible.size() << " infeasible constraints\n";
 
     /* compute the objective */
-    this->compute_linear_feasibility_objective(current_iterate, phase_II_solution.constraint_partition);
+    this->compute_linear_feasibility_objective_(current_iterate, phase_II_solution.constraint_partition);
 
     /* bounds of the variables */
-    std::vector<Range> variables_bounds = this->generate_variables_bounds(problem, current_iterate, trust_region_radius);
+    std::vector<Range> variables_bounds = this->generate_variables_bounds_(problem, current_iterate, trust_region_radius);
 
     /* bounds of the linearized constraints */
-    std::vector<Range> constraints_bounds = this->generate_feasibility_bounds(problem, current_iterate.constraints, phase_II_solution.constraint_partition);
+    std::vector<Range> constraints_bounds = this->generate_feasibility_bounds_(problem, current_iterate.constraints, phase_II_solution.constraint_partition);
 
     /* generate the initial point */
     std::vector<double> d0 = phase_II_solution.x;
@@ -108,7 +108,7 @@ SubproblemSolution ActiveSetMethod::compute_feasibility_qp_step(Problem& problem
     return solution;
 }
 
-void ActiveSetMethod::compute_linear_feasibility_objective(Iterate& current_iterate, ConstraintPartition& constraint_partition) {
+void ActiveSetMethod::compute_linear_feasibility_objective_(Iterate& current_iterate, ConstraintPartition& constraint_partition) {
     /* objective function: sum of gradients of infeasible constraints */
     std::map<int, double> objective_gradient;
     for (int j: constraint_partition.infeasible) {
@@ -128,7 +128,7 @@ void ActiveSetMethod::compute_linear_feasibility_objective(Iterate& current_iter
     return;
 }
 
-std::vector<double> ActiveSetMethod::generate_feasibility_multipliers(Problem& problem, std::vector<double>& current_constraint_multipliers, ConstraintPartition& constraint_partition) {
+std::vector<double> ActiveSetMethod::generate_feasibility_multipliers_(Problem& problem, std::vector<double>& current_constraint_multipliers, ConstraintPartition& constraint_partition) {
     std::vector<double> constraint_multipliers(problem.number_constraints);
     for (int j = 0; j < problem.number_constraints; j++) {
         if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
@@ -144,7 +144,7 @@ std::vector<double> ActiveSetMethod::generate_feasibility_multipliers(Problem& p
     return constraint_multipliers;
 }
 
-std::vector<Range> ActiveSetMethod::generate_feasibility_bounds(Problem& problem, std::vector<double>& current_constraints, ConstraintPartition& constraint_partition) {
+std::vector<Range> ActiveSetMethod::generate_feasibility_bounds_(Problem& problem, std::vector<double>& current_constraints, ConstraintPartition& constraint_partition) {
     std::vector<Range> constraints_bounds(problem.number_constraints);
     for (int j = 0; j < problem.number_constraints; j++) {
         double lb, ub;
@@ -167,14 +167,14 @@ std::vector<Range> ActiveSetMethod::generate_feasibility_bounds(Problem& problem
 
 /* LP */
 
-SubproblemSolution ActiveSetMethod::compute_lp_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+SubproblemSolution ActiveSetMethod::compute_lp_step_(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
     DEBUG << "Current point: "; print_vector(DEBUG, current_iterate.x);
     DEBUG << "Current constraint multipliers: "; print_vector(DEBUG, current_iterate.multipliers.constraints);
     DEBUG << "Current lb multipliers: "; print_vector(DEBUG, current_iterate.multipliers.lower_bounds);
     DEBUG << "Current ub multipliers: "; print_vector(DEBUG, current_iterate.multipliers.upper_bounds);
     
     /* bounds of the variables */
-    std::vector<Range> variables_bounds = this->generate_variables_bounds(problem, current_iterate, trust_region_radius);
+    std::vector<Range> variables_bounds = this->generate_variables_bounds_(problem, current_iterate, trust_region_radius);
 
     /* bounds of the linearized constraints */
     std::vector<Range> constraints_bounds = Subproblem::generate_constraints_bounds(problem, current_iterate.constraints);
@@ -187,29 +187,29 @@ SubproblemSolution ActiveSetMethod::compute_lp_step(Problem& problem, Iterate& c
     solution.objective_multiplier = problem.objective_sign;
     solution.phase = OPTIMALITY;
     solution.predicted_reduction = [&](double step_length) {
-        return this->compute_lp_predicted_reduction(solution, step_length);
+        return this->compute_lp_predicted_reduction_(solution, step_length);
     };
     this->number_subproblems_solved++;
     DEBUG << solution;
     return solution;
 }
 
-double ActiveSetMethod::compute_lp_predicted_reduction(SubproblemSolution& solution, double step_length) {
+double ActiveSetMethod::compute_lp_predicted_reduction_(SubproblemSolution& solution, double step_length) {
     // the predicted reduction is linear in the step length 
     return -step_length*solution.objective;
 }
 
-SubproblemSolution ActiveSetMethod::compute_feasibility_lp_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) {
+SubproblemSolution ActiveSetMethod::compute_feasibility_lp_step_(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) {
     DEBUG << "\nCreating the restoration problem with " << phase_II_solution.constraint_partition.infeasible.size() << " infeasible constraints\n";
     
     /* compute the objective */
-    this->compute_linear_feasibility_objective(current_iterate, phase_II_solution.constraint_partition);
+    this->compute_linear_feasibility_objective_(current_iterate, phase_II_solution.constraint_partition);
 
     /* bounds of the variables */
-    std::vector<Range> variables_bounds = this->generate_variables_bounds(problem, current_iterate, trust_region_radius);
+    std::vector<Range> variables_bounds = this->generate_variables_bounds_(problem, current_iterate, trust_region_radius);
 
     /* bounds of the linearized constraints */
-    std::vector<Range> constraints_bounds = this->generate_feasibility_bounds(problem, current_iterate.constraints, phase_II_solution.constraint_partition);
+    std::vector<Range> constraints_bounds = this->generate_feasibility_bounds_(problem, current_iterate.constraints, phase_II_solution.constraint_partition);
 
     /* generate the initial point */
     std::vector<double> d0 = phase_II_solution.x;
@@ -220,7 +220,7 @@ SubproblemSolution ActiveSetMethod::compute_feasibility_lp_step(Problem& problem
     solution.phase = RESTORATION;
     solution.constraint_partition = phase_II_solution.constraint_partition;
     solution.predicted_reduction = [&](double step_length) {
-        return this->compute_lp_predicted_reduction(solution, step_length);
+        return this->compute_lp_predicted_reduction_(solution, step_length);
     };
     this->number_subproblems_solved++;
     DEBUG << solution;

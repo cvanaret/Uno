@@ -30,7 +30,7 @@ public:
     int number_iterations; /*!< Current number of iterations */
 
 protected:
-    OptimalityStatus compute_status(Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier);
+    OptimalityStatus compute_status_(Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier);
 };
 
 #endif // GLOBALIZATIONMECHANISM_H

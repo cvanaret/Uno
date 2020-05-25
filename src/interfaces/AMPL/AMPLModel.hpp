@@ -81,13 +81,13 @@ class AMPLModel: public Problem {
         int fortran_indexing;
         std::vector<double> ampl_tmp_gradient;
 
-		void generate_variables();
-		void initialize_objective();
-		void generate_constraints();
-        void create_objective_variables(ograd* ampl_variables);
-        void create_constraint_variables(int j, cgrad* ampl_variables);
-		void set_function_types(std::string file_name, Option_Info* option_info);
-		void initialize_lagrangian_hessian();
+		void generate_variables_();
+		void initialize_objective_();
+		void generate_constraints_();
+        void create_objective_variables_(ograd* ampl_variables);
+        void create_constraint_variables_(int j, cgrad* ampl_variables);
+		void set_function_types_(std::string file_name, Option_Info* option_info);
+		void initialize_lagrangian_hessian_();
 };
 
 #endif // AMPLMODEL_H

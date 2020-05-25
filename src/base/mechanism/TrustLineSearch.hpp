@@ -29,9 +29,9 @@ class TrustLineSearch : public GlobalizationMechanism {
         double radius; /*!< Current trust region radius */
 
     private:
-        bool termination(bool is_accepted, int iteration);
-        std::vector<Range> compute_variables_bounds(Problem& problem, Iterate& current_iterate, double radius);
-        void correct_multipliers(Problem& problem, SubproblemSolution& solution);
+        bool termination_(bool is_accepted, int iteration);
+        std::vector<Range> compute_variables_bounds_(Problem& problem, Iterate& current_iterate, double radius);
+        void correct_multipliers_(Problem& problem, SubproblemSolution& solution);
 
         double activity_tolerance_;
 };

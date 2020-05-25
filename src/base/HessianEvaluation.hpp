@@ -38,8 +38,8 @@ public:
     void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers);
     
 private:
-    CSCMatrix previous_hessian;
-    std::vector<double> previous_x;
+    CSCMatrix previous_hessian_;
+    std::vector<double> previous_x_;
 };
 
 class HessianEvaluationFactory {

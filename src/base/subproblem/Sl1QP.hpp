@@ -29,10 +29,6 @@ public:
     SubproblemSolution compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius = INFINITY) override;
     SubproblemSolution restore_feasibility(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius = INFINITY) override;
     
-    void evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate, double penalty_parameter);
-    
-    double compute_complementarity_error(Problem& problem, Iterate& iterate, Multipliers& multipliers) override;
-
     /* use pointers to allow polymorphism */
     std::shared_ptr<QPSolver> solver; /*!< Subproblem solver */
     std::shared_ptr<HessianEvaluation> hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
@@ -48,13 +44,15 @@ private:
     std::map<int, int> positive_part_variables; // p
     std::map<int, int> negative_part_variables; // n
 
-    int count_additional_variables(Problem& problem);
-    std::vector<Range> generate_variables_bounds(Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
-    SubproblemSolution solve_l1qp_subproblem(Problem& problem, Iterate& current_iterate, double trust_region_radius, double penalty_parameter);
-    double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length);
-    double compute_linearized_constraint_residual(std::vector<double>& x);
-    double compute_error(Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter);
-    void recover_active_set(Problem& problem, SubproblemSolution& solution, std::vector<Range>& variables_bounds);
+    int count_additional_variables_(Problem& problem);
+    void evaluate_optimality_iterate_(Problem& problem, Iterate& current_iterate, double penalty_parameter);
+    std::vector<Range> generate_variables_bounds_(Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
+    SubproblemSolution solve_l1qp_subproblem_(Problem& problem, Iterate& current_iterate, double trust_region_radius, double penalty_parameter);
+    double compute_predicted_reduction_(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length);
+    double compute_linearized_constraint_residual_(std::vector<double>& x);
+    double compute_error_(Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter);
+    double compute_complementarity_error_(Problem& problem, Iterate& iterate, Multipliers& multipliers) override;
+    void recover_active_set_(Problem& problem, SubproblemSolution& solution, std::vector<Range>& variables_bounds);
 };
 
 #endif // Sl1QP_H

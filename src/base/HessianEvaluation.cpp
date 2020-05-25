@@ -73,7 +73,7 @@ void ExactHessianEvaluation::compute(Problem& problem, Iterate& iterate, double 
 
 /* BFGS Hessian */
 
-BFGSHessianEvaluation::BFGSHessianEvaluation(int dimension): HessianEvaluation(dimension), previous_hessian(dimension, 1), previous_x(dimension) {
+BFGSHessianEvaluation::BFGSHessianEvaluation(int dimension): HessianEvaluation(dimension), previous_hessian_(dimension, 1), previous_x_(dimension) {
 }
 
 void BFGSHessianEvaluation::compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) {

@@ -42,7 +42,7 @@ public:
     static std::vector<double> compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, std::vector<double>& default_multipliers, double multipliers_max_size=1e3);
     
     double compute_KKT_error(Problem& problem, Iterate& iterate, double objective_mutiplier);
-    virtual double compute_complementarity_error(Problem& problem, Iterate& iterate, Multipliers& multipliers);
+    virtual double compute_complementarity_error_(Problem& problem, Iterate& iterate, Multipliers& multipliers);
     void compute_residuals(Problem& problem, Iterate& iterate, Multipliers& multipliers, double objective_multiplier);
     
     std::string residual_norm;

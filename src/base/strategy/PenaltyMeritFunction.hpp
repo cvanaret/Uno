@@ -24,9 +24,9 @@ class PenaltyMeritFunction : public GlobalizationStrategy {
         Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
 
     private:
-        double eta;
+        double decrease_fraction_;
         
-        double compute_linear_model(Problem& problem, SubproblemSolution& solution);
+        double compute_linear_model_(Problem& problem, SubproblemSolution& solution);
 };
 
 #endif // PENALTYMERITFUNCTION_H

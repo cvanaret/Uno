@@ -9,10 +9,10 @@
 
 Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals):
 // compute the number of variables and call the private constructor
-Sl1QP(problem, QP_solver, hessian_evaluation_method, use_trust_region, scale_residuals, this->count_additional_variables(problem)) {
+Sl1QP(problem, QP_solver, hessian_evaluation_method, use_trust_region, scale_residuals, this->count_additional_variables_(problem)) {
 }
 
-int Sl1QP::count_additional_variables(Problem& problem) {
+int Sl1QP::count_additional_variables_(Problem& problem) {
     int number_variables = problem.number_variables;
     for (int j = 0; j < problem.number_constraints; j++) {
         if (-INFINITY < problem.constraint_bounds[j].lb) {
@@ -58,13 +58,13 @@ SubproblemSolution Sl1QP::compute_step(Problem& problem, Iterate& current_iterat
     current_iterate.compute_constraints(problem);
 
     /* stage a: compute the step within trust region */
-    SubproblemSolution solution = this->solve_l1qp_subproblem(problem, current_iterate, trust_region_radius, this->penalty_parameter);
+    SubproblemSolution solution = this->solve_l1qp_subproblem_(problem, current_iterate, trust_region_radius, this->penalty_parameter);
     DEBUG << solution;
 
     /* penalty update: if penalty parameter is already 0, no need to decrease it */
     if (0. < this->penalty_parameter) {
         /* check infeasibility */
-        double linearized_residual = this->compute_linearized_constraint_residual(solution.x);
+        double linearized_residual = this->compute_linearized_constraint_residual_(solution.x);
         DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
 
         // if problem had to be relaxed
@@ -73,11 +73,11 @@ SubproblemSolution Sl1QP::compute_step(Problem& problem, Iterate& current_iterat
 
             /* stage c: solve the ideal l1 penalty problem with a zero penalty (no objective) */
             DEBUG << "Compute ideal solution:\n";
-            SubproblemSolution ideal_solution = this->solve_l1qp_subproblem(problem, current_iterate, trust_region_radius, 0.);
+            SubproblemSolution ideal_solution = this->solve_l1qp_subproblem_(problem, current_iterate, trust_region_radius, 0.);
             DEBUG << ideal_solution;
 
             /* compute the ideal error (with a zero penalty parameter) */
-            double ideal_error = this->compute_error(problem, current_iterate, ideal_solution.multipliers, 0.);
+            double ideal_error = this->compute_error_(problem, current_iterate, ideal_solution.multipliers, 0.);
             DEBUG << "Ideal error: " << ideal_error << "\n";
 
             if (ideal_error == 0.) {
@@ -85,7 +85,7 @@ SubproblemSolution Sl1QP::compute_step(Problem& problem, Iterate& current_iterat
                 this->penalty_parameter = 0.;
             }
             else {
-                double ideal_linearized_residual = this->compute_linearized_constraint_residual(ideal_solution.x);
+                double ideal_linearized_residual = this->compute_linearized_constraint_residual_(ideal_solution.x);
                 DEBUG << "Linearized residual mk(dk): " << ideal_linearized_residual << "\n\n";
 
                 /* decrease penalty parameter to satisfy 2 conditions */
@@ -111,10 +111,10 @@ SubproblemSolution Sl1QP::compute_step(Problem& problem, Iterate& current_iterat
                         }
                         else {
                             DEBUG << "\nAttempting to solve with penalty parameter " << this->penalty_parameter << "\n";
-                            solution = this->solve_l1qp_subproblem(problem, current_iterate, trust_region_radius, this->penalty_parameter);
+                            solution = this->solve_l1qp_subproblem_(problem, current_iterate, trust_region_radius, this->penalty_parameter);
                             DEBUG << solution;
 
-                            linearized_residual = this->compute_linearized_constraint_residual(solution.x);
+                            linearized_residual = this->compute_linearized_constraint_residual_(solution.x);
                             DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
                         }
                     }
@@ -159,14 +159,14 @@ SubproblemSolution Sl1QP::compute_step(Problem& problem, Iterate& current_iterat
     return solution;
 }
 
-SubproblemSolution Sl1QP::solve_l1qp_subproblem(Problem& problem, Iterate& current_iterate, double trust_region_radius, double penalty_parameter) {
+SubproblemSolution Sl1QP::solve_l1qp_subproblem_(Problem& problem, Iterate& current_iterate, double trust_region_radius, double penalty_parameter) {
     /* compute l1QP step */
-    this->evaluate_optimality_iterate(problem, current_iterate, penalty_parameter);
-    SubproblemSolution solution = this->compute_qp_step(problem, current_iterate, trust_region_radius);
+    this->evaluate_optimality_iterate_(problem, current_iterate, penalty_parameter);
+    SubproblemSolution solution = this->compute_qp_step_(problem, current_iterate, trust_region_radius);
     
     solution.objective_multiplier = penalty_parameter;
     solution.predicted_reduction = [&](double step_length) {
-        return this->compute_predicted_reduction(problem, current_iterate, solution, step_length);
+        return this->compute_predicted_reduction_(problem, current_iterate, solution, step_length);
     };
     
     // recompute active set: constraints are active when p-n = 0
@@ -174,7 +174,7 @@ SubproblemSolution Sl1QP::solve_l1qp_subproblem(Problem& problem, Iterate& curre
     return solution;
 }
 
-void Sl1QP::evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate, double penalty_parameter) {
+void Sl1QP::evaluate_optimality_iterate_(Problem& problem, Iterate& current_iterate, double penalty_parameter) {
     current_iterate.compute_objective_gradient(problem);
     std::map<int, double> objective_gradient;
     if (penalty_parameter != 0.) {
@@ -209,7 +209,7 @@ SubproblemSolution Sl1QP::restore_feasibility(Problem&, Iterate&, SubproblemSolu
     throw std::out_of_range("Sl1QP.compute_infeasibility_step is not implemented, since l1QP are always feasible");
 }
 
-double Sl1QP::compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
+double Sl1QP::compute_predicted_reduction_(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
     // the predicted reduction is quadratic
     if (step_length == 1.) {
         return current_iterate.feasibility_measure - solution.objective;
@@ -229,7 +229,7 @@ double Sl1QP::compute_predicted_reduction(Problem& problem, Iterate& current_ite
 
 /* private methods */
 
-std::vector<Range> Sl1QP::generate_variables_bounds(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+std::vector<Range> Sl1QP::generate_variables_bounds_(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
     // p and n are nonnegative
     std::vector<Range> variables_bounds(this->number_variables, {0., INFINITY});
 
@@ -242,7 +242,7 @@ std::vector<Range> Sl1QP::generate_variables_bounds(Problem& problem, Iterate& c
     return variables_bounds;
 }
 
-double Sl1QP::compute_linearized_constraint_residual(std::vector<double>& d) {
+double Sl1QP::compute_linearized_constraint_residual_(std::vector<double>& d) {
     double residual = 0.;
     // l1 residual of the linearized constraints
     for (std::pair<const int, int>& element: this->positive_part_variables) {
@@ -256,7 +256,7 @@ double Sl1QP::compute_linearized_constraint_residual(std::vector<double>& d) {
     return residual;
 }
 
-double Sl1QP::compute_error(Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter) {
+double Sl1QP::compute_error_(Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter) {
     /* measure that combines KKT error and complementarity error */
     double error = 0.;
 
@@ -264,12 +264,12 @@ double Sl1QP::compute_error(Problem& problem, Iterate& iterate, Multipliers& mul
     std::vector<double> lagrangian_gradient = iterate.lagrangian_gradient(problem, penalty_parameter, multipliers);
     error += norm_1(lagrangian_gradient);
     /* complementarity error */
-    error += this->compute_complementarity_error(problem, iterate, multipliers);
+    error += this->compute_complementarity_error_(problem, iterate, multipliers);
     return error;
 }
 
 /* complementary slackness error. Use abs/1e-8 to safeguard */
-double Sl1QP::compute_complementarity_error(Problem& problem, Iterate& iterate, Multipliers& multipliers) {
+double Sl1QP::compute_complementarity_error_(Problem& problem, Iterate& iterate, Multipliers& multipliers) {
     double error = 0.;
     /* bound constraints */
     for (int i = 0; i < problem.number_variables; i++) {
@@ -301,7 +301,7 @@ double Sl1QP::compute_complementarity_error(Problem& problem, Iterate& iterate, 
     return error;
 }
 
-void Sl1QP::recover_active_set(Problem& problem, SubproblemSolution& solution, std::vector<Range>& variables_bounds) {
+void Sl1QP::recover_active_set_(Problem& problem, SubproblemSolution& solution, std::vector<Range>& variables_bounds) {
     solution.active_set.at_lower_bound.clear();
     solution.active_set.at_upper_bound.clear();
     // variables

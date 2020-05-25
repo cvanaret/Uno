@@ -23,23 +23,23 @@ Iterate LineSearch::compute_acceptable_iterate(Problem& problem, Iterate& curren
         bool is_accepted = false;
         this->number_iterations = 0;
 
-        while (!this->termination(is_accepted)) {
+        while (!this->termination_(is_accepted)) {
             this->number_iterations++;
-            this->print_iteration();
+            this->print_iteration_();
 
             try {
                 /* check whether the trial step is accepted */
                 is_accepted = this->globalization_strategy.check_step(problem, current_iterate, solution, this->step_length);
             }
             catch (const IEEE_Error& e) {
-                this->print_warning(e.what());
+                this->print_warning_(e.what());
                 is_accepted = false;
             }
 
             if (is_accepted) {
-                current_iterate.status = this->compute_status(problem, current_iterate, this->step_length*solution.norm, solution.objective_multiplier);
+                current_iterate.status = this->compute_status_(problem, current_iterate, this->step_length*solution.norm, solution.objective_multiplier);
                 /* print summary */
-                this->print_acceptance(step_length, step_length * solution.norm);
+                this->print_acceptance_(step_length, step_length * solution.norm);
             }
             else {
                 /* decrease the step length */
@@ -64,7 +64,7 @@ Iterate LineSearch::compute_acceptable_iterate(Problem& problem, Iterate& curren
     return current_iterate;
 }
 
-bool LineSearch::termination(bool is_accepted) {
+bool LineSearch::termination_(bool is_accepted) {
     if (is_accepted) {
         return true;
     }
@@ -74,12 +74,12 @@ bool LineSearch::termination(bool is_accepted) {
     return false;
 }
 
-void LineSearch::print_iteration() {
+void LineSearch::print_iteration_() {
     DEBUG << "\tLINE SEARCH iteration " << this->number_iterations << ", step_length " << this->step_length << "\n";
     return;
 }
 
-void LineSearch::print_acceptance(double step_length, double solution_norm) {
+void LineSearch::print_acceptance_(double step_length, double solution_norm) {
     DEBUG << CYAN "LS trial point accepted\n" RESET;
     INFO << "minor: " << this->number_iterations << "\t";
     INFO << "step length: " << step_length << "\t\t";
@@ -88,7 +88,7 @@ void LineSearch::print_acceptance(double step_length, double solution_norm) {
     return;
 }
 
-void LineSearch::print_warning(const char* message) {
+void LineSearch::print_warning_(const char* message) {
     WARNING << RED << message << RESET "\n";
     return;
 }

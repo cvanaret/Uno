@@ -54,17 +54,17 @@ AMPLModel::AMPLModel(std::string file_name, ASL_pfgh* asl, int fortran_indexing)
     this->objective_sign = (this->asl_->i.objtype_[0] == 1) ? -1. : 1.;
 
     /* variables */
-    this->generate_variables();
+    this->generate_variables_();
 
     /* objective function */
-    this->initialize_objective();
+    this->initialize_objective_();
 
     /* constraints */
-    this->generate_constraints();
-    set_function_types(file_name, &info);
+    this->generate_constraints_();
+    set_function_types_(file_name, &info);
 
     /* Lagrangian Hessian */
-    this->initialize_lagrangian_hessian();
+    this->initialize_lagrangian_hessian_();
 
     /* evaluations counters */
     this->number_eval_objective = 0;
@@ -84,7 +84,7 @@ bool is_discrete(ASL_pfgh* asl, int index) {
             (asl->i.n_var_ - asl->i.niv_ - asl->i.nbv_ <= index && index < asl->i.n_var_));
 }
 
-void AMPLModel::generate_variables() {
+void AMPLModel::generate_variables_() {
     SufDesc* uncertain_suffixes = suf_get_ASL((ASL*) this->asl_, UNCERTAIN_SUFFIX, ASL_Sufkind_var);
     
     for (int i = 0; i < this->number_variables; i++) {
@@ -103,7 +103,7 @@ void AMPLModel::generate_variables() {
 }
 
 // TODO: fix this duplication!
-void AMPLModel::create_objective_variables(ograd* ampl_variables) {
+void AMPLModel::create_objective_variables_(ograd* ampl_variables) {
     /* create the dependency pattern as an associative table (variable index, coefficient) */
     ograd* ampl_variables_tmp = ampl_variables;
     while (ampl_variables_tmp != NULL) {
@@ -113,7 +113,7 @@ void AMPLModel::create_objective_variables(ograd* ampl_variables) {
     return;
 }
 
-void AMPLModel::create_constraint_variables(int j, cgrad* ampl_variables) {
+void AMPLModel::create_constraint_variables_(int j, cgrad* ampl_variables) {
     /* create the dependency pattern as an associative table (variable index, coefficient) */
     cgrad* ampl_variables_tmp = ampl_variables;
     while (ampl_variables_tmp != NULL) {
@@ -176,9 +176,9 @@ std::map<int, double> AMPLModel::objective_sparse_gradient(std::vector<double>& 
     return gradient;
 }
 
-void AMPLModel::initialize_objective() {
+void AMPLModel::initialize_objective_() {
     this->objective_name = obj_name_ASL((ASL*) this->asl_, 0);
-    this->create_objective_variables(this->asl_->i.Ograd_[0]);
+    this->create_objective_variables_(this->asl_->i.Ograd_[0]);
     return;
 }
 
@@ -260,23 +260,23 @@ std::vector<std::map<int, double> > AMPLModel::constraints_sparse_jacobian(std::
     return constraints_jacobian;
 }
 
-void AMPLModel::generate_constraints() {
+void AMPLModel::generate_constraints_() {
     SufDesc* uncertain_suffixes = suf_get_ASL((ASL*) this->asl_, UNCERTAINTY_SET_SUFFIX, ASL_Sufkind_con);
     
     for (int j = 0; j < this->number_constraints; j++) {
         this->constraint_name[j] = con_name_ASL((ASL*) this->asl_, j);
-        this->create_constraint_variables(j, this->asl_->i.Cgrad_[j]);
+        this->create_constraint_variables_(j, this->asl_->i.Cgrad_[j]);
         double lb = (this->asl_->i.LUrhs_ != NULL) ? this->asl_->i.LUrhs_[2 * j] : -INFINITY;
         double ub = (this->asl_->i.LUrhs_ != NULL) ? this->asl_->i.LUrhs_[2 * j + 1] : INFINITY;
         this->constraint_bounds[j] = {lb, ub};
         this->constraint_is_uncertainty_set[j] = (uncertain_suffixes->u.i != NULL && uncertain_suffixes->u.i[j] == 1);
     }
     this->determine_bounds_types(this->constraint_bounds, this->constraint_status);
-    this->determine_constraints();
+    this->determine_constraints_();
     return;
 }
 
-void AMPLModel::set_function_types(std::string file_name, Option_Info* option_info) {
+void AMPLModel::set_function_types_(std::string file_name, Option_Info* option_info) {
     /* allocate a temporary ASL to read Hessian sparsity pattern */
     ASL_pfgh* asl = (ASL_pfgh*) ASL_alloc(ASL_read_fg);
     // char* stub = getstops(file_name, option_info);
@@ -333,7 +333,7 @@ void AMPLModel::set_function_types(std::string file_name, Option_Info* option_in
     return;
 }
 
-void AMPLModel::initialize_lagrangian_hessian() {
+void AMPLModel::initialize_lagrangian_hessian_() {
     /* compute the maximum number of nonzero elements, provided that all multipliers are non-zero */
     /* fint (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri); */
     int objective_number = 0;

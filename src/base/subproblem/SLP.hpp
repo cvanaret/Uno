@@ -11,8 +11,8 @@ public:
     SubproblemSolution restore_feasibility(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius = INFINITY) override;
     
 private:
-    void evaluate_optimality_iterate(Problem& problem, Iterate& current_iterate);
-    void evaluate_feasibility_iterate(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution);
+    void evaluate_optimality_iterate_(Problem& problem, Iterate& current_iterate);
+    void evaluate_feasibility_iterate_(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution);
 };
 
 #endif // SLP_H

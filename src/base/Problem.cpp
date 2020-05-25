@@ -53,7 +53,7 @@ void Problem::determine_bounds_types(std::vector<Range>& bounds, std::vector<Con
     return;
 }
 
-void Problem::determine_constraints() {
+void Problem::determine_constraints_() {
     int current_equality_constraint = 0;
     int current_inequality_constraint = 0;
     for (int j = 0; j < this->number_constraints; j++) {
