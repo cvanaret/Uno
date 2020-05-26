@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 
 # specify local compilers and compiler flags
-PROFILER = #-pg
+PROFILER =#-pg
 CC     = gcc
 CPP    = g++ -std=c++11
 F77    = gfortran
@@ -12,11 +12,11 @@ include Makefile.local
 LFLAGS = $(PROFILER)
 
 # local libraries
-L = -pthread -ldl -lf2c
-LIBCOIN   = -lOsiClp -lClp -lCoinUtils -lOsi
+L = -pthread -ldl -lf2c -fopenmp -lm
+# LIBCOIN   = -lOsiClp -lClp -lCoinUtils -lOsi
 LIBLINALG = -lblas -llapack
 
-INCLUDES = -I base -I base/mechanism -I base/strategy -I base/subproblem -I logger -I interfaces/AMPL -I solvers/QP -I solvers/KKT -I solvers/NLP -I $(AMPL_DIR)
+INCLUDES = -I base -I base/mechanism -I base/strategy -I base/subproblem -I logger -I interfaces/AMPL -I solvers/QP -I solvers/linear -I solvers/NLP -I $(AMPL_DIR)
 # -I $(BFGS_DIR)
 
 SRC_FILES = base/Argonot.cpp base/Iterate.cpp \
@@ -27,19 +27,21 @@ SRC_FILES = base/Argonot.cpp base/Iterate.cpp \
 	base/mechanism/GlobalizationMechanism.cpp base/mechanism/TrustRegion.cpp \
 	base/mechanism/LineSearch.cpp base/mechanism/TrustLineSearch.cpp \
 	base/mechanism/GlobalizationMechanismFactory.cpp \
-	base/subproblem/Subproblem.cpp base/subproblem/ActiveSetMethod.cpp base/subproblem/SQP.cpp base/subproblem/SLP.cpp base/subproblem/Sl1QP.cpp base/subproblem/InteriorPoint.cpp \
+	base/subproblem/Subproblem.cpp base/subproblem/ActiveSetMethod.cpp base/subproblem/SQP.cpp base/subproblem/SLP.cpp base/subproblem/Sl1QP.cpp base/subproblem/SLPEQP.cpp base/subproblem/InteriorPoint.cpp \
 	base/subproblem/SubproblemFactory.cpp base/subproblem/SubproblemSolution.cpp base/Utils.cpp \
 	solvers/QP/BQPDSolver.cpp solvers/QP/QPSolverFactory.cpp \
-	solvers/KKT/MA57Solver.cpp solvers/NLP/LBFGSB.cpp
+	solvers/linear/MA57Solver.cpp \
+	solvers/NLP/LBFGSB.cpp
 OBJ_FILES = $(subst .cpp,.o,$(SRC_FILES)) solvers/QP/wdotd.o $(BFGS_DIR)/lbfgsb.o $(BFGS_DIR)/timer.o $(BFGS_DIR)/blas.o $(BFGS_DIR)/linpack.o
 EXEC_NAME = argonot
 
-#   base/subproblem/SLPEQP.cpp
+#  solvers/linear/PardisoSolver.cpp
 # base/strategy/Tube.cpp base/strategy/TubeStrategy.cpp
 # base/subproblem/AugmentedLagrangian.cpp \
 
-DEFINES =# -D BQPD # https://stackoverflow.com/questions/10337248/what-does-the-g-d-flag-do
-LIBS = $(AMPL_DIR)/amplsolver.a $(BQPD_DIR)/libbqpd.a -L$(MA57_DIR) -lma57 -l$(METIS) -lf2c
+# https://stackoverflow.com/questions/10337248/what-does-the-g-d-flag-do
+DEFINES = -D BQPD -D MA57 -D PARDISO -D L_BFGS_B
+LIBS = $(AMPL_DIR)/amplsolver.a $(BQPD_DIR)/libbqpd.a -L$(MA57_DIR) -lma57 -l$(METIS) -lf2c -L$(PARDISO_DIR) #-lpardiso600-GNU720-X86-64
 
 #%.o: %.cpp %.hpp
 .cpp.o:
