@@ -4,12 +4,12 @@
 
 extern "C" {
     // MA57
-    extern void ma57id_(double cntl[], int icntl[]);
-    extern void ma57ad_(int* n, int* ne, int irn[], int jcn[], int* lkeep, int keep[], int iwork[], int icntl[],
+    void ma57id_(double cntl[], int icntl[]);
+    void ma57ad_(int* n, int* ne, int irn[], int jcn[], int* lkeep, int keep[], int iwork[], int icntl[],
             int info[], double rinfo[]);
-    extern void ma57bd_(int* n, int* ne, double a[], double fact[], int* lfact, int ifact[], int* lifact, int* lkeep,
+    void ma57bd_(int* n, int* ne, double a[], double fact[], int* lfact, int ifact[], int* lifact, int* lkeep,
             int keep[], int iwork[], int icntl[], double cntl[], int info[], double rinfo[]);
-    extern void ma57cd_(int* job, int* n, double fact[], int* lfact, int ifact[], int* lifact, int* nrhs, double rhs[],
+    void ma57cd_(int* job, int* n, double fact[], int* lfact, int ifact[], int* lifact, int* nrhs, double rhs[],
             int* lrhs, double work[], int* lwork, int iwork[], int icntl[], int info[]);
 }
 
