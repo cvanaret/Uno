@@ -11,14 +11,14 @@
 #include "GlobalizationMechanismFactory.hpp"
 #include "Argonot.hpp"
 #include "Logger.hpp"
-#include "Parallel.hpp"
+#include "PardisoSolver.hpp"
 
 void run_argonot(std::string problem_name, std::map<std::string, std::string> options) {
     // generate Hessians with a Fortran indexing (starting at 1) that is supported by solvers
     int fortran_indexing = 1;
     //std::cout.precision(17);
     AMPLModel problem = AMPLModel(problem_name, fortran_indexing);
-    
+
     /* create the subproblem strategy */
     bool use_trust_region = (options["mechanism"] == "TR");
     bool scale_residuals = (options["scale_residuals"] == "yes");
@@ -30,7 +30,8 @@ void run_argonot(std::string problem_name, std::map<std::string, std::string> op
     /* create the globalization mechanism */
     std::shared_ptr<GlobalizationMechanism> mechanism = GlobalizationMechanismFactory::create(options["mechanism"], *strategy, options);
 
-    int max_iterations = stoi(options["max_iterations"]);
+    int max_iterations = std::stoi(options["max_iterations"]);
+    bool preprocessing = (options["preprocessing"] == "yes");
     Argonot argonot = Argonot(*mechanism, max_iterations);
 
     /* initial primal and dual points */
@@ -38,8 +39,8 @@ void run_argonot(std::string problem_name, std::map<std::string, std::string> op
     Multipliers multipliers(problem.number_variables, problem.number_constraints);
     multipliers.constraints = problem.dual_initial_solution();
 
-    bool preprocessing = (options["preprocessing"] == "yes");
     Result result = argonot.solve(problem, x, multipliers, preprocessing);
+    
     /* remove auxiliary variables */
     result.solution.x.resize(problem.number_variables);
     result.solution.multipliers.lower_bounds.resize(problem.number_variables);
@@ -76,7 +77,7 @@ void set_logger(std::map<std::string, std::string> options) {
 
     try {
         std::string logger_level = options.at("logger");
-        
+
         if (logger_level.compare("ERROR") == 0) {
             Logger::logger_level = ERROR;
         }
@@ -101,7 +102,8 @@ void set_logger(std::map<std::string, std::string> options) {
         else if (logger_level.compare("DEBUG4") == 0) {
             Logger::logger_level = DEBUG4;
         }
-    } catch (std::out_of_range) {
+    }
+    catch (std::out_of_range) {
     }
     return;
 }
@@ -187,6 +189,12 @@ std::map<std::string, std::string> get_default_values(std::string file_name) {
 //    return;
 //}
 
+//void test_pardiso() {
+//    PardisoSolver solver;
+//    std::cout << "PARDISO created\n";
+//    return;
+//}
+
 int main(int argc, char* argv[]) {
     if (1 < argc) {
         /* get the default values */
@@ -197,6 +205,11 @@ int main(int argc, char* argv[]) {
 
         if (std::string(argv[1]).compare("-v") == 0) {
             std::cout << "Welcome in Argonot\n";
+            std::cout << "To solve an AMPL problem, type ./argonot path_to_file/file.nl\n";
+            std::cout << "To choose a globalization mechanism, type ./argonot -mechanism [LS|TR] path_to_file/file.nl\n";
+            std::cout << "To choose a globalization strategy, type ./argonot -strategy [penalty|filter|nonmonotone-filter] path_to_file/file.nl\n";
+            std::cout << "To choose a subproblem, type ./argonot -subproblem [SQP|SLP|Sl1QP|SLPEQP|IPM] path_to_file/file.nl\n";
+            std::cout << "The three options can be combined in the same command line. Autocompletion is active.\n";
         }
         else {
             std::string problem_name = std::string(argv[argc - 1]);
