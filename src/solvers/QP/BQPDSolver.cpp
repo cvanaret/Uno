@@ -51,7 +51,6 @@ SubproblemSolution BQPDSolver::solve_QP(std::vector<Range>& variables_bounds, st
         i++;
     }
 
-    DEBUG1 << "hessian with " << hessian.number_nonzeros() << " terms:\n" << hessian;
     print_vector(DEBUG1, this->hessian_sparsity_, 0, i);
     return this->solve_subproblem_(variables_bounds, constraints_bounds, linear_objective, constraints_jacobian, x);
 }
