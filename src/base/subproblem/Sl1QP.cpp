@@ -7,9 +7,9 @@
 #include "BQPDSolver.hpp"
 #include "QPSolverFactory.hpp"
 
-Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals):
+Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals, double initial_parameter):
 // compute the number of variables and call the private constructor
-Sl1QP(problem, QP_solver, hessian_evaluation_method, use_trust_region, scale_residuals, this->count_additional_variables_(problem)) {
+Sl1QP(problem, QP_solver, hessian_evaluation_method, use_trust_region, scale_residuals, initial_parameter, this->count_additional_variables_(problem)) {
 }
 
 int Sl1QP::count_additional_variables_(Problem& problem) {
@@ -25,12 +25,12 @@ int Sl1QP::count_additional_variables_(Problem& problem) {
     return number_variables;
 }
 
-Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals, int number_variables):
+Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals, double initial_parameter, int number_variables):
 ActiveSetMethod(problem, scale_residuals),
 solver(QPSolverFactory::create(QP_solver, number_variables, problem.number_constraints, problem.hessian_maximum_number_nonzeros + problem.number_variables, true)),
 // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
 hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables)),
-penalty_parameter(1.),
+penalty_parameter(initial_parameter),
 parameters({10., 0.1, 0.1}),
 number_variables(number_variables) {
     // p and n are generated on the fly to solve the QP
