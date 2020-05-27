@@ -28,7 +28,7 @@ std::shared_ptr<Subproblem> SubproblemFactory::create(Problem& problem, const st
 //    }
     /* interior point method */
     else if (type == "IPM") {
-        return std::make_shared<InteriorPoint>(problem, options["hessian"], use_trust_region, scale_residuals);
+        return std::make_shared<InteriorPoint>(problem, options["linear_solver"], options["hessian"], use_trust_region, scale_residuals);
     }
     else {
         throw std::invalid_argument("Subproblem method " + type + " does not exist");

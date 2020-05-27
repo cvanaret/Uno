@@ -4,7 +4,7 @@
 #include <exception>
 #include <set>
 #include "Subproblem.hpp"
-#include "MA57Solver.hpp"
+#include "LinearSolver.hpp"
 #include "HessianEvaluation.hpp"
 
 struct InteriorPointParameters {
@@ -34,7 +34,7 @@ public:
     /*!
      *  Constructor
      */
-    InteriorPoint(Problem& problem, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals);
+    InteriorPoint(Problem& problem, std::string linear_solver_name, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals);
 
     Iterate evaluate_initial_point(Problem& problem, std::vector<double>& x, Multipliers& default_multipliers) override;
 
@@ -48,7 +48,7 @@ public:
     double compute_central_complementarity_error(Iterate& iterate, double mu, std::vector<Range>& variables_bounds);
 
     std::shared_ptr<HessianEvaluation> hessian_evaluation;
-    MA57Solver solver; /*!< Solver that solves the subproblem */
+    std::shared_ptr<LinearSolver> solver; /*!< Solver that solves the subproblem */
     /* barrier parameter */
     double mu_optimality;
     double mu_feasibility;

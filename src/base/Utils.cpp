@@ -144,3 +144,14 @@ double dot(std::map<int, double>& x, std::map<int, double>& y) {
     }
     return dot;
 }
+
+std::string join(std::vector<std::string> vector, const char* separator) {
+    std::string s;
+    if (0 < vector.size()) {
+        s.append(vector[0]);
+    }
+    for (unsigned int i = 1; i < vector.size(); i++) {
+        s.append(separator).append(vector[i]);
+    }
+    return s;
+}

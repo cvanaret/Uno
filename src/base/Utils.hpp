@@ -96,4 +96,6 @@ void print_vector(const Level& level, std::map<T, U> x) {
     return;
 }
 
+std::string join(std::vector<std::string> vector, const char* separator);
+
 #endif // UTILS_H

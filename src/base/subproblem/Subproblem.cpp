@@ -1,4 +1,5 @@
 #include "Subproblem.hpp"
+#include "LinearSolverFactory.hpp"
 
 Subproblem::Subproblem(std::string residual_norm, std::vector<Range>& variables_bounds, bool scale_residuals):
 residual_norm(residual_norm),
@@ -50,11 +51,11 @@ std::vector<Range> Subproblem::generate_constraints_bounds(Problem& problem, std
 }
 
 std::vector<double> Subproblem::compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, std::vector<double>& default_multipliers, double multipliers_max_size) {
-    MA57Solver solver;
+    std::shared_ptr<LinearSolver> solver = LinearSolverFactory::create("MA57", problem.number_variables, problem.number_constraints, problem.hessian_maximum_number_nonzeros);
     return Subproblem::compute_least_square_multipliers(problem, current_iterate, default_multipliers, solver, multipliers_max_size);
 }
 
-std::vector<double> Subproblem::compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, std::vector<double>& default_multipliers, MA57Solver& solver, double multipliers_max_size) {
+std::vector<double> Subproblem::compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, std::vector<double>& default_multipliers, std::shared_ptr<LinearSolver> solver, double multipliers_max_size) {
     current_iterate.compute_objective_gradient(problem);
     current_iterate.compute_constraints_jacobian(problem);
 
@@ -98,9 +99,8 @@ std::vector<double> Subproblem::compute_least_square_multipliers(Problem& proble
     }
     DEBUG << "Multipliers RHS:\n";
     print_vector(DEBUG, rhs);
-
-    MA57Factorization factorization = solver.factorize(matrix);
-    solver.solve(factorization, rhs);
+    
+    solver->solve(matrix, rhs);
     DEBUG << "Solution: ";
     std::vector<double>& solution = rhs;
     print_vector(DEBUG, solution);
