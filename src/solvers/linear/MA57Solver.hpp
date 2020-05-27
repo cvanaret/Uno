@@ -5,20 +5,6 @@
 #include "Matrix.hpp"
 #include "LinearSolver.hpp"
 
-struct MA57Factorization {
-    int dimension;
-	std::vector<double> fact;
-	int lfact;
-	std::vector<int> ifact;
-	int lifact;
-	std::vector<int> iwork;
-    std::vector<int> info;
-    
-    int number_negative_eigenvalues();
-    bool matrix_is_singular();
-    int rank();
-};
-
 /*! \class MA57Solver
 * \brief Interface for MA57
 * see https://github.com/YimingYAN/linSolve
@@ -32,8 +18,8 @@ class MA57Solver: public LinearSolver {
 		short use_fortran;
 		
         void solve(COOMatrix& matrix, std::vector<double>& rhs) override;
-		void solve(MA57Factorization& factorization, std::vector<double>& rhs);
-        MA57Factorization factorize(COOMatrix& matrix);
+		void solve(MA57Factorization& factorization, std::vector<double>& rhs) override;
+        MA57Factorization factorize(COOMatrix& matrix) override;
 		
 	private:
 		/* for ma57id_ */
