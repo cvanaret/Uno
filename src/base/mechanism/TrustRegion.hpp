@@ -17,12 +17,12 @@ public:
      * \param step_accept: strategy to accept or reject a step
      * \param initial_radius: initial trust region radius
      */
-    TrustRegion(GlobalizationStrategy& globalization_strategy, double tolerance, double initial_radius, int max_iterations = 100);
+    TrustRegion(GlobalizationStrategy& globalization_strategy, double tolerance, double initial_radius, int max_iterations);
 
     Iterate compute_acceptable_iterate(Problem& problem, Iterate& current_iterate) override;
     Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
 
-    static void correct_multipliers_(SubproblemSolution& solution, double radius);
+    static void correct_active_set(SubproblemSolution& solution, const double radius);
     
     double radius; /*!< Current trust region radius */
 

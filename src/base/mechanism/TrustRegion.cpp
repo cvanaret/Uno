@@ -23,13 +23,13 @@ Iterate TrustRegion::compute_acceptable_iterate(Problem& problem, Iterate& curre
 
             /* compute the step within trust region */
             SubproblemSolution solution = this->globalization_strategy.subproblem.compute_step(problem, current_iterate, this->radius);
-            
+
             /* set bound multipliers of active trust region to 0 */
-            this->correct_multipliers_(solution, this->radius);
-            
+            this->correct_active_set(solution, this->radius);
+
             /* check whether the trial step is accepted */
             is_accepted = this->globalization_strategy.check_step(problem, current_iterate, solution);
-            
+
             if (is_accepted) {
                 current_iterate.status = this->compute_status_(problem, current_iterate, solution.norm, solution.objective_multiplier);
                 /* print summary */
@@ -54,16 +54,26 @@ Iterate TrustRegion::compute_acceptable_iterate(Problem& problem, Iterate& curre
     return current_iterate;
 }
 
-void TrustRegion::correct_multipliers_(SubproblemSolution& solution, double radius) {
-    /* set multipliers for bound constraints active at trust region to 0 */
-    for (int i: solution.active_set.bounds.at_upper_bound) {
-        if (solution.x[i] == radius) {
-            solution.multipliers.upper_bounds[i] = 0.;
+void TrustRegion::correct_active_set(SubproblemSolution& solution, const double radius) {
+    /* update active set and set multipliers for bound constraints active at trust region to 0 */
+    for (std::set<int>::iterator it = solution.active_set.bounds.at_lower_bound.begin(); it != solution.active_set.bounds.at_lower_bound.end();) {
+        int i = *it;
+        if (solution.x[i] == -radius) {
+            it = solution.active_set.bounds.at_lower_bound.erase(it);
+            solution.multipliers.lower_bounds[i] = 0.;
+        }
+        else {
+            ++it;
         }
     }
-    for (int i: solution.active_set.bounds.at_lower_bound) {
-        if (solution.x[i] == -radius) {
-            solution.multipliers.lower_bounds[i] = 0.;
+    for (std::set<int>::iterator it = solution.active_set.bounds.at_upper_bound.begin(); it != solution.active_set.bounds.at_upper_bound.end();) {
+        int i = *it;
+        if (solution.x[i] == radius) {
+            it = solution.active_set.bounds.at_upper_bound.erase(it);
+            solution.multipliers.upper_bounds[i] = 0.;
+        }
+        else {
+            ++it;
         }
     }
     return;

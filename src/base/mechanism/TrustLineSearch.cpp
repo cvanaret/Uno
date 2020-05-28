@@ -29,7 +29,7 @@ Iterate TrustLineSearch::compute_acceptable_iterate(Problem& problem, Iterate& c
             }
             else {
                 /* set multipliers of active trust region to 0 */
-                TrustRegion::correct_multipliers_(solution, this->radius);
+                TrustRegion::correct_active_set(solution, this->radius);
 
                 /* length follows the following sequence: 1, ratio, ratio^2, ratio^3, ... */
                 double step_length = 1.;
