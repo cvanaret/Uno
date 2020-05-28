@@ -16,30 +16,7 @@ extern "C" {
 MA57Solver::MA57Solver(): use_fortran(1), cntl_(5), icntl_(20), rinfo_(20) {
 }
 
-void MA57Solver::solve(MA57Factorization& factorization, std::vector<double>& rhs) {
-    /* solve */
-    int n = factorization.dimension;
-    int job = 1;
-    int nrhs = 1; // number of right hand side being solved
-    int lrhs = n; // integer, length of rhs
-    int lwork = 1.2 * n*nrhs; // length of w; lw>=n*nrhs
-    std::vector<double> work(lwork);
-    // solve the linear system
-    ma57cd_(&job, &n, factorization.fact.data(), &factorization.lfact, factorization.ifact.data(), &factorization.lifact, &nrhs, rhs.data(), &lrhs, work.data(),
-            &lwork, factorization.iwork.data(), this->icntl_.data(), factorization.info.data());
-    // the solution is copied in rhs
-    return;
-}
-
-void MA57Solver::solve(COOMatrix& matrix, std::vector<double>& rhs) {
-    // factorize the matrix
-    MA57Factorization factorization = this->factorize(matrix);
-    // solve the linear system and save the solution in rhs
-    this->solve(factorization, rhs);
-    return;
-}
-
-MA57Factorization MA57Solver::factorize(COOMatrix& matrix) {
+void MA57Solver::factorize(COOMatrix& matrix) {
     if (matrix.fortran_indexing != this->use_fortran) {
         throw std::runtime_error("MA57Solver::factorize: please use the correct Fortran indexing");
     }
@@ -68,19 +45,35 @@ MA57Factorization MA57Solver::factorize(COOMatrix& matrix) {
     /* factorize */
     ma57bd_(&n, &nnz, matrix.matrix.data(), fact.data(), &lfact, ifact.data(), &lifact, &lkeep, keep.data(), iwork.data(), this->icntl_.data(), this->cntl_.data(), info.data(), this->rinfo_.data());
     
-    return {n, fact, lfact, ifact, lifact, iwork, info};
+    this->factorization_ = {n, fact, lfact, ifact, lifact, iwork, info};
+    return;
 }
 
-int MA57Factorization::number_negative_eigenvalues() {
-    return this->info[23];
+void MA57Solver::solve(std::vector<double>& rhs) {
+    /* solve */
+    int n = this->factorization_.dimension;
+    int job = 1;
+    int nrhs = 1; // number of right hand side being solved
+    int lrhs = n; // integer, length of rhs
+    int lwork = 1.2 * n*nrhs; // length of w; lw>=n*nrhs
+    std::vector<double> work(lwork);
+    // solve the linear system
+    ma57cd_(&job, &n, this->factorization_.fact.data(), &this->factorization_.lfact, this->factorization_.ifact.data(), &this->factorization_.lifact, &nrhs, rhs.data(), &lrhs, work.data(),
+            &lwork, this->factorization_.iwork.data(), this->icntl_.data(), this->factorization_.info.data());
+    // the solution is copied in rhs
+    return;
 }
 
-bool MA57Factorization::matrix_is_singular() {
-    return (this->info[0] == 4);
+int MA57Solver::number_negative_eigenvalues() {
+    return this->factorization_.info[23];
 }
 
-int MA57Factorization::rank() {
-    return this->info[24];
+bool MA57Solver::matrix_is_singular() {
+    return (this->factorization_.info[0] == 4);
+}
+
+int MA57Solver::rank() {
+    return this->factorization_.info[24];
 }
 
 

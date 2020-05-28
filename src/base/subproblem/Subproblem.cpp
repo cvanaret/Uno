@@ -100,7 +100,8 @@ std::vector<double> Subproblem::compute_least_square_multipliers(Problem& proble
     DEBUG << "Multipliers RHS:\n";
     print_vector(DEBUG, rhs);
     
-    solver->solve(matrix, rhs);
+    solver->factorize(matrix);
+    solver->solve(rhs);
     DEBUG << "Solution: ";
     std::vector<double>& solution = rhs;
     print_vector(DEBUG, solution);

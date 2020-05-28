@@ -28,12 +28,12 @@ CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& hessian) {
     }
     COOMatrix coo_hessian = hessian.to_COO();
     DEBUG << "Testing factorization with inertia term " << inertia << "\n";
-    MA57Factorization factorization = solver.factorize(coo_hessian);
+    solver.factorize(coo_hessian);
     
     bool good_inertia = false;
     while (!good_inertia) {
-        DEBUG << factorization.number_negative_eigenvalues() << " negative eigenvalues\n";
-        if (!factorization.matrix_is_singular() && factorization.number_negative_eigenvalues() == 0) {
+        DEBUG << solver.number_negative_eigenvalues() << " negative eigenvalues\n";
+        if (!solver.matrix_is_singular() && solver.number_negative_eigenvalues() == 0) {
             good_inertia = true;
             DEBUG << "Factorization was a success with inertia " << inertia << "\n";
         }
@@ -48,7 +48,7 @@ CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& hessian) {
             hessian = hessian.add_identity_multiple(inertia - previous_inertia);
             coo_hessian = hessian.to_COO();
             DEBUG << "Testing factorization with inertia term " << inertia << "\n";
-            factorization = solver.factorize(coo_hessian);
+            solver.factorize(coo_hessian);
         }
     }
     return hessian;
