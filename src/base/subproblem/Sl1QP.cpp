@@ -303,19 +303,14 @@ double Sl1QP::compute_complementarity_error_(Problem& problem, Iterate& iterate,
 }
 
 void Sl1QP::recover_active_set_(Problem& problem, SubproblemSolution& solution, std::vector<Range>& variables_bounds) {
-    solution.active_set.at_lower_bound.clear();
-    solution.active_set.at_upper_bound.clear();
     // variables
-    for (int i = 0; i < problem.number_variables; i++) {
-        if (solution.x[i] == variables_bounds[i].lb) {
-            solution.active_set.at_lower_bound.insert(i);
-        }
-        else if (solution.x[i] == variables_bounds[i].ub) {
-            solution.active_set.at_upper_bound.insert(i);
-        }
+    for (unsigned int i = problem.number_variables; i < solution.x.size(); i++) {
+        solution.active_set.bounds.at_lower_bound.erase(i);
+        solution.active_set.bounds.at_upper_bound.erase(i);
     }
     // constraints: only when p-n = 0
     for (unsigned int j = 0; j < solution.multipliers.constraints.size(); j++) {
+        // compute constraint violation
         double constraint_violation = 0.;
         if (positive_part_variables.find(j) != positive_part_variables.end()) {
             constraint_violation += solution.x[this->positive_part_variables[j]];
@@ -323,8 +318,10 @@ void Sl1QP::recover_active_set_(Problem& problem, SubproblemSolution& solution, 
         if (negative_part_variables.find(j) != negative_part_variables.end()) {
             constraint_violation += solution.x[this->negative_part_variables[j]];
         }
-        if (constraint_violation == 0.) {
-            solution.active_set.at_lower_bound.insert(problem.number_variables + j);
+        // update active set
+        if (0. < constraint_violation) {
+            solution.active_set.constraints.at_lower_bound.erase(j);
+            solution.active_set.constraints.at_upper_bound.erase(j);
         }
     }
     return;

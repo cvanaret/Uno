@@ -154,20 +154,15 @@ SubproblemSolution BQPDSolver::generate_solution_(std::vector<double>& x) {
     for (int j = 0; j < this->n_ - this->k_; j++) {
         int index = std::abs(this->ls_[j]) - this->use_fortran_;
 
-        if (0 <= this->ls_[j]) { /* lower bound active */
-            solution.active_set.at_lower_bound.insert(index);
-        }
-        else { /* upper bound active */
-            solution.active_set.at_upper_bound.insert(index);
-        }
-
         if (index < this->n_) {
             // bound constraint
-            if (this->ls_[j] < 0) { /* upper bound active */
-                solution.multipliers.upper_bounds[index] = -this->residuals_[index];
-            }
-            else { /* lower bound active */
+            if (0 <= this->ls_[j]) { /* lower bound active */
                 solution.multipliers.lower_bounds[index] = this->residuals_[index];
+                solution.active_set.bounds.at_lower_bound.insert(index);
+            }
+            else { /* upper bound active */
+                solution.multipliers.upper_bounds[index] = -this->residuals_[index];
+                solution.active_set.bounds.at_upper_bound.insert(index);
             }
         }
         else {
@@ -175,7 +170,14 @@ SubproblemSolution BQPDSolver::generate_solution_(std::vector<double>& x) {
             int constraint_index = index - this->n_;
             solution.constraint_partition.feasible.insert(constraint_index);
             solution.constraint_partition.constraint_feasibility[constraint_index] = FEASIBLE;
-            solution.multipliers.constraints[constraint_index] = (this->ls_[j] < 0) ? - this->residuals_[index] : this->residuals_[index];
+            if (0 <= this->ls_[j]) { /* lower bound active */
+                solution.multipliers.constraints[constraint_index] = this->residuals_[index];
+                solution.active_set.constraints.at_lower_bound.insert(constraint_index);
+            }
+            else { /* upper bound active */
+                solution.multipliers.constraints[constraint_index] = -this->residuals_[index];
+                solution.active_set.constraints.at_upper_bound.insert(constraint_index);
+            }
         }
     }
 

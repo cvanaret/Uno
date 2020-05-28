@@ -46,25 +46,26 @@ std::ostream& operator<<(std::ostream &stream, SubproblemSolution& solution) {
     stream << "objective = " << solution.objective << "\n";
     stream << "norm = " << solution.norm << "\n";
 
-    stream << "active set at upper bound =";
-    for (unsigned int index: solution.active_set.at_upper_bound) {
-        if (index < solution.x.size()) {
-            stream << " x" << index;
-        }
-        else {
-            stream << " c" << (index - solution.x.size());
-        }
+    stream << "active set:\n";
+    stream << "bound constraints at lower bound =";
+    for (unsigned int index: solution.active_set.bounds.at_lower_bound) {
+        stream << " x" << index;
+    }
+    stream << "\n";
+    stream << "bound constraints at upper bound =";
+    for (unsigned int index: solution.active_set.bounds.at_upper_bound) {
+        stream << " x" << index;
     }
     stream << "\n";
 
-    stream << "active set at lower bound =";
-    for (unsigned int index: solution.active_set.at_lower_bound) {
-        if (index < solution.x.size()) {
-            stream << " x" << index;
-        }
-        else {
-            stream << " c" << (index - solution.x.size());
-        }
+    stream << "constraints at lower bound =";
+    for (unsigned int index: solution.active_set.constraints.at_lower_bound) {
+        stream << " c" << index;
+    }
+    stream << "\n";
+    stream << "constraints at upper bound =";
+    for (unsigned int index: solution.active_set.constraints.at_upper_bound) {
+        stream << " c" << index;
     }
     stream << "\n";
 

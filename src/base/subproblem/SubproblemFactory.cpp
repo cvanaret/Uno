@@ -7,6 +7,7 @@
 #include "QPSolverFactory.hpp"
 
 std::shared_ptr<Subproblem> SubproblemFactory::create(Problem& problem, const std::string& type, std::map<std::string, std::string> options, bool use_trust_region, bool scale_residuals) {
+    std::vector<std::string> possible_methods = {"SQP", "SLP", "Sl1QP", "SLPEQP", "IPM"};
     /* active-set methods */
     if (type == "SQP") {
         return std::make_shared<SQP>(problem, options["QP_solver"], options["hessian"], use_trust_region, scale_residuals);
@@ -31,6 +32,6 @@ std::shared_ptr<Subproblem> SubproblemFactory::create(Problem& problem, const st
         return std::make_shared<InteriorPoint>(problem, options["linear_solver"], options["hessian"], use_trust_region, scale_residuals);
     }
     else {
-        throw std::invalid_argument("Subproblem method " + type + " does not exist");
+        throw std::invalid_argument("Subproblem method " + type + " does not exist. The possible options are: " + join(possible_methods, ", "));
     }
 }
