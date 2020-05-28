@@ -7,8 +7,10 @@ InteriorPoint::InteriorPoint(Problem& problem, std::string linear_solver_name, s
 Subproblem("l2", problem.variables_bounds, scale_residuals), // use the l2 norm to compute residuals
 hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables)),
 solver(LinearSolverFactory::create(linear_solver_name, problem.number_variables, problem.number_constraints, problem.hessian_maximum_number_nonzeros)),
-mu_optimality(0.1), mu_feasibility(mu_optimality), inertia_hessian_(0.), inertia_hessian_last_(0.),
-inertia_constraints_(0.), default_multiplier_(1.), iteration_(0),
+mu_optimality(0.1), mu_feasibility(mu_optimality),
+rhs_(problem.number_variables + problem.inequality_constraints.size() + problem.number_constraints),
+inertia_hessian_(0.), inertia_hessian_last_(0.), inertia_constraints_(0.),
+default_multiplier_(1.), iteration_(0),
 parameters_({0.99, 1e10, 100., 0.2, 1.5, 10., 1e10}) {
     /* the subproblem optimizes the original variables and slacks for inequality constraints */
     int number_variables = problem.number_variables + problem.inequality_constraints.size();
@@ -154,12 +156,12 @@ SubproblemSolution InteriorPoint::compute_step(Problem& problem, Iterate& curren
         DEBUG << "KKT matrix:\n" << kkt_matrix << "\n";
 
         /* right-hand side */
-        std::vector<double> rhs = this->generate_kkt_rhs_(problem, current_iterate);
+        this->generate_kkt_rhs_(problem, current_iterate);
 
         /* compute the solution (Δx, -Δλ) */
-        this->solver->solve(rhs);
+        this->solver->solve(this->rhs_);
         this->number_subproblems_solved++;
-        std::vector<double>& solution_IPM = rhs;
+        std::vector<double>& solution_IPM = this->rhs_;
 
         /* generate IPM direction */
         SubproblemSolution solution = this->generate_direction_(problem, current_iterate, solution_IPM);
@@ -387,17 +389,19 @@ void InteriorPoint::modify_inertia_(COOMatrix& kkt_matrix, int size_first_block,
     return;
 }
 
-std::vector<double> InteriorPoint::generate_kkt_rhs_(Problem& problem, Iterate& current_iterate) {
+void InteriorPoint::generate_kkt_rhs_(Problem& problem, Iterate& current_iterate) {
     int number_variables = problem.number_variables + problem.inequality_constraints.size();
 
     /* generate the right-hand side */
-    std::vector<double> rhs(number_variables + problem.number_constraints);
+    for (unsigned int i = 0; i < this->rhs_.size(); i++) {
+        this->rhs_[i] = 0.;
+    }
 
     /* barrier objective gradient */
     for (std::pair<int, double> term: current_iterate.objective_gradient) {
         int i = term.first;
         double derivative = term.second;
-        rhs[i] = -derivative;
+        this->rhs_[i] = -derivative;
     }
 
     /* constraint gradients */
@@ -406,7 +410,7 @@ std::vector<double> InteriorPoint::generate_kkt_rhs_(Problem& problem, Iterate& 
             for (std::pair<int, double> term: current_iterate.constraints_jacobian[j]) {
                 int variable_index = term.first;
                 double derivative = term.second;
-                rhs[variable_index] += current_iterate.multipliers.constraints[j] * derivative;
+                this->rhs_[variable_index] += current_iterate.multipliers.constraints[j] * derivative;
             }
         }
     }
@@ -416,18 +420,17 @@ std::vector<double> InteriorPoint::generate_kkt_rhs_(Problem& problem, Iterate& 
     for (int j = 0; j < problem.number_constraints; j++) {
         if (problem.constraint_status[j] == EQUAL_BOUNDS) {
             // add the bound
-            rhs[number_variables + j] = -(current_iterate.constraints[j] - problem.constraint_bounds[j].lb);
+            this->rhs_[number_variables + j] = -(current_iterate.constraints[j] - problem.constraint_bounds[j].lb);
         }
         else {
             // add the slack
-            rhs[number_variables + j] = -(current_iterate.constraints[j] - current_iterate.x[problem.number_variables + slack_index]);
+            this->rhs_[number_variables + j] = -(current_iterate.constraints[j] - current_iterate.x[problem.number_variables + slack_index]);
             slack_index++;
         }
     }
     DEBUG << "RHS: ";
-    print_vector(DEBUG, rhs);
-
-    return rhs;
+    print_vector(DEBUG, this->rhs_);
+    return;
 }
 
 std::vector<double> InteriorPoint::compute_lower_bound_multiplier_displacements_(Iterate& current_iterate, std::vector<double>& solution, std::vector<Range>& variables_bounds, double mu) {
