@@ -53,7 +53,7 @@ protected:
  */
 class NonmonotoneFilter : public Filter {
 public:
-    NonmonotoneFilter(FilterConstants& constants, int number_dominated_entries = 3);
+    NonmonotoneFilter(FilterConstants& constants, int number_dominated_entries);
 
     void add(double infeasibility_measure, double optimality_measure) override;
     bool accept(double infeasibility_measure, double optimality_measure) override;

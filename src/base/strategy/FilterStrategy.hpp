@@ -34,7 +34,7 @@ public:
      *  Check the validity of a step
      *  Implements the purely virtual method of the superclass
      */
-    bool check_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length = 1.) override;
+    bool check_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
     Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
     
 private:

@@ -18,7 +18,7 @@ public:
 protected:
     /* QP subproblems */
     // optimality QP
-    SubproblemSolution compute_qp_step_(Problem& problem, std::shared_ptr<QPSolver> solver, Iterate& current_iterate, double trust_region_radius = INFINITY);
+    SubproblemSolution compute_qp_step_(Problem& problem, std::shared_ptr<QPSolver> solver, Iterate& current_iterate, double trust_region_radius);
     double compute_qp_predicted_reduction_(Iterate& current_iterate, SubproblemSolution& solution, double step_length);
     virtual std::vector<Range> generate_variables_bounds_(Problem& problem, Iterate& current_iterate, double trust_region_radius);
     // feasibility QP

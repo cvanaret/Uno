@@ -32,7 +32,7 @@ public:
      * \param globalization_strategy: strategy to promote global convergence
      * \param tolerance: tolerance for termination criteria
      */
-    Argonot(GlobalizationMechanism& globalization_mechanism, int max_iterations = 1000);
+    Argonot(GlobalizationMechanism& globalization_mechanism, int max_iterations);
 
     /*!
      *  Solve a given problem with initial primal and dual variables
