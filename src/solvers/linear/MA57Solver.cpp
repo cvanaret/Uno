@@ -5,12 +5,9 @@
 extern "C" {
     // MA57
     void ma57id_(double cntl[], int icntl[]);
-    void ma57ad_(int* n, int* ne, int irn[], int jcn[], int* lkeep, int keep[], int iwork[], int icntl[],
-            int info[], double rinfo[]);
-    void ma57bd_(int* n, int* ne, double a[], double fact[], int* lfact, int ifact[], int* lifact, int* lkeep,
-            int keep[], int iwork[], int icntl[], double cntl[], int info[], double rinfo[]);
-    void ma57cd_(int* job, int* n, double fact[], int* lfact, int ifact[], int* lifact, int* nrhs, double rhs[],
-            int* lrhs, double work[], int* lwork, int iwork[], int icntl[], int info[]);
+    void ma57ad_(int* n, int* ne, int irn[], int jcn[], int* lkeep, int keep[], int iwork[], int icntl[], int info[], double rinfo[]);
+    void ma57bd_(int* n, int* ne, double a[], double fact[], int* lfact, int ifact[], int* lifact, int* lkeep, int keep[], int iwork[], int icntl[], double cntl[], int info[], double rinfo[]);
+    void ma57cd_(int* job, int* n, double fact[], int* lfact, int ifact[], int* lifact, int* nrhs, double rhs[], int* lrhs, double work[], int* lwork, int iwork[], int icntl[], int info[]);
 }
 
 MA57Solver::MA57Solver(): use_fortran(1), cntl_(5), icntl_(20), rinfo_(20) {
@@ -42,6 +39,7 @@ void MA57Solver::factorize(COOMatrix& matrix) {
     std::vector<double> fact(lfact);
     int lifact = 2 * info[9];
     std::vector<int> ifact(lifact);
+    
     /* factorize */
     ma57bd_(&n, &nnz, matrix.matrix.data(), fact.data(), &lfact, ifact.data(), &lifact, &lkeep, keep.data(), iwork.data(), this->icntl_.data(), this->cntl_.data(), info.data(), this->rinfo_.data());
     
@@ -58,8 +56,7 @@ void MA57Solver::solve(std::vector<double>& rhs) {
     int lwork = 1.2 * n*nrhs; // length of w; lw>=n*nrhs
     std::vector<double> work(lwork);
     // solve the linear system
-    ma57cd_(&job, &n, this->factorization_.fact.data(), &this->factorization_.lfact, this->factorization_.ifact.data(), &this->factorization_.lifact, &nrhs, rhs.data(), &lrhs, work.data(),
-            &lwork, this->factorization_.iwork.data(), this->icntl_.data(), this->factorization_.info.data());
+    ma57cd_(&job, &n, this->factorization_.fact.data(), &this->factorization_.lfact, this->factorization_.ifact.data(), &this->factorization_.lifact, &nrhs, rhs.data(), &lrhs, work.data(), &lwork, this->factorization_.iwork.data(), this->icntl_.data(), this->factorization_.info.data());
     // the solution is copied in rhs
     return;
 }
