@@ -25,7 +25,7 @@ Iterate TrustRegion::compute_acceptable_iterate(Problem& problem, Iterate& curre
             SubproblemSolution solution = this->globalization_strategy.subproblem.compute_step(problem, current_iterate, this->radius);
             
             /* set bound multipliers of active trust region to 0 */
-            this->correct_multipliers_(problem, solution);
+            this->correct_multipliers_(solution, this->radius);
             
             /* check whether the trial step is accepted */
             is_accepted = this->globalization_strategy.check_step(problem, current_iterate, solution);
@@ -54,15 +54,15 @@ Iterate TrustRegion::compute_acceptable_iterate(Problem& problem, Iterate& curre
     return current_iterate;
 }
 
-void TrustRegion::correct_multipliers_(Problem& problem, SubproblemSolution& solution) {
+void TrustRegion::correct_multipliers_(SubproblemSolution& solution, double radius) {
     /* set multipliers for bound constraints active at trust region to 0 */
-    for (int i: solution.active_set.at_upper_bound) {
-        if (i < problem.number_variables && solution.x[i] == this->radius) {
+    for (int i: solution.active_set.bounds.at_upper_bound) {
+        if (solution.x[i] == radius) {
             solution.multipliers.upper_bounds[i] = 0.;
         }
     }
-    for (int i: solution.active_set.at_lower_bound) {
-        if (i < problem.number_variables && solution.x[i] == -this->radius) {
+    for (int i: solution.active_set.bounds.at_lower_bound) {
+        if (solution.x[i] == -radius) {
             solution.multipliers.lower_bounds[i] = 0.;
         }
     }

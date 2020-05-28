@@ -2,6 +2,7 @@
 #include <cmath>
 #include "TrustLineSearch.hpp"
 #include "AMPLModel.hpp"
+#include "TrustRegion.hpp"
 
 TrustLineSearch::TrustLineSearch(GlobalizationStrategy& globalization_strategy, double tolerance, double initial_radius, int max_iterations, double ratio) :
 GlobalizationMechanism(globalization_strategy, tolerance, max_iterations), ratio(ratio), radius(initial_radius), activity_tolerance_(1e-6) {
@@ -28,7 +29,7 @@ Iterate TrustLineSearch::compute_acceptable_iterate(Problem& problem, Iterate& c
             }
             else {
                 /* set multipliers of active trust region to 0 */
-                this->correct_multipliers_(problem, solution);
+                TrustRegion::correct_multipliers_(solution, this->radius);
 
                 /* length follows the following sequence: 1, ratio, ratio^2, ratio^3, ... */
                 double step_length = 1.;
@@ -84,21 +85,6 @@ Iterate TrustLineSearch::compute_acceptable_iterate(Problem& problem, Iterate& c
     }
 
     return current_iterate;
-}
-
-/* reset the bound multipliers active at the trust region */
-void TrustLineSearch::correct_multipliers_(Problem& problem, SubproblemSolution& solution) {
-    for (int i : solution.active_set.at_upper_bound) {
-        if (i < problem.number_variables && solution.x[i] == this->radius) {
-            solution.multipliers.upper_bounds[i] = 0.;
-        }
-    }
-    for (int i : solution.active_set.at_lower_bound) {
-        if (i < problem.number_variables && solution.x[i] == -this->radius) {
-            solution.multipliers.lower_bounds[i] = 0.;
-        }
-    }
-    return;
 }
 
 bool TrustLineSearch::termination_(bool is_accepted, int iteration) {
