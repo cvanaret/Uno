@@ -4,11 +4,11 @@
 #include "Parallel.hpp"
 
 ASL_pfgh* generate_asl(std::string file_name) {
-    SufDecl suffixes[] = {
-        /* suffix "uncertain" for variables or constraints */
-        {const_cast<char*> (UNCERTAIN_SUFFIX), 0, ASL_Sufkind_var},
-        {const_cast<char*> (UNCERTAINTY_SET_SUFFIX), 0, ASL_Sufkind_con}
-    };
+//    SufDecl suffixes[] = {
+//        /* suffix "uncertain" for variables or constraints */
+//        {const_cast<char*> (UNCERTAIN_SUFFIX), 0, ASL_Sufkind_var},
+//        {const_cast<char*> (UNCERTAINTY_SET_SUFFIX), 0, ASL_Sufkind_con}
+//    };
 
     ASL_pfgh* asl = (ASL_pfgh*) ASL_alloc(ASL_read_pfgh);
     FILE* nl = jac0dim_ASL((ASL*) asl, const_cast<char*> (file_name.data()), (fint) file_name.size());
@@ -27,7 +27,7 @@ ASL_pfgh* generate_asl(std::string file_name) {
     asl->i.pi0_ = (double*) M1zapalloc(sizeof (double)*n_con);
 
     /* read the file_name.nl file */
-    suf_declare_ASL((ASL*) asl, suffixes, sizeof (suffixes) / sizeof (SufDecl));
+//    suf_declare_ASL((ASL*) asl, suffixes, sizeof (suffixes) / sizeof (SufDecl));
     pfgh_read_ASL((ASL*) asl, nl, ASL_findgroups);
 
     return asl;
@@ -37,7 +37,11 @@ ASL_pfgh* generate_asl(std::string file_name) {
 AMPLModel::AMPLModel(std::string file_name, int fortran_indexing): AMPLModel(file_name, generate_asl(file_name), fortran_indexing) {
 }
 
-AMPLModel::AMPLModel(std::string file_name, ASL_pfgh* asl, int fortran_indexing): Problem(file_name, asl->i.n_var_, asl->i.n_con_), variable_uncertain(asl->i.n_var_), constraint_is_uncertainty_set(asl->i.n_con_), asl_(asl), fortran_indexing(fortran_indexing), ampl_tmp_gradient(asl->i.n_var_) {
+AMPLModel::AMPLModel(std::string file_name, ASL_pfgh* asl, int fortran_indexing):
+Problem(file_name, asl->i.n_var_, asl->i.n_con_),
+//variable_uncertain(asl->i.n_var_),
+//constraint_is_uncertainty_set(asl->i.n_con_),
+asl_(asl), fortran_indexing(fortran_indexing), ampl_tmp_gradient_(asl->i.n_var_) {
     /* TODO: avoid using implicit AMPL macros */
     keyword keywords[1];
     int size_keywords = sizeof (keywords) / sizeof (keyword);
@@ -85,41 +89,20 @@ bool is_discrete(ASL_pfgh* asl, int index) {
 }
 
 void AMPLModel::generate_variables_() {
-    SufDesc* uncertain_suffixes = suf_get_ASL((ASL*) this->asl_, UNCERTAIN_SUFFIX, ASL_Sufkind_var);
+//    SufDesc* uncertain_suffixes = suf_get_ASL((ASL*) this->asl_, UNCERTAIN_SUFFIX, ASL_Sufkind_var);
     
     for (int i = 0; i < this->number_variables; i++) {
         this->variable_name[i] = var_name_ASL((ASL*) this->asl_, i);
-        this->variable_discrete[i] = is_discrete(this->asl_, i);
+        //this->variable_discrete[i] = is_discrete(this->asl_, i);
         double lb = (this->asl_->i.LUv_ != NULL) ? this->asl_->i.LUv_[2 * i] : -INFINITY;
         double ub = (this->asl_->i.LUv_ != NULL) ? this->asl_->i.LUv_[2 * i + 1] : INFINITY;
         if (lb == ub) {
             WARNING << "Variable x" << i << " has identical bounds\n";
         }
         this->variables_bounds[i] = {lb, ub};
-        this->variable_uncertain[i] = (uncertain_suffixes->u.i != NULL && uncertain_suffixes->u.i[i] == 1);
+        //this->variable_uncertain[i] = false; //(uncertain_suffixes->u.i != NULL && uncertain_suffixes->u.i[i] == 1);
     }
     this->determine_bounds_types(this->variables_bounds, this->variable_status);
-    return;
-}
-
-// TODO: fix this duplication!
-void AMPLModel::create_objective_variables_(ograd* ampl_variables) {
-    /* create the dependency pattern as an associative table (variable index, coefficient) */
-    ograd* ampl_variables_tmp = ampl_variables;
-    while (ampl_variables_tmp != NULL) {
-        this->objective_variables[ampl_variables_tmp->varno] = ampl_variables_tmp->coef;
-        ampl_variables_tmp = ampl_variables_tmp->next;
-    }
-    return;
-}
-
-void AMPLModel::create_constraint_variables_(int j, cgrad* ampl_variables) {
-    /* create the dependency pattern as an associative table (variable index, coefficient) */
-    cgrad* ampl_variables_tmp = ampl_variables;
-    while (ampl_variables_tmp != NULL) {
-        this->constraint_variables[j][ampl_variables_tmp->varno] = ampl_variables_tmp->coef;
-        ampl_variables_tmp = ampl_variables_tmp->next;
-    }
     return;
 }
 
@@ -156,7 +139,7 @@ std::vector<double> AMPLModel::objective_dense_gradient(std::vector<double>& x) 
 std::map<int, double> AMPLModel::objective_sparse_gradient(std::vector<double>& x) {
     /* compute the AMPL gradient (always in dense format) */
     int nerror = 0;
-    (*((ASL*) this->asl_)->p.Objgrd)((ASL*) this->asl_, 0, x.data(), this->ampl_tmp_gradient.data(), &nerror);
+    (*((ASL*) this->asl_)->p.Objgrd)((ASL*) this->asl_, 0, x.data(), this->ampl_tmp_gradient_.data(), &nerror);
     if (0 < nerror) {
         throw IEEE_GradientError();
     }
@@ -165,7 +148,7 @@ std::map<int, double> AMPLModel::objective_sparse_gradient(std::vector<double>& 
     std::map<int, double> gradient;
     ograd* ampl_variables_tmp = this->asl_->i.Ograd_[0];
     while (ampl_variables_tmp != NULL) {
-        double partial_derivative = this->ampl_tmp_gradient[ampl_variables_tmp->varno];
+        double partial_derivative = this->ampl_tmp_gradient_[ampl_variables_tmp->varno];
         /* if maximization, take the opposite */
         if (this->objective_sign < 0.) {
             partial_derivative = -partial_derivative;
@@ -178,7 +161,7 @@ std::map<int, double> AMPLModel::objective_sparse_gradient(std::vector<double>& 
 
 void AMPLModel::initialize_objective_() {
     this->objective_name = obj_name_ASL((ASL*) this->asl_, 0);
-    this->create_objective_variables_(this->asl_->i.Ograd_[0]);
+    //this->create_objective_variables_(this->asl_->i.Ograd_[0]);
     return;
 }
 
@@ -230,7 +213,7 @@ void AMPLModel::constraint_sparse_gradient(std::vector<double>& x, int j, std::m
 
     /* compute the AMPL gradient */
     int nerror = 0;
-    (*((ASL*) this->asl_)->p.Congrd)((ASL*) this->asl_, j, x.data(), this->ampl_tmp_gradient.data(), &nerror);
+    (*((ASL*) this->asl_)->p.Congrd)((ASL*) this->asl_, j, x.data(), this->ampl_tmp_gradient_.data(), &nerror);
     if (0 < nerror) {
         throw IEEE_GradientError();
     }
@@ -240,8 +223,8 @@ void AMPLModel::constraint_sparse_gradient(std::vector<double>& x, int j, std::m
     int cpt = 0;
     while (ampl_variables_tmp != NULL) {
         /* keep the gradient sparse */
-        if (this->ampl_tmp_gradient[cpt] != 0.) {
-            gradient[ampl_variables_tmp->varno] = this->ampl_tmp_gradient[cpt];
+        if (this->ampl_tmp_gradient_[cpt] != 0.) {
+            gradient[ampl_variables_tmp->varno] = this->ampl_tmp_gradient_[cpt];
         }
         ampl_variables_tmp = ampl_variables_tmp->next;
         cpt++;
@@ -261,15 +244,14 @@ std::vector<std::map<int, double> > AMPLModel::constraints_sparse_jacobian(std::
 }
 
 void AMPLModel::generate_constraints_() {
-    SufDesc* uncertain_suffixes = suf_get_ASL((ASL*) this->asl_, UNCERTAINTY_SET_SUFFIX, ASL_Sufkind_con);
+    //SufDesc* uncertain_suffixes = suf_get_ASL((ASL*) this->asl_, UNCERTAINTY_SET_SUFFIX, ASL_Sufkind_con);
     
     for (int j = 0; j < this->number_constraints; j++) {
         this->constraint_name[j] = con_name_ASL((ASL*) this->asl_, j);
-        this->create_constraint_variables_(j, this->asl_->i.Cgrad_[j]);
         double lb = (this->asl_->i.LUrhs_ != NULL) ? this->asl_->i.LUrhs_[2 * j] : -INFINITY;
         double ub = (this->asl_->i.LUrhs_ != NULL) ? this->asl_->i.LUrhs_[2 * j + 1] : INFINITY;
         this->constraint_bounds[j] = {lb, ub};
-        this->constraint_is_uncertainty_set[j] = (uncertain_suffixes->u.i != NULL && uncertain_suffixes->u.i[j] == 1);
+        //this->constraint_is_uncertainty_set[j] = false; //(uncertain_suffixes->u.i != NULL && uncertain_suffixes->u.i[j] == 1);
     }
     this->determine_bounds_types(this->constraint_bounds, this->constraint_status);
     this->determine_constraints_();
@@ -339,19 +321,6 @@ void AMPLModel::initialize_lagrangian_hessian_() {
     int objective_number = 0;
     int upper_triangular = 1;
     this->hessian_maximum_number_nonzeros = (*((ASL*) this->asl_)->p.Sphset)((ASL*) this->asl_, NULL, objective_number, 1, 1, upper_triangular);
-
-//    /* build sparse description */
-//    this->hessian_column_start.resize(this->number_variables + 1);
-//    int* ampl_column_start = this->asl_->i.sputinfo_->hcolstarts;
-//    for (int k = 0; k < this->number_variables + 1; k++) {
-//        this->hessian_column_start[k] = ampl_column_start[k] + this->fortran_indexing;
-//    }
-//
-//    this->hessian_row_number.resize(this->hessian_maximum_number_nonzeros);
-//    int* ampl_row_number = this->asl_->i.sputinfo_->hrownos;
-//    for (int k = 0; k < this->hessian_maximum_number_nonzeros; k++) {
-//        this->hessian_row_number[k] = ampl_row_number[k] + this->fortran_indexing;
-//    }
 
     // use Lagrangian scale: in AMPL, the Lagrangian is f + lambda.g, while Argonot uses f - lambda.g
     int nerror;
