@@ -1,7 +1,15 @@
 # specify local compilers and compiler flags
-CFLAGS = -Wall -pedantic $(PROFILER)
-#CFLAGS = -Wall -Wextra -Werror $(PROFILER)
+PROFILER =#-pg
+CFLAGS = $(PROFILER) -Wall -pedantic
 #-Weffc++
+
+# declare availability of libraries
+# https://stackoverflow.com/questions/10337248/what-does-the-g-d-flag-do
+HAS_AMPL= -D HAS_AMPL
+HAS_BQPD = -D HAS_BQPD
+HAS_MA57 = -D HAS_MA57
+HAS_PARDISO =# -D HAS_PARDISO
+HAS_BFGS =# -D HAS_BFGS
 
 # local directories & libraries (change appropriately)
 AMPL_DIR = ~/src/amplsolver
@@ -9,9 +17,9 @@ AMPL2_DIR = ~/src/amplsolver2
 BQPD_DIR = /media/data/Bureau/robust/software/bqpd
 MA57_DIR = ~/src/ma57-3.10.0
 #MA57_DIR = ~/src/hsl_ma57-5.2.0
+PARDISO_DIR = /home/charlie/src/pardiso
 BFGS_DIR = solvers/NLP/Lbfgsb.3.0
 METIS = fakemetis
 
 # local libraries
 LIBCOMPIL = -lgfortran
-

@@ -1,14 +1,13 @@
 SHELL := /bin/bash
 
 # specify local compilers and compiler flags
-PROFILER =#-pg
 CC     = gcc
 CPP    = g++ -std=c++11
 F77    = gfortran
-FFLAGS = $(PROFILER)
 
 include Makefile.local
 
+FFLAGS = $(PROFILER)
 LFLAGS = $(PROFILER)
 
 # local libraries
@@ -16,32 +15,71 @@ L = -pthread -ldl -lf2c -fopenmp -lm
 # LIBCOIN   = -lOsiClp -lClp -lCoinUtils -lOsi
 LIBLINALG = -lblas -llapack
 
-INCLUDES = -I base -I base/mechanism -I base/strategy -I base/subproblem -I logger -I interfaces/AMPL -I solvers/QP -I solvers/linear -I solvers/NLP -I $(AMPL_DIR)
+INCLUDES = -I base -I base/mechanism -I base/strategy -I base/subproblem -I logger -I solvers/QP -I solvers/linear -I solvers/NLP
 # -I $(BFGS_DIR)
 
-SRC_FILES = base/Argonot.cpp base/Iterate.cpp \
-	base/Problem.cpp interfaces/AMPL/AMPLModel.cpp \
-	base/Matrix.cpp base/HessianEvaluation.cpp base/Constraint.cpp \
-	base/strategy/GlobalizationStrategy.cpp base/strategy/Filter.cpp base/strategy/FilterStrategy.cpp base/strategy/PenaltyMeritFunction.cpp \
-	base/strategy/GlobalizationStrategyFactory.cpp \
-	base/mechanism/GlobalizationMechanism.cpp base/mechanism/TrustRegion.cpp \
-	base/mechanism/LineSearch.cpp base/mechanism/TrustLineSearch.cpp \
-	base/mechanism/GlobalizationMechanismFactory.cpp \
-	base/subproblem/Subproblem.cpp base/subproblem/ActiveSetMethod.cpp base/subproblem/SQP.cpp base/subproblem/SLP.cpp base/subproblem/Sl1QP.cpp base/subproblem/SLPEQP.cpp base/subproblem/InteriorPoint.cpp \
-	base/subproblem/SubproblemFactory.cpp base/subproblem/SubproblemSolution.cpp base/Utils.cpp \
-	solvers/QP/BQPDSolver.cpp solvers/QP/QPSolverFactory.cpp \
-	solvers/linear/MA57Solver.cpp \
-	solvers/NLP/LBFGSB.cpp
-OBJ_FILES = $(subst .cpp,.o,$(SRC_FILES)) solvers/QP/wdotd.o $(BFGS_DIR)/lbfgsb.o $(BFGS_DIR)/timer.o $(BFGS_DIR)/blas.o $(BFGS_DIR)/linpack.o
 EXEC_NAME = argonot
 
-#  solvers/linear/PardisoSolver.cpp
+VPATH = base solvers interfaces
+
+SRC_FILES = base/Argonot.cpp base/Iterate.cpp \
+	base/Problem.cpp base/Utils.cpp \
+	base/Matrix.cpp base/HessianEvaluation.cpp base/Constraint.cpp \
+	base/strategy/GlobalizationStrategy.cpp base/strategy/GlobalizationStrategyFactory.cpp \
+	base/strategy/Filter.cpp base/strategy/FilterStrategy.cpp base/strategy/PenaltyMeritFunction.cpp \
+	base/mechanism/GlobalizationMechanism.cpp base/mechanism/GlobalizationMechanismFactory.cpp \
+	base/mechanism/TrustRegion.cpp base/mechanism/LineSearch.cpp base/mechanism/TrustLineSearch.cpp \
+	base/subproblem/Subproblem.cpp base/subproblem/SubproblemFactory.cpp base/subproblem/SubproblemSolution.cpp \
+	base/subproblem/ActiveSetMethod.cpp base/subproblem/SQP.cpp base/subproblem/SLP.cpp base/subproblem/Sl1QP.cpp base/subproblem/SLPEQP.cpp base/subproblem/InteriorPoint.cpp \
+	solvers/QP/QPSolverFactory.cpp solvers/linear/LinearSolverFactory.cpp
+
+######################
+# External libraries #
+######################
+
+DEFINES =
+LIBS = -lf2c
+
+# AMPL library
+ifneq ($(HAS_AMPL),)
+SRC_FILES := $(SRC_FILES) interfaces/AMPL/AMPLModel.cpp
+DEFINES := $(DEFINES) $(HAS_AMPL)
+LIBS := $(LIBS) $(AMPL_DIR)/amplsolver.a
+INCLUDES := $(INCLUDES) -I interfaces/AMPL -I $(AMPL_DIR)
+endif
+
+# BQPD library
+ifneq ($(HAS_BQPD),)
+SRC_FILES := $(SRC_FILES) solvers/QP/BQPDSolver.cpp
+DEFINES := $(DEFINES) $(HAS_BQPD)
+LIBS := $(LIBS) $(BQPD_DIR)/libbqpd.a
+endif
+
+# MA57 library
+ifneq ($(HAS_MA57),)
+SRC_FILES := $(SRC_FILES) solvers/linear/MA57Solver.cpp
+DEFINES := $(DEFINES) $(HAS_MA57)
+LIBS := $(LIBS) -L$(MA57_DIR) -lma57 -l$(METIS)
+endif
+
+# PARDISO library
+ifneq ($(HAS_PARDISO),)
+SRC_FILES := $(SRC_FILES) solvers/linear/PardisoSolver.cpp
+DEFINES := $(DEFINES) $(HAS_PARDISO)
+LIBS := $(LIBS) -L$(PARDISO_DIR) -lpardiso600-GNU720-X86-64
+endif
+
+# BFGS library
+ifneq ($(HAS_BFGS),)
+SRC_FILES := $(SRC_FILES) solvers/NLP/LBFGSB.cpp
+DEFINES := $(DEFINES) $(HAS_BFGS)
+endif
+
+OBJ_FILES = $(subst .cpp,.o,$(SRC_FILES)) solvers/QP/wdotd.o #$(BFGS_DIR)/lbfgsb.o $(BFGS_DIR)/timer.o $(BFGS_DIR)/blas.o $(BFGS_DIR)/linpack.o
+
 # base/strategy/Tube.cpp base/strategy/TubeStrategy.cpp
 # base/subproblem/AugmentedLagrangian.cpp \
-
-# https://stackoverflow.com/questions/10337248/what-does-the-g-d-flag-do
-DEFINES = -D BQPD -D MA57 -D PARDISO -D L_BFGS_B
-LIBS = $(AMPL_DIR)/amplsolver.a $(BQPD_DIR)/libbqpd.a -L$(MA57_DIR) -lma57 -l$(METIS) -lf2c -L$(PARDISO_DIR) #-lpardiso600-GNU720-X86-64
+#$(info HAS_BQPD is $(HAS_BQPD))
 
 #%.o: %.cpp %.hpp
 .cpp.o:
