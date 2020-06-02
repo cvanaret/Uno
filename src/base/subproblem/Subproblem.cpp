@@ -51,8 +51,8 @@ std::vector<Range> Subproblem::generate_constraints_bounds(Problem& problem, std
 }
 
 std::vector<double> Subproblem::compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, std::vector<double>& default_multipliers, double multipliers_max_size) {
-    std::shared_ptr<LinearSolver> solver = LinearSolverFactory::create("MA57", problem.number_variables, problem.number_constraints, problem.hessian_maximum_number_nonzeros);
-    return Subproblem::compute_least_square_multipliers(problem, current_iterate, default_multipliers, solver, multipliers_max_size);
+    std::shared_ptr<LinearSolver> linear_solver = LinearSolverFactory::create("MA57");
+    return Subproblem::compute_least_square_multipliers(problem, current_iterate, default_multipliers, linear_solver, multipliers_max_size);
 }
 
 std::vector<double> Subproblem::compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, std::vector<double>& default_multipliers, std::shared_ptr<LinearSolver> solver, double multipliers_max_size) {
@@ -66,14 +66,14 @@ std::vector<double> Subproblem::compute_least_square_multipliers(Problem& proble
 
     /* identity blocks */
     for (unsigned int i = 0; i < current_iterate.x.size(); i++) {
-        matrix.add_term(1., i, i);
+        matrix.insert(1., i, i);
     }
     /* Jacobian of general constraints */
     for (int j = 0; j < problem.number_constraints; j++) {
         for (std::pair<const int, double>& term: current_iterate.constraints_jacobian[j]) {
             int variable_index = term.first;
             double derivative = term.second;
-            matrix.add_term(derivative, variable_index, current_iterate.x.size() + j);
+            matrix.insert(derivative, variable_index, current_iterate.x.size() + j);
         }
     }
     DEBUG << "Multipliers estimation: KKT matrix:\n";

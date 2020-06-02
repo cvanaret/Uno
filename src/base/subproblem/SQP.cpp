@@ -10,9 +10,8 @@ SQP::SQP(Problem& problem, std::string QP_solver_name, std::string hessian_evalu
 // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
 ActiveSetMethod(problem, scale_residuals),
 solver(QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints, problem.hessian_maximum_number_nonzeros + problem.number_variables, true)),
-hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables)) {
-    /* if no trust region is used, the problem should be convexified by controlling the inertia of the Hessian */
-    this->hessian_evaluation->convexify = !use_trust_region;
+/* if no trust region is used, the problem should be convexified by controlling the inertia of the Hessian */
+hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, !use_trust_region)) {
 }
 
 SubproblemSolution SQP::compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
@@ -35,7 +34,7 @@ SubproblemSolution SQP::compute_step(Problem& problem, Iterate& current_iterate,
 
 SubproblemSolution SQP::restore_feasibility(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) {
     this->evaluate_feasibility_iterate_(problem, current_iterate, phase_II_solution.constraint_partition);
-   return this->compute_feasibility_qp_step_(problem, this->solver, current_iterate, phase_II_solution, trust_region_radius); 
+   return this->compute_l1qp_step_(problem, this->solver, current_iterate, phase_II_solution.constraint_partition, phase_II_solution.x, trust_region_radius); 
 }
 
 /* private methods */
@@ -50,7 +49,7 @@ void SQP::evaluate_optimality_iterate_(Problem& problem, Iterate& current_iterat
 
 void SQP::evaluate_feasibility_iterate_(Problem& problem, Iterate& current_iterate, ConstraintPartition& constraint_partition) {
     /* update the multipliers of the general constraints */
-    std::vector<double> constraint_multipliers = this->generate_feasibility_multipliers_(problem, current_iterate.multipliers.constraints, constraint_partition);
+    std::vector<double> constraint_multipliers = this->generate_l1_multipliers_(problem, current_iterate.multipliers.constraints, constraint_partition);
     /* compute first- and second-order information */
     current_iterate.compute_constraints_jacobian(problem);
     current_iterate.is_hessian_computed = false;

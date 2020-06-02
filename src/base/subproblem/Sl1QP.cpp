@@ -29,27 +29,12 @@ Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evalua
 ActiveSetMethod(problem, scale_residuals),
 solver(QPSolverFactory::create(QP_solver, number_variables, problem.number_constraints, problem.hessian_maximum_number_nonzeros + problem.number_variables, true)),
 // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
-hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables)),
+hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, !use_trust_region)),
 penalty_parameter(initial_parameter),
 parameters({10., 0.1, 0.1}),
 number_variables(number_variables) {
-    // p and n are generated on the fly to solve the QP
-    int current_index = problem.number_variables;
-    for (int j = 0; j < problem.number_constraints; j++) {
-        if (-INFINITY < problem.constraint_bounds[j].lb) {
-            // nonnegative variable p that captures the positive part of the constraint violation
-            this->negative_part_variables[j] = current_index;
-            current_index++;
-        }
-        if (problem.constraint_bounds[j].ub < INFINITY) {
-            // nonnegative variable p that captures the negative part of the constraint violation
-            this->positive_part_variables[j] = current_index;
-            current_index++;
-        }
-    }
-    
-    /* if no trust region is used, the problem should be convexified by changing the inertia of the Hessian */
-    this->hessian_evaluation->convexify = !use_trust_region;
+    // generate elastic variables p and n on the fly to relax the constraints
+    this->generate_elastic_variables_(problem, this->elastic_variables_);
 }
 
 SubproblemSolution Sl1QP::compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
@@ -122,14 +107,18 @@ SubproblemSolution Sl1QP::compute_step(Problem& problem, Iterate& current_iterat
                 }
 
                 /* stage f: update the penalty parameter */
+                double updated_penalty_parameter = this->penalty_parameter;
                 double term = ideal_error / std::max(1., current_iterate.feasibility_measure);
                 this->penalty_parameter = std::min(this->penalty_parameter, term * term);
+                if (this->penalty_parameter < updated_penalty_parameter) {
+                    solution = this->solve_l1qp_subproblem_(problem, current_iterate, trust_region_radius, this->penalty_parameter);
+                }
+                
             }
 
             if (this->penalty_parameter < current_penalty_parameter) {
                 DEBUG << "\n*** Penalty parameter updated to " << this->penalty_parameter << "\n";
                 this->subproblem_definition_changed = true;
-                /* recompute the solution */
                 if (this->penalty_parameter == 0.) {
                     solution = ideal_solution;
                 }
@@ -137,69 +126,21 @@ SubproblemSolution Sl1QP::compute_step(Problem& problem, Iterate& current_iterat
         }
     }
 
-    /* remove p and n */
-    solution.x.resize(current_iterate.x.size());
-    solution.multipliers.lower_bounds.resize(current_iterate.x.size());
-    solution.multipliers.upper_bounds.resize(current_iterate.x.size());
-    solution.norm = norm_inf(solution.x);
-
-    /* remove contribution of positive part variables */
-    for (std::pair<const int, int>& element: this->positive_part_variables) {
-        int j = element.first;
-        int i = element.second;
-        current_iterate.constraints_jacobian[j].erase(i);
-        current_iterate.objective_gradient.erase(i);
-    }
-    /* remove contribution of negative part variables */
-    for (std::pair<const int, int>& element: this->negative_part_variables) {
-        int j = element.first;
-        int i = element.second;
-        current_iterate.constraints_jacobian[j].erase(i);
-        current_iterate.objective_gradient.erase(i);
-    }
+    solution.objective_multiplier = penalty_parameter;
+    solution.predicted_reduction = [&](double step_length) {
+        return this->compute_predicted_reduction_(problem, current_iterate, solution, step_length);
+    };
     return solution;
 }
 
 SubproblemSolution Sl1QP::solve_l1qp_subproblem_(Problem& problem, Iterate& current_iterate, double trust_region_radius, double penalty_parameter) {
     /* compute l1QP step */
     this->evaluate_optimality_iterate_(problem, current_iterate, penalty_parameter);
-    SubproblemSolution solution = this->compute_qp_step_(problem, this->solver, current_iterate, trust_region_radius);
-    
-    solution.objective_multiplier = penalty_parameter;
-    solution.predicted_reduction = [&](double step_length) {
-        return this->compute_predicted_reduction_(problem, current_iterate, solution, step_length);
-    };
-    
-    // recompute active set: constraints are active when p-n = 0
-    //this->recover_active_set(problem, solution, variables_bounds);
+    SubproblemSolution solution = this->compute_l1qp_step_(problem, this->solver, current_iterate, penalty_parameter, this->elastic_variables_, trust_region_radius);
     return solution;
 }
 
 void Sl1QP::evaluate_optimality_iterate_(Problem& problem, Iterate& current_iterate, double penalty_parameter) {
-    current_iterate.compute_objective_gradient(problem);
-    std::map<int, double> objective_gradient;
-    if (penalty_parameter != 0.) {
-        for (std::pair<const int, double>& element: current_iterate.objective_gradient) {
-            int i = element.first;
-            double derivative = element.second;
-            objective_gradient[i] = penalty_parameter*derivative;
-        }
-    }
-    /* add contribution of positive part variables */
-    for (std::pair<const int, int>& element: this->positive_part_variables) {
-        int j = element.first;
-        int i = element.second;
-        current_iterate.constraints_jacobian[j][i] = -1.;
-        objective_gradient[i] = 1.;
-    }
-    /* add contribution of negative part variables */
-    for (std::pair<const int, int>& element: this->negative_part_variables) {
-        int j = element.first;
-        int i = element.second;
-        current_iterate.constraints_jacobian[j][i] = 1.;
-        objective_gradient[i] = 1.;
-    }
-    current_iterate.set_objective_gradient(objective_gradient);
     // Hessian
     current_iterate.is_hessian_computed = false;
     this->hessian_evaluation->compute(problem, current_iterate, penalty_parameter, current_iterate.multipliers.constraints);
@@ -246,11 +187,11 @@ std::vector<Range> Sl1QP::generate_variables_bounds_(Problem& problem, Iterate& 
 double Sl1QP::compute_linearized_constraint_residual_(std::vector<double>& d) {
     double residual = 0.;
     // l1 residual of the linearized constraints
-    for (std::pair<const int, int>& element: this->positive_part_variables) {
+    for (std::pair<const int, int>& element: this->elastic_variables_.positive) {
         int i = element.second;
         residual += d[i];
     }
-    for (std::pair<const int, int>& element: this->negative_part_variables) {
+    for (std::pair<const int, int>& element: this->elastic_variables_.negative) {
         int i = element.second;
         residual += d[i];
     }
@@ -300,29 +241,4 @@ double Sl1QP::compute_complementarity_error_(Problem& problem, Iterate& iterate,
         }
     }
     return error;
-}
-
-void Sl1QP::recover_active_set_(Problem& problem, SubproblemSolution& solution, std::vector<Range>& variables_bounds) {
-    // variables
-    for (unsigned int i = problem.number_variables; i < solution.x.size(); i++) {
-        solution.active_set.bounds.at_lower_bound.erase(i);
-        solution.active_set.bounds.at_upper_bound.erase(i);
-    }
-    // constraints: only when p-n = 0
-    for (unsigned int j = 0; j < solution.multipliers.constraints.size(); j++) {
-        // compute constraint violation
-        double constraint_violation = 0.;
-        if (positive_part_variables.find(j) != positive_part_variables.end()) {
-            constraint_violation += solution.x[this->positive_part_variables[j]];
-        }
-        if (negative_part_variables.find(j) != negative_part_variables.end()) {
-            constraint_violation += solution.x[this->negative_part_variables[j]];
-        }
-        // update active set
-        if (0. < constraint_violation) {
-            solution.active_set.constraints.at_lower_bound.erase(j);
-            solution.active_set.constraints.at_upper_bound.erase(j);
-        }
-    }
-    return;
 }

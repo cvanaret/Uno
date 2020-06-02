@@ -3,6 +3,7 @@
 
 #include <ostream>
 #include <vector>
+#include <set>
 #include <functional>
 #include "Utils.hpp"
 #include "Constraint.hpp"
@@ -20,11 +21,6 @@ enum Status {
     SPARSE_INSUFFICIENT_SPACE,
     MAX_RESTARTS_REACHED,
     UNDEFINED
-};
-
-struct ObjectiveTerms {
-    double linear;
-    double quadratic;
 };
 
 /*! \struct SubproblemSolution
@@ -46,6 +42,7 @@ public:
     double objective; /*!< Objective value */
     bool is_descent_direction;
     ActiveSet active_set; /*!< Active set */
+    std::set<int> inactive_set; /*!< Inactive set */
     ConstraintPartition constraint_partition; /*!< Partition of feasible and infeasible constraints */
     
     // this function computes the predicted reduction of the direction for a given step length

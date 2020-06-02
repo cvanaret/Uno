@@ -5,8 +5,9 @@
 
 InteriorPoint::InteriorPoint(Problem& problem, std::string linear_solver_name, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals):
 Subproblem("l2", problem.variables_bounds, scale_residuals), // use the l2 norm to compute residuals
-hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables)),
-solver(LinearSolverFactory::create(linear_solver_name, problem.number_variables, problem.number_constraints, problem.hessian_maximum_number_nonzeros)),
+/* if no trust region is used, the problem should be convexified. However, the inertia of the augmented matrix will be corrected later */
+hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, false)),
+linear_solver(LinearSolverFactory::create(linear_solver_name)),
 mu_optimality(0.1), mu_feasibility(mu_optimality),
 rhs_(problem.number_variables + problem.inequality_constraints.size() + problem.number_constraints),
 inertia_hessian_(0.), inertia_hessian_last_(0.), inertia_constraints_(0.),
@@ -80,7 +81,7 @@ Iterate InteriorPoint::evaluate_initial_point(Problem& problem, std::vector<doub
     }
     /* compute least-square multipliers */
     if (0 < problem.number_constraints) {
-        first_iterate.multipliers.constraints = Subproblem::compute_least_square_multipliers(problem, first_iterate, default_multipliers.constraints, this->solver);
+        first_iterate.multipliers.constraints = Subproblem::compute_least_square_multipliers(problem, first_iterate, default_multipliers.constraints, this->linear_solver);
     }
 
     DEBUG << problem.inequality_constraints.size() << " slacks\n";
@@ -93,10 +94,6 @@ Iterate InteriorPoint::evaluate_initial_point(Problem& problem, std::vector<doub
 
     /* compute the optimality and feasibility measures of the initial point */
     this->compute_optimality_measures(problem, first_iterate);
-
-    /* if no trust region is used, the problem should be convexified. The inertia of the augmented matrix will be corrected later */
-    this->hessian_evaluation->convexify = false;
-
     return first_iterate;
 }
 
@@ -159,7 +156,7 @@ SubproblemSolution InteriorPoint::compute_step(Problem& problem, Iterate& curren
         this->generate_kkt_rhs_(problem, current_iterate);
 
         /* compute the solution (Δx, -Δλ) */
-        this->solver->solve(this->rhs_);
+        this->linear_solver->solve(this->rhs_);
         this->number_subproblems_solved++;
         std::vector<double>& solution_IPM = this->rhs_;
 
@@ -301,10 +298,10 @@ COOMatrix InteriorPoint::generate_optimality_kkt_matrix_(Problem& problem, Itera
 
     /* variable bound constraints */
     for (int i: this->lower_bounded_variables) {
-        kkt_matrix.add_term(current_iterate.multipliers.lower_bounds[i] / (current_iterate.x[i] - variables_bounds[i].lb), i, i);
+        kkt_matrix.insert(current_iterate.multipliers.lower_bounds[i] / (current_iterate.x[i] - variables_bounds[i].lb), i, i);
     }
     for (int i: this->upper_bounded_variables) {
-        kkt_matrix.add_term(current_iterate.multipliers.upper_bounds[i] / (current_iterate.x[i] - variables_bounds[i].ub), i, i);
+        kkt_matrix.insert(current_iterate.multipliers.upper_bounds[i] / (current_iterate.x[i] - variables_bounds[i].ub), i, i);
     }
 
     /* Jacobian of general constraints */
@@ -312,7 +309,7 @@ COOMatrix InteriorPoint::generate_optimality_kkt_matrix_(Problem& problem, Itera
         for (std::pair<int, double> term: current_iterate.constraints_jacobian[j]) {
             int variable_index = term.first;
             double derivative = term.second;
-            kkt_matrix.add_term(derivative, variable_index, number_variables + j);
+            kkt_matrix.insert(derivative, variable_index, number_variables + j);
         }
     }
     return kkt_matrix;
@@ -322,16 +319,16 @@ void InteriorPoint::modify_inertia_(COOMatrix& kkt_matrix, int size_first_block,
     this->inertia_hessian_ = 0.;
     this->inertia_constraints_ = 0.;
     DEBUG << "Testing factorization with inertia term " << this->inertia_hessian_ << "\n";
-    this->solver->factorize(kkt_matrix);
+    this->linear_solver->factorize(kkt_matrix);
 
     bool good_inertia = false;
-    if (!this->solver->matrix_is_singular() && this->solver->number_negative_eigenvalues() == size_second_block) {
+    if (!this->linear_solver->matrix_is_singular() && this->linear_solver->number_negative_eigenvalues() == size_second_block) {
         DEBUG << "Factorization was a success\n";
         good_inertia = true;
     }
     else {
         // inertia term for constraints
-        if (this->solver->matrix_is_singular()) {
+        if (this->linear_solver->matrix_is_singular()) {
             DEBUG << "Matrix is singular\n";
             this->inertia_constraints_ = 1e-8 * std::pow(this->mu_optimality, 0.25);
         }
@@ -350,18 +347,18 @@ void InteriorPoint::modify_inertia_(COOMatrix& kkt_matrix, int size_first_block,
     int current_matrix_size = kkt_matrix.matrix.size();
     if (!good_inertia) {
         for (int i = 0; i < size_first_block; i++) {
-            kkt_matrix.add_term(this->inertia_hessian_, i, i);
+            kkt_matrix.insert(this->inertia_hessian_, i, i);
         }
         for (int j = size_first_block; j < size_first_block + size_second_block; j++) {
-            kkt_matrix.add_term(-this->inertia_constraints_, j, j);
+            kkt_matrix.insert(-this->inertia_constraints_, j, j);
         }
     }
 
     while (!good_inertia) {
         DEBUG << "Testing factorization with inertia term " << this->inertia_hessian_ << "\n";
-        this->solver->factorize(kkt_matrix);
+        this->linear_solver->factorize(kkt_matrix);
 
-        if (!this->solver->matrix_is_singular() && this->solver->number_negative_eigenvalues() == size_second_block) {
+        if (!this->linear_solver->matrix_is_singular() && this->linear_solver->number_negative_eigenvalues() == size_second_block) {
             good_inertia = true;
             DEBUG << "Factorization was a success\n";
             this->inertia_hessian_last_ = this->inertia_hessian_;
@@ -538,10 +535,10 @@ SubproblemSolution InteriorPoint::restore_feasibility(Problem& problem, Iterate&
     }
     // variable bound constraints
     for (int i: this->lower_bounded_variables) {
-        kkt_matrix.add_term(current_iterate.multipliers.lower_bounds[i] / (current_iterate.x[i] - this->subproblem_variables_bounds[i].lb), i, i);
+        kkt_matrix.insert(current_iterate.multipliers.lower_bounds[i] / (current_iterate.x[i] - this->subproblem_variables_bounds[i].lb), i, i);
     }
     for (int i: this->upper_bounded_variables) {
-        kkt_matrix.add_term(current_iterate.multipliers.upper_bounds[i] / (current_iterate.x[i] - this->subproblem_variables_bounds[i].ub), i, i);
+        kkt_matrix.insert(current_iterate.multipliers.upper_bounds[i] / (current_iterate.x[i] - this->subproblem_variables_bounds[i].ub), i, i);
     }
 
     /* factorization by the linear solver */
@@ -576,7 +573,7 @@ SubproblemSolution InteriorPoint::restore_feasibility(Problem& problem, Iterate&
     DEBUG << "\n";
 
     /* compute the solution Δx */
-    this->solver->solve(rhs);
+    this->linear_solver->solve(rhs);
     this->number_subproblems_solved++;
     std::vector<double>& solution_IPM = rhs;
 

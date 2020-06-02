@@ -48,7 +48,7 @@ public:
     double compute_central_complementarity_error(Iterate& iterate, double mu, std::vector<Range>& variables_bounds);
 
     std::shared_ptr<HessianEvaluation> hessian_evaluation;
-    std::shared_ptr<LinearSolver> solver; /*!< Solver that solves the subproblem */
+    std::shared_ptr<LinearSolver> linear_solver; /*!< Solver that solves the subproblem */
     /* barrier parameter */
     double mu_optimality;
     double mu_feasibility;

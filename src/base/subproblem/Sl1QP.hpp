@@ -39,10 +39,9 @@ public:
 private:
     Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals, double initial_parameter, int number_variables);
     
-    /* problem reformulation */
+    /* problem reformulation with elastic variables */
     // constraints l <= c(x) = u are reformulated as c(x) - p + n
-    std::map<int, int> positive_part_variables; // p
-    std::map<int, int> negative_part_variables; // n
+    ElasticVariables elastic_variables_;
 
     int count_additional_variables_(Problem& problem);
     void evaluate_optimality_iterate_(Problem& problem, Iterate& current_iterate, double penalty_parameter);
@@ -52,7 +51,6 @@ private:
     double compute_linearized_constraint_residual_(std::vector<double>& x);
     double compute_error_(Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter);
     double compute_complementarity_error_(Problem& problem, Iterate& iterate, Multipliers& multipliers) override;
-    void recover_active_set_(Problem& problem, SubproblemSolution& solution, std::vector<Range>& variables_bounds);
 };
 
 #endif // Sl1QP_H
