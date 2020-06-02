@@ -8,6 +8,7 @@
 #include "Problem.hpp"
 #include "Iterate.hpp"
 #include "Matrix.hpp"
+#include "LinearSolver.hpp"
 
 // virtual (abstract) class
 class HessianEvaluation {
@@ -16,22 +17,28 @@ public:
     virtual ~HessianEvaluation();
 
     int dimension;
-    bool convexify;
     
     virtual void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) = 0;
-    CSCMatrix modify_inertia(CSCMatrix& hessian);
+    CSCMatrix modify_inertia(CSCMatrix& hessian, std::shared_ptr<LinearSolver> linear_solver);
 };
 
 class ExactHessianEvaluation : public HessianEvaluation {
-    /* Coordinate list */
 public:
     ExactHessianEvaluation(int dimension);
 
     void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers);
 };
 
+class ExactHessianInertiaControlEvaluation : public HessianEvaluation {
+public:
+    ExactHessianInertiaControlEvaluation(int dimension, std::string linear_solve_name);
+
+    void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers);
+private:
+    std::shared_ptr<LinearSolver> linear_solver_; /*!< Solver that solves the subproblem */
+};
+
 class BFGSHessianEvaluation : public HessianEvaluation {
-    /* Coordinate list */
 public:
     BFGSHessianEvaluation(int dimension);
 
@@ -44,6 +51,6 @@ private:
 
 class HessianEvaluationFactory {
     public:
-		static std::shared_ptr<HessianEvaluation> create(std::string hessian_evaluation_method, int dimension);
+		static std::shared_ptr<HessianEvaluation> create(std::string hessian_evaluation_method, int dimension, bool convexify);
 };
 #endif // HESSIANEVALUATION_H

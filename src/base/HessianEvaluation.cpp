@@ -1,39 +1,38 @@
 #include <exception>
 #include "HessianEvaluation.hpp"
-#include "MA57Solver.hpp"
+#include "LinearSolverFactory.hpp"
 #include "Utils.hpp"
 
-HessianEvaluation::HessianEvaluation(int dimension) : dimension(dimension), convexify(false) {
+HessianEvaluation::HessianEvaluation(int dimension): dimension(dimension) {
 }
 
 HessianEvaluation::~HessianEvaluation() {
 }
 
-CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& hessian) {
-    MA57Solver solver;
+CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& hessian, std::shared_ptr<LinearSolver> linear_solver) {
     double beta = 1e-4;
-    
+
     // Nocedal and Wright, p51
     double smallest_diagonal_entry = hessian.smallest_diagonal_entry();
     DEBUG << "The minimal diagonal entry of the Hessian is " << hessian.smallest_diagonal_entry() << "\n";
-    
+
     double inertia = 0.;
     double previous_inertia = 0.;
     if (smallest_diagonal_entry <= 0.) {
         inertia = beta - smallest_diagonal_entry;
     }
-    
+
     if (0. < inertia) {
         hessian = hessian.add_identity_multiple(inertia - previous_inertia);
     }
     COOMatrix coo_hessian = hessian.to_COO();
     DEBUG << "Testing factorization with inertia term " << inertia << "\n";
-    solver.factorize(coo_hessian);
-    
+    linear_solver->factorize(coo_hessian);
+
     bool good_inertia = false;
     while (!good_inertia) {
-        DEBUG << solver.number_negative_eigenvalues() << " negative eigenvalues\n";
-        if (!solver.matrix_is_singular() && solver.number_negative_eigenvalues() == 0) {
+        DEBUG << linear_solver->number_negative_eigenvalues() << " negative eigenvalues\n";
+        if (!linear_solver->matrix_is_singular() && linear_solver->number_negative_eigenvalues() == 0) {
             good_inertia = true;
             DEBUG << "Factorization was a success with inertia " << inertia << "\n";
         }
@@ -48,7 +47,7 @@ CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& hessian) {
             hessian = hessian.add_identity_multiple(inertia - previous_inertia);
             coo_hessian = hessian.to_COO();
             DEBUG << "Testing factorization with inertia term " << inertia << "\n";
-            solver.factorize(coo_hessian);
+            linear_solver->factorize(coo_hessian);
         }
     }
     return hessian;
@@ -62,12 +61,22 @@ ExactHessianEvaluation::ExactHessianEvaluation(int dimension): HessianEvaluation
 void ExactHessianEvaluation::compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) {
     /* compute Hessian */
     iterate.compute_hessian(problem, objective_multiplier, constraint_multipliers);
-    
-    if (this->convexify) {
-        DEBUG << "hessian before convexification: " << iterate.hessian;
-        /* modify the inertia to make the problem strictly convex */
-        iterate.hessian = this->modify_inertia(iterate.hessian);
-    }
+    return;
+}
+
+/* Exact Hessian with inertia control */
+
+ExactHessianInertiaControlEvaluation::ExactHessianInertiaControlEvaluation(int dimension, std::string linear_solver_name):
+HessianEvaluation(dimension),
+linear_solver_(LinearSolverFactory::create(linear_solver_name)) {
+}
+
+void ExactHessianInertiaControlEvaluation::compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) {
+    /* compute Hessian */
+    iterate.compute_hessian(problem, objective_multiplier, constraint_multipliers);
+    DEBUG << "hessian before convexification: " << iterate.hessian;
+    /* modify the inertia to make the problem strictly convex */
+    iterate.hessian = this->modify_inertia(iterate.hessian, this->linear_solver_);
     return;
 }
 
@@ -84,13 +93,18 @@ void BFGSHessianEvaluation::compute(Problem& problem, Iterate& iterate, double o
 
 /* Factory */
 
-std::shared_ptr<HessianEvaluation> HessianEvaluationFactory::create(std::string hessian_evaluation_method, int dimension) {
+std::shared_ptr<HessianEvaluation> HessianEvaluationFactory::create(std::string hessian_evaluation_method, int dimension, bool convexify) {
     if (hessian_evaluation_method == "exact") {
-        return std::make_shared<ExactHessianEvaluation>(dimension);
+        if (convexify) {
+            return std::make_shared<ExactHessianInertiaControlEvaluation>(dimension, "MA57");
+        }
+        else {
+            return std::make_shared<ExactHessianEvaluation>(dimension);
+        }
     }
-//    else if (hessian_evaluation_method == "BFGS") {
-//        return std::make_shared<BFGSHessianEvaluation>(dimension);
-//    }
+        //    else if (hessian_evaluation_method == "BFGS") {
+        //        return std::make_shared<BFGSHessianEvaluation>(dimension);
+        //    }
     else {
         throw std::invalid_argument("Hessian evaluation method " + hessian_evaluation_method + " does not exist");
     }
