@@ -3,12 +3,19 @@
 #include <iostream>
 #include "Utils.hpp"
 
+/* Abstract Problem class */
+
 Problem::Problem(std::string name, int number_variables, int number_constraints):
 name(name), number_variables(number_variables), number_constraints(number_constraints),
 // allocate all vectors
-variable_name(number_variables), variable_discrete(number_variables), variables_bounds(number_variables), variable_status(number_variables),
-constraint_name(number_constraints), constraint_variables(number_constraints), constraint_bounds(number_constraints), constraint_type(number_constraints), constraint_status(number_constraints)
-{
+variable_name(number_variables),
+//variable_discrete(number_variables),
+variables_bounds(number_variables), variable_status(number_variables),
+constraint_name(number_constraints),
+//constraint_variables(number_constraints),
+constraint_bounds(number_constraints), constraint_type(number_constraints), constraint_status(number_constraints),
+hessian_maximum_number_nonzeros(0),
+number_eval_objective(0), number_eval_constraints(0), number_eval_jacobian(0), number_eval_hessian(0) {
 }
 
 Problem::~Problem() {
@@ -68,3 +75,42 @@ void Problem::determine_constraints_() {
     }
     return;
 }
+
+/* native C++ problem */
+
+//CppProblem::CppProblem(std::string name, int number_variables, int number_constraints, double (*objective)(std::vector<double> x), std::vector<double> (*objective_gradient)(std::vector<double> x)):
+//Problem(name, number_variables, number_constraints),
+//objective_(objective),
+//objective_gradient_(objective_gradient) {
+//}
+//
+//double CppProblem::objective(std::vector<double>& x) {
+//    return this->objective_(x);
+//}
+//
+//std::vector<double> CppProblem::objective_dense_gradient(std::vector<double>& x) {
+//    return this->objective_gradient_(x);
+//}
+//
+//std::map<int, double> CppProblem::objective_sparse_gradient(std::vector<double>& x) {
+//    std::vector<double> dense_gradient = this->objective_gradient_(x);
+//    std::map<int, double> sparse_gradient;
+//    for (unsigned int i = 0; i < dense_gradient.size(); i++) {
+//        if (dense_gradient[i] != 0.) {
+//            sparse_gradient[i] = dense_gradient[i];
+//        }
+//    }
+//    return sparse_gradient;
+//}
+//
+//double CppProblem::evaluate_constraint(int j, std::vector<double>& x) {
+//    return this->constraints_[j](x);
+//}
+//
+//std::vector<double> CppProblem::evaluate_constraints(std::vector<double>& x) {
+//    std::vector<double> constraints(this->number_constraints);
+//    for (int j = 0; j < this->number_constraints; j++) {
+//        constraints[j] = this->evaluate_constraint(j, x);
+//    }
+//    return constraints;
+//}
