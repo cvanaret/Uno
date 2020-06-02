@@ -1,7 +1,6 @@
 #include <cmath>
 #include "LineSearch.hpp"
 #include "Logger.hpp"
-#include "AMPLModel.hpp"
 #include "InteriorPoint.hpp"
 
 LineSearch::LineSearch(GlobalizationStrategy& globalization_strategy, double tolerance, int max_iterations, double backtracking_ratio) :

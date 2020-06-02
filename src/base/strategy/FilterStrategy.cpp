@@ -33,7 +33,7 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Subp
         this->subproblem.subproblem_definition_changed = false;
         this->subproblem.compute_optimality_measures(problem, current_iterate);
     }
-
+    
     /* assemble trial point: TODO do not reevaluate if ||d|| = 0 */
     std::vector<double> trial_x = add_vectors(current_iterate.x, solution.x, step_length);
     Iterate trial_iterate(trial_x, solution.multipliers);

@@ -2,7 +2,6 @@
 #include "TrustRegion.hpp"
 #include "Utils.hpp"
 #include "Logger.hpp"
-#include "AMPLModel.hpp"
 
 TrustRegion::TrustRegion(GlobalizationStrategy& globalization_strategy, double tolerance, double initial_radius, int max_iterations):
 GlobalizationMechanism(globalization_strategy, tolerance, max_iterations), radius(initial_radius), activity_tolerance_(1e-6) {

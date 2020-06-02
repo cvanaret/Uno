@@ -23,12 +23,12 @@ public:
     Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
 
     static void correct_active_set(SubproblemSolution& solution, const double radius);
-    
+
     double radius; /*!< Current trust region radius */
 
 private:
     double activity_tolerance_;
-    
+
     bool termination_(bool is_accepted);
     void print_iteration_();
     void print_acceptance_(double solution_norm);

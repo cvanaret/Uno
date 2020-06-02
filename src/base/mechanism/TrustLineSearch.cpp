@@ -1,10 +1,9 @@
 #include <iostream>
 #include <cmath>
 #include "TrustLineSearch.hpp"
-#include "AMPLModel.hpp"
 #include "TrustRegion.hpp"
 
-TrustLineSearch::TrustLineSearch(GlobalizationStrategy& globalization_strategy, double tolerance, double initial_radius, int max_iterations, double ratio) :
+TrustLineSearch::TrustLineSearch(GlobalizationStrategy& globalization_strategy, double tolerance, double initial_radius, int max_iterations, double ratio):
 GlobalizationMechanism(globalization_strategy, tolerance, max_iterations), ratio(ratio), radius(initial_radius), activity_tolerance_(1e-6) {
 }
 
@@ -21,7 +20,7 @@ Iterate TrustLineSearch::compute_acceptable_iterate(Problem& problem, Iterate& c
         try {
             /* compute a trial direction */
             SubproblemSolution solution = this->globalization_strategy.subproblem.compute_step(problem, current_iterate, this->radius);
-            
+
             /* fail if direction is not a descent direction */
             if (0. < dot(solution.x, current_iterate.objective_gradient)) {
                 INFO << RED "Trust-line-search direction is not a descent direction\n" RESET;
@@ -48,7 +47,7 @@ Iterate TrustLineSearch::compute_acceptable_iterate(Problem& problem, Iterate& c
 
                     if (is_accepted) {
                         DEBUG << CYAN "TLS trial point accepted\n" RESET;
-                        current_iterate.status = this->compute_status_(problem, current_iterate, step_length*solution.norm, solution.objective_multiplier);
+                        current_iterate.status = this->compute_status_(problem, current_iterate, step_length * solution.norm, solution.objective_multiplier);
                         /* print summary */
                         INFO << "minor: " << this->number_iterations << "\t";
                         INFO << "radius: " << this->radius << "\t";

@@ -30,7 +30,7 @@ public:
 
 private:
     double min_step_length;
-    
+
     std::vector<Range> compute_subproblem_bounds_(Iterate& current_iterate);
     bool termination_(bool is_accepted);
     void print_iteration_();
