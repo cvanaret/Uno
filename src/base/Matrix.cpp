@@ -4,7 +4,7 @@
 #include "Utils.hpp"
 #include "SubproblemSolution.hpp"
 
-Matrix::Matrix(int dimension, int fortran_indexing): dimension(dimension), fortran_indexing(fortran_indexing) {
+Matrix::Matrix(int dimension, short fortran_indexing): dimension(dimension), fortran_indexing(fortran_indexing) {
 }
 
 Matrix::~Matrix() {
@@ -31,7 +31,7 @@ void Matrix::add_outer_product(std::map<int, double>& x, double scaling_factor) 
             // upper triangular matrix
             if (row_index <= column_index) {
                 // add product of components
-                this->add_term(scaling_factor * row_term*column_term, row_index, column_index);
+                this->insert(scaling_factor * row_term*column_term, row_index, column_index);
             }
         }
     }
@@ -43,14 +43,14 @@ void Matrix::add_outer_product(std::map<int, double>& x, double scaling_factor) 
  * https://en.wikipedia.org/wiki/Sparse_matrix#Coordinate_list_(COO)
  */
 
-COOMatrix::COOMatrix(int dimension, int fortran_indexing): Matrix(dimension, fortran_indexing) {
+COOMatrix::COOMatrix(int dimension, short fortran_indexing): Matrix(dimension, fortran_indexing) {
 }
 
 int COOMatrix::number_nonzeros() {
     return this->matrix.size();
 }
 
-void COOMatrix::add_term(double term, int row_index, int column_index) {
+void COOMatrix::insert(double term, int row_index, int column_index) {
     /* TODO: check matrix size */
     this->matrix.push_back(term);
     this->row_indices.push_back(row_index + this->fortran_indexing);
@@ -112,7 +112,9 @@ std::ostream& operator<<(std::ostream &stream, const COOMatrix& matrix) {
  * https://en.wikipedia.org/wiki/Sparse_matrix#Compressed_sparse_column_(CSC_or_CCS)
  */
 
-CSCMatrix::CSCMatrix(int dimension, int fortran_indexing): Matrix(dimension, fortran_indexing), column_start(dimension+1) {
+CSCMatrix::CSCMatrix(int dimension, short fortran_indexing): Matrix(dimension, fortran_indexing)
+//column_start(dimension+1)
+{
 }
 
 CSCMatrix::CSCMatrix(std::vector<double>& matrix, std::vector<int>& column_start, std::vector<int>& row_number, int fortran_indexing):
@@ -125,7 +127,7 @@ int CSCMatrix::number_nonzeros() {
     return this->matrix.size();
 }
 
-void CSCMatrix::add_term(double /*term*/, int /*row_index*/, int /*column_index*/) {
+void CSCMatrix::insert(double /*term*/, int /*row_index*/, int /*column_index*/) {
     throw std::out_of_range("CSCMatrix::add_term is not implemented");
 }
 
@@ -220,7 +222,7 @@ COOMatrix CSCMatrix::to_COO() {
     for (int j = 0; j < this->dimension; j++) {
         for (int k = this->column_start[j] - this->fortran_indexing; k < this->column_start[j + 1] - this->fortran_indexing; k++) {
             int i = this->row_number[k] - this->fortran_indexing;
-            coo_matrix.add_term(this->matrix[k], i, j);
+            coo_matrix.insert(this->matrix[k], i, j);
         }
     }
     return coo_matrix;
@@ -232,7 +234,7 @@ ArgonotMatrix CSCMatrix::to_ArgonotMatrix(int argonot_matrix_dimension) {
     for (int j = 0; j < this->dimension; j++) {
         for (int k = this->column_start[j] - this->fortran_indexing; k < this->column_start[j + 1] - this->fortran_indexing; k++) {
             int i = this->row_number[k] - this->fortran_indexing;
-            argonot_matrix.add_term(this->matrix[k], i, j);
+            argonot_matrix.insert(this->matrix[k], i, j);
         }
     }
     return argonot_matrix;
@@ -320,14 +322,14 @@ std::ostream& operator<<(std::ostream &stream, const CSCMatrix& matrix) {
  * Argonot matrix: bijection between indices and single key + sparse vector (map)
  */
 
-ArgonotMatrix::ArgonotMatrix(int dimension, int fortran_indexing): Matrix(dimension, fortran_indexing) {
+ArgonotMatrix::ArgonotMatrix(int dimension, short fortran_indexing): Matrix(dimension, fortran_indexing) {
 }
 
 int ArgonotMatrix::number_nonzeros() {
     return this->matrix.size();
 }
 
-void ArgonotMatrix::add_term(double term, int row_index, int column_index) {
+void ArgonotMatrix::insert(double term, int row_index, int column_index) {
     // generate the unique key
     int key = column_index * this->dimension + row_index;
     // insert the element
@@ -365,6 +367,18 @@ std::vector<double> ArgonotMatrix::product(std::vector<double>& vector) {
     throw std::out_of_range("ArgonotMatrix::product is not implemented");
 }
 
+void ArgonotMatrix::add_matrix(ArgonotMatrix& other_matrix, double factor) {
+    for (std::pair<const int, double> element: other_matrix.matrix) {
+        int key = element.first;
+        double value = element.second;
+        // retrieve indices
+        int i = key % this->dimension;
+        int j = key / this->dimension;
+        this->insert(factor*value, i, j);
+    }
+    return;
+}
+
 COOMatrix ArgonotMatrix::to_COO() {
     COOMatrix coo_matrix(this->dimension, this->fortran_indexing);
 
@@ -374,7 +388,29 @@ COOMatrix ArgonotMatrix::to_COO() {
         // retrieve indices
         int i = key % this->dimension;
         int j = key / this->dimension;
-        coo_matrix.add_term(value, i, j);
+        coo_matrix.insert(value, i, j);
+    }
+    return coo_matrix;
+}
+
+/* generate a COO matrix by removing some variables (e.g. reduced Hessian in EQP problems) */
+/* mask contains (i_origin, i_reduced) pairs, where i_origin is the original index, and i_reduced is the index in the reduced matrix */
+COOMatrix ArgonotMatrix::to_COO(std::map<int, int> mask) {
+    COOMatrix coo_matrix(this->dimension, this->fortran_indexing);
+
+    for (std::pair<const int, double> element: this->matrix) {
+        int key = element.first;
+        double value = element.second;
+        // retrieve indices
+        int i = key % this->dimension;
+        int j = key / this->dimension;
+        try {
+            // if i and j are kept, compute the indices in the reduced matrix
+            int i_reduced = mask.at(i);
+            int j_reduced = mask.at(j);
+            coo_matrix.insert(value, i_reduced, j_reduced);
+        }
+        catch (const std::out_of_range& e) {}
     }
     return coo_matrix;
 }
@@ -404,6 +440,36 @@ CSCMatrix ArgonotMatrix::to_CSC() {
     return csc_matrix;
 }
 
+CSCMatrix ArgonotMatrix::to_CSC(std::map<int, int> mask) {
+    CSCMatrix csc_matrix(this->dimension, this->fortran_indexing);
+    
+    int current_column = this->fortran_indexing;
+    int number_terms = this->fortran_indexing;
+    csc_matrix.column_start.push_back(this->fortran_indexing);
+    for (std::pair<const int, double> element: this->matrix) {
+        double value = element.second;
+        // retrieve indices
+        int key = element.first;
+        int i = key % this->dimension + this->fortran_indexing;
+        int j = key / this->dimension + this->fortran_indexing;
+        try {
+            // if i and j are kept, compute the indices in the reduced matrix
+            int i_reduced = mask.at(i);
+            int j_reduced = mask.at(j);
+            csc_matrix.matrix.push_back(value);
+            csc_matrix.row_number.push_back(i_reduced);
+            for (int column = current_column; column < j_reduced; column++) {
+                csc_matrix.column_start.push_back(number_terms);
+            }
+            current_column = j_reduced;
+            number_terms++;
+        }
+        catch (const std::out_of_range& e) {}
+    }
+    csc_matrix.column_start.push_back(number_terms);
+    return csc_matrix;
+}
+
 std::ostream& operator<<(std::ostream &stream, ArgonotMatrix& matrix) {
     for (std::pair<const int, double> element: matrix.matrix) {
         int key = element.first;
@@ -411,7 +477,7 @@ std::ostream& operator<<(std::ostream &stream, ArgonotMatrix& matrix) {
         // retrieve indices
         int i = key % matrix.dimension;
         int j = key / matrix.dimension;
-        stream << "m[" << i << ", " << j << "] = " << value << ", ";
+        stream << "m(" << i << ", " << j << ") = " << value << ", ";
     }
     return stream;
 }

@@ -7,15 +7,15 @@
 
 class Matrix {
 public:
-    Matrix(int dimension, int fortran_indexing);
+    Matrix(int dimension, short fortran_indexing);
     virtual ~Matrix();
 
     int dimension;
-    int fortran_indexing;
+    short fortran_indexing;
 
     virtual int number_nonzeros() = 0;
     /* build the matrix incrementally */
-    virtual void add_term(double term, int row_index, int column_index) = 0;
+    virtual void insert(double term, int row_index, int column_index) = 0;
     virtual std::vector<double> product(std::vector<double>& vector) = 0;
     
     double quadratic_product(std::vector<double>& x, std::vector<double>& y);
@@ -25,14 +25,14 @@ public:
 class COOMatrix : public Matrix {
     /* Coordinate list */
 public:
-    COOMatrix(int dimension, int fortran_indexing);
+    COOMatrix(int dimension, short fortran_indexing);
 
     std::vector<double> matrix;
     std::vector<int> row_indices;
     std::vector<int> column_indices;
 
     int number_nonzeros() override;
-    void add_term(double term, int row_index, int column_index) override;
+    void insert(double term, int row_index, int column_index) override;
     std::vector<double> product(std::vector<double>& vector) override;
     
     double norm_1();
@@ -48,7 +48,7 @@ class ArgonotMatrix;
 class CSCMatrix : public Matrix {
     /* Compressed Sparse Column */
 public:
-    CSCMatrix(int dimension, int fortran_indexing);
+    CSCMatrix(int dimension, short fortran_indexing);
     CSCMatrix(std::vector<double>& matrix, std::vector<int>& column_start, std::vector<int>& row_number, int fortran_indexing);
 
     std::vector<double> matrix;
@@ -56,7 +56,7 @@ public:
     std::vector<int> row_number;
 
     int number_nonzeros() override;
-    void add_term(double term, int row_index, int column_index) override;
+    void insert(double term, int row_index, int column_index) override;
     std::vector<double> product(std::vector<double>& vector) override;
     
     CSCMatrix add_identity_multiple(double multiple);
@@ -73,17 +73,20 @@ public:
 class ArgonotMatrix : public Matrix {
     /* Coordinate list */
 public:
-    ArgonotMatrix(int dimension, int fortran_indexing);
+    ArgonotMatrix(int dimension, short fortran_indexing);
 
     std::map<int, double> matrix;
 
     int number_nonzeros() override;
-    void add_term(double term, int row_index, int column_index) override;
+    void insert(double term, int row_index, int column_index) override;
     std::vector<double> product(std::vector<double>& vector) override;
+    void add_matrix(ArgonotMatrix& other_matrix, double factor);
     
     double norm_1();
     COOMatrix to_COO();
+    COOMatrix to_COO(std::map<int, int> mask);
     CSCMatrix to_CSC();
+    CSCMatrix to_CSC(std::map<int, int> mask);
 
     friend std::ostream& operator<<(std::ostream &stream, ArgonotMatrix& matrix);
 };
