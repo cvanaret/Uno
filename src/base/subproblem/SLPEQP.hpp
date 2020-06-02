@@ -1,89 +1,41 @@
 #ifndef SLPEQP_H
 #define SLPEQP_H
 
-#include "Subproblem.hpp"
+#include <memory>
+#include "ActiveSetMethod.hpp"
 #include "QPSolver.hpp"
-#include "MA57Solver.hpp"
-#include "SQP.hpp"
-#include "SLP.hpp"
+#include "LinearSolver.hpp"
 
-/*! \class QPApproximation
- * \brief QP local approximation
- *
- *  Quadratic approximation
- */
-class SLPEQP : public Subproblem {
+class SLPEQP: public ActiveSetMethod {
 public:
-    /*!
-     *  Constructor
-     * 
-     * \param solver: solver that solves the subproblem
-     */
-    SLPEQP(Problem& problem, std::string QP_solver_name, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals);
-
+    SLPEQP(Problem& problem, std::string LP_solver_name, std::string linear_solver_name, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals);
+    
     SubproblemSolution compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius=INFINITY) override;
     SubproblemSolution restore_feasibility(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius=INFINITY) override;
     
-    void compute_optimality_measures(Problem& problem, Iterate& iterate) override;
-    void compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution) override;
-    
-    bool phase_1_required(SubproblemSolution& solution) override;
-
-    /* use a reference to allow polymorphism */
-    SLP lp_subproblem;
-    SQP eqp_subproblem;
+    /* use pointers to allow polymorphism */
+    std::shared_ptr<QPSolver> lp_solver;
+    std::shared_ptr<LinearSolver> linear_solver; /*!< Solver that solves the subproblem */
+    std::shared_ptr<HessianEvaluation> hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
 
 private:
-    void fix_active_constraints(Problem& problem, ActiveSet& active_set, std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds);
-    double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length);
+    SubproblemSolution solve_eqp_(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius);
+    //void fix_active_constraints_(Problem& problem, ActiveSet& active_set, std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds);
+    //virtual SubproblemSolution compute_optimality_eqp_step_() = 0;
+    //virtual SubproblemSolution compute_feasibility_eqp_step_() = 0;
 };
 
-//class SLPEQP_l2 : public SLPEQP {
-//public:
-//    /*!
-//     *  Constructor
-//     * 
-//     * \param solver: solver that solves the subproblem
-//     */
-//    SLPEQP_l2();
-//
-//    Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, int number_constraints, bool use_trust_region) override;
-//
-//    SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds) override;
-//    SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, SubproblemSolution& phase_II_solution) override;
-//    void compute_measures(Problem& problem, Iterate& iterate) override;
-//    bool phase_1_required(SubproblemSolution& solution) override;
-//    double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
-//
-//    /* use a reference to allow polymorphism */
-//    MA57Solver solver; /*!< Solver that solves the subproblem */
-//
-//private:
-//    void fix_active_constraints(Problem& problem, ActiveSet& active_set, std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds);
-//};
-//
 //class SLPEQP_TR : public SLPEQP {
 //public:
-//    /*!
-//     *  Constructor
-//     * 
-//     * \param solver: solver that solves the subproblem
-//     */
-//    SLPEQP_TR(QPSolver& solver);
+//    SLPEQP_TR(Problem& problem, std::string LP_solver_name, std::string QP_solver_name, std::string hessian_evaluation_method, bool scale_residuals);
+//    
+//    /* use a pointer to allow polymorphism */
+//    std::shared_ptr<QPSolver> qp_solver; /*!< Solver that solves the subproblem */
+//};
 //
-//    Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers, int number_variables, int number_constraints, bool use_trust_region) override;
-//
-//    SubproblemSolution compute_optimality_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds) override;
-//    SubproblemSolution compute_infeasibility_step(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds, SubproblemSolution& phase_II_solution) override;
-//    void compute_measures(Problem& problem, Iterate& iterate) override;
-//    bool phase_1_required(SubproblemSolution& solution) override;
-//    double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
-//
-//    /* use a reference to allow polymorphism */
-//    QPSolver& solver; /*!< Solver that solves the subproblem */
-//
-//private:
-//    void fix_active_constraints(Problem& problem, ActiveSet& active_set, std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds);
+//class SLPEQP_l2 : public SLPEQP {
+//public:
+//    SLPEQP_l2(Problem& problem, std::string LP_solver_name, std::string linear_solver_name, std::string hessian_evaluation_method, bool scale_residuals);
 //};
 
 #endif // SLPEQP_H
