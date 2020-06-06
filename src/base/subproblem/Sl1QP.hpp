@@ -43,7 +43,7 @@ private:
     // constraints l <= c(x) = u are reformulated as c(x) - p + n
     ElasticVariables elastic_variables_;
 
-    int count_additional_variables_(Problem& problem);
+    int count_elastic_variables_(Problem& problem);
     void evaluate_optimality_iterate_(Problem& problem, Iterate& current_iterate, double penalty_parameter);
     std::vector<Range> generate_variables_bounds_(Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
     SubproblemSolution solve_l1qp_subproblem_(Problem& problem, Iterate& current_iterate, double trust_region_radius, double penalty_parameter);

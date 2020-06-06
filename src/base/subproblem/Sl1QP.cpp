@@ -9,10 +9,10 @@
 
 Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals, double initial_parameter):
 // compute the number of variables and call the private constructor
-Sl1QP(problem, QP_solver, hessian_evaluation_method, use_trust_region, scale_residuals, initial_parameter, this->count_additional_variables_(problem)) {
+Sl1QP(problem, QP_solver, hessian_evaluation_method, use_trust_region, scale_residuals, initial_parameter, this->count_elastic_variables_(problem)) {
 }
 
-int Sl1QP::count_additional_variables_(Problem& problem) {
+int Sl1QP::count_elastic_variables_(Problem& problem) {
     int number_variables = problem.number_variables;
     for (int j = 0; j < problem.number_constraints; j++) {
         if (-INFINITY < problem.constraint_bounds[j].lb) {
