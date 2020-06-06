@@ -28,10 +28,12 @@ SRC_FILES = base/Argonot.cpp base/Iterate.cpp \
 	base/strategy/GlobalizationStrategy.cpp base/strategy/GlobalizationStrategyFactory.cpp \
 	base/strategy/Filter.cpp base/strategy/FilterStrategy.cpp base/strategy/PenaltyMeritFunction.cpp \
 	base/mechanism/GlobalizationMechanism.cpp base/mechanism/GlobalizationMechanismFactory.cpp \
-	base/mechanism/TrustRegion.cpp base/mechanism/LineSearch.cpp base/mechanism/TrustLineSearch.cpp \
+	base/mechanism/TrustRegion.cpp base/mechanism/LineSearch.cpp \
 	base/subproblem/Subproblem.cpp base/subproblem/SubproblemFactory.cpp base/subproblem/SubproblemSolution.cpp \
 	base/subproblem/ActiveSetMethod.cpp base/subproblem/SQP.cpp base/subproblem/SLP.cpp base/subproblem/Sl1QP.cpp base/subproblem/SLPEQP.cpp base/subproblem/InteriorPoint.cpp \
 	solvers/QP/QPSolverFactory.cpp solvers/linear/LinearSolverFactory.cpp
+
+# base/mechanism/TrustLineSearch.cpp
 
 ######################
 # External libraries #

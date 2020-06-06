@@ -1,7 +1,7 @@
 #include "GlobalizationMechanismFactory.hpp"
 #include "TrustRegion.hpp"
 #include "LineSearch.hpp"
-#include "TrustLineSearch.hpp"
+//#include "TrustLineSearch.hpp"
 
 std::shared_ptr<GlobalizationMechanism> GlobalizationMechanismFactory::create(const std::string& type, GlobalizationStrategy& globalization_strategy, std::map<std::string, std::string> options) {
     double tolerance = std::stod(options["tolerance"]);
@@ -16,12 +16,12 @@ std::shared_ptr<GlobalizationMechanism> GlobalizationMechanismFactory::create(co
         double backtracking_ratio = std::stod(options["LS_backtracking_ratio"]);
         return std::make_shared<LineSearch>(globalization_strategy, tolerance, max_iterations, backtracking_ratio);
     }
-    else if (type == "TLS") {
-        double radius = INFINITY;
-        int max_iterations = std::stoi(options["LS_max_iterations"]);
-        double ratio = std::stod(options["LS_ratio"]);
-        return std::make_shared<TrustLineSearch>(globalization_strategy, tolerance, radius, max_iterations, ratio);
-    }
+//    else if (type == "TLS") {
+//        double radius = INFINITY;
+//        int max_iterations = std::stoi(options["LS_max_iterations"]);
+//        double ratio = std::stod(options["LS_ratio"]);
+//        return std::make_shared<TrustLineSearch>(globalization_strategy, tolerance, radius, max_iterations, ratio);
+//    }
     else {
         throw std::invalid_argument("GlobalizationMechanism type " + type + " does not exist");
     }
