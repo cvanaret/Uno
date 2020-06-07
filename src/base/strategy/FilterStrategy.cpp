@@ -26,7 +26,7 @@ Iterate FilterStrategy::initialize(Problem& problem, std::vector<double>& x, Mul
 /* check acceptability of step(s) (filter & sufficient reduction)
  * precondition: feasible step
  * */
-bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) {
+std::optional<Iterate> FilterStrategy::check_acceptance(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) {
     /* check if subproblem definition changed */
     if (this->subproblem.subproblem_definition_changed) {
         this->filter_optimality->reset();
@@ -91,10 +91,13 @@ bool FilterStrategy::check_step(Problem& problem, Iterate& current_iterate, Dire
         this->subproblem.compute_residuals(problem, trial_iterate, trial_iterate.multipliers, direction.objective_multiplier);
         //trial_iterate.status = this->compute_status(problem, trial_iterate, step_norm, solution.objective_multiplier);
         INFO << "phase: " << this->current_phase_ << "\t";
-        current_iterate = trial_iterate;
-        DEBUG << "Residuals: ||c|| = " << current_iterate.residuals.constraints << ", KKT = " << current_iterate.residuals.KKT << ", cmpl = " << current_iterate.residuals.complementarity << "\n";
+        //current_iterate = trial_iterate;
+        DEBUG << "Residuals: ||c|| = " << trial_iterate.residuals.constraints << ", KKT = " << trial_iterate.residuals.KKT << ", cmpl = " << trial_iterate.residuals.complementarity << "\n";
+        return std::optional<Iterate>{trial_iterate};
     }
-    return accept;
+    else {
+        return std::nullopt;
+    }
 }
 
 void FilterStrategy::switch_phase_(Problem& problem, Direction& direction, Iterate& current_iterate, Iterate& trial_iterate) {

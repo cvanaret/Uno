@@ -20,7 +20,7 @@ class PenaltyMeritFunction : public GlobalizationStrategy {
         /*!
          *  Check the validity of a step
          */
-        bool check_step(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) override;
+        std::optional<Iterate> check_acceptance(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) override;
         Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
 
     private:

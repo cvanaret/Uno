@@ -27,9 +27,10 @@ Iterate TrustRegion::compute_acceptable_iterate(Problem& problem, Iterate& curre
             this->correct_active_set(direction, this->radius);
 
             /* check whether the trial step is accepted */
-            is_accepted = this->globalization_strategy.check_step(problem, current_iterate, direction);
-
-            if (is_accepted) {
+            std::optional<Iterate> acceptance_check = this->globalization_strategy.check_acceptance(problem, current_iterate, direction);
+            if (acceptance_check.has_value()) {
+                is_accepted = true;
+                current_iterate = acceptance_check.value();
                 current_iterate.status = this->compute_status_(problem, current_iterate, direction.norm, direction.objective_multiplier);
                 /* print summary */
                 this->print_acceptance_(direction.norm);

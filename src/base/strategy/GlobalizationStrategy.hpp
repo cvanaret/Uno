@@ -2,6 +2,7 @@
 #define GLOBALIZATIONSTRATEGY_H
 
 #include <cmath>
+#include <optional>
 #include "Problem.hpp"
 #include "Subproblem.hpp"
 #include "Iterate.hpp"
@@ -30,7 +31,7 @@ public:
      *  Check the validity of a step
      *  Purely virtual method (only implemented in subclasses)
      */
-    virtual bool check_step(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length = 1.) = 0;
+    virtual std::optional<Iterate> check_acceptance(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length = 1.) = 0;
     virtual Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
 };
 

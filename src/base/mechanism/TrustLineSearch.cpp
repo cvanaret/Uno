@@ -38,7 +38,7 @@ Iterate TrustLineSearch::compute_acceptable_iterate(Problem& problem, Iterate& c
 
                     try {
                         /* check whether the trial step is accepted */
-                        is_accepted = this->globalization_strategy.check_step(problem, current_iterate, direction, step_length);
+                        is_accepted = this->globalization_strategy.check_acceptance(problem, current_iterate, direction, step_length);
                     }
                     catch (const std::invalid_argument& e) {
                         DEBUG << RED << e.what() << "\n" RESET;

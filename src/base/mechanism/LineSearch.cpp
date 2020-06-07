@@ -28,7 +28,11 @@ Iterate LineSearch::compute_acceptable_iterate(Problem& problem, Iterate& curren
 
             try {
                 /* check whether the trial step is accepted */
-                is_accepted = this->globalization_strategy.check_step(problem, current_iterate, direction, this->step_length);
+                std::optional<Iterate> acceptance_check = this->globalization_strategy.check_acceptance(problem, current_iterate, direction, this->step_length);
+                if (acceptance_check.has_value()) {
+                    is_accepted = true;
+                    current_iterate = acceptance_check.value();
+                }
             }
             catch (const IEEE_Error& e) {
                 this->print_warning_(e.what());
