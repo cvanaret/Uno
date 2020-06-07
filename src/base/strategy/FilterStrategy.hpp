@@ -34,14 +34,14 @@ public:
      *  Check the validity of a step
      *  Implements the purely virtual method of the superclass
      */
-    bool check_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
+    bool check_step(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) override;
     Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
     
 private:
     Phase current_phase_; /*!< Current phase (optimality or feasibility restoration) */
     FilterStrategyParameters parameters_; /*!< Set of constants */
     
-    void switch_phase_(Problem& problem, SubproblemSolution& solution, Iterate& current_iterate, Iterate& trial_iterate);
+    void switch_phase_(Problem& problem, Direction& direction, Iterate& current_iterate, Iterate& trial_iterate);
     void update_restoration_multipliers_(Iterate& trial_iterate, ConstraintPartition& constraint_partition);
 };
 

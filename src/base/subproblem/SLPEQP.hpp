@@ -10,8 +10,8 @@ class SLPEQP: public ActiveSetMethod {
 public:
     SLPEQP(Problem& problem, std::string LP_solver_name, std::string linear_solver_name, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals);
     
-    SubproblemSolution compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius=INFINITY) override;
-    SubproblemSolution restore_feasibility(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius=INFINITY) override;
+    Direction compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius=INFINITY) override;
+    Direction restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_II_solution, double trust_region_radius=INFINITY) override;
     
     /* use pointers to allow polymorphism */
     std::shared_ptr<QPSolver> lp_solver;
@@ -19,7 +19,7 @@ public:
     std::shared_ptr<HessianEvaluation> hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
 
 private:
-    SubproblemSolution solve_eqp_(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius);
+    Direction solve_eqp_(Problem& problem, Iterate& current_iterate, Direction& phase_II_solution, double trust_region_radius);
     //void fix_active_constraints_(Problem& problem, ActiveSet& active_set, std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds);
     //virtual SubproblemSolution compute_optimality_eqp_step_() = 0;
     //virtual SubproblemSolution compute_feasibility_eqp_step_() = 0;

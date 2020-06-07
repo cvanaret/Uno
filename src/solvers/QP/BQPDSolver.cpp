@@ -29,7 +29,7 @@ QPSolver(), n_(number_variables), m_(number_constraints), maximum_number_nonzero
     }
 }
 
-SubproblemSolution BQPDSolver::solve_QP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, CSCMatrix& hessian, std::vector<double>& x) {
+Direction BQPDSolver::solve_QP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, CSCMatrix& hessian, std::vector<double>& x) {
     /* Hessian */
     for (int i = 0; i < hessian.number_nonzeros(); i++) {
         this->hessian_[i] = hessian.matrix[i];
@@ -55,11 +55,11 @@ SubproblemSolution BQPDSolver::solve_QP(std::vector<Range>& variables_bounds, st
     return this->solve_subproblem_(variables_bounds, constraints_bounds, linear_objective, constraints_jacobian, x);
 }
 
-SubproblemSolution BQPDSolver::solve_LP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, std::vector<double>& x) {
+Direction BQPDSolver::solve_LP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, std::vector<double>& x) {
     return this->solve_subproblem_(variables_bounds, constraints_bounds, linear_objective, constraints_jacobian, x);
 }
 
-SubproblemSolution BQPDSolver::solve_subproblem_(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, std::vector<double>& x) {
+Direction BQPDSolver::solve_subproblem_(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, std::vector<double>& x) {
     /* initialize wsc_ common block (Hessian & workspace for bqpd) */
     // setting the common block here ensures that several instances of BQPD can run simultaneously
     wsc_.kk = this->maximum_number_nonzeros_;
@@ -142,13 +142,13 @@ SubproblemSolution BQPDSolver::solve_subproblem_(std::vector<Range>& variables_b
         }
     }
 
-    SubproblemSolution solution = this->generate_solution_(x);
-    return solution;
+    Direction direction = this->generate_direction_(x);
+    return direction;
 }
 
-SubproblemSolution BQPDSolver::generate_solution_(std::vector<double>& x) {
+Direction BQPDSolver::generate_direction_(std::vector<double>& x) {
     Multipliers multipliers(this->n_, this->m_);
-    SubproblemSolution solution(x, multipliers);
+    Direction direction(x, multipliers);
     
     /* active constraints */
     for (int j = 0; j < this->n_ - this->k_; j++) {
@@ -157,26 +157,26 @@ SubproblemSolution BQPDSolver::generate_solution_(std::vector<double>& x) {
         if (index < this->n_) {
             // bound constraint
             if (0 <= this->ls_[j]) { /* lower bound active */
-                solution.multipliers.lower_bounds[index] = this->residuals_[index];
-                solution.active_set.bounds.at_lower_bound.insert(index);
+                direction.multipliers.lower_bounds[index] = this->residuals_[index];
+                direction.active_set.bounds.at_lower_bound.insert(index);
             }
             else { /* upper bound active */
-                solution.multipliers.upper_bounds[index] = -this->residuals_[index];
-                solution.active_set.bounds.at_upper_bound.insert(index);
+                direction.multipliers.upper_bounds[index] = -this->residuals_[index];
+                direction.active_set.bounds.at_upper_bound.insert(index);
             }
         }
         else {
             // general constraint            
             int constraint_index = index - this->n_;
-            solution.constraint_partition.feasible.insert(constraint_index);
-            solution.constraint_partition.constraint_feasibility[constraint_index] = FEASIBLE;
+            direction.constraint_partition.feasible.insert(constraint_index);
+            direction.constraint_partition.constraint_feasibility[constraint_index] = FEASIBLE;
             if (0 <= this->ls_[j]) { /* lower bound active */
-                solution.multipliers.constraints[constraint_index] = this->residuals_[index];
-                solution.active_set.constraints.at_lower_bound.insert(constraint_index);
+                direction.multipliers.constraints[constraint_index] = this->residuals_[index];
+                direction.active_set.constraints.at_lower_bound.insert(constraint_index);
             }
             else { /* upper bound active */
-                solution.multipliers.constraints[constraint_index] = -this->residuals_[index];
-                solution.active_set.constraints.at_upper_bound.insert(constraint_index);
+                direction.multipliers.constraints[constraint_index] = -this->residuals_[index];
+                direction.active_set.constraints.at_upper_bound.insert(constraint_index);
             }
         }
     }
@@ -188,25 +188,25 @@ SubproblemSolution BQPDSolver::generate_solution_(std::vector<double>& x) {
         if (this->n_ <= index) { // general constraints
             int constraint_index = index - this->n_;
             if (this->residuals_[index] < 0.) { // infeasible constraint
-                solution.constraint_partition.infeasible.insert(constraint_index);
+                direction.constraint_partition.infeasible.insert(constraint_index);
                 if (this->ls_[j] < 0) { // upper bound violated
-                    solution.constraint_partition.constraint_feasibility[constraint_index] = INFEASIBLE_UPPER;
+                    direction.constraint_partition.constraint_feasibility[constraint_index] = INFEASIBLE_UPPER;
                 }
                 else { // lower bound violated
-                    solution.constraint_partition.constraint_feasibility[constraint_index] = INFEASIBLE_LOWER;
+                    direction.constraint_partition.constraint_feasibility[constraint_index] = INFEASIBLE_LOWER;
                 }
             }
             else { // feasible constraint
-                solution.constraint_partition.feasible.insert(constraint_index);
-                solution.constraint_partition.constraint_feasibility[constraint_index] = FEASIBLE;
+                direction.constraint_partition.feasible.insert(constraint_index);
+                direction.constraint_partition.constraint_feasibility[constraint_index] = FEASIBLE;
             }
         }
     }
-    solution.status = this->int_to_status_(this->ifail_);
+    direction.status = this->int_to_status_(this->ifail_);
     // phase_1_required
-    solution.norm = norm_inf(x);
-    solution.objective = this->f_solution_;
-    return solution;
+    direction.norm = norm_inf(x);
+    direction.objective = this->f_solution_;
+    return direction;
 }
 
 Status BQPDSolver::int_to_status_(int ifail) {

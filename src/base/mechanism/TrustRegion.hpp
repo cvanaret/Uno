@@ -22,7 +22,7 @@ public:
     Iterate compute_acceptable_iterate(Problem& problem, Iterate& current_iterate) override;
     Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
 
-    static void correct_active_set(SubproblemSolution& solution, const double radius);
+    static void correct_active_set(Direction& direction, const double radius);
 
     double radius; /*!< Current trust region radius */
 

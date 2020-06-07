@@ -116,21 +116,21 @@ void Argonot::preprocessing(Problem& problem, std::vector<double>& x, Multiplier
                 int linear_constraint_index = element.second;
                 constraints_bounds[linear_constraint_index] = {problem.constraint_bounds[j].lb - constraints[j], problem.constraint_bounds[j].ub - constraints[j]};
             }
-            SubproblemSolution solution = solver.solve_QP(variables_bounds, constraints_bounds, linear_objective, constraints_jacobian, hessian, d0);
-            if (solution.status == INFEASIBLE) {
+            Direction direction = solver.solve_QP(variables_bounds, constraints_bounds, linear_objective, constraints_jacobian, hessian, d0);
+            if (direction.status == INFEASIBLE) {
                 throw std::runtime_error("Linear constraints cannot be satisfied");
             }
             
-            std::vector<double> feasible_x = add_vectors(x, solution.x, 1.);
+            std::vector<double> feasible_x = add_vectors(x, direction.x, 1.);
             x = feasible_x;
             // copy bound multipliers
-            multipliers.lower_bounds = solution.multipliers.lower_bounds;
-            multipliers.upper_bounds = solution.multipliers.upper_bounds;
+            multipliers.lower_bounds = direction.multipliers.lower_bounds;
+            multipliers.upper_bounds = direction.multipliers.upper_bounds;
             // copy constraint multipliers
             for (std::pair<int, int> element: problem.linear_constraints) {
                 int j = element.first;
                 int linear_constraint_index = element.second;
-                multipliers.constraints[j] = solution.multipliers.constraints[linear_constraint_index];
+                multipliers.constraints[j] = direction.multipliers.constraints[linear_constraint_index];
             }
             INFO << "Linear feasible initial point: "; print_vector(INFO, x);
             INFO << "\n";

@@ -15,7 +15,7 @@ extern "C" {
 LBFGSB::LBFGSB(int limited_memory_size): penalty_parameter(200.), limited_memory_size(limited_memory_size) {
 }
 
-SubproblemSolution LBFGSB::solve(Problem& problem, Iterate& current_iterate,
+Direction LBFGSB::solve(Problem& problem, Iterate& current_iterate,
         double (*compute_objective)(Problem&, std::vector<double>&, std::vector<double>&, std::vector<double>&, double),
         std::vector<double> (*compute_objective_gradient)(Problem&, std::vector<double>&, std::vector<double>&, std::vector<double>&, std::vector<double>&, double),
         std::vector<double> (*compute_constraints)(Problem& problem, std::vector<double>& x),
@@ -79,8 +79,7 @@ SubproblemSolution LBFGSB::solve(Problem& problem, Iterate& current_iterate,
         }
     }
     // create local solution from primal and dual variables
-    SubproblemSolution solution(x, multipliers);
-    solution.status = OPTIMAL;
-
-    return solution;
+    Direction direction(x, multipliers);
+    direction.status = OPTIMAL;
+    return direction;
 }

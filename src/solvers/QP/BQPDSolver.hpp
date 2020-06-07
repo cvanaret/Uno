@@ -37,14 +37,14 @@ public:
      * 
      * \param d0: initial point
      */
-    SubproblemSolution solve_QP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, CSCMatrix& hessian, std::vector<double>& x);
+    Direction solve_QP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, CSCMatrix& hessian, std::vector<double>& x);
 
     /*!
      *  Solve an LP
      * 
      * \param d0: initial point
      */
-    SubproblemSolution solve_LP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, std::vector<double>& x);
+    Direction solve_LP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, std::vector<double>& x);
     
 private:
     int n_, m_;
@@ -73,9 +73,9 @@ private:
      * 
      * \param d: optimal solution
      */
-    SubproblemSolution generate_solution_(std::vector<double>& x);
+    Direction generate_direction_(std::vector<double>& x);
     Status int_to_status_(int ifail);
-    SubproblemSolution solve_subproblem_(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, std::vector<double>& x);
+    Direction solve_subproblem_(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, std::vector<double>& x);
 };
 
 #endif // BQPDSOLVER_H

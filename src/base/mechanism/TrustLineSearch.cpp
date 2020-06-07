@@ -19,16 +19,16 @@ Iterate TrustLineSearch::compute_acceptable_iterate(Problem& problem, Iterate& c
     while (!this->termination_(is_accepted, this->number_iterations)) {
         try {
             /* compute a trial direction */
-            SubproblemSolution solution = this->globalization_strategy.subproblem.compute_step(problem, current_iterate, this->radius);
+            Direction direction = this->globalization_strategy.subproblem.compute_step(problem, current_iterate, this->radius);
 
             /* fail if direction is not a descent direction */
-            if (0. < dot(solution.x, current_iterate.objective_gradient)) {
+            if (0. < dot(direction.x, current_iterate.objective_gradient)) {
                 INFO << RED "Trust-line-search direction is not a descent direction\n" RESET;
                 linesearch_failed = true;
             }
             else {
                 /* set multipliers of active trust region to 0 */
-                TrustRegion::correct_active_set(solution, this->radius);
+                TrustRegion::correct_active_set(direction, this->radius);
 
                 /* length follows the following sequence: 1, ratio, ratio^2, ratio^3, ... */
                 double step_length = 1.;
@@ -38,7 +38,7 @@ Iterate TrustLineSearch::compute_acceptable_iterate(Problem& problem, Iterate& c
 
                     try {
                         /* check whether the trial step is accepted */
-                        is_accepted = this->globalization_strategy.check_step(problem, current_iterate, solution, step_length);
+                        is_accepted = this->globalization_strategy.check_step(problem, current_iterate, direction, step_length);
                     }
                     catch (const std::invalid_argument& e) {
                         DEBUG << RED << e.what() << "\n" RESET;
@@ -47,15 +47,15 @@ Iterate TrustLineSearch::compute_acceptable_iterate(Problem& problem, Iterate& c
 
                     if (is_accepted) {
                         DEBUG << CYAN "TLS trial point accepted\n" RESET;
-                        current_iterate.status = this->compute_status_(problem, current_iterate, step_length * solution.norm, solution.objective_multiplier);
+                        current_iterate.status = this->compute_status_(problem, current_iterate, step_length * direction.norm, direction.objective_multiplier);
                         /* print summary */
                         INFO << "minor: " << this->number_iterations << "\t";
                         INFO << "radius: " << this->radius << "\t";
                         INFO << "step length: " << step_length << "\t";
-                        INFO << "step norm: " << solution.norm << "\t";
+                        INFO << "step norm: " << direction.norm << "\t";
 
                         /* increase the radius if trust region is active, otherwise keep the same radius */
-                        if (solution.norm >= this->radius - this->activity_tolerance_) {
+                        if (direction.norm >= this->radius - this->activity_tolerance_) {
                             this->radius *= 2.;
                         }
                     }

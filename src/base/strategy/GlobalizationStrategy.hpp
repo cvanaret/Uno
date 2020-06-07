@@ -5,7 +5,7 @@
 #include "Problem.hpp"
 #include "Subproblem.hpp"
 #include "Iterate.hpp"
-#include "SubproblemSolution.hpp"
+#include "Direction.hpp"
 #include "Constraint.hpp"
 
 /*! \class GlobalizationStrategy
@@ -30,7 +30,7 @@ public:
      *  Check the validity of a step
      *  Purely virtual method (only implemented in subclasses)
      */
-    virtual bool check_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length = 1.) = 0;
+    virtual bool check_step(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length = 1.) = 0;
     virtual Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
 };
 

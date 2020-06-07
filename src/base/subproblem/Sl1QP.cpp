@@ -37,20 +37,20 @@ number_variables(number_variables) {
     this->generate_elastic_variables_(problem, this->elastic_variables_);
 }
 
-SubproblemSolution Sl1QP::compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+Direction Sl1QP::compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
     DEBUG << "penalty parameter: " << this->penalty_parameter << "\n";
 
     // evaluate constraints
     current_iterate.compute_constraints(problem);
 
     /* stage a: compute the step within trust region */
-    SubproblemSolution solution = this->solve_l1qp_subproblem_(problem, current_iterate, trust_region_radius, this->penalty_parameter);
-    DEBUG << solution;
+    Direction direction = this->solve_l1qp_subproblem_(problem, current_iterate, trust_region_radius, this->penalty_parameter);
+    DEBUG << direction;
 
     /* penalty update: if penalty parameter is already 0, no need to decrease it */
     if (0. < this->penalty_parameter) {
         /* check infeasibility */
-        double linearized_residual = this->compute_linearized_constraint_residual_(solution.x);
+        double linearized_residual = this->compute_linearized_constraint_residual_(direction.x);
         DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
 
         // if problem had to be relaxed
@@ -59,11 +59,11 @@ SubproblemSolution Sl1QP::compute_step(Problem& problem, Iterate& current_iterat
 
             /* stage c: solve the ideal l1 penalty problem with a zero penalty (no objective) */
             DEBUG << "Compute ideal solution:\n";
-            SubproblemSolution ideal_solution = this->solve_l1qp_subproblem_(problem, current_iterate, trust_region_radius, 0.);
-            DEBUG << ideal_solution;
+            Direction ideal_direction = this->solve_l1qp_subproblem_(problem, current_iterate, trust_region_radius, 0.);
+            DEBUG << ideal_direction;
 
             /* compute the ideal error (with a zero penalty parameter) */
-            double ideal_error = this->compute_error_(problem, current_iterate, ideal_solution.multipliers, 0.);
+            double ideal_error = this->compute_error_(problem, current_iterate, ideal_direction.multipliers, 0.);
             DEBUG << "Ideal error: " << ideal_error << "\n";
 
             if (ideal_error == 0.) {
@@ -71,7 +71,7 @@ SubproblemSolution Sl1QP::compute_step(Problem& problem, Iterate& current_iterat
                 this->penalty_parameter = 0.;
             }
             else {
-                double ideal_linearized_residual = this->compute_linearized_constraint_residual_(ideal_solution.x);
+                double ideal_linearized_residual = this->compute_linearized_constraint_residual_(ideal_direction.x);
                 DEBUG << "Linearized residual mk(dk): " << ideal_linearized_residual << "\n\n";
 
                 /* decrease penalty parameter to satisfy 2 conditions */
@@ -85,7 +85,7 @@ SubproblemSolution Sl1QP::compute_step(Problem& problem, Iterate& current_iterat
                         }
                     }
                     /* stage e: further decrease penalty parameter if necessary */
-                    if (condition1 && current_iterate.feasibility_measure - solution.objective >= this->parameters.epsilon2 * (current_iterate.feasibility_measure - ideal_solution.objective)) {
+                    if (condition1 && current_iterate.feasibility_measure - direction.objective >= this->parameters.epsilon2 * (current_iterate.feasibility_measure - ideal_direction.objective)) {
                         condition2 = true;
                         DEBUG << "Condition 2 is true\n";
                     }
@@ -97,10 +97,10 @@ SubproblemSolution Sl1QP::compute_step(Problem& problem, Iterate& current_iterat
                         }
                         else {
                             DEBUG << "\nAttempting to solve with penalty parameter " << this->penalty_parameter << "\n";
-                            solution = this->solve_l1qp_subproblem_(problem, current_iterate, trust_region_radius, this->penalty_parameter);
-                            DEBUG << solution;
+                            direction = this->solve_l1qp_subproblem_(problem, current_iterate, trust_region_radius, this->penalty_parameter);
+                            DEBUG << direction;
 
-                            linearized_residual = this->compute_linearized_constraint_residual_(solution.x);
+                            linearized_residual = this->compute_linearized_constraint_residual_(direction.x);
                             DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
                         }
                     }
@@ -111,7 +111,7 @@ SubproblemSolution Sl1QP::compute_step(Problem& problem, Iterate& current_iterat
                 double term = ideal_error / std::max(1., current_iterate.feasibility_measure);
                 this->penalty_parameter = std::min(this->penalty_parameter, term * term);
                 if (this->penalty_parameter < updated_penalty_parameter) {
-                    solution = this->solve_l1qp_subproblem_(problem, current_iterate, trust_region_radius, this->penalty_parameter);
+                    direction = this->solve_l1qp_subproblem_(problem, current_iterate, trust_region_radius, this->penalty_parameter);
                 }
                 
             }
@@ -120,24 +120,24 @@ SubproblemSolution Sl1QP::compute_step(Problem& problem, Iterate& current_iterat
                 DEBUG << "\n*** Penalty parameter updated to " << this->penalty_parameter << "\n";
                 this->subproblem_definition_changed = true;
                 if (this->penalty_parameter == 0.) {
-                    solution = ideal_solution;
+                    direction = ideal_direction;
                 }
             }
         }
     }
 
-    solution.objective_multiplier = penalty_parameter;
-    solution.predicted_reduction = [&](double step_length) {
-        return this->compute_predicted_reduction_(problem, current_iterate, solution, step_length);
+    direction.objective_multiplier = penalty_parameter;
+    direction.predicted_reduction = [&](double step_length) {
+        return this->compute_predicted_reduction_(problem, current_iterate, direction, step_length);
     };
-    return solution;
+    return direction;
 }
 
-SubproblemSolution Sl1QP::solve_l1qp_subproblem_(Problem& problem, Iterate& current_iterate, double trust_region_radius, double penalty_parameter) {
+Direction Sl1QP::solve_l1qp_subproblem_(Problem& problem, Iterate& current_iterate, double trust_region_radius, double penalty_parameter) {
     /* compute l1QP step */
     this->evaluate_optimality_iterate_(problem, current_iterate, penalty_parameter);
-    SubproblemSolution solution = this->compute_l1qp_step_(problem, this->solver, current_iterate, penalty_parameter, this->elastic_variables_, trust_region_radius);
-    return solution;
+    Direction direction = this->compute_l1qp_step_(problem, this->solver, current_iterate, penalty_parameter, this->elastic_variables_, trust_region_radius);
+    return direction;
 }
 
 void Sl1QP::evaluate_optimality_iterate_(Problem& problem, Iterate& current_iterate, double penalty_parameter) {
@@ -147,22 +147,22 @@ void Sl1QP::evaluate_optimality_iterate_(Problem& problem, Iterate& current_iter
     return;
 }
 
-SubproblemSolution Sl1QP::restore_feasibility(Problem&, Iterate&, SubproblemSolution&, double) {
+Direction Sl1QP::restore_feasibility(Problem&, Iterate&, Direction&, double) {
     throw std::out_of_range("Sl1QP.compute_infeasibility_step is not implemented, since l1QP are always feasible");
 }
 
-double Sl1QP::compute_predicted_reduction_(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) {
+double Sl1QP::compute_predicted_reduction_(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) {
     // the predicted reduction is quadratic
     if (step_length == 1.) {
-        return current_iterate.feasibility_measure - solution.objective;
+        return current_iterate.feasibility_measure - direction.objective;
     }
     else {
-        double linear_term = dot(solution.x, current_iterate.objective_gradient);
-        double quadratic_term = current_iterate.hessian.quadratic_product(solution.x, solution.x) / 2.;
+        double linear_term = dot(direction.x, current_iterate.objective_gradient);
+        double quadratic_term = current_iterate.hessian.quadratic_product(direction.x, direction.x) / 2.;
         // determine the constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
         std::vector<double> scaled_constraints(current_iterate.constraints);
         for (unsigned int j = 0; j < current_iterate.constraints.size(); j++) {
-            scaled_constraints[j] += step_length * dot(solution.x, current_iterate.constraints_jacobian[j]);
+            scaled_constraints[j] += step_length * dot(direction.x, current_iterate.constraints_jacobian[j]);
         }
         double constraint_violation = problem.compute_constraint_residual(scaled_constraints, this->residual_norm);
         return current_iterate.feasibility_measure - (step_length * (linear_term + step_length * quadratic_term) + constraint_violation);

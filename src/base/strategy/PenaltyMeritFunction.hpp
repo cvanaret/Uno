@@ -20,13 +20,13 @@ class PenaltyMeritFunction : public GlobalizationStrategy {
         /*!
          *  Check the validity of a step
          */
-        bool check_step(Problem& problem, Iterate& current_iterate, SubproblemSolution& solution, double step_length) override;
+        bool check_step(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) override;
         Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
 
     private:
         double decrease_fraction_;
         
-        double compute_linear_model_(Problem& problem, SubproblemSolution& solution);
+        double compute_linear_model_(Problem& problem, Direction& direction);
 };
 
 #endif // PENALTYMERITFUNCTION_H

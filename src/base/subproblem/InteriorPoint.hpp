@@ -38,11 +38,11 @@ public:
 
     Iterate evaluate_initial_point(Problem& problem, std::vector<double>& x, Multipliers& default_multipliers) override;
 
-    SubproblemSolution compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
-    SubproblemSolution restore_feasibility(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) override;
+    Direction compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
+    Direction restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_II_direction, double trust_region_radius) override;
 
     void compute_optimality_measures(Problem& problem, Iterate& iterate) override;
-    void compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& solution) override;
+    void compute_infeasibility_measures(Problem& problem, Iterate& iterate, Direction& direction) override;
     
     double constraint_violation(Problem& problem, Iterate& iterate);
     double compute_central_complementarity_error(Iterate& iterate, double mu, std::vector<Range>& variables_bounds);
@@ -69,9 +69,9 @@ private:
     void generate_kkt_rhs_(Problem& problem, Iterate& current_iterate);
     std::vector<double> compute_lower_bound_multiplier_displacements_(Iterate& current_iterate, std::vector<double>& solution, std::vector<Range>& variables_bounds, double mu);
     std::vector<double> compute_upper_bound_multiplier_displacements_(Iterate& current_iterate, std::vector<double>& solution, std::vector<Range>& variables_bounds, double mu);
-    SubproblemSolution generate_direction_(Problem& problem, Iterate& current_iterate, std::vector<double>& solution_IPM);
+    Direction generate_direction_(Problem& problem, Iterate& current_iterate, std::vector<double>& solution_IPM);
     double compute_KKT_error_scaling_(Iterate& current_iterate);
-    double compute_predicted_reduction_(SubproblemSolution& solution, double step_length);
+    double compute_predicted_reduction_(Direction& direction, double step_length);
 
     std::vector<double> rhs_;
     double inertia_hessian_;

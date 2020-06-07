@@ -14,27 +14,27 @@ solver(QPSolverFactory::create(QP_solver_name, problem.number_variables, problem
 hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, !use_trust_region)) {
 }
 
-SubproblemSolution SQP::compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+Direction SQP::compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
     /* compute optimality step */
     this->evaluate_optimality_iterate_(problem, current_iterate);
-    SubproblemSolution solution = this->compute_qp_step_(problem, this->solver, current_iterate, trust_region_radius);
+    Direction direction = this->compute_qp_step_(problem, this->solver, current_iterate, trust_region_radius);
     
-    if (solution.status == INFEASIBLE) {
+    if (direction.status == INFEASIBLE) {
         /* infeasible subproblem during optimality phase */
-        solution = this->restore_feasibility(problem, current_iterate, solution, trust_region_radius);
+        direction = this->restore_feasibility(problem, current_iterate, direction, trust_region_radius);
     }
     // the solution is now feasible
     
-    solution.objective_multiplier = problem.objective_sign;
-    solution.predicted_reduction = [&](double step_length) {
-        return this->compute_qp_predicted_reduction_(current_iterate, solution, step_length);
+    direction.objective_multiplier = problem.objective_sign;
+    direction.predicted_reduction = [&](double step_length) {
+        return this->compute_qp_predicted_reduction_(current_iterate, direction, step_length);
     };
-    return solution;
+    return direction;
 }
 
-SubproblemSolution SQP::restore_feasibility(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) {
-    this->evaluate_feasibility_iterate_(problem, current_iterate, phase_II_solution.constraint_partition);
-   return this->compute_l1qp_step_(problem, this->solver, current_iterate, phase_II_solution.constraint_partition, phase_II_solution.x, trust_region_radius); 
+Direction SQP::restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_II_direction, double trust_region_radius) {
+    this->evaluate_feasibility_iterate_(problem, current_iterate, phase_II_direction.constraint_partition);
+   return this->compute_l1qp_step_(problem, this->solver, current_iterate, phase_II_direction.constraint_partition, phase_II_direction.x, trust_region_radius); 
 }
 
 /* private methods */

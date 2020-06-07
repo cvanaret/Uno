@@ -14,7 +14,7 @@ Iterate LineSearch::initialize(Problem& problem, std::vector<double>& x, Multipl
 Iterate LineSearch::compute_acceptable_iterate(Problem& problem, Iterate& current_iterate) {
     bool line_search_termination = false;
     /* compute the step */
-    SubproblemSolution solution = this->globalization_strategy.subproblem.compute_step(problem, current_iterate);
+    Direction direction = this->globalization_strategy.subproblem.compute_step(problem, current_iterate);
     
     while (!line_search_termination) {
         /* step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ... */
@@ -28,7 +28,7 @@ Iterate LineSearch::compute_acceptable_iterate(Problem& problem, Iterate& curren
 
             try {
                 /* check whether the trial step is accepted */
-                is_accepted = this->globalization_strategy.check_step(problem, current_iterate, solution, this->step_length);
+                is_accepted = this->globalization_strategy.check_step(problem, current_iterate, direction, this->step_length);
             }
             catch (const IEEE_Error& e) {
                 this->print_warning_(e.what());
@@ -36,9 +36,9 @@ Iterate LineSearch::compute_acceptable_iterate(Problem& problem, Iterate& curren
             }
 
             if (is_accepted) {
-                current_iterate.status = this->compute_status_(problem, current_iterate, this->step_length*solution.norm, solution.objective_multiplier);
+                current_iterate.status = this->compute_status_(problem, current_iterate, this->step_length*direction.norm, direction.objective_multiplier);
                 /* print summary */
-                this->print_acceptance_(step_length, step_length * solution.norm);
+                this->print_acceptance_(step_length, step_length * direction.norm);
             }
             else {
                 /* decrease the step length */
@@ -46,10 +46,10 @@ Iterate LineSearch::compute_acceptable_iterate(Problem& problem, Iterate& curren
             }
         }
         // if step length is too small, run restoration phase
-        if (!is_accepted && this->step_length < this->min_step_length && solution.phase == OPTIMALITY) {
+        if (!is_accepted && this->step_length < this->min_step_length && direction.phase == OPTIMALITY) {
             if (0. < current_iterate.feasibility_measure) {
                 // reset the line search with the restoration solution
-                solution = this->globalization_strategy.subproblem.restore_feasibility(problem, current_iterate, solution);
+                direction = this->globalization_strategy.subproblem.restore_feasibility(problem, current_iterate, direction);
                 this->step_length = 1.;
             }
             else {

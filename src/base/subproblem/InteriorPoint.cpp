@@ -106,7 +106,7 @@ double InteriorPoint::compute_KKT_error_scaling_(Iterate& current_iterate) {
 }
 
 /* reduced primal-dual approach */
-SubproblemSolution InteriorPoint::compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+Direction InteriorPoint::compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
     DEBUG << "\nCurrent iterate: ";
     DEBUG << current_iterate;
 
@@ -161,21 +161,21 @@ SubproblemSolution InteriorPoint::compute_step(Problem& problem, Iterate& curren
         std::vector<double>& solution_IPM = this->rhs_;
 
         /* generate IPM direction */
-        SubproblemSolution solution = this->generate_direction_(problem, current_iterate, solution_IPM);
-        solution.status = OPTIMAL;
-        solution.phase = OPTIMALITY;
-        solution.norm = norm_inf(solution.x, problem.number_variables);
-        solution.predicted_reduction = [&](double step_length) {
-            return this->compute_predicted_reduction_(solution, step_length);
+        Direction direction = this->generate_direction_(problem, current_iterate, solution_IPM);
+        direction.status = OPTIMAL;
+        direction.phase = OPTIMALITY;
+        direction.norm = norm_inf(direction.x, problem.number_variables);
+        direction.predicted_reduction = [&](double step_length) {
+            return this->compute_predicted_reduction_(direction, step_length);
         };
         /* evaluate the barrier objective */
-        solution.objective = this->evaluate_local_model_(problem, current_iterate, solution.x);
-        return solution;
+        direction.objective = this->evaluate_local_model_(problem, current_iterate, direction.x);
+        return direction;
     }
     catch (const UnstableInertiaCorrection& e) {
         /* unstable factorization during optimality phase */
-        SubproblemSolution solution(current_iterate.x, current_iterate.multipliers); // dummy solution
-        return this->restore_feasibility(problem, current_iterate, solution, trust_region_radius);
+        Direction direction(current_iterate.x, current_iterate.multipliers); // dummy solution
+        return this->restore_feasibility(problem, current_iterate, direction, trust_region_radius);
     }
 }
 
@@ -204,7 +204,7 @@ void InteriorPoint::evaluate_optimality_iterate_(Problem& problem, Iterate& curr
     return;
 }
 
-SubproblemSolution InteriorPoint::generate_direction_(Problem& problem, Iterate& current_iterate, std::vector<double>& solution_IPM) {
+Direction InteriorPoint::generate_direction_(Problem& problem, Iterate& current_iterate, std::vector<double>& solution_IPM) {
     int number_variables = problem.number_variables + problem.inequality_constraints.size();
 
     /* retrieve +Δλ (Nocedal p590) */
@@ -253,8 +253,8 @@ SubproblemSolution InteriorPoint::generate_direction_(Problem& problem, Iterate&
     DEBUG << "primal length = " << primal_length << "\n";
     DEBUG << "dual length = " << dual_length << "\n\n";
 
-    SubproblemSolution solution(trial_x, trial_multipliers);
-    return solution;
+    Direction direction(trial_x, trial_multipliers);
+    return direction;
 }
 
 double InteriorPoint::compute_primal_length_(Iterate& current_iterate, std::vector<double>& ipm_solution, std::vector<Range>& variables_bounds, double tau) {
@@ -454,7 +454,7 @@ void InteriorPoint::compute_optimality_measures(Problem& problem, Iterate& itera
     return;
 }
 
-void InteriorPoint::compute_infeasibility_measures(Problem& problem, Iterate& iterate, SubproblemSolution& /*solution*/) {
+void InteriorPoint::compute_infeasibility_measures(Problem& problem, Iterate& iterate, Direction& /*direction*/) {
     this->compute_optimality_measures(problem, iterate);
     return;
 }
@@ -498,12 +498,12 @@ double InteriorPoint::evaluate_local_model_(Problem& /*problem*/, Iterate& curre
     return subproblem_objective;
 }
 
-double InteriorPoint::compute_predicted_reduction_(SubproblemSolution& solution, double step_length) {
+double InteriorPoint::compute_predicted_reduction_(Direction& direction, double step_length) {
     // the predicted reduction is linear
-    return -step_length * solution.objective;
+    return -step_length * direction.objective;
 }
 
-SubproblemSolution InteriorPoint::restore_feasibility(Problem& problem, Iterate& current_iterate, SubproblemSolution& phase_II_solution, double trust_region_radius) {
+Direction InteriorPoint::restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& /*phase_II_direction*/, double trust_region_radius) {
     int number_variables = problem.number_variables + problem.inequality_constraints.size();
 
     DEBUG << "restoration x: ";
@@ -610,14 +610,14 @@ SubproblemSolution InteriorPoint::restore_feasibility(Problem& problem, Iterate&
     DEBUG << "primal length = " << primal_length << "\n";
     DEBUG << "dual length = " << dual_length << "\n\n";
 
-    SubproblemSolution solution(trial_x, trial_multipliers);
-    solution.status = INFEASIBLE;
-    solution.phase = RESTORATION;
-    solution.norm = norm_inf(solution.x, problem.number_variables);
-    solution.predicted_reduction = [&](double step_length) {
-        return this->compute_predicted_reduction_(solution, step_length);
+    Direction direction(trial_x, trial_multipliers);
+    direction.status = INFEASIBLE;
+    direction.phase = RESTORATION;
+    direction.norm = norm_inf(direction.x, problem.number_variables);
+    direction.predicted_reduction = [&](double step_length) {
+        return this->compute_predicted_reduction_(direction, step_length);
     };
-    return solution;
+    return direction;
 }
 
 double InteriorPoint::compute_central_complementarity_error(Iterate& iterate, double mu, std::vector<Range>& variables_bounds) {

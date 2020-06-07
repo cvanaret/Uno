@@ -28,9 +28,9 @@ enum Status {
  *
  *  Description of a local solution
  */
-class SubproblemSolution {
+class Direction {
 public:
-    SubproblemSolution(std::vector<double>& x, Multipliers& multipliers);
+    Direction(std::vector<double>& x, Multipliers& multipliers);
     std::vector<double> x; /*!< Primal variables */
     Multipliers multipliers; /*!< Multipliers */
     double objective_multiplier; /*!< Objective multiplier */
@@ -48,7 +48,7 @@ public:
     // this function computes the predicted reduction of the direction for a given step length
     std::function<double(double step_length)> predicted_reduction;
 
-    friend std::ostream& operator<<(std::ostream &stream, SubproblemSolution& step);
+    friend std::ostream& operator<<(std::ostream &stream, Direction& step);
 };
 
 #endif // SUBPROBLEMSOLUTION_H

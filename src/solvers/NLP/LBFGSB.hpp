@@ -13,7 +13,7 @@
 class LBFGSB {
     public:
         LBFGSB(int limited_memory_size = 5);
-        SubproblemSolution solve(Problem& problem, Iterate& current_iterate,
+        Direction solve(Problem& problem, Iterate& current_iterate,
             double (*compute_objective)(Problem&, std::vector<double>&, std::vector<double>&, std::vector<double>&, double),
             std::vector<double> (*compute_objective_gradient)(Problem&, std::vector<double>&, std::vector<double>&, std::vector<double>&, std::vector<double>&, double),
             std::vector<double> (*compute_constraints)(Problem& problem, std::vector<double>& x),
