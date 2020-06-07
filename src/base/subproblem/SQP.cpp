@@ -32,9 +32,9 @@ Direction SQP::compute_step(Problem& problem, Iterate& current_iterate, double t
     return direction;
 }
 
-Direction SQP::restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_II_direction, double trust_region_radius) {
-    this->evaluate_feasibility_iterate_(problem, current_iterate, phase_II_direction.constraint_partition);
-   return this->compute_l1qp_step_(problem, this->solver, current_iterate, phase_II_direction.constraint_partition, phase_II_direction.x, trust_region_radius); 
+Direction SQP::restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) {
+    this->evaluate_feasibility_iterate_(problem, current_iterate, phase_2_direction.constraint_partition);
+   return this->compute_l1qp_step_(problem, this->solver, current_iterate, phase_2_direction.constraint_partition, phase_2_direction.x, trust_region_radius); 
 }
 
 /* private methods */

@@ -20,8 +20,8 @@ Direction SLP::compute_step(Problem& problem, Iterate& current_iterate, double t
     return direction;
 }
 
-Direction SLP::restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_II_direction, double trust_region_radius) {
-   return this->compute_feasibility_lp_step_(problem, this->solver, current_iterate, phase_II_direction, trust_region_radius); 
+Direction SLP::restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) {
+   return this->compute_feasibility_lp_step_(problem, this->solver, current_iterate, phase_2_direction, trust_region_radius); 
 }
 
 /* private methods */
@@ -32,7 +32,7 @@ void SLP::evaluate_optimality_iterate_(Problem& problem, Iterate& current_iterat
     current_iterate.compute_constraints_jacobian(problem);
 }
 
-void SLP::evaluate_feasibility_iterate_(Problem& problem, Iterate& current_iterate, Direction& /*phase_II_direction*/) {
+void SLP::evaluate_feasibility_iterate_(Problem& problem, Iterate& current_iterate, Direction& /*phase_2_direction*/) {
     /* compute first-order information */
     current_iterate.compute_constraints_jacobian(problem);
 }

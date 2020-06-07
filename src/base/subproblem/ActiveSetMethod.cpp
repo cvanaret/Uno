@@ -311,26 +311,26 @@ double ActiveSetMethod::compute_lp_predicted_reduction_(Direction& direction, do
     return -step_length*direction.objective;
 }
 
-Direction ActiveSetMethod::compute_feasibility_lp_step_(Problem& problem, std::shared_ptr<QPSolver> solver, Iterate& current_iterate, Direction& phase_II_direction, double trust_region_radius) {
-    DEBUG << "\nCreating the restoration problem with " << phase_II_direction.constraint_partition.infeasible.size() << " infeasible constraints\n";
+Direction ActiveSetMethod::compute_feasibility_lp_step_(Problem& problem, std::shared_ptr<QPSolver> solver, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) {
+    DEBUG << "\nCreating the restoration problem with " << phase_2_direction.constraint_partition.infeasible.size() << " infeasible constraints\n";
     
     /* compute the objective */
-    this->compute_l1_linear_objective_(current_iterate, phase_II_direction.constraint_partition);
+    this->compute_l1_linear_objective_(current_iterate, phase_2_direction.constraint_partition);
 
     /* bounds of the variables */
     std::vector<Range> variables_bounds = this->generate_variables_bounds_(problem, current_iterate, trust_region_radius);
 
     /* bounds of the linearized constraints */
-    std::vector<Range> constraints_bounds = this->generate_feasibility_bounds_(problem, current_iterate.constraints, phase_II_direction.constraint_partition);
+    std::vector<Range> constraints_bounds = this->generate_feasibility_bounds_(problem, current_iterate.constraints, phase_2_direction.constraint_partition);
 
     /* generate the initial point */
-    std::vector<double> d0 = phase_II_direction.x;
+    std::vector<double> d0 = phase_2_direction.x;
 
     /* solve the QP */
     Direction direction = solver->solve_LP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, d0);
     direction.objective_multiplier = 0.;
     direction.phase = RESTORATION;
-    direction.constraint_partition = phase_II_direction.constraint_partition;
+    direction.constraint_partition = phase_2_direction.constraint_partition;
     direction.predicted_reduction = [&](double step_length) {
         return this->compute_lp_predicted_reduction_(direction, step_length);
     };

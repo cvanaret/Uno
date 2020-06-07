@@ -38,7 +38,7 @@ protected:
     /* LP subproblems */
     Direction compute_lp_step_(Problem& problem, std::shared_ptr<QPSolver> solver, Iterate& current_iterate, double trust_region_radius);
     double compute_lp_predicted_reduction_(Direction& direction, double step_length);
-    Direction compute_feasibility_lp_step_(Problem& problem, std::shared_ptr<QPSolver> solver, Iterate& current_iterate, Direction& phase_II_direction, double trust_region_radius);
+    Direction compute_feasibility_lp_step_(Problem& problem, std::shared_ptr<QPSolver> solver, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius);
 };
 
 #endif // ACTIVESETMETHOD_H

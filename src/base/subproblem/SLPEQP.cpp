@@ -56,7 +56,7 @@ Direction SLPEQP::compute_step(Problem& problem, Iterate& current_iterate, doubl
     }
 }
 
-Direction SLPEQP::solve_eqp_(Problem& problem, Iterate& current_iterate, Direction& phase_II_direction, double trust_region_radius) {
+Direction SLPEQP::solve_eqp_(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) {
     // hs016 example
     DEBUG << "\nCurrent point: "; print_vector(DEBUG, current_iterate.x);
     // bounds
@@ -73,7 +73,7 @@ Direction SLPEQP::solve_eqp_(Problem& problem, Iterate& current_iterate, Directi
     current_iterate.compute_objective_gradient(problem);
     current_iterate.compute_constraints(problem);
     // use the multipliers from the LP solution (correct activity)
-    this->hessian_evaluation->compute(problem, current_iterate, problem.objective_sign, phase_II_direction.multipliers.constraints);
+    this->hessian_evaluation->compute(problem, current_iterate, problem.objective_sign, phase_2_direction.multipliers.constraints);
     
     /* KKT matrix */
     
@@ -105,17 +105,17 @@ Direction SLPEQP::solve_eqp_(Problem& problem, Iterate& current_iterate, Directi
     this->linear_solver->factorize(kkt_matrix);
     this->linear_solver->solve(rhs);
     std::vector<double>& solution_EQP = rhs;
-    DEBUG << "LP solution: "; print_vector(DEBUG, phase_II_direction.x);
-    DEBUG << "Infeasible? " << (phase_II_direction.status == INFEASIBLE) << "\n";
+    DEBUG << "LP solution: "; print_vector(DEBUG, phase_2_direction.x);
+    DEBUG << "Infeasible? " << (phase_2_direction.status == INFEASIBLE) << "\n";
     DEBUG << "EQP solution: "; print_vector(DEBUG, solution_EQP);
     
-    Direction direction(phase_II_direction);
+    Direction direction(phase_2_direction);
     direction.x[1] = solution_EQP[0];
     direction.multipliers.constraints[active_constraint_index] = -solution_EQP[1];
     return direction;
 }
 
-Direction SLPEQP::restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_II_solution, double trust_region_radius) {
+Direction SLPEQP::restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) {
     // TODO
     throw std::out_of_range("SLPEQP::restore_feasibility not implemented");
     return this->compute_qp_step_(problem, this->lp_solver, current_iterate, trust_region_radius);
