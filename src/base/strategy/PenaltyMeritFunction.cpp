@@ -59,8 +59,6 @@ std::optional<Iterate> PenaltyMeritFunction::check_acceptance(Problem& problem, 
     if (accept) {
         trial_iterate.compute_objective(problem);
         this->subproblem.compute_residuals(problem, trial_iterate, trial_iterate.multipliers, direction.objective_multiplier);
-        //trial_iterate.status = this->compute_status(problem, trial_iterate, step_norm, solution.objective_multiplier);
-        //current_iterate = trial_iterate;
         DEBUG << "Residuals: ||c|| = " << trial_iterate.residuals.constraints << ", KKT = " << trial_iterate.residuals.KKT << ", cmpl = " << trial_iterate.residuals.complementarity << "\n";
         return std::optional<Iterate>{trial_iterate};
     }
