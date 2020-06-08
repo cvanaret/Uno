@@ -34,7 +34,7 @@ private:
     std::vector<Range> compute_subproblem_bounds_(Iterate& current_iterate);
     bool termination_(bool is_accepted);
     void print_iteration_();
-    void print_acceptance_(double step_length, double solution_norm);
+    void print_acceptance_(double solution_norm) override;
     void print_warning_(const char* message);
 
     double quadratic_interpolation_(Problem& problem, Iterate& current_iterate, std::vector<double> direction, double steplength = 1.);

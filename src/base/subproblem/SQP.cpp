@@ -14,27 +14,31 @@ solver(QPSolverFactory::create(QP_solver_name, problem.number_variables, problem
 hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, !use_trust_region)) {
 }
 
-Direction SQP::compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+std::vector<Direction> SQP::compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
     /* compute optimality step */
     this->evaluate_optimality_iterate_(problem, current_iterate);
     Direction direction = this->compute_qp_step_(problem, this->solver, current_iterate, trust_region_radius);
     
-    if (direction.status == INFEASIBLE) {
-        /* infeasible subproblem during optimality phase */
-        direction = this->restore_feasibility(problem, current_iterate, direction, trust_region_radius);
+    if (direction.status != INFEASIBLE) {
+        direction.phase = OPTIMALITY;
+        direction.objective_multiplier = problem.objective_sign;
+        direction.predicted_reduction = this->compute_qp_predicted_reduction_;
+        return std::vector<Direction>{direction};
     }
-    // the solution is now feasible
-    
-    direction.objective_multiplier = problem.objective_sign;
-    direction.predicted_reduction = [&](double step_length) {
-        return this->compute_qp_predicted_reduction_(current_iterate, direction, step_length);
-    };
-    return direction;
+    else {
+        /* infeasible subproblem during optimality phase */
+        return this->restore_feasibility(problem, current_iterate, direction, trust_region_radius);
+    }
 }
 
-Direction SQP::restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) {
+std::vector<Direction> SQP::restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) {
+    DEBUG << "\nCreating the restoration problem with " << phase_2_direction.constraint_partition.infeasible.size() << " infeasible constraints\n";
     this->evaluate_feasibility_iterate_(problem, current_iterate, phase_2_direction.constraint_partition);
-   return this->compute_l1qp_step_(problem, this->solver, current_iterate, phase_2_direction.constraint_partition, phase_2_direction.x, trust_region_radius); 
+    Direction direction = this->compute_l1qp_step_(problem, this->solver, current_iterate, phase_2_direction.constraint_partition, phase_2_direction.x, trust_region_radius);
+    direction.phase = RESTORATION;
+    direction.objective_multiplier = problem.objective_sign;
+    direction.predicted_reduction = this->compute_qp_predicted_reduction_;
+    return std::vector<Direction>{direction};
 }
 
 /* private methods */

@@ -3,7 +3,7 @@
 #include "Logger.hpp"
 #include "InteriorPoint.hpp"
 
-LineSearch::LineSearch(GlobalizationStrategy& globalization_strategy, double tolerance, int max_iterations, double backtracking_ratio) :
+LineSearch::LineSearch(GlobalizationStrategy& globalization_strategy, double tolerance, int max_iterations, double backtracking_ratio):
 GlobalizationMechanism(globalization_strategy, tolerance, max_iterations), backtracking_ratio(backtracking_ratio), min_step_length(1e-9) {
 }
 
@@ -14,8 +14,8 @@ Iterate LineSearch::initialize(Problem& problem, std::vector<double>& x, Multipl
 Iterate LineSearch::compute_acceptable_iterate(Problem& problem, Iterate& current_iterate) {
     bool line_search_termination = false;
     /* compute the step */
-    Direction direction = this->globalization_strategy.subproblem.compute_step(problem, current_iterate);
-    
+    std::vector<Direction> directions = this->globalization_strategy.subproblem.compute_directions(problem, current_iterate);
+
     while (!line_search_termination) {
         /* step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ... */
         this->step_length = 1.;
@@ -26,34 +26,22 @@ Iterate LineSearch::compute_acceptable_iterate(Problem& problem, Iterate& curren
             this->number_iterations++;
             this->print_iteration_();
 
-            try {
-                /* check whether the trial step is accepted */
-                std::optional<Iterate> acceptance_check = this->globalization_strategy.check_acceptance(problem, current_iterate, direction, this->step_length);
-                if (acceptance_check.has_value()) {
-                    is_accepted = true;
-                    current_iterate = acceptance_check.value();
-                }
+            /* check whether the trial step is accepted */
+            std::optional<std::pair<Iterate, int> > acceptance_check = this->find_first_acceptable_direction_(problem, current_iterate, directions, this->step_length);
+            if (acceptance_check.has_value()) {
+                is_accepted = true;
+                current_iterate = acceptance_check.value().first;
             }
-            catch (const IEEE_Error& e) {
-                this->print_warning_(e.what());
-                is_accepted = false;
-            }
-
-            if (is_accepted) {
-                current_iterate.status = this->compute_status_(problem, current_iterate, this->step_length*direction.norm, direction.objective_multiplier);
-                /* print summary */
-                this->print_acceptance_(step_length, step_length * direction.norm);
-            }
-            else {
+            if (!is_accepted) {
                 /* decrease the step length */
                 this->step_length *= this->backtracking_ratio;
             }
         }
         // if step length is too small, run restoration phase
-        if (!is_accepted && this->step_length < this->min_step_length && direction.phase == OPTIMALITY) {
-            if (0. < current_iterate.feasibility_measure) {
+        if (!is_accepted && this->step_length < this->min_step_length) {
+            if (0. < current_iterate.feasibility_measure && directions[0].phase == OPTIMALITY) {
                 // reset the line search with the restoration solution
-                direction = this->globalization_strategy.subproblem.restore_feasibility(problem, current_iterate, direction);
+                directions = this->globalization_strategy.subproblem.restore_feasibility(problem, current_iterate, directions[0]);
                 this->step_length = 1.;
             }
             else {
@@ -82,11 +70,10 @@ void LineSearch::print_iteration_() {
     return;
 }
 
-void LineSearch::print_acceptance_(double step_length, double solution_norm) {
+void LineSearch::print_acceptance_(double solution_norm) {
     DEBUG << CYAN "LS trial point accepted\n" RESET;
     INFO << "minor: " << this->number_iterations << "\t";
-    INFO << "step length: " << step_length << "\t\t";
-    // TODO: if stragegy == penalty, the step norm has no meaning!
+    INFO << "step length: " << this->step_length << "\t\t";
     INFO << "step norm: " << solution_norm << "\t\t";
     return;
 }

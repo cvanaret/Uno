@@ -65,13 +65,12 @@ Direction ActiveSetMethod::compute_qp_step_(Problem& problem, std::shared_ptr<QP
 
     /* solve the QP */
     Direction direction = solver->solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
-    direction.phase = OPTIMALITY;
     this->number_subproblems_solved++;
     DEBUG << direction;
     return direction;
 }
 
-double ActiveSetMethod::compute_qp_predicted_reduction_(Iterate& current_iterate, Direction& direction, double step_length) {
+double ActiveSetMethod::compute_qp_predicted_reduction_(Problem& /*problem*/, Iterate& current_iterate, Direction& direction, double step_length) {
     // the predicted reduction is quadratic in the step length
     if (step_length == 1.) {
         return -direction.objective;
@@ -84,8 +83,6 @@ double ActiveSetMethod::compute_qp_predicted_reduction_(Iterate& current_iterate
 }
 
 Direction ActiveSetMethod::compute_l1qp_step_(Problem& problem, std::shared_ptr<QPSolver> solver, Iterate& current_iterate, ConstraintPartition& constraint_partition, std::vector<double>& initial_solution, double trust_region_radius) {
-    DEBUG << "\nCreating the restoration problem with " << constraint_partition.infeasible.size() << " infeasible constraints\n";
-
     /* compute the objective */
     this->compute_l1_linear_objective_(current_iterate, constraint_partition);
 
@@ -101,7 +98,6 @@ Direction ActiveSetMethod::compute_l1qp_step_(Problem& problem, std::shared_ptr<
     /* solve the QP */
     Direction direction = solver->solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
     direction.objective_multiplier = 0.;
-    direction.phase = RESTORATION;
     direction.constraint_partition = constraint_partition;
     this->number_subproblems_solved++;
     DEBUG << direction;
@@ -298,20 +294,21 @@ Direction ActiveSetMethod::compute_lp_step_(Problem& problem, std::shared_ptr<QP
     Direction direction = solver->solve_LP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, d0);
     direction.objective_multiplier = problem.objective_sign;
     direction.phase = OPTIMALITY;
-    direction.predicted_reduction = [&](double step_length) {
-        return this->compute_lp_predicted_reduction_(direction, step_length);
-    };
+//    direction.predicted_reduction = [&](double step_length) {
+//        return this->compute_lp_predicted_reduction_(direction, step_length);
+//    };
+    direction.predicted_reduction = this->compute_lp_predicted_reduction_;
     this->number_subproblems_solved++;
     DEBUG << direction;
     return direction;
 }
 
-double ActiveSetMethod::compute_lp_predicted_reduction_(Direction& direction, double step_length) {
+double ActiveSetMethod::compute_lp_predicted_reduction_(Problem& /*problem*/, Iterate& /*current_iterate*/, Direction& direction, double step_length) {
     // the predicted reduction is linear in the step length 
     return -step_length*direction.objective;
 }
 
-Direction ActiveSetMethod::compute_feasibility_lp_step_(Problem& problem, std::shared_ptr<QPSolver> solver, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) {
+Direction ActiveSetMethod::compute_l1lp_step_(Problem& problem, std::shared_ptr<QPSolver> solver, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) {
     DEBUG << "\nCreating the restoration problem with " << phase_2_direction.constraint_partition.infeasible.size() << " infeasible constraints\n";
     
     /* compute the objective */
@@ -331,9 +328,10 @@ Direction ActiveSetMethod::compute_feasibility_lp_step_(Problem& problem, std::s
     direction.objective_multiplier = 0.;
     direction.phase = RESTORATION;
     direction.constraint_partition = phase_2_direction.constraint_partition;
-    direction.predicted_reduction = [&](double step_length) {
-        return this->compute_lp_predicted_reduction_(direction, step_length);
-    };
+//    direction.predicted_reduction = [&](double step_length) {
+//        return this->compute_lp_predicted_reduction_(direction, step_length);
+//    };
+    direction.predicted_reduction = this->compute_lp_predicted_reduction_;
     this->number_subproblems_solved++;
     DEBUG << direction;
     return direction;

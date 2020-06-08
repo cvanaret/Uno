@@ -29,9 +29,8 @@ public:
 
     virtual Iterate evaluate_initial_point(Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
     
-    // TODO return a list of steps
-    virtual Direction compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius=INFINITY) = 0;
-    virtual Direction restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius=INFINITY) = 0;
+    virtual std::vector<Direction> compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius=INFINITY) = 0;
+    virtual std::vector<Direction> restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius=INFINITY) = 0;
     
     virtual void compute_optimality_measures(Problem& problem, Iterate& iterate) = 0;
     virtual void compute_infeasibility_measures(Problem& problem, Iterate& iterate, Direction& direction) = 0;

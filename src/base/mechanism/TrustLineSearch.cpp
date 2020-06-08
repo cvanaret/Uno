@@ -19,7 +19,7 @@ Iterate TrustLineSearch::compute_acceptable_iterate(Problem& problem, Iterate& c
     while (!this->termination_(is_accepted, this->number_iterations)) {
         try {
             /* compute a trial direction */
-            Direction direction = this->globalization_strategy.subproblem.compute_step(problem, current_iterate, this->radius);
+            Direction direction = this->globalization_strategy.subproblem.compute_directions(problem, current_iterate, this->radius);
 
             /* fail if direction is not a descent direction */
             if (0. < dot(direction.x, current_iterate.objective_gradient)) {

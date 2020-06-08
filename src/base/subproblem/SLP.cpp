@@ -11,17 +11,22 @@ ActiveSetMethod(problem, scale_residuals),
 solver(QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints, 0, false)) {
 }
 
-Direction SLP::compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+std::vector<Direction> SLP::compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
     Direction direction = this->compute_lp_step_(problem, this->solver, current_iterate, trust_region_radius);
     if (direction.status == INFEASIBLE) {
         /* infeasible subproblem during optimality phase */
-        direction = this->restore_feasibility(problem, current_iterate, direction, trust_region_radius);
+        return this->restore_feasibility(problem, current_iterate, direction, trust_region_radius);
     }
-    return direction;
+    else {
+        direction.phase = OPTIMALITY;
+        return std::vector<Direction>{direction};
+    }
 }
 
-Direction SLP::restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) {
-   return this->compute_feasibility_lp_step_(problem, this->solver, current_iterate, phase_2_direction, trust_region_radius); 
+std::vector<Direction> SLP::restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) {
+   Direction direction = this->compute_l1lp_step_(problem, this->solver, current_iterate, phase_2_direction, trust_region_radius);
+   direction.phase = RESTORATION;
+   return std::vector<Direction>{direction};
 }
 
 /* private methods */

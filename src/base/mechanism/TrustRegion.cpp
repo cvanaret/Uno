@@ -21,28 +21,31 @@ Iterate TrustRegion::compute_acceptable_iterate(Problem& problem, Iterate& curre
             this->print_iteration_();
 
             /* compute the step within trust region */
-            Direction direction = this->globalization_strategy.subproblem.compute_step(problem, current_iterate, this->radius);
+            std::vector<Direction> directions = this->globalization_strategy.subproblem.compute_directions(problem, current_iterate, this->radius);
 
             /* set bound multipliers of active trust region to 0 */
-            this->correct_active_set(direction, this->radius);
+            for (Direction& direction: directions) {
+                this->correct_active_set(direction, this->radius);
+            }
 
             /* check whether the trial step is accepted */
-            std::optional<Iterate> acceptance_check = this->globalization_strategy.check_acceptance(problem, current_iterate, direction);
+            std::optional<std::pair<Iterate, int> > acceptance_check = this->find_first_acceptable_direction_(problem, current_iterate, directions, 1.);
             if (acceptance_check.has_value()) {
                 is_accepted = true;
-                current_iterate = acceptance_check.value();
-                current_iterate.status = this->compute_status_(problem, current_iterate, direction.norm, direction.objective_multiplier);
-                /* print summary */
-                this->print_acceptance_(direction.norm);
-
+                current_iterate = acceptance_check.value().first;
+                double direction_norm = directions[acceptance_check.value().second].norm;
                 /* increase the radius if trust region is active, otherwise keep the same radius */
-                if (direction.norm >= this->radius - this->activity_tolerance_) {
+                if (direction_norm >= this->radius - this->activity_tolerance_) {
                     this->radius *= 2.;
                 }
             }
             else {
                 /* if the step is rejected, decrease the radius */
-                this->radius = std::min(this->radius, direction.norm) / 2.;
+                double min_norm = INFINITY;
+                for (const Direction& direction: directions) {
+                    min_norm = std::min(min_norm, direction.norm);
+                }
+                this->radius = std::min(this->radius, min_norm) / 2.;
             }
         }
         catch (const IEEE_Error& e) {

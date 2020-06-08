@@ -37,7 +37,7 @@ number_variables(number_variables) {
     this->generate_elastic_variables_(problem, this->elastic_variables_);
 }
 
-Direction Sl1QP::compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+std::vector<Direction> Sl1QP::compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
     DEBUG << "penalty parameter: " << this->penalty_parameter << "\n";
 
     // evaluate constraints
@@ -127,10 +127,10 @@ Direction Sl1QP::compute_step(Problem& problem, Iterate& current_iterate, double
     }
 
     direction.objective_multiplier = penalty_parameter;
-    direction.predicted_reduction = [&](double step_length) {
+    direction.predicted_reduction = [&](Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) {
         return this->compute_predicted_reduction_(problem, current_iterate, direction, step_length);
     };
-    return direction;
+    return std::vector<Direction>{direction};
 }
 
 Direction Sl1QP::solve_l1qp_subproblem_(Problem& problem, Iterate& current_iterate, double trust_region_radius, double penalty_parameter) {
@@ -147,7 +147,7 @@ void Sl1QP::evaluate_optimality_iterate_(Problem& problem, Iterate& current_iter
     return;
 }
 
-Direction Sl1QP::restore_feasibility(Problem&, Iterate&, Direction&, double) {
+std::vector<Direction> Sl1QP::restore_feasibility(Problem&, Iterate&, Direction&, double) {
     throw std::out_of_range("Sl1QP.compute_infeasibility_step is not implemented, since l1QP are always feasible");
 }
 

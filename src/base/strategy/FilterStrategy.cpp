@@ -64,7 +64,7 @@ std::optional<Iterate> FilterStrategy::check_acceptance(Problem& problem, Iterat
             // check acceptance wrt current x (h,f)
             acceptable = filter.improves_current_iterate(current_iterate.feasibility_measure, current_iterate.optimality_measure, trial_iterate.feasibility_measure, trial_iterate.optimality_measure);
             if (acceptable) {
-                double predicted_reduction = direction.predicted_reduction(step_length);
+                double predicted_reduction = direction.predicted_reduction(problem, current_iterate, direction, step_length);
                 double actual_reduction = filter.compute_actual_reduction(current_iterate.optimality_measure, current_iterate.feasibility_measure, trial_iterate.optimality_measure);
                 DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << actual_reduction << "\n\n";
 

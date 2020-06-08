@@ -10,8 +10,8 @@ class SLPEQP: public ActiveSetMethod {
 public:
     SLPEQP(Problem& problem, std::string LP_solver_name, std::string linear_solver_name, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals);
     
-    Direction compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius=INFINITY) override;
-    Direction restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius=INFINITY) override;
+    std::vector<Direction> compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius=INFINITY) override;
+    std::vector<Direction> restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius=INFINITY) override;
     
     /* use pointers to allow polymorphism */
     std::shared_ptr<QPSolver> lp_solver;

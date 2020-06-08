@@ -38,8 +38,8 @@ public:
 
     Iterate evaluate_initial_point(Problem& problem, std::vector<double>& x, Multipliers& default_multipliers) override;
 
-    Direction compute_step(Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
-    Direction restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) override;
+    std::vector<Direction> compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
+    std::vector<Direction> restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) override;
 
     void compute_optimality_measures(Problem& problem, Iterate& iterate) override;
     void compute_infeasibility_measures(Problem& problem, Iterate& iterate, Direction& direction) override;
@@ -71,7 +71,7 @@ private:
     std::vector<double> compute_upper_bound_multiplier_displacements_(Iterate& current_iterate, std::vector<double>& solution, std::vector<Range>& variables_bounds, double mu);
     Direction generate_direction_(Problem& problem, Iterate& current_iterate, std::vector<double>& solution_IPM);
     double compute_KKT_error_scaling_(Iterate& current_iterate);
-    double compute_predicted_reduction_(Direction& direction, double step_length);
+    static double compute_predicted_reduction_(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length);
 
     std::vector<double> rhs_;
     double inertia_hessian_;

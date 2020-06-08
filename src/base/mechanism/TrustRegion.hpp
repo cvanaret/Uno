@@ -31,7 +31,7 @@ private:
 
     bool termination_(bool is_accepted);
     void print_iteration_();
-    void print_acceptance_(double solution_norm);
+    void print_acceptance_(double solution_norm) override;
     void print_warning_(const char* message);
 };
 
