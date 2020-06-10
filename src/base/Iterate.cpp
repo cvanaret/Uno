@@ -29,7 +29,7 @@ void Iterate::compute_objective_gradient(Problem& problem) {
     return;
 }
 
-void Iterate::set_objective_gradient(std::map<int, double>& objective_gradient) {
+void Iterate::set_objective_gradient(SparseGradient& objective_gradient) {
     this->objective_gradient = objective_gradient;
     this->is_objective_gradient_computed = true;
     return;

@@ -22,12 +22,11 @@ Iterate TrustRegion::compute_acceptable_iterate(Problem& problem, Iterate& curre
 
             /* compute the step within trust region */
             std::vector<Direction> directions = this->globalization_strategy.subproblem.compute_directions(problem, current_iterate, this->radius);
-
             /* set bound multipliers of active trust region to 0 */
             for (Direction& direction: directions) {
                 this->correct_active_set(direction, this->radius);
             }
-
+            
             /* check whether the trial step is accepted */
             std::optional<std::pair<Iterate, int> > acceptance_check = this->find_first_acceptable_direction_(problem, current_iterate, directions, 1.);
             if (acceptance_check.has_value()) {

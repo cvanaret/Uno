@@ -29,7 +29,7 @@ QPSolver(), n_(number_variables), m_(number_constraints), maximum_number_nonzero
     }
 }
 
-Direction BQPDSolver::solve_QP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, CSCMatrix& hessian, std::vector<double>& x) {
+Direction BQPDSolver::solve_QP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, SparseGradient& linear_objective, std::vector<SparseGradient>& constraints_jacobian, CSCMatrix& hessian, std::vector<double>& x) {
     /* Hessian */
     for (int i = 0; i < hessian.number_nonzeros(); i++) {
         this->hessian_[i] = hessian.matrix[i];
@@ -55,11 +55,11 @@ Direction BQPDSolver::solve_QP(std::vector<Range>& variables_bounds, std::vector
     return this->solve_subproblem_(variables_bounds, constraints_bounds, linear_objective, constraints_jacobian, x);
 }
 
-Direction BQPDSolver::solve_LP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, std::vector<double>& x) {
+Direction BQPDSolver::solve_LP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, SparseGradient& linear_objective, std::vector<SparseGradient>& constraints_jacobian, std::vector<double>& x) {
     return this->solve_subproblem_(variables_bounds, constraints_bounds, linear_objective, constraints_jacobian, x);
 }
 
-Direction BQPDSolver::solve_subproblem_(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, std::map<int, double>& linear_objective, std::vector<std::map<int, double> >& constraints_jacobian, std::vector<double>& x) {
+Direction BQPDSolver::solve_subproblem_(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, SparseGradient& linear_objective, std::vector<SparseGradient>& constraints_jacobian, std::vector<double>& x) {
     /* initialize wsc_ common block (Hessian & workspace for bqpd) */
     // setting the common block here ensures that several instances of BQPD can run simultaneously
     wsc_.kk = this->maximum_number_nonzeros_;

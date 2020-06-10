@@ -3,7 +3,6 @@
 
 #include <ostream>
 #include <vector>
-#include <map>
 #include "Problem.hpp"
 #include "Constraint.hpp"
 #include "Matrix.hpp"
@@ -47,10 +46,10 @@ public:
     std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
     bool are_constraints_computed;
     
-    std::map<int, double> objective_gradient; /*!< Sparse Jacobian of the objective */
+    SparseGradient objective_gradient; /*!< Sparse Jacobian of the objective */
     bool is_objective_gradient_computed; /*!< Flag that indicates if the objective gradient has already been computed */
-
-    std::vector<std::map<int, double> > constraints_jacobian; /*!< Sparse Jacobian of the constraints */
+    
+    std::vector<SparseGradient> constraints_jacobian; /*!< Sparse Jacobian of the constraints */
     bool is_constraints_jacobian_computed; /*!< Flag that indicates if the constraint Jacobian has already been computed */
 
     CSCMatrix hessian; /*!< Sparse Lagrangian Hessian */
@@ -72,7 +71,7 @@ public:
     void compute_constraints(Problem& problem);
     void set_constraint_residual(double constraint_residual);
     void compute_objective_gradient(Problem& problem);
-    void set_objective_gradient(std::map<int, double>& objective_gradient);
+    void set_objective_gradient(SparseGradient& objective_gradient);
     void compute_constraints_jacobian(Problem& problem);
     std::vector<double> lagrangian_gradient(Problem& problem, double objective_multiplier, Multipliers& multipliers);
 

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include "Problem.hpp"
 #include "Constraint.hpp"
 
@@ -27,15 +28,15 @@ public:
     /* objective */
     double objective(std::vector<double>& x);
     std::vector<double> objective_dense_gradient(std::vector<double>& x);
-    std::map<int, double> objective_sparse_gradient(std::vector<double>& x);
+    SparseGradient objective_sparse_gradient(std::vector<double>& x);
     
     /* constraints */
     //std::vector<bool> constraint_is_uncertainty_set;
     double evaluate_constraint(int j, std::vector<double>& x);
     std::vector<double> evaluate_constraints(std::vector<double>& x);
     std::vector<double> constraint_dense_gradient(int j, std::vector<double>& x);
-    void constraint_sparse_gradient(std::vector<double>& x, int j, std::map<int, double>& gradient);
-    std::vector<std::map<int, double> > constraints_sparse_jacobian(std::vector<double>& x);
+    void constraint_sparse_gradient(std::vector<double>& x, int j, SparseGradient& gradient);
+    std::vector<SparseGradient> constraints_sparse_jacobian(std::vector<double>& x);
 
     /* Hessian */
     CSCMatrix lagrangian_hessian(std::vector<double>& x, double objective_multiplier, std::vector<double>& multipliers);

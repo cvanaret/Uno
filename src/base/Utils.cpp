@@ -21,7 +21,7 @@ double norm_1(std::vector<double>& x) {
     return norm;
 }
 
-double norm_1(std::map<int, double>& x) {
+double norm_1(SparseGradient& x) {
     double norm = 0.;
     for (std::pair<int, double> term: x) {
         double xi = term.second;
@@ -31,7 +31,7 @@ double norm_1(std::map<int, double>& x) {
 }
 
 // https://en.wikipedia.org/wiki/Matrix_norm#Special_cases
-double norm_1(std::vector<std::map<int, double> >& m) {
+double norm_1(std::vector<SparseGradient>& m) {
     double norm = 0.;
     for (unsigned int j = 0; j < m.size(); j++) {
         double column_norm = norm_1(m[j]);
@@ -49,7 +49,7 @@ double norm_2_squared(std::vector<double>& x) {
     return norm_squared;
 }
 
-double norm_2_squared(std::map<int, double>& x) {
+double norm_2_squared(SparseGradient& x) {
     double norm_squared = 0.;
     for (std::pair<int, double> term: x) {
         double xi = term.second;
@@ -63,7 +63,7 @@ double norm_2(std::vector<double>& x) {
     return std::sqrt(norm_2_squared(x));
 }
 
-double norm_2(std::map<int, double>& x) {
+double norm_2(SparseGradient& x) {
     return std::sqrt(norm_2_squared(x));
 }
 
@@ -76,7 +76,7 @@ double norm_inf(std::vector<double>& x, unsigned int length) {
     return norm;
 }
 
-double norm_inf(std::map<int, double>& x) {
+double norm_inf(SparseGradient& x) {
     double norm = 0.;
     for (std::pair<int, double> term: x) {
         double xi = term.second;
@@ -86,11 +86,11 @@ double norm_inf(std::map<int, double>& x) {
 }
 
 // https://en.wikipedia.org/wiki/Matrix_norm#Special_cases
-double norm_inf(std::vector<std::map<int, double> >& m) {
+double norm_inf(std::vector<SparseGradient>& m) {
     // compute maximum row index
     int number_rows = 0;
     for (unsigned int j = 0; j < m.size(); j++) {
-        number_rows = std::max(number_rows, 1 + m[j].rbegin()->first);
+        number_rows = std::max(number_rows, 1 + m[j].begin()->first);
     }
     // read the matrix column-wise and fill in the row_vectors norm vector
     std::vector<double> row_vectors(number_rows);
@@ -117,7 +117,7 @@ double dot(std::vector<double>& x, std::vector<double>& y) {
     return dot;
 }
 
-double dot(std::vector<double>& x, std::map<int, double>& y) {
+double dot(std::vector<double>& x, SparseGradient& y) {
     double dot = 0.;
     for (std::pair<int, double> term: y) {
         unsigned int i = term.first;
@@ -132,7 +132,7 @@ double dot(std::vector<double>& x, std::map<int, double>& y) {
     return dot;
 }
 
-double dot(std::map<int, double>& x, std::map<int, double>& y) {
+double dot(SparseGradient& x, SparseGradient& y) {
     double dot = 0.;
     for (std::pair<int, double> term: x) {
         int i = term.first;

@@ -106,7 +106,7 @@ Direction ActiveSetMethod::compute_l1qp_step_(Problem& problem, std::shared_ptr<
 
 Direction ActiveSetMethod::compute_l1qp_step_(Problem& problem, std::shared_ptr<QPSolver> solver, Iterate& current_iterate, double penalty_parameter, ElasticVariables& elastic_variables, double trust_region_radius) {
     current_iterate.compute_objective_gradient(problem);
-    std::map<int, double> objective_gradient;
+    SparseGradient objective_gradient;
     if (penalty_parameter != 0.) {
         for (std::pair<const int, double>& element: current_iterate.objective_gradient) {
             int i = element.first;
@@ -218,7 +218,7 @@ void ActiveSetMethod::generate_elastic_variables_(Problem& problem, ElasticVaria
 
 void ActiveSetMethod::compute_l1_linear_objective_(Iterate& current_iterate, ConstraintPartition& constraint_partition) {
     /* objective function: sum of gradients of infeasible constraints */
-    std::map<int, double> objective_gradient;
+    SparseGradient objective_gradient;
     for (int j: constraint_partition.infeasible) {
         for (std::pair<int, double> term: current_iterate.constraints_jacobian[j]) {
             int i = term.first;

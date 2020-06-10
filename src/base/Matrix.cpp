@@ -19,7 +19,7 @@ double Matrix::quadratic_product(std::vector<double>& x, std::vector<double>& y)
     return product;
 }
 
-void Matrix::add_outer_product(std::map<int, double>& x, double scaling_factor) {
+void Matrix::add_outer_product(SparseGradient& x, double scaling_factor) {
     /* perform matrix addition: A + rho x x^T */
     for (std::pair<const int, double> row_element: x) {
         int row_index = row_element.first;

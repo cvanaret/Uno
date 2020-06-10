@@ -4,6 +4,7 @@
 #include <ostream>
 #include <map>
 #include <vector>
+#include "SparseGradient.hpp"
 
 class Matrix {
 public:
@@ -19,7 +20,7 @@ public:
     virtual std::vector<double> product(std::vector<double>& vector) = 0;
     
     double quadratic_product(std::vector<double>& x, std::vector<double>& y);
-    void add_outer_product(std::map<int, double>& x, double scaling_factor = 1.);
+    void add_outer_product(SparseGradient& x, double scaling_factor = 1.);
 };
 
 class COOMatrix : public Matrix {

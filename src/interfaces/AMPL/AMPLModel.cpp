@@ -136,7 +136,7 @@ std::vector<double> AMPLModel::objective_dense_gradient(std::vector<double>& x) 
 }
 
 /* sparse gradient */
-std::map<int, double> AMPLModel::objective_sparse_gradient(std::vector<double>& x) {
+SparseGradient AMPLModel::objective_sparse_gradient(std::vector<double>& x) {
     /* compute the AMPL gradient (always in dense format) */
     int nerror = 0;
     (*((ASL*) this->asl_)->p.Objgrd)((ASL*) this->asl_, 0, x.data(), this->ampl_tmp_gradient_.data(), &nerror);
@@ -145,7 +145,7 @@ std::map<int, double> AMPLModel::objective_sparse_gradient(std::vector<double>& 
     }
 
     /* partial derivatives in same order as variables in this->asl_->i.Ograd_[0] */
-    std::map<int, double> gradient;
+    SparseGradient gradient;
     ograd* ampl_variables_tmp = this->asl_->i.Ograd_[0];
     while (ampl_variables_tmp != NULL) {
         double partial_derivative = this->ampl_tmp_gradient_[ampl_variables_tmp->varno];
@@ -207,7 +207,7 @@ std::vector<double> AMPLModel::constraint_dense_gradient(int j, std::vector<doub
 }
 
 /* sparse gradient */
-void AMPLModel::constraint_sparse_gradient(std::vector<double>& x, int j, std::map<int, double>& gradient) {
+void AMPLModel::constraint_sparse_gradient(std::vector<double>& x, int j, SparseGradient& gradient) {
     int congrd_mode_backup = this->asl_->i.congrd_mode;
     this->asl_->i.congrd_mode = 1; // sparse computation
 
@@ -234,9 +234,9 @@ void AMPLModel::constraint_sparse_gradient(std::vector<double>& x, int j, std::m
     return;
 }
 
-std::vector<std::map<int, double> > AMPLModel::constraints_sparse_jacobian(std::vector<double>& x) {
+std::vector<SparseGradient> AMPLModel::constraints_sparse_jacobian(std::vector<double>& x) {
     this->number_eval_jacobian++;
-    std::vector<std::map<int, double> > constraints_jacobian(this->number_constraints);
+    std::vector<SparseGradient> constraints_jacobian(this->number_constraints);
     for (int j = 0; j < this->number_constraints; j++) {
         this->constraint_sparse_gradient(x, j, constraints_jacobian[j]);
     }

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <ctime>
 #include <cmath>
+#include <unordered_map>
 #include "Argonot.hpp"
 #include "Iterate.hpp"
 #include "Logger.hpp"
@@ -95,10 +96,10 @@ void Argonot::preprocessing(Problem& problem, std::vector<double>& x, Multiplier
             
             int fortran_indexing = 1;
             CSCMatrix hessian = CSCMatrix::identity(problem.number_variables, fortran_indexing);
-            std::map<int, double> linear_objective; // empty
+            SparseGradient linear_objective; // empty
             std::vector<double> d0(problem.number_variables);
             // constraints Jacobian
-            std::vector<std::map<int, double> > constraints_jacobian(number_constraints);
+            std::vector<SparseGradient> constraints_jacobian(number_constraints);
             for (std::pair<int, int> element: problem.linear_constraints) {
                 int j = element.first;
                 int linear_constraint_index = element.second;
