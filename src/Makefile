@@ -107,7 +107,7 @@ $(AMPL_DIR)/amplsolver.a:
 clean: cleanhere
 
 cleanhere:
-	rm -f $(EXEC_NAME) $(OBJ_FILES) *~
+	rm -f $(EXEC_NAME) $(OBJ_FILES) main.o *~
 
 xsum.out: $SRC_FILES
 	xsum $SRC_FILES >xsum1.out
