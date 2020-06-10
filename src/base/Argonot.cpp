@@ -1,7 +1,6 @@
 #include <iostream>
 #include <ctime>
 #include <cmath>
-#include <unordered_map>
 #include "Argonot.hpp"
 #include "Iterate.hpp"
 #include "Logger.hpp"

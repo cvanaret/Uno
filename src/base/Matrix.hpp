@@ -76,7 +76,7 @@ class ArgonotMatrix : public Matrix {
 public:
     ArgonotMatrix(int dimension, short fortran_indexing);
 
-    std::map<int, double> matrix;
+    SparseGradient matrix;
 
     int number_nonzeros() override;
     void insert(double term, int row_index, int column_index) override;
