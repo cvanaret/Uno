@@ -8,6 +8,7 @@
 #include "Iterate.hpp"
 #include "Direction.hpp"
 #include "Constraint.hpp"
+#include "Statistics.hpp"
 
 /*! \class GlobalizationStrategy
  * \brief Step acceptance strategy
@@ -27,12 +28,8 @@ public:
 
     Subproblem& subproblem;
 
-    /*!
-     *  Check the validity of a step
-     *  Purely virtual method (only implemented in subclasses)
-     */
-    virtual std::optional<Iterate> check_acceptance(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length = 1.) = 0;
-    virtual Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
+    virtual Iterate initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
+    virtual std::optional<Iterate> check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction, double step_length = 1.) = 0;
 };
 
 #endif // GLOBALIZATIONSTRATEGY_H

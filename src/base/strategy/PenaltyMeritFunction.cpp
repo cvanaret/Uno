@@ -11,14 +11,15 @@
 PenaltyMeritFunction::PenaltyMeritFunction(Subproblem& subproblem): GlobalizationStrategy(subproblem), decrease_fraction_(1e-8) {
 }
 
-Iterate PenaltyMeritFunction::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+Iterate PenaltyMeritFunction::initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+    statistics.add_column("penalty param.", Statistics::double_width, 4);
     /* initialize the subproblem */
     Iterate first_iterate = this->subproblem.evaluate_initial_point(problem, x, multipliers);
     this->subproblem.compute_residuals(problem, first_iterate, first_iterate.multipliers, 1.);
     return first_iterate;
 }
 
-std::optional<Iterate> PenaltyMeritFunction::check_acceptance(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) {
+std::optional<Iterate> PenaltyMeritFunction::check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) {
     /* check if subproblem definition changed */
     if (this->subproblem.subproblem_definition_changed) {
         this->subproblem.subproblem_definition_changed = false;
@@ -57,6 +58,7 @@ std::optional<Iterate> PenaltyMeritFunction::check_acceptance(Problem& problem, 
     }
     
     if (accept) {
+        statistics.add_statistic("penalty param.", direction.objective_multiplier);
         trial_iterate.compute_objective(problem);
         this->subproblem.compute_residuals(problem, trial_iterate, trial_iterate.multipliers, direction.objective_multiplier);
         DEBUG << "Residuals: ||c|| = " << trial_iterate.residuals.constraints << ", KKT = " << trial_iterate.residuals.KKT << ", cmpl = " << trial_iterate.residuals.complementarity << "\n";

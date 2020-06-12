@@ -31,12 +31,8 @@ public:
     std::shared_ptr<Filter> filter_optimality; /*!< Filter for the optimality phase */
     std::shared_ptr<Filter> filter_restoration; /*!< Filter for the restoration phase */
 
-    /*!
-     *  Check the validity of a step
-     *  Implements the purely virtual method of the superclass
-     */
-    std::optional<Iterate> check_acceptance(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) override;
-    Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
+    Iterate initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
+    std::optional<Iterate> check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) override;
     
 private:
     Phase current_phase_; /*!< Current phase (optimality or feasibility restoration) */

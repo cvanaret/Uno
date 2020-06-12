@@ -5,6 +5,7 @@
 #include "Iterate.hpp"
 #include "Logger.hpp"
 #include "BQPDSolver.hpp"
+#include "Statistics.hpp"
 
 Argonot::Argonot(GlobalizationMechanism& globalization_mechanism, int max_iterations): globalization_mechanism(globalization_mechanism), max_iterations(max_iterations) {
 }
@@ -24,23 +25,37 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& mul
         this->preprocessing(problem, x, multipliers);
     }
     
+    Statistics statistics;
+    statistics.add_column("major", Statistics::int_width, 1);
+    statistics.add_column("f", Statistics::double_width, 100);
+    statistics.add_column("||c||", Statistics::double_width, 101);
+    statistics.add_column("complementarity", Statistics::double_width, 104);
+    statistics.add_column("KKT", Statistics::double_width, 105);
+    statistics.add_column("FJ", Statistics::double_width, 106);
+    
     /* use the current point to initialize the strategies and generate the initial point */
-    Iterate current_iterate = this->globalization_mechanism.initialize(problem, x, multipliers);
+    Iterate current_iterate = this->globalization_mechanism.initialize(statistics, problem, x, multipliers);
     DEBUG << "Initial iterate\n" << current_iterate << "\n";
     
     try {
         /* check for convergence */
         while (!this->termination_criterion_(current_iterate.status, major_iterations)) {
+            if (major_iterations % 50 == 0) {
+                statistics.print_header(major_iterations == 0);
+            }
+            statistics.new_line();
             major_iterations++;
             DEBUG << "\n\t\tARGONOT iteration " << major_iterations << "\n";
-            INFO << "major: " << major_iterations << "\t";
-            
             DEBUG << "Current point: "; print_vector(DEBUG, current_iterate.x);
             /* update the current point */
-            current_iterate = this->globalization_mechanism.compute_acceptable_iterate(problem, current_iterate);
-            INFO << "||c|| = " << current_iterate.residuals.constraints << "\tf = " << current_iterate.objective << "\t";
-            INFO << "η = " << current_iterate.feasibility_measure << "\tω = " << current_iterate.optimality_measure << "\n";
-
+            current_iterate = this->globalization_mechanism.compute_acceptable_iterate(statistics, problem, current_iterate);
+            statistics.add_statistic("major", major_iterations);
+            statistics.add_statistic("f", current_iterate.objective);
+            statistics.add_statistic("||c||", current_iterate.residuals.constraints);
+            statistics.add_statistic("complementarity", current_iterate.residuals.complementarity);
+            statistics.add_statistic("KKT", current_iterate.residuals.KKT);
+            statistics.add_statistic("FJ", current_iterate.residuals.FJ);
+            statistics.print_current_line();
             DEBUG << "Next iterate\n" << current_iterate;
         }
     }
@@ -50,6 +65,7 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& mul
     catch (std::runtime_error& exception) {
         ERROR << exception.what();
     }
+    statistics.print_footer();
     std::clock_t c_end = std::clock();
     double cpu_time = (c_end - c_start) / (double) CLOCKS_PER_SEC;
     
@@ -72,10 +88,8 @@ bool Argonot::termination_criterion_(OptimalityStatus current_status, int iterat
 }
 
 void Argonot::preprocessing(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
-    INFO << "Preprocessing phase:\n";
-    
     /* linear constraints */
-    INFO << "The problem has " << problem.linear_constraints.size() << " linear constraints\n";
+    INFO << "Preprocessing phase: the problem has " << problem.linear_constraints.size() << " linear constraints\n";
     if (0 < problem.linear_constraints.size()) {
         std::vector<double> constraints = problem.evaluate_constraints(x);
         

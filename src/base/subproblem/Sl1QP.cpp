@@ -45,7 +45,6 @@ std::vector<Direction> Sl1QP::compute_directions(Problem& problem, Iterate& curr
 
     /* stage a: compute the step within trust region */
     Direction direction = this->solve_l1qp_subproblem_(problem, current_iterate, trust_region_radius, this->penalty_parameter);
-    DEBUG << direction;
 
     /* penalty update: if penalty parameter is already 0, no need to decrease it */
     if (0. < this->penalty_parameter) {
@@ -60,7 +59,6 @@ std::vector<Direction> Sl1QP::compute_directions(Problem& problem, Iterate& curr
             /* stage c: solve the ideal l1 penalty problem with a zero penalty (no objective) */
             DEBUG << "Compute ideal solution:\n";
             Direction ideal_direction = this->solve_l1qp_subproblem_(problem, current_iterate, trust_region_radius, 0.);
-            DEBUG << ideal_direction;
 
             /* compute the ideal error (with a zero penalty parameter) */
             double ideal_error = this->compute_error_(problem, current_iterate, ideal_direction.multipliers, 0.);
@@ -98,7 +96,6 @@ std::vector<Direction> Sl1QP::compute_directions(Problem& problem, Iterate& curr
                         else {
                             DEBUG << "\nAttempting to solve with penalty parameter " << this->penalty_parameter << "\n";
                             direction = this->solve_l1qp_subproblem_(problem, current_iterate, trust_region_radius, this->penalty_parameter);
-                            DEBUG << direction;
 
                             linearized_residual = this->compute_linearized_constraint_residual_(direction.x);
                             DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";

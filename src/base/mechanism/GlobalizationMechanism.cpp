@@ -7,16 +7,16 @@ globalization_strategy(globalization_strategy), tolerance(tolerance), max_iterat
 GlobalizationMechanism::~GlobalizationMechanism() {
 }
 
-std::optional<std::pair<Iterate, int> > GlobalizationMechanism::find_first_acceptable_direction_(Problem& problem, Iterate& current_iterate, std::vector<Direction>& directions, double step_length) {
+std::optional<std::pair<Iterate, int> > GlobalizationMechanism::find_first_acceptable_direction_(Statistics& statistics, Problem& problem, Iterate& current_iterate, std::vector<Direction>& directions, double step_length) {
     int k = 0;
     for (Direction& direction: directions) {
         try {
-            std::optional<Iterate> acceptance_check = this->globalization_strategy.check_acceptance(problem, current_iterate, direction, step_length);
+            std::optional<Iterate> acceptance_check = this->globalization_strategy.check_acceptance(statistics, problem, current_iterate, direction, step_length);
             if (acceptance_check.has_value()) {
                 Iterate& accepted_iterate = acceptance_check.value();
                 accepted_iterate.status = this->compute_status_(problem, accepted_iterate, step_length*direction.norm, direction.objective_multiplier);
                 /* print summary */
-                this->print_acceptance_(step_length*direction.norm);
+                this->print_acceptance_();
                 return std::pair<Iterate, int>(accepted_iterate, k);
             }
         }

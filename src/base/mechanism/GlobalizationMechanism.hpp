@@ -3,6 +3,7 @@
 
 #include "Problem.hpp"
 #include "GlobalizationStrategy.hpp"
+#include "Statistics.hpp"
 
 /*! \class GlobalizationMechanism
  * \brief Step control strategy
@@ -20,9 +21,9 @@ public:
     GlobalizationMechanism(GlobalizationStrategy& globalization_strategy, double tolerance, int max_iterations);
     virtual ~GlobalizationMechanism();
 
-    virtual Iterate compute_acceptable_iterate(Problem& problem, Iterate& current_iterate) = 0;
-    virtual Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
-    std::optional<std::pair<Iterate, int> > find_first_acceptable_direction_(Problem& problem, Iterate& current_iterate, std::vector<Direction>& directions, double step_length);
+    virtual Iterate initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
+    virtual Iterate compute_acceptable_iterate(Statistics& statistics, Problem& problem, Iterate& current_iterate) = 0;
+    std::optional<std::pair<Iterate, int> > find_first_acceptable_direction_(Statistics& statistics, Problem& problem, Iterate& current_iterate, std::vector<Direction>& directions, double step_length);
 
     /* references to allow polymorphism */
     GlobalizationStrategy& globalization_strategy; /*!< Strategy to accept or reject a step */
@@ -32,7 +33,7 @@ public:
 
 protected:
     OptimalityStatus compute_status_(Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier);
-    virtual void print_acceptance_(double solution_norm) = 0;
+    virtual void print_acceptance_() = 0;
 };
 
 #endif // GLOBALIZATIONMECHANISM_H

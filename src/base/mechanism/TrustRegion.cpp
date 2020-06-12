@@ -7,11 +7,14 @@ TrustRegion::TrustRegion(GlobalizationStrategy& globalization_strategy, double t
 GlobalizationMechanism(globalization_strategy, tolerance, max_iterations), radius(initial_radius), activity_tolerance_(1e-6) {
 }
 
-Iterate TrustRegion::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
-    return this->globalization_strategy.initialize(problem, x, multipliers);
+Iterate TrustRegion::initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+    statistics.add_column("minor", Statistics::int_width, 2);
+    statistics.add_column("TR radius", Statistics::double_width, 30);
+    statistics.add_column("step norm", Statistics::double_width, 31);
+    return this->globalization_strategy.initialize(statistics, problem, x, multipliers);
 }
 
-Iterate TrustRegion::compute_acceptable_iterate(Problem& problem, Iterate& current_iterate) {
+Iterate TrustRegion::compute_acceptable_iterate(Statistics& statistics, Problem& problem, Iterate& current_iterate) {
     bool is_accepted = false;
     this->number_iterations = 0;
 
@@ -28,13 +31,16 @@ Iterate TrustRegion::compute_acceptable_iterate(Problem& problem, Iterate& curre
             }
             
             /* check whether the trial step is accepted */
-            std::optional<std::pair<Iterate, int> > acceptance_check = this->find_first_acceptable_direction_(problem, current_iterate, directions, 1.);
+            std::optional<std::pair<Iterate, int> > acceptance_check = this->find_first_acceptable_direction_(statistics, problem, current_iterate, directions, 1.);
             if (acceptance_check.has_value()) {
                 is_accepted = true;
                 current_iterate = acceptance_check.value().first;
-                double direction_norm = directions[acceptance_check.value().second].norm;
+                double step_norm = directions[acceptance_check.value().second].norm;
+                statistics.add_statistic("minor", this->number_iterations);
+                statistics.add_statistic("TR radius", this->radius);
+                statistics.add_statistic("step norm", step_norm);
                 /* increase the radius if trust region is active, otherwise keep the same radius */
-                if (direction_norm >= this->radius - this->activity_tolerance_) {
+                if (step_norm >= this->radius - this->activity_tolerance_) {
                     this->radius *= 2.;
                 }
             }
@@ -99,11 +105,8 @@ void TrustRegion::print_iteration_() {
     return;
 }
 
-void TrustRegion::print_acceptance_(double solution_norm) {
+void TrustRegion::print_acceptance_() {
     DEBUG << CYAN "TR trial point accepted\n" RESET;
-    INFO << "minor: " << this->number_iterations << "\t";
-    INFO << "radius: " << this->radius << "\t\t";
-    INFO << "step norm: " << solution_norm << "\t\t";
     return;
 }
 

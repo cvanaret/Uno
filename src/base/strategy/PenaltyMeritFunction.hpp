@@ -17,11 +17,8 @@ public:
      */
     PenaltyMeritFunction(Subproblem& subproblem);
 
-    /*!
-     *  Check the validity of a step
-     */
-    std::optional<Iterate> check_acceptance(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) override;
-    Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
+    Iterate initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
+    std::optional<Iterate> check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) override;
 
 private:
     double decrease_fraction_;

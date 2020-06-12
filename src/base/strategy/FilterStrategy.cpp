@@ -11,7 +11,8 @@ filter_restoration(FilterFactory::create(options)),
 current_phase_(OPTIMALITY), parameters_(strategy_parameters) {
 }
 
-Iterate FilterStrategy::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+Iterate FilterStrategy::initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+    statistics.add_column("phase", Statistics::int_width, 4);
     /* initialize the subproblem */
     Iterate first_iterate = this->subproblem.evaluate_initial_point(problem, x, multipliers);
     this->subproblem.compute_residuals(problem, first_iterate, first_iterate.multipliers, 1.);
@@ -26,7 +27,7 @@ Iterate FilterStrategy::initialize(Problem& problem, std::vector<double>& x, Mul
 /* check acceptability of step(s) (filter & sufficient reduction)
  * precondition: feasible step
  * */
-std::optional<Iterate> FilterStrategy::check_acceptance(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) {
+std::optional<Iterate> FilterStrategy::check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) {
     /* check if subproblem definition changed */
     if (this->subproblem.subproblem_definition_changed) {
         this->filter_optimality->reset();
@@ -84,12 +85,12 @@ std::optional<Iterate> FilterStrategy::check_acceptance(Problem& problem, Iterat
 
     /* correct multipliers for infeasibility problem */
     if (accept) {
+        statistics.add_statistic("phase", (int) direction.phase);
         if (direction.phase == RESTORATION) {
             this->update_restoration_multipliers_(trial_iterate, direction.constraint_partition);
         }
         trial_iterate.compute_objective(problem);
         this->subproblem.compute_residuals(problem, trial_iterate, trial_iterate.multipliers, direction.objective_multiplier);
-        INFO << "phase: " << this->current_phase_ << "\t";
         DEBUG << "Residuals: ||c|| = " << trial_iterate.residuals.constraints << ", KKT = " << trial_iterate.residuals.KKT << ", cmpl = " << trial_iterate.residuals.complementarity << "\n";
         return std::optional<Iterate>{trial_iterate};
     }

@@ -23,7 +23,7 @@ EXEC_NAME = argonot
 VPATH = base solvers interfaces
 
 SRC_FILES = base/Argonot.cpp base/Iterate.cpp \
-	base/Problem.cpp base/Utils.cpp \
+	base/Problem.cpp base/Utils.cpp base/Statistics.cpp \
 	base/Matrix.cpp base/HessianEvaluation.cpp base/Constraint.cpp \
 	base/strategy/GlobalizationStrategy.cpp base/strategy/GlobalizationStrategyFactory.cpp \
 	base/strategy/Filter.cpp base/strategy/FilterStrategy.cpp base/strategy/PenaltyMeritFunction.cpp \

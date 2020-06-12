@@ -7,11 +7,14 @@ LineSearch::LineSearch(GlobalizationStrategy& globalization_strategy, double tol
 GlobalizationMechanism(globalization_strategy, tolerance, max_iterations), backtracking_ratio(backtracking_ratio), min_step_length(1e-9) {
 }
 
-Iterate LineSearch::initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
-    return this->globalization_strategy.initialize(problem, x, multipliers);
+Iterate LineSearch::initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+    statistics.add_column("minor", Statistics::int_width, 2);
+    statistics.add_column("LS step length", Statistics::double_width, 30);
+    statistics.add_column("step norm", Statistics::double_width, 31);
+    return this->globalization_strategy.initialize(statistics, problem, x, multipliers);
 }
 
-Iterate LineSearch::compute_acceptable_iterate(Problem& problem, Iterate& current_iterate) {
+Iterate LineSearch::compute_acceptable_iterate(Statistics& statistics, Problem& problem, Iterate& current_iterate) {
     bool line_search_termination = false;
     /* compute the step */
     std::vector<Direction> directions = this->globalization_strategy.subproblem.compute_directions(problem, current_iterate);
@@ -27,10 +30,14 @@ Iterate LineSearch::compute_acceptable_iterate(Problem& problem, Iterate& curren
             this->print_iteration_();
 
             /* check whether the trial step is accepted */
-            std::optional<std::pair<Iterate, int> > acceptance_check = this->find_first_acceptable_direction_(problem, current_iterate, directions, this->step_length);
+            std::optional<std::pair<Iterate, int> > acceptance_check = this->find_first_acceptable_direction_(statistics, problem, current_iterate, directions, this->step_length);
             if (acceptance_check.has_value()) {
                 is_accepted = true;
                 current_iterate = acceptance_check.value().first;
+                double step_norm = directions[acceptance_check.value().second].norm;
+                statistics.add_statistic("minor", this->number_iterations);
+                statistics.add_statistic("LS step length", this->step_length);
+                statistics.add_statistic("step norm", this->step_length*step_norm);
             }
             if (!is_accepted) {
                 /* decrease the step length */
@@ -70,11 +77,8 @@ void LineSearch::print_iteration_() {
     return;
 }
 
-void LineSearch::print_acceptance_(double solution_norm) {
+void LineSearch::print_acceptance_() {
     DEBUG << CYAN "LS trial point accepted\n" RESET;
-    INFO << "minor: " << this->number_iterations << "\t";
-    INFO << "step length: " << this->step_length << "\t\t";
-    INFO << "step norm: " << solution_norm << "\t\t";
     return;
 }
 

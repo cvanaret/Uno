@@ -19,8 +19,8 @@ public:
      */
     TrustRegion(GlobalizationStrategy& globalization_strategy, double tolerance, double initial_radius, int max_iterations);
 
-    Iterate compute_acceptable_iterate(Problem& problem, Iterate& current_iterate) override;
-    Iterate initialize(Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
+    Iterate initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
+    Iterate compute_acceptable_iterate(Statistics& statistics, Problem& problem, Iterate& current_iterate) override;
 
     static void correct_active_set(Direction& direction, const double radius);
 
@@ -31,7 +31,7 @@ private:
 
     bool termination_(bool is_accepted);
     void print_iteration_();
-    void print_acceptance_(double solution_norm) override;
+    void print_acceptance_() override;
     void print_warning_(const char* message);
 };
 
