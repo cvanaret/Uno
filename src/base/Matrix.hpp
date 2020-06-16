@@ -85,9 +85,9 @@ public:
     
     double norm_1();
     COOMatrix to_COO();
-    COOMatrix to_COO(std::map<int, int> mask);
+    COOMatrix to_COO(std::unordered_map<int, int> mask);
     CSCMatrix to_CSC();
-    CSCMatrix to_CSC(std::map<int, int> mask);
+    CSCMatrix to_CSC(std::unordered_map<int, int> mask);
 
     friend std::ostream& operator<<(std::ostream &stream, ArgonotMatrix& matrix);
 };

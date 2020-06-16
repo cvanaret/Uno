@@ -207,7 +207,7 @@ void test_mask_matrix() {
     matrix.insert(10., 3, 3);
     std::cout << "Original matrix: " << matrix << "\n";
     
-    std::map<int, int> mask;
+    std::unordered_map<int, int> mask;
     mask[0] = 0;
     mask[2] = 1;
     

@@ -394,7 +394,7 @@ COOMatrix ArgonotMatrix::to_COO() {
 
 /* generate a COO matrix by removing some variables (e.g. reduced Hessian in EQP problems) */
 /* mask contains (i_origin, i_reduced) pairs, where i_origin is the original index, and i_reduced is the index in the reduced matrix */
-COOMatrix ArgonotMatrix::to_COO(std::map<int, int> mask) {
+COOMatrix ArgonotMatrix::to_COO(std::unordered_map<int, int> mask) {
     COOMatrix coo_matrix(this->dimension, this->fortran_indexing);
 
     for (std::pair<const int, double> element: this->matrix) {
@@ -439,7 +439,7 @@ CSCMatrix ArgonotMatrix::to_CSC() {
     return csc_matrix;
 }
 
-CSCMatrix ArgonotMatrix::to_CSC(std::map<int, int> mask) {
+CSCMatrix ArgonotMatrix::to_CSC(std::unordered_map<int, int> mask) {
     CSCMatrix csc_matrix(this->dimension, this->fortran_indexing);
     
     int current_column = this->fortran_indexing;
