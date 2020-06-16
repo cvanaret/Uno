@@ -106,7 +106,7 @@ std::ostream& operator<<(std::ostream &stream, Iterate& iterate) {
     return stream;
 }
 
-std::ostream& operator<<(std::ostream &stream, OptimalityStatus& status) {
+std::ostream& operator<<(std::ostream &stream, TerminationStatus& status) {
     if (status == NOT_OPTIMAL) {
         stream << "not optimal";
     }

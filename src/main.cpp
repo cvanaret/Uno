@@ -108,12 +108,12 @@ void set_logger(std::map<std::string, std::string> options) {
     return;
 }
 
-std::map<std::string, std::string> get_default_values(std::string file_name) {
+std::map<std::string, std::string> get_options(std::string file_name) {
     std::ifstream file;
     file.open(file_name);
 
     /* register the default values */
-    std::map<std::string, std::string> default_values;
+    std::map<std::string, std::string> options;
     std::string key, value;
     std::string line;
     while (std::getline(file, line)) {
@@ -121,39 +121,13 @@ std::map<std::string, std::string> get_default_values(std::string file_name) {
             std::istringstream iss;
             iss.str(line);
             iss >> key >> value;
-            std::cout << "Default value " << key << " = " << value << "\n";
-            default_values[key] = value;
+            std::cout << "Option " << key << " = " << value << "\n";
+            options[key] = value;
         }
     }
     file.close();
-    return default_values;
+    return options;
 }
-
-//void test_sl1QP() {
-//    AMPLModel problem = AMPLModel("../ampl_models/hs015");
-//    BQPDSolver solver(problem.hessian_column_start, problem.hessian_row_number);
-//    Sl1QP sl1qp(solver);
-//
-//    std::vector<double> x = problem.primal_initial_solution();
-//    std::cout << "Original x is:     ";
-//    print_vector(std::cout, x);
-//    Multipliers multipliers(problem.number_variables, problem.number_constraints);
-//    multipliers.constraints = problem.dual_initial_solution();
-//
-//    Iterate current_iterate = sl1qp.initialize(problem, x, multipliers, 2, false);
-//    solver.allocate(current_iterate.x.size(), problem.number_constraints);
-//
-//    std::cout << "Reformulated x is: ";
-//    print_vector(std::cout, current_iterate.x);
-//
-//    double trust_region_radius = INFINITY;
-//    SubproblemSolution solution = sl1qp.compute_optimality_step(problem, current_iterate, trust_region_radius);
-//    std::cout << solution << "\n";
-//
-//    double c1 = dot(solution.x, current_iterate.constraints_jacobian[0]);
-//    double c2 = dot(solution.x, current_iterate.constraints_jacobian[1]);
-//    std::cout << "Value of constraints: " << c1 << " and " << c2 << "\n";
-//}
 
 //void test_matrix() {
 //    int fortran_indexing = 0;
@@ -249,7 +223,7 @@ void test_mask_matrix() {
 int main(int argc, char* argv[]) {
     if (1 < argc) {
         /* get the default values */
-        std::map<std::string, std::string> options = get_default_values("argonot.cfg");
+        std::map<std::string, std::string> options = get_options("argonot.cfg");
         /* get the command line options */
         get_command_options(argc, argv, options);
         set_logger(options);

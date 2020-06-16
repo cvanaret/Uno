@@ -7,27 +7,26 @@ globalization_strategy(globalization_strategy), tolerance(tolerance), max_iterat
 GlobalizationMechanism::~GlobalizationMechanism() {
 }
 
-std::optional<std::pair<Iterate, int> > GlobalizationMechanism::find_first_acceptable_direction_(Statistics& statistics, Problem& problem, Iterate& current_iterate, std::vector<Direction>& directions, double step_length) {
-    int k = 0;
+std::optional<std::pair<Iterate, double> > GlobalizationMechanism::find_first_acceptable_direction_(Statistics& statistics, Problem& problem, Iterate& current_iterate, std::vector<Direction>& directions, double step_length) {
     for (Direction& direction: directions) {
         try {
             std::optional<Iterate> acceptance_check = this->globalization_strategy.check_acceptance(statistics, problem, current_iterate, direction, step_length);
             if (acceptance_check.has_value()) {
                 Iterate& accepted_iterate = acceptance_check.value();
-                accepted_iterate.status = this->compute_status_(problem, accepted_iterate, step_length*direction.norm, direction.objective_multiplier);
+                double step_norm = step_length*direction.norm;
+                accepted_iterate.status = this->compute_termination_status_(problem, accepted_iterate, step_norm, direction.objective_multiplier);
                 /* print summary */
                 this->print_acceptance_();
-                return std::pair<Iterate, int>(accepted_iterate, k);
+                return std::pair<Iterate, double>(accepted_iterate, step_norm);
             }
         }
         catch (const IEEE_Error& e) {}
-        k++;
     }
     return std::nullopt;
 }
 
-OptimalityStatus GlobalizationMechanism::compute_status_(Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier) {
-    OptimalityStatus status = NOT_OPTIMAL;
+TerminationStatus GlobalizationMechanism::compute_termination_status_(Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier) {
+    TerminationStatus status = NOT_OPTIMAL;
 
     if (current_iterate.residuals.complementarity <= this->tolerance * (current_iterate.x.size() + problem.number_constraints)) {
         // feasible and KKT point

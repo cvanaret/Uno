@@ -47,7 +47,7 @@ Iterate TrustLineSearch::compute_acceptable_iterate(Problem& problem, Iterate& c
 
                     if (is_accepted) {
                         DEBUG << CYAN "TLS trial point accepted\n" RESET;
-                        current_iterate.status = this->compute_status_(problem, current_iterate, step_length * direction.norm, direction.objective_multiplier);
+                        current_iterate.status = this->compute_termination_status_(problem, current_iterate, step_length * direction.norm, direction.objective_multiplier);
                         /* print summary */
                         INFO << "minor: " << this->number_iterations << "\t";
                         INFO << "radius: " << this->radius << "\t";

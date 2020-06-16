@@ -83,7 +83,7 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& mul
     return result;
 }
 
-bool Argonot::termination_criterion_(OptimalityStatus current_status, int iteration) {
+bool Argonot::termination_criterion_(TerminationStatus current_status, int iteration) {
     return current_status != NOT_OPTIMAL || this->max_iterations <= iteration;
 }
 

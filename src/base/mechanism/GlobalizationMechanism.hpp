@@ -23,7 +23,7 @@ public:
 
     virtual Iterate initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
     virtual Iterate compute_acceptable_iterate(Statistics& statistics, Problem& problem, Iterate& current_iterate) = 0;
-    std::optional<std::pair<Iterate, int> > find_first_acceptable_direction_(Statistics& statistics, Problem& problem, Iterate& current_iterate, std::vector<Direction>& directions, double step_length);
+    std::optional<std::pair<Iterate, double> > find_first_acceptable_direction_(Statistics& statistics, Problem& problem, Iterate& current_iterate, std::vector<Direction>& directions, double step_length);
 
     /* references to allow polymorphism */
     GlobalizationStrategy& globalization_strategy; /*!< Strategy to accept or reject a step */
@@ -32,7 +32,7 @@ public:
     int number_iterations; /*!< Current number of iterations */
 
 protected:
-    OptimalityStatus compute_status_(Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier);
+    TerminationStatus compute_termination_status_(Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier);
     virtual void print_acceptance_() = 0;
 };
 

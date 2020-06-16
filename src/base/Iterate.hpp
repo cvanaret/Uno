@@ -7,7 +7,7 @@
 #include "Constraint.hpp"
 #include "Matrix.hpp"
 
-enum OptimalityStatus {
+enum TerminationStatus {
     NOT_OPTIMAL = 0,
     KKT_POINT, /* feasible stationary point */
     FJ_POINT, /* infeasible stationary point */
@@ -22,7 +22,7 @@ struct Residuals {
     double complementarity;
 };
 
-std::ostream& operator<<(std::ostream &stream, OptimalityStatus& status);
+std::ostream& operator<<(std::ostream &stream, TerminationStatus& status);
 
 /*! \class Iterate
  * \brief Optimization iterate
@@ -56,7 +56,7 @@ public:
     bool is_hessian_computed; /*!< Flag that indicates if the Hessian has already been computed */
 
     // status and measures
-    OptimalityStatus status;
+    TerminationStatus status;
 
     //double constraint_residual; /*!< Constraint residual */
     //double KKT_residual;
