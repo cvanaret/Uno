@@ -362,7 +362,7 @@ double ArgonotMatrix::norm_1() {
     return norm;
 }
 
-std::vector<double> ArgonotMatrix::product(std::vector<double>& vector) {
+std::vector<double> ArgonotMatrix::product(std::vector<double>& /*vector*/) {
     throw std::out_of_range("ArgonotMatrix::product is not implemented");
 }
 
