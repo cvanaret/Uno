@@ -105,7 +105,11 @@ void Statistics::print_current_line() {
             std::cout << " -";
             size = 2;
         }
-        for (unsigned int j = 0; j < this->widths_[header] - size; j++) {
+        int number_spaces = this->widths_[header] - size;
+        if (number_spaces < 0) {
+            number_spaces = 0;
+        }
+        for (int j = 0; j < number_spaces; j++) {
             std::cout << " ";
         }
         k++;
