@@ -51,7 +51,7 @@ double norm(T& x, std::string norm_value) {
 
 template <typename T>
 void print_vector(std::ostream &stream, std::vector<T> x, unsigned int start = 0, unsigned int length = std::numeric_limits<unsigned int>::max()) {
-    for (unsigned int i = start; i < std::min<unsigned int>(start + length, x.size()); i++) {
+    for (size_t i = start; i < std::min<unsigned int>(start + length, x.size()); i++) {
         stream << x[i] << " ";
     }
     stream << "\n";
@@ -60,7 +60,7 @@ void print_vector(std::ostream &stream, std::vector<T> x, unsigned int start = 0
 
 template <typename T>
 void print_vector(const Level& level, std::vector<T> x, unsigned int start = 0, unsigned int length = std::numeric_limits<unsigned int>::max()) {
-    for (unsigned int i = start; i < std::min<unsigned int>(start + length, x.size()); i++) {
+    for (size_t i = start; i < std::min<unsigned int>(start + length, x.size()); i++) {
         level << x[i] << " ";
     }
     level << "\n";

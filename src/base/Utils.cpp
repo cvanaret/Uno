@@ -6,7 +6,7 @@ std::vector<double> add_vectors(std::vector<double>& x, std::vector<double>& y, 
         throw std::length_error("Utils.add_vectors: x and y have different sizes");
     }
     std::vector<double> z(x.size());
-    for (unsigned int i = 0; i < x.size(); i++) {
+    for (size_t i = 0; i < x.size(); i++) {
         z[i] = x[i] + scaling_factor * y[i];
     }
     return z;
@@ -15,7 +15,7 @@ std::vector<double> add_vectors(std::vector<double>& x, std::vector<double>& y, 
 /* compute ||x||_1 */
 double norm_1(std::vector<double>& x) {
     double norm = 0.;
-    for (unsigned int i = 0; i < x.size(); i++) {
+    for (size_t i = 0; i < x.size(); i++) {
         norm += std::abs(x[i]);
     }
     return norm;
@@ -33,7 +33,7 @@ double norm_1(SparseGradient& x) {
 // https://en.wikipedia.org/wiki/Matrix_norm#Special_cases
 double norm_1(std::vector<SparseGradient>& m) {
     double norm = 0.;
-    for (unsigned int j = 0; j < m.size(); j++) {
+    for (size_t j = 0; j < m.size(); j++) {
         double column_norm = norm_1(m[j]);
         norm = std::max(norm, column_norm);
     }
@@ -43,7 +43,7 @@ double norm_1(std::vector<SparseGradient>& m) {
 /* compute ||x||^2_2 */
 double norm_2_squared(std::vector<double>& x) {
     double norm_squared = 0.;
-    for (unsigned int i = 0; i < x.size(); i++) {
+    for (size_t i = 0; i < x.size(); i++) {
         norm_squared += x[i] * x[i];
     }
     return norm_squared;
@@ -70,7 +70,7 @@ double norm_2(SparseGradient& x) {
 /* compute ||x||_infty */
 double norm_inf(std::vector<double>& x, unsigned int length) {
     double norm = 0.;
-    for (unsigned int i = 0; i < std::min<unsigned int>(length, x.size()); i++) {
+    for (size_t i = 0; i < std::min<unsigned int>(length, x.size()); i++) {
         norm = std::max(norm, std::abs(x[i]));
     }
     return norm;
@@ -89,12 +89,12 @@ double norm_inf(SparseGradient& x) {
 double norm_inf(std::vector<SparseGradient>& m) {
     // compute maximum row index
     int number_rows = 0;
-    for (unsigned int j = 0; j < m.size(); j++) {
+    for (size_t j = 0; j < m.size(); j++) {
         number_rows = std::max(number_rows, 1 + m[j].begin()->first);
     }
     // read the matrix column-wise and fill in the row_vectors norm vector
     std::vector<double> row_vectors(number_rows);
-    for (unsigned int j = 0; j < m.size(); j++) {
+    for (size_t j = 0; j < m.size(); j++) {
         for (std::pair<const int, double> element: m[j]) {
             int i = element.first;
             double value = element.second;
@@ -103,7 +103,7 @@ double norm_inf(std::vector<SparseGradient>& m) {
     }
     // compute the maximal component of the row_vectors vector
     double norm = 0.;
-    for (unsigned int i = 0; i < row_vectors.size(); i++) {
+    for (size_t i = 0; i < row_vectors.size(); i++) {
         norm = std::max(norm, row_vectors[i]);
     }
     return norm;
@@ -111,7 +111,7 @@ double norm_inf(std::vector<SparseGradient>& m) {
 
 double dot(std::vector<double>& x, std::vector<double>& y) {
     double dot = 0.;
-    for (unsigned int i = 0; i < std::min(x.size(), y.size()); i++) {
+    for (size_t i = 0; i < std::min(x.size(), y.size()); i++) {
         dot += x[i] * y[i];
     }
     return dot;
@@ -150,7 +150,7 @@ std::string join(std::vector<std::string> vector, const char* separator) {
     if (0 < vector.size()) {
         s.append(vector[0]);
     }
-    for (unsigned int i = 1; i < vector.size(); i++) {
+    for (size_t i = 1; i < vector.size(); i++) {
         s.append(separator).append(vector[i]);
     }
     return s;

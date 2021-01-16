@@ -60,18 +60,18 @@ void COOMatrix::insert(double term, int row_index, int column_index) {
 double COOMatrix::norm_1() {
     // compute maximum column index
     int number_columns = 0;
-    for (unsigned int k = 0; k < this->column_indices.size(); k++) {
+    for (size_t k = 0; k < this->column_indices.size(); k++) {
         number_columns = std::max(number_columns, 1 + this->column_indices[k] - this->fortran_indexing);
     }
     // read the matrix and fill in the column_vectors norm vector
     std::vector<double> column_vectors(number_columns);
-    for (unsigned int k = 0; k < this->matrix.size(); k++) {
+    for (size_t k = 0; k < this->matrix.size(); k++) {
         int j = this->column_indices[k] - this->fortran_indexing;
         column_vectors[j] += std::abs(this->matrix[k]);
     }
     // compute the maximal component of the column_vectors vector
     double norm = 0.;
-    for (unsigned int j = 0; j < column_vectors.size(); j++) {
+    for (size_t j = 0; j < column_vectors.size(); j++) {
         norm = std::max(norm, column_vectors[j]);
     }
     return norm;
@@ -79,7 +79,7 @@ double COOMatrix::norm_1() {
 
 std::vector<double> COOMatrix::product(std::vector<double>& vector) {
     std::vector<double> result(vector.size());
-    for (unsigned int k = 0; k < this->matrix.size(); k++) {
+    for (size_t k = 0; k < this->matrix.size(); k++) {
         int i = this->row_indices[k] - this->fortran_indexing;
         int j = this->column_indices[k] - this->fortran_indexing;
         result[i] += this->matrix[k] * vector[j];
@@ -93,14 +93,14 @@ std::vector<double> COOMatrix::product(std::vector<double>& vector) {
 }
 
 std::ostream& operator<<(std::ostream &stream, COOMatrix& matrix) {
-    for (unsigned int k = 0; k < matrix.matrix.size(); k++) {
+    for (size_t k = 0; k < matrix.matrix.size(); k++) {
         stream << "m(" << matrix.row_indices[k] << ", " << matrix.column_indices[k] << ") = " << matrix.matrix[k] << "\n";
     }
     return stream;
 }
 
 std::ostream& operator<<(std::ostream &stream, const COOMatrix& matrix) {
-    for (unsigned int k = 0; k < matrix.matrix.size(); k++) {
+    for (size_t k = 0; k < matrix.matrix.size(); k++) {
         stream << "m(" << matrix.row_indices[k] << ", " << matrix.column_indices[k] << ") = " << matrix.matrix[k] << "\n";
     }
     return stream;
@@ -339,7 +339,7 @@ void ArgonotMatrix::insert(double term, int row_index, int column_index) {
 double ArgonotMatrix::norm_1() {
     // compute maximum column index
     int number_columns = 0;
-    for (std::pair<const unsigned int, double> element: this->matrix) {
+    for (std::pair<const size_t, double> element: this->matrix) {
         int key = element.first;
         // retrieve indices
         int j = key / this->dimension;
@@ -347,7 +347,7 @@ double ArgonotMatrix::norm_1() {
     }
     // read the matrix and fill in the column_vectors norm vector
     std::vector<double> column_vectors(number_columns);
-    for (std::pair<const unsigned int, double> element: this->matrix) {
+    for (std::pair<const size_t, double> element: this->matrix) {
         int key = element.first;
         double value = element.second;
         // retrieve indices
@@ -356,7 +356,7 @@ double ArgonotMatrix::norm_1() {
     }
     // compute the maximal component of the column_vectors vector
     double norm = 0.;
-    for (unsigned int j = 0; j < column_vectors.size(); j++) {
+    for (size_t j = 0; j < column_vectors.size(); j++) {
         norm = std::max(norm, column_vectors[j]);
     }
     return norm;
