@@ -8,7 +8,7 @@
 
 class GlobalizationStrategyFactory {
     public:
-        static std::shared_ptr<GlobalizationStrategy> create(const std::string& type, Subproblem& subproblem, std::map<std::string, std::string> options);
+        static std::shared_ptr<GlobalizationStrategy> create(const std::string& type, Subproblem& subproblem, std::map<std::string, std::string>& options);
 };
 
 #endif // GLOBALIZATIONSTRATEGYFACTORY_H

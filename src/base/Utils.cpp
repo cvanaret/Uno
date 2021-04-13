@@ -1,7 +1,7 @@
 #include <cmath>
 #include "Utils.hpp"
 
-std::vector<double> add_vectors(std::vector<double>& x, std::vector<double>& y, double scaling_factor) {
+std::vector<double> add_vectors(const std::vector<double>& x, const std::vector<double>& y, double scaling_factor) {
     if (x.size() != y.size()) {
         throw std::length_error("Utils.add_vectors: x and y have different sizes");
     }
@@ -13,7 +13,7 @@ std::vector<double> add_vectors(std::vector<double>& x, std::vector<double>& y, 
 }
 
 /* compute ||x||_1 */
-double norm_1(std::vector<double>& x) {
+double norm_1(const std::vector<double>& x) {
     double norm = 0.;
     for (size_t i = 0; i < x.size(); i++) {
         norm += std::abs(x[i]);
@@ -21,7 +21,7 @@ double norm_1(std::vector<double>& x) {
     return norm;
 }
 
-double norm_1(SparseGradient& x) {
+double norm_1(const SparseGradient& x) {
     double norm = 0.;
     for (std::pair<int, double> term: x) {
         double xi = term.second;
@@ -31,7 +31,7 @@ double norm_1(SparseGradient& x) {
 }
 
 // https://en.wikipedia.org/wiki/Matrix_norm#Special_cases
-double norm_1(std::vector<SparseGradient>& m) {
+double norm_1(const std::vector<SparseGradient>& m) {
     double norm = 0.;
     for (size_t j = 0; j < m.size(); j++) {
         double column_norm = norm_1(m[j]);
@@ -41,7 +41,7 @@ double norm_1(std::vector<SparseGradient>& m) {
 }
 
 /* compute ||x||^2_2 */
-double norm_2_squared(std::vector<double>& x) {
+double norm_2_squared(const std::vector<double>& x) {
     double norm_squared = 0.;
     for (size_t i = 0; i < x.size(); i++) {
         norm_squared += x[i] * x[i];
@@ -49,7 +49,7 @@ double norm_2_squared(std::vector<double>& x) {
     return norm_squared;
 }
 
-double norm_2_squared(SparseGradient& x) {
+double norm_2_squared(const SparseGradient& x) {
     double norm_squared = 0.;
     for (std::pair<int, double> term: x) {
         double xi = term.second;
@@ -59,16 +59,16 @@ double norm_2_squared(SparseGradient& x) {
 }
 
 /* compute ||x||_2 */
-double norm_2(std::vector<double>& x) {
+double norm_2(const std::vector<double>& x) {
     return std::sqrt(norm_2_squared(x));
 }
 
-double norm_2(SparseGradient& x) {
+double norm_2(const SparseGradient& x) {
     return std::sqrt(norm_2_squared(x));
 }
 
 /* compute ||x||_infty */
-double norm_inf(std::vector<double>& x, unsigned int length) {
+double norm_inf(const std::vector<double>& x, unsigned int length) {
     double norm = 0.;
     for (size_t i = 0; i < std::min<unsigned int>(length, x.size()); i++) {
         norm = std::max(norm, std::abs(x[i]));
@@ -76,7 +76,7 @@ double norm_inf(std::vector<double>& x, unsigned int length) {
     return norm;
 }
 
-double norm_inf(SparseGradient& x) {
+double norm_inf(const SparseGradient& x) {
     double norm = 0.;
     for (std::pair<int, double> term: x) {
         double xi = term.second;
@@ -86,7 +86,7 @@ double norm_inf(SparseGradient& x) {
 }
 
 // https://en.wikipedia.org/wiki/Matrix_norm#Special_cases
-double norm_inf(std::vector<SparseGradient>& m) {
+double norm_inf(const std::vector<SparseGradient>& m) {
     // compute maximum row index
     int number_rows = 0;
     for (size_t j = 0; j < m.size(); j++) {
@@ -109,7 +109,7 @@ double norm_inf(std::vector<SparseGradient>& m) {
     return norm;
 }
 
-double dot(std::vector<double>& x, std::vector<double>& y) {
+double dot(const std::vector<double>& x, const std::vector<double>& y) {
     double dot = 0.;
     for (size_t i = 0; i < std::min(x.size(), y.size()); i++) {
         dot += x[i] * y[i];
@@ -117,7 +117,7 @@ double dot(std::vector<double>& x, std::vector<double>& y) {
     return dot;
 }
 
-double dot(std::vector<double>& x, SparseGradient& y) {
+double dot(const std::vector<double>& x, const SparseGradient& y) {
     double dot = 0.;
     for (std::pair<int, double> term: y) {
         unsigned int i = term.first;
@@ -132,7 +132,7 @@ double dot(std::vector<double>& x, SparseGradient& y) {
     return dot;
 }
 
-double dot(SparseGradient& x, SparseGradient& y) {
+double dot(const SparseGradient& x, const SparseGradient& y) {
     double dot = 0.;
     for (std::pair<int, double> term: x) {
         int i = term.first;
@@ -145,7 +145,7 @@ double dot(SparseGradient& x, SparseGradient& y) {
     return dot;
 }
 
-std::string join(std::vector<std::string> vector, const char* separator) {
+std::string join(const std::vector<std::string> vector, const char* separator) {
     std::string s;
     if (0 < vector.size()) {
         s.append(vector[0]);

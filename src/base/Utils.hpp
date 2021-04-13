@@ -10,27 +10,27 @@
 #include "Logger.hpp"
 #include "SparseGradient.hpp"
 
-std::vector<double> add_vectors(std::vector<double>& x, std::vector<double>& y, double scaling_factor = 1.);
+std::vector<double> add_vectors(const std::vector<double>& x, const std::vector<double>& y, double scaling_factor = 1.);
 
-double norm_1(std::vector<double>& x);
-double norm_1(SparseGradient& x);
-double norm_1(std::vector<SparseGradient>& m);
+double norm_1(const std::vector<double>& x);
+double norm_1(const SparseGradient& x);
+double norm_1(const std::vector<SparseGradient>& m);
 
-double norm_2_squared(std::vector<double>& x);
-double norm_2_squared(SparseGradient& x);
-double norm_2(std::vector<double>& x);
-double norm_2(SparseGradient& x);
+double norm_2_squared(const std::vector<double>& x);
+double norm_2_squared(const SparseGradient& x);
+double norm_2(const std::vector<double>& x);
+double norm_2(const SparseGradient& x);
 
-double norm_inf(std::vector<double>& x, unsigned int length = std::numeric_limits<unsigned int>::max());
-double norm_inf(SparseGradient& x);
-double norm_inf(std::vector<SparseGradient>& m);
+double norm_inf(const std::vector<double>& x, unsigned int length = std::numeric_limits<unsigned int>::max());
+double norm_inf(const SparseGradient& x);
+double norm_inf(const std::vector<SparseGradient>& m);
 
-double dot(std::vector<double>& x, std::vector<double>& y);
-double dot(std::vector<double>& x, SparseGradient& y);
-double dot(SparseGradient& x, SparseGradient& y);
+double dot(const std::vector<double>& x, const std::vector<double>& y);
+double dot(const std::vector<double>& x, const SparseGradient& y);
+double dot(const SparseGradient& x, const SparseGradient& y);
 
 template <typename T>
-double norm(T& x, std::string norm_value) {
+double norm(const T& x, std::string norm_value) {
     /* choose the right norm */
     if (norm_value == "inf") {
         return norm_inf(x);

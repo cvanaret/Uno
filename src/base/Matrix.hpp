@@ -17,10 +17,10 @@ public:
     virtual int number_nonzeros() = 0;
     /* build the matrix incrementally */
     virtual void insert(double term, int row_index, int column_index) = 0;
-    virtual std::vector<double> product(std::vector<double>& vector) = 0;
+    virtual std::vector<double> product(const std::vector<double>& vector) = 0;
     
-    double quadratic_product(std::vector<double>& x, std::vector<double>& y);
-    void add_outer_product(SparseGradient& x, double scaling_factor = 1.);
+    double quadratic_product(const std::vector<double>& x, const std::vector<double>& y);
+    void add_outer_product(const SparseGradient& x, double scaling_factor = 1.);
 };
 
 class COOMatrix : public Matrix {
@@ -34,7 +34,7 @@ public:
 
     int number_nonzeros() override;
     void insert(double term, int row_index, int column_index) override;
-    std::vector<double> product(std::vector<double>& vector) override;
+    std::vector<double> product(const std::vector<double>& vector) override;
     
     double norm_1();
     /*COOMatrix add_identity_multiple(double multiple);*/
@@ -50,7 +50,7 @@ class CSCMatrix : public Matrix {
     /* Compressed Sparse Column */
 public:
     CSCMatrix(int dimension, short fortran_indexing);
-    CSCMatrix(std::vector<double>& matrix, std::vector<int>& column_start, std::vector<int>& row_number, int fortran_indexing);
+    CSCMatrix(const std::vector<double>& matrix, const std::vector<int>& column_start, const std::vector<int>& row_number, int fortran_indexing);
 
     std::vector<double> matrix;
     std::vector<int> column_start;
@@ -58,7 +58,7 @@ public:
 
     int number_nonzeros() override;
     void insert(double term, int row_index, int column_index) override;
-    std::vector<double> product(std::vector<double>& vector) override;
+    std::vector<double> product(const std::vector<double>& vector) override;
     
     CSCMatrix add_identity_multiple(double multiple);
     double smallest_diagonal_entry();
@@ -80,14 +80,14 @@ public:
 
     int number_nonzeros() override;
     void insert(double term, int row_index, int column_index) override;
-    std::vector<double> product(std::vector<double>& vector) override;
+    std::vector<double> product(const std::vector<double>& vector) override;
     void add_matrix(ArgonotMatrix& other_matrix, double factor);
     
     double norm_1();
     COOMatrix to_COO();
-    COOMatrix to_COO(std::unordered_map<int, int> mask);
+    COOMatrix to_COO(const std::unordered_map<int, int>& mask);
     CSCMatrix to_CSC();
-    CSCMatrix to_CSC(std::unordered_map<int, int> mask);
+    CSCMatrix to_CSC(const std::unordered_map<int, int>& mask);
 
     friend std::ostream& operator<<(std::ostream &stream, ArgonotMatrix& matrix);
 };

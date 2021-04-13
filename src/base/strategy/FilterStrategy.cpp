@@ -4,7 +4,7 @@
 #include "FilterStrategy.hpp"
 #include "Utils.hpp"
 
-FilterStrategy::FilterStrategy(Subproblem& subproblem, FilterStrategyParameters strategy_parameters, std::map<std::string, std::string> options):
+FilterStrategy::FilterStrategy(Subproblem& subproblem, FilterStrategyParameters& strategy_parameters, std::map<std::string, std::string>& options):
 GlobalizationStrategy(subproblem),
 filter_optimality(FilterFactory::create(options)),
 filter_restoration(FilterFactory::create(options)),

@@ -9,7 +9,7 @@ Matrix::Matrix(int dimension, short fortran_indexing): dimension(dimension), for
 Matrix::~Matrix() {
 }
 
-double Matrix::quadratic_product(std::vector<double>& x, std::vector<double>& y) {
+double Matrix::quadratic_product(const std::vector<double>& x, const std::vector<double>& y) {
     if (x.size() != y.size()) {
         throw std::length_error("COOMatrix::quadratic_product: x and y have different sizes");
     }
@@ -19,7 +19,7 @@ double Matrix::quadratic_product(std::vector<double>& x, std::vector<double>& y)
     return product;
 }
 
-void Matrix::add_outer_product(SparseGradient& x, double scaling_factor) {
+void Matrix::add_outer_product(const SparseGradient& x, double scaling_factor) {
     /* perform matrix addition: A + rho x x^T */
     for (std::pair<const int, double> row_element: x) {
         int row_index = row_element.first;
@@ -77,7 +77,7 @@ double COOMatrix::norm_1() {
     return norm;
 }
 
-std::vector<double> COOMatrix::product(std::vector<double>& vector) {
+std::vector<double> COOMatrix::product(const std::vector<double>& vector) {
     std::vector<double> result(vector.size());
     for (size_t k = 0; k < this->matrix.size(); k++) {
         int i = this->row_indices[k] - this->fortran_indexing;
@@ -116,7 +116,7 @@ CSCMatrix::CSCMatrix(int dimension, short fortran_indexing): Matrix(dimension, f
 {
 }
 
-CSCMatrix::CSCMatrix(std::vector<double>& matrix, std::vector<int>& column_start, std::vector<int>& row_number, int fortran_indexing):
+CSCMatrix::CSCMatrix(const std::vector<double>& matrix, const std::vector<int>& column_start, const std::vector<int>& row_number, int fortran_indexing):
 // matrix and row_number have nnz elements
 // column_start has dimension+1 elements
 Matrix(column_start.size() - 1, fortran_indexing), matrix(matrix), column_start(column_start), row_number(row_number) {
@@ -131,7 +131,7 @@ void CSCMatrix::insert(double /*term*/, int /*row_index*/, int /*column_index*/)
 }
 
 /* product of symmetric (n, n) matrix with (n, 1) vector */
-std::vector<double> CSCMatrix::product(std::vector<double>& vector) {
+std::vector<double> CSCMatrix::product(const std::vector<double>& vector) {
     int n = this->column_start.size() - 1;
     /* create (n, 1) result */
     std::vector<double> result(n); // = {0.}
@@ -362,7 +362,7 @@ double ArgonotMatrix::norm_1() {
     return norm;
 }
 
-std::vector<double> ArgonotMatrix::product(std::vector<double>& /*vector*/) {
+std::vector<double> ArgonotMatrix::product(const std::vector<double>& /*vector*/) {
     throw std::out_of_range("ArgonotMatrix::product is not implemented");
 }
 
@@ -394,7 +394,7 @@ COOMatrix ArgonotMatrix::to_COO() {
 
 /* generate a COO matrix by removing some variables (e.g. reduced Hessian in EQP problems) */
 /* mask contains (i_origin, i_reduced) pairs, where i_origin is the original index, and i_reduced is the index in the reduced matrix */
-COOMatrix ArgonotMatrix::to_COO(std::unordered_map<int, int> mask) {
+COOMatrix ArgonotMatrix::to_COO(const std::unordered_map<int, int>& mask) {
     COOMatrix coo_matrix(this->dimension, this->fortran_indexing);
 
     for (std::pair<const int, double> element: this->matrix) {
@@ -439,7 +439,7 @@ CSCMatrix ArgonotMatrix::to_CSC() {
     return csc_matrix;
 }
 
-CSCMatrix ArgonotMatrix::to_CSC(std::unordered_map<int, int> mask) {
+CSCMatrix ArgonotMatrix::to_CSC(const std::unordered_map<int, int>& mask) {
     CSCMatrix csc_matrix(this->dimension, this->fortran_indexing);
     
     int current_column = this->fortran_indexing;
