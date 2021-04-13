@@ -3,7 +3,7 @@
 #include "Filter.hpp"
 #include "FilterStrategy.hpp"
 
-std::shared_ptr<GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& strategy_type, Subproblem& subproblem, std::map<std::string, std::string> options) {
+std::shared_ptr<GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& strategy_type, Subproblem& subproblem, std::map<std::string, std::string>& options) {
     if (strategy_type == "penalty") {
         return std::make_shared<PenaltyMeritFunction>(subproblem);
     }
