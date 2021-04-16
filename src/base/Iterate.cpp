@@ -2,6 +2,11 @@
 #include "Utils.hpp"
 #include "Logger.hpp"
 
+int Iterate::number_eval_objective = 0;
+int Iterate::number_eval_constraints = 0;
+int Iterate::number_eval_jacobian = 0;
+int Iterate::number_eval_hessian = 0;
+
 Iterate::Iterate(std::vector<double>& x, Multipliers& multipliers) : x(x), multipliers(multipliers), objective(0.), is_objective_computed(false), are_constraints_computed(false), is_objective_gradient_computed(false), is_constraints_jacobian_computed(false), hessian(x.size(), 1), is_hessian_computed(false), status(NOT_OPTIMAL), residuals({0., 0., 0.}), feasibility_measure(0.), optimality_measure(0.) {
 }
 
@@ -9,6 +14,7 @@ void Iterate::compute_objective(Problem& problem) {
     if (!this->is_objective_computed) {
         this->objective = problem.objective(this->x);
         this->is_objective_computed = true;
+        Iterate::number_eval_objective++;
     }
     return;
 }
@@ -17,6 +23,7 @@ void Iterate::compute_constraints(Problem& problem) {
     if (!this->are_constraints_computed) {
         this->constraints = problem.evaluate_constraints(this->x);
         this->are_constraints_computed = true;
+        Iterate::number_eval_constraints++;
     }
     return;
 }
@@ -39,6 +46,7 @@ void Iterate::compute_constraints_jacobian(Problem& problem) {
     if (!this->is_constraints_jacobian_computed) {
         this->constraints_jacobian = problem.constraints_sparse_jacobian(this->x);
         this->is_constraints_jacobian_computed = true;
+        Iterate::number_eval_jacobian++;
     }
     return;
 }
@@ -47,6 +55,7 @@ void Iterate::compute_hessian(Problem& problem, double objective_multiplier, std
     if (!this->is_hessian_computed) {
         this->hessian = problem.lagrangian_hessian(this->x, objective_multiplier, constraint_multipliers);
         this->is_hessian_computed = true;
+        Iterate::number_eval_hessian++;
     }
     return;
 }

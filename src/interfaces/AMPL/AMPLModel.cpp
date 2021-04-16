@@ -69,12 +69,6 @@ asl_(asl), fortran_indexing(fortran_indexing), ampl_tmp_gradient_(asl->i.n_var_)
 
     /* Lagrangian Hessian */
     this->initialize_lagrangian_hessian_();
-
-    /* evaluations counters */
-    this->number_eval_objective = 0;
-    this->number_eval_constraints = 0;
-    this->number_eval_jacobian = 0;
-    this->number_eval_hessian = 0;
 }
 
 AMPLModel::~AMPLModel() {
@@ -107,7 +101,6 @@ void AMPLModel::generate_variables_() {
 }
 
 double AMPLModel::objective(std::vector<double>& x) {
-    this->number_eval_objective++;
     int nerror = 0;
     double result = this->objective_sign * (*((ASL*) this->asl_)->p.Objval)((ASL*) this->asl_, 0, x.data(), &nerror);
     if (0 < nerror) {
@@ -175,7 +168,6 @@ double AMPLModel::evaluate_constraint(int j, std::vector<double>& x) {
 }
 
 std::vector<double> AMPLModel::evaluate_constraints(std::vector<double>& x) {
-    this->number_eval_constraints++;
     std::vector<double> constraints(this->number_constraints);
     //for (int j = 0; j < this->number_constraints; j++) {
     //    constraints[j] = this->evaluate_constraint(j, x);
@@ -235,7 +227,6 @@ void AMPLModel::constraint_sparse_gradient(std::vector<double>& x, int j, Sparse
 }
 
 std::vector<SparseGradient> AMPLModel::constraints_sparse_jacobian(std::vector<double>& x) {
-    this->number_eval_jacobian++;
     std::vector<SparseGradient> constraints_jacobian(this->number_constraints);
     for (int j = 0; j < this->number_constraints; j++) {
         this->constraint_sparse_gradient(x, j, constraints_jacobian[j]);
@@ -338,7 +329,6 @@ bool all_zeros(std::vector<double>& multipliers) {
 }
 
 CSCMatrix AMPLModel::lagrangian_hessian(std::vector<double>& x, double objective_multiplier, std::vector<double>& multipliers) {
-    this->number_eval_hessian++;
     /* register the vector of variables */
     (*((ASL*) this->asl_)->p.Xknown)((ASL*) this->asl_, x.data(), 0);
     

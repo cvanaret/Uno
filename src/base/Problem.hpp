@@ -92,11 +92,6 @@ public:
     double compute_constraint_residual(std::vector<double>& constraints, std::string norm_value);
     double compute_constraint_residual(std::vector<double>& constraints, std::set<int> constraint_set, std::string norm_value);
 
-    int number_eval_objective;
-    int number_eval_constraints;
-    int number_eval_jacobian;
-    int number_eval_hessian;
-
 protected:
     void determine_constraints_();
 };

@@ -14,8 +14,7 @@ variables_bounds(number_variables), variable_status(number_variables),
 constraint_name(number_constraints),
 //constraint_variables(number_constraints),
 constraint_bounds(number_constraints), constraint_type(number_constraints), constraint_status(number_constraints),
-hessian_maximum_number_nonzeros(0),
-number_eval_objective(0), number_eval_constraints(0), number_eval_jacobian(0), number_eval_hessian(0) {
+hessian_maximum_number_nonzeros(0) {
 }
 
 Problem::~Problem() {
