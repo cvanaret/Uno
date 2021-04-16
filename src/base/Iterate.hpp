@@ -38,6 +38,10 @@ public:
 
     std::vector<double> x; /*!< \f$\mathbb{R}^n\f$ primal variables */
     Multipliers multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
+    static int number_eval_objective;
+    static int number_eval_constraints;
+    static int number_eval_jacobian;
+    static int number_eval_hessian;
 
     // functions
     double objective; /*!< Objective value */

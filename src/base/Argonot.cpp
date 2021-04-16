@@ -75,10 +75,10 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& mul
         problem.number_constraints,
         major_iterations,
         cpu_time,
-        problem.number_eval_objective,
-        problem.number_eval_constraints,
-        problem.number_eval_jacobian,
-        problem.number_eval_hessian,
+        Iterate::number_eval_objective,
+        Iterate::number_eval_constraints,
+        Iterate::number_eval_jacobian,
+        Iterate::number_eval_hessian,
         number_subproblems_solved};
     return result;
 }
