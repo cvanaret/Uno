@@ -12,7 +12,7 @@
 
 /* SLEQP: virtual class, implemented by SLEQP_TR and SLEQP_l2 */
 
-SLPEQP::SLPEQP(Problem& problem, std::string LP_solver_name, std::string linear_solver_name, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals):
+SLPEQP::SLPEQP(Problem& problem, std::string LP_solver_name, std::string linear_solver_name, std::string hessian_evaluation_method, bool /*use_trust_region*/, bool scale_residuals):
 ActiveSetMethod(problem, scale_residuals),
 lp_solver(QPSolverFactory::create(LP_solver_name, problem.number_variables, problem.number_constraints, 0, false)),
 linear_solver(LinearSolverFactory::create(linear_solver_name)),
@@ -55,7 +55,7 @@ std::vector<Direction> SLPEQP::compute_directions(Problem& problem, Iterate& cur
     }
 }
 
-Direction SLPEQP::solve_eqp_(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) {
+Direction SLPEQP::solve_eqp_(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double /*trust_region_radius*/) {
     // hs016 example
     DEBUG << "\nCurrent point: "; print_vector(DEBUG, current_iterate.x);
     // bounds
@@ -114,7 +114,7 @@ Direction SLPEQP::solve_eqp_(Problem& problem, Iterate& current_iterate, Directi
     return direction;
 }
 
-std::vector<Direction> SLPEQP::restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) {
+std::vector<Direction> SLPEQP::restore_feasibility(Problem& /*problem*/, Iterate& /*current_iterate*/, Direction& /*phase_2_direction*/, double /*trust_region_radius*/) {
     // TODO
     throw std::out_of_range("SLPEQP::restore_feasibility not implemented");
 }

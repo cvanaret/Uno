@@ -9,14 +9,22 @@ project(Argonot VERSION 1.0
 				LANGUAGES CXX C Fortran)
 
 # set C++17 and enable languages
-set (CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 17)
 enable_language(CXX C Fortran)
+
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
+set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 # directories
 set(DIRECTORIES base base/mechanism base/strategy base/subproblem interfaces interfaces/AMPL logger solvers solvers/linear solvers/QP solvers/NLP)
 
 # source files
-set (SRC_FILES
+set(SRC_FILES
     base/Argonot.cpp base/Constraint.cpp base/HessianEvaluation.cpp
     base/Iterate.cpp base/Matrix.cpp base/Phase.hpp base/Problem.cpp
     base/Statistics.cpp base/Utils.cpp
@@ -35,34 +43,14 @@ set (SRC_FILES
     base/subproblem/SLP.cpp base/subproblem/SLPEQP.cpp
     base/subproblem/SQP.cpp base/subproblem/Subproblem.cpp
     base/subproblem/SubproblemFactory.cpp
-
-    interfaces/AMPL/AMPLModel.cpp
-
+    
     logger/Logger.hpp
 
     solvers/linear/LinearSolver.hpp
     solvers/linear/LinearSolverFactory.cpp
-    solvers/linear/MA57Solver.cpp
-    solvers/QP/BQPDSolver.cpp
 	solvers/QP/QPSolverFactory.cpp
     solvers/QP/LPSolver.hpp solvers/QP/QPSolver.hpp
-    solvers/QP/wdotd.f
 )
-
-###########
-# Argonot #
-###########
-add_executable(argonot ${SRC_FILES} main.cpp)
-target_include_directories(argonot PUBLIC ${DIRECTORIES})
-# TODO: create a library with ${SRC_FILES} and an executable with main.cpp
-#install(TARGETS argonot DESTINATION bin)
-#add_executable (argonot_ampl main.cpp)
-
-if(MSVC)
-  target_compile_options(argonot PRIVATE /W4 /WX)
-else()
-  target_compile_options(argonot PRIVATE -Wall -pedantic)
-endif()
 
 # find libraries
 set(LIBS "")
@@ -72,7 +60,7 @@ set(REQUIRED_LIBS blas lapack dl)
 # automatic detection of optional libraries
 foreach(library_name IN LISTS OPTIONAL_LIBS)
 	find_library(${library_name} ${library_name})
-	# ${library_name} is the name of the library (e.g. ma57)
+	# ${library_name} is the name of the library(e.g. ma57)
 	# ${${library_name}} is the path of the library if found, otherwise ${library_name}-NOTFOUND
 	if(${${library_name}} STREQUAL "${library_name}-NOTFOUND")
 		message(WARNING "Optional library ${library_name} was not found. Use ccmake to configure its path.")
@@ -85,13 +73,22 @@ foreach(library_name IN LISTS OPTIONAL_LIBS)
 		# include the corresponding directory
 		get_filename_component(directory ${${library_name}} DIRECTORY)
 		include_directories(${directory})
+        
+        # add the corresponding sources
+        if(${library_name} STREQUAL amplsolver)
+            list(APPEND SRC_FILES interfaces/AMPL/AMPLModel.cpp)
+        elseif(${library_name} STREQUAL bqpd)
+            list(APPEND SRC_FILES solvers/QP/BQPDSolver.cpp solvers/QP/wdotd.f)
+        elseif(${library_name} STREQUAL ma57)
+            list(APPEND SRC_FILES solvers/linear/MA57Solver.cpp)
+        endif()
 	endif()
 endforeach(library_name)
 
 # automatic detection of required libraries
 foreach(library_name IN LISTS REQUIRED_LIBS)
 	find_library(${library_name} ${library_name})
-	# ${library_name} is the name of the library (e.g. blas)
+	# ${library_name} is the name of the library(e.g. blas)
 	# ${${library_name}} is the path of the library if found, otherwise ${library_name}-NOTFOUND
 	if(${${library_name}} STREQUAL "${library_name}-NOTFOUND")
 		message(FATAL_ERROR "Required library ${library_name} was not found. Use ccmake to configure its path.")
@@ -100,6 +97,21 @@ foreach(library_name IN LISTS REQUIRED_LIBS)
 		list(APPEND LIBS ${${library_name}})
 	endif()
 endforeach(library_name)
+
+###########
+# Argonot #
+###########
+add_executable(argonot ${SRC_FILES} main.cpp)
+target_include_directories(argonot PUBLIC ${DIRECTORIES})
+# TODO: create a library with ${SRC_FILES} and an executable with main.cpp
+#install(TARGETS argonot DESTINATION bin)
+#add_executable(argonot_ampl main.cpp)
+
+if(MSVC)
+  target_compile_options(argonot PRIVATE /W4 /WX)
+else()
+  target_compile_options(argonot PRIVATE -Wall -pedantic)
+endif()
 
 # link the libraries
 target_link_libraries(argonot PUBLIC ${LIBS})
@@ -113,3 +125,10 @@ if(NOT ${GTest}_DIR STREQUAL "${GTest}-NOTFOUND")
 	target_include_directories(run_unit_tests PUBLIC ${DIRECTORIES})
 	target_link_libraries(run_unit_tests PUBLIC GTest::gtest ${LIBS})
 endif()
+
+#############
+# filter-al #
+#############
+#add_executable(filter-al filter-al/filter-al.cpp)
+#target_include_directories(filter-al PUBLIC ${DIRECTORIES})
+#target_link_libraries(filter-al PUBLIC ${LIBS})

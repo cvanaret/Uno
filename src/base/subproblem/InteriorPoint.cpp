@@ -503,7 +503,7 @@ double InteriorPoint::compute_predicted_reduction_(Problem& /*problem*/, Iterate
     return -step_length * direction.objective;
 }
 
-std::vector<Direction> InteriorPoint::restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& /*phase_2_direction*/, double trust_region_radius) {
+std::vector<Direction> InteriorPoint::restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& /*phase_2_direction*/, double /*trust_region_radius*/) {
     int number_variables = problem.number_variables + problem.inequality_constraints.size();
 
     DEBUG << "restoration x: ";
