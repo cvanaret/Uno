@@ -1,4 +1,5 @@
 #include <cmath>
+#include <assert.h>
 #include "LineSearch.hpp"
 #include "Logger.hpp"
 #include "InteriorPoint.hpp"
@@ -26,6 +27,7 @@ Iterate LineSearch::compute_acceptable_iterate(Statistics& statistics, Problem& 
         this->number_iterations = 0;
 
         while (!this->termination_(is_accepted)) {
+            assert (0 < this->step_length && this->step_length <= 1);
             this->number_iterations++;
             this->print_iteration_();
 
