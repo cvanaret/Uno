@@ -1,4 +1,5 @@
 #include <cmath>
+#include <assert.h>
 #include "TrustRegion.hpp"
 #include "Utils.hpp"
 #include "Logger.hpp"
@@ -20,6 +21,7 @@ Iterate TrustRegion::compute_acceptable_iterate(Statistics& statistics, Problem&
 
     while (!this->termination_(is_accepted)) {
         try {
+            assert (0 < this->radius);
             this->number_iterations++;
             this->print_iteration_();
 
@@ -62,7 +64,8 @@ Iterate TrustRegion::compute_acceptable_iterate(Statistics& statistics, Problem&
     return current_iterate;
 }
 
-void TrustRegion::correct_active_set(Direction& direction, const double radius) {
+void TrustRegion::correct_active_set(Direction& direction, double radius) {
+    assert (0 < radius);
     /* update active set and set multipliers for bound constraints active at trust region to 0 */
     for (std::set<int>::iterator it = direction.active_set.bounds.at_lower_bound.begin(); it != direction.active_set.bounds.at_lower_bound.end();) {
         int i = *it;
