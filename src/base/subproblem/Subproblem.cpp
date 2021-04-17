@@ -17,7 +17,7 @@ Subproblem::~Subproblem() {
 //    first_iterate.multipliers.constraints = Subproblem::compute_least_square_multipliers(problem, first_iterate, multipliers.constraints, 1e4);
 //}
 
-void Subproblem::project_point_in_bounds(std::vector<double>& x, std::vector<Range>& variables_bounds) {
+void Subproblem::project_point_in_bounds(std::vector<double>& x, const std::vector<Range>& variables_bounds) {
     for (unsigned int i = 0; i < x.size(); i++) {
         if (x[i] < variables_bounds[i].lb) {
             x[i] = variables_bounds[i].lb;
@@ -29,7 +29,7 @@ void Subproblem::project_point_in_bounds(std::vector<double>& x, std::vector<Ran
     return;
 }
 
-double Subproblem::project_strictly_variable_in_bounds(double variable_value, Range& variable_bounds) {
+double Subproblem::project_strictly_variable_in_bounds(double variable_value, const Range& variable_bounds) {
     double k1 = 1e-2;
     double k2 = 1e-2;
 
@@ -40,7 +40,7 @@ double Subproblem::project_strictly_variable_in_bounds(double variable_value, Ra
     return variable_value;
 }
 
-std::vector<Range> Subproblem::generate_constraints_bounds(Problem& problem, std::vector<double>& current_constraints) {
+std::vector<Range> Subproblem::generate_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints) {
     std::vector<Range> constraints_bounds(problem.number_constraints);
     for (int j = 0; j < problem.number_constraints; j++) {
         double lb = problem.constraint_bounds[j].lb - current_constraints[j];
@@ -50,12 +50,12 @@ std::vector<Range> Subproblem::generate_constraints_bounds(Problem& problem, std
     return constraints_bounds;
 }
 
-std::vector<double> Subproblem::compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, std::vector<double>& default_multipliers, double multipliers_max_size) {
+std::vector<double> Subproblem::compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, const std::vector<double>& default_multipliers, double multipliers_max_size) {
     std::shared_ptr<LinearSolver> linear_solver = LinearSolverFactory::create("MA57");
     return Subproblem::compute_least_square_multipliers(problem, current_iterate, default_multipliers, linear_solver, multipliers_max_size);
 }
 
-std::vector<double> Subproblem::compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, std::vector<double>& default_multipliers, std::shared_ptr<LinearSolver> solver, double multipliers_max_size) {
+std::vector<double> Subproblem::compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, const std::vector<double>& default_multipliers, std::shared_ptr<LinearSolver> solver, double multipliers_max_size) {
     current_iterate.compute_objective_gradient(problem);
     current_iterate.compute_constraints_jacobian(problem);
 

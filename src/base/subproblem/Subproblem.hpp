@@ -35,11 +35,11 @@ public:
     virtual void compute_optimality_measures(Problem& problem, Iterate& iterate) = 0;
     virtual void compute_infeasibility_measures(Problem& problem, Iterate& iterate, Direction& direction) = 0;
     
-    static void project_point_in_bounds(std::vector<double>& x, std::vector<Range>& variables_bounds);
-    static double project_strictly_variable_in_bounds(double variable_value, Range& variable_bounds);
-    static std::vector<Range> generate_constraints_bounds(Problem& problem, std::vector<double>& current_constraints);
-    static std::vector<double> compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, std::vector<double>& default_multipliers, std::shared_ptr<LinearSolver> solver, double multipliers_max_size=1e3);
-    static std::vector<double> compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, std::vector<double>& default_multipliers, double multipliers_max_size=1e3);
+    static void project_point_in_bounds(std::vector<double>& x, const std::vector<Range>& variables_bounds);
+    static double project_strictly_variable_in_bounds(double variable_value, const Range& variable_bounds);
+    static std::vector<Range> generate_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints);
+    static std::vector<double> compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, const std::vector<double>& default_multipliers, std::shared_ptr<LinearSolver> solver, double multipliers_max_size=1e3);
+    static std::vector<double> compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, const std::vector<double>& default_multipliers, double multipliers_max_size=1e3);
     
     double compute_KKT_error(Problem& problem, Iterate& iterate, double objective_mutiplier);
     virtual double compute_complementarity_error_(Problem& problem, Iterate& iterate, Multipliers& multipliers);
