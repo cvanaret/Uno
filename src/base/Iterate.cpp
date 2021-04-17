@@ -10,7 +10,7 @@ int Iterate::number_eval_hessian = 0;
 Iterate::Iterate(std::vector<double>& x, Multipliers& multipliers) : x(x), multipliers(multipliers), objective(0.), is_objective_computed(false), are_constraints_computed(false), is_objective_gradient_computed(false), is_constraints_jacobian_computed(false), hessian(x.size(), 1), is_hessian_computed(false), status(NOT_OPTIMAL), residuals({0., 0., 0.}), feasibility_measure(0.), optimality_measure(0.) {
 }
 
-void Iterate::compute_objective(Problem& problem) {
+void Iterate::compute_objective(const Problem& problem) {
     if (!this->is_objective_computed) {
         this->objective = problem.objective(this->x);
         this->is_objective_computed = true;
@@ -19,7 +19,7 @@ void Iterate::compute_objective(Problem& problem) {
     return;
 }
 
-void Iterate::compute_constraints(Problem& problem) {
+void Iterate::compute_constraints(const Problem& problem) {
     if (!this->are_constraints_computed) {
         this->constraints = problem.evaluate_constraints(this->x);
         this->are_constraints_computed = true;
@@ -28,7 +28,7 @@ void Iterate::compute_constraints(Problem& problem) {
     return;
 }
 
-void Iterate::compute_objective_gradient(Problem& problem) {
+void Iterate::compute_objective_gradient(const Problem& problem) {
     if (!this->is_objective_gradient_computed) {
         this->objective_gradient = problem.objective_sparse_gradient(this->x);
         this->is_objective_gradient_computed = true;
@@ -36,13 +36,13 @@ void Iterate::compute_objective_gradient(Problem& problem) {
     return;
 }
 
-void Iterate::set_objective_gradient(SparseGradient& objective_gradient) {
+void Iterate::set_objective_gradient(const SparseGradient& objective_gradient) {
     this->objective_gradient = objective_gradient;
     this->is_objective_gradient_computed = true;
     return;
 }
 
-void Iterate::compute_constraints_jacobian(Problem& problem) {
+void Iterate::compute_constraints_jacobian(const Problem& problem) {
     if (!this->is_constraints_jacobian_computed) {
         this->constraints_jacobian = problem.constraints_sparse_jacobian(this->x);
         this->is_constraints_jacobian_computed = true;
@@ -51,7 +51,7 @@ void Iterate::compute_constraints_jacobian(Problem& problem) {
     return;
 }
 
-void Iterate::compute_hessian(Problem& problem, double objective_multiplier, std::vector<double>& constraint_multipliers) {
+void Iterate::compute_hessian(const Problem& problem, double objective_multiplier, const std::vector<double>& constraint_multipliers) {
     if (!this->is_hessian_computed) {
         this->hessian = problem.lagrangian_hessian(this->x, objective_multiplier, constraint_multipliers);
         this->is_hessian_computed = true;
@@ -60,7 +60,7 @@ void Iterate::compute_hessian(Problem& problem, double objective_multiplier, std
     return;
 }
 
-std::vector<double> Iterate::lagrangian_gradient(Problem& problem, double objective_mutiplier, Multipliers& multipliers) {
+std::vector<double> Iterate::lagrangian_gradient(const Problem& problem, double objective_mutiplier, const Multipliers& multipliers) {
     std::vector<double> lagrangian_gradient(problem.number_variables);
 
     /* objective gradient */
@@ -98,7 +98,7 @@ std::vector<double> Iterate::lagrangian_gradient(Problem& problem, double object
     return lagrangian_gradient;
 }
 
-std::ostream& operator<<(std::ostream &stream, Iterate& iterate) {
+std::ostream& operator<<(std::ostream &stream, const Iterate& iterate) {
     stream << "x: "; print_vector(stream, iterate.x);
     stream << "Lower bound multipliers: "; print_vector(stream, iterate.multipliers.lower_bounds);
     stream << "Upper bound multipliers: "; print_vector(stream, iterate.multipliers.upper_bounds);
@@ -115,7 +115,7 @@ std::ostream& operator<<(std::ostream &stream, Iterate& iterate) {
     return stream;
 }
 
-std::ostream& operator<<(std::ostream &stream, TerminationStatus& status) {
+std::ostream& operator<<(std::ostream &stream, TerminationStatus status) {
     if (status == NOT_OPTIMAL) {
         stream << "not optimal";
     }

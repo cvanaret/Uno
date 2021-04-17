@@ -22,8 +22,6 @@ struct Residuals {
     double complementarity;
 };
 
-std::ostream& operator<<(std::ostream &stream, TerminationStatus& status);
-
 /*! \class Iterate
  * \brief Optimization iterate
  *
@@ -71,21 +69,21 @@ public:
     double feasibility_measure;
     double optimality_measure;
 
-    void compute_objective(Problem& problem);
-    void compute_constraints(Problem& problem);
+    void compute_objective(const Problem& problem);
+    void compute_constraints(const Problem& problem);
     void set_constraint_residual(double constraint_residual);
-    void compute_objective_gradient(Problem& problem);
-    void set_objective_gradient(SparseGradient& objective_gradient);
-    void compute_constraints_jacobian(Problem& problem);
-    std::vector<double> lagrangian_gradient(Problem& problem, double objective_multiplier, Multipliers& multipliers);
+    void compute_objective_gradient(const Problem& problem);
+    void set_objective_gradient(const SparseGradient& objective_gradient);
+    void compute_constraints_jacobian(const Problem& problem);
+    std::vector<double> lagrangian_gradient(const Problem& problem, double objective_multiplier, const Multipliers& multipliers);
 
     /*!
      *  Compute the Hessian in a lazy way: the Hessian is computed only when required and stored
      *  in CSC (Compressed Sparse Column)
      */
-    void compute_hessian(Problem& problem, double objective_multiplier, std::vector<double>& constraint_multipliers);
+    void compute_hessian(const Problem& problem, double objective_multiplier, const std::vector<double>& constraint_multipliers);
 
-    friend std::ostream& operator<<(std::ostream &stream, Iterate& iterate);
+    friend std::ostream& operator<<(std::ostream &stream, const Iterate& iterate);
 };
 
 #endif // ITERATE_H
