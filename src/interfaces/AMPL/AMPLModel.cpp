@@ -43,14 +43,16 @@ Problem(file_name, asl->i.n_var_, asl->i.n_con_),
 //constraint_is_uncertainty_set(asl->i.n_con_),
 asl_(asl), fortran_indexing(fortran_indexing), ampl_tmp_gradient_(asl->i.n_var_) {
     /* TODO: avoid using implicit AMPL macros */
-    keyword keywords[1];
-    int size_keywords = sizeof (keywords) / sizeof (keyword);
+    //keyword keywords[1];
+    //int size_keywords = sizeof (keywords) / sizeof (keyword);
 
+    /*
     Option_Info info = {const_cast<char*> ("Argonot"),
         const_cast<char*> ("Argonot 2018"),
         const_cast<char*> ("argonot_options"),
         keywords, size_keywords};
-
+    */
+    
     //this->asl_ = generate_asl(file_name, &info);
     this->asl_->i.congrd_mode = 0;
 
@@ -65,7 +67,7 @@ asl_(asl), fortran_indexing(fortran_indexing), ampl_tmp_gradient_(asl->i.n_var_)
 
     /* constraints */
     this->generate_constraints_();
-    set_function_types_(file_name, &info);
+    set_function_types_(file_name);
 
     /* Lagrangian Hessian */
     this->initialize_lagrangian_hessian_();
@@ -249,7 +251,7 @@ void AMPLModel::generate_constraints_() {
     return;
 }
 
-void AMPLModel::set_function_types_(std::string file_name, Option_Info* option_info) {
+void AMPLModel::set_function_types_(std::string file_name) {
     /* allocate a temporary ASL to read Hessian sparsity pattern */
     ASL_pfgh* asl = (ASL_pfgh*) ASL_alloc(ASL_read_fg);
     // char* stub = getstops(file_name, option_info);

@@ -58,7 +58,7 @@ private:
     void generate_constraints_();
     //void create_objective_variables_(ograd* ampl_variables);
     //void create_constraint_variables_(int j, cgrad* ampl_variables);
-    void set_function_types_(std::string file_name, Option_Info* option_info);
+    void set_function_types_(std::string file_name);
     void initialize_lagrangian_hessian_();
 };
 
