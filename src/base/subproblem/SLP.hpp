@@ -11,7 +11,7 @@ public:
     std::vector<Direction> restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius = INFINITY) override;
     
     /* use references to allow polymorphism */
-    std::shared_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
+    std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
     
 private:
     void evaluate_optimality_iterate_(Problem& problem, Iterate& current_iterate);

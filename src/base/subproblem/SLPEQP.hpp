@@ -14,9 +14,9 @@ public:
     std::vector<Direction> restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius=INFINITY) override;
     
     /* use pointers to allow polymorphism */
-    std::shared_ptr<QPSolver> lp_solver;
-    std::shared_ptr<LinearSolver> linear_solver; /*!< Solver that solves the subproblem */
-    std::shared_ptr<HessianEvaluation> hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
+    std::unique_ptr<QPSolver> lp_solver;
+    std::unique_ptr<LinearSolver> linear_solver; /*!< Solver that solves the subproblem */
+    std::unique_ptr<HessianEvaluation> hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
 
 private:
     Direction solve_eqp_(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius);
@@ -30,7 +30,7 @@ private:
 //    SLPEQP_TR(Problem& problem, std::string LP_solver_name, std::string QP_solver_name, std::string hessian_evaluation_method, bool scale_residuals);
 //    
 //    /* use a pointer to allow polymorphism */
-//    std::shared_ptr<QPSolver> qp_solver; /*!< Solver that solves the subproblem */
+//    std::unique_ptr<QPSolver> qp_solver; /*!< Solver that solves the subproblem */
 //};
 //
 //class SLPEQP_l2 : public SLPEQP {

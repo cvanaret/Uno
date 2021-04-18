@@ -7,7 +7,7 @@
 
 class QPSolverFactory {
 	public:
-		static std::shared_ptr<QPSolver> create(const std::string& QP_solver_name, int number_variables, int number_constraints, int maximum_number_nonzeros, bool quadratic_programming);
+		static std::unique_ptr<QPSolver> create(const std::string& QP_solver_name, int number_variables, int number_constraints, int maximum_number_nonzeros, bool quadratic_programming);
 };
 
 #endif // QPSOLVERFACTORY_H

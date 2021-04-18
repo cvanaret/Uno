@@ -51,11 +51,11 @@ std::vector<Range> Subproblem::generate_constraints_bounds(const Problem& proble
 }
 
 std::vector<double> Subproblem::compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, const std::vector<double>& default_multipliers, double multipliers_max_size) {
-    std::shared_ptr<LinearSolver> linear_solver = LinearSolverFactory::create("MA57");
-    return Subproblem::compute_least_square_multipliers(problem, current_iterate, default_multipliers, linear_solver, multipliers_max_size);
+    std::unique_ptr<LinearSolver> linear_solver = LinearSolverFactory::create("MA57");
+    return Subproblem::compute_least_square_multipliers(problem, current_iterate, default_multipliers, *linear_solver, multipliers_max_size);
 }
 
-std::vector<double> Subproblem::compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, const std::vector<double>& default_multipliers, std::shared_ptr<LinearSolver> solver, double multipliers_max_size) {
+std::vector<double> Subproblem::compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, const std::vector<double>& default_multipliers, LinearSolver& solver, double multipliers_max_size) {
     current_iterate.compute_objective_gradient(problem);
     current_iterate.compute_constraints_jacobian(problem);
 
@@ -100,8 +100,8 @@ std::vector<double> Subproblem::compute_least_square_multipliers(Problem& proble
     DEBUG << "Multipliers RHS:\n";
     print_vector(DEBUG, rhs);
     
-    solver->factorize(matrix);
-    solver->solve(rhs);
+    solver.factorize(matrix);
+    solver.solve(rhs);
     DEBUG << "Solution: ";
     std::vector<double>& solution = rhs;
     print_vector(DEBUG, solution);

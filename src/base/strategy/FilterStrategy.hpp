@@ -28,8 +28,8 @@ public:
     FilterStrategy(Subproblem& subproblem, FilterStrategyParameters& strategy_constants, std::map<std::string, std::string>& options);
 
     /* use pointers to allow polymorphism */
-    std::shared_ptr<Filter> filter_optimality; /*!< Filter for the optimality phase */
-    std::shared_ptr<Filter> filter_restoration; /*!< Filter for the restoration phase */
+    std::unique_ptr<Filter> filter_optimality; /*!< Filter for the optimality phase */
+    std::unique_ptr<Filter> filter_restoration; /*!< Filter for the restoration phase */
 
     Iterate initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
     std::optional<Iterate> check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) override;

@@ -48,7 +48,7 @@ void ActiveSetMethod::compute_infeasibility_measures(Problem& problem, Iterate& 
 
 /* QP */
 
-Direction ActiveSetMethod::compute_qp_step_(Problem& problem, std::shared_ptr<QPSolver> solver, Iterate& current_iterate, double trust_region_radius) {
+Direction ActiveSetMethod::compute_qp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, double trust_region_radius) {
     DEBUG << "Current point: "; print_vector(DEBUG, current_iterate.x);
     DEBUG << "Current constraint multipliers: "; print_vector(DEBUG, current_iterate.multipliers.constraints);
     DEBUG << "Current lb multipliers: "; print_vector(DEBUG, current_iterate.multipliers.lower_bounds);
@@ -64,7 +64,7 @@ Direction ActiveSetMethod::compute_qp_step_(Problem& problem, std::shared_ptr<QP
     std::vector<double> d0(variables_bounds.size()); // = {0.}
 
     /* solve the QP */
-    Direction direction = solver->solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
+    Direction direction = solver.solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
     this->number_subproblems_solved++;
     DEBUG << direction;
     return direction;
@@ -82,7 +82,7 @@ double ActiveSetMethod::compute_qp_predicted_reduction_(Problem& /*problem*/, It
     }
 }
 
-Direction ActiveSetMethod::compute_l1qp_step_(Problem& problem, std::shared_ptr<QPSolver> solver, Iterate& current_iterate, ConstraintPartition& constraint_partition, std::vector<double>& initial_solution, double trust_region_radius) {
+Direction ActiveSetMethod::compute_l1qp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, ConstraintPartition& constraint_partition, std::vector<double>& initial_solution, double trust_region_radius) {
     /* compute the objective */
     this->compute_l1_linear_objective_(current_iterate, constraint_partition);
 
@@ -96,7 +96,7 @@ Direction ActiveSetMethod::compute_l1qp_step_(Problem& problem, std::shared_ptr<
     std::vector<double>& d0 = initial_solution;
 
     /* solve the QP */
-    Direction direction = solver->solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
+    Direction direction = solver.solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
     direction.objective_multiplier = 0.;
     direction.constraint_partition = constraint_partition;
     this->number_subproblems_solved++;
@@ -104,7 +104,7 @@ Direction ActiveSetMethod::compute_l1qp_step_(Problem& problem, std::shared_ptr<
     return direction;
 }
 
-Direction ActiveSetMethod::compute_l1qp_step_(Problem& problem, std::shared_ptr<QPSolver> solver, Iterate& current_iterate, double penalty_parameter, ElasticVariables& elastic_variables, double trust_region_radius) {
+Direction ActiveSetMethod::compute_l1qp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, double penalty_parameter, ElasticVariables& elastic_variables, double trust_region_radius) {
     current_iterate.compute_objective_gradient(problem);
     SparseGradient objective_gradient;
     if (penalty_parameter != 0.) {
@@ -140,7 +140,7 @@ Direction ActiveSetMethod::compute_l1qp_step_(Problem& problem, std::shared_ptr<
     std::vector<double> d0(variables_bounds.size()); // = {0.}
 
     /* solve the QP */
-    Direction direction = solver->solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
+    Direction direction = solver.solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
     direction.phase = OPTIMALITY;
     this->number_subproblems_solved++;
     // recompute active set: constraints are active when p-n = 0
@@ -275,7 +275,7 @@ std::vector<Range> ActiveSetMethod::generate_feasibility_bounds_(Problem& proble
 
 /* LP */
 
-Direction ActiveSetMethod::compute_lp_step_(Problem& problem, std::shared_ptr<QPSolver> solver, Iterate& current_iterate, double trust_region_radius) {
+Direction ActiveSetMethod::compute_lp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, double trust_region_radius) {
     DEBUG << "Current point: "; print_vector(DEBUG, current_iterate.x);
     DEBUG << "Current constraint multipliers: "; print_vector(DEBUG, current_iterate.multipliers.constraints);
     DEBUG << "Current lb multipliers: "; print_vector(DEBUG, current_iterate.multipliers.lower_bounds);
@@ -291,7 +291,7 @@ Direction ActiveSetMethod::compute_lp_step_(Problem& problem, std::shared_ptr<QP
     std::vector<double> d0(current_iterate.x.size()); // = {0.}
 
     /* solve the QP */
-    Direction direction = solver->solve_LP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, d0);
+    Direction direction = solver.solve_LP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, d0);
     direction.objective_multiplier = problem.objective_sign;
     direction.phase = OPTIMALITY;
 //    direction.predicted_reduction = [&](double step_length) {
@@ -308,7 +308,7 @@ double ActiveSetMethod::compute_lp_predicted_reduction_(Problem& /*problem*/, It
     return -step_length*direction.objective;
 }
 
-Direction ActiveSetMethod::compute_l1lp_step_(Problem& problem, std::shared_ptr<QPSolver> solver, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) {
+Direction ActiveSetMethod::compute_l1lp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) {
     DEBUG << "\nCreating the restoration problem with " << phase_2_direction.constraint_partition.infeasible.size() << " infeasible constraints\n";
     
     /* compute the objective */
@@ -324,7 +324,7 @@ Direction ActiveSetMethod::compute_l1lp_step_(Problem& problem, std::shared_ptr<
     std::vector<double> d0 = phase_2_direction.x;
 
     /* solve the QP */
-    Direction direction = solver->solve_LP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, d0);
+    Direction direction = solver.solve_LP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, d0);
     direction.objective_multiplier = 0.;
     direction.phase = RESTORATION;
     direction.constraint_partition = phase_2_direction.constraint_partition;

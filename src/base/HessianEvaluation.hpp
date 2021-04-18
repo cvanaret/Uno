@@ -19,7 +19,7 @@ public:
     int dimension;
     
     virtual void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) = 0;
-    CSCMatrix modify_inertia(CSCMatrix& hessian, std::shared_ptr<LinearSolver> linear_solver);
+    CSCMatrix modify_inertia(CSCMatrix& hessian, LinearSolver& linear_solver);
 };
 
 class ExactHessianEvaluation : public HessianEvaluation {
@@ -35,7 +35,7 @@ public:
 
     void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers);
 private:
-    std::shared_ptr<LinearSolver> linear_solver_; /*!< Solver that solves the subproblem */
+    std::unique_ptr<LinearSolver> linear_solver_; /*!< Solver that solves the subproblem */
 };
 
 class BFGSHessianEvaluation : public HessianEvaluation {
@@ -51,6 +51,6 @@ private:
 
 class HessianEvaluationFactory {
     public:
-		static std::shared_ptr<HessianEvaluation> create(std::string hessian_evaluation_method, int dimension, bool convexify);
+		static std::unique_ptr<HessianEvaluation> create(std::string hessian_evaluation_method, int dimension, bool convexify);
 };
 #endif // HESSIANEVALUATION_H

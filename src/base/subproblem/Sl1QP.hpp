@@ -30,8 +30,8 @@ public:
     std::vector<Direction> restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius = INFINITY) override;
     
     /* use pointers to allow polymorphism */
-    std::shared_ptr<QPSolver> solver; /*!< Subproblem solver */
-    std::shared_ptr<HessianEvaluation> hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
+    std::unique_ptr<QPSolver> solver; /*!< Subproblem solver */
+    std::unique_ptr<HessianEvaluation> hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
     double penalty_parameter;
     Sl1QPParameters parameters;
     int number_variables;
