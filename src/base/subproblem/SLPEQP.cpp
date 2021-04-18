@@ -30,7 +30,7 @@ std::vector<Direction> SLPEQP::compute_directions(Problem& problem, Iterate& cur
     /***********/
     DEBUG << "SOLVING SLPEQP.LP\n";
     double LP_trust_region_radius = 10.;
-    Direction direction_LP = this->compute_lp_step_(problem, this->lp_solver, current_iterate, LP_trust_region_radius);
+    Direction direction_LP = this->compute_lp_step_(problem, *this->lp_solver, current_iterate, LP_trust_region_radius);
     direction_LP.phase = OPTIMALITY;
     
     /* set active trust region multipliers to 0 */

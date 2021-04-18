@@ -17,7 +17,7 @@ hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, p
 std::vector<Direction> SQP::compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
     /* compute optimality step */
     this->evaluate_optimality_iterate_(problem, current_iterate);
-    Direction direction = this->compute_qp_step_(problem, this->solver, current_iterate, trust_region_radius);
+    Direction direction = this->compute_qp_step_(problem, *this->solver, current_iterate, trust_region_radius);
     
     if (direction.status != INFEASIBLE) {
         direction.phase = OPTIMALITY;
@@ -34,7 +34,7 @@ std::vector<Direction> SQP::compute_directions(Problem& problem, Iterate& curren
 std::vector<Direction> SQP::restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) {
     DEBUG << "\nCreating the restoration problem with " << phase_2_direction.constraint_partition.infeasible.size() << " infeasible constraints\n";
     this->evaluate_feasibility_iterate_(problem, current_iterate, phase_2_direction.constraint_partition);
-    Direction direction = this->compute_l1qp_step_(problem, this->solver, current_iterate, phase_2_direction.constraint_partition, phase_2_direction.x, trust_region_radius);
+    Direction direction = this->compute_l1qp_step_(problem, *this->solver, current_iterate, phase_2_direction.constraint_partition, phase_2_direction.x, trust_region_radius);
     direction.phase = RESTORATION;
     direction.objective_multiplier = problem.objective_sign;
     direction.predicted_reduction = this->compute_qp_predicted_reduction_;

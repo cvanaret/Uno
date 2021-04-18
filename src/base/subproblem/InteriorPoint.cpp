@@ -81,7 +81,7 @@ Iterate InteriorPoint::evaluate_initial_point(Problem& problem, std::vector<doub
     }
     /* compute least-square multipliers */
     if (0 < problem.number_constraints) {
-        first_iterate.multipliers.constraints = Subproblem::compute_least_square_multipliers(problem, first_iterate, default_multipliers.constraints, this->linear_solver);
+        first_iterate.multipliers.constraints = Subproblem::compute_least_square_multipliers(problem, first_iterate, default_multipliers.constraints, *this->linear_solver);
     }
 
     DEBUG << problem.inequality_constraints.size() << " slacks\n";

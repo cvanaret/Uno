@@ -7,7 +7,7 @@
 
 class LinearSolverFactory {
 public:
-    static std::shared_ptr<LinearSolver> create(const std::string& linear_solver);
+    static std::unique_ptr<LinearSolver> create(const std::string& linear_solver);
 };
 
 #endif // LINEARSOLVERFACTORY_H

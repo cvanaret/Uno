@@ -68,7 +68,7 @@ private:
 
 class FilterFactory {
 public:
-    static std::shared_ptr<Filter> create(std::map<std::string, std::string> options);
+    static std::unique_ptr<Filter> create(std::map<std::string, std::string> options);
 };
 
 #endif // FILTER_H

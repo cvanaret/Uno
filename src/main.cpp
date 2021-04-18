@@ -21,13 +21,13 @@ void run_argonot(std::string problem_name, std::map<std::string, std::string> op
     /* create the subproblem strategy */
     bool use_trust_region = (options["mechanism"] == "TR");
     bool scale_residuals = (options["scale_residuals"] == "yes");
-    std::shared_ptr<Subproblem> subproblem = SubproblemFactory::create(problem, options["subproblem"], options, use_trust_region, scale_residuals);
+    std::unique_ptr<Subproblem> subproblem = SubproblemFactory::create(problem, options["subproblem"], options, use_trust_region, scale_residuals);
 
     /* create the globalization strategy */
-    std::shared_ptr<GlobalizationStrategy> strategy = GlobalizationStrategyFactory::create(options["strategy"], *subproblem, options);
+    std::unique_ptr<GlobalizationStrategy> strategy = GlobalizationStrategyFactory::create(options["strategy"], *subproblem, options);
 
     /* create the globalization mechanism */
-    std::shared_ptr<GlobalizationMechanism> mechanism = GlobalizationMechanismFactory::create(options["mechanism"], *strategy, options);
+    std::unique_ptr<GlobalizationMechanism> mechanism = GlobalizationMechanismFactory::create(options["mechanism"], *strategy, options);
 
     int max_iterations = std::stoi(options["max_iterations"]);
     bool preprocessing = (options["preprocessing"] == "yes");

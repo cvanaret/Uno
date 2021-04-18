@@ -4,17 +4,17 @@
 #include "MA57Solver.hpp"
 #endif
 
-std::shared_ptr<LinearSolver> LinearSolverFactory::create(const std::string& linear_solver_name) {
+std::unique_ptr<LinearSolver> LinearSolverFactory::create(const std::string& linear_solver_name) {
     std::vector<std::string> possible_solvers;
 #ifdef HAS_MA57
     if (linear_solver_name == "MA57") {
-        return std::make_shared<MA57Solver>();
+        return std::make_unique<MA57Solver>();
     }
     possible_solvers.push_back("MA57");
 #endif
 //#ifdef HAS_PARDISO
 //    if (linear_solver_name == "PARDISO") {
-//        return std::make_shared<PardisoSolver>();
+//        return std::make_unique<PardisoSolver>();
 //    }
 //    possible_solvers.push_back("PARDISO");
 //#endif
