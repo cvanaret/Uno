@@ -21,7 +21,7 @@ Problem::~Problem() {
 }
 
 /* compute ||c|| */
-double Problem::compute_constraint_residual(std::vector<double>& constraints, std::string norm_value) {
+double Problem::compute_constraint_residual(std::vector<double>& constraints, std::string norm_value) const {
     std::vector<double> residuals(constraints.size());
     for (int j = 0; j < this->number_constraints; j++) {
         residuals[j] = std::max(std::max(0., this->constraint_bounds[j].lb - constraints[j]), constraints[j] - this->constraint_bounds[j].ub);
@@ -30,7 +30,7 @@ double Problem::compute_constraint_residual(std::vector<double>& constraints, st
 }
 
 /* compute ||c_S|| for a given set S */
-double Problem::compute_constraint_residual(std::vector<double>& constraints, std::set<int> constraint_set, std::string norm_value) {
+double Problem::compute_constraint_residual(std::vector<double>& constraints, std::set<int> constraint_set, std::string norm_value) const {
     SparseGradient residuals;
     for (int j: constraint_set) {
         residuals[j] = std::max(std::max(0., this->constraint_bounds[j].lb - constraints[j]), constraints[j] - this->constraint_bounds[j].ub);

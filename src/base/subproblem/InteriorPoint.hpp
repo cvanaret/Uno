@@ -36,15 +36,15 @@ public:
      */
     InteriorPoint(Problem& problem, std::string linear_solver_name, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals);
 
-    Iterate evaluate_initial_point(Problem& problem, std::vector<double>& x, Multipliers& default_multipliers) override;
+    Iterate evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& default_multipliers) override;
 
     std::vector<Direction> compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
     std::vector<Direction> restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) override;
 
-    void compute_optimality_measures(Problem& problem, Iterate& iterate) override;
-    void compute_infeasibility_measures(Problem& problem, Iterate& iterate, Direction& direction) override;
+    void compute_optimality_measures(const Problem& problem, Iterate& iterate) override;
+    void compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const Direction& direction) override;
     
-    double constraint_violation(Problem& problem, Iterate& iterate);
+    double constraint_violation(const Problem& problem, Iterate& iterate);
     double compute_central_complementarity_error(Iterate& iterate, double mu, std::vector<Range>& variables_bounds);
 
     std::unique_ptr<HessianEvaluation> hessian_evaluation;
@@ -60,7 +60,7 @@ public:
 private:
     void evaluate_optimality_iterate_(Problem& problem, Iterate& current_iterate);
     double evaluate_local_model_(Problem& problem, Iterate& current_iterate, std::vector<double>& solution);
-    double barrier_function_(Problem& problem, Iterate& iterate, std::vector<Range>& variables_bounds);
+    double barrier_function_(const Problem& problem, Iterate& iterate, const std::vector<Range>& variables_bounds);
     double project_variable_in_bounds_(double variable_value, Range& variable_bounds);
     double compute_primal_length_(Iterate& iterate, std::vector<double>& ipm_solution, std::vector<Range>& variables_bounds, double tau);
     double compute_dual_length_(Iterate& current_iterate, double tau, std::vector<double>& lower_delta_z, std::vector<double>& upper_delta_z);

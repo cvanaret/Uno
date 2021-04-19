@@ -15,10 +15,10 @@ class ActiveSetMethod : public Subproblem {
 public:
     ActiveSetMethod(Problem& problem, bool scale_residuals);
 
-    virtual Iterate evaluate_initial_point(Problem& problem, std::vector<double>& x, Multipliers& multipliers);
+    virtual Iterate evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& multipliers) override;
     
-    void compute_optimality_measures(Problem& problem, Iterate& iterate);
-    void compute_infeasibility_measures(Problem& problem, Iterate& iterate, Direction& direction);
+    void compute_optimality_measures(const Problem& problem, Iterate& iterate);
+    void compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const Direction& direction);
 
 protected:
     /* QP subproblems */

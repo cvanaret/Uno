@@ -32,7 +32,7 @@ public:
     /*!
      *  Constructor
      */
-    Iterate(std::vector<double>& x, Multipliers& multipliers);
+    Iterate(const std::vector<double>& x, const Multipliers& multipliers);
 
     std::vector<double> x; /*!< \f$\mathbb{R}^n\f$ primal variables */
     Multipliers multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */

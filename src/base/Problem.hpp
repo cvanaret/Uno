@@ -89,8 +89,8 @@ public:
     virtual std::vector<double> primal_initial_solution() = 0;
     virtual std::vector<double> dual_initial_solution() = 0;
     
-    double compute_constraint_residual(std::vector<double>& constraints, std::string norm_value);
-    double compute_constraint_residual(std::vector<double>& constraints, std::set<int> constraint_set, std::string norm_value);
+    double compute_constraint_residual(std::vector<double>& constraints, std::string norm_value) const;
+    double compute_constraint_residual(std::vector<double>& constraints, std::set<int> constraint_set, std::string norm_value) const;
 
 protected:
     void determine_constraints_();

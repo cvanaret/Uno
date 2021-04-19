@@ -208,7 +208,7 @@ double Sl1QP::compute_error_(Problem& problem, Iterate& iterate, Multipliers& mu
 }
 
 /* complementary slackness error. Use abs/1e-8 to safeguard */
-double Sl1QP::compute_complementarity_error_(Problem& problem, Iterate& iterate, Multipliers& multipliers) {
+double Sl1QP::compute_complementarity_error_(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const {
     double error = 0.;
     /* bound constraints */
     for (int i = 0; i < problem.number_variables; i++) {

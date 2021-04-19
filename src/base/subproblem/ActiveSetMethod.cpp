@@ -9,7 +9,7 @@ ActiveSetMethod::ActiveSetMethod(Problem& problem, bool scale_residuals):
 Subproblem("l1", problem.variables_bounds, scale_residuals) {
 }
 
-Iterate ActiveSetMethod::evaluate_initial_point(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+Iterate ActiveSetMethod::evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& multipliers) {
     Iterate first_iterate(x, multipliers);
     /* compute the optimality and feasibility measures of the initial point */
     this->compute_optimality_measures(problem, first_iterate);
@@ -27,7 +27,7 @@ std::vector<Range> ActiveSetMethod::generate_variables_bounds_(Problem& /*proble
     return bounds;
 }
 
-void ActiveSetMethod::compute_optimality_measures(Problem& problem, Iterate& iterate) {
+void ActiveSetMethod::compute_optimality_measures(const Problem& problem, Iterate& iterate) {
     // feasibility
     this->compute_residuals(problem, iterate, iterate.multipliers, 1.);
     iterate.feasibility_measure = iterate.residuals.constraints;
@@ -37,7 +37,7 @@ void ActiveSetMethod::compute_optimality_measures(Problem& problem, Iterate& ite
     return;
 }
 
-void ActiveSetMethod::compute_infeasibility_measures(Problem& problem, Iterate& iterate, Direction& direction) {
+void ActiveSetMethod::compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const Direction& direction) {
     iterate.compute_constraints(problem);
     // feasibility measure: residual of all constraints
     iterate.feasibility_measure = problem.compute_constraint_residual(iterate.constraints, this->residual_norm);
