@@ -50,12 +50,12 @@ std::vector<Range> Subproblem::generate_constraints_bounds(const Problem& proble
     return constraints_bounds;
 }
 
-std::vector<double> Subproblem::compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, const std::vector<double>& default_multipliers, double multipliers_max_size) {
+std::vector<double> Subproblem::compute_least_square_multipliers(const Problem& problem, Iterate& current_iterate, const std::vector<double>& default_multipliers, double multipliers_max_size) {
     std::unique_ptr<LinearSolver> linear_solver = LinearSolverFactory::create("MA57");
     return Subproblem::compute_least_square_multipliers(problem, current_iterate, default_multipliers, *linear_solver, multipliers_max_size);
 }
 
-std::vector<double> Subproblem::compute_least_square_multipliers(Problem& problem, Iterate& current_iterate, const std::vector<double>& default_multipliers, LinearSolver& solver, double multipliers_max_size) {
+std::vector<double> Subproblem::compute_least_square_multipliers(const Problem& problem, Iterate& current_iterate, const std::vector<double>& default_multipliers, LinearSolver& solver, double multipliers_max_size) {
     current_iterate.compute_objective_gradient(problem);
     current_iterate.compute_constraints_jacobian(problem);
 
@@ -119,13 +119,13 @@ std::vector<double> Subproblem::compute_least_square_multipliers(Problem& proble
 }
 
 
-double Subproblem::compute_KKT_error(Problem& problem, Iterate& iterate, double objective_mutiplier) {
+double Subproblem::compute_KKT_error(const Problem& problem, Iterate& iterate, double objective_mutiplier) const {
     std::vector<double> lagrangian_gradient = iterate.lagrangian_gradient(problem, objective_mutiplier, iterate.multipliers);
     return norm(lagrangian_gradient, this->residual_norm);
 }
 
 /* complementary slackness error. Use abs/1e-8 to safeguard */
-double Subproblem::compute_complementarity_error_(Problem& problem, Iterate& iterate, Multipliers& multipliers) {
+double Subproblem::compute_complementarity_error_(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const {
     double complementarity_error = 0.;
     /* bound constraints */
     for (unsigned int i = 0; i < iterate.x.size(); i++) {
@@ -150,7 +150,7 @@ double Subproblem::compute_complementarity_error_(Problem& problem, Iterate& ite
     return complementarity_error;
 }
 
-void Subproblem::compute_residuals(Problem& problem, Iterate& iterate, Multipliers& multipliers, double objective_multiplier) {
+void Subproblem::compute_residuals(const Problem& problem, Iterate& iterate, const Multipliers& multipliers, double objective_multiplier) const {
     iterate.compute_constraints(problem);
     iterate.residuals.constraints = problem.compute_constraint_residual(iterate.constraints, this->residual_norm);
     iterate.residuals.KKT = Subproblem::compute_KKT_error(problem, iterate, objective_multiplier);

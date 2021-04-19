@@ -36,7 +36,7 @@ public:
     Sl1QPParameters parameters;
     int number_variables;
 
-private:
+protected:
     Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals, double initial_parameter, int number_variables);
     
     /* problem reformulation with elastic variables */
@@ -50,7 +50,7 @@ private:
     double compute_predicted_reduction_(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length);
     double compute_linearized_constraint_residual_(std::vector<double>& x);
     double compute_error_(Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter);
-    double compute_complementarity_error_(Problem& problem, Iterate& iterate, Multipliers& multipliers) override;
+    double compute_complementarity_error_(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const override;
 };
 
 #endif // Sl1QP_H

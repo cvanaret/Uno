@@ -41,7 +41,7 @@ parameters_({0.99, 1e10, 100., 0.2, 1.5, 10., 1e10}) {
     }
 }
 
-Iterate InteriorPoint::evaluate_initial_point(Problem& problem, std::vector<double>& x, Multipliers& default_multipliers) {
+Iterate InteriorPoint::evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& default_multipliers) {
     int number_variables = problem.number_variables + problem.inequality_constraints.size();
 
     /* make the initial point strictly feasible */
@@ -64,7 +64,7 @@ Iterate InteriorPoint::evaluate_initial_point(Problem& problem, std::vector<doub
 
     /* initialize the slacks */
     first_iterate.compute_constraints(problem);
-    for (std::pair<const int, int>& element: problem.inequality_constraints) {
+    for (const std::pair<const int, int>& element: problem.inequality_constraints) {
         int j = element.first;
         int slack_index = problem.number_variables + element.second;
         double slack_value = Subproblem::project_strictly_variable_in_bounds(first_iterate.constraints[j], problem.constraint_bounds[j]);
@@ -74,7 +74,7 @@ Iterate InteriorPoint::evaluate_initial_point(Problem& problem, std::vector<doub
     /* evaluate the constraint Jacobian */
     first_iterate.compute_constraints_jacobian(problem);
     // contribution of the slacks
-    for (std::pair<const int, int>& element: problem.inequality_constraints) {
+    for (const std::pair<const int, int>& element: problem.inequality_constraints) {
         int j = element.first;
         int slack_index = problem.number_variables + element.second;
         first_iterate.constraints_jacobian[j][slack_index] = -1.;
@@ -446,7 +446,7 @@ std::vector<double> InteriorPoint::compute_upper_bound_multiplier_displacements_
     return delta_z;
 }
 
-void InteriorPoint::compute_optimality_measures(Problem& problem, Iterate& iterate) {
+void InteriorPoint::compute_optimality_measures(const Problem& problem, Iterate& iterate) {
     /* evaluate constraints with slacks */
     iterate.feasibility_measure = this->constraint_violation(problem, iterate);
     /* compute barrier objective */
@@ -454,12 +454,12 @@ void InteriorPoint::compute_optimality_measures(Problem& problem, Iterate& itera
     return;
 }
 
-void InteriorPoint::compute_infeasibility_measures(Problem& problem, Iterate& iterate, Direction& /*direction*/) {
+void InteriorPoint::compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const Direction& /*direction*/) {
     this->compute_optimality_measures(problem, iterate);
     return;
 }
 
-double InteriorPoint::constraint_violation(Problem& problem, Iterate& iterate) {
+double InteriorPoint::constraint_violation(const Problem& problem, Iterate& iterate) {
     iterate.compute_constraints(problem);
     // compute l2 square norm
     std::vector<double> residuals(problem.number_constraints);
@@ -478,7 +478,7 @@ double InteriorPoint::constraint_violation(Problem& problem, Iterate& iterate) {
     return norm(residuals, this->residual_norm);
 }
 
-double InteriorPoint::barrier_function_(Problem& problem, Iterate& iterate, std::vector<Range>& variables_bounds) {
+double InteriorPoint::barrier_function_(const Problem& problem, Iterate& iterate, const std::vector<Range>& variables_bounds) {
     /* original objective */
     iterate.compute_objective(problem);
     double objective = iterate.objective;

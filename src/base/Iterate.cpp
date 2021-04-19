@@ -8,7 +8,7 @@ int Iterate::number_eval_constraints = 0;
 int Iterate::number_eval_jacobian = 0;
 int Iterate::number_eval_hessian = 0;
 
-Iterate::Iterate(std::vector<double>& x, Multipliers& multipliers) : x(x), multipliers(multipliers),
+Iterate::Iterate(const std::vector<double>& x, const Multipliers& multipliers) : x(x), multipliers(multipliers),
     objective(std::numeric_limits<double>::infinity()), is_objective_computed(false), are_constraints_computed(false), is_objective_gradient_computed(false), is_constraints_jacobian_computed(false), hessian(x.size(), 1), is_hessian_computed(false),
     status(NOT_OPTIMAL),
     residuals({0., 0., 0., 0.}), feasibility_measure(0.), optimality_measure(0.) {
