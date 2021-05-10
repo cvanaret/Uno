@@ -63,7 +63,7 @@ void MA57Solver::do_symbolic_factorization(const COOMatrix& matrix) {
     std::vector<int> ifact(lifact);
     // build the factorization object
     this->factorization_ = {n, nnz, fact, lfact, ifact, lifact, lkeep, keep, iwork, info};
-    INFO << "Symbolic factorization completed\n";
+    DEBUG << "Symbolic factorization completed\n";
     return;
 }
 
@@ -87,7 +87,7 @@ void MA57Solver::do_numerical_factorization(const COOMatrix& matrix) {
             this->cntl_.data(),
             /* out */ this->factorization_.info.data(),
             /* out */ this->rinfo_.data());
-    INFO << "Numerical factorization completed\n";
+    DEBUG << "Numerical factorization completed\n";
     return;
 }
 
@@ -115,6 +115,7 @@ void MA57Solver::solve(std::vector<double>& rhs) {
             this->icntl_.data(),
             this->factorization_.info.data());
     // the solution is copied in rhs
+    DEBUG << "Linear system solve completed\n";
     return;
 }
 
