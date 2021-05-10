@@ -16,7 +16,7 @@ Result Uno::solve(Problem& problem, std::vector<double>& x, Multipliers& multipl
     
     INFO << "Problem " << problem.name << "\n";
     INFO << problem.number_variables << " variables, " << problem.number_constraints << " constraints\n";
-    INFO << "Nonlinear? " << (problem.is_nonlinear ? "yes" : "no") << "\n";
+    INFO << "Problem type: " << Problem::type_to_string[problem.type] << "\n";
     
     /* project x into the bounds */
     Subproblem::project_point_in_bounds(x, problem.variables_bounds);
