@@ -147,7 +147,7 @@ std::vector<Direction> InteriorPoint::compute_directions(Problem& problem, Itera
         /* KKT matrix */
         COOMatrix kkt_matrix = this->generate_optimality_kkt_matrix_(problem, current_iterate, this->subproblem_variables_bounds);
 
-        /* inertia correction */
+        /* inertia correction (includes factorization) */
         this->modify_inertia_(kkt_matrix, current_iterate.x.size(), problem.number_constraints);
         DEBUG << "KKT matrix:\n" << kkt_matrix << "\n";
 
@@ -164,9 +164,6 @@ std::vector<Direction> InteriorPoint::compute_directions(Problem& problem, Itera
         direction.status = OPTIMAL;
         direction.phase = OPTIMALITY;
         direction.norm = norm_inf(direction.x, problem.number_variables);
-//        direction.predicted_reduction = [&](double step_length) {
-//            return this->compute_predicted_reduction_(direction, step_length);
-//        };
         direction.predicted_reduction = this->compute_predicted_reduction_;
         /* evaluate the barrier objective */
         direction.objective = this->evaluate_local_model_(problem, current_iterate, direction.x);

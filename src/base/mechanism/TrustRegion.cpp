@@ -55,7 +55,7 @@ Iterate TrustRegion::compute_acceptable_iterate(Statistics& statistics, Problem&
                 this->radius = std::min(this->radius, min_norm) / 2.;
             }
         }
-        catch (const IEEE_Error& e) {
+        catch (const NumericalError& e) {
             this->print_warning_(e.what());
             /* if an evaluation error occurs, decrease the radius */
             this->radius /= 2.;

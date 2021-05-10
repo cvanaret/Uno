@@ -14,7 +14,7 @@ public:
     int dimension;
     short fortran_indexing;
 
-    virtual int number_nonzeros() = 0;
+    virtual int number_nonzeros() const = 0;
     /* build the matrix incrementally */
     virtual void insert(double term, int row_index, int column_index) = 0;
     virtual std::vector<double> product(const std::vector<double>& vector) = 0;
@@ -32,7 +32,7 @@ public:
     std::vector<int> row_indices;
     std::vector<int> column_indices;
 
-    int number_nonzeros() override;
+    int number_nonzeros() const override;
     void insert(double term, int row_index, int column_index) override;
     std::vector<double> product(const std::vector<double>& vector) override;
     
@@ -56,7 +56,7 @@ public:
     std::vector<int> column_start;
     std::vector<int> row_number;
 
-    int number_nonzeros() override;
+    int number_nonzeros() const override;
     void insert(double term, int row_index, int column_index) override;
     std::vector<double> product(const std::vector<double>& vector) override;
     
@@ -78,7 +78,7 @@ public:
 
     SparseGradient matrix;
 
-    int number_nonzeros() override;
+    int number_nonzeros() const override;
     void insert(double term, int row_index, int column_index) override;
     std::vector<double> product(const std::vector<double>& vector) override;
     void add_matrix(ArgonotMatrix& other_matrix, double factor);

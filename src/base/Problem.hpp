@@ -14,28 +14,28 @@ enum FunctionType {
     NONLINEAR /*!< Nonlinear function */
 };
 
-struct IEEE_Error : public std::exception {
+struct NumericalError : public std::exception {
     virtual const char* what() const throw () = 0;
 };
 
-struct IEEE_HEssianError : IEEE_Error {
+struct HessianNumericalError : NumericalError {
 
     const char* what() const throw () {
-        return "An IEEE error was encountered while evaluating the Hessian";
+        return "A numerical error was encountered while evaluating the Hessian";
     }
 };
 
-struct IEEE_GradientError : IEEE_Error {
+struct GradientNumericalError : NumericalError {
 
     const char* what() const throw () {
-        return "An IEEE error was encountered while evaluating a gradient";
+        return "A numerical error was encountered while evaluating a gradient";
     }
 };
 
-struct IEEE_FunctionError : IEEE_Error {
+struct FunctionNumericalError : NumericalError {
 
     const char* what() const throw () {
-        return "An IEEE error was encountered while evaluating a function";
+        return "A numerical error was encountered while evaluating a function";
     }
 };
 
@@ -46,12 +46,13 @@ struct IEEE_FunctionError : IEEE_Error {
  */
 class Problem {
 public:
-    Problem(std::string name, int number_variables, int number_constraints);
+    Problem(std::string name, int number_variables, int number_constraints, bool is_nonlinear);
     virtual ~Problem();
 
     std::string name;
     int number_variables; /*!< Number of variables */
     int number_constraints; /*!< Number of constraints */
+    bool is_nonlinear;
 
     /* objective */
     double objective_sign; /*!< Sign of the objective function (1: minimization, -1: maximization) */
