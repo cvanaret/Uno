@@ -1,5 +1,5 @@
-#ifndef ARGONOT_H
-#define ARGONOT_H
+#ifndef UNO_H
+#define UNO_H
 
 #include "Problem.hpp"
 #include "GlobalizationMechanism.hpp"
@@ -22,9 +22,9 @@ struct Result {
 /*! \class Argonot
  * \brief Argonot
  *
- *  Argonot solver
+ *  UNO solver
  */
-class Argonot {
+class Uno {
 public:
     /*!
      *  Constructor
@@ -32,7 +32,7 @@ public:
      * \param globalization_strategy: strategy to promote global convergence
      * \param tolerance: tolerance for termination criteria
      */
-    Argonot(GlobalizationMechanism& globalization_mechanism, int max_iterations);
+    Uno(GlobalizationMechanism& globalization_mechanism, int max_iterations);
 
     /*!
      *  Solve a given problem with initial primal and dual variables
@@ -52,4 +52,4 @@ private:
     TerminationStatus optimality_test_(Problem& problem, Phase& phase, Iterate& current_iterate);
 };
 
-#endif // ARGONOT_H
+#endif // UNO_H

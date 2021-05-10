@@ -1,8 +1,8 @@
 #include <iostream>
 #include <cmath>
-#include "Argonot.hpp"
+#include "Uno.hpp"
 #include "FilterStrategy.hpp"
-#include "Utils.hpp"
+#include "Vector.hpp"
 
 FilterStrategy::FilterStrategy(Subproblem& subproblem, FilterStrategyParameters& strategy_parameters, std::map<std::string, std::string>& options):
 GlobalizationStrategy(subproblem),

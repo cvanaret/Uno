@@ -4,7 +4,7 @@
 #include "SLP.hpp"
 #include "SQP.hpp"
 #include "Constraint.hpp"
-#include "Utils.hpp"
+#include "Vector.hpp"
 #include "Logger.hpp"
 #include "QPSolverFactory.hpp"
 #include "TrustRegion.hpp"

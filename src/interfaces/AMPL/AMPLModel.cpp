@@ -1,7 +1,7 @@
 #include "AMPLModel.hpp"
 #include "Logger.hpp"
-#include "Utils.hpp"
-#include "Parallel.hpp"
+#include "Vector.hpp"
+//#include "Parallel.hpp"
 
 ASL_pfgh* generate_asl(std::string file_name) {
 //    SufDecl suffixes[] = {

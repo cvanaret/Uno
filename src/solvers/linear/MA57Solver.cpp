@@ -1,6 +1,6 @@
 #include <iostream>
 #include "MA57Solver.hpp"
-#include "Utils.hpp"
+#include "Vector.hpp"
 
 extern "C" {
     // MA57

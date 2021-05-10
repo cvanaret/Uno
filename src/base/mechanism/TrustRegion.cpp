@@ -1,7 +1,7 @@
 #include <cmath>
 #include <assert.h>
 #include "TrustRegion.hpp"
-#include "Utils.hpp"
+#include "Vector.hpp"
 #include "Logger.hpp"
 
 TrustRegion::TrustRegion(GlobalizationStrategy& globalization_strategy, double tolerance, double initial_radius, int max_iterations):

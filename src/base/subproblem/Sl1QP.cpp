@@ -3,7 +3,7 @@
 #include <memory>
 #include "Sl1QP.hpp"
 #include "Constraint.hpp"
-#include "Utils.hpp"
+#include "Vector.hpp"
 #include "BQPDSolver.hpp"
 #include "QPSolverFactory.hpp"
 

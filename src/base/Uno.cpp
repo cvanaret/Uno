@@ -1,16 +1,16 @@
 #include <iostream>
 #include <ctime>
 #include <cmath>
-#include "Argonot.hpp"
+#include "Uno.hpp"
 #include "Iterate.hpp"
 #include "Logger.hpp"
 #include "BQPDSolver.hpp"
 #include "Statistics.hpp"
 
-Argonot::Argonot(GlobalizationMechanism& globalization_mechanism, int max_iterations): globalization_mechanism(globalization_mechanism), max_iterations(max_iterations) {
+Uno::Uno(GlobalizationMechanism& globalization_mechanism, int max_iterations): globalization_mechanism(globalization_mechanism), max_iterations(max_iterations) {
 }
 
-Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool preprocessing) {
+Result Uno::solve(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool preprocessing) {
     std::clock_t c_start = std::clock();
     int major_iterations = 0;
     
@@ -83,11 +83,11 @@ Result Argonot::solve(Problem& problem, std::vector<double>& x, Multipliers& mul
     return result;
 }
 
-bool Argonot::termination_criterion_(TerminationStatus current_status, int iteration) {
+bool Uno::termination_criterion_(TerminationStatus current_status, int iteration) {
     return current_status != NOT_OPTIMAL || this->max_iterations <= iteration;
 }
 
-void Argonot::preprocessing(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+void Uno::preprocessing(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
     /* linear constraints */
     INFO << "Preprocessing phase: the problem has " << problem.linear_constraints.size() << " linear constraints\n";
     if (0 < problem.linear_constraints.size()) {

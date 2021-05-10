@@ -1,6 +1,6 @@
 #include <cmath>
 #include "InteriorPoint.hpp"
-#include "Argonot.hpp"
+#include "Uno.hpp"
 #include "LinearSolverFactory.hpp"
 
 InteriorPoint::InteriorPoint(Problem& problem, std::string linear_solver_name, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals):

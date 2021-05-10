@@ -1,5 +1,5 @@
 #/usr/bin/env bash
-_argonot_completions() 
+_uno_completions() 
 {
     local cur prev opts base
     cur="${COMP_WORDS[COMP_CWORD]}"
@@ -36,4 +36,4 @@ _argonot_completions()
 		_filedir
     fi
 }
-complete -F _argonot_completions argonot
+complete -F _uno_completions uno

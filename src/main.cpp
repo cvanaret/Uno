@@ -8,11 +8,11 @@
 #include "SubproblemFactory.hpp"
 #include "GlobalizationStrategyFactory.hpp"
 #include "GlobalizationMechanismFactory.hpp"
-#include "Argonot.hpp"
+#include "Uno.hpp"
 #include "Logger.hpp"
 //#include "PardisoSolver.hpp"
 
-void run_argonot(std::string problem_name, std::map<std::string, std::string> options) {
+void run_uno(std::string problem_name, std::map<std::string, std::string> options) {
     // generate Hessians with a Fortran indexing (starting at 1) that is supported by solvers
     int fortran_indexing = 1;
     //std::cout.precision(17);
@@ -31,14 +31,14 @@ void run_argonot(std::string problem_name, std::map<std::string, std::string> op
 
     int max_iterations = std::stoi(options["max_iterations"]);
     bool preprocessing = (options["preprocessing"] == "yes");
-    Argonot argonot = Argonot(*mechanism, max_iterations);
+    Uno uno = Uno(*mechanism, max_iterations);
 
     /* initial primal and dual points */
     std::vector<double> x = problem.primal_initial_solution();
     Multipliers multipliers(problem.number_variables, problem.number_constraints);
     multipliers.constraints = problem.dual_initial_solution();
     
-    Result result = argonot.solve(problem, x, multipliers, preprocessing);
+    Result result = uno.solve(problem, x, multipliers, preprocessing);
     
     /* remove auxiliary variables */
     result.solution.x.resize(problem.number_variables);
@@ -110,22 +110,26 @@ void set_logger(std::map<std::string, std::string> options) {
 std::map<std::string, std::string> get_options(std::string file_name) {
     std::ifstream file;
     file.open(file_name);
-
-    /* register the default values */
-    std::map<std::string, std::string> options;
-    std::string key, value;
-    std::string line;
-    while (std::getline(file, line)) {
-        if (line != "" && line.find("#") != 0) {
-            std::istringstream iss;
-            iss.str(line);
-            iss >> key >> value;
-            std::cout << "Option " << key << " = " << value << "\n";
-            options[key] = value;
-        }
+    if (!file) {
+        throw std::invalid_argument("The configuration file was not found");
     }
-    file.close();
-    return options;
+    else {
+        /* register the default values */
+        std::map<std::string, std::string> options;
+        std::string key, value;
+        std::string line;
+        while (std::getline(file, line)) {
+            if (line != "" && line.find("#") != 0) {
+                std::istringstream iss;
+                iss.str(line);
+                iss >> key >> value;
+                std::cout << "Option " << key << " = " << value << "\n";
+                options[key] = value;
+            }
+        }
+        file.close();
+        return options;
+    }
 }
 
 //void test_matrix() {
@@ -222,24 +226,24 @@ void test_mask_matrix() {
 int main(int argc, char* argv[]) {
     if (1 < argc) {
         /* get the default values */
-        std::map<std::string, std::string> options = get_options("argonot.cfg");
+        std::map<std::string, std::string> options = get_options("uno.cfg");
         /* get the command line options */
         get_command_options(argc, argv, options);
         set_logger(options);
 
         if (std::string(argv[1]).compare("-v") == 0) {
-            std::cout << "Welcome in Argonot\n";
-            std::cout << "To solve an AMPL problem, type ./argonot path_to_file/file.nl\n";
-            std::cout << "To choose a globalization mechanism, type ./argonot -mechanism [LS|TR] path_to_file/file.nl\n";
-            std::cout << "To choose a globalization strategy, type ./argonot -strategy [penalty|filter|nonmonotone-filter] path_to_file/file.nl\n";
-            std::cout << "To choose a subproblem, type ./argonot -subproblem [SQP|SLP|Sl1QP|SLPEQP|IPM] path_to_file/file.nl\n";
+            std::cout << "Welcome in UNO\n";
+            std::cout << "To solve an AMPL problem, type ./uno path_to_file/file.nl\n";
+            std::cout << "To choose a globalization mechanism, type ./uno -mechanism [LS|TR] path_to_file/file.nl\n";
+            std::cout << "To choose a globalization strategy, type ./uno -strategy [penalty|filter|nonmonotone-filter] path_to_file/file.nl\n";
+            std::cout << "To choose a subproblem, type ./uno -subproblem [SQP|SLP|Sl1QP|SLPEQP|IPM] path_to_file/file.nl\n";
             std::cout << "The three options can be combined in the same command line. Autocompletion is active.\n";
             test_mask_matrix();
         }
         else {
             std::string problem_name = std::string(argv[argc - 1]);
             /* run Argonot */
-            run_argonot(problem_name, options);
+            run_uno(problem_name, options);
         }
     }
     return 0;
