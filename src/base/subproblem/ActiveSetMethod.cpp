@@ -2,7 +2,7 @@
 #include <map>
 #include "ActiveSetMethod.hpp"
 #include "Constraint.hpp"
-#include "Utils.hpp"
+#include "Vector.hpp"
 #include "Logger.hpp"
 
 ActiveSetMethod::ActiveSetMethod(Problem& problem, bool scale_residuals):

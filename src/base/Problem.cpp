@@ -1,7 +1,7 @@
 #include "Problem.hpp"
 #include <cmath>
 #include <iostream>
-#include "Utils.hpp"
+#include "Vector.hpp"
 
 /* Abstract Problem class */
 

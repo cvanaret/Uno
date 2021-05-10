@@ -4,9 +4,9 @@ if(${CMAKE_VERSION} VERSION_LESS 3.12)
 endif()
 
 # define the project name
-project(Argonot VERSION 1.0
-				DESCRIPTION "Unifying Framework for Optimization" 
-				LANGUAGES CXX C Fortran)
+project(UNO VERSION 1.0
+			DESCRIPTION "Unifying Framework for Optimization" 
+            LANGUAGES CXX C Fortran)
 
 # set C++17 and enable languages
 set(CMAKE_CXX_STANDARD 17)
@@ -16,6 +16,7 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
+#set(CMAKE_Fortran_FLAGS "-cpp")
 set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
@@ -25,9 +26,11 @@ set(DIRECTORIES base base/mechanism base/strategy base/subproblem interfaces int
 
 # source files
 set(SRC_FILES
-    base/Argonot.cpp base/Constraint.cpp base/HessianEvaluation.cpp
+    base/Uno.cpp base/Constraint.cpp base/HessianEvaluation.cpp
     base/Iterate.cpp base/Matrix.cpp base/Phase.hpp base/Problem.cpp
-    base/Statistics.cpp base/Utils.cpp
+    base/Statistics.cpp base/Vector.cpp
+    
+    base/infeasibility/FeasibilityRelaxation.cpp base/infeasibility/FeasibilityRestoration.cpp
     
     base/mechanism/GlobalizationMechanism.cpp
     base/mechanism/GlobalizationMechanismFactory.cpp
@@ -98,23 +101,23 @@ foreach(library_name IN LISTS REQUIRED_LIBS)
 	endif()
 endforeach(library_name)
 
-###########
-# Argonot #
-###########
-add_executable(argonot ${SRC_FILES} main.cpp)
-target_include_directories(argonot PUBLIC ${DIRECTORIES})
+#######
+# UNO #
+#######
+add_executable(uno ${SRC_FILES} main.cpp)
+target_include_directories(uno PUBLIC ${DIRECTORIES})
 # TODO: create a library with ${SRC_FILES} and an executable with main.cpp
-#install(TARGETS argonot DESTINATION bin)
-#add_executable(argonot_ampl main.cpp)
+#install(TARGETS uno DESTINATION bin)
+#add_executable(uno main.cpp)
 
 if(MSVC)
-  target_compile_options(argonot PRIVATE /W4 /WX)
+  target_compile_options(uno PRIVATE /W4 /WX)
 else()
-  target_compile_options(argonot PRIVATE -Wall -pedantic)
+  target_compile_options(uno PRIVATE -Wall -pedantic)
 endif()
 
 # link the libraries
-target_link_libraries(argonot PUBLIC ${LIBS})
+target_link_libraries(uno PUBLIC ${LIBS})
 
 ####################
 # gtest unit tests #

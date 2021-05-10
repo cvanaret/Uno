@@ -1,5 +1,5 @@
 #include <cmath>
-#include "Utils.hpp"
+#include "Vector.hpp"
 
 std::vector<double> add_vectors(const std::vector<double>& x, const std::vector<double>& y, double scaling_factor) {
     if (x.size() != y.size()) {

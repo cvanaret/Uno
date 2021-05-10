@@ -1,7 +1,7 @@
 #include <exception>
 #include "HessianEvaluation.hpp"
 #include "LinearSolverFactory.hpp"
-#include "Utils.hpp"
+#include "Vector.hpp"
 
 HessianEvaluation::HessianEvaluation(int dimension): dimension(dimension) {
 }

@@ -1,6 +1,6 @@
-# Argonot (Unifying Nonlinear Optimization framework)
+# UNO (Unifying Framework for Optimization)
 
-Argonot is a C++ framework aiming at unifying most of the methods for solving nonlinearly constrained optimization problems.
+UNO is a C++ framework aiming at unifying most of the methods for solving nonlinearly constrained optimization problems.
 
 ## Table of contents
 * [Installation instructions](#installation-instructions)
@@ -30,7 +30,7 @@ sudo apt-get install cmake cmake-curses-gui
 ## Compilation instructions
 1. Create a build directory in src/:
 ```
-  cd src/ && mkdir build && cp argonot.cfg build/
+  cd src/ && mkdir build && cp uno.cfg build/
 ```
 2. Move to the build directory:
 ```
@@ -48,9 +48,9 @@ sudo apt-get install cmake cmake-curses-gui
 ```
   make -jn
 ```
-6. Run Argonot:
+6. Run UNO:
 ```
-  ./argonot your_problem.nl
+  ./uno your_problem.nl
 ```
 
 To compile the code with different configurations, simply create a build directory for each configuration and perform instructions 1 to 6.
@@ -67,8 +67,8 @@ To compile the code with different configurations, simply create a build directo
 ```
 
 ## Autocompletion
-To benefit from autocompletion, install the file argonot-completion.bash:
+To benefit from autocompletion, install the file uno-completion.bash:
 ```
-  sudo cp argonot-completion.bash /etc/bash_completion.d/
+  sudo cp uno-completion.bash /etc/bash_completion.d/
 ```
 and open a new terminal.

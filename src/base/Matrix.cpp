@@ -1,7 +1,7 @@
 #include <exception>
 #include <cmath>
 #include "Matrix.hpp"
-#include "Utils.hpp"
+#include "Vector.hpp"
 
 Matrix::Matrix(int dimension, short fortran_indexing): dimension(dimension), fortran_indexing(fortran_indexing) {
 }

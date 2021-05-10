@@ -2,7 +2,7 @@
 #include <map>
 #include "SLP.hpp"
 #include "Constraint.hpp"
-#include "Utils.hpp"
+#include "Vector.hpp"
 #include "Logger.hpp"
 #include "QPSolverFactory.hpp"
 

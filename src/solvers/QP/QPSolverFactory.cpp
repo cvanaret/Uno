@@ -1,4 +1,4 @@
-#include "Utils.hpp"
+#include "Vector.hpp"
 #include "QPSolverFactory.hpp"
 #ifdef HAS_BQPD
 #include "BQPDSolver.hpp"
