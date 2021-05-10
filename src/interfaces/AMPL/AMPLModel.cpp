@@ -39,7 +39,7 @@ AMPLModel::AMPLModel(std::string file_name, int fortran_indexing): AMPLModel(fil
 }
 
 AMPLModel::AMPLModel(std::string file_name, ASL_pfgh* asl, int fortran_indexing):
-Problem(file_name, asl->i.n_var_, asl->i.n_con_, true), // asl->i.nlc_ + asl->i.nlo_ > 0),
+Problem(file_name, asl->i.n_var_, asl->i.n_con_, NONLINEAR), // asl->i.nlc_ + asl->i.nlo_ > 0),
 //variable_uncertain(asl->i.n_var_),
 //constraint_is_uncertainty_set(asl->i.n_con_),
 asl_(asl), fortran_indexing(fortran_indexing), ampl_tmp_gradient_(asl->i.n_var_) {
@@ -264,14 +264,14 @@ void AMPLModel::set_function_types_(std::string file_name) {
 
     // determine the type of each constraint and objective function
     // determine if the problem is nonlinear (nonquadratic objective or nonlinear constraints)
-    this->is_nonlinear = false;
+    this->type = LINEAR;
     int current_linear_constraint = 0;
     for (int j = 0; j < this->number_constraints; j++) {
         fint qp = nqpcheck_ASL((ASL*) asl, -(j + 1), &rowq, &colqp, &delsqp);
 
         if (0 < qp) {
             this->constraint_type[j] = QUADRATIC;
-            this->is_nonlinear = true;
+            this->type = NONLINEAR;
         }
         else if (qp == 0) {
             this->constraint_type[j] = LINEAR;
@@ -280,20 +280,23 @@ void AMPLModel::set_function_types_(std::string file_name) {
         }
         else {
             this->constraint_type[j] = NONLINEAR;
-            this->is_nonlinear = true;
+            this->type = NONLINEAR;
         }
     }
     /* objective function */
     fint qp = nqpcheck_ASL((ASL*) asl, 0, &rowq, &colqp, &delsqp);
     if (0 < qp) {
         this->objective_type = QUADRATIC;
+        if (this->type == LINEAR) {
+            this->type = QUADRATIC;
+        }
     }
     else if (qp == 0) {
         this->objective_type = LINEAR;
     }
     else {
         this->objective_type = NONLINEAR;
-        this->is_nonlinear = true;
+        this->type = NONLINEAR;
     }
     qp_opify_ASL((ASL*) asl);
 
@@ -316,7 +319,7 @@ void AMPLModel::initialize_lagrangian_hessian_() {
     return;
 }
 
-bool all_zeros(const std::vector<double>& multipliers) {
+bool are_all_zeros(const std::vector<double>& multipliers) {
     for (double xj: multipliers) {
         if (xj != 0.) {
             return false;
@@ -334,7 +337,8 @@ CSCMatrix AMPLModel::lagrangian_hessian(const std::vector<double>& x, double obj
     double* objective_multiplier_pointer = (objective_multiplier != 0.) ? &objective_multiplier : NULL;
     int upper_triangular = 1;
     
-    bool all_zeros_multipliers = all_zeros(multipliers);
+    // compute the sparsity
+    bool all_zeros_multipliers = are_all_zeros(multipliers);
     int number_non_zeros = (*((ASL*) this->asl_)->p.Sphset)((ASL*) this->asl_, NULL, objective_number, (objective_multiplier > 0.), !all_zeros_multipliers, upper_triangular);
     
     /* evaluate the Hessian */

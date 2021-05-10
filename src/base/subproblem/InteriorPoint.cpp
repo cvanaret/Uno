@@ -148,7 +148,7 @@ std::vector<Direction> InteriorPoint::compute_directions(Problem& problem, Itera
         COOMatrix kkt_matrix = this->generate_optimality_kkt_matrix_(problem, current_iterate, this->subproblem_variables_bounds);
 
         /* inertia correction (includes factorization) */
-        this->modify_inertia_(kkt_matrix, current_iterate.x.size(), problem.number_constraints, problem.is_nonlinear);
+        this->modify_inertia_(kkt_matrix, current_iterate.x.size(), problem.number_constraints, problem.type);
         DEBUG << "KKT matrix:\n" << kkt_matrix << "\n";
 
         /* right-hand side */
@@ -312,10 +312,11 @@ COOMatrix InteriorPoint::generate_optimality_kkt_matrix_(Problem& problem, Itera
     return kkt_matrix;
 }
 
-void InteriorPoint::factorize_(COOMatrix& kkt_matrix, bool problem_is_nonlinear) {
+void InteriorPoint::factorize_(COOMatrix& kkt_matrix, FunctionType problem_type) {
     // compute the symbolic factorization only when:
     // the problem has a non constant Hessian (ie is not an LP or a QP) or it is the first factorization
-    if (force_symbolic_factorization || problem_is_nonlinear || this->number_factorizations_ == 0) {
+    // TODO: for QPs as well, but only when the sparsity pattern is constant
+    if (force_symbolic_factorization || problem_type == LINEAR || this->number_factorizations_ == 0) {
         this->linear_solver->do_symbolic_factorization(kkt_matrix);
     }
     this->linear_solver->do_numerical_factorization(kkt_matrix);
@@ -323,11 +324,11 @@ void InteriorPoint::factorize_(COOMatrix& kkt_matrix, bool problem_is_nonlinear)
     return;
 }
 
-void InteriorPoint::modify_inertia_(COOMatrix& kkt_matrix, int size_first_block, int size_second_block, bool problem_is_nonlinear) {
+void InteriorPoint::modify_inertia_(COOMatrix& kkt_matrix, int size_first_block, int size_second_block, FunctionType problem_type) {
     this->inertia_hessian_ = 0.;
     this->inertia_constraints_ = 0.;
     DEBUG << "Testing factorization with inertia term " << this->inertia_hessian_ << "\n";
-    this->factorize_(kkt_matrix, problem_is_nonlinear);
+    this->factorize_(kkt_matrix, problem_type);
 
     bool good_inertia = false;
     if (!this->linear_solver->matrix_is_singular() && this->linear_solver->number_negative_eigenvalues() == size_second_block) {
@@ -364,7 +365,7 @@ void InteriorPoint::modify_inertia_(COOMatrix& kkt_matrix, int size_first_block,
 
     while (!good_inertia) {
         DEBUG << "Testing factorization with inertia term " << this->inertia_hessian_ << "\n";
-        this->factorize_(kkt_matrix, problem_is_nonlinear);
+        this->factorize_(kkt_matrix, problem_type);
 
         if (!this->linear_solver->matrix_is_singular() && this->linear_solver->number_negative_eigenvalues() == size_second_block) {
             good_inertia = true;
@@ -553,7 +554,7 @@ std::vector<Direction> InteriorPoint::restore_feasibility(Problem& problem, Iter
     COOMatrix coo_matrix = kkt_matrix.to_COO();
 
     /* inertia correction */
-    this->modify_inertia_(coo_matrix, current_iterate.x.size(), 0, problem.is_nonlinear);
+    this->modify_inertia_(coo_matrix, current_iterate.x.size(), 0, problem.type);
 
     DEBUG << "restoration KKT matrix:\n" << coo_matrix;
 
