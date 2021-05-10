@@ -58,6 +58,7 @@ public:
     std::set<int> upper_bounded_variables; /* indices of the upper-bounded variables */
 
 private:
+    void factorize_(COOMatrix& kkt_matrix, bool problem_is_nonlinear);
     void evaluate_optimality_iterate_(Problem& problem, Iterate& current_iterate);
     double evaluate_local_model_(Problem& problem, Iterate& current_iterate, std::vector<double>& solution);
     double barrier_function_(const Problem& problem, Iterate& iterate, const std::vector<Range>& variables_bounds);
@@ -65,7 +66,7 @@ private:
     double compute_primal_length_(Iterate& iterate, std::vector<double>& ipm_solution, std::vector<Range>& variables_bounds, double tau);
     double compute_dual_length_(Iterate& current_iterate, double tau, std::vector<double>& lower_delta_z, std::vector<double>& upper_delta_z);
     COOMatrix generate_optimality_kkt_matrix_(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds);
-    void modify_inertia_(COOMatrix& kkt_matrix, int size_first_block, int size_second_block);
+    void modify_inertia_(COOMatrix& kkt_matrix, int size_first_block, int size_second_block, bool problem_is_nonlinear);
     void generate_kkt_rhs_(Problem& problem, Iterate& current_iterate);
     std::vector<double> compute_lower_bound_multiplier_displacements_(Iterate& current_iterate, std::vector<double>& solution, std::vector<Range>& variables_bounds, double mu);
     std::vector<double> compute_upper_bound_multiplier_displacements_(Iterate& current_iterate, std::vector<double>& solution, std::vector<Range>& variables_bounds, double mu);
@@ -73,12 +74,14 @@ private:
     double compute_KKT_error_scaling_(Iterate& current_iterate);
     static double compute_predicted_reduction_(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length);
 
+    bool force_symbolic_factorization = true;
     std::vector<double> rhs_;
     double inertia_hessian_;
     double inertia_hessian_last_;
     double inertia_constraints_;
     double default_multiplier_;
-    int iteration_;
+    unsigned int iteration_;
+    unsigned int number_factorizations_;
 
     /* constants */
     InteriorPointParameters parameters_;
