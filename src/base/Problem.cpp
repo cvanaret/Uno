@@ -5,8 +5,8 @@
 
 /* Abstract Problem class */
 
-Problem::Problem(std::string name, int number_variables, int number_constraints):
-name(name), number_variables(number_variables), number_constraints(number_constraints),
+Problem::Problem(std::string name, int number_variables, int number_constraints, bool is_nonlinear):
+name(name), number_variables(number_variables), number_constraints(number_constraints), is_nonlinear(is_nonlinear),
 // allocate all vectors
 variable_name(number_variables),
 //variable_discrete(number_variables),

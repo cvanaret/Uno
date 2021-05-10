@@ -45,7 +45,7 @@ void Matrix::add_outer_product(const SparseGradient& x, double scaling_factor) {
 COOMatrix::COOMatrix(int dimension, short fortran_indexing): Matrix(dimension, fortran_indexing) {
 }
 
-int COOMatrix::number_nonzeros() {
+int COOMatrix::number_nonzeros() const {
     return this->matrix.size();
 }
 
@@ -122,7 +122,7 @@ CSCMatrix::CSCMatrix(const std::vector<double>& matrix, const std::vector<int>& 
 Matrix(column_start.size() - 1, fortran_indexing), matrix(matrix), column_start(column_start), row_number(row_number) {
 }
 
-int CSCMatrix::number_nonzeros() {
+int CSCMatrix::number_nonzeros() const {
     return this->matrix.size();
 }
 
@@ -324,7 +324,7 @@ std::ostream& operator<<(std::ostream &stream, const CSCMatrix& matrix) {
 ArgonotMatrix::ArgonotMatrix(int dimension, short fortran_indexing): Matrix(dimension, fortran_indexing) {
 }
 
-int ArgonotMatrix::number_nonzeros() {
+int ArgonotMatrix::number_nonzeros() const {
     return this->matrix.size();
 }
 

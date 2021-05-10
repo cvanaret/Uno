@@ -27,7 +27,7 @@ CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& hessian, LinearSolver& li
     }
     COOMatrix coo_hessian = hessian.to_COO();
     DEBUG << "Testing factorization with inertia term " << inertia << "\n";
-    linear_solver.factorize(coo_hessian);
+    linear_solver.do_symbolic_factorization(coo_hessian);
 
     bool good_inertia = false;
     while (!good_inertia) {
@@ -47,7 +47,7 @@ CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& hessian, LinearSolver& li
             hessian = hessian.add_identity_multiple(inertia - previous_inertia);
             coo_hessian = hessian.to_COO();
             DEBUG << "Testing factorization with inertia term " << inertia << "\n";
-            linear_solver.factorize(coo_hessian);
+            linear_solver.do_symbolic_factorization(coo_hessian);
         }
     }
     return hessian;

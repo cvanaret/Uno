@@ -16,6 +16,7 @@ Result Uno::solve(Problem& problem, std::vector<double>& x, Multipliers& multipl
     
     INFO << "Problem " << problem.name << "\n";
     INFO << problem.number_variables << " variables, " << problem.number_constraints << " constraints\n";
+    INFO << "Nonlinear? " << (problem.is_nonlinear ? "yes" : "no") << "\n";
     
     /* project x into the bounds */
     Subproblem::project_point_in_bounds(x, problem.variables_bounds);
@@ -40,7 +41,7 @@ Result Uno::solve(Problem& problem, std::vector<double>& x, Multipliers& multipl
     try {
         /* check for convergence */
         while (!this->termination_criterion_(current_iterate.status, major_iterations)) {
-            if (major_iterations % 50 == 0) {
+            if (major_iterations % 15 == 0) {
                 statistics.print_header(major_iterations == 0);
             }
             statistics.new_line();

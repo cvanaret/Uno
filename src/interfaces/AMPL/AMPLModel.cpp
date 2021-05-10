@@ -1,7 +1,8 @@
 #include "AMPLModel.hpp"
 #include "Logger.hpp"
 #include "Vector.hpp"
-//#include "Parallel.hpp"
+
+/* TODO: avoid using implicit AMPL macros */
 
 ASL_pfgh* generate_asl(std::string file_name) {
 //    SufDecl suffixes[] = {
@@ -38,22 +39,10 @@ AMPLModel::AMPLModel(std::string file_name, int fortran_indexing): AMPLModel(fil
 }
 
 AMPLModel::AMPLModel(std::string file_name, ASL_pfgh* asl, int fortran_indexing):
-Problem(file_name, asl->i.n_var_, asl->i.n_con_),
+Problem(file_name, asl->i.n_var_, asl->i.n_con_, true), // asl->i.nlc_ + asl->i.nlo_ > 0),
 //variable_uncertain(asl->i.n_var_),
 //constraint_is_uncertainty_set(asl->i.n_con_),
 asl_(asl), fortran_indexing(fortran_indexing), ampl_tmp_gradient_(asl->i.n_var_) {
-    /* TODO: avoid using implicit AMPL macros */
-    //keyword keywords[1];
-    //int size_keywords = sizeof (keywords) / sizeof (keyword);
-
-    /*
-    Option_Info info = {const_cast<char*> ("Argonot"),
-        const_cast<char*> ("Argonot 2018"),
-        const_cast<char*> ("argonot_options"),
-        keywords, size_keywords};
-    */
-    
-    //this->asl_ = generate_asl(file_name, &info);
     this->asl_->i.congrd_mode = 0;
 
     /* dimensions */
@@ -106,7 +95,7 @@ double AMPLModel::objective(const std::vector<double>& x) const {
     int nerror = 0;
     double result = this->objective_sign * (*((ASL*) this->asl_)->p.Objval)((ASL*) this->asl_, 0, (double*) x.data(), &nerror);
     if (0 < nerror) {
-        throw IEEE_FunctionError();
+        throw FunctionNumericalError();
     }
     return result;
 }
@@ -118,7 +107,7 @@ std::vector<double> AMPLModel::objective_dense_gradient(std::vector<double>& x) 
     /* compute the AMPL gradient (always in dense format) */
     (*((ASL*) this->asl_)->p.Objgrd)((ASL*) this->asl_, 0, x.data(), gradient.data(), &nerror);
     if (0 < nerror) {
-        throw IEEE_GradientError();
+        throw GradientNumericalError();
     }
 
     /* if maximization, take the opposite */
@@ -136,7 +125,7 @@ SparseGradient AMPLModel::objective_sparse_gradient(std::vector<double>& x) cons
     int nerror = 0;
     (*((ASL*) this->asl_)->p.Objgrd)((ASL*) this->asl_, 0, x.data(), (double*) this->ampl_tmp_gradient_.data(), &nerror);
     if (0 < nerror) {
-        throw IEEE_GradientError();
+        throw GradientNumericalError();
     }
 
     /* partial derivatives in same order as variables in this->asl_->i.Ograd_[0] */
@@ -164,7 +153,7 @@ double AMPLModel::evaluate_constraint(int j, std::vector<double>& x) const {
     int nerror = 0;
     double result = (*((ASL*) this->asl_)->p.Conival)((ASL*) this->asl_, j, x.data(), &nerror);
     if (0 < nerror) {
-        throw IEEE_FunctionError();
+        throw FunctionNumericalError();
     }
     return result;
 }
@@ -177,7 +166,7 @@ std::vector<double> AMPLModel::evaluate_constraints(std::vector<double>& x) cons
     int nerror = 0;
     (*((ASL*) this->asl_)->p.Conval)((ASL*) this->asl_, x.data(), constraints.data(), &nerror);
     if (0 < nerror) {
-        throw IEEE_FunctionError();
+        throw FunctionNumericalError();
     }
     return constraints;
 }
@@ -192,7 +181,7 @@ std::vector<double> AMPLModel::constraint_dense_gradient(int j, std::vector<doub
     int nerror = 0;
     (*((ASL*) this->asl_)->p.Congrd)((ASL*) this->asl_, j, x.data(), gradient.data(), &nerror);
     if (0 < nerror) {
-        throw IEEE_FunctionError();
+        throw FunctionNumericalError();
     }
 
     this->asl_->i.congrd_mode = congrd_mode_backup;
@@ -209,7 +198,7 @@ void AMPLModel::constraint_sparse_gradient(std::vector<double>& x, int j, Sparse
     int nerror = 0;
     (*((ASL*) this->asl_)->p.Congrd)((ASL*) this->asl_, j, x.data(), (double*) this->ampl_tmp_gradient_.data(), &nerror);
     if (0 < nerror) {
-        throw IEEE_GradientError();
+        throw GradientNumericalError();
     }
 
     /* partial derivatives in ampl_gradient in same order as variables in this->asl_->i.Cgrad_[j] */
@@ -273,12 +262,16 @@ void AMPLModel::set_function_types_(std::string file_name) {
     }
     this->constraint_type.reserve(this->number_constraints);
 
+    // determine the type of each constraint and objective function
+    // determine if the problem is nonlinear (nonquadratic objective or nonlinear constraints)
+    this->is_nonlinear = false;
     int current_linear_constraint = 0;
     for (int j = 0; j < this->number_constraints; j++) {
         fint qp = nqpcheck_ASL((ASL*) asl, -(j + 1), &rowq, &colqp, &delsqp);
 
         if (0 < qp) {
             this->constraint_type[j] = QUADRATIC;
+            this->is_nonlinear = true;
         }
         else if (qp == 0) {
             this->constraint_type[j] = LINEAR;
@@ -287,6 +280,7 @@ void AMPLModel::set_function_types_(std::string file_name) {
         }
         else {
             this->constraint_type[j] = NONLINEAR;
+            this->is_nonlinear = true;
         }
     }
     /* objective function */
@@ -299,6 +293,7 @@ void AMPLModel::set_function_types_(std::string file_name) {
     }
     else {
         this->objective_type = NONLINEAR;
+        this->is_nonlinear = true;
     }
     qp_opify_ASL((ASL*) asl);
 

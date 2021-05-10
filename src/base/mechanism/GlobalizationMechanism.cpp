@@ -20,7 +20,7 @@ std::optional<std::pair<Iterate, double> > GlobalizationMechanism::find_first_ac
                 return std::pair<Iterate, double>(accepted_iterate, step_norm);
             }
         }
-        catch (const IEEE_Error& e) {}
+        catch (const NumericalError& e) {}
     }
     return std::nullopt;
 }
