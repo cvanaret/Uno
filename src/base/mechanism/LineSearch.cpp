@@ -32,14 +32,14 @@ Iterate LineSearch::compute_acceptable_iterate(Statistics& statistics, Problem& 
             this->print_iteration_();
 
             /* check whether the trial step is accepted */
-            std::optional<std::pair<Iterate, double> > acceptance_check = this->find_first_acceptable_direction_(statistics, problem, current_iterate, directions, this->step_length);
+            std::optional<std::pair<Iterate, Direction> > acceptance_check = this->find_first_acceptable_direction_(statistics, problem, current_iterate, directions, this->step_length);
             if (acceptance_check.has_value()) {
                 is_accepted = true;
                 current_iterate = acceptance_check.value().first;
-                double step_norm = acceptance_check.value().second;
+                Direction direction = acceptance_check.value().second;
                 statistics.add_statistic("minor", this->number_iterations);
                 statistics.add_statistic("LS step length", this->step_length);
-                statistics.add_statistic("step norm", this->step_length*step_norm);
+                statistics.add_statistic("step norm", this->step_length*direction.norm);
             }
             if (!is_accepted) {
                 /* decrease the step length */
