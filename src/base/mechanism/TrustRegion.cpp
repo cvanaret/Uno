@@ -33,16 +33,16 @@ Iterate TrustRegion::compute_acceptable_iterate(Statistics& statistics, Problem&
             }
             
             /* check whether the trial step is accepted */
-            std::optional<std::pair<Iterate, double> > acceptance_check = this->find_first_acceptable_direction_(statistics, problem, current_iterate, directions, 1.);
+            std::optional<std::pair<Iterate, Direction> > acceptance_check = this->find_first_acceptable_direction_(statistics, problem, current_iterate, directions, 1.);
             if (acceptance_check.has_value()) {
                 is_accepted = true;
                 current_iterate = acceptance_check.value().first;
-                double step_norm = acceptance_check.value().second;
+                Direction direction = acceptance_check.value().second;
                 statistics.add_statistic("minor", this->number_iterations);
                 statistics.add_statistic("TR radius", this->radius);
-                statistics.add_statistic("step norm", step_norm);
+                statistics.add_statistic("step norm", direction.norm);
                 /* increase the radius if trust region is active, otherwise keep the same radius */
-                if (step_norm >= this->radius - this->activity_tolerance_) {
+                if (direction.norm >= this->radius - this->activity_tolerance_) {
                     this->radius *= 2.;
                 }
             }
