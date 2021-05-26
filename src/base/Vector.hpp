@@ -50,73 +50,73 @@ double norm(const T& x, std::string norm_value) {
 }
 
 template <typename T>
-void print_vector(std::ostream &stream, std::vector<T> x, unsigned int start = 0, unsigned int length = std::numeric_limits<unsigned int>::max()) {
+void print_vector(std::ostream &stream, const std::vector<T>& x, const char end='\n', unsigned int start = 0, unsigned int length = std::numeric_limits<unsigned int>::max()) {
     for (size_t i = start; i < std::min<unsigned int>(start + length, x.size()); i++) {
         stream << x[i] << " ";
     }
-    stream << "\n";
+    stream << end;
     return;
 }
 
 template <typename T>
-void print_vector(const Level& level, std::vector<T> x, unsigned int start = 0, unsigned int length = std::numeric_limits<unsigned int>::max()) {
+void print_vector(const Level& level, const std::vector<T>& x, const char end='\n', unsigned int start = 0, unsigned int length = std::numeric_limits<unsigned int>::max()) {
     for (size_t i = start; i < std::min<unsigned int>(start + length, x.size()); i++) {
         level << x[i] << " ";
     }
-    level << "\n";
+    level << end;
     return;
 }
 
 template <typename T>
-void print_vector(const Level& level, std::set<T> x) {
+void print_vector(const Level& level, const std::set<T>& x, const char end='\n') {
     for (T xi: x) {
         level << xi << " ";
     }
-    level << "\n";
+    level << end;
     return;
 }
 
 template <typename T, typename U>
-void print_vector(std::ostream &stream, std::map<T, U> x) {
+void print_vector(std::ostream &stream, const std::map<T, U>& x, const char end='\n') {
     for (std::pair<T, U> element : x) {
         T i = element.first;
         U xi = element.second;
         stream << "x[" << i << "] = " << xi << ", ";
     }
-    stream << "\n";
+    stream << end;
     return;
 }
 
 template <typename T, typename U>
-void print_vector(const Level& level, std::map<T, U> x) {
+void print_vector(const Level& level, const std::map<T, U>& x, const char end='\n') {
     for (std::pair<T, U> element : x) {
         T i = element.first;
         U xi = element.second;
         level << "x[" << i << "] = " << xi << ", ";
     }
-    level << "\n";
+    level << end;
     return;
 }
 
 template <typename T, typename U>
-void print_vector(std::ostream &stream, std::unordered_map<T, U> x) {
+void print_vector(std::ostream &stream, const std::unordered_map<T, U>& x, const char end='\n') {
     for (std::pair<T, U> element : x) {
         T i = element.first;
         U xi = element.second;
         stream << "x[" << i << "] = " << xi << ", ";
     }
-    stream << "\n";
+    stream << end;
     return;
 }
 
 template <typename T, typename U>
-void print_vector(const Level& level, std::unordered_map<T, U> x) {
+void print_vector(const Level& level, const std::unordered_map<T, U>& x, const char end='\n') {
     for (std::pair<T, U> element : x) {
         T i = element.first;
         U xi = element.second;
         level << "x[" << i << "] = " << xi << ", ";
     }
-    level << "\n";
+    level << end;
     return;
 }
 
