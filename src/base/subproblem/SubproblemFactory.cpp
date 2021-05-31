@@ -6,7 +6,8 @@
 #include "InteriorPoint.hpp"
 #include "QPSolverFactory.hpp"
 
-std::unique_ptr<Subproblem> SubproblemFactory::create(Problem& problem, const std::string& type, std::map<std::string, std::string> options, bool use_trust_region, bool scale_residuals) {
+std::unique_ptr<Subproblem> SubproblemFactory::create(Problem& problem, const std::string& type, std::map<std::string, std::string>&
+      options, bool use_trust_region, bool scale_residuals) {
     std::vector<std::string> possible_methods = {"SQP", "SLP", "Sl1QP", "SLPEQP", "IPM"};
     /* active-set methods */
     if (type == "SQP") {

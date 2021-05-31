@@ -4,7 +4,8 @@
 //#include "DualUpdate.hpp"
 //#include "TrustLineSearch.hpp"
 
-std::unique_ptr<GlobalizationMechanism> GlobalizationMechanismFactory::create(const std::string& type, GlobalizationStrategy& globalization_strategy, std::map<std::string, std::string> options) {
+std::unique_ptr<GlobalizationMechanism> GlobalizationMechanismFactory::create(const std::string& type, GlobalizationStrategy&
+globalization_strategy, std::map<std::string, std::string>& options) {
     double tolerance = std::stod(options["tolerance"]);
 
     if (type == "TR") {
