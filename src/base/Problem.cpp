@@ -1,6 +1,7 @@
-#include "Problem.hpp"
 #include <cmath>
 #include <iostream>
+#include <cassert>
+#include "Problem.hpp"
 #include "Vector.hpp"
 
 std::map<FunctionType, std::string> Problem::type_to_string = {
@@ -11,8 +12,9 @@ std::map<FunctionType, std::string> Problem::type_to_string = {
 
 /* Abstract Problem class */
 
-Problem::Problem(std::string name, int number_variables, int number_constraints, FunctionType type):
+Problem::Problem(std::string& name, int number_variables, int number_constraints, FunctionType type):
 name(name), number_variables(number_variables), number_constraints(number_constraints), type(type),
+objective_sign(1.), objective_type(NONLINEAR),
 // allocate all vectors
 variable_name(number_variables),
 //variable_discrete(number_variables),
@@ -23,11 +25,8 @@ constraint_bounds(number_constraints), constraint_type(number_constraints), cons
 hessian_maximum_number_nonzeros(0) {
 }
 
-Problem::~Problem() {
-}
-
 /* compute ||c|| */
-double Problem::compute_constraint_residual(std::vector<double>& constraints, std::string norm_value) const {
+double Problem::compute_constraint_residual(const std::vector<double>& constraints, const std::string& norm_value) const {
     std::vector<double> residuals(constraints.size());
     for (int j = 0; j < this->number_constraints; j++) {
         residuals[j] = std::max(std::max(0., this->constraint_bounds[j].lb - constraints[j]), constraints[j] - this->constraint_bounds[j].ub);
@@ -36,7 +35,8 @@ double Problem::compute_constraint_residual(std::vector<double>& constraints, st
 }
 
 /* compute ||c_S|| for a given set S */
-double Problem::compute_constraint_residual(std::vector<double>& constraints, std::set<int> constraint_set, std::string norm_value) const {
+double Problem::compute_constraint_residual(const std::vector<double>& constraints, const std::set<int>& constraint_set, const std::string&
+norm_value) const {
     SparseGradient residuals;
     for (int j: constraint_set) {
         residuals[j] = std::max(std::max(0., this->constraint_bounds[j].lb - constraints[j]), constraints[j] - this->constraint_bounds[j].ub);
@@ -45,6 +45,8 @@ double Problem::compute_constraint_residual(std::vector<double>& constraints, st
 }
 
 void Problem::determine_bounds_types(std::vector<Range>& bounds, std::vector<ConstraintType>& status) {
+   assert(bounds.size() == status.size());
+
     for (unsigned int i = 0; i < bounds.size(); i++) {
         if (bounds[i].lb == bounds[i].ub) {
             status[i] = EQUAL_BOUNDS;

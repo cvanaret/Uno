@@ -22,7 +22,7 @@ std::vector<Direction> SQP::compute_directions(Problem& problem, Iterate& curren
     if (direction.status != INFEASIBLE) {
         direction.phase = OPTIMALITY;
         direction.objective_multiplier = problem.objective_sign;
-        direction.predicted_reduction = this->compute_qp_predicted_reduction_;
+        direction.predicted_reduction = ActiveSetMethod::compute_qp_predicted_reduction_;
         return std::vector<Direction>{direction};
     }
     else {
@@ -37,7 +37,7 @@ std::vector<Direction> SQP::restore_feasibility(Problem& problem, Iterate& curre
     Direction direction = this->compute_l1qp_step_(problem, *this->solver, current_iterate, phase_2_direction.constraint_partition, phase_2_direction.x, trust_region_radius);
     direction.phase = RESTORATION;
     direction.objective_multiplier = problem.objective_sign;
-    direction.predicted_reduction = this->compute_qp_predicted_reduction_;
+    direction.predicted_reduction = ActiveSetMethod::compute_qp_predicted_reduction_;
     return std::vector<Direction>{direction};
 }
 
