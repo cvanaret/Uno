@@ -19,7 +19,7 @@ public:
      * \param step_accept: strategy to accept or reject a step
      */
     GlobalizationMechanism(GlobalizationStrategy& globalization_strategy, double tolerance, int max_iterations);
-    virtual ~GlobalizationMechanism();
+    virtual ~GlobalizationMechanism() = default;
 
     virtual Iterate initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
     virtual Iterate compute_acceptable_iterate(Statistics& statistics, Problem& problem, Iterate& current_iterate) = 0;
@@ -32,7 +32,7 @@ public:
     int number_iterations; /*!< Current number of iterations */
 
 protected:
-    TerminationStatus compute_termination_status_(Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier);
+    TerminationStatus compute_termination_status_(Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier) const;
     virtual void print_acceptance_() = 0;
 };
 

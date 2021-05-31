@@ -25,7 +25,7 @@ public:
      * \param name: name of the strategy
      */
     Subproblem(std::string residual_norm, std::vector<Range>& subproblem_variables_bounds, bool scale_residuals);
-    virtual ~Subproblem();
+    virtual ~Subproblem() = default;
 
     virtual Iterate evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& multipliers) = 0;
     

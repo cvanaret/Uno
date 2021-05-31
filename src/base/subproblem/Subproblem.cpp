@@ -8,9 +8,6 @@ number_subproblems_solved(0), subproblem_definition_changed(false),
 scale_residuals(scale_residuals) {
 }
 
-Subproblem::~Subproblem() {
-}
-
 /* compute least-square multipliers */
 //if (0 < problem.number_constraints) {
 //    first_iterate.compute_constraints_jacobian(problem);
@@ -153,7 +150,13 @@ double Subproblem::compute_complementarity_error_(const Problem& problem, Iterat
 void Subproblem::compute_residuals(const Problem& problem, Iterate& iterate, const Multipliers& multipliers, double objective_multiplier) const {
     iterate.compute_constraints(problem);
     iterate.residuals.constraints = problem.compute_constraint_residual(iterate.constraints, this->residual_norm);
-    iterate.residuals.KKT = Subproblem::compute_KKT_error(problem, iterate, objective_multiplier);
+    // compute the KKT residual only if the objective multiplier is positive
+    if (0. < objective_multiplier) {
+       iterate.residuals.KKT = Subproblem::compute_KKT_error(problem, iterate, objective_multiplier);
+    }
+    else {
+       iterate.residuals.KKT = Subproblem::compute_KKT_error(problem, iterate, 1.);
+    }
     iterate.residuals.FJ = Subproblem::compute_KKT_error(problem, iterate, 0.);
     iterate.residuals.complementarity = this->compute_complementarity_error_(problem, iterate, multipliers);
     if (this->scale_residuals) {
