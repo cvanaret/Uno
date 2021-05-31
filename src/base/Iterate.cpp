@@ -37,7 +37,7 @@ void Iterate::compute_constraints(const Problem& problem) {
 
 void Iterate::compute_objective_gradient(const Problem& problem) {
     if (!this->is_objective_gradient_computed) {
-        this->objective_gradient = problem.objective_sparse_gradient(this->x);
+        this->objective_gradient = problem.objective_gradient(this->x);
         this->is_objective_gradient_computed = true;
     }
     return;
@@ -51,7 +51,7 @@ void Iterate::set_objective_gradient(const SparseGradient& objective_gradient) {
 
 void Iterate::compute_constraints_jacobian(const Problem& problem) {
     if (!this->is_constraints_jacobian_computed) {
-        this->constraints_jacobian = problem.constraints_sparse_jacobian(this->x);
+        this->constraints_jacobian = problem.constraints_jacobian(this->x);
         this->is_constraints_jacobian_computed = true;
         Iterate::number_eval_jacobian++;
     }

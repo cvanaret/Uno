@@ -26,24 +26,22 @@ public:
     ~AMPLModel();
 
     /* objective */
-    double objective(const std::vector<double>& x) const override;
-    std::vector<double> objective_dense_gradient(std::vector<double>& x) const override;
-    SparseGradient objective_sparse_gradient(std::vector<double>& x) const override;
+    [[nodiscard]] double objective(const std::vector<double>& x) const override;
+    SparseGradient objective_gradient(std::vector<double>& x) const override;
     
     /* constraints */
     //std::vector<bool> constraint_is_uncertainty_set;
-    double evaluate_constraint(int j, std::vector<double>& x) const;
-    std::vector<double> evaluate_constraints(std::vector<double>& x) const;
-    std::vector<double> constraint_dense_gradient(int j, std::vector<double>& x) const;
-    void constraint_sparse_gradient(std::vector<double>& x, int j, SparseGradient& gradient) const;
-    std::vector<SparseGradient> constraints_sparse_jacobian(std::vector<double>& x) const;
+    double evaluate_constraint(int j, std::vector<double>& x) const override;
+    std::vector<double> evaluate_constraints(std::vector<double>& x) const override;
+    void constraint_gradient(std::vector<double>& x, int j, SparseGradient& gradient) const override;
+    std::vector<SparseGradient> constraints_jacobian(std::vector<double>& x) const override;
 
     /* Hessian */
-    CSCMatrix lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers) const override;
+    [[nodiscard]] CSCMatrix lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers) const override;
     //CSCMatrix lagrangian_hessian(std::vector<double>& x, double objective_multiplier, std::vector<double>& multipliers, std::vector<double>& hessian);
 
-    std::vector<double> primal_initial_solution();
-    std::vector<double> dual_initial_solution();
+    std::vector<double> primal_initial_solution() override;
+    std::vector<double> dual_initial_solution() override;
 
 private:
     // private constructor to pass the dimensions to the Problem base constructor

@@ -46,9 +46,9 @@ struct FunctionNumericalError : NumericalError {
  */
 class Problem {
 public:
-    Problem(std::string name, int number_variables, int number_constraints, FunctionType problem_type);
-    virtual ~Problem();
-   
+    Problem(std::string& name, int number_variables, int number_constraints, FunctionType problem_type);
+    virtual ~Problem() = default;
+
     static std::map<FunctionType, std::string> type_to_string;
 
     std::string name;
@@ -60,9 +60,8 @@ public:
     double objective_sign; /*!< Sign of the objective function (1: minimization, -1: maximization) */
     std::string objective_name;
     FunctionType objective_type; /*!< Type of the objective (LINEAR, QUADRATIC, NONLINEAR) */
-    virtual double objective(const std::vector<double>& x) const = 0;
-    virtual std::vector<double> objective_dense_gradient(std::vector<double>& x) const = 0;
-    virtual SparseGradient objective_sparse_gradient(std::vector<double>& x) const = 0;
+    [[nodiscard]] virtual double objective(const std::vector<double>& x) const = 0;
+    virtual SparseGradient objective_gradient(std::vector<double>& x) const = 0;
 
     /* variables */
     std::vector<std::string> variable_name;
@@ -77,9 +76,8 @@ public:
     std::vector<ConstraintType> constraint_status; /*!< Status of the constraints (EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES, UNBOUNDED) */
     virtual double evaluate_constraint(int j, std::vector<double>& x) const = 0;
     virtual std::vector<double> evaluate_constraints(std::vector<double>& x) const = 0;
-    virtual std::vector<double> constraint_dense_gradient(int j, std::vector<double>& x) const = 0;
-    virtual void constraint_sparse_gradient(std::vector<double>& x, int j, SparseGradient& gradient) const = 0;
-    virtual std::vector<SparseGradient> constraints_sparse_jacobian(std::vector<double>& x) const = 0;
+    virtual void constraint_gradient(std::vector<double>& x, int j, SparseGradient& gradient) const = 0;
+    virtual std::vector<SparseGradient> constraints_jacobian(std::vector<double>& x) const = 0;
     void determine_bounds_types(std::vector<Range>& variables_bounds, std::vector<ConstraintType>& status);
     std::map<int, int> equality_constraints; /*!< inequality constraints */
     std::map<int, int> inequality_constraints; /*!< inequality constraints */
@@ -87,13 +85,13 @@ public:
 
     /* Hessian */
     int hessian_maximum_number_nonzeros; /*!< Number of nonzero elements in the Hessian */
-    virtual CSCMatrix lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers) const = 0;
+    [[nodiscard]] virtual CSCMatrix lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers) const = 0;
 
     virtual std::vector<double> primal_initial_solution() = 0;
     virtual std::vector<double> dual_initial_solution() = 0;
 
-    double compute_constraint_residual(std::vector<double>& constraints, std::string norm_value) const;
-    double compute_constraint_residual(std::vector<double>& constraints, std::set<int> constraint_set, std::string norm_value) const;
+    [[nodiscard]] double compute_constraint_residual(const std::vector<double>& constraints, const std::string& norm_value) const;
+    [[nodiscard]] double compute_constraint_residual(const std::vector<double>& constraints, const std::set<int>& constraint_set, const std::string& norm_value) const;
 
 protected:
     void determine_constraints_();
@@ -104,14 +102,12 @@ public:
     CppProblem(std::string name, int number_variables, int number_constraints, double (*objective)(std::vector<double> x), std::vector<double> (*objective_gradient)(std::vector<double> x));
 
     double objective(const std::vector<double>& x) const override;
-    std::vector<double> objective_dense_gradient(std::vector<double>& x) const override;
-    SparseGradient objective_sparse_gradient(std::vector<double>& x) const override;
+    SparseGradient objective_gradient(std::vector<double>& x) const override;
 
     double evaluate_constraint(int j, std::vector<double>& x) const override;
     std::vector<double> evaluate_constraints(std::vector<double>& x) const override;
-    std::vector<double> constraint_dense_gradient(int j, std::vector<double>& x) const override;
-    void constraint_sparse_gradient(std::vector<double>& x, int j, SparseGradient& gradient) const override;
-    std::vector<SparseGradient> constraints_sparse_jacobian(std::vector<double>& x) const override;
+    void constraint_gradient(std::vector<double>& x, int j, SparseGradient& gradient) const override;
+    std::vector<SparseGradient> constraints_jacobian(std::vector<double>& x) const override;
 
     CSCMatrix lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers) const override;
 
