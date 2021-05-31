@@ -30,7 +30,7 @@ double dot(const std::vector<double>& x, const SparseGradient& y);
 double dot(const SparseGradient& x, const SparseGradient& y);
 
 template <typename T>
-double norm(const T& x, std::string norm_value) {
+double norm(const T& x, const std::string& norm_value) {
     /* choose the right norm */
     if (norm_value == "inf") {
         return norm_inf(x);
