@@ -1,4 +1,5 @@
 #include <cmath>
+#include <cassert>
 #include "BQPDSolver.hpp"
 
 #define BIG 1e30
@@ -22,7 +23,15 @@ extern "C" {
 
 /* preallocate a bunch of stuff */
 BQPDSolver::BQPDSolver(int number_variables, int number_constraints, int maximum_number_nonzeros, bool quadratic_programming):
-QPSolver(), n_(number_variables), m_(number_constraints), maximum_number_nonzeros_(maximum_number_nonzeros), lb_(n_ + m_), ub_(n_ + m_), use_fortran_(1), jacobian_(n_*(m_ + 1)), jacobian_sparsity_(n_*(m_ + 1) + m_ + 3), kmax_(quadratic_programming ? 500 : 0), mlp_(1000), mxwk0_(2000000), mxiwk0_(500000), info_(100), alp_(mlp_), lp_(mlp_), ls_(n_ + m_), w_(n_ + m_), gradient_solution_(n_), residuals_(n_ + m_), e_(n_ + m_), size_hessian_sparsity_(quadratic_programming ? maximum_number_nonzeros + n_ + 3 : 0), size_hessian_workspace_(maximum_number_nonzeros_ + kmax_ * (kmax_ + 9) / 2 + 2 * n_ + m_ + mxwk0_), size_hessian_sparsity_workspace_(size_hessian_sparsity_ + kmax_ + mxiwk0_), hessian_(size_hessian_workspace_), hessian_sparsity_(size_hessian_sparsity_workspace_), k_(0), mode_(COLD_START), iprint_(0), nout_(6), fmin_(-1e20) {
+QPSolver(), n_(number_variables), m_(number_constraints), maximum_number_nonzeros_(maximum_number_nonzeros),
+lb_(n_ + m_), ub_(n_ + m_), use_fortran_(1), jacobian_(n_*(m_ + 1)), jacobian_sparsity_(n_*(m_ + 1) + m_ + 3),
+kmax_(quadratic_programming ? 500 : 0), mlp_(1000), mxwk0_(2000000), mxiwk0_(500000), info_(100), alp_(mlp_),
+lp_(mlp_), ls_(n_ + m_), w_(n_ + m_), gradient_solution_(n_), residuals_(n_ + m_), e_(n_ + m_),
+size_hessian_sparsity_(quadratic_programming ? maximum_number_nonzeros + n_ + 3 : 0),
+size_hessian_workspace_(maximum_number_nonzeros_ + kmax_ * (kmax_ + 9) / 2 + 2 * n_ + m_ + mxwk0_),
+size_hessian_sparsity_workspace_(size_hessian_sparsity_ + kmax_ + mxiwk0_),
+hessian_(size_hessian_workspace_), hessian_sparsity_(size_hessian_sparsity_workspace_),
+k_(0), mode_(COLD_START), iprint_(0), nout_(6), fmin_(-1e20) {
     // active set
     for (int i = 0; i < this->n_ + this->m_; i++) {
         this->ls_[i] = i + this->use_fortran_;
@@ -67,7 +76,7 @@ Direction BQPDSolver::solve_subproblem_(std::vector<Range>& variables_bounds, st
     wsc_.mxws = this->size_hessian_workspace_;
     wsc_.mxlws = this->size_hessian_sparsity_workspace_;
     kktalphac_.alpha = 0; // inertia control
-    
+
     DEBUG1 << "objective gradient: ";
     print_vector(DEBUG1, linear_objective);
     for (unsigned int j = 0; j < constraints_jacobian.size(); j++) {
@@ -113,7 +122,7 @@ Direction BQPDSolver::solve_subproblem_(std::vector<Range>& variables_bounds, st
         this->jacobian_sparsity_[current_index] = size;
         current_index++;
     }
-    
+
     /* bounds */
     for (int i = 0; i < this->n_; i++) {
         this->lb_[i] = (variables_bounds[i].lb == -INFINITY) ? -BIG : variables_bounds[i].lb;
@@ -123,7 +132,7 @@ Direction BQPDSolver::solve_subproblem_(std::vector<Range>& variables_bounds, st
         this->lb_[this->n_ + j] = (constraints_bounds[j].lb == -INFINITY) ? -BIG : constraints_bounds[j].lb;
         this->ub_[this->n_ + j] = (constraints_bounds[j].ub == INFINITY) ? BIG : constraints_bounds[j].ub;
     }
-    
+
     /* call BQPD */
     int mode = (int) this->mode_;
     bqpd_(&this->n_, &this->m_, &this->k_, &this->kmax_, this->jacobian_.data(), this->jacobian_sparsity_.data(), x.data(),
@@ -149,7 +158,7 @@ Direction BQPDSolver::solve_subproblem_(std::vector<Range>& variables_bounds, st
 Direction BQPDSolver::generate_direction_(std::vector<double>& x) {
     Multipliers multipliers(this->n_, this->m_);
     Direction direction(x, multipliers);
-    
+
     /* active constraints */
     for (int j = 0; j < this->n_ - this->k_; j++) {
         int index = std::abs(this->ls_[j]) - this->use_fortran_;
@@ -210,9 +219,7 @@ Direction BQPDSolver::generate_direction_(std::vector<double>& x) {
 }
 
 Status BQPDSolver::int_to_status_(int ifail) {
-    if (ifail < 0 || 10 <= ifail) {
-        throw std::length_error("BQPDSolver.int_to_status: ifail does not belong to [0, 9]");
-    }
+    assert(0 <= ifail && ifail <= 9 && "BQPDSolver.int_to_status: ifail does not belong to [0, 9]");
     Status status = static_cast<Status> (ifail);
     return status;
 }
