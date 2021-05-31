@@ -40,15 +40,15 @@ k_(0), mode_(COLD_START), iprint_(0), nout_(6), fmin_(-1e20) {
 
 Direction BQPDSolver::solve_QP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, SparseGradient& linear_objective, std::vector<SparseGradient>& constraints_jacobian, CSCMatrix& hessian, std::vector<double>& x) {
     /* Hessian */
-    for (int i = 0; i < hessian.number_nonzeros(); i++) {
+    for (size_t i = 0; i < hessian.number_nonzeros(); i++) {
         this->hessian_[i] = hessian.matrix[i];
     }
     /* Hessian sparsity */
     this->hessian_sparsity_[0] = hessian.number_nonzeros() + 1;
-    for (int i = 0; i < hessian.number_nonzeros(); i++) {
+    for (size_t i = 0; i < hessian.number_nonzeros(); i++) {
         this->hessian_sparsity_[i + 1] = hessian.row_number[i] + (hessian.fortran_indexing ? 0 : this->use_fortran_);
     }
-    for (unsigned int i = 0; i < hessian.column_start.size(); i++) {
+    for (size_t i = 0; i < hessian.column_start.size(); i++) {
         this->hessian_sparsity_[hessian.number_nonzeros() + i + 1] = hessian.column_start[i] + (hessian.fortran_indexing ? 0 : this->use_fortran_);
     }
 
@@ -79,14 +79,14 @@ Direction BQPDSolver::solve_subproblem_(std::vector<Range>& variables_bounds, st
 
     DEBUG1 << "objective gradient: ";
     print_vector(DEBUG1, linear_objective);
-    for (unsigned int j = 0; j < constraints_jacobian.size(); j++) {
+    for (size_t j = 0; j < constraints_jacobian.size(); j++) {
         DEBUG1 << "gradient c" << j << ": ";
         print_vector(DEBUG1, constraints_jacobian[j]);
     }
-    for (unsigned int i = 0; i < variables_bounds.size(); i++) {
+    for (size_t i = 0; i < variables_bounds.size(); i++) {
         DEBUG1 << "Δx" << i << " in [" << variables_bounds[i].lb << ", " << variables_bounds[i].ub << "]\n";
     }
-    for (unsigned int j = 0; j < constraints_bounds.size(); j++) {
+    for (size_t j = 0; j < constraints_bounds.size(); j++) {
         DEBUG1 << "linearized c" << j << " in [" << constraints_bounds[j].lb << ", " << constraints_bounds[j].ub << "]\n";
     }
 

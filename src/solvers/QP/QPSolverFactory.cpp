@@ -12,5 +12,6 @@ std::unique_ptr<QPSolver> QPSolverFactory::create(const std::string& QP_solver_n
     }
     possible_solvers.push_back("BQPD");
 #endif
-    throw std::invalid_argument("QPSolver name " + QP_solver_name + " does not exist. The possible options are: " + join(possible_solvers, ", "));
+    throw std::invalid_argument("QPSolver name " + QP_solver_name + " does not exist.");
+        // " The possible options are: " + join(possible_solvers, ", "));
 }
