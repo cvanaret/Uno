@@ -3,7 +3,7 @@
 
 std::vector<double> add_vectors(const std::vector<double>& x, const std::vector<double>& y, double scaling_factor) {
     if (x.size() != y.size()) {
-        throw std::length_error("Utils.add_vectors: x and y have different sizes");
+        throw std::length_error("Vector.add_vectors: x and y have different sizes");
     }
     std::vector<double> z(x.size());
     for (size_t i = 0; i < x.size(); i++) {
@@ -126,7 +126,7 @@ double dot(const std::vector<double>& x, const SparseGradient& y) {
             dot += x[i] * yi;
         }
         else {
-            throw std::length_error("Utils.dot: x and y have different sizes");
+            throw std::length_error("Vector.dot: x and y have different sizes");
         }
     }
     return dot;
