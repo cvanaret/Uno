@@ -68,9 +68,9 @@ double norm_2(const SparseGradient& x) {
 }
 
 /* compute ||x||_infty */
-double norm_inf(const std::vector<double>& x, unsigned int length) {
+double norm_inf(const std::vector<double>& x, size_t length) {
     double norm = 0.;
-    for (size_t i = 0; i < std::min<unsigned int>(length, x.size()); i++) {
+    for (size_t i = 0; i < std::min<size_t>(length, x.size()); i++) {
         norm = std::max(norm, std::abs(x[i]));
     }
     return norm;
@@ -140,18 +140,19 @@ double dot(const SparseGradient& x, const SparseGradient& y) {
         try {
             dot += xi * y.at(i);
         }
-        catch (std::out_of_range) {}
+        catch (std::out_of_range&) {}
     }
     return dot;
 }
 
-std::string join(const std::vector<std::string> vector, const char* separator) {
+std::string join(const std::vector<std::string>& vector, const std::string& separator) {
     std::string s;
     if (0 < vector.size()) {
         s.append(vector[0]);
     }
     for (size_t i = 1; i < vector.size(); i++) {
-        s.append(separator).append(vector[i]);
+        s.append(separator);
+        s.append(vector[i]);
     }
     return s;
 }

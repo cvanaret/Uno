@@ -273,7 +273,7 @@ double InteriorPoint::compute_primal_length_(Iterate& current_iterate, std::vect
 
 double InteriorPoint::compute_dual_length_(Iterate& current_iterate, double tau, std::vector<double>& lower_delta_z, std::vector<double>& upper_delta_z) {
     double dual_length = 1.;
-    for (unsigned int i = 0; i < current_iterate.multipliers.lower_bounds.size(); i++) {
+    for (size_t i = 0; i < current_iterate.multipliers.lower_bounds.size(); i++) {
         double trial_alpha_zj = -tau * current_iterate.multipliers.lower_bounds[i] / lower_delta_z[i];
         if (0 < trial_alpha_zj && trial_alpha_zj <= 1.) {
             dual_length = std::min(dual_length, trial_alpha_zj);
@@ -399,7 +399,7 @@ void InteriorPoint::generate_kkt_rhs_(Problem& problem, Iterate& current_iterate
     int number_variables = problem.number_variables + problem.inequality_constraints.size();
 
     /* generate the right-hand side */
-    for (unsigned int i = 0; i < this->rhs_.size(); i++) {
+    for (size_t i = 0; i < this->rhs_.size(); i++) {
         this->rhs_[i] = 0.;
     }
 
@@ -601,7 +601,7 @@ std::vector<Direction> InteriorPoint::restore_feasibility(Problem& problem, Iter
     }
     // scale dual variables
     double dual_length = this->compute_dual_length_(current_iterate, tau, lower_delta_z, upper_delta_z);
-    for (unsigned int i = 0; i < current_iterate.multipliers.lower_bounds.size(); i++) {
+    for (size_t i = 0; i < current_iterate.multipliers.lower_bounds.size(); i++) {
         trial_multipliers.lower_bounds[i] = current_iterate.multipliers.lower_bounds[i] + dual_length * lower_delta_z[i];
         trial_multipliers.upper_bounds[i] = current_iterate.multipliers.upper_bounds[i] + dual_length * upper_delta_z[i];
         // TODO rescale the multipliers (IPOPT paper p6)
@@ -633,7 +633,7 @@ std::vector<Direction> InteriorPoint::restore_feasibility(Problem& problem, Iter
 double InteriorPoint::compute_central_complementarity_error(Iterate& iterate, double mu, std::vector<Range>& variables_bounds) {
     std::vector<double> residuals(iterate.x.size());
     /* variable bound constraints */
-    for (unsigned int i = 0; i < iterate.x.size(); i++) {
+    for (size_t i = 0; i < iterate.x.size(); i++) {
         if (-INFINITY < variables_bounds[i].lb) {
             residuals[i] = iterate.multipliers.lower_bounds[i] * (iterate.x[i] - variables_bounds[i].lb) - mu;
         }

@@ -18,5 +18,6 @@ std::unique_ptr<LinearSolver> LinearSolverFactory::create(const std::string& lin
 //    }
 //    possible_solvers.push_back("PARDISO");
 //#endif
-    throw std::invalid_argument("LinearSolver name " + linear_solver_name + " does not exist. The possible options are: " + join(possible_solvers, ", "));
+    throw std::invalid_argument("LinearSolver name " + linear_solver_name + " does not exist.");
+       // " The possible options are: " + join(possible_solvers, ", "));
 }

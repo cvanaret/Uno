@@ -21,7 +21,7 @@ double norm_2_squared(const SparseGradient& x);
 double norm_2(const std::vector<double>& x);
 double norm_2(const SparseGradient& x);
 
-double norm_inf(const std::vector<double>& x, unsigned int length = std::numeric_limits<unsigned int>::max());
+double norm_inf(const std::vector<double>& x, size_t length = std::numeric_limits<unsigned int>::max());
 double norm_inf(const SparseGradient& x);
 double norm_inf(const std::vector<SparseGradient>& m);
 
@@ -120,6 +120,6 @@ void print_vector(const Level& level, const std::unordered_map<T, U>& x, const c
     return;
 }
 
-std::string join(std::vector<std::string> vector, const char* separator);
+std::string join(std::vector<std::string>& vector, const std::string& separator);
 
 #endif // UTILS_H
