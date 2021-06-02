@@ -4,15 +4,15 @@
 
 /* TODO: avoid using implicit AMPL macros */
 
-ASL_pfgh* generate_asl(std::string file_name) {
+ASL* generate_asl(std::string file_name) {
 //    SufDecl suffixes[] = {
 //        /* suffix "uncertain" for variables or constraints */
 //        {const_cast<char*> (UNCERTAIN_SUFFIX), 0, ASL_Sufkind_var},
 //        {const_cast<char*> (UNCERTAINTY_SET_SUFFIX), 0, ASL_Sufkind_con}
 //    };
 
-   ASL_pfgh* asl = (ASL_pfgh*) ASL_alloc(ASL_read_pfgh);
-   FILE* nl = jac0dim_ASL((ASL*) asl, const_cast<char*> (file_name.data()), (fint) file_name.size());
+   ASL* asl = ASL_alloc(ASL_read_pfgh);
+   FILE* nl = jac0dim_ASL(asl, const_cast<char*> (file_name.data()), (fint) file_name.size());
    /* indices start at 0 */
    asl->i.Fortran_ = 0;
 
@@ -27,8 +27,8 @@ ASL_pfgh* generate_asl(std::string file_name) {
    asl->i.pi0_ = (double*) M1zapalloc(sizeof(double) * n_con);
 
    /* read the file_name.nl file */
-//    suf_declare_ASL((ASL*) asl, suffixes, sizeof (suffixes) / sizeof (SufDecl));
-   pfgh_read_ASL((ASL*) asl, nl, ASL_findgroups);
+//    suf_declare_ASL(asl, suffixes, sizeof (suffixes) / sizeof (SufDecl));
+   pfgh_read_ASL(asl, nl, ASL_findgroups);
 
    return asl;
 }
@@ -37,7 +37,7 @@ ASL_pfgh* generate_asl(std::string file_name) {
 AMPLModel::AMPLModel(std::string file_name, int fortran_indexing) : AMPLModel(file_name, generate_asl(file_name), fortran_indexing) {
 }
 
-AMPLModel::AMPLModel(std::string file_name, ASL_pfgh* asl, int fortran_indexing) : Problem(file_name, asl->i.n_var_, asl->i.n_con_,
+AMPLModel::AMPLModel(std::string file_name, ASL* asl, int fortran_indexing) : Problem(file_name, asl->i.n_var_, asl->i.n_con_,
       NONLINEAR), // asl->i.nlc_ + asl->i.nlo_ > 0),
 //variable_uncertain(asl->i.n_var_),
 //constraint_is_uncertainty_set(asl->i.n_con_),
@@ -65,7 +65,7 @@ AMPLModel::~AMPLModel() {
    ASL_free((ASL * *) & this->asl_);
 }
 
-bool is_discrete(ASL_pfgh* asl, int index) {
+bool is_discrete(ASL* asl, int index) {
    return ((asl->i.nlvb_ - asl->i.nlvbi_ <= index && index < asl->i.nlvb_) ||
            (asl->i.nlvc_ - asl->i.nlvci_ <= index && index < asl->i.nlvc_) ||
            (asl->i.nlvo_ - asl->i.nlvoi_ <= index && index < asl->i.nlvo_) ||
@@ -73,11 +73,10 @@ bool is_discrete(ASL_pfgh* asl, int index) {
 }
 
 void AMPLModel::generate_variables_() {
-//    SufDesc* uncertain_suffixes = suf_get_ASL((ASL*) this->asl_, UNCERTAIN_SUFFIX, ASL_Sufkind_var);
+//    SufDesc* uncertain_suffixes = suf_get_ASL(this->asl_, UNCERTAIN_SUFFIX, ASL_Sufkind_var);
 
    for (int i = 0; i < this->number_variables; i++) {
-      this->variable_name[i] = var_name_ASL((ASL * )
-      this->asl_, i);
+      this->variable_name[i] = var_name_ASL(this->asl_, i);
       //this->variable_discrete[i] = is_discrete(this->asl_, i);
       double lb = (this->asl_->i.LUv_ != NULL) ? this->asl_->i.LUv_[2 * i] : -INFINITY;
       double ub = (this->asl_->i.LUv_ != NULL) ? this->asl_->i.LUv_[2 * i + 1] : INFINITY;
@@ -93,9 +92,7 @@ void AMPLModel::generate_variables_() {
 
 double AMPLModel::objective(const std::vector<double>& x) const {
    int nerror = 0;
-   double result = this->objective_sign * (*((ASL * )
-   this->asl_)->p.Objval)((ASL * )
-   this->asl_, 0, (double*) x.data(), &nerror);
+   double result = this->objective_sign * (*(this->asl_)->p.Objval)(this->asl_, 0, (double*) x.data(), &nerror);
    if (0 < nerror) {
       throw FunctionNumericalError();
    }
@@ -106,9 +103,7 @@ double AMPLModel::objective(const std::vector<double>& x) const {
 SparseGradient AMPLModel::objective_gradient(std::vector<double>& x) const {
    /* compute the AMPL gradient (always in dense format) */
    int nerror = 0;
-   (*((ASL * )
-   this->asl_)->p.Objgrd)((ASL * )
-   this->asl_, 0, x.data(), (double*) this->ampl_tmp_gradient_.data(), &nerror);
+   (*(this->asl_)->p.Objgrd)(this->asl_, 0, x.data(), (double*) this->ampl_tmp_gradient_.data(), &nerror);
    if (0 < nerror) {
       throw GradientNumericalError();
    }
@@ -129,17 +124,14 @@ SparseGradient AMPLModel::objective_gradient(std::vector<double>& x) const {
 }
 
 void AMPLModel::initialize_objective_() {
-   this->objective_name = obj_name_ASL((ASL * )
-   this->asl_, 0);
+   this->objective_name = obj_name_ASL(this->asl_, 0);
    //this->create_objective_variables_(this->asl_->i.Ograd_[0]);
    return;
 }
 
 double AMPLModel::evaluate_constraint(int j, std::vector<double>& x) const {
    int nerror = 0;
-   double result = (*((ASL * )
-   this->asl_)->p.Conival)((ASL * )
-   this->asl_, j, x.data(), &nerror);
+   double result = (*(this->asl_)->p.Conival)(this->asl_, j, x.data(), &nerror);
    if (0 < nerror) {
       throw FunctionNumericalError();
    }
@@ -152,9 +144,7 @@ std::vector<double> AMPLModel::evaluate_constraints(std::vector<double>& x) cons
    //    constraints[j] = this->evaluate_constraint(j, x);
    //}
    int nerror = 0;
-   (*((ASL * )
-   this->asl_)->p.Conval)((ASL * )
-   this->asl_, x.data(), constraints.data(), &nerror);
+   (*(this->asl_)->p.Conval)(this->asl_, x.data(), constraints.data(), &nerror);
    if (0 < nerror) {
       throw FunctionNumericalError();
    }
@@ -168,9 +158,7 @@ void AMPLModel::constraint_gradient(std::vector<double>& x, int j, SparseGradien
 
    /* compute the AMPL gradient */
    int nerror = 0;
-   (*((ASL * )
-   this->asl_)->p.Congrd)((ASL * )
-   this->asl_, j, x.data(), (double*) this->ampl_tmp_gradient_.data(), &nerror);
+   (*(this->asl_)->p.Congrd)(this->asl_, j, x.data(), (double*) this->ampl_tmp_gradient_.data(), &nerror);
    if (0 < nerror) {
       throw GradientNumericalError();
    }
@@ -200,11 +188,10 @@ std::vector<SparseGradient> AMPLModel::constraints_jacobian(std::vector<double>&
 }
 
 void AMPLModel::generate_constraints_() {
-   //SufDesc* uncertain_suffixes = suf_get_ASL((ASL*) this->asl_, UNCERTAINTY_SET_SUFFIX, ASL_Sufkind_con);
+   //SufDesc* uncertain_suffixes = suf_get_ASL(this->asl_, UNCERTAINTY_SET_SUFFIX, ASL_Sufkind_con);
 
    for (int j = 0; j < this->number_constraints; j++) {
-      this->constraint_name[j] = con_name_ASL((ASL * )
-      this->asl_, j);
+      this->constraint_name[j] = con_name_ASL(this->asl_, j);
       double lb = (this->asl_->i.LUrhs_ != NULL) ? this->asl_->i.LUrhs_[2 * j] : -INFINITY;
       double ub = (this->asl_->i.LUrhs_ != NULL) ? this->asl_->i.LUrhs_[2 * j + 1] : INFINITY;
       this->constraint_bounds[j] = {lb, ub};
@@ -217,7 +204,7 @@ void AMPLModel::generate_constraints_() {
 
 void AMPLModel::set_function_types_(std::string file_name) {
    /* allocate a temporary ASL to read Hessian sparsity pattern */
-   ASL_pfgh* asl = (ASL_pfgh*) ASL_alloc(ASL_read_fg);
+   ASL* asl = ASL_alloc(ASL_read_fg);
    // char* stub = getstops(file_name, option_info);
    //if (file_name == NULL) {
    //	usage_ASL(option_info, 1);
@@ -225,7 +212,7 @@ void AMPLModel::set_function_types_(std::string file_name) {
 
    FILE* nl = jac0dim(const_cast<char*> (file_name.data()), (fint) file_name.size());
    /* specific read function */
-   qp_read_ASL((ASL*) asl, nl, ASL_findgroups);
+   qp_read_ASL(asl, nl, ASL_findgroups);
 
    fint* rowq;
    fint* colqp;
@@ -242,7 +229,7 @@ void AMPLModel::set_function_types_(std::string file_name) {
    this->type = LINEAR;
    int current_linear_constraint = 0;
    for (int j = 0; j < this->number_constraints; j++) {
-      fint qp = nqpcheck_ASL((ASL*) asl, -(j + 1), &rowq, &colqp, &delsqp);
+      fint qp = nqpcheck_ASL(asl, -(j + 1), &rowq, &colqp, &delsqp);
 
       if (0 < qp) {
          this->constraint_type[j] = QUADRATIC;
@@ -259,7 +246,7 @@ void AMPLModel::set_function_types_(std::string file_name) {
       }
    }
    /* objective function */
-   fint qp = nqpcheck_ASL((ASL*) asl, 0, &rowq, &colqp, &delsqp);
+   fint qp = nqpcheck_ASL(asl, 0, &rowq, &colqp, &delsqp);
    if (0 < qp) {
       this->objective_type = QUADRATIC;
       if (this->type == LINEAR) {
@@ -273,7 +260,7 @@ void AMPLModel::set_function_types_(std::string file_name) {
       this->objective_type = NONLINEAR;
       this->type = NONLINEAR;
    }
-   qp_opify_ASL((ASL*) asl);
+   qp_opify_ASL(asl);
 
    /* deallocate memory */
    ASL_free((ASL * *) & asl);
@@ -286,14 +273,11 @@ void AMPLModel::initialize_lagrangian_hessian_() {
    /* fint (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri); */
    int objective_number = 0;
    int upper_triangular = 1;
-   this->hessian_maximum_number_nonzeros = (*((ASL * )
-   this->asl_)->p.Sphset)((ASL * )
-   this->asl_, NULL, objective_number, 1, 1, upper_triangular);
+   this->hessian_maximum_number_nonzeros = (*(this->asl_)->p.Sphset)(this->asl_, NULL, objective_number, 1, 1, upper_triangular);
 
    // use Lagrangian scale: in AMPL, the Lagrangian is f + lambda.g, while Argonot uses f - lambda.g
    int nerror;
-   lagscale_ASL((ASL * )
-   this->asl_, -1., &nerror);
+   lagscale_ASL(this->asl_, -1., &nerror);
    return;
 }
 
@@ -309,27 +293,21 @@ bool are_all_zeros(const std::vector<double>& multipliers) {
 CSCMatrix
 AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers) const {
    /* register the vector of variables */
-   (*((ASL * )
-   this->asl_)->p.Xknown)((ASL * )
-   this->asl_, (double*) x.data(), 0);
+   (*(this->asl_)->p.Xknown)(this->asl_, (double*) x.data(), 0);
 
    /* set the multiplier for the objective function */
    int objective_number = (objective_multiplier != 0.) ? 0 : -1;
    double* objective_multiplier_pointer = (objective_multiplier != 0.) ? &objective_multiplier : NULL;
    int upper_triangular = 1;
 
-   // compute the sparsity
+   /* compute the sparsity */
    bool all_zeros_multipliers = are_all_zeros(multipliers);
-   int number_non_zeros = (*((ASL * )
-   this->asl_)->p.Sphset)((ASL * )
-   this->asl_, NULL, objective_number, (objective_multiplier > 0.), !all_zeros_multipliers, upper_triangular);
+   int number_non_zeros = (*(this->asl_)->p.Sphset)(this->asl_, NULL, objective_number, (objective_multiplier > 0.), !all_zeros_multipliers, upper_triangular);
 
    /* evaluate the Hessian */
    std::vector<double> hessian(number_non_zeros);
-   (*((ASL * )
-   this->asl_)->p.Sphes)((ASL * )
-   this->asl_, 0, hessian.data(), objective_number, objective_multiplier_pointer, all_zeros_multipliers ? nullptr : (double*) multipliers
-         .data());
+   (*(this->asl_)->p.Sphes)(this->asl_, 0, hessian.data(), objective_number, objective_multiplier_pointer,
+         all_zeros_multipliers ? nullptr : (double*) multipliers.data());
 
    /* build sparse description */
    std::vector<int> column_start(this->number_variables + 1);

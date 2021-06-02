@@ -28,7 +28,7 @@ public:
     /* objective */
     [[nodiscard]] double objective(const std::vector<double>& x) const override;
     SparseGradient objective_gradient(std::vector<double>& x) const override;
-    
+
     /* constraints */
     //std::vector<bool> constraint_is_uncertainty_set;
     double evaluate_constraint(int j, std::vector<double>& x) const override;
@@ -45,9 +45,9 @@ public:
 
 private:
     // private constructor to pass the dimensions to the Problem base constructor
-    AMPLModel(std::string file_name, ASL_pfgh* asl, int fortran_indexing);
+    AMPLModel(std::string file_name, ASL* asl, int fortran_indexing);
 
-    ASL_pfgh* asl_; /*!< Instance of the AMPL Solver Library class */
+    ASL* asl_; /*!< Instance of the AMPL Solver Library class */
     int fortran_indexing;
     std::vector<double> ampl_tmp_gradient_;
 
