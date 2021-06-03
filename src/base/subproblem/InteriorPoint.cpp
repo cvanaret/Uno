@@ -27,9 +27,8 @@ parameters_({0.99, 1e10, 100., 0.2, 1.5, 10., 1e10}) {
         }
     }
     /* identify the inequality constraint slacks */
-    for (std::pair<const int, int>& element: problem.inequality_constraints) {
-        int j = element.first;
-        int slack_index = problem.number_variables + element.second;
+    for (const auto [j, i]: problem.inequality_constraints) {
+        int slack_index = problem.number_variables + i;
         if (problem.constraint_status[j] == BOUNDED_LOWER || problem.constraint_status[j] == BOUNDED_BOTH_SIDES) {
             this->lower_bounded_variables.insert(slack_index);
         }
@@ -64,9 +63,8 @@ Iterate InteriorPoint::evaluate_initial_point(const Problem& problem, const std:
 
     /* initialize the slacks */
     first_iterate.compute_constraints(problem);
-    for (const std::pair<const int, int>& element: problem.inequality_constraints) {
-        int j = element.first;
-        int slack_index = problem.number_variables + element.second;
+    for (const auto [j, i]: problem.inequality_constraints) {
+        int slack_index = problem.number_variables + i;
         double slack_value = Subproblem::project_strictly_variable_in_bounds(first_iterate.constraints[j], problem.constraint_bounds[j]);
         first_iterate.x[slack_index] = slack_value;
     }
@@ -74,9 +72,8 @@ Iterate InteriorPoint::evaluate_initial_point(const Problem& problem, const std:
     /* evaluate the constraint Jacobian */
     first_iterate.compute_constraints_jacobian(problem);
     // contribution of the slacks
-    for (const std::pair<const int, int>& element: problem.inequality_constraints) {
-        int j = element.first;
-        int slack_index = problem.number_variables + element.second;
+    for (const auto [j, i]: problem.inequality_constraints) {
+        int slack_index = problem.number_variables + i;
         first_iterate.constraints_jacobian[j][slack_index] = -1.;
     }
     /* compute least-square multipliers */
@@ -112,9 +109,8 @@ trust_region_radius) {
 
     current_iterate.compute_constraints_jacobian(problem);
     // contribution of the slacks
-    for (std::pair<const int, int>& element: problem.inequality_constraints) {
-        int j = element.first;
-        int slack_index = problem.number_variables + element.second;
+    for (const auto [j, i]: problem.inequality_constraints) {
+        int slack_index = problem.number_variables + i;
         current_iterate.constraints_jacobian[j][slack_index] = -1.;
     }
 
@@ -191,9 +187,8 @@ void InteriorPoint::evaluate_optimality_iterate_(Problem& problem, Iterate& curr
     /* compute constraint Jacobian */
     current_iterate.compute_constraints_jacobian(problem);
     // contribution of the slacks
-    for (std::pair<const int, int>& element: problem.inequality_constraints) {
-        int j = element.first;
-        int slack_index = problem.number_variables + element.second;
+    for (const auto [j, i]: problem.inequality_constraints) {
+        int slack_index = problem.number_variables + i;
         current_iterate.constraints_jacobian[j][slack_index] = -1.;
     }
 
@@ -304,9 +299,7 @@ COOMatrix InteriorPoint::generate_optimality_kkt_matrix_(Problem& problem, Itera
 
     /* Jacobian of general constraints */
     for (int j = 0; j < problem.number_constraints; j++) {
-        for (std::pair<int, double> term: current_iterate.constraints_jacobian[j]) {
-            int variable_index = term.first;
-            double derivative = term.second;
+        for (const auto [variable_index, derivative]: current_iterate.constraints_jacobian[j]) {
             kkt_matrix.insert(derivative, variable_index, number_variables + j);
         }
     }
@@ -405,18 +398,14 @@ void InteriorPoint::generate_kkt_rhs_(Problem& problem, Iterate& current_iterate
     }
 
     /* barrier objective gradient */
-    for (std::pair<int, double> term: current_iterate.objective_gradient) {
-        int i = term.first;
-        double derivative = term.second;
+    for (const auto [i, derivative]: current_iterate.objective_gradient) {
         this->rhs_[i] = -derivative;
     }
 
     /* constraint gradients */
     for (int j = 0; j < problem.number_constraints; j++) {
         if (current_iterate.multipliers.constraints[j] != 0.) {
-            for (std::pair<int, double> term: current_iterate.constraints_jacobian[j]) {
-                int variable_index = term.first;
-                double derivative = term.second;
+            for (const auto [variable_index, derivative]: current_iterate.constraints_jacobian[j]) {
                 this->rhs_[variable_index] += current_iterate.multipliers.constraints[j] * derivative;
             }
         }
@@ -564,9 +553,7 @@ std::vector<Direction> InteriorPoint::restore_feasibility(Problem& problem, Iter
     // constraint Jacobian
     for (int j = 0; j < problem.number_constraints; j++) {
         if (restoration_multipliers[j] != 0.) {
-            for (std::pair<int, double> term: current_iterate.constraints_jacobian[j]) {
-                int i = term.first;
-                double derivative = term.second;
+            for (const auto [i, derivative]: current_iterate.constraints_jacobian[j]) {
                 rhs[i] += restoration_multipliers[j] * derivative;
             }
         }

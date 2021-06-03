@@ -75,9 +75,7 @@ std::vector<double> Iterate::lagrangian_gradient(const Problem& problem, double 
         this->compute_objective_gradient(problem);
         
         /* scale the objective gradient */
-        for (std::pair<int, double> term : this->objective_gradient) {
-            int i = term.first;
-            double derivative = term.second;
+        for (const auto [i, derivative]: this->objective_gradient) {
             if (i < problem.number_variables) {
                 lagrangian_gradient[i] += objective_mutiplier*derivative;
             }
@@ -93,9 +91,7 @@ std::vector<double> Iterate::lagrangian_gradient(const Problem& problem, double 
     for (int j = 0; j < problem.number_constraints; j++) {
         double multiplier_j = multipliers.constraints[j];
         if (multiplier_j != 0.) {
-            for (std::pair<int, double> term : this->constraints_jacobian[j]) {
-                int i = term.first;
-                double derivative = term.second;
+            for (const auto [i, derivative]: this->constraints_jacobian[j]) {
                 if (i < problem.number_variables) {
                     lagrangian_gradient[i] -= multiplier_j*derivative;
                 }

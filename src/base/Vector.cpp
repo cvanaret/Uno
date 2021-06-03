@@ -95,9 +95,7 @@ double norm_inf(const std::vector<SparseGradient>& m) {
     // read the matrix column-wise and fill in the row_vectors norm vector
     std::vector<double> row_vectors(number_rows);
     for (size_t j = 0; j < m.size(); j++) {
-        for (std::pair<const int, double> element: m[j]) {
-            int i = element.first;
-            double value = element.second;
+        for (const auto [i, value]: m[j]) {
             row_vectors[i] += std::abs(value);
         }
     }
@@ -119,9 +117,7 @@ double dot(const std::vector<double>& x, const std::vector<double>& y) {
 
 double dot(const std::vector<double>& x, const SparseGradient& y) {
     double dot = 0.;
-    for (std::pair<int, double> term: y) {
-        unsigned int i = term.first;
-        double yi = term.second;
+    for (const auto [i, yi]: y) {
         if (i < x.size()) {
             dot += x[i] * yi;
         }
@@ -134,9 +130,7 @@ double dot(const std::vector<double>& x, const SparseGradient& y) {
 
 double dot(const SparseGradient& x, const SparseGradient& y) {
     double dot = 0.;
-    for (std::pair<int, double> term: x) {
-        int i = term.first;
-        double xi = term.second;
+    for (const auto [i, xi]: x) {
         try {
             dot += xi * y.at(i);
         }
