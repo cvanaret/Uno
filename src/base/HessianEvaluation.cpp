@@ -6,9 +6,6 @@
 HessianEvaluation::HessianEvaluation(int dimension): dimension(dimension) {
 }
 
-HessianEvaluation::~HessianEvaluation() {
-}
-
 CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& hessian, LinearSolver& linear_solver) {
     double beta = 1e-4;
 
