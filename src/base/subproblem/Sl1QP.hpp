@@ -1,10 +1,12 @@
 #ifndef Sl1QP_H
 #define Sl1QP_H
 
+#include <Relaxation.hpp>
 #include "Subproblem.hpp"
 #include "QPSolver.hpp"
 #include "HessianEvaluation.hpp"
 #include "ActiveSetMethod.hpp"
+#include "Relaxation.hpp"
 
 struct Sl1QPParameters {
     double tau;
@@ -26,7 +28,8 @@ public:
      */
     Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals, double initial_parameter);
     
-    std::vector<Direction> compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius = INFINITY) override;
+    std::vector<Direction> compute_directions(Problem& problem, Iterate& current_iterate, double objective_multiplier, double
+    trust_region_radius = INFINITY) override;
     std::vector<Direction> restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius = INFINITY) override;
     
     /* use pointers to allow polymorphism */
@@ -48,7 +51,7 @@ protected:
     std::vector<Range> generate_variables_bounds_(Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
     Direction solve_l1qp_subproblem_(Problem& problem, Iterate& current_iterate, double trust_region_radius, double penalty_parameter);
     double compute_predicted_reduction_(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length);
-    double compute_linearized_constraint_residual_(std::vector<double>& x);
+    double compute_linearized_constraint_residual_(std::vector<double>& direction);
     double compute_error_(Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter);
     double compute_complementarity_error_(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const override;
 };

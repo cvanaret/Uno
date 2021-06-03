@@ -19,7 +19,8 @@ linear_solver(LinearSolverFactory::create(linear_solver_name)),
 hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, false)) {
 }
 
-std::vector<Direction> SLPEQP::compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+std::vector<Direction> SLPEQP::compute_directions(Problem& problem, Iterate& current_iterate, double /*objective_multiplier*/, double
+trust_region_radius) {
     /* compute first-order information */
     current_iterate.compute_objective_gradient(problem);
     current_iterate.compute_constraints(problem);

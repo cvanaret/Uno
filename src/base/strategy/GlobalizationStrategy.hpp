@@ -24,7 +24,7 @@ public:
      * \param constants: set of constants
      */
     GlobalizationStrategy(Subproblem& subproblem);
-    virtual ~GlobalizationStrategy();
+    virtual ~GlobalizationStrategy() = default;
 
     Subproblem& subproblem;
 

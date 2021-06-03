@@ -1,4 +1,4 @@
-#include "InfeasibilityStrategy.hpp"
+#include "FeasibilityStrategy.hpp"
 
-InfeasibilityStrategy::InfeasibilityStrategy(Subproblem& subproblem): subproblem(subproblem) {
+FeasibilityStrategy::FeasibilityStrategy(Subproblem& subproblem): subproblem(subproblem) {
 }

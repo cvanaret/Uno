@@ -6,6 +6,7 @@
 #include <sstream>
 #include "AMPLModel.hpp"
 #include "SubproblemFactory.hpp"
+#include "FeasibilityRestoration.hpp"
 #include "GlobalizationStrategyFactory.hpp"
 #include "GlobalizationMechanismFactory.hpp"
 #include "Uno.hpp"
@@ -22,6 +23,9 @@ void run_uno(std::string problem_name, std::map<std::string, std::string> option
     bool use_trust_region = (options["mechanism"] == "TR");
     bool scale_residuals = (options["scale_residuals"] == "yes");
     std::unique_ptr<Subproblem> subproblem = SubproblemFactory::create(problem, options["subproblem"], options, use_trust_region, scale_residuals);
+
+    /* create the infeasibility method */
+    //FeasibilityRestoration feasibility_method = FeasibilityRestoration(*subproblem);
 
     /* create the globalization strategy */
     std::unique_ptr<GlobalizationStrategy> strategy = GlobalizationStrategyFactory::create(options["strategy"], *subproblem, options);
@@ -190,7 +194,7 @@ std::map<std::string, std::string> get_options(std::string file_name) {
 
 void test_mask_matrix() {
     int n = 4;
-    ArgonotMatrix matrix(n, 0);
+    UnoMatrix matrix(n, 0);
     
     // Column 0
     matrix.insert(1., 0, 0);

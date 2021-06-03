@@ -1,9 +1,9 @@
 #include "Subproblem.hpp"
 #include "LinearSolverFactory.hpp"
 
-Subproblem::Subproblem(std::string residual_norm, std::vector<Range>& variables_bounds, bool scale_residuals):
+Subproblem::Subproblem(Norm residual_norm, std::vector<Range>& variables_bounds, bool scale_residuals):
 residual_norm(residual_norm),
-subproblem_variables_bounds(variables_bounds), // register the original bounds
+bounds(variables_bounds), // register the original bounds
 number_subproblems_solved(0), subproblem_definition_changed(false),
 scale_residuals(scale_residuals) {
 }
@@ -126,11 +126,11 @@ double Subproblem::compute_complementarity_error_(const Problem& problem, Iterat
     double complementarity_error = 0.;
     /* bound constraints */
     for (unsigned int i = 0; i < iterate.x.size(); i++) {
-        if (-INFINITY < this->subproblem_variables_bounds[i].lb) {
-            complementarity_error += std::abs(multipliers.lower_bounds[i] * (iterate.x[i] - this->subproblem_variables_bounds[i].lb));
+        if (-INFINITY < this->bounds[i].lb) {
+            complementarity_error += std::abs(multipliers.lower_bounds[i] * (iterate.x[i] - this->bounds[i].lb));
         }
-        if (this->subproblem_variables_bounds[i].ub < INFINITY) {
-            complementarity_error += std::abs(multipliers.upper_bounds[i] * (iterate.x[i] - this->subproblem_variables_bounds[i].ub));
+        if (this->bounds[i].ub < INFINITY) {
+            complementarity_error += std::abs(multipliers.upper_bounds[i] * (iterate.x[i] - this->bounds[i].ub));
         }
     }
     /* constraints */

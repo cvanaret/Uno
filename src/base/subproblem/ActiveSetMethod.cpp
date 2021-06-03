@@ -6,7 +6,7 @@
 #include "Logger.hpp"
 
 ActiveSetMethod::ActiveSetMethod(Problem& problem, bool scale_residuals):
-Subproblem("l1", problem.variables_bounds, scale_residuals) {
+Subproblem(L1_NORM, problem.variables_bounds, scale_residuals) {
 }
 
 Iterate ActiveSetMethod::evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& multipliers) {
@@ -19,9 +19,9 @@ Iterate ActiveSetMethod::evaluate_initial_point(const Problem& problem, const st
 std::vector<Range> ActiveSetMethod::generate_variables_bounds_(Problem& /*problem*/, Iterate& current_iterate, double trust_region_radius) {
     std::vector<Range> bounds(current_iterate.x.size());
     /* bounds intersected with trust region  */
-    for (unsigned int i = 0; i < current_iterate.x.size(); i++) {
-        double lb = std::max(-trust_region_radius, this->subproblem_variables_bounds[i].lb - current_iterate.x[i]);
-        double ub = std::min(trust_region_radius, this->subproblem_variables_bounds[i].ub - current_iterate.x[i]);
+    for (size_t i = 0; i < current_iterate.x.size(); i++) {
+        double lb = std::max(-trust_region_radius, this->bounds[i].lb - current_iterate.x[i]);
+        double ub = std::min(trust_region_radius, this->bounds[i].ub - current_iterate.x[i]);
         bounds[i] = {lb, ub};
     }
     return bounds;
@@ -94,7 +94,7 @@ Direction ActiveSetMethod::compute_l1qp_step_(Problem& problem, QPSolver& solver
 
     /* generate the initial point */
     std::vector<double>& d0 = initial_solution;
-
+    
     /* solve the QP */
     Direction direction = solver.solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
     direction.objective_multiplier = 0.;
@@ -128,7 +128,7 @@ Direction ActiveSetMethod::compute_l1qp_step_(Problem& problem, QPSolver& solver
         current_iterate.constraints_jacobian[j][i] = 1.;
         objective_gradient[i] = 1.;
     }
-    current_iterate.set_objective_gradient(objective_gradient);
+    //current_iterate.set_objective_gradient(objective_gradient);
     
     /* bounds of the variables */
     std::vector<Range> variables_bounds = this->generate_variables_bounds_(problem, current_iterate, trust_region_radius);
@@ -139,12 +139,24 @@ Direction ActiveSetMethod::compute_l1qp_step_(Problem& problem, QPSolver& solver
     /* generate the initial point */
     std::vector<double> d0(variables_bounds.size()); // = {0.}
 
+    DEBUG << "Bounds:\n";
+    for (size_t i = 0; i < variables_bounds.size(); i++) {
+        DEBUG << "x" << i << " in [" << variables_bounds[i].lb << ", " << variables_bounds[i].ub << "]\n";
+    }
+    DEBUG << "Hessian: " << current_iterate.hessian << "\n";
+    DEBUG << "Objective gradient: "; print_vector(DEBUG, current_iterate.objective_gradient);
+    for (size_t j = 0; j < constraints_bounds.size(); j++) {
+        DEBUG << "Constraint " << j << ": "; print_vector(DEBUG, current_iterate.constraints_jacobian[j], ' '); DEBUG << " in [" << constraints_bounds[j].lb << ", " << constraints_bounds[j].ub << "]\n";
+    }
+
     /* solve the QP */
-    Direction direction = solver.solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
+    Direction direction = solver.solve_QP(variables_bounds, constraints_bounds, objective_gradient, current_iterate.constraints_jacobian, current_iterate.hessian, d0);
     direction.phase = OPTIMALITY;
     this->number_subproblems_solved++;
     // recompute active set: constraints are active when p-n = 0
     this->recover_l1qp_active_set_(problem, direction, elastic_variables);
+    DEBUG << direction;    
+    
     /* remove p and n */
     direction.x.resize(current_iterate.x.size());
     direction.multipliers.lower_bounds.resize(current_iterate.x.size());
@@ -165,18 +177,17 @@ Direction ActiveSetMethod::compute_l1qp_step_(Problem& problem, QPSolver& solver
         current_iterate.constraints_jacobian[j].erase(i);
         current_iterate.objective_gradient.erase(i);
     }
-    DEBUG << direction;
     return direction;
 }
 
 void ActiveSetMethod::recover_l1qp_active_set_(Problem& problem, Direction& direction, const ElasticVariables& elastic_variables) {
     // remove extra variables p and n
-    for (unsigned int i = problem.number_variables; i < direction.x.size(); i++) {
+    for (size_t i = problem.number_variables; i < direction.x.size(); i++) {
         direction.active_set.bounds.at_lower_bound.erase(i);
         direction.active_set.bounds.at_upper_bound.erase(i);
     }
     // constraints: only when p-n = 0
-    for (unsigned int j = 0; j < direction.multipliers.constraints.size(); j++) {
+    for (size_t j = 0; j < direction.multipliers.constraints.size(); j++) {
         // compute constraint violation
         double constraint_violation = 0.;
         try {
@@ -200,17 +211,17 @@ void ActiveSetMethod::recover_l1qp_active_set_(Problem& problem, Direction& dire
 
 void ActiveSetMethod::generate_elastic_variables_(Problem& problem, ElasticVariables& elastic_variables) {
     // generate elastic variables p and n on the fly to relax the constraints
-    int current_index = problem.number_variables;
+    int elastic_index = problem.number_variables;
     for (int j = 0; j < problem.number_constraints; j++) {
         if (-INFINITY < problem.constraint_bounds[j].lb) {
             // nonpositive variable n that captures the negative part of the constraint violation
-            elastic_variables.negative[j] = current_index;
-            current_index++;
+            elastic_variables.negative[j] = elastic_index;
+            elastic_index++;
         }
         if (problem.constraint_bounds[j].ub < INFINITY) {
             // nonnegative variable p that captures the positive part of the constraint violation
-            elastic_variables.positive[j] = current_index;
-            current_index++;
+            elastic_variables.positive[j] = elastic_index;
+            elastic_index++;
         }
     }
     return;

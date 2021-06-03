@@ -18,7 +18,7 @@ Iterate LineSearch::initialize(Statistics& statistics, Problem& problem, std::ve
 Iterate LineSearch::compute_acceptable_iterate(Statistics& statistics, Problem& problem, Iterate& current_iterate) {
     bool line_search_termination = false;
     /* compute the step */
-    std::vector<Direction> directions = this->globalization_strategy.subproblem.compute_directions(problem, current_iterate);
+    std::vector<Direction> directions = this->globalization_strategy.subproblem.compute_directions(problem, current_iterate, 1.);
 
     while (!line_search_termination) {
         /* step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ... */

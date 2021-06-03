@@ -9,6 +9,7 @@
 struct ElasticVariables {
     std::map<int, int> positive;
     std::map<int, int> negative;
+    size_t size() const { return this->positive.size() + this->negative.size(); }
 };
 
 class ActiveSetMethod : public Subproblem {
@@ -20,6 +21,8 @@ public:
     void compute_optimality_measures(const Problem& problem, Iterate& iterate);
     void compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const Direction& direction);
 
+   static void generate_elastic_variables_(Problem& problem, ElasticVariables& elastic_variables);
+
 protected:
     /* QP subproblems */
     // optimality QP
@@ -29,7 +32,7 @@ protected:
     // l1QP
     Direction compute_l1qp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, ConstraintPartition& constraint_partition, std::vector<double>& initial_direction, double trust_region_radius);
     Direction compute_l1qp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, double penalty_parameter, ElasticVariables& elastic_variables, double trust_region_radius);
-    static void generate_elastic_variables_(Problem& problem, ElasticVariables& elastic_variables);
+
     void compute_l1_linear_objective_(Iterate& current_iterate, ConstraintPartition& constraint_partition);
     std::vector<double> generate_l1_multipliers_(Problem& problem, std::vector<double>& current_constraint_multipliers, ConstraintPartition& constraint_partition);
     std::vector<Range> generate_feasibility_bounds_(Problem& problem, std::vector<double>& current_constraints, ConstraintPartition& constraint_partition);

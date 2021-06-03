@@ -10,6 +10,8 @@
 #include "Logger.hpp"
 #include "SparseGradient.hpp"
 
+enum Norm {L1_NORM = 1, L2_NORM = 2, L2_SQUARED_NORM, INF_NORM};
+
 std::vector<double> add_vectors(const std::vector<double>& x, const std::vector<double>& y, double scaling_factor = 1.);
 
 double norm_1(const std::vector<double>& x);
@@ -30,18 +32,18 @@ double dot(const std::vector<double>& x, const SparseGradient& y);
 double dot(const SparseGradient& x, const SparseGradient& y);
 
 template <typename T>
-double norm(const T& x, const std::string& norm_value) {
+double norm(const T& x, Norm norm) {
     /* choose the right norm */
-    if (norm_value == "inf") {
+    if (norm == INF_NORM) {
         return norm_inf(x);
     }
-    else if (norm_value == "l2") {
+    else if (norm == L2_NORM) {
         return norm_2(x);
     }
-    else if (norm_value == "l2_squared") {
+    else if (norm == L2_SQUARED_NORM) {
         return norm_2_squared(x);
     }
-    else if (norm_value == "l1") {
+    else if (norm == L1_NORM) {
         return norm_1(x);
     }
     else {

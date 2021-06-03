@@ -49,8 +49,7 @@ std::optional<Iterate> PenaltyMeritFunction::check_acceptance(Statistics& statis
         DEBUG << "Current: η = " << current_iterate.feasibility_measure << ", ω = " << current_iterate.optimality_measure << "\n";
         DEBUG << "Trial: η = " << trial_iterate.feasibility_measure << ", ω = " << trial_iterate.optimality_measure << "\n";
         DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << actual_reduction << "\n\n";
-        
-        accept = false;
+
         // Armijo sufficient decrease condition
         if (actual_reduction >= this->decrease_fraction_*predicted_reduction) {
             accept = true;
