@@ -1,3 +1,4 @@
+#include <cassert>
 #include "AMPLModel.hpp"
 #include "Logger.hpp"
 #include "Vector.hpp"
@@ -290,8 +291,8 @@ bool are_all_zeros(const std::vector<double>& multipliers) {
    return true;
 }
 
-CSCMatrix
-AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers) const {
+void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
+      CSCMatrix& hessian) const {
    /* register the vector of variables */
    (*(this->asl_)->p.Xknown)(this->asl_, (double*) x.data(), 0);
 
@@ -306,27 +307,27 @@ AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objective_mul
          !all_zeros_multipliers, upper_triangular);
 
    /* evaluate the Hessian */
-   std::vector<double> hessian(number_non_zeros);
-   (*(this->asl_)->p.Sphes)(this->asl_, 0, hessian.data(), objective_number, objective_multiplier_pointer,
-         all_zeros_multipliers ? nullptr : (double*) multipliers.data());
+   assert(hessian.matrix.size() >= number_non_zeros);
+   assert(hessian.row_number.size() >= number_non_zeros);
+   assert(hessian.column_start.size() >= this->number_variables + 1);
 
-   /* build sparse description */
-   std::vector<int> column_start(this->number_variables + 1);
+   (*(this->asl_)->p.Sphes)(this->asl_, 0, hessian.matrix.data(), objective_number, objective_multiplier_pointer,
+         all_zeros_multipliers ? nullptr : (double*) multipliers.data());
+   hessian.number_nonzeros = number_non_zeros;
+
+   /* copy sparse matrix description */
    int* ampl_column_start = this->asl_->i.sputinfo_->hcolstarts;
    for (size_t k = 0; k < this->number_variables + 1; k++) {
-      column_start[k] = ampl_column_start[k] + this->fortran_indexing;
+      hessian.column_start[k] = ampl_column_start[k] + this->fortran_indexing;
    }
-
-   std::vector<int> row_number(number_non_zeros);
    int* ampl_row_number = this->asl_->i.sputinfo_->hrownos;
    for (size_t k = 0; k < number_non_zeros; k++) {
-      row_number[k] = ampl_row_number[k] + this->fortran_indexing;
+      hessian.row_number[k] = ampl_row_number[k] + this->fortran_indexing;
    }
 
    /* unregister the vector of variables */
    this->asl_->i.x_known = 0;
-
-   return CSCMatrix(hessian, column_start, row_number, this->fortran_indexing);
+   return;
 }
 
 /* initial primal point */

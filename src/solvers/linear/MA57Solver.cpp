@@ -33,7 +33,7 @@ void MA57Solver::do_symbolic_factorization(const COOMatrix& matrix) {
    assert(matrix.fortran_indexing == this->use_fortran && "MA57Solver: please use the correct Fortran indexing");
 
    int n = matrix.dimension;
-   size_t nnz = matrix.number_nonzeros();
+   size_t nnz = matrix.number_nonzeros;
 
    /* set the default values of the controlling parameters */
    ma57id_(this->cntl_.data(), this->icntl_.data());
@@ -73,7 +73,7 @@ void MA57Solver::do_symbolic_factorization(const COOMatrix& matrix) {
 void MA57Solver::do_numerical_factorization(const COOMatrix& matrix) {
    assert(matrix.fortran_indexing == this->use_fortran && "MA57Solver: please use the correct Fortran indexing");
    assert(this->factorization_.n == matrix.dimension && "MA57Solver: the dimensions do not match");
-   assert(this->factorization_.nnz == matrix.number_nonzeros() && "MA57Solver: the numbers of nonzeros do not match");
+   assert(this->factorization_.nnz == matrix.number_nonzeros && "MA57Solver: the numbers of nonzeros do not match");
 
    /* numerical factorization */
    ma57bd_(&this->factorization_.n,

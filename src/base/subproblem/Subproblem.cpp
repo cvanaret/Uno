@@ -59,7 +59,7 @@ std::vector<double> Subproblem::compute_least_square_multipliers(const Problem& 
     /******************************/
     /* build the symmetric matrix */
     /******************************/
-    COOMatrix matrix(current_iterate.x.size() + problem.number_constraints, 1);
+    COOMatrix matrix(current_iterate.x.size() + problem.number_constraints, problem.hessian_maximum_number_nonzeros, 1);
 
     /* identity blocks */
     for (size_t i = 0; i < current_iterate.x.size(); i++) {

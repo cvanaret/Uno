@@ -37,7 +37,8 @@ public:
     std::vector<SparseGradient> constraints_jacobian(std::vector<double>& x) const override;
 
     /* Hessian */
-    [[nodiscard]] CSCMatrix lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers) const override;
+    void lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
+          CSCMatrix& hessian) const override;
     //CSCMatrix lagrangian_hessian(std::vector<double>& x, double objective_multiplier, std::vector<double>& multipliers, std::vector<double>& hessian);
 
     std::vector<double> primal_initial_solution() override;

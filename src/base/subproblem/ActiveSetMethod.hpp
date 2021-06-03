@@ -7,41 +7,39 @@
 #include "HessianEvaluation.hpp"
 
 struct ElasticVariables {
-    std::map<int, int> positive;
-    std::map<int, int> negative;
-    size_t size() const { return this->positive.size() + this->negative.size(); }
+   std::map<int, int> positive;
+   std::map<int, int> negative;
+   [[nodiscard]] size_t size() const { return this->positive.size() + this->negative.size(); }
 };
 
 class ActiveSetMethod : public Subproblem {
 public:
-    ActiveSetMethod(Problem& problem, bool scale_residuals);
+   ActiveSetMethod(Problem& problem, bool scale_residuals);
 
-    virtual Iterate evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& multipliers) override;
-    
-    void compute_optimality_measures(const Problem& problem, Iterate& iterate);
-    void compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const Direction& direction);
+   Iterate evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& multipliers) override;
+
+   void compute_optimality_measures(const Problem& problem, Iterate& iterate) override;
+   void compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const Direction& direction) override;
 
    static void generate_elastic_variables_(Problem& problem, ElasticVariables& elastic_variables);
 
 protected:
-    /* QP subproblems */
-    // optimality QP
-    Direction compute_qp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, double trust_region_radius);
-    static double compute_qp_predicted_reduction_(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length);
-    virtual std::vector<Range> generate_variables_bounds_(Problem& problem, Iterate& current_iterate, double trust_region_radius);
-    // l1QP
-    Direction compute_l1qp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, ConstraintPartition& constraint_partition, std::vector<double>& initial_direction, double trust_region_radius);
-    Direction compute_l1qp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, double penalty_parameter, ElasticVariables& elastic_variables, double trust_region_radius);
+   /* QP subproblems */
+   // optimality QP
+   virtual std::vector<Range> generate_variables_bounds_(Problem& problem, Iterate& current_iterate, double trust_region_radius);
 
-    void compute_l1_linear_objective_(Iterate& current_iterate, ConstraintPartition& constraint_partition);
-    std::vector<double> generate_l1_multipliers_(Problem& problem, std::vector<double>& current_constraint_multipliers, ConstraintPartition& constraint_partition);
-    std::vector<Range> generate_feasibility_bounds_(Problem& problem, std::vector<double>& current_constraints, ConstraintPartition& constraint_partition);
-    static void recover_l1qp_active_set_(Problem& problem, Direction& direction, const ElasticVariables& elastic_variables);
-    
-    /* LP subproblems */
-    Direction compute_lp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, double trust_region_radius);
-    static double compute_lp_predicted_reduction_(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length);
-    Direction compute_l1lp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius);
+   void compute_l1_linear_objective_(Iterate& current_iterate, ConstraintPartition& constraint_partition);
+   std::vector<double> generate_l1_multipliers_(Problem& problem, std::vector<double>& current_constraint_multipliers,
+         ConstraintPartition& constraint_partition);
+   std::vector<Range>
+   generate_feasibility_bounds_(Problem& problem, std::vector<double>& current_constraints, ConstraintPartition& constraint_partition);
+   static void recover_l1qp_active_set_(Problem& problem, Direction& direction, const ElasticVariables& elastic_variables);
+
+   /* LP subproblems */
+   Direction compute_lp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, double trust_region_radius);
+   static double compute_lp_predicted_reduction_(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length);
+   Direction compute_l1lp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, Direction& phase_2_direction,
+         double trust_region_radius);
 };
 
 #endif // ACTIVESETMETHOD_H

@@ -50,9 +50,12 @@ protected:
    ElasticVariables elastic_variables_;
 
    size_t count_elastic_variables_(Problem& problem);
-   void evaluate_optimality_iterate_(Problem& problem, Iterate& current_iterate, double penalty_parameter);
    std::vector<Range> generate_variables_bounds_(Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
    Direction solve_l1qp_subproblem_(Problem& problem, Iterate& current_iterate, double trust_region_radius, double penalty_parameter);
+   Direction compute_l1qp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, ConstraintPartition& constraint_partition,
+         std::vector<double>& initial_solution, double trust_region_radius);
+   Direction compute_l1qp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, double penalty_parameter,
+         ElasticVariables& elastic_variables, double trust_region_radius);
    double compute_predicted_reduction_(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length);
    double compute_linearized_constraint_residual_(std::vector<double>& direction);
    double compute_error_(Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter);

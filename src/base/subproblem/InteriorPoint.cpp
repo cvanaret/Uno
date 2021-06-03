@@ -296,7 +296,7 @@ COOMatrix InteriorPoint::generate_optimality_kkt_matrix_(Problem& problem, Itera
    int number_variables = problem.number_variables + problem.inequality_constraints.size();
 
    /* compute the Lagrangian Hessian */
-   COOMatrix kkt_matrix = current_iterate.hessian.to_COO();
+   COOMatrix kkt_matrix = this->hessian_evaluation->hessian.to_COO();
    kkt_matrix.dimension = number_variables + problem.number_constraints;
 
    /* variable bound constraints */
@@ -541,7 +541,7 @@ std::vector<Direction> InteriorPoint::restore_feasibility(Problem& problem, Iter
 
    /* compute the Lagrangian Hessian */
    this->hessian_evaluation->compute(problem, current_iterate, 0., restoration_multipliers);
-   UnoMatrix kkt_matrix = current_iterate.hessian.to_UnoMatrix(number_variables);
+   UnoMatrix kkt_matrix = this->hessian_evaluation->hessian.to_UnoMatrix(number_variables);
    // contribution of 2 \nabla c \nabla c^T
    for (size_t j = 0; j < problem.number_constraints; j++) {
       DEBUG << "Gradient c" << j << ": ";
