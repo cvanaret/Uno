@@ -28,7 +28,7 @@ public:
     virtual ~Filter();
 
     double upper_bound; /*!< Upper bound on constraint violation */
-    unsigned int max_size; /*!< Max filter size */
+    size_t max_size; /*!< Max filter size */
     FilterConstants constants; /*!< Set of constants */
 
     void reset();

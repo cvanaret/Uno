@@ -119,7 +119,7 @@ void Uno::preprocessing(Problem& problem, std::vector<double>& x, Multipliers& m
             }
             // variables bounds
             std::vector<Range> variables_bounds(problem.number_variables);
-            for (int i = 0; i < problem.number_variables; i++) {
+            for (size_t i = 0; i < problem.number_variables; i++) {
                 variables_bounds[i] = {problem.variables_bounds[i].lb - x[i], problem.variables_bounds[i].ub - x[i]};
             }
             // constraints bounds

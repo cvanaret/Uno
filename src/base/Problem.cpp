@@ -28,7 +28,7 @@ hessian_maximum_number_nonzeros(0) {
 /* compute ||c|| */
 double Problem::compute_constraint_residual(const std::vector<double>& constraints, Norm residual_norm) const {
     std::vector<double> residuals(constraints.size());
-    for (int j = 0; j < this->number_constraints; j++) {
+    for (size_t j = 0; j < this->number_constraints; j++) {
         residuals[j] = std::max(std::max(0., this->constraint_bounds[j].lb - constraints[j]), constraints[j] - this->constraint_bounds[j].ub);
     }
     return norm(residuals, residual_norm);
@@ -69,7 +69,7 @@ void Problem::determine_bounds_types(std::vector<Range>& bounds, std::vector<Con
 void Problem::determine_constraints_() {
     int current_equality_constraint = 0;
     int current_inequality_constraint = 0;
-    for (int j = 0; j < this->number_constraints; j++) {
+    for (size_t j = 0; j < this->number_constraints; j++) {
         if (this->constraint_status[j] == EQUAL_BOUNDS) {
             this->equality_constraints[j] = current_equality_constraint;
             current_equality_constraint++;

@@ -75,7 +75,7 @@ bool is_discrete(ASL* asl, int index) {
 void AMPLModel::generate_variables_() {
 //    SufDesc* uncertain_suffixes = suf_get_ASL(this->asl_, UNCERTAIN_SUFFIX, ASL_Sufkind_var);
 
-   for (int i = 0; i < this->number_variables; i++) {
+   for (size_t i = 0; i < this->number_variables; i++) {
       this->variable_name[i] = var_name_ASL(this->asl_, i);
       //this->variable_discrete[i] = is_discrete(this->asl_, i);
       double lb = (this->asl_->i.LUv_ != NULL) ? this->asl_->i.LUv_[2 * i] : -INFINITY;
@@ -181,7 +181,7 @@ void AMPLModel::constraint_gradient(std::vector<double>& x, int j, SparseGradien
 
 std::vector<SparseGradient> AMPLModel::constraints_jacobian(std::vector<double>& x) const {
    std::vector<SparseGradient> constraints_jacobian(this->number_constraints);
-   for (int j = 0; j < this->number_constraints; j++) {
+   for (size_t j = 0; j < this->number_constraints; j++) {
       this->constraint_gradient(x, j, constraints_jacobian[j]);
    }
    return constraints_jacobian;
@@ -190,7 +190,7 @@ std::vector<SparseGradient> AMPLModel::constraints_jacobian(std::vector<double>&
 void AMPLModel::generate_constraints_() {
    //SufDesc* uncertain_suffixes = suf_get_ASL(this->asl_, UNCERTAINTY_SET_SUFFIX, ASL_Sufkind_con);
 
-   for (int j = 0; j < this->number_constraints; j++) {
+   for (size_t j = 0; j < this->number_constraints; j++) {
       this->constraint_name[j] = con_name_ASL(this->asl_, j);
       double lb = (this->asl_->i.LUrhs_ != NULL) ? this->asl_->i.LUrhs_[2 * j] : -INFINITY;
       double ub = (this->asl_->i.LUrhs_ != NULL) ? this->asl_->i.LUrhs_[2 * j + 1] : INFINITY;
@@ -219,7 +219,7 @@ void AMPLModel::set_function_types_(std::string file_name) {
    double* delsqp;
 
    /* constraints */
-   if (asl->i.n_con_ != this->number_constraints) {
+   if ((unsigned int) asl->i.n_con_ != this->number_constraints) {
       throw std::length_error("AMPLModel.set_function_types: inconsistent number of constraints");
    }
    this->constraint_type.reserve(this->number_constraints);
@@ -228,7 +228,7 @@ void AMPLModel::set_function_types_(std::string file_name) {
    // determine if the problem is nonlinear (nonquadratic objective or nonlinear constraints)
    this->type = LINEAR;
    int current_linear_constraint = 0;
-   for (int j = 0; j < this->number_constraints; j++) {
+   for (size_t j = 0; j < this->number_constraints; j++) {
       fint qp = nqpcheck_ASL(asl, -(j + 1), &rowq, &colqp, &delsqp);
 
       if (0 < qp) {
@@ -302,7 +302,8 @@ AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objective_mul
 
    /* compute the sparsity */
    bool all_zeros_multipliers = are_all_zeros(multipliers);
-   int number_non_zeros = (*(this->asl_)->p.Sphset)(this->asl_, NULL, objective_number, (objective_multiplier > 0.), !all_zeros_multipliers, upper_triangular);
+   size_t number_non_zeros = (*(this->asl_)->p.Sphset)(this->asl_, NULL, objective_number, (objective_multiplier > 0.),
+         !all_zeros_multipliers, upper_triangular);
 
    /* evaluate the Hessian */
    std::vector<double> hessian(number_non_zeros);
@@ -312,13 +313,13 @@ AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objective_mul
    /* build sparse description */
    std::vector<int> column_start(this->number_variables + 1);
    int* ampl_column_start = this->asl_->i.sputinfo_->hcolstarts;
-   for (int k = 0; k < this->number_variables + 1; k++) {
+   for (size_t k = 0; k < this->number_variables + 1; k++) {
       column_start[k] = ampl_column_start[k] + this->fortran_indexing;
    }
 
    std::vector<int> row_number(number_non_zeros);
    int* ampl_row_number = this->asl_->i.sputinfo_->hrownos;
-   for (int k = 0; k < number_non_zeros; k++) {
+   for (size_t k = 0; k < number_non_zeros; k++) {
       row_number[k] = ampl_row_number[k] + this->fortran_indexing;
    }
 
@@ -332,7 +333,7 @@ AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objective_mul
 std::vector<double> AMPLModel::primal_initial_solution() {
    double* ampl_x0 = this->asl_->i.X0_;
    std::vector<double> x(this->number_variables);
-   for (int i = 0; i < this->number_variables; i++) {
+   for (size_t i = 0; i < this->number_variables; i++) {
       x[i] = ampl_x0[i];
    }
    return x;
@@ -342,7 +343,7 @@ std::vector<double> AMPLModel::primal_initial_solution() {
 std::vector<double> AMPLModel::dual_initial_solution() {
    double* ampl_multipliers0 = this->asl_->i.pi0_;
    std::vector<double> multipliers(this->number_constraints);
-   for (int j = 0; j < this->number_constraints; j++) {
+   for (size_t j = 0; j < this->number_constraints; j++) {
       multipliers[j] = ampl_multipliers0[j];
    }
    return multipliers;

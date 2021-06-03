@@ -212,7 +212,7 @@ double Relaxation::compute_predicted_reduction(Problem& problem, Iterate& curren
 double Relaxation::compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const {
    double error = 0.;
    /* bound constraints */
-   for (int i = 0; i < problem.number_variables; i++) {
+   for (size_t i = 0; i < problem.number_variables; i++) {
       if (-INFINITY < problem.variables_bounds[i].lb) {
          error += std::abs(iterate.multipliers.lower_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].lb));
       }
@@ -221,7 +221,7 @@ double Relaxation::compute_complementarity_error(const Problem& problem, Iterate
       }
    }
    /* general constraints */
-   for (int j = 0; j < problem.number_constraints; j++) {
+   for (size_t j = 0; j < problem.number_constraints; j++) {
       double multiplier_j = multipliers.constraints[j];
       if (iterate.constraints[j] < problem.constraint_bounds[j].lb) {
          // violated lower: the multiplier is 1 at optimum

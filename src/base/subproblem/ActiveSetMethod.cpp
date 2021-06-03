@@ -202,7 +202,7 @@ void ActiveSetMethod::recover_l1qp_active_set_(Problem& problem, Direction& dire
 void ActiveSetMethod::generate_elastic_variables_(Problem& problem, ElasticVariables& elastic_variables) {
     // generate elastic variables p and n on the fly to relax the constraints
     int elastic_index = problem.number_variables;
-    for (int j = 0; j < problem.number_constraints; j++) {
+    for (size_t j = 0; j < problem.number_constraints; j++) {
         if (-INFINITY < problem.constraint_bounds[j].lb) {
             // nonpositive variable n that captures the negative part of the constraint violation
             elastic_variables.negative[j] = elastic_index;
@@ -236,7 +236,7 @@ void ActiveSetMethod::compute_l1_linear_objective_(Iterate& current_iterate, Con
 
 std::vector<double> ActiveSetMethod::generate_l1_multipliers_(Problem& problem, std::vector<double>& current_constraint_multipliers, ConstraintPartition& constraint_partition) {
     std::vector<double> constraint_multipliers(problem.number_constraints);
-    for (int j = 0; j < problem.number_constraints; j++) {
+    for (size_t j = 0; j < problem.number_constraints; j++) {
         if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
             constraint_multipliers[j] = 1.;
         }
@@ -252,7 +252,7 @@ std::vector<double> ActiveSetMethod::generate_l1_multipliers_(Problem& problem, 
 
 std::vector<Range> ActiveSetMethod::generate_feasibility_bounds_(Problem& problem, std::vector<double>& current_constraints, ConstraintPartition& constraint_partition) {
     std::vector<Range> constraints_bounds(problem.number_constraints);
-    for (int j = 0; j < problem.number_constraints; j++) {
+    for (size_t j = 0; j < problem.number_constraints; j++) {
         double lb, ub;
         if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
             lb = -INFINITY;

@@ -82,13 +82,13 @@ std::vector<double> Iterate::lagrangian_gradient(const Problem& problem, double 
         }
     }
     /* bound constraints */
-    for (int i = 0; i < problem.number_variables; i++) {
+    for (size_t i = 0; i < problem.number_variables; i++) {
         lagrangian_gradient[i] -= multipliers.lower_bounds[i] + multipliers.upper_bounds[i];
     }
     
     /* constraints */
     this->compute_constraints_jacobian(problem);
-    for (int j = 0; j < problem.number_constraints; j++) {
+    for (size_t j = 0; j < problem.number_constraints; j++) {
         double multiplier_j = multipliers.constraints[j];
         if (multiplier_j != 0.) {
             for (const auto [i, derivative]: this->constraints_jacobian[j]) {

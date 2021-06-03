@@ -80,8 +80,8 @@ private:
     double inertia_hessian_last_;
     double inertia_constraints_;
     double default_multiplier_;
-    unsigned int iteration_;
-    unsigned int number_factorizations_;
+    size_t iteration_;
+    size_t number_factorizations_;
 
     /* constants */
     InteriorPointParameters parameters_;

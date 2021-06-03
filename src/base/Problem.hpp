@@ -20,21 +20,18 @@ struct NumericalError : public std::exception {
 };
 
 struct HessianNumericalError : NumericalError {
-
     const char* what() const throw () {
         return "A numerical error was encountered while evaluating the Hessian";
     }
 };
 
 struct GradientNumericalError : NumericalError {
-
     const char* what() const throw () {
         return "A numerical error was encountered while evaluating a gradient";
     }
 };
 
 struct FunctionNumericalError : NumericalError {
-
     const char* what() const throw () {
         return "A numerical error was encountered while evaluating a function";
     }
@@ -53,8 +50,8 @@ public:
     static std::map<FunctionType, std::string> type_to_string;
 
     std::string name;
-    int number_variables; /*!< Number of variables */
-    int number_constraints; /*!< Number of constraints */
+    size_t number_variables; /*!< Number of variables */
+    size_t number_constraints; /*!< Number of constraints */
     FunctionType type;
 
     /* objective */
