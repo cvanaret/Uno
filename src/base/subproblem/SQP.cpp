@@ -14,7 +14,8 @@ solver(QPSolverFactory::create(QP_solver_name, problem.number_variables, problem
 hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, !use_trust_region)) {
 }
 
-std::vector<Direction> SQP::compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+std::vector<Direction> SQP::compute_directions(Problem& problem, Iterate& current_iterate, double /*objective_multiplier*/, double
+trust_region_radius) {
     /* compute optimality step */
     this->evaluate_optimality_iterate_(problem, current_iterate);
     Direction direction = this->compute_qp_step_(problem, *this->solver, current_iterate, trust_region_radius);

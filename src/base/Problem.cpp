@@ -26,28 +26,27 @@ hessian_maximum_number_nonzeros(0) {
 }
 
 /* compute ||c|| */
-double Problem::compute_constraint_residual(const std::vector<double>& constraints, const std::string& norm_value) const {
+double Problem::compute_constraint_residual(const std::vector<double>& constraints, Norm residual_norm) const {
     std::vector<double> residuals(constraints.size());
     for (int j = 0; j < this->number_constraints; j++) {
         residuals[j] = std::max(std::max(0., this->constraint_bounds[j].lb - constraints[j]), constraints[j] - this->constraint_bounds[j].ub);
     }
-    return norm(residuals, norm_value);
+    return norm(residuals, residual_norm);
 }
 
 /* compute ||c_S|| for a given set S */
-double Problem::compute_constraint_residual(const std::vector<double>& constraints, const std::set<int>& constraint_set, const std::string&
-norm_value) const {
+double Problem::compute_constraint_residual(const std::vector<double>& constraints, const std::set<int>& constraint_set, Norm residual_norm) const {
     SparseGradient residuals;
     for (int j: constraint_set) {
         residuals[j] = std::max(std::max(0., this->constraint_bounds[j].lb - constraints[j]), constraints[j] - this->constraint_bounds[j].ub);
     }
-    return norm(residuals, norm_value);
+    return norm(residuals, residual_norm);
 }
 
 void Problem::determine_bounds_types(std::vector<Range>& bounds, std::vector<ConstraintType>& status) {
    assert(bounds.size() == status.size());
 
-    for (unsigned int i = 0; i < bounds.size(); i++) {
+    for (size_t i = 0; i < bounds.size(); i++) {
         if (bounds[i].lb == bounds[i].ub) {
             status[i] = EQUAL_BOUNDS;
         }
@@ -102,7 +101,7 @@ void Problem::determine_constraints_() {
 //SparseGradient CppProblem::objective_sparse_gradient(std::vector<double>& x) {
 //    std::vector<double> dense_gradient = this->objective_gradient_(x);
 //    SparseGradient sparse_gradient;
-//    for (unsigned int i = 0; i < dense_gradient.size(); i++) {
+//    for (size_t i = 0; i < dense_gradient.size(); i++) {
 //        if (dense_gradient[i] != 0.) {
 //            sparse_gradient[i] = dense_gradient[i];
 //        }

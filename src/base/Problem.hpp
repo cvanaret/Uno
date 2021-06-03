@@ -7,6 +7,7 @@
 #include "Constraint.hpp"
 #include "Matrix.hpp"
 #include "SparseGradient.hpp"
+#include "Vector.hpp"
 
 enum FunctionType {
     LINEAR = 0, /*!< Linear function */
@@ -90,8 +91,9 @@ public:
     virtual std::vector<double> primal_initial_solution() = 0;
     virtual std::vector<double> dual_initial_solution() = 0;
 
-    [[nodiscard]] double compute_constraint_residual(const std::vector<double>& constraints, const std::string& norm_value) const;
-    [[nodiscard]] double compute_constraint_residual(const std::vector<double>& constraints, const std::set<int>& constraint_set, const std::string& norm_value) const;
+    [[nodiscard]] double compute_constraint_residual(const std::vector<double>& constraints, Norm residual_norm) const;
+    [[nodiscard]] double compute_constraint_residual(const std::vector<double>& constraints, const std::set<int>& constraint_set, Norm
+    residual_norm) const;
 
 protected:
     void determine_constraints_();

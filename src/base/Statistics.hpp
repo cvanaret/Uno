@@ -10,8 +10,8 @@ public:
     static int int_width;
     static int double_width;
     
-    void add_column(std::string name, int width, int order);
-    void add_statistic(std::string name, std::string value);
+    void add_column(const std::string& name, int width, int order);
+    void add_statistic(const std::string& name, const std::string& value);
     void add_statistic(std::string name, int value);
     void add_statistic(std::string name, double value);
     void print_header(bool first_occurrence);

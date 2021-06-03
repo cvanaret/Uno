@@ -10,6 +10,7 @@
 #include "Direction.hpp"
 #include "Constraint.hpp"
 #include "MA57Solver.hpp"
+#include "Vector.hpp"
 
 /*! \class Subproblem
  * \brief Subproblem
@@ -24,12 +25,13 @@ public:
      * \param solver: solver that solves the subproblem
      * \param name: name of the strategy
      */
-    Subproblem(std::string residual_norm, std::vector<Range>& subproblem_variables_bounds, bool scale_residuals);
+    Subproblem(Norm residual_norm, std::vector<Range>& subproblem_variables_bounds, bool scale_residuals);
     virtual ~Subproblem() = default;
 
     virtual Iterate evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& multipliers) = 0;
     
-    virtual std::vector<Direction> compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius=INFINITY) = 0;
+    virtual std::vector<Direction> compute_directions(Problem& problem, Iterate& current_iterate, double objective_multiplier, double
+    trust_region_radius=INFINITY) = 0;
     virtual std::vector<Direction> restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius=INFINITY) = 0;
     
     virtual void compute_optimality_measures(const Problem& problem, Iterate& iterate) = 0;
@@ -44,9 +46,13 @@ public:
     double compute_KKT_error(const Problem& problem, Iterate& iterate, double objective_mutiplier) const;
     void compute_residuals(const Problem& problem, Iterate& iterate, const Multipliers& multipliers, double objective_multiplier) const;
     
-    std::string residual_norm;
+    Norm residual_norm;
     // when the subproblem is reformulated (e.g. when slacks are introduced), the bounds may be altered as well
-    std::vector<Range> subproblem_variables_bounds;
+    std::vector<Range> bounds;
+    SparseGradient objective_gradient;
+    std::vector<double> constraints;
+    std::vector<SparseGradient> constraints_jacobian;
+
     int number_subproblems_solved;
     // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it
     bool subproblem_definition_changed;

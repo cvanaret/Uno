@@ -3,7 +3,8 @@
 #include "Filter.hpp"
 #include "FilterStrategy.hpp"
 
-std::unique_ptr<GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& strategy_type, Subproblem& subproblem, std::map<std::string, std::string>& options) {
+std::unique_ptr<GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& strategy_type, Subproblem& subproblem,
+      std::map<std::string, std::string>& options) {
     if (strategy_type == "penalty") {
         return std::make_unique<PenaltyMeritFunction>(subproblem);
     }

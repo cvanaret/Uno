@@ -26,7 +26,8 @@ Iterate TrustRegion::compute_acceptable_iterate(Statistics& statistics, Problem&
             this->print_iteration_();
 
             /* compute the step within trust region */
-            std::vector<Direction> directions = this->globalization_strategy.subproblem.compute_directions(problem, current_iterate, this->radius);
+            std::vector<Direction> directions = this->globalization_strategy.subproblem.compute_directions(problem, current_iterate,
+                  1., this->radius);
             /* set bound multipliers of active trust region to 0 */
             for (Direction& direction: directions) {
                 this->correct_active_set(direction, this->radius);

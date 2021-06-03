@@ -20,9 +20,6 @@ public:
 
    virtual void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) = 0;
    CSCMatrix modify_inertia(CSCMatrix& hessian, LinearSolver& linear_solver);
-
-protected:
-   double objective_multiplier;
 };
 
 class ExactHessianEvaluation : public HessianEvaluation {
@@ -31,6 +28,9 @@ public:
    ~ExactHessianEvaluation() override = default;
 
    void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) override;
+
+protected:
+   double objective_multiplier;
 };
 
 class ExactHessianInertiaControlEvaluation : public HessianEvaluation {
@@ -39,8 +39,10 @@ public:
    ~ExactHessianInertiaControlEvaluation() override = default;
 
    void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) override;
-private:
+
+protected:
    std::unique_ptr<LinearSolver> linear_solver_; /*!< Solver that solves the subproblem */
+   double objective_multiplier;
 };
 
 class BFGSHessianEvaluation : public HessianEvaluation {

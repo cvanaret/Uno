@@ -11,7 +11,8 @@ ActiveSetMethod(problem, scale_residuals),
 solver(QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints, 0, false)) {
 }
 
-std::vector<Direction> SLP::compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+std::vector<Direction> SLP::compute_directions(Problem& problem, Iterate& current_iterate, double /*objective_multiplier*/, double
+trust_region_radius) {
     Direction direction = this->compute_lp_step_(problem, *this->solver, current_iterate, trust_region_radius);
     if (direction.status == INFEASIBLE) {
         /* infeasible subproblem during optimality phase */

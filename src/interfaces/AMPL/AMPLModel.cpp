@@ -275,7 +275,7 @@ void AMPLModel::initialize_lagrangian_hessian_() {
    int upper_triangular = 1;
    this->hessian_maximum_number_nonzeros = (*(this->asl_)->p.Sphset)(this->asl_, NULL, objective_number, 1, 1, upper_triangular);
 
-   // use Lagrangian scale: in AMPL, the Lagrangian is f + lambda.g, while Argonot uses f - lambda.g
+   // use Lagrangian scale: in AMPL, the Lagrangian is f + lambda.g, while Uno uses f - lambda.g
    int nerror;
    lagscale_ASL(this->asl_, -1., &nerror);
    return;

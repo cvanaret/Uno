@@ -22,7 +22,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 # directories
-set(DIRECTORIES base base/mechanism base/strategy base/subproblem interfaces interfaces/AMPL logger solvers solvers/linear solvers/QP solvers/NLP)
+set(DIRECTORIES base base/feasibility base/mechanism base/strategy base/subproblem interfaces interfaces/AMPL logger solvers solvers/linear solvers/QP solvers/NLP)
 
 # source files
 set(SRC_FILES
@@ -30,22 +30,28 @@ set(SRC_FILES
     base/Iterate.cpp base/Matrix.cpp base/Phase.hpp base/Problem.cpp
     base/Statistics.cpp base/Vector.cpp
     
-    base/infeasibility/FeasibilityRelaxation.cpp base/infeasibility/FeasibilityRestoration.cpp
-    
     base/mechanism/GlobalizationMechanism.cpp
     base/mechanism/GlobalizationMechanismFactory.cpp
     base/mechanism/LineSearch.cpp base/mechanism/TrustRegion.cpp
     
-    base/strategy/Filter.cpp base/strategy/FilterStrategy.cpp
-    base/strategy/GlobalizationStrategy.cpp 
+    base/strategy/GlobalizationStrategy.cpp
     base/strategy/GlobalizationStrategyFactory.cpp
-    base/strategy/PenaltyMeritFunction.cpp 
+    base/strategy/FilterStrategy.cpp base/strategy/Filter.cpp
+    base/strategy/PenaltyMeritFunction.cpp
+
+    base/feasibility/FeasibilityStrategy.cpp
+    base/feasibility/Relaxation.cpp
+    base/feasibility/FeasibilityRestoration.cpp
     
-    base/subproblem/ActiveSetMethod.cpp base/subproblem/Direction.cpp
-    base/subproblem/InteriorPoint.cpp base/subproblem/Sl1QP.cpp
-    base/subproblem/SLP.cpp base/subproblem/SLPEQP.cpp
-    base/subproblem/SQP.cpp base/subproblem/Subproblem.cpp
+    base/subproblem/Subproblem.cpp
     base/subproblem/SubproblemFactory.cpp
+    base/subproblem/Direction.cpp
+    base/subproblem/ActiveSetMethod.cpp 
+    base/subproblem/InteriorPoint.cpp
+    base/subproblem/Sl1QP.cpp
+    base/subproblem/SLP.cpp
+    base/subproblem/SLPEQP.cpp
+    base/subproblem/SQP.cpp
     
     logger/Logger.hpp
 

@@ -19,8 +19,8 @@ struct Result {
     void display(bool print_solution);
 };
 
-/*! \class Argonot
- * \brief Argonot
+/*! \class Uno
+ * \brief Uno
  *
  *  UNO solver
  */

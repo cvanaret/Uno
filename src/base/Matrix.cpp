@@ -45,7 +45,7 @@ void Matrix::add_outer_product(const SparseGradient& x, double scaling_factor) {
 COOMatrix::COOMatrix(int dimension, short fortran_indexing): Matrix(dimension, fortran_indexing) {
 }
 
-int COOMatrix::number_nonzeros() const {
+size_t COOMatrix::number_nonzeros() const {
     return this->matrix.size();
 }
 
@@ -122,7 +122,7 @@ CSCMatrix::CSCMatrix(const std::vector<double>& matrix, const std::vector<int>& 
 Matrix(column_start.size() - 1, fortran_indexing), matrix(matrix), column_start(column_start), row_number(row_number) {
 }
 
-int CSCMatrix::number_nonzeros() const {
+size_t CSCMatrix::number_nonzeros() const {
     return this->matrix.size();
 }
 
@@ -227,16 +227,16 @@ COOMatrix CSCMatrix::to_COO() {
     return coo_matrix;
 }
 
-ArgonotMatrix CSCMatrix::to_ArgonotMatrix(int argonot_matrix_dimension) {
-    ArgonotMatrix argonot_matrix(argonot_matrix_dimension, this->fortran_indexing);
+UnoMatrix CSCMatrix::to_UnoMatrix(int uno_matrix_size) {
+    UnoMatrix uno_matrix(uno_matrix_size, this->fortran_indexing);
 
     for (int j = 0; j < this->dimension; j++) {
         for (int k = this->column_start[j] - this->fortran_indexing; k < this->column_start[j + 1] - this->fortran_indexing; k++) {
             int i = this->row_number[k] - this->fortran_indexing;
-            argonot_matrix.insert(this->matrix[k], i, j);
+            uno_matrix.insert(this->matrix[k], i, j);
         }
     }
-    return argonot_matrix;
+    return uno_matrix;
 }
 
 CSCMatrix CSCMatrix::identity(int dimension, int fortran_indexing) {
@@ -318,17 +318,17 @@ std::ostream& operator<<(std::ostream &stream, const CSCMatrix& matrix) {
 //}
 
 /* 
- * Argonot matrix: bijection between indices and single key + sparse vector (map)
+ * Uno matrix: bijection between indices and single key + sparse vector (map)
  */
 
-ArgonotMatrix::ArgonotMatrix(int dimension, short fortran_indexing): Matrix(dimension, fortran_indexing) {
+UnoMatrix::UnoMatrix(int dimension, short fortran_indexing): Matrix(dimension, fortran_indexing) {
 }
 
-int ArgonotMatrix::number_nonzeros() const {
+size_t UnoMatrix::number_nonzeros() const {
     return this->matrix.size();
 }
 
-void ArgonotMatrix::insert(double term, int row_index, int column_index) {
+void UnoMatrix::insert(double term, int row_index, int column_index) {
     // generate the unique key
     int key = column_index * this->dimension + row_index;
     // insert the element
@@ -336,7 +336,7 @@ void ArgonotMatrix::insert(double term, int row_index, int column_index) {
     return;
 }
 
-double ArgonotMatrix::norm_1() {
+double UnoMatrix::norm_1() {
     // compute maximum column index
     int number_columns = 0;
     for (std::pair<const size_t, double> element: this->matrix) {
@@ -362,11 +362,11 @@ double ArgonotMatrix::norm_1() {
     return norm;
 }
 
-std::vector<double> ArgonotMatrix::product(const std::vector<double>& /*vector*/) {
-    throw std::out_of_range("ArgonotMatrix::product is not implemented");
+std::vector<double> UnoMatrix::product(const std::vector<double>& /*vector*/) {
+    throw std::out_of_range("UnoMatrix::product is not implemented");
 }
 
-void ArgonotMatrix::add_matrix(ArgonotMatrix& other_matrix, double factor) {
+void UnoMatrix::add_matrix(UnoMatrix& other_matrix, double factor) {
     for (std::pair<const int, double> element: other_matrix.matrix) {
         int key = element.first;
         double value = element.second;
@@ -378,7 +378,7 @@ void ArgonotMatrix::add_matrix(ArgonotMatrix& other_matrix, double factor) {
     return;
 }
 
-COOMatrix ArgonotMatrix::to_COO() {
+COOMatrix UnoMatrix::to_COO() {
     COOMatrix coo_matrix(this->dimension, this->fortran_indexing);
 
     for (std::pair<const int, double> element: this->matrix) {
@@ -394,7 +394,7 @@ COOMatrix ArgonotMatrix::to_COO() {
 
 /* generate a COO matrix by removing some variables (e.g. reduced Hessian in EQP problems) */
 /* mask contains (i_origin, i_reduced) pairs, where i_origin is the original index, and i_reduced is the index in the reduced matrix */
-COOMatrix ArgonotMatrix::to_COO(const std::unordered_map<int, int>& mask) {
+COOMatrix UnoMatrix::to_COO(const std::unordered_map<int, int>& mask) {
     COOMatrix coo_matrix(this->dimension, this->fortran_indexing);
 
     for (std::pair<const int, double> element: this->matrix) {
@@ -414,7 +414,7 @@ COOMatrix ArgonotMatrix::to_COO(const std::unordered_map<int, int>& mask) {
     return coo_matrix;
 }
 
-CSCMatrix ArgonotMatrix::to_CSC() {
+CSCMatrix UnoMatrix::to_CSC() {
     CSCMatrix csc_matrix(this->dimension, this->fortran_indexing);
     
     int current_column = this->fortran_indexing;
@@ -439,7 +439,7 @@ CSCMatrix ArgonotMatrix::to_CSC() {
     return csc_matrix;
 }
 
-CSCMatrix ArgonotMatrix::to_CSC(const std::unordered_map<int, int>& mask) {
+CSCMatrix UnoMatrix::to_CSC(const std::unordered_map<int, int>& mask) {
     CSCMatrix csc_matrix(this->dimension, this->fortran_indexing);
     
     int current_column = this->fortran_indexing;
@@ -469,7 +469,7 @@ CSCMatrix ArgonotMatrix::to_CSC(const std::unordered_map<int, int>& mask) {
     return csc_matrix;
 }
 
-std::ostream& operator<<(std::ostream &stream, ArgonotMatrix& matrix) {
+std::ostream& operator<<(std::ostream &stream, UnoMatrix& matrix) {
     for (std::pair<const int, double> element: matrix.matrix) {
         int key = element.first;
         double value = element.second;
@@ -485,7 +485,7 @@ std::ostream& operator<<(std::ostream &stream, ArgonotMatrix& matrix) {
 void test_matrix() {
     int size = 3;
     int nnz = 4;
-    ArgonotMatrix matrix(size, nnz);
+    UnoMatrix matrix(size, nnz);
     // add terms
     matrix.add_term(12., 0, 0);
     

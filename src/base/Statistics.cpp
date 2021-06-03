@@ -22,13 +22,13 @@ std::map<std::string, std::string> Statistics::symbols = {
 int Statistics::int_width = 7;
 int Statistics::double_width = 21;
 
-void Statistics::add_column(std::string name, int width, int order) {
+void Statistics::add_column(const std::string& name, int width, int order) {
     this->columns_[order] = name;
     this->widths_[name] = width;
     return;
 }
 
-void Statistics::add_statistic(std::string name, std::string value) {
+void Statistics::add_statistic(const std::string& name, const std::string& value) {
     this->current_line_[name] = value;
     return;
 }
@@ -45,7 +45,7 @@ void Statistics::print_header(bool first_occurrence) {
     /* line above */
     std::cout << (first_occurrence ? Statistics::symbols["top-left"] : Statistics::symbols["left-mid"]);
     int k = 0;
-    for (const std::pair<int, std::string>& element: this->columns_) {
+    for (const std::pair<const int, std::string>& element: this->columns_) {
         if (0 < k) {
             std::cout << (first_occurrence ? Statistics::symbols["top-mid"] : Statistics::symbols["mid-mid"]);
         }
@@ -59,7 +59,7 @@ void Statistics::print_header(bool first_occurrence) {
     /* headers */
     std::cout << Statistics::symbols["left"];
     k = 0;
-    for (const std::pair<int, std::string>& element: this->columns_) {
+    for (const std::pair<const int, std::string>& element: this->columns_) {
         if (0 < k) {
             std::cout << Statistics::symbols["middle"];
         }
@@ -76,7 +76,7 @@ void Statistics::print_header(bool first_occurrence) {
 void Statistics::print_current_line() {
     std::cout << Statistics::symbols["left-mid"];
     int k = 0;
-    for (const std::pair<int, std::string>& element: this->columns_) {
+    for (const std::pair<const int, std::string>& element: this->columns_) {
         if (0 < k) {
             std::cout << Statistics::symbols["mid-mid"];
         }
@@ -90,7 +90,7 @@ void Statistics::print_current_line() {
     /* headers */
     std::cout << Statistics::symbols["left"];
     k = 0;
-    for (const std::pair<int, std::string>& element: this->columns_) {
+    for (const std::pair<const int, std::string>& element: this->columns_) {
         if (0 < k) {
             std::cout << Statistics::symbols["middle"];
         }
@@ -101,7 +101,7 @@ void Statistics::print_current_line() {
             std::cout << " " << value;
             size = 1 + value.size();
         }
-        catch (const std::out_of_range) {
+        catch (const std::out_of_range&) {
             std::cout << " -";
             size = 2;
         }
@@ -120,7 +120,7 @@ void Statistics::print_current_line() {
 void Statistics::print_footer() {
     std::cout << Statistics::symbols["bottom-left"];
     int k = 0;
-    for (const std::pair<int, std::string>& element: this->columns_) {
+    for (const std::pair<const int, std::string>& element: this->columns_) {
         if (0 < k) {
             std::cout << Statistics::symbols["bottom-mid"];
         }

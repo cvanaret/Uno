@@ -46,7 +46,7 @@ Result Uno::solve(Problem& problem, std::vector<double>& x, Multipliers& multipl
             }
             statistics.new_line();
             major_iterations++;
-            DEBUG << "\n\t\tARGONOT iteration " << major_iterations << "\n";
+            DEBUG << "\n\t\tUNO iteration " << major_iterations << "\n";
             DEBUG << "Current point: "; print_vector(DEBUG, current_iterate.x);
             /* update the current point */
             current_iterate = this->globalization_mechanism.compute_acceptable_iterate(statistics, problem, current_iterate);
@@ -117,7 +117,7 @@ void Uno::preprocessing(Problem& problem, std::vector<double>& x, Multipliers& m
             for (std::pair<int, int> element: problem.linear_constraints) {
                 int j = element.first;
                 int linear_constraint_index = element.second;
-                problem.constraint_sparse_gradient(x, j, constraints_jacobian[linear_constraint_index]);
+               problem.constraint_gradient(x, j, constraints_jacobian[linear_constraint_index]);
             }
             // variables bounds
             std::vector<Range> variables_bounds(problem.number_variables);
@@ -156,7 +156,7 @@ void Uno::preprocessing(Problem& problem, std::vector<double>& x, Multipliers& m
 
 void Result::display(bool print_solution) {
     INFO << "\n";
-    INFO << "ARGONOT v1: optimization summary\n";
+    INFO << "UNO v1: optimization summary\n";
     INFO << "==============================\n";
 
     INFO << "Status:\t\t\t\t";
