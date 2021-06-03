@@ -31,10 +31,13 @@ private:
     void print_acceptance_() override;
     void print_warning_(const char* message);
 
+    void update_step_length();
+    /*
     double quadratic_interpolation_(Problem& problem, Iterate& current_iterate, std::vector<double> direction, double steplength = 1.);
     double cubic_interpolation_(Problem& problem, Iterate& current_iterate, std::vector<double> direction, double steplength1, double steplength2);
     double minimize_quadratic_(double a, double b);
     double minimize_cubic_(double a, double b, double c);
+     */
 };
 
 #endif // LINESEARCH_H
