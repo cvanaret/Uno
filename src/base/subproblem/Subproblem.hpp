@@ -43,7 +43,7 @@ public:
     static std::vector<double> compute_least_square_multipliers(const Problem& problem, Iterate& current_iterate, const std::vector<double>& default_multipliers, LinearSolver& solver, double multipliers_max_size=1e3);
     static std::vector<double> compute_least_square_multipliers(const Problem& problem, Iterate& current_iterate, const std::vector<double>& default_multipliers, double multipliers_max_size=1e3);
     
-    double compute_KKT_error(const Problem& problem, Iterate& iterate, double objective_mutiplier) const;
+    double compute_KKT_error(const Problem& problem, Iterate& iterate, double objective_multiplier) const;
     void compute_residuals(const Problem& problem, Iterate& iterate, const Multipliers& multipliers, double objective_multiplier) const;
     
     Norm residual_norm;

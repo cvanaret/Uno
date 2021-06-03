@@ -112,8 +112,8 @@ std::vector<double> Subproblem::compute_least_square_multipliers(const Problem& 
 }
 
 
-double Subproblem::compute_KKT_error(const Problem& problem, Iterate& iterate, double objective_mutiplier) const {
-    std::vector<double> lagrangian_gradient = iterate.lagrangian_gradient(problem, objective_mutiplier, iterate.multipliers);
+double Subproblem::compute_KKT_error(const Problem& problem, Iterate& iterate, double objective_multiplier) const {
+    std::vector<double> lagrangian_gradient = iterate.lagrangian_gradient(problem, objective_multiplier, iterate.multipliers);
     return norm(lagrangian_gradient, this->residual_norm);
 }
 

@@ -6,7 +6,8 @@
 InteriorPoint::InteriorPoint(Problem& problem, std::string linear_solver_name, std::string hessian_evaluation_method, bool use_trust_region,
       bool scale_residuals) : Subproblem(L2_NORM, problem.variables_bounds, scale_residuals), // use the l2 norm to compute residuals
 /* if no trust region is used, the problem should be convexified. However, the inertia of the augmented matrix will be corrected later */
-      hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, false)),
+      hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, problem
+      .hessian_maximum_number_nonzeros, false)),
       linear_solver(LinearSolverFactory::create(linear_solver_name)), mu_optimality(0.1), mu_feasibility(mu_optimality),
       rhs_(problem.number_variables + problem.inequality_constraints.size() + problem.number_constraints), inertia_hessian_(0.),
       inertia_hessian_last_(0.), inertia_constraints_(0.), default_multiplier_(1.), iteration_(0), number_factorizations_(0),

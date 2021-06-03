@@ -71,7 +71,6 @@ public:
 
     void compute_objective(const Problem& problem);
     void compute_constraints(const Problem& problem);
-    void set_constraint_residual(double constraint_residual);
     void compute_objective_gradient(const Problem& problem);
     void set_objective_gradient(const SparseGradient& objective_gradient);
     void compute_constraints_jacobian(const Problem& problem);

@@ -16,7 +16,8 @@ SLPEQP::SLPEQP(Problem& problem, std::string LP_solver_name, std::string linear_
 ActiveSetMethod(problem, scale_residuals),
 lp_solver(QPSolverFactory::create(LP_solver_name, problem.number_variables, problem.number_constraints, 0, false)),
 linear_solver(LinearSolverFactory::create(linear_solver_name)),
-hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, false)) {
+hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, problem
+.hessian_maximum_number_nonzeros, false)) {
 }
 
 std::vector<Direction> SLPEQP::compute_directions(Problem& problem, Iterate& current_iterate, double /*objective_multiplier*/, double
