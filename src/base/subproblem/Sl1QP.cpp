@@ -32,15 +32,16 @@ Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evalua
       QPSolverFactory::create(QP_solver, number_variables, problem.number_constraints,
             problem.hessian_maximum_number_nonzeros + problem.number_variables, true)),
 // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
-      hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, problem
-      .hessian_maximum_number_nonzeros, !use_trust_region)),
-      penalty_parameter(initial_parameter), parameters({10., 0.1, 0.1}), number_variables(number_variables) {
+      hessian_evaluation(
+            HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, problem.hessian_maximum_number_nonzeros,
+                  !use_trust_region)), penalty_parameter(initial_parameter), parameters({10., 0.1, 0.1}),
+      number_variables(number_variables) {
    // generate elastic variables p and n on the fly to relax the constraints
    this->generate_elastic_variables_(problem, this->elastic_variables_);
 }
 
-std::vector<Direction> Sl1QP::compute_directions(Problem& problem, Iterate& current_iterate, double /*objective_multiplier*/, double
-trust_region_radius) {
+std::vector<Direction>
+Sl1QP::compute_directions(Problem& problem, Iterate& current_iterate, double /*objective_multiplier*/, double trust_region_radius) {
    DEBUG << "penalty parameter: " << this->penalty_parameter << "\n";
 
    // evaluate constraints
@@ -139,19 +140,108 @@ trust_region_radius) {
    return std::vector<Direction>{direction};
 }
 
-Direction Sl1QP::solve_l1qp_subproblem_(Problem& problem, Iterate& current_iterate, double trust_region_radius, double penalty_parameter) {
-   /* compute l1QP step */
-   this->evaluate_optimality_iterate_(problem, current_iterate, penalty_parameter);
-   Direction direction = this->compute_l1qp_step_(problem, *this->solver, current_iterate, penalty_parameter, this->elastic_variables_,
-         trust_region_radius);
+Direction Sl1QP::compute_l1qp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, ConstraintPartition& constraint_partition,
+      std::vector<double>& initial_solution, double trust_region_radius) {
+   /* compute the objective */
+   this->compute_l1_linear_objective_(current_iterate, constraint_partition);
+
+   /* bounds of the variables */
+   std::vector<Range> variables_bounds = this->generate_variables_bounds_(problem, current_iterate, trust_region_radius);
+
+   /* bounds of the linearized constraints */
+   std::vector<Range> constraints_bounds = this->generate_feasibility_bounds_(problem, current_iterate.constraints, constraint_partition);
+
+   /* generate the initial point */
+   std::vector<double>& d0 = initial_solution;
+
+   /* solve the QP */
+   Direction direction =
+         solver.solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian,
+               this->hessian_evaluation->hessian, d0);
+   direction.objective_multiplier = 0.;
+   direction.constraint_partition = constraint_partition;
+   this->number_subproblems_solved++;
+   DEBUG << direction;
    return direction;
 }
 
-void Sl1QP::evaluate_optimality_iterate_(Problem& problem, Iterate& current_iterate, double penalty_parameter) {
-   // Hessian
-   current_iterate.is_hessian_computed = false;
+Direction Sl1QP::compute_l1qp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, double penalty_parameter,
+      ElasticVariables& elastic_variables, double trust_region_radius) {
+   current_iterate.compute_objective_gradient(problem);
+   SparseGradient objective_gradient;
+   if (penalty_parameter != 0.) {
+      for (const auto[i, derivative]: current_iterate.objective_gradient) {
+         objective_gradient[i] = penalty_parameter * derivative;
+      }
+   }
+   /* add contribution of positive part variables */
+   for (const auto[j, i]: elastic_variables.positive) {
+      current_iterate.constraints_jacobian[j][i] = -1.;
+      objective_gradient[i] = 1.;
+   }
+   /* add contribution of negative part variables */
+   for (const auto[j, i]: elastic_variables.negative) {
+      current_iterate.constraints_jacobian[j][i] = 1.;
+      objective_gradient[i] = 1.;
+   }
+   //current_iterate.set_objective_gradient(objective_gradient);
+
+   /* bounds of the variables */
+   std::vector<Range> variables_bounds = this->generate_variables_bounds_(problem, current_iterate, trust_region_radius);
+
+   /* bounds of the linearized constraints */
+   std::vector<Range> constraints_bounds = Subproblem::generate_constraints_bounds(problem, current_iterate.constraints);
+
+   /* generate the initial point */
+   std::vector<double> d0(variables_bounds.size()); // = {0.}
+
+   DEBUG << "Bounds:\n";
+   for (size_t i = 0; i < variables_bounds.size(); i++) {
+      DEBUG << "x" << i << " in [" << variables_bounds[i].lb << ", " << variables_bounds[i].ub << "]\n";
+   }
+   DEBUG << "Hessian: " << this->hessian_evaluation->hessian << "\n";
+   DEBUG << "Objective gradient: ";
+   print_vector(DEBUG, current_iterate.objective_gradient);
+   for (size_t j = 0; j < constraints_bounds.size(); j++) {
+      DEBUG << "Constraint " << j << ": ";
+      print_vector(DEBUG, current_iterate.constraints_jacobian[j], ' ');
+      DEBUG << " in [" << constraints_bounds[j].lb << ", " << constraints_bounds[j].ub << "]\n";
+   }
+
+   /* solve the QP */
+   Direction direction = solver.solve_QP(variables_bounds, constraints_bounds, objective_gradient, current_iterate.constraints_jacobian,
+         this->hessian_evaluation->hessian, d0);
+   direction.phase = OPTIMALITY;
+   this->number_subproblems_solved++;
+   // recompute active set: constraints are active when p-n = 0
+   this->recover_l1qp_active_set_(problem, direction, elastic_variables);
+   DEBUG << direction;
+
+   /* remove p and n */
+   direction.x.resize(current_iterate.x.size());
+   direction.multipliers.lower_bounds.resize(current_iterate.x.size());
+   direction.multipliers.upper_bounds.resize(current_iterate.x.size());
+   direction.norm = norm_inf(direction.x);
+
+   /* remove contribution of positive part variables */
+   for (const auto[j, i]: elastic_variables.positive) {
+      current_iterate.constraints_jacobian[j].erase(i);
+      current_iterate.objective_gradient.erase(i);
+   }
+   /* remove contribution of negative part variables */
+   for (const auto[j, i]: elastic_variables.negative) {
+      current_iterate.constraints_jacobian[j].erase(i);
+      current_iterate.objective_gradient.erase(i);
+   }
+   return direction;
+}
+
+Direction Sl1QP::solve_l1qp_subproblem_(Problem& problem, Iterate& current_iterate, double trust_region_radius, double penalty_parameter) {
+   /* compute l1QP step */
    this->hessian_evaluation->compute(problem, current_iterate, penalty_parameter, current_iterate.multipliers.constraints);
-   return;
+   Direction direction = this->compute_l1qp_step_(problem, *this->solver, current_iterate, penalty_parameter, this->elastic_variables_,
+         trust_region_radius);
+   return direction;
 }
 
 std::vector<Direction> Sl1QP::restore_feasibility(Problem&, Iterate&, Direction&, double) {
@@ -165,7 +255,7 @@ double Sl1QP::compute_predicted_reduction_(Problem& problem, Iterate& current_it
    }
    else {
       double linear_term = dot(direction.x, current_iterate.objective_gradient);
-      double quadratic_term = current_iterate.hessian.quadratic_product(direction.x, direction.x) / 2.;
+      double quadratic_term = this->hessian_evaluation->hessian.quadratic_product(direction.x, direction.x) / 2.;
       // determine the constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
       std::vector<double> scaled_constraints(current_iterate.constraints);
       for (size_t j = 0; j < current_iterate.constraints.size(); j++) {

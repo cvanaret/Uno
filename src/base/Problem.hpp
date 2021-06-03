@@ -83,7 +83,8 @@ public:
 
     /* Hessian */
     int hessian_maximum_number_nonzeros; /*!< Number of nonzero elements in the Hessian */
-    [[nodiscard]] virtual CSCMatrix lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers) const = 0;
+    virtual void lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
+          CSCMatrix& hessian) const = 0;
 
     virtual std::vector<double> primal_initial_solution() = 0;
     virtual std::vector<double> dual_initial_solution() = 0;
@@ -108,7 +109,8 @@ public:
     void constraint_gradient(std::vector<double>& x, int j, SparseGradient& gradient) const override;
     std::vector<SparseGradient> constraints_jacobian(std::vector<double>& x) const override;
 
-    CSCMatrix lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers) const override;
+    void lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
+          CSCMatrix& hessian) const override;
 
     /* variables */
     void add_variable(std::string name, Range& bounds);

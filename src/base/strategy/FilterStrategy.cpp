@@ -114,7 +114,7 @@ void FilterStrategy::switch_phase_(Problem& problem, Direction& direction, Itera
             this->filter_restoration->upper_bound = this->filter_optimality->upper_bound;
             this->subproblem.compute_infeasibility_measures(problem, current_iterate, direction);
             this->filter_restoration->add(current_iterate.feasibility_measure, current_iterate.optimality_measure);
-            current_iterate.is_hessian_computed = false;
+            //current_iterate.is_hessian_computed = false;
         }
     }
         /* check whether we can switch from phase I (restoration) to II (optimality) */

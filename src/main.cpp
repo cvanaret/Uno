@@ -192,38 +192,38 @@ std::map<std::string, std::string> get_options(std::string file_name) {
 //    return;
 //}
 
-void test_mask_matrix() {
-    int n = 4;
-    UnoMatrix matrix(n, 0);
-    
-    // Column 0
-    matrix.insert(1., 0, 0);
-    // Column 1
-    matrix.insert(2., 0, 1);
-    matrix.insert(3., 1, 1);
-    // Column 2
-    matrix.insert(4., 0, 2);
-    matrix.insert(5., 1, 2);
-    matrix.insert(6., 2, 2);
-    // Column 3
-    matrix.insert(7., 0, 3);
-    matrix.insert(8., 1, 3);
-    matrix.insert(9., 2, 3);
-    matrix.insert(10., 3, 3);
-    std::cout << "Original matrix: " << matrix << "\n";
-    
-    std::unordered_map<int, int> mask;
-    mask[0] = 0;
-    mask[2] = 1;
-    
-    
-    COOMatrix coo_matrix = matrix.to_COO(mask);
-    std::cout << "COO reduced matrix:\n" << coo_matrix;
-    
-    CSCMatrix csc_matrix = matrix.to_CSC(mask);
-    std::cout << "CSC reduced matrix:\n" << csc_matrix;
-    return;
-}
+//void test_mask_matrix() {
+//    int n = 4;
+//    UnoMatrix matrix(n, 0);
+//
+//    // Column 0
+//    matrix.insert(1., 0, 0);
+//    // Column 1
+//    matrix.insert(2., 0, 1);
+//    matrix.insert(3., 1, 1);
+//    // Column 2
+//    matrix.insert(4., 0, 2);
+//    matrix.insert(5., 1, 2);
+//    matrix.insert(6., 2, 2);
+//    // Column 3
+//    matrix.insert(7., 0, 3);
+//    matrix.insert(8., 1, 3);
+//    matrix.insert(9., 2, 3);
+//    matrix.insert(10., 3, 3);
+//    std::cout << "Original matrix: " << matrix << "\n";
+//
+//    std::unordered_map<int, int> mask;
+//    mask[0] = 0;
+//    mask[2] = 1;
+//
+//
+//    COOMatrix coo_matrix = matrix.to_COO(mask);
+//    std::cout << "COO reduced matrix:\n" << coo_matrix;
+//
+//    CSCMatrix csc_matrix = matrix.to_CSC(mask);
+//    std::cout << "CSC reduced matrix:\n" << csc_matrix;
+//    return;
+//}
 
 int main(int argc, char* argv[]) {
     if (1 < argc) {
@@ -240,7 +240,7 @@ int main(int argc, char* argv[]) {
             std::cout << "To choose a globalization strategy, type ./uno -strategy [penalty|filter|nonmonotone-filter] path_to_file/file.nl\n";
             std::cout << "To choose a subproblem, type ./uno -subproblem [SQP|SLP|Sl1QP|SLPEQP|IPM] path_to_file/file.nl\n";
             std::cout << "The three options can be combined in the same command line. Autocompletion is active.\n";
-            test_mask_matrix();
+            //test_mask_matrix();
         }
         else {
             std::string problem_name = std::string(argv[argc - 1]);
