@@ -21,12 +21,8 @@ double Matrix::quadratic_product(const std::vector<double>& x, const std::vector
 
 void Matrix::add_outer_product(const SparseGradient& x, double scaling_factor) {
     /* perform matrix addition: A + rho x x^T */
-    for (std::pair<const int, double> row_element: x) {
-        int row_index = row_element.first;
-        double row_term = row_element.second;
-        for (std::pair<const int, double> column_element: x) {
-            int column_index = column_element.first;
-            double column_term = column_element.second;
+    for (const auto [row_index, row_term]: x) {
+        for (const auto [column_index, column_term]: x) {
             // upper triangular matrix
             if (row_index <= column_index) {
                 // add product of components
@@ -347,9 +343,7 @@ double UnoMatrix::norm_1() {
     }
     // read the matrix and fill in the column_vectors norm vector
     std::vector<double> column_vectors(number_columns);
-    for (std::pair<const size_t, double> element: this->matrix) {
-        int key = element.first;
-        double value = element.second;
+    for (const auto [key, value]: this->matrix) {
         // retrieve indices
         int j = key / this->dimension;
         column_vectors[j] += std::abs(value);
@@ -367,9 +361,7 @@ std::vector<double> UnoMatrix::product(const std::vector<double>& /*vector*/) {
 }
 
 void UnoMatrix::add_matrix(UnoMatrix& other_matrix, double factor) {
-    for (std::pair<const int, double> element: other_matrix.matrix) {
-        int key = element.first;
-        double value = element.second;
+    for (const auto [key, value]: other_matrix.matrix) {
         // retrieve indices
         int i = key % this->dimension;
         int j = key / this->dimension;
@@ -381,9 +373,7 @@ void UnoMatrix::add_matrix(UnoMatrix& other_matrix, double factor) {
 COOMatrix UnoMatrix::to_COO() {
     COOMatrix coo_matrix(this->dimension, this->fortran_indexing);
 
-    for (std::pair<const int, double> element: this->matrix) {
-        int key = element.first;
-        double value = element.second;
+    for (const auto [key, value]: this->matrix) {
         // retrieve indices
         int i = key % this->dimension;
         int j = key / this->dimension;
@@ -397,9 +387,7 @@ COOMatrix UnoMatrix::to_COO() {
 COOMatrix UnoMatrix::to_COO(const std::unordered_map<int, int>& mask) {
     COOMatrix coo_matrix(this->dimension, this->fortran_indexing);
 
-    for (std::pair<const int, double> element: this->matrix) {
-        int key = element.first;
-        double value = element.second;
+    for (const auto [key, value]: this->matrix) {
         // retrieve indices
         int i = key % this->dimension;
         int j = key / this->dimension;
@@ -420,11 +408,9 @@ CSCMatrix UnoMatrix::to_CSC() {
     int current_column = this->fortran_indexing;
     int number_terms = this->fortran_indexing;
     csc_matrix.column_start.push_back(this->fortran_indexing);
-    for (std::pair<const int, double> element: this->matrix) {
-        double value = element.second;
+    for (const auto [key, value]: this->matrix) {
         csc_matrix.matrix.push_back(value);
         // retrieve indices
-        int key = element.first;
         int i = key % this->dimension + this->fortran_indexing;
         int j = key / this->dimension + this->fortran_indexing;
 
@@ -445,10 +431,8 @@ CSCMatrix UnoMatrix::to_CSC(const std::unordered_map<int, int>& mask) {
     int current_column = this->fortran_indexing;
     int number_terms = this->fortran_indexing;
     csc_matrix.column_start.push_back(this->fortran_indexing);
-    for (std::pair<const int, double> element: this->matrix) {
-        double value = element.second;
+    for (const auto [key, value]: this->matrix) {
         // retrieve indices
-        int key = element.first;
         int i = key % this->dimension + this->fortran_indexing;
         int j = key / this->dimension + this->fortran_indexing;
         try {
@@ -470,9 +454,7 @@ CSCMatrix UnoMatrix::to_CSC(const std::unordered_map<int, int>& mask) {
 }
 
 std::ostream& operator<<(std::ostream &stream, UnoMatrix& matrix) {
-    for (std::pair<const int, double> element: matrix.matrix) {
-        int key = element.first;
-        double value = element.second;
+    for (const auto [key, value]: matrix.matrix) {
         // retrieve indices
         int i = key % matrix.dimension;
         int j = key / matrix.dimension;

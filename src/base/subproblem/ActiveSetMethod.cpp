@@ -108,23 +108,17 @@ Direction ActiveSetMethod::compute_l1qp_step_(Problem& problem, QPSolver& solver
     current_iterate.compute_objective_gradient(problem);
     SparseGradient objective_gradient;
     if (penalty_parameter != 0.) {
-        for (std::pair<const int, double>& element: current_iterate.objective_gradient) {
-            int i = element.first;
-            double derivative = element.second;
+        for (const auto [i, derivative]: current_iterate.objective_gradient) {
             objective_gradient[i] = penalty_parameter*derivative;
         }
     }
     /* add contribution of positive part variables */
-    for (std::pair<const int, int>& element: elastic_variables.positive) {
-        int j = element.first;
-        int i = element.second;
+    for (const auto [j, i]: elastic_variables.positive) {
         current_iterate.constraints_jacobian[j][i] = -1.;
         objective_gradient[i] = 1.;
     }
     /* add contribution of negative part variables */
-    for (std::pair<const int, int>& element: elastic_variables.negative) {
-        int j = element.first;
-        int i = element.second;
+    for (const auto [j, i]: elastic_variables.negative) {
         current_iterate.constraints_jacobian[j][i] = 1.;
         objective_gradient[i] = 1.;
     }
@@ -164,16 +158,12 @@ Direction ActiveSetMethod::compute_l1qp_step_(Problem& problem, QPSolver& solver
     direction.norm = norm_inf(direction.x);
 
     /* remove contribution of positive part variables */
-    for (std::pair<const int, int>& element: elastic_variables.positive) {
-        int j = element.first;
-        int i = element.second;
+    for (const auto [j, i]: elastic_variables.positive) {
         current_iterate.constraints_jacobian[j].erase(i);
         current_iterate.objective_gradient.erase(i);
     }
     /* remove contribution of negative part variables */
-    for (std::pair<const int, int>& element: elastic_variables.negative) {
-        int j = element.first;
-        int i = element.second;
+    for (const auto [j, i]: elastic_variables.negative) {
         current_iterate.constraints_jacobian[j].erase(i);
         current_iterate.objective_gradient.erase(i);
     }
@@ -231,10 +221,7 @@ void ActiveSetMethod::compute_l1_linear_objective_(Iterate& current_iterate, Con
     /* objective function: sum of gradients of infeasible constraints */
     SparseGradient objective_gradient;
     for (int j: constraint_partition.infeasible) {
-        for (std::pair<int, double> term: current_iterate.constraints_jacobian[j]) {
-            int i = term.first;
-            double derivative = term.second;
-
+        for (const auto [i, derivative]: current_iterate.constraints_jacobian[j]) {
             if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
                 objective_gradient[i] -= derivative;
             }

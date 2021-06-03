@@ -92,17 +92,13 @@ Direction BQPDSolver::solve_subproblem_(std::vector<Range>& variables_bounds, st
 
     /* Jacobian */
     int current_index = 0;
-    for (std::pair<int, double> element: linear_objective) {
-        int i = element.first;
-        double derivative = element.second;
+    for (const auto [i, derivative]: linear_objective) {
         this->jacobian_[current_index] = derivative;
         this->jacobian_sparsity_[current_index + 1] = i + this->use_fortran_;
         current_index++;
     }
     for (int j = 0; j < this->m_; j++) {
-        for (std::pair<int, double> element: constraints_jacobian[j]) {
-            int i = element.first;
-            double derivative = element.second;
+        for (const auto [i, derivative]: constraints_jacobian[j]) {
             this->jacobian_[current_index] = derivative;
             this->jacobian_sparsity_[current_index + 1] = i + this->use_fortran_;
             current_index++;

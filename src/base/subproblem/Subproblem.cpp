@@ -67,9 +67,7 @@ std::vector<double> Subproblem::compute_least_square_multipliers(const Problem& 
     }
     /* Jacobian of general constraints */
     for (int j = 0; j < problem.number_constraints; j++) {
-        for (std::pair<const int, double>& term: current_iterate.constraints_jacobian[j]) {
-            int variable_index = term.first;
-            double derivative = term.second;
+        for (const auto [variable_index, derivative]: current_iterate.constraints_jacobian[j]) {
             matrix.insert(derivative, variable_index, current_iterate.x.size() + j);
         }
     }
@@ -84,9 +82,7 @@ std::vector<double> Subproblem::compute_least_square_multipliers(const Problem& 
     std::vector<double> rhs(current_iterate.x.size() + problem.number_constraints);
 
     /* objective gradient */
-    for (std::pair<int, double> term: current_iterate.objective_gradient) {
-        int i = term.first;
-        double derivative = term.second;
+    for (const auto [i, derivative]: current_iterate.objective_gradient) {
         rhs[i] += problem.objective_sign*derivative;
     }
     /* variable bound constraints */

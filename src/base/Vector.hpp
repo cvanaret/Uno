@@ -80,9 +80,7 @@ void print_vector(const Level& level, const std::set<T>& x, const char end='\n')
 
 template <typename T, typename U>
 void print_vector(std::ostream &stream, const std::map<T, U>& x, const char end='\n') {
-    for (std::pair<T, U> element : x) {
-        T i = element.first;
-        U xi = element.second;
+    for (const auto [i, xi]: x) {
         stream << "x[" << i << "] = " << xi << ", ";
     }
     stream << end;
@@ -91,9 +89,7 @@ void print_vector(std::ostream &stream, const std::map<T, U>& x, const char end=
 
 template <typename T, typename U>
 void print_vector(const Level& level, const std::map<T, U>& x, const char end='\n') {
-    for (std::pair<T, U> element : x) {
-        T i = element.first;
-        U xi = element.second;
+    for (const auto [i, xi]: x) {
         level << "x[" << i << "] = " << xi << ", ";
     }
     level << end;
@@ -102,9 +98,7 @@ void print_vector(const Level& level, const std::map<T, U>& x, const char end='\
 
 template <typename T, typename U>
 void print_vector(std::ostream &stream, const std::unordered_map<T, U>& x, const char end='\n') {
-    for (std::pair<T, U> element : x) {
-        T i = element.first;
-        U xi = element.second;
+    for (const auto [i, xi]: x) {
         stream << "x[" << i << "] = " << xi << ", ";
     }
     stream << end;
@@ -113,9 +107,7 @@ void print_vector(std::ostream &stream, const std::unordered_map<T, U>& x, const
 
 template <typename T, typename U>
 void print_vector(const Level& level, const std::unordered_map<T, U>& x, const char end='\n') {
-    for (std::pair<T, U> element : x) {
-        T i = element.first;
-        U xi = element.second;
+    for (const auto [i, xi]: x) {
         level << "x[" << i << "] = " << xi << ", ";
     }
     level << end;

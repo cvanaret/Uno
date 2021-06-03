@@ -114,9 +114,7 @@ void Uno::preprocessing(Problem& problem, std::vector<double>& x, Multipliers& m
             std::vector<double> d0(problem.number_variables);
             // constraints Jacobian
             std::vector<SparseGradient> constraints_jacobian(number_constraints);
-            for (std::pair<int, int> element: problem.linear_constraints) {
-                int j = element.first;
-                int linear_constraint_index = element.second;
+            for (const auto [j, linear_constraint_index]: problem.linear_constraints) {
                problem.constraint_gradient(x, j, constraints_jacobian[linear_constraint_index]);
             }
             // variables bounds
@@ -126,9 +124,7 @@ void Uno::preprocessing(Problem& problem, std::vector<double>& x, Multipliers& m
             }
             // constraints bounds
             std::vector<Range> constraints_bounds(number_constraints);
-            for (std::pair<int, int> element: problem.linear_constraints) {
-                int j = element.first;
-                int linear_constraint_index = element.second;
+            for (const auto [j, linear_constraint_index]: problem.linear_constraints) {
                 constraints_bounds[linear_constraint_index] = {problem.constraint_bounds[j].lb - constraints[j], problem.constraint_bounds[j].ub - constraints[j]};
             }
             Direction direction = solver.solve_QP(variables_bounds, constraints_bounds, linear_objective, constraints_jacobian, hessian, d0);
@@ -142,9 +138,7 @@ void Uno::preprocessing(Problem& problem, std::vector<double>& x, Multipliers& m
             multipliers.lower_bounds = direction.multipliers.lower_bounds;
             multipliers.upper_bounds = direction.multipliers.upper_bounds;
             // copy constraint multipliers
-            for (std::pair<int, int> element: problem.linear_constraints) {
-                int j = element.first;
-                int linear_constraint_index = element.second;
+            for (const auto [j, linear_constraint_index]: problem.linear_constraints) {
                 multipliers.constraints[j] = direction.multipliers.constraints[linear_constraint_index];
             }
             INFO << "Linear feasible initial point: "; print_vector(INFO, x);
