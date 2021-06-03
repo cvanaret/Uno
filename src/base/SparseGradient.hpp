@@ -3,6 +3,6 @@
 
 #include <map>
 #include <unordered_map>
-typedef std::unordered_map<int, double> SparseGradient;
+typedef std::unordered_map<unsigned int, double> SparseGradient;
 
 #endif // SPARSEGRADIENT_H

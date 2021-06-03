@@ -48,23 +48,23 @@ std::ostream& operator<<(std::ostream &stream, Direction& direction) {
 
     stream << "active set:\n";
     stream << "bound constraints at lower bound =";
-    for (unsigned int index: direction.active_set.bounds.at_lower_bound) {
+    for (size_t index: direction.active_set.bounds.at_lower_bound) {
         stream << " x" << index;
     }
     stream << "\n";
     stream << "bound constraints at upper bound =";
-    for (unsigned int index: direction.active_set.bounds.at_upper_bound) {
+    for (size_t index: direction.active_set.bounds.at_upper_bound) {
         stream << " x" << index;
     }
     stream << "\n";
 
     stream << "constraints at lower bound =";
-    for (unsigned int index: direction.active_set.constraints.at_lower_bound) {
+    for (size_t index: direction.active_set.constraints.at_lower_bound) {
         stream << " c" << index;
     }
     stream << "\n";
     stream << "constraints at upper bound =";
-    for (unsigned int index: direction.active_set.constraints.at_upper_bound) {
+    for (size_t index: direction.active_set.constraints.at_upper_bound) {
         stream << " c" << index;
     }
     stream << "\n";

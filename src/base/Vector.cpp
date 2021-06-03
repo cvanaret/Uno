@@ -88,7 +88,7 @@ double norm_inf(const SparseGradient& x) {
 // https://en.wikipedia.org/wiki/Matrix_norm#Special_cases
 double norm_inf(const std::vector<SparseGradient>& m) {
     // compute maximum row index
-    int number_rows = 0;
+    unsigned int number_rows = 0;
     for (size_t j = 0; j < m.size(); j++) {
         number_rows = std::max(number_rows, 1 + m[j].begin()->first);
     }

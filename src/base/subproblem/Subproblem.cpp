@@ -15,7 +15,7 @@ scale_residuals(scale_residuals) {
 //}
 
 void Subproblem::project_point_in_bounds(std::vector<double>& x, const std::vector<Range>& variables_bounds) {
-    for (unsigned int i = 0; i < x.size(); i++) {
+    for (size_t i = 0; i < x.size(); i++) {
         if (x[i] < variables_bounds[i].lb) {
             x[i] = variables_bounds[i].lb;
         }
@@ -39,7 +39,7 @@ double Subproblem::project_strictly_variable_in_bounds(double variable_value, co
 
 std::vector<Range> Subproblem::generate_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints) {
     std::vector<Range> constraints_bounds(problem.number_constraints);
-    for (int j = 0; j < problem.number_constraints; j++) {
+    for (size_t j = 0; j < problem.number_constraints; j++) {
         double lb = problem.constraint_bounds[j].lb - current_constraints[j];
         double ub = problem.constraint_bounds[j].ub - current_constraints[j];
         constraints_bounds[j] = {lb, ub};
@@ -62,17 +62,17 @@ std::vector<double> Subproblem::compute_least_square_multipliers(const Problem& 
     COOMatrix matrix(current_iterate.x.size() + problem.number_constraints, 1);
 
     /* identity blocks */
-    for (unsigned int i = 0; i < current_iterate.x.size(); i++) {
+    for (size_t i = 0; i < current_iterate.x.size(); i++) {
         matrix.insert(1., i, i);
     }
     /* Jacobian of general constraints */
-    for (int j = 0; j < problem.number_constraints; j++) {
+    for (size_t j = 0; j < problem.number_constraints; j++) {
         for (const auto [variable_index, derivative]: current_iterate.constraints_jacobian[j]) {
             matrix.insert(derivative, variable_index, current_iterate.x.size() + j);
         }
     }
     DEBUG << "Multipliers estimation: KKT matrix:\n";
-    for (unsigned int k = 0; k < matrix.matrix.size(); k++) {
+    for (size_t k = 0; k < matrix.matrix.size(); k++) {
         DEBUG << "m(" << matrix.row_indices[k] << ", " << matrix.column_indices[k] << ") = " << matrix.matrix[k] << "\n";
     }
 
@@ -86,7 +86,7 @@ std::vector<double> Subproblem::compute_least_square_multipliers(const Problem& 
         rhs[i] += problem.objective_sign*derivative;
     }
     /* variable bound constraints */
-    for (unsigned int i = 0; i < current_iterate.x.size(); i++) {
+    for (size_t i = 0; i < current_iterate.x.size(); i++) {
         rhs[i] -= current_iterate.multipliers.lower_bounds[i];
         rhs[i] -= current_iterate.multipliers.upper_bounds[i];
     }
@@ -101,7 +101,7 @@ std::vector<double> Subproblem::compute_least_square_multipliers(const Problem& 
 
     /* retrieve multipliers */
     std::vector<double> multipliers(problem.number_constraints);
-    for (int j = 0; j < problem.number_constraints; j++) {
+    for (size_t j = 0; j < problem.number_constraints; j++) {
         multipliers[j] = solution[current_iterate.x.size() + j];
     }
     // if multipliers too big, discard them
@@ -121,7 +121,7 @@ double Subproblem::compute_KKT_error(const Problem& problem, Iterate& iterate, d
 double Subproblem::compute_complementarity_error_(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const {
     double complementarity_error = 0.;
     /* bound constraints */
-    for (unsigned int i = 0; i < iterate.x.size(); i++) {
+    for (size_t i = 0; i < iterate.x.size(); i++) {
         if (-INFINITY < this->bounds[i].lb) {
             complementarity_error += std::abs(multipliers.lower_bounds[i] * (iterate.x[i] - this->bounds[i].lb));
         }
@@ -131,7 +131,7 @@ double Subproblem::compute_complementarity_error_(const Problem& problem, Iterat
     }
     /* constraints */
     iterate.compute_constraints(problem);
-    for (int j = 0; j < problem.number_constraints; j++) {
+    for (size_t j = 0; j < problem.number_constraints; j++) {
         double multiplier_j = multipliers.constraints[j];
         if (-INFINITY < problem.constraint_bounds[j].lb && 0. < multiplier_j) {
             complementarity_error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraint_bounds[j].lb));

@@ -23,7 +23,7 @@ double norm_2_squared(const SparseGradient& x);
 double norm_2(const std::vector<double>& x);
 double norm_2(const SparseGradient& x);
 
-double norm_inf(const std::vector<double>& x, size_t length = std::numeric_limits<unsigned int>::max());
+double norm_inf(const std::vector<double>& x, size_t length = std::numeric_limits<size_t>::max());
 double norm_inf(const SparseGradient& x);
 double norm_inf(const std::vector<SparseGradient>& m);
 
@@ -52,8 +52,8 @@ double norm(const T& x, Norm norm) {
 }
 
 template <typename T>
-void print_vector(std::ostream &stream, const std::vector<T>& x, const char end='\n', unsigned int start = 0, unsigned int length = std::numeric_limits<unsigned int>::max()) {
-    for (size_t i = start; i < std::min<unsigned int>(start + length, x.size()); i++) {
+void print_vector(std::ostream &stream, const std::vector<T>& x, const char end='\n', size_t start = 0, size_t length = std::numeric_limits<size_t>::max()) {
+    for (size_t i = start; i < std::min<size_t>(start + length, x.size()); i++) {
         stream << x[i] << " ";
     }
     stream << end;
@@ -61,8 +61,8 @@ void print_vector(std::ostream &stream, const std::vector<T>& x, const char end=
 }
 
 template <typename T>
-void print_vector(const Level& level, const std::vector<T>& x, const char end='\n', unsigned int start = 0, unsigned int length = std::numeric_limits<unsigned int>::max()) {
-    for (size_t i = start; i < std::min<unsigned int>(start + length, x.size()); i++) {
+void print_vector(const Level& level, const std::vector<T>& x, const char end='\n', size_t start = 0, size_t length = std::numeric_limits<size_t>::max()) {
+    for (size_t i = start; i < std::min<size_t>(start + length, x.size()); i++) {
         level << x[i] << " ";
     }
     level << end;

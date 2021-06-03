@@ -48,10 +48,10 @@ TerminationStatus GlobalizationMechanism::compute_termination_status_(Problem& p
 
     // if convergence, correct the multipliers
     if (status != NOT_OPTIMAL && 0. < objective_multiplier) {
-        for (int j = 0; j < problem.number_constraints; j++) {
+        for (size_t j = 0; j < problem.number_constraints; j++) {
             current_iterate.multipliers.constraints[j] /= objective_multiplier;
         }
-        for (unsigned int i = 0; i < current_iterate.x.size(); i++) {
+        for (size_t i = 0; i < current_iterate.x.size(); i++) {
             current_iterate.multipliers.lower_bounds[i] /= objective_multiplier;
             current_iterate.multipliers.upper_bounds[i] /= objective_multiplier;
         }

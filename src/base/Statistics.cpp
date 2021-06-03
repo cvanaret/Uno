@@ -65,7 +65,7 @@ void Statistics::print_header(bool first_occurrence) {
         }
         std::string header = element.second;
         std::cout << " " << header;
-        for (unsigned int j = 0; j < this->widths_[header] - header.size() - 1; j++) {
+        for (size_t j = 0; j < this->widths_[header] - header.size() - 1; j++) {
             std::cout << " ";
         }
         k++;
@@ -95,7 +95,7 @@ void Statistics::print_current_line() {
             std::cout << Statistics::symbols["middle"];
         }
         std::string header = element.second;
-        unsigned int size;
+        size_t size;
         try {
             std::string value = this->current_line_.at(header);
             std::cout << " " << value;

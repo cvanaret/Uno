@@ -14,9 +14,9 @@ Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evalua
             this->count_elastic_variables_(problem)) {
 }
 
-int Sl1QP::count_elastic_variables_(Problem& problem) {
-   int number_variables = problem.number_variables;
-   for (int j = 0; j < problem.number_constraints; j++) {
+size_t Sl1QP::count_elastic_variables_(Problem& problem) {
+   size_t number_variables = problem.number_variables;
+   for (size_t j = 0; j < problem.number_constraints; j++) {
       if (-INFINITY < problem.constraint_bounds[j].lb) {
          number_variables++;
       }
@@ -167,7 +167,7 @@ double Sl1QP::compute_predicted_reduction_(Problem& problem, Iterate& current_it
       double quadratic_term = current_iterate.hessian.quadratic_product(direction.x, direction.x) / 2.;
       // determine the constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
       std::vector<double> scaled_constraints(current_iterate.constraints);
-      for (unsigned int j = 0; j < current_iterate.constraints.size(); j++) {
+      for (size_t j = 0; j < current_iterate.constraints.size(); j++) {
          scaled_constraints[j] += step_length * dot(direction.x, current_iterate.constraints_jacobian[j]);
       }
       double constraint_violation = problem.compute_constraint_residual(scaled_constraints, this->residual_norm);
@@ -182,7 +182,7 @@ std::vector<Range> Sl1QP::generate_variables_bounds_(Problem& problem, Iterate& 
    std::vector<Range> variables_bounds(this->number_variables, {0., INFINITY});
 
    /* original bounds intersected with trust region  */
-   for (int i = 0; i < problem.number_variables; i++) {
+   for (size_t i = 0; i < problem.number_variables; i++) {
       double lb = std::max(-trust_region_radius, this->bounds[i].lb - current_iterate.x[i]);
       double ub = std::min(trust_region_radius, this->bounds[i].ub - current_iterate.x[i]);
       variables_bounds[i] = {lb, ub};
@@ -220,7 +220,7 @@ double Sl1QP::compute_error_(Problem& problem, Iterate& iterate, Multipliers& mu
 double Sl1QP::compute_complementarity_error_(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const {
    double error = 0.;
    /* bound constraints */
-   for (int i = 0; i < problem.number_variables; i++) {
+   for (size_t i = 0; i < problem.number_variables; i++) {
       if (-INFINITY < problem.variables_bounds[i].lb) {
          error += std::abs(iterate.multipliers.lower_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].lb));
       }
@@ -229,7 +229,7 @@ double Sl1QP::compute_complementarity_error_(const Problem& problem, Iterate& it
       }
    }
    /* general constraints */
-   for (int j = 0; j < problem.number_constraints; j++) {
+   for (size_t j = 0; j < problem.number_constraints; j++) {
       double multiplier_j = multipliers.constraints[j];
       if (iterate.constraints[j] < problem.constraint_bounds[j].lb) {
          // violated lower: the multiplier is 1 at optimum
