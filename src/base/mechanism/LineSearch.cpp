@@ -43,7 +43,7 @@ Iterate LineSearch::compute_acceptable_iterate(Statistics& statistics, Problem& 
             }
             if (!is_accepted) {
                 /* decrease the step length */
-                this->step_length *= this->backtracking_ratio;
+               this->update_step_length();
             }
         }
         // if step length is too small, run restoration phase
@@ -63,6 +63,11 @@ Iterate LineSearch::compute_acceptable_iterate(Statistics& statistics, Problem& 
         }
     }
     return current_iterate;
+}
+
+void LineSearch::update_step_length() {
+   this->step_length *= this->backtracking_ratio;
+   return;
 }
 
 bool LineSearch::termination_(bool is_accepted) {
