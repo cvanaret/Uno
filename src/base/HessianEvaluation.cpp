@@ -3,7 +3,8 @@
 #include "LinearSolverFactory.hpp"
 #include "Vector.hpp"
 
-HessianEvaluation::HessianEvaluation(int dimension): dimension(dimension) {
+HessianEvaluation::HessianEvaluation(int dimension, int hessian_maximum_number_nonzeros):
+   dimension(dimension), hessian(hessian_maximum_number_nonzeros) {
 }
 
 CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& hessian, LinearSolver& linear_solver) {
@@ -52,7 +53,8 @@ CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& hessian, LinearSolver& li
 
 /* Exact Hessian */
 
-ExactHessianEvaluation::ExactHessianEvaluation(int dimension): HessianEvaluation(dimension) {
+ExactHessianEvaluation::ExactHessianEvaluation(int dimension, int hessian_maximum_number_nonzeros):
+   HessianEvaluation(dimension, hessian_maximum_number_nonzeros) {
 }
 
 void ExactHessianEvaluation::compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) {
@@ -63,8 +65,8 @@ void ExactHessianEvaluation::compute(Problem& problem, Iterate& iterate, double 
 
 /* Exact Hessian with inertia control */
 
-ExactHessianInertiaControlEvaluation::ExactHessianInertiaControlEvaluation(int dimension, std::string linear_solver_name):
-HessianEvaluation(dimension),
+ExactHessianInertiaControlEvaluation::ExactHessianInertiaControlEvaluation(int dimension, int hessian_maximum_number_nonzeros, std::string linear_solver_name):
+HessianEvaluation(dimension, hessian_maximum_number_nonzeros),
 linear_solver_(LinearSolverFactory::create(linear_solver_name)) {
 }
 
@@ -79,7 +81,8 @@ void ExactHessianInertiaControlEvaluation::compute(Problem& problem, Iterate& it
 
 /* BFGS Hessian */
 
-BFGSHessianEvaluation::BFGSHessianEvaluation(int dimension): HessianEvaluation(dimension), previous_hessian_(dimension, 1), previous_x_(dimension) {
+BFGSHessianEvaluation::BFGSHessianEvaluation(int dimension, int hessian_maximum_number_nonzeros):
+   HessianEvaluation(dimension, hessian_maximum_number_nonzeros), previous_hessian_(dimension, 1), previous_x_(dimension) {
 }
 
 void BFGSHessianEvaluation::compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) {
@@ -90,17 +93,17 @@ void BFGSHessianEvaluation::compute(Problem& problem, Iterate& iterate, double o
 
 /* Factory */
 
-std::unique_ptr<HessianEvaluation> HessianEvaluationFactory::create(std::string hessian_evaluation_method, int dimension, bool convexify) {
+std::unique_ptr<HessianEvaluation> HessianEvaluationFactory::create(std::string hessian_evaluation_method, int dimension, int hessian_maximum_number_nonzeros, bool convexify) {
     if (hessian_evaluation_method == "exact") {
         if (convexify) {
-            return std::make_unique<ExactHessianInertiaControlEvaluation>(dimension, "MA57");
+            return std::make_unique<ExactHessianInertiaControlEvaluation>(dimension, hessian_maximum_number_nonzeros, "MA57");
         }
         else {
-            return std::make_unique<ExactHessianEvaluation>(dimension);
+            return std::make_unique<ExactHessianEvaluation>(dimension, hessian_maximum_number_nonzeros);
         }
     }
         //    else if (hessian_evaluation_method == "BFGS") {
-        //        return std::make_unique<BFGSHessianEvaluation>(dimension);
+        //        return std::make_unique<BFGSHessianEvaluation>(dimension, hessian_maximum_number_nonzeros);
         //    }
     else {
         throw std::invalid_argument("Hessian evaluation method " + hessian_evaluation_method + " does not exist");

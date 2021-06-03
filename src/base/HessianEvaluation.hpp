@@ -13,18 +13,21 @@
 // virtual (abstract) class
 class HessianEvaluation {
 public:
-   explicit HessianEvaluation(int dimension);
+   explicit HessianEvaluation(int dimension, int hessian_maximum_number_nonzeros);
    virtual ~HessianEvaluation() = default;
 
    int dimension;
 
    virtual void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) = 0;
    CSCMatrix modify_inertia(CSCMatrix& hessian, LinearSolver& linear_solver);
+
+protected:
+   std::vector<double> hessian;
 };
 
 class ExactHessianEvaluation : public HessianEvaluation {
 public:
-   explicit ExactHessianEvaluation(int dimension);
+   explicit ExactHessianEvaluation(int dimension, int hessian_maximum_number_nonzeros);
    ~ExactHessianEvaluation() override = default;
 
    void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) override;
@@ -35,7 +38,7 @@ protected:
 
 class ExactHessianInertiaControlEvaluation : public HessianEvaluation {
 public:
-   ExactHessianInertiaControlEvaluation(int dimension, std::string linear_solve_name);
+   ExactHessianInertiaControlEvaluation(int dimension, int hessian_maximum_number_nonzeros, std::string linear_solve_name);
    ~ExactHessianInertiaControlEvaluation() override = default;
 
    void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) override;
@@ -47,7 +50,7 @@ protected:
 
 class BFGSHessianEvaluation : public HessianEvaluation {
 public:
-   explicit BFGSHessianEvaluation(int dimension);
+   explicit BFGSHessianEvaluation(int dimension, int hessian_maximum_number_nonzeros);
    ~BFGSHessianEvaluation() override = default;
 
    void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) override;
@@ -59,7 +62,7 @@ private:
 
 class HessianEvaluationFactory {
 public:
-   static std::unique_ptr<HessianEvaluation> create(std::string hessian_evaluation_method, int dimension, bool convexify);
+   static std::unique_ptr<HessianEvaluation> create(std::string hessian_evaluation_method, int dimension, int hessian_maximum_number_nonzeros, bool convexify);
 };
 
 #endif // HESSIANEVALUATION_H

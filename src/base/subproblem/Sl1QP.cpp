@@ -32,7 +32,8 @@ Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evalua
       QPSolverFactory::create(QP_solver, number_variables, problem.number_constraints,
             problem.hessian_maximum_number_nonzeros + problem.number_variables, true)),
 // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
-      hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, !use_trust_region)),
+      hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, problem
+      .hessian_maximum_number_nonzeros, !use_trust_region)),
       penalty_parameter(initial_parameter), parameters({10., 0.1, 0.1}), number_variables(number_variables) {
    // generate elastic variables p and n on the fly to relax the constraints
    this->generate_elastic_variables_(problem, this->elastic_variables_);
