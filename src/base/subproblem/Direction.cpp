@@ -3,7 +3,7 @@
 
 Direction::Direction(std::vector<double>& x, Multipliers& multipliers):
 x(x), multipliers(multipliers), objective_multiplier(1.), status(OPTIMAL), phase(OPTIMALITY), norm(0.), objective(0.),
-is_descent_direction(true), constraint_partition(ConstraintPartition(multipliers.constraints.size())),
+constraint_partition(ConstraintPartition(multipliers.constraints.size())),
 predicted_reduction(nullptr) {
 }
 
