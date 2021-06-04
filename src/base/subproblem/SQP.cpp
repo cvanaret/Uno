@@ -113,7 +113,6 @@ void SQP::evaluate_optimality_iterate_(Problem& problem, Iterate& current_iterat
    current_iterate.compute_objective_gradient(problem);
    current_iterate.compute_constraints_jacobian(problem);
    this->hessian_evaluation->compute(problem, current_iterate, problem.objective_sign, current_iterate.multipliers.constraints);
-   return;
 }
 
 void SQP::evaluate_feasibility_iterate_(Problem& problem, Iterate& current_iterate, ConstraintPartition& constraint_partition) {
@@ -125,7 +124,6 @@ void SQP::evaluate_feasibility_iterate_(Problem& problem, Iterate& current_itera
    //current_iterate.is_hessian_computed = false;
    double objective_multiplier = 0.;
    this->hessian_evaluation->compute(problem, current_iterate, objective_multiplier, constraint_multipliers);
-   return;
 }
 
 double SQP::compute_qp_predicted_reduction_(Problem& /*problem*/, Iterate& current_iterate, Direction& direction, double step_length) {

@@ -21,7 +21,6 @@ void Subproblem::project_point_in_bounds(std::vector<double>& x, const std::vect
          x[i] = variables_bounds[i].ub;
       }
    }
-   return;
 }
 
 double Subproblem::project_strictly_variable_in_bounds(double variable_value, const Range& variable_bounds) {
@@ -159,5 +158,4 @@ Subproblem::compute_residuals(const Problem& problem, Iterate& iterate, const Mu
    if (this->scale_residuals) {
       // TODO scale the residuals
    }
-   return;
 }

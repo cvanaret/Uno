@@ -26,7 +26,6 @@ void MA57Solver::factorize(COOMatrix& matrix) {
    // for more flexibility, call the two methods independently
    this->do_symbolic_factorization(matrix);
    this->do_numerical_factorization(matrix);
-   return;
 }
 
 void MA57Solver::do_symbolic_factorization(const COOMatrix& matrix) {
@@ -67,7 +66,6 @@ void MA57Solver::do_symbolic_factorization(const COOMatrix& matrix) {
    // build the factorization object
    this->factorization_ = {n, nnz, fact, lfact, ifact, lifact, lkeep, keep, iwork, info};
    DEBUG << "Symbolic factorization completed\n";
-   return;
 }
 
 void MA57Solver::do_numerical_factorization(const COOMatrix& matrix) {
@@ -88,7 +86,6 @@ void MA57Solver::do_numerical_factorization(const COOMatrix& matrix) {
          /* out */ this->factorization_.info.data(),
          /* out */ this->rinfo_.data());
    DEBUG << "Numerical factorization completed\n";
-   return;
 }
 
 void MA57Solver::solve(std::vector<double>& rhs) {
@@ -105,7 +102,6 @@ void MA57Solver::solve(std::vector<double>& rhs) {
          this->icntl_.data(), this->factorization_.info.data());
    // the solution is copied in rhs
    DEBUG << "Linear system solve completed\n";
-   return;
 }
 
 int MA57Solver::number_negative_eigenvalues() const {

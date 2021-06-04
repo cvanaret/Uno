@@ -6,21 +6,17 @@ Filter::Filter(FilterConstants& constants): constants(constants) {
     this->reset();
 }
 
-Filter::~Filter() {
-}
-
 void Filter::reset() {
     /* initialize the maximum filter size (not critical) */
     this->max_size = 50;
     this->upper_bound = INFINITY;
     this->entries_.clear();
-    return;
 }
 
 /*  add (infeasibility_measure, optimality_measure) to the filter */
 void Filter::add(double infeasibility_measure, double optimality_measure) {
     /* remove dominated filter entries */
-    std::list<FilterEntry>::iterator entry = this->entries_.begin();
+    auto entry = this->entries_.begin();
     while (entry != this->entries_.end()) {
         if (infeasibility_measure < entry->infeasibility_measure && optimality_measure <= entry->optimality_measure) {
             entry = this->entries_.erase(entry);
@@ -38,14 +34,12 @@ void Filter::add(double infeasibility_measure, double optimality_measure) {
     }
 
     /* add new entry to the filter */
-    std::list<FilterEntry>::iterator position = this->entries_.begin();
+    auto position = this->entries_.begin();
     while (position != this->entries_.end() && infeasibility_measure >= this->constants.Beta * position->infeasibility_measure) {
         position++;
     }
     FilterEntry new_entry{infeasibility_measure, optimality_measure};
     this->entries_.insert(position, new_entry);
-
-    return;
 }
 
 // filter must be nonempty
@@ -69,7 +63,7 @@ bool Filter::accept(double infeasibility_measure, double optimality_measure) {
         return false;
     }
 
-    std::list<FilterEntry>::iterator position = this->entries_.begin();
+    auto position = this->entries_.begin();
     while (position != this->entries_.end() && infeasibility_measure >= this->constants.Beta * position->infeasibility_measure) {
         position++;
     }
@@ -117,8 +111,8 @@ NonmonotoneFilter::NonmonotoneFilter(FilterConstants& constants, int number_domi
 void NonmonotoneFilter::add(double infeasibility_measure, double optimality_measure) {
     int dominated_entries;
     /* find entries in filter that are dominated by "number_dominated_entries" other entries */
-    std::list<FilterEntry>::iterator entry = this->entries_.begin();
-    std::list<FilterEntry>::iterator position = this->entries_.end();
+    auto entry = this->entries_.begin();
+    auto position = this->entries_.end();
     while (entry != this->entries_.end()) {
         /* check whether ith entry dominated by (infeasibility_measure, optimality_measure) */
         if ((optimality_measure < entry->optimality_measure) && (infeasibility_measure < entry->infeasibility_measure)) {
@@ -153,7 +147,6 @@ void NonmonotoneFilter::add(double infeasibility_measure, double optimality_meas
     /* add new entry to the filter */
     FilterEntry new_entry{infeasibility_measure, optimality_measure};
     this->entries_.insert(position, new_entry);
-    return;
 }
 
 //! accept: check if (infeasibility_measure, optimality_measure) acceptable

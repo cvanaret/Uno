@@ -88,7 +88,6 @@ void AMPLModel::generate_variables_() {
       //this->variable_uncertain[i] = false; //(uncertain_suffixes->u.i != NULL && uncertain_suffixes->u.i[i] == 1);
    }
    this->determine_bounds_types(this->variables_bounds, this->variable_status);
-   return;
 }
 
 double AMPLModel::objective(const std::vector<double>& x) const {
@@ -127,7 +126,6 @@ SparseGradient AMPLModel::objective_gradient(std::vector<double>& x) const {
 void AMPLModel::initialize_objective_() {
    this->objective_name = obj_name_ASL(this->asl_, 0);
    //this->create_objective_variables_(this->asl_->i.Ograd_[0]);
-   return;
 }
 
 double AMPLModel::evaluate_constraint(int j, std::vector<double>& x) const {
@@ -177,7 +175,6 @@ void AMPLModel::constraint_gradient(std::vector<double>& x, int j, SparseGradien
    }
 
    this->asl_->i.congrd_mode = congrd_mode_backup;
-   return;
 }
 
 std::vector<SparseGradient> AMPLModel::constraints_jacobian(std::vector<double>& x) const {
@@ -200,7 +197,6 @@ void AMPLModel::generate_constraints_() {
    }
    this->determine_bounds_types(this->constraint_bounds, this->constraint_status);
    this->determine_constraints_();
-   return;
 }
 
 void AMPLModel::set_function_types_(std::string file_name) {
@@ -265,8 +261,6 @@ void AMPLModel::set_function_types_(std::string file_name) {
 
    /* deallocate memory */
    ASL_free((ASL * *) & asl);
-
-   return;
 }
 
 void AMPLModel::initialize_lagrangian_hessian_() {
@@ -279,7 +273,6 @@ void AMPLModel::initialize_lagrangian_hessian_() {
    // use Lagrangian scale: in AMPL, the Lagrangian is f + lambda.g, while Uno uses f - lambda.g
    int nerror;
    lagscale_ASL(this->asl_, -1., &nerror);
-   return;
 }
 
 bool are_all_zeros(const std::vector<double>& multipliers) {
@@ -327,7 +320,6 @@ void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objectiv
 
    /* unregister the vector of variables */
    this->asl_->i.x_known = 0;
-   return;
 }
 
 /* initial primal point */

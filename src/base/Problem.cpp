@@ -63,7 +63,6 @@ void Problem::determine_bounds_types(std::vector<Range>& bounds, std::vector<Con
             status[i] = UNBOUNDED;
         }
     }
-    return;
 }
 
 void Problem::determine_constraints_() {
@@ -79,7 +78,6 @@ void Problem::determine_constraints_() {
             current_inequality_constraint++;
         }
     }
-    return;
 }
 
 /* native C++ problem */

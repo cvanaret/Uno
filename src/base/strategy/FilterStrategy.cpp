@@ -126,7 +126,6 @@ void FilterStrategy::switch_phase_(Problem& problem, Direction& direction, Itera
       this->current_phase_ = OPTIMALITY;
       this->subproblem.compute_optimality_measures(problem, current_iterate);
    }
-   return;
 }
 
 void FilterStrategy::update_restoration_multipliers_(Iterate& trial_iterate, ConstraintPartition& constraint_partition) {
@@ -138,5 +137,4 @@ void FilterStrategy::update_restoration_multipliers_(Iterate& trial_iterate, Con
          trial_iterate.multipliers.constraints[j] = 1.;
       }
    }
-   return;
 }
