@@ -50,6 +50,7 @@ Result Uno::solve(Problem& problem, std::vector<double>& x, Multipliers& multipl
             DEBUG << "Current point: "; print_vector(DEBUG, current_iterate.x);
             /* update the current point */
             current_iterate = this->globalization_mechanism.compute_acceptable_iterate(statistics, problem, current_iterate);
+
             statistics.add_statistic("major", major_iterations);
             statistics.add_statistic("f", current_iterate.objective);
             statistics.add_statistic("||c||", current_iterate.residuals.constraints);
@@ -145,7 +146,6 @@ void Uno::preprocessing(Problem& problem, std::vector<double>& x, Multipliers& m
             INFO << "\n";
         }
     }
-    return;
 }
 
 void Result::display(bool print_solution) {
@@ -193,5 +193,4 @@ void Result::display(bool print_solution) {
     INFO << "Jacobian evaluations:\t\t" << this->jacobian_evaluations << "\n";
     INFO << "Hessian evaluations:\t\t" << this->hessian_evaluations << "\n";
     INFO << "Number of subproblems solved:\t" << this->number_subproblems_solved << "\n";
-    return;
 }

@@ -59,12 +59,7 @@ public:
 
     // status and measures
     TerminationStatus status;
-
-    //double constraint_residual; /*!< Constraint residual */
-    //double KKT_residual;
-    //double complementarity_residual;
     Residuals residuals;
-    //bool are_residuals_computed;
 
     double feasibility_measure;
     double optimality_measure;

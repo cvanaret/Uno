@@ -3,7 +3,7 @@
 #include "Matrix.hpp"
 #include "Vector.hpp"
 
-Matrix::Matrix(int dimension, size_t number_nonzeros, short fortran_indexing) :
+Matrix::Matrix(size_t dimension, size_t number_nonzeros, short fortran_indexing) :
 dimension(dimension), number_nonzeros(number_nonzeros), fortran_indexing(fortran_indexing) {
 }
 
@@ -39,7 +39,7 @@ void Matrix::add_outer_product(const SparseGradient& x, double scaling_factor) {
  * https://en.wikipedia.org/wiki/Sparse_matrix#Coordinate_list_(COO)
  */
 
-COOMatrix::COOMatrix(int dimension, size_t number_nonzeros, short fortran_indexing) :
+COOMatrix::COOMatrix(size_t dimension, size_t number_nonzeros, short fortran_indexing) :
 Matrix(dimension, number_nonzeros, fortran_indexing) {
 }
 
@@ -109,7 +109,7 @@ std::ostream& operator<<(std::ostream& stream, const COOMatrix& matrix) {
 // matrix and row_number have nnz elements
 // column_start has dimension+1 elements
 
-CSCMatrix::CSCMatrix(int dimension, int maximum_number_nonzeros, int fortran_indexing) :
+CSCMatrix::CSCMatrix(size_t dimension, int maximum_number_nonzeros, int fortran_indexing) :
 Matrix(dimension, maximum_number_nonzeros, fortran_indexing),
 matrix(maximum_number_nonzeros), column_start(dimension + 1), row_number(maximum_number_nonzeros) {
 }
@@ -126,13 +126,13 @@ void CSCMatrix::insert(double /*term*/, int /*row_index*/, int /*column_index*/)
 
 /* product of symmetric (n, n) matrix with (n, 1) vector */
 std::vector<double> CSCMatrix::product(const std::vector<double>& vector) {
-   int n = this->column_start.size() - 1;
+   size_t n = this->column_start.size() - 1;
    /* create (n, 1) result */
    std::vector<double> result(n); // = {0.}
 
-   for (int j = 0; j < n; j++) {
+   for (size_t j = 0; j < n; j++) {
       for (int k = this->column_start[j] - this->fortran_indexing; k < this->column_start[j + 1] - this->fortran_indexing; k++) {
-         int i = this->row_number[k] - this->fortran_indexing;
+         size_t i = this->row_number[k] - this->fortran_indexing;
          result[i] += vector[j] * this->matrix[k];
 
          /* non diagonal terms of the lower triangle */
@@ -154,12 +154,12 @@ CSCMatrix CSCMatrix::add_identity_multiple(double multiple) {
    damped_column_start.push_back(this->fortran_indexing);
 
    /* go through the columns */
-   for (int j = 0; j < this->dimension; j++) {
+   for (size_t j = 0; j < this->dimension; j++) {
       bool diagonal_term_updated = false;
 
       for (int k = this->column_start[j] - this->fortran_indexing; k < this->column_start[j + 1] - this->fortran_indexing; k++) {
          /* compute row number */
-         int i = this->row_number[k] - this->fortran_indexing;
+         size_t i = this->row_number[k] - this->fortran_indexing;
 
          if (i == j) { /* update diagonal term */
             damped_matrix.push_back(this->matrix[k] + multiple);
@@ -192,10 +192,10 @@ CSCMatrix CSCMatrix::add_identity_multiple(double multiple) {
 double CSCMatrix::smallest_diagonal_entry() {
    double smallest_entry = INFINITY;
 
-   for (int j = 0; j < this->dimension; j++) {
+   for (size_t j = 0; j < this->dimension; j++) {
       for (int k = this->column_start[j] - this->fortran_indexing; k < this->column_start[j + 1] - this->fortran_indexing; k++) {
          /* compute row number */
-         int i = this->row_number[k] - this->fortran_indexing;
+         size_t i = this->row_number[k] - this->fortran_indexing;
 
          if (i == j) {
             smallest_entry = std::min(smallest_entry, this->matrix[k]);
@@ -212,7 +212,7 @@ double CSCMatrix::smallest_diagonal_entry() {
 COOMatrix CSCMatrix::to_COO() {
    COOMatrix coo_matrix(this->dimension, this->number_nonzeros, this->fortran_indexing);
 
-   for (int j = 0; j < this->dimension; j++) {
+   for (size_t j = 0; j < this->dimension; j++) {
       for (int k = this->column_start[j] - this->fortran_indexing; k < this->column_start[j + 1] - this->fortran_indexing; k++) {
          int i = this->row_number[k] - this->fortran_indexing;
          coo_matrix.insert(this->matrix[k], i, j);
@@ -224,7 +224,7 @@ COOMatrix CSCMatrix::to_COO() {
 UnoMatrix CSCMatrix::to_UnoMatrix(int uno_matrix_size) {
    UnoMatrix uno_matrix(uno_matrix_size, this->number_nonzeros, this->fortran_indexing);
 
-   for (int j = 0; j < this->dimension; j++) {
+   for (size_t j = 0; j < this->dimension; j++) {
       for (int k = this->column_start[j] - this->fortran_indexing; k < this->column_start[j + 1] - this->fortran_indexing; k++) {
          int i = this->row_number[k] - this->fortran_indexing;
          uno_matrix.insert(this->matrix[k], i, j);
@@ -233,13 +233,13 @@ UnoMatrix CSCMatrix::to_UnoMatrix(int uno_matrix_size) {
    return uno_matrix;
 }
 
-CSCMatrix CSCMatrix::identity(int dimension, int fortran_indexing) {
+CSCMatrix CSCMatrix::identity(size_t dimension, int fortran_indexing) {
    /* initialize the identity matrix */
    std::vector<double> matrix(dimension);
    std::vector<int> column_start(dimension + 1);
    std::vector<int> row_number(dimension);
 
-   for (int i = 0; i < dimension; i++) {
+   for (size_t i = 0; i < dimension; i++) {
       matrix[i] = 1.;
       row_number[i] = i + fortran_indexing;
       column_start[i] = i + fortran_indexing;
@@ -321,7 +321,7 @@ std::ostream& operator<<(std::ostream& stream, const CSCMatrix& matrix) {
  * Uno matrix: bijection between indices and single key + sparse vector (map)
  */
 
-UnoMatrix::UnoMatrix(int dimension, size_t number_nonzeros, short fortran_indexing) :
+UnoMatrix::UnoMatrix(size_t dimension, size_t number_nonzeros, short fortran_indexing) :
    Matrix(dimension, number_nonzeros, fortran_indexing) {
 }
 

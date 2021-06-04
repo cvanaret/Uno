@@ -46,7 +46,7 @@ protected:
          double initial_parameter, int number_variables);
 
    /* problem reformulation with elastic variables */
-   // constraints l <= c(x) = u are reformulated as c(x) - p + n
+   // constraints l <= c(x) = u are reformulated as l <= c(x) - p + n <= u and p, n >= 0
    ElasticVariables elastic_variables_;
 
    size_t count_elastic_variables_(Problem& problem);

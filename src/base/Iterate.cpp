@@ -15,16 +15,12 @@ Iterate::Iterate(const std::vector<double>& x, const Multipliers& multipliers) :
       status(NOT_OPTIMAL), residuals({0., 0., 0., 0.}), feasibility_measure(0.), optimality_measure(0.) {
 }
 
-//std::optional<Iterate>{trial_iterate};
-//return std::nullopt;
-
 void Iterate::compute_objective(const Problem& problem) {
    if (!this->is_objective_computed) {
       this->objective = problem.objective(this->x);
       this->is_objective_computed = true;
       Iterate::number_eval_objective++;
    }
-   return;
 }
 
 void Iterate::compute_constraints(const Problem& problem) {
@@ -33,7 +29,6 @@ void Iterate::compute_constraints(const Problem& problem) {
       this->are_constraints_computed = true;
       Iterate::number_eval_constraints++;
    }
-   return;
 }
 
 void Iterate::compute_objective_gradient(const Problem& problem) {
@@ -41,13 +36,11 @@ void Iterate::compute_objective_gradient(const Problem& problem) {
       this->objective_gradient = problem.objective_gradient(this->x);
       this->is_objective_gradient_computed = true;
    }
-   return;
 }
 
 void Iterate::set_objective_gradient(const SparseGradient& objective_gradient) {
    this->objective_gradient = objective_gradient;
    this->is_objective_gradient_computed = true;
-   return;
 }
 
 void Iterate::compute_constraints_jacobian(const Problem& problem) {
@@ -56,17 +49,7 @@ void Iterate::compute_constraints_jacobian(const Problem& problem) {
       this->is_constraints_jacobian_computed = true;
       Iterate::number_eval_jacobian++;
    }
-   return;
 }
-
-//void Iterate::compute_hessian(const Problem& problem, double objective_multiplier, const std::vector<double>& constraint_multipliers) {
-//    if (!this->is_hessian_computed) {
-//        this->hessian = problem.lagrangian_hessian(this->x, objective_multiplier, constraint_multipliers);
-//        this->is_hessian_computed = true;
-//        Iterate::number_eval_hessian++;
-//    }
-//    return;
-//}
 
 std::vector<double> Iterate::lagrangian_gradient(const Problem& problem, double objective_mutiplier, const Multipliers& multipliers) {
    std::vector<double> lagrangian_gradient(problem.number_variables);
