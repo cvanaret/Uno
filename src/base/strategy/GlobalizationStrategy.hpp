@@ -7,7 +7,6 @@
 #include "Subproblem.hpp"
 #include "Iterate.hpp"
 #include "Direction.hpp"
-#include "Constraint.hpp"
 #include "Statistics.hpp"
 
 /*! \class GlobalizationStrategy
@@ -23,13 +22,13 @@ public:
      * \param problem: optimization problem
      * \param constants: set of constants
      */
-    GlobalizationStrategy(Subproblem& subproblem);
+    explicit GlobalizationStrategy(Subproblem& subproblem);
     virtual ~GlobalizationStrategy() = default;
 
     Subproblem& subproblem;
 
     virtual Iterate initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
-    virtual std::optional<Iterate> check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction, double step_length = 1.) = 0;
+    virtual std::optional<Iterate> check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) = 0;
 };
 
 #endif // GLOBALIZATIONSTRATEGY_H

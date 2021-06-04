@@ -14,124 +14,126 @@
 //#include "PardisoSolver.hpp"
 
 void run_uno(std::string problem_name, std::map<std::string, std::string> options) {
-    // generate Hessians with a Fortran indexing (starting at 1) that is supported by solvers
-    int fortran_indexing = 1;
-    //std::cout.precision(17);
-    AMPLModel problem = AMPLModel(problem_name, fortran_indexing);
+   // generate Hessians with a Fortran indexing (starting at 1) that is supported by solvers
+   int fortran_indexing = 1;
+   //std::cout.precision(17);
+   AMPLModel problem = AMPLModel(problem_name, fortran_indexing);
 
-    /* create the subproblem strategy */
-    bool use_trust_region = (options["mechanism"] == "TR");
-    bool scale_residuals = (options["scale_residuals"] == "yes");
-    std::unique_ptr<Subproblem> subproblem = SubproblemFactory::create(problem, options["subproblem"], options, use_trust_region, scale_residuals);
+   /* create the subproblem strategy */
+   bool use_trust_region = (options["mechanism"] == "TR");
+   bool scale_residuals = (options["scale_residuals"] == "yes");
+   std::unique_ptr<Subproblem>
+         subproblem = SubproblemFactory::create(problem, options["subproblem"], options, use_trust_region, scale_residuals);
 
-    /* create the infeasibility method */
-    //FeasibilityRestoration feasibility_method = FeasibilityRestoration(*subproblem);
+   /* create the infeasibility method */
+   //FeasibilityRestoration feasibility_method = FeasibilityRestoration(*subproblem);
 
-    /* create the globalization strategy */
-    std::unique_ptr<GlobalizationStrategy> strategy = GlobalizationStrategyFactory::create(options["strategy"], *subproblem, options);
+   /* create the globalization strategy */
+   std::unique_ptr<GlobalizationStrategy> strategy = GlobalizationStrategyFactory::create(options["strategy"], *subproblem, options);
 
-    /* create the globalization mechanism */
-    std::unique_ptr<GlobalizationMechanism> mechanism = GlobalizationMechanismFactory::create(options["mechanism"], *strategy, options);
+   /* create the globalization mechanism */
+   std::unique_ptr<GlobalizationMechanism> mechanism = GlobalizationMechanismFactory::create(options["mechanism"], *strategy, options);
 
-    int max_iterations = std::stoi(options["max_iterations"]);
-    bool preprocessing = (options["preprocessing"] == "yes");
-    Uno uno = Uno(*mechanism, max_iterations);
+   double tolerance = std::stod(options["tolerance"]);
+   int max_iterations = std::stoi(options["max_iterations"]);
+   bool preprocessing = (options["preprocessing"] == "yes");
+   Uno uno = Uno(*mechanism, tolerance, max_iterations);
 
-    /* initial primal and dual points */
-    std::vector<double> x = problem.primal_initial_solution();
-    Multipliers multipliers(problem.number_variables, problem.number_constraints);
-    multipliers.constraints = problem.dual_initial_solution();
-    
-    Result result = uno.solve(problem, x, multipliers, preprocessing);
-    
-    /* remove auxiliary variables */
-    result.solution.x.resize(problem.number_variables);
-    result.solution.multipliers.lower_bounds.resize(problem.number_variables);
-    result.solution.multipliers.upper_bounds.resize(problem.number_variables);
-    bool print_solution = (options["print_solution"] == "yes");
-    result.display(print_solution);
-    return;
+   /* initial primal and dual points */
+   std::vector<double> x = problem.primal_initial_solution();
+   Multipliers multipliers(problem.number_variables, problem.number_constraints);
+   multipliers.constraints = problem.dual_initial_solution();
+
+   Result result = uno.solve(problem, x, multipliers, preprocessing);
+
+   /* remove auxiliary variables */
+   result.solution.x.resize(problem.number_variables);
+   result.solution.multipliers.lower_bounds.resize(problem.number_variables);
+   result.solution.multipliers.upper_bounds.resize(problem.number_variables);
+   bool print_solution = (options["print_solution"] == "yes");
+   result.display(print_solution);
+   return;
 }
 
 std::map<std::string, std::string> get_command_options(int argc, char* argv[], std::map<std::string, std::string>& options) {
-    /* build the (argument, value) map */
-    int i = 1;
-    while (i < argc - 1) {
-        std::string argument_i = std::string(argv[i]);
+   /* build the (argument, value) map */
+   int i = 1;
+   while (i < argc - 1) {
+      std::string argument_i = std::string(argv[i]);
 
-        if (argument_i[0] == '-' && i < argc - 1) {
-            std::string value_i = std::string(argv[i + 1]);
-            std::cout << "(" << argument_i << ", " << value_i << ")\n";
-            options[argument_i.substr(1)] = value_i;
-            i += 2;
-        }
-        else {
-            std::cout << "Argument " << argument_i << " was ignored\n";
-            i++;
-        }
-    }
-    return options;
+      if (argument_i[0] == '-' && i < argc - 1) {
+         std::string value_i = std::string(argv[i + 1]);
+         std::cout << "(" << argument_i << ", " << value_i << ")\n";
+         options[argument_i.substr(1)] = value_i;
+         i += 2;
+      }
+      else {
+         std::cout << "Argument " << argument_i << " was ignored\n";
+         i++;
+      }
+   }
+   return options;
 }
 
 Level Logger::logger_level = DEBUG;
 
 void set_logger(std::map<std::string, std::string> options) {
-    try {
-        std::string logger_level = options.at("logger");
+   try {
+      std::string logger_level = options.at("logger");
 
-        if (logger_level.compare("ERROR") == 0) {
-            Logger::logger_level = ERROR;
-        }
-        else if (logger_level.compare("WARNING") == 0) {
-            Logger::logger_level = WARNING;
-        }
-        else if (logger_level.compare("INFO") == 0) {
-            Logger::logger_level = INFO;
-        }
-        else if (logger_level.compare("DEBUG") == 0) {
-            Logger::logger_level = DEBUG;
-        }
-        else if (logger_level.compare("DEBUG1") == 0) {
-            Logger::logger_level = DEBUG1;
-        }
-        else if (logger_level.compare("DEBUG2") == 0) {
-            Logger::logger_level = DEBUG2;
-        }
-        else if (logger_level.compare("DEBUG3") == 0) {
-            Logger::logger_level = DEBUG3;
-        }
-        else if (logger_level.compare("DEBUG4") == 0) {
-            Logger::logger_level = DEBUG4;
-        }
-    }
-    catch (std::out_of_range) {
-    }
-    return;
+      if (logger_level.compare("ERROR") == 0) {
+         Logger::logger_level = ERROR;
+      }
+      else if (logger_level.compare("WARNING") == 0) {
+         Logger::logger_level = WARNING;
+      }
+      else if (logger_level.compare("INFO") == 0) {
+         Logger::logger_level = INFO;
+      }
+      else if (logger_level.compare("DEBUG") == 0) {
+         Logger::logger_level = DEBUG;
+      }
+      else if (logger_level.compare("DEBUG1") == 0) {
+         Logger::logger_level = DEBUG1;
+      }
+      else if (logger_level.compare("DEBUG2") == 0) {
+         Logger::logger_level = DEBUG2;
+      }
+      else if (logger_level.compare("DEBUG3") == 0) {
+         Logger::logger_level = DEBUG3;
+      }
+      else if (logger_level.compare("DEBUG4") == 0) {
+         Logger::logger_level = DEBUG4;
+      }
+   }
+   catch (std::out_of_range) {
+   }
+   return;
 }
 
 std::map<std::string, std::string> get_options(std::string file_name) {
-    std::ifstream file;
-    file.open(file_name);
-    if (!file) {
-        throw std::invalid_argument("The configuration file was not found");
-    }
-    else {
-        /* register the default values */
-        std::map<std::string, std::string> options;
-        std::string key, value;
-        std::string line;
-        while (std::getline(file, line)) {
-            if (line != "" && line.find("#") != 0) {
-                std::istringstream iss;
-                iss.str(line);
-                iss >> key >> value;
-                std::cout << "Option " << key << " = " << value << "\n";
-                options[key] = value;
-            }
-        }
-        file.close();
-        return options;
-    }
+   std::ifstream file;
+   file.open(file_name);
+   if (!file) {
+      throw std::invalid_argument("The configuration file was not found");
+   }
+   else {
+      /* register the default values */
+      std::map<std::string, std::string> options;
+      std::string key, value;
+      std::string line;
+      while (std::getline(file, line)) {
+         if (line != "" && line.find("#") != 0) {
+            std::istringstream iss;
+            iss.str(line);
+            iss >> key >> value;
+            std::cout << "Option " << key << " = " << value << "\n";
+            options[key] = value;
+         }
+      }
+      file.close();
+      return options;
+   }
 }
 
 //void test_matrix() {
@@ -226,27 +228,27 @@ std::map<std::string, std::string> get_options(std::string file_name) {
 //}
 
 int main(int argc, char* argv[]) {
-    if (1 < argc) {
-        /* get the default values */
-        std::map<std::string, std::string> options = get_options("uno.cfg");
-        /* get the command line options */
-        get_command_options(argc, argv, options);
-        set_logger(options);
+   if (1 < argc) {
+      /* get the default values */
+      std::map<std::string, std::string> options = get_options("uno.cfg");
+      /* get the command line options */
+      get_command_options(argc, argv, options);
+      set_logger(options);
 
-        if (std::string(argv[1]).compare("-v") == 0) {
-            std::cout << "Welcome in UNO\n";
-            std::cout << "To solve an AMPL problem, type ./uno path_to_file/file.nl\n";
-            std::cout << "To choose a globalization mechanism, type ./uno -mechanism [LS|TR] path_to_file/file.nl\n";
-            std::cout << "To choose a globalization strategy, type ./uno -strategy [penalty|filter|nonmonotone-filter] path_to_file/file.nl\n";
-            std::cout << "To choose a subproblem, type ./uno -subproblem [SQP|SLP|Sl1QP|SLPEQP|IPM] path_to_file/file.nl\n";
-            std::cout << "The three options can be combined in the same command line. Autocompletion is active.\n";
-            //test_mask_matrix();
-        }
-        else {
-            std::string problem_name = std::string(argv[argc - 1]);
-            /* run Argonot */
-            run_uno(problem_name, options);
-        }
-    }
-    return 0;
+      if (std::string(argv[1]).compare("-v") == 0) {
+         std::cout << "Welcome in UNO\n";
+         std::cout << "To solve an AMPL problem, type ./uno path_to_file/file.nl\n";
+         std::cout << "To choose a globalization mechanism, type ./uno -mechanism [LS|TR] path_to_file/file.nl\n";
+         std::cout << "To choose a globalization strategy, type ./uno -strategy [penalty|filter|nonmonotone-filter] path_to_file/file.nl\n";
+         std::cout << "To choose a subproblem, type ./uno -subproblem [SQP|SLP|Sl1QP|SLPEQP|IPM] path_to_file/file.nl\n";
+         std::cout << "The three options can be combined in the same command line. Autocompletion is active.\n";
+         //test_mask_matrix();
+      }
+      else {
+         std::string problem_name = std::string(argv[argc - 1]);
+         /* run Argonot */
+         run_uno(problem_name, options);
+      }
+   }
+   return 0;
 }

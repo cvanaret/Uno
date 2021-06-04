@@ -57,10 +57,8 @@ public:
     //CSCMatrix hessian; /*!< Sparse Lagrangian Hessian */
     //bool is_hessian_computed; /*!< Flag that indicates if the Hessian has already been computed */
 
-    // status and measures
-    TerminationStatus status;
+    // residuals
     Residuals residuals;
-
     double feasibility_measure;
     double optimality_measure;
 
