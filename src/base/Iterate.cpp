@@ -8,6 +8,10 @@ int Iterate::number_eval_constraints = 0;
 int Iterate::number_eval_jacobian = 0;
 int Iterate::number_eval_hessian = 0;
 
+Iterate::Iterate(size_t number_variables, size_t number_constraints):
+   x(number_variables), multipliers(number_variables, number_constraints) {
+}
+
 Iterate::Iterate(const std::vector<double>& x, const Multipliers& multipliers) : x(x), multipliers(multipliers),
       objective(std::numeric_limits<double>::infinity()), is_objective_computed(false), are_constraints_computed(false),
       is_objective_gradient_computed(false), is_constraints_jacobian_computed(false),
@@ -83,6 +87,15 @@ std::vector<double> Iterate::lagrangian_gradient(const Problem& problem, double 
       }
    }
    return lagrangian_gradient;
+}
+
+void Iterate::clear() {
+   this->is_objective_computed = false;
+   this->is_objective_gradient_computed = false;
+   this->is_constraints_jacobian_computed = false;
+   this->residuals = {0., 0., 0., 0.};
+   this->feasibility_measure = 0.;
+   this->optimality_measure = 0.;
 }
 
 std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {

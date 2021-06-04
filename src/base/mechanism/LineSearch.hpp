@@ -13,7 +13,7 @@ public:
    /*!
     *  Constructor
     */
-   LineSearch(GlobalizationStrategy& globalization_strategy, int max_iterations = 30, double backtracking_ratio = 0.5);
+   explicit LineSearch(GlobalizationStrategy& globalization_strategy, int max_iterations = 30, double backtracking_ratio = 0.5);
 
    Iterate initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
    std::pair<Iterate, Direction> compute_acceptable_iterate(Statistics& statistics, Problem& problem, Iterate& current_iterate) override;
@@ -27,8 +27,6 @@ private:
 
    bool termination_(bool is_accepted);
    void print_iteration_();
-   void print_acceptance_() override;
-   void print_warning_(const char* message);
 
    void update_step_length();
    /*

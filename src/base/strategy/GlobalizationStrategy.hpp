@@ -29,6 +29,10 @@ public:
 
     virtual Iterate initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
     virtual std::optional<Iterate> check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) = 0;
+
+protected:
+   // preallocated vector to receive the trial primal variables
+   std::vector<double> trial_primals_;
 };
 
 #endif // GLOBALIZATIONSTRATEGY_H

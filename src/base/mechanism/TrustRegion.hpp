@@ -30,8 +30,6 @@ private:
 
    bool termination_(bool is_accepted);
    void print_iteration_();
-   void print_acceptance_() override;
-   void print_warning_(const char* message);
 };
 
 #endif // TRUSTREGION_H

@@ -5,9 +5,8 @@
 #include "InteriorPoint.hpp"
 
 LineSearch::LineSearch(GlobalizationStrategy& globalization_strategy, int max_iterations, double backtracking_ratio):
-      GlobalizationMechanism(globalization_strategy, max_iterations),
-      step_length(1.), backtracking_ratio(backtracking_ratio),
-      min_step_length(1e-9) {
+   GlobalizationMechanism(globalization_strategy, max_iterations), step_length(1.), backtracking_ratio(backtracking_ratio),
+   min_step_length(1e-9) {
 }
 
 Iterate LineSearch::initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
@@ -44,10 +43,8 @@ std::pair<Iterate, Direction> LineSearch::compute_acceptable_iterate(Statistics&
             statistics.add_statistic("step norm", this->step_length * direction.norm);
             return std::make_pair(current_iterate, direction);
          }
-         if (!is_accepted) {
-            /* decrease the step length */
-            this->update_step_length();
-         }
+         /* decrease the step length */
+         this->update_step_length();
       }
       // if step length is too small, run restoration phase
       if (!is_accepted && this->step_length < this->min_step_length) {
@@ -84,17 +81,6 @@ bool LineSearch::termination_(bool is_accepted) {
 
 void LineSearch::print_iteration_() {
    DEBUG << "\tLINE SEARCH iteration " << this->number_iterations << ", step_length " << this->step_length << "\n";
-   return;
-}
-
-void LineSearch::print_acceptance_() {
-   DEBUG << CYAN "LS trial point accepted\n" RESET;
-   return;
-}
-
-void LineSearch::print_warning_(const char* message) {
-   WARNING << RED << message << RESET "\n";
-   return;
 }
 
 /*
