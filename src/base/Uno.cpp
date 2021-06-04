@@ -1,18 +1,18 @@
-#include <iostream>
-#include <ctime>
 #include <cmath>
 #include "Uno.hpp"
 #include "Iterate.hpp"
 #include "Logger.hpp"
 #include "BQPDSolver.hpp"
 #include "Statistics.hpp"
+#include "Timer.hpp"
 
 Uno::Uno(GlobalizationMechanism& globalization_mechanism, double tolerance, int max_iterations) :
 globalization_mechanism(globalization_mechanism), tolerance(tolerance), max_iterations(max_iterations) {
 }
 
 Result Uno::solve(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool preprocessing) {
-   std::clock_t c_start = std::clock();
+   Timer timer;
+   timer.start();
    int major_iterations = 0;
 
    INFO << "Problem " << problem.name << "\n";
@@ -64,12 +64,11 @@ Result Uno::solve(Problem& problem, std::vector<double>& x, Multipliers& multipl
       ERROR << exception.what();
    }
    statistics.print_footer();
-   std::clock_t c_end = std::clock();
-   double cpu_time = (c_end - c_start) / (double) CLOCKS_PER_SEC;
+   timer.stop();
 
    int number_subproblems_solved = this->globalization_mechanism.globalization_strategy.subproblem.number_subproblems_solved;
    Result result =
-         {termination_status, current_iterate, problem.number_variables, problem.number_constraints, major_iterations, cpu_time,
+         {termination_status, current_iterate, problem.number_variables, problem.number_constraints, major_iterations, timer.get_time(),
           Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_jacobian, Iterate::number_eval_hessian,
           number_subproblems_solved};
    return result;
