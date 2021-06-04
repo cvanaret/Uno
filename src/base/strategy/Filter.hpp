@@ -24,8 +24,8 @@ struct FilterEntry {
  */
 class Filter {
 public:
-    Filter(FilterConstants& constants);
-    virtual ~Filter();
+    explicit Filter(FilterConstants& constants);
+    virtual ~Filter() = default;
 
     double upper_bound; /*!< Upper bound on constraint violation */
     size_t max_size; /*!< Max filter size */

@@ -58,7 +58,6 @@ void print_vector(std::ostream &stream, const std::vector<T>& x, const char end=
         stream << x[i] << " ";
     }
     stream << end;
-    return;
 }
 
 template <typename T>
@@ -67,7 +66,6 @@ void print_vector(const Level& level, const std::vector<T>& x, const char end='\
         level << x[i] << " ";
     }
     level << end;
-    return;
 }
 
 template <typename T>
@@ -76,7 +74,6 @@ void print_vector(const Level& level, const std::set<T>& x, const char end='\n')
         level << xi << " ";
     }
     level << end;
-    return;
 }
 
 template <typename T, typename U>
@@ -85,7 +82,6 @@ void print_vector(std::ostream &stream, const std::map<T, U>& x, const char end=
         stream << "x[" << i << "] = " << xi << ", ";
     }
     stream << end;
-    return;
 }
 
 template <typename T, typename U>
@@ -94,7 +90,6 @@ void print_vector(const Level& level, const std::map<T, U>& x, const char end='\
         level << "x[" << i << "] = " << xi << ", ";
     }
     level << end;
-    return;
 }
 
 template <typename T, typename U>
@@ -103,7 +98,6 @@ void print_vector(std::ostream &stream, const std::unordered_map<T, U>& x, const
         stream << "x[" << i << "] = " << xi << ", ";
     }
     stream << end;
-    return;
 }
 
 template <typename T, typename U>
@@ -112,7 +106,6 @@ void print_vector(const Level& level, const std::unordered_map<T, U>& x, const c
         level << "x[" << i << "] = " << xi << ", ";
     }
     level << end;
-    return;
 }
 
 std::string join(std::vector<std::string>& vector, const std::string& separator);

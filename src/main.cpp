@@ -52,7 +52,6 @@ void run_uno(std::string problem_name, std::map<std::string, std::string> option
    result.solution.multipliers.upper_bounds.resize(problem.number_variables);
    bool print_solution = (options["print_solution"] == "yes");
    result.display(print_solution);
-   return;
 }
 
 std::map<std::string, std::string> get_command_options(int argc, char* argv[], std::map<std::string, std::string>& options) {
@@ -108,7 +107,6 @@ void set_logger(std::map<std::string, std::string> options) {
    }
    catch (std::out_of_range) {
    }
-   return;
 }
 
 std::map<std::string, std::string> get_options(std::string file_name) {
@@ -167,13 +165,11 @@ std::map<std::string, std::string> get_options(std::string file_name) {
 //    std::cout << "Singular ? " << factorization.matrix_is_singular() << "\n";
 //    std::cout << "Rank ? " << factorization.rank() << "\n";
 //    std::cout << "Negative eigenvalues ? " << factorization.number_negative_eigenvalues() << "\n";
-//    return;
 //}
 
 //void test_pardiso() {
 //    PardisoSolver solver;
 //    std::cout << "PARDISO created\n";
-//    return;
 //}
 
 //double f(std::vector<double> x) {
@@ -191,7 +187,6 @@ std::map<std::string, std::string> get_options(std::string file_name) {
 //    std::vector<double> x = {123.};
 //    double f_x = f(x);
 //    std::cout << "f(x) = " << f_x << "\n";
-//    return;
 //}
 
 //void test_mask_matrix() {
@@ -224,7 +219,6 @@ std::map<std::string, std::string> get_options(std::string file_name) {
 //
 //    CSCMatrix csc_matrix = matrix.to_CSC(mask);
 //    std::cout << "CSC reduced matrix:\n" << csc_matrix;
-//    return;
 //}
 
 int main(int argc, char* argv[]) {

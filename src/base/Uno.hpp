@@ -43,7 +43,7 @@ public:
     * \param multipliers: Lagrange multipliers/dual variables
     */
    Result solve(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool preprocessing);
-   void preprocessing(Problem& problem, std::vector<double>& x, Multipliers& multipliers);
+   static void preprocessing(Problem& problem, std::vector<double>& x, Multipliers& multipliers);
 
    GlobalizationMechanism& globalization_mechanism; /*!< Step control strategy (trust region or line-search) */
    double tolerance; /*!< Tolerance of the termination criteria */

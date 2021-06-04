@@ -46,7 +46,6 @@ void Relaxation::preprocess_subproblem() {
       this->subproblem.objective_gradient[i] = 1.;
       this->subproblem.constraints_jacobian[j][i] = 1.;
    }
-   return;
 }
 
 std::vector<Direction> Relaxation::compute_byrd_steering_rule(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
@@ -187,7 +186,6 @@ void Relaxation::postprocess_direction(const Problem& problem, Direction& direct
       this->subproblem.objective_gradient.erase(i);
       this->subproblem.constraints_jacobian[j].erase(i);
    }
-   return;
 }
 
 double Relaxation::compute_predicted_reduction(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) {

@@ -33,7 +33,6 @@ void ActiveSetMethod::compute_optimality_measures(const Problem& problem, Iterat
    // optimality
    iterate.compute_objective(problem);
    iterate.optimality_measure = iterate.objective;
-   return;
 }
 
 void ActiveSetMethod::compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const Direction& direction) {
@@ -43,7 +42,6 @@ void ActiveSetMethod::compute_infeasibility_measures(const Problem& problem, Ite
    // optimality measure: residual of linearly infeasible constraints
    iterate.optimality_measure =
          problem.compute_constraint_residual(iterate.constraints, direction.constraint_partition.infeasible, this->residual_norm);
-   return;
 }
 
 /* QP */
@@ -76,7 +74,6 @@ void ActiveSetMethod::recover_l1qp_active_set_(Problem& problem, Direction& dire
          direction.active_set.constraints.at_upper_bound.erase(j);
       }
    }
-   return;
 }
 
 void ActiveSetMethod::generate_elastic_variables_(Problem& problem, ElasticVariables& elastic_variables) {
@@ -94,7 +91,6 @@ void ActiveSetMethod::generate_elastic_variables_(Problem& problem, ElasticVaria
          elastic_index++;
       }
    }
-   return;
 }
 
 void ActiveSetMethod::compute_l1_linear_objective_(Iterate& current_iterate, ConstraintPartition& constraint_partition) {
@@ -111,7 +107,6 @@ void ActiveSetMethod::compute_l1_linear_objective_(Iterate& current_iterate, Con
       }
    }
    current_iterate.set_objective_gradient(objective_gradient);
-   return;
 }
 
 std::vector<double> ActiveSetMethod::generate_l1_multipliers_(Problem& problem, std::vector<double>& current_constraint_multipliers,

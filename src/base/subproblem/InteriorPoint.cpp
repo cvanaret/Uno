@@ -199,7 +199,6 @@ void InteriorPoint::evaluate_optimality_iterate_(Problem& problem, Iterate& curr
 
    /* compute second-order information */
    this->hessian_evaluation->compute(problem, current_iterate, problem.objective_sign, current_iterate.multipliers.constraints);
-   return;
 }
 
 Direction InteriorPoint::generate_direction_(Problem& problem, Iterate& current_iterate, std::vector<double>& solution_IPM) {
@@ -325,7 +324,6 @@ void InteriorPoint::factorize_(COOMatrix& kkt_matrix, FunctionType problem_type)
    }
    this->linear_solver->do_numerical_factorization(kkt_matrix);
    this->number_factorizations_++;
-   return;
 }
 
 void InteriorPoint::modify_inertia_(COOMatrix& kkt_matrix, int size_first_block, int size_second_block, FunctionType problem_type) {
@@ -396,7 +394,6 @@ void InteriorPoint::modify_inertia_(COOMatrix& kkt_matrix, int size_first_block,
          }
       }
    }
-   return;
 }
 
 void InteriorPoint::generate_kkt_rhs_(Problem& problem, Iterate& current_iterate) {
@@ -436,7 +433,6 @@ void InteriorPoint::generate_kkt_rhs_(Problem& problem, Iterate& current_iterate
    }
    DEBUG << "RHS: ";
    print_vector(DEBUG, this->rhs_);
-   return;
 }
 
 std::vector<double> InteriorPoint::compute_lower_bound_multiplier_displacements_(Iterate& current_iterate, std::vector<double>& solution,
@@ -464,19 +460,17 @@ void InteriorPoint::compute_optimality_measures(const Problem& problem, Iterate&
    iterate.feasibility_measure = this->constraint_violation(problem, iterate);
    /* compute barrier objective */
    iterate.optimality_measure = this->barrier_function_(problem, iterate, this->bounds);
-   return;
 }
 
 void InteriorPoint::compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const Direction& /*direction*/) {
    this->compute_optimality_measures(problem, iterate);
-   return;
 }
 
 double InteriorPoint::constraint_violation(const Problem& problem, Iterate& iterate) {
    iterate.compute_constraints(problem);
    // compute l2 square norm
    std::vector<double> residuals(problem.number_constraints);
-   int slack_index = problem.number_variables;
+   size_t slack_index = problem.number_variables;
    for (size_t j = 0; j < problem.number_constraints; j++) {
       if (problem.constraint_status[j] == EQUAL_BOUNDS) {
          double constraint_value = iterate.constraints[j] - problem.constraint_bounds[j].lb;

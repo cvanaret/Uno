@@ -66,7 +66,6 @@ std::pair<Iterate, Direction> LineSearch::compute_acceptable_iterate(Statistics&
 
 void LineSearch::update_step_length() {
    this->step_length *= this->backtracking_ratio;
-   return;
 }
 
 bool LineSearch::termination_(bool is_accepted) {

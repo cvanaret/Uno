@@ -31,7 +31,6 @@ void Matrix::add_outer_product(const SparseGradient& x, double scaling_factor) {
          }
       }
    }
-   return;
 }
 
 /* 
@@ -49,7 +48,6 @@ void COOMatrix::insert(double term, int row_index, int column_index) {
    this->row_indices.push_back(row_index + this->fortran_indexing);
    this->column_indices.push_back(column_index + this->fortran_indexing);
    this->number_nonzeros++;
-   return;
 }
 
 double COOMatrix::norm_1() {
@@ -330,7 +328,6 @@ void UnoMatrix::insert(double term, int row_index, int column_index) {
    int key = column_index * this->dimension + row_index;
    // insert the element
    this->matrix[key] += term;
-   return;
 }
 
 double UnoMatrix::norm_1() {
@@ -368,7 +365,6 @@ void UnoMatrix::add_matrix(UnoMatrix& other_matrix, double factor) {
       int j = key / this->dimension;
       this->insert(factor * value, i, j);
    }
-   return;
 }
 
 COOMatrix UnoMatrix::to_COO() {
@@ -488,7 +484,5 @@ void test_matrix() {
     print_vector(std::cout, coo_matrix.matrix);
     print_vector(std::cout, coo_matrix.row_indices);
     print_vector(std::cout, coo_matrix.column_indices);
-    
-    return;
 }
  */

@@ -71,7 +71,6 @@ FilterAugmentedLagrangian::FilterAugmentedLagrangian(): penalty_parameter(10.), 
 void FilterAugmentedLagrangian::reset_bfgs() {
     strcpy(this->task_, "START");
     std::cout << "Resetting BFGS\n";
-    return;
 }
 
 // evaluate the augmented Lagrangian at x,y, where y=constraint_multipliers

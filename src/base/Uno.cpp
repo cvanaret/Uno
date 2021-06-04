@@ -11,7 +11,7 @@ Uno::Uno(GlobalizationMechanism& globalization_mechanism, double tolerance, int 
 }
 
 Result Uno::solve(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool preprocessing) {
-   Timer timer;
+   Timer timer{};
    timer.start();
    int major_iterations = 0;
 
@@ -24,7 +24,7 @@ Result Uno::solve(Problem& problem, std::vector<double>& x, Multipliers& multipl
 
    if (preprocessing) {
       /* preprocessing phase: satisfy linear constraints */
-      this->preprocessing(problem, x, multipliers);
+      Uno::preprocessing(problem, x, multipliers);
    }
 
    Statistics statistics = Uno::create_statistics();
@@ -134,7 +134,7 @@ Uno::compute_termination_status_(Problem& problem, Iterate& current_iterate, dou
 void Uno::preprocessing(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
    /* linear constraints */
    INFO << "Preprocessing phase: the problem has " << problem.linear_constraints.size() << " linear constraints\n";
-   if (0 < problem.linear_constraints.size()) {
+   if (!problem.linear_constraints.empty()) {
       std::vector<double> constraints = problem.evaluate_constraints(x);
 
       int infeasible_linear_constraints = 0;
