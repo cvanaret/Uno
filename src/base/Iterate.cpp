@@ -42,7 +42,7 @@ void Iterate::compute_objective_gradient(const Problem& problem) {
    }
 }
 
-void Iterate::set_objective_gradient(const SparseGradient& objective_gradient) {
+void Iterate::set_objective_gradient(const SparseVector& objective_gradient) {
    this->objective_gradient = objective_gradient;
    this->is_objective_gradient_computed = true;
 }

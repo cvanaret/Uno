@@ -11,22 +11,20 @@ LineSearch::LineSearch(GlobalizationStrategy& globalization_strategy, int max_it
 
 Iterate LineSearch::initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
    statistics.add_column("LS step length", Statistics::double_width, 30);
-
+   // generate the initial point
    return this->globalization_strategy.initialize(statistics, problem, x, multipliers);
 }
 
 std::pair<Iterate, Direction> LineSearch::compute_acceptable_iterate(Statistics& statistics, Problem& problem, Iterate& current_iterate) {
-   bool line_search_termination = false;
    /* compute the directions */
    std::vector<Direction> directions = this->globalization_strategy.subproblem.compute_directions(problem, current_iterate, 1.);
 
+   bool line_search_termination = false;
    while (!line_search_termination) {
       /* step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ... */
       this->step_length = 1.;
-      bool is_accepted = false;
       this->number_iterations = 0;
-
-      while (!this->termination_(is_accepted)) {
+      while (!this->termination_()) {
          assert (0 < this->step_length && this->step_length <= 1);
          this->number_iterations++;
          this->print_iteration_();
@@ -35,19 +33,15 @@ std::pair<Iterate, Direction> LineSearch::compute_acceptable_iterate(Statistics&
          std::optional<std::pair<Iterate, Direction> > acceptance_check =
                this->find_first_acceptable_direction_(statistics, problem, current_iterate, directions, this->step_length);
          if (acceptance_check.has_value()) {
-            is_accepted = true;
-            current_iterate = acceptance_check.value().first;
-            Direction direction = acceptance_check.value().second;
-            statistics.add_statistic("minor", this->number_iterations);
-            statistics.add_statistic("LS step length", this->step_length);
-            statistics.add_statistic("step norm", this->step_length * direction.norm);
-            return std::make_pair(current_iterate, direction);
+            auto [new_iterate, direction] = acceptance_check.value();
+            this->add_statistics(statistics, direction);
+            return std::make_pair(new_iterate, direction);
          }
          /* decrease the step length */
          this->update_step_length();
       }
       // if step length is too small, run restoration phase
-      if (!is_accepted && this->step_length < this->min_step_length) {
+      if (this->step_length < this->min_step_length) {
          if (0. < current_iterate.feasibility_measure && directions[0].phase == OPTIMALITY) {
             // reset the line search with the restoration solution
             DEBUG << "Enter restoration feasibility phase\n";
@@ -64,18 +58,18 @@ std::pair<Iterate, Direction> LineSearch::compute_acceptable_iterate(Statistics&
    }
 }
 
+void LineSearch::add_statistics(Statistics& statistics, const Direction& direction) {
+   statistics.add_statistic("minor", this->number_iterations);
+   statistics.add_statistic("LS step length", this->step_length);
+   statistics.add_statistic("step norm", this->step_length * direction.norm);
+}
+
 void LineSearch::update_step_length() {
    this->step_length *= this->backtracking_ratio;
 }
 
-bool LineSearch::termination_(bool is_accepted) {
-   if (is_accepted) {
-      return true;
-   }
-   else if (this->max_iterations < this->number_iterations) {
-      return true;
-   }
-   return false;
+bool LineSearch::termination_() {
+   return (this->max_iterations < this->number_iterations);
 }
 
 void LineSearch::print_iteration_() {

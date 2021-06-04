@@ -95,7 +95,7 @@ void ActiveSetMethod::generate_elastic_variables_(Problem& problem, ElasticVaria
 
 void ActiveSetMethod::compute_l1_linear_objective_(Iterate& current_iterate, ConstraintPartition& constraint_partition) {
    /* objective function: sum of gradients of infeasible constraints */
-   SparseGradient objective_gradient;
+   SparseVector objective_gradient;
    for (int j: constraint_partition.infeasible) {
       for (const auto[i, derivative]: current_iterate.constraints_jacobian[j]) {
          if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {

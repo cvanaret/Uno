@@ -20,7 +20,7 @@ double Matrix::quadratic_product(const std::vector<double>& x, const std::vector
    return product;
 }
 
-void Matrix::add_outer_product(const SparseGradient& x, double scaling_factor) {
+void Matrix::add_outer_product(const SparseVector& x, double scaling_factor) {
    /* perform matrix addition: A + rho x x^T */
    for (const auto[row_index, row_term]: x) {
       for (const auto[column_index, column_term]: x) {

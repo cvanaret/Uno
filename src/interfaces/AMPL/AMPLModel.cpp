@@ -100,7 +100,7 @@ double AMPLModel::objective(const std::vector<double>& x) const {
 }
 
 /* sparse gradient */
-SparseGradient AMPLModel::objective_gradient(std::vector<double>& x) const {
+SparseVector AMPLModel::objective_gradient(std::vector<double>& x) const {
    /* compute the AMPL gradient (always in dense format) */
    int nerror = 0;
    (*(this->asl_)->p.Objgrd)(this->asl_, 0, x.data(), (double*) this->ampl_tmp_gradient_.data(), &nerror);
@@ -109,7 +109,7 @@ SparseGradient AMPLModel::objective_gradient(std::vector<double>& x) const {
    }
 
    /* partial derivatives in same order as variables in this->asl_->i.Ograd_[0] */
-   SparseGradient gradient;
+   SparseVector gradient;
    ograd* ampl_variables_tmp = this->asl_->i.Ograd_[0];
    while (ampl_variables_tmp != NULL) {
       double partial_derivative = this->ampl_tmp_gradient_[ampl_variables_tmp->varno];
@@ -151,7 +151,7 @@ std::vector<double> AMPLModel::evaluate_constraints(std::vector<double>& x) cons
 }
 
 /* sparse gradient */
-void AMPLModel::constraint_gradient(std::vector<double>& x, int j, SparseGradient& gradient) const {
+void AMPLModel::constraint_gradient(std::vector<double>& x, int j, SparseVector& gradient) const {
    int congrd_mode_backup = this->asl_->i.congrd_mode;
    this->asl_->i.congrd_mode = 1; // sparse computation
 
@@ -177,8 +177,8 @@ void AMPLModel::constraint_gradient(std::vector<double>& x, int j, SparseGradien
    this->asl_->i.congrd_mode = congrd_mode_backup;
 }
 
-std::vector<SparseGradient> AMPLModel::constraints_jacobian(std::vector<double>& x) const {
-   std::vector<SparseGradient> constraints_jacobian(this->number_constraints);
+std::vector<SparseVector> AMPLModel::constraints_jacobian(std::vector<double>& x) const {
+   std::vector<SparseVector> constraints_jacobian(this->number_constraints);
    for (size_t j = 0; j < this->number_constraints; j++) {
       this->constraint_gradient(x, j, constraints_jacobian[j]);
    }

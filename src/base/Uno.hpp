@@ -50,11 +50,9 @@ public:
 
 private:
    static Statistics create_statistics();
-   void add_statistics();
+   static void add_statistics(Statistics& statistics, const Iterate& new_iterate, int major_iterations);
    [[nodiscard]] bool termination_criterion_(TerminationStatus is_optimal, int iteration) const;
-   TerminationStatus
-   compute_termination_status_(Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier) const;
-   void add_statistics(Statistics& statistics, const Iterate& new_iterate, int major_iterations);
+   TerminationStatus check_termination(Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier) const;
 };
 
 #endif // UNO_H

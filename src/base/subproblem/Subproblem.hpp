@@ -49,9 +49,9 @@ public:
     Norm residual_norm;
     // when the subproblem is reformulated (e.g. when slacks are introduced), the bounds may be altered as well
     std::vector<Range> bounds;
-    SparseGradient objective_gradient;
+    SparseVector objective_gradient;
     std::vector<double> constraints;
-    std::vector<SparseGradient> constraints_jacobian;
+    std::vector<SparseVector> constraints_jacobian;
 
     int number_subproblems_solved;
     // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it

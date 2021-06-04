@@ -4,7 +4,7 @@
 #include <ostream>
 #include <map>
 #include <vector>
-#include "SparseGradient.hpp"
+#include "SparseVector.hpp"
 
 class Matrix {
 public:
@@ -20,7 +20,7 @@ public:
    virtual std::vector<double> product(const std::vector<double>& vector) = 0;
 
    double quadratic_product(const std::vector<double>& x, const std::vector<double>& y);
-   void add_outer_product(const SparseGradient& x, double scaling_factor = 1.);
+   void add_outer_product(const SparseVector& x, double scaling_factor = 1.);
 };
 
 class COOMatrix : public Matrix {
@@ -76,7 +76,7 @@ class UnoMatrix : public Matrix {
 public:
    UnoMatrix(size_t dimension, size_t number_nonzeros, short fortran_indexing);
 
-   SparseGradient matrix;
+   SparseVector matrix;
 
    void insert(double term, int row_index, int column_index) override;
    std::vector<double> product(const std::vector<double>& vector) override;
