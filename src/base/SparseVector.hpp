@@ -3,6 +3,6 @@
 
 #include <map>
 #include <unordered_map>
-typedef std::unordered_map<unsigned int, double> SparseVector;
+using SparseVector = std::unordered_map<unsigned int, double>;
 
 #endif // SPARSEVECTOR_H
