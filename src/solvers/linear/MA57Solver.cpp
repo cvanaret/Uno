@@ -31,7 +31,7 @@ void MA57Solver::factorize(COOMatrix& matrix) {
 void MA57Solver::do_symbolic_factorization(const COOMatrix& matrix) {
    assert(matrix.fortran_indexing == this->use_fortran && "MA57Solver: please use the correct Fortran indexing");
 
-   int n = matrix.dimension;
+   size_t n = matrix.dimension;
    size_t nnz = matrix.number_nonzeros;
 
    /* set the default values of the controlling parameters */
@@ -40,13 +40,13 @@ void MA57Solver::do_symbolic_factorization(const COOMatrix& matrix) {
    this->icntl_[4] = 0;
 
    /* sparsity pattern */
-   int lkeep = 5 * n + nnz + std::max(n, (int) nnz) + 42;
+   int lkeep = 5 * n + nnz + std::max(n, nnz) + 42;
    std::vector<int> keep(lkeep);
    std::vector<int> iwork(5 * n);
 
    /* symbolic factorization */
    std::vector<int> info(40);
-   ma57ad_(/* const */ &n,
+   ma57ad_(/* const */ (int*) &n,
          /* const */ (int*) &nnz,
          /* const */ matrix.row_indices.data(),
          /* const */ matrix.column_indices.data(),
@@ -74,7 +74,7 @@ void MA57Solver::do_numerical_factorization(const COOMatrix& matrix) {
    assert(this->factorization_.nnz == matrix.number_nonzeros && "MA57Solver: the numbers of nonzeros do not match");
 
    /* numerical factorization */
-   ma57bd_(&this->factorization_.n,
+   ma57bd_((int*) &this->factorization_.n,
          (int*) &this->factorization_.nnz,
          /* const */ matrix.matrix.data(),
          /* out */ this->factorization_.fact.data(),
