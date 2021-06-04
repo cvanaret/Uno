@@ -17,13 +17,13 @@ void ExactHessianEvaluation::compute(Problem& problem, Iterate& iterate, double 
       std::vector<double>& constraint_multipliers) {
    /* compute Hessian */
    problem.lagrangian_hessian(iterate.x, objective_multiplier, constraint_multipliers, this->hessian);
-   return;
+   this->objective_multiplier = objective_multiplier;
 }
 
 /* Exact Hessian with inertia control */
 
 ExactHessianInertiaControlEvaluation::ExactHessianInertiaControlEvaluation(int dimension, int hessian_maximum_number_nonzeros,
-      std::string linear_solver_name) : HessianEvaluation(dimension, hessian_maximum_number_nonzeros),
+      const std::string& linear_solver_name) : HessianEvaluation(dimension, hessian_maximum_number_nonzeros),
       linear_solver_(LinearSolverFactory::create(linear_solver_name)) {
 }
 
@@ -33,16 +33,15 @@ void ExactHessianInertiaControlEvaluation::compute(Problem& problem, Iterate& it
    problem.lagrangian_hessian(iterate.x, objective_multiplier, constraint_multipliers, this->hessian);
    DEBUG << "hessian before convexification: " << this->hessian;
    /* modify the inertia to make the problem strictly convex */
-   //this->hessian = this->modify_inertia(this->hessian, *this->linear_solver_);
-   return;
+   // this->hessian = this->modify_inertia(this->hessian, *this->linear_solver_);
 }
 
-CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& hessian, LinearSolver& linear_solver) {
+CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& matrix, LinearSolver& linear_solver) {
    double beta = 1e-4;
 
    // Nocedal and Wright, p51
-   double smallest_diagonal_entry = hessian.smallest_diagonal_entry();
-   DEBUG << "The minimal diagonal entry of the Hessian is " << hessian.smallest_diagonal_entry() << "\n";
+   double smallest_diagonal_entry = matrix.smallest_diagonal_entry();
+   DEBUG << "The minimal diagonal entry of the Hessian is " << matrix.smallest_diagonal_entry() << "\n";
 
    double inertia = 0.;
    double previous_inertia = 0.;
@@ -51,9 +50,9 @@ CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& hessian, LinearSolver& li
    }
 
    if (0. < inertia) {
-      hessian = hessian.add_identity_multiple(inertia - previous_inertia);
+      matrix = matrix.add_identity_multiple(inertia - previous_inertia);
    }
-   COOMatrix coo_hessian = hessian.to_COO();
+   COOMatrix coo_hessian = matrix.to_COO();
    DEBUG << "Testing factorization with inertia term " << inertia << "\n";
    linear_solver.do_symbolic_factorization(coo_hessian);
 
@@ -72,13 +71,13 @@ CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& hessian, LinearSolver& li
          else {
             inertia *= 2.;
          }
-         hessian = hessian.add_identity_multiple(inertia - previous_inertia);
-         coo_hessian = hessian.to_COO();
+         matrix = matrix.add_identity_multiple(inertia - previous_inertia);
+         coo_hessian = matrix.to_COO();
          DEBUG << "Testing factorization with inertia term " << inertia << "\n";
          linear_solver.do_symbolic_factorization(coo_hessian);
       }
    }
-   return hessian;
+   return matrix;
 }
 
 /* BFGS Hessian */
@@ -92,13 +91,12 @@ void BFGSHessianEvaluation::compute(Problem& problem, Iterate& iterate, double o
       std::vector<double>& constraint_multipliers) {
    // the BFGS Hessian is already positive definite, do not convexify
    problem.lagrangian_hessian(iterate.x, objective_multiplier, constraint_multipliers, this->hessian);
-   return;
 }
 
 /* Factory */
 
 std::unique_ptr<HessianEvaluation>
-HessianEvaluationFactory::create(std::string hessian_evaluation_method, int dimension, int hessian_maximum_number_nonzeros,
+HessianEvaluationFactory::create(const std::string& hessian_evaluation_method, int dimension, int hessian_maximum_number_nonzeros,
       bool convexify) {
    if (hessian_evaluation_method == "exact") {
       if (convexify) {

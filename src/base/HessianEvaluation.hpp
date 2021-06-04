@@ -20,7 +20,7 @@ public:
    CSCMatrix hessian;
 
    virtual void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) = 0;
-   CSCMatrix modify_inertia(CSCMatrix& hessian, LinearSolver& linear_solver);
+   CSCMatrix modify_inertia(CSCMatrix& matrix, LinearSolver& linear_solver);
 };
 
 class ExactHessianEvaluation : public HessianEvaluation {
@@ -36,7 +36,7 @@ protected:
 
 class ExactHessianInertiaControlEvaluation : public HessianEvaluation {
 public:
-   ExactHessianInertiaControlEvaluation(int dimension, int hessian_maximum_number_nonzeros, std::string linear_solve_name);
+   ExactHessianInertiaControlEvaluation(int dimension, int hessian_maximum_number_nonzeros, const std::string& linear_solve_name);
    ~ExactHessianInertiaControlEvaluation() override = default;
 
    void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) override;
@@ -61,7 +61,7 @@ private:
 class HessianEvaluationFactory {
 public:
    static std::unique_ptr<HessianEvaluation>
-   create(std::string hessian_evaluation_method, int dimension, int hessian_maximum_number_nonzeros, bool convexify);
+   create(const std::string& hessian_evaluation_method, int dimension, int hessian_maximum_number_nonzeros, bool convexify);
 };
 
 #endif // HESSIANEVALUATION_H
