@@ -31,20 +31,20 @@ TerminationStatus GlobalizationMechanism::compute_termination_status_(Problem& p
       double objective_multiplier) const {
    TerminationStatus status = NOT_OPTIMAL;
 
-   if (current_iterate.residuals.complementarity <= this->tolerance * (current_iterate.x.size() + problem.number_constraints)) {
+   if (current_iterate.residuals.complementarity <= this->tolerance * (double) (current_iterate.x.size() + problem.number_constraints)) {
       // feasible and KKT point
-      if (current_iterate.residuals.constraints <= this->tolerance * current_iterate.x.size()) {
+      if (current_iterate.residuals.constraints <= this->tolerance * (double) current_iterate.x.size()) {
          if (current_iterate.residuals.KKT <= this->tolerance * std::sqrt(current_iterate.x.size())) {
             status = KKT_POINT;
          }
       }
-         // infeasible and FJ point
+      // infeasible and FJ point
       else if (current_iterate.residuals.FJ <= this->tolerance * std::sqrt(current_iterate.x.size())) {
          status = FJ_POINT;
       }
    }
    else if (step_norm <= this->tolerance / 100.) {
-      if (current_iterate.residuals.constraints <= this->tolerance * current_iterate.x.size()) {
+      if (current_iterate.residuals.constraints <= this->tolerance * (double) current_iterate.x.size()) {
          status = FEASIBLE_SMALL_STEP;
       }
       else {
@@ -54,8 +54,8 @@ TerminationStatus GlobalizationMechanism::compute_termination_status_(Problem& p
 
    // if convergence, correct the multipliers
    if (status != NOT_OPTIMAL && 0. < objective_multiplier) {
-      for (size_t j = 0; j < problem.number_constraints; j++) {
-         current_iterate.multipliers.constraints[j] /= objective_multiplier;
+      for (double& multiplier_j: current_iterate.multipliers.constraints) {
+         multiplier_j /= objective_multiplier;
       }
       for (size_t i = 0; i < current_iterate.x.size(); i++) {
          current_iterate.multipliers.lower_bounds[i] /= objective_multiplier;

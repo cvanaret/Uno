@@ -8,10 +8,10 @@
 
 class Matrix {
 public:
-   Matrix(int dimension, size_t number_nonzeros, short fortran_indexing);
+   Matrix(size_t dimension, size_t number_nonzeros, short fortran_indexing);
    virtual ~Matrix();
 
-   int dimension;
+   size_t dimension;
    size_t number_nonzeros;
    short fortran_indexing;
 
@@ -26,7 +26,7 @@ public:
 class COOMatrix : public Matrix {
    /* Coordinate list */
 public:
-   COOMatrix(int dimension, size_t number_nonzeros, short fortran_indexing);
+   COOMatrix(size_t dimension, size_t number_nonzeros, short fortran_indexing);
 
    std::vector<double> matrix;
    std::vector<int> row_indices;
@@ -48,8 +48,8 @@ class UnoMatrix;
 class CSCMatrix : public Matrix {
    /* Compressed Sparse Column */
 public:
-   //CSCMatrix(int dimension, short fortran_indexing);
-   CSCMatrix(int dimension, int maximum_number_nonzeros, int fortran_indexing);
+   //CSCMatrix(size_t dimension, short fortran_indexing);
+   CSCMatrix(size_t dimension, int maximum_number_nonzeros, int fortran_indexing);
    CSCMatrix(const std::vector<double>& matrix, const std::vector<int>& column_start, const std::vector<int>& row_number,
          int fortran_indexing);
 
@@ -65,7 +65,7 @@ public:
    COOMatrix to_COO();
    UnoMatrix to_UnoMatrix(int uno_matrix_size);
 
-   static CSCMatrix identity(int dimension, int fortran_indexing);
+   static CSCMatrix identity(size_t dimension, int fortran_indexing);
 
    friend std::ostream& operator<<(std::ostream& stream, CSCMatrix& matrix);
    friend std::ostream& operator<<(std::ostream& stream, const CSCMatrix& matrix);
@@ -74,7 +74,7 @@ public:
 class UnoMatrix : public Matrix {
    /* Coordinate list */
 public:
-   UnoMatrix(int dimension, size_t number_nonzeros, short fortran_indexing);
+   UnoMatrix(size_t dimension, size_t number_nonzeros, short fortran_indexing);
 
    SparseGradient matrix;
 
