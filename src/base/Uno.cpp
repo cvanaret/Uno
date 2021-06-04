@@ -15,13 +15,8 @@ Result Uno::solve(Problem& problem, std::vector<double>& x, Multipliers& multipl
    timer.start();
    int major_iterations = 0;
 
-   INFO << "Problem " << problem.name << "\n";
-   INFO << problem.number_variables << " variables, " << problem.number_constraints << " constraints\n";
-   INFO << "Problem type: " << Problem::type_to_string[problem.type] << "\n";
-
    /* project x into the bounds */
    Subproblem::project_point_in_bounds(x, problem.variables_bounds);
-
    if (preprocessing) {
       /* preprocessing phase: satisfy linear constraints */
       Preprocessing::apply(problem, x, multipliers);
@@ -30,7 +25,10 @@ Result Uno::solve(Problem& problem, std::vector<double>& x, Multipliers& multipl
    Statistics statistics = Uno::create_statistics();
    /* use the current point to initialize the strategies and generate the initial point */
    Iterate current_iterate = this->globalization_mechanism.initialize(statistics, problem, x, multipliers);
-   DEBUG << "Initial iterate\n" << current_iterate << "\n";
+
+   INFO << "Problem " << problem.name << "\n";
+   INFO << problem.number_variables << " variables, " << problem.number_constraints << " constraints\n";
+   INFO << "Problem type: " << Problem::type_to_string[problem.type] << "\n";
 
    TerminationStatus termination_status = NOT_OPTIMAL;
    try {
@@ -38,20 +36,13 @@ Result Uno::solve(Problem& problem, std::vector<double>& x, Multipliers& multipl
       while (!this->termination_criterion_(termination_status, major_iterations)) {
          statistics.new_line();
          major_iterations++;
-
-         DEBUG << "Current point: ";
-         print_vector(DEBUG, current_iterate.x);
+         DEBUG << "Current iterate\n" << current_iterate << "\n";
 
          /* compute an acceptable iterate by solving a subproblem at the current point */
          auto [new_iterate, direction] = this->globalization_mechanism.compute_acceptable_iterate(statistics, problem, current_iterate);
          DEBUG << "Next iterate\n" << new_iterate;
 
-         statistics.add_statistic("major", major_iterations);
-         statistics.add_statistic("f", new_iterate.objective);
-         statistics.add_statistic("||c||", new_iterate.residuals.constraints);
-         statistics.add_statistic("complementarity", new_iterate.residuals.complementarity);
-         statistics.add_statistic("KKT", new_iterate.residuals.KKT);
-         statistics.add_statistic("FJ", new_iterate.residuals.FJ);
+         Uno::add_statistics(statistics, new_iterate, major_iterations);
          statistics.print_current_line();
 
          // compute the status of the new iterate
@@ -87,6 +78,15 @@ Statistics Uno::create_statistics() {
    statistics.add_column("KKT", Statistics::double_width, 105);
    statistics.add_column("FJ", Statistics::double_width, 106);
    return statistics;
+}
+
+void Uno::add_statistics(Statistics& statistics, const Iterate& new_iterate, int major_iterations) {
+   statistics.add_statistic("major", major_iterations);
+   statistics.add_statistic("f", new_iterate.objective);
+   statistics.add_statistic("||c||", new_iterate.residuals.constraints);
+   statistics.add_statistic("complementarity", new_iterate.residuals.complementarity);
+   statistics.add_statistic("KKT", new_iterate.residuals.KKT);
+   statistics.add_statistic("FJ", new_iterate.residuals.FJ);
 }
 
 bool Uno::termination_criterion_(TerminationStatus current_status, int iteration) const {
