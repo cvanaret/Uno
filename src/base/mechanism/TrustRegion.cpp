@@ -58,7 +58,7 @@ std::pair<Iterate, Direction> TrustRegion::compute_acceptable_iterate(Statistics
          }
       }
       catch (const NumericalError& e) {
-         this->print_warning_(e.what());
+         GlobalizationMechanism::print_warning_(e.what());
          /* if an evaluation error occurs, decrease the radius */
          this->radius /= 2.;
       }
@@ -105,12 +105,4 @@ bool TrustRegion::termination_(bool is_accepted) {
 
 void TrustRegion::print_iteration_() {
    DEBUG << "\n\tTRUST REGION iteration " << this->number_iterations << ", radius " << this->radius << "\n";
-}
-
-void TrustRegion::print_acceptance_() {
-   DEBUG << CYAN "TR trial point accepted\n" RESET;
-}
-
-void TrustRegion::print_warning_(const char* message) {
-   WARNING << RED << message << RESET << "\n";
 }

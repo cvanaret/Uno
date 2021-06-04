@@ -6,8 +6,8 @@
 #include "Statistics.hpp"
 #include "Timer.hpp"
 
-Uno::Uno(GlobalizationMechanism& globalization_mechanism, double tolerance, int max_iterations) :
-globalization_mechanism(globalization_mechanism), tolerance(tolerance), max_iterations(max_iterations) {
+Uno::Uno(GlobalizationMechanism& globalization_mechanism, double tolerance, int max_iterations) : globalization_mechanism(
+      globalization_mechanism), tolerance(tolerance), max_iterations(max_iterations) {
 }
 
 Result Uno::solve(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool preprocessing) {
@@ -37,13 +37,14 @@ Result Uno::solve(Problem& problem, std::vector<double>& x, Multipliers& multipl
       /* check for convergence */
       while (!this->termination_criterion_(termination_status, major_iterations)) {
          statistics.new_line();
-
          major_iterations++;
-         DEBUG << "\n\t\tUNO iteration " << major_iterations << "\n";
+
          DEBUG << "Current point: ";
          print_vector(DEBUG, current_iterate.x);
-         /* update the current point */
-         auto[new_iterate, direction] = this->globalization_mechanism.compute_acceptable_iterate(statistics, problem, current_iterate);
+
+         /* compute an acceptable iterate by solving a subproblem at the current point */
+         auto [new_iterate, direction] = this->globalization_mechanism.compute_acceptable_iterate(statistics, problem, current_iterate);
+         DEBUG << "Next iterate\n" << new_iterate;
 
          statistics.add_statistic("major", major_iterations);
          statistics.add_statistic("f", new_iterate.objective);
@@ -52,7 +53,8 @@ Result Uno::solve(Problem& problem, std::vector<double>& x, Multipliers& multipl
          statistics.add_statistic("KKT", new_iterate.residuals.KKT);
          statistics.add_statistic("FJ", new_iterate.residuals.FJ);
          statistics.print_current_line();
-         DEBUG << "Next iterate\n" << new_iterate;
+
+         // compute the status of the new iterate
          termination_status = this->compute_termination_status_(problem, new_iterate, direction.norm, direction.objective_multiplier);
          current_iterate = new_iterate;
       }
@@ -97,8 +99,8 @@ Uno::compute_termination_status_(Problem& problem, Iterate& current_iterate, dou
 
    if (current_iterate.residuals.complementarity <= this->tolerance * (double) (current_iterate.x.size() + problem.number_constraints)) {
       // feasible and KKT point
-      if (current_iterate.residuals.constraints <= this->tolerance * (double) current_iterate.x.size()) {
-         if (current_iterate.residuals.KKT <= this->tolerance * std::sqrt(current_iterate.x.size())) {
+      if (current_iterate.residuals.KKT <= this->tolerance * std::sqrt(current_iterate.x.size())) {
+         if (current_iterate.residuals.constraints <= this->tolerance * (double) current_iterate.x.size()) {
             status = KKT_POINT;
          }
       }
