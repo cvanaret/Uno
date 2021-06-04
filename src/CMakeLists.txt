@@ -28,7 +28,7 @@ set(DIRECTORIES base base/feasibility base/mechanism base/strategy base/subprobl
 set(SRC_FILES
     base/Uno.cpp base/Constraint.cpp base/HessianEvaluation.cpp
     base/Iterate.cpp base/Matrix.cpp base/Phase.hpp base/Problem.cpp
-    base/Statistics.cpp base/Vector.cpp
+    base/Statistics.cpp base/Timer.cpp base/Vector.cpp
     
     base/mechanism/GlobalizationMechanism.cpp
     base/mechanism/GlobalizationMechanismFactory.cpp
