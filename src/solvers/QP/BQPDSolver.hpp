@@ -6,7 +6,7 @@
 #include <map>
 #include "QPSolver.hpp"
 #include "LPSolver.hpp"
-#include "SparseGradient.hpp"
+#include "SparseVector.hpp"
 
 enum BQPDMode {
     COLD_START = 0,
@@ -38,14 +38,14 @@ public:
      * 
      * \param d0: initial point
      */
-    Direction solve_QP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, SparseGradient& linear_objective, std::vector<SparseGradient>& constraints_jacobian, CSCMatrix& hessian, std::vector<double>& x);
+    Direction solve_QP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, SparseVector& linear_objective, std::vector<SparseVector>& constraints_jacobian, CSCMatrix& hessian, std::vector<double>& x);
 
     /*!
      *  Solve an LP
      * 
      * \param d0: initial point
      */
-    Direction solve_LP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, SparseGradient& linear_objective, std::vector<SparseGradient>& constraints_jacobian, std::vector<double>& x);
+    Direction solve_LP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, SparseVector& linear_objective, std::vector<SparseVector>& constraints_jacobian, std::vector<double>& x);
     
 private:
     int n_, m_;
@@ -76,7 +76,7 @@ private:
      */
     Direction generate_direction_(std::vector<double>& x);
     Status int_to_status_(int ifail);
-    Direction solve_subproblem_(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, SparseGradient& linear_objective, std::vector<SparseGradient>& constraints_jacobian, std::vector<double>& x);
+    Direction solve_subproblem_(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, SparseVector& linear_objective, std::vector<SparseVector>& constraints_jacobian, std::vector<double>& x);
 };
 
 #endif // BQPDSOLVER_H

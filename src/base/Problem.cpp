@@ -36,7 +36,7 @@ double Problem::compute_constraint_residual(const std::vector<double>& constrain
 
 /* compute ||c_S|| for a given set S */
 double Problem::compute_constraint_residual(const std::vector<double>& constraints, const std::set<int>& constraint_set, Norm residual_norm) const {
-    SparseGradient residuals;
+    SparseVector residuals;
     for (int j: constraint_set) {
         residuals[j] = std::max(std::max(0., this->constraint_bounds[j].lb - constraints[j]), constraints[j] - this->constraint_bounds[j].ub);
     }
@@ -96,9 +96,9 @@ void Problem::determine_constraints_() {
 //    return this->objective_gradient_(x);
 //}
 //
-//SparseGradient CppProblem::objective_sparse_gradient(std::vector<double>& x) {
+//SparseVector CppProblem::objective_sparse_gradient(std::vector<double>& x) {
 //    std::vector<double> dense_gradient = this->objective_gradient_(x);
-//    SparseGradient sparse_gradient;
+//    SparseVector sparse_gradient;
 //    for (size_t i = 0; i < dense_gradient.size(); i++) {
 //        if (dense_gradient[i] != 0.) {
 //            sparse_gradient[i] = dense_gradient[i];

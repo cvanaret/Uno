@@ -15,6 +15,10 @@ Result Uno::solve(Problem& problem, std::vector<double>& x, Multipliers& multipl
    timer.start();
    int major_iterations = 0;
 
+   INFO << "Problem " << problem.name << "\n";
+   INFO << problem.number_variables << " variables, " << problem.number_constraints << " constraints\n";
+   INFO << "Problem type: " << Problem::type_to_string[problem.type] << "\n";
+
    /* project x into the bounds */
    Subproblem::project_point_in_bounds(x, problem.variables_bounds);
    if (preprocessing) {
@@ -25,10 +29,6 @@ Result Uno::solve(Problem& problem, std::vector<double>& x, Multipliers& multipl
    Statistics statistics = Uno::create_statistics();
    /* use the current point to initialize the strategies and generate the initial point */
    Iterate current_iterate = this->globalization_mechanism.initialize(statistics, problem, x, multipliers);
-
-   INFO << "Problem " << problem.name << "\n";
-   INFO << problem.number_variables << " variables, " << problem.number_constraints << " constraints\n";
-   INFO << "Problem type: " << Problem::type_to_string[problem.type] << "\n";
 
    TerminationStatus termination_status = NOT_OPTIMAL;
    try {
@@ -46,7 +46,7 @@ Result Uno::solve(Problem& problem, std::vector<double>& x, Multipliers& multipl
          statistics.print_current_line();
 
          // compute the status of the new iterate
-         termination_status = this->compute_termination_status_(problem, new_iterate, direction.norm, direction.objective_multiplier);
+         termination_status = this->check_termination(problem, new_iterate, direction.norm, direction.objective_multiplier);
          current_iterate = new_iterate;
       }
    }
@@ -94,7 +94,7 @@ bool Uno::termination_criterion_(TerminationStatus current_status, int iteration
 }
 
 TerminationStatus
-Uno::compute_termination_status_(Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier) const {
+Uno::check_termination(Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier) const {
    TerminationStatus status = NOT_OPTIMAL;
 
    if (current_iterate.residuals.complementarity <= this->tolerance * (double) (current_iterate.x.size() + problem.number_constraints)) {

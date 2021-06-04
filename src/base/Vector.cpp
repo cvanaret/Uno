@@ -26,7 +26,7 @@ double norm_1(const std::vector<double>& x) {
    return norm;
 }
 
-double norm_1(const SparseGradient& x) {
+double norm_1(const SparseVector& x) {
    double norm = 0.;
    for (std::pair<int, double> term: x) {
       double xi = term.second;
@@ -36,7 +36,7 @@ double norm_1(const SparseGradient& x) {
 }
 
 // https://en.wikipedia.org/wiki/Matrix_norm#Special_cases
-double norm_1(const std::vector<SparseGradient>& m) {
+double norm_1(const std::vector<SparseVector>& m) {
    double norm = 0.;
    for (const auto& column: m) {
       double column_norm = norm_1(column);
@@ -54,7 +54,7 @@ double norm_2_squared(const std::vector<double>& x) {
    return norm_squared;
 }
 
-double norm_2_squared(const SparseGradient& x) {
+double norm_2_squared(const SparseVector& x) {
    double norm_squared = 0.;
    for (std::pair<int, double> term: x) {
       double xi = term.second;
@@ -68,7 +68,7 @@ double norm_2(const std::vector<double>& x) {
    return std::sqrt(norm_2_squared(x));
 }
 
-double norm_2(const SparseGradient& x) {
+double norm_2(const SparseVector& x) {
    return std::sqrt(norm_2_squared(x));
 }
 
@@ -81,7 +81,7 @@ double norm_inf(const std::vector<double>& x, size_t length) {
    return norm;
 }
 
-double norm_inf(const SparseGradient& x) {
+double norm_inf(const SparseVector& x) {
    double norm = 0.;
    for (std::pair<int, double> term: x) {
       double xi = term.second;
@@ -91,7 +91,7 @@ double norm_inf(const SparseGradient& x) {
 }
 
 // https://en.wikipedia.org/wiki/Matrix_norm#Special_cases
-double norm_inf(const std::vector<SparseGradient>& m) {
+double norm_inf(const std::vector<SparseVector>& m) {
    // compute maximum row index
    unsigned int number_rows = 0;
    for (size_t j = 0; j < m.size(); j++) {
@@ -120,7 +120,7 @@ double dot(const std::vector<double>& x, const std::vector<double>& y) {
    return dot;
 }
 
-double dot(const std::vector<double>& x, const SparseGradient& y) {
+double dot(const std::vector<double>& x, const SparseVector& y) {
    double dot = 0.;
    for (const auto[i, yi]: y) {
       if (i < x.size()) {
@@ -133,7 +133,7 @@ double dot(const std::vector<double>& x, const SparseGradient& y) {
    return dot;
 }
 
-double dot(const SparseGradient& x, const SparseGradient& y) {
+double dot(const SparseVector& x, const SparseVector& y) {
    double dot = 0.;
    for (const auto[i, xi]: x) {
       try {

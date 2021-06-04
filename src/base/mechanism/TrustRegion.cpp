@@ -10,7 +10,7 @@ TrustRegion::TrustRegion(GlobalizationStrategy& globalization_strategy, double i
 
 Iterate TrustRegion::initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
    statistics.add_column("TR radius", Statistics::double_width, 30);
-
+   // generate the initial point
    return this->globalization_strategy.initialize(statistics, problem, x, multipliers);
 }
 
@@ -37,8 +37,7 @@ std::pair<Iterate, Direction> TrustRegion::compute_acceptable_iterate(Statistics
                acceptance_check = this->find_first_acceptable_direction_(statistics, problem, current_iterate, directions, 1.);
          if (acceptance_check.has_value()) {
             is_accepted = true;
-            current_iterate = acceptance_check.value().first;
-            Direction direction = acceptance_check.value().second;
+            auto [new_iterate, direction] = acceptance_check.value();
             statistics.add_statistic("minor", this->number_iterations);
             statistics.add_statistic("TR radius", this->radius);
             statistics.add_statistic("step norm", direction.norm);
@@ -46,7 +45,7 @@ std::pair<Iterate, Direction> TrustRegion::compute_acceptable_iterate(Statistics
             if (direction.norm >= this->radius - this->activity_tolerance_) {
                this->radius *= 2.;
             }
-            return std::make_pair(current_iterate, direction);
+            return std::make_pair(new_iterate, direction);
          }
          else {
             /* if the step is rejected, decrease the radius */

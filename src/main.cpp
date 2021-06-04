@@ -221,6 +221,28 @@ std::map<std::string, std::string> get_options(std::string file_name) {
 //    std::cout << "CSC reduced matrix:\n" << csc_matrix;
 //}
 
+using MySparseVector = std::vector<std::pair<int, double>>;
+
+void dense_to_sparse(const std::vector<double>& input) {
+   // create
+   std::vector<std::pair<int, double>> output;
+   output.reserve(input.size());
+   for (size_t i = 0; i < input.size(); i++) {
+      if (input[i] != 0.) {
+         output.emplace_back(i, input[i]);
+      }
+   }
+   // print
+   for (auto& [i, xi]: output) {
+      std::cout << "Index " << i << ", value " << xi << "\n";
+   }
+}
+
+void test_sparse_vector() {
+   std::vector<double> input{0, 1, 2, 0, 0, 0, 3};
+   dense_to_sparse(input);
+}
+
 int main(int argc, char* argv[]) {
    if (1 < argc) {
       /* get the default values */
@@ -237,6 +259,7 @@ int main(int argc, char* argv[]) {
          std::cout << "To choose a subproblem, type ./uno -subproblem [SQP|SLP|Sl1QP|SLPEQP|IPM] path_to_file/file.nl\n";
          std::cout << "The three options can be combined in the same command line. Autocompletion is active.\n";
          //test_mask_matrix();
+         test_sparse_vector();
       }
       else {
          std::string problem_name = std::string(argv[argc - 1]);

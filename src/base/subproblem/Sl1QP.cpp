@@ -169,7 +169,7 @@ Direction Sl1QP::compute_l1qp_step_(Problem& problem, QPSolver& solver, Iterate&
 Direction Sl1QP::compute_l1qp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, double penalty_parameter,
       ElasticVariables& elastic_variables, double trust_region_radius) {
    current_iterate.compute_objective_gradient(problem);
-   SparseGradient objective_gradient;
+   SparseVector objective_gradient;
    if (penalty_parameter != 0.) {
       for (const auto[i, derivative]: current_iterate.objective_gradient) {
          objective_gradient[i] = penalty_parameter * derivative;

@@ -8,7 +8,7 @@
 #include <vector>
 #include <set>
 #include "Logger.hpp"
-#include "SparseGradient.hpp"
+#include "SparseVector.hpp"
 
 enum Norm {L1_NORM = 1, L2_NORM = 2, L2_SQUARED_NORM, INF_NORM};
 
@@ -16,21 +16,21 @@ void add_vectors(const std::vector<double>& x, const std::vector<double>& y, dou
 std::vector<double> add_vectors(const std::vector<double>& x, const std::vector<double>& y, double scaling_factor = 1.);
 
 double norm_1(const std::vector<double>& x);
-double norm_1(const SparseGradient& x);
-double norm_1(const std::vector<SparseGradient>& m);
+double norm_1(const SparseVector& x);
+double norm_1(const std::vector<SparseVector>& m);
 
 double norm_2_squared(const std::vector<double>& x);
-double norm_2_squared(const SparseGradient& x);
+double norm_2_squared(const SparseVector& x);
 double norm_2(const std::vector<double>& x);
-double norm_2(const SparseGradient& x);
+double norm_2(const SparseVector& x);
 
 double norm_inf(const std::vector<double>& x, size_t length = std::numeric_limits<size_t>::max());
-double norm_inf(const SparseGradient& x);
-double norm_inf(const std::vector<SparseGradient>& m);
+double norm_inf(const SparseVector& x);
+double norm_inf(const std::vector<SparseVector>& m);
 
 double dot(const std::vector<double>& x, const std::vector<double>& y);
-double dot(const std::vector<double>& x, const SparseGradient& y);
-double dot(const SparseGradient& x, const SparseGradient& y);
+double dot(const std::vector<double>& x, const SparseVector& y);
+double dot(const SparseVector& x, const SparseVector& y);
 
 template <typename T>
 double norm(const T& x, Norm norm) {

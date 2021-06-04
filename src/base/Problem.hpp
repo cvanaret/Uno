@@ -6,7 +6,7 @@
 #include <map>
 #include "Constraint.hpp"
 #include "Matrix.hpp"
-#include "SparseGradient.hpp"
+#include "SparseVector.hpp"
 #include "Vector.hpp"
 
 enum FunctionType {
@@ -59,7 +59,7 @@ public:
     std::string objective_name;
     FunctionType objective_type; /*!< Type of the objective (LINEAR, QUADRATIC, NONLINEAR) */
     [[nodiscard]] virtual double objective(const std::vector<double>& x) const = 0;
-    virtual SparseGradient objective_gradient(std::vector<double>& x) const = 0;
+    virtual SparseVector objective_gradient(std::vector<double>& x) const = 0;
 
     /* variables */
     std::vector<std::string> variable_name;
@@ -74,8 +74,8 @@ public:
     std::vector<ConstraintType> constraint_status; /*!< Status of the constraints (EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES, UNBOUNDED) */
     virtual double evaluate_constraint(int j, std::vector<double>& x) const = 0;
     virtual std::vector<double> evaluate_constraints(std::vector<double>& x) const = 0;
-    virtual void constraint_gradient(std::vector<double>& x, int j, SparseGradient& gradient) const = 0;
-    virtual std::vector<SparseGradient> constraints_jacobian(std::vector<double>& x) const = 0;
+    virtual void constraint_gradient(std::vector<double>& x, int j, SparseVector& gradient) const = 0;
+    virtual std::vector<SparseVector> constraints_jacobian(std::vector<double>& x) const = 0;
     void determine_bounds_types(std::vector<Range>& variables_bounds, std::vector<ConstraintType>& status);
     std::map<int, int> equality_constraints; /*!< inequality constraints */
     std::map<int, int> inequality_constraints; /*!< inequality constraints */
@@ -102,12 +102,12 @@ public:
     CppProblem(std::string name, int number_variables, int number_constraints, double (*objective)(std::vector<double> x), std::vector<double> (*objective_gradient)(std::vector<double> x));
 
     double objective(const std::vector<double>& x) const override;
-    SparseGradient objective_gradient(std::vector<double>& x) const override;
+    SparseVector objective_gradient(std::vector<double>& x) const override;
 
     double evaluate_constraint(int j, std::vector<double>& x) const override;
     std::vector<double> evaluate_constraints(std::vector<double>& x) const override;
-    void constraint_gradient(std::vector<double>& x, int j, SparseGradient& gradient) const override;
-    std::vector<SparseGradient> constraints_jacobian(std::vector<double>& x) const override;
+    void constraint_gradient(std::vector<double>& x, int j, SparseVector& gradient) const override;
+    std::vector<SparseVector> constraints_jacobian(std::vector<double>& x) const override;
 
     void lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
           CSCMatrix& hessian) const override;

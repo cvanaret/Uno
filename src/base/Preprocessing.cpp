@@ -24,10 +24,10 @@ void Preprocessing::apply(Problem& problem, std::vector<double>& x, Multipliers&
 
          int fortran_indexing = 1;
          CSCMatrix hessian = CSCMatrix::identity(problem.number_variables, fortran_indexing);
-         SparseGradient linear_objective; // empty
+         SparseVector linear_objective; // empty
          std::vector<double> d0(problem.number_variables);
          // constraints Jacobian
-         std::vector<SparseGradient> constraints_jacobian(number_constraints);
+         std::vector<SparseVector> constraints_jacobian(number_constraints);
          for (const auto[j, linear_constraint_index]: problem.linear_constraints) {
             problem.constraint_gradient(x, j, constraints_jacobian[linear_constraint_index]);
          }

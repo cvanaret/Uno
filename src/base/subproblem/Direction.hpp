@@ -1,5 +1,5 @@
-#ifndef SUBPROBLEMSOLUTION_H
-#define SUBPROBLEMSOLUTION_H
+#ifndef DIRECTION_H
+#define DIRECTION_H
 
 #include <ostream>
 #include <vector>
@@ -36,7 +36,7 @@ public:
     std::vector<double> x; /*!< Primal variables */
     Multipliers multipliers; /*!< Multipliers */
     double objective_multiplier; /*!< Objective multiplier */
-    
+
     Status status; /*!< Status of the solution */
     Phase phase; /*!< Current phase */
 
@@ -52,4 +52,4 @@ public:
     friend std::ostream& operator<<(std::ostream &stream, Direction& step);
 };
 
-#endif // SUBPROBLEMSOLUTION_H
+#endif // DIRECTION_H
