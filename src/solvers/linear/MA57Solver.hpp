@@ -6,7 +6,7 @@
 #include "LinearSolver.hpp"
 
 struct MA57Factorization {
-   int n;
+   size_t n;
    size_t nnz;
    std::vector<double> fact;
    int lfact;
