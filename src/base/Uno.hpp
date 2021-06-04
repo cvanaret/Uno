@@ -5,6 +5,7 @@
 #include "GlobalizationMechanism.hpp"
 
 struct Result {
+   TerminationStatus status;
    Iterate solution;
    size_t number_variables;
    size_t number_constraints;
@@ -32,7 +33,7 @@ public:
     * \param globalization_strategy: strategy to promote global convergence
     * \param tolerance: tolerance for termination criteria
     */
-   Uno(GlobalizationMechanism& globalization_mechanism, int max_iterations);
+   Uno(GlobalizationMechanism& globalization_mechanism, double tolerance, int max_iterations);
 
    /*!
     *  Solve a given problem with initial primal and dual variables
@@ -45,11 +46,14 @@ public:
    void preprocessing(Problem& problem, std::vector<double>& x, Multipliers& multipliers);
 
    GlobalizationMechanism& globalization_mechanism; /*!< Step control strategy (trust region or line-search) */
+   double tolerance; /*!< Tolerance of the termination criteria */
    int max_iterations; /*!< Maximum number of iterations */
 
 private:
-   bool termination_criterion_(TerminationStatus is_optimal, int iteration);
-   TerminationStatus optimality_test_(Problem& problem, Phase& phase, Iterate& current_iterate);
+   static Statistics create_statistics();
+   [[nodiscard]] bool termination_criterion_(TerminationStatus is_optimal, int iteration) const;
+   TerminationStatus
+   compute_termination_status_(Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier) const;
 };
 
 #endif // UNO_H

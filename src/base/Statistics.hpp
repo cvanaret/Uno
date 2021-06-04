@@ -6,23 +6,24 @@
 
 class Statistics {
 public:
-    static std::map<std::string, std::string> symbols;
-    static int int_width;
-    static int double_width;
-    
-    void add_column(const std::string& name, int width, int order);
-    void add_statistic(const std::string& name, const std::string& value);
-    void add_statistic(std::string name, int value);
-    void add_statistic(std::string name, double value);
-    void print_header(bool first_occurrence);
-    void print_current_line();
-    void print_footer();
-    void new_line();
-    
+   static std::map<std::string, std::string> symbols;
+   static int int_width;
+   static int double_width;
+
+   void add_column(const std::string& name, int width, int order);
+   void add_statistic(const std::string& name, const std::string& value);
+   void add_statistic(std::string name, int value);
+   void add_statistic(std::string name, double value);
+   void print_header(bool first_occurrence);
+   void print_current_line();
+   void print_footer();
+   void new_line();
+
 private:
-    std::map<int, std::string> columns_;
-    std::map<std::string, int> widths_;
-    std::map<std::string, std::string> current_line_;
+   size_t iteration{0};
+   std::map<int, std::string> columns_;
+   std::map<std::string, int> widths_;
+   std::map<std::string, std::string> current_line_;
 };
 
 #endif // STATISTICS_H

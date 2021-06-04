@@ -36,7 +36,7 @@ SLPEQP::compute_directions(Problem& problem, Iterate& current_iterate, double /*
    direction_LP.phase = OPTIMALITY;
 
    /* set active trust region multipliers to 0 */
-   TrustRegion::correct_active_set(direction_LP, LP_trust_region_radius);
+   TrustRegion::rectify_active_set(direction_LP, LP_trust_region_radius);
 
    /************/
    /* EQP part */

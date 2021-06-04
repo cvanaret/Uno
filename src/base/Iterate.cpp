@@ -12,7 +12,7 @@ Iterate::Iterate(const std::vector<double>& x, const Multipliers& multipliers) :
       objective(std::numeric_limits<double>::infinity()), is_objective_computed(false), are_constraints_computed(false),
       is_objective_gradient_computed(false), is_constraints_jacobian_computed(false),
       //hessian(x.size(), 1), is_hessian_computed(false),
-      status(NOT_OPTIMAL), residuals({0., 0., 0., 0.}), feasibility_measure(0.), optimality_measure(0.) {
+      residuals({0., 0., 0., 0.}), feasibility_measure(0.), optimality_measure(0.) {
 }
 
 void Iterate::compute_objective(const Problem& problem) {
@@ -51,17 +51,17 @@ void Iterate::compute_constraints_jacobian(const Problem& problem) {
    }
 }
 
-std::vector<double> Iterate::lagrangian_gradient(const Problem& problem, double objective_mutiplier, const Multipliers& multipliers) {
+std::vector<double> Iterate::lagrangian_gradient(const Problem& problem, double objective_multiplier, const Multipliers& multipliers) {
    std::vector<double> lagrangian_gradient(problem.number_variables);
 
    /* objective gradient */
-   if (objective_mutiplier != 0.) {
+   if (objective_multiplier != 0.) {
       this->compute_objective_gradient(problem);
 
       /* scale the objective gradient */
       for (const auto[i, derivative]: this->objective_gradient) {
          if (i < problem.number_variables) {
-            lagrangian_gradient[i] += objective_mutiplier * derivative;
+            lagrangian_gradient[i] += objective_multiplier * derivative;
          }
       }
    }
@@ -103,24 +103,5 @@ std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
 
    stream << "Optimality measure: " << iterate.optimality_measure << "\n";
    stream << "Feasibility measure: " << iterate.feasibility_measure << "\n";
-   return stream;
-}
-
-std::ostream& operator<<(std::ostream& stream, TerminationStatus status) {
-   if (status == NOT_OPTIMAL) {
-      stream << "not optimal";
-   }
-   else if (status == KKT_POINT) {
-      stream << "KKT point";
-   }
-   else if (status == FJ_POINT) {
-      stream << "FJ point";
-   }
-   else if (status == FEASIBLE_SMALL_STEP) {
-      stream << "feasible small step";
-   }
-   else if (status == INFEASIBLE_SMALL_STEP) {
-      stream << "infeasible small step";
-   }
    return stream;
 }
