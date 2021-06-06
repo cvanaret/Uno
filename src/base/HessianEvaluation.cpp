@@ -13,11 +13,11 @@ ExactHessianEvaluation::ExactHessianEvaluation(int dimension, int hessian_maximu
       hessian_maximum_number_nonzeros) {
 }
 
-void ExactHessianEvaluation::compute(Problem& problem, Iterate& iterate, double objective_multiplier,
+void ExactHessianEvaluation::compute(Problem& problem, std::vector<double>& primal_variables, double objective_multiplier,
       std::vector<double>& constraint_multipliers) {
    /* compute Hessian */
-   problem.lagrangian_hessian(iterate.x, objective_multiplier, constraint_multipliers, this->hessian);
-   this->objective_multiplier = objective_multiplier;
+   problem.lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, this->hessian);
+   //this->objective_multiplier_ = objective_multiplier;
 }
 
 /* Exact Hessian with inertia control */
@@ -27,10 +27,10 @@ ExactHessianInertiaControlEvaluation::ExactHessianInertiaControlEvaluation(int d
       linear_solver_(LinearSolverFactory::create(linear_solver_name)) {
 }
 
-void ExactHessianInertiaControlEvaluation::compute(Problem& problem, Iterate& iterate, double objective_multiplier,
+void ExactHessianInertiaControlEvaluation::compute(Problem& problem, std::vector<double>& primal_variables, double objective_multiplier,
       std::vector<double>& constraint_multipliers) {
    /* compute Hessian */
-   problem.lagrangian_hessian(iterate.x, objective_multiplier, constraint_multipliers, this->hessian);
+   problem.lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, this->hessian);
    DEBUG << "hessian before convexification: " << this->hessian;
    /* modify the inertia to make the problem strictly convex */
    // this->hessian = this->modify_inertia(this->hessian, *this->linear_solver_);
@@ -87,10 +87,10 @@ BFGSHessianEvaluation::BFGSHessianEvaluation(int dimension, int hessian_maximum_
    previous_hessian_(dimension, hessian_maximum_number_nonzeros, 1), previous_x_(dimension) {
 }
 
-void BFGSHessianEvaluation::compute(Problem& problem, Iterate& iterate, double objective_multiplier,
+void BFGSHessianEvaluation::compute(Problem& problem, std::vector<double>& primal_variables, double objective_multiplier,
       std::vector<double>& constraint_multipliers) {
    // the BFGS Hessian is already positive definite, do not convexify
-   problem.lagrangian_hessian(iterate.x, objective_multiplier, constraint_multipliers, this->hessian);
+   problem.lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, this->hessian);
 }
 
 /* Factory */
