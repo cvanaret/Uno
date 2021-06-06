@@ -239,7 +239,7 @@ Direction Sl1QP::compute_l1qp_step_(Problem& problem, QPSolver& solver, Iterate&
 
 Direction Sl1QP::solve_l1qp_subproblem_(Problem& problem, Iterate& current_iterate, double trust_region_radius, double penalty_parameter) {
    /* compute l1QP step */
-   this->hessian_evaluation->compute(problem, current_iterate, penalty_parameter, current_iterate.multipliers.constraints);
+   this->hessian_evaluation->compute(problem, current_iterate.x, penalty_parameter, current_iterate.multipliers.constraints);
    Direction direction = this->compute_l1qp_step_(problem, *this->solver, current_iterate, penalty_parameter, this->elastic_variables_,
          trust_region_radius);
    return direction;

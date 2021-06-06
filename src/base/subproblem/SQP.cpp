@@ -12,9 +12,9 @@ SQP::SQP(Problem& problem, std::string QP_solver_name, std::string hessian_evalu
       QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints,
             problem.hessian_maximum_number_nonzeros + problem.number_variables, true)),
 /* if no trust region is used, the problem should be convexified by controlling the inertia of the Hessian */
-      hessian_evaluation(
-            HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, problem.hessian_maximum_number_nonzeros,
-                  !use_trust_region)) {
+      hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables,
+            problem.hessian_maximum_number_nonzeros, !use_trust_region)) {
+         //this->hessian_evaluation->hessian.matrix.resize(this->solver->hess);
 }
 
 Direction SQP::compute_qp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, double trust_region_radius) {
@@ -37,9 +37,8 @@ Direction SQP::compute_qp_step_(Problem& problem, QPSolver& solver, Iterate& cur
    std::vector<double> d0(variables_bounds.size()); // = {0.}
 
    /* solve the QP */
-   Direction direction =
-         solver.solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian,
-               this->hessian_evaluation->hessian, d0);
+   Direction direction = solver.solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient,
+         current_iterate.constraints_jacobian,this->hessian_evaluation->hessian, d0);
    this->number_subproblems_solved++;
    DEBUG << direction;
    return direction;
@@ -112,7 +111,7 @@ void SQP::evaluate_optimality_iterate_(Problem& problem, Iterate& current_iterat
    /* compute first- and second-order information */
    current_iterate.compute_objective_gradient(problem);
    current_iterate.compute_constraints_jacobian(problem);
-   this->hessian_evaluation->compute(problem, current_iterate, problem.objective_sign, current_iterate.multipliers.constraints);
+   this->hessian_evaluation->compute(problem, current_iterate.x, problem.objective_sign, current_iterate.multipliers.constraints);
 }
 
 void SQP::evaluate_feasibility_iterate_(Problem& problem, Iterate& current_iterate, ConstraintPartition& constraint_partition) {
@@ -123,7 +122,7 @@ void SQP::evaluate_feasibility_iterate_(Problem& problem, Iterate& current_itera
    current_iterate.compute_constraints_jacobian(problem);
    //current_iterate.is_hessian_computed = false;
    double objective_multiplier = 0.;
-   this->hessian_evaluation->compute(problem, current_iterate, objective_multiplier, constraint_multipliers);
+   this->hessian_evaluation->compute(problem, current_iterate.x, objective_multiplier, constraint_multipliers);
 }
 
 double SQP::compute_qp_predicted_reduction_(Problem& /*problem*/, Iterate& current_iterate, Direction& direction, double step_length) {

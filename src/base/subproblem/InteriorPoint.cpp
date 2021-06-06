@@ -198,7 +198,7 @@ void InteriorPoint::evaluate_optimality_iterate_(Problem& problem, Iterate& curr
    }
 
    /* compute second-order information */
-   this->hessian_evaluation->compute(problem, current_iterate, problem.objective_sign, current_iterate.multipliers.constraints);
+   this->hessian_evaluation->compute(problem, current_iterate.x, problem.objective_sign, current_iterate.multipliers.constraints);
 }
 
 Direction InteriorPoint::generate_direction_(Problem& problem, Iterate& current_iterate, std::vector<double>& solution_IPM) {
@@ -534,7 +534,7 @@ std::vector<Direction> InteriorPoint::restore_feasibility(Problem& problem, Iter
    }
 
    /* compute the Lagrangian Hessian */
-   this->hessian_evaluation->compute(problem, current_iterate, 0., restoration_multipliers);
+   this->hessian_evaluation->compute(problem, current_iterate.x, 0., restoration_multipliers);
    UnoMatrix kkt_matrix = this->hessian_evaluation->hessian.to_UnoMatrix(number_variables);
    // contribution of 2 \nabla c \nabla c^T
    for (size_t j = 0; j < problem.number_constraints; j++) {

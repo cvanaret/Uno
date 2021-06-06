@@ -19,7 +19,8 @@ public:
    int dimension;
    CSCMatrix hessian;
 
-   virtual void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) = 0;
+   virtual void compute(Problem& problem, std::vector<double>& primal_variables, double objective_multiplier,
+         std::vector<double>& constraint_multipliers) = 0;
    CSCMatrix modify_inertia(CSCMatrix& matrix, LinearSolver& linear_solver);
 };
 
@@ -28,10 +29,11 @@ public:
    explicit ExactHessianEvaluation(int dimension, int hessian_maximum_number_nonzeros);
    ~ExactHessianEvaluation() override = default;
 
-   void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) override;
+   void compute(Problem& problem, std::vector<double>& primal_variables, double objective_multiplier,
+         std::vector<double>& constraint_multipliers) override;
 
 protected:
-   double objective_multiplier;
+   //double objective_multiplier_;
 };
 
 class ExactHessianInertiaControlEvaluation : public HessianEvaluation {
@@ -39,11 +41,12 @@ public:
    ExactHessianInertiaControlEvaluation(int dimension, int hessian_maximum_number_nonzeros, const std::string& linear_solve_name);
    ~ExactHessianInertiaControlEvaluation() override = default;
 
-   void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) override;
+   void compute(Problem& problem, std::vector<double>& primal_variables, double objective_multiplier,
+         std::vector<double>& constraint_multipliers) override;
 
 protected:
    std::unique_ptr<LinearSolver> linear_solver_; /*!< Solver that solves the subproblem */
-   double objective_multiplier;
+   //double objective_multiplier;
 };
 
 class BFGSHessianEvaluation : public HessianEvaluation {
@@ -51,7 +54,8 @@ public:
    explicit BFGSHessianEvaluation(int dimension, int hessian_maximum_number_nonzeros);
    ~BFGSHessianEvaluation() override = default;
 
-   void compute(Problem& problem, Iterate& iterate, double objective_multiplier, std::vector<double>& constraint_multipliers) override;
+   void compute(Problem& problem, std::vector<double>& primal_variables, double objective_multiplier,
+         std::vector<double>& constraint_multipliers) override;
 
 private:
    CSCMatrix previous_hessian_;

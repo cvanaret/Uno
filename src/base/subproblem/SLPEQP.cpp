@@ -77,7 +77,7 @@ Direction SLPEQP::solve_eqp_(Problem& problem, Iterate& current_iterate, Directi
    current_iterate.compute_objective_gradient(problem);
    current_iterate.compute_constraints(problem);
    // use the multipliers from the LP solution (correct activity)
-   this->hessian_evaluation->compute(problem, current_iterate, problem.objective_sign, phase_2_direction.multipliers.constraints);
+   this->hessian_evaluation->compute(problem, current_iterate.x, problem.objective_sign, phase_2_direction.multipliers.constraints);
 
    /* KKT matrix */
 
