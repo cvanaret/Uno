@@ -13,8 +13,8 @@ ExactHessianEvaluation::ExactHessianEvaluation(int dimension, int hessian_maximu
       hessian_maximum_number_nonzeros) {
 }
 
-void ExactHessianEvaluation::compute(Problem& problem, std::vector<double>& primal_variables, double objective_multiplier,
-      std::vector<double>& constraint_multipliers) {
+void ExactHessianEvaluation::compute(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
+      const std::vector<double>& constraint_multipliers) {
    /* compute Hessian */
    problem.lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, this->hessian);
    //this->objective_multiplier_ = objective_multiplier;
@@ -27,8 +27,8 @@ ExactHessianInertiaControlEvaluation::ExactHessianInertiaControlEvaluation(int d
       linear_solver_(LinearSolverFactory::create(linear_solver_name)) {
 }
 
-void ExactHessianInertiaControlEvaluation::compute(Problem& problem, std::vector<double>& primal_variables, double objective_multiplier,
-      std::vector<double>& constraint_multipliers) {
+void ExactHessianInertiaControlEvaluation::compute(const Problem& problem, const std::vector<double>& primal_variables,
+      double objective_multiplier, const std::vector<double>& constraint_multipliers) {
    /* compute Hessian */
    problem.lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, this->hessian);
    DEBUG << "hessian before convexification: " << this->hessian;
@@ -87,8 +87,8 @@ BFGSHessianEvaluation::BFGSHessianEvaluation(int dimension, int hessian_maximum_
    previous_hessian_(dimension, hessian_maximum_number_nonzeros, 1), previous_x_(dimension) {
 }
 
-void BFGSHessianEvaluation::compute(Problem& problem, std::vector<double>& primal_variables, double objective_multiplier,
-      std::vector<double>& constraint_multipliers) {
+void BFGSHessianEvaluation::compute(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
+      const std::vector<double>& constraint_multipliers) {
    // the BFGS Hessian is already positive definite, do not convexify
    problem.lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, this->hessian);
 }
