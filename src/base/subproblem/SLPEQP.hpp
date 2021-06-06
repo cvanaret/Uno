@@ -6,24 +6,29 @@
 #include "QPSolver.hpp"
 #include "LinearSolver.hpp"
 
-class SLPEQP: public ActiveSetMethod {
+class SLPEQP : public ActiveSetMethod {
 public:
-    SLPEQP(Problem& problem, std::string LP_solver_name, std::string linear_solver_name, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals);
-    
-    std::vector<Direction> compute_directions(Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius=INFINITY) override;
-    std::vector<Direction> restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius=INFINITY) override;
-    double compute_qp_predicted_reduction_(Problem& /*problem*/, Iterate& current_iterate, Direction& direction, double step_length);
+   SLPEQP(Problem& problem, std::string LP_solver_name, std::string linear_solver_name, std::string hessian_evaluation_method,
+         bool use_trust_region, bool scale_residuals);
 
-    /* use pointers to allow polymorphism */
-    std::unique_ptr<QPSolver> lp_solver;
-    std::unique_ptr<LinearSolver> linear_solver; /*!< Solver that solves the subproblem */
-    std::unique_ptr<HessianEvaluation> hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
+   void evaluate_current_iterate(const Problem& problem, const Iterate& current_iterate) override;
+
+   std::vector<Direction>
+   compute_directions(Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
+   std::vector<Direction>
+   restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) override;
+   double compute_qp_predicted_reduction_(Problem& /*problem*/, Iterate& current_iterate, Direction& direction, double step_length);
+
+   /* use pointers to allow polymorphism */
+   std::unique_ptr<QPSolver> lp_solver;
+   std::unique_ptr<LinearSolver> linear_solver; /*!< Solver that solves the subproblem */
+   std::unique_ptr<HessianEvaluation> hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
 
 private:
-    Direction solve_eqp_(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius);
-    //void fix_active_constraints_(Problem& problem, ActiveSet& active_set, std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds);
-    //virtual SubproblemSolution compute_optimality_eqp_step_() = 0;
-    //virtual SubproblemSolution compute_feasibility_eqp_step_() = 0;
+   Direction solve_eqp_(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius);
+   //void fix_active_constraints_(Problem& problem, ActiveSet& active_set, std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds);
+   //virtual SubproblemSolution compute_optimality_eqp_step_() = 0;
+   //virtual SubproblemSolution compute_feasibility_eqp_step_() = 0;
 };
 
 //class SLPEQP_TR : public SLPEQP {

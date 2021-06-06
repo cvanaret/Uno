@@ -20,6 +20,10 @@ SLPEQP::SLPEQP(Problem& problem, std::string LP_solver_name, std::string linear_
                   false)) {
 }
 
+void SLPEQP::evaluate_current_iterate(const Problem& problem, const Iterate& current_iterate) {
+
+}
+
 std::vector<Direction>
 SLPEQP::compute_directions(Problem& problem, Iterate& current_iterate, double /*objective_multiplier*/, double trust_region_radius) {
    /* compute first-order information */
@@ -140,6 +144,7 @@ std::vector<Direction> SLPEQP::restore_feasibility(Problem& /*problem*/, Iterate
    // TODO
    throw std::out_of_range("SLPEQP::restore_feasibility not implemented");
 }
+
 
 ///* SLPEQP_TR */
 //
