@@ -150,7 +150,7 @@ InteriorPoint::compute_directions(Problem& problem, Iterate& current_iterate, do
    /************************/
    try {
       /* KKT matrix */
-      COOMatrix kkt_matrix = this->generate_optimality_kkt_matrix_(problem, current_iterate, this->bounds);
+      COOMatrix kkt_matrix = this->assemble_optimality_kkt_matrix_(problem, current_iterate, this->bounds);
 
       /* inertia correction (includes factorization) */
       this->modify_inertia_(kkt_matrix, current_iterate.x.size(), problem.number_constraints, problem.type);
@@ -294,7 +294,7 @@ double InteriorPoint::compute_dual_length_(Iterate& current_iterate, double tau,
    return dual_length;
 }
 
-COOMatrix InteriorPoint::generate_optimality_kkt_matrix_(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds) {
+COOMatrix InteriorPoint::assemble_optimality_kkt_matrix_(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds) {
    int number_variables = problem.number_variables + problem.inequality_constraints.size();
 
    /* compute the Lagrangian Hessian */
