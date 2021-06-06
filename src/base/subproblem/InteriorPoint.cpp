@@ -95,13 +95,16 @@ InteriorPoint::evaluate_initial_point(const Problem& problem, const std::vector<
    return first_iterate;
 }
 
-double InteriorPoint::compute_KKT_error_scaling_(Iterate& current_iterate) {
+void InteriorPoint::evaluate_current_iterate(const Problem& problem, const Iterate& current_iterate) {
+
+}
+
+double InteriorPoint::compute_KKT_error_scaling_(Iterate& current_iterate) const {
    /* KKT error */
    double norm_1_constraint_multipliers = norm_1(current_iterate.multipliers.constraints);
    double norm_1_bound_multipliers = norm_1(current_iterate.multipliers.lower_bounds) + norm_1(current_iterate.multipliers.upper_bounds);
    double sd = std::max(this->parameters_.smax, (norm_1_constraint_multipliers + norm_1_bound_multipliers) /
-                                                (current_iterate.x.size() + current_iterate.multipliers.constraints.size())) /
-               this->parameters_.smax;
+         (double)  (current_iterate.x.size() + current_iterate.multipliers.constraints.size())) / this->parameters_.smax;
    return sd;
 }
 
@@ -113,7 +116,7 @@ InteriorPoint::compute_directions(Problem& problem, Iterate& current_iterate, do
    current_iterate.compute_constraints_jacobian(problem);
    // contribution of the slacks
    for (const auto[j, i]: problem.inequality_constraints) {
-      int slack_index = problem.number_variables + i;
+      size_t slack_index = problem.number_variables + i;
       current_iterate.constraints_jacobian[j][slack_index] = -1.;
    }
 
@@ -166,7 +169,7 @@ InteriorPoint::compute_directions(Problem& problem, Iterate& current_iterate, do
       direction.status = OPTIMAL;
       direction.phase = OPTIMALITY;
       direction.norm = norm_inf(direction.x, problem.number_variables);
-      direction.predicted_reduction = this->compute_predicted_reduction_;
+      direction.predicted_reduction = InteriorPoint::compute_predicted_reduction_;
       /* evaluate the barrier objective */
       direction.objective = this->evaluate_local_model_(problem, current_iterate, direction.x);
       return std::vector<Direction>{direction};
@@ -623,10 +626,7 @@ std::vector<Direction> InteriorPoint::restore_feasibility(Problem& problem, Iter
    direction.status = INFEASIBLE;
    direction.phase = RESTORATION;
    direction.norm = norm_inf(direction.x, problem.number_variables);
-//    direction.predicted_reduction = [&](double step_length) {
-//        return this->compute_predicted_reduction_(direction, step_length);
-//    };
-   direction.predicted_reduction = this->compute_predicted_reduction_;
+   direction.predicted_reduction = InteriorPoint::compute_predicted_reduction_;
    return std::vector<Direction>{direction};
 }
 
@@ -647,3 +647,4 @@ double InteriorPoint::compute_central_complementarity_error(Iterate& iterate, do
          (norm_1(iterate.multipliers.lower_bounds) + norm_1(iterate.multipliers.upper_bounds)) / iterate.x.size()) / this->parameters_.smax;
    return norm(residuals, this->residual_norm) / sc;
 }
+

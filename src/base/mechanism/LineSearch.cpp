@@ -17,7 +17,7 @@ Iterate LineSearch::initialize(Statistics& statistics, Problem& problem, std::ve
 
 std::pair<Iterate, Direction> LineSearch::compute_acceptable_iterate(Statistics& statistics, Problem& problem, Iterate& current_iterate) {
    /* compute the directions */
-   std::vector<Direction> directions = this->globalization_strategy.subproblem.compute_directions(problem, current_iterate, 1.);
+   std::vector<Direction> directions = this->globalization_strategy.subproblem.compute_directions(problem, current_iterate, 1., INFINITY);
 
    bool line_search_termination = false;
    while (!line_search_termination) {
@@ -45,7 +45,7 @@ std::pair<Iterate, Direction> LineSearch::compute_acceptable_iterate(Statistics&
          if (0. < current_iterate.feasibility_measure && directions[0].phase == OPTIMALITY) {
             // reset the line search with the restoration solution
             DEBUG << "Enter restoration feasibility phase\n";
-            directions = this->globalization_strategy.subproblem.restore_feasibility(problem, current_iterate, directions[0]);
+            directions = this->globalization_strategy.subproblem.restore_feasibility(problem, current_iterate, directions[0], INFINITY);
             this->step_length = 1.;
          }
          else {

@@ -11,6 +11,10 @@ ActiveSetMethod(problem, scale_residuals),
 solver(QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints, 0, false)) {
 }
 
+void SLP::evaluate_current_iterate(const Problem& problem, const Iterate& current_iterate) {
+
+}
+
 std::vector<Direction> SLP::compute_directions(Problem& problem, Iterate& current_iterate, double /*objective_multiplier*/, double
 trust_region_radius) {
     Direction direction = this->compute_lp_step_(problem, *this->solver, current_iterate, trust_region_radius);
@@ -42,3 +46,4 @@ void SLP::evaluate_feasibility_iterate_(Problem& problem, Iterate& current_itera
     /* compute first-order information */
     current_iterate.compute_constraints_jacobian(problem);
 }
+

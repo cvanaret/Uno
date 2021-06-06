@@ -17,6 +17,10 @@ SQP::SQP(Problem& problem, std::string QP_solver_name, std::string hessian_evalu
          //this->hessian_evaluation->hessian.matrix.resize(this->solver->hess);
 }
 
+void SQP::evaluate_current_iterate(const Problem& problem, const Iterate& current_iterate) {
+
+}
+
 Direction SQP::compute_qp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, double trust_region_radius) {
    DEBUG << "Current point: ";
    print_vector(DEBUG, current_iterate.x);
@@ -136,3 +140,4 @@ double SQP::compute_qp_predicted_reduction_(Problem& /*problem*/, Iterate& curre
       return -step_length * (linear_term + step_length * quadratic_term);
    }
 }
+
