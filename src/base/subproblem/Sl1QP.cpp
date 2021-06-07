@@ -41,7 +41,7 @@ Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evalua
    // TODO let the solver resize the Hessian space
 }
 
-void Sl1QP::evaluate_current_iterate(const Problem& problem, const Iterate& current_iterate) {
+void Sl1QP::evaluate_current_iterate(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double /*trust_region_radius*/) {
 
 }
 
@@ -151,7 +151,7 @@ Direction Sl1QP::compute_l1qp_step_(Problem& problem, QPSolver& solver, Iterate&
    this->compute_l1_linear_objective_(current_iterate, constraint_partition);
 
    /* bounds of the variables */
-   std::vector<Range> variables_bounds = this->generate_variables_bounds_(problem, current_iterate, trust_region_radius);
+   this->generate_variables_bounds_(problem, current_iterate, trust_region_radius);
 
    /* bounds of the linearized constraints */
    std::vector<Range> constraints_bounds = this->generate_feasibility_bounds_(problem, current_iterate.constraints, constraint_partition);
@@ -161,7 +161,8 @@ Direction Sl1QP::compute_l1qp_step_(Problem& problem, QPSolver& solver, Iterate&
 
    /* solve the QP */
    Direction direction =
-         solver.solve_QP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian,
+         solver.solve_QP(this->variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate
+         .constraints_jacobian,
                this->hessian_evaluation->hessian, d0);
    direction.objective_multiplier = 0.;
    direction.constraint_partition = constraint_partition;
@@ -192,17 +193,19 @@ Direction Sl1QP::compute_l1qp_step_(Problem& problem, QPSolver& solver, Iterate&
    //current_iterate.set_objective_gradient(objective_gradient);
 
    /* bounds of the variables */
-   std::vector<Range> variables_bounds = this->generate_variables_bounds_(problem, current_iterate, trust_region_radius);
+   this->generate_variables_bounds_(problem, current_iterate, trust_region_radius);
 
    /* bounds of the linearized constraints */
-   std::vector<Range> constraints_bounds = Subproblem::generate_constraints_bounds(problem, current_iterate.constraints);
+   this->generate_constraints_bounds(problem, current_iterate.constraints);
 
    /* generate the initial point */
-   std::vector<double> d0(variables_bounds.size()); // = {0.}
+   for (size_t i = 0; i < problem.number_variables; i++) {
+      this->initial_point[i] = 0.;
+   }
 
    DEBUG << "Bounds:\n";
-   for (size_t i = 0; i < variables_bounds.size(); i++) {
-      DEBUG << "x" << i << " in [" << variables_bounds[i].lb << ", " << variables_bounds[i].ub << "]\n";
+   for (size_t i = 0; i < this->variables_bounds.size(); i++) {
+      DEBUG << "x" << i << " in [" << this->variables_bounds[i].lb << ", " << this->variables_bounds[i].ub << "]\n";
    }
    DEBUG << "Hessian: " << this->hessian_evaluation->hessian << "\n";
    DEBUG << "Objective gradient: ";
@@ -214,8 +217,8 @@ Direction Sl1QP::compute_l1qp_step_(Problem& problem, QPSolver& solver, Iterate&
    }
 
    /* solve the QP */
-   Direction direction = solver.solve_QP(variables_bounds, constraints_bounds, objective_gradient, current_iterate.constraints_jacobian,
-         this->hessian_evaluation->hessian, d0);
+   Direction direction = solver.solve_QP(this->variables_bounds, this->constraints_bounds, objective_gradient,
+         current_iterate.constraints_jacobian, this->hessian_evaluation->hessian, this->initial_point);
    direction.phase = OPTIMALITY;
    this->number_subproblems_solved++;
    // recompute active set: constraints are active when p-n = 0
@@ -273,17 +276,16 @@ double Sl1QP::compute_predicted_reduction_(Problem& problem, Iterate& current_it
 
 /* private methods */
 
-std::vector<Range> Sl1QP::generate_variables_bounds_(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+void Sl1QP::generate_variables_bounds_(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {
    // p and n are nonnegative
-   std::vector<Range> variables_bounds(this->number_variables, {0., INFINITY});
+   //this->variables_bounds(this->number_variables, {0., INFINITY});
 
    /* original bounds intersected with trust region  */
    for (size_t i = 0; i < problem.number_variables; i++) {
-      double lb = std::max(-trust_region_radius, this->bounds[i].lb - current_iterate.x[i]);
-      double ub = std::min(trust_region_radius, this->bounds[i].ub - current_iterate.x[i]);
-      variables_bounds[i] = {lb, ub};
+      double lb = std::max(-trust_region_radius, this->variables_bounds[i].lb - current_iterate.x[i]);
+      double ub = std::min(trust_region_radius, this->variables_bounds[i].ub - current_iterate.x[i]);
+      this->variables_bounds[i] = {lb, ub};
    }
-   return variables_bounds;
 }
 
 double Sl1QP::compute_linearized_constraint_residual_(std::vector<double>& direction) {

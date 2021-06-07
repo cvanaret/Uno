@@ -25,11 +25,11 @@ public:
     * \param solver: solver that solves the subproblem
     * \param name: name of the strategy
     */
-   Subproblem(Norm residual_norm, std::vector<Range>& subproblem_variables_bounds, bool scale_residuals);
+   Subproblem(Problem& problem, Norm residual_norm, bool scale_residuals);
    virtual ~Subproblem() = default;
 
    virtual Iterate evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& multipliers) = 0;
-   virtual void evaluate_current_iterate(const Problem& problem, const Iterate& current_iterate) = 0;
+   virtual void evaluate_current_iterate(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) = 0;
 
    virtual std::vector<Direction>
    compute_directions(Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) = 0;
@@ -40,8 +40,8 @@ public:
    virtual void compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const Direction& direction) = 0;
 
    static void project_point_in_bounds(std::vector<double>& x, const std::vector<Range>& variables_bounds);
-   static double project_strictly_variable_in_bounds(double variable_value, const Range& variable_bounds);
-   static std::vector<Range> generate_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints);
+   static double project_variable_in_interior(double variable_value, const Range& variable_bounds);
+   void generate_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints);
    static std::vector<double>
    compute_least_square_multipliers(const Problem& problem, Iterate& current_iterate, const std::vector<double>& default_multipliers,
          LinearSolver& solver, double multipliers_max_size = 1e3);
@@ -52,13 +52,19 @@ public:
    double compute_KKT_error(const Problem& problem, Iterate& iterate, double objective_multiplier) const;
    void compute_residuals(const Problem& problem, Iterate& iterate, const Multipliers& multipliers, double objective_multiplier) const;
 
-   Norm residual_norm;
-   // when the subproblem is reformulated (e.g. when slacks are introduced), the bounds may be altered as well
-   std::vector<Range> bounds;
+   size_t number_variables;
+   size_t number_constraints;
+   // when the subproblem is reformulated (e.g. when slacks are introduced), the bounds may be altered
+   std::vector<Range> variables_bounds;
+   Multipliers multipliers;
    SparseVector objective_gradient;
    std::vector<double> constraints;
    std::vector<SparseVector> constraints_jacobian;
+   std::vector<Range> constraints_bounds;
+   // Hessian is optional and depends on the subproblem
+   std::vector<double> initial_point;
 
+   Norm residual_norm;
    int number_subproblems_solved;
    // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it
    bool subproblem_definition_changed;

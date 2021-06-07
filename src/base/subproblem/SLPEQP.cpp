@@ -20,7 +20,7 @@ SLPEQP::SLPEQP(Problem& problem, std::string LP_solver_name, std::string linear_
                   false)) {
 }
 
-void SLPEQP::evaluate_current_iterate(const Problem& problem, const Iterate& current_iterate) {
+void SLPEQP::evaluate_current_iterate(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double /*trust_region_radius*/) {
 
 }
 

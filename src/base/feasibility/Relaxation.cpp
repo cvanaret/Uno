@@ -6,9 +6,9 @@ parameters({10., 0.1, 0.1}) {
    ActiveSetMethod::generate_elastic_variables_(problem, this->elastic_variables);
 
    // add nonnegative elastic variables to the subproblem
-   this->subproblem.bounds.resize(problem.number_variables + this->elastic_variables.size());
-   for (size_t i = problem.number_variables; i < this->subproblem.bounds.size(); i++) {
-      this->subproblem.bounds[i] = {0., INFINITY};
+   this->subproblem.variables_bounds.resize(problem.number_variables + this->elastic_variables.size());
+   for (size_t i = problem.number_variables; i < this->subproblem.variables_bounds.size(); i++) {
+      this->subproblem.variables_bounds[i] = {0., INFINITY};
    }
 }
 

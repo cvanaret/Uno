@@ -27,14 +27,14 @@ public:
 
     /* objective */
     [[nodiscard]] double objective(const std::vector<double>& x) const override;
-    SparseVector objective_gradient(std::vector<double>& x) const override;
+    [[nodiscard]] SparseVector objective_gradient(const std::vector<double>& x) const override;
 
     /* constraints */
     //std::vector<bool> constraint_is_uncertainty_set;
-    double evaluate_constraint(int j, std::vector<double>& x) const override;
-    std::vector<double> evaluate_constraints(std::vector<double>& x) const override;
-    void constraint_gradient(std::vector<double>& x, int j, SparseVector& gradient) const override;
-    std::vector<SparseVector> constraints_jacobian(std::vector<double>& x) const override;
+    double evaluate_constraint(int j, const std::vector<double>& x) const override;
+    std::vector<double> evaluate_constraints(const std::vector<double>& x) const override;
+    void constraint_gradient(const std::vector<double>& x, int j, SparseVector& gradient) const override;
+    [[nodiscard]] std::vector<SparseVector> constraints_jacobian(const std::vector<double>& x) const override;
 
     /* Hessian */
     void lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
