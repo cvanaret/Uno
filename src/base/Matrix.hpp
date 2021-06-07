@@ -16,7 +16,7 @@ public:
    short fortran_indexing;
 
    /* build the matrix incrementally */
-   virtual void insert(double term, int row_index, int column_index) = 0;
+   virtual void insert(double term, size_t row_index, size_t column_index) = 0;
    virtual std::vector<double> product(const std::vector<double>& vector) = 0;
 
    double quadratic_product(const std::vector<double>& x, const std::vector<double>& y);
@@ -29,10 +29,10 @@ public:
    COOMatrix(size_t dimension, size_t number_nonzeros, short fortran_indexing);
 
    std::vector<double> matrix;
-   std::vector<int> row_indices;
-   std::vector<int> column_indices;
+   std::vector<size_t> row_indices;
+   std::vector<size_t> column_indices;
 
-   void insert(double term, int row_index, int column_index) override;
+   void insert(double term, size_t row_index, size_t column_index) override;
    std::vector<double> product(const std::vector<double>& vector) override;
 
    double norm_1();
@@ -49,15 +49,15 @@ class CSCMatrix : public Matrix {
    /* Compressed Sparse Column */
 public:
    //CSCMatrix(size_t dimension, short fortran_indexing);
-   CSCMatrix(size_t dimension, int maximum_number_nonzeros, int fortran_indexing);
-   CSCMatrix(const std::vector<double>& matrix, const std::vector<int>& column_start, const std::vector<int>& row_number,
-         int fortran_indexing);
+   CSCMatrix(size_t dimension, size_t maximum_number_nonzeros, short fortran_indexing);
+   CSCMatrix(const std::vector<double>& matrix, const std::vector<size_t>& column_start, const std::vector<size_t>& row_number,
+         short fortran_indexing);
 
    std::vector<double> matrix;
-   std::vector<int> column_start;
-   std::vector<int> row_number;
+   std::vector<size_t> column_start;
+   std::vector<size_t> row_number;
 
-   void insert(double term, int row_index, int column_index) override;
+   void insert(double term, size_t row_index, size_t column_index) override;
    std::vector<double> product(const std::vector<double>& vector) override;
 
    CSCMatrix add_identity_multiple(double multiple);
@@ -65,7 +65,7 @@ public:
    COOMatrix to_COO();
    UnoMatrix to_UnoMatrix(int uno_matrix_size);
 
-   static CSCMatrix identity(size_t dimension, int fortran_indexing);
+   static CSCMatrix identity(size_t dimension, short fortran_indexing);
 
    friend std::ostream& operator<<(std::ostream& stream, CSCMatrix& matrix);
    friend std::ostream& operator<<(std::ostream& stream, const CSCMatrix& matrix);
@@ -78,13 +78,13 @@ public:
 
    SparseVector matrix;
 
-   void insert(double term, int row_index, int column_index) override;
+   void insert(double term, size_t row_index, size_t column_index) override;
    std::vector<double> product(const std::vector<double>& vector) override;
    void add_matrix(UnoMatrix& other_matrix, double factor);
 
    double norm_1();
    COOMatrix to_COO();
-   COOMatrix to_COO(const std::unordered_map<int, int>& mask);
+   COOMatrix to_COO(const std::unordered_map<size_t, size_t>& mask);
    //CSCMatrix to_CSC();
    //CSCMatrix to_CSC(const std::unordered_map<int, int>& mask);
 
