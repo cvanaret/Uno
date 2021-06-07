@@ -38,7 +38,7 @@ public:
          bool scale_residuals);
 
    Iterate evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& default_multipliers) override;
-   void evaluate_current_iterate(const Problem& problem, const Iterate& current_iterate) override;
+   void evaluate_current_iterate(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;
 
    std::vector<Direction>
    compute_directions(Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
@@ -66,11 +66,10 @@ private:
    void evaluate_optimality_iterate_(Problem& problem, Iterate& current_iterate);
    double evaluate_local_model_(Problem& problem, Iterate& current_iterate, std::vector<double>& solution);
    double barrier_function_(const Problem& problem, Iterate& iterate, const std::vector<Range>& variables_bounds);
-   double project_variable_in_bounds_(double variable_value, Range& variable_bounds);
    double compute_primal_length_(Iterate& iterate, std::vector<double>& ipm_solution, std::vector<Range>& variables_bounds, double tau);
    double
    compute_dual_length_(Iterate& current_iterate, double tau, std::vector<double>& lower_delta_z, std::vector<double>& upper_delta_z);
-   COOMatrix assemble_optimality_kkt_matrix_(Problem& problem, Iterate& current_iterate, std::vector<Range>& variables_bounds);
+   COOMatrix assemble_optimality_kkt_matrix_(Problem& problem, Iterate& current_iterate);
    void modify_inertia_(COOMatrix& kkt_matrix, int size_first_block, int size_second_block, FunctionType problem_type);
    void generate_kkt_rhs_(Problem& problem, Iterate& current_iterate);
    std::vector<double> compute_lower_bound_multiplier_displacements_(Iterate& current_iterate, std::vector<double>& solution,

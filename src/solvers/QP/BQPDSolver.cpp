@@ -23,7 +23,7 @@ bqpd_(int* n, int* m, int* k, int* kmax, double* a, int* la, double* x, double* 
 }
 
 /* preallocate a bunch of stuff */
-BQPDSolver::BQPDSolver(int number_variables, int number_constraints, int maximum_number_nonzeros, bool quadratic_programming)
+BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_t maximum_number_nonzeros, bool quadratic_programming)
       : QPSolver(), n_(number_variables), m_(number_constraints), maximum_number_nonzeros_(maximum_number_nonzeros), lb_(n_ + m_),
       ub_(n_ + m_), use_fortran_(1), jacobian_(n_ * (m_ + 1)), jacobian_sparsity_(n_ * (m_ + 1) + m_ + 3),
       kmax_(quadratic_programming ? 500 : 0), mlp_(1000), mxwk0_(2000000), mxiwk0_(500000), info_(100), alp_(mlp_), lp_(mlp_), ls_(n_ + m_),
@@ -33,13 +33,12 @@ BQPDSolver::BQPDSolver(int number_variables, int number_constraints, int maximum
       size_hessian_sparsity_workspace_(size_hessian_sparsity_ + kmax_ + mxiwk0_), hessian_(size_hessian_workspace_),
       hessian_sparsity_(size_hessian_sparsity_workspace_), k_(0), mode_(COLD_START), iprint_(0), nout_(6), fmin_(-1e20) {
    // active set
-   for (int i = 0; i < this->n_ + this->m_; i++) {
+   for (size_t i = 0; i < this->n_ + this->m_; i++) {
       this->ls_[i] = i + this->use_fortran_;
    }
 }
 
-Direction
-BQPDSolver::solve_QP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, SparseVector& linear_objective,
+Direction BQPDSolver::solve_QP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, SparseVector& linear_objective,
       std::vector<SparseVector>& constraints_jacobian, CSCMatrix& hessian, std::vector<double>& x) {
    /* Hessian */
    for (size_t i = 0; i < hessian.number_nonzeros; i++) {
@@ -58,7 +57,7 @@ BQPDSolver::solve_QP(std::vector<Range>& variables_bounds, std::vector<Range>& c
    // if extra variables have been introduced, correct hessian.column_start
    int i = hessian.number_nonzeros + hessian.dimension + 2;
    int last_value = hessian.column_start[hessian.dimension];
-   for (int j = hessian.dimension; j < this->n_; j++) {
+   for (size_t j = hessian.dimension; j < this->n_; j++) {
       this->hessian_sparsity_[i] = last_value + (hessian.fortran_indexing ? 0 : this->use_fortran_);
       i++;
    }
@@ -67,14 +66,14 @@ BQPDSolver::solve_QP(std::vector<Range>& variables_bounds, std::vector<Range>& c
    return this->solve_subproblem_(variables_bounds, constraints_bounds, linear_objective, constraints_jacobian, x);
 }
 
-Direction
-BQPDSolver::solve_LP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, SparseVector& linear_objective,
+Direction BQPDSolver::solve_LP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, SparseVector& linear_objective,
       std::vector<SparseVector>& constraints_jacobian, std::vector<double>& x) {
    return this->solve_subproblem_(variables_bounds, constraints_bounds, linear_objective, constraints_jacobian, x);
 }
 
-Direction BQPDSolver::solve_subproblem_(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds,
-      SparseVector& linear_objective, std::vector<SparseVector>& constraints_jacobian, std::vector<double>& x) {
+Direction
+BQPDSolver::solve_subproblem_(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, SparseVector& linear_objective,
+      std::vector<SparseVector>& constraints_jacobian, std::vector<double>& x) {
    /* initialize wsc_ common block (Hessian & workspace for bqpd) */
    // setting the common block here ensures that several instances of BQPD can run simultaneously
    wsc_.kk = this->maximum_number_nonzeros_;
@@ -103,7 +102,7 @@ Direction BQPDSolver::solve_subproblem_(std::vector<Range>& variables_bounds, st
       this->jacobian_sparsity_[current_index + 1] = i + this->use_fortran_;
       current_index++;
    }
-   for (int j = 0; j < this->m_; j++) {
+   for (size_t j = 0; j < this->m_; j++) {
       for (const auto[i, derivative]: constraints_jacobian[j]) {
          this->jacobian_[current_index] = derivative;
          this->jacobian_sparsity_[current_index + 1] = i + this->use_fortran_;
@@ -119,28 +118,28 @@ Direction BQPDSolver::solve_subproblem_(std::vector<Range>& variables_bounds, st
    size += linear_objective.size();
    this->jacobian_sparsity_[current_index] = size;
    current_index++;
-   for (int j = 0; j < this->m_; j++) {
+   for (size_t j = 0; j < this->m_; j++) {
       size += constraints_jacobian[j].size();
       this->jacobian_sparsity_[current_index] = size;
       current_index++;
    }
 
    /* bounds */
-   for (int i = 0; i < this->n_; i++) {
+   for (size_t i = 0; i < this->n_; i++) {
       this->lb_[i] = (variables_bounds[i].lb == -INFINITY) ? -BIG : variables_bounds[i].lb;
       this->ub_[i] = (variables_bounds[i].ub == INFINITY) ? BIG : variables_bounds[i].ub;
    }
-   for (int j = 0; j < this->m_; j++) {
+   for (size_t j = 0; j < this->m_; j++) {
       this->lb_[this->n_ + j] = (constraints_bounds[j].lb == -INFINITY) ? -BIG : constraints_bounds[j].lb;
       this->ub_[this->n_ + j] = (constraints_bounds[j].ub == INFINITY) ? BIG : constraints_bounds[j].ub;
    }
 
    /* call BQPD */
    int mode = (int) this->mode_;
-   bqpd_(&this->n_, &this->m_, &this->k_, &this->kmax_, this->jacobian_.data(), this->jacobian_sparsity_.data(), x.data(), this->lb_.data(),
-         this->ub_.data(), &this->f_solution_, &this->fmin_, this->gradient_solution_.data(), this->residuals_.data(), this->w_.data(),
-         this->e_.data(), this->ls_.data(), this->alp_.data(), this->lp_.data(), &this->mlp_, &this->peq_solution_, this->hessian_.data(),
-         this->hessian_sparsity_.data(), &mode, &this->ifail_, this->info_.data(), &this->iprint_, &this->nout_);
+   bqpd_((int*) &this->n_, (int*) &this->m_, &this->k_, &this->kmax_, this->jacobian_.data(), this->jacobian_sparsity_.data(), x.data(),
+         this->lb_.data(), this->ub_.data(), &this->f_solution_, &this->fmin_, this->gradient_solution_.data(), this->residuals_.data(),
+         this->w_.data(), this->e_.data(), this->ls_.data(), this->alp_.data(), this->lp_.data(), &this->mlp_, &this->peq_solution_,
+         this->hessian_.data(), this->hessian_sparsity_.data(), &mode, &this->ifail_, this->info_.data(), &this->iprint_, &this->nout_);
 
    /* project solution into bounds: it's a ray! */
    for (unsigned int i = 0; i < x.size(); i++) {
@@ -161,8 +160,8 @@ Direction BQPDSolver::generate_direction_(std::vector<double>& x) {
    Direction direction(x, multipliers);
 
    /* active constraints */
-   for (int j = 0; j < this->n_ - this->k_; j++) {
-      int index = std::abs(this->ls_[j]) - this->use_fortran_;
+   for (size_t j = 0; j < this->n_ - this->k_; j++) {
+      size_t index = std::abs(this->ls_[j]) - this->use_fortran_;
 
       if (index < this->n_) {
          // bound constraint
@@ -192,8 +191,8 @@ Direction BQPDSolver::generate_direction_(std::vector<double>& x) {
    }
 
    /* inactive constraints */
-   for (int j = this->n_ - this->k_; j < this->n_ + this->m_; j++) {
-      int index = std::abs(this->ls_[j]) - this->use_fortran_;
+   for (size_t j = this->n_ - this->k_; j < this->n_ + this->m_; j++) {
+      size_t index = std::abs(this->ls_[j]) - this->use_fortran_;
 
       if (this->n_ <= index) { // general constraints
          int constraint_index = index - this->n_;

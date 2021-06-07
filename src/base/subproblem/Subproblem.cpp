@@ -1,8 +1,13 @@
 #include "Subproblem.hpp"
 #include "LinearSolverFactory.hpp"
 
-Subproblem::Subproblem(Norm residual_norm, std::vector<Range>& variables_bounds, bool scale_residuals) : residual_norm(residual_norm),
-      bounds(variables_bounds), // register the original bounds
+Subproblem::Subproblem(Problem& problem, Norm residual_norm, bool scale_residuals) : number_variables(
+      problem.number_variables), number_constraints(problem.number_constraints), variables_bounds(problem.number_variables),
+      multipliers(problem.number_variables, problem.number_constraints),
+      // objective_gradient is a SparseVector
+      constraints(problem.number_constraints),
+      // constraints_jacobian is a vector of SparseVectors
+      constraints_bounds(problem.number_constraints), initial_point(problem.number_variables), residual_norm(residual_norm),
       number_subproblems_solved(0), subproblem_definition_changed(false), scale_residuals(scale_residuals) {
 }
 
@@ -23,7 +28,7 @@ void Subproblem::project_point_in_bounds(std::vector<double>& x, const std::vect
    }
 }
 
-double Subproblem::project_strictly_variable_in_bounds(double variable_value, const Range& variable_bounds) {
+double Subproblem::project_variable_in_interior(double variable_value, const Range& variable_bounds) {
    double k1 = 1e-2;
    double k2 = 1e-2;
 
@@ -34,14 +39,12 @@ double Subproblem::project_strictly_variable_in_bounds(double variable_value, co
    return variable_value;
 }
 
-std::vector<Range> Subproblem::generate_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints) {
-   std::vector<Range> constraints_bounds(problem.number_constraints);
+void Subproblem::generate_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints) {
    for (size_t j = 0; j < problem.number_constraints; j++) {
       double lb = problem.constraint_bounds[j].lb - current_constraints[j];
       double ub = problem.constraint_bounds[j].ub - current_constraints[j];
-      constraints_bounds[j] = {lb, ub};
+      this->constraints_bounds[j] = {lb, ub};
    }
-   return constraints_bounds;
 }
 
 std::vector<double> Subproblem::compute_least_square_multipliers(const Problem& problem, Iterate& current_iterate,
@@ -121,11 +124,11 @@ double Subproblem::compute_complementarity_error_(const Problem& problem, Iterat
    double complementarity_error = 0.;
    /* bound constraints */
    for (size_t i = 0; i < iterate.x.size(); i++) {
-      if (-INFINITY < this->bounds[i].lb) {
-         complementarity_error += std::abs(multipliers.lower_bounds[i] * (iterate.x[i] - this->bounds[i].lb));
+      if (-INFINITY < problem.variables_bounds[i].lb) {
+         complementarity_error += std::abs(multipliers.lower_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].lb));
       }
-      if (this->bounds[i].ub < INFINITY) {
-         complementarity_error += std::abs(multipliers.upper_bounds[i] * (iterate.x[i] - this->bounds[i].ub));
+      if (problem.variables_bounds[i].ub < INFINITY) {
+         complementarity_error += std::abs(multipliers.upper_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].ub));
       }
    }
    /* constraints */

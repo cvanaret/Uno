@@ -4,7 +4,8 @@
 #include "BQPDSolver.hpp"
 #endif
 
-std::unique_ptr<QPSolver> QPSolverFactory::create(const std::string& QP_solver_name, int number_variables, int number_constraints, int maximum_number_nonzeros, bool quadratic_programming) {
+std::unique_ptr<QPSolver> QPSolverFactory::create(const std::string& QP_solver_name, size_t number_variables, size_t number_constraints, size_t
+maximum_number_nonzeros, bool quadratic_programming) {
     std::vector<std::string> possible_solvers;
 #ifdef HAS_BQPD
     if (QP_solver_name == "BQPD") {

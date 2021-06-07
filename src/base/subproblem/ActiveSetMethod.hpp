@@ -26,7 +26,7 @@ public:
 protected:
    /* QP subproblems */
    // optimality QP
-   virtual std::vector<Range> generate_variables_bounds_(Problem& problem, Iterate& current_iterate, double trust_region_radius);
+   virtual void generate_variables_bounds_(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
 
    void compute_l1_linear_objective_(Iterate& current_iterate, ConstraintPartition& constraint_partition);
    std::vector<double> generate_l1_multipliers_(Problem& problem, std::vector<double>& current_constraint_multipliers,

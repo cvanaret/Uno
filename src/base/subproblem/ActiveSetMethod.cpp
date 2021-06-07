@@ -5,7 +5,8 @@
 #include "Vector.hpp"
 #include "Logger.hpp"
 
-ActiveSetMethod::ActiveSetMethod(Problem& problem, bool scale_residuals) : Subproblem(L1_NORM, problem.variables_bounds, scale_residuals) {
+ActiveSetMethod::ActiveSetMethod(Problem& problem, bool scale_residuals) :
+   Subproblem(problem, L1_NORM, scale_residuals) {
 }
 
 Iterate ActiveSetMethod::evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& multipliers) {
@@ -15,15 +16,14 @@ Iterate ActiveSetMethod::evaluate_initial_point(const Problem& problem, const st
    return first_iterate;
 }
 
-std::vector<Range> ActiveSetMethod::generate_variables_bounds_(Problem& /*problem*/, Iterate& current_iterate, double trust_region_radius) {
+void ActiveSetMethod::generate_variables_bounds_(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {
    std::vector<Range> bounds(current_iterate.x.size());
    /* bounds intersected with trust region  */
    for (size_t i = 0; i < current_iterate.x.size(); i++) {
-      double lb = std::max(-trust_region_radius, this->bounds[i].lb - current_iterate.x[i]);
-      double ub = std::min(trust_region_radius, this->bounds[i].ub - current_iterate.x[i]);
-      bounds[i] = {lb, ub};
+      double lb = std::max(-trust_region_radius, problem.variables_bounds[i].lb - current_iterate.x[i]);
+      double ub = std::min(trust_region_radius, problem.variables_bounds[i].ub - current_iterate.x[i]);
+      this->variables_bounds[i] = {lb, ub};
    }
-   return bounds;
 }
 
 void ActiveSetMethod::compute_optimality_measures(const Problem& problem, Iterate& iterate) {
@@ -161,18 +161,20 @@ Direction ActiveSetMethod::compute_lp_step_(Problem& problem, QPSolver& solver, 
    print_vector(DEBUG, current_iterate.multipliers.upper_bounds);
 
    /* bounds of the variables */
-   std::vector<Range> variables_bounds = this->generate_variables_bounds_(problem, current_iterate, trust_region_radius);
+   this->generate_variables_bounds_(problem, current_iterate, trust_region_radius);
 
    /* bounds of the linearized constraints */
-   std::vector<Range> constraints_bounds = Subproblem::generate_constraints_bounds(problem, current_iterate.constraints);
+   this->generate_constraints_bounds(problem, current_iterate.constraints);
 
    /* generate the initial point */
-   std::vector<double> d0(current_iterate.x.size()); // = {0.}
+   for (size_t i = 0; i < this->number_variables; i++) {
+      this->initial_point[i] = 0.;
+   }
 
    /* solve the QP */
    Direction direction =
          solver.solve_LP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian,
-               d0);
+               this->initial_point);
    direction.objective_multiplier = problem.objective_sign;
    direction.phase = OPTIMALITY;
 //    direction.predicted_reduction = [&](double step_length) {
@@ -199,7 +201,7 @@ Direction ActiveSetMethod::compute_l1lp_step_(Problem& problem, QPSolver& solver
    this->compute_l1_linear_objective_(current_iterate, phase_2_direction.constraint_partition);
 
    /* bounds of the variables */
-   std::vector<Range> variables_bounds = this->generate_variables_bounds_(problem, current_iterate, trust_region_radius);
+   this->generate_variables_bounds_(problem, current_iterate, trust_region_radius);
 
    /* bounds of the linearized constraints */
    std::vector<Range> constraints_bounds =
@@ -210,7 +212,8 @@ Direction ActiveSetMethod::compute_l1lp_step_(Problem& problem, QPSolver& solver
 
    /* solve the QP */
    Direction direction =
-         solver.solve_LP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian,
+         solver.solve_LP(this->variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate
+         .constraints_jacobian,
                d0);
    direction.objective_multiplier = 0.;
    direction.phase = RESTORATION;
