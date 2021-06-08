@@ -38,7 +38,7 @@ public:
          bool scale_residuals);
 
    Iterate evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& default_multipliers) override;
-   void evaluate_current_iterate(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;
+   void generate(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;
 
    std::vector<Direction>
    compute_directions(Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;

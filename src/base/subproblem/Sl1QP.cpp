@@ -41,7 +41,7 @@ Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evalua
    // TODO let the solver resize the Hessian space
 }
 
-void Sl1QP::evaluate_current_iterate(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double /*trust_region_radius*/) {
+void Sl1QP::generate(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double /*trust_region_radius*/) {
 
 }
 

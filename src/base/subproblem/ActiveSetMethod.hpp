@@ -24,10 +24,6 @@ public:
    static void generate_elastic_variables_(Problem& problem, ElasticVariables& elastic_variables);
 
 protected:
-   /* QP subproblems */
-   // optimality QP
-   virtual void generate_variables_bounds_(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
-
    void compute_l1_linear_objective_(Iterate& current_iterate, ConstraintPartition& constraint_partition);
    std::vector<double> generate_l1_multipliers_(Problem& problem, std::vector<double>& current_constraint_multipliers,
          ConstraintPartition& constraint_partition);

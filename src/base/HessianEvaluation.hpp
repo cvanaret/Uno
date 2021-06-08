@@ -13,10 +13,10 @@
 // virtual (abstract) class
 class HessianEvaluation {
 public:
-   explicit HessianEvaluation(int dimension, int hessian_maximum_number_nonzeros);
+   explicit HessianEvaluation(size_t dimension, size_t hessian_maximum_number_nonzeros);
    virtual ~HessianEvaluation() = default;
 
-   int dimension;
+   size_t dimension;
    CSCMatrix hessian;
 
    virtual void compute(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
@@ -26,7 +26,7 @@ public:
 
 class ExactHessianEvaluation : public HessianEvaluation {
 public:
-   explicit ExactHessianEvaluation(int dimension, int hessian_maximum_number_nonzeros);
+   explicit ExactHessianEvaluation(size_t dimension, size_t hessian_maximum_number_nonzeros);
    ~ExactHessianEvaluation() override = default;
 
    void compute(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
@@ -38,20 +38,20 @@ protected:
 
 class ExactHessianInertiaControlEvaluation : public HessianEvaluation {
 public:
-   ExactHessianInertiaControlEvaluation(int dimension, int hessian_maximum_number_nonzeros, const std::string& linear_solve_name);
+   ExactHessianInertiaControlEvaluation(size_t dimension, size_t hessian_maximum_number_nonzeros, const std::string& linear_solve_name);
    ~ExactHessianInertiaControlEvaluation() override = default;
 
    void compute(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
          const std::vector<double>& constraint_multipliers) override;
 
 protected:
-   std::unique_ptr<LinearSolver> linear_solver_; /*!< Solver that solves the subproblem */
+   std::unique_ptr<LinearSolver> linear_solver_; /*!< Solver that computes the inertia */
    //double objective_multiplier;
 };
 
 class BFGSHessianEvaluation : public HessianEvaluation {
 public:
-   explicit BFGSHessianEvaluation(int dimension, int hessian_maximum_number_nonzeros);
+   explicit BFGSHessianEvaluation(size_t dimension, size_t hessian_maximum_number_nonzeros);
    ~BFGSHessianEvaluation() override = default;
 
    void compute(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
@@ -65,7 +65,7 @@ private:
 class HessianEvaluationFactory {
 public:
    static std::unique_ptr<HessianEvaluation>
-   create(const std::string& hessian_evaluation_method, int dimension, int hessian_maximum_number_nonzeros, bool convexify);
+   create(const std::string& hessian_evaluation_method, size_t dimension, size_t hessian_maximum_number_nonzeros, bool convexify);
 };
 
 #endif // HESSIANEVALUATION_H

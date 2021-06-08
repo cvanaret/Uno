@@ -16,16 +16,6 @@ Iterate ActiveSetMethod::evaluate_initial_point(const Problem& problem, const st
    return first_iterate;
 }
 
-void ActiveSetMethod::generate_variables_bounds_(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {
-   std::vector<Range> bounds(current_iterate.x.size());
-   /* bounds intersected with trust region  */
-   for (size_t i = 0; i < current_iterate.x.size(); i++) {
-      double lb = std::max(-trust_region_radius, problem.variables_bounds[i].lb - current_iterate.x[i]);
-      double ub = std::min(trust_region_radius, problem.variables_bounds[i].ub - current_iterate.x[i]);
-      this->variables_bounds[i] = {lb, ub};
-   }
-}
-
 void ActiveSetMethod::compute_optimality_measures(const Problem& problem, Iterate& iterate) {
    // feasibility
    this->compute_residuals(problem, iterate, iterate.multipliers, 1.);

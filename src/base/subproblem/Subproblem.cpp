@@ -4,6 +4,7 @@
 Subproblem::Subproblem(Problem& problem, Norm residual_norm, bool scale_residuals) : number_variables(
       problem.number_variables), number_constraints(problem.number_constraints), variables_bounds(problem.number_variables),
       multipliers(problem.number_variables, problem.number_constraints),
+      objective_value(INFINITY),
       // objective_gradient is a SparseVector
       constraints(problem.number_constraints),
       // constraints_jacobian is a vector of SparseVectors
@@ -37,6 +38,20 @@ double Subproblem::project_variable_in_interior(double variable_value, const Ran
    variable_value = std::max(variable_value, variable_bounds.lb + perturbation_lb);
    variable_value = std::min(variable_value, variable_bounds.ub - perturbation_ub);
    return variable_value;
+}
+
+void Subproblem::update_trust_region(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {
+   this->generate_variables_bounds_(problem, current_iterate, trust_region_radius);
+}
+
+void Subproblem::generate_variables_bounds_(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {
+   /* bounds intersected with trust region  */
+   // very important: apply the trust region only on the original variables
+   for (size_t i = 0; i < problem.number_variables; i++) {
+      double lb = std::max(-trust_region_radius, problem.variables_bounds[i].lb - current_iterate.x[i]);
+      double ub = std::min(trust_region_radius, problem.variables_bounds[i].ub - current_iterate.x[i]);
+      this->variables_bounds[i] = {lb, ub};
+   }
 }
 
 void Subproblem::generate_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints) {

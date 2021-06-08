@@ -1,12 +1,12 @@
 #ifndef Sl1QP_H
 #define Sl1QP_H
 
-#include <Relaxation.hpp>
+#include <l1Relaxation.hpp>
 #include "Subproblem.hpp"
 #include "QPSolver.hpp"
 #include "HessianEvaluation.hpp"
 #include "ActiveSetMethod.hpp"
-#include "Relaxation.hpp"
+#include "l1Relaxation.hpp"
 
 struct Sl1QPParameters {
    double tau;
@@ -29,7 +29,7 @@ public:
    Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals,
          double initial_parameter);
 
-   void evaluate_current_iterate(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;
+   void generate(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;
 
    std::vector<Direction> compute_directions(Problem& problem, Iterate& current_iterate, double objective_multiplier,
          double trust_region_radius) override;

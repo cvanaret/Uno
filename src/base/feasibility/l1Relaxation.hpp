@@ -10,10 +10,10 @@ struct RelaxationParameters {
    double epsilon2;
 };
 
-class Relaxation: public FeasibilityStrategy {
+class l1Relaxation: public FeasibilityStrategy {
 public:
-   explicit Relaxation(Problem& problem, Subproblem& subproblem);
-   std::vector<Direction> compute_feasible_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius=INFINITY) override;
+   explicit l1Relaxation(Problem& problem, Subproblem& subproblem);
+   std::vector<Direction> compute_feasible_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
    double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) override;
 
 protected:
