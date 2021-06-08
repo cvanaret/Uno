@@ -91,7 +91,7 @@ private:
          std::vector<Range>& variables_bounds, double mu);
    Direction generate_direction_(Problem& problem, Iterate& current_iterate, std::vector<double>& solution_IPM);
    double compute_KKT_error_scaling_(Iterate& current_iterate) const;
-   static double compute_predicted_reduction_(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length);
+   static double compute_predicted_reduction_(Direction& direction, double step_length);
 };
 
 #endif // IPM_H

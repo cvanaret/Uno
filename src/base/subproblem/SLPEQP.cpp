@@ -60,8 +60,8 @@ SLPEQP::compute_directions(Problem& problem, Iterate& current_iterate, double tr
       Direction direction_EQP = this->solve_eqp_(problem, current_iterate, direction_LP, trust_region_radius);
       direction_EQP.phase = OPTIMALITY;
       direction_EQP.objective_multiplier = problem.objective_sign;
-      direction_EQP.predicted_reduction = [&](Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) {
-         return this->compute_qp_predicted_reduction_(problem, current_iterate, direction, step_length);
+      direction_EQP.predicted_reduction = [&](double step_length) {
+         return this->compute_qp_predicted_reduction_(current_iterate, direction_EQP, step_length);
       };
       return std::vector<Direction>{direction_EQP};
    }
@@ -131,7 +131,7 @@ Direction SLPEQP::solve_eqp_(Problem& problem, Iterate& current_iterate, Directi
    return direction;
 }
 
-double SLPEQP::compute_qp_predicted_reduction_(Problem& /*problem*/, Iterate& current_iterate, Direction& direction, double step_length) {
+double SLPEQP::compute_qp_predicted_reduction_(Iterate& current_iterate, Direction& direction, double step_length) {
    // the predicted reduction is quadratic in the step length
    if (step_length == 1.) {
       return -direction.objective;

@@ -49,7 +49,7 @@ PenaltyMeritFunction::check_acceptance(Statistics& statistics, Problem& problem,
       double trial_exact_l1_penalty = direction.objective_multiplier * trial_iterate.optimality_measure + trial_iterate.feasibility_measure;
 
       /* check the validity of the trial step */
-      double predicted_reduction = direction.predicted_reduction(problem, current_iterate, direction, step_length);
+      double predicted_reduction = direction.predicted_reduction(step_length);
       double actual_reduction = current_exact_l1_penalty - trial_exact_l1_penalty;
 
       DEBUG << "Current: η = " << current_iterate.feasibility_measure << ", ω = " << current_iterate.optimality_measure << "\n";

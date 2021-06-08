@@ -173,7 +173,9 @@ InteriorPoint::compute_directions(Problem& problem, Iterate& current_iterate, do
       direction.status = OPTIMAL;
       direction.phase = OPTIMALITY;
       direction.norm = norm_inf(direction.x, problem.number_variables);
-      direction.predicted_reduction = InteriorPoint::compute_predicted_reduction_;
+      direction.predicted_reduction = [&](double step_length) {
+         return InteriorPoint::compute_predicted_reduction_(direction, step_length);
+      };
       /* evaluate the barrier objective */
       direction.objective = this->evaluate_local_model_(problem, current_iterate, direction.x);
       return std::vector<Direction>{direction};
@@ -508,8 +510,7 @@ double InteriorPoint::evaluate_local_model_(Problem& /*problem*/, Iterate& curre
    return subproblem_objective;
 }
 
-double
-InteriorPoint::compute_predicted_reduction_(Problem& /*problem*/, Iterate& /*current_iterate*/, Direction& direction, double step_length) {
+double InteriorPoint::compute_predicted_reduction_(Direction& direction, double step_length) {
    // the predicted reduction is linear
    return -step_length * direction.objective;
 }
@@ -626,7 +627,9 @@ std::vector<Direction> InteriorPoint::restore_feasibility(Problem& problem, Iter
    direction.status = INFEASIBLE;
    direction.phase = RESTORATION;
    direction.norm = norm_inf(direction.x, problem.number_variables);
-   direction.predicted_reduction = InteriorPoint::compute_predicted_reduction_;
+   direction.predicted_reduction = [&](double step_length) {
+      return InteriorPoint::compute_predicted_reduction_(direction, step_length);
+   };
    return std::vector<Direction>{direction};
 }
 

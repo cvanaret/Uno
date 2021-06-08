@@ -23,7 +23,8 @@ protected:
    Direction compute_l1qp_step_(Problem& problem, Iterate& current_iterate, ConstraintPartition& constraint_partition,
          std::vector<double>& initial_point, double trust_region_radius);
    void evaluate_feasibility_iterate_(Problem& problem, Iterate& current_iterate, ConstraintPartition& constraint_partition);
-   double compute_qp_predicted_reduction_(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) const;
+   double compute_qp_predicted_reduction_(Iterate& current_iterate, Direction& direction, double step_length) const;
+   void display_();
 };
 
 #endif // SQP_H

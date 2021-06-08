@@ -32,7 +32,7 @@ protected:
 
    /* LP subproblems */
    Direction compute_lp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, double trust_region_radius);
-   static double compute_lp_predicted_reduction_(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length);
+   static double compute_lp_predicted_reduction_(Direction& direction, double step_length);
    Direction compute_l1lp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, Direction& phase_2_direction,
          double trust_region_radius);
 };

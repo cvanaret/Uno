@@ -142,7 +142,7 @@ Sl1QP::compute_directions(Problem& problem, Iterate& current_iterate, double tru
    }
 
    direction.objective_multiplier = penalty_parameter;
-   direction.predicted_reduction = [&](Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) {
+   direction.predicted_reduction = [&](double step_length) {
       return this->compute_predicted_reduction_(problem, current_iterate, direction, step_length);
    };
    return std::vector<Direction>{direction};
