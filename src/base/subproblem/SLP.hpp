@@ -7,7 +7,7 @@ class SLP : public ActiveSetMethod {
 public:
     SLP(Problem& problem, std::string QP_solver_name, bool use_trust_region, bool scale_residuals);
 
-   void evaluate_current_iterate(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;
+   void generate(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;
 
     std::vector<Direction> compute_directions(Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
     std::vector<Direction> restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) override;

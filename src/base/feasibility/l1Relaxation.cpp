@@ -1,6 +1,6 @@
-#include "Relaxation.hpp"
+#include "l1Relaxation.hpp"
 
-Relaxation::Relaxation(Problem& problem, Subproblem& subproblem) : FeasibilityStrategy(subproblem), penalty_parameter(1.),
+l1Relaxation::l1Relaxation(Problem& problem, Subproblem& subproblem) : FeasibilityStrategy(subproblem), penalty_parameter(1.),
 parameters({10., 0.1, 0.1}) {
    // generate elastic variables to relax the constraints
    ActiveSetMethod::generate_elastic_variables_(problem, this->elastic_variables);
@@ -12,7 +12,7 @@ parameters({10., 0.1, 0.1}) {
    }
 }
 
-std::vector<Direction> Relaxation::compute_feasible_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+std::vector<Direction> l1Relaxation::compute_feasible_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
    // preprocess the subproblem: scale the objective gradient and introduce the elastic variables
    this->preprocess_subproblem();
 
@@ -26,7 +26,7 @@ std::vector<Direction> Relaxation::compute_feasible_directions(Problem& problem,
    return directions;
 }
 
-void Relaxation::preprocess_subproblem() {
+void l1Relaxation::preprocess_subproblem() {
    // scale the objective gradient
    if (this->penalty_parameter == 0.) {
       this->subproblem.objective_gradient.clear();
@@ -48,7 +48,7 @@ void Relaxation::preprocess_subproblem() {
    }
 }
 
-std::vector<Direction> Relaxation::compute_byrd_steering_rule(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+std::vector<Direction> l1Relaxation::compute_byrd_steering_rule(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
    DEBUG << "penalty parameter: " << this->penalty_parameter << "\n";
    // TODO: pass penalty parameter to the Hessian and multipliers to the subproblem
 
@@ -143,7 +143,7 @@ std::vector<Direction> Relaxation::compute_byrd_steering_rule(Problem& problem, 
    return std::vector<Direction>{direction};
 }
 
-double Relaxation::compute_linearized_constraint_residual(std::vector<double>& direction) {
+double l1Relaxation::compute_linearized_constraint_residual(std::vector<double>& direction) {
    double residual = 0.;
    // l1 residual of the linearized constraints: sum of elastic variables
    for (std::pair<const int, int>& element: this->elastic_variables.positive) {
@@ -157,7 +157,7 @@ double Relaxation::compute_linearized_constraint_residual(std::vector<double>& d
    return residual;
 }
 
-double Relaxation::compute_error(Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter) {
+double l1Relaxation::compute_error(Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter) {
    /* measure that combines KKT error and complementarity error */
    double error = 0.;
 
@@ -169,7 +169,7 @@ double Relaxation::compute_error(Problem& problem, Iterate& iterate, Multipliers
    return error;
 }
 
-void Relaxation::postprocess_direction(const Problem& problem, Direction& direction) {
+void l1Relaxation::postprocess_direction(const Problem& problem, Direction& direction) {
    /* remove p and n */
    direction.x.resize(problem.number_variables);
    direction.multipliers.lower_bounds.resize(problem.number_variables);
@@ -188,7 +188,7 @@ void Relaxation::postprocess_direction(const Problem& problem, Direction& direct
    }
 }
 
-double Relaxation::compute_predicted_reduction(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) {
+double l1Relaxation::compute_predicted_reduction(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) {
    // compute the predicted reduction of the l1 relaxation as a postprocessing of the predicted reduction of the subproblem
    if (step_length == 1.) {
       return current_iterate.feasibility_measure + direction.predicted_reduction(problem, current_iterate, direction, step_length);
@@ -207,7 +207,7 @@ double Relaxation::compute_predicted_reduction(Problem& problem, Iterate& curren
 }
 
 /* complementary slackness error. Use abs/1e-8 to safeguard */
-double Relaxation::compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const {
+double l1Relaxation::compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const {
    double error = 0.;
    /* bound constraints */
    for (size_t i = 0; i < problem.number_variables; i++) {

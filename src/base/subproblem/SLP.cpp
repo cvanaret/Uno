@@ -11,7 +11,7 @@ ActiveSetMethod(problem, scale_residuals),
 solver(QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints, 0, false)) {
 }
 
-void SLP::evaluate_current_iterate(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double /*trust_region_radius*/) {
+void SLP::generate(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double /*trust_region_radius*/) {
 
 }
 

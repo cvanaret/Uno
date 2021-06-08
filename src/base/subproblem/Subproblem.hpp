@@ -29,7 +29,8 @@ public:
    virtual ~Subproblem() = default;
 
    virtual Iterate evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& multipliers) = 0;
-   virtual void evaluate_current_iterate(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) = 0;
+   virtual void generate(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) = 0;
+   virtual void update_trust_region(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
 
    virtual std::vector<Direction>
    compute_directions(Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) = 0;
@@ -57,6 +58,7 @@ public:
    // when the subproblem is reformulated (e.g. when slacks are introduced), the bounds may be altered
    std::vector<Range> variables_bounds;
    Multipliers multipliers;
+   double objective_value{};
    SparseVector objective_gradient;
    std::vector<double> constraints;
    std::vector<SparseVector> constraints_jacobian;
@@ -71,6 +73,7 @@ public:
    bool scale_residuals;
 
 protected:
+   virtual void generate_variables_bounds_(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
    virtual double compute_complementarity_error_(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const;
 };
 

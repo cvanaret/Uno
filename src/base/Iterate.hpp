@@ -54,9 +54,6 @@ public:
    std::vector<SparseVector> constraints_jacobian; /*!< Sparse Jacobian of the constraints */
    bool is_constraints_jacobian_computed; /*!< Flag that indicates if the constraint Jacobian has already been computed */
 
-   //CSCMatrix hessian; /*!< Sparse Lagrangian Hessian */
-   //bool is_hessian_computed; /*!< Flag that indicates if the Hessian has already been computed */
-
    // residuals
    Residuals residuals;
    double feasibility_measure;
@@ -70,12 +67,6 @@ public:
    std::vector<double> lagrangian_gradient(const Problem& problem, double objective_multiplier, const Multipliers& multipliers);
 
    void clear();
-
-   /*!
-    *  Compute the Hessian in a lazy way: the Hessian is computed only when required and stored
-    *  in CSC (Compressed Sparse Column)
-    */
-   //void compute_hessian(const Problem& problem, double objective_multiplier, const std::vector<double>& constraint_multipliers);
 
    friend std::ostream& operator<<(std::ostream& stream, const Iterate& iterate);
 };

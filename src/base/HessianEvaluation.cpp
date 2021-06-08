@@ -3,13 +3,13 @@
 #include "LinearSolverFactory.hpp"
 #include "Vector.hpp"
 
-HessianEvaluation::HessianEvaluation(int dimension, int hessian_maximum_number_nonzeros) : dimension(dimension),
+HessianEvaluation::HessianEvaluation(size_t dimension, size_t hessian_maximum_number_nonzeros) : dimension(dimension),
       hessian(dimension, hessian_maximum_number_nonzeros, 1) {
 }
 
 /* Exact Hessian */
 
-ExactHessianEvaluation::ExactHessianEvaluation(int dimension, int hessian_maximum_number_nonzeros) : HessianEvaluation(dimension,
+ExactHessianEvaluation::ExactHessianEvaluation(size_t dimension, size_t hessian_maximum_number_nonzeros) : HessianEvaluation(dimension,
       hessian_maximum_number_nonzeros) {
 }
 
@@ -22,7 +22,7 @@ void ExactHessianEvaluation::compute(const Problem& problem, const std::vector<d
 
 /* Exact Hessian with inertia control */
 
-ExactHessianInertiaControlEvaluation::ExactHessianInertiaControlEvaluation(int dimension, int hessian_maximum_number_nonzeros,
+ExactHessianInertiaControlEvaluation::ExactHessianInertiaControlEvaluation(size_t dimension, size_t hessian_maximum_number_nonzeros,
       const std::string& linear_solver_name) : HessianEvaluation(dimension, hessian_maximum_number_nonzeros),
       linear_solver_(LinearSolverFactory::create(linear_solver_name)) {
 }
@@ -78,7 +78,7 @@ CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& matrix, LinearSolver& lin
 
 /* BFGS Hessian */
 
-BFGSHessianEvaluation::BFGSHessianEvaluation(int dimension, int hessian_maximum_number_nonzeros) :
+BFGSHessianEvaluation::BFGSHessianEvaluation(size_t dimension, size_t hessian_maximum_number_nonzeros) :
    HessianEvaluation(dimension, hessian_maximum_number_nonzeros),
    previous_hessian_(dimension, hessian_maximum_number_nonzeros, 1), previous_x_(dimension) {
 }
@@ -92,7 +92,7 @@ void BFGSHessianEvaluation::compute(const Problem& problem, const std::vector<do
 /* Factory */
 
 std::unique_ptr<HessianEvaluation>
-HessianEvaluationFactory::create(const std::string& hessian_evaluation_method, int dimension, int hessian_maximum_number_nonzeros,
+HessianEvaluationFactory::create(const std::string& hessian_evaluation_method, size_t dimension, size_t hessian_maximum_number_nonzeros,
       bool convexify) {
    if (hessian_evaluation_method == "exact") {
       if (convexify) {

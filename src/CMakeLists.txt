@@ -40,7 +40,7 @@ set(SRC_FILES
     base/strategy/PenaltyMeritFunction.cpp
 
     base/feasibility/FeasibilityStrategy.cpp
-    base/feasibility/Relaxation.cpp
+        base/feasibility/l1Relaxation.cpp
     base/feasibility/FeasibilityRestoration.cpp
     
     base/subproblem/Subproblem.cpp

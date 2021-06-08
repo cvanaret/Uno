@@ -96,7 +96,7 @@ InteriorPoint::evaluate_initial_point(const Problem& problem, const std::vector<
    return first_iterate;
 }
 
-void InteriorPoint::evaluate_current_iterate(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double
+void InteriorPoint::generate(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double
 /*trust_region_radius*/) {
 
 }

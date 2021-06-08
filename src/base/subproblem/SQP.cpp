@@ -17,7 +17,7 @@ SQP::SQP(Problem& problem, const std::string& QP_solver_name, const std::string&
             problem.hessian_maximum_number_nonzeros, !use_trust_region)) {
 }
 
-void SQP::evaluate_current_iterate(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {
+void SQP::generate(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {
    /* compute first- and second-order information */
    this->objective_gradient = problem.objective_gradient(current_iterate.x);
    this->constraints = problem.evaluate_constraints(current_iterate.x);
@@ -36,31 +36,19 @@ void SQP::evaluate_current_iterate(const Problem& problem, const Iterate& curren
    }
 }
 
-Direction SQP::compute_qp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, double trust_region_radius) {
-   DEBUG << "Current point: ";
-   print_vector(DEBUG, current_iterate.x);
-   DEBUG << "Current constraint multipliers: ";
-   print_vector(DEBUG, current_iterate.multipliers.constraints);
-   DEBUG << "Current lb multipliers: ";
-   print_vector(DEBUG, current_iterate.multipliers.lower_bounds);
-   DEBUG << "Current ub multipliers: ";
-   print_vector(DEBUG, current_iterate.multipliers.upper_bounds);
-
-   this->evaluate_current_iterate(problem, current_iterate, trust_region_radius);
-
-   /* solve the QP */
-   Direction direction = solver.solve_QP(this->variables_bounds, constraints_bounds, this->objective_gradient,
-         this->constraints_jacobian, this->hessian_evaluation->hessian, this->initial_point);
-   this->number_subproblems_solved++;
-   DEBUG << direction;
-   return direction;
-}
-
 std::vector<Direction>
 SQP::compute_directions(Problem& problem, Iterate& current_iterate, double /*objective_multiplier*/, double trust_region_radius) {
    /* compute optimality step */
-   this->evaluate_current_iterate(problem, current_iterate, trust_region_radius);
-   Direction direction = this->compute_qp_step_(problem, *this->solver, current_iterate, trust_region_radius);
+   DEBUG << "Current point: "; print_vector(DEBUG, current_iterate.x);
+   DEBUG << "Current constraint multipliers: "; print_vector(DEBUG, current_iterate.multipliers.constraints);
+   DEBUG << "Current lb multipliers: "; print_vector(DEBUG, current_iterate.multipliers.lower_bounds);
+   DEBUG << "Current ub multipliers: "; print_vector(DEBUG, current_iterate.multipliers.upper_bounds);
+
+   /* solve the QP */
+   Direction direction = this->solver->solve_QP(this->variables_bounds, constraints_bounds, this->objective_gradient,
+         this->constraints_jacobian, this->hessian_evaluation->hessian, this->initial_point);
+   this->number_subproblems_solved++;
+   DEBUG << direction;
 
    if (direction.status != INFEASIBLE) {
       direction.phase = OPTIMALITY;
