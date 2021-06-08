@@ -19,12 +19,12 @@ public:
    restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) override;
    double compute_qp_predicted_reduction_(Problem& /*problem*/, Iterate& current_iterate, Direction& direction, double step_length);
 
+private:
    /* use pointers to allow polymorphism */
    std::unique_ptr<QPSolver> lp_solver;
    std::unique_ptr<LinearSolver> linear_solver; /*!< Solver that solves the subproblem */
    std::unique_ptr<HessianEvaluation> hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
 
-private:
    Direction solve_eqp_(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius);
    //void fix_active_constraints_(Problem& problem, ActiveSet& active_set, std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds);
    //virtual SubproblemSolution compute_optimality_eqp_step_() = 0;

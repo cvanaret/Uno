@@ -13,6 +13,7 @@ parameters({10., 0.1, 0.1}) {
 }
 
 std::vector<Direction> l1Relaxation::compute_feasible_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+   /*
    // preprocess the subproblem: scale the objective gradient and introduce the elastic variables
    this->preprocess_subproblem();
 
@@ -24,6 +25,8 @@ std::vector<Direction> l1Relaxation::compute_feasible_directions(Problem& proble
       this->postprocess_direction(problem, direction);
    }
    return directions;
+   */
+   return this->subproblem.compute_directions(problem, current_iterate, trust_region_radius);
 }
 
 void l1Relaxation::preprocess_subproblem() {

@@ -25,7 +25,6 @@ void Preprocessing::apply(Problem& problem, std::vector<double>& x, Multipliers&
          short fortran_indexing = 1;
          CSCMatrix hessian = CSCMatrix::identity(problem.number_variables, fortran_indexing);
          SparseVector linear_objective; // empty
-         std::vector<double> d0(problem.number_variables);
          // constraints Jacobian
          std::vector<SparseVector> constraints_jacobian(number_constraints);
          for (const auto[j, linear_constraint_index]: problem.linear_constraints) {
@@ -42,6 +41,7 @@ void Preprocessing::apply(Problem& problem, std::vector<double>& x, Multipliers&
             constraints_bounds[linear_constraint_index] =
                   {problem.constraint_bounds[j].lb - constraints[j], problem.constraint_bounds[j].ub - constraints[j]};
          }
+         std::vector<double> d0(problem.number_variables);
          Direction direction = solver.solve_QP(variables_bounds, constraints_bounds, linear_objective, constraints_jacobian, hessian, d0);
          if (direction.status == INFEASIBLE) {
             throw std::runtime_error("Linear constraints cannot be satisfied");

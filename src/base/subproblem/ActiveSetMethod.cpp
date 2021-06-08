@@ -192,14 +192,10 @@ Direction ActiveSetMethod::compute_l1lp_step_(Problem& problem, QPSolver& solver
    /* bounds of the linearized constraints */
    this->generate_feasibility_bounds_(problem, current_iterate.constraints, phase_2_direction.constraint_partition);
 
-   /* generate the initial point */
-   std::vector<double> d0 = phase_2_direction.x;
-
    /* solve the QP */
    Direction direction =
          solver.solve_LP(this->variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate
-         .constraints_jacobian,
-               d0);
+         .constraints_jacobian,phase_2_direction.x);
    direction.objective_multiplier = 0.;
    direction.phase = RESTORATION;
    direction.constraint_partition = phase_2_direction.constraint_partition;

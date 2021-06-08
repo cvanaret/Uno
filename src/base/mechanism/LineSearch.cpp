@@ -18,7 +18,7 @@ Iterate LineSearch::initialize(Statistics& statistics, Problem& problem, std::ve
 std::pair<Iterate, Direction> LineSearch::compute_acceptable_iterate(Statistics& statistics, Problem& problem, Iterate& current_iterate) {
    /* compute the directions */
    this->globalization_strategy.subproblem.generate(problem, current_iterate, problem.objective_sign, INFINITY);
-   std::vector<Direction> directions = this->globalization_strategy.subproblem.compute_directions(problem, current_iterate, INFINITY);
+   std::vector<Direction> directions = this->globalization_strategy.feasibility_strategy.compute_feasible_directions(problem, current_iterate, INFINITY);
 
    bool line_search_termination = false;
    while (!line_search_termination) {

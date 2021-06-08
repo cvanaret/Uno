@@ -47,7 +47,7 @@ void SQP::update_objective_multipliers(const Problem& problem, const Iterate& cu
    }
 }
 
-std::vector<Direction> SQP::compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+std::vector<Direction> SQP::compute_directions(Problem& /*problem*/, Iterate& current_iterate, double /*trust_region_radius*/) {
    /* compute optimality step */
    DEBUG << "Current point: ";
    print_vector(DEBUG, current_iterate.x);
@@ -61,21 +61,12 @@ std::vector<Direction> SQP::compute_directions(Problem& problem, Iterate& curren
    /* solve the QP */
    Direction direction = this->solver->solve_QP(this->variables_bounds, constraints_bounds, this->objective_gradient,
          this->constraints_jacobian, this->hessian_evaluation->hessian, this->initial_point);
+   direction.predicted_reduction = [&](Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) {
+      return this->compute_qp_predicted_reduction_(problem, current_iterate, direction, step_length);
+   };
    this->number_subproblems_solved++;
    DEBUG << direction;
-
-   if (direction.status != INFEASIBLE) {
-      direction.phase = OPTIMALITY;
-      direction.objective_multiplier = problem.objective_sign;
-      direction.predicted_reduction = [&](Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) {
-         return this->compute_qp_predicted_reduction_(problem, current_iterate, direction, step_length);
-      };
-      return std::vector<Direction>{direction};
-   }
-   else {
-      /* infeasible subproblem during optimality phase */
-      return this->restore_feasibility(problem, current_iterate, direction, trust_region_radius);
-   }
+   return std::vector<Direction>{direction};
 }
 
 Direction SQP::compute_l1qp_step_(Problem& problem, Iterate& current_iterate, ConstraintPartition& constraint_partition,
@@ -113,8 +104,6 @@ SQP::restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& 
    };
    return std::vector<Direction>{direction};
 }
-
-/* private methods */
 
 void SQP::evaluate_feasibility_iterate_(Problem& problem, Iterate& current_iterate, ConstraintPartition& constraint_partition) {
    /* update the multipliers of the general constraints */

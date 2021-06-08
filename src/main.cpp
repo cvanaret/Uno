@@ -9,6 +9,7 @@
 #include "FeasibilityRestoration.hpp"
 #include "GlobalizationStrategyFactory.hpp"
 #include "GlobalizationMechanismFactory.hpp"
+#include "FeasibilityRestoration.hpp"
 #include "Uno.hpp"
 #include "Logger.hpp"
 //#include "PardisoSolver.hpp"
@@ -17,16 +18,18 @@ void run_uno(const std::string& problem_name, const std::map<std::string, std::s
    // generate Hessians with a Fortran indexing (starting at 1) that is supported by solvers
    int fortran_indexing = 1;
    //std::cout.precision(17);
-   AMPLModel problem = AMPLModel(problem_name, fortran_indexing);
+
+   // TODO: use a factory
+   std::unique_ptr<Problem> problem = std::make_unique<AMPLModel>(problem_name, fortran_indexing);
 
    /* create the subproblem strategy */
    bool use_trust_region = (options.at("mechanism") == "TR");
    bool scale_residuals = (options.at("scale_residuals") == "yes");
    std::unique_ptr<Subproblem>
-         subproblem = SubproblemFactory::create(problem, options.at("subproblem"), options, use_trust_region, scale_residuals);
+         subproblem = SubproblemFactory::create(*problem, options.at("subproblem"), options, use_trust_region, scale_residuals);
 
    /* create the infeasibility method */
-   FeasibilityRestoration feasibility_strategy = FeasibilityRestoration(*subproblem);
+   FeasibilityRestoration feasibility_strategy = FeasibilityRestoration(*problem, *subproblem);
 
    /* create the globalization strategy */
    std::unique_ptr<GlobalizationStrategy> strategy = GlobalizationStrategyFactory::create(options.at("strategy"), feasibility_strategy,
@@ -41,16 +44,16 @@ void run_uno(const std::string& problem_name, const std::map<std::string, std::s
    Uno uno = Uno(*mechanism, tolerance, max_iterations);
 
    /* initial primal and dual points */
-   std::vector<double> x = problem.primal_initial_solution();
-   Multipliers multipliers(problem.number_variables, problem.number_constraints);
-   multipliers.constraints = problem.dual_initial_solution();
+   std::vector<double> x = problem->primal_initial_solution();
+   Multipliers multipliers(problem->number_variables, problem->number_constraints);
+   multipliers.constraints = problem->dual_initial_solution();
 
-   Result result = uno.solve(problem, x, multipliers, preprocessing);
+   Result result = uno.solve(*problem, x, multipliers, preprocessing);
 
    /* remove auxiliary variables */
-   result.solution.x.resize(problem.number_variables);
-   result.solution.multipliers.lower_bounds.resize(problem.number_variables);
-   result.solution.multipliers.upper_bounds.resize(problem.number_variables);
+   result.solution.x.resize(problem->number_variables);
+   result.solution.multipliers.lower_bounds.resize(problem->number_variables);
+   result.solution.multipliers.upper_bounds.resize(problem->number_variables);
    bool print_solution = (options.at("print_solution") == "yes");
    result.display(print_solution);
 }
@@ -79,38 +82,38 @@ Level Logger::logger_level = DEBUG;
 
 void set_logger(std::map<std::string, std::string> options) {
    try {
-      std::string logger_level = options.at("logger");
+      const std::string logger_level = options.at("logger");
 
-      if (logger_level.compare("ERROR") == 0) {
+      if (logger_level == "ERROR") {
          Logger::logger_level = ERROR;
       }
-      else if (logger_level.compare("WARNING") == 0) {
+      else if (logger_level == "WARNING") {
          Logger::logger_level = WARNING;
       }
-      else if (logger_level.compare("INFO") == 0) {
+      else if (logger_level == "INFO") {
          Logger::logger_level = INFO;
       }
-      else if (logger_level.compare("DEBUG") == 0) {
+      else if (logger_level == "DEBUG") {
          Logger::logger_level = DEBUG;
       }
-      else if (logger_level.compare("DEBUG1") == 0) {
+      else if (logger_level == "DEBUG1") {
          Logger::logger_level = DEBUG1;
       }
-      else if (logger_level.compare("DEBUG2") == 0) {
+      else if (logger_level == "DEBUG2") {
          Logger::logger_level = DEBUG2;
       }
-      else if (logger_level.compare("DEBUG3") == 0) {
+      else if (logger_level == "DEBUG3") {
          Logger::logger_level = DEBUG3;
       }
-      else if (logger_level.compare("DEBUG4") == 0) {
+      else if (logger_level == "DEBUG4") {
          Logger::logger_level = DEBUG4;
       }
    }
-   catch (std::out_of_range) {
+   catch (std::out_of_range&) {
    }
 }
 
-std::map<std::string, std::string> get_options(std::string file_name) {
+std::map<std::string, std::string> get_options(const std::string& file_name) {
    std::ifstream file;
    file.open(file_name);
    if (!file) {
@@ -122,7 +125,7 @@ std::map<std::string, std::string> get_options(std::string file_name) {
       std::string key, value;
       std::string line;
       while (std::getline(file, line)) {
-         if (line != "" && line.find("#") != 0) {
+         if (!line.empty() && line.find("#") != 0) {
             std::istringstream iss;
             iss.str(line);
             iss >> key >> value;
