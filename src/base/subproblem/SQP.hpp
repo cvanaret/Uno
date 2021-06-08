@@ -14,16 +14,16 @@ public:
    std::vector<Direction> compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
    std::vector<Direction> restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction,
          double trust_region_radius) override;
-   double compute_qp_predicted_reduction_(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) const;
 
+protected:
    /* use references to allow polymorphism */
    std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
    std::unique_ptr<HessianEvaluation> hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
 
-protected:
    Direction compute_l1qp_step_(Problem& problem, Iterate& current_iterate, ConstraintPartition& constraint_partition,
          std::vector<double>& initial_point, double trust_region_radius);
    void evaluate_feasibility_iterate_(Problem& problem, Iterate& current_iterate, ConstraintPartition& constraint_partition);
+   double compute_qp_predicted_reduction_(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) const;
 };
 
 #endif // SQP_H

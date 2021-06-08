@@ -127,8 +127,8 @@ double norm_inf(const std::vector<SparseVector>& m) {
    }
    // compute the maximal component of the row_vectors vector
    double norm = 0.;
-   for (size_t i = 0; i < row_vectors.size(); i++) {
-      norm = std::max(norm, row_vectors[i]);
+   for (double & row_vector : row_vectors) {
+      norm = std::max(norm, row_vector);
    }
    return norm;
 }
@@ -168,7 +168,7 @@ double dot(const SparseVector& x, const SparseVector& y) {
 
 std::string join(const std::vector<std::string>& vector, const std::string& separator) {
    std::string s;
-   if (0 < vector.size()) {
+   if (!vector.empty()) {
       s.append(vector[0]);
    }
    for (size_t i = 1; i < vector.size(); i++) {

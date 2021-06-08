@@ -51,8 +51,10 @@ public:
    double constraint_violation(const Problem& problem, Iterate& iterate);
    double compute_central_complementarity_error(Iterate& iterate, double mu, std::vector<Range>& variables_bounds);
 
+private:
    std::unique_ptr<HessianEvaluation> hessian_evaluation;
    std::unique_ptr<LinearSolver> linear_solver; /*!< Solver that solves the subproblem */
+
    /* barrier parameter */
    double mu_optimality;
    double mu_feasibility;
@@ -61,7 +63,18 @@ public:
    std::set<int> lower_bounded_variables; /* indices of the lower-bounded variables */
    std::set<int> upper_bounded_variables; /* indices of the upper-bounded variables */
 
-private:
+   bool force_symbolic_factorization = true;
+   std::vector<double> rhs_;
+   double inertia_hessian_;
+   double inertia_hessian_last_;
+   double inertia_constraints_;
+   double default_multiplier_;
+   size_t iteration_;
+   size_t number_factorizations_;
+
+   /* constants */
+   InteriorPointParameters parameters_;
+
    void factorize_(COOMatrix& kkt_matrix, FunctionType problem_type);
    void evaluate_optimality_iterate_(Problem& problem, Iterate& current_iterate);
    double evaluate_local_model_(Problem& problem, Iterate& current_iterate, std::vector<double>& solution);
@@ -79,18 +92,6 @@ private:
    Direction generate_direction_(Problem& problem, Iterate& current_iterate, std::vector<double>& solution_IPM);
    double compute_KKT_error_scaling_(Iterate& current_iterate) const;
    static double compute_predicted_reduction_(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length);
-
-   bool force_symbolic_factorization = true;
-   std::vector<double> rhs_;
-   double inertia_hessian_;
-   double inertia_hessian_last_;
-   double inertia_constraints_;
-   double default_multiplier_;
-   size_t iteration_;
-   size_t number_factorizations_;
-
-   /* constants */
-   InteriorPointParameters parameters_;
 };
 
 #endif // IPM_H

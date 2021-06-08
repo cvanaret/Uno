@@ -36,6 +36,7 @@ public:
    std::vector<Direction> restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction,
          double trust_region_radius) override;
 
+protected:
    /* use pointers to allow polymorphism */
    std::unique_ptr<QPSolver> solver; /*!< Subproblem solver */
    std::unique_ptr<HessianEvaluation> hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
@@ -43,7 +44,6 @@ public:
    Sl1QPParameters parameters;
    int number_variables;
 
-protected:
    Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals,
          double initial_parameter, int number_variables);
 
