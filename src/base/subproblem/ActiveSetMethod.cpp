@@ -163,17 +163,15 @@ Direction ActiveSetMethod::compute_lp_step_(Problem& problem, QPSolver& solver, 
                this->initial_point);
    direction.objective_multiplier = problem.objective_sign;
    direction.phase = OPTIMALITY;
-//    direction.predicted_reduction = [&](double step_length) {
-//        return this->compute_lp_predicted_reduction_(direction, step_length);
-//    };
-   direction.predicted_reduction = this->compute_lp_predicted_reduction_;
+   direction.predicted_reduction = [&](double step_length) {
+      return ActiveSetMethod::compute_lp_predicted_reduction_(direction, step_length);
+   };
    this->number_subproblems_solved++;
    DEBUG << direction;
    return direction;
 }
 
-double ActiveSetMethod::compute_lp_predicted_reduction_(Problem& /*problem*/, Iterate& /*current_iterate*/, Direction& direction,
-      double step_length) {
+double ActiveSetMethod::compute_lp_predicted_reduction_(Direction& direction, double step_length) {
    // the predicted reduction is linear in the step length
    return -step_length * direction.objective;
 }
@@ -202,7 +200,9 @@ Direction ActiveSetMethod::compute_l1lp_step_(Problem& problem, QPSolver& solver
 //    direction.predicted_reduction = [&](double step_length) {
 //        return this->compute_lp_predicted_reduction_(direction, step_length);
 //    };
-   direction.predicted_reduction = this->compute_lp_predicted_reduction_;
+   direction.predicted_reduction = [&](double step_length) {
+      return this->compute_lp_predicted_reduction_(direction, step_length);
+   };
    this->number_subproblems_solved++;
    DEBUG << direction;
    return direction;

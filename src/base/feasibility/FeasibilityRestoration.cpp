@@ -20,7 +20,7 @@ trust_region_radius) {
    }
 }
 
-double FeasibilityRestoration::compute_predicted_reduction(Problem& /*problem*/, Iterate& /*current_iterate*/, Direction& /*direction*/,
+double FeasibilityRestoration::compute_predicted_reduction(Problem& /*problem*/, Iterate& /*current_iterate*/, Direction& direction,
       double /*step_length*/) {
    return 0.;
 }

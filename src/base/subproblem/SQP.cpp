@@ -47,22 +47,23 @@ void SQP::update_objective_multipliers(const Problem& problem, const Iterate& cu
    }
 }
 
-std::vector<Direction> SQP::compute_directions(Problem& /*problem*/, Iterate& current_iterate, double /*trust_region_radius*/) {
-   /* compute optimality step */
-   DEBUG << "Current point: ";
-   print_vector(DEBUG, current_iterate.x);
+void SQP::display_() {
+   DEBUG << "Current point: \n";
+   //print_vector(DEBUG, current_iterate.x);
    DEBUG << "Current constraint multipliers: ";
-   print_vector(DEBUG, current_iterate.multipliers.constraints);
+   print_vector(DEBUG, this->multipliers.constraints);
    DEBUG << "Current lb multipliers: ";
-   print_vector(DEBUG, current_iterate.multipliers.lower_bounds);
+   print_vector(DEBUG, this->multipliers.lower_bounds);
    DEBUG << "Current ub multipliers: ";
-   print_vector(DEBUG, current_iterate.multipliers.upper_bounds);
+   print_vector(DEBUG, this->multipliers.upper_bounds);
+}
 
-   /* solve the QP */
+std::vector<Direction> SQP::compute_directions(Problem& problem, Iterate& current_iterate, double /*trust_region_radius*/) {
+   /* compute QP direction */
    Direction direction = this->solver->solve_QP(this->variables_bounds, constraints_bounds, this->objective_gradient,
          this->constraints_jacobian, this->hessian_evaluation->hessian, this->initial_point);
-   direction.predicted_reduction = [&](Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) {
-      return this->compute_qp_predicted_reduction_(problem, current_iterate, direction, step_length);
+   direction.predicted_reduction = [&](double step_length) {
+      return this->compute_qp_predicted_reduction_(current_iterate, direction, step_length);
    };
    this->number_subproblems_solved++;
    DEBUG << direction;
@@ -99,8 +100,8 @@ SQP::restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& 
          phase_2_direction.x, trust_region_radius);
    direction.phase = RESTORATION;
    direction.objective_multiplier = 0.;
-   direction.predicted_reduction = [&](Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) {
-      return this->compute_qp_predicted_reduction_(problem, current_iterate, direction, step_length);
+   direction.predicted_reduction = [&](double step_length) {
+      return this->compute_qp_predicted_reduction_(current_iterate, direction, step_length);
    };
    return std::vector<Direction>{direction};
 }
@@ -116,8 +117,7 @@ void SQP::evaluate_feasibility_iterate_(Problem& problem, Iterate& current_itera
    this->hessian_evaluation->compute(problem, current_iterate.x, objective_multiplier, constraint_multipliers);
 }
 
-double
-SQP::compute_qp_predicted_reduction_(Problem& /*problem*/, Iterate& current_iterate, Direction& direction, double step_length) const {
+double SQP::compute_qp_predicted_reduction_(Iterate& current_iterate, Direction& direction, double step_length) const {
    // the predicted reduction is quadratic in the step length
    if (step_length == 1.) {
       return -direction.objective;

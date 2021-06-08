@@ -17,7 +17,6 @@ public:
    std::vector<Direction> compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
    std::vector<Direction>
    restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) override;
-   double compute_qp_predicted_reduction_(Problem& /*problem*/, Iterate& current_iterate, Direction& direction, double step_length);
 
 private:
    /* use pointers to allow polymorphism */
@@ -26,6 +25,7 @@ private:
    std::unique_ptr<HessianEvaluation> hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
 
    Direction solve_eqp_(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius);
+   double compute_qp_predicted_reduction_(Iterate& current_iterate, Direction& direction, double step_length);
    //void fix_active_constraints_(Problem& problem, ActiveSet& active_set, std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds);
    //virtual SubproblemSolution compute_optimality_eqp_step_() = 0;
    //virtual SubproblemSolution compute_feasibility_eqp_step_() = 0;

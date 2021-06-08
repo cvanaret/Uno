@@ -47,7 +47,7 @@ public:
     ConstraintPartition constraint_partition; /*!< Partition of feasible and infeasible constraints */
     
     // this function computes the predicted reduction of the direction for a given step length
-    std::function<double(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length)> predicted_reduction;
+    std::function<double(double step_length)> predicted_reduction;
 
     friend std::ostream& operator<<(std::ostream &stream, Direction& step);
 };

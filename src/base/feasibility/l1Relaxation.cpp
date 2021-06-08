@@ -198,7 +198,7 @@ void l1Relaxation::postprocess_direction(const Problem& problem, Direction& dire
 double l1Relaxation::compute_predicted_reduction(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) {
    // compute the predicted reduction of the l1 relaxation as a postprocessing of the predicted reduction of the subproblem
    if (step_length == 1.) {
-      return current_iterate.feasibility_measure + direction.predicted_reduction(problem, current_iterate, direction, step_length);
+      return current_iterate.feasibility_measure + direction.predicted_reduction(step_length);
    }
    else {
       // determine the linearized constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
@@ -208,8 +208,7 @@ double l1Relaxation::compute_predicted_reduction(Problem& problem, Iterate& curr
          linearized_constraints[j] += step_length * dot(direction.x, current_iterate.constraints_jacobian[j]);
       }
       double linearized_constraint_violation = problem.compute_constraint_residual(linearized_constraints, L1_NORM);
-      return current_iterate.feasibility_measure - linearized_constraint_violation + direction.predicted_reduction(problem,
-            current_iterate, direction, step_length);
+      return current_iterate.feasibility_measure - linearized_constraint_violation + direction.predicted_reduction(step_length);
    }
 }
 
