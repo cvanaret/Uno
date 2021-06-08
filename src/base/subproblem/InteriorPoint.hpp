@@ -38,10 +38,10 @@ public:
          bool scale_residuals);
 
    Iterate evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& default_multipliers) override;
-   void generate(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;
+   void generate(const Problem& problem, const Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
+   void update_objective_multipliers(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
 
-   std::vector<Direction>
-   compute_directions(Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
+   std::vector<Direction> compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
    std::vector<Direction>
    restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) override;
 

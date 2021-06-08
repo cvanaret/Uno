@@ -41,12 +41,15 @@ Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evalua
    // TODO let the solver resize the Hessian space
 }
 
-void Sl1QP::generate(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double /*trust_region_radius*/) {
+void Sl1QP::generate(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double /*objective_multiplier*/, double
+/*trust_region_radius*/) {
+}
 
+void Sl1QP::update_objective_multipliers(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double /*objective_multiplier*/) {
 }
 
 std::vector<Direction>
-Sl1QP::compute_directions(Problem& problem, Iterate& current_iterate, double /*objective_multiplier*/, double trust_region_radius) {
+Sl1QP::compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
    DEBUG << "penalty parameter: " << this->penalty_parameter << "\n";
 
    // evaluate constraints
@@ -154,16 +157,12 @@ Direction Sl1QP::compute_l1qp_step_(Problem& problem, QPSolver& solver, Iterate&
    this->generate_variables_bounds_(problem, current_iterate, trust_region_radius);
 
    /* bounds of the linearized constraints */
-   std::vector<Range> constraints_bounds = this->generate_feasibility_bounds_(problem, current_iterate.constraints, constraint_partition);
-
-   /* generate the initial point */
-   std::vector<double>& d0 = initial_solution;
+   this->generate_feasibility_bounds_(problem, current_iterate.constraints, constraint_partition);
 
    /* solve the QP */
    Direction direction =
          solver.solve_QP(this->variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate
-         .constraints_jacobian,
-               this->hessian_evaluation->hessian, d0);
+         .constraints_jacobian,this->hessian_evaluation->hessian, initial_solution);
    direction.objective_multiplier = 0.;
    direction.constraint_partition = constraint_partition;
    this->number_subproblems_solved++;

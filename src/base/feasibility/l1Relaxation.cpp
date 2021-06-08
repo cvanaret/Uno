@@ -54,7 +54,8 @@ std::vector<Direction> l1Relaxation::compute_byrd_steering_rule(Problem& problem
 
    /* stage a: compute the step within trust region */
    // std::vector<Direction> directions = this->subproblem.compute_directions(problem, current_iterate, trust_region_radius);
-   std::vector<Direction> directions = this->subproblem.compute_directions(problem, current_iterate, this->penalty_parameter, trust_region_radius);
+   this->subproblem.generate(problem, current_iterate, this->penalty_parameter, trust_region_radius);
+   std::vector<Direction> directions = this->subproblem.compute_directions(problem, current_iterate, trust_region_radius);
    Direction direction = directions[0];
 
    /* penalty update: if penalty parameter is already 0, no need to decrease it */
@@ -69,7 +70,8 @@ std::vector<Direction> l1Relaxation::compute_byrd_steering_rule(Problem& problem
 
          /* stage c: solve the ideal l1 penalty problem with a zero penalty (no objective) */
          DEBUG << "Compute ideal solution:\n";
-         directions = this->subproblem.compute_directions(problem, current_iterate, 0., trust_region_radius);
+         this->subproblem.generate(problem, current_iterate, 0., trust_region_radius);
+         directions = this->subproblem.compute_directions(problem, current_iterate, trust_region_radius);
          Direction& ideal_direction = directions[0];
 
          /* compute the ideal error (with a zero penalty parameter) */
@@ -110,7 +112,8 @@ std::vector<Direction> l1Relaxation::compute_byrd_steering_rule(Problem& problem
                   }
                   else {
                      DEBUG << "\nAttempting to solve with penalty parameter " << this->penalty_parameter << "\n";
-                     directions = this->subproblem.compute_directions(problem, current_iterate, this->penalty_parameter, trust_region_radius);
+                     this->subproblem.generate(problem, current_iterate, this->penalty_parameter, trust_region_radius);
+                     directions = this->subproblem.compute_directions(problem, current_iterate, trust_region_radius);
                      direction = directions[0];
 
                      linearized_residual = this->compute_linearized_constraint_residual(direction.x);
@@ -124,7 +127,8 @@ std::vector<Direction> l1Relaxation::compute_byrd_steering_rule(Problem& problem
             double term = ideal_error / std::max(1., current_iterate.feasibility_measure);
             this->penalty_parameter = std::min(this->penalty_parameter, term * term);
             if (this->penalty_parameter < updated_penalty_parameter) {
-               directions = this->subproblem.compute_directions(problem, current_iterate, this->penalty_parameter, trust_region_radius);
+               this->subproblem.generate(problem, current_iterate, this->penalty_parameter, trust_region_radius);
+               directions = this->subproblem.compute_directions(problem, current_iterate, trust_region_radius);
                direction = directions[0];
             }
 

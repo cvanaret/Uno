@@ -116,9 +116,8 @@ std::vector<double> ActiveSetMethod::generate_l1_multipliers_(Problem& problem, 
    return constraint_multipliers;
 }
 
-std::vector<Range> ActiveSetMethod::generate_feasibility_bounds_(Problem& problem, std::vector<double>& current_constraints,
+void ActiveSetMethod::generate_feasibility_bounds_(Problem& problem, std::vector<double>& current_constraints,
       ConstraintPartition& constraint_partition) {
-   std::vector<Range> constraints_bounds(problem.number_constraints);
    for (size_t j = 0; j < problem.number_constraints; j++) {
       double lb, ub;
       if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
@@ -133,9 +132,8 @@ std::vector<Range> ActiveSetMethod::generate_feasibility_bounds_(Problem& proble
          lb = problem.constraint_bounds[j].lb - current_constraints[j];
          ub = problem.constraint_bounds[j].ub - current_constraints[j];
       }
-      constraints_bounds[j] = {lb, ub};
+      this->constraints_bounds[j] = {lb, ub};
    }
-   return constraints_bounds;
 }
 
 /* LP */
@@ -157,9 +155,7 @@ Direction ActiveSetMethod::compute_lp_step_(Problem& problem, QPSolver& solver, 
    this->generate_constraints_bounds(problem, current_iterate.constraints);
 
    /* generate the initial point */
-   for (size_t i = 0; i < this->number_variables; i++) {
-      this->initial_point[i] = 0.;
-   }
+   clear(this->initial_point);
 
    /* solve the QP */
    Direction direction =
@@ -194,8 +190,7 @@ Direction ActiveSetMethod::compute_l1lp_step_(Problem& problem, QPSolver& solver
    this->generate_variables_bounds_(problem, current_iterate, trust_region_radius);
 
    /* bounds of the linearized constraints */
-   std::vector<Range> constraints_bounds =
-         this->generate_feasibility_bounds_(problem, current_iterate.constraints, phase_2_direction.constraint_partition);
+   this->generate_feasibility_bounds_(problem, current_iterate.constraints, phase_2_direction.constraint_partition);
 
    /* generate the initial point */
    std::vector<double> d0 = phase_2_direction.x;

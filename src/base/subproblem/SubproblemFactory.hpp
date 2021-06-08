@@ -7,8 +7,8 @@
 
 class SubproblemFactory {
 	public:
-		static std::unique_ptr<Subproblem> create(Problem& problem, const std::string& type, std::map<std::string, std::string>&
-		      default_values, bool use_trust_region, bool scale_residuals);
+		static std::unique_ptr<Subproblem> create(Problem& problem, const std::string& type, const std::map<std::string, std::string>&
+		      options, bool use_trust_region, bool scale_residuals);
 };
 
 #endif // SUBPROBLEMFACTORY_H

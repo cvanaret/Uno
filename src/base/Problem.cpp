@@ -25,6 +25,12 @@ constraint_bounds(number_constraints), constraint_type(number_constraints), cons
 hessian_maximum_number_nonzeros(0) {
 }
 
+std::vector<double> Problem::evaluate_constraints(const std::vector<double>& x) const {
+   std::vector<double> constraints(this->number_constraints);
+   this->evaluate_constraints(x, constraints);
+   return constraints;
+}
+
 /* compute ||c|| */
 double Problem::compute_constraint_residual(const std::vector<double>& constraints, Norm residual_norm) const {
     std::vector<double> residuals(constraints.size());

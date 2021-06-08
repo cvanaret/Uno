@@ -25,23 +25,23 @@ std::pair<Iterate, Direction> TrustRegion::compute_acceptable_iterate(Statistics
          this->print_iteration_();
 
          /* generate the subproblem once, then update the trust region */
-         if (this->number_iterations == 1) {
-            this->globalization_strategy.subproblem.generate(problem, current_iterate, this->radius);
+         if (true || this->number_iterations == 1) {
+            this->globalization_strategy.subproblem.generate(problem, current_iterate, problem.objective_sign, this->radius);
          }
          else {
             this->globalization_strategy.subproblem.update_trust_region(problem, current_iterate, this->radius);
          }
          /* compute the directions within the trust region */
-         std::vector<Direction>
-               directions = this->globalization_strategy.subproblem.compute_directions(problem, current_iterate, 1., this->radius);
+         std::vector<Direction> directions = this->globalization_strategy.subproblem.compute_directions(problem, current_iterate,
+               this->radius);
          /* set bound multipliers of active trust region to 0 */
          for (Direction& direction: directions) {
             TrustRegion::rectify_active_set(direction, this->radius);
          }
 
          /* check whether the trial step is accepted */
-         std::optional<std::pair<Iterate, Direction> >
-               acceptance_check = this->find_first_acceptable_direction_(statistics, problem, current_iterate, directions, 1.);
+         std::optional<std::pair<Iterate, Direction> > acceptance_check = this->find_first_acceptable_direction_(statistics, problem,
+               current_iterate, directions,1.);
          if (acceptance_check.has_value()) {
             is_accepted = true;
             auto [new_iterate, direction] = acceptance_check.value();

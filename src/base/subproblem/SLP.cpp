@@ -11,12 +11,14 @@ ActiveSetMethod(problem, scale_residuals),
 solver(QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints, 0, false)) {
 }
 
-void SLP::generate(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double /*trust_region_radius*/) {
-
+void SLP::generate(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double /*objective_multiplier*/, double
+/*trust_region_radius*/) {
 }
 
-std::vector<Direction> SLP::compute_directions(Problem& problem, Iterate& current_iterate, double /*objective_multiplier*/, double
-trust_region_radius) {
+void SLP::update_objective_multipliers(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double /*objective_multiplier*/) {
+}
+
+std::vector<Direction> SLP::compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
     Direction direction = this->compute_lp_step_(problem, *this->solver, current_iterate, trust_region_radius);
     if (direction.status == INFEASIBLE) {
         /* infeasible subproblem during optimality phase */

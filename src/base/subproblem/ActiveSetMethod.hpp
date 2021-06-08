@@ -27,8 +27,7 @@ protected:
    void compute_l1_linear_objective_(Iterate& current_iterate, ConstraintPartition& constraint_partition);
    std::vector<double> generate_l1_multipliers_(Problem& problem, std::vector<double>& current_constraint_multipliers,
          ConstraintPartition& constraint_partition);
-   std::vector<Range>
-   generate_feasibility_bounds_(Problem& problem, std::vector<double>& current_constraints, ConstraintPartition& constraint_partition);
+   void generate_feasibility_bounds_(Problem& problem, std::vector<double>& current_constraints, ConstraintPartition& constraint_partition);
    static void recover_l1qp_active_set_(Problem& problem, Direction& direction, const ElasticVariables& elastic_variables);
 
    /* LP subproblems */

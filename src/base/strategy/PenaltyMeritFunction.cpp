@@ -8,7 +8,8 @@
  * http://epubs.siam.org/doi/pdf/10.1137/080738222
  */
 
-PenaltyMeritFunction::PenaltyMeritFunction(Subproblem& subproblem) : GlobalizationStrategy(subproblem), decrease_fraction_(1e-8) {
+PenaltyMeritFunction::PenaltyMeritFunction(FeasibilityStrategy& feasibility_strategy, Subproblem& subproblem) :
+   GlobalizationStrategy(feasibility_strategy, subproblem), decrease_fraction_(1e-8) {
 }
 
 Iterate PenaltyMeritFunction::initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
