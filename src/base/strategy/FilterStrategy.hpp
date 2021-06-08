@@ -25,7 +25,8 @@ struct FilterStrategyParameters {
  */
 class FilterStrategy : public GlobalizationStrategy {
 public:
-    FilterStrategy(Subproblem& subproblem, FilterStrategyParameters& strategy_constants, std::map<std::string, std::string>& options);
+    FilterStrategy(FeasibilityStrategy& feasibility_strategy, Subproblem& subproblem, FilterStrategyParameters& strategy_constants,
+          const std::map<std::string, std::string>& options);
 
     /* use pointers to allow polymorphism */
     std::unique_ptr<Filter> filter_optimality; /*!< Filter for the optimality phase */

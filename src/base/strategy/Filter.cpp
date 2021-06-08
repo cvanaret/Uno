@@ -217,17 +217,17 @@ double NonmonotoneFilter::compute_actual_reduction(double current_objective, dou
 
 /* FilterFactory class */
 
-std::unique_ptr<Filter> FilterFactory::create(std::map<std::string, std::string> options) {
-    double Beta = stod(options["Beta"]);
-    double Gamma = stod(options["Gamma"]);
+std::unique_ptr<Filter> FilterFactory::create(const std::map<std::string, std::string>& options) {
+    double Beta = stod(options.at("Beta"));
+    double Gamma = stod(options.at("Gamma"));
     FilterConstants filter_constants = {Beta, Gamma};
-    std::string filter_type = options["strategy"];
+    std::string filter_type = options.at("strategy");
 
     if (filter_type == "filter") {
         return std::make_unique<Filter>(filter_constants);
     }
     else if (filter_type == "nonmonotone-filter") {
-        int number_dominated_entries = stoi(options["number_dominated_entries"]);
+        int number_dominated_entries = stoi(options.at("number_dominated_entries"));
         return std::make_unique<NonmonotoneFilter>(filter_constants, number_dominated_entries);
     }
     else {

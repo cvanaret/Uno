@@ -96,9 +96,11 @@ InteriorPoint::evaluate_initial_point(const Problem& problem, const std::vector<
    return first_iterate;
 }
 
-void InteriorPoint::generate(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double
+void InteriorPoint::generate(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double /*objective_multiplier*/, double
 /*trust_region_radius*/) {
+}
 
+void InteriorPoint::update_objective_multipliers(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double /*objective_multiplier*/) {
 }
 
 double InteriorPoint::compute_KKT_error_scaling_(Iterate& current_iterate) const {
@@ -112,7 +114,7 @@ double InteriorPoint::compute_KKT_error_scaling_(Iterate& current_iterate) const
 
 /* reduced primal-dual approach */
 std::vector<Direction>
-InteriorPoint::compute_directions(Problem& problem, Iterate& current_iterate, double /*objective_multiplier*/, double trust_region_radius) {
+InteriorPoint::compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
    DEBUG << "\nCurrent iterate: " << current_iterate;
 
    current_iterate.compute_constraints_jacobian(problem);

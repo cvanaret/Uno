@@ -12,9 +12,9 @@ project(UNO VERSION 1.0
 set(CMAKE_CXX_STANDARD 17)
 enable_language(CXX C Fortran)
 
-if(NOT CMAKE_BUILD_TYPE)
+#if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
-endif()
+#endif()
 
 #set(CMAKE_Fortran_FLAGS "-cpp")
 set(CMAKE_CXX_FLAGS "-Wall -Wextra")

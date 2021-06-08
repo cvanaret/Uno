@@ -17,6 +17,27 @@ std::vector<double> add_vectors(const std::vector<double>& x, const std::vector<
    return result;
 }
 
+void clear(std::vector<double>& x) {
+   for (double& xi: x) {
+      xi = 0.;
+   }
+}
+
+void clear(SparseVector & x) {
+   x.clear();
+}
+
+void scale(std::vector<double>& x, double scaling_factor) {
+   for (double& xi: x) {
+      xi *= scaling_factor;
+   }
+}
+void scale(SparseVector & x, double scaling_factor) {
+   for (auto& [i, xi]: x) {
+      xi *= scaling_factor;
+   }
+}
+
 /* compute ||x||_1 */
 double norm_1(const std::vector<double>& x) {
    double norm = 0.;

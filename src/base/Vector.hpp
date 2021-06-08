@@ -15,6 +15,12 @@ enum Norm {L1_NORM = 1, L2_NORM = 2, L2_SQUARED_NORM, INF_NORM};
 void add_vectors(const std::vector<double>& x, const std::vector<double>& y, double scaling_factor, std::vector<double>& result);
 std::vector<double> add_vectors(const std::vector<double>& x, const std::vector<double>& y, double scaling_factor = 1.);
 
+void clear(std::vector<double>& x);
+void clear(SparseVector & x);
+
+void scale(std::vector<double>& x, double scaling_factor);
+void scale(SparseVector & x, double scaling_factor);
+
 double norm_1(const std::vector<double>& x);
 double norm_1(const SparseVector& x);
 double norm_1(const std::vector<SparseVector>& m);

@@ -13,30 +13,31 @@
 #include "Logger.hpp"
 //#include "PardisoSolver.hpp"
 
-void run_uno(std::string problem_name, std::map<std::string, std::string> options) {
+void run_uno(const std::string& problem_name, const std::map<std::string, std::string>& options) {
    // generate Hessians with a Fortran indexing (starting at 1) that is supported by solvers
    int fortran_indexing = 1;
    //std::cout.precision(17);
    AMPLModel problem = AMPLModel(problem_name, fortran_indexing);
 
    /* create the subproblem strategy */
-   bool use_trust_region = (options["mechanism"] == "TR");
-   bool scale_residuals = (options["scale_residuals"] == "yes");
+   bool use_trust_region = (options.at("mechanism") == "TR");
+   bool scale_residuals = (options.at("scale_residuals") == "yes");
    std::unique_ptr<Subproblem>
-         subproblem = SubproblemFactory::create(problem, options["subproblem"], options, use_trust_region, scale_residuals);
+         subproblem = SubproblemFactory::create(problem, options.at("subproblem"), options, use_trust_region, scale_residuals);
 
    /* create the infeasibility method */
-   //FeasibilityRestoration feasibility_method = FeasibilityRestoration(*subproblem);
+   FeasibilityRestoration feasibility_strategy = FeasibilityRestoration(*subproblem);
 
    /* create the globalization strategy */
-   std::unique_ptr<GlobalizationStrategy> strategy = GlobalizationStrategyFactory::create(options["strategy"], *subproblem, options);
+   std::unique_ptr<GlobalizationStrategy> strategy = GlobalizationStrategyFactory::create(options.at("strategy"), feasibility_strategy,
+         *subproblem, options);
 
    /* create the globalization mechanism */
-   std::unique_ptr<GlobalizationMechanism> mechanism = GlobalizationMechanismFactory::create(options["mechanism"], *strategy, options);
+   std::unique_ptr<GlobalizationMechanism> mechanism = GlobalizationMechanismFactory::create(options.at("mechanism"), *strategy, options);
 
-   double tolerance = std::stod(options["tolerance"]);
-   int max_iterations = std::stoi(options["max_iterations"]);
-   bool preprocessing = (options["preprocessing"] == "yes");
+   double tolerance = std::stod(options.at("tolerance"));
+   int max_iterations = std::stoi(options.at("max_iterations"));
+   bool preprocessing = (options.at("preprocessing") == "yes");
    Uno uno = Uno(*mechanism, tolerance, max_iterations);
 
    /* initial primal and dual points */
@@ -50,7 +51,7 @@ void run_uno(std::string problem_name, std::map<std::string, std::string> option
    result.solution.x.resize(problem.number_variables);
    result.solution.multipliers.lower_bounds.resize(problem.number_variables);
    result.solution.multipliers.upper_bounds.resize(problem.number_variables);
-   bool print_solution = (options["print_solution"] == "yes");
+   bool print_solution = (options.at("print_solution") == "yes");
    result.display(print_solution);
 }
 
@@ -251,15 +252,13 @@ int main(int argc, char* argv[]) {
       get_command_options(argc, argv, options);
       set_logger(options);
 
-      if (std::string(argv[1]).compare("-v") == 0) {
+      if (std::string(argv[1]) == "-v") {
          std::cout << "Welcome in UNO\n";
          std::cout << "To solve an AMPL problem, type ./uno path_to_file/file.nl\n";
          std::cout << "To choose a globalization mechanism, type ./uno -mechanism [LS|TR] path_to_file/file.nl\n";
          std::cout << "To choose a globalization strategy, type ./uno -strategy [penalty|filter|nonmonotone-filter] path_to_file/file.nl\n";
          std::cout << "To choose a subproblem, type ./uno -subproblem [SQP|SLP|Sl1QP|SLPEQP|IPM] path_to_file/file.nl\n";
          std::cout << "The three options can be combined in the same command line. Autocompletion is active.\n";
-         //test_mask_matrix();
-         test_sparse_vector();
       }
       else {
          std::string problem_name = std::string(argv[argc - 1]);
@@ -267,5 +266,5 @@ int main(int argc, char* argv[]) {
          run_uno(problem_name, options);
       }
    }
-   return 0;
+   return EXIT_SUCCESS;
 }

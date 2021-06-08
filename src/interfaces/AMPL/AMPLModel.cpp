@@ -137,17 +137,12 @@ double AMPLModel::evaluate_constraint(int j, const std::vector<double>& x) const
    return result;
 }
 
-std::vector<double> AMPLModel::evaluate_constraints(const std::vector<double>& x) const {
-   std::vector<double> constraints(this->number_constraints);
-   //for (int j = 0; j < this->number_constraints; j++) {
-   //    constraints[j] = this->evaluate_constraint(j, x);
-   //}
+void AMPLModel::evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const {
    int nerror = 0;
    (*(this->asl_)->p.Conval)(this->asl_, (double *) x.data(), constraints.data(), &nerror);
    if (0 < nerror) {
       throw FunctionNumericalError();
    }
-   return constraints;
 }
 
 /* sparse gradient */

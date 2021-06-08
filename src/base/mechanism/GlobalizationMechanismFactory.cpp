@@ -5,15 +5,15 @@
 //#include "TrustLineSearch.hpp"
 
 std::unique_ptr<GlobalizationMechanism> GlobalizationMechanismFactory::create(const std::string& type, GlobalizationStrategy&
-globalization_strategy, std::map<std::string, std::string>& options) {
+globalization_strategy, const std::map<std::string, std::string>& options) {
     if (type == "TR") {
-        double radius = stod(options["TR_radius"]);
-        int max_iterations = std::stoi(options["TR_max_iterations"]);
+        double radius = stod(options.at("TR_radius"));
+        int max_iterations = std::stoi(options.at("TR_max_iterations"));
         return std::make_unique<TrustRegion>(globalization_strategy, radius, max_iterations);
     }
     else if (type == "LS") {
-        int max_iterations = std::stoi(options["LS_max_iterations"]);
-        double backtracking_ratio = std::stod(options["LS_backtracking_ratio"]);
+        int max_iterations = std::stoi(options.at("LS_max_iterations"));
+        double backtracking_ratio = std::stod(options.at("LS_backtracking_ratio"));
         return std::make_unique<LineSearch>(globalization_strategy, max_iterations, backtracking_ratio);
     }
 //    else if (type == "TLS") {

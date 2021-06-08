@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <optional>
+#include "FeasibilityStrategy.hpp"
 #include "Problem.hpp"
 #include "Subproblem.hpp"
 #include "Iterate.hpp"
@@ -16,19 +17,21 @@
  */
 class GlobalizationStrategy {
 public:
-    /*!
-     *  Constructor that takes an optimization problem and a tolerance
-     * 
-     * \param problem: optimization problem
-     * \param constants: set of constants
-     */
-    explicit GlobalizationStrategy(Subproblem& subproblem);
-    virtual ~GlobalizationStrategy() = default;
+   /*!
+    *  Constructor that takes an optimization problem and a tolerance
+    *
+    * \param problem: optimization problem
+    * \param constants: set of constants
+    */
+   explicit GlobalizationStrategy(FeasibilityStrategy& feasibility_strategy, Subproblem& subproblem);
+   virtual ~GlobalizationStrategy() = default;
 
-    Subproblem& subproblem;
+   FeasibilityStrategy& feasibility_strategy;
+   Subproblem& subproblem;
 
-    virtual Iterate initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
-    virtual std::optional<Iterate> check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) = 0;
+   virtual Iterate initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
+   virtual std::optional<Iterate> check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction,
+         double step_length) = 0;
 
 protected:
    // preallocated vector to receive the trial primal variables

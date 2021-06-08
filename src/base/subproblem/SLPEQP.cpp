@@ -20,12 +20,16 @@ SLPEQP::SLPEQP(Problem& problem, std::string LP_solver_name, std::string linear_
                   false)) {
 }
 
-void SLPEQP::generate(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double /*trust_region_radius*/) {
+void SLPEQP::generate(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double /*objective_multiplier*/, double
+/*trust_region_radius*/) {
 
 }
 
+void SLPEQP::update_objective_multipliers(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double /*objective_multiplier*/) {
+}
+
 std::vector<Direction>
-SLPEQP::compute_directions(Problem& problem, Iterate& current_iterate, double /*objective_multiplier*/, double trust_region_radius) {
+SLPEQP::compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
    /* compute first-order information */
    current_iterate.compute_objective_gradient(problem);
    current_iterate.compute_constraints(problem);

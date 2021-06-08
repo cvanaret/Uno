@@ -29,11 +29,12 @@ public:
    virtual ~Subproblem() = default;
 
    virtual Iterate evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& multipliers) = 0;
-   virtual void generate(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) = 0;
+   virtual void generate(const Problem& problem, const Iterate& current_iterate, double objective_multiplier, double trust_region_radius)
+   = 0;
    virtual void update_trust_region(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
+   virtual void update_objective_multipliers(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) = 0;
 
-   virtual std::vector<Direction>
-   compute_directions(Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) = 0;
+   virtual std::vector<Direction> compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) = 0;
    virtual std::vector<Direction>
    restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) = 0;
 
