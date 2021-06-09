@@ -167,25 +167,25 @@ Direction BQPDSolver::generate_direction_(std::vector<double>& x) {
          // bound constraint
          if (0 <= this->ls_[j]) { /* lower bound active */
             direction.multipliers.lower_bounds[index] = this->residuals_[index];
-            direction.active_set.bounds.at_lower_bound.insert(index);
+            direction.active_set.bounds.at_lower_bound.push_back(index);
          }
          else { /* upper bound active */
             direction.multipliers.upper_bounds[index] = -this->residuals_[index];
-            direction.active_set.bounds.at_upper_bound.insert(index);
+            direction.active_set.bounds.at_upper_bound.push_back(index);
          }
       }
       else {
          // general constraint
          int constraint_index = index - this->n_;
-         direction.constraint_partition.feasible.insert(constraint_index);
+         direction.constraint_partition.feasible.push_back(constraint_index);
          direction.constraint_partition.constraint_feasibility[constraint_index] = FEASIBLE;
          if (0 <= this->ls_[j]) { /* lower bound active */
             direction.multipliers.constraints[constraint_index] = this->residuals_[index];
-            direction.active_set.constraints.at_lower_bound.insert(constraint_index);
+            direction.active_set.constraints.at_lower_bound.push_back(constraint_index);
          }
          else { /* upper bound active */
             direction.multipliers.constraints[constraint_index] = -this->residuals_[index];
-            direction.active_set.constraints.at_upper_bound.insert(constraint_index);
+            direction.active_set.constraints.at_upper_bound.push_back(constraint_index);
          }
       }
    }
@@ -197,7 +197,7 @@ Direction BQPDSolver::generate_direction_(std::vector<double>& x) {
       if (this->n_ <= index) { // general constraints
          int constraint_index = index - this->n_;
          if (this->residuals_[index] < 0.) { // infeasible constraint
-            direction.constraint_partition.infeasible.insert(constraint_index);
+            direction.constraint_partition.infeasible.push_back(constraint_index);
             if (this->ls_[j] < 0) { // upper bound violated
                direction.constraint_partition.constraint_feasibility[constraint_index] = INFEASIBLE_UPPER;
             }
@@ -206,7 +206,7 @@ Direction BQPDSolver::generate_direction_(std::vector<double>& x) {
             }
          }
          else { // feasible constraint
-            direction.constraint_partition.feasible.insert(constraint_index);
+            direction.constraint_partition.feasible.push_back(constraint_index);
             direction.constraint_partition.constraint_feasibility[constraint_index] = FEASIBLE;
          }
       }
