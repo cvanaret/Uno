@@ -115,3 +115,12 @@ bool MA57Solver::matrix_is_singular() const {
 int MA57Solver::rank() const {
    return this->factorization_.info[24];
 }
+
+/*
+const int rank = info[24];
+const int n_negative_eigenvalues = info[23];
+const int n_positive_eigenvalues = rank - n_negative_eigenvalues;
+assert(0 <= n_positive_eigenvalues);
+
+return {n_positive_eigenvalues, n_negative_eigenvalues, n - rank};
+*/
