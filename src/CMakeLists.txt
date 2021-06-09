@@ -37,7 +37,7 @@ set(SRC_FILES
     base/strategy/GlobalizationStrategy.cpp
     base/strategy/GlobalizationStrategyFactory.cpp
     base/strategy/FilterStrategy.cpp base/strategy/Filter.cpp
-    base/strategy/PenaltyMeritFunction.cpp
+        base/strategy/l1Penalty.cpp
 
     base/feasibility/FeasibilityStrategy.cpp
         base/feasibility/l1Relaxation.cpp

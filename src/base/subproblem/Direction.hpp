@@ -43,7 +43,7 @@ public:
     double norm; /*!< Norm of \f$x\f$ */
     double objective; /*!< Objective value */
     ActiveSet active_set; /*!< Active set */
-    std::set<int> inactive_set; /*!< Inactive set */
+    std::vector<int> inactive_set; /*!< Inactive set */
     ConstraintPartition constraint_partition; /*!< Partition of feasible and infeasible constraints */
     
     // this function computes the predicted reduction of the direction for a given step length

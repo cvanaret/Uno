@@ -41,7 +41,8 @@ double Problem::compute_constraint_residual(const std::vector<double>& constrain
 }
 
 /* compute ||c_S|| for a given set S */
-double Problem::compute_constraint_residual(const std::vector<double>& constraints, const std::set<int>& constraint_set, Norm residual_norm) const {
+double Problem::compute_constraint_residual(const std::vector<double>& constraints, const std::vector<int>& constraint_set, Norm residual_norm)
+const {
     SparseVector residuals;
     for (int j: constraint_set) {
         residuals[j] = std::max(std::max(0., this->constraint_bounds[j].lb - constraints[j]), constraints[j] - this->constraint_bounds[j].ub);

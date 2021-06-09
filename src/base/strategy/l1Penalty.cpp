@@ -1,6 +1,6 @@
 #include <cmath>
 #include "Uno.hpp"
-#include "PenaltyMeritFunction.hpp"
+#include "l1Penalty.hpp"
 #include "Logger.hpp"
 
 /*
@@ -8,11 +8,11 @@
  * http://epubs.siam.org/doi/pdf/10.1137/080738222
  */
 
-PenaltyMeritFunction::PenaltyMeritFunction(FeasibilityStrategy& feasibility_strategy, Subproblem& subproblem) :
+l1Penalty::l1Penalty(FeasibilityStrategy& feasibility_strategy, Subproblem& subproblem) :
    GlobalizationStrategy(feasibility_strategy, subproblem), decrease_fraction_(1e-8) {
 }
 
-Iterate PenaltyMeritFunction::initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+Iterate l1Penalty::initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
    statistics.add_column("penalty param.", Statistics::double_width, 4);
    /* initialize the subproblem */
    Iterate first_iterate = this->subproblem.evaluate_initial_point(problem, x, multipliers);
@@ -23,7 +23,7 @@ Iterate PenaltyMeritFunction::initialize(Statistics& statistics, Problem& proble
 }
 
 std::optional<Iterate>
-PenaltyMeritFunction::check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction,
+l1Penalty::check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction,
       double step_length) {
    /* check if subproblem definition changed */
    if (this->subproblem.subproblem_definition_changed) {

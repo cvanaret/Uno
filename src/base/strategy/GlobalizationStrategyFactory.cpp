@@ -1,12 +1,12 @@
 #include "GlobalizationStrategyFactory.hpp"
-#include "PenaltyMeritFunction.hpp"
+#include "l1Penalty.hpp"
 #include "Filter.hpp"
 #include "FilterStrategy.hpp"
 
 std::unique_ptr<GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& strategy_type,
       FeasibilityStrategy& feasibility_strategy, Subproblem& subproblem, const std::map<std::string, std::string>& options) {
     if (strategy_type == "penalty") {
-        return std::make_unique<PenaltyMeritFunction>(feasibility_strategy, subproblem);
+        return std::make_unique<l1Penalty>(feasibility_strategy, subproblem);
     }
     else if (strategy_type == "filter" || strategy_type == "nonmonotone-filter") {
         double Sigma = stod(options.at("Sigma"));
