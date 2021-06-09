@@ -10,12 +10,12 @@
  *
  *  Strategy that accepts or declines a trial step
  */
-class PenaltyMeritFunction : public GlobalizationStrategy {
+class l1Penalty : public GlobalizationStrategy {
 public:
     /*!
      *  Constructor that takes an optimization problem and a set of constants
      */
-    PenaltyMeritFunction(FeasibilityStrategy& feasibility_strategy, Subproblem& subproblem);
+    l1Penalty(FeasibilityStrategy& feasibility_strategy, Subproblem& subproblem);
 
     Iterate initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
     std::optional<Iterate> check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) override;

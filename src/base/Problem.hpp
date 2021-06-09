@@ -93,7 +93,7 @@ public:
 
    [[nodiscard]] double compute_constraint_residual(const std::vector<double>& constraints, Norm residual_norm) const;
    [[nodiscard]] double
-   compute_constraint_residual(const std::vector<double>& constraints, const std::set<int>& constraint_set, Norm residual_norm) const;
+   compute_constraint_residual(const std::vector<double>& constraints, const std::vector<int>& constraint_set, Norm residual_norm) const;
 
 protected:
    void determine_constraints_();

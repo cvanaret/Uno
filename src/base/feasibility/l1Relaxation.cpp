@@ -203,6 +203,9 @@ double l1Relaxation::compute_predicted_reduction(Problem& problem, Iterate& curr
    else {
       // determine the linearized constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
       // TODO: creating a vector is not necessary!
+      //auto linearized_constraint = [&](size_t j) {
+      //   return current_iterate.constraints[j] + step_length * dot(direction.x, current_iterate.constraints_jacobian[j]);
+      //}
       std::vector<double> linearized_constraints(current_iterate.constraints);
       for (size_t j = 0; j < current_iterate.constraints.size(); j++) {
          linearized_constraints[j] += step_length * dot(direction.x, current_iterate.constraints_jacobian[j]);

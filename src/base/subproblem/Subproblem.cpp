@@ -3,7 +3,7 @@
 
 Subproblem::Subproblem(Problem& problem, Norm residual_norm, bool scale_residuals) : number_variables(
       problem.number_variables), number_constraints(problem.number_constraints), variables_bounds(problem.number_variables),
-      multipliers(problem.number_variables, problem.number_constraints),
+      constraints_multipliers(problem.number_constraints),
       objective_value(INFINITY),
       // objective_gradient is a SparseVector
       constraints(problem.number_constraints),
@@ -129,7 +129,7 @@ std::vector<double> Subproblem::compute_least_square_multipliers(const Problem& 
 }
 
 
-double Subproblem::compute_KKT_error(const Problem& problem, Iterate& iterate, double objective_multiplier) const {
+double Subproblem::compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier) const {
    std::vector<double> lagrangian_gradient = iterate.lagrangian_gradient(problem, objective_multiplier, iterate.multipliers);
    return norm(lagrangian_gradient, this->residual_norm);
 }
@@ -166,12 +166,12 @@ Subproblem::compute_residuals(const Problem& problem, Iterate& iterate, const Mu
    iterate.residuals.constraints = problem.compute_constraint_residual(iterate.constraints, this->residual_norm);
    // compute the KKT residual only if the objective multiplier is positive
    if (0. < objective_multiplier) {
-      iterate.residuals.KKT = Subproblem::compute_KKT_error(problem, iterate, objective_multiplier);
+      iterate.residuals.KKT = Subproblem::compute_first_order_error(problem, iterate, objective_multiplier);
    }
    else {
-      iterate.residuals.KKT = Subproblem::compute_KKT_error(problem, iterate, 1.);
+      iterate.residuals.KKT = Subproblem::compute_first_order_error(problem, iterate, 1.);
    }
-   iterate.residuals.FJ = Subproblem::compute_KKT_error(problem, iterate, 0.);
+   iterate.residuals.FJ = Subproblem::compute_first_order_error(problem, iterate, 0.);
    iterate.residuals.complementarity = this->compute_complementarity_error_(problem, iterate, multipliers);
    if (this->scale_residuals) {
       // TODO scale the residuals

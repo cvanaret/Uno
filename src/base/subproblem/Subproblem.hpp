@@ -51,14 +51,14 @@ public:
    compute_least_square_multipliers(const Problem& problem, Iterate& current_iterate, const std::vector<double>& default_multipliers,
          double multipliers_max_size = 1e3);
 
-   double compute_KKT_error(const Problem& problem, Iterate& iterate, double objective_multiplier) const;
+   double compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier) const;
    void compute_residuals(const Problem& problem, Iterate& iterate, const Multipliers& multipliers, double objective_multiplier) const;
 
    size_t number_variables;
    size_t number_constraints;
    // when the subproblem is reformulated (e.g. when slacks are introduced), the bounds may be altered
    std::vector<Range> variables_bounds;
-   Multipliers multipliers;
+   std::vector<double> constraints_multipliers;
    double objective_value{};
    SparseVector objective_gradient;
    std::vector<double> constraints;

@@ -5,6 +5,12 @@ Direction::Direction(std::vector<double>& x, Multipliers& multipliers):
 x(x), multipliers(multipliers), objective_multiplier(1.), status(OPTIMAL), phase(OPTIMALITY), norm(0.), objective(0.),
 constraint_partition(ConstraintPartition(multipliers.constraints.size())),
 predicted_reduction(nullptr) {
+   this->active_set.bounds.at_lower_bound.reserve(x.size());
+   this->active_set.bounds.at_lower_bound.reserve(x.size());
+   this->active_set.constraints.at_lower_bound.reserve(multipliers.constraints.size());
+   this->active_set.constraints.at_upper_bound.reserve(multipliers.constraints.size());
+   this->constraint_partition.feasible.reserve(multipliers.constraints.size());
+   this->constraint_partition.infeasible.reserve(multipliers.constraints.size());
 }
 
 std::ostream& operator<<(std::ostream &stream, Direction& direction) {

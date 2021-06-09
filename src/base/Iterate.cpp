@@ -9,11 +9,12 @@ int Iterate::number_eval_jacobian = 0;
 int Iterate::number_eval_hessian = 0;
 
 Iterate::Iterate(size_t number_variables, size_t number_constraints):
-   x(number_variables), multipliers(number_variables, number_constraints) {
+   x(number_variables), multipliers(number_variables, number_constraints), constraints(number_constraints) {
 }
 
 Iterate::Iterate(const std::vector<double>& x, const Multipliers& multipliers) : x(x), multipliers(multipliers),
-      objective(std::numeric_limits<double>::infinity()), is_objective_computed(false), are_constraints_computed(false),
+      objective(std::numeric_limits<double>::infinity()), is_objective_computed(false),
+      constraints(multipliers.constraints.size()), are_constraints_computed(false),
       is_objective_gradient_computed(false), is_constraints_jacobian_computed(false),
       //hessian(x.size(), 1), is_hessian_computed(false),
       residuals({0., 0., 0., 0.}), feasibility_measure(0.), optimality_measure(0.) {
@@ -29,7 +30,7 @@ void Iterate::compute_objective(const Problem& problem) {
 
 void Iterate::compute_constraints(const Problem& problem) {
    if (!this->are_constraints_computed) {
-      this->constraints = problem.evaluate_constraints(this->x);
+      problem.evaluate_constraints(this->x, this->constraints);
       this->are_constraints_computed = true;
       Iterate::number_eval_constraints++;
    }

@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <vector>
 #include <set>
+#include <functional>
 #include "Logger.hpp"
 #include "SparseVector.hpp"
 
@@ -21,18 +22,24 @@ void clear(SparseVector & x);
 void scale(std::vector<double>& x, double scaling_factor);
 void scale(SparseVector & x, double scaling_factor);
 
+void copy_from(std::vector<double>& destination, const std::vector<double>& source);
+
 double norm_1(const std::vector<double>& x);
 double norm_1(const SparseVector& x);
 double norm_1(const std::vector<SparseVector>& m);
+double norm_1(const std::function<double(int i)>& f, size_t size);
 
 double norm_2_squared(const std::vector<double>& x);
 double norm_2_squared(const SparseVector& x);
+double norm_2_squared(const std::function<double(int i)>& f, size_t size);
 double norm_2(const std::vector<double>& x);
 double norm_2(const SparseVector& x);
+double norm_2(const std::function<double(int i)>& f, size_t size);
 
 double norm_inf(const std::vector<double>& x, size_t length = std::numeric_limits<size_t>::max());
 double norm_inf(const SparseVector& x);
 double norm_inf(const std::vector<SparseVector>& m);
+double norm_inf(const std::function<double(int i)>& f, size_t size);
 
 double dot(const std::vector<double>& x, const std::vector<double>& y);
 double dot(const std::vector<double>& x, const SparseVector& y);
@@ -57,6 +64,8 @@ double norm(const T& x, Norm norm) {
         throw std::out_of_range("The norm is not known");
     }
 }
+
+double norm(const std::function<double(int i)>& f, size_t size, Norm norm);
 
 template <typename T>
 void print_vector(std::ostream &stream, const std::vector<T>& x, const char end='\n', size_t start = 0, size_t length = std::numeric_limits<size_t>::max()) {

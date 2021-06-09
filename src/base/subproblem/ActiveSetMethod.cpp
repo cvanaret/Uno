@@ -39,8 +39,9 @@ void ActiveSetMethod::compute_infeasibility_measures(const Problem& problem, Ite
 void ActiveSetMethod::recover_l1qp_active_set_(Problem& problem, Direction& direction, const ElasticVariables& elastic_variables) {
    // remove extra variables p and n
    for (size_t i = problem.number_variables; i < direction.x.size(); i++) {
-      direction.active_set.bounds.at_lower_bound.erase(i);
-      direction.active_set.bounds.at_upper_bound.erase(i);
+      // TODO
+      //direction.active_set.bounds.at_lower_bound.erase(i);
+      //direction.active_set.bounds.at_upper_bound.erase(i);
    }
    // constraints: only when p-n = 0
    for (size_t j = 0; j < direction.multipliers.constraints.size(); j++) {
@@ -60,8 +61,9 @@ void ActiveSetMethod::recover_l1qp_active_set_(Problem& problem, Direction& dire
       }
       // update active set
       if (0. < constraint_violation) {
-         direction.active_set.constraints.at_lower_bound.erase(j);
-         direction.active_set.constraints.at_upper_bound.erase(j);
+         // TODO
+         //direction.active_set.constraints.at_lower_bound.erase(j);
+         //direction.active_set.constraints.at_upper_bound.erase(j);
       }
    }
 }
@@ -99,25 +101,19 @@ void ActiveSetMethod::compute_l1_linear_objective_(Iterate& current_iterate, Con
    current_iterate.set_objective_gradient(objective_gradient);
 }
 
-std::vector<double> ActiveSetMethod::generate_l1_multipliers_(Problem& problem, std::vector<double>& current_constraint_multipliers,
-      ConstraintPartition& constraint_partition) {
-   std::vector<double> constraint_multipliers(problem.number_constraints);
+void ActiveSetMethod::generate_l1_multipliers_(Problem& problem, ConstraintPartition& constraint_partition) {
    for (size_t j = 0; j < problem.number_constraints; j++) {
       if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
-         constraint_multipliers[j] = 1.;
+         this->constraints_multipliers[j] = 1.;
       }
       else if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_UPPER) {
-         constraint_multipliers[j] = -1.;
+         this->constraints_multipliers[j] = -1.;
       }
-      else {
-         constraint_multipliers[j] = current_constraint_multipliers[j];
-      }
+      // otherwise, leave the multiplier as it is
    }
-   return constraint_multipliers;
 }
 
-void ActiveSetMethod::generate_feasibility_bounds_(Problem& problem, std::vector<double>& current_constraints,
-      ConstraintPartition& constraint_partition) {
+void ActiveSetMethod::generate_feasibility_bounds_(Problem& problem, std::vector<double>& current_constraints, ConstraintPartition& constraint_partition) {
    for (size_t j = 0; j < problem.number_constraints; j++) {
       double lb, ub;
       if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {

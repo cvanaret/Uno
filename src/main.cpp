@@ -14,6 +14,14 @@
 #include "Logger.hpp"
 //#include "PardisoSolver.hpp"
 
+/*
+ * // new overload to track heap allocations
+void* operator new(size_t size) {
+   std::cout << "Allocating " << size << " bytes\n";
+   return malloc(size);
+}
+ */
+
 void run_uno(const std::string& problem_name, const std::map<std::string, std::string>& options) {
    // generate Hessians with a Fortran indexing (starting at 1) that is supported by solvers
    int fortran_indexing = 1;
@@ -29,7 +37,7 @@ void run_uno(const std::string& problem_name, const std::map<std::string, std::s
          subproblem = SubproblemFactory::create(*problem, options.at("subproblem"), options, use_trust_region, scale_residuals);
 
    /* create the infeasibility method */
-   FeasibilityRestoration feasibility_strategy = FeasibilityRestoration(*problem, *subproblem);
+   FeasibilityRestoration feasibility_strategy = FeasibilityRestoration(*subproblem);
 
    /* create the globalization strategy */
    std::unique_ptr<GlobalizationStrategy> strategy = GlobalizationStrategyFactory::create(options.at("strategy"), feasibility_strategy,

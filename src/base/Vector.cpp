@@ -23,7 +23,7 @@ void clear(std::vector<double>& x) {
    }
 }
 
-void clear(SparseVector & x) {
+void clear(SparseVector& x) {
    x.clear();
 }
 
@@ -32,9 +32,16 @@ void scale(std::vector<double>& x, double scaling_factor) {
       xi *= scaling_factor;
    }
 }
-void scale(SparseVector & x, double scaling_factor) {
-   for (auto& [i, xi]: x) {
-      xi *= scaling_factor;
+void scale(SparseVector& x, double scaling_factor) {
+   for (auto& element: x) {
+      element.second *= scaling_factor;
+   }
+}
+
+void copy_from(std::vector<double>& destination, const std::vector<double>& source) {
+   assert(destination.size() == source.size());
+   for (size_t i = 0; i < source.size(); i++) {
+      destination[i] = source[i];
    }
 }
 
@@ -66,6 +73,14 @@ double norm_1(const std::vector<SparseVector>& m) {
    return norm;
 }
 
+double norm_1(const std::function<double(int i)>& f, size_t size) {
+   double norm = 0.;
+   for (size_t i = 0; i < size; i++) {
+      norm += std::abs(f(i));
+   }
+   return norm;
+}
+
 /* compute ||x||^2_2 */
 double norm_2_squared(const std::vector<double>& x) {
    double norm_squared = 0.;
@@ -84,6 +99,15 @@ double norm_2_squared(const SparseVector& x) {
    return norm_squared;
 }
 
+double norm_2_squared(const std::function<double(int i)>& f, size_t size) {
+   double norm = 0.;
+   for (size_t i = 0; i < size; i++) {
+      double x_i = f(i);
+      norm += x_i * x_i;
+   }
+   return norm;
+}
+
 /* compute ||x||_2 */
 double norm_2(const std::vector<double>& x) {
    return std::sqrt(norm_2_squared(x));
@@ -91,6 +115,10 @@ double norm_2(const std::vector<double>& x) {
 
 double norm_2(const SparseVector& x) {
    return std::sqrt(norm_2_squared(x));
+}
+
+double norm_2(const std::function<double(int i)>& f, size_t size) {
+   return std::sqrt(norm_2_squared(f, size));
 }
 
 /* compute ||x||_infty */
@@ -127,11 +155,40 @@ double norm_inf(const std::vector<SparseVector>& m) {
    }
    // compute the maximal component of the row_vectors vector
    double norm = 0.;
-   for (double & row_vector : row_vectors) {
+   for (double& row_vector : row_vectors) {
       norm = std::max(norm, row_vector);
    }
    return norm;
 }
+
+double norm_inf(const std::function<double(int i)>& f, size_t size) {
+   double norm = 0.;
+   for (size_t i = 0; i < size; i++) {
+      norm = std::max(norm, std::abs(f(i)));
+   }
+   return norm;
+}
+
+double norm(const std::function<double(int i)>& f, size_t size, Norm norm) {
+   /* choose the right norm */
+   if (norm == INF_NORM) {
+      return norm_inf(f, size);
+   }
+   else if (norm == L2_NORM) {
+      return norm_2(f, size);
+   }
+   else if (norm == L2_SQUARED_NORM) {
+      return norm_2_squared(f, size);
+   }
+   else if (norm == L1_NORM) {
+      return norm_1(f, size);
+   }
+   else {
+      throw std::out_of_range("The norm is not known");
+   }
+}
+
+/* dot products */
 
 double dot(const std::vector<double>& x, const std::vector<double>& y) {
    double dot = 0.;

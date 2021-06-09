@@ -82,7 +82,6 @@ FilterStrategy::check_acceptance(Statistics& statistics, Problem& problem, Itera
             }
                /* Armijo sufficient decrease condition: predicted_reduction should be positive */
             else if (actual_reduction >= this->parameters_.Sigma * step_length * std::max(0., predicted_reduction - 1e-9)) {
-               //else if (predicted_reduction > 0. && actual_reduction >= this->parameters.Sigma*predicted_reduction) {
                accept = true;
             }
          }
@@ -95,7 +94,7 @@ FilterStrategy::check_acceptance(Statistics& statistics, Problem& problem, Itera
       if (direction.phase == RESTORATION) {
          this->update_restoration_multipliers_(trial_iterate, direction.constraint_partition);
       }
-      return std::optional<Iterate>{trial_iterate};
+      return trial_iterate;
    }
    else {
       return std::nullopt;

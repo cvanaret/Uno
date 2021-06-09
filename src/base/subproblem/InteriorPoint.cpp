@@ -473,21 +473,19 @@ void InteriorPoint::compute_infeasibility_measures(const Problem& problem, Itera
 
 double InteriorPoint::constraint_violation(const Problem& problem, Iterate& iterate) {
    iterate.compute_constraints(problem);
-   // compute l2 square norm
-   std::vector<double> residuals(problem.number_constraints);
+   // compute l2 square norm by using a lambda (avoids constructing a vector)
    size_t slack_index = problem.number_variables;
-   for (size_t j = 0; j < problem.number_constraints; j++) {
+   auto residual_function = [&](size_t j) {
       if (problem.constraint_status[j] == EQUAL_BOUNDS) {
-         double constraint_value = iterate.constraints[j] - problem.constraint_bounds[j].lb;
-         residuals[j] = constraint_value;
+         return iterate.constraints[j] - problem.constraint_bounds[j].lb;
       }
       else {
          double constraint_value = iterate.constraints[j] - iterate.x[slack_index];
-         residuals[j] = constraint_value;
          slack_index++;
+         return constraint_value;
       }
-   }
-   return norm(residuals, this->residual_norm);
+   };
+   return norm(residual_function, problem.number_constraints, this->residual_norm);
 }
 
 double InteriorPoint::barrier_function_(const Problem& problem, Iterate& iterate, const std::vector<Range>& variables_bounds) {

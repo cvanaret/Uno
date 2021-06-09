@@ -44,7 +44,7 @@ std::pair<Iterate, Direction> TrustRegion::compute_acceptable_iterate(Statistics
                current_iterate, directions,1.);
          if (acceptance_check.has_value()) {
             is_accepted = true;
-            auto [new_iterate, direction] = acceptance_check.value();
+            auto& [new_iterate, direction] = acceptance_check.value();
             statistics.add_statistic("minor", this->number_iterations);
             statistics.add_statistic("TR radius", this->radius);
             statistics.add_statistic("step norm", direction.norm);
