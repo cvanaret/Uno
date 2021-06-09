@@ -6,7 +6,7 @@ _uno_completions()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     #  The basic options to complete.
-    opts="-mechanism -strategy -subproblem"
+    opts="-mechanism -strategy -feasibility -subproblem"
 
     #  Complete the arguments to some of the basic commands.
     case "${prev}" in
@@ -16,8 +16,13 @@ _uno_completions()
             return 0
             ;;
         -strategy)
-			local strategies="penalty filter nonmonotone-filter"
+			local strategies="l1-penalty filter nonmonotone-filter"
             COMPREPLY=( $(compgen -W "${strategies}" -- ${cur}) )
+            return 0
+            ;;
+        -feasibility)
+			local feasibility="feasibility-restoration l1-relaxation"
+            COMPREPLY=( $(compgen -W "${feasibility}" -- ${cur}) )
             return 0
             ;;
 		-subproblem)
