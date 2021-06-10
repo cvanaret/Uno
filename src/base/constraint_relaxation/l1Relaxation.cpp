@@ -3,7 +3,7 @@
 
 l1Relaxation::l1Relaxation(Problem& problem, Subproblem& subproblem, const std::map<std::string, std::string>& options) :
    ConstraintRelaxationStrategy(subproblem),
-   globalization_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), subproblem, options)),
+   globalization_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
    penalty_parameter(1.),
    parameters({10., 0.1, 0.1}) {
    // generate elastic variables to relax the constraints

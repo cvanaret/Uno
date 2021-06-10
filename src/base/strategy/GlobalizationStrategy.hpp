@@ -23,10 +23,8 @@ public:
     * \param problem: optimization problem
     * \param constants: set of constants
     */
-   explicit GlobalizationStrategy(Subproblem& subproblem);
+   GlobalizationStrategy() = default;
    virtual ~GlobalizationStrategy() = default;
-
-   Subproblem& subproblem;
 
    virtual void initialize(Statistics& statistics, const Iterate& first_iterate) = 0;
    virtual bool check_acceptance(Statistics& statistics, ProgressMeasures& current_progress, ProgressMeasures& trial_progress,

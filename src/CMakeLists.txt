@@ -33,8 +33,7 @@ set(SRC_FILES
     base/mechanism/GlobalizationMechanism.cpp
     base/mechanism/GlobalizationMechanismFactory.cpp
     base/mechanism/LineSearch.cpp base/mechanism/TrustRegion.cpp
-    
-    base/strategy/GlobalizationStrategy.cpp
+
     base/strategy/GlobalizationStrategyFactory.cpp
     base/strategy/FilterStrategy.cpp base/strategy/Filter.cpp
     base/strategy/l1MeritFunction.cpp

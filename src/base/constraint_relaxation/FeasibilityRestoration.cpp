@@ -4,8 +4,8 @@
 FeasibilityRestoration::FeasibilityRestoration(const std::string& constraint_relaxation_strategy, Subproblem& subproblem,
    const std::map<std::string, std::string>& options) : ConstraintRelaxationStrategy(subproblem),
    /* create the globalization strategy */
-   phase_1_strategy(GlobalizationStrategyFactory::create(constraint_relaxation_strategy, subproblem, options)),
-   phase_2_strategy(GlobalizationStrategyFactory::create(constraint_relaxation_strategy, subproblem, options)),
+   phase_1_strategy(GlobalizationStrategyFactory::create(constraint_relaxation_strategy, options)),
+   phase_2_strategy(GlobalizationStrategyFactory::create(constraint_relaxation_strategy, options)),
    current_phase(OPTIMALITY) {
 }
 
