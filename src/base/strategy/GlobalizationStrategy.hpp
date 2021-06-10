@@ -3,7 +3,7 @@
 
 #include <cmath>
 #include <optional>
-#include "FeasibilityStrategy.hpp"
+#include "ConstraintRelaxationStrategy.hpp"
 #include "Problem.hpp"
 #include "Subproblem.hpp"
 #include "Iterate.hpp"
@@ -23,10 +23,10 @@ public:
     * \param problem: optimization problem
     * \param constants: set of constants
     */
-   explicit GlobalizationStrategy(FeasibilityStrategy& feasibility_strategy, Subproblem& subproblem);
+   explicit GlobalizationStrategy(ConstraintRelaxationStrategy& feasibility_strategy, Subproblem& subproblem);
    virtual ~GlobalizationStrategy() = default;
 
-   FeasibilityStrategy& feasibility_strategy;
+   ConstraintRelaxationStrategy& feasibility_strategy;
    Subproblem& subproblem;
 
    virtual Iterate initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;

@@ -1,6 +1,6 @@
 #include "l1Relaxation.hpp"
 
-l1Relaxation::l1Relaxation(Problem& problem, Subproblem& subproblem) : FeasibilityStrategy(subproblem), penalty_parameter(1.),
+l1Relaxation::l1Relaxation(Problem& problem, Subproblem& subproblem) : ConstraintRelaxationStrategy(subproblem), penalty_parameter(1.),
 parameters({10., 0.1, 0.1}) {
    // generate elastic variables to relax the constraints
    ActiveSetMethod::generate_elastic_variables_(problem, this->elastic_variables);

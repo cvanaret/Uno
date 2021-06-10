@@ -1,6 +1,6 @@
 #include "FeasibilityRestoration.hpp"
 
-FeasibilityRestoration::FeasibilityRestoration(Subproblem& subproblem) : FeasibilityStrategy(subproblem) {
+FeasibilityRestoration::FeasibilityRestoration(Subproblem& subproblem) : ConstraintRelaxationStrategy(subproblem) {
 }
 
 std::vector<Direction> FeasibilityRestoration::compute_feasible_directions(Problem& problem, Iterate& current_iterate, double

@@ -4,7 +4,7 @@
 #include "FilterStrategy.hpp"
 
 std::unique_ptr<GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& strategy_type,
-      FeasibilityStrategy& feasibility_strategy, Subproblem& subproblem, const std::map<std::string, std::string>& options) {
+      ConstraintRelaxationStrategy& feasibility_strategy, Subproblem& subproblem, const std::map<std::string, std::string>& options) {
     if (strategy_type == "penalty") {
         return std::make_unique<l1Penalty>(feasibility_strategy, subproblem);
     }
