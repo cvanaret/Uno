@@ -36,15 +36,12 @@ void run_uno(const std::string& problem_name, const std::map<std::string, std::s
    std::unique_ptr<Subproblem>
          subproblem = SubproblemFactory::create(*problem, options.at("subproblem"), options, use_trust_region, scale_residuals);
 
-   /* create the infeasibility method */
-   FeasibilityRestoration constraint_relaxation_strategy = FeasibilityRestoration(*subproblem);
-
-   /* create the globalization strategy */
-   std::unique_ptr<GlobalizationStrategy> strategy = GlobalizationStrategyFactory::create(options.at("strategy"), constraint_relaxation_strategy,
-         *subproblem, options);
+   /* create the constraint relaxation strategy */
+   FeasibilityRestoration constraint_relaxation_strategy = FeasibilityRestoration(options.at("strategy"), *subproblem, options);
 
    /* create the globalization mechanism */
-   std::unique_ptr<GlobalizationMechanism> mechanism = GlobalizationMechanismFactory::create(options.at("mechanism"), *strategy, options);
+   std::unique_ptr<GlobalizationMechanism> mechanism = GlobalizationMechanismFactory::create(options.at("mechanism"),
+         constraint_relaxation_strategy, options);
 
    double tolerance = std::stod(options.at("tolerance"));
    int max_iterations = std::stoi(options.at("max_iterations"));

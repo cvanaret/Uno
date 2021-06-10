@@ -59,7 +59,7 @@ Result Uno::solve(Problem& problem, std::vector<double>& x, Multipliers& multipl
    statistics.print_footer();
    timer.stop();
 
-   int number_subproblems_solved = this->globalization_mechanism.globalization_strategy.subproblem.number_subproblems_solved;
+   int number_subproblems_solved = this->globalization_mechanism.constraint_relaxation_strategy.subproblem.number_subproblems_solved;
    Result result =
          {termination_status, current_iterate, problem.number_variables, problem.number_constraints, major_iterations, timer.get_time(),
           Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_jacobian, Iterate::number_eval_hessian,

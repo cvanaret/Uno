@@ -4,14 +4,14 @@
 #include "Vector.hpp"
 #include "Logger.hpp"
 
-TrustRegion::TrustRegion(GlobalizationStrategy& globalization_strategy, double initial_radius, int max_iterations) : GlobalizationMechanism(
-      globalization_strategy, max_iterations), radius(initial_radius), activity_tolerance_(1e-6) {
+TrustRegion::TrustRegion(ConstraintRelaxationStrategy& constraint_relaxation_strategy, double initial_radius, int max_iterations) :
+   GlobalizationMechanism(constraint_relaxation_strategy, max_iterations), radius(initial_radius), activity_tolerance_(1e-6) {
 }
 
 Iterate TrustRegion::initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
    statistics.add_column("TR radius", Statistics::double_width, 30);
    // generate the initial point
-   return this->globalization_strategy.initialize(statistics, problem, x, multipliers);
+   return this->constraint_relaxation_strategy.initialize(statistics, problem, x, multipliers);
 }
 
 std::pair<Iterate, Direction> TrustRegion::compute_acceptable_iterate(Statistics& statistics, Problem& problem, Iterate& current_iterate) {
@@ -26,13 +26,13 @@ std::pair<Iterate, Direction> TrustRegion::compute_acceptable_iterate(Statistics
 
          /* generate the subproblem once, then update the trust region */
          if (true || this->number_iterations == 1) {
-            this->globalization_strategy.subproblem.generate(problem, current_iterate, problem.objective_sign, this->radius);
+            this->constraint_relaxation_strategy.subproblem.generate(problem, current_iterate, problem.objective_sign, this->radius);
          }
          else {
-            this->globalization_strategy.subproblem.update_trust_region(problem, current_iterate, this->radius);
+            this->constraint_relaxation_strategy.subproblem.update_trust_region(problem, current_iterate, this->radius);
          }
          /* compute the directions within the trust region */
-         std::vector<Direction> directions = this->globalization_strategy.constraint_relaxation_strategy.compute_feasible_directions(problem, current_iterate,
+         std::vector<Direction> directions = this->constraint_relaxation_strategy.compute_feasible_directions(problem, current_iterate,
                this->radius);
          /* set bound multipliers of active trust region to 0 */
          for (Direction& direction: directions) {

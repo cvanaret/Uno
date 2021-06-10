@@ -12,10 +12,10 @@
  *  Set of constants to control the filter and tube strategies
  */
 struct FilterStrategyParameters {
-    double Sigma; /*!< Sufficient reduction constant */
-    double Delta; /*!< Switching constant */
-    double ubd;
-    double fact;
+   double Sigma; /*!< Sufficient reduction constant */
+   double Delta; /*!< Switching constant */
+   double ubd;
+   double fact;
 };
 
 /*! \class FilterStrategy
@@ -25,22 +25,19 @@ struct FilterStrategyParameters {
  */
 class FilterStrategy : public GlobalizationStrategy {
 public:
-    FilterStrategy(ConstraintRelaxationStrategy& feasibility_strategy, Subproblem& subproblem, FilterStrategyParameters& strategy_constants,
-          const std::map<std::string, std::string>& options);
+   FilterStrategy(Subproblem& subproblem, FilterStrategyParameters& strategy_constants, const std::map<std::string, std::string>& options);
 
-    /* use pointers to allow polymorphism */
-    std::unique_ptr<Filter> filter_optimality; /*!< Filter for the optimality phase */
-    std::unique_ptr<Filter> filter_restoration; /*!< Filter for the restoration phase */
+   /* use pointers to allow polymorphism */
+   std::unique_ptr<Filter> filter;
+   double initial_filter_upper_bound;
 
-    Iterate initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
-    std::optional<Iterate> check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) override;
-    
+   void initialize(Statistics& statistics, const Iterate& first_iterate) override;
+   bool check_acceptance(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, Direction& direction, double step_length) override;
+   void reset() override;
+   void notify(Iterate& current_iterate) override;
+
 private:
-    Phase current_phase_; /*!< Current phase (optimality or feasibility restoration) */
-    FilterStrategyParameters parameters_; /*!< Set of constants */
-    
-    void switch_phase_(Problem& problem, Direction& direction, Iterate& current_iterate, Iterate& trial_iterate);
-    void update_restoration_multipliers_(Iterate& trial_iterate, ConstraintPartition& constraint_partition);
+   FilterStrategyParameters parameters_; /*!< Set of constants */
 };
 
 #endif // FILTERSTRATEGY_H

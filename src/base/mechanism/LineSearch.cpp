@@ -4,21 +4,21 @@
 #include "Logger.hpp"
 #include "InteriorPoint.hpp"
 
-LineSearch::LineSearch(GlobalizationStrategy& globalization_strategy, int max_iterations, double backtracking_ratio):
-   GlobalizationMechanism(globalization_strategy, max_iterations), step_length(1.), backtracking_ratio(backtracking_ratio),
+LineSearch::LineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, int max_iterations, double backtracking_ratio):
+   GlobalizationMechanism(constraint_relaxation_strategy, max_iterations), step_length(1.), backtracking_ratio(backtracking_ratio),
    min_step_length(1e-9) {
 }
 
 Iterate LineSearch::initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
    statistics.add_column("LS step length", Statistics::double_width, 30);
    // generate the initial point
-   return this->globalization_strategy.initialize(statistics, problem, x, multipliers);
+   return this->constraint_relaxation_strategy.initialize(statistics, problem, x, multipliers);
 }
 
 std::pair<Iterate, Direction> LineSearch::compute_acceptable_iterate(Statistics& statistics, Problem& problem, Iterate& current_iterate) {
    /* compute the directions */
-   this->globalization_strategy.subproblem.generate(problem, current_iterate, problem.objective_sign, INFINITY);
-   std::vector<Direction> directions = this->globalization_strategy.constraint_relaxation_strategy.compute_feasible_directions(problem, current_iterate, INFINITY);
+   this->constraint_relaxation_strategy.subproblem.generate(problem, current_iterate, problem.objective_sign, INFINITY);
+   std::vector<Direction> directions = this->constraint_relaxation_strategy.compute_feasible_directions(problem, current_iterate, INFINITY);
 
    bool line_search_termination = false;
    while (!line_search_termination) {
@@ -46,7 +46,7 @@ std::pair<Iterate, Direction> LineSearch::compute_acceptable_iterate(Statistics&
          if (0. < current_iterate.progress.feasibility && directions[0].phase == OPTIMALITY) {
             // reset the line search with the restoration solution
             DEBUG << "Enter restoration feasibility phase\n";
-            directions = this->globalization_strategy.subproblem.restore_feasibility(problem, current_iterate, directions[0], INFINITY);
+            directions = this->constraint_relaxation_strategy.subproblem.restore_feasibility(problem, current_iterate, directions[0], INFINITY);
             this->step_length = 1.;
          }
          else {

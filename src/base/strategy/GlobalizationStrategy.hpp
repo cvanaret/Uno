@@ -23,19 +23,15 @@ public:
     * \param problem: optimization problem
     * \param constants: set of constants
     */
-   explicit GlobalizationStrategy(ConstraintRelaxationStrategy& constraint_relaxation_strategy, Subproblem& subproblem);
+   explicit GlobalizationStrategy(Subproblem& subproblem);
    virtual ~GlobalizationStrategy() = default;
 
-   ConstraintRelaxationStrategy& constraint_relaxation_strategy;
    Subproblem& subproblem;
 
-   virtual Iterate initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
-   virtual std::optional<Iterate> check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction,
-         double step_length) = 0;
-
-protected:
-   // preallocated vector to receive the trial primal variables
-   std::vector<double> trial_primals_;
+   virtual void initialize(Statistics& statistics, const Iterate& first_iterate) = 0;
+   virtual bool check_acceptance(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, Direction& direction, double step_length) = 0;
+   virtual void reset() = 0;
+   virtual void notify(Iterate& current_iterate) = 0;
 };
 
 #endif // GLOBALIZATIONSTRATEGY_H

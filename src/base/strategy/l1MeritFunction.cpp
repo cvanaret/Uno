@@ -1,0 +1,48 @@
+#include <cmath>
+#include "Uno.hpp"
+#include "l1MeritFunction.hpp"
+#include "Logger.hpp"
+
+/*
+ * Infeasibility detection and SQP methods for nonlinear optimization 
+ * http://epubs.siam.org/doi/pdf/10.1137/080738222
+ */
+
+l1MeritFunction::l1MeritFunction(Subproblem& subproblem) : GlobalizationStrategy(subproblem), decrease_fraction_(1e-8) {
+}
+
+void l1MeritFunction::initialize(Statistics& statistics, const Iterate& /*first_iterate*/) {
+   statistics.add_column("penalty param.", Statistics::double_width, 4);
+}
+
+void l1MeritFunction::reset() {
+}
+
+void l1MeritFunction::notify(Iterate& /*current_iterate*/) {
+}
+
+bool l1MeritFunction::check_acceptance(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, Direction& direction, double step_length) {
+   bool accept = false;
+   /* compute current exact l1 penalty: rho f + ||c|| */
+   double current_exact_l1_penalty =
+         direction.objective_multiplier * current_iterate.progress.objective + current_iterate.progress.feasibility;
+   double trial_exact_l1_penalty = direction.objective_multiplier * trial_iterate.progress.objective + trial_iterate.progress.feasibility;
+
+   /* check the validity of the trial step */
+   double predicted_reduction = direction.predicted_reduction(step_length);
+   double actual_reduction = current_exact_l1_penalty - trial_exact_l1_penalty;
+
+   DEBUG << "Current: η = " << current_iterate.progress.feasibility << ", ω = " << current_iterate.progress.objective << "\n";
+   DEBUG << "Trial: η = " << trial_iterate.progress.feasibility << ", ω = " << trial_iterate.progress.objective << "\n";
+   DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << actual_reduction << "\n\n";
+
+   // Armijo sufficient decrease condition
+   if (actual_reduction >= this->decrease_fraction_ * predicted_reduction) {
+      accept = true;
+   }
+
+   if (accept) {
+      statistics.add_statistic("penalty param.", direction.objective_multiplier);
+   }
+   return accept;
+}
