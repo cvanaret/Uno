@@ -44,9 +44,33 @@ std::vector<Direction> l1Relaxation::compute_feasible_directions(Problem& proble
    return this->subproblem.compute_directions(problem, current_iterate, trust_region_radius);
 }
 
-std::optional<Iterate> l1Relaxation::check_acceptance(Statistics& /*statistics*/, Problem& /*problem*/, Iterate& /*current_iterate*/, Direction&
-   /*direction*/, double /*step_length*/) {
-   return std::optional<Iterate>();
+std::optional<Iterate> l1Relaxation::check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction,
+      double step_length) {
+   // compute the trial iterate TODO do not reevaluate if ||d|| = 0
+   add_vectors(current_iterate.x, direction.x, step_length, this->trial_primals_);
+   Iterate trial_iterate(this->trial_primals_, direction.multipliers);
+   double step_norm = step_length * direction.norm;
+   this->subproblem.compute_optimality_measures(problem, trial_iterate);
+
+   // check if subproblem definition changed
+   if (this->subproblem.subproblem_definition_changed) {
+      this->globalization_strategy->reset();
+      this->subproblem.subproblem_definition_changed = false;
+      this->subproblem.compute_optimality_measures(problem, current_iterate);
+   }
+
+   bool accept = false;
+   if (step_norm == 0.) {
+      accept = true;
+   }
+   else {
+      // compute the predicted reduction (a mixture of the subproblem's and of the l1 relaxation's)
+      double predicted_reduction = this->compute_predicted_reduction(problem, current_iterate, direction, step_length);
+      accept = this->globalization_strategy->check_acceptance(statistics, current_iterate.progress, trial_iterate.progress, direction,
+            predicted_reduction);
+   }
+
+   return (accept ? std::make_optional(trial_iterate) : std::nullopt);
 }
 
 void l1Relaxation::preprocess_subproblem() {

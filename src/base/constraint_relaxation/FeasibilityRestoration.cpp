@@ -75,10 +75,10 @@ std::optional<Iterate> FeasibilityRestoration::check_acceptance(Statistics& stat
       }
    }
 
-   /* correct multipliers for infeasibility problem */
    if (accept) {
       statistics.add_statistic("phase", (int) direction.phase);
       if (direction.phase == FEASIBILITY_RESTORATION) {
+         /* correct multipliers for infeasibility problem */
          FeasibilityRestoration::update_restoration_multipliers_(trial_iterate, direction.constraint_partition);
       }
       return trial_iterate;
