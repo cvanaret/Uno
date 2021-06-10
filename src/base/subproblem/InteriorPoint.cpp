@@ -624,7 +624,7 @@ std::vector<Direction> InteriorPoint::restore_feasibility(Problem& problem, Iter
 
    Direction direction(trial_x, trial_multipliers);
    direction.status = INFEASIBLE;
-   direction.phase = RESTORATION;
+   direction.phase = FEASIBILITY_RESTORATION;
    direction.norm = norm_inf(direction.x, problem.number_variables);
    direction.predicted_reduction = [&](double step_length) {
       return InteriorPoint::compute_predicted_reduction_(direction, step_length);

@@ -37,10 +37,10 @@ void run_uno(const std::string& problem_name, const std::map<std::string, std::s
          subproblem = SubproblemFactory::create(*problem, options.at("subproblem"), options, use_trust_region, scale_residuals);
 
    /* create the infeasibility method */
-   FeasibilityRestoration feasibility_strategy = FeasibilityRestoration(*subproblem);
+   FeasibilityRestoration constraint_relaxation_strategy = FeasibilityRestoration(*subproblem);
 
    /* create the globalization strategy */
-   std::unique_ptr<GlobalizationStrategy> strategy = GlobalizationStrategyFactory::create(options.at("strategy"), feasibility_strategy,
+   std::unique_ptr<GlobalizationStrategy> strategy = GlobalizationStrategyFactory::create(options.at("strategy"), constraint_relaxation_strategy,
          *subproblem, options);
 
    /* create the globalization mechanism */

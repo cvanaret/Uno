@@ -22,11 +22,11 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 # directories
-set(DIRECTORIES base base/feasibility base/mechanism base/strategy base/subproblem interfaces interfaces/AMPL linear_algebra logger solvers solvers/linear solvers/QP solvers/NLP)
+set(DIRECTORIES base base/constraint_relaxation base/mechanism base/strategy base/subproblem interfaces interfaces/AMPL linear_algebra logger solvers solvers/linear solvers/QP solvers/NLP)
 
 # source files
 set(SRC_FILES
-    base/Uno.cpp base/Constraint.cpp base/HessianEvaluation.cpp
+    base/Uno.cpp base/Constraint.cpp 
     base/Iterate.cpp base/Phase.hpp base/Preprocessing.cpp
     base/Problem.cpp base/Statistics.cpp base/Timer.cpp
     
@@ -39,9 +39,9 @@ set(SRC_FILES
     base/strategy/FilterStrategy.cpp base/strategy/Filter.cpp
     base/strategy/l1Penalty.cpp
 
-    base/feasibility/FeasibilityStrategy.cpp
-    base/feasibility/l1Relaxation.cpp
-    base/feasibility/FeasibilityRestoration.cpp
+    base/constraint_relaxation/ConstraintRelaxationStrategy.cpp
+    base/constraint_relaxation/l1Relaxation.cpp
+    base/constraint_relaxation/FeasibilityRestoration.cpp
     
     base/subproblem/Subproblem.cpp
     base/subproblem/SubproblemFactory.cpp
@@ -52,6 +52,7 @@ set(SRC_FILES
     base/subproblem/SLP.cpp
     base/subproblem/SLPEQP.cpp
     base/subproblem/SQP.cpp
+    base/subproblem/HessianEvaluation.cpp
     
     linear_algebra/Matrix.cpp linear_algebra/Vector.cpp
     

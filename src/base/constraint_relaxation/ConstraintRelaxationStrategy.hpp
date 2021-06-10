@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cmath>
+#include "Statistics.hpp"
 #include "Subproblem.hpp"
 #include "Direction.hpp"
 #include "Problem.hpp"
@@ -14,6 +15,8 @@ public:
 
    explicit ConstraintRelaxationStrategy(Subproblem& subproblem);
    virtual std::vector<Direction> compute_feasible_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) = 0;
+   virtual std::optional<Iterate> check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction,
+         double step_length) = 0;
    virtual double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) = 0;
 };
 
