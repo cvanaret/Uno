@@ -21,19 +21,20 @@ void l1MeritFunction::reset() {
 void l1MeritFunction::notify(Iterate& /*current_iterate*/) {
 }
 
-bool l1MeritFunction::check_acceptance(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, Direction& direction, double step_length) {
+bool l1MeritFunction::check_acceptance(Statistics& statistics, ProgressMeasures& current_progress, ProgressMeasures& trial_progress,
+      const Direction& direction, double predicted_reduction) {
    bool accept = false;
    /* compute current exact l1 penalty: rho f + ||c|| */
    double current_exact_l1_penalty =
-         direction.objective_multiplier * current_iterate.progress.objective + current_iterate.progress.feasibility;
-   double trial_exact_l1_penalty = direction.objective_multiplier * trial_iterate.progress.objective + trial_iterate.progress.feasibility;
+         direction.objective_multiplier * current_progress.objective + current_progress.feasibility;
+   double trial_exact_l1_penalty = direction.objective_multiplier * trial_progress.objective + trial_progress.feasibility;
 
    /* check the validity of the trial step */
-   double predicted_reduction = direction.predicted_reduction(step_length);
+   //double predicted_reduction = direction.predicted_reduction(step_length);
    double actual_reduction = current_exact_l1_penalty - trial_exact_l1_penalty;
 
-   DEBUG << "Current: η = " << current_iterate.progress.feasibility << ", ω = " << current_iterate.progress.objective << "\n";
-   DEBUG << "Trial: η = " << trial_iterate.progress.feasibility << ", ω = " << trial_iterate.progress.objective << "\n";
+   DEBUG << "Current: η = " << current_progress.feasibility << ", ω = " << current_progress.objective << "\n";
+   DEBUG << "Trial: η = " << trial_progress.feasibility << ", ω = " << trial_progress.objective << "\n";
    DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << actual_reduction << "\n\n";
 
    // Armijo sufficient decrease condition
