@@ -23,10 +23,10 @@ public:
     * \param problem: optimization problem
     * \param constants: set of constants
     */
-   explicit GlobalizationStrategy(ConstraintRelaxationStrategy& feasibility_strategy, Subproblem& subproblem);
+   explicit GlobalizationStrategy(ConstraintRelaxationStrategy& constraint_relaxation_strategy, Subproblem& subproblem);
    virtual ~GlobalizationStrategy() = default;
 
-   ConstraintRelaxationStrategy& feasibility_strategy;
+   ConstraintRelaxationStrategy& constraint_relaxation_strategy;
    Subproblem& subproblem;
 
    virtual Iterate initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;

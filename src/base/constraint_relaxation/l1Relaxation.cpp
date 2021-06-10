@@ -29,6 +29,11 @@ std::vector<Direction> l1Relaxation::compute_feasible_directions(Problem& proble
    return this->subproblem.compute_directions(problem, current_iterate, trust_region_radius);
 }
 
+std::optional<Iterate> l1Relaxation::check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction,
+      double step_length) {
+   return std::optional<Iterate>();
+}
+
 void l1Relaxation::preprocess_subproblem() {
    // scale the objective gradient
    if (this->penalty_parameter == 0.) {

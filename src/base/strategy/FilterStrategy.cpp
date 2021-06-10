@@ -54,7 +54,7 @@ FilterStrategy::check_acceptance(Statistics& statistics, Problem& problem, Itera
       this->switch_phase_(problem, direction, current_iterate, trial_iterate);
 
       /* if RESTORATION phase, compute (in)feasibility measures of trial point */
-      if (this->current_phase_ == RESTORATION) {
+      if (this->current_phase_ == FEASIBILITY_RESTORATION) {
          this->subproblem.compute_infeasibility_measures(problem, trial_iterate, direction);
       }
 
@@ -91,7 +91,7 @@ FilterStrategy::check_acceptance(Statistics& statistics, Problem& problem, Itera
    /* correct multipliers for infeasibility problem */
    if (accept) {
       statistics.add_statistic("phase", (int) direction.phase);
-      if (direction.phase == RESTORATION) {
+      if (direction.phase == FEASIBILITY_RESTORATION) {
          this->update_restoration_multipliers_(trial_iterate, direction.constraint_partition);
       }
       return trial_iterate;
@@ -104,10 +104,10 @@ FilterStrategy::check_acceptance(Statistics& statistics, Problem& problem, Itera
 void FilterStrategy::switch_phase_(Problem& problem, Direction& direction, Iterate& current_iterate, Iterate& trial_iterate) {
    /* find out if transition of one phase to the other */
    if (this->current_phase_ == OPTIMALITY) {
-      if (direction.phase == RESTORATION) {
-         /* infeasible QP: go from phase II (optimality) to I (restoration) */
+      if (direction.phase == FEASIBILITY_RESTORATION) {
+         /* infeasible subproblem: go from phase II (optimality) to I (restoration) */
          DEBUG << "Switching from optimality to restoration phase\n";
-         this->current_phase_ = RESTORATION;
+         this->current_phase_ = FEASIBILITY_RESTORATION;
          /* add [h,f] (c/s violation) to filter, entering restoration */
          this->filter_optimality->add(current_iterate.progress.feasibility, current_iterate.progress.objective);
 

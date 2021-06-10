@@ -1,6 +1,6 @@
 #include "FeasibilityRestoration.hpp"
 
-FeasibilityRestoration::FeasibilityRestoration(Subproblem& subproblem) : ConstraintRelaxationStrategy(subproblem) {
+FeasibilityRestoration::FeasibilityRestoration(Subproblem& subproblem) : ConstraintRelaxationStrategy(subproblem), current_phase(OPTIMALITY) {
 }
 
 std::vector<Direction> FeasibilityRestoration::compute_feasible_directions(Problem& problem, Iterate& current_iterate, double
@@ -16,8 +16,17 @@ trust_region_radius) {
    }
    else {
       /* infeasible subproblem: switch to restoration phase */
-      return this->subproblem.restore_feasibility(problem, current_iterate, direction, trust_region_radius);
+      directions = this->subproblem.restore_feasibility(problem, current_iterate, direction, trust_region_radius);
+      /* infeasible subproblem: go from phase II (optimality) to I (restoration) */
+      DEBUG << "Switching from optimality to restoration phase\n";
+      this->current_phase = FEASIBILITY_RESTORATION;
+      return directions;
    }
+}
+
+std::optional<Iterate> FeasibilityRestoration::check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction,
+      double step_length) {
+   return std::optional<Iterate>();
 }
 
 double FeasibilityRestoration::compute_predicted_reduction(Problem& /*problem*/, Iterate& /*current_iterate*/, Direction& direction,

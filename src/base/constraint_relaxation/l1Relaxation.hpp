@@ -14,6 +14,8 @@ class l1Relaxation: public ConstraintRelaxationStrategy {
 public:
    explicit l1Relaxation(Problem& problem, Subproblem& subproblem);
    std::vector<Direction> compute_feasible_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
+   std::optional<Iterate> check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction, double
+   step_length) override;
    double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) override;
 
 protected:

@@ -32,7 +32,7 @@ std::pair<Iterate, Direction> TrustRegion::compute_acceptable_iterate(Statistics
             this->globalization_strategy.subproblem.update_trust_region(problem, current_iterate, this->radius);
          }
          /* compute the directions within the trust region */
-         std::vector<Direction> directions = this->globalization_strategy.feasibility_strategy.compute_feasible_directions(problem, current_iterate,
+         std::vector<Direction> directions = this->globalization_strategy.constraint_relaxation_strategy.compute_feasible_directions(problem, current_iterate,
                this->radius);
          /* set bound multipliers of active trust region to 0 */
          for (Direction& direction: directions) {

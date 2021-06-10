@@ -32,7 +32,7 @@ std::vector<Direction> SLP::compute_directions(Problem& problem, Iterate& curren
 
 std::vector<Direction> SLP::restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) {
    Direction direction = this->compute_l1lp_step_(problem, *this->solver, current_iterate, phase_2_direction, trust_region_radius);
-   direction.phase = RESTORATION;
+   direction.phase = FEASIBILITY_RESTORATION;
    return std::vector<Direction>{direction};
 }
 
