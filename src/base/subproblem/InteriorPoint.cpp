@@ -462,9 +462,10 @@ std::vector<double> InteriorPoint::compute_upper_bound_multiplier_displacements_
 
 void InteriorPoint::compute_optimality_measures(const Problem& problem, Iterate& iterate) {
    /* evaluate constraints with slacks */
-   iterate.feasibility_measure = this->constraint_violation(problem, iterate);
+   double feasibility = this->constraint_violation(problem, iterate);
    /* compute barrier objective */
-   iterate.optimality_measure = this->barrier_function_(problem, iterate, this->variables_bounds);
+   double objective = this->barrier_function_(problem, iterate, this->variables_bounds);
+   iterate.progress = {feasibility, objective};
 }
 
 void InteriorPoint::compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const Direction& /*direction*/) {

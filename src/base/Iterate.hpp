@@ -20,6 +20,11 @@ struct Residuals {
    double complementarity;
 };
 
+struct ProgressMeasures {
+   double feasibility;
+   double objective;
+};
+
 /*! \class Iterate
  * \brief Optimization iterate
  *
@@ -56,8 +61,9 @@ public:
 
    // residuals
    Residuals residuals;
-   double feasibility_measure;
-   double optimality_measure;
+   //double feasibility_measure;
+   //double optimality_measure;
+   ProgressMeasures progress;
 
    void compute_objective(const Problem& problem);
    void compute_constraints(const Problem& problem);
