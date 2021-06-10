@@ -8,7 +8,7 @@
 
 class GlobalizationStrategyFactory {
 public:
-   static std::unique_ptr<GlobalizationStrategy> create(const std::string& type, FeasibilityStrategy& feasibility_strategy,
+   static std::unique_ptr<GlobalizationStrategy> create(const std::string& type, ConstraintRelaxationStrategy& feasibility_strategy,
          Subproblem& subproblem, const std::map<std::string, std::string>& options);
 };
 

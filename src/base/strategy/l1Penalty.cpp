@@ -8,7 +8,7 @@
  * http://epubs.siam.org/doi/pdf/10.1137/080738222
  */
 
-l1Penalty::l1Penalty(FeasibilityStrategy& feasibility_strategy, Subproblem& subproblem) :
+l1Penalty::l1Penalty(ConstraintRelaxationStrategy& feasibility_strategy, Subproblem& subproblem) :
    GlobalizationStrategy(feasibility_strategy, subproblem), decrease_fraction_(1e-8) {
 }
 

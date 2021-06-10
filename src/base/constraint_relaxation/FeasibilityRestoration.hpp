@@ -1,9 +1,9 @@
 #ifndef FEASIBILITYRESTORATION_H
 #define FEASIBILITYRESTORATION_H
 
-#include "FeasibilityStrategy.hpp"
+#include "ConstraintRelaxationStrategy.hpp"
 
-class FeasibilityRestoration: public FeasibilityStrategy {
+class FeasibilityRestoration: public ConstraintRelaxationStrategy {
 public:
    explicit FeasibilityRestoration(Subproblem& subproblem);
    std::vector<Direction> compute_feasible_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) override;

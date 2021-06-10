@@ -1,7 +1,7 @@
 #ifndef FEASIBILITYRESTORATION_H
 #define FEASIBILITYRESTORATION_H
 
-#include "FeasibilityStrategy.hpp"
+#include "ConstraintRelaxationStrategy.hpp"
 #include "ActiveSetMethod.hpp"
 
 struct RelaxationParameters {
@@ -10,7 +10,7 @@ struct RelaxationParameters {
    double epsilon2;
 };
 
-class l1Relaxation: public FeasibilityStrategy {
+class l1Relaxation: public ConstraintRelaxationStrategy {
 public:
    explicit l1Relaxation(Problem& problem, Subproblem& subproblem);
    std::vector<Direction> compute_feasible_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
