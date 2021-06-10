@@ -19,19 +19,18 @@ Iterate ActiveSetMethod::evaluate_initial_point(const Problem& problem, const st
 void ActiveSetMethod::compute_optimality_measures(const Problem& problem, Iterate& iterate) {
    // feasibility
    this->compute_residuals(problem, iterate, iterate.multipliers, 1.);
-   iterate.feasibility_measure = iterate.residuals.constraints;
    // optimality
    iterate.compute_objective(problem);
-   iterate.optimality_measure = iterate.objective;
+   iterate.progress = {iterate.residuals.constraints, iterate.objective};
 }
 
 void ActiveSetMethod::compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const Direction& direction) {
    iterate.compute_constraints(problem);
    // feasibility measure: residual of all constraints
-   iterate.feasibility_measure = problem.compute_constraint_residual(iterate.constraints, this->residual_norm);
+   double feasibility = problem.compute_constraint_residual(iterate.constraints, this->residual_norm);
    // optimality measure: residual of linearly infeasible constraints
-   iterate.optimality_measure =
-         problem.compute_constraint_residual(iterate.constraints, direction.constraint_partition.infeasible, this->residual_norm);
+   double objective = problem.compute_constraint_residual(iterate.constraints, direction.constraint_partition.infeasible, this->residual_norm);
+   iterate.progress = {feasibility, objective};
 }
 
 /* QP */

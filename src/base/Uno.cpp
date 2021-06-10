@@ -159,8 +159,8 @@ void Result::display(bool print_solution) {
    INFO << "FJ residual:\t\t\t" << this->solution.residuals.FJ << "\n";
    INFO << "Complementarity residual:\t" << this->solution.residuals.complementarity << "\n";
 
-   INFO << "Feasibility measure:\t\t" << this->solution.feasibility_measure << "\n";
-   INFO << "Optimality measure:\t\t" << this->solution.optimality_measure << "\n";
+   INFO << "Feasibility measure:\t\t" << this->solution.progress.feasibility << "\n";
+   INFO << "Optimality measure:\t\t" << this->solution.progress.objective << "\n";
 
    if (print_solution) {
       INFO << "Primal solution:\t\t";

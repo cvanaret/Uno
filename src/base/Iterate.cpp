@@ -17,7 +17,8 @@ Iterate::Iterate(const std::vector<double>& x, const Multipliers& multipliers) :
       constraints(multipliers.constraints.size()), are_constraints_computed(false),
       is_objective_gradient_computed(false), is_constraints_jacobian_computed(false),
       //hessian(x.size(), 1), is_hessian_computed(false),
-      residuals({0., 0., 0., 0.}), feasibility_measure(0.), optimality_measure(0.) {
+      residuals({0., 0., 0., 0.}),
+      progress({0., 0.}) {
 }
 
 void Iterate::compute_objective(const Problem& problem) {
@@ -95,8 +96,7 @@ void Iterate::clear() {
    this->is_objective_gradient_computed = false;
    this->is_constraints_jacobian_computed = false;
    this->residuals = {0., 0., 0., 0.};
-   this->feasibility_measure = 0.;
-   this->optimality_measure = 0.;
+   this->progress = {0., 0.};
 }
 
 std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
@@ -115,7 +115,7 @@ std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
    stream << "FJ residual: " << iterate.residuals.KKT << "\n";
    stream << "Complementarity residual: " << iterate.residuals.complementarity << "\n";
 
-   stream << "Optimality measure: " << iterate.optimality_measure << "\n";
-   stream << "Feasibility measure: " << iterate.feasibility_measure << "\n";
+   stream << "Optimality measure: " << iterate.progress.objective << "\n";
+   stream << "Feasibility measure: " << iterate.progress.feasibility << "\n";
    return stream;
 }

@@ -22,8 +22,7 @@ Iterate l1Penalty::initialize(Statistics& statistics, Problem& problem, std::vec
    return first_iterate;
 }
 
-std::optional<Iterate>
-l1Penalty::check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction,
+std::optional<Iterate> l1Penalty::check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction,
       double step_length) {
    /* check if subproblem definition changed */
    if (this->subproblem.subproblem_definition_changed) {
@@ -45,15 +44,15 @@ l1Penalty::check_acceptance(Statistics& statistics, Problem& problem, Iterate& c
    else {
       /* compute current exact l1 penalty: rho f + ||c|| */
       double current_exact_l1_penalty =
-            direction.objective_multiplier * current_iterate.optimality_measure + current_iterate.feasibility_measure;
-      double trial_exact_l1_penalty = direction.objective_multiplier * trial_iterate.optimality_measure + trial_iterate.feasibility_measure;
+            direction.objective_multiplier * current_iterate.progress.objective + current_iterate.progress.feasibility;
+      double trial_exact_l1_penalty = direction.objective_multiplier * trial_iterate.progress.objective + trial_iterate.progress.feasibility;
 
       /* check the validity of the trial step */
       double predicted_reduction = direction.predicted_reduction(step_length);
       double actual_reduction = current_exact_l1_penalty - trial_exact_l1_penalty;
 
-      DEBUG << "Current: η = " << current_iterate.feasibility_measure << ", ω = " << current_iterate.optimality_measure << "\n";
-      DEBUG << "Trial: η = " << trial_iterate.feasibility_measure << ", ω = " << trial_iterate.optimality_measure << "\n";
+      DEBUG << "Current: η = " << current_iterate.progress.feasibility << ", ω = " << current_iterate.progress.objective << "\n";
+      DEBUG << "Trial: η = " << trial_iterate.progress.feasibility << ", ω = " << trial_iterate.progress.objective << "\n";
       DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << actual_reduction << "\n\n";
 
       // Armijo sufficient decrease condition

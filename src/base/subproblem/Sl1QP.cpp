@@ -90,18 +90,18 @@ Sl1QP::compute_directions(Problem& problem, Iterate& current_iterate, double tru
                if (!condition1) {
                   /* stage d: reach a fraction of the ideal decrease */
                   if ((ideal_linearized_residual == 0. && linearized_residual == 0) || (ideal_linearized_residual != 0. &&
-                                                                                        current_iterate.feasibility_measure -
+                                                                                        current_iterate.progress.feasibility -
                                                                                         linearized_residual >= this->parameters.epsilon1 *
                                                                                                                (current_iterate
-                                                                                                                      .feasibility_measure -
+                                                                                                                      .progress.feasibility -
                                                                                                                 ideal_linearized_residual))) {
                      condition1 = true;
                      DEBUG << "Condition 1 is true\n";
                   }
                }
                /* stage e: further decrease penalty parameter if necessary */
-               if (condition1 && current_iterate.feasibility_measure - direction.objective >=
-                                 this->parameters.epsilon2 * (current_iterate.feasibility_measure - ideal_direction.objective)) {
+               if (condition1 && current_iterate.progress.feasibility - direction.objective >=
+                                 this->parameters.epsilon2 * (current_iterate.progress.feasibility - ideal_direction.objective)) {
                   condition2 = true;
                   DEBUG << "Condition 2 is true\n";
                }
@@ -123,7 +123,7 @@ Sl1QP::compute_directions(Problem& problem, Iterate& current_iterate, double tru
 
             /* stage f: update the penalty parameter */
             double updated_penalty_parameter = this->penalty_parameter;
-            double term = ideal_error / std::max(1., current_iterate.feasibility_measure);
+            double term = ideal_error / std::max(1., current_iterate.progress.feasibility);
             this->penalty_parameter = std::min(this->penalty_parameter, term * term);
             if (this->penalty_parameter < updated_penalty_parameter) {
                direction = this->solve_l1qp_subproblem_(problem, current_iterate, trust_region_radius, this->penalty_parameter);
@@ -258,7 +258,7 @@ std::vector<Direction> Sl1QP::restore_feasibility(Problem&, Iterate&, Direction&
 double Sl1QP::compute_predicted_reduction_(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) {
    // the predicted reduction is quadratic
    if (step_length == 1.) {
-      return current_iterate.feasibility_measure - direction.objective;
+      return current_iterate.progress.feasibility - direction.objective;
    }
    else {
       double linear_term = dot(direction.x, current_iterate.objective_gradient);
@@ -269,7 +269,7 @@ double Sl1QP::compute_predicted_reduction_(Problem& problem, Iterate& current_it
          scaled_constraints[j] += step_length * dot(direction.x, current_iterate.constraints_jacobian[j]);
       }
       double constraint_violation = problem.compute_constraint_residual(scaled_constraints, this->residual_norm);
-      return current_iterate.feasibility_measure - constraint_violation - step_length * (linear_term + step_length * quadratic_term);
+      return current_iterate.progress.feasibility - constraint_violation - step_length * (linear_term + step_length * quadratic_term);
    }
 }
 
