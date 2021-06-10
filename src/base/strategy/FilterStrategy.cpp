@@ -31,33 +31,32 @@ void FilterStrategy::notify(Iterate& current_iterate) {
 /* check acceptability of step(s) (filter & sufficient reduction)
  * precondition: feasible step
  * */
-bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, Iterate& current_iterate, Iterate& trial_iterate, Direction& direction,
-      double step_length) {
+bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, ProgressMeasures& current_progress, ProgressMeasures& trial_progress,
+      const Direction& /*direction*/, double predicted_reduction) {
    bool accept = false;
 
-   DEBUG << "Current: η = " << current_iterate.progress.feasibility << ", ω = " << current_iterate.progress.objective << "\n";
-   DEBUG << "Trial: η = " << trial_iterate.progress.feasibility << ", ω = " << trial_iterate.progress.objective << "\n";
+   DEBUG << "Current: η = " << current_progress.feasibility << ", ω = " << current_progress.objective << "\n";
+   DEBUG << "Trial: η = " << trial_progress.feasibility << ", ω = " << trial_progress.objective << "\n";
 
    /* check acceptance */
-   bool acceptable = filter->accept(trial_iterate.progress.feasibility, trial_iterate.progress.objective);
+   bool acceptable = filter->accept(trial_progress.feasibility, trial_progress.objective);
    if (acceptable) {
       // check acceptance wrt current x (h,f)
-      acceptable = filter->improves_current_iterate(current_iterate.progress.feasibility, current_iterate.progress.objective,
-            trial_iterate.progress.feasibility, trial_iterate.progress.objective);
+      acceptable = filter->improves_current_iterate(current_progress.feasibility, current_progress.objective,
+            trial_progress.feasibility, trial_progress.objective);
       if (acceptable) {
-         double predicted_reduction = direction.predicted_reduction(step_length);
          double actual_reduction =
-               filter->compute_actual_reduction(current_iterate.progress.objective, current_iterate.progress.feasibility,
-                     trial_iterate.progress.objective);
+               filter->compute_actual_reduction(current_progress.objective, current_progress.feasibility,
+                     trial_progress.objective);
          DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << actual_reduction << "\n\n";
 
          /* switching condition */
-         if (predicted_reduction < this->parameters_.Delta * std::pow(current_iterate.progress.feasibility, 2)) {
-            filter->add(current_iterate.progress.feasibility, current_iterate.progress.objective);
+         if (predicted_reduction < this->parameters_.Delta * std::pow(current_progress.feasibility, 2)) {
+            filter->add(current_progress.feasibility, current_progress.objective);
             accept = true;
          }
             /* Armijo sufficient decrease condition: predicted_reduction should be positive */
-         else if (actual_reduction >= this->parameters_.Sigma * step_length * std::max(0., predicted_reduction - 1e-9)) {
+         else if (actual_reduction >= this->parameters_.Sigma * std::max(0., predicted_reduction - 1e-9)) {
             accept = true;
          }
       }

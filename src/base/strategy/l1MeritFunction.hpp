@@ -14,7 +14,8 @@ public:
    explicit l1MeritFunction(Subproblem& subproblem);
 
    void initialize(Statistics& statistics, const Iterate& first_iterate) override;
-   bool check_acceptance(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, Direction& direction, double step_length) override;
+   bool check_acceptance(Statistics& statistics, ProgressMeasures& current_progress, ProgressMeasures& trial_progress, const Direction& direction,
+         double predicted_reduction) override;
    void reset() override;
    void notify(Iterate& current_iterate) override;
 

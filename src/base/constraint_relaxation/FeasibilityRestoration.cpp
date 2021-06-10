@@ -37,9 +37,6 @@ trust_region_radius) {
    else {
       /* infeasible subproblem: switch to restoration phase */
       directions = this->subproblem.restore_feasibility(problem, current_iterate, direction, trust_region_radius);
-      /* infeasible subproblem: go from phase II (optimality) to I (restoration) */
-      DEBUG << "Switching from optimality to restoration phase\n";
-      this->current_phase = FEASIBILITY_RESTORATION;
    }
    return directions;
 }
@@ -66,13 +63,15 @@ std::optional<Iterate> FeasibilityRestoration::check_acceptance(Statistics& stat
    else {
       this->switch_phase_(problem, direction, current_iterate, trial_iterate);
 
+      // evaluate the predicted reduction
+      double predicted_reduction = direction.predicted_reduction(step_length);
       if (this->current_phase == OPTIMALITY) {
-         accept = this->phase_2_strategy->check_acceptance(statistics, current_iterate, trial_iterate, direction, step_length);
+         accept = this->phase_2_strategy->check_acceptance(statistics, current_iterate.progress, trial_iterate.progress, direction, predicted_reduction);
       }
       else {
          /* if RESTORATION phase, compute (in)feasibility measures of trial point */
          this->subproblem.compute_infeasibility_measures(problem, trial_iterate, direction);
-         accept = this->phase_1_strategy->check_acceptance(statistics, current_iterate, trial_iterate, direction, step_length);
+         accept = this->phase_1_strategy->check_acceptance(statistics, current_iterate.progress, trial_iterate.progress, direction, predicted_reduction);
       }
    }
 
