@@ -4,9 +4,8 @@
 #include "FilterStrategy.hpp"
 #include "Vector.hpp"
 
-FilterStrategy::FilterStrategy(Subproblem& subproblem, FilterStrategyParameters& strategy_parameters, const std::map<std::string, std::string>&
-      options) :
-   GlobalizationStrategy(subproblem), filter(FilterFactory::create(options)), initial_filter_upper_bound(INFINITY),
+FilterStrategy::FilterStrategy(FilterStrategyParameters& strategy_parameters, const std::map<std::string, std::string>& options) :
+   GlobalizationStrategy(), filter(FilterFactory::create(options)), initial_filter_upper_bound(INFINITY),
    parameters_(strategy_parameters) {
 }
 

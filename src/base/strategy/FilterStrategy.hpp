@@ -25,7 +25,7 @@ struct FilterStrategyParameters {
  */
 class FilterStrategy : public GlobalizationStrategy {
 public:
-   FilterStrategy(Subproblem& subproblem, FilterStrategyParameters& strategy_constants, const std::map<std::string, std::string>& options);
+   FilterStrategy(FilterStrategyParameters& strategy_constants, const std::map<std::string, std::string>& options);
 
    /* use pointers to allow polymorphism */
    std::unique_ptr<Filter> filter;
