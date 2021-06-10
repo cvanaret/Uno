@@ -18,7 +18,7 @@ public:
     * \param direction_computation: strategy to compute a descent direction
     * \param step_accept: strategy to accept or reject a step
     */
-   GlobalizationMechanism(GlobalizationStrategy& globalization_strategy, int max_iterations);
+   GlobalizationMechanism(ConstraintRelaxationStrategy& constraint_relaxation_strategy, int max_iterations);
    virtual ~GlobalizationMechanism() = default;
 
    virtual Iterate initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
@@ -28,7 +28,7 @@ public:
          double step_length);
 
    /* references to allow polymorphism */
-   GlobalizationStrategy& globalization_strategy; /*!< Strategy to accept or reject a step */
+   ConstraintRelaxationStrategy& constraint_relaxation_strategy;
    int max_iterations; /*!< Maximum number of iterations */
    int number_iterations; /*!< Current number of iterations */
 

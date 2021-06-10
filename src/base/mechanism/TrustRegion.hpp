@@ -19,7 +19,7 @@ public:
     * \param step_accept: strategy to accept or reject a step
     * \param initial_radius: initial trust region radius
     */
-   TrustRegion(GlobalizationStrategy& globalization_strategy, double initial_radius, int max_iterations);
+   TrustRegion(ConstraintRelaxationStrategy& constraint_relaxation_strategy, double initial_radius, int max_iterations);
 
    Iterate initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
    std::pair<Iterate, Direction> compute_acceptable_iterate(Statistics& statistics, Problem& problem, Iterate& current_iterate) override;

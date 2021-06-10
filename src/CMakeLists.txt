@@ -37,7 +37,7 @@ set(SRC_FILES
     base/strategy/GlobalizationStrategy.cpp
     base/strategy/GlobalizationStrategyFactory.cpp
     base/strategy/FilterStrategy.cpp base/strategy/Filter.cpp
-    base/strategy/l1Penalty.cpp
+    base/strategy/l1MeritFunction.cpp
 
     base/constraint_relaxation/ConstraintRelaxationStrategy.cpp
     base/constraint_relaxation/l1Relaxation.cpp

@@ -1,7 +1,11 @@
 #include "l1Relaxation.hpp"
+#include "GlobalizationStrategyFactory.hpp"
 
-l1Relaxation::l1Relaxation(Problem& problem, Subproblem& subproblem) : ConstraintRelaxationStrategy(subproblem), penalty_parameter(1.),
-parameters({10., 0.1, 0.1}) {
+l1Relaxation::l1Relaxation(Problem& problem, Subproblem& subproblem, const std::map<std::string, std::string>& options) :
+   ConstraintRelaxationStrategy(subproblem),
+   globalization_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), subproblem, options)),
+   penalty_parameter(1.),
+   parameters({10., 0.1, 0.1}) {
    // generate elastic variables to relax the constraints
    ActiveSetMethod::generate_elastic_variables_(problem, this->elastic_variables);
 
@@ -10,6 +14,17 @@ parameters({10., 0.1, 0.1}) {
    for (size_t i = problem.number_variables; i < this->subproblem.variables_bounds.size(); i++) {
       this->subproblem.variables_bounds[i] = {0., INFINITY};
    }
+}
+
+Iterate l1Relaxation::initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+   /* initialize the subproblem */
+   Iterate first_iterate = this->subproblem.evaluate_initial_point(problem, x, multipliers);
+   this->globalization_strategy->initialize(statistics, first_iterate);
+
+   // preallocate trial_iterate
+   this->trial_primals_.resize(first_iterate.x.size());
+
+   return first_iterate;
 }
 
 std::vector<Direction> l1Relaxation::compute_feasible_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
@@ -29,8 +44,8 @@ std::vector<Direction> l1Relaxation::compute_feasible_directions(Problem& proble
    return this->subproblem.compute_directions(problem, current_iterate, trust_region_radius);
 }
 
-std::optional<Iterate> l1Relaxation::check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction,
-      double step_length) {
+std::optional<Iterate> l1Relaxation::check_acceptance(Statistics& /*statistics*/, Problem& /*problem*/, Iterate& /*current_iterate*/, Direction&
+   /*direction*/, double /*step_length*/) {
    return std::optional<Iterate>();
 }
 

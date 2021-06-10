@@ -4,17 +4,17 @@
 //#include "DualUpdate.hpp"
 //#include "TrustLineSearch.hpp"
 
-std::unique_ptr<GlobalizationMechanism> GlobalizationMechanismFactory::create(const std::string& type, GlobalizationStrategy&
-globalization_strategy, const std::map<std::string, std::string>& options) {
-    if (type == "TR") {
+std::unique_ptr<GlobalizationMechanism> GlobalizationMechanismFactory::create(const std::string& mechanism_type, ConstraintRelaxationStrategy&
+constraint_relaxation_strategy, const std::map<std::string, std::string>& options) {
+    if (mechanism_type == "TR") {
         double radius = stod(options.at("TR_radius"));
         int max_iterations = std::stoi(options.at("TR_max_iterations"));
-        return std::make_unique<TrustRegion>(globalization_strategy, radius, max_iterations);
+        return std::make_unique<TrustRegion>(constraint_relaxation_strategy, radius, max_iterations);
     }
-    else if (type == "LS") {
+    else if (mechanism_type == "LS") {
         int max_iterations = std::stoi(options.at("LS_max_iterations"));
         double backtracking_ratio = std::stod(options.at("LS_backtracking_ratio"));
-        return std::make_unique<LineSearch>(globalization_strategy, max_iterations, backtracking_ratio);
+        return std::make_unique<LineSearch>(constraint_relaxation_strategy, max_iterations, backtracking_ratio);
     }
 //    else if (type == "TLS") {
 //        double radius = INFINITY;
@@ -26,6 +26,6 @@ globalization_strategy, const std::map<std::string, std::string>& options) {
     //    return std::make_unique<DualUpdate>(globalization_strategy, tolerance);
     //}
     else {
-        throw std::invalid_argument("GlobalizationMechanism type " + type + " does not exist");
+        throw std::invalid_argument("GlobalizationMechanism type " + mechanism_type + " does not exist");
     }
 }
