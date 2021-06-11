@@ -9,7 +9,7 @@ FeasibilityRestoration::FeasibilityRestoration(const std::string& constraint_rel
    current_phase(OPTIMALITY) {
 }
 
-Iterate FeasibilityRestoration::initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+Iterate FeasibilityRestoration::initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
    statistics.add_column("phase", Statistics::int_width, 4);
 
    /* initialize the subproblem */
@@ -24,11 +24,8 @@ Iterate FeasibilityRestoration::initialize(Statistics& statistics, Problem& prob
    return first_iterate;
 }
 
-std::vector<Direction> FeasibilityRestoration::compute_feasible_directions(Problem& problem, Iterate& current_iterate, double
-trust_region_radius) {
-   std::vector<Direction> directions = this->subproblem.compute_directions(problem, current_iterate, trust_region_radius);
-   // TODO handle multiple directions
-   Direction& direction = directions[0];
+Direction FeasibilityRestoration::compute_feasible_direction(const Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+   Direction direction = this->subproblem.compute_direction(problem, current_iterate, trust_region_radius);
 
    if (direction.status != INFEASIBLE) {
       direction.phase = OPTIMALITY;
@@ -36,12 +33,12 @@ trust_region_radius) {
    }
    else {
       /* infeasible subproblem: switch to restoration phase */
-      directions = this->subproblem.restore_feasibility(problem, current_iterate, direction, trust_region_radius);
+      direction = this->subproblem.restore_feasibility(problem, current_iterate, direction, trust_region_radius);
    }
-   return directions;
+   return direction;
 }
 
-std::optional<Iterate> FeasibilityRestoration::check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction,
+std::optional<Iterate> FeasibilityRestoration::check_acceptance(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Direction& direction,
       double step_length) {
    // compute the trial iterate TODO do not reevaluate if ||d|| = 0
    add_vectors(current_iterate.x, direction.x, step_length, this->trial_primals_);
@@ -88,7 +85,7 @@ std::optional<Iterate> FeasibilityRestoration::check_acceptance(Statistics& stat
    }
 }
 
-void FeasibilityRestoration::switch_phase_(Problem& problem, Direction& direction, Iterate& current_iterate, Iterate& /*trial_iterate*/) {
+void FeasibilityRestoration::switch_phase_(const Problem& problem, Direction& direction, Iterate& current_iterate, Iterate& /*trial_iterate*/) {
    /* find out if transition of one phase to the other */
    if (this->current_phase == OPTIMALITY) {
       if (direction.phase == FEASIBILITY_RESTORATION) {
@@ -111,7 +108,7 @@ void FeasibilityRestoration::switch_phase_(Problem& problem, Direction& directio
    }
 }
 
-double FeasibilityRestoration::compute_predicted_reduction(Problem& /*problem*/, Iterate& /*current_iterate*/, Direction& direction,
+double FeasibilityRestoration::compute_predicted_reduction(const Problem& /*problem*/, Iterate& /*current_iterate*/, Direction& direction,
       double step_length) {
    return direction.predicted_reduction(step_length);
 }

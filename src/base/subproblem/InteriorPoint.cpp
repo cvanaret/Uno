@@ -3,7 +3,7 @@
 #include "Uno.hpp"
 #include "LinearSolverFactory.hpp"
 
-InteriorPoint::InteriorPoint(Problem& problem, std::string linear_solver_name, std::string hessian_evaluation_method, bool use_trust_region,
+InteriorPoint::InteriorPoint(const Problem& problem, std::string linear_solver_name, std::string hessian_evaluation_method, bool use_trust_region,
       bool scale_residuals) :
       Subproblem(problem, L2_NORM, scale_residuals), // use the l2 norm to compute residuals
 /* if no trust region is used, the problem should be convexified. However, the inertia of the augmented matrix will be corrected later */
@@ -42,8 +42,7 @@ InteriorPoint::InteriorPoint(Problem& problem, std::string linear_solver_name, s
    }
 }
 
-Iterate
-InteriorPoint::evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& default_multipliers) {
+Iterate InteriorPoint::evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& default_multipliers) {
    /* make the initial point strictly feasible */
    std::vector<double> reformulated_x(this->number_variables);
    for (size_t i = 0; i < problem.number_variables; i++) {
@@ -113,8 +112,7 @@ double InteriorPoint::compute_KKT_error_scaling_(Iterate& current_iterate) const
 }
 
 /* reduced primal-dual approach */
-std::vector<Direction>
-InteriorPoint::compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+Direction InteriorPoint::compute_direction(const Problem& problem, Iterate& current_iterate, double trust_region_radius) {
    DEBUG << "\nCurrent iterate: " << current_iterate;
 
    current_iterate.compute_constraints_jacobian(problem);
@@ -178,7 +176,7 @@ InteriorPoint::compute_directions(Problem& problem, Iterate& current_iterate, do
       };
       /* evaluate the barrier objective */
       direction.objective = this->evaluate_local_model_(problem, current_iterate, direction.x);
-      return std::vector<Direction>{direction};
+      return Direction{direction};
    }
    catch (const UnstableInertiaCorrection& e) {
       /* unstable factorization during optimality phase */
@@ -187,7 +185,7 @@ InteriorPoint::compute_directions(Problem& problem, Iterate& current_iterate, do
    }
 }
 
-void InteriorPoint::evaluate_optimality_iterate_(Problem& problem, Iterate& current_iterate) {
+void InteriorPoint::evaluate_optimality_iterate_(const Problem& problem, Iterate& current_iterate) {
    /* compute barrier gradient */
    current_iterate.compute_objective_gradient(problem);
    // contribution of bound constraints
@@ -210,7 +208,7 @@ void InteriorPoint::evaluate_optimality_iterate_(Problem& problem, Iterate& curr
    this->hessian_evaluation->compute(problem, current_iterate.x, problem.objective_sign, current_iterate.multipliers.constraints);
 }
 
-Direction InteriorPoint::generate_direction_(Problem& problem, Iterate& current_iterate, std::vector<double>& solution_IPM) {
+Direction InteriorPoint::generate_direction_(const Problem& problem, Iterate& current_iterate, std::vector<double>& solution_IPM) {
    /* retrieve +Δλ (Nocedal p590) */
    for (size_t j = 0; j < problem.number_constraints; j++) {
       size_t multiplier_index = this->number_variables + j;
@@ -298,7 +296,7 @@ double InteriorPoint::compute_dual_length_(Iterate& current_iterate, double tau,
    return dual_length;
 }
 
-COOMatrix InteriorPoint::assemble_optimality_kkt_matrix_(Problem& problem, Iterate& current_iterate) {
+COOMatrix InteriorPoint::assemble_optimality_kkt_matrix_(const Problem& problem, Iterate& current_iterate) {
    /* compute the Lagrangian Hessian */
    COOMatrix kkt_matrix = this->hessian_evaluation->hessian.to_COO();
    kkt_matrix.dimension = this->number_variables + problem.number_constraints;
@@ -401,7 +399,7 @@ void InteriorPoint::modify_inertia_(COOMatrix& kkt_matrix, int size_first_block,
    }
 }
 
-void InteriorPoint::generate_kkt_rhs_(Problem& problem, Iterate& current_iterate) {
+void InteriorPoint::generate_kkt_rhs_(const Problem& problem, Iterate& current_iterate) {
    int number_variables = problem.number_variables + problem.inequality_constraints.size();
 
    /* generate the right-hand side */
@@ -504,7 +502,7 @@ double InteriorPoint::barrier_function_(const Problem& problem, Iterate& iterate
    return objective;
 }
 
-double InteriorPoint::evaluate_local_model_(Problem& /*problem*/, Iterate& current_iterate, std::vector<double>& solution) {
+double InteriorPoint::evaluate_local_model_(const Problem& /*problem*/, Iterate& current_iterate, std::vector<double>& solution) {
    double subproblem_objective = dot(solution, current_iterate.objective_gradient);
    return subproblem_objective;
 }
@@ -514,7 +512,7 @@ double InteriorPoint::compute_predicted_reduction_(Direction& direction, double 
    return -step_length * direction.objective;
 }
 
-std::vector<Direction> InteriorPoint::restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& /*phase_2_direction*/,
+Direction InteriorPoint::restore_feasibility(const Problem& problem, Iterate& current_iterate, Direction& /*phase_2_direction*/,
       double /*trust_region_radius*/) {
    int number_variables = problem.number_variables + problem.inequality_constraints.size();
 
@@ -629,7 +627,7 @@ std::vector<Direction> InteriorPoint::restore_feasibility(Problem& problem, Iter
    direction.predicted_reduction = [&](double step_length) {
       return InteriorPoint::compute_predicted_reduction_(direction, step_length);
    };
-   return std::vector<Direction>{direction};
+   return direction;
 }
 
 double InteriorPoint::compute_central_complementarity_error(Iterate& iterate, double mu, std::vector<Range>& variables_bounds) {

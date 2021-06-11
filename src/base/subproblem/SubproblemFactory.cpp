@@ -2,7 +2,7 @@
 #include "SQP.hpp"
 #include "SLP.hpp"
 #include "Sl1QP.hpp"
-#include "SLPEQP.hpp"
+//#include "SLPEQP.hpp"
 #include "InteriorPoint.hpp"
 #include "QPSolverFactory.hpp"
 #include "Vector.hpp"
@@ -23,10 +23,10 @@ use_trust_region, bool scale_residuals) {
       return std::make_unique<Sl1QP>(problem, options.at("QP_solver"), options.at("hessian"), use_trust_region, scale_residuals,
             initial_parameter);
    }
-   else if (type == "SLPEQP") {
-      return std::make_unique<SLPEQP>(problem, options.at("QP_solver"), options.at("linear_solver"), options.at("hessian"),
-            use_trust_region, scale_residuals);
-   }
+   //else if (type == "SLPEQP") {
+   //   return std::make_unique<SLPEQP>(problem, options.at("QP_solver"), options.at("linear_solver"), options.at("hessian"),
+   //         use_trust_region, scale_residuals);
+   //}
       //    else if (type == "SLPEQP") {
       //          if (use_trust_region) {
       //             return std::make_unique<SLPEQP_TR>(problem, options.at("LP_solver"], options.at("hessian"], use_trust_region, scale_residuals);

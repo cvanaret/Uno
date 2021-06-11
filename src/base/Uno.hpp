@@ -42,7 +42,7 @@ public:
     * \param x: primal variables
     * \param multipliers: Lagrange multipliers/dual variables
     */
-   Result solve(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool preprocessing);
+   Result solve(const Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool preprocessing);
 
    GlobalizationMechanism& globalization_mechanism; /*!< Step control strategy (trust region or line-search) */
    double tolerance; /*!< Tolerance of the termination criteria */
@@ -52,7 +52,7 @@ private:
    static Statistics create_statistics();
    static void add_statistics(Statistics& statistics, const Iterate& new_iterate, int major_iterations);
    [[nodiscard]] bool termination_criterion_(TerminationStatus is_optimal, int iteration) const;
-   TerminationStatus check_termination(Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier) const;
+   TerminationStatus check_termination(const Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier) const;
 };
 
 #endif // UNO_H

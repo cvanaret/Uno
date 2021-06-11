@@ -5,7 +5,7 @@
 #include "Vector.hpp"
 #include "Logger.hpp"
 
-ActiveSetMethod::ActiveSetMethod(Problem& problem, bool scale_residuals) :
+ActiveSetMethod::ActiveSetMethod(const Problem& problem, bool scale_residuals) :
    Subproblem(problem, L1_NORM, scale_residuals) {
 }
 
@@ -35,7 +35,7 @@ void ActiveSetMethod::compute_infeasibility_measures(const Problem& problem, Ite
 
 /* QP */
 
-void ActiveSetMethod::recover_l1qp_active_set_(Problem& problem, Direction& direction, const ElasticVariables& elastic_variables) {
+void ActiveSetMethod::recover_l1qp_active_set_(const Problem& problem, Direction& direction, const ElasticVariables& elastic_variables) {
    // remove extra variables p and n
    for (size_t i = problem.number_variables; i < direction.x.size(); i++) {
       // TODO
@@ -67,7 +67,7 @@ void ActiveSetMethod::recover_l1qp_active_set_(Problem& problem, Direction& dire
    }
 }
 
-void ActiveSetMethod::generate_elastic_variables_(Problem& problem, ElasticVariables& elastic_variables) {
+void ActiveSetMethod::generate_elastic_variables_(const Problem& problem, ElasticVariables& elastic_variables) {
    // generate elastic variables p and n on the fly to relax the constraints
    int elastic_index = problem.number_variables;
    for (size_t j = 0; j < problem.number_constraints; j++) {
@@ -100,7 +100,7 @@ void ActiveSetMethod::compute_l1_linear_objective_(Iterate& current_iterate, Con
    current_iterate.set_objective_gradient(objective_gradient);
 }
 
-void ActiveSetMethod::generate_l1_multipliers_(Problem& problem, ConstraintPartition& constraint_partition) {
+void ActiveSetMethod::generate_l1_multipliers_(const Problem& problem, ConstraintPartition& constraint_partition) {
    for (size_t j = 0; j < problem.number_constraints; j++) {
       if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
          this->constraints_multipliers[j] = 1.;
@@ -112,7 +112,7 @@ void ActiveSetMethod::generate_l1_multipliers_(Problem& problem, ConstraintParti
    }
 }
 
-void ActiveSetMethod::generate_feasibility_bounds_(Problem& problem, std::vector<double>& current_constraints, ConstraintPartition& constraint_partition) {
+void ActiveSetMethod::generate_feasibility_bounds_(const Problem& problem, std::vector<double>& current_constraints, ConstraintPartition& constraint_partition) {
    for (size_t j = 0; j < problem.number_constraints; j++) {
       double lb, ub;
       if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
@@ -133,7 +133,7 @@ void ActiveSetMethod::generate_feasibility_bounds_(Problem& problem, std::vector
 
 /* LP */
 
-Direction ActiveSetMethod::compute_lp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, double trust_region_radius) {
+Direction ActiveSetMethod::compute_lp_step_(const Problem& problem, QPSolver& solver, Iterate& current_iterate, double trust_region_radius) {
    DEBUG << "Current point: ";
    print_vector(DEBUG, current_iterate.x);
    DEBUG << "Current constraint multipliers: ";
@@ -171,7 +171,7 @@ double ActiveSetMethod::compute_lp_predicted_reduction_(Direction& direction, do
    return -step_length * direction.objective;
 }
 
-Direction ActiveSetMethod::compute_l1lp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, Direction& phase_2_direction,
+Direction ActiveSetMethod::compute_l1lp_step_(const Problem& problem, QPSolver& solver, Iterate& current_iterate, Direction& phase_2_direction,
       double trust_region_radius) {
    DEBUG << "\nCreating the restoration problem with " << phase_2_direction.constraint_partition.infeasible.size()
          << " infeasible constraints\n";

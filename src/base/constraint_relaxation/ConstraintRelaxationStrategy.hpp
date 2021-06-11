@@ -14,11 +14,11 @@ public:
    Subproblem& subproblem;
 
    explicit ConstraintRelaxationStrategy(Subproblem& subproblem);
-   virtual Iterate initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
-   virtual std::vector<Direction> compute_feasible_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) = 0;
-   virtual std::optional<Iterate> check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction,
+   virtual Iterate initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
+   virtual Direction compute_feasible_direction(const Problem& problem, Iterate& current_iterate, double trust_region_radius) = 0;
+   virtual std::optional<Iterate> check_acceptance(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Direction& direction,
          double step_length) = 0;
-   virtual double compute_predicted_reduction(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) = 0;
+   virtual double compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) = 0;
 
 protected:
    // preallocated vector to receive the trial primal variables

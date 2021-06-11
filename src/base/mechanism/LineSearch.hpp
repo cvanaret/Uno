@@ -15,8 +15,8 @@ public:
     */
    explicit LineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, int max_iterations = 30, double backtracking_ratio = 0.5);
 
-   Iterate initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
-   std::pair<Iterate, Direction> compute_acceptable_iterate(Statistics& statistics, Problem& problem, Iterate& current_iterate) override;
+   Iterate initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
+   std::pair<Iterate, Direction> compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
 
    double step_length;
    /* ratio of step length update in ]0, 1[ */
