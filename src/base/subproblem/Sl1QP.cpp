@@ -1,6 +1,5 @@
 #include <cmath>
 #include <map>
-#include <memory>
 #include "Sl1QP.hpp"
 #include "Constraint.hpp"
 #include "Vector.hpp"

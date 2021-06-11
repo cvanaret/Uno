@@ -1,6 +1,5 @@
 #include <cmath>
 #include "InteriorPoint.hpp"
-#include "Uno.hpp"
 #include "LinearSolverFactory.hpp"
 
 InteriorPoint::InteriorPoint(const Problem& problem, std::string linear_solver_name, std::string hessian_evaluation_method, bool use_trust_region,

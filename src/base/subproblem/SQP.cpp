@@ -1,4 +1,3 @@
-#include <cmath>
 #include <map>
 #include "SQP.hpp"
 #include "Constraint.hpp"

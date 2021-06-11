@@ -16,7 +16,7 @@ public:
    explicit l1Relaxation(Problem& problem, Subproblem& subproblem, const std::map<std::string, std::string>& options);
    Iterate initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
    Direction compute_feasible_direction(const Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
-   std::optional<Iterate> check_acceptance(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Direction& direction, double
+   bool is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate, Direction& direction, double
    step_length) override;
    double compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) override;
 

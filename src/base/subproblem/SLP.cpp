@@ -1,9 +1,5 @@
-#include <cmath>
 #include <map>
 #include "SLP.hpp"
-#include "Constraint.hpp"
-#include "Vector.hpp"
-#include "Logger.hpp"
 #include "QPSolverFactory.hpp"
 
 SLP::SLP(const Problem& problem, std::string QP_solver_name, bool /*use_trust_region*/, bool scale_residuals):

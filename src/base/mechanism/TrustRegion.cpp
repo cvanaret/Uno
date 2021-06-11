@@ -11,7 +11,12 @@ TrustRegion::TrustRegion(ConstraintRelaxationStrategy& constraint_relaxation_str
 Iterate TrustRegion::initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
    statistics.add_column("TR radius", Statistics::double_width, 30);
    // generate the initial point
-   return this->relaxation_strategy.initialize(statistics, problem, x, multipliers);
+   Iterate first_iterate = this->relaxation_strategy.initialize(statistics, problem, x, multipliers);
+
+   // preallocate trial_iterate
+   this->trial_primals_.resize(first_iterate.x.size());
+
+   return first_iterate;
 }
 
 std::pair<Iterate, Direction> TrustRegion::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
@@ -36,15 +41,14 @@ std::pair<Iterate, Direction> TrustRegion::compute_acceptable_iterate(Statistics
          /* set bound multipliers of active trust region to 0 */
          TrustRegion::rectify_active_set(direction, this->radius);
 
-         /* check whether the trial step is accepted */
-         std::optional<Iterate> acceptance_check = this->relaxation_strategy.check_acceptance(statistics, problem, current_iterate,
-               direction, 1.);
-         if (acceptance_check.has_value()) {
-            Iterate& accepted_iterate = acceptance_check.value();
+         // assemble the trial iterate TODO do not reevaluate if ||d|| = 0
+         Iterate trial_iterate = this->assemble_trial_iterate(problem, current_iterate, direction, 1.);
+
+         // check whether the trial step is accepted
+         if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate,direction, 1.)) {
             // compute the residuals
-            accepted_iterate.compute_objective(problem);
-            this->relaxation_strategy.subproblem.compute_residuals(problem, accepted_iterate, accepted_iterate.multipliers,
-                  -direction.objective_multiplier);
+            trial_iterate.compute_objective(problem);
+            this->relaxation_strategy.subproblem.compute_residuals(problem, trial_iterate, trial_iterate.multipliers, direction.objective_multiplier);
 
             statistics.add_statistic("minor", this->number_iterations);
             statistics.add_statistic("TR radius", this->radius);
@@ -54,7 +58,7 @@ std::pair<Iterate, Direction> TrustRegion::compute_acceptable_iterate(Statistics
                this->radius *= 2.;
             }
             is_accepted = true;
-            return std::make_pair(accepted_iterate, direction);
+            return std::make_pair(trial_iterate, direction);
          }
          else {
             /* if the step is rejected, decrease the radius */
