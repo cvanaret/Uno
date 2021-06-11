@@ -169,7 +169,6 @@ Direction InteriorPoint::compute_direction(const Problem& problem, Iterate& curr
       /* generate IPM direction */
       Direction direction = this->generate_direction_(problem, current_iterate, solution_IPM);
       direction.status = OPTIMAL;
-      direction.phase = OPTIMALITY;
       direction.norm = norm_inf(direction.x, problem.number_variables);
       direction.predicted_reduction = [&](double step_length) {
          return InteriorPoint::compute_predicted_reduction_(direction, step_length);
@@ -621,8 +620,8 @@ Direction InteriorPoint::restore_feasibility(const Problem& problem, Iterate& cu
    DEBUG << "dual length = " << dual_length << "\n\n";
 
    Direction direction(trial_x, trial_multipliers);
-   direction.status = INFEASIBLE;
-   direction.phase = FEASIBILITY_RESTORATION;
+   direction.status = OPTIMAL;
+   direction.is_relaxed = true;
    direction.norm = norm_inf(direction.x, problem.number_variables);
    direction.predicted_reduction = [&](double step_length) {
       return InteriorPoint::compute_predicted_reduction_(direction, step_length);

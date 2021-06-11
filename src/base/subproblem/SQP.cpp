@@ -90,7 +90,7 @@ Direction SQP::restore_feasibility(const Problem& problem, Iterate& current_iter
    this->evaluate_feasibility_iterate_(problem, current_iterate, phase_2_direction.constraint_partition);
    Direction direction = this->compute_l1qp_step_(problem, current_iterate, phase_2_direction.constraint_partition,
          phase_2_direction.x, trust_region_radius);
-   direction.phase = FEASIBILITY_RESTORATION;
+   direction.is_relaxed = true;
    direction.objective_multiplier = 0.;
    direction.predicted_reduction = [&](double step_length) {
       return this->compute_predicted_reduction_(current_iterate, direction, step_length);

@@ -20,19 +20,18 @@ void SLP::update_objective_multipliers(const Problem& /*problem*/, const Iterate
 
 Direction SLP::compute_direction(const Problem& problem, Iterate& current_iterate, double trust_region_radius) {
     Direction direction = this->compute_lp_step_(problem, *this->solver, current_iterate, trust_region_radius);
-    if (direction.status == INFEASIBLE) {
-        /* infeasible subproblem during optimality phase */
-        return this->restore_feasibility(problem, current_iterate, direction, trust_region_radius);
+    if (direction.status != INFEASIBLE) {
+       return direction;
     }
     else {
-        direction.phase = OPTIMALITY;
-        return direction;
+        /* infeasible subproblem during optimality phase */
+        return this->restore_feasibility(problem, current_iterate, direction, trust_region_radius);
     }
 }
 
 Direction SLP::restore_feasibility(const Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) {
    Direction direction = this->compute_l1lp_step_(problem, *this->solver, current_iterate, phase_2_direction, trust_region_radius);
-   direction.phase = FEASIBILITY_RESTORATION;
+   direction.is_relaxed = true;
    return direction;
 }
 

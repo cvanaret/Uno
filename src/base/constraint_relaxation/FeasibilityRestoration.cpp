@@ -28,7 +28,7 @@ Direction FeasibilityRestoration::compute_feasible_direction(const Problem& prob
    Direction direction = this->subproblem.compute_direction(problem, current_iterate, trust_region_radius);
 
    if (direction.status != INFEASIBLE) {
-      direction.phase = OPTIMALITY;
+      direction.is_relaxed = false;
       direction.objective_multiplier = problem.objective_sign;
    }
    else {
@@ -76,8 +76,8 @@ std::optional<Iterate> FeasibilityRestoration::check_acceptance(Statistics& stat
    }
 
    if (accept) {
-      statistics.add_statistic("phase", (int) direction.phase);
-      if (direction.phase == FEASIBILITY_RESTORATION) {
+      statistics.add_statistic("phase", (int) direction.is_relaxed ? FEASIBILITY_RESTORATION : OPTIMALITY);
+      if (direction.is_relaxed) {
          /* correct multipliers for infeasibility problem */
          FeasibilityRestoration::update_restoration_multipliers_(trial_iterate, direction.constraint_partition);
       }
@@ -91,7 +91,7 @@ std::optional<Iterate> FeasibilityRestoration::check_acceptance(Statistics& stat
 void FeasibilityRestoration::switch_phase_(const Problem& problem, Direction& direction, Iterate& current_iterate, Iterate& /*trial_iterate*/) {
    /* find out if transition of one phase to the other */
    if (this->current_phase == OPTIMALITY) {
-      if (direction.phase == FEASIBILITY_RESTORATION) {
+      if (direction.is_relaxed) {
          /* infeasible subproblem: go from phase II (optimality) to I (restoration) */
          DEBUG << "Switching from optimality to restoration phase\n";
          this->current_phase = FEASIBILITY_RESTORATION;
@@ -103,7 +103,7 @@ void FeasibilityRestoration::switch_phase_(const Problem& problem, Direction& di
       }
    }
       /* check whether we can switch from phase I (restoration) to II (optimality) */
-   else if (direction.phase == OPTIMALITY) { // TODO && this->filter_optimality->accept(trial_iterate.progress.feasibility, trial_iterate.progress
+   else if (!direction.is_relaxed) { // TODO && this->filter_optimality->accept(trial_iterate.progress.feasibility, trial_iterate.progress
    // .objective)) {
       DEBUG << "Switching from restoration to optimality phase\n";
       this->current_phase = OPTIMALITY;
