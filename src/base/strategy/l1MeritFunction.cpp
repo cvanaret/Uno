@@ -25,18 +25,11 @@ bool l1MeritFunction::check_acceptance(Statistics& statistics, ProgressMeasures&
       const Direction& direction, double predicted_reduction) {
    bool accept = false;
    /* compute current exact l1 penalty: rho f + ||c|| */
-   double current_exact_l1_penalty =
-         direction.objective_multiplier * current_progress.objective + current_progress.feasibility;
+   double current_exact_l1_penalty = direction.objective_multiplier * current_progress.objective + current_progress.feasibility;
    double trial_exact_l1_penalty = direction.objective_multiplier * trial_progress.objective + trial_progress.feasibility;
 
-   /* check the validity of the trial step */
-   //double predicted_reduction = direction.predicted_reduction(step_length);
    double actual_reduction = current_exact_l1_penalty - trial_exact_l1_penalty;
-
-   DEBUG << "Current: η = " << current_progress.feasibility << ", ω = " << current_progress.objective << "\n";
-   DEBUG << "Trial: η = " << trial_progress.feasibility << ", ω = " << trial_progress.objective << "\n";
    DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << actual_reduction << "\n\n";
-
    // Armijo sufficient decrease condition
    if (actual_reduction >= this->decrease_fraction_ * predicted_reduction) {
       accept = true;
