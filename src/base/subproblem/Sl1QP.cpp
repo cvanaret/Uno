@@ -342,3 +342,7 @@ double Sl1QP::compute_complementarity_error_(const Problem& problem, Iterate& it
    }
    return error;
 }
+
+int Sl1QP::get_hessian_evaluation_count() {
+   return this->hessian_evaluation->evaluation_count;
+}

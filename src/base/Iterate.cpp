@@ -6,7 +6,6 @@
 int Iterate::number_eval_objective = 0;
 int Iterate::number_eval_constraints = 0;
 int Iterate::number_eval_jacobian = 0;
-int Iterate::number_eval_hessian = 0;
 
 Iterate::Iterate(size_t number_variables, size_t number_constraints):
    x(number_variables), multipliers(number_variables, number_constraints), constraints(number_constraints) {

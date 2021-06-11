@@ -8,12 +8,12 @@
  *
  *  Line-search strategy
  */
-class LineSearch : public GlobalizationMechanism {
+class BacktrackingLineSearch : public GlobalizationMechanism {
 public:
    /*!
     *  Constructor
     */
-   explicit LineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, int max_iterations = 30, double backtracking_ratio = 0.5);
+   explicit BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, int max_iterations = 30, double backtracking_ratio = 0.5);
 
    Iterate initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
    std::pair<Iterate, Direction> compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;

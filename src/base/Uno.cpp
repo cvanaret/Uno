@@ -60,9 +60,10 @@ Result Uno::solve(const Problem& problem, std::vector<double>& x, Multipliers& m
    timer.stop();
 
    int number_subproblems_solved = this->globalization_mechanism.relaxation_strategy.subproblem.number_subproblems_solved;
+   int hessian_evaluation_count = this->globalization_mechanism.relaxation_strategy.subproblem.get_hessian_evaluation_count();
    Result result =
          {termination_status, current_iterate, problem.number_variables, problem.number_constraints, major_iterations, timer.get_time(),
-          Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_jacobian, Iterate::number_eval_hessian,
+          Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_jacobian, hessian_evaluation_count,
           number_subproblems_solved};
    return result;
 }

@@ -17,6 +17,7 @@ void ExactHessianEvaluation::compute(const Problem& problem, const std::vector<d
       const std::vector<double>& constraint_multipliers) {
    /* compute Hessian */
    problem.lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, this->hessian);
+   this->evaluation_count++;
    //this->objective_multiplier_ = objective_multiplier;
 }
 
@@ -31,6 +32,7 @@ void ExactHessianInertiaControlEvaluation::compute(const Problem& problem, const
       double objective_multiplier, const std::vector<double>& constraint_multipliers) {
    /* compute Hessian */
    problem.lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, this->hessian);
+   this->evaluation_count++;
    DEBUG << "hessian before convexification: " << this->hessian;
    /* modify the inertia to make the problem strictly convex */
    // this->hessian = this->modify_inertia(this->hessian, *this->linear_solver_);
@@ -87,6 +89,7 @@ void BFGSHessianEvaluation::compute(const Problem& problem, const std::vector<do
       const std::vector<double>& constraint_multipliers) {
    // the BFGS Hessian is already positive definite, do not convexify
    problem.lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, this->hessian);
+   this->evaluation_count++;
 }
 
 /* Factory */

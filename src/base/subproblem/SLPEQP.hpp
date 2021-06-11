@@ -17,6 +17,7 @@ public:
    std::vector<Direction> compute_direction(Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
    std::vector<Direction>
    restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) override;
+   int get_hessian_evaluation_count() override;
 
 private:
    /* use pointers to allow polymorphism */

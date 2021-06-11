@@ -43,6 +43,7 @@ public:
 
    Direction compute_direction(const Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
    Direction restore_feasibility(const Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) override;
+   int get_hessian_evaluation_count() override;
 
    void compute_optimality_measures(const Problem& problem, Iterate& iterate) override;
    void compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const Direction& direction) override;

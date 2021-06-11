@@ -646,3 +646,6 @@ double InteriorPoint::compute_central_complementarity_error(Iterate& iterate, do
    return norm(residuals, this->residual_norm) / sc;
 }
 
+int InteriorPoint::get_hessian_evaluation_count() {
+   return this->hessian_evaluation->evaluation_count;
+}

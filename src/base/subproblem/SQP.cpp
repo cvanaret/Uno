@@ -119,3 +119,7 @@ double SQP::compute_predicted_reduction_(Iterate& current_iterate, Direction& di
       return -step_length * (linear_term + step_length * quadratic_term);
    }
 }
+
+int SQP::get_hessian_evaluation_count() {
+   return this->hessian_evaluation->evaluation_count;
+}

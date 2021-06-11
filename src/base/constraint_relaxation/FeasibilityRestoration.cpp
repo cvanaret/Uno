@@ -37,6 +37,7 @@ Direction FeasibilityRestoration::compute_feasible_direction(const Problem& prob
    }
    else {
       /* infeasible subproblem: enter restoration phase */
+      current_iterate.multipliers.objective = 0.;
       direction = this->subproblem.restore_feasibility(problem, current_iterate, direction, trust_region_radius);
       direction.objective_multiplier = 0.;
       direction.is_relaxed = true;
@@ -70,17 +71,17 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
       accept = true;
    }
    else {
-      // evaluate the predicted reduction
-      double predicted_reduction = direction.predicted_reduction(step_length);
-
       if (this->current_phase != OPTIMALITY) {
          // if restoration phase, recompute progress measures of trial point
          this->subproblem.compute_infeasibility_measures(problem, trial_iterate, direction);
       }
 
+      // evaluate the predicted reduction
+      double predicted_reduction = direction.predicted_reduction(step_length);
       GlobalizationStrategy& globalization_strategy = (this->current_phase == OPTIMALITY) ?  *this->phase_2_strategy : *this->phase_1_strategy;
       // invoke the globalization strategy for acceptance
-      accept = globalization_strategy.check_acceptance(statistics, current_iterate.progress, trial_iterate.progress, direction, predicted_reduction);
+      accept = globalization_strategy.check_acceptance(statistics, current_iterate.progress, trial_iterate.progress,
+            direction.objective_multiplier, predicted_reduction);
    }
 
    if (accept) {

@@ -28,8 +28,9 @@ public:
 private:
    double activity_tolerance_;
 
-   bool termination_(bool is_accepted);
-   void print_iteration_();
+   void add_statistics(Statistics& statistics, const Direction& direction);
+   bool termination();
+   void print_iteration();
 };
 
 #endif // TRUSTREGION_H

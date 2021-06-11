@@ -20,11 +20,11 @@ void l1MeritFunction::notify(Iterate& /*current_iterate*/) {
 }
 
 bool l1MeritFunction::check_acceptance(Statistics& statistics, ProgressMeasures& current_progress, ProgressMeasures& trial_progress,
-      const Direction& direction, double predicted_reduction) {
+      double objective_multiplier, double predicted_reduction) {
    bool accept = false;
    /* compute current exact l1 penalty: rho f + ||c|| */
-   double current_exact_l1_penalty = direction.objective_multiplier * current_progress.objective + current_progress.feasibility;
-   double trial_exact_l1_penalty = direction.objective_multiplier * trial_progress.objective + trial_progress.feasibility;
+   double current_exact_l1_penalty = objective_multiplier * current_progress.objective + current_progress.feasibility;
+   double trial_exact_l1_penalty = objective_multiplier * trial_progress.objective + trial_progress.feasibility;
 
    double actual_reduction = current_exact_l1_penalty - trial_exact_l1_penalty;
    DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << actual_reduction << "\n\n";
@@ -34,7 +34,7 @@ bool l1MeritFunction::check_acceptance(Statistics& statistics, ProgressMeasures&
    }
 
    if (accept) {
-      statistics.add_statistic("penalty param.", direction.objective_multiplier);
+      statistics.add_statistic("penalty param.", objective_multiplier);
    }
    return accept;
 }

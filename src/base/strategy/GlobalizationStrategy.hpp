@@ -28,7 +28,7 @@ public:
 
    virtual void initialize(Statistics& statistics, const Iterate& first_iterate) = 0;
    virtual bool check_acceptance(Statistics& statistics, ProgressMeasures& current_progress, ProgressMeasures& trial_progress,
-         const Direction& direction, double predicted_reduction) = 0;
+         double objective_multiplier, double predicted_reduction) = 0;
    virtual void reset() = 0;
    virtual void notify(Iterate& current_iterate) = 0;
 };
