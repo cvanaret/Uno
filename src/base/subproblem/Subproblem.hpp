@@ -6,7 +6,6 @@
 #include <memory>
 #include "Problem.hpp"
 #include "Iterate.hpp"
-#include "Phase.hpp"
 #include "Direction.hpp"
 #include "Constraint.hpp"
 #include "MA57Solver.hpp"

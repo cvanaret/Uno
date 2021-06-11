@@ -2,7 +2,7 @@
 #include "Logger.hpp"
 
 Direction::Direction(std::vector<double>& x, Multipliers& multipliers):
-x(x), multipliers(multipliers), objective_multiplier(1.), status(OPTIMAL), phase(OPTIMALITY), norm(0.), objective(0.),
+x(x), multipliers(multipliers), objective_multiplier(1.), status(OPTIMAL), norm(0.), objective(0.),
 constraint_partition(ConstraintPartition(multipliers.constraints.size())),
 predicted_reduction(nullptr) {
    this->active_set.bounds.at_lower_bound.reserve(x.size());

@@ -217,7 +217,6 @@ Direction Sl1QP::compute_l1qp_step_(const Problem& problem, QPSolver& solver, It
    /* solve the QP */
    Direction direction = solver.solve_QP(this->variables_bounds, this->constraints_bounds, objective_gradient,
          current_iterate.constraints_jacobian, this->hessian_evaluation->hessian, this->initial_point);
-   direction.phase = OPTIMALITY;
    this->number_subproblems_solved++;
    // recompute active set: constraints are active when p-n = 0
    this->recover_l1qp_active_set_(problem, direction, elastic_variables);

@@ -48,7 +48,7 @@ std::pair<Iterate, Direction> LineSearch::compute_acceptable_iterate(Statistics&
       }
       // if step length is too small, run restoration phase
       if (this->step_length < this->min_step_length) {
-         if (0. < current_iterate.progress.feasibility && direction.phase == OPTIMALITY) {
+         if (0. < current_iterate.progress.feasibility && !direction.is_relaxed) {
             // reset the line search with the restoration solution
             DEBUG << "Enter restoration feasibility phase\n";
             direction = this->relaxation_strategy.subproblem.restore_feasibility(problem, current_iterate, direction, INFINITY);

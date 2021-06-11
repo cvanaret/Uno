@@ -4,6 +4,8 @@
 #include "ConstraintRelaxationStrategy.hpp"
 #include "GlobalizationStrategy.hpp"
 
+enum Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
+
 class FeasibilityRestoration : public ConstraintRelaxationStrategy {
 public:
    explicit FeasibilityRestoration(const std::string& constraint_relaxation_strategy, Subproblem& subproblem, const std::map<std::string, std::string>& options);

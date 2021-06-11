@@ -157,7 +157,6 @@ Direction ActiveSetMethod::compute_lp_step_(const Problem& problem, QPSolver& so
          solver.solve_LP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian,
                this->initial_point);
    direction.objective_multiplier = problem.objective_sign;
-   direction.phase = OPTIMALITY;
    direction.predicted_reduction = [&](double step_length) {
       return ActiveSetMethod::compute_lp_predicted_reduction_(direction, step_length);
    };
@@ -190,7 +189,7 @@ Direction ActiveSetMethod::compute_l1lp_step_(const Problem& problem, QPSolver& 
          solver.solve_LP(this->variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate
          .constraints_jacobian,phase_2_direction.x);
    direction.objective_multiplier = 0.;
-   direction.phase = FEASIBILITY_RESTORATION;
+   direction.is_relaxed = true;
    direction.constraint_partition = phase_2_direction.constraint_partition;
 //    direction.predicted_reduction = [&](double step_length) {
 //        return this->compute_lp_predicted_reduction_(direction, step_length);

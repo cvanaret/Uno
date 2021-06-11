@@ -9,7 +9,6 @@
 #include "Problem.hpp"
 #include "Iterate.hpp"
 #include "Constraint.hpp"
-#include "Phase.hpp"
 
 /* see bqpd.f */
 enum Status {
@@ -38,7 +37,7 @@ public:
     double objective_multiplier; /*!< Objective multiplier */
 
     Status status; /*!< Status of the solution */
-    Phase phase; /*!< Current phase */
+    bool is_relaxed{false};
 
     double norm; /*!< Norm of \f$x\f$ */
     double objective; /*!< Objective value */
