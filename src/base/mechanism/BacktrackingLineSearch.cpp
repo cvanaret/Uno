@@ -1,15 +1,15 @@
 #include <cmath>
 #include <cassert>
-#include "LineSearch.hpp"
+#include "BacktrackingLineSearch.hpp"
 #include "Logger.hpp"
 #include "InteriorPoint.hpp"
 
-LineSearch::LineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, int max_iterations, double backtracking_ratio):
+BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, int max_iterations, double backtracking_ratio):
    GlobalizationMechanism(constraint_relaxation_strategy, max_iterations), step_length(1.), backtracking_ratio(backtracking_ratio),
    min_step_length(1e-9) {
 }
 
-Iterate LineSearch::initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+Iterate BacktrackingLineSearch::initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
    statistics.add_column("LS step length", Statistics::double_width, 30);
    // generate the initial point
    Iterate first_iterate = this->relaxation_strategy.initialize(statistics, problem, x, multipliers);
@@ -20,7 +20,7 @@ Iterate LineSearch::initialize(Statistics& statistics, const Problem& problem, s
    return first_iterate;
 }
 
-std::pair<Iterate, Direction> LineSearch::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
+std::pair<Iterate, Direction> BacktrackingLineSearch::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
    /* compute the directions */
    this->relaxation_strategy.subproblem.generate(problem, current_iterate, problem.objective_sign, INFINITY);
    Direction direction = this->relaxation_strategy.compute_feasible_direction(problem, current_iterate, INFINITY);
@@ -35,7 +35,7 @@ std::pair<Iterate, Direction> LineSearch::compute_acceptable_iterate(Statistics&
          this->number_iterations++;
          this->print_iteration_();
 
-         // assemble the trial iterate TODO do not reevaluate if ||d|| = 0
+         // assemble the trial iterate
          Iterate trial_iterate = this->assemble_trial_iterate(problem, current_iterate, direction, this->step_length);
 
          // check whether the trial step is accepted
@@ -66,23 +66,24 @@ std::pair<Iterate, Direction> LineSearch::compute_acceptable_iterate(Statistics&
          line_search_termination = true;
       }
    }
+   throw std::runtime_error("Trust-region failed with an unexpected error");
 }
 
-void LineSearch::add_statistics(Statistics& statistics, const Direction& direction) {
+void BacktrackingLineSearch::add_statistics(Statistics& statistics, const Direction& direction) {
    statistics.add_statistic("minor", this->number_iterations);
    statistics.add_statistic("LS step length", this->step_length);
    statistics.add_statistic("step norm", this->step_length * direction.norm);
 }
 
-void LineSearch::update_step_length() {
+void BacktrackingLineSearch::update_step_length() {
    this->step_length *= this->backtracking_ratio;
 }
 
-bool LineSearch::termination_() {
+bool BacktrackingLineSearch::termination_() {
    return (this->max_iterations < this->number_iterations);
 }
 
-void LineSearch::print_iteration_() {
+void BacktrackingLineSearch::print_iteration_() {
    DEBUG << "\tLINE SEARCH iteration " << this->number_iterations << ", step_length " << this->step_length << "\n";
 }
 

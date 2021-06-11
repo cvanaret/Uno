@@ -18,6 +18,7 @@ public:
 
    size_t dimension;
    CSCMatrix hessian;
+   int evaluation_count{0};
 
    virtual void compute(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
          const std::vector<double>& constraint_multipliers) = 0;

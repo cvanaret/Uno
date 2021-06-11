@@ -31,7 +31,7 @@ void FilterStrategy::notify(Iterate& current_iterate) {
  * precondition: feasible step
  * */
 bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, ProgressMeasures& current_progress, ProgressMeasures& trial_progress,
-      const Direction& /*direction*/, double predicted_reduction) {
+      double /*objective_multiplier*/, double predicted_reduction) {
    bool accept = false;
 
    DEBUG << "Current: η = " << current_progress.feasibility << ", ω = " << current_progress.objective << "\n";

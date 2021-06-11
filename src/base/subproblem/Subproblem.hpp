@@ -44,6 +44,7 @@ public:
 
    double compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier) const;
    void compute_residuals(const Problem& problem, Iterate& iterate, const Multipliers& multipliers, double objective_multiplier) const;
+   virtual int get_hessian_evaluation_count() = 0;
 
    size_t number_variables;
    size_t number_constraints;

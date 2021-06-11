@@ -31,8 +31,6 @@ Direction SLP::restore_feasibility(const Problem& problem, Iterate& current_iter
    return direction;
 }
 
-/* private methods */
-
 void SLP::evaluate_optimality_iterate_(const Problem& problem, Iterate& current_iterate) {
     /* compute first-order information */
     current_iterate.compute_objective_gradient(problem);
@@ -44,3 +42,6 @@ void SLP::evaluate_feasibility_iterate_(const Problem& problem, Iterate& current
     current_iterate.compute_constraints_jacobian(problem);
 }
 
+int SLP::get_hessian_evaluation_count() {
+   return 0;
+}

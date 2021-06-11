@@ -57,8 +57,9 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
    else {
       // compute the predicted reduction (a mixture of the subproblem's and of the l1 relaxation's)
       double predicted_reduction = this->compute_predicted_reduction(problem, current_iterate, direction, step_length);
-      accept = this->globalization_strategy->check_acceptance(statistics, current_iterate.progress, trial_iterate.progress, direction,
-            predicted_reduction);
+
+      accept = this->globalization_strategy->check_acceptance(statistics, current_iterate.progress, trial_iterate.progress,
+            this->penalty_parameter, predicted_reduction);
    }
    return accept;
 }

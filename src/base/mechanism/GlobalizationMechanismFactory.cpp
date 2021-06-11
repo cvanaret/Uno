@@ -1,6 +1,6 @@
 #include "GlobalizationMechanismFactory.hpp"
 #include "TrustRegion.hpp"
-#include "LineSearch.hpp"
+#include "BacktrackingLineSearch.hpp"
 //#include "DualUpdate.hpp"
 //#include "TrustLineSearch.hpp"
 
@@ -14,7 +14,7 @@ constraint_relaxation_strategy, const std::map<std::string, std::string>& option
     else if (mechanism_type == "LS") {
         int max_iterations = std::stoi(options.at("LS_max_iterations"));
         double backtracking_ratio = std::stod(options.at("LS_backtracking_ratio"));
-        return std::make_unique<LineSearch>(constraint_relaxation_strategy, max_iterations, backtracking_ratio);
+        return std::make_unique<BacktrackingLineSearch>(constraint_relaxation_strategy, max_iterations, backtracking_ratio);
     }
 //    else if (type == "TLS") {
 //        double radius = INFINITY;

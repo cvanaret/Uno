@@ -6,11 +6,6 @@
 
 enum ConstraintType { EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES, UNBOUNDED };
 
-struct PenaltyDimensions {
-   int number_additional_variables;
-   int number_constraints;
-};
-
 /*! \struct ConstraintActivity
 * \brief Constraints at lower or upper bound at the optimum solution
 *
@@ -45,6 +40,7 @@ struct Multipliers {
    std::vector<double> lower_bounds; /*!< Multipliers of the lower bound constraints */
    std::vector<double> upper_bounds; /*!< Multipliers of the lower bound constraints */
    std::vector<double> constraints; /*!< Multipliers of the general constraints */
+   double objective{1.};
 
    Multipliers() = default;
    Multipliers(size_t number_variables, size_t number_constraints);
