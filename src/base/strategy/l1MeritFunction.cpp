@@ -1,5 +1,3 @@
-#include <cmath>
-#include "Uno.hpp"
 #include "l1MeritFunction.hpp"
 #include "Logger.hpp"
 

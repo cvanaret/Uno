@@ -18,18 +18,11 @@
  */
 class Subproblem {
 public:
-   /*!
-    *  Constructor
-    *
-    * \param solver: solver that solves the subproblem
-    * \param name: name of the strategy
-    */
    Subproblem(const Problem& problem, Norm residual_norm, bool scale_residuals);
    virtual ~Subproblem() = default;
 
    virtual Iterate evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& multipliers) = 0;
-   virtual void generate(const Problem& problem, const Iterate& current_iterate, double objective_multiplier, double trust_region_radius)
-   = 0;
+   virtual void generate(const Problem& problem, const Iterate& current_iterate, double objective_multiplier, double trust_region_radius) = 0;
    virtual void update_trust_region(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
    virtual void update_objective_multipliers(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) = 0;
 

@@ -20,10 +20,6 @@ Iterate l1Relaxation::initialize(Statistics& statistics, const Problem& problem,
    /* initialize the subproblem */
    Iterate first_iterate = this->subproblem.evaluate_initial_point(problem, x, multipliers);
    this->globalization_strategy->initialize(statistics, first_iterate);
-
-   // preallocate trial_iterate
-   this->trial_primals_.resize(first_iterate.x.size());
-
    return first_iterate;
 }
 
@@ -44,20 +40,15 @@ Direction l1Relaxation::compute_feasible_direction(const Problem& problem, Itera
    return this->subproblem.compute_direction(problem, current_iterate, trust_region_radius);
 }
 
-std::optional<Iterate> l1Relaxation::check_acceptance(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Direction& direction,
-      double step_length) {
-   // compute the trial iterate TODO do not reevaluate if ||d|| = 0
-   add_vectors(current_iterate.x, direction.x, step_length, this->trial_primals_);
-   Iterate trial_iterate(this->trial_primals_, direction.multipliers);
-   double step_norm = step_length * direction.norm;
-   this->subproblem.compute_optimality_measures(problem, trial_iterate);
-
+bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate,
+      Direction& direction, double step_length) {
    // check if subproblem definition changed
    if (this->subproblem.subproblem_definition_changed) {
       this->globalization_strategy->reset();
       this->subproblem.subproblem_definition_changed = false;
       this->subproblem.compute_optimality_measures(problem, current_iterate);
    }
+   double step_norm = step_length * direction.norm;
 
    bool accept = false;
    if (step_norm == 0.) {
@@ -69,8 +60,7 @@ std::optional<Iterate> l1Relaxation::check_acceptance(Statistics& statistics, co
       accept = this->globalization_strategy->check_acceptance(statistics, current_iterate.progress, trial_iterate.progress, direction,
             predicted_reduction);
    }
-
-   return (accept ? std::make_optional(trial_iterate) : std::nullopt);
+   return accept;
 }
 
 void l1Relaxation::preprocess_subproblem() {

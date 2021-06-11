@@ -153,9 +153,8 @@ Direction ActiveSetMethod::compute_lp_step_(const Problem& problem, QPSolver& so
    clear(this->initial_point);
 
    /* solve the QP */
-   Direction direction =
-         solver.solve_LP(variables_bounds, constraints_bounds, current_iterate.objective_gradient, current_iterate.constraints_jacobian,
-               this->initial_point);
+   Direction direction = solver.solve_LP(variables_bounds, constraints_bounds, current_iterate.objective_gradient,
+         current_iterate.constraints_jacobian,this->initial_point);
    direction.objective_multiplier = problem.objective_sign;
    direction.predicted_reduction = [&](double step_length) {
       return ActiveSetMethod::compute_lp_predicted_reduction_(direction, step_length);

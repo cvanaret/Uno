@@ -16,9 +16,6 @@ Iterate FeasibilityRestoration::initialize(Statistics& statistics, const Problem
    Iterate first_iterate = this->subproblem.evaluate_initial_point(problem, x, multipliers);
    this->subproblem.compute_residuals(problem, first_iterate, first_iterate.multipliers, 1.);
 
-   // preallocate trial_iterate
-   this->trial_primals_.resize(first_iterate.x.size());
-
    this->phase_1_strategy->initialize(statistics, first_iterate);
    this->phase_2_strategy->initialize(statistics, first_iterate);
    return first_iterate;
@@ -28,71 +25,24 @@ Direction FeasibilityRestoration::compute_feasible_direction(const Problem& prob
    Direction direction = this->subproblem.compute_direction(problem, current_iterate, trust_region_radius);
 
    if (direction.status != INFEASIBLE) {
-      direction.is_relaxed = false;
       direction.objective_multiplier = problem.objective_sign;
+
+      /* possibly go from 1 (restoration) to phase 2 (optimality) */
+      if (this->current_phase == FEASIBILITY_RESTORATION) {
+         // TODO && this->filter_optimality->accept(trial_iterate.progress.feasibility, trial_iterate.progress.objective))
+         DEBUG << "Switching from restoration to optimality phase\n";
+         this->current_phase = OPTIMALITY;
+         this->subproblem.compute_optimality_measures(problem, current_iterate);
+      }
    }
    else {
-      /* infeasible subproblem: switch to restoration phase */
+      /* infeasible subproblem: enter restoration phase */
       direction = this->subproblem.restore_feasibility(problem, current_iterate, direction, trust_region_radius);
-   }
-   return direction;
-}
+      direction.objective_multiplier = 0.;
+      direction.is_relaxed = true;
 
-std::optional<Iterate> FeasibilityRestoration::check_acceptance(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Direction& direction,
-      double step_length) {
-   // compute the trial iterate TODO do not reevaluate if ||d|| = 0
-   add_vectors(current_iterate.x, direction.x, step_length, this->trial_primals_);
-   Iterate trial_iterate(this->trial_primals_, direction.multipliers);
-   double step_norm = step_length * direction.norm;
-   this->subproblem.compute_optimality_measures(problem, trial_iterate);
-
-   // check if subproblem definition changed
-   if (this->subproblem.subproblem_definition_changed) {
-      this->phase_2_strategy->reset();
-      this->subproblem.subproblem_definition_changed = false;
-      this->subproblem.compute_optimality_measures(problem, current_iterate);
-   }
-
-   bool accept = false;
-   if (step_norm == 0.) {
-      accept = true;
-   }
-   else {
-      // possibly switch phases
-      this->switch_phase_(problem, direction, current_iterate, trial_iterate);
-
-      // evaluate the predicted reduction
-      double predicted_reduction = direction.predicted_reduction(step_length);
-
-      // invoke the globalization strategy for acceptance
+      /* possibly go from phase 2 (optimality) to 1 (restoration) */
       if (this->current_phase == OPTIMALITY) {
-         accept = this->phase_2_strategy->check_acceptance(statistics, current_iterate.progress, trial_iterate.progress, direction, predicted_reduction);
-      }
-      else {
-         // if restoration phase, recompute progress measures of trial point
-         this->subproblem.compute_infeasibility_measures(problem, trial_iterate, direction);
-         accept = this->phase_1_strategy->check_acceptance(statistics, current_iterate.progress, trial_iterate.progress, direction, predicted_reduction);
-      }
-   }
-
-   if (accept) {
-      statistics.add_statistic("phase", (int) direction.is_relaxed ? FEASIBILITY_RESTORATION : OPTIMALITY);
-      if (direction.is_relaxed) {
-         /* correct multipliers for infeasibility problem */
-         FeasibilityRestoration::update_restoration_multipliers_(trial_iterate, direction.constraint_partition);
-      }
-      return trial_iterate;
-   }
-   else {
-      return std::nullopt;
-   }
-}
-
-void FeasibilityRestoration::switch_phase_(const Problem& problem, Direction& direction, Iterate& current_iterate, Iterate& /*trial_iterate*/) {
-   /* find out if transition of one phase to the other */
-   if (this->current_phase == OPTIMALITY) {
-      if (direction.is_relaxed) {
-         /* infeasible subproblem: go from phase II (optimality) to I (restoration) */
          DEBUG << "Switching from optimality to restoration phase\n";
          this->current_phase = FEASIBILITY_RESTORATION;
 
@@ -102,13 +52,45 @@ void FeasibilityRestoration::switch_phase_(const Problem& problem, Direction& di
          this->phase_1_strategy->notify(current_iterate);
       }
    }
-      /* check whether we can switch from phase I (restoration) to II (optimality) */
-   else if (!direction.is_relaxed) { // TODO && this->filter_optimality->accept(trial_iterate.progress.feasibility, trial_iterate.progress
-   // .objective)) {
-      DEBUG << "Switching from restoration to optimality phase\n";
-      this->current_phase = OPTIMALITY;
+   return direction;
+}
+
+bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate,
+      Direction& direction, double step_length) {
+   // check if subproblem definition changed
+   if (this->subproblem.subproblem_definition_changed) {
+      this->phase_2_strategy->reset();
+      this->subproblem.subproblem_definition_changed = false;
       this->subproblem.compute_optimality_measures(problem, current_iterate);
    }
+   double step_norm = step_length * direction.norm;
+
+   bool accept = false;
+   if (step_norm == 0.) {
+      accept = true;
+   }
+   else {
+      // evaluate the predicted reduction
+      double predicted_reduction = direction.predicted_reduction(step_length);
+
+      if (this->current_phase != OPTIMALITY) {
+         // if restoration phase, recompute progress measures of trial point
+         this->subproblem.compute_infeasibility_measures(problem, trial_iterate, direction);
+      }
+
+      GlobalizationStrategy& globalization_strategy = (this->current_phase == OPTIMALITY) ?  *this->phase_2_strategy : *this->phase_1_strategy;
+      // invoke the globalization strategy for acceptance
+      accept = globalization_strategy.check_acceptance(statistics, current_iterate.progress, trial_iterate.progress, direction, predicted_reduction);
+   }
+
+   if (accept) {
+      statistics.add_statistic("phase", (int) direction.is_relaxed ? FEASIBILITY_RESTORATION : OPTIMALITY);
+      if (direction.is_relaxed) {
+         /* correct multipliers for infeasibility problem */
+         FeasibilityRestoration::update_restoration_multipliers_(trial_iterate, direction.constraint_partition);
+      }
+   }
+   return accept;
 }
 
 double FeasibilityRestoration::compute_predicted_reduction(const Problem& /*problem*/, Iterate& /*current_iterate*/, Direction& direction,

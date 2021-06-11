@@ -30,6 +30,10 @@ public:
    int number_iterations; /*!< Current number of iterations */
 
 protected:
+   // preallocated vector to receive the trial primal variables
+   std::vector<double> trial_primals_;
+
+   Iterate assemble_trial_iterate(const Problem& problem, const Iterate& current_iterate, const Direction& direction, double step_length);
    virtual void print_acceptance_(const Iterate& iterate);
    static void print_warning_(const char* message);
 };
