@@ -5,8 +5,8 @@
 #include "Vector.hpp"
 
 FilterStrategy::FilterStrategy(FilterStrategyParameters& strategy_parameters, const std::map<std::string, std::string>& options) :
-   GlobalizationStrategy(), filter(FilterFactory::create(options)), initial_filter_upper_bound(INFINITY),
-   parameters_(strategy_parameters) {
+      GlobalizationStrategy(), filter(FilterFactory::create(options)), initial_filter_upper_bound(INFINITY),
+      parameters_(strategy_parameters) {
 }
 
 void FilterStrategy::initialize(Statistics& /*statistics*/, const Iterate& first_iterate) {
@@ -41,12 +41,9 @@ bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, ProgressMeasur
    bool acceptable = filter->accept(trial_progress.feasibility, trial_progress.objective);
    if (acceptable) {
       // check acceptance wrt current x (h,f)
-      acceptable = filter->improves_current_iterate(current_progress.feasibility, current_progress.objective,
-            trial_progress.feasibility, trial_progress.objective);
+      acceptable = filter->improves_current_iterate(current_progress.feasibility, current_progress.objective, trial_progress.feasibility, trial_progress.objective);
       if (acceptable) {
-         double actual_reduction =
-               filter->compute_actual_reduction(current_progress.objective, current_progress.feasibility,
-                     trial_progress.objective);
+         double actual_reduction = filter->compute_actual_reduction(current_progress.objective, current_progress.feasibility, trial_progress.objective);
          DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << actual_reduction << "\n\n";
 
          /* switching condition */

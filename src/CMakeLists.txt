@@ -22,13 +22,16 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 # directories
-set(DIRECTORIES base base/constraint_relaxation base/mechanism base/strategy base/subproblem interfaces interfaces/AMPL linear_algebra logger solvers solvers/linear solvers/QP solvers/NLP)
+set(DIRECTORIES base base/optimization_problem base/constraint_relaxation base/mechanism base/strategy base/subproblem interfaces interfaces/AMPL linear_algebra logger solvers solvers/linear solvers/QP solvers/NLP)
 
 # source files
 set(SRC_FILES
-    base/Uno.cpp base/Constraint.cpp 
+    base/Uno.cpp
     base/Iterate.cpp base/Phase.hpp base/Preprocessing.cpp
-    base/Problem.cpp base/Statistics.cpp base/Timer.cpp
+    base/Statistics.cpp base/Timer.cpp
+    
+    base/optimization_problem/Problem.cpp
+    base/optimization_problem/Constraint.cpp
     
     base/mechanism/GlobalizationMechanism.cpp
     base/mechanism/GlobalizationMechanismFactory.cpp
@@ -49,7 +52,6 @@ set(SRC_FILES
     base/subproblem/InteriorPoint.cpp
     base/subproblem/Sl1QP.cpp
     base/subproblem/SLP.cpp
-    base/subproblem/SLPEQP.cpp
     base/subproblem/SQP.cpp
     base/subproblem/HessianEvaluation.cpp
     

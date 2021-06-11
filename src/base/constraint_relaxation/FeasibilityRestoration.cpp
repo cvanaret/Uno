@@ -58,15 +58,18 @@ std::optional<Iterate> FeasibilityRestoration::check_acceptance(Statistics& stat
       accept = true;
    }
    else {
+      // possibly switch phases
       this->switch_phase_(problem, direction, current_iterate, trial_iterate);
 
       // evaluate the predicted reduction
       double predicted_reduction = direction.predicted_reduction(step_length);
+
+      // invoke the globalization strategy for acceptance
       if (this->current_phase == OPTIMALITY) {
          accept = this->phase_2_strategy->check_acceptance(statistics, current_iterate.progress, trial_iterate.progress, direction, predicted_reduction);
       }
       else {
-         /* if RESTORATION phase, compute (in)feasibility measures of trial point */
+         // if restoration phase, recompute progress measures of trial point
          this->subproblem.compute_infeasibility_measures(problem, trial_iterate, direction);
          accept = this->phase_1_strategy->check_acceptance(statistics, current_iterate.progress, trial_iterate.progress, direction, predicted_reduction);
       }
