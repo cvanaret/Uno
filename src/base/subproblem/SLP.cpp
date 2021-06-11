@@ -6,7 +6,7 @@
 #include "Logger.hpp"
 #include "QPSolverFactory.hpp"
 
-SLP::SLP(Problem& problem, std::string QP_solver_name, bool /*use_trust_region*/, bool scale_residuals):
+SLP::SLP(const Problem& problem, std::string QP_solver_name, bool /*use_trust_region*/, bool scale_residuals):
 ActiveSetMethod(problem, scale_residuals),
 solver(QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints, 0, false)) {
 }
@@ -18,7 +18,7 @@ void SLP::generate(const Problem& /*problem*/, const Iterate& /*current_iterate*
 void SLP::update_objective_multipliers(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double /*objective_multiplier*/) {
 }
 
-std::vector<Direction> SLP::compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+Direction SLP::compute_direction(const Problem& problem, Iterate& current_iterate, double trust_region_radius) {
     Direction direction = this->compute_lp_step_(problem, *this->solver, current_iterate, trust_region_radius);
     if (direction.status == INFEASIBLE) {
         /* infeasible subproblem during optimality phase */
@@ -26,25 +26,25 @@ std::vector<Direction> SLP::compute_directions(Problem& problem, Iterate& curren
     }
     else {
         direction.phase = OPTIMALITY;
-        return std::vector<Direction>{direction};
+        return direction;
     }
 }
 
-std::vector<Direction> SLP::restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) {
+Direction SLP::restore_feasibility(const Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) {
    Direction direction = this->compute_l1lp_step_(problem, *this->solver, current_iterate, phase_2_direction, trust_region_radius);
    direction.phase = FEASIBILITY_RESTORATION;
-   return std::vector<Direction>{direction};
+   return direction;
 }
 
 /* private methods */
 
-void SLP::evaluate_optimality_iterate_(Problem& problem, Iterate& current_iterate) {
+void SLP::evaluate_optimality_iterate_(const Problem& problem, Iterate& current_iterate) {
     /* compute first-order information */
     current_iterate.compute_objective_gradient(problem);
     current_iterate.compute_constraints_jacobian(problem);
 }
 
-void SLP::evaluate_feasibility_iterate_(Problem& problem, Iterate& current_iterate, Direction& /*phase_2_direction*/) {
+void SLP::evaluate_feasibility_iterate_(const Problem& problem, Iterate& current_iterate, Direction& /*phase_2_direction*/) {
     /* compute first-order information */
     current_iterate.compute_constraints_jacobian(problem);
 }

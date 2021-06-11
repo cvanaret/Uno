@@ -25,7 +25,7 @@ public:
     * \param solver: solver that solves the subproblem
     * \param name: name of the strategy
     */
-   Subproblem(Problem& problem, Norm residual_norm, bool scale_residuals);
+   Subproblem(const Problem& problem, Norm residual_norm, bool scale_residuals);
    virtual ~Subproblem() = default;
 
    virtual Iterate evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& multipliers) = 0;
@@ -34,9 +34,8 @@ public:
    virtual void update_trust_region(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
    virtual void update_objective_multipliers(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) = 0;
 
-   virtual std::vector<Direction> compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) = 0;
-   virtual std::vector<Direction>
-   restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) = 0;
+   virtual Direction compute_direction(const Problem& problem, Iterate& current_iterate, double trust_region_radius) = 0;
+   virtual Direction restore_feasibility(const Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) = 0;
 
    virtual void compute_optimality_measures(const Problem& problem, Iterate& iterate) = 0;
    virtual void compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const Direction& direction) = 0;

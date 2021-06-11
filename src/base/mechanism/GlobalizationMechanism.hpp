@@ -21,14 +21,11 @@ public:
    GlobalizationMechanism(ConstraintRelaxationStrategy& constraint_relaxation_strategy, int max_iterations);
    virtual ~GlobalizationMechanism() = default;
 
-   virtual Iterate initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
-   virtual std::pair<Iterate, Direction> compute_acceptable_iterate(Statistics& statistics, Problem& problem, Iterate& current_iterate) = 0;
-   std::optional<std::pair<Iterate, Direction> >
-   find_first_acceptable_direction_(Statistics& statistics, Problem& problem, Iterate& current_iterate, std::vector<Direction>& directions,
-         double step_length);
+   virtual Iterate initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
+   virtual std::pair<Iterate, Direction> compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate& current_iterate) = 0;
 
    /* references to allow polymorphism */
-   ConstraintRelaxationStrategy& constraint_relaxation_strategy;
+   ConstraintRelaxationStrategy& relaxation_strategy;
    int max_iterations; /*!< Maximum number of iterations */
    int number_iterations; /*!< Current number of iterations */
 

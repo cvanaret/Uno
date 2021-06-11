@@ -16,7 +16,7 @@ l1Relaxation::l1Relaxation(Problem& problem, Subproblem& subproblem, const std::
    }
 }
 
-Iterate l1Relaxation::initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+Iterate l1Relaxation::initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
    /* initialize the subproblem */
    Iterate first_iterate = this->subproblem.evaluate_initial_point(problem, x, multipliers);
    this->globalization_strategy->initialize(statistics, first_iterate);
@@ -27,7 +27,7 @@ Iterate l1Relaxation::initialize(Statistics& statistics, Problem& problem, std::
    return first_iterate;
 }
 
-std::vector<Direction> l1Relaxation::compute_feasible_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+Direction l1Relaxation::compute_feasible_direction(const Problem& problem, Iterate& current_iterate, double trust_region_radius) {
    /*
    // preprocess the subproblem: scale the objective gradient and introduce the elastic variables
    this->preprocess_subproblem();
@@ -41,10 +41,10 @@ std::vector<Direction> l1Relaxation::compute_feasible_directions(Problem& proble
    }
    return directions;
    */
-   return this->subproblem.compute_directions(problem, current_iterate, trust_region_radius);
+   return this->subproblem.compute_direction(problem, current_iterate, trust_region_radius);
 }
 
-std::optional<Iterate> l1Relaxation::check_acceptance(Statistics& statistics, Problem& problem, Iterate& current_iterate, Direction& direction,
+std::optional<Iterate> l1Relaxation::check_acceptance(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Direction& direction,
       double step_length) {
    // compute the trial iterate TODO do not reevaluate if ||d|| = 0
    add_vectors(current_iterate.x, direction.x, step_length, this->trial_primals_);
@@ -95,15 +95,14 @@ void l1Relaxation::preprocess_subproblem() {
    }
 }
 
-std::vector<Direction> l1Relaxation::compute_byrd_steering_rule(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+std::vector<Direction> l1Relaxation::compute_byrd_steering_rule(const Problem& problem, Iterate& current_iterate, double trust_region_radius) {
    DEBUG << "penalty parameter: " << this->penalty_parameter << "\n";
    // TODO: pass penalty parameter to the Hessian and multipliers to the subproblem
 
    /* stage a: compute the step within trust region */
    // std::vector<Direction> directions = this->subproblem.compute_directions(problem, current_iterate, trust_region_radius);
    this->subproblem.generate(problem, current_iterate, this->penalty_parameter, trust_region_radius);
-   std::vector<Direction> directions = this->subproblem.compute_directions(problem, current_iterate, trust_region_radius);
-   Direction direction = directions[0];
+   Direction direction = this->subproblem.compute_direction(problem, current_iterate, trust_region_radius);
 
    /* penalty update: if penalty parameter is already 0, no need to decrease it */
    if (0. < this->penalty_parameter) {
@@ -118,8 +117,7 @@ std::vector<Direction> l1Relaxation::compute_byrd_steering_rule(Problem& problem
          /* stage c: solve the ideal l1 penalty problem with a zero penalty (no objective) */
          DEBUG << "Compute ideal solution:\n";
          this->subproblem.generate(problem, current_iterate, 0., trust_region_radius);
-         directions = this->subproblem.compute_directions(problem, current_iterate, trust_region_radius);
-         Direction& ideal_direction = directions[0];
+         Direction ideal_direction = this->subproblem.compute_direction(problem, current_iterate, trust_region_radius);
 
          /* compute the ideal error (with a zero penalty parameter) */
          double ideal_error = this->compute_error(problem, current_iterate, ideal_direction.multipliers, 0.);
@@ -160,8 +158,7 @@ std::vector<Direction> l1Relaxation::compute_byrd_steering_rule(Problem& problem
                   else {
                      DEBUG << "\nAttempting to solve with penalty parameter " << this->penalty_parameter << "\n";
                      this->subproblem.generate(problem, current_iterate, this->penalty_parameter, trust_region_radius);
-                     directions = this->subproblem.compute_directions(problem, current_iterate, trust_region_radius);
-                     direction = directions[0];
+                     direction = this->subproblem.compute_direction(problem, current_iterate, trust_region_radius);
 
                      linearized_residual = this->compute_linearized_constraint_residual(direction.x);
                      DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
@@ -175,8 +172,7 @@ std::vector<Direction> l1Relaxation::compute_byrd_steering_rule(Problem& problem
             this->penalty_parameter = std::min(this->penalty_parameter, term * term);
             if (this->penalty_parameter < updated_penalty_parameter) {
                this->subproblem.generate(problem, current_iterate, this->penalty_parameter, trust_region_radius);
-               directions = this->subproblem.compute_directions(problem, current_iterate, trust_region_radius);
-               direction = directions[0];
+               direction = this->subproblem.compute_direction(problem, current_iterate, trust_region_radius);
             }
 
          }
@@ -208,7 +204,7 @@ double l1Relaxation::compute_linearized_constraint_residual(std::vector<double>&
    return residual;
 }
 
-double l1Relaxation::compute_error(Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter) {
+double l1Relaxation::compute_error(const Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter) {
    /* measure that combines KKT error and complementarity error */
    double error = 0.;
 
@@ -239,7 +235,7 @@ void l1Relaxation::postprocess_direction(const Problem& problem, Direction& dire
    }
 }
 
-double l1Relaxation::compute_predicted_reduction(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) {
+double l1Relaxation::compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) {
    // compute the predicted reduction of the l1 relaxation as a postprocessing of the predicted reduction of the subproblem
    if (step_length == 1.) {
       return current_iterate.progress.feasibility + direction.predicted_reduction(step_length);

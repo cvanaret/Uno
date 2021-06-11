@@ -9,16 +9,16 @@ LineSearch::LineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strat
    min_step_length(1e-9) {
 }
 
-Iterate LineSearch::initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+Iterate LineSearch::initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
    statistics.add_column("LS step length", Statistics::double_width, 30);
    // generate the initial point
-   return this->constraint_relaxation_strategy.initialize(statistics, problem, x, multipliers);
+   return this->relaxation_strategy.initialize(statistics, problem, x, multipliers);
 }
 
-std::pair<Iterate, Direction> LineSearch::compute_acceptable_iterate(Statistics& statistics, Problem& problem, Iterate& current_iterate) {
+std::pair<Iterate, Direction> LineSearch::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
    /* compute the directions */
-   this->constraint_relaxation_strategy.subproblem.generate(problem, current_iterate, problem.objective_sign, INFINITY);
-   std::vector<Direction> directions = this->constraint_relaxation_strategy.compute_feasible_directions(problem, current_iterate, INFINITY);
+   this->relaxation_strategy.subproblem.generate(problem, current_iterate, problem.objective_sign, INFINITY);
+   Direction direction = this->relaxation_strategy.compute_feasible_direction(problem, current_iterate, INFINITY);
 
    bool line_search_termination = false;
    while (!line_search_termination) {
@@ -31,22 +31,27 @@ std::pair<Iterate, Direction> LineSearch::compute_acceptable_iterate(Statistics&
          this->print_iteration_();
 
          /* check whether the trial step is accepted */
-         std::optional<std::pair<Iterate, Direction> > acceptance_check =
-               this->find_first_acceptable_direction_(statistics, problem, current_iterate, directions, this->step_length);
+         std::optional<Iterate> acceptance_check =
+               this->relaxation_strategy.check_acceptance(statistics, problem, current_iterate, direction, this->step_length);
          if (acceptance_check.has_value()) {
-            auto [new_iterate, direction] = acceptance_check.value();
+            Iterate& accepted_iterate = acceptance_check.value();
+            // compute the residuals
+            accepted_iterate.compute_objective(problem);
+            this->relaxation_strategy.subproblem.compute_residuals(problem, accepted_iterate, accepted_iterate.multipliers,
+                  direction.objective_multiplier);
+
             this->add_statistics(statistics, direction);
-            return std::make_pair(new_iterate, direction);
+            return std::make_pair(accepted_iterate, direction);
          }
          /* decrease the step length */
          this->update_step_length();
       }
       // if step length is too small, run restoration phase
       if (this->step_length < this->min_step_length) {
-         if (0. < current_iterate.progress.feasibility && directions[0].phase == OPTIMALITY) {
+         if (0. < current_iterate.progress.feasibility && direction.phase == OPTIMALITY) {
             // reset the line search with the restoration solution
             DEBUG << "Enter restoration feasibility phase\n";
-            directions = this->constraint_relaxation_strategy.subproblem.restore_feasibility(problem, current_iterate, directions[0], INFINITY);
+            direction = this->relaxation_strategy.subproblem.restore_feasibility(problem, current_iterate, direction, INFINITY);
             this->step_length = 1.;
          }
          else {

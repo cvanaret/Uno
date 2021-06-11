@@ -1,8 +1,10 @@
 #include "Subproblem.hpp"
 #include "LinearSolverFactory.hpp"
 
-Subproblem::Subproblem(Problem& problem, Norm residual_norm, bool scale_residuals) : number_variables(
-      problem.number_variables), number_constraints(problem.number_constraints), variables_bounds(problem.number_variables),
+Subproblem::Subproblem(const Problem& problem, Norm residual_norm, bool scale_residuals) :
+      number_variables(problem.number_variables),
+      number_constraints(problem.number_constraints),
+      variables_bounds(problem.number_variables),
       constraints_multipliers(problem.number_constraints),
       objective_value(INFINITY),
       // objective_gradient is a SparseVector

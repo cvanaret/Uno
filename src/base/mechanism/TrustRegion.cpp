@@ -5,16 +5,16 @@
 #include "Logger.hpp"
 
 TrustRegion::TrustRegion(ConstraintRelaxationStrategy& constraint_relaxation_strategy, double initial_radius, int max_iterations) :
-   GlobalizationMechanism(constraint_relaxation_strategy, max_iterations), radius(initial_radius), activity_tolerance_(1e-6) {
+      GlobalizationMechanism(constraint_relaxation_strategy, max_iterations), radius(initial_radius), activity_tolerance_(1e-6) {
 }
 
-Iterate TrustRegion::initialize(Statistics& statistics, Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+Iterate TrustRegion::initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
    statistics.add_column("TR radius", Statistics::double_width, 30);
    // generate the initial point
-   return this->constraint_relaxation_strategy.initialize(statistics, problem, x, multipliers);
+   return this->relaxation_strategy.initialize(statistics, problem, x, multipliers);
 }
 
-std::pair<Iterate, Direction> TrustRegion::compute_acceptable_iterate(Statistics& statistics, Problem& problem, Iterate& current_iterate) {
+std::pair<Iterate, Direction> TrustRegion::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
    bool is_accepted = false;
    this->number_iterations = 0;
 
@@ -26,25 +26,26 @@ std::pair<Iterate, Direction> TrustRegion::compute_acceptable_iterate(Statistics
 
          /* generate the subproblem once, then update the trust region */
          if (true || this->number_iterations == 1) {
-            this->constraint_relaxation_strategy.subproblem.generate(problem, current_iterate, problem.objective_sign, this->radius);
+            this->relaxation_strategy.subproblem.generate(problem, current_iterate, problem.objective_sign, this->radius);
          }
          else {
-            this->constraint_relaxation_strategy.subproblem.update_trust_region(problem, current_iterate, this->radius);
+            this->relaxation_strategy.subproblem.update_trust_region(problem, current_iterate, this->radius);
          }
-         /* compute the directions within the trust region */
-         std::vector<Direction> directions = this->constraint_relaxation_strategy.compute_feasible_directions(problem, current_iterate,
-               this->radius);
+         /* compute the direction within the trust region */
+         Direction direction = this->relaxation_strategy.compute_feasible_direction(problem, current_iterate, this->radius);
          /* set bound multipliers of active trust region to 0 */
-         for (Direction& direction: directions) {
-            TrustRegion::rectify_active_set(direction, this->radius);
-         }
+         TrustRegion::rectify_active_set(direction, this->radius);
 
          /* check whether the trial step is accepted */
-         std::optional<std::pair<Iterate, Direction> > acceptance_check = this->find_first_acceptable_direction_(statistics, problem,
-               current_iterate, directions,1.);
+         std::optional<Iterate> acceptance_check = this->relaxation_strategy.check_acceptance(statistics, problem, current_iterate,
+               direction, 1.);
          if (acceptance_check.has_value()) {
-            is_accepted = true;
-            auto& [new_iterate, direction] = acceptance_check.value();
+            Iterate& accepted_iterate = acceptance_check.value();
+            // compute the residuals
+            accepted_iterate.compute_objective(problem);
+            this->relaxation_strategy.subproblem.compute_residuals(problem, accepted_iterate, accepted_iterate.multipliers,
+                  -direction.objective_multiplier);
+
             statistics.add_statistic("minor", this->number_iterations);
             statistics.add_statistic("TR radius", this->radius);
             statistics.add_statistic("step norm", direction.norm);
@@ -52,15 +53,12 @@ std::pair<Iterate, Direction> TrustRegion::compute_acceptable_iterate(Statistics
             if (direction.norm >= this->radius - this->activity_tolerance_) {
                this->radius *= 2.;
             }
-            return std::make_pair(new_iterate, direction);
+            is_accepted = true;
+            return std::make_pair(accepted_iterate, direction);
          }
          else {
             /* if the step is rejected, decrease the radius */
-            double min_norm = INFINITY;
-            for (const Direction& direction: directions) {
-               min_norm = std::min(min_norm, direction.norm);
-            }
-            this->radius = std::min(this->radius, min_norm) / 2.;
+            this->radius = std::min(this->radius, direction.norm) / 2.;
          }
       }
       catch (const NumericalError& e) {

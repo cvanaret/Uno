@@ -10,7 +10,7 @@ Uno::Uno(GlobalizationMechanism& globalization_mechanism, double tolerance, int 
       globalization_mechanism), tolerance(tolerance), max_iterations(max_iterations) {
 }
 
-Result Uno::solve(Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool preprocessing) {
+Result Uno::solve(const Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool preprocessing) {
    Timer timer{};
    timer.start();
    int major_iterations = 0;
@@ -27,7 +27,7 @@ Result Uno::solve(Problem& problem, std::vector<double>& x, Multipliers& multipl
    }
 
    Statistics statistics = Uno::create_statistics();
-   /* use the current point to initialize the strategies and generate the initial point */
+   /* use the current point to initialize the strategies and generate the initial iterate */
    Iterate current_iterate = this->globalization_mechanism.initialize(statistics, problem, x, multipliers);
 
    TerminationStatus termination_status = NOT_OPTIMAL;
@@ -59,7 +59,7 @@ Result Uno::solve(Problem& problem, std::vector<double>& x, Multipliers& multipl
    statistics.print_footer();
    timer.stop();
 
-   int number_subproblems_solved = this->globalization_mechanism.constraint_relaxation_strategy.subproblem.number_subproblems_solved;
+   int number_subproblems_solved = this->globalization_mechanism.relaxation_strategy.subproblem.number_subproblems_solved;
    Result result =
          {termination_status, current_iterate, problem.number_variables, problem.number_constraints, major_iterations, timer.get_time(),
           Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_jacobian, Iterate::number_eval_hessian,
@@ -93,8 +93,7 @@ bool Uno::termination_criterion_(TerminationStatus current_status, int iteration
    return current_status != NOT_OPTIMAL || this->max_iterations <= iteration;
 }
 
-TerminationStatus
-Uno::check_termination(Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier) const {
+TerminationStatus Uno::check_termination(const Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier) const {
    TerminationStatus status = NOT_OPTIMAL;
 
    if (current_iterate.residuals.complementarity <= this->tolerance * (double) (current_iterate.x.size() + problem.number_constraints)) {

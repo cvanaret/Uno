@@ -29,7 +29,7 @@ void SLPEQP::update_objective_multipliers(const Problem& /*problem*/, const Iter
 }
 
 std::vector<Direction>
-SLPEQP::compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+SLPEQP::compute_direction(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
    /* compute first-order information */
    current_iterate.compute_objective_gradient(problem);
    current_iterate.compute_constraints(problem);

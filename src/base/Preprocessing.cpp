@@ -1,7 +1,7 @@
 #include "Preprocessing.hpp"
 #include "BQPDSolver.hpp"
 
-void Preprocessing::apply(Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+void Preprocessing::apply(const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
    /* linear constraints */
    INFO << "Preprocessing phase: the problem has " << problem.linear_constraints.size() << " linear constraints\n";
    if (!problem.linear_constraints.empty()) {

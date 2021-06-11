@@ -7,14 +7,14 @@
 #include "BQPDSolver.hpp"
 #include "QPSolverFactory.hpp"
 
-Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals,
-      double initial_parameter) :
+Sl1QP::Sl1QP(const Problem& problem, const std::string& QP_solver, const std::string& hessian_evaluation_method, bool use_trust_region, bool
+scale_residuals, double initial_parameter) :
 // compute the number of variables and call the private constructor
       Sl1QP(problem, QP_solver, hessian_evaluation_method, use_trust_region, scale_residuals, initial_parameter,
             this->count_elastic_variables_(problem)) {
 }
 
-size_t Sl1QP::count_elastic_variables_(Problem& problem) {
+size_t Sl1QP::count_elastic_variables_(const Problem& problem) {
    size_t number_variables = problem.number_variables;
    for (size_t j = 0; j < problem.number_constraints; j++) {
       if (-INFINITY < problem.constraint_bounds[j].lb) {
@@ -27,8 +27,8 @@ size_t Sl1QP::count_elastic_variables_(Problem& problem) {
    return number_variables;
 }
 
-Sl1QP::Sl1QP(Problem& problem, std::string QP_solver, std::string hessian_evaluation_method, bool use_trust_region, bool scale_residuals,
-      double initial_parameter, int number_variables) : ActiveSetMethod(problem, scale_residuals), solver(
+Sl1QP::Sl1QP(const Problem& problem, const std::string& QP_solver, const std::string& hessian_evaluation_method, bool use_trust_region, bool
+scale_residuals, double initial_parameter, int number_variables) : ActiveSetMethod(problem, scale_residuals), solver(
       QPSolverFactory::create(QP_solver, number_variables, problem.number_constraints,
             problem.hessian_maximum_number_nonzeros + problem.number_variables, true)),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
@@ -48,8 +48,7 @@ void Sl1QP::generate(const Problem& /*problem*/, const Iterate& /*current_iterat
 void Sl1QP::update_objective_multipliers(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double /*objective_multiplier*/) {
 }
 
-std::vector<Direction>
-Sl1QP::compute_directions(Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+Direction Sl1QP::compute_direction(const Problem& problem, Iterate& current_iterate, double trust_region_radius) {
    DEBUG << "penalty parameter: " << this->penalty_parameter << "\n";
 
    // evaluate constraints
@@ -145,10 +144,10 @@ Sl1QP::compute_directions(Problem& problem, Iterate& current_iterate, double tru
    direction.predicted_reduction = [&](double step_length) {
       return this->compute_predicted_reduction_(problem, current_iterate, direction, step_length);
    };
-   return std::vector<Direction>{direction};
+   return direction;
 }
 
-Direction Sl1QP::compute_l1qp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, ConstraintPartition& constraint_partition,
+Direction Sl1QP::compute_l1qp_step_(const Problem& problem, QPSolver& solver, Iterate& current_iterate, ConstraintPartition& constraint_partition,
       std::vector<double>& initial_solution, double trust_region_radius) {
    /* compute the objective */
    this->compute_l1_linear_objective_(current_iterate, constraint_partition);
@@ -170,7 +169,7 @@ Direction Sl1QP::compute_l1qp_step_(Problem& problem, QPSolver& solver, Iterate&
    return direction;
 }
 
-Direction Sl1QP::compute_l1qp_step_(Problem& problem, QPSolver& solver, Iterate& current_iterate, double penalty_parameter,
+Direction Sl1QP::compute_l1qp_step_(const Problem& problem, QPSolver& solver, Iterate& current_iterate, double penalty_parameter,
       ElasticVariables& elastic_variables, double trust_region_radius) {
    current_iterate.compute_objective_gradient(problem);
    SparseVector objective_gradient;
@@ -243,7 +242,7 @@ Direction Sl1QP::compute_l1qp_step_(Problem& problem, QPSolver& solver, Iterate&
    return direction;
 }
 
-Direction Sl1QP::solve_l1qp_subproblem_(Problem& problem, Iterate& current_iterate, double trust_region_radius, double penalty_parameter) {
+Direction Sl1QP::solve_l1qp_subproblem_(const Problem& problem, Iterate& current_iterate, double trust_region_radius, double penalty_parameter) {
    /* compute l1QP step */
    this->hessian_evaluation->compute(problem, current_iterate.x, penalty_parameter, current_iterate.multipliers.constraints);
    Direction direction = this->compute_l1qp_step_(problem, *this->solver, current_iterate, penalty_parameter, this->elastic_variables_,
@@ -251,11 +250,11 @@ Direction Sl1QP::solve_l1qp_subproblem_(Problem& problem, Iterate& current_itera
    return direction;
 }
 
-std::vector<Direction> Sl1QP::restore_feasibility(Problem&, Iterate&, Direction&, double) {
+Direction Sl1QP::restore_feasibility(const Problem&, Iterate&, Direction&, double) {
    throw std::out_of_range("Sl1QP.compute_infeasibility_step is not implemented, since l1QP are always feasible");
 }
 
-double Sl1QP::compute_predicted_reduction_(Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) {
+double Sl1QP::compute_predicted_reduction_(const Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) {
    // the predicted reduction is quadratic
    if (step_length == 1.) {
       return current_iterate.progress.feasibility - direction.objective;
@@ -301,7 +300,7 @@ double Sl1QP::compute_linearized_constraint_residual_(std::vector<double>& direc
    return residual;
 }
 
-double Sl1QP::compute_error_(Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter) {
+double Sl1QP::compute_error_(const Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter) {
    /* measure that combines KKT error and complementarity error */
    double error = 0.;
 

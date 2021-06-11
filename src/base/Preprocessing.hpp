@@ -7,7 +7,7 @@
 
 class Preprocessing {
 public:
-   static void apply(Problem& problem, std::vector<double>& x, Multipliers& multipliers);
+   static void apply(const Problem& problem, std::vector<double>& x, Multipliers& multipliers);
 };
 
 #endif //PREPROCESSING_H

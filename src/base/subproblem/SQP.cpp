@@ -6,7 +6,7 @@
 #include "Logger.hpp"
 #include "QPSolverFactory.hpp"
 
-SQP::SQP(Problem& problem, const std::string& QP_solver_name, const std::string& hessian_evaluation_method, bool use_trust_region,
+SQP::SQP(const Problem& problem, const std::string& QP_solver_name, const std::string& hessian_evaluation_method, bool use_trust_region,
       bool scale_residuals) : ActiveSetMethod(problem, scale_residuals),
       solver(QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints,
             // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
@@ -50,12 +50,7 @@ void SQP::update_objective_multipliers(const Problem& problem, const Iterate& cu
    }
 }
 
-void SQP::display_() {
-   DEBUG << "Current constraint multipliers: ";
-   print_vector(DEBUG, constraints_multipliers);
-}
-
-std::vector<Direction> SQP::compute_directions(Problem& /*problem*/, Iterate& current_iterate, double /*trust_region_radius*/) {
+Direction SQP::compute_direction(const Problem& /*problem*/, Iterate& current_iterate, double /*trust_region_radius*/) {
    /* compute QP direction */
    Direction direction = this->solver->solve_QP(this->variables_bounds, constraints_bounds, this->objective_gradient,
          this->constraints_jacobian, this->hessian_evaluation->hessian, this->initial_point);
@@ -65,10 +60,10 @@ std::vector<Direction> SQP::compute_directions(Problem& /*problem*/, Iterate& cu
    direction.predicted_reduction = [&](double step_length) {
       return this->compute_predicted_reduction_(current_iterate, direction, step_length);
    };
-   return std::vector<Direction>{direction};
+   return direction;
 }
 
-Direction SQP::compute_l1qp_step_(Problem& problem, Iterate& current_iterate, ConstraintPartition& constraint_partition,
+Direction SQP::compute_l1qp_step_(const Problem& problem, Iterate& current_iterate, ConstraintPartition& constraint_partition,
       std::vector<double>& initial_point, double trust_region_radius) {
    /* compute the objective */
    this->compute_l1_linear_objective_(current_iterate, constraint_partition);
@@ -89,8 +84,7 @@ Direction SQP::compute_l1qp_step_(Problem& problem, Iterate& current_iterate, Co
    return direction;
 }
 
-std::vector<Direction>
-SQP::restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) {
+Direction SQP::restore_feasibility(const Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) {
    DEBUG << "\nCreating the restoration problem with " << phase_2_direction.constraint_partition.infeasible.size()
          << " infeasible constraints\n";
    this->evaluate_feasibility_iterate_(problem, current_iterate, phase_2_direction.constraint_partition);
@@ -101,10 +95,10 @@ SQP::restore_feasibility(Problem& problem, Iterate& current_iterate, Direction& 
    direction.predicted_reduction = [&](double step_length) {
       return this->compute_predicted_reduction_(current_iterate, direction, step_length);
    };
-   return std::vector<Direction>{direction};
+   return direction;
 }
 
-void SQP::evaluate_feasibility_iterate_(Problem& problem, Iterate& current_iterate, ConstraintPartition& constraint_partition) {
+void SQP::evaluate_feasibility_iterate_(const Problem& problem, Iterate& current_iterate, ConstraintPartition& constraint_partition) {
    copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
    /* update the multipliers of the general constraints */
    this->generate_l1_multipliers_(problem, constraint_partition);
