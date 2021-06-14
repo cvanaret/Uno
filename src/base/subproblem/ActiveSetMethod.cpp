@@ -17,20 +17,12 @@ Iterate ActiveSetMethod::evaluate_initial_point(const Problem& problem, const st
 }
 
 void ActiveSetMethod::compute_optimality_measures(const Problem& problem, Iterate& iterate) {
-   // feasibility
-   this->compute_residuals(problem, iterate, iterate.multipliers, 1.);
+   iterate.compute_constraints(problem);
+   // feasibility measure: residual of all constraints
+   iterate.residuals.constraints = problem.compute_constraint_residual(iterate.constraints, this->residual_norm);
    // optimality
    iterate.compute_objective(problem);
    iterate.progress = {iterate.residuals.constraints, iterate.objective};
-}
-
-void ActiveSetMethod::compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const Direction& direction) {
-   iterate.compute_constraints(problem);
-   // feasibility measure: residual of all constraints
-   double feasibility = problem.compute_constraint_residual(iterate.constraints, this->residual_norm);
-   // optimality measure: residual of linearly infeasible constraints
-   double objective = problem.compute_constraint_residual(iterate.constraints, direction.constraint_partition.infeasible, this->residual_norm);
-   iterate.progress = {feasibility, objective};
 }
 
 /* QP */
@@ -84,53 +76,6 @@ void ActiveSetMethod::generate_elastic_variables_(const Problem& problem, Elasti
    }
 }
 
-void ActiveSetMethod::compute_l1_linear_objective_(Iterate& current_iterate, ConstraintPartition& constraint_partition) {
-   /* objective function: sum of gradients of infeasible constraints */
-   SparseVector objective_gradient;
-   for (int j: constraint_partition.infeasible) {
-      for (const auto[i, derivative]: current_iterate.constraints_jacobian[j]) {
-         if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
-            objective_gradient[i] -= derivative;
-         }
-         else {
-            objective_gradient[i] += derivative;
-         }
-      }
-   }
-   current_iterate.set_objective_gradient(objective_gradient);
-}
-
-void ActiveSetMethod::generate_l1_multipliers_(const Problem& problem, ConstraintPartition& constraint_partition) {
-   for (size_t j = 0; j < problem.number_constraints; j++) {
-      if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
-         this->constraints_multipliers[j] = 1.;
-      }
-      else if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_UPPER) {
-         this->constraints_multipliers[j] = -1.;
-      }
-      // otherwise, leave the multiplier as it is
-   }
-}
-
-void ActiveSetMethod::generate_feasibility_bounds_(const Problem& problem, std::vector<double>& current_constraints, ConstraintPartition& constraint_partition) {
-   for (size_t j = 0; j < problem.number_constraints; j++) {
-      double lb, ub;
-      if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
-         lb = -INFINITY;
-         ub = problem.constraint_bounds[j].lb - current_constraints[j];
-      }
-      else if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_UPPER) {
-         lb = problem.constraint_bounds[j].ub - current_constraints[j];
-         ub = INFINITY;
-      }
-      else { // FEASIBLE
-         lb = problem.constraint_bounds[j].lb - current_constraints[j];
-         ub = problem.constraint_bounds[j].ub - current_constraints[j];
-      }
-      this->constraints_bounds[j] = {lb, ub};
-   }
-}
-
 /* LP */
 
 Direction ActiveSetMethod::compute_lp_step_(const Problem& problem, QPSolver& solver, Iterate& current_iterate, double trust_region_radius) {
@@ -144,10 +89,10 @@ Direction ActiveSetMethod::compute_lp_step_(const Problem& problem, QPSolver& so
    print_vector(DEBUG, current_iterate.multipliers.upper_bounds);
 
    /* bounds of the variables */
-   this->generate_variables_bounds_(problem, current_iterate, trust_region_radius);
+   this->set_variables_bounds_(problem, current_iterate, trust_region_radius);
 
    /* bounds of the linearized constraints */
-   this->generate_constraints_bounds(problem, current_iterate.constraints);
+   this->set_constraints_bounds(problem, current_iterate.constraints);
 
    /* generate the initial point */
    clear(this->initial_point);
@@ -175,13 +120,13 @@ Direction ActiveSetMethod::compute_l1lp_step_(const Problem& problem, QPSolver& 
          << " infeasible constraints\n";
 
    /* compute the objective */
-   this->compute_l1_linear_objective_(current_iterate, phase_2_direction.constraint_partition);
+   this->compute_l1_linear_objective(current_iterate, phase_2_direction.constraint_partition);
 
    /* bounds of the variables */
-   this->generate_variables_bounds_(problem, current_iterate, trust_region_radius);
+   this->set_variables_bounds_(problem, current_iterate, trust_region_radius);
 
    /* bounds of the linearized constraints */
-   this->generate_feasibility_bounds_(problem, current_iterate.constraints, phase_2_direction.constraint_partition);
+   this->generate_feasibility_bounds(problem, current_iterate.constraints, phase_2_direction.constraint_partition);
 
    /* solve the QP */
    Direction direction =

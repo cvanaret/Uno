@@ -5,86 +5,88 @@
 #include "Vector.hpp"
 
 std::map<FunctionType, std::string> Problem::type_to_string = {
-    {LINEAR, "linear"},
-    {QUADRATIC, "quadratic"},
-    {NONLINEAR, "nonlinear"}
+      {LINEAR, "linear"},
+      {QUADRATIC, "quadratic"},
+      {NONLINEAR, "nonlinear"}
 };
 
 /* Abstract Problem class */
 
-Problem::Problem(std::string& name, int number_variables, int number_constraints, FunctionType type):
-name(name), number_variables(number_variables), number_constraints(number_constraints), type(type),
-objective_sign(1.), objective_type(NONLINEAR),
-// allocate all vectors
-variable_name(number_variables),
-//variable_discrete(number_variables),
-variables_bounds(number_variables), variable_status(number_variables),
-constraint_name(number_constraints),
-//constraint_variables(number_constraints),
-constraint_bounds(number_constraints), constraint_type(number_constraints), constraint_status(number_constraints),
-hessian_maximum_number_nonzeros(0) {
+Problem::Problem(std::string& name, int number_variables, int number_constraints, FunctionType type) :
+      name(name), number_variables(number_variables), number_constraints(number_constraints), type(type),
+      objective_sign(1.), objective_type(NONLINEAR),
+      // allocate all vectors
+      variable_name(number_variables),
+      //variable_discrete(number_variables),
+      variables_bounds(number_variables), variable_status(number_variables),
+      constraint_name(number_constraints),
+      //constraint_variables(number_constraints),
+      constraint_bounds(number_constraints), constraint_type(number_constraints), constraint_status(number_constraints),
+      hessian_maximum_number_nonzeros(0) {
 }
 
 std::vector<double> Problem::evaluate_constraints(const std::vector<double>& x) const {
+   // allocate an empty vector
    std::vector<double> constraints(this->number_constraints);
+   // evaluate the constraints in place
    this->evaluate_constraints(x, constraints);
    return constraints;
 }
 
 /* compute ||c|| */
 double Problem::compute_constraint_residual(const std::vector<double>& constraints, Norm residual_norm) const {
-    std::vector<double> residuals(constraints.size());
-    for (size_t j = 0; j < this->number_constraints; j++) {
-        residuals[j] = std::max(std::max(0., this->constraint_bounds[j].lb - constraints[j]), constraints[j] - this->constraint_bounds[j].ub);
-    }
-    return norm(residuals, residual_norm);
+   // create a lambda to avoid allocating an std::vector
+   auto residual_function = [&](size_t j) {
+      return std::max(std::max(0., this->constraint_bounds[j].lb - constraints[j]), constraints[j] - this->constraint_bounds[j].ub);
+   };
+   return norm(residual_function, constraints.size(), residual_norm);
 }
 
 /* compute ||c_S|| for a given set S */
 double Problem::compute_constraint_residual(const std::vector<double>& constraints, const std::vector<int>& constraint_set, Norm residual_norm)
 const {
-    SparseVector residuals;
-    for (int j: constraint_set) {
-        residuals[j] = std::max(std::max(0., this->constraint_bounds[j].lb - constraints[j]), constraints[j] - this->constraint_bounds[j].ub);
-    }
-    return norm(residuals, residual_norm);
+   SparseVector residuals;
+   for (int j: constraint_set) {
+      residuals[j] = std::max(std::max(0., this->constraint_bounds[j].lb - constraints[j]), constraints[j] - this->constraint_bounds[j].ub);
+   }
+   return norm(residuals, residual_norm);
 }
 
 void Problem::determine_bounds_types(std::vector<Range>& bounds, std::vector<ConstraintType>& status) {
    assert(bounds.size() == status.size());
 
-    for (size_t i = 0; i < bounds.size(); i++) {
-        if (bounds[i].lb == bounds[i].ub) {
-            status[i] = EQUAL_BOUNDS;
-        }
-        else if (-INFINITY < bounds[i].lb && bounds[i].ub < INFINITY) {
-            status[i] = BOUNDED_BOTH_SIDES;
-        }
-        else if (-INFINITY < bounds[i].lb) {
-            status[i] = BOUNDED_LOWER;
-        }
-        else if (bounds[i].ub < INFINITY) {
-            status[i] = BOUNDED_UPPER;
-        }
-        else {
-            status[i] = UNBOUNDED;
-        }
-    }
+   for (size_t i = 0; i < bounds.size(); i++) {
+      if (bounds[i].lb == bounds[i].ub) {
+         status[i] = EQUAL_BOUNDS;
+      }
+      else if (-INFINITY < bounds[i].lb && bounds[i].ub < INFINITY) {
+         status[i] = BOUNDED_BOTH_SIDES;
+      }
+      else if (-INFINITY < bounds[i].lb) {
+         status[i] = BOUNDED_LOWER;
+      }
+      else if (bounds[i].ub < INFINITY) {
+         status[i] = BOUNDED_UPPER;
+      }
+      else {
+         status[i] = UNBOUNDED;
+      }
+   }
 }
 
 void Problem::determine_constraints_() {
-    int current_equality_constraint = 0;
-    int current_inequality_constraint = 0;
-    for (size_t j = 0; j < this->number_constraints; j++) {
-        if (this->constraint_status[j] == EQUAL_BOUNDS) {
-            this->equality_constraints[j] = current_equality_constraint;
-            current_equality_constraint++;
-        }
-        else {
-            this->inequality_constraints[j] = current_inequality_constraint;
-            current_inequality_constraint++;
-        }
-    }
+   int current_equality_constraint = 0;
+   int current_inequality_constraint = 0;
+   for (size_t j = 0; j < this->number_constraints; j++) {
+      if (this->constraint_status[j] == EQUAL_BOUNDS) {
+         this->equality_constraints[j] = current_equality_constraint;
+         current_equality_constraint++;
+      }
+      else {
+         this->inequality_constraints[j] = current_inequality_constraint;
+         current_inequality_constraint++;
+      }
+   }
 }
 
 /* native C++ problem */

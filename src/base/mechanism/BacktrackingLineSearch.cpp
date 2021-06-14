@@ -54,8 +54,7 @@ std::pair<Iterate, Direction> BacktrackingLineSearch::compute_acceptable_iterate
       if (this->step_length < this->min_step_length) {
          if (0. < current_iterate.progress.feasibility && !direction.is_relaxed) {
             // reset the line search with the restoration solution
-            DEBUG << "Enter restoration feasibility phase\n";
-            direction = this->relaxation_strategy.subproblem.restore_feasibility(problem, current_iterate, direction, INFINITY);
+            direction = this->relaxation_strategy.solve_feasibility_problem(problem, current_iterate, direction, INFINITY);
             this->step_length = 1.;
          }
          else {

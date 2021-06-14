@@ -27,8 +27,8 @@ public:
     explicit Filter(FilterConstants& constants);
     virtual ~Filter() = default;
 
-    double upper_bound; /*!< Upper bound on constraint violation */
-    size_t max_size; /*!< Max filter size */
+    double upper_bound{INFINITY}; /*!< Upper bound on constraint violation */
+    size_t max_size{50}; /*!< Max filter size */
     FilterConstants constants; /*!< Set of constants */
 
     void reset();

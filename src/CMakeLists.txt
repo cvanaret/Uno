@@ -27,7 +27,7 @@ set(DIRECTORIES base base/optimization_problem base/constraint_relaxation base/m
 # source files
 set(SRC_FILES
     base/Uno.cpp
-    base/Iterate.cpp base/Phase.hpp base/Preprocessing.cpp
+    base/Iterate.cpp base/Preprocessing.cpp
     base/Statistics.cpp base/Timer.cpp
     
     base/optimization_problem/Problem.cpp
@@ -35,7 +35,7 @@ set(SRC_FILES
     
     base/mechanism/GlobalizationMechanism.cpp
     base/mechanism/GlobalizationMechanismFactory.cpp
-    base/mechanism/LineSearch.cpp base/mechanism/TrustRegion.cpp
+		base/mechanism/BacktrackingLineSearch.cpp base/mechanism/TrustRegion.cpp
 
     base/strategy/GlobalizationStrategyFactory.cpp
     base/strategy/FilterStrategy.cpp base/strategy/Filter.cpp

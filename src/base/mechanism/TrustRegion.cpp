@@ -33,7 +33,7 @@ std::pair<Iterate, Direction> TrustRegion::compute_acceptable_iterate(Statistics
             this->relaxation_strategy.subproblem.generate(problem, current_iterate, problem.objective_sign, this->radius);
          }
          else {
-            this->relaxation_strategy.subproblem.update_trust_region(problem, current_iterate, this->radius);
+            this->relaxation_strategy.subproblem.set_trust_region(problem, current_iterate, this->radius);
          }
          /* compute the direction within the trust region */
          Direction direction = this->relaxation_strategy.compute_feasible_direction(problem, current_iterate, this->radius);

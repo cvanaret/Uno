@@ -212,7 +212,6 @@ Direction BQPDSolver::generate_direction_(std::vector<double>& x) {
       }
    }
    direction.status = this->int_to_status_(this->ifail_);
-   // phase_1_required
    direction.norm = norm_inf(x);
    direction.objective = this->f_solution_;
    return direction;

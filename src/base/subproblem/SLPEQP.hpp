@@ -12,7 +12,7 @@ public:
          bool use_trust_region, bool scale_residuals);
 
    void generate(const Problem& problem, const Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
-   void update_objective_multipliers(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
+   void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
 
    std::vector<Direction> compute_direction(Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
    std::vector<Direction>

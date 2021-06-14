@@ -1,4 +1,3 @@
-#include "Vector.hpp"
 #include "LinearSolverFactory.hpp"
 #ifdef HAS_MA57
 #include "MA57Solver.hpp"

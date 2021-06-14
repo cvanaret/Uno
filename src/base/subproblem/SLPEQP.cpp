@@ -25,7 +25,7 @@ void SLPEQP::generate(const Problem& /*problem*/, const Iterate& /*current_itera
 
 }
 
-void SLPEQP::update_objective_multipliers(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double /*objective_multiplier*/) {
+void SLPEQP::update_objective_multiplier(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double /*objective_multiplier*/) {
 }
 
 std::vector<Direction>
