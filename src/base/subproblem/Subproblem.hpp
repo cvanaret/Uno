@@ -21,19 +21,17 @@ public:
    Subproblem(const Problem& problem, Norm residual_norm, bool scale_residuals);
    virtual ~Subproblem() = default;
 
-   virtual Iterate evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& multipliers) = 0;
+   virtual Iterate evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& multipliers);
    virtual void generate(const Problem& problem, const Iterate& current_iterate, double objective_multiplier, double trust_region_radius) = 0;
    virtual void set_trust_region(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
    virtual void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) = 0;
 
-   virtual Direction compute_direction(const Problem& problem, Iterate& current_iterate, double trust_region_radius) = 0;
-   //virtual Direction restore_feasibility(const Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double
-   //trust_region_radius) = 0;
+   virtual Direction compute_direction(const Problem& problem, Iterate& current_iterate) = 0;
    void compute_l1_linear_objective(const Iterate& current_iterate, const ConstraintPartition& constraint_partition);
    void generate_feasibility_bounds(const Problem& problem, const std::vector<double>& current_constraints, const ConstraintPartition&
    constraint_partition);
 
-   virtual void compute_optimality_measures(const Problem& problem, Iterate& iterate) = 0;
+   virtual void compute_optimality_measures(const Problem& problem, Iterate& iterate);
    void compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const ConstraintPartition& constraint_partition);
 
    static void project_point_in_bounds(std::vector<double>& x, const std::vector<Range>& variables_bounds);

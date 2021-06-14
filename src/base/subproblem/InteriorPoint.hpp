@@ -41,9 +41,7 @@ public:
    void generate(const Problem& problem, const Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
    void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
 
-   Direction compute_direction(const Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
-   //Direction restore_feasibility(const Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius)
-   //override;
+   Direction compute_direction(const Problem& problem, Iterate& current_iterate) override;
    int get_hessian_evaluation_count() override;
 
    void compute_optimality_measures(const Problem& problem, Iterate& iterate) override;

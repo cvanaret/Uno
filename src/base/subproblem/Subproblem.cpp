@@ -20,6 +20,23 @@ Subproblem::Subproblem(const Problem& problem, Norm residual_norm, bool scale_re
 //    first_iterate.multipliers.constraints = Subproblem::compute_least_square_multipliers(problem, first_iterate, multipliers.constraints, 1e4);
 //}
 
+Iterate Subproblem::evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& multipliers) {
+   Iterate first_iterate(x, multipliers);
+   /* compute the optimality and feasibility measures of the initial point */
+   this->compute_optimality_measures(problem, first_iterate);
+   return first_iterate;
+}
+
+void Subproblem::compute_optimality_measures(const Problem& problem, Iterate& iterate) {
+   iterate.compute_constraints(problem);
+   // feasibility measure: residual of all constraints
+   iterate.residuals.constraints = problem.compute_constraint_residual(iterate.constraints, this->residual_norm);
+   // optimality
+   iterate.compute_objective(problem);
+   iterate.progress = {iterate.residuals.constraints, iterate.objective};
+}
+
+
 void Subproblem::project_point_in_bounds(std::vector<double>& x, const std::vector<Range>& variables_bounds) {
    for (size_t i = 0; i < x.size(); i++) {
       if (x[i] < variables_bounds[i].lb) {

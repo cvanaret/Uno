@@ -21,9 +21,9 @@ Iterate FeasibilityRestoration::initialize(Statistics& statistics, const Problem
    return first_iterate;
 }
 
-Direction FeasibilityRestoration::compute_feasible_direction(const Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+Direction FeasibilityRestoration::compute_feasible_direction(const Problem& problem, Iterate& current_iterate) {
    // solve the original subproblem
-   Direction direction = this->subproblem.compute_direction(problem, current_iterate, trust_region_radius);
+   Direction direction = this->subproblem.compute_direction(problem, current_iterate);
 
    if (direction.status != INFEASIBLE) {
       direction.objective_multiplier = problem.objective_sign;
@@ -33,7 +33,7 @@ Direction FeasibilityRestoration::compute_feasible_direction(const Problem& prob
       // infeasible subproblem: form the feasibility problem
       this->form_feasibility_problem(problem, current_iterate, constraint_partition);
       // solve the feasibility subproblem
-      direction = this->subproblem.compute_direction(problem, current_iterate, trust_region_radius);
+      direction = this->subproblem.compute_direction(problem, current_iterate);
       direction.objective_multiplier = 0.;
       direction.constraint_partition = constraint_partition;
       direction.is_relaxed = true;
@@ -56,9 +56,9 @@ constraint_partition) {
    this->subproblem.generate_feasibility_bounds(problem, current_iterate.constraints, constraint_partition);
 }
 
-Direction FeasibilityRestoration::solve_feasibility_problem(const Problem& problem, Iterate& current_iterate, Direction& /*direction*/, double
-trust_region_radius) {
-   return this->subproblem.compute_direction(problem, current_iterate, trust_region_radius);
+Direction FeasibilityRestoration::solve_feasibility_problem(const Problem& problem, Iterate& current_iterate, Direction& direction) {
+   this->form_feasibility_problem(problem, current_iterate, direction.constraint_partition);
+   return this->subproblem.compute_direction(problem, current_iterate);
 }
 
 bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate,

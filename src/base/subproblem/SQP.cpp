@@ -2,9 +2,9 @@
 #include "QPSolverFactory.hpp"
 
 SQP::SQP(const Problem& problem, const std::string& QP_solver_name, const std::string& hessian_evaluation_method, bool use_trust_region,
-      bool scale_residuals) : ActiveSetMethod(problem, scale_residuals),
+      bool scale_residuals) : Subproblem(problem, L1_NORM, scale_residuals),
+      // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
       solver(QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints,
-            // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
             problem.hessian_maximum_number_nonzeros + problem.number_variables, true)),
       /* if no trust region is used, the problem should be convexified by controlling the inertia of the Hessian */
       hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, problem.hessian_maximum_number_nonzeros,
@@ -45,7 +45,7 @@ void SQP::update_objective_multiplier(const Problem& problem, const Iterate& cur
    }
 }
 
-Direction SQP::compute_direction(const Problem& /*problem*/, Iterate& current_iterate, double /*trust_region_radius*/) {
+Direction SQP::compute_direction(const Problem& /*problem*/, Iterate& current_iterate) {
    /* compute QP direction */
    Direction direction = this->solver->solve_QP(this->variables_bounds, constraints_bounds, this->objective_gradient,
          this->constraints_jacobian, this->hessian_evaluation->hessian, this->initial_point);

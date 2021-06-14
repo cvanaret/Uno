@@ -40,14 +40,55 @@ scale_residuals, double initial_parameter, int number_variables) : ActiveSetMeth
    // TODO let the solver resize the Hessian space
 }
 
-void Sl1QP::generate(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double /*objective_multiplier*/, double
-/*trust_region_radius*/) {
+void Sl1QP::generate(const Problem& problem, const Iterate& current_iterate, double objective_multiplier, double trust_region_radius) {
+   current_iterate.compute_objective_gradient(problem);
+   SparseVector objective_gradient;
+   if (penalty_parameter != 0.) {
+      for (const auto[i, derivative]: current_iterate.objective_gradient) {
+         objective_gradient[i] = penalty_parameter * derivative;
+      }
+   }
+   /* add contribution of positive part variables */
+   for (const auto[j, i]: elastic_variables.positive) {
+      current_iterate.constraints_jacobian[j][i] = -1.;
+      objective_gradient[i] = 1.;
+   }
+   /* add contribution of negative part variables */
+   for (const auto[j, i]: elastic_variables.negative) {
+      current_iterate.constraints_jacobian[j][i] = 1.;
+      objective_gradient[i] = 1.;
+   }
+   //current_iterate.set_objective_gradient(objective_gradient);
+
+   /* bounds of the variables */
+   this->set_variables_bounds_(problem, current_iterate, trust_region_radius);
+
+   /* bounds of the linearized constraints */
+   this->set_constraints_bounds(problem, current_iterate.constraints);
+
+   /* generate the initial point */
+   for (size_t i = 0; i < problem.number_variables; i++) {
+      this->initial_point[i] = 0.;
+   }
+
+   DEBUG << "Bounds:\n";
+   for (size_t i = 0; i < this->variables_bounds.size(); i++) {
+      DEBUG << "x" << i << " in [" << this->variables_bounds[i].lb << ", " << this->variables_bounds[i].ub << "]\n";
+   }
+   DEBUG << "Hessian: " << this->hessian_evaluation->hessian << "\n";
+   DEBUG << "Objective gradient: ";
+   print_vector(DEBUG, current_iterate.objective_gradient);
+   for (size_t j = 0; j < constraints_bounds.size(); j++) {
+      DEBUG << "Constraint " << j << ": ";
+      print_vector(DEBUG, current_iterate.constraints_jacobian[j], ' ');
+      DEBUG << " in [" << constraints_bounds[j].lb << ", " << constraints_bounds[j].ub << "]\n";
+   }
 }
 
 void Sl1QP::update_objective_multiplier(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double /*objective_multiplier*/) {
 }
 
-Direction Sl1QP::compute_direction(const Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+Direction Sl1QP::compute_direction(const Problem& problem, Iterate& current_iterate) {
    DEBUG << "penalty parameter: " << this->penalty_parameter << "\n";
 
    // evaluate constraints
@@ -170,49 +211,6 @@ Direction Sl1QP::compute_l1qp_step_(const Problem& problem, QPSolver& solver, It
 
 Direction Sl1QP::compute_l1qp_step_(const Problem& problem, QPSolver& solver, Iterate& current_iterate, double penalty_parameter,
       ElasticVariables& elastic_variables, double trust_region_radius) {
-   current_iterate.compute_objective_gradient(problem);
-   SparseVector objective_gradient;
-   if (penalty_parameter != 0.) {
-      for (const auto[i, derivative]: current_iterate.objective_gradient) {
-         objective_gradient[i] = penalty_parameter * derivative;
-      }
-   }
-   /* add contribution of positive part variables */
-   for (const auto[j, i]: elastic_variables.positive) {
-      current_iterate.constraints_jacobian[j][i] = -1.;
-      objective_gradient[i] = 1.;
-   }
-   /* add contribution of negative part variables */
-   for (const auto[j, i]: elastic_variables.negative) {
-      current_iterate.constraints_jacobian[j][i] = 1.;
-      objective_gradient[i] = 1.;
-   }
-   //current_iterate.set_objective_gradient(objective_gradient);
-
-   /* bounds of the variables */
-   this->set_variables_bounds_(problem, current_iterate, trust_region_radius);
-
-   /* bounds of the linearized constraints */
-   this->set_constraints_bounds(problem, current_iterate.constraints);
-
-   /* generate the initial point */
-   for (size_t i = 0; i < problem.number_variables; i++) {
-      this->initial_point[i] = 0.;
-   }
-
-   DEBUG << "Bounds:\n";
-   for (size_t i = 0; i < this->variables_bounds.size(); i++) {
-      DEBUG << "x" << i << " in [" << this->variables_bounds[i].lb << ", " << this->variables_bounds[i].ub << "]\n";
-   }
-   DEBUG << "Hessian: " << this->hessian_evaluation->hessian << "\n";
-   DEBUG << "Objective gradient: ";
-   print_vector(DEBUG, current_iterate.objective_gradient);
-   for (size_t j = 0; j < constraints_bounds.size(); j++) {
-      DEBUG << "Constraint " << j << ": ";
-      print_vector(DEBUG, current_iterate.constraints_jacobian[j], ' ');
-      DEBUG << " in [" << constraints_bounds[j].lb << ", " << constraints_bounds[j].ub << "]\n";
-   }
-
    /* solve the QP */
    Direction direction = solver.solve_QP(this->variables_bounds, this->constraints_bounds, objective_gradient,
          current_iterate.constraints_jacobian, this->hessian_evaluation->hessian, this->initial_point);

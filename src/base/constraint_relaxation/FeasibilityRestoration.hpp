@@ -12,8 +12,8 @@ public:
    Iterate initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
 
    // direction computation
-   Direction compute_feasible_direction(const Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
-   Direction solve_feasibility_problem(const Problem& problem, Iterate& current_iterate, Direction& direction, double trust_region_radius) override;
+   Direction compute_feasible_direction(const Problem& problem, Iterate& current_iterate) override;
+   Direction solve_feasibility_problem(const Problem& problem, Iterate& current_iterate, Direction& direction) override;
 
    bool is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate, Direction& direction, double
    step_length) override;

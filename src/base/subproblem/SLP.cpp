@@ -2,7 +2,7 @@
 #include "QPSolverFactory.hpp"
 
 SLP::SLP(const Problem& problem, std::string QP_solver_name, bool /*use_trust_region*/, bool scale_residuals) :
-      ActiveSetMethod(problem, scale_residuals),
+      Subproblem(problem, L1_NORM, scale_residuals),
       solver(QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints, 0, false)) {
 }
 
@@ -37,38 +37,24 @@ void SLP::update_objective_multiplier(const Problem& /*problem*/, const Iterate&
    }
 }
 
-Direction SLP::compute_direction(const Problem& problem, Iterate& current_iterate, double trust_region_radius) {
-   Direction direction = this->compute_lp_step_(problem, *this->solver, current_iterate, trust_region_radius);
+Direction SLP::compute_direction(const Problem& /*problem*/, Iterate& /*current_iterate*/) {
+   /* solve the LP */
+   Direction direction = this->solver->solve_LP(variables_bounds, constraints_bounds, this->objective_gradient,
+         this->constraints_jacobian,this->initial_point);
    this->number_subproblems_solved++;
    DEBUG << direction;
-   // attach the predicted reduction function
    direction.predicted_reduction = [&](double step_length) {
-      return SLP::compute_predicted_reduction_(current_iterate, direction, step_length);
+      return SLP::compute_predicted_reduction_(direction, step_length);
    };
    return direction;
 }
 
-double SLP::compute_predicted_reduction_(Iterate& current_iterate, Direction& direction, double step_length) {
-   // the predicted reduction is quadratic in the step length
-   if (step_length == 1.) {
-      return -direction.objective;
-   }
-   else {
-      return -step_length * dot(direction.x, current_iterate.objective_gradient);
-   }
-}
-
-void SLP::evaluate_optimality_iterate_(const Problem& problem, Iterate& current_iterate) {
-   /* compute first-order information */
-   current_iterate.compute_objective_gradient(problem);
-   current_iterate.compute_constraints_jacobian(problem);
-}
-
-void SLP::evaluate_feasibility_iterate_(const Problem& problem, Iterate& current_iterate, Direction& /*phase_2_direction*/) {
-   /* compute first-order information */
-   current_iterate.compute_constraints_jacobian(problem);
+double SLP::compute_predicted_reduction_(Direction& direction, double step_length) {
+   // the predicted reduction is linear in the step length
+   return -step_length * direction.objective;
 }
 
 int SLP::get_hessian_evaluation_count() {
+   // no second order evaluation is used
    return 0;
 }

@@ -141,7 +141,7 @@ BQPDSolver::solve_subproblem_(std::vector<Range>& variables_bounds, std::vector<
          this->w_.data(), this->e_.data(), this->ls_.data(), this->alp_.data(), this->lp_.data(), &this->mlp_, &this->peq_solution_,
          this->hessian_.data(), this->hessian_sparsity_.data(), &mode, &this->ifail_, this->info_.data(), &this->iprint_, &this->nout_);
 
-   /* project solution into bounds: it's a ray! */
+   /* project solution into bounds */
    for (unsigned int i = 0; i < x.size(); i++) {
       if (x[i] < variables_bounds[i].lb) {
          x[i] = variables_bounds[i].lb;
@@ -150,9 +150,7 @@ BQPDSolver::solve_subproblem_(std::vector<Range>& variables_bounds, std::vector<
          x[i] = variables_bounds[i].ub;
       }
    }
-
-   Direction direction = this->generate_direction_(x);
-   return direction;
+   return this->generate_direction_(x);
 }
 
 Direction BQPDSolver::generate_direction_(std::vector<double>& x) {

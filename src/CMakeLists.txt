@@ -35,7 +35,7 @@ set(SRC_FILES
     
     base/mechanism/GlobalizationMechanism.cpp
     base/mechanism/GlobalizationMechanismFactory.cpp
-		base/mechanism/BacktrackingLineSearch.cpp base/mechanism/TrustRegion.cpp
+    base/mechanism/BacktrackingLineSearch.cpp base/mechanism/TrustRegion.cpp
 
     base/strategy/GlobalizationStrategyFactory.cpp
     base/strategy/FilterStrategy.cpp base/strategy/Filter.cpp
@@ -48,9 +48,7 @@ set(SRC_FILES
     base/subproblem/Subproblem.cpp
     base/subproblem/SubproblemFactory.cpp
     base/subproblem/Direction.cpp
-    base/subproblem/ActiveSetMethod.cpp 
     base/subproblem/InteriorPoint.cpp
-    base/subproblem/Sl1QP.cpp
     base/subproblem/SLP.cpp
     base/subproblem/SQP.cpp
     base/subproblem/HessianEvaluation.cpp
