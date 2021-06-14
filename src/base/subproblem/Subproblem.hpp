@@ -23,18 +23,22 @@ public:
 
    virtual Iterate evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& multipliers) = 0;
    virtual void generate(const Problem& problem, const Iterate& current_iterate, double objective_multiplier, double trust_region_radius) = 0;
-   virtual void update_trust_region(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
-   virtual void update_objective_multipliers(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) = 0;
+   virtual void set_trust_region(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
+   virtual void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) = 0;
 
    virtual Direction compute_direction(const Problem& problem, Iterate& current_iterate, double trust_region_radius) = 0;
-   virtual Direction restore_feasibility(const Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) = 0;
+   //virtual Direction restore_feasibility(const Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double
+   //trust_region_radius) = 0;
+   void compute_l1_linear_objective(const Iterate& current_iterate, const ConstraintPartition& constraint_partition);
+   void generate_feasibility_bounds(const Problem& problem, const std::vector<double>& current_constraints, const ConstraintPartition&
+   constraint_partition);
 
    virtual void compute_optimality_measures(const Problem& problem, Iterate& iterate) = 0;
-   virtual void compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const Direction& direction) = 0;
+   void compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const ConstraintPartition& constraint_partition);
 
    static void project_point_in_bounds(std::vector<double>& x, const std::vector<Range>& variables_bounds);
    static double project_variable_in_interior(double variable_value, const Range& variable_bounds);
-   void generate_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints);
+   void set_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints);
    static std::vector<double>
    compute_least_square_multipliers(const Problem& problem, Iterate& current_iterate, const std::vector<double>& default_multipliers,
          LinearSolver& solver, double multipliers_max_size = 1e3);
@@ -66,7 +70,7 @@ public:
    bool scale_residuals;
 
 protected:
-   virtual void generate_variables_bounds_(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
+   virtual void set_variables_bounds_(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
    virtual double compute_complementarity_error_(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const;
 };
 

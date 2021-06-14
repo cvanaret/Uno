@@ -17,16 +17,10 @@ public:
    ActiveSetMethod(const Problem& problem, bool scale_residuals);
 
    Iterate evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& multipliers) override;
-
    void compute_optimality_measures(const Problem& problem, Iterate& iterate) override;
-   void compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const Direction& direction) override;
-
    static void generate_elastic_variables_(const Problem& problem, ElasticVariables& elastic_variables);
 
 protected:
-   void compute_l1_linear_objective_(Iterate& current_iterate, ConstraintPartition& constraint_partition);
-   void generate_l1_multipliers_(const Problem& problem, ConstraintPartition& constraint_partition);
-   void generate_feasibility_bounds_(const Problem& problem, std::vector<double>& current_constraints, ConstraintPartition& constraint_partition);
    static void recover_l1qp_active_set_(const Problem& problem, Direction& direction, const ElasticVariables& elastic_variables);
 
    /* LP subproblems */

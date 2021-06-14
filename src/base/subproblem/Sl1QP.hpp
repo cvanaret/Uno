@@ -31,10 +31,11 @@ public:
          double initial_parameter);
 
    void generate(const Problem& problem, const Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
-   void update_objective_multipliers(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
+   void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
 
    Direction compute_direction(const Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
-   Direction restore_feasibility(const Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) override;
+   //Direction restore_feasibility(const Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius)
+   //override;
    int get_hessian_evaluation_count() override;
 
 protected:
@@ -53,7 +54,7 @@ protected:
    ElasticVariables elastic_variables_;
 
    size_t count_elastic_variables_(const Problem& problem);
-   void generate_variables_bounds_(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;
+   void set_variables_bounds_(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;
    Direction solve_l1qp_subproblem_(const Problem& problem, Iterate& current_iterate, double trust_region_radius, double penalty_parameter);
    Direction compute_l1qp_step_(const Problem& problem, QPSolver& solver, Iterate& current_iterate, ConstraintPartition& constraint_partition,
          std::vector<double>& initial_solution, double trust_region_radius);

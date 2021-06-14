@@ -44,7 +44,7 @@ void Sl1QP::generate(const Problem& /*problem*/, const Iterate& /*current_iterat
 /*trust_region_radius*/) {
 }
 
-void Sl1QP::update_objective_multipliers(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double /*objective_multiplier*/) {
+void Sl1QP::update_objective_multiplier(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double /*objective_multiplier*/) {
 }
 
 Direction Sl1QP::compute_direction(const Problem& problem, Iterate& current_iterate, double trust_region_radius) {
@@ -149,13 +149,13 @@ Direction Sl1QP::compute_direction(const Problem& problem, Iterate& current_iter
 Direction Sl1QP::compute_l1qp_step_(const Problem& problem, QPSolver& solver, Iterate& current_iterate, ConstraintPartition& constraint_partition,
       std::vector<double>& initial_solution, double trust_region_radius) {
    /* compute the objective */
-   this->compute_l1_linear_objective_(current_iterate, constraint_partition);
+   this->compute_l1_linear_objective(current_iterate, constraint_partition);
 
    /* bounds of the variables */
-   this->generate_variables_bounds_(problem, current_iterate, trust_region_radius);
+   this->set_variables_bounds_(problem, current_iterate, trust_region_radius);
 
    /* bounds of the linearized constraints */
-   this->generate_feasibility_bounds_(problem, current_iterate.constraints, constraint_partition);
+   this->generate_feasibility_bounds(problem, current_iterate.constraints, constraint_partition);
 
    /* solve the QP */
    Direction direction =
@@ -190,10 +190,10 @@ Direction Sl1QP::compute_l1qp_step_(const Problem& problem, QPSolver& solver, It
    //current_iterate.set_objective_gradient(objective_gradient);
 
    /* bounds of the variables */
-   this->generate_variables_bounds_(problem, current_iterate, trust_region_radius);
+   this->set_variables_bounds_(problem, current_iterate, trust_region_radius);
 
    /* bounds of the linearized constraints */
-   this->generate_constraints_bounds(problem, current_iterate.constraints);
+   this->set_constraints_bounds(problem, current_iterate.constraints);
 
    /* generate the initial point */
    for (size_t i = 0; i < problem.number_variables; i++) {
@@ -248,10 +248,6 @@ Direction Sl1QP::solve_l1qp_subproblem_(const Problem& problem, Iterate& current
    return direction;
 }
 
-Direction Sl1QP::restore_feasibility(const Problem&, Iterate&, Direction&, double) {
-   throw std::out_of_range("Sl1QP.compute_infeasibility_step is not implemented, since l1QP are always feasible");
-}
-
 double Sl1QP::compute_predicted_reduction_(const Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) {
    // the predicted reduction is quadratic
    if (step_length == 1.) {
@@ -272,7 +268,7 @@ double Sl1QP::compute_predicted_reduction_(const Problem& problem, Iterate& curr
 
 /* private methods */
 
-void Sl1QP::generate_variables_bounds_(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {
+void Sl1QP::set_variables_bounds_(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {
    // p and n are nonnegative
    //this->variables_bounds(this->number_variables, {0., INFINITY});
 

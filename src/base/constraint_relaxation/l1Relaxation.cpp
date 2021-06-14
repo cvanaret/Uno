@@ -40,6 +40,11 @@ Direction l1Relaxation::compute_feasible_direction(const Problem& problem, Itera
    return this->subproblem.compute_direction(problem, current_iterate, trust_region_radius);
 }
 
+Direction l1Relaxation::solve_feasibility_problem(const Problem& problem, Iterate& current_iterate, Direction& /*direction*/, double
+trust_region_radius) {
+   return this->subproblem.compute_direction(problem, current_iterate, trust_region_radius);
+}
+
 bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate,
       Direction& direction, double step_length) {
    // check if subproblem definition changed

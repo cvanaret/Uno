@@ -39,14 +39,14 @@ public:
 
    Iterate evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& default_multipliers) override;
    void generate(const Problem& problem, const Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
-   void update_objective_multipliers(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
+   void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
 
    Direction compute_direction(const Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
-   Direction restore_feasibility(const Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius) override;
+   //Direction restore_feasibility(const Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius)
+   //override;
    int get_hessian_evaluation_count() override;
 
    void compute_optimality_measures(const Problem& problem, Iterate& iterate) override;
-   void compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const Direction& direction) override;
 
    double constraint_violation(const Problem& problem, Iterate& iterate);
    double compute_central_complementarity_error(Iterate& iterate, double mu, std::vector<Range>& variables_bounds);

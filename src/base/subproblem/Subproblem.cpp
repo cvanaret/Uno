@@ -42,11 +42,11 @@ double Subproblem::project_variable_in_interior(double variable_value, const Ran
    return variable_value;
 }
 
-void Subproblem::update_trust_region(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {
-   this->generate_variables_bounds_(problem, current_iterate, trust_region_radius);
+void Subproblem::set_trust_region(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {
+   this->set_variables_bounds_(problem, current_iterate, trust_region_radius);
 }
 
-void Subproblem::generate_variables_bounds_(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {
+void Subproblem::set_variables_bounds_(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {
    /* bounds intersected with trust region  */
    // very important: apply the trust region only on the original variables
    for (size_t i = 0; i < problem.number_variables; i++) {
@@ -56,7 +56,7 @@ void Subproblem::generate_variables_bounds_(const Problem& problem, const Iterat
    }
 }
 
-void Subproblem::generate_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints) {
+void Subproblem::set_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints) {
    for (size_t j = 0; j < problem.number_constraints; j++) {
       double lb = problem.constraint_bounds[j].lb - current_constraints[j];
       double ub = problem.constraint_bounds[j].ub - current_constraints[j];
@@ -130,6 +130,49 @@ std::vector<double> Subproblem::compute_least_square_multipliers(const Problem& 
    return multipliers;
 }
 
+void Subproblem::compute_l1_linear_objective(const Iterate& current_iterate, const ConstraintPartition& constraint_partition) {
+   /* objective function: sum of gradients of infeasible constraints */
+   this->objective_gradient.clear();
+   for (int j: constraint_partition.infeasible) {
+      for (const auto [i, derivative]: current_iterate.constraints_jacobian[j]) {
+         if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
+            this->objective_gradient[i] -= derivative;
+         }
+         else {
+            this->objective_gradient[i] += derivative;
+         }
+      }
+   }
+}
+
+void Subproblem::generate_feasibility_bounds(const Problem& problem, const std::vector<double>& current_constraints, const ConstraintPartition&
+constraint_partition) {
+   for (size_t j = 0; j < problem.number_constraints; j++) {
+      double lb, ub;
+      if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
+         lb = -INFINITY;
+         ub = problem.constraint_bounds[j].lb - current_constraints[j];
+      }
+      else if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_UPPER) {
+         lb = problem.constraint_bounds[j].ub - current_constraints[j];
+         ub = INFINITY;
+      }
+      else { // FEASIBLE
+         lb = problem.constraint_bounds[j].lb - current_constraints[j];
+         ub = problem.constraint_bounds[j].ub - current_constraints[j];
+      }
+      this->constraints_bounds[j] = {lb, ub};
+   }
+}
+
+void Subproblem::compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const ConstraintPartition& constraint_partition) {
+   iterate.compute_constraints(problem);
+   // feasibility measure: residual of all constraints
+   double feasibility = problem.compute_constraint_residual(iterate.constraints, this->residual_norm);
+   // optimality measure: residual of linearly infeasible constraints
+   double objective = problem.compute_constraint_residual(iterate.constraints, constraint_partition.infeasible, this->residual_norm);
+   iterate.progress = {feasibility, objective};
+}
 
 double Subproblem::compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier) const {
    std::vector<double> lagrangian_gradient = iterate.lagrangian_gradient(problem, objective_multiplier, iterate.multipliers);
