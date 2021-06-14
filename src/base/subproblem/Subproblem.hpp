@@ -27,7 +27,7 @@ public:
    virtual void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) = 0;
 
    virtual Direction compute_direction(const Problem& problem, Iterate& current_iterate) = 0;
-   void compute_l1_linear_objective(const Iterate& current_iterate, const ConstraintPartition& constraint_partition);
+   void compute_feasibility_linear_objective(const Iterate& current_iterate, const ConstraintPartition& constraint_partition);
    void generate_feasibility_bounds(const Problem& problem, const std::vector<double>& current_constraints, const ConstraintPartition&
    constraint_partition);
 

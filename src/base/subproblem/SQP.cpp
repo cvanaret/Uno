@@ -38,10 +38,8 @@ void SQP::update_objective_multiplier(const Problem& problem, const Iterate& cur
    if (objective_multiplier == 0.) {
       clear(this->objective_gradient);
    }
-   else {
-      if (objective_multiplier < 1.) {
-         scale(this->objective_gradient, objective_multiplier);
-      }
+   else if (objective_multiplier < 1.) {
+      scale(this->objective_gradient, objective_multiplier);
    }
 }
 

@@ -12,6 +12,7 @@ public:
    Iterate initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
 
    // direction computation
+   void generate_subproblem(const Problem& problem, const Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
    Direction compute_feasible_direction(const Problem& problem, Iterate& current_iterate) override;
    Direction solve_feasibility_problem(const Problem& problem, Iterate& current_iterate, Direction& direction) override;
 

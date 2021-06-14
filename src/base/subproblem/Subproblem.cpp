@@ -147,7 +147,7 @@ std::vector<double> Subproblem::compute_least_square_multipliers(const Problem& 
    return multipliers;
 }
 
-void Subproblem::compute_l1_linear_objective(const Iterate& current_iterate, const ConstraintPartition& constraint_partition) {
+void Subproblem::compute_feasibility_linear_objective(const Iterate& current_iterate, const ConstraintPartition& constraint_partition) {
    /* objective function: sum of gradients of infeasible constraints */
    this->objective_gradient.clear();
    for (int j: constraint_partition.infeasible) {

@@ -16,27 +16,40 @@ l1Relaxation::l1Relaxation(Problem& problem, Subproblem& subproblem, const std::
 }
 
 Iterate l1Relaxation::initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+   statistics.add_column("penalty param.", Statistics::double_width, 4);
+
    /* initialize the subproblem */
    Iterate first_iterate = this->subproblem.evaluate_initial_point(problem, x, multipliers);
    this->globalization_strategy->initialize(statistics, first_iterate);
    return first_iterate;
 }
 
-Direction l1Relaxation::compute_feasible_direction(const Problem& problem, Iterate& current_iterate) {
-   /*
+void l1Relaxation::generate_subproblem(const Problem& problem, const Iterate& current_iterate, double objective_multiplier, double trust_region_radius) {
+   this->subproblem.generate(problem, current_iterate, objective_multiplier, trust_region_radius);
+
    // preprocess the subproblem: scale the objective gradient and introduce the elastic variables
-   this->preprocess_subproblem();
+   // scale the objective gradient and (possibly) and Hessian
+   this->subproblem.update_objective_multiplier(problem, current_iterate, this->penalty_parameter);
 
-   // use Byrd's steering rules to update the penalty parameter and compute descent directions
-   std::vector<Direction> directions = this->compute_byrd_steering_rule(problem, current_iterate, trust_region_radius);
-
-   // postprocess the subproblem: remove the elastic variables
-   for (Direction& direction: directions) {
-      this->postprocess_direction(problem, direction);
+   // add the positive elastic variables
+   for (const auto& [j, i]: elastic_variables.positive) {
+      this->subproblem.objective_gradient[i] = 1.;
+      this->subproblem.constraints_jacobian[j][i] = -1.;
    }
-   return directions;
-   */
-   return this->subproblem.compute_direction(problem, current_iterate);
+   // add the negative elastic variables
+   for (const auto& [j, i]: elastic_variables.negative) {
+      this->subproblem.objective_gradient[i] = 1.;
+      this->subproblem.constraints_jacobian[j][i] = 1.;
+   }
+}
+
+Direction l1Relaxation::compute_feasible_direction(const Problem& problem, Iterate& current_iterate) {
+   DEBUG << "penalty parameter: " << this->penalty_parameter << "\n";
+   // use Byrd's steering rules to update the penalty parameter and compute descent directions
+   Direction direction = this->compute_byrd_steering_rule(problem, current_iterate);
+
+   this->postprocess_direction(problem, direction);
+   return direction;
 }
 
 Direction l1Relaxation::solve_feasibility_problem(const Problem& problem, Iterate& current_iterate, Direction& /*direction*/) {
@@ -60,42 +73,18 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
    else {
       // compute the predicted reduction (a mixture of the subproblem's and of the l1 relaxation's)
       double predicted_reduction = this->compute_predicted_reduction(problem, current_iterate, direction, step_length);
-
+      // invoke the globalization strategy for acceptance
       accept = this->globalization_strategy->check_acceptance(statistics, current_iterate.progress, trial_iterate.progress,
             this->penalty_parameter, predicted_reduction);
+   }
+   if (accept) {
+      statistics.add_statistic("penalty param.", this->penalty_parameter);
    }
    return accept;
 }
 
-void l1Relaxation::preprocess_subproblem() {
-   // scale the objective gradient
-   if (this->penalty_parameter == 0.) {
-      this->subproblem.objective_gradient.clear();
-   }
-   else if (this->penalty_parameter < 1.) {
-      for (auto& derivative : this->subproblem.objective_gradient) {
-         derivative.second *= this->penalty_parameter;
-      }
-   }
-   // add the positive elastic variables
-   for (const auto& [j, i]: elastic_variables.positive) {
-      this->subproblem.objective_gradient[i] = 1.;
-      this->subproblem.constraints_jacobian[j][i] = -1.;
-   }
-   // add the negative elastic variables
-   for (const auto& [j, i]: elastic_variables.negative) {
-      this->subproblem.objective_gradient[i] = 1.;
-      this->subproblem.constraints_jacobian[j][i] = 1.;
-   }
-}
-
-std::vector<Direction> l1Relaxation::compute_byrd_steering_rule(const Problem& problem, Iterate& current_iterate, double trust_region_radius) {
-   DEBUG << "penalty parameter: " << this->penalty_parameter << "\n";
-   // TODO: pass penalty parameter to the Hessian and multipliers to the subproblem
-
+Direction l1Relaxation::compute_byrd_steering_rule(const Problem& problem, Iterate& current_iterate) {
    /* stage a: compute the step within trust region */
-   // std::vector<Direction> directions = this->subproblem.compute_directions(problem, current_iterate, trust_region_radius);
-   this->subproblem.generate(problem, current_iterate, this->penalty_parameter, trust_region_radius);
    Direction direction = this->subproblem.compute_direction(problem, current_iterate);
 
    /* penalty update: if penalty parameter is already 0, no need to decrease it */
@@ -110,7 +99,7 @@ std::vector<Direction> l1Relaxation::compute_byrd_steering_rule(const Problem& p
 
          /* stage c: solve the ideal l1 penalty problem with a zero penalty (no objective) */
          DEBUG << "Compute ideal solution:\n";
-         this->subproblem.generate(problem, current_iterate, 0., trust_region_radius);
+         this->subproblem.update_objective_multiplier(problem, current_iterate, 0.);
          Direction ideal_direction = this->subproblem.compute_direction(problem, current_iterate);
 
          /* compute the ideal error (with a zero penalty parameter) */
@@ -151,7 +140,7 @@ std::vector<Direction> l1Relaxation::compute_byrd_steering_rule(const Problem& p
                   }
                   else {
                      DEBUG << "\nAttempting to solve with penalty parameter " << this->penalty_parameter << "\n";
-                     this->subproblem.generate(problem, current_iterate, this->penalty_parameter, trust_region_radius);
+                     this->subproblem.update_objective_multiplier(problem, current_iterate, this->penalty_parameter);
                      direction = this->subproblem.compute_direction(problem, current_iterate);
 
                      linearized_residual = this->compute_linearized_constraint_residual(direction.x);
@@ -165,7 +154,7 @@ std::vector<Direction> l1Relaxation::compute_byrd_steering_rule(const Problem& p
             double term = ideal_error / std::max(1., current_iterate.progress.feasibility);
             this->penalty_parameter = std::min(this->penalty_parameter, term * term);
             if (this->penalty_parameter < updated_penalty_parameter) {
-               this->subproblem.generate(problem, current_iterate, this->penalty_parameter, trust_region_radius);
+               this->subproblem.update_objective_multiplier(problem, current_iterate, this->penalty_parameter);
                direction = this->subproblem.compute_direction(problem, current_iterate);
             }
 
@@ -181,7 +170,7 @@ std::vector<Direction> l1Relaxation::compute_byrd_steering_rule(const Problem& p
       }
    }
    direction.objective_multiplier = penalty_parameter;
-   return std::vector<Direction>{direction};
+   return direction;
 }
 
 void l1Relaxation::generate_elastic_variables_(const Problem& problem) {
@@ -216,19 +205,19 @@ double l1Relaxation::compute_linearized_constraint_residual(std::vector<double>&
    return residual;
 }
 
+/* measure that combines KKT error and complementarity error */
 double l1Relaxation::compute_error(const Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter) {
-   /* measure that combines KKT error and complementarity error */
-   double error = 0.;
-
+   /* complementarity error */
+   double error = this->compute_complementarity_error(problem, iterate, multipliers);
    /* KKT error */
    std::vector<double> lagrangian_gradient = iterate.lagrangian_gradient(problem, penalty_parameter, multipliers);
    error += norm_1(lagrangian_gradient);
-   /* complementarity error */
-   error += this->compute_complementarity_error(problem, iterate, multipliers);
    return error;
 }
 
 void l1Relaxation::postprocess_direction(const Problem& problem, Direction& direction) {
+   // compute set of satisfied/violated constraints
+
    /* remove p and n */
    direction.x.resize(problem.number_variables);
    direction.multipliers.lower_bounds.resize(problem.number_variables);
@@ -268,7 +257,7 @@ double l1Relaxation::compute_predicted_reduction(const Problem& problem, Iterate
 }
 
 /* complementary slackness error. Use abs/1e-8 to safeguard */
-double l1Relaxation::compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const {
+double l1Relaxation::compute_complementarity_error(const Problem& problem, const Iterate& iterate, const Multipliers& multipliers) const {
    double error = 0.;
    /* bound constraints */
    for (size_t i = 0; i < problem.number_variables; i++) {
@@ -300,7 +289,7 @@ double l1Relaxation::compute_complementarity_error(const Problem& problem, Itera
    return error;
 }
 
-void l1Relaxation::recover_l1qp_active_set_(const Problem& problem, Direction& direction) {
+void l1Relaxation::recover_l1qp_active_set_(const Problem& problem, const Direction& direction) {
    // remove extra variables p and n
    for (size_t i = problem.number_variables; i < direction.x.size(); i++) {
       // TODO
