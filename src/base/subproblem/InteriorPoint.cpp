@@ -4,7 +4,7 @@
 
 InteriorPoint::InteriorPoint(const Problem& problem, std::string linear_solver_name, std::string hessian_evaluation_method, bool use_trust_region,
       bool scale_residuals) :
-      Subproblem(problem, L2_NORM, scale_residuals), // use the l2 norm to compute residuals
+      Subproblem(problem, L1_NORM, scale_residuals), // use the l2 norm to compute residuals
 /* if no trust region is used, the problem should be convexified. However, the inertia of the augmented matrix will be corrected later */
       hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, problem
       .hessian_maximum_number_nonzeros, false)),
@@ -111,7 +111,7 @@ double InteriorPoint::compute_KKT_error_scaling_(Iterate& current_iterate) const
 }
 
 /* reduced primal-dual approach */
-Direction InteriorPoint::compute_direction(const Problem& problem, Iterate& current_iterate, double /*trust_region_radius*/) {
+Direction InteriorPoint::compute_direction(const Problem& problem, Iterate& current_iterate) {
    DEBUG << "\nCurrent iterate: " << current_iterate;
 
    current_iterate.compute_constraints_jacobian(problem);

@@ -14,13 +14,15 @@
 #include "Logger.hpp"
 //#include "PardisoSolver.hpp"
 
+
+// new overload to track heap allocations
 /*
- * // new overload to track heap allocations
 void* operator new(size_t size) {
    std::cout << "Allocating " << size << " bytes\n";
    return malloc(size);
 }
  */
+
 
 void run_uno(const std::string& problem_name, const std::map<std::string, std::string>& options) {
    // generate Hessians with a Fortran indexing (starting at 1) that is supported by solvers

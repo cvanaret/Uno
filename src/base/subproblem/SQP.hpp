@@ -1,19 +1,18 @@
 #ifndef SQP_H
 #define SQP_H
 
-#include "ActiveSetMethod.hpp"
+#include "Subproblem.hpp"
 #include "HessianEvaluation.hpp"
+#include "QPSolver.hpp"
 
-class SQP : public ActiveSetMethod {
+class SQP : public Subproblem {
 public:
    SQP(const Problem& problem, const std::string& QP_solver_name, const std::string& hessian_evaluation_method, bool use_trust_region, bool scale_residuals);
 
    void generate(const Problem& problem, const Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
    void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
 
-   Direction compute_direction(const Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
-   //Direction restore_feasibility(const Problem& problem, Iterate& current_iterate, Direction& phase_2_direction, double trust_region_radius)
-   //override;
+   Direction compute_direction(const Problem& problem, Iterate& current_iterate) override;
    int get_hessian_evaluation_count() override;
 
 protected:
