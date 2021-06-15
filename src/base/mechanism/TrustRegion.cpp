@@ -33,7 +33,7 @@ std::pair<Iterate, Direction> TrustRegion::compute_acceptable_iterate(Statistics
             this->relaxation_strategy.generate_subproblem(problem, current_iterate, problem.objective_sign, this->radius);
          }
          else {
-            this->relaxation_strategy.subproblem.set_trust_region(problem, current_iterate, this->radius);
+            this->relaxation_strategy.update_variables_bounds(problem, current_iterate, this->radius);
          }
          /* compute the direction within the trust region */
          Direction direction = this->relaxation_strategy.compute_feasible_direction(problem, current_iterate);
@@ -41,14 +41,11 @@ std::pair<Iterate, Direction> TrustRegion::compute_acceptable_iterate(Statistics
          TrustRegion::rectify_active_set(direction, this->radius);
 
          // assemble the trial iterate
-         Iterate trial_iterate = this->assemble_trial_iterate(problem, current_iterate, direction, 1.);
+         Iterate trial_iterate = this->assemble_trial_iterate(current_iterate, direction, 1.);
 
          // check whether the trial step is accepted
          if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate,direction, 1.)) {
             this->add_statistics(statistics, direction);
-            // compute the residuals
-            trial_iterate.compute_objective(problem);
-            this->relaxation_strategy.subproblem.compute_residuals(problem, trial_iterate, trial_iterate.multipliers, direction.objective_multiplier);
 
             // increase the radius if trust region is active, otherwise keep the same radius
             if (direction.norm >= this->radius - this->activity_tolerance_) {

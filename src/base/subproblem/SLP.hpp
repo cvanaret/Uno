@@ -12,7 +12,7 @@ public:
    void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
 
    Direction compute_direction(const Problem& problem, Iterate& current_iterate) override;
-   int get_hessian_evaluation_count() override;
+   int get_hessian_evaluation_count() const override;
 
 private:
    /* use references to allow polymorphism */

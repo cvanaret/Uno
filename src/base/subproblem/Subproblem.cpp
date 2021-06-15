@@ -36,18 +36,6 @@ void Subproblem::compute_optimality_measures(const Problem& problem, Iterate& it
    iterate.progress = {iterate.residuals.constraints, iterate.objective};
 }
 
-
-void Subproblem::project_point_in_bounds(std::vector<double>& x, const std::vector<Range>& variables_bounds) {
-   for (size_t i = 0; i < x.size(); i++) {
-      if (x[i] < variables_bounds[i].lb) {
-         x[i] = variables_bounds[i].lb;
-      }
-      else if (variables_bounds[i].ub < x[i]) {
-         x[i] = variables_bounds[i].ub;
-      }
-   }
-}
-
 double Subproblem::project_variable_in_interior(double variable_value, const Range& variable_bounds) {
    double k1 = 1e-2;
    double k2 = 1e-2;
@@ -187,7 +175,7 @@ void Subproblem::compute_infeasibility_measures(const Problem& problem, Iterate&
    // feasibility measure: residual of all constraints
    double feasibility = problem.compute_constraint_residual(iterate.constraints, this->residual_norm);
    // optimality measure: residual of linearly infeasible constraints
-   double objective = problem.compute_constraint_residual(iterate.constraints, constraint_partition.infeasible, this->residual_norm);
+   double objective = problem.compute_constraint_violation(iterate.constraints, constraint_partition.infeasible, this->residual_norm);
    iterate.progress = {feasibility, objective};
 }
 

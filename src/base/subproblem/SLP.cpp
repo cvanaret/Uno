@@ -54,7 +54,7 @@ double SLP::compute_predicted_reduction_(Direction& direction, double step_lengt
    return -step_length * direction.objective;
 }
 
-int SLP::get_hessian_evaluation_count() {
+int SLP::get_hessian_evaluation_count() const {
    // no second order evaluation is used
    return 0;
 }

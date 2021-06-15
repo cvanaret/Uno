@@ -34,7 +34,6 @@ public:
    virtual void compute_optimality_measures(const Problem& problem, Iterate& iterate);
    void compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const ConstraintPartition& constraint_partition);
 
-   static void project_point_in_bounds(std::vector<double>& x, const std::vector<Range>& variables_bounds);
    static double project_variable_in_interior(double variable_value, const Range& variable_bounds);
    void set_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints);
    static std::vector<double>
@@ -46,7 +45,7 @@ public:
 
    double compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier) const;
    void compute_residuals(const Problem& problem, Iterate& iterate, const Multipliers& multipliers, double objective_multiplier) const;
-   virtual int get_hessian_evaluation_count() = 0;
+   virtual int get_hessian_evaluation_count() const = 0;
 
    size_t number_variables;
    size_t number_constraints;
