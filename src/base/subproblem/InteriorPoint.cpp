@@ -4,7 +4,7 @@
 
 InteriorPoint::InteriorPoint(const Problem& problem, std::string linear_solver_name, std::string hessian_evaluation_method, bool use_trust_region,
       bool scale_residuals) :
-      Subproblem(problem, L1_NORM, scale_residuals), // use the l2 norm to compute residuals
+      Subproblem(problem, scale_residuals), // use the l2 norm to compute residuals
 /* if no trust region is used, the problem should be convexified. However, the inertia of the augmented matrix will be corrected later */
       hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, problem
       .hessian_maximum_number_nonzeros, false)),
@@ -90,7 +90,7 @@ Iterate InteriorPoint::evaluate_initial_point(const Problem& problem, const std:
    print_vector(DEBUG, this->upper_bounded_variables);
 
    /* compute the optimality and feasibility measures of the initial point */
-   this->compute_optimality_measures(problem, first_iterate);
+   this->compute_progress_measures(problem, first_iterate);
    return first_iterate;
 }
 
@@ -457,7 +457,7 @@ std::vector<double> InteriorPoint::compute_upper_bound_multiplier_displacements_
    return delta_z;
 }
 
-void InteriorPoint::compute_optimality_measures(const Problem& problem, Iterate& iterate) {
+void InteriorPoint::compute_progress_measures(const Problem& problem, Iterate& iterate) {
    /* evaluate constraints with slacks */
    double feasibility = this->constraint_violation(problem, iterate);
    /* compute barrier objective */
@@ -479,7 +479,7 @@ double InteriorPoint::constraint_violation(const Problem& problem, Iterate& iter
          return constraint_value;
       }
    };
-   return norm(residual_function, problem.number_constraints, this->residual_norm);
+   return norm(residual_function, problem.number_constraints, L1_NORM);
 }
 
 double InteriorPoint::barrier_function_(const Problem& problem, Iterate& iterate, const std::vector<Range>& variables_bounds) {
@@ -640,7 +640,7 @@ double InteriorPoint::compute_central_complementarity_error(Iterate& iterate, do
    /* scaling */
    double sc = std::max(this->parameters_.smax,
          (norm_1(iterate.multipliers.lower_bounds) + norm_1(iterate.multipliers.upper_bounds)) / iterate.x.size()) / this->parameters_.smax;
-   return norm(residuals, this->residual_norm) / sc;
+   return norm(residuals, L1_NORM) / sc;
 }
 
 int InteriorPoint::get_hessian_evaluation_count() const {

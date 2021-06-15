@@ -62,7 +62,7 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
    if (this->subproblem.subproblem_definition_changed) {
       this->globalization_strategy->reset();
       this->subproblem.subproblem_definition_changed = false;
-      this->subproblem.compute_optimality_measures(problem, current_iterate);
+      this->subproblem.compute_progress_measures(problem, current_iterate);
    }
    double step_norm = step_length * direction.norm;
 

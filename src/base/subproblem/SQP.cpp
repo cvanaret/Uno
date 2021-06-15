@@ -2,7 +2,7 @@
 #include "QPSolverFactory.hpp"
 
 SQP::SQP(const Problem& problem, const std::string& QP_solver_name, const std::string& hessian_evaluation_method, bool use_trust_region,
-      bool scale_residuals) : Subproblem(problem, L1_NORM, scale_residuals),
+      bool scale_residuals) : Subproblem(problem, scale_residuals),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
       solver(QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints,
             problem.hessian_maximum_number_nonzeros + problem.number_variables, true)),
@@ -51,12 +51,12 @@ Direction SQP::compute_direction(const Problem& /*problem*/, Iterate& current_it
    DEBUG << direction;
    // attach the predicted reduction function
    direction.predicted_reduction = [&](double step_length) {
-      return this->compute_predicted_reduction_(current_iterate, direction, step_length);
+      return this->compute_predicted_reduction(current_iterate, direction, step_length);
    };
    return direction;
 }
 
-double SQP::compute_predicted_reduction_(Iterate& current_iterate, Direction& direction, double step_length) const {
+double SQP::compute_predicted_reduction(Iterate& current_iterate, Direction& direction, double step_length) const {
    // the predicted reduction is quadratic in the step length
    if (step_length == 1.) {
       return -direction.objective;

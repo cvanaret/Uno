@@ -1,7 +1,7 @@
 #include "Subproblem.hpp"
 #include "LinearSolverFactory.hpp"
 
-Subproblem::Subproblem(const Problem& problem, Norm residual_norm, bool scale_residuals) :
+Subproblem::Subproblem(const Problem& problem, bool scale_residuals) :
       number_variables(problem.number_variables),
       number_constraints(problem.number_constraints),
       variables_bounds(problem.number_variables),
@@ -10,7 +10,7 @@ Subproblem::Subproblem(const Problem& problem, Norm residual_norm, bool scale_re
       // objective_gradient is a SparseVector
       constraints(problem.number_constraints),
       // constraints_jacobian is a vector of SparseVectors
-      constraints_bounds(problem.number_constraints), initial_point(problem.number_variables), residual_norm(residual_norm),
+      constraints_bounds(problem.number_constraints), initial_point(problem.number_variables),
       number_subproblems_solved(0), subproblem_definition_changed(false), scale_residuals(scale_residuals) {
 }
 
@@ -23,11 +23,11 @@ Subproblem::Subproblem(const Problem& problem, Norm residual_norm, bool scale_re
 Iterate Subproblem::evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& multipliers) {
    Iterate first_iterate(x, multipliers);
    /* compute the optimality and feasibility measures of the initial point */
-   this->compute_optimality_measures(problem, first_iterate);
+   this->compute_progress_measures(problem, first_iterate);
    return first_iterate;
 }
 
-void Subproblem::compute_optimality_measures(const Problem& problem, Iterate& iterate) {
+void Subproblem::compute_progress_measures(const Problem& problem, Iterate& iterate) {
    iterate.compute_constraints(problem);
    // feasibility measure: residual of all constraints
    iterate.residuals.constraints = problem.compute_constraint_residual(iterate.constraints, this->residual_norm);
@@ -168,15 +168,6 @@ constraint_partition) {
       }
       this->constraints_bounds[j] = {lb, ub};
    }
-}
-
-void Subproblem::compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const ConstraintPartition& constraint_partition) {
-   iterate.compute_constraints(problem);
-   // feasibility measure: residual of all constraints
-   double feasibility = problem.compute_constraint_residual(iterate.constraints, this->residual_norm);
-   // optimality measure: residual of linearly infeasible constraints
-   double objective = problem.compute_constraint_violation(iterate.constraints, constraint_partition.infeasible, this->residual_norm);
-   iterate.progress = {feasibility, objective};
 }
 
 double Subproblem::compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier) const {

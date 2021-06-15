@@ -79,7 +79,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
    }
    double step_norm = step_length * direction.norm;
 
-   this->subproblem.compute_optimality_measures(problem, trial_iterate);
+   this->subproblem.compute_progress_measures(problem, trial_iterate);
    bool accept = false;
    if (step_norm == 0.) {
       accept = true;
@@ -93,7 +93,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
          // TODO && this->filter_optimality->accept(trial_iterate.progress.feasibility, trial_iterate.progress.objective))
          this->current_phase = OPTIMALITY;
          DEBUG << "Switching from restoration to optimality phase\n";
-         this->subproblem.compute_optimality_measures(problem, current_iterate);
+         this->subproblem.compute_progress_measures(problem, current_iterate);
       }
       /* possibly go from phase 2 (optimality) to 1 (restoration) */
       else if (direction.is_relaxed && this->current_phase == OPTIMALITY) {
@@ -101,13 +101,13 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
          DEBUG << "Switching from optimality to restoration phase\n";
          this->phase_2_strategy->notify(current_iterate);
          this->phase_1_strategy->reset();
-         this->subproblem.compute_infeasibility_measures(problem, current_iterate, direction.constraint_partition);
+         this->compute_infeasibility_measures(problem, current_iterate, direction.constraint_partition);
          this->phase_1_strategy->notify(current_iterate);
       }
 
       if (this->current_phase == FEASIBILITY_RESTORATION) {
          // if restoration phase, recompute progress measures of trial point
-         this->subproblem.compute_infeasibility_measures(problem, trial_iterate, direction.constraint_partition);
+         this->compute_infeasibility_measures(problem, trial_iterate, direction.constraint_partition);
       }
 
       // evaluate the predicted reduction
@@ -143,6 +143,15 @@ void FeasibilityRestoration::set_restoration_multipliers(const Problem& problem,
       }
       // otherwise, leave the multiplier as it is
    }
+}
+
+void FeasibilityRestoration::compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const ConstraintPartition& constraint_partition) {
+   iterate.compute_constraints(problem);
+   // feasibility measure: residual of all constraints
+   double feasibility = problem.compute_constraint_residual(iterate.constraints, L1_NORM);
+   // optimality measure: residual of linearly infeasible constraints
+   double objective = problem.compute_constraint_violation(iterate.constraints, constraint_partition.infeasible, L1_NORM);
+   iterate.progress = {feasibility, objective};
 }
 
 void FeasibilityRestoration::update_restoration_multipliers(Iterate& trial_iterate, const ConstraintPartition& constraint_partition) {
