@@ -77,7 +77,7 @@ void AMPLModel::generate_variables_() {
 //    SufDesc* uncertain_suffixes = suf_get_ASL(this->asl_, UNCERTAIN_SUFFIX, ASL_Sufkind_var);
 
    for (size_t i = 0; i < this->number_variables; i++) {
-      this->variable_name[i] = var_name_ASL(this->asl_, i);
+      this->variables_names[i] = var_name_ASL(this->asl_, i);
       //this->variable_discrete[i] = is_discrete(this->asl_, i);
       double lb = (this->asl_->i.LUv_ != NULL) ? this->asl_->i.LUv_[2 * i] : -INFINITY;
       double ub = (this->asl_->i.LUv_ != NULL) ? this->asl_->i.LUv_[2 * i + 1] : INFINITY;
