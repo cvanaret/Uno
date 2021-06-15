@@ -75,15 +75,19 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
    if (this->subproblem.subproblem_definition_changed) {
       this->phase_2_strategy->reset();
       this->subproblem.subproblem_definition_changed = false;
-      this->subproblem.compute_optimality_measures(problem, current_iterate);
+      //this->subproblem.compute_optimality_measures(problem, current_iterate);
    }
    double step_norm = step_length * direction.norm;
 
+   this->subproblem.compute_optimality_measures(problem, trial_iterate);
    bool accept = false;
    if (step_norm == 0.) {
       accept = true;
    }
    else {
+      //ProgressMeasures current_progress_tmp{};
+      //ProgressMeasures trial_progress_tmp{};
+
       /* possibly go from 1 (restoration) to phase 2 (optimality) */
       if (!direction.is_relaxed && this->current_phase == FEASIBILITY_RESTORATION) {
          // TODO && this->filter_optimality->accept(trial_iterate.progress.feasibility, trial_iterate.progress.objective))
@@ -121,6 +125,10 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
          /* correct multipliers for infeasibility problem */
          FeasibilityRestoration::update_restoration_multipliers(trial_iterate, direction.constraint_partition);
       }
+      // compute the residuals
+      trial_iterate.compute_objective(problem);
+      this->subproblem.compute_residuals(problem, trial_iterate, trial_iterate.multipliers, direction.objective_multiplier);
+
    }
    return accept;
 }

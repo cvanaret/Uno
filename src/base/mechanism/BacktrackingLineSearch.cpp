@@ -36,14 +36,10 @@ std::pair<Iterate, Direction> BacktrackingLineSearch::compute_acceptable_iterate
          this->print_iteration_();
 
          // assemble the trial iterate
-         Iterate trial_iterate = this->assemble_trial_iterate(problem, current_iterate, direction, this->step_length);
+         Iterate trial_iterate = this->assemble_trial_iterate(current_iterate, direction, this->step_length);
 
          // check whether the trial step is accepted
          if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate, direction, this->step_length)) {
-            // compute the residuals
-            trial_iterate.compute_objective(problem);
-            this->relaxation_strategy.subproblem.compute_residuals(problem, trial_iterate, trial_iterate.multipliers, direction.objective_multiplier);
-
             this->add_statistics(statistics, direction);
             return std::make_pair(trial_iterate, direction);
          }

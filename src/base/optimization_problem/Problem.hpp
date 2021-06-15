@@ -62,7 +62,7 @@ public:
    virtual SparseVector objective_gradient(const std::vector<double>& x) const = 0;
 
    /* variables */
-   std::vector<std::string> variable_name;
+   std::vector<std::string> variables_names;
    //std::vector<bool> variable_discrete;
    std::vector<Range> variables_bounds;
    std::vector<ConstraintType> variable_status; /*!< Status of the variables (EQUALITY, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES) */
@@ -71,29 +71,31 @@ public:
    std::vector<std::string> constraint_name;
    std::vector<Range> constraint_bounds;
    std::vector<FunctionType> constraint_type; /*!< Types of the constraints (LINEAR, QUADRATIC, NONLINEAR) */
-   std::vector<ConstraintType>
-         constraint_status; /*!< Status of the constraints (EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES, UNBOUNDED) */
-   [[nodiscard]] virtual double evaluate_constraint(int j, const std::vector<double>& x) const = 0;
-   [[nodiscard]] std::vector<double> evaluate_constraints(const std::vector<double>& x) const;
-   virtual void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const = 0;
-   virtual void constraint_gradient(const std::vector<double>& x, int j, SparseVector& gradient) const = 0;
-   [[nodiscard]] virtual std::vector<SparseVector> constraints_jacobian(const std::vector<double>& x) const = 0;
-   void determine_bounds_types(std::vector<Range>& variables_bounds, std::vector<ConstraintType>& status);
+   std::vector<ConstraintType> constraint_status; /*!< Status of the constraints (EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES,
+ * UNBOUNDED) */
    std::map<int, int> equality_constraints; /*!< inequality constraints */
    std::map<int, int> inequality_constraints; /*!< inequality constraints */
    std::map<int, int> linear_constraints;
-
    /* Hessian */
    int hessian_maximum_number_nonzeros; /*!< Number of nonzero elements in the Hessian */
+
+   // purely virtual functions
+   [[nodiscard]] virtual double evaluate_constraint(int j, const std::vector<double>& x) const = 0;
+   virtual void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const = 0;
+   virtual void constraint_gradient(const std::vector<double>& x, int j, SparseVector& gradient) const = 0;
+   [[nodiscard]] virtual std::vector<SparseVector> constraints_jacobian(const std::vector<double>& x) const = 0;
    virtual void lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
          CSCMatrix& hessian) const = 0;
-
    virtual std::vector<double> primal_initial_solution() = 0;
    virtual std::vector<double> dual_initial_solution() = 0;
 
+   // auxiliary functions
+   [[nodiscard]] std::vector<double> evaluate_constraints(const std::vector<double>& x) const;
+   void determine_bounds_types(std::vector<Range>& variables_bounds, std::vector<ConstraintType>& status);
+   void project_point_in_bounds(std::vector<double>& x) const;
    [[nodiscard]] double compute_constraint_residual(const std::vector<double>& constraints, Norm residual_norm) const;
-   [[nodiscard]] double
-   compute_constraint_residual(const std::vector<double>& constraints, const std::vector<int>& constraint_set, Norm residual_norm) const;
+   [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, const std::vector<int>& constraint_set, Norm
+   residual_norm) const;
 
 protected:
    void determine_constraints_();

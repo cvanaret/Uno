@@ -68,6 +68,6 @@ double SQP::compute_predicted_reduction_(Iterate& current_iterate, Direction& di
    }
 }
 
-int SQP::get_hessian_evaluation_count() {
+int SQP::get_hessian_evaluation_count() const {
    return this->hessian_evaluation->evaluation_count;
 }

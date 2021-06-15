@@ -16,7 +16,7 @@ Problem::Problem(std::string& name, int number_variables, int number_constraints
       name(name), number_variables(number_variables), number_constraints(number_constraints), type(type),
       objective_sign(1.), objective_type(NONLINEAR),
       // allocate all vectors
-      variable_name(number_variables),
+      variables_names(number_variables),
       //variable_discrete(number_variables),
       variables_bounds(number_variables), variable_status(number_variables),
       constraint_name(number_constraints),
@@ -43,7 +43,7 @@ double Problem::compute_constraint_residual(const std::vector<double>& constrain
 }
 
 /* compute ||c_S|| for a given set S */
-double Problem::compute_constraint_residual(const std::vector<double>& constraints, const std::vector<int>& constraint_set, Norm residual_norm)
+double Problem::compute_constraint_violation(const std::vector<double>& constraints, const std::vector<int>& constraint_set, Norm residual_norm)
 const {
    SparseVector residuals;
    for (int j: constraint_set) {
@@ -85,6 +85,17 @@ void Problem::determine_constraints_() {
       else {
          this->inequality_constraints[j] = current_inequality_constraint;
          current_inequality_constraint++;
+      }
+   }
+}
+
+void Problem::project_point_in_bounds(std::vector<double>& x) const {
+   for (size_t i = 0; i < x.size(); i++) {
+      if (x[i] < this->variables_bounds[i].lb) {
+         x[i] = this->variables_bounds[i].lb;
+      }
+      else if (this->variables_bounds[i].ub < x[i]) {
+         x[i] = this->variables_bounds[i].ub;
       }
    }
 }
