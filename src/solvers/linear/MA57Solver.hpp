@@ -36,7 +36,7 @@ public:
    void do_numerical_factorization(const COOMatrix& matrix) override;
    void solve(std::vector<double>& rhs) override;
 
-   int number_negative_eigenvalues() const override;
+   size_t number_negative_eigenvalues() const override;
    bool matrix_is_singular() const override;
    int rank() const override;
 

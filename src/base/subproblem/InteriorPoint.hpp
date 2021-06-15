@@ -24,16 +24,8 @@ struct UnstableInertiaCorrection : public std::exception {
    }
 };
 
-/*! \class InteriorPoint
- * \brief Interior Point Method
- *
- *  Implementation of an Interior Point Method
- */
 class InteriorPoint : public Subproblem {
 public:
-   /*!
-    *  Constructor
-    */
    InteriorPoint(const Problem& problem, std::string linear_solver_name, std::string hessian_evaluation_method, bool use_trust_region,
          bool scale_residuals);
 
@@ -42,19 +34,16 @@ public:
    void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
 
    Direction compute_direction(const Problem& problem, Iterate& current_iterate) override;
+   void compute_progress_measures(const Problem& problem, Iterate& iterate) override;
    int get_hessian_evaluation_count() const override;
 
-   void compute_progress_measures(const Problem& problem, Iterate& iterate) override;
-
-   static double constraint_violation(const Problem& problem, Iterate& iterate);
-   double compute_central_complementarity_error(Iterate& iterate, double mu, std::vector<Range>& variables_bounds) const;
-
 private:
-   std::unique_ptr<HessianEvaluation> hessian_evaluation;
-   std::unique_ptr<LinearSolver> linear_solver; /*!< Solver that solves the subproblem */
-
    /* barrier parameter */
    double barrier_parameter;
+   std::unique_ptr<HessianEvaluation> hessian_evaluation;
+   std::unique_ptr<LinearSolver> linear_solver; /*!< Solver that solves the subproblem */
+   /* constants */
+   InteriorPointParameters parameters_;
 
    /* data structures */
    std::set<size_t> lower_bounded_variables; /* indices of the lower-bounded variables */
@@ -66,28 +55,25 @@ private:
    double inertia_hessian_last_;
    double inertia_constraints_;
    double default_multiplier_;
-   size_t iteration_;
+   size_t iteration;
    size_t number_factorizations_;
 
-   /* constants */
-   InteriorPointParameters parameters_;
-
-   void factorize_(COOMatrix& kkt_matrix, FunctionType problem_type);
-   void evaluate_optimality_iterate_(const Problem& problem, Iterate& current_iterate);
-   static double evaluate_local_model_(const Problem& problem, Iterate& current_iterate, std::vector<double>& solution);
-   double barrier_function_(const Problem& problem, Iterate& iterate, const std::vector<Range>& variables_bounds);
+   void factorize(COOMatrix& kkt_matrix, FunctionType problem_type);
+   void evaluate_optimality_iterate(const Problem& problem, Iterate& current_iterate);
+   static double compute_barrier_directional_derivative(const Problem&, Iterate& current_iterate, std::vector<double>& solution);
+   double evaluate_barrier_function(const Problem& problem, Iterate& iterate, const std::vector<Range>& variables_bounds);
    double compute_primal_length(Iterate& current_iterate, std::vector<double>& ipm_solution, std::vector<Range>& variables_bounds, double tau);
    static double compute_dual_length(Iterate& current_iterate, double tau, std::vector<double>& lower_delta_z, std::vector<double>& upper_delta_z);
-   COOMatrix assemble_optimality_kkt_matrix_(const Problem& problem, Iterate& current_iterate);
+   COOMatrix assemble_optimality_kkt_matrix(const Problem& problem, Iterate& current_iterate);
    void modify_inertia(COOMatrix& kkt_matrix, size_t size_first_block, size_t size_second_block, FunctionType problem_type);
-   void generate_kkt_rhs_(const Problem& problem, Iterate& current_iterate);
-   std::vector<double> compute_lower_bound_multiplier_displacements_(Iterate& current_iterate, std::vector<double>& solution,
-         std::vector<Range>& variables_bounds, double mu);
-   std::vector<double> compute_upper_bound_multiplier_displacements_(Iterate& current_iterate, std::vector<double>& solution,
-         std::vector<Range>& variables_bounds, double mu);
+   void generate_kkt_rhs(const Problem& problem, Iterate& current_iterate);
+   std::vector<double> compute_lower_bound_dual_displacements(const Iterate& current_iterate, const std::vector<double>& solution);
+   std::vector<double> compute_upper_bound_dual_displacements(const Iterate& current_iterate, const std::vector<double>& solution);
    Direction generate_direction(const Problem& problem, Iterate& current_iterate, std::vector<double>& solution_IPM);
-   double compute_KKT_error_scaling_(Iterate& current_iterate) const;
-   static double compute_predicted_reduction_(Direction& direction, double step_length);
+   double compute_KKT_error_scaling(Iterate& current_iterate) const;
+   static double compute_predicted_reduction(Direction& direction, double step_length);
+   static double constraint_violation(const Problem& problem, Iterate& iterate);
+   double compute_central_complementarity_error(Iterate& iterate, double mu, std::vector<Range>& variables_bounds) const;
 };
 
 #endif // IPM_H
