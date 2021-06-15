@@ -29,7 +29,7 @@ public:
    InteriorPoint(const Problem& problem, std::string linear_solver_name, std::string hessian_evaluation_method, bool use_trust_region,
          bool scale_residuals);
 
-   Iterate evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& default_multipliers) override;
+   Iterate evaluate_initial_point(const Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
    void generate(const Problem& problem, const Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
    void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
 
