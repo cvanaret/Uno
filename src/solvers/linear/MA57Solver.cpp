@@ -104,7 +104,7 @@ void MA57Solver::solve(std::vector<double>& rhs) {
    DEBUG << "Linear system solve completed\n";
 }
 
-int MA57Solver::number_negative_eigenvalues() const {
+size_t MA57Solver::number_negative_eigenvalues() const {
    return this->factorization_.info[23];
 }
 
