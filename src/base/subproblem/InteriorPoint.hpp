@@ -46,20 +46,19 @@ public:
 
    void compute_progress_measures(const Problem& problem, Iterate& iterate) override;
 
-   double constraint_violation(const Problem& problem, Iterate& iterate);
-   double compute_central_complementarity_error(Iterate& iterate, double mu, std::vector<Range>& variables_bounds);
+   static double constraint_violation(const Problem& problem, Iterate& iterate);
+   double compute_central_complementarity_error(Iterate& iterate, double mu, std::vector<Range>& variables_bounds) const;
 
 private:
    std::unique_ptr<HessianEvaluation> hessian_evaluation;
    std::unique_ptr<LinearSolver> linear_solver; /*!< Solver that solves the subproblem */
 
    /* barrier parameter */
-   double mu_optimality;
-   double mu_feasibility;
+   double barrier_parameter;
 
    /* data structures */
-   std::set<int> lower_bounded_variables; /* indices of the lower-bounded variables */
-   std::set<int> upper_bounded_variables; /* indices of the upper-bounded variables */
+   std::set<size_t> lower_bounded_variables; /* indices of the lower-bounded variables */
+   std::set<size_t> upper_bounded_variables; /* indices of the upper-bounded variables */
 
    bool force_symbolic_factorization = true;
    std::vector<double> rhs_;
@@ -75,19 +74,18 @@ private:
 
    void factorize_(COOMatrix& kkt_matrix, FunctionType problem_type);
    void evaluate_optimality_iterate_(const Problem& problem, Iterate& current_iterate);
-   double evaluate_local_model_(const Problem& problem, Iterate& current_iterate, std::vector<double>& solution);
+   static double evaluate_local_model_(const Problem& problem, Iterate& current_iterate, std::vector<double>& solution);
    double barrier_function_(const Problem& problem, Iterate& iterate, const std::vector<Range>& variables_bounds);
-   double compute_primal_length_(Iterate& iterate, std::vector<double>& ipm_solution, std::vector<Range>& variables_bounds, double tau);
-   double
-   compute_dual_length_(Iterate& current_iterate, double tau, std::vector<double>& lower_delta_z, std::vector<double>& upper_delta_z);
+   double compute_primal_length(Iterate& current_iterate, std::vector<double>& ipm_solution, std::vector<Range>& variables_bounds, double tau);
+   static double compute_dual_length(Iterate& current_iterate, double tau, std::vector<double>& lower_delta_z, std::vector<double>& upper_delta_z);
    COOMatrix assemble_optimality_kkt_matrix_(const Problem& problem, Iterate& current_iterate);
-   void modify_inertia_(COOMatrix& kkt_matrix, int size_first_block, int size_second_block, FunctionType problem_type);
+   void modify_inertia(COOMatrix& kkt_matrix, size_t size_first_block, size_t size_second_block, FunctionType problem_type);
    void generate_kkt_rhs_(const Problem& problem, Iterate& current_iterate);
    std::vector<double> compute_lower_bound_multiplier_displacements_(Iterate& current_iterate, std::vector<double>& solution,
          std::vector<Range>& variables_bounds, double mu);
    std::vector<double> compute_upper_bound_multiplier_displacements_(Iterate& current_iterate, std::vector<double>& solution,
          std::vector<Range>& variables_bounds, double mu);
-   Direction generate_direction_(const Problem& problem, Iterate& current_iterate, std::vector<double>& solution_IPM);
+   Direction generate_direction(const Problem& problem, Iterate& current_iterate, std::vector<double>& solution_IPM);
    double compute_KKT_error_scaling_(Iterate& current_iterate) const;
    static double compute_predicted_reduction_(Direction& direction, double step_length);
 };
