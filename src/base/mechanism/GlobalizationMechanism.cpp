@@ -11,6 +11,14 @@ Iterate GlobalizationMechanism::assemble_trial_iterate(const Iterate& current_it
    return trial_iterate;
 }
 
+int GlobalizationMechanism::get_hessian_evaluation_count() const {
+   return this->relaxation_strategy.get_hessian_evaluation_count();
+}
+
+int GlobalizationMechanism::get_number_subproblems_solved() const {
+   return this->relaxation_strategy.get_number_subproblems_solved();
+}
+
 void GlobalizationMechanism::print_acceptance_(const Iterate& iterate) {
    DEBUG << CYAN "trial point accepted\n" RESET;
    DEBUG << "Residuals: ||c|| = " << iterate.residuals.constraints << ", KKT = " << iterate.residuals.KKT

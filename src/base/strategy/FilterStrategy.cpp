@@ -33,8 +33,6 @@ void FilterStrategy::notify(Iterate& current_iterate) {
 bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, ProgressMeasures& current_progress, ProgressMeasures& trial_progress,
       double /*objective_multiplier*/, double predicted_reduction) {
    bool accept = false;
-   //std::cout << "Current progress: " << current_progress.feasibility << ", " << current_progress.objective << "\n";
-   //std::cout << "Trial progress: " << trial_progress.feasibility << ", " << trial_progress.objective << "\n";
 
    DEBUG << "Current: η = " << current_progress.feasibility << ", ω = " << current_progress.objective << "\n";
    DEBUG << "Trial: η = " << trial_progress.feasibility << ", ω = " << trial_progress.objective << "\n";

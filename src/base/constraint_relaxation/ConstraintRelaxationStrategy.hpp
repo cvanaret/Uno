@@ -23,6 +23,7 @@ public:
    virtual bool is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate, Direction&
    direction, double step_length) = 0;
    virtual double compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) = 0;
+   
    [[nodiscard]] int get_hessian_evaluation_count() const;
    [[nodiscard]] int get_number_subproblems_solved() const;
 
