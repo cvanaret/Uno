@@ -2,7 +2,7 @@
 #include "QPSolverFactory.hpp"
 
 SLP::SLP(const Problem& problem, std::string QP_solver_name, bool /*use_trust_region*/, bool scale_residuals) :
-      Subproblem(problem, L1_NORM, scale_residuals),
+      Subproblem(problem, scale_residuals),
       solver(QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints, 0, false)) {
 }
 

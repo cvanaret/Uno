@@ -20,7 +20,7 @@ protected:
    std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
    std::unique_ptr<HessianEvaluation> hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
 
-   double compute_predicted_reduction_(Iterate& current_iterate, Direction& direction, double step_length) const;
+   double compute_predicted_reduction(Iterate& current_iterate, Direction& direction, double step_length) const;
 };
 
 #endif // SQP_H

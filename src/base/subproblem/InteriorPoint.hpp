@@ -44,7 +44,7 @@ public:
    Direction compute_direction(const Problem& problem, Iterate& current_iterate) override;
    int get_hessian_evaluation_count() const override;
 
-   void compute_optimality_measures(const Problem& problem, Iterate& iterate) override;
+   void compute_progress_measures(const Problem& problem, Iterate& iterate) override;
 
    double constraint_violation(const Problem& problem, Iterate& iterate);
    double compute_central_complementarity_error(Iterate& iterate, double mu, std::vector<Range>& variables_bounds);

@@ -27,6 +27,7 @@ private:
 
    void form_feasibility_problem(const Problem& problem, const Iterate& current_iterate, const ConstraintPartition& constraint_partition);
    void set_restoration_multipliers(const Problem& problem, const ConstraintPartition& constraint_partition);
+   void compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const ConstraintPartition& constraint_partition);
    static void update_restoration_multipliers(Iterate& trial_iterate, const ConstraintPartition& constraint_partition);
 };
 

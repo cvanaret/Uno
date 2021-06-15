@@ -18,7 +18,7 @@
  */
 class Subproblem {
 public:
-   Subproblem(const Problem& problem, Norm residual_norm, bool scale_residuals);
+   Subproblem(const Problem& problem, bool scale_residuals);
    virtual ~Subproblem() = default;
 
    virtual Iterate evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& multipliers);
@@ -31,8 +31,7 @@ public:
    void generate_feasibility_bounds(const Problem& problem, const std::vector<double>& current_constraints, const ConstraintPartition&
    constraint_partition);
 
-   virtual void compute_optimality_measures(const Problem& problem, Iterate& iterate);
-   void compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const ConstraintPartition& constraint_partition);
+   virtual void compute_progress_measures(const Problem& problem, Iterate& iterate);
 
    static double project_variable_in_interior(double variable_value, const Range& variable_bounds);
    void set_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints);
@@ -60,7 +59,6 @@ public:
    // Hessian is optional and depends on the subproblem
    std::vector<double> initial_point;
 
-   Norm residual_norm;
    int number_subproblems_solved;
    // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it
    bool subproblem_definition_changed;
