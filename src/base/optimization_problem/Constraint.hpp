@@ -44,8 +44,6 @@ struct Multipliers {
 
    Multipliers() = default;
    Multipliers(size_t number_variables, size_t number_constraints);
-
-   void copy_from(const Multipliers& multipliers);
 };
 
 #endif // CONSTRAINT_H
