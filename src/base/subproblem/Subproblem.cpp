@@ -30,7 +30,7 @@ Iterate Subproblem::evaluate_initial_point(const Problem& problem, const std::ve
 void Subproblem::compute_progress_measures(const Problem& problem, Iterate& iterate) {
    iterate.compute_constraints(problem);
    // feasibility measure: residual of all constraints
-   iterate.residuals.constraints = problem.compute_constraint_residual(iterate.constraints, this->residual_norm);
+   iterate.residuals.constraints = problem.compute_constraint_residual(iterate.constraints, L1_NORM);
    // optimality
    iterate.compute_objective(problem);
    iterate.progress = {iterate.residuals.constraints, iterate.objective};
@@ -172,7 +172,7 @@ constraint_partition) {
 
 double Subproblem::compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier) const {
    std::vector<double> lagrangian_gradient = iterate.lagrangian_gradient(problem, objective_multiplier, iterate.multipliers);
-   return norm(lagrangian_gradient, this->residual_norm);
+   return norm(lagrangian_gradient, L1_NORM);
 }
 
 /* complementary slackness error. Use abs/1e-8 to safeguard */
@@ -204,7 +204,7 @@ double Subproblem::compute_complementarity_error_(const Problem& problem, Iterat
 void
 Subproblem::compute_residuals(const Problem& problem, Iterate& iterate, const Multipliers& multipliers, double objective_multiplier) const {
    iterate.compute_constraints(problem);
-   iterate.residuals.constraints = problem.compute_constraint_residual(iterate.constraints, this->residual_norm);
+   iterate.residuals.constraints = problem.compute_constraint_residual(iterate.constraints, L1_NORM);
    // compute the KKT residual only if the objective multiplier is positive
    if (0. < objective_multiplier) {
       iterate.residuals.KKT = Subproblem::compute_first_order_error(problem, iterate, objective_multiplier);
