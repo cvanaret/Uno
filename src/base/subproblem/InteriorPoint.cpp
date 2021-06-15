@@ -41,14 +41,15 @@ InteriorPoint::InteriorPoint(const Problem& problem, std::string linear_solver_n
    }
 }
 
-Iterate InteriorPoint::evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& default_multipliers) {
+Iterate InteriorPoint::evaluate_initial_point(const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
    /* make the initial point strictly feasible */
-   std::vector<double> reformulated_x(this->number_variables);
+   x.resize(this->number_variables);
    for (size_t i = 0; i < problem.number_variables; i++) {
-      reformulated_x[i] = Subproblem::project_variable_in_interior(x[i], problem.variables_bounds[i]);
+      x[i] = Subproblem::project_variable_in_interior(x[i], problem.variables_bounds[i]);
    }
 
-   Multipliers multipliers(this->number_variables, problem.number_constraints);
+   multipliers.lower_bounds.resize(this->number_variables);
+   multipliers.upper_bounds.resize(this->number_variables);
    /* generate the bound multipliers */
    for (size_t i: this->lower_bounded_variables) {
       multipliers.lower_bounds[i] = this->default_multiplier_; // positive multiplier
@@ -58,7 +59,7 @@ Iterate InteriorPoint::evaluate_initial_point(const Problem& problem, const std:
    }
 
    /* generate the first iterate */
-   Iterate first_iterate(reformulated_x, multipliers);
+   Iterate first_iterate(x, multipliers);
 
    /* initialize the slacks */
    first_iterate.compute_constraints(problem);
@@ -78,7 +79,7 @@ Iterate InteriorPoint::evaluate_initial_point(const Problem& problem, const std:
    /* compute least-square multipliers */
    if (0 < problem.number_constraints) {
       first_iterate.multipliers.constraints =
-            Subproblem::compute_least_square_multipliers(problem, first_iterate, default_multipliers.constraints, *this->linear_solver);
+            Subproblem::compute_least_square_multipliers(problem, first_iterate, multipliers.constraints, *this->linear_solver);
    }
 
    DEBUG << problem.inequality_constraints.size() << " slacks\n";

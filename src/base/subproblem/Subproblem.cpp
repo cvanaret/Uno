@@ -20,7 +20,7 @@ Subproblem::Subproblem(const Problem& problem, bool scale_residuals) :
 //    first_iterate.multipliers.constraints = Subproblem::compute_least_square_multipliers(problem, first_iterate, multipliers.constraints, 1e4);
 //}
 
-Iterate Subproblem::evaluate_initial_point(const Problem& problem, const std::vector<double>& x, const Multipliers& multipliers) {
+Iterate Subproblem::evaluate_initial_point(const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
    Iterate first_iterate(x, multipliers);
    /* compute the optimality and feasibility measures of the initial point */
    this->compute_progress_measures(problem, first_iterate);
