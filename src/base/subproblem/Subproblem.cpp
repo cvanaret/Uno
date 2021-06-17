@@ -172,12 +172,12 @@ double Subproblem::compute_first_order_error(const Problem& problem, Iterate& it
 double Subproblem::compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const {
    double complementarity_error = 0.;
    /* bound constraints */
-   for (size_t i = 0; i < this->number_variables; i++) {
-      if (-INFINITY < this->variables_bounds[i].lb) {
-         complementarity_error += std::abs(multipliers.lower_bounds[i] * (iterate.x[i] - this->variables_bounds[i].lb));
+   for (size_t i = 0; i < problem.number_variables; i++) {
+      if (-INFINITY < problem.variables_bounds[i].lb) {
+         complementarity_error += std::abs(multipliers.lower_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].lb));
       }
-      if (this->variables_bounds[i].ub < INFINITY) {
-         complementarity_error += std::abs(multipliers.upper_bounds[i] * (iterate.x[i] - this->variables_bounds[i].ub));
+      if (problem.variables_bounds[i].ub < INFINITY) {
+         complementarity_error += std::abs(multipliers.upper_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].ub));
       }
    }
    /* constraints */
