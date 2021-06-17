@@ -29,8 +29,8 @@ public:
    COOMatrix(size_t dimension, size_t number_nonzeros, short fortran_indexing);
 
    std::vector<double> matrix;
-   std::vector<size_t> row_indices;
-   std::vector<size_t> column_indices;
+   std::vector<int> row_indices;
+   std::vector<int> column_indices;
 
    void insert(double term, size_t row_index, size_t column_index) override;
    std::vector<double> product(const std::vector<double>& vector) override;

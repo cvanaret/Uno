@@ -16,7 +16,7 @@ void SLP::generate(const Problem& problem, const Iterate& current_iterate, doubl
    this->update_objective_multiplier(problem, current_iterate, objective_multiplier);
 
    /* bounds of the variables */
-   this->set_variables_bounds_(problem, current_iterate, trust_region_radius);
+   this->set_variables_bounds(problem, current_iterate, trust_region_radius);
 
    /* bounds of the linearized constraints */
    this->set_constraints_bounds(problem, this->constraints);
@@ -37,7 +37,7 @@ void SLP::update_objective_multiplier(const Problem& /*problem*/, const Iterate&
    }
 }
 
-Direction SLP::compute_direction(const Problem& /*problem*/, Iterate& /*current_iterate*/) {
+Direction SLP::compute_direction(Statistics& /*statistics*/, const Problem& /*problem*/, Iterate& /*current_iterate*/) {
    /* solve the LP */
    Direction direction = this->solver->solve_LP(variables_bounds, constraints_bounds, this->objective_gradient,
          this->constraints_jacobian,this->initial_point);

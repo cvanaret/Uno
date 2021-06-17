@@ -4,6 +4,7 @@
 #include <cmath>
 #include <vector>
 #include <memory>
+#include "Statistics.hpp"
 #include "Problem.hpp"
 #include "Iterate.hpp"
 #include "Direction.hpp"
@@ -21,25 +22,23 @@ public:
    Subproblem(const Problem& problem, bool scale_residuals);
    virtual ~Subproblem() = default;
 
-   virtual Iterate evaluate_initial_point(const Problem& problem, std::vector<double>& x, Multipliers& multipliers);
+   virtual Iterate generate_initial_point(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers);
    virtual void generate(const Problem& problem, const Iterate& current_iterate, double objective_multiplier, double trust_region_radius) = 0;
    virtual void set_trust_region(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
    virtual void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) = 0;
 
-   virtual Direction compute_direction(const Problem& problem, Iterate& current_iterate) = 0;
+   virtual Direction compute_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) = 0;
    void compute_feasibility_linear_objective(const Iterate& current_iterate, const ConstraintPartition& constraint_partition);
    void generate_feasibility_bounds(const Problem& problem, const std::vector<double>& current_constraints, const ConstraintPartition&
    constraint_partition);
 
    virtual void compute_progress_measures(const Problem& problem, Iterate& iterate);
 
-   static double project_variable_in_interior(double variable_value, const Range& variable_bounds);
+   static double push_variable_to_interior(double variable_value, const Range& variable_bounds);
    void set_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints);
-   static std::vector<double>
-   compute_least_square_multipliers(const Problem& problem, Iterate& current_iterate, const std::vector<double>& default_multipliers,
-         LinearSolver& solver, double multipliers_max_size = 1e3);
-   static std::vector<double>
-   compute_least_square_multipliers(const Problem& problem, Iterate& current_iterate, const std::vector<double>& default_multipliers,
+   static void compute_least_square_multipliers(const Problem& problem, Iterate& current_iterate, std::vector<double>& multipliers, LinearSolver& solver,
+         double multipliers_max_size = 1e3);
+   static void compute_least_square_multipliers(const Problem& problem, Iterate& current_iterate, std::vector<double>& multipliers,
          double multipliers_max_size = 1e3);
 
    double compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier) const;
@@ -65,8 +64,8 @@ public:
    bool scale_residuals;
 
 protected:
-   virtual void set_variables_bounds_(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
-   virtual double compute_complementarity_error_(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const;
+   virtual void set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
+   virtual double compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const;
 };
 
 #endif // SUBPROBLEM_H

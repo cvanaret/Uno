@@ -13,12 +13,12 @@ public:
 
    // direction computation
    void generate_subproblem(const Problem& problem, const Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
-   Direction compute_feasible_direction(const Problem& problem, Iterate& current_iterate) override;
-   Direction solve_feasibility_problem(const Problem& problem, Iterate& current_iterate, Direction& direction) override;
+   Direction compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
+   Direction solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Direction& direction) override;
 
-   bool is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate, Direction& direction, double
-   step_length) override;
-   double compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) override;
+   bool is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+         double step_length) override;
+   double compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, const Direction& direction, double step_length) override;
 
 private:
    std::unique_ptr<GlobalizationStrategy> phase_1_strategy;
