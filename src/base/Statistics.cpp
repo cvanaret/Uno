@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include "Statistics.hpp"
 
 std::map<std::string, std::string>Statistics::symbols = {{"top",          "─"},
@@ -34,7 +35,9 @@ void Statistics::add_statistic(std::string name, int value) {
 }
 
 void Statistics::add_statistic(std::string name, double value) {
-   return add_statistic(name, std::to_string(value));
+   std::ostringstream stream;
+   stream << std::scientific << std::setprecision(6) << value;
+   return add_statistic(name, stream.str());
 }
 
 void Statistics::print_header(bool first_occurrence) {
@@ -73,7 +76,6 @@ void Statistics::print_current_line() {
    if (this->iteration % 15 == 0) {
       this->print_header(this->iteration == 0);
    }
-
    std::cout << Statistics::symbols["left-mid"];
    int k = 0;
    for (const std::pair<const int, std::string>& element: this->columns_) {
