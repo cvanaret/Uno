@@ -14,8 +14,8 @@ public:
     virtual void do_numerical_factorization(const COOMatrix& matrix) = 0;
     virtual void solve(std::vector<double>& rhs) = 0;
     
-    virtual size_t number_negative_eigenvalues() const = 0;
-    virtual bool matrix_is_singular() const = 0;
+    [[nodiscard]] virtual size_t number_negative_eigenvalues() const = 0;
+    [[nodiscard]] virtual bool matrix_is_singular() const = 0;
     virtual int rank() const = 0;
 };
 

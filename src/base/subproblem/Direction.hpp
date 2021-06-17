@@ -5,6 +5,7 @@
 #include <vector>
 #include <set>
 #include <functional>
+#include <cmath>
 #include "Vector.hpp"
 #include "Problem.hpp"
 #include "Iterate.hpp"
@@ -12,16 +13,16 @@
 
 /* see bqpd.f */
 enum Status {
-    OPTIMAL = 0,
-    UNBOUNDED_PROBLEM,
-    BOUND_INCONSISTENCY,
-    INFEASIBLE,
-    INCORRECT_PARAMETER,
-    LP_INSUFFICIENT_SPACE,
-    HESSIAN_INSUFFICIENT_SPACE,
-    SPARSE_INSUFFICIENT_SPACE,
-    MAX_RESTARTS_REACHED,
-    UNDEFINED
+   OPTIMAL = 0,
+   UNBOUNDED_PROBLEM,
+   BOUND_INCONSISTENCY,
+   INFEASIBLE,
+   INCORRECT_PARAMETER,
+   LP_INSUFFICIENT_SPACE,
+   HESSIAN_INSUFFICIENT_SPACE,
+   SPARSE_INSUFFICIENT_SPACE,
+   MAX_RESTARTS_REACHED,
+   UNDEFINED
 };
 
 /*! \struct SubproblemSolution
@@ -31,24 +32,24 @@ enum Status {
  */
 class Direction {
 public:
-    Direction(std::vector<double>& x, Multipliers& multipliers);
-    std::vector<double> x; /*!< Primal variables */
-    Multipliers multipliers; /*!< Multipliers */
-    double objective_multiplier; /*!< Objective multiplier */
+   Direction(std::vector<double>& x, Multipliers& multipliers);
+   std::vector<double> x; /*!< Primal variables */
+   Multipliers multipliers; /*!< Multipliers */
+   double objective_multiplier{1.}; /*!< Objective multiplier */
 
-    Status status; /*!< Status of the solution */
-    bool is_relaxed{false};
+   Status status{OPTIMAL}; /*!< Status of the solution */
+   bool is_relaxed{false};
 
-    double norm; /*!< Norm of \f$x\f$ */
-    double objective; /*!< Objective value */
-    ActiveSet active_set; /*!< Active set */
-    std::vector<int> inactive_set; /*!< Inactive set */
-    ConstraintPartition constraint_partition; /*!< Partition of feasible and infeasible constraints */
-    
-    // this function computes the predicted reduction of the direction for a given step length
-    std::function<double(double step_length)> predicted_reduction;
+   double norm{0.}; /*!< Norm of \f$x\f$ */
+   double objective{INFINITY}; /*!< Objective value */
+   ActiveSet active_set; /*!< Active set */
+   std::vector<int> inactive_set; /*!< Inactive set */
+   ConstraintPartition constraint_partition; /*!< Partition of feasible and infeasible constraints */
 
-    friend std::ostream& operator<<(std::ostream &stream, Direction& step);
+   // this function computes the predicted reduction of the direction for a given step length
+   std::function<double(double step_length)> predicted_reduction;
+
+   friend std::ostream& operator<<(std::ostream& stream, const Direction& step);
 };
 
 #endif // DIRECTION_H

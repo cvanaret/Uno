@@ -21,7 +21,7 @@ void SQP::generate(const Problem& problem, const Iterate& current_iterate, doubl
    this->update_objective_multiplier(problem, current_iterate, objective_multiplier);
 
    /* bounds of the variables */
-   this->set_variables_bounds_(problem, current_iterate, trust_region_radius);
+   this->set_variables_bounds(problem, current_iterate, trust_region_radius);
 
    /* bounds of the linearized constraints */
    this->set_constraints_bounds(problem, this->constraints);
@@ -43,7 +43,7 @@ void SQP::update_objective_multiplier(const Problem& problem, const Iterate& cur
    }
 }
 
-Direction SQP::compute_direction(const Problem& /*problem*/, Iterate& current_iterate) {
+Direction SQP::compute_direction(Statistics& /*statistics*/, const Problem& /*problem*/, Iterate& /*current_iterate*/) {
    /* compute QP direction */
    Direction direction = this->solver->solve_QP(this->variables_bounds, constraints_bounds, this->objective_gradient,
          this->constraints_jacobian, this->hessian_evaluation->hessian, this->initial_point);
@@ -51,18 +51,18 @@ Direction SQP::compute_direction(const Problem& /*problem*/, Iterate& current_it
    DEBUG << direction;
    // attach the predicted reduction function
    direction.predicted_reduction = [&](double step_length) {
-      return this->compute_predicted_reduction(current_iterate, direction, step_length);
+      return this->compute_predicted_reduction(direction, step_length);
    };
    return direction;
 }
 
-double SQP::compute_predicted_reduction(Iterate& current_iterate, Direction& direction, double step_length) const {
+double SQP::compute_predicted_reduction(const Direction& direction, double step_length) const {
    // the predicted reduction is quadratic in the step length
    if (step_length == 1.) {
       return -direction.objective;
    }
    else {
-      double linear_term = dot(direction.x, current_iterate.objective_gradient);
+      double linear_term = dot(direction.x, this->objective_gradient);
       double quadratic_term = this->hessian_evaluation->hessian.quadratic_product(direction.x, direction.x) / 2.;
       return -step_length * (linear_term + step_length * quadratic_term);
    }

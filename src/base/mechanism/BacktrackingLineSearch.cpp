@@ -23,7 +23,7 @@ Iterate BacktrackingLineSearch::initialize(Statistics& statistics, const Problem
 std::pair<Iterate, Direction> BacktrackingLineSearch::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
    /* compute the directions */
    this->relaxation_strategy.generate_subproblem(problem, current_iterate, problem.objective_sign, INFINITY);
-   Direction direction = this->relaxation_strategy.compute_feasible_direction(problem, current_iterate);
+   Direction direction = this->relaxation_strategy.compute_feasible_direction(statistics, problem, current_iterate);
 
    bool line_search_termination = false;
    while (!line_search_termination) {
@@ -48,14 +48,15 @@ std::pair<Iterate, Direction> BacktrackingLineSearch::compute_acceptable_iterate
       }
       // if step length is too small, run restoration phase
       if (this->step_length < this->min_step_length) {
-         if (0. < current_iterate.progress.feasibility && !direction.is_relaxed) {
+         //if (0. < current_iterate.progress.feasibility && !direction.is_relaxed) {
             // reset the line search with the restoration solution
-            direction = this->relaxation_strategy.solve_feasibility_problem(problem, current_iterate, direction);
+            throw "NOT NOW";
+            direction = this->relaxation_strategy.solve_feasibility_problem(statistics, problem, current_iterate, direction);
             this->step_length = 1.;
-         }
-         else {
-            throw std::runtime_error("Line-search iteration limit reached");
-         }
+         //}
+         //else {
+         //   throw std::runtime_error("Line-search iteration limit reached");
+         //}
       }
       else {
          line_search_termination = true;

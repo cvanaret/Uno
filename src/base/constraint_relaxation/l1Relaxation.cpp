@@ -19,7 +19,7 @@ Iterate l1Relaxation::initialize(Statistics& statistics, const Problem& problem,
    statistics.add_column("penalty param.", Statistics::double_width, 4);
 
    /* initialize the subproblem */
-   Iterate first_iterate = this->subproblem.evaluate_initial_point(problem, x, multipliers);
+   Iterate first_iterate = this->subproblem.generate_initial_point(statistics, problem, x, multipliers);
    this->globalization_strategy->initialize(statistics, first_iterate);
    return first_iterate;
 }
@@ -43,21 +43,21 @@ void l1Relaxation::generate_subproblem(const Problem& problem, const Iterate& cu
    }
 }
 
-Direction l1Relaxation::compute_feasible_direction(const Problem& problem, Iterate& current_iterate) {
+Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
    DEBUG << "penalty parameter: " << this->penalty_parameter << "\n";
    // use Byrd's steering rules to update the penalty parameter and compute descent directions
-   Direction direction = this->compute_byrd_steering_rule(problem, current_iterate);
+   Direction direction = this->compute_byrd_steering_rule(statistics, problem, current_iterate);
 
    this->postprocess_direction(problem, direction);
    return direction;
 }
 
-Direction l1Relaxation::solve_feasibility_problem(const Problem& problem, Iterate& current_iterate, Direction& /*direction*/) {
-   return this->subproblem.compute_direction(problem, current_iterate);
+Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Direction& /*direction*/) {
+   return this->subproblem.compute_direction(statistics, problem, current_iterate);
 }
 
 bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate,
-      Direction& direction, double step_length) {
+      const Direction& direction, double step_length) {
    // check if subproblem definition changed
    if (this->subproblem.subproblem_definition_changed) {
       this->globalization_strategy->reset();
@@ -83,9 +83,9 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
    return accept;
 }
 
-Direction l1Relaxation::compute_byrd_steering_rule(const Problem& problem, Iterate& current_iterate) {
+Direction l1Relaxation::compute_byrd_steering_rule(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
    /* stage a: compute the step within trust region */
-   Direction direction = this->subproblem.compute_direction(problem, current_iterate);
+   Direction direction = this->subproblem.compute_direction(statistics, problem, current_iterate);
 
    /* penalty update: if penalty parameter is already 0, no need to decrease it */
    if (0. < this->penalty_parameter) {
@@ -100,7 +100,7 @@ Direction l1Relaxation::compute_byrd_steering_rule(const Problem& problem, Itera
          /* stage c: solve the ideal l1 penalty problem with a zero penalty (no objective) */
          DEBUG << "Compute ideal solution:\n";
          this->subproblem.update_objective_multiplier(problem, current_iterate, 0.);
-         Direction ideal_direction = this->subproblem.compute_direction(problem, current_iterate);
+         Direction ideal_direction = this->subproblem.compute_direction(statistics, problem, current_iterate);
 
          /* compute the ideal error (with a zero penalty parameter) */
          double ideal_error = this->compute_error(problem, current_iterate, ideal_direction.multipliers, 0.);
@@ -141,7 +141,7 @@ Direction l1Relaxation::compute_byrd_steering_rule(const Problem& problem, Itera
                   else {
                      DEBUG << "\nAttempting to solve with penalty parameter " << this->penalty_parameter << "\n";
                      this->subproblem.update_objective_multiplier(problem, current_iterate, this->penalty_parameter);
-                     direction = this->subproblem.compute_direction(problem, current_iterate);
+                     direction = this->subproblem.compute_direction(statistics, problem, current_iterate);
 
                      linearized_residual = this->compute_linearized_constraint_residual(direction.x);
                      DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
@@ -155,7 +155,7 @@ Direction l1Relaxation::compute_byrd_steering_rule(const Problem& problem, Itera
             this->penalty_parameter = std::min(this->penalty_parameter, term * term);
             if (this->penalty_parameter < updated_penalty_parameter) {
                this->subproblem.update_objective_multiplier(problem, current_iterate, this->penalty_parameter);
-               direction = this->subproblem.compute_direction(problem, current_iterate);
+               direction = this->subproblem.compute_direction(statistics, problem, current_iterate);
             }
 
          }
@@ -236,7 +236,7 @@ void l1Relaxation::postprocess_direction(const Problem& problem, Direction& dire
    }
 }
 
-double l1Relaxation::compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) {
+double l1Relaxation::compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, const Direction& direction, double step_length) {
    // compute the predicted reduction of the l1 relaxation as a postprocessing of the predicted reduction of the subproblem
    if (step_length == 1.) {
       return current_iterate.progress.feasibility + direction.predicted_reduction(step_length);

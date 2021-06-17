@@ -72,28 +72,29 @@ double COOMatrix::norm_1() {
 
 std::vector<double> COOMatrix::product(const std::vector<double>& vector) {
    std::vector<double> result(vector.size());
-   for (size_t k = 0; k < this->matrix.size(); k++) {
+   for (size_t k = 0; k < this->number_nonzeros; k++) {
       size_t i = this->row_indices[k] - this->fortran_indexing;
       size_t j = this->column_indices[k] - this->fortran_indexing;
-      result[i] += this->matrix[k] * vector[j];
+      double element_ij = this->matrix[k];
+      result[i] += element_ij * vector[j];
 
       // off-diagonal term
       if (i != j) {
-         result[j] += this->matrix[k] * vector[i];
+         result[j] += element_ij * vector[i];
       }
    }
    return result;
 }
 
 std::ostream& operator<<(std::ostream& stream, COOMatrix& matrix) {
-   for (size_t k = 0; k < matrix.matrix.size(); k++) {
+   for (size_t k = 0; k < matrix.number_nonzeros; k++) {
       stream << "m(" << matrix.row_indices[k] << ", " << matrix.column_indices[k] << ") = " << matrix.matrix[k] << "\n";
    }
    return stream;
 }
 
 std::ostream& operator<<(std::ostream& stream, const COOMatrix& matrix) {
-   for (size_t k = 0; k < matrix.matrix.size(); k++) {
+   for (size_t k = 0; k < matrix.number_nonzeros; k++) {
       stream << "m(" << matrix.row_indices[k] << ", " << matrix.column_indices[k] << ") = " << matrix.matrix[k] << "\n";
    }
    return stream;

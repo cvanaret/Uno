@@ -12,7 +12,7 @@ public:
    void generate(const Problem& problem, const Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
    void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
 
-   Direction compute_direction(const Problem& problem, Iterate& current_iterate) override;
+   Direction compute_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
    int get_hessian_evaluation_count() const override;
 
 protected:
@@ -20,7 +20,7 @@ protected:
    std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
    std::unique_ptr<HessianEvaluation> hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
 
-   double compute_predicted_reduction(Iterate& current_iterate, Direction& direction, double step_length) const;
+   double compute_predicted_reduction(const Direction& direction, double step_length) const;
 };
 
 #endif // SQP_H

@@ -23,12 +23,12 @@ public:
 
    // direction computation
    void generate_subproblem(const Problem& problem, const Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
-   Direction compute_feasible_direction(const Problem& problem, Iterate& current_iterate) override;
-   Direction solve_feasibility_problem(const Problem& problem, Iterate& current_iterate, Direction& direction) override;
+   Direction compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
+   Direction solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Direction& direction) override;
 
-   bool is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate, Direction& direction, double
-   step_length) override;
-   double compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, Direction& direction, double step_length) override;
+   bool is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+         double step_length) override;
+   double compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, const Direction& direction, double step_length) override;
 
 protected:
    std::unique_ptr<GlobalizationStrategy> globalization_strategy;
@@ -37,7 +37,7 @@ protected:
    /* problem reformulation with elastic variables. Constraints l <= c(x) = u are reformulated as l <= c(x) - p + n <= u */
    ElasticVariables elastic_variables;
 
-   Direction compute_byrd_steering_rule(const Problem& problem, Iterate& current_iterate);
+   Direction compute_byrd_steering_rule(Statistics& statistics, const Problem& problem, Iterate& current_iterate);
    void generate_elastic_variables_(const Problem& problem);
    double compute_linearized_constraint_residual(std::vector<double>& direction);
    double compute_error(const Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter);

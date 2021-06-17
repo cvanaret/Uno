@@ -20,7 +20,7 @@ Subproblem::Subproblem(const Problem& problem, bool scale_residuals) :
 //    first_iterate.multipliers.constraints = Subproblem::compute_least_square_multipliers(problem, first_iterate, multipliers.constraints, 1e4);
 //}
 
-Iterate Subproblem::evaluate_initial_point(const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+Iterate Subproblem::generate_initial_point(Statistics& /*statistics*/, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
    Iterate first_iterate(x, multipliers);
    /* compute the optimality and feasibility measures of the initial point */
    this->compute_progress_measures(problem, first_iterate);
@@ -36,7 +36,7 @@ void Subproblem::compute_progress_measures(const Problem& problem, Iterate& iter
    iterate.progress = {iterate.residuals.constraints, iterate.objective};
 }
 
-double Subproblem::project_variable_in_interior(double variable_value, const Range& variable_bounds) {
+double Subproblem::push_variable_to_interior(double variable_value, const Range& variable_bounds) {
    double k1 = 1e-2;
    double k2 = 1e-2;
 
@@ -48,10 +48,10 @@ double Subproblem::project_variable_in_interior(double variable_value, const Ran
 }
 
 void Subproblem::set_trust_region(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {
-   this->set_variables_bounds_(problem, current_iterate, trust_region_radius);
+   this->set_variables_bounds(problem, current_iterate, trust_region_radius);
 }
 
-void Subproblem::set_variables_bounds_(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {
+void Subproblem::set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {
    /* bounds intersected with trust region  */
    // very important: apply the trust region only on the original variables
    for (size_t i = 0; i < problem.number_variables; i++) {
@@ -69,23 +69,23 @@ void Subproblem::set_constraints_bounds(const Problem& problem, const std::vecto
    }
 }
 
-std::vector<double> Subproblem::compute_least_square_multipliers(const Problem& problem, Iterate& current_iterate,
-      const std::vector<double>& default_multipliers, double multipliers_max_size) {
+void Subproblem::compute_least_square_multipliers(const Problem& problem, Iterate& current_iterate, std::vector<double>& multipliers, double
+multipliers_max_size) {
    std::unique_ptr<LinearSolver> linear_solver = LinearSolverFactory::create("MA57");
-   return Subproblem::compute_least_square_multipliers(problem, current_iterate, default_multipliers, *linear_solver, multipliers_max_size);
+   Subproblem::compute_least_square_multipliers(problem, current_iterate, multipliers, *linear_solver, multipliers_max_size);
 }
 
-std::vector<double> Subproblem::compute_least_square_multipliers(const Problem& problem, Iterate& current_iterate,
-      const std::vector<double>& default_multipliers, LinearSolver& solver, double multipliers_max_size) {
+void Subproblem::compute_least_square_multipliers(const Problem& problem, Iterate& current_iterate, std::vector<double>& multipliers,
+      LinearSolver& solver, double multipliers_max_size) {
    current_iterate.compute_objective_gradient(problem);
    current_iterate.compute_constraints_jacobian(problem);
 
    /******************************/
    /* build the symmetric matrix */
    /******************************/
-   COOMatrix matrix(current_iterate.x.size() + problem.number_constraints, problem.hessian_maximum_number_nonzeros, 1);
+   COOMatrix matrix(current_iterate.x.size() + problem.number_constraints, 0, 1);
 
-   /* identity blocks */
+   /* identity block */
    for (size_t i = 0; i < current_iterate.x.size(); i++) {
       matrix.insert(1., i, i);
    }
@@ -95,10 +95,7 @@ std::vector<double> Subproblem::compute_least_square_multipliers(const Problem& 
          matrix.insert(derivative, variable_index, current_iterate.x.size() + j);
       }
    }
-   DEBUG << "Multipliers estimation: KKT matrix:\n";
-   for (size_t k = 0; k < matrix.matrix.size(); k++) {
-      DEBUG << "m(" << matrix.row_indices[k] << ", " << matrix.column_indices[k] << ") = " << matrix.matrix[k] << "\n";
-   }
+   DEBUG << "Multipliers estimation: KKT matrix:\n" << matrix << "\n";
 
    /********************************/
    /* generate the right-hand side */
@@ -114,25 +111,21 @@ std::vector<double> Subproblem::compute_least_square_multipliers(const Problem& 
       rhs[i] -= current_iterate.multipliers.lower_bounds[i];
       rhs[i] -= current_iterate.multipliers.upper_bounds[i];
    }
-   DEBUG << "Multipliers RHS:\n";
-   print_vector(DEBUG, rhs);
+   DEBUG << "Multipliers RHS:\n"; print_vector(DEBUG, rhs);
 
-   solver.do_symbolic_factorization(matrix);
+   // solve the system
+   solver.factorize(matrix);
    solver.solve(rhs);
    DEBUG << "Solution: ";
    std::vector<double>& solution = rhs;
    print_vector(DEBUG, solution);
 
-   /* retrieve multipliers */
-   std::vector<double> multipliers(problem.number_constraints);
-   for (size_t j = 0; j < problem.number_constraints; j++) {
-      multipliers[j] = solution[current_iterate.x.size() + j];
+   // if multipliers too big, discard them. Otherwise, retrieve the least-square multipliers
+   if (norm_inf(solution, current_iterate.x.size(), problem.number_constraints) <= multipliers_max_size) {
+      for (size_t j = 0; j < problem.number_constraints; j++) {
+         multipliers[j] = solution[current_iterate.x.size() + j];
+      }
    }
-   // if multipliers too big, discard them
-   if (norm_inf(multipliers) > multipliers_max_size) {
-      return default_multipliers;
-   }
-   return multipliers;
 }
 
 void Subproblem::compute_feasibility_linear_objective(const Iterate& current_iterate, const ConstraintPartition& constraint_partition) {
@@ -176,15 +169,15 @@ double Subproblem::compute_first_order_error(const Problem& problem, Iterate& it
 }
 
 /* complementary slackness error. Use abs/1e-8 to safeguard */
-double Subproblem::compute_complementarity_error_(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const {
+double Subproblem::compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const {
    double complementarity_error = 0.;
    /* bound constraints */
-   for (size_t i = 0; i < iterate.x.size(); i++) {
-      if (-INFINITY < problem.variables_bounds[i].lb) {
-         complementarity_error += std::abs(multipliers.lower_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].lb));
+   for (size_t i = 0; i < this->number_variables; i++) {
+      if (-INFINITY < this->variables_bounds[i].lb) {
+         complementarity_error += std::abs(multipliers.lower_bounds[i] * (iterate.x[i] - this->variables_bounds[i].lb));
       }
-      if (problem.variables_bounds[i].ub < INFINITY) {
-         complementarity_error += std::abs(multipliers.upper_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].ub));
+      if (this->variables_bounds[i].ub < INFINITY) {
+         complementarity_error += std::abs(multipliers.upper_bounds[i] * (iterate.x[i] - this->variables_bounds[i].ub));
       }
    }
    /* constraints */
@@ -213,7 +206,7 @@ Subproblem::compute_residuals(const Problem& problem, Iterate& iterate, const Mu
       iterate.residuals.KKT = Subproblem::compute_first_order_error(problem, iterate, 1.);
    }
    iterate.residuals.FJ = Subproblem::compute_first_order_error(problem, iterate, 0.);
-   iterate.residuals.complementarity = this->compute_complementarity_error_(problem, iterate, multipliers);
+   iterate.residuals.complementarity = this->compute_complementarity_error(problem, iterate, multipliers);
    if (this->scale_residuals) {
       // TODO scale the residuals
    }

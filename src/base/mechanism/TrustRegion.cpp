@@ -36,7 +36,7 @@ std::pair<Iterate, Direction> TrustRegion::compute_acceptable_iterate(Statistics
             this->relaxation_strategy.update_variables_bounds(problem, current_iterate, this->radius);
          }
          /* compute the direction within the trust region */
-         Direction direction = this->relaxation_strategy.compute_feasible_direction(problem, current_iterate);
+         Direction direction = this->relaxation_strategy.compute_feasible_direction(statistics, problem, current_iterate);
          /* set bound multipliers of active trust region to 0 */
          TrustRegion::rectify_active_set(direction, this->radius);
 

@@ -18,7 +18,7 @@ std::map<std::string, std::string>Statistics::symbols = {{"top",          "─"}
                                                          {"middle",       "│"}};
 
 int Statistics::int_width = 7;
-int Statistics::double_width = 21;
+int Statistics::double_width = 20;
 
 void Statistics::add_column(const std::string& name, int width, int order) {
    this->columns_[order] = name;
