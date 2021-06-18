@@ -27,18 +27,19 @@ struct MA57Factorization {
 class MA57Solver : public LinearSolver {
 public:
    MA57Solver();
-   virtual ~MA57Solver() = default;
+   ~MA57Solver() override = default;
 
    short use_fortran;
 
    void factorize(COOMatrix& matrix) override;
    void do_symbolic_factorization(const COOMatrix& matrix) override;
    void do_numerical_factorization(const COOMatrix& matrix) override;
-   void solve(std::vector<double>& rhs) override;
+   std::vector<double> solve(const COOMatrix& matrix, std::vector<double>& rhs) override;
 
-   size_t number_negative_eigenvalues() const override;
-   bool matrix_is_singular() const override;
-   int rank() const override;
+   std::tuple<int, int, int> get_inertia() const override;
+   [[nodiscard]] size_t number_negative_eigenvalues() const override;
+   [[nodiscard]] bool matrix_is_singular() const override;
+   [[nodiscard]] int rank() const override;
 
 private:
    /* for ma57id_ (default values of controlling parameters) */
@@ -47,6 +48,7 @@ private:
    std::vector<double> rinfo_;
 
    MA57Factorization factorization_;
+   bool use_iterative_refinement{true};
 };
 
 #endif // MA57SOLVER_H
