@@ -49,7 +49,7 @@ private:
    std::set<size_t> lower_bounded_variables; /* indices of the lower-bounded variables */
    std::set<size_t> upper_bounded_variables; /* indices of the upper-bounded variables */
 
-   bool force_symbolic_factorization = true;
+   bool force_symbolic_factorization{true};
    std::vector<double> rhs;
    double inertia_hessian;
    double inertia_hessian_last_;
@@ -61,7 +61,7 @@ private:
    void update_barrier_parameter(const Problem& problem, Iterate& current_iterate);
    void set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;
    void factorize(COOMatrix& kkt_matrix, FunctionType problem_type);
-   static double compute_barrier_directional_derivative(const Problem&, Iterate& current_iterate, std::vector<double>& solution);
+   double compute_barrier_directional_derivative(const std::vector<double>& solution);
    double evaluate_barrier_function(const Problem& problem, Iterate& iterate);
    double compute_primal_length(const Iterate& current_iterate, const std::vector<double>& ipm_solution, double tau);
    static double compute_dual_length(const Iterate& current_iterate, double tau, const std::vector<double>& lower_delta_z, const std::vector<double>&

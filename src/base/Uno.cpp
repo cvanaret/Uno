@@ -36,14 +36,14 @@ Result Uno::solve(const Problem& problem, std::vector<double>& x, Multipliers& m
       while (!this->termination_criterion_(termination_status, major_iterations)) {
          statistics.new_line();
          major_iterations++;
+         DEBUG << "\n########## Outer iteration " << major_iterations << "\n";
          DEBUG << "Current iterate\n" << current_iterate << "\n";
 
          /* compute an acceptable iterate by solving a subproblem at the current point */
          auto [new_iterate, direction] = this->globalization_mechanism.compute_acceptable_iterate(statistics, problem, current_iterate);
-         DEBUG << "Next iterate\n" << new_iterate;
 
          Uno::add_statistics(statistics, new_iterate, major_iterations);
-         statistics.print_current_line();
+         if (Logger::logger_level == INFO) statistics.print_current_line();
 
          // compute the status of the new iterate
          termination_status = this->check_termination(problem, new_iterate, direction.norm, direction.objective_multiplier);

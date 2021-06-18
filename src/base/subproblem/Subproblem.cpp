@@ -115,10 +115,8 @@ void Subproblem::compute_least_square_multipliers(const Problem& problem, Iterat
 
    // solve the system
    solver.factorize(matrix);
-   solver.solve(rhs);
-   DEBUG << "Solution: ";
-   std::vector<double>& solution = rhs;
-   print_vector(DEBUG, solution);
+   std::vector<double> solution = solver.solve(matrix, rhs);
+   DEBUG << "Solution: "; print_vector(DEBUG, solution);
 
    // if multipliers too big, discard them. Otherwise, retrieve the least-square multipliers
    if (norm_inf(solution, current_iterate.x.size(), problem.number_constraints) <= multipliers_max_size) {
