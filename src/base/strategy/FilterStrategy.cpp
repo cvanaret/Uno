@@ -35,7 +35,10 @@ bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, ProgressMeasur
    bool accept = false;
 
    DEBUG << "Current: η = " << current_progress.feasibility << ", ω = " << current_progress.objective << "\n";
-   DEBUG << "Trial: η = " << trial_progress.feasibility << ", ω = " << trial_progress.objective << "\n";
+   DEBUG << "Trial:   η = " << trial_progress.feasibility << ", ω = " << trial_progress.objective << "\n";
+   DEBUG << "Predicted reduction (should be positive): " << predicted_reduction << "\n";
+
+   DEBUG << *this->filter << "\n";
 
    /* check acceptance */
    bool acceptable = filter->accept(trial_progress.feasibility, trial_progress.objective);
@@ -44,18 +47,30 @@ bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, ProgressMeasur
       acceptable = filter->improves_current_iterate(current_progress.feasibility, current_progress.objective, trial_progress.feasibility, trial_progress.objective);
       if (acceptable) {
          double actual_reduction = filter->compute_actual_reduction(current_progress.objective, current_progress.feasibility, trial_progress.objective);
-         DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << actual_reduction << "\n\n";
+         DEBUG << "Actual reduction: " << actual_reduction << "\n";
 
-         /* switching condition */
+         /* switching condition: predicted reduction is not promising */
          if (predicted_reduction < this->parameters_.Delta * std::pow(current_progress.feasibility, 2)) {
             filter->add(current_progress.feasibility, current_progress.objective);
+            DEBUG << "Trial iterate was accepted by switching condition\n";
+            DEBUG << "Current iterate was added to the filter\n";
             accept = true;
          }
          /* Armijo sufficient decrease condition: predicted_reduction should be positive */
          else if (actual_reduction >= this->parameters_.Sigma * std::max(0., predicted_reduction - 1e-9)) {
+            DEBUG << "Trial iterate was accepted by Armijo condition\n";
             accept = true;
          }
+         else {
+            DEBUG << "Armijo condition not satisfied\n";
+         }
       }
+      else {
+         DEBUG << "Not filter acceptable wrt current point\n";
+      }
+   }
+   else {
+      DEBUG << "Not filter acceptable\n";
    }
    return accept;
 }

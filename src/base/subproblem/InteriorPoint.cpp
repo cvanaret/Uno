@@ -1,4 +1,5 @@
 #include <cmath>
+#include <cassert>
 #include "InteriorPoint.hpp"
 #include "LinearSolverFactory.hpp"
 
@@ -6,9 +7,9 @@ InteriorPoint::InteriorPoint(const Problem& problem, const std::string& linear_s
 use_trust_region, bool scale_residuals) :
       Subproblem(problem, scale_residuals), // use the l2 norm to compute residuals
       barrier_parameter(0.1),
-/* if no trust region is used, the problem should be convexified. However, the inertia of the augmented matrix will be corrected later */
+      /* if no trust region is used, the problem should be convexified. However, the inertia of the augmented matrix will be corrected later */
       hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, problem
-      .hessian_maximum_number_nonzeros, false)),
+            .hessian_maximum_number_nonzeros, false)),
       linear_solver(LinearSolverFactory::create(linear_solver_name)),
       parameters({0.99, 1e10, 100., 0.2, 1.5, 10., 1e10}),
       rhs(problem.number_variables + problem.inequality_constraints.size() + problem.number_constraints), inertia_hessian(0.),
@@ -153,8 +154,6 @@ void InteriorPoint::update_objective_multiplier(const Problem& problem, const It
 /* reduced primal-dual approach */
 Direction InteriorPoint::compute_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
    this->iteration++;
-   DEBUG << "\nCurrent iterate: " << current_iterate;
-
    // update the barrier parameter if the current iterate solves the subproblem
    this->update_barrier_parameter(problem, current_iterate);
    DEBUG << "mu is " << this->barrier_parameter << "\n";
@@ -167,47 +166,35 @@ Direction InteriorPoint::compute_direction(Statistics& statistics, const Problem
    this->factorize(kkt_matrix, problem.type);
 
    /* inertia correction */
-   this->modify_inertia(kkt_matrix, current_iterate.x.size(), problem.number_constraints, problem.type);
+   this->modify_inertia(kkt_matrix, this->number_variables, problem.number_constraints, problem.type);
    DEBUG << "KKT matrix:\n" << kkt_matrix << "\n";
+   auto [number_pos, number_neg, number_zero] = this->linear_solver->get_inertia();
+   assert(number_pos == this->number_variables && number_neg == problem.number_constraints && number_zero == 0);
 
    /* right-hand side */
    this->generate_kkt_rhs(problem, current_iterate.x);
    std::vector<double> rhs_copy(rhs);
 
    /* compute the solution (Δx, -Δλ) */
-   this->linear_solver->solve(this->rhs);
+   std::vector<double> solution_IPM = this->linear_solver->solve(kkt_matrix, this->rhs);
    this->number_subproblems_solved++;
-   std::vector<double>& solution_IPM = this->rhs;
 
    /* generate IPM direction */
    Direction direction = this->generate_direction(problem, current_iterate, solution_IPM);
    direction.status = OPTIMAL;
    direction.norm = norm_inf(direction.x, 0, this->number_variables);
    /* evaluate the barrier objective */
-   direction.objective = InteriorPoint::compute_barrier_directional_derivative(problem, current_iterate, direction.x);
+   direction.objective = this->compute_barrier_directional_derivative(direction.x);
    direction.predicted_reduction = [&](double step_length) {
       return this->compute_predicted_reduction(direction, step_length);
    };
-   //std::cout << "IPM direction:\n" << direction << "\n";
-
    statistics.add_statistic("barrier param.", this->barrier_parameter);
 
-   // check the residuals
-//      std::vector<double> result = kkt_matrix.product(solution_IPM);
-//      std::cout << "KKT matrix vector product: "; print_vector(std::cout, result);
-//      std::cout << "RHS:                       "; print_vector(std::cout, rhs_copy);
-//      std::vector<double> residual = add_vectors(result, rhs_copy, -1.);
-//      double residual_norm = 0.;
-//      for (size_t k = this->number_variables; k < residual.size(); k++) {
-//         residual_norm += std::abs(residual[k]);
-//      }
-//      std::cout << "Residual norm: " << residual_norm << "\n";
-
    return direction;
-//   catch (const UnstableInertiaCorrection& e) {
-//      /* unstable factorization during optimality phase */
-//      throw "InteriorPoint: inertia correction failed";
-//   }
+   //   catch (const UnstableInertiaCorrection& e) {
+   //      /* unstable factorization during optimality phase */
+   //      throw "InteriorPoint: inertia correction failed";
+   //   }
 }
 
 void InteriorPoint::update_barrier_parameter(const Problem& problem, Iterate& current_iterate) {
@@ -215,7 +202,8 @@ void InteriorPoint::update_barrier_parameter(const Problem& problem, Iterate& cu
    this->compute_residuals(problem, current_iterate, current_iterate.multipliers, 1.);
    double sd = this->compute_KKT_error_scaling(current_iterate);
    double KKTerror = current_iterate.residuals.KKT / sd;
-   double central_complementarity_error = this->compute_central_complementarity_error(current_iterate, this->barrier_parameter, this->variables_bounds);
+   double central_complementarity_error = this
+         ->compute_central_complementarity_error(current_iterate, this->barrier_parameter, this->variables_bounds);
    DEBUG << "IPM error (KKT: " << KKTerror << ", cmpl: " << central_complementarity_error << ", feas: " << current_iterate.residuals.constraints <<
          ")\n";
 
@@ -247,8 +235,8 @@ COOMatrix InteriorPoint::assemble_kkt_matrix(const Problem& problem, Iterate& cu
 
    /* Jacobian of general constraints */
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      for (const auto[variable_index, derivative]: this->constraints_jacobian[j]) {
-         kkt_matrix.insert(derivative, variable_index, this->number_variables + j);
+      for (const auto[i, derivative]: this->constraints_jacobian[j]) {
+         kkt_matrix.insert(derivative, i, this->number_variables + j);
       }
    }
    return kkt_matrix;
@@ -285,6 +273,7 @@ void InteriorPoint::generate_kkt_rhs(const Problem& problem, const std::vector<d
    }
    DEBUG << "RHS: ";
    print_vector(DEBUG, this->rhs);
+   DEBUG << "\n";
 }
 
 double InteriorPoint::compute_KKT_error_scaling(Iterate& current_iterate) const {
@@ -292,15 +281,15 @@ double InteriorPoint::compute_KKT_error_scaling(Iterate& current_iterate) const 
    double norm_1_constraint_multipliers = norm_1(current_iterate.multipliers.constraints);
    double norm_1_bound_multipliers = norm_1(current_iterate.multipliers.lower_bounds) + norm_1(current_iterate.multipliers.upper_bounds);
    double sd = std::max(this->parameters.smax, (norm_1_constraint_multipliers + norm_1_bound_multipliers) /
-                                               (double) (current_iterate.x.size() + current_iterate.multipliers.constraints.size())) / this->parameters.smax;
+                                               (double) (current_iterate.x.size() + current_iterate.multipliers.constraints.size())) /
+               this->parameters.smax;
    return sd;
 }
 
 Direction InteriorPoint::generate_direction(const Problem& problem, const Iterate& current_iterate, std::vector<double>& solution_IPM) {
    /* retrieve +Δλ (Nocedal p590) */
-   for (size_t j = 0; j < problem.number_constraints; j++) {
-      size_t multiplier_index = this->number_variables + j;
-      solution_IPM[multiplier_index] = -solution_IPM[multiplier_index];
+   for (size_t j = this->number_variables; j < solution_IPM.size(); j++) {
+      solution_IPM[j] = -solution_IPM[j];
    }
 
    /* "fraction to boundary" rule for variables and bound multipliers */
@@ -330,7 +319,7 @@ Direction InteriorPoint::generate_direction(const Problem& problem, const Iterat
 
    DEBUG << "MA57 solution:\n";
    DEBUG << "Δx: ";
-   print_vector(DEBUG, solution_IPM, '\n',0, problem.number_variables);
+   print_vector(DEBUG, solution_IPM, '\n', 0, problem.number_variables);
    DEBUG << "Δs: ";
    print_vector(DEBUG, solution_IPM, '\n', problem.number_variables, problem.inequality_constraints.size());
    DEBUG << "Δz_L: ";
@@ -338,7 +327,7 @@ Direction InteriorPoint::generate_direction(const Problem& problem, const Iterat
    DEBUG << "Δz_U: ";
    print_vector(DEBUG, upper_delta_z);
    DEBUG << "Δλ: ";
-   print_vector(DEBUG, solution_IPM,'\n', number_variables, problem.number_constraints);
+   print_vector(DEBUG, solution_IPM, '\n', number_variables, problem.number_constraints);
    DEBUG << "primal length = " << primal_length << "\n";
    DEBUG << "dual length = " << dual_length << "\n\n";
 
@@ -519,9 +508,8 @@ double InteriorPoint::evaluate_barrier_function(const Problem& problem, Iterate&
    return objective;
 }
 
-double InteriorPoint::compute_barrier_directional_derivative(const Problem& /*problem*/, Iterate& current_iterate, std::vector<double>& solution) {
-   double subproblem_objective = dot(solution, current_iterate.objective_gradient);
-   return subproblem_objective;
+double InteriorPoint::compute_barrier_directional_derivative(const std::vector<double>& solution) {
+   return dot(solution, this->objective_gradient);
 }
 
 double InteriorPoint::compute_predicted_reduction(const Direction& direction, double step_length) const {

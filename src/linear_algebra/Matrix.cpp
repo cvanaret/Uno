@@ -72,6 +72,7 @@ double COOMatrix::norm_1() {
 
 std::vector<double> COOMatrix::product(const std::vector<double>& vector) {
    std::vector<double> result(vector.size());
+
    for (size_t k = 0; k < this->number_nonzeros; k++) {
       size_t i = this->row_indices[k] - this->fortran_indexing;
       size_t j = this->column_indices[k] - this->fortran_indexing;
