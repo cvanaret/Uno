@@ -13,9 +13,13 @@ ma57ad_(int* n, int* ne, const int irn[], const int jcn[], int* lkeep, int keep[
 // numerical factorization
 void ma57bd_(int* n, int* ne, const double a[], /* out */ double fact[], const int* lfact, /* out */ int ifact[], const int* lifact,
       const int* lkeep, const int keep[], int iwork[], int icntl[], double cntl[], /* out */ int info[], /* out */ double rinfo[]);
-// linear system solve
+// linear system solve without iterative refinement
 void ma57cd_(int* job, int* n, double fact[], int* lfact, int ifact[], int* lifact, int* nrhs, double rhs[], int* lrhs, double work[],
       int* lwork, int iwork[], int icntl[], int info[]);
+// linear system solve with iterative refinement
+void ma57dd_(int* job, int* n, int* ne, const double a[], const int irn[], const int jcn[], double fact[], int* lfact, int ifact[], int* lifact,
+      double rhs[], double x[], double resid[], double work[], int iwork[], int icntl[],
+      double cntl[], int info[], double rinfo[]);
 }
 
 MA57Solver::MA57Solver() : use_fortran(1), cntl_(5), icntl_(20), rinfo_(20) {
@@ -38,6 +42,8 @@ void MA57Solver::do_symbolic_factorization(const COOMatrix& matrix) {
    ma57id_(this->cntl_.data(), this->icntl_.data());
    // suppress warning messages
    this->icntl_[4] = 0;
+   // iterative refinement enabled
+   this->icntl_[8] = 1;
 
    /* sparsity pattern */
    int lkeep = 5 * n + nnz + std::max(n, nnz) + 42;
@@ -65,7 +71,6 @@ void MA57Solver::do_symbolic_factorization(const COOMatrix& matrix) {
    std::vector<int> ifact(lifact);
    // build the factorization object
    this->factorization_ = {n, nnz, fact, lfact, ifact, lifact, lkeep, keep, iwork, info};
-   DEBUG << "Symbolic factorization completed\n";
 }
 
 void MA57Solver::do_numerical_factorization(const COOMatrix& matrix) {
@@ -85,23 +90,45 @@ void MA57Solver::do_numerical_factorization(const COOMatrix& matrix) {
          /* const */ this->factorization_.keep.data(), this->factorization_.iwork.data(), this->icntl_.data(), this->cntl_.data(),
          /* out */ this->factorization_.info.data(),
          /* out */ this->rinfo_.data());
-   DEBUG << "Numerical factorization completed\n";
 }
 
-void MA57Solver::solve(std::vector<double>& rhs) {
+std::vector<double> MA57Solver::solve(const COOMatrix& matrix, std::vector<double>& rhs) {
    /* solve */
    int n = this->factorization_.n;
-   int job = 1;
    int nrhs = 1; // number of right hand side being solved
    int lrhs = n; // integer, length of rhs
    int lwork = 1.2 * n * nrhs; // length of w; lw>=n*nrhs
    std::vector<double> work(lwork);
+
    // solve the linear system
-   ma57cd_(&job, &n, this->factorization_.fact.data(), &this->factorization_.lfact, this->factorization_.ifact.data(),
-         &this->factorization_.lifact, &nrhs, rhs.data(), &lrhs, work.data(), &lwork, this->factorization_.iwork.data(),
-         this->icntl_.data(), this->factorization_.info.data());
-   // the solution is copied in rhs
-   DEBUG << "Linear system solve completed\n";
+   if (this->use_iterative_refinement) {
+      int job = 1;
+      std::vector<double> x(n);
+      std::vector<double> residuals(n);
+
+      ma57dd_(&job, &n, (int*) &this->factorization_.nnz, matrix.matrix.data(), matrix.row_indices.data(), matrix.column_indices.data(),
+         this->factorization_.fact.data(), &this->factorization_.lfact, this->factorization_.ifact.data(), &this->factorization_.lifact,
+         rhs.data(), x.data(), residuals.data(), work.data(), this->factorization_.iwork.data(), this->icntl_.data(),
+         this->cntl_.data(), this->factorization_.info.data(), this->rinfo_.data());
+      return x;
+   }
+   else {
+      int job = 1;
+      ma57cd_(&job, &n, this->factorization_.fact.data(), &this->factorization_.lfact, this->factorization_.ifact.data(),
+            &this->factorization_.lifact, &nrhs, rhs.data(), &lrhs, work.data(), &lwork, this->factorization_.iwork.data(),
+            this->icntl_.data(), this->factorization_.info.data());
+      // the solution is copied in rhs
+      DEBUG << "Linear system solve completed\n";
+      return rhs;
+   }
+}
+
+std::tuple<int, int, int> MA57Solver::get_inertia() const {
+   int rank = this->rank();
+   int number_negative_eigenvalues = this->number_negative_eigenvalues();
+   int number_positive_eigenvalues = rank - number_negative_eigenvalues;
+   int number_zero_eigenvalues = this->factorization_.n - rank;
+   return std::make_tuple(number_positive_eigenvalues, number_negative_eigenvalues, number_zero_eigenvalues);
 }
 
 size_t MA57Solver::number_negative_eigenvalues() const {
