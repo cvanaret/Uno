@@ -6,11 +6,9 @@ Subproblem::Subproblem(const Problem& problem, bool scale_residuals) :
       number_constraints(problem.number_constraints),
       variables_bounds(problem.number_variables),
       constraints_multipliers(problem.number_constraints),
-      objective_value(INFINITY),
       // objective_gradient is a SparseVector
-      constraints(problem.number_constraints),
       // constraints_jacobian is a vector of SparseVectors
-      constraints_bounds(problem.number_constraints), initial_point(problem.number_variables),
+      constraints_bounds(problem.number_constraints),
       number_subproblems_solved(0), subproblem_definition_changed(false), scale_residuals(scale_residuals) {
 }
 
@@ -161,7 +159,7 @@ constraint_partition) {
    }
 }
 
-double Subproblem::compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier) const {
+double Subproblem::compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier) {
    std::vector<double> lagrangian_gradient = iterate.lagrangian_gradient(problem, objective_multiplier, iterate.multipliers);
    return norm(lagrangian_gradient, L1_NORM);
 }
@@ -192,10 +190,19 @@ double Subproblem::compute_complementarity_error(const Problem& problem, Iterate
    return complementarity_error;
 }
 
+double Subproblem::compute_constraint_violation(const Problem& problem, const Iterate& iterate) const {
+   // create a lambda to avoid allocating an std::vector
+   auto residual_function = [&](size_t j) {
+      return std::max(std::max(0., problem.constraint_bounds[j].lb - iterate.constraints[j]), iterate.constraints[j] - problem.constraint_bounds[j]
+      .ub);
+   };
+   return norm(residual_function, iterate.constraints.size(), L1_NORM);
+}
+
 void
 Subproblem::compute_residuals(const Problem& problem, Iterate& iterate, const Multipliers& multipliers, double objective_multiplier) const {
    iterate.compute_constraints(problem);
-   iterate.residuals.constraints = problem.compute_constraint_residual(iterate.constraints, L1_NORM);
+   iterate.residuals.constraints = this->compute_constraint_violation(problem, iterate);
    // compute the KKT residual only if the objective multiplier is positive
    if (0. < objective_multiplier) {
       iterate.residuals.KKT = Subproblem::compute_first_order_error(problem, iterate, objective_multiplier);

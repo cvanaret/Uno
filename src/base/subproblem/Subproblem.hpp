@@ -23,7 +23,7 @@ public:
    virtual ~Subproblem() = default;
 
    virtual Iterate generate_initial_point(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers);
-   virtual void generate(const Problem& problem, const Iterate& current_iterate, double objective_multiplier, double trust_region_radius) = 0;
+   virtual void generate(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) = 0;
    virtual void set_trust_region(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
    virtual void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) = 0;
 
@@ -41,7 +41,8 @@ public:
    static void compute_least_square_multipliers(const Problem& problem, Iterate& current_iterate, std::vector<double>& multipliers,
          double multipliers_max_size = 1e3);
 
-   double compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier) const;
+   virtual double compute_constraint_violation(const Problem& problem, const Iterate& iterate) const;
+   static double compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier);
    void compute_residuals(const Problem& problem, Iterate& iterate, const Multipliers& multipliers, double objective_multiplier) const;
    virtual int get_hessian_evaluation_count() const = 0;
 
@@ -50,13 +51,10 @@ public:
    // when the subproblem is reformulated (e.g. when slacks are introduced), the bounds may be altered
    std::vector<Range> variables_bounds;
    std::vector<double> constraints_multipliers;
-   double objective_value{};
    SparseVector objective_gradient;
-   std::vector<double> constraints;
    std::vector<SparseVector> constraints_jacobian;
    std::vector<Range> constraints_bounds;
    // Hessian is optional and depends on the subproblem
-   std::vector<double> initial_point;
 
    int number_subproblems_solved;
    // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it

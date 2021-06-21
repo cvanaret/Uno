@@ -8,13 +8,14 @@ SQP::SQP(const Problem& problem, const std::string& QP_solver_name, const std::s
             problem.hessian_maximum_number_nonzeros + problem.number_variables, true)),
       /* if no trust region is used, the problem should be convexified by controlling the inertia of the Hessian */
       hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, problem.hessian_maximum_number_nonzeros,
-          !use_trust_region)) {
+          !use_trust_region)),
+      initial_point(problem.number_variables) {
 }
 
-void SQP::generate(const Problem& problem, const Iterate& current_iterate, double objective_multiplier, double trust_region_radius) {
+void SQP::generate(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) {
    copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
    /* compute first- and second-order information */
-   problem.evaluate_constraints(current_iterate.x, this->constraints);
+   problem.evaluate_constraints(current_iterate.x, current_iterate.constraints);
    this->constraints_jacobian = problem.constraints_jacobian(current_iterate.x);
 
    this->objective_gradient = problem.objective_gradient(current_iterate.x);
@@ -24,7 +25,7 @@ void SQP::generate(const Problem& problem, const Iterate& current_iterate, doubl
    this->set_variables_bounds(problem, current_iterate, trust_region_radius);
 
    /* bounds of the linearized constraints */
-   this->set_constraints_bounds(problem, this->constraints);
+   this->set_constraints_bounds(problem, current_iterate.constraints);
 
    /* set the initial point */
    clear(this->initial_point);

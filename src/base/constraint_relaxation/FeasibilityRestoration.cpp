@@ -22,7 +22,7 @@ Iterate FeasibilityRestoration::initialize(Statistics& statistics, const Problem
    return first_iterate;
 }
 
-void FeasibilityRestoration::generate_subproblem(const Problem& problem, const Iterate& current_iterate, double objective_multiplier, double trust_region_radius) {
+void FeasibilityRestoration::generate_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) {
    // simply generate the subproblem
    this->subproblem.generate(problem, current_iterate, objective_multiplier, trust_region_radius);
 }
@@ -61,6 +61,7 @@ constraint_partition) {
    this->subproblem.update_objective_multiplier(problem, current_iterate, 0.);
    this->subproblem.compute_feasibility_linear_objective(current_iterate, constraint_partition);
    this->subproblem.generate_feasibility_bounds(problem, current_iterate.constraints, constraint_partition);
+   // TODO: modify subproblem.initial_point
 }
 
 Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Direction& direction) {
@@ -127,7 +128,6 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
       // compute the residuals
       trial_iterate.compute_objective(problem);
       this->subproblem.compute_residuals(problem, trial_iterate, trial_iterate.multipliers, direction.objective_multiplier);
-
    }
    return accept;
 }
