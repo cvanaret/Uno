@@ -35,8 +35,6 @@ public:
    /*!
     *  Constructor
     */
-   Iterate() = default;
-   Iterate(size_t number_variables, size_t number_constraints);
    Iterate(const std::vector<double>& x, const Multipliers& multipliers);
 
    std::vector<double> x; /*!< \f$\mathbb{R}^n\f$ primal variables */
@@ -60,18 +58,13 @@ public:
 
    // residuals
    Residuals residuals;
-   //double feasibility_measure;
-   //double optimality_measure;
    ProgressMeasures progress;
 
    void compute_objective(const Problem& problem);
    void compute_constraints(const Problem& problem);
    void compute_objective_gradient(const Problem& problem);
-   void set_objective_gradient(const SparseVector& objective_gradient);
    void compute_constraints_jacobian(const Problem& problem);
    std::vector<double> lagrangian_gradient(const Problem& problem, double objective_multiplier, const Multipliers& multipliers);
-
-   void clear();
 
    friend std::ostream& operator<<(std::ostream& stream, const Iterate& iterate);
 };

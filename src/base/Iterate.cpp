@@ -1,5 +1,6 @@
 #include <limits>
 #include <utility>
+#include <cassert>
 #include "Iterate.hpp"
 #include "Vector.hpp"
 #include "Logger.hpp"
@@ -7,10 +8,6 @@
 int Iterate::number_eval_objective = 0;
 int Iterate::number_eval_constraints = 0;
 int Iterate::number_eval_jacobian = 0;
-
-Iterate::Iterate(size_t number_variables, size_t number_constraints):
-   x(number_variables), multipliers(number_variables, number_constraints), constraints(number_constraints) {
-}
 
 Iterate::Iterate(const std::vector<double>& x, const Multipliers& multipliers) : x(x), multipliers(multipliers),
       objective(std::numeric_limits<double>::infinity()), is_objective_computed(false),
@@ -42,11 +39,6 @@ void Iterate::compute_objective_gradient(const Problem& problem) {
       this->objective_gradient = problem.objective_gradient(this->x);
       this->is_objective_gradient_computed = true;
    }
-}
-
-void Iterate::set_objective_gradient(const SparseVector& objective_gradient) {
-   this->objective_gradient = objective_gradient;
-   this->is_objective_gradient_computed = true;
 }
 
 void Iterate::compute_constraints_jacobian(const Problem& problem) {
@@ -89,14 +81,6 @@ std::vector<double> Iterate::lagrangian_gradient(const Problem& problem, double 
       }
    }
    return lagrangian_gradient;
-}
-
-void Iterate::clear() {
-   this->is_objective_computed = false;
-   this->is_objective_gradient_computed = false;
-   this->is_constraints_jacobian_computed = false;
-   this->residuals = {0., 0., 0., 0.};
-   this->progress = {0., 0.};
 }
 
 std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {

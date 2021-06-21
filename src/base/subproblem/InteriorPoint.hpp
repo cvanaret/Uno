@@ -78,8 +78,8 @@ private:
 
    double compute_constraint_violation(const Problem& problem, const Iterate& iterate) const override;
    double compute_KKT_error_scaling(Iterate& current_iterate) const;
-   double compute_predicted_reduction(const Direction& direction, double step_length) const;
-   double compute_central_complementarity_error(Iterate& iterate, double mu, std::vector<Range>& variables_bounds) const;
+   static double compute_predicted_reduction(const Direction& direction, double step_length) ;
+   double compute_central_complementarity_error(const Iterate& iterate) const;
 };
 
 #endif // IPM_H

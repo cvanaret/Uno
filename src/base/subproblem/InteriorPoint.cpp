@@ -192,10 +192,9 @@ Direction InteriorPoint::compute_direction(Statistics& statistics, const Problem
    assert(direction.objective < 0. && "the IPM directional derivative is positive");
 
    direction.predicted_reduction = [&](double step_length) {
-      return this->compute_predicted_reduction(direction, step_length);
+      return InteriorPoint::compute_predicted_reduction(direction, step_length);
    };
    statistics.add_statistic("barrier param.", this->barrier_parameter);
-
    return direction;
    //   catch (const UnstableInertiaCorrection& e) {
    //      /* unstable factorization during optimality phase */
@@ -207,8 +206,7 @@ void InteriorPoint::update_barrier_parameter(Iterate& current_iterate) {
    /* scaled error terms */
    double sd = this->compute_KKT_error_scaling(current_iterate);
    double KKTerror = current_iterate.residuals.KKT / sd;
-   double central_complementarity_error = this
-         ->compute_central_complementarity_error(current_iterate, this->barrier_parameter, this->variables_bounds);
+   double central_complementarity_error = this->compute_central_complementarity_error(current_iterate);
    DEBUG << "IPM error (KKT: " << KKTerror << ", cmpl: " << central_complementarity_error << ", feas: " << current_iterate.residuals.constraints <<
          ")\n";
 
@@ -265,7 +263,6 @@ void InteriorPoint::generate_kkt_rhs(const Iterate& current_iterate) {
          }
       }
    }
-
    DEBUG << "RHS: "; print_vector(DEBUG, this->rhs); DEBUG << "\n";
 }
 
@@ -496,27 +493,26 @@ double InteriorPoint::compute_barrier_directional_derivative(const std::vector<d
    return dot(solution, this->objective_gradient);
 }
 
-double InteriorPoint::compute_predicted_reduction(const Direction& direction, double step_length) const {
+double InteriorPoint::compute_predicted_reduction(const Direction& direction, double step_length) {
    // the predicted reduction is linear
    return -step_length * direction.objective;
 }
 
-double InteriorPoint::compute_central_complementarity_error(Iterate& iterate, double mu, std::vector<Range>& variables_bounds) const {
-   std::vector<double> residuals(iterate.x.size());
+double InteriorPoint::compute_central_complementarity_error(const Iterate& iterate) const {
    /* variable bound constraints */
-   for (size_t i = 0; i < iterate.x.size(); i++) {
-      if (-INFINITY < variables_bounds[i].lb) {
-         residuals[i] = iterate.multipliers.lower_bounds[i] * (iterate.x[i] - variables_bounds[i].lb) - mu;
+   auto residual_function = [&](size_t i) {
+      if (-INFINITY < this->variables_bounds[i].lb) {
+         return iterate.multipliers.lower_bounds[i] * (iterate.x[i] - this->variables_bounds[i].lb) - this->barrier_parameter;
       }
-      if (variables_bounds[i].ub < INFINITY) {
-         residuals[i] = iterate.multipliers.upper_bounds[i] * (iterate.x[i] - variables_bounds[i].ub) - mu;
+      if (this->variables_bounds[i].ub < INFINITY) {
+         return iterate.multipliers.upper_bounds[i] * (iterate.x[i] - this->variables_bounds[i].ub) - this->barrier_parameter;
       }
-   }
+   };
 
    /* scaling */
    double sc = std::max(this->parameters.smax,
          (norm_1(iterate.multipliers.lower_bounds) + norm_1(iterate.multipliers.upper_bounds)) / (double) iterate.x.size()) / this->parameters.smax;
-   return norm(residuals, L1_NORM) / sc;
+   return norm_1(residual_function, iterate.x.size()) / sc;
 }
 
 int InteriorPoint::get_hessian_evaluation_count() const {
