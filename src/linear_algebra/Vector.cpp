@@ -73,7 +73,7 @@ double norm_1(const std::vector<SparseVector>& m) {
    return norm;
 }
 
-double norm_1(const std::function<double(int i)>& f, size_t size) {
+double norm_1(const std::function<double(size_t i)>& f, size_t size) {
    double norm = 0.;
    for (size_t i = 0; i < size; i++) {
       norm += std::abs(f(i));
@@ -169,7 +169,7 @@ double norm_inf(const std::function<double(int i)>& f, size_t size) {
    return norm;
 }
 
-double norm(const std::function<double(int i)>& f, size_t size, Norm norm) {
+double norm(const std::function<double(size_t i)>& f, size_t size, Norm norm) {
    /* choose the right norm */
    if (norm == INF_NORM) {
       return norm_inf(f, size);
