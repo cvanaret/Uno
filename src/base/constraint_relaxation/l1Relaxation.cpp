@@ -24,7 +24,7 @@ Iterate l1Relaxation::initialize(Statistics& statistics, const Problem& problem,
    return first_iterate;
 }
 
-void l1Relaxation::generate_subproblem(const Problem& problem, const Iterate& current_iterate, double objective_multiplier, double trust_region_radius) {
+void l1Relaxation::generate_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) {
    this->subproblem.generate(problem, current_iterate, objective_multiplier, trust_region_radius);
 
    // preprocess the subproblem: scale the objective gradient and introduce the elastic variables

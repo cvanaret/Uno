@@ -3,13 +3,14 @@
 
 SLP::SLP(const Problem& problem, std::string QP_solver_name, bool /*use_trust_region*/, bool scale_residuals) :
       Subproblem(problem, scale_residuals),
-      solver(QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints, 0, false)) {
+      solver(QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints, 0, false)),
+      initial_point(problem.number_variables) {
 }
 
-void SLP::generate(const Problem& problem, const Iterate& current_iterate, double objective_multiplier, double trust_region_radius) {
+void SLP::generate(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) {
    copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
    /* compute first- and second-order information */
-   problem.evaluate_constraints(current_iterate.x, this->constraints);
+   problem.evaluate_constraints(current_iterate.x, current_iterate.constraints);
    this->constraints_jacobian = problem.constraints_jacobian(current_iterate.x);
 
    this->objective_gradient = problem.objective_gradient(current_iterate.x);
@@ -19,7 +20,7 @@ void SLP::generate(const Problem& problem, const Iterate& current_iterate, doubl
    this->set_variables_bounds(problem, current_iterate, trust_region_radius);
 
    /* bounds of the linearized constraints */
-   this->set_constraints_bounds(problem, this->constraints);
+   this->set_constraints_bounds(problem, current_iterate.constraints);
 
    /* set the initial point */
    clear(this->initial_point);

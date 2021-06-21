@@ -118,7 +118,6 @@ std::vector<double> MA57Solver::solve(const COOMatrix& matrix, std::vector<doubl
             &this->factorization_.lifact, &nrhs, rhs.data(), &lrhs, work.data(), &lwork, this->factorization_.iwork.data(),
             this->icntl_.data(), this->factorization_.info.data());
       // the solution is copied in rhs
-      DEBUG << "Linear system solve completed\n";
       return rhs;
    }
 }

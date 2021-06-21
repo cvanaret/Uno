@@ -14,7 +14,7 @@ public:
    explicit ConstraintRelaxationStrategy(Subproblem& subproblem);
    virtual Iterate initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
 
-   virtual void generate_subproblem(const Problem& problem, const Iterate& current_iterate, double objective_multiplier, double trust_region_radius)
+   virtual void generate_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius)
    = 0;
    virtual Direction compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) = 0;
    virtual Direction solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Direction& direction) = 0;
