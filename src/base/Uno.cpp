@@ -104,8 +104,8 @@ TerminationStatus Uno::check_termination(const Problem& problem, Iterate& curren
             status = KKT_POINT;
          }
       }
-         // infeasible and FJ point
-      else if (current_iterate.residuals.FJ <= this->tolerance * std::sqrt(current_iterate.x.size())) {
+      // infeasible and FJ point
+      else if (0 < problem.number_constraints && current_iterate.residuals.FJ <= this->tolerance * std::sqrt(current_iterate.x.size())) {
          status = FJ_POINT;
       }
    }
