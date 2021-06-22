@@ -268,9 +268,9 @@ void InteriorPoint::generate_kkt_rhs(const Iterate& current_iterate) {
 
 double InteriorPoint::compute_KKT_error_scaling(Iterate& current_iterate) const {
    /* KKT error */
-   double norm_1_constraint_multipliers = norm_1(current_iterate.multipliers.constraints);
-   double norm_1_bound_multipliers = norm_1(current_iterate.multipliers.lower_bounds) + norm_1(current_iterate.multipliers.upper_bounds);
-   double sd = std::max(this->parameters.smax, (norm_1_constraint_multipliers + norm_1_bound_multipliers) /
+   const double norm_1_constraint_multipliers = norm_1(current_iterate.multipliers.constraints);
+   const double norm_1_bound_multipliers = norm_1(current_iterate.multipliers.lower_bounds) + norm_1(current_iterate.multipliers.upper_bounds);
+   const double sd = std::max(this->parameters.smax, (norm_1_constraint_multipliers + norm_1_bound_multipliers) /
                                                (double) (current_iterate.x.size() + current_iterate.multipliers.constraints.size())) /
                this->parameters.smax;
    return sd;
