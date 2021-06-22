@@ -56,7 +56,7 @@ double FeasibilityRestoration::compute_predicted_reduction(const Problem& /*prob
 void FeasibilityRestoration::form_feasibility_problem(const Problem& problem, const Iterate& current_iterate, const ConstraintPartition&
 constraint_partition) {
    // set the multipliers of the violated constraints
-   this->set_restoration_multipliers(problem, constraint_partition);
+   FeasibilityRestoration::set_restoration_multipliers(this->subproblem.constraints_multipliers, constraint_partition);
    // compute the objective gradient and (possibly) Hessian
    this->subproblem.update_objective_multiplier(problem, current_iterate, 0.);
    this->subproblem.compute_feasibility_linear_objective(current_iterate, constraint_partition);
@@ -123,7 +123,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
       statistics.add_statistic("phase", (int) direction.is_relaxed ? FEASIBILITY_RESTORATION : OPTIMALITY);
       if (direction.is_relaxed) {
          /* correct multipliers for infeasibility problem */
-         FeasibilityRestoration::update_restoration_multipliers(trial_iterate, direction.constraint_partition);
+         FeasibilityRestoration::set_restoration_multipliers(trial_iterate.multipliers.constraints, direction.constraint_partition);
       }
       // compute the residuals
       trial_iterate.compute_objective(problem);
@@ -132,16 +132,17 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
    return accept;
 }
 
-void FeasibilityRestoration::set_restoration_multipliers(const Problem& problem, const ConstraintPartition& constraint_partition) {
-   for (size_t j = 0; j < problem.number_constraints; j++) {
+void FeasibilityRestoration::set_restoration_multipliers(std::vector<double>& constraints_multipliers, const ConstraintPartition&
+constraint_partition) {
+   for (int j: constraint_partition.infeasible) {
       if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
-         this->subproblem.constraints_multipliers[j] = 1.;
+         constraints_multipliers[j] = 1.;
       }
-      else if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_UPPER) {
-         this->subproblem.constraints_multipliers[j] = -1.;
+      else { // constraint_partition.constraint_feasibility[j] == INFEASIBLE_UPPER
+         constraints_multipliers[j] = -1.;
       }
-      // otherwise, leave the multiplier as it is
    }
+   // otherwise, leave the multiplier as it is
 }
 
 void FeasibilityRestoration::compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const ConstraintPartition& constraint_partition) {
@@ -151,15 +152,4 @@ void FeasibilityRestoration::compute_infeasibility_measures(const Problem& probl
    // optimality measure: residual of linearly infeasible constraints
    double objective = problem.compute_constraint_violation(iterate.constraints, constraint_partition.infeasible, L1_NORM);
    iterate.progress = {feasibility, objective};
-}
-
-void FeasibilityRestoration::update_restoration_multipliers(Iterate& trial_iterate, const ConstraintPartition& constraint_partition) {
-   for (int j: constraint_partition.infeasible) {
-      if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_UPPER) {
-         trial_iterate.multipliers.constraints[j] = -1.;
-      }
-      else {
-         trial_iterate.multipliers.constraints[j] = 1.;
-      }
-   }
 }

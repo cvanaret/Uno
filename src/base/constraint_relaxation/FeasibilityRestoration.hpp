@@ -26,9 +26,8 @@ private:
    Phase current_phase;
 
    void form_feasibility_problem(const Problem& problem, const Iterate& current_iterate, const ConstraintPartition& constraint_partition);
-   void set_restoration_multipliers(const Problem& problem, const ConstraintPartition& constraint_partition);
+   static void set_restoration_multipliers(std::vector<double>& constraints_multipliers, const ConstraintPartition& constraint_partition);
    void compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const ConstraintPartition& constraint_partition);
-   static void update_restoration_multipliers(Iterate& trial_iterate, const ConstraintPartition& constraint_partition);
 };
 
 #endif //FEASIBILITYRESTORATION_H
