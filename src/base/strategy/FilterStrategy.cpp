@@ -46,7 +46,8 @@ bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, ProgressMeasur
       // check acceptance wrt current x (h,f)
       acceptable = filter->improves_current_iterate(current_progress.feasibility, current_progress.objective, trial_progress.feasibility, trial_progress.objective);
       if (acceptable) {
-         double actual_reduction = filter->compute_actual_reduction(current_progress.objective, current_progress.feasibility, trial_progress.objective);
+         const double actual_reduction = filter->compute_actual_reduction(current_progress.objective, current_progress.feasibility, trial_progress
+         .objective);
          DEBUG << "Actual reduction: " << actual_reduction << "\n";
 
          /* switching condition: predicted reduction is not promising */
