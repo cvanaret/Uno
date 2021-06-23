@@ -8,7 +8,7 @@ enum Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 
 class FeasibilityRestoration : public ConstraintRelaxationStrategy {
 public:
-   explicit FeasibilityRestoration(const std::string& constraint_relaxation_strategy, Subproblem& subproblem, const std::map<std::string, std::string>& options);
+   explicit FeasibilityRestoration(Subproblem& subproblem, const std::map<std::string, std::string>& options);
    Iterate initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
 
    // direction computation

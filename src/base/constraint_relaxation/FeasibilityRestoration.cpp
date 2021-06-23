@@ -2,11 +2,11 @@
 #include "FeasibilityRestoration.hpp"
 #include "GlobalizationStrategyFactory.hpp"
 
-FeasibilityRestoration::FeasibilityRestoration(const std::string& constraint_relaxation_strategy, Subproblem& subproblem,
-   const std::map<std::string, std::string>& options) : ConstraintRelaxationStrategy(subproblem),
+FeasibilityRestoration::FeasibilityRestoration(Subproblem& subproblem, const std::map<std::string, std::string>& options) :
+   ConstraintRelaxationStrategy(subproblem),
    /* create the globalization strategy */
-   phase_1_strategy(GlobalizationStrategyFactory::create(constraint_relaxation_strategy, options)),
-   phase_2_strategy(GlobalizationStrategyFactory::create(constraint_relaxation_strategy, options)),
+   phase_1_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
+   phase_2_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
    current_phase(OPTIMALITY) {
 }
 
@@ -111,7 +111,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
       }
 
       // evaluate the predicted reduction
-      double predicted_reduction = this->compute_predicted_reduction(problem, current_iterate, direction, step_length);
+      const double predicted_reduction = this->compute_predicted_reduction(problem, current_iterate, direction, step_length);
       // pick the current strategy
       GlobalizationStrategy& strategy = (this->current_phase == OPTIMALITY) ? *this->phase_2_strategy : *this->phase_1_strategy;
       // invoke the globalization strategy for acceptance

@@ -9,6 +9,7 @@
 #include "FeasibilityRestoration.hpp"
 #include "GlobalizationStrategyFactory.hpp"
 #include "GlobalizationMechanismFactory.hpp"
+#include <ConstraintRelaxationStrategyFactory.hpp>
 #include "FeasibilityRestoration.hpp"
 #include "Uno.hpp"
 #include "Logger.hpp"
@@ -16,18 +17,18 @@
 
 
 // new overload to track heap allocations
+
 /*
 void* operator new(size_t size) {
-   std::cout << "Allocating " << size << " bytes\n";
+   std::cout << "   Allocating " << size << " bytes\n";
    return malloc(size);
 }
- */
+*/
 
 
 void run_uno(const std::string& problem_name, const std::map<std::string, std::string>& options) {
    // generate Hessians with a Fortran indexing (starting at 1) that is supported by solvers
    int fortran_indexing = 1;
-   //std::cout.precision(17);
 
    // TODO: use a factory
    std::unique_ptr<Problem> problem = std::make_unique<AMPLModel>(problem_name, fortran_indexing);
@@ -39,11 +40,12 @@ void run_uno(const std::string& problem_name, const std::map<std::string, std::s
          subproblem = SubproblemFactory::create(*problem, options.at("subproblem"), options, use_trust_region, scale_residuals);
 
    /* create the constraint relaxation strategy */
-   FeasibilityRestoration constraint_relaxation_strategy = FeasibilityRestoration(options.at("strategy"), *subproblem, options);
+   std::unique_ptr<ConstraintRelaxationStrategy> constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(options.at
+         ("constraint-relaxation"), *problem, *subproblem, options);
 
    /* create the globalization mechanism */
    std::unique_ptr<GlobalizationMechanism> mechanism = GlobalizationMechanismFactory::create(options.at("mechanism"),
-         constraint_relaxation_strategy, options);
+         *constraint_relaxation_strategy, options);
 
    double tolerance = std::stod(options.at("tolerance"));
    int max_iterations = std::stoi(options.at("max_iterations"));
