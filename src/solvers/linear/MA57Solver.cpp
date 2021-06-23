@@ -97,7 +97,7 @@ std::vector<double> MA57Solver::solve(const COOMatrix& matrix, std::vector<doubl
    int n = this->factorization_.n;
    int nrhs = 1; // number of right hand side being solved
    int lrhs = n; // integer, length of rhs
-   int lwork = 1.2 * n * nrhs; // length of w; lw>=n*nrhs
+   int lwork = 1.2 * n * nrhs; // length of w; lw >= n*nrhs
    std::vector<double> work(lwork);
 
    // solve the linear system
