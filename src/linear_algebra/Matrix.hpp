@@ -8,11 +8,12 @@
 
 class Matrix {
 public:
-   Matrix(size_t dimension, size_t number_nonzeros, short fortran_indexing);
-   virtual ~Matrix();
+   Matrix(size_t dimension, size_t capacity, short fortran_indexing);
+   virtual ~Matrix() = default;
 
    size_t dimension;
    size_t number_nonzeros;
+   size_t capacity;
    short fortran_indexing;
 
    /* build the matrix incrementally */
@@ -26,7 +27,7 @@ public:
 class COOMatrix : public Matrix {
    /* Coordinate list */
 public:
-   COOMatrix(size_t dimension, size_t number_nonzeros, short fortran_indexing);
+   COOMatrix(size_t dimension, size_t capacity, short fortran_indexing);
 
    std::vector<double> matrix;
    std::vector<int> row_indices;
