@@ -1,4 +1,5 @@
 #include <exception>
+#include <cassert>
 #include "HessianEvaluation.hpp"
 #include "LinearSolverFactory.hpp"
 #include "Vector.hpp"
@@ -34,6 +35,7 @@ void ExactHessianInertiaControlEvaluation::compute(const Problem& problem, const
    problem.lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, this->hessian);
    this->evaluation_count++;
    DEBUG << "hessian before convexification: " << this->hessian;
+   assert(false && "ExactHessianInertiaControlEvaluation: inertia correction not implemented");
    /* modify the inertia to make the problem strictly convex */
    // this->hessian = this->modify_inertia(this->hessian, *this->linear_solver_);
 }
@@ -94,9 +96,8 @@ void BFGSHessianEvaluation::compute(const Problem& problem, const std::vector<do
 
 /* Factory */
 
-std::unique_ptr<HessianEvaluation>
-HessianEvaluationFactory::create(const std::string& hessian_evaluation_method, size_t dimension, size_t hessian_maximum_number_nonzeros,
-      bool convexify) {
+std::unique_ptr<HessianEvaluation> HessianEvaluationFactory::create(const std::string& hessian_evaluation_method, size_t dimension,
+      size_t hessian_maximum_number_nonzeros, bool convexify) {
    if (hessian_evaluation_method == "exact") {
       if (convexify) {
          return std::make_unique<ExactHessianInertiaControlEvaluation>(dimension, hessian_maximum_number_nonzeros, "MA57");
