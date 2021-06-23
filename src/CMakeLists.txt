@@ -42,6 +42,7 @@ set(SRC_FILES
     base/strategy/l1MeritFunction.cpp
 
     base/constraint_relaxation/ConstraintRelaxationStrategy.cpp
+    base/constraint_relaxation/ConstraintRelaxationStrategyFactory.cpp
     base/constraint_relaxation/l1Relaxation.cpp
     base/constraint_relaxation/FeasibilityRestoration.cpp
     
