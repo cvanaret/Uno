@@ -1,13 +1,11 @@
 #include <exception>
 #include <cmath>
+#include <cassert>
 #include "Matrix.hpp"
 #include "Vector.hpp"
 
-Matrix::Matrix(size_t dimension, size_t number_nonzeros, short fortran_indexing) :
-dimension(dimension), number_nonzeros(number_nonzeros), fortran_indexing(fortran_indexing) {
-}
-
-Matrix::~Matrix() {
+Matrix::Matrix(size_t dimension, size_t capacity, short fortran_indexing) :
+dimension(dimension), number_nonzeros(0), capacity(capacity), fortran_indexing(fortran_indexing) {
 }
 
 double Matrix::quadratic_product(const std::vector<double>& x, const std::vector<double>& y) {
@@ -38,15 +36,18 @@ void Matrix::add_outer_product(const SparseVector& x, double scaling_factor) {
  * https://en.wikipedia.org/wiki/Sparse_matrix#Coordinate_list_(COO)
  */
 
-COOMatrix::COOMatrix(size_t dimension, size_t number_nonzeros, short fortran_indexing) :
-Matrix(dimension, number_nonzeros, fortran_indexing) {
+COOMatrix::COOMatrix(size_t dimension, size_t capacity, short fortran_indexing) :
+Matrix(dimension, capacity, fortran_indexing) {
+   this->matrix.reserve(capacity);
+   this->row_indices.reserve(capacity);
+   this->column_indices.reserve(capacity);
 }
 
 void COOMatrix::insert(double term, size_t row_index, size_t column_index) {
    /* TODO: check matrix size */
    this->matrix.push_back(term);
-   this->row_indices.push_back(row_index + this->fortran_indexing);
-   this->column_indices.push_back(column_index + this->fortran_indexing);
+   this->row_indices.push_back((int) row_index + this->fortran_indexing);
+   this->column_indices.push_back((int) column_index + this->fortran_indexing);
    this->number_nonzeros++;
 }
 
@@ -109,9 +110,9 @@ std::ostream& operator<<(std::ostream& stream, const COOMatrix& matrix) {
 // matrix and row_number have nnz elements
 // column_start has dimension+1 elements
 
-CSCMatrix::CSCMatrix(size_t dimension, size_t maximum_number_nonzeros, short fortran_indexing) :
-Matrix(dimension, maximum_number_nonzeros, fortran_indexing),
-matrix(maximum_number_nonzeros), column_start(dimension + 1), row_number(maximum_number_nonzeros) {
+CSCMatrix::CSCMatrix(size_t dimension, size_t capacity, short fortran_indexing) :
+Matrix(dimension, capacity, fortran_indexing),
+matrix(capacity), column_start(dimension + 1), row_number(capacity) {
 }
 
 CSCMatrix::CSCMatrix(const std::vector<double>& matrix, const std::vector<size_t>& column_start, const std::vector<size_t>& row_number,
@@ -121,16 +122,16 @@ CSCMatrix::CSCMatrix(const std::vector<double>& matrix, const std::vector<size_t
 }
 
 void CSCMatrix::insert(double /*term*/, size_t /*row_index*/, size_t /*column_index*/) {
-   throw std::out_of_range("CSCMatrix::add_term is not implemented");
+   assert(false && "CSCMatrix::add_term is not implemented");
 }
 
 /* product of symmetric (n, n) matrix with (n, 1) vector */
 std::vector<double> CSCMatrix::product(const std::vector<double>& vector) {
-   size_t n = this->column_start.size() - 1;
+   assert(this->dimension == vector.size() && "the matrix and the vector do not have the same size");
    /* create (n, 1) result */
-   std::vector<double> result(n); // = {0.}
+   std::vector<double> result(this->dimension); // = {0.}
 
-   for (size_t j = 0; j < n; j++) {
+   for (size_t j = 0; j < this->dimension; j++) {
       for (size_t k = this->column_start[j] - this->fortran_indexing; k < this->column_start[j + 1] - this->fortran_indexing; k++) {
          size_t i = this->row_number[k] - this->fortran_indexing;
          result[i] += vector[j] * this->matrix[k];
@@ -210,7 +211,7 @@ double CSCMatrix::smallest_diagonal_entry() {
 }
 
 COOMatrix CSCMatrix::to_COO() {
-   COOMatrix coo_matrix(this->dimension, 0, this->fortran_indexing);
+   COOMatrix coo_matrix(this->dimension, this->capacity, this->fortran_indexing);
 
    for (size_t j = 0; j < this->dimension; j++) {
       for (size_t k = this->column_start[j] - this->fortran_indexing; k < this->column_start[j + 1] - this->fortran_indexing; k++) {
@@ -222,7 +223,7 @@ COOMatrix CSCMatrix::to_COO() {
 }
 
 UnoMatrix CSCMatrix::to_UnoMatrix(int uno_matrix_size) {
-   UnoMatrix uno_matrix(uno_matrix_size, this->number_nonzeros, this->fortran_indexing);
+   UnoMatrix uno_matrix(uno_matrix_size, this->capacity, this->fortran_indexing);
 
    for (size_t j = 0; j < this->dimension; j++) {
       for (size_t k = this->column_start[j] - this->fortran_indexing; k < this->column_start[j + 1] - this->fortran_indexing; k++) {
@@ -321,8 +322,8 @@ std::ostream& operator<<(std::ostream& stream, const CSCMatrix& matrix) {
  * Uno matrix: bijection between indices and single key + sparse vector (map)
  */
 
-UnoMatrix::UnoMatrix(size_t dimension, size_t number_nonzeros, short fortran_indexing) :
-   Matrix(dimension, number_nonzeros, fortran_indexing) {
+UnoMatrix::UnoMatrix(size_t dimension, size_t capacity, short fortran_indexing) :
+   Matrix(dimension, capacity, fortran_indexing) {
 }
 
 void UnoMatrix::insert(double term, size_t row_index, size_t column_index) {
@@ -330,6 +331,7 @@ void UnoMatrix::insert(double term, size_t row_index, size_t column_index) {
    size_t key = column_index * this->dimension + row_index;
    // insert the element
    this->matrix[key] += term;
+   this->number_nonzeros++;
 }
 
 double UnoMatrix::norm_1() {
@@ -350,7 +352,7 @@ double UnoMatrix::norm_1() {
    }
    // compute the maximal component of the column_vectors vector
    double norm = 0.;
-   for (double & column_vector : column_vectors) {
+   for (double column_vector : column_vectors) {
       norm = std::max(norm, column_vector);
    }
    return norm;
@@ -370,7 +372,7 @@ void UnoMatrix::add_matrix(UnoMatrix& other_matrix, double factor) {
 }
 
 COOMatrix UnoMatrix::to_COO() {
-   COOMatrix coo_matrix(this->dimension, this->number_nonzeros, this->fortran_indexing);
+   COOMatrix coo_matrix(this->dimension, this->capacity, this->fortran_indexing);
 
    for (const auto[key, value]: this->matrix) {
       // retrieve indices
@@ -384,7 +386,7 @@ COOMatrix UnoMatrix::to_COO() {
 /* generate a COO matrix by removing some variables (e.g. reduced Hessian in EQP problems) */
 /* mask contains (i_origin, i_reduced) pairs, where i_origin is the original index, and i_reduced is the index in the reduced matrix */
 COOMatrix UnoMatrix::to_COO(const std::unordered_map<size_t, size_t>& mask) {
-   COOMatrix coo_matrix(this->dimension, this->number_nonzeros, this->fortran_indexing);
+   COOMatrix coo_matrix(this->dimension, this->capacity, this->fortran_indexing);
 
    for (const auto[key, value]: this->matrix) {
       // retrieve indices
