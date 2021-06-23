@@ -36,7 +36,7 @@ public:
    void do_numerical_factorization(const COOMatrix& matrix) override;
    std::vector<double> solve(const COOMatrix& matrix, std::vector<double>& rhs) override;
 
-   std::tuple<int, int, int> get_inertia() const override;
+   [[nodiscard]] std::tuple<int, int, int> get_inertia() const override;
    [[nodiscard]] size_t number_negative_eigenvalues() const override;
    [[nodiscard]] bool matrix_is_singular() const override;
    [[nodiscard]] int rank() const override;
