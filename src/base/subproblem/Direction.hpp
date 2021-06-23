@@ -32,6 +32,7 @@ enum Status {
  */
 class Direction {
 public:
+   Direction(size_t number_variables, size_t number_constraints);
    Direction(std::vector<double>& x, Multipliers& multipliers);
    std::vector<double> x; /*!< Primal variables */
    Multipliers multipliers; /*!< Multipliers */
@@ -47,7 +48,7 @@ public:
    ConstraintPartition constraint_partition; /*!< Partition of feasible and infeasible constraints */
 
    // this function computes the predicted reduction of the direction for a given step length
-   std::function<double(double step_length)> predicted_reduction;
+   std::function<double(double step_length)> predicted_reduction{nullptr};
 
    friend std::ostream& operator<<(std::ostream& stream, const Direction& step);
 };

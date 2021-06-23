@@ -154,8 +154,13 @@ BQPDSolver::solve_subproblem_(std::vector<Range>& variables_bounds, std::vector<
 }
 
 Direction BQPDSolver::generate_direction_(std::vector<double>& x) {
-   Multipliers multipliers(this->n_, this->m_);
-   Direction direction(x, multipliers);
+   Direction direction(this->n_, this->m_);
+   for (size_t i = 0; i < this->n_; i++) {
+      direction.x[i] = x[i];
+   }
+   direction.status = this->int_to_status_(this->ifail_);
+   direction.norm = norm_inf(x);
+   direction.objective = this->f_solution_;
 
    /* active constraints */
    for (size_t j = 0; j < this->n_ - this->k_; j++) {
@@ -209,9 +214,6 @@ Direction BQPDSolver::generate_direction_(std::vector<double>& x) {
          }
       }
    }
-   direction.status = this->int_to_status_(this->ifail_);
-   direction.norm = norm_inf(x);
-   direction.objective = this->f_solution_;
    return direction;
 }
 
