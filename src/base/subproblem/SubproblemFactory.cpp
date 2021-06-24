@@ -10,10 +10,9 @@ SubproblemFactory::create(const Problem& problem, size_t number_variables, const
       std::string>& options, bool use_trust_region) {
    const std::vector<std::string> possible_methods = {"SQP", "SLP", "IPM"};
    /* active-set methods */
-   // , size_t number_constraints, size_t hessian_maximum_number_nonzeros
    if (subproblem_type == "SQP") {
-      return std::make_unique<SQP>(number_variables, problem.number_constraints, problem.hessian_maximum_number_nonzeros,
-            options.at("QP_solver"), options.at("hessian"), use_trust_region);
+      return std::make_unique<SQP>(problem, number_variables, problem.number_constraints, options.at("QP_solver"), options.at("hessian"),
+            use_trust_region);
    }
    else if (subproblem_type == "SLP") {
       return std::make_unique<SLP>(number_variables, problem.number_constraints, options.at("QP_solver"));

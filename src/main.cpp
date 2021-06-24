@@ -33,15 +33,10 @@ void run_uno(const std::string& problem_name, const std::map<std::string, std::s
    // TODO: use a factory
    std::unique_ptr<Problem> problem = std::make_unique<AMPLModel>(problem_name, fortran_indexing);
 
-   /* create the subproblem strategy */
+   /* create the constraint relaxation strategy and the subproblem */
    bool use_trust_region = (options.at("mechanism") == "TR");
-   bool scale_residuals = (options.at("scale_residuals") == "yes");
-   std::unique_ptr<Subproblem>
-         subproblem = SubproblemFactory::create(*problem, options.at("subproblem"), options, use_trust_region, scale_residuals);
-
-   /* create the constraint relaxation strategy */
    std::unique_ptr<ConstraintRelaxationStrategy> constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(options.at
-         ("constraint-relaxation"), *problem, *subproblem, options);
+         ("constraint-relaxation"), *problem, options, use_trust_region);
 
    /* create the globalization mechanism */
    std::unique_ptr<GlobalizationMechanism> mechanism = GlobalizationMechanismFactory::create(options.at("mechanism"),
