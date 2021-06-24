@@ -28,7 +28,7 @@ Iterate Subproblem::generate_initial_point(Statistics& /*statistics*/, const Pro
 void Subproblem::compute_progress_measures(const Problem& problem, Iterate& iterate) {
    iterate.compute_constraints(problem);
    // feasibility measure: residual of all constraints
-   iterate.residuals.constraints = problem.compute_constraint_residual(iterate.constraints, L1_NORM);
+   iterate.residuals.constraints = problem.compute_constraint_violation(iterate.constraints, L1_NORM);
    // optimality
    iterate.compute_objective(problem);
    iterate.progress = {iterate.residuals.constraints, iterate.objective};
@@ -191,12 +191,7 @@ double Subproblem::compute_complementarity_error(const Problem& problem, Iterate
 }
 
 double Subproblem::compute_constraint_violation(const Problem& problem, const Iterate& iterate) const {
-   // create a lambda to avoid allocating an std::vector
-   auto residual_function = [&](size_t j) {
-      return std::max(std::max(0., problem.constraint_bounds[j].lb - iterate.constraints[j]), iterate.constraints[j] - problem.constraint_bounds[j]
-      .ub);
-   };
-   return norm(residual_function, iterate.constraints.size(), L1_NORM);
+   return problem.compute_constraint_violation(iterate.constraints, L1_NORM);
 }
 
 void
