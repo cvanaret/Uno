@@ -32,6 +32,7 @@ public:
    Iterate generate_initial_point(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
    void generate(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
    void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
+   void set_initial_point(const std::vector<double>& initial_point) override;
 
    Direction compute_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
    void compute_progress_measures(const Problem& problem, Iterate& iterate) override;

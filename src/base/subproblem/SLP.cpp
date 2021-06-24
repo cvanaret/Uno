@@ -38,6 +38,10 @@ void SLP::update_objective_multiplier(const Problem& /*problem*/, const Iterate&
    }
 }
 
+void SLP::set_initial_point(const std::vector<double>& initial_point) {
+   copy_from(this->initial_point, initial_point);
+}
+
 Direction SLP::compute_direction(Statistics& /*statistics*/, const Problem& /*problem*/, Iterate& /*current_iterate*/) {
    /* solve the LP */
    Direction direction = this->solver->solve_LP(variables_bounds, constraints_bounds, this->objective_gradient,

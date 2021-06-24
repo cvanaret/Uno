@@ -9,10 +9,7 @@ l1Relaxation::l1Relaxation(Problem& problem, Subproblem& subproblem, const std::
    this->generate_elastic_variables_(problem);
 
    // add nonnegative elastic variables to the subproblem
-   this->subproblem.variables_bounds.resize(problem.number_variables + this->elastic_variables.size());
-   for (size_t i = problem.number_variables; i < this->subproblem.variables_bounds.size(); i++) {
-      this->subproblem.variables_bounds[i] = {0., INFINITY};
-   }
+   this->subproblem.variables_bounds.resize(problem.number_variables + this->elastic_variables.size(), {0., INFINITY});
 }
 
 Iterate l1Relaxation::initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
@@ -20,11 +17,14 @@ Iterate l1Relaxation::initialize(Statistics& statistics, const Problem& problem,
 
    /* initialize the subproblem */
    Iterate first_iterate = this->subproblem.generate_initial_point(statistics, problem, x, multipliers);
+   this->subproblem.compute_residuals(problem, first_iterate, first_iterate.multipliers, this->penalty_parameter);
+
    this->globalization_strategy->initialize(statistics, first_iterate);
    return first_iterate;
 }
 
 void l1Relaxation::generate_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) {
+   std::cout << "l1Relaxation::generate_subproblem STARTS\n";
    this->subproblem.generate(problem, current_iterate, objective_multiplier, trust_region_radius);
 
    // preprocess the subproblem: scale the objective gradient and introduce the elastic variables
@@ -41,14 +41,17 @@ void l1Relaxation::generate_subproblem(const Problem& problem, Iterate& current_
       this->subproblem.objective_gradient[i] = 1.;
       this->subproblem.constraints_jacobian[j][i] = 1.;
    }
+   std::cout << "l1Relaxation::generate_subproblem ENDS\n";
 }
 
 Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
+   std::cout << "l1Relaxation::compute_feasible_direction STARTS\n";
    DEBUG << "penalty parameter: " << this->penalty_parameter << "\n";
    // use Byrd's steering rules to update the penalty parameter and compute descent directions
    Direction direction = this->compute_byrd_steering_rule(statistics, problem, current_iterate);
 
    this->postprocess_direction(problem, direction);
+   std::cout << "l1Relaxation::compute_feasible_direction ENDS\n";
    return direction;
 }
 
@@ -58,6 +61,7 @@ Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, const 
 
 bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate,
       const Direction& direction, double step_length) {
+   std::cout << "l1Relaxation::is_acceptable STARTS\n";
    // check if subproblem definition changed
    if (this->subproblem.subproblem_definition_changed) {
       this->globalization_strategy->reset();
@@ -79,11 +83,16 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
    }
    if (accept) {
       statistics.add_statistic("penalty param.", this->penalty_parameter);
+      // compute the residuals
+      trial_iterate.compute_objective(problem);
+      this->subproblem.compute_residuals(problem, trial_iterate, trial_iterate.multipliers, direction.objective_multiplier);
    }
+   std::cout << "l1Relaxation::is_acceptable ENDS\n";
    return accept;
 }
 
 Direction l1Relaxation::compute_byrd_steering_rule(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
+   std::cout << "l1Relaxation::compute_byrd_steering_rule STARTS\n";
    /* stage a: compute the step within trust region */
    Direction direction = this->subproblem.compute_direction(statistics, problem, current_iterate);
 
@@ -158,7 +167,7 @@ Direction l1Relaxation::compute_byrd_steering_rule(Statistics& statistics, const
                direction = this->subproblem.compute_direction(statistics, problem, current_iterate);
             }
 
-         }
+         } // end else
 
          if (this->penalty_parameter < current_penalty_parameter) {
             DEBUG << "\n*** Penalty parameter updated to " << this->penalty_parameter << "\n";
@@ -170,6 +179,7 @@ Direction l1Relaxation::compute_byrd_steering_rule(Statistics& statistics, const
       }
    }
    direction.objective_multiplier = penalty_parameter;
+   std::cout << "l1Relaxation::compute_byrd_steering_rule ENDS\n";
    return direction;
 }
 
@@ -194,11 +204,11 @@ void l1Relaxation::generate_elastic_variables_(const Problem& problem) {
 double l1Relaxation::compute_linearized_constraint_residual(std::vector<double>& direction) {
    double residual = 0.;
    // l1 residual of the linearized constraints: sum of elastic variables
-   for (std::pair<const size_t, size_t>& element: this->elastic_variables.positive) {
+   for (const auto& element: this->elastic_variables.positive) {
       size_t i = element.second;
       residual += direction[i];
    }
-   for (std::pair<const size_t, size_t>& element: this->elastic_variables.negative) {
+   for (const auto& element: this->elastic_variables.negative) {
       size_t i = element.second;
       residual += direction[i];
    }
@@ -251,7 +261,7 @@ double l1Relaxation::compute_predicted_reduction(const Problem& problem, Iterate
       for (size_t j = 0; j < current_iterate.constraints.size(); j++) {
          linearized_constraints[j] += step_length * dot(direction.x, current_iterate.constraints_jacobian[j]);
       }
-      double linearized_constraint_violation = problem.compute_constraint_residual(linearized_constraints, L1_NORM);
+      double linearized_constraint_violation = problem.compute_constraint_violation(linearized_constraints, L1_NORM);
       return current_iterate.progress.feasibility - linearized_constraint_violation + direction.predicted_reduction(step_length);
    }
 }

@@ -7,8 +7,9 @@ SQP::SQP(const Problem& problem, const std::string& QP_solver_name, const std::s
       solver(QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints,
             problem.hessian_maximum_number_nonzeros + problem.number_variables, true)),
       /* if no trust region is used, the problem should be convexified by controlling the inertia of the Hessian */
-      hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, problem.hessian_maximum_number_nonzeros,
-          !use_trust_region)),
+      hessian_evaluation(
+            HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, problem.hessian_maximum_number_nonzeros,
+                  !use_trust_region)),
       initial_point(problem.number_variables) {
 }
 
@@ -42,6 +43,10 @@ void SQP::update_objective_multiplier(const Problem& problem, const Iterate& cur
    else if (objective_multiplier < 1.) {
       scale(this->objective_gradient, objective_multiplier);
    }
+}
+
+void SQP::set_initial_point(const std::vector<double>& initial_point) {
+   copy_from(this->initial_point, initial_point);
 }
 
 Direction SQP::compute_direction(Statistics& /*statistics*/, const Problem& /*problem*/, Iterate& /*current_iterate*/) {

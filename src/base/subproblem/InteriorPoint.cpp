@@ -156,6 +156,10 @@ void InteriorPoint::update_objective_multiplier(const Problem& problem, const It
    }
 }
 
+void InteriorPoint::set_initial_point(const std::vector<double>& /*initial_point*/) {
+   // do nothing
+}
+
 /* reduced primal-dual approach */
 Direction InteriorPoint::compute_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
    this->iteration++;
