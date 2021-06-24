@@ -8,11 +8,11 @@ enum Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 
 class FeasibilityRestoration : public ConstraintRelaxationStrategy {
 public:
-   explicit FeasibilityRestoration(Subproblem& subproblem, const std::map<std::string, std::string>& options);
+   FeasibilityRestoration(const Problem& problem, const std::map<std::string, std::string>& options, bool use_trust_region);
    Iterate initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
 
    // direction computation
-   void generate_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
+   void generate_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
    Direction compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
    Direction solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Direction& direction) override;
 

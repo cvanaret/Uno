@@ -1,14 +1,14 @@
 #include "Subproblem.hpp"
 #include "LinearSolverFactory.hpp"
 
-Subproblem::Subproblem(const Problem& problem) :
-      number_variables(problem.number_variables),
-      number_constraints(problem.number_constraints),
-      variables_bounds(problem.number_variables),
-      constraints_multipliers(problem.number_constraints),
+Subproblem::Subproblem(size_t number_variables, size_t number_constraints) :
+      number_variables(number_variables),
+      number_constraints(number_constraints),
+      variables_bounds(number_variables),
+      constraints_multipliers(number_constraints),
       // objective_gradient is a SparseVector
       // constraints_jacobian is a vector of SparseVectors
-      constraints_bounds(problem.number_constraints),
+      constraints_bounds(number_constraints),
       number_subproblems_solved(0), subproblem_definition_changed(false) {
 }
 
@@ -18,7 +18,7 @@ Subproblem::Subproblem(const Problem& problem) :
 //    first_iterate.multipliers.constraints = Subproblem::compute_least_square_multipliers(problem, first_iterate, multipliers.constraints, 1e4);
 //}
 
-Iterate Subproblem::generate_initial_point(Statistics& /*statistics*/, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+Iterate Subproblem::generate_initial_iterate(Statistics& /*statistics*/, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
    Iterate first_iterate(x, multipliers);
    /* compute the optimality and feasibility measures of the initial point */
    this->compute_progress_measures(problem, first_iterate);
@@ -195,7 +195,7 @@ double Subproblem::compute_constraint_violation(const Problem& problem, const It
 }
 
 void
-Subproblem::compute_residuals(const Problem& problem, Iterate& iterate, const Multipliers& multipliers, double objective_multiplier) const {
+Subproblem::compute_residuals(const Problem& problem, Iterate& iterate, double objective_multiplier) const {
    iterate.compute_constraints(problem);
    iterate.residuals.constraints = this->compute_constraint_violation(problem, iterate);
    // compute the KKT residual only if the objective multiplier is positive
@@ -206,5 +206,5 @@ Subproblem::compute_residuals(const Problem& problem, Iterate& iterate, const Mu
       iterate.residuals.KKT = Subproblem::compute_first_order_error(problem, iterate, 1.);
    }
    iterate.residuals.FJ = Subproblem::compute_first_order_error(problem, iterate, 0.);
-   iterate.residuals.complementarity = this->compute_complementarity_error(problem, iterate, multipliers);
+   iterate.residuals.complementarity = this->compute_complementarity_error(problem, iterate, iterate.multipliers);
 }

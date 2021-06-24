@@ -3,9 +3,10 @@
 #include "InteriorPoint.hpp"
 #include "LinearSolverFactory.hpp"
 
-InteriorPoint::InteriorPoint(const Problem& problem, const std::string& linear_solver_name, const std::string& hessian_evaluation_method, bool
-use_trust_region) :
-      Subproblem(problem),
+InteriorPoint::InteriorPoint(const Problem& problem, size_t number_variables, size_t number_constraints, const std::string& linear_solver_name, const
+std::string& hessian_evaluation_method, bool use_trust_region) :
+      // add the slacks to the variables
+      Subproblem(number_variables + problem.inequality_constraints.size(), number_constraints),
       barrier_parameter(0.1),
       /* if no trust region is used, the problem should be convexified. However, the inertia of the augmented matrix will be corrected later */
       hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, problem
@@ -14,19 +15,14 @@ use_trust_region) :
       parameters({0.99, 1e10, 100., 0.2, 1.5, 10., 1e10}),
       inertia_hessian(0.), inertia_hessian_last_(0.), inertia_constraints(0.),
       default_multiplier_(1.), iteration(0), number_factorizations_(0),
-      rhs(problem.number_variables + problem.inequality_constraints.size() + problem.number_constraints),
-      lower_delta_z(problem.number_variables + problem.inequality_constraints.size()),
-      upper_delta_z(problem.number_variables + problem.inequality_constraints.size()) {
-
-   /* the subproblem optimizes the original variables and slacks for inequality constraints */
-   this->number_variables = problem.number_variables + problem.inequality_constraints.size();
-   this->variables_bounds.resize(this->number_variables);
-
+      rhs(this->number_variables + number_constraints),
+      lower_delta_z(this->number_variables), upper_delta_z(this->number_variables) {
+   // register the original variables bounds
    for (size_t i = 0; i < problem.number_variables; i++) {
       this->variables_bounds[i] = problem.variables_bounds[i];
    }
 
-   /* identify the bounded variables */
+   // identify the bounded variables
    for (size_t i = 0; i < problem.number_variables; i++) {
       if (use_trust_region || (problem.variable_status[i] == BOUNDED_LOWER || problem.variable_status[i] == BOUNDED_BOTH_SIDES)) {
          this->lower_bounded_variables.insert(i);
@@ -37,7 +33,7 @@ use_trust_region) :
    }
    /* identify the inequality constraint slacks */
    for (const auto[j, i]: problem.inequality_constraints) {
-      size_t slack_index = problem.number_variables + i;
+      size_t slack_index = number_variables + i;
       if (problem.constraint_status[j] == BOUNDED_LOWER || problem.constraint_status[j] == BOUNDED_BOTH_SIDES) {
          this->lower_bounded_variables.insert(slack_index);
       }
@@ -49,7 +45,7 @@ use_trust_region) :
    }
 }
 
-Iterate InteriorPoint::generate_initial_point(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+Iterate InteriorPoint::generate_initial_iterate(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
    statistics.add_column("barrier param.", Statistics::double_width, 8);
 
    // resize to the new size (primals + slacks)

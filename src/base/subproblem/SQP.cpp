@@ -1,16 +1,16 @@
+#include <cassert>
 #include "SQP.hpp"
 #include "QPSolverFactory.hpp"
 
-SQP::SQP(const Problem& problem, const std::string& QP_solver_name, const std::string& hessian_evaluation_method, bool use_trust_region) :
-      Subproblem(problem),
+SQP::SQP(size_t number_variables, size_t number_constraints, size_t hessian_maximum_number_nonzeros, const std::string& QP_solver_name,
+      const std::string& hessian_evaluation_method, bool use_trust_region) :
+      Subproblem(number_variables, number_constraints),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
-      solver(QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints,
-            problem.hessian_maximum_number_nonzeros + problem.number_variables, true)),
+      solver(QPSolverFactory::create(QP_solver_name, number_variables, number_constraints,
+            hessian_maximum_number_nonzeros + number_variables, true)),
       /* if no trust region is used, the problem should be convexified by controlling the inertia of the Hessian */
-      hessian_evaluation(
-            HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, problem.hessian_maximum_number_nonzeros,
-                  !use_trust_region)),
-      initial_point(problem.number_variables) {
+      hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, number_variables, hessian_maximum_number_nonzeros, !use_trust_region)),
+      initial_point(number_variables) {
 }
 
 void SQP::generate(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) {
@@ -41,8 +41,10 @@ void SQP::update_objective_multiplier(const Problem& problem, const Iterate& cur
       clear(this->objective_gradient);
    }
    else if (objective_multiplier < 1.) {
+      this->objective_gradient = problem.objective_gradient(current_iterate.x);
       scale(this->objective_gradient, objective_multiplier);
    }
+   clear(this->initial_point);
 }
 
 void SQP::set_initial_point(const std::vector<double>& point) {
@@ -51,10 +53,11 @@ void SQP::set_initial_point(const std::vector<double>& point) {
 
 Direction SQP::compute_direction(Statistics& /*statistics*/, const Problem& /*problem*/, Iterate& /*current_iterate*/) {
    /* compute QP direction */
-   Direction direction = this->solver->solve_QP(this->variables_bounds, constraints_bounds, this->objective_gradient,
+   Direction direction = this->solver->solve_QP(this->variables_bounds, this->constraints_bounds, this->objective_gradient,
          this->constraints_jacobian, this->hessian_evaluation->hessian, this->initial_point);
    this->number_subproblems_solved++;
    DEBUG << direction;
+
    // attach the predicted reduction function
    direction.predicted_reduction = [&](double step_length) {
       return this->compute_predicted_reduction(direction, step_length);

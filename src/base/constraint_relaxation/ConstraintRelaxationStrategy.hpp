@@ -11,11 +11,10 @@
 
 class ConstraintRelaxationStrategy {
 public:
-   explicit ConstraintRelaxationStrategy(Subproblem& subproblem);
+   explicit ConstraintRelaxationStrategy(std::unique_ptr<Subproblem> subproblem);
    virtual Iterate initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
 
-   virtual void generate_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius)
-   = 0;
+   virtual void generate_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) = 0;
    virtual Direction compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) = 0;
    virtual Direction solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Direction& direction) = 0;
    void update_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
@@ -28,7 +27,7 @@ public:
    [[nodiscard]] int get_number_subproblems_solved() const;
 
 protected:
-   Subproblem& subproblem;
+   std::unique_ptr<Subproblem> subproblem;
 };
 
 #endif //CONSTRAINTRELAXATIONSTRATEGY_H

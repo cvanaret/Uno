@@ -18,11 +18,11 @@ struct ElasticVariables {
 
 class l1Relaxation: public ConstraintRelaxationStrategy {
 public:
-   explicit l1Relaxation(Problem& problem, Subproblem& subproblem, const std::map<std::string, std::string>& options);
+   l1Relaxation(Problem& problem, const std::map<std::string, std::string>& options, bool use_trust_region);
    Iterate initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
 
    // direction computation
-   void generate_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
+   void generate_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
    Direction compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
    Direction solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Direction& direction) override;
 
@@ -38,7 +38,9 @@ protected:
    ElasticVariables elastic_variables;
 
    Direction compute_byrd_steering_rule(Statistics& statistics, const Problem& problem, Iterate& current_iterate);
-   void generate_elastic_variables_(const Problem& problem);
+   void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier);
+   static size_t count_elastic_variables(const Problem& problem);
+   void generate_elastic_variables(const Problem& problem);
    double compute_linearized_constraint_residual(std::vector<double>& direction);
    double compute_error(const Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter);
    void postprocess_direction(const Problem& problem, Direction& direction);
