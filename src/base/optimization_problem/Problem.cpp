@@ -33,25 +33,6 @@ std::vector<double> Problem::evaluate_constraints(const std::vector<double>& x) 
    return constraints;
 }
 
-/* compute ||c|| */
-double Problem::compute_constraint_residual(const std::vector<double>& constraints, Norm residual_norm) const {
-   // create a lambda to avoid allocating an std::vector
-   auto residual_function = [&](size_t j) {
-      return std::max(std::max(0., this->constraint_bounds[j].lb - constraints[j]), constraints[j] - this->constraint_bounds[j].ub);
-   };
-   return norm(residual_function, constraints.size(), residual_norm);
-}
-
-/* compute ||c_S|| for a given set S */
-double Problem::compute_constraint_violation(const std::vector<double>& constraints, const std::vector<int>& constraint_set, Norm residual_norm)
-const {
-   SparseVector residuals;
-   for (int j: constraint_set) {
-      residuals[j] = std::max(std::max(0., this->constraint_bounds[j].lb - constraints[j]), constraints[j] - this->constraint_bounds[j].ub);
-   }
-   return norm(residuals, residual_norm);
-}
-
 void Problem::determine_bounds_types(std::vector<Range>& bounds, std::vector<ConstraintType>& status) {
    assert(bounds.size() == status.size());
 
@@ -98,6 +79,29 @@ void Problem::project_point_in_bounds(std::vector<double>& x) const {
          x[i] = this->variables_bounds[i].ub;
       }
    }
+}
+
+double Problem::compute_constraint_violation(double constraint, size_t j) const {
+   return std::max(std::max(0., this->constraint_bounds[j].lb - constraint), constraint - this->constraint_bounds[j].ub);
+}
+
+/* compute ||c|| */
+double Problem::compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const {
+   // create a lambda to avoid allocating an std::vector
+   auto residual_function = [&](size_t j) {
+      return this->compute_constraint_violation(constraints[j], j);
+   };
+   return norm(residual_function, constraints.size(), residual_norm);
+}
+
+/* compute ||c_S|| for a given set S */
+double Problem::compute_constraint_violation(const std::vector<double>& constraints, const std::vector<int>& constraint_set, Norm residual_norm)
+const {
+   SparseVector residuals;
+   for (int j: constraint_set) {
+      residuals[j] = this->compute_constraint_violation(constraints[j], j);
+   }
+   return norm(residuals, residual_norm);
 }
 
 /* native C++ problem */
