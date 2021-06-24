@@ -1,7 +1,7 @@
 #include "Subproblem.hpp"
 #include "LinearSolverFactory.hpp"
 
-Subproblem::Subproblem(const Problem& problem, bool scale_residuals) :
+Subproblem::Subproblem(const Problem& problem) :
       number_variables(problem.number_variables),
       number_constraints(problem.number_constraints),
       variables_bounds(problem.number_variables),
@@ -9,7 +9,7 @@ Subproblem::Subproblem(const Problem& problem, bool scale_residuals) :
       // objective_gradient is a SparseVector
       // constraints_jacobian is a vector of SparseVectors
       constraints_bounds(problem.number_constraints),
-      number_subproblems_solved(0), subproblem_definition_changed(false), scale_residuals(scale_residuals) {
+      number_subproblems_solved(0), subproblem_definition_changed(false) {
 }
 
 /* compute least-square multipliers */
@@ -207,7 +207,4 @@ Subproblem::compute_residuals(const Problem& problem, Iterate& iterate, const Mu
    }
    iterate.residuals.FJ = Subproblem::compute_first_order_error(problem, iterate, 0.);
    iterate.residuals.complementarity = this->compute_complementarity_error(problem, iterate, multipliers);
-   if (this->scale_residuals) {
-      // TODO scale the residuals
-   }
 }

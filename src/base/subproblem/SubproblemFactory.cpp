@@ -7,14 +7,14 @@
 
 std::unique_ptr<Subproblem>
 SubproblemFactory::create(Problem& problem, const std::string& type, const std::map<std::string, std::string>& options, bool
-use_trust_region, bool scale_residuals) {
+use_trust_region) {
    std::vector<std::string> possible_methods = {"SQP", "SLP", "Sl1QP", "SLPEQP", "IPM"};
    /* active-set methods */
    if (type == "SQP") {
-      return std::make_unique<SQP>(problem, options.at("QP_solver"), options.at("hessian"), use_trust_region, scale_residuals);
+      return std::make_unique<SQP>(problem, options.at("QP_solver"), options.at("hessian"), use_trust_region);
    }
    else if (type == "SLP") {
-      return std::make_unique<SLP>(problem, options.at("QP_solver"), use_trust_region, scale_residuals);
+      return std::make_unique<SLP>(problem, options.at("QP_solver"), use_trust_region);
    }
 //   else if (type == "Sl1QP") {
 //      double initial_parameter = std::stod(options.at("Sl1QP_initial_parameter"));
@@ -35,8 +35,7 @@ use_trust_region, bool scale_residuals) {
       //    }
       /* interior point method */
    else if (type == "IPM") {
-      return std::make_unique<InteriorPoint>(problem, options.at("linear_solver"), options.at("hessian"), use_trust_region,
-            scale_residuals);
+      return std::make_unique<InteriorPoint>(problem, options.at("linear_solver"), options.at("hessian"), use_trust_region);
    }
    throw std::invalid_argument(
          "Subproblem method " + type + " does not exist.");// The possible options are: " + join(possible_methods, ", "));

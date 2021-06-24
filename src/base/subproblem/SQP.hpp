@@ -7,11 +7,11 @@
 
 class SQP : public Subproblem {
 public:
-   SQP(const Problem& problem, const std::string& QP_solver_name, const std::string& hessian_evaluation_method, bool use_trust_region, bool scale_residuals);
+   SQP(const Problem& problem, const std::string& QP_solver_name, const std::string& hessian_evaluation_method, bool use_trust_region);
 
    void generate(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
    void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
-   void set_initial_point(const std::vector<double>& initial_point) override;
+   void set_initial_point(const std::vector<double>& point) override;
 
    Direction compute_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
    int get_hessian_evaluation_count() const override;

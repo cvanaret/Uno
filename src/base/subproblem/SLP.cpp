@@ -1,8 +1,8 @@
 #include "SLP.hpp"
 #include "QPSolverFactory.hpp"
 
-SLP::SLP(const Problem& problem, std::string QP_solver_name, bool /*use_trust_region*/, bool scale_residuals) :
-      Subproblem(problem, scale_residuals),
+SLP::SLP(const Problem& problem, std::string QP_solver_name, bool /*use_trust_region*/) :
+      Subproblem(problem),
       solver(QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints, 0, false)),
       initial_point(problem.number_variables) {
 }
@@ -38,8 +38,8 @@ void SLP::update_objective_multiplier(const Problem& /*problem*/, const Iterate&
    }
 }
 
-void SLP::set_initial_point(const std::vector<double>& initial_point) {
-   copy_from(this->initial_point, initial_point);
+void SLP::set_initial_point(const std::vector<double>& point) {
+   copy_from(this->initial_point, point);
 }
 
 Direction SLP::compute_direction(Statistics& /*statistics*/, const Problem& /*problem*/, Iterate& /*current_iterate*/) {

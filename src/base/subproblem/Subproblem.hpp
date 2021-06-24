@@ -19,7 +19,7 @@
  */
 class Subproblem {
 public:
-   Subproblem(const Problem& problem, bool scale_residuals);
+   Subproblem(const Problem& problem);
    virtual ~Subproblem() = default;
 
    virtual Iterate generate_initial_point(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers);
@@ -60,7 +60,7 @@ public:
    int number_subproblems_solved;
    // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it
    bool subproblem_definition_changed;
-   bool scale_residuals;
+   //bool scale_residuals;
 
 protected:
    virtual void set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);

@@ -59,7 +59,7 @@ public:
    std::string objective_name;
    FunctionType objective_type; /*!< Type of the objective (LINEAR, QUADRATIC, NONLINEAR) */
    [[nodiscard]] virtual double objective(const std::vector<double>& x) const = 0;
-   virtual SparseVector objective_gradient(const std::vector<double>& x) const = 0;
+   [[nodiscard]] virtual SparseVector objective_gradient(const std::vector<double>& x) const = 0;
 
    /* variables */
    std::vector<std::string> variables_names;
@@ -93,7 +93,7 @@ public:
    [[nodiscard]] std::vector<double> evaluate_constraints(const std::vector<double>& x) const;
    void determine_bounds_types(std::vector<Range>& variables_bounds, std::vector<ConstraintType>& status);
    void project_point_in_bounds(std::vector<double>& x) const;
-   double compute_constraint_violation(double constraint, size_t j) const;
+   [[nodiscard]] double compute_constraint_violation(double constraint, size_t j) const;
    [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const;
    [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, const std::vector<int>& constraint_set, Norm
    residual_norm) const;
