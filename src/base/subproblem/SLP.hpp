@@ -13,14 +13,13 @@ public:
    void set_initial_point(const std::vector<double>& point) override;
 
    Direction compute_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
+   double compute_predicted_reduction(const Direction& direction, double step_length) const override;
    int get_hessian_evaluation_count() const override;
 
 private:
    /* use references to allow polymorphism */
    std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
    std::vector<double> initial_point;
-
-   static double compute_predicted_reduction_(Direction& direction, double step_length);
 };
 
 #endif // SLP_H

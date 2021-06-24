@@ -12,7 +12,6 @@ QP_solver_name, const std::string& hessian_evaluation_method, bool use_trust_reg
       hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables,
             problem.hessian_maximum_number_nonzeros + problem.number_variables, !use_trust_region)),
       initial_point(number_variables) {
-         std::cout << "PROBLEM.MAX NNZ = " << problem.hessian_maximum_number_nonzeros << "\n";
 }
 
 void SQP::generate(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) {
@@ -76,11 +75,6 @@ Direction SQP::compute_direction(Statistics& /*statistics*/, const Problem& /*pr
          this->constraints_jacobian, this->hessian_evaluation->hessian, this->initial_point);
    this->number_subproblems_solved++;
    DEBUG << direction;
-
-   // attach the predicted reduction function
-   direction.predicted_reduction = [&](double step_length) {
-      return this->compute_predicted_reduction(direction, step_length);
-   };
    return direction;
 }
 

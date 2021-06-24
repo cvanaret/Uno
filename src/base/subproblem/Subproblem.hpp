@@ -32,6 +32,7 @@ public:
    void generate_feasibility_bounds(const Problem& problem, const std::vector<double>& current_constraints, const ConstraintPartition&
    constraint_partition);
 
+   virtual double compute_predicted_reduction(const Direction& direction, double step_length) const = 0;
    virtual void compute_progress_measures(const Problem& problem, Iterate& iterate);
 
    static double push_variable_to_interior(double variable_value, const Range& variable_bounds);

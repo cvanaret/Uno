@@ -48,13 +48,10 @@ Direction SLP::compute_direction(Statistics& /*statistics*/, const Problem& /*pr
          this->constraints_jacobian,this->initial_point);
    this->number_subproblems_solved++;
    DEBUG << direction;
-   direction.predicted_reduction = [&](double step_length) {
-      return SLP::compute_predicted_reduction_(direction, step_length);
-   };
    return direction;
 }
 
-double SLP::compute_predicted_reduction_(Direction& direction, double step_length) {
+double SLP::compute_predicted_reduction(const Direction& direction, double step_length) const {
    // the predicted reduction is linear in the step length
    return -step_length * direction.objective;
 }

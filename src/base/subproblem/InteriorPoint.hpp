@@ -35,6 +35,7 @@ public:
    void set_initial_point(const std::vector<double>& point) override;
 
    Direction compute_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
+   double compute_predicted_reduction(const Direction& direction, double step_length) const override;
    void compute_progress_measures(const Problem& problem, Iterate& iterate) override;
    int get_hessian_evaluation_count() const override;
 
@@ -79,7 +80,6 @@ private:
 
    double compute_constraint_violation(const Problem& problem, const Iterate& iterate) const override;
    double compute_KKT_error_scaling(Iterate& current_iterate) const;
-   static double compute_predicted_reduction(const Direction& direction, double step_length) ;
    double compute_central_complementarity_error(const Iterate& iterate) const;
 };
 

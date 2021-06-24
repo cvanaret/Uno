@@ -187,9 +187,6 @@ Direction InteriorPoint::compute_direction(Statistics& statistics, const Problem
    direction.objective = this->compute_barrier_directional_derivative(direction.x);
    assert(direction.objective < 0. && "the IPM directional derivative is positive");
 
-   direction.predicted_reduction = [&](double step_length) {
-      return InteriorPoint::compute_predicted_reduction(direction, step_length);
-   };
    statistics.add_statistic("barrier param.", this->barrier_parameter);
    return direction;
    //   catch (const UnstableInertiaCorrection& e) {
@@ -485,7 +482,7 @@ double InteriorPoint::compute_barrier_directional_derivative(const std::vector<d
    return dot(solution, this->objective_gradient);
 }
 
-double InteriorPoint::compute_predicted_reduction(const Direction& direction, double step_length) {
+double InteriorPoint::compute_predicted_reduction(const Direction& direction, double step_length) const {
    // the predicted reduction is linear
    return -step_length * direction.objective;
 }
