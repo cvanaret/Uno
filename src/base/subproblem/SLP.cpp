@@ -1,10 +1,10 @@
 #include "SLP.hpp"
 #include "QPSolverFactory.hpp"
 
-SLP::SLP(const Problem& problem, std::string QP_solver_name, bool /*use_trust_region*/) :
-      Subproblem(problem),
-      solver(QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints, 0, false)),
-      initial_point(problem.number_variables) {
+SLP::SLP(size_t number_variables, size_t number_constraints, const std::string& QP_solver_name) :
+      Subproblem(number_variables, number_constraints),
+      solver(QPSolverFactory::create(QP_solver_name, number_variables, number_constraints, 0, false)),
+      initial_point(number_variables) {
 }
 
 void SLP::generate(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) {

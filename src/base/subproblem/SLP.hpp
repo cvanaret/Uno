@@ -6,7 +6,7 @@
 
 class SLP : public Subproblem {
 public:
-   SLP(const Problem& problem, std::string QP_solver_name, bool use_trust_region);
+   SLP(size_t number_variables, size_t number_constraints, const std::string& QP_solver_name);
 
    void generate(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
    void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;

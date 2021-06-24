@@ -30,7 +30,7 @@ std::pair<Iterate, Direction> TrustRegion::compute_acceptable_iterate(Statistics
 
          /* generate the subproblem once, then update the trust region */
          if (true || this->number_iterations == 1) {
-            this->relaxation_strategy.generate_subproblem(problem, current_iterate, problem.objective_sign, this->radius);
+            this->relaxation_strategy.generate_subproblem(problem, current_iterate, this->radius);
          }
          else {
             this->relaxation_strategy.update_variables_bounds(problem, current_iterate, this->radius);

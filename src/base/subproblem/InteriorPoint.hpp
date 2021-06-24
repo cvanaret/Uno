@@ -26,9 +26,10 @@ struct UnstableInertiaCorrection : public std::exception {
 
 class InteriorPoint : public Subproblem {
 public:
-   InteriorPoint(const Problem& problem, const std::string& linear_solver_name, const std::string& hessian_evaluation_method, bool use_trust_region);
+   InteriorPoint(const Problem& problem, size_t number_variables, size_t number_constraints, const std::string& linear_solver_name, const
+   std::string& hessian_evaluation_method, bool use_trust_region);
 
-   Iterate generate_initial_point(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
+   Iterate generate_initial_iterate(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
    void generate(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
    void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
    void set_initial_point(const std::vector<double>& point) override;
