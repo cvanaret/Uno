@@ -1,6 +1,5 @@
 #include "GlobalizationStrategyFactory.hpp"
 #include "l1MeritFunction.hpp"
-#include "Filter.hpp"
 #include "FilterStrategy.hpp"
 
 std::unique_ptr<GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& strategy_type,
