@@ -35,7 +35,6 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
 
    if (direction.status != INFEASIBLE) {
       direction.objective_multiplier = problem.objective_sign;
-      return direction;
    }
    else {
       ConstraintPartition constraint_partition = direction.constraint_partition;
@@ -46,8 +45,8 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
       direction.objective_multiplier = 0.;
       direction.constraint_partition = constraint_partition;
       direction.is_relaxed = true;
-      return direction;
    }
+   return direction;
 }
 
 double FeasibilityRestoration::compute_predicted_reduction(const Problem& /*problem*/, Iterate& /*current_iterate*/, const Direction& direction,
@@ -81,7 +80,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
       this->subproblem->subproblem_definition_changed = false;
       this->subproblem->compute_progress_measures(problem, current_iterate);
    }
-   double step_norm = step_length * direction.norm;
+   const double step_norm = step_length * direction.norm;
 
    bool accept = false;
    if (step_norm == 0.) {
@@ -114,7 +113,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
       }
 
       // evaluate the predicted reduction
-      double predicted_reduction = this->compute_predicted_reduction(problem, current_iterate, direction, step_length);
+      const double predicted_reduction = this->compute_predicted_reduction(problem, current_iterate, direction, step_length);
       // pick the current strategy
       GlobalizationStrategy& strategy = (this->current_phase == OPTIMALITY) ? *this->phase_2_strategy : *this->phase_1_strategy;
       // invoke the globalization strategy for acceptance

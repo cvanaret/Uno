@@ -66,7 +66,7 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
       this->subproblem->subproblem_definition_changed = false;
       this->subproblem->compute_progress_measures(problem, current_iterate);
    }
-   double step_norm = step_length * direction.norm;
+   const double step_norm = step_length * direction.norm;
 
    bool accept = false;
    if (step_norm == 0.) {
@@ -74,7 +74,7 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
    }
    else {
       // compute the predicted reduction (a mixture of the subproblem's and of the l1 relaxation's)
-      double predicted_reduction = this->compute_predicted_reduction(problem, current_iterate, direction, step_length);
+      const double predicted_reduction = this->compute_predicted_reduction(problem, current_iterate, direction, step_length);
       // invoke the globalization strategy for acceptance
       accept = this->globalization_strategy->check_acceptance(statistics, current_iterate.progress, trial_iterate.progress,
             this->penalty_parameter, predicted_reduction);
@@ -277,16 +277,13 @@ double l1Relaxation::compute_predicted_reduction(const Problem& problem, Iterate
    }
    else {
       // determine the linearized constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
-      // TODO: creating a vector is not necessary!
-      //auto linearized_constraint = [&](size_t j) {
-      //   return current_iterate.constraints[j] + step_length * dot(direction.x, current_iterate.constraints_jacobian[j]);
-      //}
-      std::vector<double> linearized_constraints(current_iterate.constraints);
-      for (size_t j = 0; j < current_iterate.constraints.size(); j++) {
-         linearized_constraints[j] += step_length * dot(direction.x, current_iterate.constraints_jacobian[j]);
-      }
-      double linearized_constraint_violation = problem.compute_constraint_violation(linearized_constraints, L1_NORM);
-      return current_iterate.progress.feasibility - linearized_constraint_violation + this->subproblem->compute_predicted_reduction(direction, step_length);;
+      auto residual_function = [&](size_t j) {
+         const double component_j = current_iterate.constraints[j] + step_length * dot(direction.x, current_iterate.constraints_jacobian[j]);
+         return problem.compute_constraint_violation(component_j, j);
+      };
+      const double linearized_constraint_violation = norm_1(residual_function, problem.number_constraints);
+      return current_iterate.progress.feasibility - linearized_constraint_violation + this->subproblem->compute_predicted_reduction(direction,
+            step_length);
    }
 }
 
