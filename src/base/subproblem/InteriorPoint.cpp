@@ -4,8 +4,8 @@
 #include "LinearSolverFactory.hpp"
 
 InteriorPoint::InteriorPoint(const Problem& problem, const std::string& linear_solver_name, const std::string& hessian_evaluation_method, bool
-use_trust_region, bool scale_residuals) :
-      Subproblem(problem, scale_residuals), // use the l2 norm to compute residuals
+use_trust_region) :
+      Subproblem(problem),
       barrier_parameter(0.1),
       /* if no trust region is used, the problem should be convexified. However, the inertia of the augmented matrix will be corrected later */
       hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, problem
@@ -156,7 +156,7 @@ void InteriorPoint::update_objective_multiplier(const Problem& problem, const It
    }
 }
 
-void InteriorPoint::set_initial_point(const std::vector<double>& /*initial_point*/) {
+void InteriorPoint::set_initial_point(const std::vector<double>& /*point*/) {
    // do nothing
 }
 
@@ -227,7 +227,6 @@ void InteriorPoint::update_barrier_parameter(Iterate& current_iterate) {
 }
 
 COOMatrix InteriorPoint::assemble_kkt_matrix(const Problem& problem, Iterate& current_iterate) {
-    std::cout << "COOMatrix InteriorPoint::assemble_kkt_matrix STARTS\n";
    /* compute the Lagrangian Hessian */
    COOMatrix kkt_matrix = this->hessian_evaluation->hessian.to_COO();
    kkt_matrix.dimension = this->number_variables + problem.number_constraints;
@@ -246,12 +245,10 @@ COOMatrix InteriorPoint::assemble_kkt_matrix(const Problem& problem, Iterate& cu
          kkt_matrix.insert(derivative, i, this->number_variables + j);
       }
    }
-   std::cout << "COOMatrix InteriorPoint::assemble_kkt_matrix ENDS\n";
    return kkt_matrix;
 }
 
 void InteriorPoint::generate_kkt_rhs(const Iterate& current_iterate) {
-    std::cout << "COOMatrix InteriorPoint::generate_kkt_rhs STARTS\n";
    /* generate the right-hand side */
    clear(this->rhs);
 
@@ -262,15 +259,16 @@ void InteriorPoint::generate_kkt_rhs(const Iterate& current_iterate) {
 
    /* constraint: evaluations and gradients */
    for (size_t j = 0; j < current_iterate.constraints.size(); j++) {
-      this->rhs[this->number_variables + j] = -current_iterate.constraints[j];
+      // Lagrangian
       if (this->constraints_multipliers[j] != 0.) {
          for (const auto[i, derivative]: this->constraints_jacobian[j]) {
             this->rhs[i] += this->constraints_multipliers[j] * derivative;
          }
       }
+      // constraints
+      this->rhs[this->number_variables + j] = -current_iterate.constraints[j];
    }
    DEBUG << "RHS: "; print_vector(DEBUG, this->rhs); DEBUG << "\n";
-   std::cout << "COOMatrix InteriorPoint::generate_kkt_rhs ENDS\n";
 }
 
 double InteriorPoint::compute_KKT_error_scaling(Iterate& current_iterate) const {
@@ -283,20 +281,17 @@ double InteriorPoint::compute_KKT_error_scaling(Iterate& current_iterate) const 
 }
 
 Direction InteriorPoint::generate_direction(const Problem& problem, const Iterate& current_iterate, std::vector<double>& solution_IPM) {
-   std::cout << "InteriorPoint::generate_direction STARTS\n";
    /* retrieve +Δλ (Nocedal p590) */
    for (size_t j = this->number_variables; j < solution_IPM.size(); j++) {
       solution_IPM[j] = -solution_IPM[j];
    }
 
    /* "fraction to boundary" rule for variables and bound multipliers */
-   std::cout << "InteriorPoint::generate_direction allocation of direction\n";
    Direction direction(this->number_variables, problem.number_constraints);
 
    // scale primal variables and constraints multipliers
    double tau = std::max(this->parameters.tau_min, 1. - this->barrier_parameter);
    double primal_length = this->compute_primal_length(current_iterate, solution_IPM, tau);
-   std::cout << "InteriorPoint::generate_direction 2\n";
    for (size_t i = 0; i < this->number_variables; i++) {
       direction.x[i] = primal_length * solution_IPM[i];
    }
@@ -325,8 +320,6 @@ Direction InteriorPoint::generate_direction(const Problem& problem, const Iterat
    DEBUG << "Δλ: "; print_vector(DEBUG, solution_IPM, '\n', number_variables, problem.number_constraints);
    DEBUG << "primal length = " << primal_length << "\n";
    DEBUG << "dual length = " << dual_length << "\n\n";
-
-   std::cout << "InteriorPoint::generate_direction ENDS\n";
    return direction;
 }
 
@@ -364,7 +357,6 @@ double InteriorPoint::compute_dual_length(const Iterate& current_iterate, double
 }
 
 void InteriorPoint::factorize(COOMatrix& kkt_matrix, FunctionType problem_type) {
-    std::cout << "InteriorPoint::factorize STARTS\n";
    // compute the symbolic factorization only when:
    // the problem has a non constant Hessian (ie is not an LP or a QP) or it is the first factorization
    // TODO: for QPs as well, but only when the sparsity pattern is constant
@@ -373,7 +365,6 @@ void InteriorPoint::factorize(COOMatrix& kkt_matrix, FunctionType problem_type) 
    }
    this->linear_solver->do_numerical_factorization(kkt_matrix);
    this->number_factorizations_++;
-   std::cout << "InteriorPoint::factorize ENDS\n";
 }
 
 void InteriorPoint::modify_inertia(COOMatrix& kkt_matrix, size_t size_first_block, size_t size_second_block, FunctionType problem_type) {

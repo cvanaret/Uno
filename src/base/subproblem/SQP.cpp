@@ -1,8 +1,8 @@
 #include "SQP.hpp"
 #include "QPSolverFactory.hpp"
 
-SQP::SQP(const Problem& problem, const std::string& QP_solver_name, const std::string& hessian_evaluation_method, bool use_trust_region,
-      bool scale_residuals) : Subproblem(problem, scale_residuals),
+SQP::SQP(const Problem& problem, const std::string& QP_solver_name, const std::string& hessian_evaluation_method, bool use_trust_region) :
+      Subproblem(problem),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
       solver(QPSolverFactory::create(QP_solver_name, problem.number_variables, problem.number_constraints,
             problem.hessian_maximum_number_nonzeros + problem.number_variables, true)),
@@ -45,8 +45,8 @@ void SQP::update_objective_multiplier(const Problem& problem, const Iterate& cur
    }
 }
 
-void SQP::set_initial_point(const std::vector<double>& initial_point) {
-   copy_from(this->initial_point, initial_point);
+void SQP::set_initial_point(const std::vector<double>& point) {
+   copy_from(this->initial_point, point);
 }
 
 Direction SQP::compute_direction(Statistics& /*statistics*/, const Problem& /*problem*/, Iterate& /*current_iterate*/) {
