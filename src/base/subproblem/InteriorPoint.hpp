@@ -40,7 +40,7 @@ public:
 
 private:
    /* barrier parameter */
-   double barrier_parameter;
+   double barrier_parameter{0.1};
    std::unique_ptr<HessianEvaluation> hessian_evaluation;
    std::unique_ptr<LinearSolver> linear_solver; /*!< Solver that solves the subproblem */
    /* constants */
@@ -51,12 +51,12 @@ private:
    std::set<size_t> upper_bounded_variables; /* indices of the upper-bounded variables */
 
    bool force_symbolic_factorization{true};
-   double inertia_hessian;
-   double inertia_hessian_last_;
-   double inertia_constraints;
-   double default_multiplier_;
-   size_t iteration;
-   size_t number_factorizations_;
+   double inertia_hessian{0.};
+   double inertia_hessian_last_{0.};
+   double inertia_constraints{0.};
+   double default_multiplier_{1.};
+   size_t iteration{0};
+   size_t number_factorizations_{0};
 
    /* preallocated vectors */
    std::vector<double> rhs;

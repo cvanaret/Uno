@@ -7,14 +7,11 @@ InteriorPoint::InteriorPoint(const Problem& problem, size_t number_variables, si
 std::string& hessian_evaluation_method, bool use_trust_region) :
       // add the slacks to the variables
       Subproblem(number_variables + problem.inequality_constraints.size(), number_constraints),
-      barrier_parameter(0.1),
       /* if no trust region is used, the problem should be convexified. However, the inertia of the augmented matrix will be corrected later */
       hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, problem
             .hessian_maximum_number_nonzeros, false)),
       linear_solver(LinearSolverFactory::create(linear_solver_name)),
       parameters({0.99, 1e10, 100., 0.2, 1.5, 10., 1e10}),
-      inertia_hessian(0.), inertia_hessian_last_(0.), inertia_constraints(0.),
-      default_multiplier_(1.), iteration(0), number_factorizations_(0),
       rhs(this->number_variables + number_constraints),
       lower_delta_z(this->number_variables), upper_delta_z(this->number_variables) {
    // register the original variables bounds

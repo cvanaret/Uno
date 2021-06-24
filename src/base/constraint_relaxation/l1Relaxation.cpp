@@ -190,7 +190,6 @@ Direction l1Relaxation::compute_byrd_steering_rule(Statistics& statistics, const
          }
       }
    }
-   direction.objective_multiplier = penalty_parameter;
    return direction;
 }
 
