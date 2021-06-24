@@ -15,6 +15,7 @@ public:
    void set_initial_point(const std::vector<double>& point) override;
 
    Direction compute_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
+   double compute_predicted_reduction(const Direction& direction, double step_length) const override;
    int get_hessian_evaluation_count() const override;
 
 protected:
@@ -22,8 +23,6 @@ protected:
    std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
    std::unique_ptr<HessianEvaluation> hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
    std::vector<double> initial_point;
-
-   double compute_predicted_reduction(const Direction& direction, double step_length) const;
 };
 
 #endif // SQP_H
