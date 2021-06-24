@@ -7,7 +7,7 @@
 
 class SQP : public Subproblem {
 public:
-   SQP(size_t number_variables, size_t number_constraints, size_t hessian_maximum_number_nonzeros, const std::string& QP_solver_name,
+   SQP(const Problem& problem, size_t number_variables, size_t number_constraints, const std::string& QP_solver_name,
          const std::string& hessian_evaluation_method, bool use_trust_region);
 
    void generate(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;

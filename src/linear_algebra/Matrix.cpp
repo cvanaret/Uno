@@ -115,9 +115,9 @@ Matrix(dimension, capacity, fortran_indexing),
 matrix(capacity), column_start(dimension + 1), row_number(capacity) {
 }
 
-CSCMatrix::CSCMatrix(const std::vector<double>& matrix, const std::vector<size_t>& column_start, const std::vector<size_t>& row_number,
-      short fortran_indexing) :
-      Matrix(column_start.size() - 1, matrix.size(), fortran_indexing),
+CSCMatrix::CSCMatrix(const std::vector<double>& matrix, const std::vector<size_t>& column_start, const std::vector<size_t>& row_number, size_t
+capacity, short fortran_indexing) :
+      Matrix(column_start.size() - 1, capacity, fortran_indexing),
       matrix(matrix), column_start(column_start), row_number(row_number) {
 }
 
@@ -150,6 +150,9 @@ CSCMatrix CSCMatrix::add_identity_multiple(double multiple) {
    std::vector<double> damped_matrix;
    std::vector<size_t> damped_column_start;
    std::vector<size_t> damped_row_number;
+   damped_matrix.reserve(this->capacity);
+   damped_row_number.reserve(this->capacity);
+   damped_column_start.reserve(this->dimension);
 
    int current_number_nonzeros = 0;
    damped_column_start.push_back(this->fortran_indexing);
@@ -187,7 +190,7 @@ CSCMatrix CSCMatrix::add_identity_multiple(double multiple) {
       }
       damped_column_start.push_back(current_number_nonzeros + this->fortran_indexing);
    }
-   return CSCMatrix(damped_matrix, damped_column_start, damped_row_number, this->fortran_indexing);
+   return CSCMatrix(damped_matrix, damped_column_start, damped_row_number, this->capacity, this->fortran_indexing);
 }
 
 double CSCMatrix::smallest_diagonal_entry() {
@@ -247,17 +250,17 @@ CSCMatrix CSCMatrix::identity(size_t dimension, short fortran_indexing) {
    }
    column_start[dimension] = dimension + fortran_indexing;
 
-   return CSCMatrix(matrix, column_start, row_number, fortran_indexing);
+   return CSCMatrix(matrix, column_start, row_number, dimension, fortran_indexing);
 }
 
 std::ostream& operator<<(std::ostream& stream, CSCMatrix& matrix) {
    /* Hessian */
    stream << "W = ";
-   print_vector(stream, matrix.matrix);
+   print_vector(stream, matrix.matrix, '\n', 0, matrix.number_nonzeros);
    stream << "with column start: ";
-   print_vector(stream, matrix.column_start);
+   print_vector(stream, matrix.column_start, '\n', 0, matrix.number_nonzeros);
    stream << "and row number: ";
-   print_vector(stream, matrix.row_number);
+   print_vector(stream, matrix.row_number, '\n', 0, matrix.number_nonzeros);
    return stream;
 }
 

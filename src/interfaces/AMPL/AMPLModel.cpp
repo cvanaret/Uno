@@ -295,9 +295,7 @@ void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objectiv
          !all_zeros_multipliers, upper_triangular);
 
    /* evaluate the Hessian */
-   assert(hessian.matrix.size() >= number_non_zeros);
-   assert(hessian.row_number.size() >= number_non_zeros);
-   assert(hessian.column_start.size() >= this->number_variables + 1);
+   assert(hessian.capacity >= number_non_zeros);
 
    (*(this->asl_)->p.Sphes)(this->asl_, 0, hessian.matrix.data(), objective_number, objective_multiplier_pointer,
          all_zeros_multipliers ? nullptr : (double*) multipliers.data());

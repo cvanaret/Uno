@@ -35,9 +35,9 @@ void ExactHessianInertiaControlEvaluation::compute(const Problem& problem, const
    problem.lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, this->hessian);
    this->evaluation_count++;
    DEBUG << "hessian before convexification: " << this->hessian;
-   assert(false && "ExactHessianInertiaControlEvaluation: inertia correction not implemented");
+   //assert(false && "ExactHessianInertiaControlEvaluation: inertia correction not implemented");
    /* modify the inertia to make the problem strictly convex */
-   // this->hessian = this->modify_inertia(this->hessian, *this->linear_solver_);
+   this->hessian = this->modify_inertia(this->hessian, *this->linear_solver_);
 }
 
 CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& matrix, LinearSolver& linear_solver) {
@@ -57,6 +57,7 @@ CSCMatrix HessianEvaluation::modify_inertia(CSCMatrix& matrix, LinearSolver& lin
       matrix = matrix.add_identity_multiple(inertia - previous_inertia);
    }
    COOMatrix coo_hessian = matrix.to_COO();
+
    DEBUG << "Testing factorization with inertia term " << inertia << "\n";
    linear_solver.do_symbolic_factorization(coo_hessian);
    linear_solver.do_numerical_factorization(coo_hessian);

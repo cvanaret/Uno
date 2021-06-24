@@ -2,15 +2,17 @@
 #include "SQP.hpp"
 #include "QPSolverFactory.hpp"
 
-SQP::SQP(size_t number_variables, size_t number_constraints, size_t hessian_maximum_number_nonzeros, const std::string& QP_solver_name,
-      const std::string& hessian_evaluation_method, bool use_trust_region) :
+SQP::SQP(const Problem& problem, size_t number_variables, size_t number_constraints, const std::string&
+QP_solver_name, const std::string& hessian_evaluation_method, bool use_trust_region) :
       Subproblem(number_variables, number_constraints),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
       solver(QPSolverFactory::create(QP_solver_name, number_variables, number_constraints,
-            hessian_maximum_number_nonzeros + number_variables, true)),
+            problem.hessian_maximum_number_nonzeros + number_variables, true)),
       /* if no trust region is used, the problem should be convexified by controlling the inertia of the Hessian */
-      hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, number_variables, hessian_maximum_number_nonzeros, !use_trust_region)),
+      hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables,
+            problem.hessian_maximum_number_nonzeros + problem.number_variables, !use_trust_region)),
       initial_point(number_variables) {
+         std::cout << "PROBLEM.MAX NNZ = " << problem.hessian_maximum_number_nonzeros << "\n";
 }
 
 void SQP::generate(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) {

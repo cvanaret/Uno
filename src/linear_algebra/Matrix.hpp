@@ -51,7 +51,7 @@ class CSCMatrix : public Matrix {
 public:
    //CSCMatrix(size_t dimension, short fortran_indexing);
    CSCMatrix(size_t dimension, size_t maximum_number_nonzeros, short fortran_indexing);
-   CSCMatrix(const std::vector<double>& matrix, const std::vector<size_t>& column_start, const std::vector<size_t>& row_number,
+   CSCMatrix(const std::vector<double>& matrix, const std::vector<size_t>& column_start, const std::vector<size_t>& row_number, size_t capacity,
          short fortran_indexing);
 
    std::vector<double> matrix;
