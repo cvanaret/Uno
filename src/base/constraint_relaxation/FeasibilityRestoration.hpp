@@ -25,7 +25,8 @@ private:
    std::unique_ptr<GlobalizationStrategy> phase_2_strategy;
    Phase current_phase;
 
-   void form_feasibility_problem(const Problem& problem, const Iterate& current_iterate, const ConstraintPartition& constraint_partition);
+   void form_feasibility_problem(const Problem& problem, const Iterate& current_iterate, const std::vector<double>& phase_2_direction, const
+   ConstraintPartition& constraint_partition);
    static void set_restoration_multipliers(std::vector<double>& constraints_multipliers, const ConstraintPartition& constraint_partition);
    void compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const ConstraintPartition& constraint_partition);
 };
