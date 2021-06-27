@@ -21,8 +21,8 @@ public:
    double compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, const Direction& direction, double step_length) override;
 
 private:
-   std::unique_ptr<GlobalizationStrategy> phase_1_strategy;
-   std::unique_ptr<GlobalizationStrategy> phase_2_strategy;
+   const std::unique_ptr<GlobalizationStrategy> phase_1_strategy;
+   const std::unique_ptr<GlobalizationStrategy> phase_2_strategy;
    Phase current_phase;
 
    void form_feasibility_problem(const Problem& problem, const Iterate& current_iterate, const std::vector<double>& phase_2_direction, const

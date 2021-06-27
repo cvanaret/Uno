@@ -100,7 +100,7 @@ double AMPLModel::objective(const std::vector<double>& x) const {
 }
 
 /* sparse gradient */
-SparseVector AMPLModel::objective_gradient(const std::vector<double>& x) const {
+void AMPLModel::objective_gradient(const std::vector<double>& x, SparseVector& gradient) const {
    /* compute the AMPL gradient (always in dense format) */
    int nerror = 0;
    (*(this->asl_)->p.Objgrd)(this->asl_, 0, (double*) x.data(), (double*) this->ampl_tmp_gradient_.data(), &nerror);
@@ -109,7 +109,6 @@ SparseVector AMPLModel::objective_gradient(const std::vector<double>& x) const {
    }
 
    /* partial derivatives in same order as variables in this->asl_->i.Ograd_[0] */
-   SparseVector gradient;
    ograd* ampl_variables_tmp = this->asl_->i.Ograd_[0];
    while (ampl_variables_tmp != NULL) {
       double partial_derivative = this->ampl_tmp_gradient_[ampl_variables_tmp->varno];
@@ -120,7 +119,6 @@ SparseVector AMPLModel::objective_gradient(const std::vector<double>& x) const {
       gradient[ampl_variables_tmp->varno] = partial_derivative;
       ampl_variables_tmp = ampl_variables_tmp->next;
    }
-   return gradient;
 }
 
 void AMPLModel::initialize_objective_() {
@@ -172,12 +170,10 @@ void AMPLModel::constraint_gradient(const std::vector<double>& x, int j, SparseV
    this->asl_->i.congrd_mode = congrd_mode_backup;
 }
 
-std::vector<SparseVector> AMPLModel::constraints_jacobian(const std::vector<double>& x) const {
-   std::vector<SparseVector> constraints_jacobian(this->number_constraints);
+void AMPLModel::constraints_jacobian(const std::vector<double>& x, std::vector<SparseVector>& constraints_jacobian) const {
    for (size_t j = 0; j < this->number_constraints; j++) {
       this->constraint_gradient(x, j, constraints_jacobian[j]);
    }
-   return constraints_jacobian;
 }
 
 void AMPLModel::generate_constraints_() {
@@ -293,10 +289,9 @@ void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objectiv
    bool all_zeros_multipliers = are_all_zeros(multipliers);
    size_t number_non_zeros = (*(this->asl_)->p.Sphset)(this->asl_, NULL, objective_number, (objective_multiplier > 0.),
          !all_zeros_multipliers, upper_triangular);
-
-   /* evaluate the Hessian */
    assert(hessian.capacity >= number_non_zeros);
 
+   /* evaluate the Hessian */
    (*(this->asl_)->p.Sphes)(this->asl_, 0, hessian.matrix.data(), objective_number, objective_multiplier_pointer,
          all_zeros_multipliers ? nullptr : (double*) multipliers.data());
    hessian.number_nonzeros = number_non_zeros;
@@ -311,26 +306,35 @@ void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objectiv
       hessian.row_number[k] = ampl_row_number[k] + this->fortran_indexing;
    }
 
+//   COO
+//   int k = 0;
+//   for (int i = 0; i < asl->i.n_var_; i++) {
+//      for (int j = asl->i.sputinfo_->hcolstarts[i];
+//            j < asl->i.sputinfo_->hcolstarts[i+1]; j++) {
+//         rows[k] = asl->i.sputinfo_->hrownos[j];
+//         cols[k] = i;
+//         k++;
+//      }
+//   }
+
    /* unregister the vector of variables */
    this->asl_->i.x_known = 0;
 }
 
 /* initial primal point */
-std::vector<double> AMPLModel::primal_initial_solution() {
+void AMPLModel::set_initial_primal_point(std::vector<double>& x) {
+   assert(x.size() >= this->number_variables);
    double* ampl_x0 = this->asl_->i.X0_;
-   std::vector<double> x(this->number_variables);
    for (size_t i = 0; i < this->number_variables; i++) {
       x[i] = ampl_x0[i];
    }
-   return x;
 }
 
 /* initial dual point */
-std::vector<double> AMPLModel::dual_initial_solution() {
+void AMPLModel::set_initial_dual_point(std::vector<double>& multipliers) {
+   assert(multipliers.size() >= this->number_constraints);
    double* ampl_multipliers0 = this->asl_->i.pi0_;
-   std::vector<double> multipliers(this->number_constraints);
    for (size_t j = 0; j < this->number_constraints; j++) {
       multipliers[j] = ampl_multipliers0[j];
    }
-   return multipliers;
 }

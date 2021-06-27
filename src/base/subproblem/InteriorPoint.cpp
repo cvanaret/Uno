@@ -107,7 +107,8 @@ void InteriorPoint::generate(const Problem& problem, Iterate& current_iterate, d
    copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
    /* compute first- and second-order information */
    problem.evaluate_constraints(current_iterate.x, current_iterate.constraints);
-   for (const auto[j, i]: problem.equality_constraints) {
+   for (const auto& element: problem.equality_constraints) {
+      size_t j = element.first;
       current_iterate.constraints[j] -= problem.constraint_bounds[j].lb;
    }
    for (const auto[j, i]: problem.inequality_constraints) {
@@ -115,13 +116,17 @@ void InteriorPoint::generate(const Problem& problem, Iterate& current_iterate, d
    }
 
    // constraint Jacobian
-   this->constraints_jacobian = problem.constraints_jacobian(current_iterate.x);
+   for (auto& row: this->constraints_jacobian) {
+      row.clear();
+   }
+   problem.constraints_jacobian(current_iterate.x, this->constraints_jacobian);
    for (const auto[j, i]: problem.inequality_constraints) {
       this->constraints_jacobian[j][problem.number_variables + i] = -1.;
    }
 
    // objective gradient
-   this->objective_gradient = problem.objective_gradient(current_iterate.x);
+   this->objective_gradient.clear();
+   problem.objective_gradient(current_iterate.x, this->objective_gradient);
    for (size_t i: this->lower_bounded_variables) {
       this->objective_gradient[i] -= this->barrier_parameter / (current_iterate.x[i] - this->variables_bounds[i].lb);
    }
@@ -145,6 +150,7 @@ void InteriorPoint::update_objective_multiplier(const Problem& problem, const It
       clear(this->objective_gradient);
    }
    else if (objective_multiplier < 1.) {
+      this->objective_gradient = current_iterate.objective_gradient;
       scale(this->objective_gradient, objective_multiplier);
    }
 }

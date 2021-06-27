@@ -42,10 +42,10 @@ public:
 private:
    /* barrier parameter */
    double barrier_parameter{0.1};
-   std::unique_ptr<HessianEvaluation> hessian_evaluation;
-   std::unique_ptr<LinearSolver> linear_solver; /*!< Solver that solves the subproblem */
+   const std::unique_ptr<HessianEvaluation> hessian_evaluation;
+   const std::unique_ptr<LinearSolver> linear_solver; /*!< Solver that solves the subproblem */
    /* constants */
-   InteriorPointParameters parameters;
+   const InteriorPointParameters parameters;
 
    /* data structures */
    std::set<size_t> lower_bounded_variables; /* indices of the lower-bounded variables */

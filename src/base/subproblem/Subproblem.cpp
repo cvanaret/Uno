@@ -8,6 +8,7 @@ Subproblem::Subproblem(size_t number_variables, size_t number_constraints) :
       constraints_multipliers(number_constraints),
       // objective_gradient is a SparseVector
       // constraints_jacobian is a vector of SparseVectors
+      constraints_jacobian(number_constraints),
       constraints_bounds(number_constraints),
       number_subproblems_solved(0), subproblem_definition_changed(false) {
 }
@@ -194,17 +195,11 @@ double Subproblem::compute_constraint_violation(const Problem& problem, const It
    return problem.compute_constraint_violation(iterate.constraints, L1_NORM);
 }
 
-void
-Subproblem::compute_residuals(const Problem& problem, Iterate& iterate, double objective_multiplier) const {
+void Subproblem::compute_residuals(const Problem& problem, Iterate& iterate, double objective_multiplier) const {
    iterate.compute_constraints(problem);
    iterate.residuals.constraints = this->compute_constraint_violation(problem, iterate);
    // compute the KKT residual only if the objective multiplier is positive
-   if (0. < objective_multiplier) {
-      iterate.residuals.KKT = Subproblem::compute_first_order_error(problem, iterate, objective_multiplier);
-   }
-   else {
-      iterate.residuals.KKT = Subproblem::compute_first_order_error(problem, iterate, 1.);
-   }
+   iterate.residuals.KKT = Subproblem::compute_first_order_error(problem, iterate, 0. < objective_multiplier ? objective_multiplier : 1.);
    iterate.residuals.FJ = Subproblem::compute_first_order_error(problem, iterate, 0.);
    iterate.residuals.complementarity = this->compute_complementarity_error(problem, iterate, iterate.multipliers);
 }

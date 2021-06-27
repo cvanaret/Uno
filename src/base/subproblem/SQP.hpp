@@ -20,8 +20,8 @@ public:
 
 protected:
    /* use references to allow polymorphism */
-   std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
-   std::unique_ptr<HessianEvaluation> hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
+   const std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
+   const std::unique_ptr<HessianEvaluation> hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
    std::vector<double> initial_point;
 };
 

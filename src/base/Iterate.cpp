@@ -10,9 +10,11 @@ int Iterate::number_eval_jacobian = 0;
 Iterate::Iterate(const std::vector<double>& x, const Multipliers& multipliers) : x(x), multipliers(multipliers),
       objective(std::numeric_limits<double>::infinity()), is_objective_computed(false),
       constraints(multipliers.constraints.size()), are_constraints_computed(false),
-      is_objective_gradient_computed(false), is_constraints_jacobian_computed(false),
+      is_objective_gradient_computed(false),
+      constraints_jacobian(multipliers.constraints.size()), is_constraints_jacobian_computed(false),
       residuals({0., 0., 0., 0.}),
       progress({0., 0.}) {
+   objective_gradient.reserve(x.size());
 }
 
 void Iterate::compute_objective(const Problem& problem) {
@@ -33,14 +35,18 @@ void Iterate::compute_constraints(const Problem& problem) {
 
 void Iterate::compute_objective_gradient(const Problem& problem) {
    if (!this->is_objective_gradient_computed) {
-      this->objective_gradient = problem.objective_gradient(this->x);
+      this->objective_gradient.clear();
+      problem.objective_gradient(this->x, this->objective_gradient);
       this->is_objective_gradient_computed = true;
    }
 }
 
 void Iterate::compute_constraints_jacobian(const Problem& problem) {
    if (!this->is_constraints_jacobian_computed) {
-      this->constraints_jacobian = problem.constraints_jacobian(this->x);
+      for (auto& row: this->constraints_jacobian) {
+         row.clear();
+      }
+      problem.constraints_jacobian(this->x, this->constraints_jacobian);
       this->is_constraints_jacobian_computed = true;
       Iterate::number_eval_jacobian++;
    }

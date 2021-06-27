@@ -16,14 +16,14 @@ public:
    explicit BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, int max_iterations = 30, double backtracking_ratio = 0.5);
 
    Iterate initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
-   std::pair<Iterate, Direction> compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
+   std::tuple<Iterate, double, double> compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
 
    double step_length;
    /* ratio of step length update in ]0, 1[ */
-   double backtracking_ratio;
+   const double backtracking_ratio;
 
 private:
-   double min_step_length;
+   const double min_step_length;
 
    bool termination_();
    void print_iteration_();

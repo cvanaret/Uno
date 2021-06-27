@@ -31,12 +31,14 @@ public:
    double compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, const Direction& direction, double step_length) override;
 
 protected:
-   std::unique_ptr<GlobalizationStrategy> globalization_strategy;
+   const std::unique_ptr<GlobalizationStrategy> globalization_strategy;
    double penalty_parameter;
-   RelaxationParameters parameters;
+   const RelaxationParameters parameters;
    /* problem reformulation with elastic variables. Constraints l <= c(x) = u are reformulated as l <= c(x) - p + n <= u */
    ElasticVariables elastic_variables;
 
+   Direction compute_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate);
+   Direction compute_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double objective_multiplier);
    Direction compute_byrd_steering_rule(Statistics& statistics, const Problem& problem, Iterate& current_iterate);
    void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier);
    static size_t count_elastic_variables(const Problem& problem);

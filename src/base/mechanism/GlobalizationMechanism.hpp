@@ -16,7 +16,7 @@ public:
    virtual ~GlobalizationMechanism() = default;
 
    virtual Iterate initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
-   virtual std::pair<Iterate, Direction> compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate& current_iterate) = 0;
+   virtual std::tuple<Iterate, double, double> compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate& current_iterate) = 0;
 
    [[nodiscard]] int get_hessian_evaluation_count() const;
    [[nodiscard]] int get_number_subproblems_solved() const;

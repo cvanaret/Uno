@@ -50,8 +50,8 @@ public:
    static std::map<FunctionType, std::string> type_to_string;
 
    std::string name;
-   size_t number_variables; /*!< Number of variables */
-   size_t number_constraints; /*!< Number of constraints */
+   const size_t number_variables; /*!< Number of variables */
+   const size_t number_constraints; /*!< Number of constraints */
    FunctionType type;
 
    /* objective */
@@ -59,7 +59,7 @@ public:
    std::string objective_name;
    FunctionType objective_type; /*!< Type of the objective (LINEAR, QUADRATIC, NONLINEAR) */
    [[nodiscard]] virtual double objective(const std::vector<double>& x) const = 0;
-   [[nodiscard]] virtual SparseVector objective_gradient(const std::vector<double>& x) const = 0;
+   virtual void objective_gradient(const std::vector<double>& x, SparseVector& gradient) const = 0;
 
    /* variables */
    std::vector<std::string> variables_names;
@@ -83,11 +83,11 @@ public:
    [[nodiscard]] virtual double evaluate_constraint(int j, const std::vector<double>& x) const = 0;
    virtual void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const = 0;
    virtual void constraint_gradient(const std::vector<double>& x, int j, SparseVector& gradient) const = 0;
-   [[nodiscard]] virtual std::vector<SparseVector> constraints_jacobian(const std::vector<double>& x) const = 0;
+   virtual void constraints_jacobian(const std::vector<double>& x, std::vector<SparseVector>& constraints_jacobian) const = 0;
    virtual void lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
          CSCMatrix& hessian) const = 0;
-   virtual std::vector<double> primal_initial_solution() = 0;
-   virtual std::vector<double> dual_initial_solution() = 0;
+   virtual void set_initial_primal_point(std::vector<double>& x) = 0;
+   virtual void set_initial_dual_point(std::vector<double>& multipliers) = 0;
 
    // auxiliary functions
    [[nodiscard]] std::vector<double> evaluate_constraints(const std::vector<double>& x) const;
@@ -108,12 +108,12 @@ public:
          std::vector<double> (* objective_gradient)(std::vector<double> x));
 
    double objective(const std::vector<double>& x) const override;
-   SparseVector objective_gradient(const std::vector<double>& x) const override;
+   void objective_gradient(const std::vector<double>& x, SparseVector& gradient) const override;
 
    double evaluate_constraint(int j, const std::vector<double>& x) const override;
    void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const override;
    void constraint_gradient(const std::vector<double>& x, int j, SparseVector& gradient) const override;
-   std::vector<SparseVector> constraints_jacobian(const std::vector<double>& x) const override;
+   void constraints_jacobian(const std::vector<double>& x, std::vector<SparseVector>& constraints_jacobian) const override;
 
    void lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
          CSCMatrix& hessian) const override;
@@ -126,8 +126,8 @@ public:
    void add_constraint(std::string name, Range& bounds, FunctionType type);
 
    /* initial point */
-   std::vector<double> primal_initial_solution() override;
-   std::vector<double> dual_initial_solution() override;
+   void set_initial_primal_point(std::vector<double>& x) override;
+   void set_initial_dual_point(std::vector<double>& multipliers) override;
 
 private:
    double (* objective_)(std::vector<double> x);

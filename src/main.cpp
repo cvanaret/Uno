@@ -10,6 +10,7 @@
 #include "GlobalizationStrategyFactory.hpp"
 #include "GlobalizationMechanismFactory.hpp"
 #include <ConstraintRelaxationStrategyFactory.hpp>
+#include <cassert>
 #include "FeasibilityRestoration.hpp"
 #include "Uno.hpp"
 #include "Logger.hpp"
@@ -18,41 +19,44 @@
 
 // new overload to track heap allocations
 
-/*
+size_t total_allocations = 0;
+
 void* operator new(size_t size) {
-   std::cout << "   Allocating " << size << " bytes\n";
+   //std::cout << "Allocating " << size << " bytes\n";
+   total_allocations += size;
    return malloc(size);
 }
-*/
 
 
 void run_uno(const std::string& problem_name, const std::map<std::string, std::string>& options) {
-   // generate Hessians with a Fortran indexing (starting at 1) that is supported by solvers
-   int fortran_indexing = 1;
-
    // TODO: use a factory
-   std::unique_ptr<Problem> problem = std::make_unique<AMPLModel>(problem_name, fortran_indexing);
+   // AMPL model (Hessian with a Fortran indexing starting at 1)
+   auto problem = std::make_unique<AMPLModel>(problem_name, 1);
+   std::cout << "Heap allocations after AMPL: " << total_allocations << "\n";
 
    /* create the constraint relaxation strategy and the subproblem */
    bool use_trust_region = (options.at("mechanism") == "TR");
-   std::unique_ptr<ConstraintRelaxationStrategy> constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(options.at
-         ("constraint-relaxation"), *problem, options, use_trust_region);
+   auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(options.at("constraint-relaxation"), *problem, options,
+         use_trust_region);
+   std::cout << "Heap allocations after ConstraintRelax, Subproblem and Solver: " << total_allocations << "\n";
 
    /* create the globalization mechanism */
-   std::unique_ptr<GlobalizationMechanism> mechanism = GlobalizationMechanismFactory::create(options.at("mechanism"),
-         *constraint_relaxation_strategy, options);
+   auto mechanism = GlobalizationMechanismFactory::create(options.at("mechanism"), *constraint_relaxation_strategy, options);
+   std::cout << "Heap allocations after Mechanism: " << total_allocations << "\n";
 
    double tolerance = std::stod(options.at("tolerance"));
    int max_iterations = std::stoi(options.at("max_iterations"));
-   bool preprocessing = (options.at("preprocessing") == "yes");
+   bool use_preprocessing = (options.at("preprocessing") == "yes");
    Uno uno = Uno(*mechanism, tolerance, max_iterations);
 
    /* initial primal and dual points */
-   std::vector<double> x = problem->primal_initial_solution();
+   std::vector<double> x(problem->number_variables);
    Multipliers multipliers(problem->number_variables, problem->number_constraints);
-   multipliers.constraints = problem->dual_initial_solution();
+   problem->set_initial_primal_point(x);
+   problem->set_initial_dual_point(multipliers.constraints);
 
-   Result result = uno.solve(*problem, x, multipliers, preprocessing);
+   std::cout << "Heap allocations before solving: " << total_allocations << "\n";
+   Result result = uno.solve(*problem, x, multipliers, use_preprocessing);
 
    /* remove auxiliary variables */
    result.solution.x.resize(problem->number_variables);
@@ -60,6 +64,7 @@ void run_uno(const std::string& problem_name, const std::map<std::string, std::s
    result.solution.multipliers.upper_bounds.resize(problem->number_variables);
    bool print_solution = (options.at("print_solution") == "yes");
    result.display(print_solution);
+   std::cout << "Heap allocations: " << total_allocations << "\n";
 }
 
 std::map<std::string, std::string> get_command_options(int argc, char* argv[], std::map<std::string, std::string>& options) {

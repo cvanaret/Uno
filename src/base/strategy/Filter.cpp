@@ -8,7 +8,6 @@ Filter::Filter(FilterConstants& constants) : constants(constants) {
 
 void Filter::reset() {
    /* initialize the maximum filter size (not critical) */
-   this->max_size = 50;
    this->upper_bound = INFINITY;
    this->entries_.clear();
 }

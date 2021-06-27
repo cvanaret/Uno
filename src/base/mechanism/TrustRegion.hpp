@@ -22,11 +22,11 @@ public:
    TrustRegion(ConstraintRelaxationStrategy& constraint_relaxation_strategy, double initial_radius, int max_iterations);
 
    Iterate initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
-   std::pair<Iterate, Direction> compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
+   std::tuple<Iterate, double, double> compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
    static void rectify_active_set(Direction& direction, double radius);
 
 private:
-   double activity_tolerance_;
+   const double activity_tolerance_;
 
    void add_statistics(Statistics& statistics, const Direction& direction);
    bool termination();
