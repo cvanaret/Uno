@@ -97,12 +97,11 @@ double Problem::compute_constraint_violation(const std::vector<double>& constrai
 /* compute ||c_S|| for a given set S */
 double Problem::compute_constraint_violation(const std::vector<double>& constraints, const std::vector<int>& constraint_set, Norm residual_norm)
 const {
-   // TODO change that!!
-   SparseVector residuals;
-   for (int j: constraint_set) {
-      residuals[j] = this->compute_constraint_violation(constraints[j], j);
-   }
-   return norm(residuals, residual_norm);
+   auto residual_function = [&](size_t k) {
+      int j = constraint_set[k];
+      return this->compute_constraint_violation(constraints[j], j);
+   };
+   return norm(residual_function, constraint_set.size(), residual_norm);
 }
 
 /* native C++ problem */

@@ -96,7 +96,7 @@ void Statistics::print_current_line() {
       if (0 < k) {
          std::cout << Statistics::symbols["middle"];
       }
-      std::string header = element.second;
+      const std::string& header = element.second;
       size_t size;
       try {
          std::string value = this->current_line_.at(header);

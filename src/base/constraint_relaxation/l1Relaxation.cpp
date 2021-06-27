@@ -1,3 +1,4 @@
+#include <cassert>
 #include "l1Relaxation.hpp"
 #include "GlobalizationStrategyFactory.hpp"
 #include "SubproblemFactory.hpp"
@@ -55,6 +56,7 @@ Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, const
 }
 
 Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Direction& /*direction*/) {
+   this->update_objective_multiplier(problem, current_iterate, 0.);
    return this->subproblem->compute_direction(statistics, problem, current_iterate);
 }
 
@@ -92,18 +94,35 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
 void l1Relaxation::update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) {
    this->subproblem->update_objective_multiplier(problem, current_iterate, objective_multiplier);
    // add the positive elastic variables
-   for (const auto& [j, i]: elastic_variables.positive) {
+   for (const auto& element: elastic_variables.positive) {
+      const size_t i = element.second;
       this->subproblem->objective_gradient[i] = 1.;
    }
    // add the negative elastic variables
-   for (const auto& [j, i]: elastic_variables.negative) {
+   for (const auto& element: elastic_variables.negative) {
+      const size_t i = element.second;
       this->subproblem->objective_gradient[i] = 1.;
    }
 }
 
+Direction l1Relaxation::compute_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
+   Direction direction = this->subproblem->compute_direction(statistics, problem, current_iterate);
+   assert(direction.constraint_partition.infeasible.empty() && "Infeasible constraints found, although direction is feasible");
+   direction.objective_multiplier = this->penalty_parameter;
+   return direction;
+}
+
+Direction l1Relaxation::compute_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
+   this->update_objective_multiplier(problem, current_iterate, objective_multiplier);
+   Direction direction = this->subproblem->compute_direction(statistics, problem, current_iterate);
+   assert(direction.constraint_partition.infeasible.empty() && "Infeasible constraints found, although direction is feasible");
+   direction.objective_multiplier = objective_multiplier;
+   return direction;
+}
+
 Direction l1Relaxation::compute_byrd_steering_rule(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
    /* stage a: compute the step within trust region */
-   Direction direction = this->subproblem->compute_direction(statistics, problem, current_iterate);
+   Direction direction = this->compute_direction(statistics, problem, current_iterate);
 
    /* penalty update: if penalty parameter is already 0, no need to decrease it */
    if (0. < this->penalty_parameter) {
@@ -113,24 +132,21 @@ Direction l1Relaxation::compute_byrd_steering_rule(Statistics& statistics, const
 
       // if problem had to be relaxed
       if (linearized_residual != 0.) {
-         double current_penalty_parameter = this->penalty_parameter;
+         const double current_penalty_parameter = this->penalty_parameter;
 
          /* stage c: solve the ideal l1 penalty problem with a zero penalty (no objective) */
          DEBUG << "Compute ideal solution (param = 0):\n";
-         this->update_objective_multiplier(problem, current_iterate, 0.);
-         Direction ideal_direction = this->subproblem->compute_direction(statistics, problem, current_iterate);
-         ideal_direction.objective_multiplier = 0.;
+         Direction ideal_direction = this->compute_direction(statistics, problem, current_iterate, 0.);
 
          /* compute the ideal error (with a zero penalty parameter) */
-         double ideal_error = this->compute_error(problem, current_iterate, ideal_direction.multipliers, 0.);
+         const double ideal_error = this->compute_error(problem, current_iterate, ideal_direction.multipliers, 0.);
          DEBUG << "Ideal error: " << ideal_error << "\n";
-
          if (ideal_error == 0.) {
             /* stage f: update the penalty parameter */
             this->penalty_parameter = 0.;
          }
          else {
-            double ideal_linearized_residual = this->compute_linearized_constraint_residual(ideal_direction.x);
+            const double ideal_linearized_residual = this->compute_linearized_constraint_residual(ideal_direction.x);
             DEBUG << "Linearized residual mk(dk): " << ideal_linearized_residual << "\n\n";
 
             /* decrease penalty parameter to satisfy 2 conditions */
@@ -159,9 +175,7 @@ Direction l1Relaxation::compute_byrd_steering_rule(Statistics& statistics, const
                   }
                   else {
                      DEBUG << "\nAttempting to solve with penalty parameter " << this->penalty_parameter << "\n";
-                     this->update_objective_multiplier(problem, current_iterate, this->penalty_parameter);
-                     direction = this->subproblem->compute_direction(statistics, problem, current_iterate);
-                     ideal_direction.objective_multiplier = this->penalty_parameter;
+                     direction = this->compute_direction(statistics, problem, current_iterate, this->penalty_parameter);
 
                      linearized_residual = this->compute_linearized_constraint_residual(direction.x);
                      DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
@@ -174,9 +188,7 @@ Direction l1Relaxation::compute_byrd_steering_rule(Statistics& statistics, const
             double term = ideal_error / std::max(1., current_iterate.progress.feasibility);
             this->penalty_parameter = std::min(this->penalty_parameter, term * term);
             if (this->penalty_parameter < updated_penalty_parameter) {
-               this->update_objective_multiplier(problem, current_iterate, this->penalty_parameter);
-               direction = this->subproblem->compute_direction(statistics, problem, current_iterate);
-               ideal_direction.objective_multiplier = this->penalty_parameter;
+               direction = this->compute_direction(statistics, problem, current_iterate, this->penalty_parameter);
             }
 
          } // end else
@@ -222,7 +234,6 @@ void l1Relaxation::generate_elastic_variables(const Problem& problem) {
       }
    }
 }
-
 
 double l1Relaxation::compute_linearized_constraint_residual(std::vector<double>& direction) {
    double residual = 0.;

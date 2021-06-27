@@ -28,8 +28,8 @@ public:
     virtual ~Filter() = default;
 
     double upper_bound{INFINITY}; /*!< Upper bound on constraint violation */
-    size_t max_size{50}; /*!< Max filter size */
-    FilterConstants constants; /*!< Set of constants */
+    const size_t max_size{50}; /*!< Max filter size */
+    const FilterConstants constants; /*!< Set of constants */
 
     void reset();
     virtual void add(double infeasibility_measure, double optimality_measure);

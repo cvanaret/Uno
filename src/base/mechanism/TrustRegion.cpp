@@ -19,7 +19,8 @@ Iterate TrustRegion::initialize(Statistics& statistics, const Problem& problem, 
    return first_iterate;
 }
 
-std::pair<Iterate, Direction> TrustRegion::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
+std::tuple<Iterate, double, double> TrustRegion::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate&
+current_iterate) {
    this->number_iterations = 0;
 
    while (!this->termination()) {
@@ -51,7 +52,7 @@ std::pair<Iterate, Direction> TrustRegion::compute_acceptable_iterate(Statistics
             if (direction.norm >= this->radius - this->activity_tolerance_) {
                this->radius *= 2.;
             }
-            return std::make_pair(trial_iterate, direction);
+            return std::make_tuple(std::move(trial_iterate), direction.norm, direction.objective_multiplier);
          }
          else {
             /* if the step is rejected, decrease the radius */

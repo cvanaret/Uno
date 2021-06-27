@@ -20,7 +20,7 @@ public:
    void notify(Iterate& current_iterate) override;
 
 private:
-   double decrease_fraction_;
+   const double decrease_fraction_{1e-8};
 };
 
 #endif // PENALTYMERITFUNCTION_H

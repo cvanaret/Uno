@@ -6,7 +6,7 @@
  * http://epubs.siam.org/doi/pdf/10.1137/080738222
  */
 
-l1MeritFunction::l1MeritFunction() : GlobalizationStrategy(), decrease_fraction_(1e-8) {
+l1MeritFunction::l1MeritFunction() : GlobalizationStrategy() {
 }
 
 void l1MeritFunction::initialize(Statistics& statistics, const Iterate& /*first_iterate*/) {

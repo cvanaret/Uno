@@ -48,8 +48,8 @@ public:
    virtual int get_hessian_evaluation_count() const = 0;
    virtual void set_initial_point(const std::vector<double>& initial_point) = 0;
 
-   size_t number_variables;
-   size_t number_constraints;
+   const size_t number_variables;
+   const size_t number_constraints;
    // when the subproblem is reformulated (e.g. when slacks are introduced), the bounds may be altered
    std::vector<Range> variables_bounds;
    std::vector<double> constraints_multipliers;

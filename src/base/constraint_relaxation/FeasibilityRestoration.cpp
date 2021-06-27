@@ -32,11 +32,13 @@ void FeasibilityRestoration::generate_subproblem(const Problem& problem, Iterate
 Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
    // solve the original subproblem
    Direction direction = this->subproblem->compute_direction(statistics, problem, current_iterate);
+   DEBUG << direction;
 
    if (direction.status != INFEASIBLE) {
       direction.objective_multiplier = problem.objective_sign;
    }
    else {
+      assert(!direction.constraint_partition.infeasible.empty() && "Infeasible direction requires infeasible constraints");
       ConstraintPartition constraint_partition = direction.constraint_partition;
       // infeasible subproblem: form the feasibility problem
       this->form_feasibility_problem(problem, current_iterate, direction.x, constraint_partition);
@@ -45,6 +47,7 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
       direction.objective_multiplier = 0.;
       direction.constraint_partition = constraint_partition;
       direction.is_relaxed = true;
+      DEBUG << direction;
    }
    return direction;
 }

@@ -20,7 +20,8 @@ Iterate BacktrackingLineSearch::initialize(Statistics& statistics, const Problem
    return first_iterate;
 }
 
-std::pair<Iterate, Direction> BacktrackingLineSearch::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
+std::tuple<Iterate, double, double> BacktrackingLineSearch::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate&
+current_iterate) {
    /* compute the directions */
    this->relaxation_strategy.generate_subproblem(problem, current_iterate, INFINITY);
    Direction direction = this->relaxation_strategy.compute_feasible_direction(statistics, problem, current_iterate);
@@ -41,7 +42,7 @@ std::pair<Iterate, Direction> BacktrackingLineSearch::compute_acceptable_iterate
          // check whether the trial step is accepted
          if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate, direction, this->step_length)) {
             this->add_statistics(statistics, direction);
-            return std::make_pair(trial_iterate, direction);
+            return std::make_tuple(std::move(trial_iterate), direction.norm, direction.objective_multiplier);
          }
          /* decrease the step length */
          this->update_step_length();

@@ -18,9 +18,12 @@ void SQP::generate(const Problem& problem, Iterate& current_iterate, double obje
    copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
    /* compute first- and second-order information */
    problem.evaluate_constraints(current_iterate.x, current_iterate.constraints);
-   this->constraints_jacobian = problem.constraints_jacobian(current_iterate.x);
-
-   this->objective_gradient = problem.objective_gradient(current_iterate.x);
+   for (auto& row: this->constraints_jacobian) {
+      row.clear();
+   }
+   problem.constraints_jacobian(current_iterate.x, this->constraints_jacobian);
+   this->objective_gradient.clear();
+   problem.objective_gradient(current_iterate.x, this->objective_gradient);
    this->update_objective_multiplier(problem, current_iterate, objective_multiplier);
 
    /* bounds of the variables */
@@ -42,7 +45,7 @@ void SQP::update_objective_multiplier(const Problem& problem, const Iterate& cur
       clear(this->objective_gradient);
    }
    else if (objective_multiplier < 1.) {
-      this->objective_gradient = problem.objective_gradient(current_iterate.x);
+      this->objective_gradient = current_iterate.objective_gradient;
       scale(this->objective_gradient, objective_multiplier);
    }
    clear(this->initial_point);
@@ -53,28 +56,10 @@ void SQP::set_initial_point(const std::vector<double>& point) {
 }
 
 Direction SQP::compute_direction(Statistics& /*statistics*/, const Problem& /*problem*/, Iterate& /*current_iterate*/) {
-   /*
-   std::cout << "Hessian:\n" << this->hessian_evaluation->hessian << "\n";
-   std::cout << "Obj gradient: "; print_vector(std::cout, this->objective_gradient);
-   std::cout << "Variables bounds:\n";
-   for (const Range range: variables_bounds) {
-      std::cout << range.lb << ", " << range.ub << "\n";
-   }
-   std::cout << "Constraints bounds:\n";
-   for (const Range range: constraints_bounds) {
-      std::cout << range.lb << ", " << range.ub << "\n";
-   }
-   for (size_t j = 0; j < this->constraints_jacobian.size(); j++) {
-      std::cout << "Constraint " << j << " gradient: "; print_vector(std::cout, this->constraints_jacobian[j]);
-   }
-   std::cout << "Initial point: "; print_vector(std::cout, this->initial_point);
-    */
-
    /* compute QP direction */
    Direction direction = this->solver->solve_QP(this->variables_bounds, this->constraints_bounds, this->objective_gradient,
          this->constraints_jacobian, this->hessian_evaluation->hessian, this->initial_point);
    this->number_subproblems_solved++;
-   DEBUG << direction;
    return direction;
 }
 

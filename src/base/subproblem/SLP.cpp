@@ -11,9 +11,13 @@ void SLP::generate(const Problem& problem, Iterate& current_iterate, double obje
    copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
    /* compute first- and second-order information */
    problem.evaluate_constraints(current_iterate.x, current_iterate.constraints);
-   this->constraints_jacobian = problem.constraints_jacobian(current_iterate.x);
+   for (auto& row: this->constraints_jacobian) {
+      row.clear();
+   }
+   problem.constraints_jacobian(current_iterate.x, this->constraints_jacobian);
 
-   this->objective_gradient = problem.objective_gradient(current_iterate.x);
+   this->objective_gradient.clear();
+   problem.objective_gradient(current_iterate.x, this->objective_gradient);
    this->update_objective_multiplier(problem, current_iterate, objective_multiplier);
 
    /* bounds of the variables */
@@ -26,16 +30,16 @@ void SLP::generate(const Problem& problem, Iterate& current_iterate, double obje
    clear(this->initial_point);
 }
 
-void SLP::update_objective_multiplier(const Problem& /*problem*/, const Iterate& /*current_iterate*/, double objective_multiplier) {
+void SLP::update_objective_multiplier(const Problem& /*problem*/, const Iterate& current_iterate, double objective_multiplier) {
    // scale objective gradient
    if (objective_multiplier == 0.) {
       clear(this->objective_gradient);
    }
-   else {
-      if (objective_multiplier < 1.) {
-         scale(this->objective_gradient, objective_multiplier);
-      }
+   else if (objective_multiplier < 1.) {
+      this->objective_gradient = current_iterate.objective_gradient;
+      scale(this->objective_gradient, objective_multiplier);
    }
+   clear(this->initial_point);
 }
 
 void SLP::set_initial_point(const std::vector<double>& point) {
@@ -47,7 +51,6 @@ Direction SLP::compute_direction(Statistics& /*statistics*/, const Problem& /*pr
    Direction direction = this->solver->solve_LP(variables_bounds, constraints_bounds, this->objective_gradient,
          this->constraints_jacobian,this->initial_point);
    this->number_subproblems_solved++;
-   DEBUG << direction;
    return direction;
 }
 

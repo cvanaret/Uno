@@ -28,7 +28,7 @@ public:
    FilterStrategy(FilterStrategyParameters& strategy_constants, const std::map<std::string, std::string>& options);
 
    /* use pointers to allow polymorphism */
-   std::unique_ptr<Filter> filter;
+   const std::unique_ptr<Filter> filter;
    double initial_filter_upper_bound;
 
    void initialize(Statistics& statistics, const Iterate& first_iterate) override;
@@ -38,7 +38,7 @@ public:
    void notify(Iterate& current_iterate) override;
 
 private:
-   FilterStrategyParameters parameters_; /*!< Set of constants */
+   const FilterStrategyParameters parameters_; /*!< Set of constants */
 };
 
 #endif // FILTERSTRATEGY_H

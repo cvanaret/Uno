@@ -32,18 +32,12 @@ void FilterStrategy::notify(Iterate& current_iterate) {
  * */
 bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, ProgressMeasures& current_progress, ProgressMeasures& trial_progress,
       double /*objective_multiplier*/, double predicted_reduction) {
+   DEBUG << "Current: η = " << current_progress.feasibility << ", ω = " << current_progress.objective << "\n";
+   DEBUG << "Trial:   η = " << trial_progress.feasibility << ", ω = " << trial_progress.objective << "\n";
+   DEBUG << "Predicted reduction (should be positive): " << predicted_reduction << "\n";
+   DEBUG << *this->filter << "\n";
+
    bool accept = false;
-
-   //DEBUG << "Current: η = " << current_progress.feasibility << ", ω = " << current_progress.objective << "\n";
-   //DEBUG << "Trial:   η = " << trial_progress.feasibility << ", ω = " << trial_progress.objective << "\n";
-   //DEBUG << "Predicted reduction (should be positive): " << predicted_reduction << "\n";
-
-   //std::cout << "Current: η = " << current_progress.feasibility << ", ω = " << current_progress.objective << "\n";
-   //std::cout << "Trial:   η = " << trial_progress.feasibility << ", ω = " << trial_progress.objective << "\n";
-   //std::cout << "Predicted reduction (should be positive): " << predicted_reduction << "\n";
-
-   //DEBUG << *this->filter << "\n";
-
    /* check acceptance */
    bool acceptable = filter->accept(trial_progress.feasibility, trial_progress.objective);
    if (acceptable) {

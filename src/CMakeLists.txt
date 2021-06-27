@@ -18,7 +18,7 @@ enable_language(CXX C Fortran)
 
 #set(CMAKE_Fortran_FLAGS "-cpp")
 set(CMAKE_CXX_FLAGS "-Wall -Wextra")
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_DEBUG "-pg")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 # directories

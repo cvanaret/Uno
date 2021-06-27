@@ -10,7 +10,7 @@ Uno::Uno(GlobalizationMechanism& globalization_mechanism, double tolerance, int 
       globalization_mechanism), tolerance(tolerance), max_iterations(max_iterations) {
 }
 
-Result Uno::solve(const Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool preprocessing) {
+Result Uno::solve(const Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_preprocessing) {
    Timer timer{};
    timer.start();
    int major_iterations = 0;
@@ -21,7 +21,7 @@ Result Uno::solve(const Problem& problem, std::vector<double>& x, Multipliers& m
 
    /* project x into the bounds */
    problem.project_point_in_bounds(x);
-   if (preprocessing) {
+   if (use_preprocessing) {
       /* preprocessing phase: satisfy linear constraints */
       Preprocessing::apply(problem, x, multipliers);
    }
@@ -40,13 +40,13 @@ Result Uno::solve(const Problem& problem, std::vector<double>& x, Multipliers& m
          DEBUG << "Current iterate\n" << current_iterate << "\n";
 
          /* compute an acceptable iterate by solving a subproblem at the current point */
-         auto [new_iterate, direction] = this->globalization_mechanism.compute_acceptable_iterate(statistics, problem, current_iterate);
+         auto [new_iterate, direction_norm, objective_multiplier] = this->globalization_mechanism.compute_acceptable_iterate(statistics, problem, current_iterate);
 
          Uno::add_statistics(statistics, new_iterate, major_iterations);
          if (Logger::logger_level == INFO) statistics.print_current_line();
 
          // compute the status of the new iterate
-         termination_status = this->check_termination(problem, new_iterate, direction.norm, direction.objective_multiplier);
+         termination_status = this->check_termination(problem, new_iterate, direction_norm, objective_multiplier);
          current_iterate = new_iterate;
       }
    }
@@ -62,7 +62,7 @@ Result Uno::solve(const Problem& problem, std::vector<double>& x, Multipliers& m
    int number_subproblems_solved = this->globalization_mechanism.get_number_subproblems_solved();
    int hessian_evaluation_count = this->globalization_mechanism.get_hessian_evaluation_count();
    Result result =
-         {termination_status, current_iterate, problem.number_variables, problem.number_constraints, major_iterations, timer.get_time(),
+         {termination_status, std::move(current_iterate), problem.number_variables, problem.number_constraints, major_iterations, timer.get_time(),
           Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_jacobian, hessian_evaluation_count,
           number_subproblems_solved};
    return result;
