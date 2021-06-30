@@ -281,17 +281,18 @@ void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objectiv
    (*(this->asl_)->p.Xknown)(this->asl_, (double*) x.data(), 0);
 
    /* set the multiplier for the objective function */
-   int objective_number = (objective_multiplier != 0.) ? 0 : -1;
-   double* objective_multiplier_pointer = (objective_multiplier != 0.) ? &objective_multiplier : NULL;
-   int upper_triangular = 1;
+   int objective_number = -1;
+   double* objective_multiplier_pointer = (objective_multiplier != 0.) ? &objective_multiplier : nullptr;
 
    /* compute the sparsity */
    bool all_zeros_multipliers = are_all_zeros(multipliers);
-   size_t number_non_zeros = (*(this->asl_)->p.Sphset)(this->asl_, NULL, objective_number, (objective_multiplier > 0.),
+   int upper_triangular = 1;
+   size_t number_non_zeros = (*(this->asl_)->p.Sphset)(this->asl_, nullptr, objective_number, (objective_multiplier > 0.),
          !all_zeros_multipliers, upper_triangular);
    assert(hessian.capacity >= number_non_zeros);
 
    /* evaluate the Hessian */
+   clear(hessian.matrix);
    (*(this->asl_)->p.Sphes)(this->asl_, 0, hessian.matrix.data(), objective_number, objective_multiplier_pointer,
          all_zeros_multipliers ? nullptr : (double*) multipliers.data());
    hessian.number_nonzeros = number_non_zeros;
