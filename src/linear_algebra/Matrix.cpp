@@ -1,6 +1,7 @@
 #include <exception>
 #include <cmath>
 #include <cassert>
+#include <iomanip>
 #include "Matrix.hpp"
 #include "Vector.hpp"
 
@@ -10,7 +11,7 @@ dimension(dimension), number_nonzeros(0), capacity(capacity), fortran_indexing(f
 
 double Matrix::quadratic_product(const std::vector<double>& x, const std::vector<double>& y) {
    if (x.size() != y.size()) {
-      throw std::length_error("COOMatrix::quadratic_product: x and y have different sizes");
+      throw std::length_error("Matrix::quadratic_product: x and y have different sizes");
    }
 
    std::vector<double> hy = this->product(y); // H*y
@@ -145,6 +146,27 @@ std::vector<double> CSCMatrix::product(const std::vector<double>& vector) {
    return result;
 }
 
+double CSCMatrix::quadratic_product(const std::vector<double>& x, const std::vector<double>& y) {
+   if (x.size() != y.size()) {
+      throw std::length_error("CSCMatrix::quadratic_product: x and y have different sizes");
+   }
+
+   double result = 0.;
+   for (size_t j = 0; j < this->dimension; j++) {
+      for (size_t k = this->column_start[j] - this->fortran_indexing; k < this->column_start[j + 1] - this->fortran_indexing; k++) {
+         size_t i = this->row_number[k] - this->fortran_indexing;
+
+         if (i == j) {
+            result += this->matrix[k]*x[i]*y[i];
+         }
+         else { // i < j
+            result += 2*this->matrix[k]*x[i]*y[j];
+         }
+      }
+   }
+   return result;
+}
+
 CSCMatrix CSCMatrix::add_identity_multiple(double multiple) {
    /* initialize the damped matrix */
    std::vector<double> damped_matrix;
@@ -254,24 +276,24 @@ CSCMatrix CSCMatrix::identity(size_t dimension, short fortran_indexing) {
 }
 
 std::ostream& operator<<(std::ostream& stream, CSCMatrix& matrix) {
-   /* Hessian */
+   stream << matrix.number_nonzeros << " non zeros\n";
    stream << "W = ";
    print_vector(stream, matrix.matrix, '\n', 0, matrix.number_nonzeros);
    stream << "with column start: ";
-   print_vector(stream, matrix.column_start, '\n', 0, matrix.number_nonzeros);
+   print_vector(stream, matrix.column_start, '\n', 0, matrix.dimension + 1);
    stream << "and row number: ";
    print_vector(stream, matrix.row_number, '\n', 0, matrix.number_nonzeros);
    return stream;
 }
 
 std::ostream& operator<<(std::ostream& stream, const CSCMatrix& matrix) {
-   /* Hessian */
+   stream << matrix.number_nonzeros << " non zeros\n";
    stream << "W = ";
-   print_vector(stream, matrix.matrix);
+   print_vector(stream, matrix.matrix, '\n', 0, matrix.number_nonzeros);
    stream << "with column start: ";
-   print_vector(stream, matrix.column_start);
+   print_vector(stream, matrix.column_start, '\n', 0, matrix.dimension + 1);
    stream << "and row number: ";
-   print_vector(stream, matrix.row_number);
+   print_vector(stream, matrix.row_number, '\n', 0, matrix.number_nonzeros);
    return stream;
 }
 
