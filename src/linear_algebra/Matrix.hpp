@@ -20,7 +20,7 @@ public:
    virtual void insert(double term, size_t row_index, size_t column_index) = 0;
    virtual std::vector<double> product(const std::vector<double>& vector) = 0;
 
-   double quadratic_product(const std::vector<double>& x, const std::vector<double>& y);
+   virtual double quadratic_product(const std::vector<double>& x, const std::vector<double>& y);
    void add_outer_product(const SparseVector& x, double scaling_factor = 1.);
 };
 
@@ -60,6 +60,7 @@ public:
 
    void insert(double term, size_t row_index, size_t column_index) override;
    std::vector<double> product(const std::vector<double>& vector) override;
+   double quadratic_product(const std::vector<double>& x, const std::vector<double>& y) override;
 
    CSCMatrix add_identity_multiple(double multiple);
    double smallest_diagonal_entry();
