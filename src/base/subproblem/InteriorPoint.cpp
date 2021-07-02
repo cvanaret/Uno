@@ -57,10 +57,10 @@ Iterate InteriorPoint::generate_initial_iterate(Statistics& statistics, const Pr
 
    /* set the bound multipliers */
    for (size_t i: this->lower_bounded_variables) {
-      multipliers.lower_bounds[i] = this->default_multiplier_; // positive multiplier
+      multipliers.lower_bounds[i] = this->default_multiplier_;
    }
    for (size_t i: this->upper_bounded_variables) {
-      multipliers.upper_bounds[i] = -this->default_multiplier_; // negative multiplier
+      multipliers.upper_bounds[i] = -this->default_multiplier_;
    }
 
    /* generate the first iterate */
@@ -201,7 +201,7 @@ Direction InteriorPoint::compute_direction(Statistics& statistics, const Problem
    //   }
 }
 
-void InteriorPoint::update_barrier_parameter(Iterate& current_iterate) {
+void InteriorPoint::update_barrier_parameter(const Iterate& current_iterate) {
    /* scaled error terms */
    double sd = this->compute_KKT_error_scaling(current_iterate);
    double KKTerror = current_iterate.residuals.KKT / sd;
@@ -267,7 +267,7 @@ void InteriorPoint::generate_kkt_rhs(const Iterate& current_iterate) {
    DEBUG << "RHS: "; print_vector(DEBUG, this->rhs); DEBUG << "\n";
 }
 
-double InteriorPoint::compute_KKT_error_scaling(Iterate& current_iterate) const {
+double InteriorPoint::compute_KKT_error_scaling(const Iterate& current_iterate) const {
    /* KKT error */
    const double norm_1_constraint_multipliers = norm_1(current_iterate.multipliers.constraints);
    const double norm_1_bound_multipliers = norm_1(current_iterate.multipliers.lower_bounds) + norm_1(current_iterate.multipliers.upper_bounds);
@@ -462,6 +462,7 @@ double InteriorPoint::compute_constraint_violation(const Problem& problem, const
 }
 
 void InteriorPoint::compute_progress_measures(const Problem& problem, Iterate& iterate) {
+   iterate.compute_constraints(problem);
    double constraint_violation = this->compute_constraint_violation(problem, iterate);
    /* compute barrier objective */
    double objective = this->evaluate_barrier_function(problem, iterate);
