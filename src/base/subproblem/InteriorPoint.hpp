@@ -64,7 +64,7 @@ private:
    std::vector<double> lower_delta_z;
    std::vector<double> upper_delta_z;
 
-   void update_barrier_parameter(Iterate& current_iterate);
+   void update_barrier_parameter(const Iterate& current_iterate);
    void set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;
    void factorize(COOMatrix& kkt_matrix, FunctionType problem_type);
    double compute_barrier_directional_derivative(const std::vector<double>& solution);
@@ -79,7 +79,7 @@ private:
    Direction generate_direction(const Problem& problem, const Iterate& current_iterate, std::vector<double>& solution_IPM);
 
    double compute_constraint_violation(const Problem& problem, const Iterate& iterate) const override;
-   double compute_KKT_error_scaling(Iterate& current_iterate) const;
+   double compute_KKT_error_scaling(const Iterate& current_iterate) const;
    double compute_central_complementarity_error(const Iterate& iterate) const;
 };
 
