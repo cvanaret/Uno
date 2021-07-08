@@ -14,25 +14,42 @@
 #include "FeasibilityRestoration.hpp"
 #include "Uno.hpp"
 #include "Logger.hpp"
-//#include "PardisoSolver.hpp"
 
 
 // new overload to track heap allocations
 
 size_t total_allocations = 0;
 
+/*
 void* operator new(size_t size) {
-   //std::cout << "Allocating " << size << " bytes\n";
+   std::cout << "Allocating " << size << " bytes\n";
    total_allocations += size;
    return malloc(size);
 }
-
+*/
 
 void run_uno(const std::string& problem_name, const std::map<std::string, std::string>& options) {
    // TODO: use a factory
    // AMPL model (Hessian with a Fortran indexing starting at 1)
    auto problem = std::make_unique<AMPLModel>(problem_name, 1);
    std::cout << "Heap allocations after AMPL: " << total_allocations << "\n";
+
+//   CSCMatrix hessian(2, 3, 1);
+//   std::vector<double> my_x{-2, 1};
+//   std::vector<double> my_duals{0, 0};
+//
+//   double objective_multiplier = 1.;
+//   problem->lagrangian_hessian(my_x, objective_multiplier, my_duals, hessian);
+//   std::cout << "Hessian:\n" << hessian << "\n";
+//
+//   objective_multiplier = 0.;
+//   problem->lagrangian_hessian(my_x, objective_multiplier, my_duals, hessian);
+//   std::cout << "Hessian:\n" << hessian << "\n";
+//
+//   objective_multiplier = 0.1;
+//   problem->lagrangian_hessian(my_x, objective_multiplier, my_duals, hessian);
+//   std::cout << "Hessian:\n" << hessian << "\n";
+//   assert(false && "STOP HERE");
 
    /* create the constraint relaxation strategy and the subproblem */
    bool use_trust_region = (options.at("mechanism") == "TR");
@@ -256,6 +273,29 @@ void test_sparse_vector() {
    dense_to_sparse(input);
 }
 
+struct PredictedReduction {
+   std::function<double (double)> partial_step{nullptr};
+
+   double evaluate(const Problem& problem, const Direction& direction, double step_length);
+};
+
+double PredictedReduction::evaluate(const Problem& problem, const Direction& direction, double step_length) {
+   if (step_length == 1.) {
+      return -direction.objective;
+   }
+   else {
+      if (this->partial_step == nullptr) {
+         double complicated_stuff = problem.objective(direction.x);
+         std::cout << "COMPLICATED STUFF COMPUTED ONCE\n";
+         // construct a lambda that captures by value
+         this->partial_step = [=](double step_length) {
+            return -step_length*complicated_stuff;
+         };
+      }
+      return this->partial_step(step_length);
+   }
+}
+
 int main(int argc, char* argv[]) {
    if (1 < argc) {
       /* get the default values */
@@ -276,6 +316,17 @@ int main(int argc, char* argv[]) {
          std::string problem_name = std::string(argv[argc - 1]);
          /* run Argonot */
          run_uno(problem_name, options);
+//         const AMPLModel problem = AMPLModel(problem_name, 1);
+//         std::vector<double> x(2);
+//         Multipliers multipliers(2, 2);
+//         Iterate iterate(x, multipliers);
+//         Direction direction(2, 2);
+//         PredictedReduction predicted_reduction;
+//         for (int iteration = 0; iteration < 5; iteration++) {
+//            double step_length = std::pow(2, -iteration);
+//            std::cout << "Step length: " << step_length << "\n";
+//            std::cout << "Predicted reduction: " << predicted_reduction.evaluate(problem, direction, step_length) << "\n";
+//         }
       }
    }
    return EXIT_SUCCESS;

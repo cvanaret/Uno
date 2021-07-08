@@ -20,29 +20,13 @@ enum BQPDMode {
  */
 class BQPDSolver : public QPSolver {
 public:
-   /*!
-    *  Constructor
-    *
-    * \param n: number of variables
-    * \param m: number of constraints
-    */
    BQPDSolver(size_t number_variables, size_t number_constraints, size_t max_number_nonzeros, bool quadratic_programming);
 
-   /*!
-    *  Solve a QP
-    *
-    * \param d0: initial point
-    */
    Direction solve_QP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, SparseVector& linear_objective,
-         std::vector<SparseVector>& constraints_jacobian, CSCMatrix& hessian, std::vector<double>& x);
+         std::vector<SparseVector>& constraints_jacobian, CSCMatrix& hessian, std::vector<double>& x) override;
 
-   /*!
-    *  Solve an LP
-    *
-    * \param d0: initial point
-    */
    Direction solve_LP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, SparseVector& linear_objective,
-         std::vector<SparseVector>& constraints_jacobian, std::vector<double>& x);
+         std::vector<SparseVector>& constraints_jacobian, std::vector<double>& x) override;
 
 private:
    size_t n_, m_;
