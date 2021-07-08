@@ -51,7 +51,7 @@ void MA57Solver::do_symbolic_factorization(const COOMatrix& matrix) {
    std::vector<int> iwork(5 * n);
 
    /* symbolic factorization */
-   std::vector<int> info(40);
+   std::array<int, 40> info{};
    ma57ad_(/* const */ (int*) &n,
          /* const */ (int*) &nnz,
          /* const */ matrix.row_indices.data(),
