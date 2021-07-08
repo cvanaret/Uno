@@ -9,6 +9,7 @@ public:
    static std::map<std::string, std::string> symbols;
    static int int_width;
    static int double_width;
+   static int char_width;
 
    void add_column(const std::string& name, int width, int order);
    void add_statistic(const std::string& name, const std::string& value);

@@ -7,6 +7,10 @@ void ConstraintRelaxationStrategy::update_variables_bounds(const Problem& proble
    this->subproblem->set_trust_region(problem, current_iterate, trust_region_radius);
 }
 
+Direction ConstraintRelaxationStrategy::compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) {
+   return this->subproblem->compute_second_order_correction(problem, trial_iterate);
+}
+
 int ConstraintRelaxationStrategy::get_hessian_evaluation_count() const {
    return this->subproblem->get_hessian_evaluation_count();
 }

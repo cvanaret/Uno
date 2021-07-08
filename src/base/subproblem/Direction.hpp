@@ -3,12 +3,7 @@
 
 #include <ostream>
 #include <vector>
-#include <set>
-#include <functional>
 #include <cmath>
-#include "Vector.hpp"
-#include "Problem.hpp"
-#include "Iterate.hpp"
 #include "Constraint.hpp"
 
 /* see bqpd.f */

@@ -46,10 +46,14 @@ void SLP::set_initial_point(const std::vector<double>& point) {
    copy_from(this->initial_point, point);
 }
 
-Direction SLP::compute_direction(Statistics& /*statistics*/, const Problem& /*problem*/, Iterate& /*current_iterate*/) {
+Direction SLP::compute_direction(Statistics& /*statistics*/, const Problem& problem, Iterate& current_iterate) {
    /* solve the LP */
    Direction direction = this->solver->solve_LP(variables_bounds, constraints_bounds, this->objective_gradient,
          this->constraints_jacobian,this->initial_point);
+   // compute dual displacements (SQP methods compute the new duals, not the displacements)
+   for (size_t j = 0; j < problem.number_constraints; j++) {
+      direction.multipliers.constraints[j] -= current_iterate.multipliers.constraints[j];
+   }
    this->number_subproblems_solved++;
    return direction;
 }

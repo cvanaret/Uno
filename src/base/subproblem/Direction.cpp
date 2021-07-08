@@ -1,14 +1,14 @@
 #include "Direction.hpp"
 #include "Logger.hpp"
+#include "Vector.hpp"
 
 Direction::Direction(size_t number_variables, size_t number_constraints):
    x(number_variables), multipliers(number_variables, number_constraints), constraint_partition(number_constraints) {
 
 }
 
-Direction::Direction(std::vector<double>& x, Multipliers& multipliers) :
-      x(x), multipliers(multipliers),
-      constraint_partition(multipliers.constraints.size()) {
+Direction::Direction(std::vector<double>& x, Multipliers& multipliers) : x(x), multipliers(multipliers), constraint_partition(multipliers
+.constraints.size()) {
    this->active_set.bounds.at_lower_bound.reserve(x.size());
    this->active_set.bounds.at_lower_bound.reserve(x.size());
    this->active_set.constraints.at_lower_bound.reserve(multipliers.constraints.size());

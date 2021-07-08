@@ -2,7 +2,7 @@
 #define SLP_H
 
 #include "Subproblem.hpp"
-#include "QPSolver.hpp"
+#include "LPSolver.hpp"
 
 class SLP : public Subproblem {
 public:
@@ -18,7 +18,7 @@ public:
 
 private:
    /* use references to allow polymorphism */
-   const std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
+   const std::unique_ptr<LPSolver> solver; /*!< Solver that solves the subproblem */
    std::vector<double> initial_point;
 };
 

@@ -4,9 +4,11 @@ GlobalizationMechanism::GlobalizationMechanism(ConstraintRelaxationStrategy& con
       relaxation_strategy(constraint_relaxation_strategy), max_iterations(max_iterations), number_iterations(0) {
 }
 
-Iterate GlobalizationMechanism::assemble_trial_iterate(const Iterate& current_iterate, const Direction& direction, double step_length) {
+Iterate GlobalizationMechanism::assemble_trial_iterate(const Iterate& current_iterate, Direction& direction, double step_length) {
    // TODO do not reevaluate if ||d|| = 0
    add_vectors(current_iterate.x, direction.x, step_length, this->trial_primals_);
+   add_vectors(current_iterate.multipliers.constraints, direction.multipliers.constraints, step_length, this->trial_duals_);
+   direction.multipliers.constraints = this->trial_duals_;
    Iterate trial_iterate(this->trial_primals_, direction.multipliers);
    return trial_iterate;
 }

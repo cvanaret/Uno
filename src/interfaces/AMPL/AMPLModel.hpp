@@ -23,7 +23,7 @@ extern "C" {
 class AMPLModel : public Problem {
 public:
     AMPLModel(std::string file_name, int fortran_indexing);
-    ~AMPLModel();
+    ~AMPLModel() override;
 
     /* objective */
     [[nodiscard]] double objective(const std::vector<double>& x) const override;

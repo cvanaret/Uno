@@ -27,11 +27,16 @@ public:
    virtual void set_trust_region(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
    virtual void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) = 0;
 
+   // direction computation
    virtual Direction compute_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) = 0;
+   virtual Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate);
+
+   // feasibility subproblem
    void compute_feasibility_linear_objective(const Iterate& current_iterate, const ConstraintPartition& constraint_partition);
    void generate_feasibility_bounds(const Problem& problem, const std::vector<double>& current_constraints, const ConstraintPartition&
    constraint_partition);
 
+   // globalization metrics
    virtual double compute_predicted_reduction(const Direction& direction, double step_length) const = 0;
    virtual void compute_progress_measures(const Problem& problem, Iterate& iterate);
 

@@ -45,9 +45,9 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
       // solve the feasibility subproblem
       direction = this->subproblem->compute_direction(statistics, problem, current_iterate);
       direction.objective_multiplier = 0.;
-      direction.constraint_partition = constraint_partition;
       direction.is_relaxed = true;
       DEBUG << direction;
+      direction.constraint_partition = constraint_partition;
    }
    return direction;
 }
@@ -106,6 +106,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
          this->compute_infeasibility_measures(problem, current_iterate, direction.constraint_partition);
          this->phase_1_strategy->notify(current_iterate);
       }
+
 
       if (this->current_phase == FEASIBILITY_RESTORATION) {
          // if restoration phase, recompute progress measures of trial point

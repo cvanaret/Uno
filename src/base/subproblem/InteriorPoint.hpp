@@ -35,6 +35,7 @@ public:
    void set_initial_point(const std::vector<double>& point) override;
 
    Direction compute_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
+   Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) override;
    double compute_predicted_reduction(const Direction& direction, double step_length) const override;
    void compute_progress_measures(const Problem& problem, Iterate& iterate) override;
    int get_hessian_evaluation_count() const override;
@@ -43,6 +44,7 @@ private:
    /* barrier parameter */
    double barrier_parameter{0.1};
    const std::unique_ptr<HessianEvaluation> hessian_evaluation;
+   COOMatrix kkt_matrix;
    const std::unique_ptr<LinearSolver> linear_solver; /*!< Solver that solves the subproblem */
    /* constants */
    const InteriorPointParameters parameters;
@@ -64,13 +66,14 @@ private:
    std::vector<double> lower_delta_z;
    std::vector<double> upper_delta_z;
 
+   void evaluate_constraints(const Problem& problem, Iterate& iterate);
    void update_barrier_parameter(const Iterate& current_iterate);
    void set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;
    void factorize(COOMatrix& kkt_matrix, FunctionType problem_type);
    double compute_barrier_directional_derivative(const std::vector<double>& solution);
    double evaluate_barrier_function(const Problem& problem, Iterate& iterate);
-   double compute_primal_length(const Iterate& current_iterate, const std::vector<double>& ipm_solution, double tau);
-   double compute_dual_length(const Iterate& current_iterate, double tau);
+   double primal_fraction_to_boundary(const Iterate& current_iterate, const std::vector<double>& ipm_solution, double tau);
+   double dual_fraction_to_boundary(const Iterate& current_iterate, double tau);
    COOMatrix assemble_kkt_matrix(const Problem& problem, Iterate& current_iterate);
    void modify_inertia(COOMatrix& kkt_matrix, size_t size_first_block, size_t size_second_block, FunctionType problem_type);
    void generate_kkt_rhs(const Iterate& current_iterate);
