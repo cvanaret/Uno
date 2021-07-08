@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "Direction.hpp"
+#include "SparseVector.hpp"
 
 /*! \class LPSolver
  * \brief LP solver

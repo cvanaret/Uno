@@ -1,6 +1,8 @@
 #include <cmath>
 #include <cassert>
 #include "BQPDSolver.hpp"
+#include "Logger.hpp"
+#include "Vector.hpp"
 
 #define BIG 1e30
 
