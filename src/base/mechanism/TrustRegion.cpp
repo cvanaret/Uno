@@ -15,6 +15,7 @@ Iterate TrustRegion::initialize(Statistics& statistics, const Problem& problem, 
 
    // preallocate trial_iterate
    this->trial_primals_.resize(first_iterate.x.size());
+   this->trial_duals_.resize(multipliers.constraints.size());
 
    return first_iterate;
 }

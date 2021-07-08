@@ -1,3 +1,4 @@
+#include <cassert>
 #include "Subproblem.hpp"
 #include "LinearSolverFactory.hpp"
 
@@ -105,6 +106,8 @@ void Subproblem::compute_least_square_multipliers(const Problem& problem, Iterat
    for (const auto[i, derivative]: current_iterate.objective_gradient) {
       rhs[i] += problem.objective_sign * derivative;
    }
+   DEBUG << "LB duals:\n"; print_vector(DEBUG, current_iterate.multipliers.lower_bounds);
+   DEBUG << "UB duals:\n"; print_vector(DEBUG, current_iterate.multipliers.upper_bounds);
    /* variable bound constraints */
    for (size_t i = 0; i < current_iterate.x.size(); i++) {
       rhs[i] -= current_iterate.multipliers.lower_bounds[i];
@@ -202,4 +205,8 @@ void Subproblem::compute_residuals(const Problem& problem, Iterate& iterate, dou
    iterate.residuals.KKT = Subproblem::compute_first_order_error(problem, iterate, 0. < objective_multiplier ? objective_multiplier : 1.);
    iterate.residuals.FJ = Subproblem::compute_first_order_error(problem, iterate, 0.);
    iterate.residuals.complementarity = this->compute_complementarity_error(problem, iterate, iterate.multipliers);
+}
+
+Direction Subproblem::compute_second_order_correction(const Problem& /*problem*/, Iterate& /*trial_iterate*/) {
+   assert(false && "Subproblem::compute_second_order_correction");
 }

@@ -7,7 +7,8 @@ l1Relaxation::l1Relaxation(Problem& problem, const std::map<std::string, std::st
    ConstraintRelaxationStrategy(SubproblemFactory::create(problem, l1Relaxation::count_elastic_variables(problem),
          options.at("subproblem"), options, use_trust_region)),
    globalization_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
-   penalty_parameter(1.), parameters({10., 0.1, 0.1}) {
+   penalty_parameter(stod(options.at("l1_relaxation_initial_parameter"))),
+   parameters({10., 0.1, 0.1}) {
    // generate elastic variables to relax the constraints
    this->generate_elastic_variables(problem);
 

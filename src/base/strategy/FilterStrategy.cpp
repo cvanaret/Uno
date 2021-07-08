@@ -61,7 +61,8 @@ bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, ProgressMeasur
             accept = true;
          }
          else {
-            DEBUG << "Armijo condition not satisfied\n";
+            DEBUG << "Armijo condition not satisfied: " << actual_reduction << " < " << this->parameters_.Sigma * std::max(0., predicted_reduction
+            - 1e-9) << "\n";
          }
       }
       else {

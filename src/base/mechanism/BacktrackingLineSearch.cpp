@@ -5,17 +5,19 @@
 #include "InteriorPoint.hpp"
 
 BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, int max_iterations, double backtracking_ratio):
-   GlobalizationMechanism(constraint_relaxation_strategy, max_iterations), step_length(1.), backtracking_ratio(backtracking_ratio),
-   min_step_length(1e-9) {
+   GlobalizationMechanism(constraint_relaxation_strategy, max_iterations), backtracking_ratio(backtracking_ratio) {
 }
 
 Iterate BacktrackingLineSearch::initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+   statistics.add_column("SOC", Statistics::char_width, 9);
    statistics.add_column("LS step length", Statistics::double_width, 30);
+
    // generate the initial point
    Iterate first_iterate = this->relaxation_strategy.initialize(statistics, problem, x, multipliers);
 
    // preallocate trial_iterate
    this->trial_primals_.resize(first_iterate.x.size());
+   this->trial_duals_.resize(multipliers.constraints.size());
 
    return first_iterate;
 }
@@ -26,44 +28,60 @@ current_iterate) {
    this->relaxation_strategy.generate_subproblem(problem, current_iterate, INFINITY);
    Direction direction = this->relaxation_strategy.compute_feasible_direction(statistics, problem, current_iterate);
 
-   bool line_search_termination = false;
-   while (!line_search_termination) {
-      /* step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ... */
-      this->step_length = 1.;
-      this->number_iterations = 0;
-      while (!this->termination_()) {
-         assert (0 < this->step_length && this->step_length <= 1);
-         this->number_iterations++;
-         this->print_iteration_();
+   /* step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ... */
+   this->step_length = 1.;
+   this->number_iterations = 0;
+   while (!this->termination_()) {
+      assert (0 < this->step_length && this->step_length <= 1);
+      this->number_iterations++;
+      this->print_iteration_();
 
-         // assemble the trial iterate
-         Iterate trial_iterate = this->assemble_trial_iterate(current_iterate, direction, this->step_length);
+      // assemble the trial iterate
+      Iterate trial_iterate = this->assemble_trial_iterate(current_iterate, direction, this->step_length);
 
-         // check whether the trial step is accepted
-         if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate, direction, this->step_length)) {
-            this->add_statistics(statistics, direction);
-            return std::make_tuple(std::move(trial_iterate), direction.norm, direction.objective_multiplier);
+      // check whether the trial step is accepted
+      if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate, direction, this->step_length)) {
+         this->add_statistics(statistics, direction);
+         return std::make_tuple(std::move(trial_iterate), direction.norm, direction.objective_multiplier);
+      }
+      else if (this->number_iterations == 1 && trial_iterate.progress.feasibility >= current_iterate.progress.feasibility) { // reject
+         // compute a (temporary) SOC direction
+         Direction direction_soc = this->relaxation_strategy.compute_second_order_correction(problem, trial_iterate);
+
+         // assemble the (temporary) trial iterate
+         Iterate trial_iterate_soc = this->assemble_trial_iterate(current_iterate, direction_soc, this->step_length);
+
+         if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate_soc, direction_soc, this->step_length)) {
+            this->add_statistics(statistics, direction_soc);
+            statistics.add_statistic("SOC", "x");
+            //assert(false && "SOC STOP HERE");
+            return std::make_tuple(std::move(trial_iterate_soc), direction_soc.norm, direction_soc.objective_multiplier);
          }
+         else {
+            /* decrease the step length */
+            DEBUG << "SOC step discarded\n\n";
+            statistics.add_statistic("SOC", "-");
+            this->update_step_length();
+         }
+      }
+      else {
          /* decrease the step length */
          this->update_step_length();
       }
-      // if step length is too small, run restoration phase
-      if (this->step_length < this->min_step_length) {
-         //if (0. < current_iterate.progress.feasibility && !direction.is_relaxed) {
-            // reset the line search with the restoration solution
-            assert(false && "LINE SEARCH FAILED WITH TINY STEP LENGTH");
-            direction = this->relaxation_strategy.solve_feasibility_problem(statistics, problem, current_iterate, direction);
-            this->step_length = 1.;
-         //}
-         //else {
-         //   throw std::runtime_error("Line-search iteration limit reached");
-         //}
-      }
-      else {
-         line_search_termination = true;
-      }
    }
-   throw std::runtime_error("Trust-region failed with an unexpected error");
+   // if step length is too small, run restoration phase
+   if (this->step_length < this->min_step_length) {
+      //if (0. < current_iterate.progress.feasibility && !direction.is_relaxed) {
+         // reset the line search with the restoration solution
+         assert(false && "LINE SEARCH FAILED WITH TINY STEP LENGTH");
+         direction = this->relaxation_strategy.solve_feasibility_problem(statistics, problem, current_iterate, direction);
+         this->step_length = 1.;
+      //}
+      //else {
+      //   throw std::runtime_error("Line-search iteration limit reached");
+      //}
+   }
+   throw std::runtime_error("Line search failed with an unexpected error");
 }
 
 void BacktrackingLineSearch::add_statistics(Statistics& statistics, const Direction& direction) {
