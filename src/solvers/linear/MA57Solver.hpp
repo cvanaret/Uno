@@ -15,7 +15,7 @@ struct MA57Factorization {
    int lkeep;
    std::vector<int> keep;
    std::vector<int> iwork;
-   std::vector<int> info;
+   std::array<int, 40> info;
 };
 
 /*! \class MA57Solver

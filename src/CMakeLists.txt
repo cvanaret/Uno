@@ -35,7 +35,8 @@ set(SRC_FILES
     
     base/mechanism/GlobalizationMechanism.cpp
     base/mechanism/GlobalizationMechanismFactory.cpp
-    base/mechanism/BacktrackingLineSearch.cpp base/mechanism/TrustRegion.cpp
+    base/mechanism/BacktrackingLineSearch.cpp
+    base/mechanism/TrustRegion.cpp
 
     base/strategy/GlobalizationStrategyFactory.cpp
     base/strategy/FilterStrategy.cpp base/strategy/Filter.cpp
