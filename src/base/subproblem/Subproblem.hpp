@@ -22,6 +22,7 @@ public:
    Subproblem(size_t number_variables, size_t number_constraints);
    virtual ~Subproblem() = default;
 
+   virtual void evaluate_constraints(const Problem& problem, Iterate& iterate) const;
    virtual Iterate generate_initial_iterate(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers);
    virtual void generate(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) = 0;
    virtual void set_trust_region(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
@@ -49,7 +50,7 @@ public:
 
    virtual double compute_constraint_violation(const Problem& problem, const Iterate& iterate) const;
    static double compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier);
-   void compute_residuals(const Problem& problem, Iterate& iterate, double objective_multiplier) const;
+   void compute_errors(const Problem& problem, Iterate& iterate, double objective_multiplier) const;
    virtual int get_hessian_evaluation_count() const = 0;
    virtual void set_initial_point(const std::vector<double>& initial_point) = 0;
 

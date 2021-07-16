@@ -29,6 +29,7 @@ public:
    InteriorPoint(const Problem& problem, size_t number_variables, size_t number_constraints, const std::string& linear_solver_name, const
    std::string& hessian_evaluation_method, bool use_trust_region);
 
+   void evaluate_constraints(const Problem& problem, Iterate& iterate) const override;
    Iterate generate_initial_iterate(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
    void generate(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
    void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
@@ -66,7 +67,6 @@ private:
    std::vector<double> lower_delta_z;
    std::vector<double> upper_delta_z;
 
-   void evaluate_constraints(const Problem& problem, Iterate& iterate);
    void update_barrier_parameter(const Iterate& current_iterate);
    void set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;
    void factorize(COOMatrix& kkt_matrix, FunctionType problem_type);
