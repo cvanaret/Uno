@@ -15,9 +15,9 @@ Result Uno::solve(const Problem& problem, std::vector<double>& x, Multipliers& m
    timer.start();
    int major_iterations = 0;
 
-   INFO << "Problem " << problem.name << "\n";
-   INFO << problem.number_variables << " variables, " << problem.number_constraints << " constraints\n";
-   INFO << "Problem type: " << Problem::type_to_string[problem.type] << "\n";
+   std::cout << "\nProblem " << problem.name << "\n";
+   std::cout << problem.number_variables << " variables, " << problem.number_constraints << " constraints\n";
+   std::cout << "Problem type: " << Problem::type_to_string[problem.type] << "\n";
 
    /* project x into the bounds */
    problem.project_point_in_bounds(x);
@@ -47,7 +47,7 @@ Result Uno::solve(const Problem& problem, std::vector<double>& x, Multipliers& m
 
          // compute the status of the new iterate
          termination_status = this->check_termination(problem, new_iterate, direction_norm, objective_multiplier);
-         current_iterate = new_iterate;
+         current_iterate = std::move(new_iterate);
       }
    }
    catch (std::invalid_argument& exception) {
@@ -56,7 +56,7 @@ Result Uno::solve(const Problem& problem, std::vector<double>& x, Multipliers& m
    catch (std::runtime_error& exception) {
       ERROR << exception.what();
    }
-   statistics.print_footer();
+   if (Logger::logger_level == INFO) statistics.print_footer();
    timer.stop();
 
    int number_subproblems_solved = this->globalization_mechanism.get_number_subproblems_solved();
@@ -84,10 +84,10 @@ Statistics Uno::create_statistics() {
 void Uno::add_statistics(Statistics& statistics, const Iterate& new_iterate, int major_iterations) {
    statistics.add_statistic("major", major_iterations);
    statistics.add_statistic("f", new_iterate.objective);
-   statistics.add_statistic("||c||", new_iterate.residuals.constraints);
-   statistics.add_statistic("complementarity", new_iterate.residuals.complementarity);
-   statistics.add_statistic("KKT", new_iterate.residuals.KKT);
-   statistics.add_statistic("FJ", new_iterate.residuals.FJ);
+   statistics.add_statistic("||c||", new_iterate.errors.constraints);
+   statistics.add_statistic("complementarity", new_iterate.errors.complementarity);
+   statistics.add_statistic("KKT", new_iterate.errors.KKT);
+   statistics.add_statistic("FJ", new_iterate.errors.FJ);
 }
 
 bool Uno::termination_criterion_(TerminationStatus current_status, int iteration) const {
@@ -97,20 +97,20 @@ bool Uno::termination_criterion_(TerminationStatus current_status, int iteration
 TerminationStatus Uno::check_termination(const Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier) const {
    TerminationStatus status = NOT_OPTIMAL;
 
-   if (current_iterate.residuals.complementarity <= this->tolerance * (double) (current_iterate.x.size() + problem.number_constraints)) {
+   if (current_iterate.errors.complementarity <= this->tolerance * (double) (current_iterate.x.size() + problem.number_constraints)) {
       // feasible and KKT point
-      if (current_iterate.residuals.KKT <= this->tolerance * std::sqrt(current_iterate.x.size())) {
-         if (current_iterate.residuals.constraints <= this->tolerance * (double) current_iterate.x.size()) {
+      if (current_iterate.errors.KKT <= this->tolerance * std::sqrt(current_iterate.x.size())) {
+         if (current_iterate.errors.constraints <= this->tolerance * (double) current_iterate.x.size()) {
             status = KKT_POINT;
          }
       }
       // infeasible and FJ point
-      else if (0 < problem.number_constraints && current_iterate.residuals.FJ <= this->tolerance * std::sqrt(current_iterate.x.size())) {
+      else if (0 < problem.number_constraints && current_iterate.errors.FJ <= this->tolerance * std::sqrt(current_iterate.x.size())) {
          status = FJ_POINT;
       }
    }
    else if (step_norm <= this->tolerance / 100.) {
-      if (current_iterate.residuals.constraints <= this->tolerance * (double) current_iterate.x.size()) {
+      if (current_iterate.errors.constraints <= this->tolerance * (double) current_iterate.x.size()) {
          status = FEASIBLE_SMALL_STEP;
       }
       else {
@@ -132,52 +132,52 @@ TerminationStatus Uno::check_termination(const Problem& problem, Iterate& curren
 }
 
 void Result::display(bool print_solution) {
-   INFO << "\n";
-   INFO << "UNO v1: optimization summary\n";
-   INFO << "==============================\n";
+   std::cout << "\n";
+   std::cout << "UNO v1: optimization summary\n";
+   std::cout << "==============================\n";
 
-   INFO << "Status:\t\t\t\t";
+   std::cout << "Status:\t\t\t\t";
    if (this->status == KKT_POINT) {
-      INFO << "Converged with KKT point\n";
+      std::cout << "Converged with KKT point\n";
    }
    else if (this->status == FJ_POINT) {
-      INFO << "Converged with FJ point\n";
+      std::cout << "Converged with FJ point\n";
    }
    else if (this->status == FEASIBLE_SMALL_STEP) {
-      INFO << "Converged with feasible small step\n";
+      std::cout << "Converged with feasible small step\n";
    }
    else if (this->status == INFEASIBLE_SMALL_STEP) {
-      INFO << "Converged with infeasible small step\n";
+      std::cout << "Converged with infeasible small step\n";
    }
    else { // NOT_OPTIMAL
-      INFO << "Irregular termination\n";
+      std::cout << "Irregular termination\n";
    }
 
-   INFO << "Objective value:\t\t" << this->solution.objective << "\n";
-   INFO << "Constraint residual:\t\t" << this->solution.residuals.constraints << "\n";
-   INFO << "KKT residual:\t\t\t" << this->solution.residuals.KKT << "\n";
-   INFO << "FJ residual:\t\t\t" << this->solution.residuals.FJ << "\n";
-   INFO << "Complementarity residual:\t" << this->solution.residuals.complementarity << "\n";
+   std::cout << "Objective value:\t\t" << this->solution.objective << "\n";
+   std::cout << "Constraint residual:\t\t" << this->solution.errors.constraints << "\n";
+   std::cout << "KKT residual:\t\t\t" << this->solution.errors.KKT << "\n";
+   std::cout << "FJ residual:\t\t\t" << this->solution.errors.FJ << "\n";
+   std::cout << "Complementarity residual:\t" << this->solution.errors.complementarity << "\n";
 
-   INFO << "Feasibility measure:\t\t" << this->solution.progress.feasibility << "\n";
-   INFO << "Optimality measure:\t\t" << this->solution.progress.objective << "\n";
+   std::cout << "Feasibility measure:\t\t" << this->solution.progress.feasibility << "\n";
+   std::cout << "Optimality measure:\t\t" << this->solution.progress.objective << "\n";
 
    if (print_solution) {
-      INFO << "Primal solution:\t\t";
-      print_vector(INFO, this->solution.x);
-      INFO << "Lower bound multipliers:\t";
-      print_vector(INFO, this->solution.multipliers.lower_bounds);
-      INFO << "Upper bound multipliers:\t";
-      print_vector(INFO, this->solution.multipliers.upper_bounds);
-      INFO << "Constraint multipliers:\t\t";
-      print_vector(INFO, this->solution.multipliers.constraints);
+      std::cout << "Primal solution:\t\t";
+      print_vector(std::cout, this->solution.x);
+      std::cout << "Lower bound multipliers:\t";
+      print_vector(std::cout, this->solution.multipliers.lower_bounds);
+      std::cout << "Upper bound multipliers:\t";
+      print_vector(std::cout, this->solution.multipliers.upper_bounds);
+      std::cout << "Constraint multipliers:\t\t";
+      print_vector(std::cout, this->solution.multipliers.constraints);
    }
 
-   INFO << "CPU time:\t\t\t" << this->cpu_time << "s\n";
-   INFO << "Iterations:\t\t\t" << this->iteration << "\n";
-   INFO << "Objective evaluations:\t\t" << this->objective_evaluations << "\n";
-   INFO << "Constraints evaluations:\t" << this->constraint_evaluations << "\n";
-   INFO << "Jacobian evaluations:\t\t" << this->jacobian_evaluations << "\n";
-   INFO << "Hessian evaluations:\t\t" << this->hessian_evaluations << "\n";
-   INFO << "Number of subproblems solved:\t" << this->number_subproblems_solved << "\n";
+   std::cout << "CPU time:\t\t\t" << this->cpu_time << "s\n";
+   std::cout << "Iterations:\t\t\t" << this->iteration << "\n";
+   std::cout << "Objective evaluations:\t\t" << this->objective_evaluations << "\n";
+   std::cout << "Constraints evaluations:\t" << this->constraint_evaluations << "\n";
+   std::cout << "Jacobian evaluations:\t\t" << this->jacobian_evaluations << "\n";
+   std::cout << "Hessian evaluations:\t\t" << this->hessian_evaluations << "\n";
+   std::cout << "Number of subproblems solved:\t" << this->number_subproblems_solved << "\n";
 }
