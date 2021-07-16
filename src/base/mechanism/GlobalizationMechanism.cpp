@@ -23,8 +23,8 @@ int GlobalizationMechanism::get_number_subproblems_solved() const {
 
 void GlobalizationMechanism::print_acceptance_(const Iterate& iterate) {
    DEBUG << CYAN "trial point accepted\n" RESET;
-   DEBUG << "Residuals: ||c|| = " << iterate.residuals.constraints << ", KKT = " << iterate.residuals.KKT
-         << ", complementarity = " << iterate.residuals.complementarity << "\n";
+   DEBUG << "Residuals: ||c|| = " << iterate.errors.constraints << ", KKT = " << iterate.errors.KKT
+         << ", complementarity = " << iterate.errors.complementarity << "\n";
 }
 
 void GlobalizationMechanism::print_warning_(const char* message) {

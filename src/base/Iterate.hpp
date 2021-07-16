@@ -13,7 +13,7 @@ enum TerminationStatus {
    FEASIBLE_SMALL_STEP, INFEASIBLE_SMALL_STEP
 };
 
-struct Residuals {
+struct Errors {
    double constraints;
    double KKT;
    double FJ;
@@ -57,7 +57,7 @@ public:
    bool is_constraints_jacobian_computed; /*!< Flag that indicates if the constraint Jacobian has already been computed */
 
    // residuals
-   Residuals residuals;
+   Errors errors;
    ProgressMeasures progress;
 
    void compute_objective(const Problem& problem);

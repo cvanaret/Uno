@@ -17,7 +17,7 @@ Iterate FeasibilityRestoration::initialize(Statistics& statistics, const Problem
 
    /* initialize the subproblem */
    Iterate first_iterate = this->subproblem->generate_initial_iterate(statistics, problem, x, multipliers);
-   this->subproblem->compute_residuals(problem, first_iterate, 1.);
+   this->subproblem->compute_errors(problem, first_iterate, 1.);
 
    this->phase_1_strategy->initialize(statistics, first_iterate);
    this->phase_2_strategy->initialize(statistics, first_iterate);
@@ -107,7 +107,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
          this->phase_1_strategy->notify(current_iterate);
       }
 
-
+      this->subproblem->evaluate_constraints(problem, trial_iterate);
       if (this->current_phase == FEASIBILITY_RESTORATION) {
          // if restoration phase, recompute progress measures of trial point
          this->compute_infeasibility_measures(problem, trial_iterate, direction.constraint_partition);
@@ -133,7 +133,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
       }
       // compute the residuals
       trial_iterate.compute_objective(problem);
-      this->subproblem->compute_residuals(problem, trial_iterate, direction.objective_multiplier);
+      this->subproblem->compute_errors(problem, trial_iterate, direction.objective_multiplier);
    }
    return accept;
 }

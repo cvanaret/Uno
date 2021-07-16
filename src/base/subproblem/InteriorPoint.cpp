@@ -1,5 +1,6 @@
 #include <cmath>
 #include <cassert>
+#include <iomanip>
 #include "InteriorPoint.hpp"
 #include "LinearSolverFactory.hpp"
 
@@ -43,8 +44,9 @@ std::string& hessian_evaluation_method, bool use_trust_region) :
    }
 }
 
-void InteriorPoint::evaluate_constraints(const Problem& problem, Iterate& iterate) {
+void InteriorPoint::evaluate_constraints(const Problem& problem, Iterate& iterate) const {
    iterate.compute_constraints(problem);
+   // transform the constraints into "= 0" equalities
    for (const auto& element: problem.equality_constraints) {
       size_t j = element.first;
       iterate.constraints[j] -= problem.constraint_bounds[j].lb;
@@ -79,7 +81,7 @@ Iterate InteriorPoint::generate_initial_iterate(Statistics& statistics, const Pr
    Iterate first_iterate(x, multipliers);
 
    /* initialize the slacks and add contribution to the constraint Jacobian */
-   this->evaluate_constraints(problem, first_iterate);
+   first_iterate.compute_constraints(problem);
    first_iterate.compute_constraints_jacobian(problem);
    for (const auto[j, i]: problem.inequality_constraints) {
       double slack_value = Subproblem::push_variable_to_interior(first_iterate.constraints[j], problem.constraint_bounds[j]);
@@ -101,6 +103,7 @@ Iterate InteriorPoint::generate_initial_iterate(Statistics& statistics, const Pr
    print_vector(DEBUG, this->upper_bounded_variables);
 
    /* compute the optimality and feasibility measures of the initial point */
+   this->evaluate_constraints(problem, first_iterate);
    this->compute_progress_measures(problem, first_iterate);
    return first_iterate;
 }
@@ -118,13 +121,12 @@ void InteriorPoint::set_variables_bounds(const Problem& problem, const Iterate& 
 void InteriorPoint::generate(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) {
    copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
    /* compute first- and second-order information */
-   this->evaluate_constraints(problem, current_iterate);
-
    // constraint Jacobian
    for (auto& row: this->constraints_jacobian) {
       row.clear();
    }
    problem.constraints_jacobian(current_iterate.x, this->constraints_jacobian);
+   // add the slack variables
    for (const auto[j, i]: problem.inequality_constraints) {
       this->constraints_jacobian[j][problem.number_variables + i] = -1.;
    }
@@ -209,13 +211,13 @@ Direction InteriorPoint::compute_direction(Statistics& statistics, const Problem
 void InteriorPoint::update_barrier_parameter(const Iterate& current_iterate) {
    /* scaled error terms */
    double sd = this->compute_KKT_error_scaling(current_iterate);
-   double KKTerror = current_iterate.residuals.KKT / sd;
+   double KKTerror = current_iterate.errors.KKT / sd;
    double central_complementarity_error = this->compute_central_complementarity_error(current_iterate);
-   DEBUG << "IPM error (KKT: " << KKTerror << ", cmpl: " << central_complementarity_error << ", feas: " << current_iterate.residuals.constraints <<
+   DEBUG << "IPM error (KKT: " << KKTerror << ", cmpl: " << central_complementarity_error << ", feas: " << current_iterate.errors.constraints <<
          ")\n";
 
    /* update of the barrier problem */
-   double error = std::max(KKTerror, std::max(central_complementarity_error, current_iterate.residuals.constraints));
+   double error = std::max(KKTerror, std::max(central_complementarity_error, current_iterate.errors.constraints));
    if (error <= this->parameters.k_epsilon * this->barrier_parameter) {
       // TODO pass tolerance
       double tolerance = 1e-8;
@@ -275,10 +277,6 @@ void InteriorPoint::generate_kkt_rhs(const Iterate& current_iterate) {
 Direction InteriorPoint::compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) {
    DEBUG << "Entered SOC computation\n";
    DEBUG << "KKT matrix:\n" << this->kkt_matrix << "\n";
-
-   // correct the right-hand side
-   this->evaluate_constraints(problem, trial_iterate);
-
    for (size_t j = 0; j < trial_iterate.constraints.size(); j++) {
       this->rhs[this->number_variables + j] -= trial_iterate.constraints[j];
    }
@@ -290,7 +288,6 @@ Direction InteriorPoint::compute_second_order_correction(const Problem& problem,
 
    /* generate IPM direction */
    Direction direction_soc = this->generate_direction(problem, trial_iterate, solution_IPM);
-
    direction_soc.status = OPTIMAL;
    direction_soc.norm = norm_inf(direction_soc.x, 0, this->number_variables);
    /* evaluate the barrier objective */
@@ -314,11 +311,10 @@ Direction InteriorPoint::generate_direction(const Problem& problem, const Iterat
       solution_IPM[j] = -solution_IPM[j];
    }
 
-   /* "fraction to boundary" rule for variables and bound multipliers */
    Direction direction(this->number_variables, problem.number_constraints);
 
-   // scale primal variables and constraints multipliers
-   double tau = std::max(this->parameters.tau_min, 1. - this->barrier_parameter);
+   // "fraction to boundary" rule for primal variables and constraints multipliers
+   double tau = this->parameters.tau_min; //std::max(this->parameters.tau_min, 1. - this->barrier_parameter);
    double primal_step_length = this->primal_fraction_to_boundary(current_iterate, solution_IPM, tau);
    for (size_t i = 0; i < this->number_variables; i++) {
       direction.x[i] = primal_step_length * solution_IPM[i];
@@ -331,14 +327,14 @@ Direction InteriorPoint::generate_direction(const Problem& problem, const Iterat
    this->compute_lower_bound_dual_displacements(current_iterate, solution_IPM);
    this->compute_upper_bound_dual_displacements(current_iterate, solution_IPM);
 
-   // scale dual variables
+   // "fraction to boundary" rule for bound multipliers
    double dual_step_length = this->dual_fraction_to_boundary(current_iterate, tau);
    for (size_t i = 0; i < number_variables; i++) {
       direction.multipliers.lower_bounds[i] = current_iterate.multipliers.lower_bounds[i] + dual_step_length * this->lower_delta_z[i];
       direction.multipliers.upper_bounds[i] = current_iterate.multipliers.upper_bounds[i] + dual_step_length * this->upper_delta_z[i];
    }
 
-   DEBUG << "MA57 solution:\n";
+   DEBUG << "IPM solution:\n";
    DEBUG << "Δx: "; print_vector(DEBUG, solution_IPM, '\n', 0, problem.number_variables);
    DEBUG << "Δs: "; print_vector(DEBUG, solution_IPM, '\n', problem.number_variables, problem.inequality_constraints.size());
    DEBUG << "Δz_L: "; print_vector(DEBUG, this->lower_delta_z);
@@ -353,14 +349,14 @@ double
 InteriorPoint::primal_fraction_to_boundary(const Iterate& current_iterate, const std::vector<double>& ipm_solution, double tau) {
    double primal_length = 1.;
    for (size_t i: this->lower_bounded_variables) {
-      double trial_alpha_xi = -tau * (current_iterate.x[i] - this->variables_bounds[i].lb) / ipm_solution[i];
-      if (0 < trial_alpha_xi && trial_alpha_xi <= 1.) {
+      if (ipm_solution[i] < 0.) {
+         double trial_alpha_xi = -tau * (current_iterate.x[i] - this->variables_bounds[i].lb) / ipm_solution[i];
          primal_length = std::min(primal_length, trial_alpha_xi);
       }
    }
    for (size_t i: this->upper_bounded_variables) {
-      double trial_alpha_xi = -tau * (current_iterate.x[i] - this->variables_bounds[i].ub) / ipm_solution[i];
-      if (0 < trial_alpha_xi && trial_alpha_xi <= 1.) {
+      if (0. < ipm_solution[i]) {
+         double trial_alpha_xi = -tau * (current_iterate.x[i] - this->variables_bounds[i].ub) / ipm_solution[i];
          primal_length = std::min(primal_length, trial_alpha_xi);
       }
    }
@@ -370,12 +366,12 @@ InteriorPoint::primal_fraction_to_boundary(const Iterate& current_iterate, const
 double InteriorPoint::dual_fraction_to_boundary(const Iterate& current_iterate, double tau) {
    double dual_length = 1.;
    for (size_t i = 0; i < current_iterate.multipliers.lower_bounds.size(); i++) {
-      double trial_alpha_zj = -tau * current_iterate.multipliers.lower_bounds[i] / this->lower_delta_z[i];
-      if (0 < trial_alpha_zj && trial_alpha_zj <= 1.) {
+      if (this->lower_delta_z[i] < 0.) {
+         double trial_alpha_zj = -tau * current_iterate.multipliers.lower_bounds[i] / this->lower_delta_z[i];
          dual_length = std::min(dual_length, trial_alpha_zj);
       }
-      trial_alpha_zj = -tau * current_iterate.multipliers.upper_bounds[i] / this->upper_delta_z[i];
-      if (0 < trial_alpha_zj && trial_alpha_zj <= 1.) {
+      if (0. < this->upper_delta_z[i]) {
+         double trial_alpha_zj = -tau * current_iterate.multipliers.upper_bounds[i] / this->upper_delta_z[i];
          dual_length = std::min(dual_length, trial_alpha_zj);
       }
    }
@@ -478,24 +474,14 @@ void InteriorPoint::compute_upper_bound_dual_displacements(const Iterate& curren
    }
 }
 
-double InteriorPoint::compute_constraint_violation(const Problem& problem, const Iterate& iterate) const {
-   // lambda to avoid creating vector
-   const auto residual_function = [&](size_t j) {
-      if (problem.constraint_status[j] == EQUAL_BOUNDS) {
-         return iterate.constraints[j] - problem.constraint_bounds[j].lb;
-      }
-      else {
-         return iterate.constraints[j] - iterate.x[problem.number_variables + j];
-      }
-   };
-   return norm_1(residual_function, problem.number_constraints);
+double InteriorPoint::compute_constraint_violation(const Problem& /*problem*/, const Iterate& iterate) const {
+   return norm_1(iterate.constraints);
 }
 
 void InteriorPoint::compute_progress_measures(const Problem& problem, Iterate& iterate) {
-   iterate.compute_constraints(problem);
-   double constraint_violation = this->compute_constraint_violation(problem, iterate);
+   const double constraint_violation = this->compute_constraint_violation(problem, iterate);
    /* compute barrier objective */
-   double objective = this->evaluate_barrier_function(problem, iterate);
+   const double objective = this->evaluate_barrier_function(problem, iterate);
    iterate.progress = {constraint_violation, objective};
 }
 

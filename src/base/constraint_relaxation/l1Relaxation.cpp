@@ -23,7 +23,7 @@ Iterate l1Relaxation::initialize(Statistics& statistics, const Problem& problem,
 
    // initialize the subproblem
    Iterate first_iterate = this->subproblem->generate_initial_iterate(statistics, problem, x, multipliers);
-   this->subproblem->compute_residuals(problem, first_iterate, this->penalty_parameter);
+   this->subproblem->compute_errors(problem, first_iterate, this->penalty_parameter);
 
    this->globalization_strategy->initialize(statistics, first_iterate);
    return first_iterate;
@@ -76,6 +76,7 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
       accept = true;
    }
    else {
+      this->subproblem->evaluate_constraints(problem, trial_iterate);
       // compute the predicted reduction (a mixture of the subproblem's and of the l1 relaxation's)
       const double predicted_reduction = this->compute_predicted_reduction(problem, current_iterate, direction, step_length);
       // invoke the globalization strategy for acceptance
@@ -87,7 +88,7 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
 
       // compute the residuals
       trial_iterate.compute_objective(problem);
-      this->subproblem->compute_residuals(problem, trial_iterate, direction.objective_multiplier);
+      this->subproblem->compute_errors(problem, trial_iterate, direction.objective_multiplier);
    }
    return accept;
 }
@@ -196,7 +197,7 @@ Direction l1Relaxation::compute_byrd_steering_rule(Statistics& statistics, const
 
          if (this->penalty_parameter < current_penalty_parameter) {
             DEBUG << "\n*** Penalty parameter updated to " << this->penalty_parameter << "\n";
-            // TODO this->subproblem_definition_changed = true;
+            this->globalization_strategy->reset();
             if (this->penalty_parameter == 0.) {
                direction = ideal_direction;
             }

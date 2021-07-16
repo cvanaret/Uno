@@ -56,13 +56,12 @@ std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
    stream << "objective = " << direction.objective << "\n";
    stream << "norm = " << direction.norm << "\n";
 
-   stream << "active set:\n";
-   stream << "bound constraints at lower bound =";
+   stream << "bound constraints active at lower bound =";
    for (size_t index: direction.active_set.bounds.at_lower_bound) {
       stream << " x" << index;
    }
    stream << "\n";
-   stream << "bound constraints at upper bound =";
+   stream << "bound constraints active at upper bound =";
    for (size_t index: direction.active_set.bounds.at_upper_bound) {
       stream << " x" << index;
    }

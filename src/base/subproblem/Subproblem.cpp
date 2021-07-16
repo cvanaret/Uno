@@ -20,9 +20,14 @@ Subproblem::Subproblem(size_t number_variables, size_t number_constraints) :
 //    first_iterate.multipliers.constraints = Subproblem::compute_least_square_multipliers(problem, first_iterate, multipliers.constraints, 1e4);
 //}
 
+void Subproblem::evaluate_constraints(const Problem& problem, Iterate& iterate) const {
+   iterate.compute_constraints(problem);
+}
+
 Iterate Subproblem::generate_initial_iterate(Statistics& /*statistics*/, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
    Iterate first_iterate(x, multipliers);
    /* compute the optimality and feasibility measures of the initial point */
+   this->evaluate_constraints(problem, first_iterate);
    this->compute_progress_measures(problem, first_iterate);
    return first_iterate;
 }
@@ -30,10 +35,10 @@ Iterate Subproblem::generate_initial_iterate(Statistics& /*statistics*/, const P
 void Subproblem::compute_progress_measures(const Problem& problem, Iterate& iterate) {
    iterate.compute_constraints(problem);
    // feasibility measure: residual of all constraints
-   iterate.residuals.constraints = problem.compute_constraint_violation(iterate.constraints, L1_NORM);
+   iterate.errors.constraints = problem.compute_constraint_violation(iterate.constraints, L1_NORM);
    // optimality
    iterate.compute_objective(problem);
-   iterate.progress = {iterate.residuals.constraints, iterate.objective};
+   iterate.progress = {iterate.errors.constraints, iterate.objective};
 }
 
 double Subproblem::push_variable_to_interior(double variable_value, const Range& variable_bounds) {
@@ -198,13 +203,13 @@ double Subproblem::compute_constraint_violation(const Problem& problem, const It
    return problem.compute_constraint_violation(iterate.constraints, L1_NORM);
 }
 
-void Subproblem::compute_residuals(const Problem& problem, Iterate& iterate, double objective_multiplier) const {
+void Subproblem::compute_errors(const Problem& problem, Iterate& iterate, double objective_multiplier) const {
    iterate.compute_constraints(problem);
-   iterate.residuals.constraints = this->compute_constraint_violation(problem, iterate);
-   // compute the KKT residual only if the objective multiplier is positive
-   iterate.residuals.KKT = Subproblem::compute_first_order_error(problem, iterate, 0. < objective_multiplier ? objective_multiplier : 1.);
-   iterate.residuals.FJ = Subproblem::compute_first_order_error(problem, iterate, 0.);
-   iterate.residuals.complementarity = this->compute_complementarity_error(problem, iterate, iterate.multipliers);
+   iterate.errors.constraints = this->compute_constraint_violation(problem, iterate);
+   // compute the KKT error only if the objective multiplier is positive
+   iterate.errors.KKT = Subproblem::compute_first_order_error(problem, iterate, 0. < objective_multiplier ? objective_multiplier : 1.);
+   iterate.errors.FJ = Subproblem::compute_first_order_error(problem, iterate, 0.);
+   iterate.errors.complementarity = this->compute_complementarity_error(problem, iterate, iterate.multipliers);
 }
 
 Direction Subproblem::compute_second_order_correction(const Problem& /*problem*/, Iterate& /*trial_iterate*/) {
