@@ -114,7 +114,7 @@ endforeach(library_name)
 #######
 # UNO #
 #######
-add_executable(uno ${SRC_FILES} main.cpp)
+add_library(uno STATIC ${SRC_FILES})
 target_include_directories(uno PUBLIC ${DIRECTORIES})
 # TODO: create a library with ${SRC_FILES} and an executable with main.cpp
 #install(TARGETS uno DESTINATION bin)
@@ -128,6 +128,12 @@ endif()
 
 # link the libraries
 target_link_libraries(uno PUBLIC ${LIBS})
+
+########
+# main #
+########
+add_executable(uno_ampl main.cpp)
+target_link_libraries(uno_ampl PUBLIC uno)
 
 ####################
 # gtest unit tests #
