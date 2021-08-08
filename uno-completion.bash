@@ -6,7 +6,7 @@ _uno_completions()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     #  The basic options to complete.
-    opts="-mechanism -strategy -feasibility -subproblem"
+    opts="-mechanism -strategy -constraint-relaxation -subproblem"
 
     #  Complete the arguments to some of the basic commands.
     case "${prev}" in
@@ -20,13 +20,13 @@ _uno_completions()
             COMPREPLY=( $(compgen -W "${strategies}" -- ${cur}) )
             return 0
             ;;
-        -feasibility)
-			local feasibility="feasibility-restoration l1-relaxation"
-            COMPREPLY=( $(compgen -W "${feasibility}" -- ${cur}) )
+        -constraint-relaxation)
+			local constraint_relaxation="feasibility-restoration l1-relaxation"
+            COMPREPLY=( $(compgen -W "${constraint_relaxation}" -- ${cur}) )
             return 0
             ;;
 		-subproblem)
-			local subproblems="SQP SLP Sl1QP IPM"
+			local subproblems="SQP SLP IPM"
             COMPREPLY=( $(compgen -W "${subproblems}" -- ${cur}) )
             return 0
             ;;
