@@ -116,9 +116,9 @@ endforeach(library_name)
 #######
 add_library(uno STATIC ${SRC_FILES})
 target_include_directories(uno PUBLIC ${DIRECTORIES})
-# TODO: create a library with ${SRC_FILES} and an executable with main.cpp
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/uno.cfg DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
 #install(TARGETS uno DESTINATION bin)
-#add_executable(uno main.cpp)
 
 if(MSVC)
   target_compile_options(uno PRIVATE /W4 /WX)

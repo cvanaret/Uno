@@ -30,7 +30,7 @@ sudo apt-get install cmake cmake-curses-gui
 ## Compilation instructions
 1. Create a build directory in src/:
 ```
-  cd src/ && mkdir build && cp uno.cfg build/
+  cd src/ && mkdir build
 ```
 2. Move to the build directory:
 ```
