@@ -25,7 +25,7 @@ void ma57dd_(int* job, int* n, int* ne, const double a[], const int irn[], const
 MA57Solver::MA57Solver() : use_fortran(1), cntl_(5), icntl_(20), rinfo_(20) {
 }
 
-void MA57Solver::factorize(COOMatrix& matrix) {
+void MA57Solver::factorize(const COOMatrix& matrix) {
    // general factorization method: symbolic factorization and numerical factorization
    // for more flexibility, call the two methods independently
    this->do_symbolic_factorization(matrix);

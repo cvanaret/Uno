@@ -31,7 +31,7 @@ public:
 
    short use_fortran;
 
-   void factorize(COOMatrix& matrix) override;
+   void factorize(const COOMatrix& matrix) override;
    void do_symbolic_factorization(const COOMatrix& matrix) override;
    void do_numerical_factorization(const COOMatrix& matrix) override;
    std::vector<double> solve(const COOMatrix& matrix, std::vector<double>& rhs) override;
