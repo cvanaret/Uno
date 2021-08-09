@@ -254,7 +254,7 @@ double l1Relaxation::compute_linearized_constraint_residual(std::vector<double>&
 /* measure that combines KKT error and complementarity error */
 double l1Relaxation::compute_error(const Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter) {
    /* complementarity error */
-   double error = this->compute_complementarity_error(problem, iterate, multipliers);
+   double error = Subproblem::compute_complementarity_error(problem, iterate, multipliers);
    /* KKT error */
    std::vector<double> lagrangian_gradient = iterate.lagrangian_gradient(problem, penalty_parameter, multipliers);
    error += norm_1(lagrangian_gradient);
@@ -298,39 +298,6 @@ double l1Relaxation::compute_predicted_reduction(const Problem& problem, Iterate
       return current_iterate.progress.feasibility - linearized_constraint_violation + this->subproblem->compute_predicted_reduction(direction,
             step_length);
    }
-}
-
-/* complementary slackness error. Use abs/1e-8 to safeguard */
-double l1Relaxation::compute_complementarity_error(const Problem& problem, const Iterate& iterate, const Multipliers& multipliers) const {
-   double error = 0.;
-   /* bound constraints */
-   for (size_t i = 0; i < problem.number_variables; i++) {
-      if (-INFINITY < problem.variables_bounds[i].lb) {
-         error += std::abs(iterate.multipliers.lower_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].lb));
-      }
-      if (problem.variables_bounds[i].ub < INFINITY) {
-         error += std::abs(iterate.multipliers.upper_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].ub));
-      }
-   }
-   /* general constraints */
-   for (size_t j = 0; j < problem.number_constraints; j++) {
-      double multiplier_j = multipliers.constraints[j];
-      if (iterate.constraints[j] < problem.constraint_bounds[j].lb) {
-         // violated lower: the multiplier is 1 at optimum
-         error += std::abs((1. - multiplier_j) * (problem.constraint_bounds[j].lb - iterate.constraints[j]));
-      }
-      else if (problem.constraint_bounds[j].ub < iterate.constraints[j]) {
-         // violated upper: the multiplier is -1 at optimum
-         error += std::abs((1. + multiplier_j) * (iterate.constraints[j] - problem.constraint_bounds[j].ub));
-      }
-      else if (-INFINITY < problem.constraint_bounds[j].lb && 0. < multiplier_j) {
-         error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraint_bounds[j].lb));
-      }
-      else if (problem.constraint_bounds[j].ub < INFINITY && multiplier_j < 0.) {
-         error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraint_bounds[j].ub));
-      }
-   }
-   return error;
 }
 
 void l1Relaxation::recover_l1qp_active_set_(const Problem& problem, const Direction& direction) {

@@ -46,7 +46,6 @@ protected:
    double compute_linearized_constraint_residual(std::vector<double>& direction);
    double compute_error(const Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter);
    void postprocess_direction(const Problem& problem, Direction& direction);
-   [[nodiscard]] double compute_complementarity_error(const Problem& problem, const Iterate& iterate, const Multipliers& multipliers) const;
    void recover_l1qp_active_set_(const Problem& problem, const Direction& direction);
 };
 
