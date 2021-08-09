@@ -22,11 +22,11 @@ class BQPDSolver : public QPSolver {
 public:
    BQPDSolver(size_t number_variables, size_t number_constraints, size_t max_number_nonzeros, bool quadratic_programming);
 
-   Direction solve_QP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, SparseVector& linear_objective,
-         std::vector<SparseVector>& constraints_jacobian, CSCMatrix& hessian, std::vector<double>& x) override;
+   Direction solve_QP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector& linear_objective,
+         const std::vector<SparseVector>& constraints_jacobian, const CSCMatrix& hessian, const std::vector<double>& initial_point) override;
 
-   Direction solve_LP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, SparseVector& linear_objective,
-         std::vector<SparseVector>& constraints_jacobian, std::vector<double>& x) override;
+   Direction solve_LP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector& linear_objective,
+         const std::vector<SparseVector>& constraints_jacobian, const std::vector<double>& initial_point) override;
 
 private:
    size_t n_, m_;
@@ -49,16 +49,17 @@ private:
    int iprint_, nout_;
    double fmin_, f_solution_;
    int peq_solution_, ifail_;
+   std::vector<double> solution;
 
    /*!
     *  Create a SubproblemSolution from BQPD's solution
     *
     * \param d: optimal solution
     */
-   Direction generate_direction_(std::vector<double>& x);
+   Direction generate_direction();
    Status int_to_status_(int ifail);
-   Direction solve_subproblem_(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, SparseVector& linear_objective,
-         std::vector<SparseVector>& constraints_jacobian, std::vector<double>& x);
+   Direction solve_subproblem(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector&
+   linear_objective, const std::vector<SparseVector>& constraints_jacobian, const std::vector<double>& x);
 };
 
 #endif // BQPDSOLVER_H
