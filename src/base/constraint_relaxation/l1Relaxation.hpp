@@ -1,8 +1,9 @@
 #ifndef L1RELAXATION_H
 #define L1RELAXATION_H
 
-#include <GlobalizationStrategy.hpp>
+#include "GlobalizationStrategy.hpp"
 #include "ConstraintRelaxationStrategy.hpp"
+#include "Options.hpp"
 
 struct RelaxationParameters {
    double tau;
@@ -18,7 +19,7 @@ struct ElasticVariables {
 
 class l1Relaxation: public ConstraintRelaxationStrategy {
 public:
-   l1Relaxation(Problem& problem, const std::map<std::string, std::string>& options, bool use_trust_region);
+   l1Relaxation(Problem& problem, const Options& options, bool use_trust_region);
    Iterate initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
 
    // direction computation

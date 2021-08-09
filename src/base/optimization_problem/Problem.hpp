@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <cassert>
 #include "Constraint.hpp"
 #include "Matrix.hpp"
 #include "SparseVector.hpp"
@@ -20,19 +21,19 @@ struct NumericalError : public std::exception {
 };
 
 struct HessianNumericalError : NumericalError {
-   const char* what() const throw() {
+   [[nodiscard]] const char* what() const throw() {
       return "A numerical error was encountered while evaluating the Hessian";
    }
 };
 
 struct GradientNumericalError : NumericalError {
-   const char* what() const throw() {
+   [[nodiscard]] const char* what() const throw() {
       return "A numerical error was encountered while evaluating a gradient";
    }
 };
 
 struct FunctionNumericalError : NumericalError {
-   const char* what() const throw() {
+   [[nodiscard]] const char* what() const throw() {
       return "A numerical error was encountered while evaluating a function";
    }
 };
@@ -44,7 +45,7 @@ struct FunctionNumericalError : NumericalError {
  */
 class Problem {
 public:
-   Problem(std::string& name, int number_variables, int number_constraints, FunctionType problem_type);
+   Problem(std::string name, int number_variables, int number_constraints, FunctionType problem_type);
    virtual ~Problem() = default;
 
    static std::map<FunctionType, std::string> type_to_string;
@@ -55,11 +56,9 @@ public:
    FunctionType type;
 
    /* objective */
-   double objective_sign; /*!< Sign of the objective function (1: minimization, -1: maximization) */
+   double objective_sign; /*!< Sign of the evaluate_objective function (1: minimization, -1: maximization) */
    std::string objective_name;
-   FunctionType objective_type; /*!< Type of the objective (LINEAR, QUADRATIC, NONLINEAR) */
-   [[nodiscard]] virtual double objective(const std::vector<double>& x) const = 0;
-   virtual void objective_gradient(const std::vector<double>& x, SparseVector& gradient) const = 0;
+   FunctionType objective_type; /*!< Type of the evaluate_objective (LINEAR, QUADRATIC, NONLINEAR) */
 
    /* variables */
    std::vector<std::string> variables_names;
@@ -80,6 +79,8 @@ public:
    int hessian_maximum_number_nonzeros; /*!< Number of nonzero elements in the Hessian */
 
    // purely virtual functions
+   [[nodiscard]] virtual double evaluate_objective(const std::vector<double>& x) const = 0;
+   virtual void evaluate_objective_gradient(const std::vector<double>& x, SparseVector& gradient) const = 0;
    [[nodiscard]] virtual double evaluate_constraint(int j, const std::vector<double>& x) const = 0;
    virtual void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const = 0;
    virtual void constraint_gradient(const std::vector<double>& x, int j, SparseVector& gradient) const = 0;
@@ -99,42 +100,69 @@ public:
    residual_norm) const;
 
 protected:
-   void determine_constraints_();
+   void determine_constraints();
 };
 
+template<size_t N, size_t M, size_t MAX_HESSIAN_NNZ>
 class CppProblem : public Problem {
 public:
-   CppProblem(std::string name, int number_variables, int number_constraints, double (* objective)(std::vector<double> x),
-         std::vector<double> (* objective_gradient)(std::vector<double> x));
+   CppProblem(std::string name, double (* objective)(const std::vector<double>& x), void (* objective_gradient)(const std::vector<double>& x,
+         std::vector<double>& gradient)): Problem(name, N, M, NONLINEAR), objective(objective), objective_gradient(objective_gradient),
+         current_variable(0), current_constraint(0) {
+   }
 
-   double objective(const std::vector<double>& x) const override;
-   void objective_gradient(const std::vector<double>& x, SparseVector& gradient) const override;
+   [[nodiscard]] double evaluate_objective(const std::vector<double>& x) const override {
+      return this->objective(x);
+   }
 
-   double evaluate_constraint(int j, const std::vector<double>& x) const override;
-   void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const override;
-   void constraint_gradient(const std::vector<double>& x, int j, SparseVector& gradient) const override;
-   void constraints_jacobian(const std::vector<double>& x, std::vector<SparseVector>& constraints_jacobian) const override;
+   void evaluate_objective_gradient(const std::vector<double>& /*x*/, SparseVector& /*gradient*/) const override {
+      assert(false && "not yet implemented");
+   }
 
-   void lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
-         CSCMatrix& hessian) const override;
+   [[nodiscard]] double evaluate_constraint(int /*j*/, const std::vector<double>& /*x*/) const override {
+      return 0.;
+   }
 
-   /* variables */
-   void add_variable(std::string name, Range& bounds);
-   void add_variables(std::vector<std::string> names, std::vector<Range>& bounds);
+   void evaluate_constraints(const std::vector<double>& /*x*/, std::vector<double>& /*constraints*/) const override {
+      assert(false && "not yet implemented");
+   }
 
-   /* constraints */
-   void add_constraint(std::string name, Range& bounds, FunctionType type);
+   void constraint_gradient(const std::vector<double>& /*x*/, int /*j*/, SparseVector& /*gradient*/) const override {
+      assert(false && "not yet implemented");
+   }
+
+   void constraints_jacobian(const std::vector<double>& /*x*/, std::vector<SparseVector>& /*constraints_jacobian*/) const override {
+      assert(false && "not yet implemented");
+   }
+
+   void lagrangian_hessian(const std::vector<double>& /*x*/, double /*objective_multiplier*/, const std::vector<double>& /*multipliers*/,
+         CSCMatrix& /*hessian*/) const override {
+      assert(false && "not yet implemented");
+   }
 
    /* initial point */
-   void set_initial_primal_point(std::vector<double>& x) override;
-   void set_initial_dual_point(std::vector<double>& multipliers) override;
+   void set_initial_primal_point(std::vector<double>& /*x*/) override {
+      assert(false && "not yet implemented");
+   }
+
+   void set_initial_dual_point(std::vector<double>& /*multipliers*/) override {
+      assert(false && "not yet implemented");
+   }
 
 private:
-   double (* objective_)(std::vector<double> x);
-   std::vector<double> (* objective_gradient_)(std::vector<double> x);
-   std::vector<double (*)(std::vector<double> x)> constraints_;
-   int current_variable_;
-   int current_constraint_;
+   double (* objective)(const std::vector<double>& x);
+   void (* objective_gradient)(const std::vector<double>& x, std::vector<double>& gradient);
+   std::vector<double (*)(const std::vector<double>& x)> constraints;
+   int current_variable;
+   int current_constraint;
 };
+
+// https://stackoverflow.com/questions/53252321/how-to-write-a-function-that-can-take-in-an-array-or-a-vector
+//template<class Container>
+//void f_container(const Container& container) {
+//   std::for_each(std::begin(container), std::end(container), [](double xi) {
+//      std::cout << xi << "\n";
+//   });
+//}
 
 #endif // PROBLEM_H

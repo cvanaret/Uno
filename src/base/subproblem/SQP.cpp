@@ -9,7 +9,7 @@ QP_solver_name, const std::string& hessian_evaluation_method, bool use_trust_reg
       solver(QPSolverFactory::create(QP_solver_name, number_variables, number_constraints,
             problem.hessian_maximum_number_nonzeros + number_variables, true)),
       /* if no trust region is used, the problem should be convexified by controlling the inertia of the Hessian */
-      hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables,
+      hessian_evaluation(HessianEvaluationFactory<CSCMatrix>::create(hessian_evaluation_method, problem.number_variables,
             problem.hessian_maximum_number_nonzeros + problem.number_variables, !use_trust_region)),
       initial_point(number_variables) {
 }
@@ -23,7 +23,7 @@ void SQP::generate(const Problem& problem, Iterate& current_iterate, double obje
    }
    problem.constraints_jacobian(current_iterate.x, this->constraints_jacobian);
    this->objective_gradient.clear();
-   problem.objective_gradient(current_iterate.x, this->objective_gradient);
+   problem.evaluate_objective_gradient(current_iterate.x, this->objective_gradient);
    this->update_objective_multiplier(problem, current_iterate, objective_multiplier);
 
    /* bounds of the variables */
@@ -56,11 +56,10 @@ void SQP::set_initial_point(const std::vector<double>& point) {
 }
 
 Direction SQP::compute_direction(Statistics& /*statistics*/, const Problem& problem, Iterate& current_iterate) {
-   DEBUG << "Hessian: " << this->hessian_evaluation->hessian << "\n";
    /* compute QP direction */
    Direction direction = this->solver->solve_QP(this->variables_bounds, this->constraints_bounds, this->objective_gradient,
          this->constraints_jacobian, this->hessian_evaluation->hessian, this->initial_point);
-   // compute dual displacements (SQP methods compute the new duals, not the displacements)
+   // compute dual displacements (SQP methods usually compute the new duals, not the displacements)
    for (size_t j = 0; j < problem.number_constraints; j++) {
       direction.multipliers.constraints[j] -= current_iterate.multipliers.constraints[j];
    }
@@ -76,6 +75,7 @@ double SQP::compute_predicted_reduction(const Direction& direction, double step_
    else {
       double linear_term = dot(direction.x, this->objective_gradient);
       double quadratic_term = this->hessian_evaluation->hessian.quadratic_product(direction.x, direction.x) / 2.;
+      std::cout << "QUAD: " << quadratic_term << ", LIN: " << linear_term << "\n";
       return -step_length * (linear_term + step_length * quadratic_term);
    }
 }

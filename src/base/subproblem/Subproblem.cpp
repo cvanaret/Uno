@@ -14,12 +14,6 @@ Subproblem::Subproblem(size_t number_variables, size_t number_constraints) :
       number_subproblems_solved(0), subproblem_definition_changed(false) {
 }
 
-/* compute least-square multipliers */
-//if (0 < problem.number_constraints) {
-//    first_iterate.compute_constraints_jacobian(problem);
-//    first_iterate.multipliers.constraints = Subproblem::compute_least_square_multipliers(problem, first_iterate, multipliers.constraints, 1e4);
-//}
-
 void Subproblem::evaluate_constraints(const Problem& problem, Iterate& iterate) const {
    iterate.compute_constraints(problem);
 }
@@ -170,33 +164,41 @@ constraint_partition) {
 
 double Subproblem::compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier) {
    std::vector<double> lagrangian_gradient = iterate.lagrangian_gradient(problem, objective_multiplier, iterate.multipliers);
-   return norm(lagrangian_gradient, L1_NORM);
+   return norm_1(lagrangian_gradient);
 }
 
 /* complementary slackness error. Use abs/1e-8 to safeguard */
-double Subproblem::compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const {
-   double complementarity_error = 0.;
+double Subproblem::compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) {
+   double error = 0.;
    /* bound constraints */
    for (size_t i = 0; i < problem.number_variables; i++) {
       if (-INFINITY < problem.variables_bounds[i].lb) {
-         complementarity_error += std::abs(multipliers.lower_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].lb));
+         error += std::abs(multipliers.lower_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].lb));
       }
       if (problem.variables_bounds[i].ub < INFINITY) {
-         complementarity_error += std::abs(multipliers.upper_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].ub));
+         error += std::abs(multipliers.upper_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].ub));
       }
    }
    /* constraints */
    iterate.compute_constraints(problem);
    for (size_t j = 0; j < problem.number_constraints; j++) {
       double multiplier_j = multipliers.constraints[j];
-      if (-INFINITY < problem.constraint_bounds[j].lb && 0. < multiplier_j) {
-         complementarity_error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraint_bounds[j].lb));
+      if (iterate.constraints[j] < problem.constraint_bounds[j].lb) {
+         // violated lower: the multiplier is 1 at optimum
+         error += std::abs((1. - multiplier_j) * (problem.constraint_bounds[j].lb - iterate.constraints[j]));
       }
-      if (problem.constraint_bounds[j].ub < INFINITY && multiplier_j < 0.) {
-         complementarity_error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraint_bounds[j].ub));
+      else if (problem.constraint_bounds[j].ub < iterate.constraints[j]) {
+         // violated upper: the multiplier is -1 at optimum
+         error += std::abs((1. + multiplier_j) * (iterate.constraints[j] - problem.constraint_bounds[j].ub));
+      }
+      else if (-INFINITY < problem.constraint_bounds[j].lb && 0. < multiplier_j) {
+         error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraint_bounds[j].lb));
+      }
+      else if (problem.constraint_bounds[j].ub < INFINITY && multiplier_j < 0.) {
+         error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraint_bounds[j].ub));
       }
    }
-   return complementarity_error;
+   return error;
 }
 
 double Subproblem::compute_constraint_violation(const Problem& problem, const Iterate& iterate) const {
@@ -209,7 +211,7 @@ void Subproblem::compute_errors(const Problem& problem, Iterate& iterate, double
    // compute the KKT error only if the objective multiplier is positive
    iterate.errors.KKT = Subproblem::compute_first_order_error(problem, iterate, 0. < objective_multiplier ? objective_multiplier : 1.);
    iterate.errors.FJ = Subproblem::compute_first_order_error(problem, iterate, 0.);
-   iterate.errors.complementarity = this->compute_complementarity_error(problem, iterate, iterate.multipliers);
+   iterate.errors.complementarity = Subproblem::compute_complementarity_error(problem, iterate, iterate.multipliers);
 }
 
 Direction Subproblem::compute_second_order_correction(const Problem& /*problem*/, Iterate& /*trial_iterate*/) {

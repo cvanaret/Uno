@@ -31,8 +31,7 @@ protected:
    std::vector<double> trial_duals_;
 
    Iterate assemble_trial_iterate(const Iterate& current_iterate, Direction& direction, double step_length);
-   virtual void print_acceptance_(const Iterate& iterate);
-   static void print_warning_(const char* message);
+   static void print_warning(const char* message);
 };
 
 #endif // GLOBALIZATIONMECHANISM_H

@@ -21,7 +21,7 @@ public:
 protected:
    /* use references to allow polymorphism */
    const std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
-   const std::unique_ptr<HessianEvaluation> hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
+   const std::unique_ptr<HessianEvaluation<CSCMatrix> > hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
    std::vector<double> initial_point;
 };
 

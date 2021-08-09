@@ -5,7 +5,7 @@
 //#include "TrustLineSearch.hpp"
 
 std::unique_ptr<GlobalizationMechanism> GlobalizationMechanismFactory::create(const std::string& mechanism_type, ConstraintRelaxationStrategy&
-constraint_relaxation_strategy, const std::map<std::string, std::string>& options) {
+constraint_relaxation_strategy, const Options& options) {
     if (mechanism_type == "TR") {
         double radius = stod(options.at("TR_radius"));
         int max_iterations = std::stoi(options.at("TR_max_iterations"));

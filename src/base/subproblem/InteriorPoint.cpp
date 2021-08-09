@@ -9,7 +9,7 @@ std::string& hessian_evaluation_method, bool use_trust_region) :
       // add the slacks to the variables
       Subproblem(number_variables + problem.inequality_constraints.size(), number_constraints),
       /* if no trust region is used, the problem should be convexified. However, the inertia of the augmented matrix will be corrected later */
-      hessian_evaluation(HessianEvaluationFactory::create(hessian_evaluation_method, problem.number_variables, problem
+      hessian_evaluation(HessianEvaluationFactory<CSCMatrix>::create(hessian_evaluation_method, problem.number_variables, problem
             .hessian_maximum_number_nonzeros, false)),
       kkt_matrix(this->number_variables + number_constraints, problem.hessian_maximum_number_nonzeros, 1),
       linear_solver(LinearSolverFactory::create(linear_solver_name)),
@@ -133,7 +133,7 @@ void InteriorPoint::generate(const Problem& problem, Iterate& current_iterate, d
 
    // objective gradient
    this->objective_gradient.clear();
-   problem.objective_gradient(current_iterate.x, this->objective_gradient);
+   problem.evaluate_objective_gradient(current_iterate.x, this->objective_gradient);
    for (size_t i: this->lower_bounded_variables) {
       this->objective_gradient[i] -= this->barrier_parameter / (current_iterate.x[i] - this->variables_bounds[i].lb);
    }

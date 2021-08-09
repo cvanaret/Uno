@@ -4,7 +4,7 @@
 #include "FilterStrategy.hpp"
 #include "Vector.hpp"
 
-FilterStrategy::FilterStrategy(FilterStrategyParameters& strategy_parameters, const std::map<std::string, std::string>& options) :
+FilterStrategy::FilterStrategy(FilterStrategyParameters& strategy_parameters, const Options& options) :
       GlobalizationStrategy(), filter(FilterFactory::create(options)), initial_filter_upper_bound(INFINITY),
       parameters_(strategy_parameters) {
 }
@@ -48,7 +48,7 @@ bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, ProgressMeasur
          .objective);
          DEBUG << "Actual reduction: " << actual_reduction << "\n";
 
-         /* switching condition: predicted reduction is not promising */
+         /* reverse switching condition: predicted reduction is not promising */
          if (predicted_reduction < this->parameters_.Delta * std::pow(current_progress.feasibility, 2)) {
             filter->add(current_progress.feasibility, current_progress.objective);
             DEBUG << "Trial iterate was accepted by switching condition\n";

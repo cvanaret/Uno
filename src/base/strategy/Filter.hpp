@@ -6,6 +6,7 @@
 #include <list>
 #include <map>
 #include <memory>
+#include "Options.hpp"
 
 struct FilterConstants {
     double Beta; /*!< Margin around filter */
@@ -68,7 +69,7 @@ private:
 
 class FilterFactory {
 public:
-    static std::unique_ptr<Filter> create(const std::map<std::string, std::string>& options);
+    static std::unique_ptr<Filter> create(const Options& options);
 };
 
 #endif // FILTER_H

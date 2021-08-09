@@ -44,7 +44,7 @@ public:
 private:
    /* barrier parameter */
    double barrier_parameter{0.1};
-   const std::unique_ptr<HessianEvaluation> hessian_evaluation;
+   const std::unique_ptr<HessianEvaluation<CSCMatrix> > hessian_evaluation;
    COOMatrix kkt_matrix;
    const std::unique_ptr<LinearSolver> linear_solver; /*!< Solver that solves the subproblem */
    /* constants */

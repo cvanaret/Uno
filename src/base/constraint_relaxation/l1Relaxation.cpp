@@ -3,7 +3,7 @@
 #include "GlobalizationStrategyFactory.hpp"
 #include "SubproblemFactory.hpp"
 
-l1Relaxation::l1Relaxation(Problem& problem, const std::map<std::string, std::string>& options, bool use_trust_region) :
+l1Relaxation::l1Relaxation(Problem& problem, const Options& options, bool use_trust_region) :
    ConstraintRelaxationStrategy(SubproblemFactory::create(problem, l1Relaxation::count_elastic_variables(problem),
          options.at("subproblem"), options, use_trust_region)),
    globalization_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),

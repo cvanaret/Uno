@@ -53,7 +53,7 @@ std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
    stream << "d^* = ";
    print_vector(stream, direction.x);
 
-   stream << "objective = " << direction.objective << "\n";
+   stream << "evaluate_objective = " << direction.objective << "\n";
    stream << "norm = " << direction.norm << "\n";
 
    stream << "bound constraints active at lower bound =";

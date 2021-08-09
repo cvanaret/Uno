@@ -39,33 +39,39 @@ current_iterate) {
       // assemble the trial iterate
       Iterate trial_iterate = this->assemble_trial_iterate(current_iterate, direction, this->step_length);
 
-      // check whether the trial step is accepted
-      if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate, direction, this->step_length)) {
-         this->add_statistics(statistics, direction);
-         return std::make_tuple(std::move(trial_iterate), direction.norm, direction.objective_multiplier);
-      }
-      else if (this->number_iterations == 1 && trial_iterate.progress.feasibility >= current_iterate.progress.feasibility) { // reject
-         // compute a (temporary) SOC direction
-         Direction direction_soc = this->relaxation_strategy.compute_second_order_correction(problem, trial_iterate);
+      try {
+         // check whether the trial step is accepted
+         if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate, direction, this->step_length)) {
+            this->add_statistics(statistics, direction);
+            return std::make_tuple(std::move(trial_iterate), direction.norm, direction.objective_multiplier);
+         }
+         else if (this->number_iterations == 1 && trial_iterate.progress.feasibility >= current_iterate.progress.feasibility) { // reject
+            // compute a (temporary) SOC direction
+            Direction direction_soc = this->relaxation_strategy.compute_second_order_correction(problem, trial_iterate);
 
-         // assemble the (temporary) trial iterate
-         Iterate trial_iterate_soc = this->assemble_trial_iterate(current_iterate, direction_soc, this->step_length);
+            // assemble the (temporary) trial iterate
+            Iterate trial_iterate_soc = this->assemble_trial_iterate(current_iterate, direction_soc, this->step_length);
 
-         if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate_soc, direction_soc, this->step_length)) {
-            this->add_statistics(statistics, direction_soc);
-            statistics.add_statistic("SOC", "x");
-            //assert(false && "SOC STOP HERE");
-            return std::make_tuple(std::move(trial_iterate_soc), direction_soc.norm, direction_soc.objective_multiplier);
+            if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate_soc, direction_soc, this->step_length)) {
+               this->add_statistics(statistics, direction_soc);
+               statistics.add_statistic("SOC", "x");
+               //assert(false && "SOC STOP HERE");
+               return std::make_tuple(std::move(trial_iterate_soc), direction_soc.norm, direction_soc.objective_multiplier);
+            }
+            else {
+               /* decrease the step length */
+               DEBUG << "SOC step discarded\n\n";
+               statistics.add_statistic("SOC", "-");
+               this->update_step_length();
+            }
          }
          else {
             /* decrease the step length */
-            DEBUG << "SOC step discarded\n\n";
-            statistics.add_statistic("SOC", "-");
             this->update_step_length();
          }
       }
-      else {
-         /* decrease the step length */
+      catch (const NumericalError& e) {
+         GlobalizationMechanism::print_warning(e.what());
          this->update_step_length();
       }
    }

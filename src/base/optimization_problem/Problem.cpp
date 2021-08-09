@@ -1,6 +1,7 @@
 #include <cmath>
 #include <iostream>
 #include <cassert>
+#include <utility>
 #include "Problem.hpp"
 #include "Vector.hpp"
 
@@ -12,8 +13,8 @@ std::map<FunctionType, std::string> Problem::type_to_string = {
 
 /* Abstract Problem class */
 
-Problem::Problem(std::string& name, int number_variables, int number_constraints, FunctionType type) :
-      name(name), number_variables(number_variables), number_constraints(number_constraints), type(type),
+Problem::Problem(std::string name, int number_variables, int number_constraints, FunctionType type) :
+      name(std::move(name)), number_variables(number_variables), number_constraints(number_constraints), type(type),
       objective_sign(1.), objective_type(NONLINEAR),
       // allocate all vectors
       variables_names(number_variables),
@@ -55,7 +56,7 @@ void Problem::determine_bounds_types(std::vector<Range>& bounds, std::vector<Con
    }
 }
 
-void Problem::determine_constraints_() {
+void Problem::determine_constraints() {
    int current_equality_constraint = 0;
    int current_inequality_constraint = 0;
    for (size_t j = 0; j < this->number_constraints; j++) {

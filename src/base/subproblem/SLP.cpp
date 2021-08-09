@@ -17,7 +17,7 @@ void SLP::generate(const Problem& problem, Iterate& current_iterate, double obje
    problem.constraints_jacobian(current_iterate.x, this->constraints_jacobian);
 
    this->objective_gradient.clear();
-   problem.objective_gradient(current_iterate.x, this->objective_gradient);
+   problem.evaluate_objective_gradient(current_iterate.x, this->objective_gradient);
    this->update_objective_multiplier(problem, current_iterate, objective_multiplier);
 
    /* bounds of the variables */
