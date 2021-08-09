@@ -14,10 +14,10 @@ class QPSolver : public LPSolver {
 public:
 
    ~QPSolver() override = default;
-   virtual Direction solve_QP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, SparseVector& linear_objective,
-         std::vector<SparseVector>& constraints_jacobian, CSCMatrix& hessian, std::vector<double>& x0) = 0;
-   Direction solve_LP(std::vector<Range>& variables_bounds, std::vector<Range>& constraints_bounds, SparseVector& linear_objective,
-         std::vector<SparseVector>& constraints_jacobian, std::vector<double>& x0) override = 0;
+   virtual Direction solve_QP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector& linear_objective,
+         const std::vector<SparseVector>& constraints_jacobian, const CSCMatrix& hessian, const std::vector<double>& initial_point) = 0;
+   Direction solve_LP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector& linear_objective,
+         const std::vector<SparseVector>& constraints_jacobian, const std::vector<double>& initial_point) override = 0;
 };
 
 #endif // QPSOLVER_H
