@@ -17,7 +17,7 @@ enable_language(CXX C Fortran)
 #endif()
 
 #set(CMAKE_Fortran_FLAGS "-cpp")
-set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wunused-value -Wno-conversion")
 set(CMAKE_CXX_FLAGS_DEBUG "-pg")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
@@ -28,7 +28,7 @@ set(DIRECTORIES base base/optimization_problem base/constraint_relaxation base/m
 set(SRC_FILES
     base/Uno.cpp
     base/Iterate.cpp base/Preprocessing.cpp
-    base/Statistics.cpp base/Timer.cpp
+    base/Statistics.cpp base/Timer.cpp base/Options.cpp
     
     base/optimization_problem/Problem.cpp
     base/optimization_problem/Constraint.cpp
