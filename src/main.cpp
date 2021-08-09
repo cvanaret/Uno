@@ -1,27 +1,25 @@
 #include <iostream>
-#include <vector>
-#include <map>
-#include <memory>
 #include <fstream>
 #include <sstream>
+#include <memory>
+#include <cassert>
+#include <vector>
+#include <map>
 #include "AMPLModel.hpp"
 #include "SubproblemFactory.hpp"
 #include "FeasibilityRestoration.hpp"
 #include "GlobalizationStrategyFactory.hpp"
 #include "GlobalizationMechanismFactory.hpp"
 #include <ConstraintRelaxationStrategyFactory.hpp>
-#include <cassert>
 #include "FeasibilityRestoration.hpp"
 #include "Uno.hpp"
 #include "Logger.hpp"
 
-
 // new overload to track heap allocations
-
 size_t total_allocations = 0;
 
 void* operator new(size_t size) {
-   //std::cout << "Allocating " << size << " bytes\n";
+   // std::cout << "Allocating " << size << " bytes\n";
    total_allocations += size;
    return malloc(size);
 }
@@ -31,23 +29,6 @@ void run_uno(const std::string& problem_name, const std::map<std::string, std::s
    // AMPL model (Hessian with a Fortran indexing starting at 1)
    auto problem = std::make_unique<AMPLModel>(problem_name, 1);
    std::cout << "Heap allocations after AMPL: " << total_allocations << "\n";
-
-//   CSCMatrix hessian(2, 3, 1);
-//   std::vector<double> my_x{-2, 1};
-//   std::vector<double> my_duals{0, 0};
-//
-//   double objective_multiplier = 1.;
-//   problem->lagrangian_hessian(my_x, objective_multiplier, my_duals, hessian);
-//   std::cout << "Hessian:\n" << hessian << "\n";
-//
-//   objective_multiplier = 0.;
-//   problem->lagrangian_hessian(my_x, objective_multiplier, my_duals, hessian);
-//   std::cout << "Hessian:\n" << hessian << "\n";
-//
-//   objective_multiplier = 0.1;
-//   problem->lagrangian_hessian(my_x, objective_multiplier, my_duals, hessian);
-//   std::cout << "Hessian:\n" << hessian << "\n";
-//   assert(false && "STOP HERE");
 
    /* create the constraint relaxation strategy and the subproblem */
    bool use_trust_region = (options.at("mechanism") == "TR");
@@ -120,18 +101,6 @@ void set_logger(std::map<std::string, std::string> options) {
       else if (logger_level == "DEBUG") {
          Logger::logger_level = DEBUG;
       }
-      else if (logger_level == "DEBUG1") {
-         Logger::logger_level = DEBUG1;
-      }
-      else if (logger_level == "DEBUG2") {
-         Logger::logger_level = DEBUG2;
-      }
-      else if (logger_level == "DEBUG3") {
-         Logger::logger_level = DEBUG3;
-      }
-      else if (logger_level == "DEBUG4") {
-         Logger::logger_level = DEBUG4;
-      }
    }
    catch (std::out_of_range&) {
    }
@@ -162,141 +131,9 @@ std::map<std::string, std::string> get_options(const std::string& file_name) {
    }
 }
 
-//void test_matrix() {
-//    int fortran_indexing = 0;
-//    ArgonotMatrix matrix(3, fortran_indexing);
-//    matrix.add_term(1., 0, 0);
-//    matrix.add_term(2., 0, 2);
-//    matrix.add_term(3., 1, 2);
-//    matrix.add_term(4., 2, 0);
-//    matrix.add_term(5., 2, 1);
-//    matrix.add_term(6., 2, 2);
-//    CSCMatrix csc_matrix = matrix.to_CSC();
-//    std::cout << "Before\n" << csc_matrix;
-//    
-//    csc_matrix = csc_matrix.add_identity_multiple(100.);
-//    
-//    std::cout << "After\n" << csc_matrix;
-//}
-
-//void test_factorization() {
-//    int fortran_indexing = 1;
-//    int n = 2;
-//    COOMatrix coo_matrix(n, fortran_indexing);
-//    coo_matrix.add_term(6050.0001, 0, 0);
-//    coo_matrix.add_term(-2774, 0, 1);
-//    coo_matrix.add_term(1e-4, 1, 1);
-//    
-//    MA57Solver solver;
-//    MA57Factorization factorization = solver.factorize(coo_matrix);
-//    std::cout << "Dimension: " << coo_matrix.dimension << "\n";
-//    std::cout << "Singular ? " << factorization.matrix_is_singular() << "\n";
-//    std::cout << "Rank ? " << factorization.rank() << "\n";
-//    std::cout << "Negative eigenvalues ? " << factorization.number_negative_eigenvalues() << "\n";
-//}
-
-//void test_pardiso() {
-//    PardisoSolver solver;
-//    std::cout << "PARDISO created\n";
-//}
-
-//double f(std::vector<double> x) {
-//    return x[0];
-//}
-//
-//std::vector<double> f_gradient(std::vector<double> x) {
-//    std::vector<double> gradient(1);
-//    gradient[0] = 1.;
-//    return gradient;
-//}
-
-//void test_cpp() {
-//    CppProblem problem("my_problem", 1, 0, f, f_gradient);
-//    std::vector<double> x = {123.};
-//    double f_x = f(x);
-//    std::cout << "f(x) = " << f_x << "\n";
-//}
-
-//void test_mask_matrix() {
-//    int n = 4;
-//    UnoMatrix matrix(n, 0);
-//
-//    // Column 0
-//    matrix.insert(1., 0, 0);
-//    // Column 1
-//    matrix.insert(2., 0, 1);
-//    matrix.insert(3., 1, 1);
-//    // Column 2
-//    matrix.insert(4., 0, 2);
-//    matrix.insert(5., 1, 2);
-//    matrix.insert(6., 2, 2);
-//    // Column 3
-//    matrix.insert(7., 0, 3);
-//    matrix.insert(8., 1, 3);
-//    matrix.insert(9., 2, 3);
-//    matrix.insert(10., 3, 3);
-//    std::cout << "Original matrix: " << matrix << "\n";
-//
-//    std::unordered_map<int, int> mask;
-//    mask[0] = 0;
-//    mask[2] = 1;
-//
-//
-//    COOMatrix coo_matrix = matrix.to_COO(mask);
-//    std::cout << "COO reduced matrix:\n" << coo_matrix;
-//
-//    CSCMatrix csc_matrix = matrix.to_CSC(mask);
-//    std::cout << "CSC reduced matrix:\n" << csc_matrix;
-//}
-
-using MySparseVector = std::vector<std::pair<int, double>>;
-
-void dense_to_sparse(const std::vector<double>& input) {
-   // create
-   std::vector<std::pair<int, double>> output;
-   output.reserve(input.size());
-   for (size_t i = 0; i < input.size(); i++) {
-      if (input[i] != 0.) {
-         output.emplace_back(i, input[i]);
-      }
-   }
-   // print
-   for (auto& [i, xi]: output) {
-      std::cout << "Index " << i << ", value " << xi << "\n";
-   }
-}
-
-void test_sparse_vector() {
-   std::vector<double> input{0, 1, 2, 0, 0, 0, 3};
-   dense_to_sparse(input);
-}
-
-struct PredictedReduction {
-   std::function<double (double)> partial_step{nullptr};
-
-   double evaluate(const Problem& problem, const Direction& direction, double step_length);
-};
-
-double PredictedReduction::evaluate(const Problem& problem, const Direction& direction, double step_length) {
-   if (step_length == 1.) {
-      return -direction.objective;
-   }
-   else {
-      if (this->partial_step == nullptr) {
-         double complicated_stuff = problem.objective(direction.x);
-         std::cout << "COMPLICATED STUFF COMPUTED ONCE\n";
-         // construct a lambda that captures by value
-         this->partial_step = [=](double step_length) {
-            return -step_length*complicated_stuff;
-         };
-      }
-      return this->partial_step(step_length);
-   }
-}
-
 int main(int argc, char* argv[]) {
    if (1 < argc) {
-      /* get the default values */
+      /* get the options */
       std::map<std::string, std::string> options = get_options("uno.cfg");
       /* get the command line options */
       get_command_options(argc, argv, options);
@@ -304,27 +141,17 @@ int main(int argc, char* argv[]) {
 
       if (std::string(argv[1]) == "-v") {
          std::cout << "Welcome in UNO\n";
-         std::cout << "To solve an AMPL problem, type ./uno path_to_file/file.nl\n";
-         std::cout << "To choose a globalization mechanism, type ./uno -mechanism [LS|TR] path_to_file/file.nl\n";
-         std::cout << "To choose a globalization strategy, type ./uno -strategy [penalty|filter|nonmonotone-filter] path_to_file/file.nl\n";
-         std::cout << "To choose a subproblem, type ./uno -subproblem [SQP|SLP|Sl1QP|SLPEQP|IPM] path_to_file/file.nl\n";
-         std::cout << "The three options can be combined in the same command line. Autocompletion is active.\n";
+         std::cout << "To solve an AMPL problem, type ./uno_ampl path_to_file/file.nl\n";
+         std::cout << "To choose a globalization mechanism, use the argument -mechanism [LS|TR]\n";
+         std::cout << "To choose a globalization strategy, use the argument -strategy [penalty|filter|nonmonotone-filter]\n";
+         std::cout << "To choose a constraint relaxation strategy, use the argument -constraint-relaxation [feasibility-restoration|l1-relaxation]\n";
+         std::cout << "To choose a subproblem, use the argument -subproblem [SQP|SLP|IPM]\n";
+         std::cout << "The four options can be combined in the same command line. Autocompletion is active.\n";
       }
       else {
          std::string problem_name = std::string(argv[argc - 1]);
-         /* run Argonot */
+         /* run Uno */
          run_uno(problem_name, options);
-//         const AMPLModel problem = AMPLModel(problem_name, 1);
-//         std::vector<double> x(2);
-//         Multipliers multipliers(2, 2);
-//         Iterate iterate(x, multipliers);
-//         Direction direction(2, 2);
-//         PredictedReduction predicted_reduction;
-//         for (int iteration = 0; iteration < 5; iteration++) {
-//            double step_length = std::pow(2, -iteration);
-//            std::cout << "Step length: " << step_length << "\n";
-//            std::cout << "Predicted reduction: " << predicted_reduction.evaluate(problem, direction, step_length) << "\n";
-//         }
       }
    }
    return EXIT_SUCCESS;
