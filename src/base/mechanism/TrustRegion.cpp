@@ -30,13 +30,9 @@ current_iterate) {
          this->number_iterations++;
          this->print_iteration();
 
-         /* generate the subproblem once, then update the trust region */
-         if (true || this->number_iterations == 1) {
-            this->relaxation_strategy.generate_subproblem(problem, current_iterate, this->radius);
-         }
-         else {
-            this->relaxation_strategy.update_variables_bounds(problem, current_iterate, this->radius);
-         }
+         /* generate the subproblem */
+         this->relaxation_strategy.generate_subproblem(problem, current_iterate, this->radius);
+
          /* compute the direction within the trust region */
          Direction direction = this->relaxation_strategy.compute_feasible_direction(statistics, problem, current_iterate);
          /* set bound multipliers of active trust region to 0 */
@@ -61,7 +57,7 @@ current_iterate) {
          }
       }
       catch (const NumericalError& e) {
-         GlobalizationMechanism::print_warning_(e.what());
+         GlobalizationMechanism::print_warning(e.what());
          /* if an evaluation error occurs, decrease the radius */
          this->radius /= 2.;
       }
