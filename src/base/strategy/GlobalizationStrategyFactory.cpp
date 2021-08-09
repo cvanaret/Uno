@@ -2,9 +2,8 @@
 #include "l1MeritFunction.hpp"
 #include "FilterStrategy.hpp"
 
-std::unique_ptr<GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& strategy_type,
-      const std::map<std::string, std::string>& options) {
-    if (strategy_type == "penalty") {
+std::unique_ptr<GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& strategy_type, const Options& options) {
+    if (strategy_type == "l1-penalty") {
         return std::make_unique<l1MeritFunction>();
     }
     else if (strategy_type == "filter" || strategy_type == "nonmonotone-filter") {

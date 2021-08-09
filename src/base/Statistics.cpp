@@ -22,23 +22,23 @@ int Statistics::int_width = 7;
 int Statistics::double_width = 18;
 int Statistics::char_width = 7;
 
-void Statistics::add_column(const std::string& name, int width, int order) {
+void Statistics::add_column(std::string name, int width, int order) {
    this->columns_[order] = name;
-   this->widths_[name] = width;
+   this->widths_[std::move(name)] = width;
 }
 
-void Statistics::add_statistic(const std::string& name, const std::string& value) {
-   this->current_line_[name] = value;
+void Statistics::add_statistic(std::string name, std::string value) {
+   this->current_line_[std::move(name)] = std::move(value);
 }
 
 void Statistics::add_statistic(std::string name, int value) {
-   return add_statistic(name, std::to_string(value));
+   add_statistic(std::move(name), std::move(std::to_string(value)));
 }
 
 void Statistics::add_statistic(std::string name, double value) {
    std::ostringstream stream;
    stream << std::scientific << std::setprecision(6) << value;
-   return add_statistic(name, stream.str());
+   add_statistic(std::move(name), std::move(stream.str()));
 }
 
 void Statistics::print_header(bool first_occurrence) {

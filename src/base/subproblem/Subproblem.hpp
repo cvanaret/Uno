@@ -43,6 +43,7 @@ public:
 
    static double push_variable_to_interior(double variable_value, const Range& variable_bounds);
    void set_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints);
+
    static void compute_least_square_multipliers(const Problem& problem, Iterate& current_iterate, std::vector<double>& multipliers, LinearSolver& solver,
          double multipliers_max_size = 1e3);
    static void compute_least_square_multipliers(const Problem& problem, Iterate& current_iterate, std::vector<double>& multipliers,
@@ -53,6 +54,8 @@ public:
    void compute_errors(const Problem& problem, Iterate& iterate, double objective_multiplier) const;
    virtual int get_hessian_evaluation_count() const = 0;
    virtual void set_initial_point(const std::vector<double>& initial_point) = 0;
+
+   static double compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers);
 
    const size_t number_variables;
    const size_t number_constraints;
@@ -71,7 +74,6 @@ public:
 
 protected:
    virtual void set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
-   virtual double compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const;
 };
 
 #endif // SUBPROBLEM_H

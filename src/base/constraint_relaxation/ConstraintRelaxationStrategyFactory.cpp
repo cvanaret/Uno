@@ -3,7 +3,7 @@
 #include "l1Relaxation.hpp"
 
 std::unique_ptr<ConstraintRelaxationStrategy> ConstraintRelaxationStrategyFactory::create(const std::string& constraint_relaxation_type,
-      Problem& problem, const std::map<std::string, std::string>& options, bool use_trust_region) {
+      Problem& problem, const Options& options, bool use_trust_region) {
    if (constraint_relaxation_type == "feasibility-restoration") {
       return std::make_unique<FeasibilityRestoration>(problem, options, use_trust_region);
    }

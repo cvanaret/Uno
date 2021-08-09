@@ -3,12 +3,13 @@
 
 #include "ConstraintRelaxationStrategy.hpp"
 #include "GlobalizationStrategy.hpp"
+#include "Options.hpp"
 
 enum Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 
 class FeasibilityRestoration : public ConstraintRelaxationStrategy {
 public:
-   FeasibilityRestoration(const Problem& problem, const std::map<std::string, std::string>& options, bool use_trust_region);
+   FeasibilityRestoration(const Problem& problem, const Options& options, bool use_trust_region);
    Iterate initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
 
    // direction computation

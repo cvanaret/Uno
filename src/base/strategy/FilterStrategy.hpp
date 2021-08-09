@@ -5,6 +5,7 @@
 #include <memory>
 #include "GlobalizationStrategy.hpp"
 #include "Filter.hpp"
+#include "Options.hpp"
 
 /*! \class TwoPhaseConstants
  * \brief Constants for filter and tube strategies
@@ -25,7 +26,7 @@ struct FilterStrategyParameters {
  */
 class FilterStrategy : public GlobalizationStrategy {
 public:
-   FilterStrategy(FilterStrategyParameters& strategy_constants, const std::map<std::string, std::string>& options);
+   FilterStrategy(FilterStrategyParameters& strategy_constants, const Options& options);
 
    /* use pointers to allow polymorphism */
    const std::unique_ptr<Filter> filter;

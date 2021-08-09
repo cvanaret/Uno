@@ -5,10 +5,11 @@
 #include <memory>
 #include "GlobalizationStrategy.hpp"
 #include "Subproblem.hpp"
+#include "Options.hpp"
 
 class GlobalizationStrategyFactory {
 public:
-   static std::unique_ptr<GlobalizationStrategy> create(const std::string& strategy_type, const std::map<std::string, std::string>& options);
+   static std::unique_ptr<GlobalizationStrategy> create(const std::string& strategy_type, const Options& options);
 };
 
 #endif // GLOBALIZATIONSTRATEGYFACTORY_H

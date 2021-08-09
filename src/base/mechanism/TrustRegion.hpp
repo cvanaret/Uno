@@ -10,24 +10,19 @@
  */
 class TrustRegion : public GlobalizationMechanism {
 public:
-   double radius; /*!< Current trust region radius */
-
-   /*!
-    *  Constructor
-    *
-    * \param direction_computation: strategy to compute a descent direction
-    * \param step_accept: strategy to accept or reject a step
-    * \param initial_radius: initial trust region radius
-    */
    TrustRegion(ConstraintRelaxationStrategy& constraint_relaxation_strategy, double initial_radius, int max_iterations);
 
    Iterate initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
    std::tuple<Iterate, double, double> compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
-   static void rectify_active_set(Direction& direction, double radius);
 
 private:
-   const double activity_tolerance_;
+   double radius; /*!< Current trust region radius */
+   const double increase_factor{2.};
+   const double decrease_factor{2.};
+   const double activity_tolerance{1e-6};
+   const double min_radius{1e-16};
 
+   static void rectify_active_set(Direction& direction, double radius);
    void add_statistics(Statistics& statistics, const Direction& direction);
    bool termination();
    void print_iteration();

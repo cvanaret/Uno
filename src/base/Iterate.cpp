@@ -17,9 +17,19 @@ Iterate::Iterate(const std::vector<double>& x, const Multipliers& multipliers) :
    objective_gradient.reserve(x.size());
 }
 
+Iterate::Iterate(size_t number_variables, size_t number_constraints) : x(number_variables), multipliers(number_variables, number_constraints),
+      objective(std::numeric_limits<double>::infinity()), is_objective_computed(false),
+      constraints(multipliers.constraints.size()), are_constraints_computed(false),
+      is_objective_gradient_computed(false),
+      constraints_jacobian(number_constraints), is_constraints_jacobian_computed(false),
+      errors({0., 0., 0., 0.}),
+      progress({0., 0.}) {
+   objective_gradient.reserve(number_variables);
+}
+
 void Iterate::compute_objective(const Problem& problem) {
    if (!this->is_objective_computed) {
-      this->objective = problem.objective(this->x);
+      this->objective = problem.evaluate_objective(this->x);
       this->is_objective_computed = true;
       Iterate::number_eval_objective++;
    }
@@ -36,7 +46,7 @@ void Iterate::compute_constraints(const Problem& problem) {
 void Iterate::compute_objective_gradient(const Problem& problem) {
    if (!this->is_objective_gradient_computed) {
       this->objective_gradient.clear();
-      problem.objective_gradient(this->x, this->objective_gradient);
+      problem.evaluate_objective_gradient(this->x, this->objective_gradient);
       this->is_objective_gradient_computed = true;
    }
 }

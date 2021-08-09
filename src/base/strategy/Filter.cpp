@@ -95,7 +95,7 @@ double Filter::compute_actual_reduction(double current_objective, double /*curre
 
 std::ostream& operator<<(std::ostream& stream, Filter& filter) {
    stream << "************\n";
-   stream << "  Current filter (constraint residual, objective):\n";
+   stream << "  Current filter (constraint residual, evaluate_objective):\n";
    for (FilterEntry const& entry: filter.entries_) {
       stream << "\t" << entry.infeasibility_measure << "\t" << entry.optimality_measure << "\n";
    }
@@ -225,7 +225,7 @@ double NonmonotoneFilter::compute_actual_reduction(double current_objective, dou
 
 /* FilterFactory class */
 
-std::unique_ptr<Filter> FilterFactory::create(const std::map<std::string, std::string>& options) {
+std::unique_ptr<Filter> FilterFactory::create(const Options& options) {
    double Beta = stod(options.at("Beta"));
    double Gamma = stod(options.at("Gamma"));
    FilterConstants filter_constants = {Beta, Gamma};

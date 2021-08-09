@@ -36,6 +36,7 @@ public:
     *  Constructor
     */
    Iterate(const std::vector<double>& x, const Multipliers& multipliers);
+   Iterate(size_t number_variables, size_t number_constraints);
 
    std::vector<double> x; /*!< \f$\mathbb{R}^n\f$ primal variables */
    Multipliers multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
@@ -50,8 +51,8 @@ public:
    std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
    bool are_constraints_computed;
 
-   SparseVector objective_gradient; /*!< Sparse Jacobian of the objective */
-   bool is_objective_gradient_computed; /*!< Flag that indicates if the objective gradient has already been computed */
+   SparseVector objective_gradient; /*!< Sparse Jacobian of the evaluate_objective */
+   bool is_objective_gradient_computed; /*!< Flag that indicates if the evaluate_objective gradient has already been computed */
 
    std::vector<SparseVector> constraints_jacobian; /*!< Sparse Jacobian of the constraints */
    bool is_constraints_jacobian_computed; /*!< Flag that indicates if the constraint Jacobian has already been computed */

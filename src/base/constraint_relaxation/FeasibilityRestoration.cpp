@@ -3,7 +3,7 @@
 #include "GlobalizationStrategyFactory.hpp"
 #include "SubproblemFactory.hpp"
 
-FeasibilityRestoration::FeasibilityRestoration(const Problem& problem, const std::map<std::string, std::string>& options, bool use_trust_region) :
+FeasibilityRestoration::FeasibilityRestoration(const Problem& problem, const Options& options, bool use_trust_region) :
    ConstraintRelaxationStrategy(SubproblemFactory::create(problem, problem.number_variables, options.at("subproblem"),
          options, use_trust_region)),
    /* create the globalization strategy */
@@ -32,13 +32,14 @@ void FeasibilityRestoration::generate_subproblem(const Problem& problem, Iterate
 Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
    // solve the original subproblem
    Direction direction = this->subproblem->compute_direction(statistics, problem, current_iterate);
-   DEBUG << direction;
+   DEBUG << "\n" << direction;
 
    if (direction.status != INFEASIBLE) {
       direction.objective_multiplier = problem.objective_sign;
    }
    else {
       assert(!direction.constraint_partition.infeasible.empty() && "Infeasible direction requires infeasible constraints");
+      DEBUG << "\nSwitching to feasibility restoration\n";
       ConstraintPartition constraint_partition = direction.constraint_partition;
       // infeasible subproblem: form the feasibility problem
       this->form_feasibility_problem(problem, current_iterate, direction.x, constraint_partition);
@@ -46,7 +47,7 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
       direction = this->subproblem->compute_direction(statistics, problem, current_iterate);
       direction.objective_multiplier = 0.;
       direction.is_relaxed = true;
-      DEBUG << direction;
+      DEBUG << "\n" << direction;
       direction.constraint_partition = constraint_partition;
    }
    return direction;
@@ -118,6 +119,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
 
       // evaluate the predicted reduction
       const double predicted_reduction = this->compute_predicted_reduction(problem, current_iterate, direction, step_length);
+
       // pick the current strategy
       GlobalizationStrategy& strategy = (this->current_phase == OPTIMALITY) ? *this->phase_2_strategy : *this->phase_1_strategy;
       // invoke the globalization strategy for acceptance
@@ -131,7 +133,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
          /* correct multipliers for infeasibility problem */
          FeasibilityRestoration::set_restoration_multipliers(trial_iterate.multipliers.constraints, direction.constraint_partition);
       }
-      // compute the residuals
+      // compute the errors
       trial_iterate.compute_objective(problem);
       this->subproblem->compute_errors(problem, trial_iterate, direction.objective_multiplier);
    }

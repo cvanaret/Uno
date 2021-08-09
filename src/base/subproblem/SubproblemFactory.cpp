@@ -6,8 +6,8 @@
 #include "Vector.hpp"
 
 std::unique_ptr<Subproblem>
-SubproblemFactory::create(const Problem& problem, size_t number_variables, const std::string& subproblem_type, const std::map<std::string,
-      std::string>& options, bool use_trust_region) {
+SubproblemFactory::create(const Problem& problem, size_t number_variables, const std::string& subproblem_type, const Options& options, bool
+use_trust_region) {
    const std::vector<std::string> possible_methods = {"SQP", "SLP", "IPM"};
    /* active-set methods */
    if (subproblem_type == "SQP") {

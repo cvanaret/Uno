@@ -33,7 +33,7 @@ Result Uno::solve(const Problem& problem, std::vector<double>& x, Multipliers& m
    TerminationStatus termination_status = NOT_OPTIMAL;
    try {
       /* check for convergence */
-      while (!this->termination_criterion_(termination_status, major_iterations)) {
+      while (!this->termination_criterion(termination_status, major_iterations)) {
          statistics.new_line();
          major_iterations++;
          DEBUG << "\n########## Outer iteration " << major_iterations << "\n";
@@ -90,7 +90,7 @@ void Uno::add_statistics(Statistics& statistics, const Iterate& new_iterate, int
    statistics.add_statistic("FJ", new_iterate.errors.FJ);
 }
 
-bool Uno::termination_criterion_(TerminationStatus current_status, int iteration) const {
+bool Uno::termination_criterion(TerminationStatus current_status, int iteration) const {
    return current_status != NOT_OPTIMAL || this->max_iterations <= iteration;
 }
 

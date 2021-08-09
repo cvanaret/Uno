@@ -5,7 +5,7 @@
 #include "Logger.hpp"
 
 TrustRegion::TrustRegion(ConstraintRelaxationStrategy& constraint_relaxation_strategy, double initial_radius, int max_iterations) :
-      GlobalizationMechanism(constraint_relaxation_strategy, max_iterations), radius(initial_radius), activity_tolerance_(1e-6) {
+      GlobalizationMechanism(constraint_relaxation_strategy, max_iterations), radius(initial_radius) {
 }
 
 Iterate TrustRegion::initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
@@ -42,30 +42,30 @@ current_iterate) {
          Iterate trial_iterate = this->assemble_trial_iterate(current_iterate, direction, 1.);
 
          // check whether the trial step is accepted
-         if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate,direction, 1.)) {
+         if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate, direction, 1.)) {
             this->add_statistics(statistics, direction);
 
-            // increase the radius if trust region is active, otherwise keep the same radius
-            if (direction.norm >= this->radius - this->activity_tolerance_) {
-               this->radius *= 2.;
+            // increase the radius if trust region is active
+            if (direction.norm >= this->radius - this->activity_tolerance) {
+               this->radius *= this->increase_factor;
             }
             return std::make_tuple(std::move(trial_iterate), direction.norm, direction.objective_multiplier);
          }
          else {
             /* if the step is rejected, decrease the radius */
-            this->radius = std::min(this->radius, direction.norm) / 2.;
+            this->radius = std::min(this->radius, direction.norm) / this->decrease_factor;
          }
       }
       catch (const NumericalError& e) {
          GlobalizationMechanism::print_warning(e.what());
          /* if an evaluation error occurs, decrease the radius */
-         this->radius /= 2.;
+         this->radius /= this->decrease_factor;
       }
    }
    if (this->max_iterations < this->number_iterations) {
       throw std::runtime_error("Trust-region iteration limit reached");
    } /* radius gets too small */
-   else if (this->radius < 1e-16) { /* 1e-16: something like machine precision */
+   else if (this->radius < this->min_radius) { /* 1e-16: something like machine precision */
       throw std::runtime_error("Trust-region radius became too small");
    }
    else {
@@ -105,7 +105,7 @@ void TrustRegion::rectify_active_set(Direction& direction, double radius) {
 }
 
 bool TrustRegion::termination() {
-   return (this->max_iterations < this->number_iterations || this->radius < 1e-16);
+   return (this->max_iterations < this->number_iterations || this->radius < this->min_radius);
 }
 
 void TrustRegion::print_iteration() {
