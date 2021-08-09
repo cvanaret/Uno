@@ -26,8 +26,8 @@ public:
     ~AMPLModel() override;
 
     /* objective */
-    [[nodiscard]] double objective(const std::vector<double>& x) const override;
-    void objective_gradient(const std::vector<double>& x, SparseVector& gradient) const override;
+    [[nodiscard]] double evaluate_objective(const std::vector<double>& x) const override;
+    void evaluate_objective_gradient(const std::vector<double>& x, SparseVector& gradient) const override;
 
     /* constraints */
     //std::vector<bool> constraint_is_uncertainty_set;
@@ -39,6 +39,8 @@ public:
     /* Hessian */
     void lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
           CSCMatrix& hessian) const override;
+   void lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
+         COOMatrix& hessian) const;
     //CSCMatrix lagrangian_hessian(std::vector<double>& x, double objective_multiplier, std::vector<double>& multipliers, std::vector<double>& hessian);
 
     void set_initial_primal_point(std::vector<double>& x) override;
@@ -59,6 +61,8 @@ private:
     //void create_constraint_variables_(int j, cgrad* ampl_variables);
     void set_function_types_(std::string file_name);
     void initialize_lagrangian_hessian_();
+   size_t compute_hessian_number_nonzeros(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers) const;
+   void generate_sparsity_pattern(CSCMatrix& hessian, size_t number_non_zeros) const;
 };
 
 #endif // AMPLMODEL_H

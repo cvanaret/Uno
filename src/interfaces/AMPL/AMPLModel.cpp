@@ -90,7 +90,7 @@ void AMPLModel::generate_variables_() {
    this->determine_bounds_types(this->variables_bounds, this->variable_status);
 }
 
-double AMPLModel::objective(const std::vector<double>& x) const {
+double AMPLModel::evaluate_objective(const std::vector<double>& x) const {
    int nerror = 0;
    double result = this->objective_sign * (*(this->asl_)->p.Objval)(this->asl_, 0, (double*) x.data(), &nerror);
    if (0 < nerror) {
@@ -100,7 +100,7 @@ double AMPLModel::objective(const std::vector<double>& x) const {
 }
 
 /* sparse gradient */
-void AMPLModel::objective_gradient(const std::vector<double>& x, SparseVector& gradient) const {
+void AMPLModel::evaluate_objective_gradient(const std::vector<double>& x, SparseVector& gradient) const {
    /* compute the AMPL gradient (always in dense format) */
    int nerror = 0;
    (*(this->asl_)->p.Objgrd)(this->asl_, 0, (double*) x.data(), (double*) this->ampl_tmp_gradient_.data(), &nerror);
@@ -187,7 +187,7 @@ void AMPLModel::generate_constraints_() {
       //this->constraint_is_uncertainty_set[j] = false; //(uncertain_suffixes->u.i != NULL && uncertain_suffixes->u.i[j] == 1);
    }
    this->determine_bounds_types(this->constraint_bounds, this->constraint_status);
-   this->determine_constraints_();
+   this->determine_constraints();
 }
 
 void AMPLModel::set_function_types_(std::string file_name) {
@@ -275,37 +275,62 @@ bool are_all_zeros(const std::vector<double>& multipliers) {
    return true;
 }
 
-void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
-      CSCMatrix& hessian) const {
+size_t AMPLModel::compute_hessian_number_nonzeros(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers) const {
    /* register the vector of variables */
    (*(this->asl_)->p.Xknown)(this->asl_, (double*) x.data(), 0);
 
    /* set the multiplier for the objective function */
    int objective_number = -1;
-   double* objective_multiplier_pointer = (objective_multiplier != 0.) ? &objective_multiplier : nullptr;
 
    /* compute the sparsity */
    bool all_zeros_multipliers = are_all_zeros(multipliers);
    int upper_triangular = 1;
    size_t number_non_zeros = (*(this->asl_)->p.Sphset)(this->asl_, nullptr, objective_number, (objective_multiplier > 0.),
          !all_zeros_multipliers, upper_triangular);
+   return number_non_zeros;
+}
+
+void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
+      CSCMatrix& hessian) const {
+   size_t number_non_zeros = this->compute_hessian_number_nonzeros(x, objective_multiplier, multipliers);
    assert(hessian.capacity >= number_non_zeros);
 
    /* evaluate the Hessian */
    clear(hessian.matrix);
+   int objective_number = -1;
+   double* objective_multiplier_pointer = (objective_multiplier != 0.) ? &objective_multiplier : nullptr;
+   bool all_zeros_multipliers = are_all_zeros(multipliers);
    (*(this->asl_)->p.Sphes)(this->asl_, 0, hessian.matrix.data(), objective_number, objective_multiplier_pointer,
          all_zeros_multipliers ? nullptr : (double*) multipliers.data());
    hessian.number_nonzeros = number_non_zeros;
 
-   /* copy sparse matrix description */
-   int* ampl_column_start = this->asl_->i.sputinfo_->hcolstarts;
-   for (size_t k = 0; k < this->number_variables + 1; k++) {
-      hessian.column_start[k] = ampl_column_start[k] + this->fortran_indexing;
-   }
-   int* ampl_row_number = this->asl_->i.sputinfo_->hrownos;
-   for (size_t k = 0; k < number_non_zeros; k++) {
-      hessian.row_number[k] = ampl_row_number[k] + this->fortran_indexing;
-   }
+   // generate the sparsity pattern in the right sparse format
+   this->generate_sparsity_pattern(hessian, number_non_zeros);
+
+   /* unregister the vector of variables */
+   this->asl_->i.x_known = 0;
+}
+
+void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
+      COOMatrix& hessian) const {
+   size_t number_non_zeros = this->compute_hessian_number_nonzeros(x, objective_multiplier, multipliers);
+   assert(hessian.capacity >= number_non_zeros);
+
+   /* evaluate the Hessian */
+   clear(hessian.matrix);
+   int objective_number = -1;
+   double* objective_multiplier_pointer = (objective_multiplier != 0.) ? &objective_multiplier : nullptr;
+   bool all_zeros_multipliers = are_all_zeros(multipliers);
+   (*(this->asl_)->p.Sphes)(this->asl_, 0, hessian.matrix.data(), objective_number, objective_multiplier_pointer,
+         all_zeros_multipliers ? nullptr : (double*) multipliers.data());
+   hessian.number_nonzeros = number_non_zeros;
+
+   // generate the sparsity pattern in the right sparse format
+   //this->generate_sparsity_pattern(hessian, number_non_zeros);
+
+   /* unregister the vector of variables */
+   this->asl_->i.x_known = 0;
+}
 
 //   COO
 //   int k = 0;
@@ -318,8 +343,15 @@ void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objectiv
 //      }
 //   }
 
-   /* unregister the vector of variables */
-   this->asl_->i.x_known = 0;
+void AMPLModel::generate_sparsity_pattern(CSCMatrix& hessian, size_t number_non_zeros) const {
+   int* ampl_column_start = this->asl_->i.sputinfo_->hcolstarts;
+   for (size_t k = 0; k < this->number_variables + 1; k++) {
+      hessian.column_start[k] = ampl_column_start[k] + this->fortran_indexing;
+   }
+   int* ampl_row_number = this->asl_->i.sputinfo_->hrownos;
+   for (size_t k = 0; k < number_non_zeros; k++) {
+      hessian.row_number[k] = ampl_row_number[k] + this->fortran_indexing;
+   }
 }
 
 /* initial primal point */
