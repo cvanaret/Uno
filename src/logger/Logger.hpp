@@ -13,7 +13,7 @@
 #define RESET "\x1B[0m"
 
 enum Level {
-    ERROR = 0, WARNING, INFO, DEBUG, DEBUG1, DEBUG2, DEBUG3, DEBUG4
+    ERROR = 0, WARNING, INFO, DEBUG
 };
 
 class Logger {
