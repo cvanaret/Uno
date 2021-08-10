@@ -38,7 +38,7 @@ public:
 
    double norm_1();
    /*COOMatrix add_identity_multiple(double multiple);*/
-   static void iter(const COOMatrix& matrix, const std::function<void (size_t, size_t, double)>& f);
+   static void for_each(const COOMatrix& matrix, const std::function<void (size_t, size_t, double)>& f);
 
    friend std::ostream& operator<<(std::ostream& stream, COOMatrix& matrix);
    friend std::ostream& operator<<(std::ostream& stream, const COOMatrix& matrix);
@@ -66,7 +66,7 @@ public:
    COOMatrix to_COO();
    UnoMatrix to_UnoMatrix(int uno_matrix_size);
 
-   static void iter(const CSCMatrix& matrix, const std::function<void (size_t, size_t, double)>& f);
+   static void for_each(const CSCMatrix& matrix, const std::function<void (size_t, size_t, double)>& f);
    static CSCMatrix identity(size_t dimension);
 
    friend std::ostream& operator<<(std::ostream& stream, CSCMatrix& matrix);
