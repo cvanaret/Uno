@@ -113,6 +113,6 @@ std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
    stream << "Complementarity residual: " << iterate.errors.complementarity << "\n";
 
    stream << "Optimality measure: " << iterate.progress.objective << "\n";
-   stream << "Feasibility measure: " << iterate.progress.feasibility << "\n";
+   stream << "Feasibility measure: " << iterate.progress.infeasibility << "\n";
    return stream;
 }

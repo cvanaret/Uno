@@ -45,8 +45,8 @@ public:
 private:
    /* barrier parameter */
    double barrier_parameter{0.1};
-   const std::unique_ptr<HessianEvaluation<CSCMatrix> > hessian_evaluation;
-   COOMatrix kkt_matrix;
+   const std::unique_ptr<HessianEvaluation<CSCSymmetricMatrix> > hessian_evaluation;
+   COOSymmetricMatrix kkt_matrix;
    const std::unique_ptr<LinearSolver> linear_solver; /*!< Solver that solves the subproblem */
    /* constants */
    const InteriorPointParameters parameters;
@@ -70,13 +70,13 @@ private:
 
    void update_barrier_parameter(const Iterate& current_iterate);
    void set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;
-   void factorize(COOMatrix& kkt_matrix, FunctionType problem_type);
+   void factorize(COOSymmetricMatrix& kkt_matrix, FunctionType problem_type);
    double compute_barrier_directional_derivative(const std::vector<double>& solution);
    double evaluate_barrier_function(const Problem& problem, Iterate& iterate);
    double primal_fraction_to_boundary(const Iterate& current_iterate, const std::vector<double>& ipm_solution, double tau);
    double dual_fraction_to_boundary(const Iterate& current_iterate, double tau);
-   COOMatrix assemble_kkt_matrix(const Problem& problem, Iterate& current_iterate);
-   void modify_inertia(COOMatrix& kkt_matrix, size_t size_first_block, size_t size_second_block, FunctionType problem_type);
+   COOSymmetricMatrix assemble_kkt_matrix(const Problem& problem, Iterate& current_iterate);
+   void modify_inertia(COOSymmetricMatrix& kkt_matrix, size_t size_first_block, size_t size_second_block, FunctionType problem_type);
    void generate_kkt_rhs(const Iterate& current_iterate);
    void compute_lower_bound_dual_displacements(const Iterate& current_iterate, const std::vector<double>& solution);
    void compute_upper_bound_dual_displacements(const Iterate& current_iterate, const std::vector<double>& solution);

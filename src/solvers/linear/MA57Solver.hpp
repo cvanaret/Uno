@@ -2,7 +2,7 @@
 #define MA57SOLVER_H
 
 #include <vector>
-#include "Matrix.hpp"
+#include "SymmetricMatrix.hpp"
 #include "LinearSolver.hpp"
 
 struct MA57Factorization {
@@ -29,10 +29,10 @@ public:
    MA57Solver() = default;
    ~MA57Solver() override = default;
 
-   void factorize(COOMatrix& matrix) override;
-   void do_symbolic_factorization(COOMatrix& matrix) override;
-   void do_numerical_factorization(COOMatrix& matrix) override;
-   std::vector<double> solve(const COOMatrix& matrix, const std::vector<double>& rhs) override;
+   void factorize(COOSymmetricMatrix& matrix) override;
+   void do_symbolic_factorization(COOSymmetricMatrix& matrix) override;
+   void do_numerical_factorization(COOSymmetricMatrix& matrix) override;
+   std::vector<double> solve(const COOSymmetricMatrix& matrix, const std::vector<double>& rhs) override;
 
    [[nodiscard]] std::tuple<int, int, int> get_inertia() const override;
    [[nodiscard]] size_t number_negative_eigenvalues() const override;

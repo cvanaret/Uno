@@ -82,7 +82,7 @@ void Subproblem::compute_least_square_multipliers(const Problem& problem, Iterat
    /******************************/
    /* build the symmetric matrix */
    /******************************/
-   COOMatrix matrix(current_iterate.x.size() + problem.number_constraints, 0);
+   COOSymmetricMatrix matrix(current_iterate.x.size() + problem.number_constraints, 0);
 
    /* identity block */
    for (size_t i = 0; i < current_iterate.x.size(); i++) {

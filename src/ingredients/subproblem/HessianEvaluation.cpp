@@ -45,7 +45,7 @@
 //}
 
 //template <class MatrixType>
-//CSCMatrix HessianEvaluation<MatrixType>::modify_inertia(CSCMatrix& matrix, LinearSolver& linear_solver) {
+//CSCSymmetricMatrix HessianEvaluation<MatrixType>::modify_inertia(CSCSymmetricMatrix& matrix, LinearSolver& linear_solver) {
 //   double beta = 1e-4;
 //
 //   // Nocedal and Wright, p51
@@ -61,7 +61,7 @@
 //   if (0. < inertia) {
 //      matrix = matrix.add_identity_multiple(inertia - previous_inertia);
 //   }
-//   COOMatrix coo_hessian = matrix.to_COO();
+//   COOSymmetricMatrix coo_hessian = matrix.to_COO();
 //
 //   DEBUG << "Testing factorization with inertia term " << inertia << "\n";
 //   linear_solver.do_symbolic_factorization(coo_hessian);

@@ -26,6 +26,8 @@ set(DIRECTORIES . ingredients ingredients/constraint_relaxation ingredients/mech
 
 # source files
 set(SRC_FILES
+    Uno.cpp
+
     ingredients/mechanism/GlobalizationMechanism.cpp
     ingredients/mechanism/GlobalizationMechanismFactory.cpp
     ingredients/mechanism/BacktrackingLineSearch.cpp
@@ -48,7 +50,11 @@ set(SRC_FILES
     ingredients/subproblem/SQP.cpp
     ingredients/subproblem/HessianEvaluation.cpp
 
-    linear_algebra/SymmetricMatrix.cpp linear_algebra/Vector.cpp
+    linear_algebra/SymmetricMatrix.cpp
+    linear_algebra/COOSymmetricMatrix.cpp
+    linear_algebra/CSCSymmetricMatrix.cpp
+    linear_algebra/CSRSymmetricMatrix.cpp
+    linear_algebra/Vector.cpp
     
     optimization_problem/Problem.cpp optimization_problem/Constraint.cpp
     optimization_problem/Preprocessing.cpp optimization_problem/Iterate.cpp 
@@ -57,9 +63,7 @@ set(SRC_FILES
     solvers/linear/LinearSolverFactory.cpp
 	solvers/QP/QPSolverFactory.cpp
     solvers/QP/LPSolver.hpp solvers/QP/QPSolver.hpp
-    
-    Uno.cpp
-    
+
     tools/Logger.hpp tools/Statistics.cpp tools/Timer.cpp tools/Options.cpp
 )
 

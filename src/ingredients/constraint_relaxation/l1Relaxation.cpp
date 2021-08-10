@@ -157,15 +157,15 @@ Direction l1Relaxation::compute_byrd_steering_rule(Statistics& statistics, const
                if (!condition1) {
                   /* stage d: reach a fraction of the ideal decrease */
                   if ((ideal_linearized_residual == 0. && linearized_residual == 0) || (ideal_linearized_residual != 0. &&
-                     current_iterate.progress.feasibility - linearized_residual >= this->parameters.epsilon1 *
-                     (current_iterate.progress.feasibility - ideal_linearized_residual))) {
+                                                                                        current_iterate.progress.infeasibility - linearized_residual >= this->parameters.epsilon1 *
+                                                                                                                                                        (current_iterate.progress.infeasibility - ideal_linearized_residual))) {
                      condition1 = true;
                      DEBUG << "Condition 1 is true\n";
                   }
                }
                /* stage e: further decrease penalty parameter if necessary */
-               if (condition1 && current_iterate.progress.feasibility - direction.objective >=
-                                 this->parameters.epsilon2 * (current_iterate.progress.feasibility - ideal_direction.objective)) {
+               if (condition1 && current_iterate.progress.infeasibility - direction.objective >=
+                                 this->parameters.epsilon2 * (current_iterate.progress.infeasibility - ideal_direction.objective)) {
                   condition2 = true;
                   DEBUG << "Condition 2 is true\n";
                }
@@ -187,7 +187,7 @@ Direction l1Relaxation::compute_byrd_steering_rule(Statistics& statistics, const
 
             /* stage f: update the penalty parameter */
             double updated_penalty_parameter = this->penalty_parameter;
-            double term = ideal_error / std::max(1., current_iterate.progress.feasibility);
+            double term = ideal_error / std::max(1., current_iterate.progress.infeasibility);
             this->penalty_parameter = std::min(this->penalty_parameter, term * term);
             if (this->penalty_parameter < updated_penalty_parameter) {
                direction = this->compute_direction(statistics, problem, current_iterate, this->penalty_parameter);
@@ -286,7 +286,7 @@ void l1Relaxation::postprocess_direction(const Problem& problem, Direction& dire
 double l1Relaxation::compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, const Direction& direction, double step_length) {
    // compute the predicted reduction of the l1 relaxation as a postprocessing of the predicted reduction of the subproblem
    if (step_length == 1.) {
-      return current_iterate.progress.feasibility + this->subproblem->compute_predicted_reduction(direction, step_length);;
+      return current_iterate.progress.infeasibility + this->subproblem->compute_predicted_reduction(direction, step_length);;
    }
    else {
       // determine the linearized constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
@@ -295,7 +295,7 @@ double l1Relaxation::compute_predicted_reduction(const Problem& problem, Iterate
          return problem.compute_constraint_violation(component_j, j);
       };
       const double linearized_constraint_violation = norm_1(residual_function, problem.number_constraints);
-      return current_iterate.progress.feasibility - linearized_constraint_violation + this->subproblem->compute_predicted_reduction(direction,
+      return current_iterate.progress.infeasibility - linearized_constraint_violation + this->subproblem->compute_predicted_reduction(direction,
             step_length);
    }
 }

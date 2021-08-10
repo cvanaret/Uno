@@ -25,7 +25,7 @@ protected:
    /* references to allow polymorphism */
    ConstraintRelaxationStrategy& relaxation_strategy;
    int max_iterations; /*!< Maximum number of iterations */
-   int number_iterations; /*!< Current number of iterations */
+   int number_iterations{0}; /*!< Current number of iterations */
    // preallocated vector to receive the trial primal variables
    std::vector<double> trial_primals_;
    std::vector<double> trial_duals_;

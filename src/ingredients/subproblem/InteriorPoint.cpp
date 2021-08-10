@@ -3,13 +3,15 @@
 #include <iomanip>
 #include "InteriorPoint.hpp"
 #include "LinearSolverFactory.hpp"
+#include "COOSymmetricMatrix.hpp"
+#include "CSCSymmetricMatrix.hpp"
 
 InteriorPoint::InteriorPoint(const Problem& problem, size_t number_variables, size_t number_constraints, const std::string& linear_solver_name, const
 std::string& hessian_evaluation_method, bool use_trust_region) :
       // add the slacks to the variables
       Subproblem(number_variables + problem.inequality_constraints.size(), number_constraints),
       /* if no trust region is used, the problem should be convexified. However, the inertia of the augmented matrix will be corrected later */
-      hessian_evaluation(HessianEvaluationFactory<CSCMatrix>::create(hessian_evaluation_method, problem.number_variables, problem
+      hessian_evaluation(HessianEvaluationFactory<CSCSymmetricMatrix>::create(hessian_evaluation_method, problem.number_variables, problem
             .hessian_maximum_number_nonzeros, false)),
       kkt_matrix(this->number_variables + number_constraints, problem.hessian_maximum_number_nonzeros),
       linear_solver(LinearSolverFactory::create(linear_solver_name)),
@@ -229,9 +231,10 @@ void InteriorPoint::update_barrier_parameter(const Iterate& current_iterate) {
    }
 }
 
-COOMatrix InteriorPoint::assemble_kkt_matrix(const Problem& problem, Iterate& current_iterate) {
+COOSymmetricMatrix InteriorPoint::assemble_kkt_matrix(const Problem& problem, Iterate& current_iterate) {
    /* compute the Lagrangian Hessian */
-   COOMatrix kkt_matrix = this->hessian_evaluation->hessian.to_COO();
+   // TODO fix capacity problem
+   COOSymmetricMatrix kkt_matrix = this->hessian_evaluation->hessian.to_COO();
    kkt_matrix.dimension = this->number_variables + problem.number_constraints;
 
    /* diagonal terms: bounds of primals and slacks */
@@ -378,7 +381,7 @@ double InteriorPoint::dual_fraction_to_boundary(const Iterate& current_iterate, 
    return dual_length;
 }
 
-void InteriorPoint::factorize(COOMatrix& kkt_matrix, FunctionType problem_type) {
+void InteriorPoint::factorize(COOSymmetricMatrix& kkt_matrix, FunctionType problem_type) {
    // compute the symbolic factorization only when:
    // the problem has a non constant Hessian (ie is not an LP or a QP) or it is the first factorization
    // TODO: for QPs as well, but only when the sparsity pattern is constant
@@ -389,7 +392,7 @@ void InteriorPoint::factorize(COOMatrix& kkt_matrix, FunctionType problem_type) 
    this->number_factorizations_++;
 }
 
-void InteriorPoint::modify_inertia(COOMatrix& kkt_matrix, size_t size_first_block, size_t size_second_block, FunctionType problem_type) {
+void InteriorPoint::modify_inertia(COOSymmetricMatrix& kkt_matrix, size_t size_first_block, size_t size_second_block, FunctionType problem_type) {
    this->inertia_hessian = 0.;
    this->inertia_constraints = 0.;
    DEBUG << "Testing factorization with inertia term " << this->inertia_hessian << "\n";

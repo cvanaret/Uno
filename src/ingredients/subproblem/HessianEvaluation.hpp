@@ -7,7 +7,8 @@
 #include <vector>
 #include "Problem.hpp"
 #include "Iterate.hpp"
-#include "Matrix.hpp"
+#include "COOSymmetricMatrix.hpp"
+#include "CSCSymmetricMatrix.hpp"
 #include "LinearSolver.hpp"
 #include "LinearSolverFactory.hpp"
 
@@ -16,7 +17,7 @@ template <class MatrixType>
 class HessianEvaluation {
 public:
    explicit HessianEvaluation(size_t dimension, size_t hessian_maximum_number_nonzeros): dimension(dimension),
-         hessian(dimension, hessian_maximum_number_nonzeros, 1) {
+         hessian(dimension, hessian_maximum_number_nonzeros) {
    }
 
    virtual ~HessianEvaluation() = default;
@@ -28,7 +29,7 @@ public:
    virtual void compute(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
          const std::vector<double>& constraint_multipliers) = 0;
 
-   CSCMatrix modify_inertia(CSCMatrix& matrix, LinearSolver& linear_solver) {
+   CSCSymmetricMatrix modify_inertia(CSCSymmetricMatrix& matrix, LinearSolver& linear_solver) {
       double beta = 1e-4;
 
       // Nocedal and Wright, p51
@@ -44,7 +45,7 @@ public:
       if (0. < inertia) {
          matrix = matrix.add_identity_multiple(inertia - previous_inertia);
       }
-      COOMatrix coo_hessian = matrix.to_COO();
+      COOSymmetricMatrix coo_hessian = matrix.to_COO();
 
       DEBUG << "Testing factorization with inertia term " << inertia << "\n";
       linear_solver.do_symbolic_factorization(coo_hessian);
@@ -102,7 +103,7 @@ public:
       this->evaluation_count++;
       DEBUG << "hessian before convexification: " << this->hessian;
       /* modify the inertia to make the problem strictly convex */
-      //this->hessian = this->modify_inertia(this->hessian, *this->linear_solver_);
+      this->hessian = this->modify_inertia(this->hessian, *this->linear_solver_);
    }
 
 protected:
@@ -114,7 +115,7 @@ class BFGSHessianEvaluation : public HessianEvaluation<MatrixType> {
 public:
    explicit BFGSHessianEvaluation(size_t dimension, size_t hessian_maximum_number_nonzeros):
          HessianEvaluation<MatrixType>(dimension, hessian_maximum_number_nonzeros),
-         previous_hessian_(dimension, hessian_maximum_number_nonzeros, 1), previous_x_(dimension) {
+         previous_hessian_(dimension, hessian_maximum_number_nonzeros), previous_x_(dimension) {
    }
 
    ~BFGSHessianEvaluation() override = default;
@@ -127,7 +128,7 @@ public:
    }
 
 private:
-   CSCMatrix previous_hessian_;
+   CSCSymmetricMatrix previous_hessian_;
    std::vector<double> previous_x_;
 };
 

@@ -27,8 +27,8 @@ void* operator new(size_t size) {
 
 void run_uno(const std::string& problem_name, const Options& options) {
    // TODO: use a factory
-   // AMPL model (Hessian with a Fortran indexing starting at 1)
-   auto problem = std::make_unique<AMPLModel>(problem_name, 1);
+   // AMPL model
+   auto problem = std::make_unique<AMPLModel>(problem_name);
    std::cout << "Heap allocations after AMPL: " << total_allocations << "\n";
 
    /* create the constraint relaxation strategy and the subproblem */

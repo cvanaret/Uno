@@ -1,96 +1,47 @@
-#ifndef MATRIX_H
-#define MATRIX_H
+#ifndef SYMMETRICMATRIX_H
+#define SYMMETRICMATRIX_H
 
-#include <ostream>
-#include <map>
 #include <vector>
 #include <functional>
 #include "SparseVector.hpp"
 
-class Matrix {
+class SymmetricMatrix {
 public:
-   Matrix(size_t dimension, size_t capacity);
-   virtual ~Matrix() = default;
-
    size_t dimension;
-   size_t number_nonzeros;
+   size_t number_nonzeros{0};
    size_t capacity;
 
+   SymmetricMatrix(size_t dimension, size_t capacity);
+   virtual ~SymmetricMatrix() = default;
+
+   [[nodiscard]] std::vector<double> product(const std::vector<double>& vector) const;
+   [[nodiscard]] double quadratic_product(const std::vector<double>& x, const std::vector<double>& y) const;
+   void add_outer_product(const SparseVector& x, double scaling_factor = 1.);
+   [[nodiscard]] double smallest_diagonal_entry() const;
+
+   virtual void for_each(const std::function<void (size_t, size_t, double)>& f) const = 0;
    /* build the matrix incrementally */
    virtual void insert(double term, size_t row_index, size_t column_index) = 0;
-   virtual std::vector<double> product(const std::vector<double>& vector) = 0;
-
-   virtual double quadratic_product(const std::vector<double>& x, const std::vector<double>& y);
-   void add_outer_product(const SparseVector& x, double scaling_factor = 1.);
 };
 
-class COOMatrix : public Matrix {
-   /* Coordinate list */
-public:
-   COOMatrix(size_t dimension, size_t capacity);
+//class UnoMatrix : public SymmetricMatrix {
+//   /* Coordinate list */
+//public:
+//   UnoMatrix(size_t dimension, size_t number_nonzeros);
+//
+//   SparseVector matrix;
+//
+//   void insert(double term, size_t row_index, size_t column_index) override;
+//   std::vector<double> product(const std::vector<double>& vector) override;
+//   void add_matrix(UnoMatrix& other_matrix, double factor);
+//
+//   double norm_1();
+//   COOSymmetricMatrix to_COO();
+//   COOSymmetricMatrix to_COO(const std::unordered_map<size_t, size_t>& mask);
+//   //CSCSymmetricMatrix to_CSC();
+//   //CSCSymmetricMatrix to_CSC(const std::unordered_map<int, int>& mask);
+//
+//   friend std::ostream& operator<<(std::ostream& stream, UnoMatrix& matrix);
+//};
 
-   std::vector<double> matrix;
-   std::vector<int> row_indices;
-   std::vector<int> column_indices;
-
-   void insert(double term, size_t row_index, size_t column_index) override;
-   std::vector<double> product(const std::vector<double>& vector) override;
-
-   double norm_1();
-   /*COOMatrix add_identity_multiple(double multiple);*/
-   static void for_each(const COOMatrix& matrix, const std::function<void (size_t, size_t, double)>& f);
-
-   friend std::ostream& operator<<(std::ostream& stream, COOMatrix& matrix);
-   friend std::ostream& operator<<(std::ostream& stream, const COOMatrix& matrix);
-};
-
-// forward declaration
-class UnoMatrix;
-
-class CSCMatrix : public Matrix {
-   /* Compressed Sparse Column */
-public:
-   CSCMatrix(size_t dimension, size_t maximum_number_nonzeros);
-   CSCMatrix(const std::vector<double>& matrix, const std::vector<size_t>& column_start, const std::vector<size_t>& row_number, size_t capacity);
-
-   std::vector<double> matrix;
-   std::vector<size_t> column_start;
-   std::vector<size_t> row_number;
-
-   void insert(double term, size_t row_index, size_t column_index) override;
-   std::vector<double> product(const std::vector<double>& vector) override;
-   double quadratic_product(const std::vector<double>& x, const std::vector<double>& y) override;
-
-   CSCMatrix add_identity_multiple(double multiple);
-   [[nodiscard]] double smallest_diagonal_entry() const;
-   COOMatrix to_COO();
-   UnoMatrix to_UnoMatrix(int uno_matrix_size);
-
-   static void for_each(const CSCMatrix& matrix, const std::function<void (size_t, size_t, double)>& f);
-   static CSCMatrix identity(size_t dimension);
-
-   friend std::ostream& operator<<(std::ostream& stream, CSCMatrix& matrix);
-   friend std::ostream& operator<<(std::ostream& stream, const CSCMatrix& matrix);
-};
-
-class UnoMatrix : public Matrix {
-   /* Coordinate list */
-public:
-   UnoMatrix(size_t dimension, size_t number_nonzeros);
-
-   SparseVector matrix;
-
-   void insert(double term, size_t row_index, size_t column_index) override;
-   std::vector<double> product(const std::vector<double>& vector) override;
-   void add_matrix(UnoMatrix& other_matrix, double factor);
-
-   double norm_1();
-   COOMatrix to_COO();
-   COOMatrix to_COO(const std::unordered_map<size_t, size_t>& mask);
-   //CSCMatrix to_CSC();
-   //CSCMatrix to_CSC(const std::unordered_map<int, int>& mask);
-
-   friend std::ostream& operator<<(std::ostream& stream, UnoMatrix& matrix);
-};
-
-#endif // MATRIX_H
+#endif // SYMMETRICMATRIX_H

@@ -290,8 +290,20 @@ size_t AMPLModel::compute_hessian_number_nonzeros(const std::vector<double>& x, 
    return number_non_zeros;
 }
 
+// check that an array of integers is in increasing order (x[i] <= x[i+1])
+bool in_increasing_order(const int* array, size_t length) {
+   size_t i = 0;
+   while (i < length-1) {
+      if (array[i] > array[i+1]) {
+         return false;
+      }
+      i++;
+   }
+   return true;
+}
+
 void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
-      CSCMatrix& hessian) const {
+      CSCSymmetricMatrix& hessian) const {
    size_t number_non_zeros = this->compute_hessian_number_nonzeros(x, objective_multiplier, multipliers);
    assert(hessian.capacity >= number_non_zeros);
 
@@ -305,53 +317,51 @@ void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objectiv
    hessian.number_nonzeros = number_non_zeros;
 
    // generate the sparsity pattern in the right sparse format
-   this->generate_sparsity_pattern(hessian, number_non_zeros);
+   const int* ampl_column_start = this->asl_->i.sputinfo_->hcolstarts;
+   const int* ampl_row_index = this->asl_->i.sputinfo_->hrownos;
+   // check that the column pointers are sorted in increasing order
+   assert(in_increasing_order(ampl_column_start, this->number_variables + 1) && "the array of column starts is not ordered");
 
-   /* unregister the vector of variables */
-   this->asl_->i.x_known = 0;
-}
-
-void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
-      COOMatrix& hessian) const {
-   size_t number_non_zeros = this->compute_hessian_number_nonzeros(x, objective_multiplier, multipliers);
-   assert(hessian.capacity >= number_non_zeros);
-
-   /* evaluate the Hessian */
-   clear(hessian.matrix);
-   int objective_number = -1;
-   double* objective_multiplier_pointer = (objective_multiplier != 0.) ? &objective_multiplier : nullptr;
-   bool all_zeros_multipliers = are_all_zeros(multipliers);
-   (*(this->asl_)->p.Sphes)(this->asl_, 0, hessian.matrix.data(), objective_number, objective_multiplier_pointer,
-         all_zeros_multipliers ? nullptr : (double*) multipliers.data());
-   hessian.number_nonzeros = number_non_zeros;
-
-   // generate the sparsity pattern in the right sparse format
-   //this->generate_sparsity_pattern(hessian, number_non_zeros);
-
-   /* unregister the vector of variables */
-   this->asl_->i.x_known = 0;
-}
-
-//   COO
-//   int k = 0;
-//   for (int i = 0; i < asl->i.n_var_; i++) {
-//      for (int j = asl->i.sputinfo_->hcolstarts[i];
-//            j < asl->i.sputinfo_->hcolstarts[i+1]; j++) {
-//         rows[k] = asl->i.sputinfo_->hrownos[j];
-//         cols[k] = i;
-//         k++;
-//      }
-//   }
-
-void AMPLModel::generate_sparsity_pattern(CSCMatrix& hessian, size_t number_non_zeros) const {
-   int* ampl_column_start = this->asl_->i.sputinfo_->hcolstarts;
    for (size_t k = 0; k < this->number_variables + 1; k++) {
       hessian.column_start[k] = ampl_column_start[k];
    }
-   int* ampl_row_number = this->asl_->i.sputinfo_->hrownos;
    for (size_t k = 0; k < number_non_zeros; k++) {
-      hessian.row_number[k] = ampl_row_number[k];
+      hessian.row_index[k] = ampl_row_index[k];
    }
+
+   /* unregister the vector of variables */
+   this->asl_->i.x_known = 0;
+}
+
+void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
+      COOSymmetricMatrix& hessian) const {
+   size_t number_non_zeros = this->compute_hessian_number_nonzeros(x, objective_multiplier, multipliers);
+   assert(hessian.capacity >= number_non_zeros);
+
+   /* evaluate the Hessian */
+   clear(hessian.matrix);
+   int objective_number = -1;
+   double* objective_multiplier_pointer = (objective_multiplier != 0.) ? &objective_multiplier : nullptr;
+   bool all_zeros_multipliers = are_all_zeros(multipliers);
+   (*(this->asl_)->p.Sphes)(this->asl_, 0, hessian.matrix.data(), objective_number, objective_multiplier_pointer,
+         all_zeros_multipliers ? nullptr : (double*) multipliers.data());
+   hessian.number_nonzeros = number_non_zeros;
+
+   // generate the sparsity pattern in the right sparse format
+   const int* ampl_column_start = this->asl_->i.sputinfo_->hcolstarts;
+   const int* ampl_row_index = this->asl_->i.sputinfo_->hrownos;
+   int index = 0;
+   for (size_t j = 0; j < this->number_variables; j++) {
+      for (int k = ampl_column_start[j]; k < ampl_column_start[j + 1]; k++) {
+         size_t i = ampl_row_index[k];
+         hessian.row_indices[index] = i;
+         hessian.column_indices[index] = j;
+         index++;
+      }
+   }
+
+   /* unregister the vector of variables */
+   this->asl_->i.x_known = 0;
 }
 
 /* initial primal point */

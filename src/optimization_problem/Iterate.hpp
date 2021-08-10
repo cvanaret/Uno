@@ -5,7 +5,7 @@
 #include <vector>
 #include "Problem.hpp"
 #include "Constraint.hpp"
-#include "Matrix.hpp"
+#include "SymmetricMatrix.hpp"
 
 enum TerminationStatus {
    NOT_OPTIMAL = 0, KKT_POINT, /* feasible stationary point */
@@ -21,7 +21,7 @@ struct Errors {
 };
 
 struct ProgressMeasures {
-   double feasibility;
+   double infeasibility;
    double objective;
 };
 

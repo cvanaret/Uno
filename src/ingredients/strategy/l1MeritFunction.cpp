@@ -23,8 +23,8 @@ bool l1MeritFunction::check_acceptance(Statistics& statistics, ProgressMeasures&
       double objective_multiplier, double predicted_reduction) {
    bool accept = false;
    /* compute current exact l1 penalty: rho f + ||c|| */
-   const double current_exact_l1_penalty = objective_multiplier * current_progress.objective + current_progress.feasibility;
-   const double trial_exact_l1_penalty = objective_multiplier * trial_progress.objective + trial_progress.feasibility;
+   const double current_exact_l1_penalty = objective_multiplier * current_progress.objective + current_progress.infeasibility;
+   const double trial_exact_l1_penalty = objective_multiplier * trial_progress.objective + trial_progress.infeasibility;
 
    const double actual_reduction = current_exact_l1_penalty - trial_exact_l1_penalty;
    DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << actual_reduction << "\n\n";

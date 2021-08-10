@@ -1,7 +1,7 @@
 #include "GlobalizationMechanism.hpp"
 
 GlobalizationMechanism::GlobalizationMechanism(ConstraintRelaxationStrategy& constraint_relaxation_strategy, int max_iterations) :
-      relaxation_strategy(constraint_relaxation_strategy), max_iterations(max_iterations), number_iterations(0) {
+      relaxation_strategy(constraint_relaxation_strategy), max_iterations(max_iterations) {
 }
 
 Iterate GlobalizationMechanism::assemble_trial_iterate(const Iterate& current_iterate, Direction& direction, double step_length) {
