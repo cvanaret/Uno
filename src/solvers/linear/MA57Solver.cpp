@@ -22,13 +22,13 @@ extern "C" {
          double cntl[], int info[], double rinfo[]);
 }
 
-void MA57Solver::factorize(COOMatrix& matrix) {
+void MA57Solver::factorize(COOSymmetricMatrix& matrix) {
    // general factorization method: symbolic factorization and numerical factorization
    this->do_symbolic_factorization(matrix);
    this->do_numerical_factorization(matrix);
 }
 
-void MA57Solver::do_symbolic_factorization(COOMatrix& matrix) {
+void MA57Solver::do_symbolic_factorization(COOSymmetricMatrix& matrix) {
    size_t n = matrix.dimension;
    size_t nnz = matrix.number_nonzeros;
 
@@ -78,7 +78,7 @@ void MA57Solver::do_symbolic_factorization(COOMatrix& matrix) {
    this->factorization_ = {n, nnz, fact, lfact, ifact, lifact, lkeep, keep, iwork, info};
 }
 
-void MA57Solver::do_numerical_factorization(COOMatrix& matrix) {
+void MA57Solver::do_numerical_factorization(COOSymmetricMatrix& matrix) {
    assert(this->factorization_.n == matrix.dimension && "MA57Solver: the dimensions do not match");
    assert(this->factorization_.nnz == matrix.number_nonzeros && "MA57Solver: the numbers of nonzeros do not match");
 
@@ -96,7 +96,7 @@ void MA57Solver::do_numerical_factorization(COOMatrix& matrix) {
          /* out */ this->rinfo_.data());
 }
 
-std::vector<double> MA57Solver::solve(const COOMatrix& matrix, const std::vector<double>& rhs) {
+std::vector<double> MA57Solver::solve(const COOSymmetricMatrix& matrix, const std::vector<double>& rhs) {
    /* solve */
    int n = this->factorization_.n;
    int nrhs = 1; // number of right hand side being solved

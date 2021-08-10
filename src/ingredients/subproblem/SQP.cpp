@@ -9,7 +9,7 @@ QP_solver_name, const std::string& hessian_evaluation_method, bool use_trust_reg
       solver(QPSolverFactory::create(QP_solver_name, number_variables, number_constraints,
             problem.hessian_maximum_number_nonzeros + number_variables, true)),
       /* if no trust region is used, the problem should be convexified by controlling the inertia of the Hessian */
-      hessian_evaluation(HessianEvaluationFactory<CSCMatrix>::create(hessian_evaluation_method, problem.number_variables,
+      hessian_evaluation(HessianEvaluationFactory<CSCSymmetricMatrix>::create(hessian_evaluation_method, problem.number_variables,
             problem.hessian_maximum_number_nonzeros + problem.number_variables, !use_trust_region)),
       initial_point(number_variables) {
 }

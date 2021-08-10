@@ -6,7 +6,7 @@
 #include <map>
 #include <cassert>
 #include "Constraint.hpp"
-#include "Matrix.hpp"
+#include "CSCSymmetricMatrix.hpp"
 #include "SparseVector.hpp"
 #include "Vector.hpp"
 
@@ -86,7 +86,7 @@ public:
    virtual void constraint_gradient(const std::vector<double>& x, int j, SparseVector& gradient) const = 0;
    virtual void constraints_jacobian(const std::vector<double>& x, std::vector<SparseVector>& constraints_jacobian) const = 0;
    virtual void lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
-         CSCMatrix& hessian) const = 0;
+         CSCSymmetricMatrix& hessian) const = 0;
    virtual void set_initial_primal_point(std::vector<double>& x) = 0;
    virtual void set_initial_dual_point(std::vector<double>& multipliers) = 0;
 
@@ -136,7 +136,7 @@ public:
    }
 
    void lagrangian_hessian(const std::vector<double>& /*x*/, double /*objective_multiplier*/, const std::vector<double>& /*multipliers*/,
-         CSCMatrix& /*hessian*/) const override {
+         CSCSymmetricMatrix& /*hessian*/) const override {
       assert(false && "not yet implemented");
    }
 
