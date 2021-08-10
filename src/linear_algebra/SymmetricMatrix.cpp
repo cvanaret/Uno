@@ -69,7 +69,7 @@ double COOMatrix::norm_1() {
 }
 
 // generic iterator
-void COOMatrix::iter(const COOMatrix& matrix, const std::function<void (size_t, size_t, double)>& f) {
+void COOMatrix::for_each(const COOMatrix& matrix, const std::function<void (size_t, size_t, double)>& f) {
    for (size_t k = 0; k < matrix.number_nonzeros; k++) {
       size_t i = matrix.row_indices[k];
       size_t j = matrix.column_indices[k];
@@ -79,7 +79,7 @@ void COOMatrix::iter(const COOMatrix& matrix, const std::function<void (size_t, 
 
 std::vector<double> COOMatrix::product(const std::vector<double>& vector) {
    std::vector<double> result(vector.size());
-   COOMatrix::iter(*this, [&](size_t i, size_t j, double entry) {
+   COOMatrix::for_each(*this, [&](size_t i, size_t j, double entry) {
       result[i] += entry * vector[j];
       // off-diagonal term
       if (i != j) {
@@ -125,7 +125,7 @@ void CSCMatrix::insert(double /*term*/, size_t /*row_index*/, size_t /*column_in
 }
 
 // generic iterator
-void CSCMatrix::iter(const CSCMatrix& matrix, const std::function<void (size_t, size_t, double)>& f) {
+void CSCMatrix::for_each(const CSCMatrix& matrix, const std::function<void (size_t, size_t, double)>& f) {
    for (size_t j = 0; j < matrix.dimension; j++) {
       for (size_t k = matrix.column_start[j]; k < matrix.column_start[j + 1]; k++) {
          size_t i = matrix.row_number[k];
@@ -140,7 +140,7 @@ std::vector<double> CSCMatrix::product(const std::vector<double>& vector) {
 
    /* create (n, 1) result */
    std::vector<double> result(this->dimension); // = {0.}
-   CSCMatrix::iter(*this, [&](size_t i, size_t j, double entry) {
+   CSCMatrix::for_each(*this, [&](size_t i, size_t j, double entry) {
       result[i] += vector[j] * entry;
       /* non diagonal terms of the lower triangle */
       if (i != j) {
@@ -154,8 +154,8 @@ double CSCMatrix::quadratic_product(const std::vector<double>& x, const std::vec
    assert(x.size() == y.size() && "CSCMatrix::quadratic_product: x and y have different sizes");
 
    double result = 0.;
-   CSCMatrix::iter(*this, [&](size_t i, size_t j, double entry) {
-      result += (i == j ? 1 : 2)*entry*x[i]*y[j];
+   CSCMatrix::for_each(*this, [&](size_t i, size_t j, double entry) {
+      result += (i == j ? 1 : 2) * entry * x[i] * y[j];
    });
    return result;
 }
@@ -210,7 +210,7 @@ CSCMatrix CSCMatrix::add_identity_multiple(double multiple) {
 
 double CSCMatrix::smallest_diagonal_entry() const {
    double smallest_entry = INFINITY;
-   CSCMatrix::iter(*this, [&](size_t i, size_t j, double entry) {
+   CSCMatrix::for_each(*this, [&](size_t i, size_t j, double entry) {
       if (i == j) {
          smallest_entry = std::min(smallest_entry, entry);
       }
@@ -223,7 +223,7 @@ double CSCMatrix::smallest_diagonal_entry() const {
 
 COOMatrix CSCMatrix::to_COO() {
    COOMatrix coo_matrix(this->dimension, this->capacity);
-   CSCMatrix::iter(*this, [&](size_t i, size_t j, double entry) {
+   CSCMatrix::for_each(*this, [&](size_t i, size_t j, double entry) {
       coo_matrix.insert(entry, i, j);
    });
    return coo_matrix;
@@ -231,7 +231,7 @@ COOMatrix CSCMatrix::to_COO() {
 
 UnoMatrix CSCMatrix::to_UnoMatrix(int uno_matrix_size) {
    UnoMatrix uno_matrix(uno_matrix_size, this->capacity);
-   CSCMatrix::iter(*this, [&](size_t i, size_t j, double entry) {
+   CSCMatrix::for_each(*this, [&](size_t i, size_t j, double entry) {
       uno_matrix.insert(entry, i, j);
    });
    return uno_matrix;

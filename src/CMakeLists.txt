@@ -22,47 +22,45 @@ set(CMAKE_CXX_FLAGS_DEBUG "-pg")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 # directories
-set(DIRECTORIES base base/optimization_problem base/constraint_relaxation base/mechanism base/strategy base/subproblem interfaces interfaces/AMPL linear_algebra logger solvers solvers/linear solvers/QP solvers/NLP)
+set(DIRECTORIES . ingredients ingredients/constraint_relaxation ingredients/mechanism ingredients/strategy ingredients/subproblem interfaces interfaces/AMPL linear_algebra logger optimization_problem solvers solvers/linear solvers/QP solvers/NLP tools)
 
 # source files
 set(SRC_FILES
-    base/Uno.cpp
-    base/Iterate.cpp base/Preprocessing.cpp
-    base/Statistics.cpp base/Timer.cpp base/Options.cpp
-    
-    base/optimization_problem/Problem.cpp
-    base/optimization_problem/Constraint.cpp
-    
-    base/mechanism/GlobalizationMechanism.cpp
-    base/mechanism/GlobalizationMechanismFactory.cpp
-    base/mechanism/BacktrackingLineSearch.cpp
-    base/mechanism/TrustRegion.cpp
+    ingredients/mechanism/GlobalizationMechanism.cpp
+    ingredients/mechanism/GlobalizationMechanismFactory.cpp
+    ingredients/mechanism/BacktrackingLineSearch.cpp
+    ingredients/mechanism/TrustRegion.cpp
 
-    base/strategy/GlobalizationStrategyFactory.cpp
-    base/strategy/FilterStrategy.cpp base/strategy/Filter.cpp
-    base/strategy/l1MeritFunction.cpp
+    ingredients/strategy/GlobalizationStrategyFactory.cpp
+    ingredients/strategy/FilterStrategy.cpp ingredients/strategy/Filter.cpp
+    ingredients/strategy/l1MeritFunction.cpp
 
-    base/constraint_relaxation/ConstraintRelaxationStrategy.cpp
-    base/constraint_relaxation/ConstraintRelaxationStrategyFactory.cpp
-    base/constraint_relaxation/l1Relaxation.cpp
-    base/constraint_relaxation/FeasibilityRestoration.cpp
+    ingredients/constraint_relaxation/ConstraintRelaxationStrategy.cpp
+    ingredients/constraint_relaxation/ConstraintRelaxationStrategyFactory.cpp
+    ingredients/constraint_relaxation/l1Relaxation.cpp
+    ingredients/constraint_relaxation/FeasibilityRestoration.cpp
     
-    base/subproblem/Subproblem.cpp
-    base/subproblem/SubproblemFactory.cpp
-    base/subproblem/Direction.cpp
-    base/subproblem/InteriorPoint.cpp
-    base/subproblem/SLP.cpp
-    base/subproblem/SQP.cpp
-    base/subproblem/HessianEvaluation.cpp
+    ingredients/subproblem/Subproblem.cpp
+    ingredients/subproblem/SubproblemFactory.cpp
+    ingredients/subproblem/Direction.cpp
+    ingredients/subproblem/InteriorPoint.cpp
+    ingredients/subproblem/SLP.cpp
+    ingredients/subproblem/SQP.cpp
+    ingredients/subproblem/HessianEvaluation.cpp
+
+    linear_algebra/SymmetricMatrix.cpp linear_algebra/Vector.cpp
     
-    linear_algebra/Matrix.cpp linear_algebra/Vector.cpp
-    
-    logger/Logger.hpp
+    optimization_problem/Problem.cpp optimization_problem/Constraint.cpp
+    optimization_problem/Preprocessing.cpp optimization_problem/Iterate.cpp 
 
     solvers/linear/LinearSolver.hpp
     solvers/linear/LinearSolverFactory.cpp
 	solvers/QP/QPSolverFactory.cpp
     solvers/QP/LPSolver.hpp solvers/QP/QPSolver.hpp
+    
+    Uno.cpp
+    
+    tools/Logger.hpp tools/Statistics.cpp tools/Timer.cpp tools/Options.cpp
 )
 
 # find libraries
@@ -116,9 +114,8 @@ endforeach(library_name)
 #######
 add_library(uno STATIC ${SRC_FILES})
 target_include_directories(uno PUBLIC ${DIRECTORIES})
+# copy the configuration file
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/uno.cfg DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
-#install(TARGETS uno DESTINATION bin)
 
 if(MSVC)
   target_compile_options(uno PRIVATE /W4 /WX)
