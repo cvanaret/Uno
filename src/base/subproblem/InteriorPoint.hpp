@@ -39,6 +39,7 @@ public:
    Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) override;
    double compute_predicted_reduction(const Direction& direction, double step_length) const override;
    void compute_progress_measures(const Problem& problem, Iterate& iterate) override;
+   void register_accepted_iterate(Iterate& iterate) override;
    int get_hessian_evaluation_count() const override;
 
 private:

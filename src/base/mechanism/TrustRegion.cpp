@@ -49,6 +49,9 @@ current_iterate) {
             if (direction.norm >= this->radius - this->activity_tolerance) {
                this->radius *= this->increase_factor;
             }
+
+            // let the subproblem know the accepted iterate
+            this->relaxation_strategy.register_accepted_iterate(trial_iterate);
             return std::make_tuple(std::move(trial_iterate), direction.norm, direction.objective_multiplier);
          }
          else {

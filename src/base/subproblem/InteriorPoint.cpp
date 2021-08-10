@@ -11,7 +11,7 @@ std::string& hessian_evaluation_method, bool use_trust_region) :
       /* if no trust region is used, the problem should be convexified. However, the inertia of the augmented matrix will be corrected later */
       hessian_evaluation(HessianEvaluationFactory<CSCMatrix>::create(hessian_evaluation_method, problem.number_variables, problem
             .hessian_maximum_number_nonzeros, false)),
-      kkt_matrix(this->number_variables + number_constraints, problem.hessian_maximum_number_nonzeros, 1),
+      kkt_matrix(this->number_variables + number_constraints, problem.hessian_maximum_number_nonzeros),
       linear_solver(LinearSolverFactory::create(linear_solver_name)),
       parameters({0.99, 1e10, 100., 0.2, 1.5, 10., 1e10}),
       rhs(this->number_variables + number_constraints),
@@ -337,9 +337,9 @@ Direction InteriorPoint::generate_direction(const Problem& problem, const Iterat
    DEBUG << "IPM solution:\n";
    DEBUG << "Δx: "; print_vector(DEBUG, solution_IPM, '\n', 0, problem.number_variables);
    DEBUG << "Δs: "; print_vector(DEBUG, solution_IPM, '\n', problem.number_variables, problem.inequality_constraints.size());
+   DEBUG << "Δλ: "; print_vector(DEBUG, solution_IPM, '\n', number_variables, problem.number_constraints);
    DEBUG << "Δz_L: "; print_vector(DEBUG, this->lower_delta_z);
    DEBUG << "Δz_U: "; print_vector(DEBUG, this->upper_delta_z);
-   DEBUG << "Δλ: "; print_vector(DEBUG, solution_IPM, '\n', number_variables, problem.number_constraints);
    DEBUG << "primal length = " << primal_step_length << "\n";
    DEBUG << "dual length = " << dual_step_length << "\n\n";
    return direction;
@@ -524,11 +524,28 @@ double InteriorPoint::compute_central_complementarity_error(const Iterate& itera
    };
 
    /* scaling */
-   double sc = std::max(this->parameters.smax,
-         (norm_1(iterate.multipliers.lower_bounds) + norm_1(iterate.multipliers.upper_bounds)) / (double) iterate.x.size()) / this->parameters.smax;
+   const double bound_multipliers_norm = norm_1(iterate.multipliers.lower_bounds) + norm_1(iterate.multipliers.upper_bounds);
+   const double sc = std::max(this->parameters.smax, bound_multipliers_norm / (double) iterate.x.size()) / this->parameters.smax;
    return norm_1(residual_function, iterate.x.size()) / sc;
 }
 
 int InteriorPoint::get_hessian_evaluation_count() const {
    return this->hessian_evaluation->evaluation_count;
+}
+void InteriorPoint::register_accepted_iterate(Iterate& iterate) {
+    // rescale the bound multipliers (Eq (16) in Ipopt paper)
+   for (size_t i: this->lower_bounded_variables) {
+      const double coefficient = this->barrier_parameter / (iterate.x[i] - this->variables_bounds[i].lb);
+      const double lb = coefficient / this->parameters.kappa;
+      const double ub = coefficient * this->parameters.kappa;
+      assert(lb <= ub && "The bounds for are in the wrong order");
+      iterate.multipliers.lower_bounds[i] = std::max(std::min(iterate.multipliers.lower_bounds[i], ub), lb);
+   }
+   for (size_t i: this->upper_bounded_variables) {
+      const double coefficient = this->barrier_parameter / (iterate.x[i] - this->variables_bounds[i].ub);
+      const double lb = coefficient * this->parameters.kappa;
+      const double ub = coefficient / this->parameters.kappa;
+      assert(lb <= ub && "The bounds are in the wrong order");
+      iterate.multipliers.upper_bounds[i] = std::max(std::min(iterate.multipliers.upper_bounds[i], ub), lb);
+   }
 }

@@ -82,7 +82,7 @@ void Subproblem::compute_least_square_multipliers(const Problem& problem, Iterat
    /******************************/
    /* build the symmetric matrix */
    /******************************/
-   COOMatrix matrix(current_iterate.x.size() + problem.number_constraints, 0, 1);
+   COOMatrix matrix(current_iterate.x.size() + problem.number_constraints, 0);
 
    /* identity block */
    for (size_t i = 0; i < current_iterate.x.size(); i++) {
@@ -216,4 +216,8 @@ void Subproblem::compute_errors(const Problem& problem, Iterate& iterate, double
 
 Direction Subproblem::compute_second_order_correction(const Problem& /*problem*/, Iterate& /*trial_iterate*/) {
    assert(false && "Subproblem::compute_second_order_correction");
+}
+
+void Subproblem::register_accepted_iterate(Iterate& /*iterate*/) {
+   // by default, do nothing
 }

@@ -43,9 +43,12 @@ current_iterate) {
          // check whether the trial step is accepted
          if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate, direction, this->step_length)) {
             this->add_statistics(statistics, direction);
+
+            // let the subproblem know the accepted iterate
+            this->relaxation_strategy.register_accepted_iterate(trial_iterate);
             return std::make_tuple(std::move(trial_iterate), direction.norm, direction.objective_multiplier);
          }
-         else if (this->number_iterations == 1 && trial_iterate.progress.feasibility >= current_iterate.progress.feasibility) { // reject
+         else if (this->number_iterations == 1 && trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility) { // reject
             // compute a (temporary) SOC direction
             Direction direction_soc = this->relaxation_strategy.compute_second_order_correction(problem, trial_iterate);
 
@@ -55,24 +58,25 @@ current_iterate) {
             if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate_soc, direction_soc, this->step_length)) {
                this->add_statistics(statistics, direction_soc);
                statistics.add_statistic("SOC", "x");
-               //assert(false && "SOC STOP HERE");
+
+               // let the subproblem know the accepted iterate
+               this->relaxation_strategy.register_accepted_iterate(trial_iterate);
                return std::make_tuple(std::move(trial_iterate_soc), direction_soc.norm, direction_soc.objective_multiplier);
             }
             else {
                /* decrease the step length */
                DEBUG << "SOC step discarded\n\n";
                statistics.add_statistic("SOC", "-");
-               this->update_step_length();
+               this->decrease_step_length();
             }
          }
          else {
-            /* decrease the step length */
-            this->update_step_length();
+            this->decrease_step_length();
          }
       }
       catch (const NumericalError& e) {
          GlobalizationMechanism::print_warning(e.what());
-         this->update_step_length();
+         this->decrease_step_length();
       }
    }
    // if step length is too small, run restoration phase
@@ -96,7 +100,7 @@ void BacktrackingLineSearch::add_statistics(Statistics& statistics, const Direct
    statistics.add_statistic("step norm", this->step_length * direction.norm);
 }
 
-void BacktrackingLineSearch::update_step_length() {
+void BacktrackingLineSearch::decrease_step_length() {
    this->step_length *= this->backtracking_ratio;
 }
 
