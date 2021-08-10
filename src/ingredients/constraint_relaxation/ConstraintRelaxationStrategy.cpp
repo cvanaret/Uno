@@ -18,3 +18,6 @@ int ConstraintRelaxationStrategy::get_hessian_evaluation_count() const {
 int ConstraintRelaxationStrategy::get_number_subproblems_solved() const {
    return this->subproblem->number_subproblems_solved;
 }
+void ConstraintRelaxationStrategy::register_accepted_iterate(Iterate& iterate) {
+   this->subproblem->register_accepted_iterate(iterate);
+}

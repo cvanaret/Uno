@@ -159,7 +159,7 @@ void Result::display(bool print_solution) {
    std::cout << "FJ residual:\t\t\t" << this->solution.errors.FJ << "\n";
    std::cout << "Complementarity residual:\t" << this->solution.errors.complementarity << "\n";
 
-   std::cout << "Feasibility measure:\t\t" << this->solution.progress.feasibility << "\n";
+   std::cout << "Feasibility measure:\t\t" << this->solution.progress.infeasibility << "\n";
    std::cout << "Optimality measure:\t\t" << this->solution.progress.objective << "\n";
 
    if (print_solution) {
