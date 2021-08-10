@@ -22,7 +22,7 @@ extern "C" {
  */
 class AMPLModel : public Problem {
 public:
-    AMPLModel(std::string file_name, int fortran_indexing);
+    AMPLModel(std::string file_name);
     ~AMPLModel() override;
 
     /* objective */
@@ -48,10 +48,9 @@ public:
 
 private:
     // private constructor to pass the dimensions to the Problem base constructor
-    AMPLModel(std::string file_name, ASL* asl, int fortran_indexing);
+    AMPLModel(std::string file_name, ASL* asl);
 
     ASL* asl_; /*!< Instance of the AMPL Solver Library class */
-    int fortran_indexing;
     std::vector<double> ampl_tmp_gradient_;
 
     void generate_variables_();
