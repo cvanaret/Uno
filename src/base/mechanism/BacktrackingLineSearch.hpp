@@ -25,7 +25,7 @@ private:
    bool termination_();
    void print_iteration_();
    void add_statistics(Statistics& statistics, const Direction& direction);
-   void update_step_length();
+   void decrease_step_length();
 
    /*
    double quadratic_interpolation_(Problem& problem, Iterate& current_iterate, std::vector<double> direction, double steplength = 1.);
