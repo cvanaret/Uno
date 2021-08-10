@@ -32,7 +32,7 @@ public:
    void factorize(COOMatrix& matrix) override;
    void do_symbolic_factorization(COOMatrix& matrix) override;
    void do_numerical_factorization(COOMatrix& matrix) override;
-   std::vector<double> solve(const COOMatrix& matrix, std::vector<double>& rhs) override;
+   std::vector<double> solve(const COOMatrix& matrix, const std::vector<double>& rhs) override;
 
    [[nodiscard]] std::tuple<int, int, int> get_inertia() const override;
    [[nodiscard]] size_t number_negative_eigenvalues() const override;

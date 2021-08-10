@@ -18,13 +18,12 @@ extern "C" {
          int* lwork, int iwork[], int icntl[], int info[]);
    // linear system solve with iterative refinement
    void ma57dd_(int* job, int* n, int* ne, const double a[], const int irn[], const int jcn[], double fact[], int* lfact, int ifact[], int* lifact,
-         double rhs[], double x[], double resid[], double work[], int iwork[], int icntl[],
+         const double rhs[], double x[], double resid[], double work[], int iwork[], int icntl[],
          double cntl[], int info[], double rinfo[]);
 }
 
 void MA57Solver::factorize(COOMatrix& matrix) {
    // general factorization method: symbolic factorization and numerical factorization
-   // for more flexibility, call the two methods independently
    this->do_symbolic_factorization(matrix);
    this->do_numerical_factorization(matrix);
 }
@@ -97,7 +96,7 @@ void MA57Solver::do_numerical_factorization(COOMatrix& matrix) {
          /* out */ this->rinfo_.data());
 }
 
-std::vector<double> MA57Solver::solve(const COOMatrix& matrix, std::vector<double>& rhs) {
+std::vector<double> MA57Solver::solve(const COOMatrix& matrix, const std::vector<double>& rhs) {
    /* solve */
    int n = this->factorization_.n;
    int nrhs = 1; // number of right hand side being solved
@@ -112,6 +111,7 @@ std::vector<double> MA57Solver::solve(const COOMatrix& matrix, std::vector<doubl
    if (this->use_iterative_refinement) {
       int job = 1;
       std::vector<double> residuals(n);
+      assert(false && "TODO in MA57Solver::solve: reindex matrix");
 
       ma57dd_(&job, &n, (int*) &this->factorization_.nnz, matrix.matrix.data(), matrix.row_indices.data(), matrix.column_indices.data(),
          this->factorization_.fact.data(), &this->factorization_.lfact, this->factorization_.ifact.data(), &this->factorization_.lifact,
