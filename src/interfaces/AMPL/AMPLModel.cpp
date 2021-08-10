@@ -35,14 +35,14 @@ ASL* generate_asl(std::string file_name) {
 }
 
 // generate the ASL object and call the private constructor
-AMPLModel::AMPLModel(std::string file_name, int fortran_indexing) : AMPLModel(file_name, generate_asl(file_name), fortran_indexing) {
+AMPLModel::AMPLModel(std::string file_name) : AMPLModel(file_name, generate_asl(file_name)) {
 }
 
-AMPLModel::AMPLModel(std::string file_name, ASL* asl, int fortran_indexing) : Problem(file_name, asl->i.n_var_, asl->i.n_con_,
+AMPLModel::AMPLModel(std::string file_name, ASL* asl) : Problem(file_name, asl->i.n_var_, asl->i.n_con_,
       NONLINEAR), // asl->i.nlc_ + asl->i.nlo_ > 0),
 //variable_uncertain(asl->i.n_var_),
 //constraint_is_uncertainty_set(asl->i.n_con_),
-      asl_(asl), fortran_indexing(fortran_indexing), ampl_tmp_gradient_(asl->i.n_var_) {
+      asl_(asl), ampl_tmp_gradient_(asl->i.n_var_) {
    this->asl_->i.congrd_mode = 0;
 
    /* dimensions */
@@ -346,11 +346,11 @@ void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objectiv
 void AMPLModel::generate_sparsity_pattern(CSCMatrix& hessian, size_t number_non_zeros) const {
    int* ampl_column_start = this->asl_->i.sputinfo_->hcolstarts;
    for (size_t k = 0; k < this->number_variables + 1; k++) {
-      hessian.column_start[k] = ampl_column_start[k] + this->fortran_indexing;
+      hessian.column_start[k] = ampl_column_start[k];
    }
    int* ampl_row_number = this->asl_->i.sputinfo_->hrownos;
    for (size_t k = 0; k < number_non_zeros; k++) {
-      hessian.row_number[k] = ampl_row_number[k] + this->fortran_indexing;
+      hessian.row_number[k] = ampl_row_number[k];
    }
 }
 

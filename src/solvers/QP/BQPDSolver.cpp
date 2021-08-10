@@ -7,21 +7,20 @@
 #define BIG 1e30
 
 extern "C" {
+   /* fortran common block used in bqpd/bqpd.f */
+   extern struct {
+      int kk, ll, kkk, lll, mxws, mxlws;
+   } wsc_;
 
-/* fortran common block used in bqpd/bqpd.f */
-extern struct {
-   int kk, ll, kkk, lll, mxws, mxlws;
-} wsc_;
+   /* fortran common for inertia correction in wdotd */
+   extern struct {
+      double alpha;
+   } kktalphac_;
 
-/* fortran common for inertia correction in wdotd */
-extern struct {
-   double alpha;
-} kktalphac_;
-
-extern void
-bqpd_(int* n, int* m, int* k, int* kmax, double* a, int* la, double* x, double* bl, double* bu, double* f, double* fmin, double* g,
-      double* r, double* w, double* e, int* ls, double* alp, int* lp, int* mlp, int* peq, double* ws, int* lws, int* mode, int* ifail,
-      int* info, int* iprint, int* nout);
+   extern void
+   bqpd_(int* n, int* m, int* k, int* kmax, double* a, int* la, double* x, double* bl, double* bu, double* f, double* fmin, double* g,
+         double* r, double* w, double* e, int* ls, double* alp, int* lp, int* mlp, int* peq, double* ws, int* lws, int* mode, int* ifail,
+         int* info, int* iprint, int* nout);
 }
 
 /* preallocate a bunch of stuff */
@@ -50,18 +49,18 @@ Direction BQPDSolver::solve_QP(const std::vector<Range>& variables_bounds, const
    /* Hessian sparsity */
    this->hessian_sparsity_[0] = hessian.number_nonzeros + 1;
    for (size_t i = 0; i < hessian.number_nonzeros; i++) {
-      this->hessian_sparsity_[i + 1] = hessian.row_number[i] + (hessian.fortran_indexing ? 0 : this->use_fortran_);
+      this->hessian_sparsity_[i + 1] = hessian.row_number[i] + this->use_fortran_;
    }
    for (size_t i = 0; i < hessian.dimension + 1; i++) {
       this->hessian_sparsity_[hessian.number_nonzeros + i + 1] =
-            hessian.column_start[i] + (hessian.fortran_indexing ? 0 : this->use_fortran_);
+            hessian.column_start[i] + this->use_fortran_;
    }
 
    // if extra variables have been introduced, correct hessian.column_start
    int i = hessian.number_nonzeros + hessian.dimension + 2;
    int last_value = hessian.column_start[hessian.dimension];
    for (size_t j = hessian.dimension; j < this->n_; j++) {
-      this->hessian_sparsity_[i] = last_value + (hessian.fortran_indexing ? 0 : this->use_fortran_);
+      this->hessian_sparsity_[i] = last_value + this->use_fortran_;
       i++;
    }
 

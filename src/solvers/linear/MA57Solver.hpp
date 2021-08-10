@@ -26,14 +26,12 @@ struct MA57Factorization {
  */
 class MA57Solver : public LinearSolver {
 public:
-   MA57Solver();
+   MA57Solver() = default;
    ~MA57Solver() override = default;
 
-   short use_fortran;
-
-   void factorize(const COOMatrix& matrix) override;
-   void do_symbolic_factorization(const COOMatrix& matrix) override;
-   void do_numerical_factorization(const COOMatrix& matrix) override;
+   void factorize(COOMatrix& matrix) override;
+   void do_symbolic_factorization(COOMatrix& matrix) override;
+   void do_numerical_factorization(COOMatrix& matrix) override;
    std::vector<double> solve(const COOMatrix& matrix, std::vector<double>& rhs) override;
 
    [[nodiscard]] std::tuple<int, int, int> get_inertia() const override;
@@ -43,12 +41,12 @@ public:
 
 private:
    /* for ma57id_ (default values of controlling parameters) */
-   std::vector<double> cntl_;
-   std::vector<int> icntl_;
-   std::vector<double> rinfo_;
+   std::array<double, 5> cntl_{};
+   std::array<int, 20> icntl_{};
+   std::array<double, 20> rinfo_{};
 
    MA57Factorization factorization_;
-   bool use_iterative_refinement{true};
+   bool use_iterative_refinement{false};
 };
 
 #endif // MA57SOLVER_H

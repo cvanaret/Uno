@@ -4,17 +4,17 @@
 #include <ostream>
 #include <map>
 #include <vector>
+#include <functional>
 #include "SparseVector.hpp"
 
 class Matrix {
 public:
-   Matrix(size_t dimension, size_t capacity, short fortran_indexing);
+   Matrix(size_t dimension, size_t capacity);
    virtual ~Matrix() = default;
 
    size_t dimension;
    size_t number_nonzeros;
    size_t capacity;
-   short fortran_indexing;
 
    /* build the matrix incrementally */
    virtual void insert(double term, size_t row_index, size_t column_index) = 0;
@@ -27,7 +27,7 @@ public:
 class COOMatrix : public Matrix {
    /* Coordinate list */
 public:
-   COOMatrix(size_t dimension, size_t capacity, short fortran_indexing);
+   COOMatrix(size_t dimension, size_t capacity);
 
    std::vector<double> matrix;
    std::vector<int> row_indices;
@@ -38,6 +38,7 @@ public:
 
    double norm_1();
    /*COOMatrix add_identity_multiple(double multiple);*/
+   static void iter(const COOMatrix& matrix, const std::function<void (size_t, size_t, double)>& f);
 
    friend std::ostream& operator<<(std::ostream& stream, COOMatrix& matrix);
    friend std::ostream& operator<<(std::ostream& stream, const COOMatrix& matrix);
@@ -49,10 +50,8 @@ class UnoMatrix;
 class CSCMatrix : public Matrix {
    /* Compressed Sparse Column */
 public:
-   //CSCMatrix(size_t dimension, short fortran_indexing);
-   CSCMatrix(size_t dimension, size_t maximum_number_nonzeros, short fortran_indexing);
-   CSCMatrix(const std::vector<double>& matrix, const std::vector<size_t>& column_start, const std::vector<size_t>& row_number, size_t capacity,
-         short fortran_indexing);
+   CSCMatrix(size_t dimension, size_t maximum_number_nonzeros);
+   CSCMatrix(const std::vector<double>& matrix, const std::vector<size_t>& column_start, const std::vector<size_t>& row_number, size_t capacity);
 
    std::vector<double> matrix;
    std::vector<size_t> column_start;
@@ -63,11 +62,12 @@ public:
    double quadratic_product(const std::vector<double>& x, const std::vector<double>& y) override;
 
    CSCMatrix add_identity_multiple(double multiple);
-   double smallest_diagonal_entry();
+   [[nodiscard]] double smallest_diagonal_entry() const;
    COOMatrix to_COO();
    UnoMatrix to_UnoMatrix(int uno_matrix_size);
 
-   static CSCMatrix identity(size_t dimension, short fortran_indexing);
+   static void iter(const CSCMatrix& matrix, const std::function<void (size_t, size_t, double)>& f);
+   static CSCMatrix identity(size_t dimension);
 
    friend std::ostream& operator<<(std::ostream& stream, CSCMatrix& matrix);
    friend std::ostream& operator<<(std::ostream& stream, const CSCMatrix& matrix);
@@ -76,7 +76,7 @@ public:
 class UnoMatrix : public Matrix {
    /* Coordinate list */
 public:
-   UnoMatrix(size_t dimension, size_t number_nonzeros, short fortran_indexing);
+   UnoMatrix(size_t dimension, size_t number_nonzeros);
 
    SparseVector matrix;
 
