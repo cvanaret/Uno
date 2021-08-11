@@ -1,5 +1,6 @@
 #include <ostream>
 #include <cassert>
+#include <utility>
 #include "CSCSymmetricMatrix.hpp"
 #include "Vector.hpp"
 
@@ -11,34 +12,35 @@
 // matrix and row_index have nnz elements
 // column_start has dimension+1 elements
 
-CSCSymmetricMatrix::CSCSymmetricMatrix(size_t dimension, size_t capacity) : SymmetricMatrix(dimension, capacity),
+CSCSymmetricMatrix::CSCSymmetricMatrix(int dimension, size_t capacity) : SymmetricMatrix(dimension, capacity),
       matrix(capacity), column_start(dimension + 1), row_index(capacity) {
 }
 
-CSCSymmetricMatrix::CSCSymmetricMatrix(const std::vector<double>& matrix, const std::vector<size_t>& column_start, const std::vector<size_t>& row_number, size_t
-capacity) : SymmetricMatrix(column_start.size() - 1, capacity), matrix(matrix), column_start(column_start), row_index(row_number) {
-   assert(false && "CSCSymmetricMatrix::CSCSymmetricMatrix to check");
+CSCSymmetricMatrix::CSCSymmetricMatrix(std::vector<double> matrix, const std::vector<int>& column_start, std::vector<int> row_number, int
+capacity) : SymmetricMatrix((int) column_start.size() - 1, capacity), matrix(std::move(matrix)), column_start(column_start), row_index(std::move
+(row_number)) {
+   //assert(false && "CSCSymmetricMatrix::CSCSymmetricMatrix to check");
 }
 
 // generic iterator
-void CSCSymmetricMatrix::for_each(const std::function<void (size_t, size_t, double)>& f) const {
-   for (size_t j = 0; j < this->dimension; j++) {
-      for (size_t k = this->column_start[j]; k < this->column_start[j + 1]; k++) {
-         size_t i = this->row_index[k];
+void CSCSymmetricMatrix::for_each(const std::function<void (int, int, double)>& f) const {
+   for (int j = 0; j < this->dimension; j++) {
+      for (int k = this->column_start[j]; k < this->column_start[j + 1]; k++) {
+         int i = this->row_index[k];
          f(i, j, this->matrix[k]);
       }
    }
 }
 
-void CSCSymmetricMatrix::insert(double /*term*/, size_t /*row_index*/, size_t /*column_index*/) {
+void CSCSymmetricMatrix::insert(double /*term*/, int /*row_index*/, int /*column_index*/) {
    assert(false && "CSCSymmetricMatrix::insert is not implemented");
 }
 
 CSCSymmetricMatrix CSCSymmetricMatrix::add_identity_multiple(double multiple) {
    /* initialize the damped matrix */
    std::vector<double> damped_matrix;
-   std::vector<size_t> damped_column_start;
-   std::vector<size_t> damped_row_number;
+   std::vector<int> damped_column_start;
+   std::vector<int> damped_row_number;
    damped_matrix.reserve(this->capacity);
    damped_row_number.reserve(this->capacity);
    damped_column_start.reserve(this->dimension);
@@ -47,12 +49,12 @@ CSCSymmetricMatrix CSCSymmetricMatrix::add_identity_multiple(double multiple) {
    damped_column_start.push_back(0);
 
    /* go through the columns */
-   for (size_t j = 0; j < this->dimension; j++) {
+   for (int j = 0; j < this->dimension; j++) {
       bool diagonal_term_updated = false;
 
-      for (size_t k = this->column_start[j]; k < this->column_start[j + 1]; k++) {
+      for (int k = this->column_start[j]; k < this->column_start[j + 1]; k++) {
          /* compute row number */
-         size_t i = this->row_index[k];
+         int i = this->row_index[k];
 
          if (i == j) { /* update diagonal term */
             damped_matrix.push_back(this->matrix[k] + multiple);
@@ -79,30 +81,30 @@ CSCSymmetricMatrix CSCSymmetricMatrix::add_identity_multiple(double multiple) {
       }
       damped_column_start.push_back(current_number_nonzeros);
    }
-   return CSCSymmetricMatrix(damped_matrix, damped_column_start, damped_row_number, this->capacity);
+   return {damped_matrix, damped_column_start, damped_row_number, (int) this->capacity};
 }
 
 COOSymmetricMatrix CSCSymmetricMatrix::to_COO() {
    COOSymmetricMatrix coo_matrix(this->dimension, this->capacity);
-   this->for_each([&](size_t i, size_t j, double entry) {
+   this->for_each([&](int i, int j, double entry) {
       coo_matrix.insert(entry, i, j);
    });
    return coo_matrix;
 }
 
-CSCSymmetricMatrix CSCSymmetricMatrix::identity(size_t dimension) {
+CSCSymmetricMatrix CSCSymmetricMatrix::identity(int dimension) {
    /* initialize the identity matrix */
    std::vector<double> matrix(dimension);
-   std::vector<size_t> column_start(dimension + 1);
-   std::vector<size_t> row_index(dimension);
+   std::vector<int> column_start(dimension + 1);
+   std::vector<int> row_index(dimension);
 
    column_start[0] = 0;
-   for (size_t i = 0; i < dimension; i++) {
+   for (int i = 0; i < dimension; i++) {
       matrix[i] = 1.;
       row_index[i] = i;
       column_start[i + 1] = i + 1;
    }
-   return CSCSymmetricMatrix(matrix, column_start, row_index, dimension);
+   return {matrix, column_start, row_index, dimension};
 }
 
 std::ostream& operator<<(std::ostream& stream, CSCSymmetricMatrix& matrix) {

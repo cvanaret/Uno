@@ -185,7 +185,7 @@ Direction InteriorPoint::compute_direction(Statistics& statistics, const Problem
    this->modify_inertia(this->kkt_matrix, this->number_variables, problem.number_constraints, problem.type);
    DEBUG << "KKT matrix:\n" << this->kkt_matrix << "\n";
    auto [number_pos, number_neg, number_zero] = this->linear_solver->get_inertia();
-   assert(number_pos == this->number_variables && number_neg == problem.number_constraints && number_zero == 0);
+   assert(number_pos == (int) this->number_variables && number_neg == (int) problem.number_constraints && number_zero == 0);
 
    /* right-hand side */
    this->generate_kkt_rhs(current_iterate);

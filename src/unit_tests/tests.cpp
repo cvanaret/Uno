@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
 //void test_factorization() {
 //    int fortran_indexing = 1;
 //    int n = 2;
-//    COOMatrix coo_matrix(n, fortran_indexing);
+//    COOSymmetricMatrix coo_matrix(n, fortran_indexing);
 //    coo_matrix.add_term(6050.0001, 0, 0);
 //    coo_matrix.add_term(-2774, 0, 1);
 //    coo_matrix.add_term(1e-4, 1, 1);
@@ -71,10 +71,10 @@ int main(int argc, char **argv) {
 //    mask[2] = 1;
 //
 //
-//    COOMatrix coo_matrix = matrix.to_COO(mask);
+//    COOSymmetricMatrix coo_matrix = matrix.to_COO(mask);
 //    std::cout << "COO reduced matrix:\n" << coo_matrix;
 //
-//    CSCMatrix csc_matrix = matrix.to_CSC(mask);
+//    CSCSymmetricMatrix csc_matrix = matrix.to_CSC(mask);
 //    std::cout << "CSC reduced matrix:\n" << csc_matrix;
 //}
 
@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
 //    matrix.add_term(4., 2, 0);
 //    matrix.add_term(5., 2, 1);
 //    matrix.add_term(6., 2, 2);
-//    CSCMatrix csc_matrix = matrix.to_CSC();
+//    CSCSymmetricMatrix csc_matrix = matrix.to_CSC();
 //    std::cout << "Before\n" << csc_matrix;
 //    
 //    csc_matrix = csc_matrix.add_identity_multiple(100.);
@@ -178,3 +178,75 @@ int main(int argc, char **argv) {
     //double f_x = f(x);
     //std::cout << "f(x) = " << f_x << "\n";
 //}
+
+//// test of add_identity_multiple
+//std::vector<double> matrix(6);
+//matrix[0] = matrix[1] = matrix[2] = matrix[3] = matrix[4] = matrix[5] = 1.;
+//std::vector<int> column_start(5);
+//column_start[0] = 1;
+//column_start[1] = 2;
+//column_start[2] = 3;
+//column_start[3] = 4;
+//column_start[4] = 7;
+//std::vector<int> row_number(6);
+//row_number[0] = 1;
+//row_number[1] = 1;
+//row_number[2] = 2;
+//row_number[3] = 1;
+//row_number[4] = 3;
+//row_number[5] = 4;
+//Matrix m(matrix, column_start, row_number);
+//m.display();
+
+//Matrix m_damped = add_identity_multiple(m, 100.);
+//m_damped.display();
+
+//// expect 
+//W = 101 1 100 1 100 1 1 101 
+//with column start: 1 2 4 6 9 
+//and row number: 1 1 2 2 3 1 3 4 
+
+//void test_product() {
+//std::vector<double> m(5);
+//m[0] = 1.;
+//m[1] = 3.;
+//m[2] = 4.;
+//m[3] = 7.;
+//m[4] = 15.;
+//std::vector<int> matrix_column_start = {1, 2, 4, 6};
+//std::vector<int> matrix_row_number = {1, 1, 2, 1, 3};
+//Matrix matrix(m, matrix_column_start, matrix_row_number);
+//std::vector<double> vector(3);
+//vector[0] = 1.;
+//vector[1] = 2.;
+//vector[2] = 3.;
+
+//std::vector<double> result = matrix.product(vector);
+///* *expected result = (28, 11, 52) */
+//}
+
+
+/*
+void test_matrix() {
+    int size = 3;
+    int nnz = 4;
+    UnoMatrix matrix(size, nnz);
+    // add terms
+    matrix.add_term(12., 0, 0);
+    
+    matrix.add_term(14., 0, 1);
+    matrix.add_term(7., 0, 1);
+    
+    matrix.add_term(13., 1, 2);
+    
+    matrix.add_term(19., 2, 2);
+    
+    print_vector(std::cout, matrix.matrix);
+    
+    COOSymmetricMatrix coo_matrix = matrix.to_COO();
+    std::cout << "COO matrix: \n";
+    print_vector(std::cout, coo_matrix.matrix);
+    print_vector(std::cout, coo_matrix.row_indices);
+    print_vector(std::cout, coo_matrix.column_indices);
+}
+ */

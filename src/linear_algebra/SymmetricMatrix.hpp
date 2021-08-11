@@ -5,13 +5,17 @@
 #include <functional>
 #include "SparseVector.hpp"
 
+enum MatrixType {
+   COO, CSC
+};
+
 class SymmetricMatrix {
 public:
-   size_t dimension;
-   size_t number_nonzeros{0};
+   int dimension;
+   int number_nonzeros{0};
    size_t capacity;
 
-   SymmetricMatrix(size_t dimension, size_t capacity);
+   SymmetricMatrix(int dimension, size_t capacity);
    virtual ~SymmetricMatrix() = default;
 
    [[nodiscard]] std::vector<double> product(const std::vector<double>& vector) const;
@@ -19,9 +23,9 @@ public:
    void add_outer_product(const SparseVector& x, double scaling_factor = 1.);
    [[nodiscard]] double smallest_diagonal_entry() const;
 
-   virtual void for_each(const std::function<void (size_t, size_t, double)>& f) const = 0;
+   virtual void for_each(const std::function<void (int, int, double)>& f) const = 0;
    /* build the matrix incrementally */
-   virtual void insert(double term, size_t row_index, size_t column_index) = 0;
+   virtual void insert(double term, int row_index, int column_index) = 0;
 };
 
 //class UnoMatrix : public SymmetricMatrix {
