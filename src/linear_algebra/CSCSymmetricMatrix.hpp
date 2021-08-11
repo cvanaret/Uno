@@ -8,15 +8,15 @@ class CSCSymmetricMatrix : public SymmetricMatrix {
    /* Compressed Sparse Column */
 public:
    std::vector<double> matrix;
-   std::vector<size_t> column_start;
-   std::vector<size_t> row_index;
+   std::vector<int> column_start;
+   std::vector<int> row_index;
 
-   CSCSymmetricMatrix(size_t dimension, size_t maximum_number_nonzeros);
-   CSCSymmetricMatrix(const std::vector<double>& matrix, const std::vector<size_t>& column_start, const std::vector<size_t>& row_number, size_t capacity);
+   CSCSymmetricMatrix(int dimension, size_t maximum_number_nonzeros);
+   CSCSymmetricMatrix(std::vector<double> matrix, const std::vector<int>& column_start, std::vector<int> row_number, int capacity);
 
-   void for_each(const std::function<void (size_t, size_t, double)>& f) const override;
-   void insert(double term, size_t row_index, size_t column_index) override;
-   static CSCSymmetricMatrix identity(size_t dimension);
+   void for_each(const std::function<void (int, int, double)>& f) const override;
+   void insert(double term, int row_index, int column_index) override;
+   static CSCSymmetricMatrix identity(int dimension);
 
    CSCSymmetricMatrix add_identity_multiple(double multiple);
    COOSymmetricMatrix to_COO();

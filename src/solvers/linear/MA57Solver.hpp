@@ -2,12 +2,13 @@
 #define MA57SOLVER_H
 
 #include <vector>
+#include <cassert>
 #include "SymmetricMatrix.hpp"
 #include "LinearSolver.hpp"
 
 struct MA57Factorization {
-   size_t n;
-   size_t nnz;
+   int n;
+   int nnz;
    std::vector<double> fact;
    int lfact;
    std::vector<int> ifact;
@@ -26,13 +27,26 @@ struct MA57Factorization {
  */
 class MA57Solver : public LinearSolver {
 public:
-   MA57Solver() = default;
+   MA57Solver();
    ~MA57Solver() override = default;
 
    void factorize(COOSymmetricMatrix& matrix) override;
    void do_symbolic_factorization(COOSymmetricMatrix& matrix) override;
    void do_numerical_factorization(COOSymmetricMatrix& matrix) override;
-   std::vector<double> solve(const COOSymmetricMatrix& matrix, const std::vector<double>& rhs) override;
+   std::vector<double> solve(COOSymmetricMatrix& matrix, const std::vector<double>& rhs) override;
+
+   void factorize(CSCSymmetricMatrix& /*matrix*/) override {
+      assert(false && "MA57Solver::factorize for CSC is not implemented");
+   }
+   void do_symbolic_factorization(CSCSymmetricMatrix& /*matrix*/) override {
+      assert(false && "MA57Solver::do_symbolic_factorization for CSC is not implemented");
+   }
+   void do_numerical_factorization(CSCSymmetricMatrix& /*matrix*/) override {
+      assert(false && "MA57Solver::do_numerical_factorization for CSC is not implemented");
+   }
+   std::vector<double> solve(CSCSymmetricMatrix& /*matrix*/, const std::vector<double>& /*rhs*/) override {
+      assert(false && "MA57Solver::solve for CSC is not implemented");
+   }
 
    [[nodiscard]] std::tuple<int, int, int> get_inertia() const override;
    [[nodiscard]] size_t number_negative_eigenvalues() const override;
@@ -41,11 +55,13 @@ public:
 
 private:
    /* for ma57id_ (default values of controlling parameters) */
-   std::array<double, 5> cntl_{};
-   std::array<int, 20> icntl_{};
-   std::array<double, 20> rinfo_{};
+   std::array<double, 5> cntl{};
+   std::array<int, 20> icntl{};
+   std::array<double, 20> rinfo{};
+   const int nrhs{1}; // number of right hand side being solved
+   const int job{1};
 
-   MA57Factorization factorization_;
+   MA57Factorization factorization;
    bool use_iterative_refinement{false};
 };
 

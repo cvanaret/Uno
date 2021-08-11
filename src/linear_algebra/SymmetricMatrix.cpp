@@ -5,11 +5,11 @@
 #include "SymmetricMatrix.hpp"
 #include "Vector.hpp"
 
-SymmetricMatrix::SymmetricMatrix(size_t dimension, size_t capacity) : dimension(dimension), capacity(capacity) {
+SymmetricMatrix::SymmetricMatrix(int dimension, size_t capacity) : dimension(dimension), capacity(capacity) {
 }
 
 std::vector<double> SymmetricMatrix::product(const std::vector<double>& vector) const {
-   assert(this->dimension == vector.size() && "The matrix and the vector do not have the same size");
+   assert(this->dimension == (int) vector.size() && "The matrix and the vector do not have the same size");
 
    /* create (n, 1) result */
    std::vector<double> result(vector.size());
@@ -40,7 +40,7 @@ void SymmetricMatrix::add_outer_product(const SparseVector& x, double scaling_fa
          // upper triangular matrix
          if (row_index <= column_index) {
             // add product of components
-            this->insert(scaling_factor * row_term * column_term, row_index, column_index);
+            this->insert(scaling_factor * row_term * column_term, (int) row_index, (int) column_index);
          }
       }
    }

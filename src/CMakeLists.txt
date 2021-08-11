@@ -53,13 +53,11 @@ set(SRC_FILES
     linear_algebra/SymmetricMatrix.cpp
     linear_algebra/COOSymmetricMatrix.cpp
     linear_algebra/CSCSymmetricMatrix.cpp
-    linear_algebra/CSRSymmetricMatrix.cpp
     linear_algebra/Vector.cpp
     
     optimization_problem/Problem.cpp optimization_problem/Constraint.cpp
-    optimization_problem/Preprocessing.cpp optimization_problem/Iterate.cpp 
+    optimization_problem/Preprocessing.cpp optimization_problem/Iterate.cpp
 
-    solvers/linear/LinearSolver.hpp
     solvers/linear/LinearSolverFactory.cpp
 	solvers/QP/QPSolverFactory.cpp
     solvers/QP/LPSolver.hpp solvers/QP/QPSolver.hpp
@@ -69,8 +67,8 @@ set(SRC_FILES
 
 # find libraries
 set(LIBS "")
-set(OPTIONAL_LIBS amplsolver ma57 metis bqpd CACHE STRING "Optional libraries")
-set(REQUIRED_LIBS blas lapack dl)
+set(OPTIONAL_LIBS amplsolver ma57 pardiso metis bqpd CACHE STRING "Optional libraries")
+set(REQUIRED_LIBS blas lapack dl gomp)
 
 # automatic detection of optional libraries
 foreach(library_name IN LISTS OPTIONAL_LIBS)
@@ -96,6 +94,8 @@ foreach(library_name IN LISTS OPTIONAL_LIBS)
             list(APPEND SRC_FILES solvers/QP/BQPDSolver.cpp solvers/QP/wdotd.f)
         elseif(${library_name} STREQUAL ma57)
             list(APPEND SRC_FILES solvers/linear/MA57Solver.cpp)
+        elseif(${library_name} STREQUAL pardiso)
+            list(APPEND SRC_FILES solvers/linear/PardisoSolver.cpp)
         endif()
 	endif()
 endforeach(library_name)

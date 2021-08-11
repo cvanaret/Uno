@@ -6,22 +6,22 @@
  * https://en.wikipedia.org/wiki/Sparse_matrix#Coordinate_list_(COO)
  */
 
-COOSymmetricMatrix::COOSymmetricMatrix(size_t dimension, size_t capacity) : SymmetricMatrix(dimension, capacity) {
+COOSymmetricMatrix::COOSymmetricMatrix(int dimension, size_t capacity) : SymmetricMatrix(dimension, capacity) {
    this->matrix.reserve(capacity);
    this->row_indices.reserve(capacity);
    this->column_indices.reserve(capacity);
 }
 
 // generic iterator
-void COOSymmetricMatrix::for_each(const std::function<void (size_t, size_t, double)>& f) const {
-   for (size_t k = 0; k < this->number_nonzeros; k++) {
-      size_t i = this->row_indices[k];
-      size_t j = this->column_indices[k];
+void COOSymmetricMatrix::for_each(const std::function<void (int, int, double)>& f) const {
+   for (int k = 0; k < this->number_nonzeros; k++) {
+      int i = this->row_indices[k];
+      int j = this->column_indices[k];
       f(i, j, this->matrix[k]);
    }
 }
 
-void COOSymmetricMatrix::insert(double term, size_t row_index, size_t column_index) {
+void COOSymmetricMatrix::insert(double term, int row_index, int column_index) {
    //assert(this->number_nonzeros <= this->capacity && "The capacity of the matrix is too low for insertion");
 
    this->matrix.push_back(term);
@@ -32,14 +32,14 @@ void COOSymmetricMatrix::insert(double term, size_t row_index, size_t column_ind
 
 double COOSymmetricMatrix::norm_1() {
    // compute maximum column index
-   size_t number_columns = 0;
-   for (unsigned long j : this->column_indices) {
+   int number_columns = 0;
+   for (int j : this->column_indices) {
       number_columns = std::max(number_columns, 1 + j);
    }
    // read the matrix and fill in the column_vectors norm vector
    std::vector<double> column_vectors(number_columns);
    for (size_t k = 0; k < this->matrix.size(); k++) {
-      size_t j = this->column_indices[k];
+      int j = this->column_indices[k];
       column_vectors[j] += std::abs(this->matrix[k]);
    }
    // compute the maximal component of the column_vectors vector
@@ -51,14 +51,14 @@ double COOSymmetricMatrix::norm_1() {
 }
 
 std::ostream& operator<<(std::ostream& stream, COOSymmetricMatrix& matrix) {
-   matrix.for_each([&](size_t i, size_t j, double entry) {
+   matrix.for_each([&](int i, int j, double entry) {
       stream << "m(" << i << ", " << j << ") = " << entry << "\n";
    });
    return stream;
 }
 
 std::ostream& operator<<(std::ostream& stream, const COOSymmetricMatrix& matrix) {
-   matrix.for_each([&](size_t i, size_t j, double entry) {
+   matrix.for_each([&](int i, int j, double entry) {
       stream << "m(" << i << ", " << j << ") = " << entry << "\n";
    });
    return stream;
