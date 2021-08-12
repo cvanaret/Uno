@@ -1,9 +1,11 @@
 #include "SLP.hpp"
 #include "QPSolverFactory.hpp"
 
-SLP::SLP(size_t number_variables, size_t number_constraints, const std::string& QP_solver_name) :
+SLP::SLP(size_t number_variables, size_t number_constraints, const std::string& /*QP_solver_name*/) :
       Subproblem(number_variables, number_constraints),
-      solver(QPSolverFactory::create(QP_solver_name, number_variables, number_constraints, 0, false)),
+      // TODO
+      //solver(QPSolverFactory::create(QP_solver_name, number_variables, number_constraints, 0, false)),
+      solver(nullptr),
       initial_point(number_variables) {
 }
 
