@@ -18,7 +18,7 @@ public:
    void insert(double term, int row_index, int column_index) override;
    static CSCSymmetricMatrix identity(int dimension);
 
-   CSCSymmetricMatrix add_identity_multiple(double multiple);
+   void add_identity_multiple(double multiple) override;
    COOSymmetricMatrix to_COO();
 
    friend std::ostream& operator<<(std::ostream& stream, CSCSymmetricMatrix& matrix);

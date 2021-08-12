@@ -11,30 +11,36 @@ std::unique_ptr<Subproblem> SubproblemFactory::create(const Problem& problem, si
    /* active-set methods */
    if (subproblem_type == "SQP") {
       const std::string& QP_solver_name = options.at("QP_solver");
+      // determine the sparse matrix format
       if (QP_solver_name == "BQPD") {
          //std::cout << "Use CSC\n";
       }
       else {
          assert(false && "SubproblemFactory::create: unknown QP solver");
       }
-      return std::make_unique<SQP>(problem, number_variables, problem.number_constraints, options.at("QP_solver"), options.at("hessian"),
+      return std::make_unique<SQP>(problem, number_variables, problem.number_constraints, QP_solver_name, options.at("hessian"),
             use_trust_region);
    }
    else if (subproblem_type == "SLP") {
-      return std::make_unique<SLP>(number_variables, problem.number_constraints, options.at("QP_solver"));
+      const std::string& QP_solver_name = options.at("QP_solver");
+      return std::make_unique<SLP>(number_variables, problem.number_constraints, QP_solver_name);
    }
-//    else if (type == "SLPEQP") {
-//          if (use_trust_region) {
-//             return std::make_unique<SLPEQP_TR>(problem, options.at("LP_solver"], options.at("hessian"], use_trust_region, scale_residuals);
-//          }
-//          else {
-//             return std::make_unique<SLPEQP_l2>(problem, options.at("hessian"], use_trust_region, scale_residuals);
-//          }
-//    }
    /* interior point method */
    else if (subproblem_type == "IPM") {
-      return std::make_unique<InteriorPoint>(problem, number_variables, problem.number_constraints, options.at("linear_solver"), options.at
-      ("hessian"), use_trust_region);
+      const std::string& linear_solver_name = options.at("linear_solver");
+      // determine the sparse matrix format
+      if (linear_solver_name == "MA57") {
+         return std::make_unique<InteriorPoint<COOSymmetricMatrix> >(problem, number_variables, problem.number_constraints, linear_solver_name,
+               options.at("hessian"), use_trust_region);
+      }
+      else if (linear_solver_name == "PARDISO") {
+         return std::make_unique<InteriorPoint<CSCSymmetricMatrix> >(problem, number_variables, problem.number_constraints, linear_solver_name,
+               options.at("hessian"), use_trust_region);
+      }
+      else {
+         assert(false && "SubproblemFactory::create: unknown QP solver");
+      }
+
    }
    throw std::invalid_argument("Subproblem method " + subproblem_type + " does not exist.");
 }

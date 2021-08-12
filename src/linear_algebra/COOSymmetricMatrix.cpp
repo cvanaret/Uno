@@ -1,4 +1,5 @@
 #include <ostream>
+#include <cassert>
 #include "COOSymmetricMatrix.hpp"
 
 /*
@@ -62,4 +63,8 @@ std::ostream& operator<<(std::ostream& stream, const COOSymmetricMatrix& matrix)
       stream << "m(" << i << ", " << j << ") = " << entry << "\n";
    });
    return stream;
+}
+void COOSymmetricMatrix::add_identity_multiple(double /*multiple*/) {
+   // do nothing
+   assert(false && "not yet implemented");
 }
