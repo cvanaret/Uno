@@ -9,8 +9,8 @@
 #include "Iterate.hpp"
 #include "Direction.hpp"
 #include "Constraint.hpp"
-#include "MA57Solver.hpp"
 #include "Vector.hpp"
+#include "LinearSolver.hpp"
 
 /*! \class Subproblem
  * \brief Subproblem
@@ -45,10 +45,59 @@ public:
    static double push_variable_to_interior(double variable_value, const Range& variable_bounds);
    void set_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints);
 
-   static void compute_least_square_multipliers(const Problem& problem, Iterate& current_iterate, std::vector<double>& multipliers, LinearSolver& solver,
-         double multipliers_max_size = 1e3);
+   template <class MatrixType>
    static void compute_least_square_multipliers(const Problem& problem, Iterate& current_iterate, std::vector<double>& multipliers,
-         double multipliers_max_size = 1e3);
+         LinearSolver<MatrixType>& solver, double multipliers_max_size = 1e3) {
+      current_iterate.compute_objective_gradient(problem);
+      current_iterate.compute_constraints_jacobian(problem);
+
+      /******************************/
+      /* build the symmetric matrix */
+      /******************************/
+      MatrixType matrix(current_iterate.x.size() + problem.number_constraints, 0);
+
+      /* identity block */
+      for (size_t i = 0; i < current_iterate.x.size(); i++) {
+         matrix.insert(1., i, i);
+      }
+      /* Jacobian of general constraints */
+      for (size_t j = 0; j < problem.number_constraints; j++) {
+         for (const auto[variable_index, derivative]: current_iterate.constraints_jacobian[j]) {
+            matrix.insert(derivative, variable_index, current_iterate.x.size() + j);
+         }
+      }
+      DEBUG << "Multipliers estimation: KKT matrix:\n" << matrix << "\n";
+
+      /********************************/
+      /* generate the right-hand side */
+      /********************************/
+      std::vector<double> rhs(current_iterate.x.size() + problem.number_constraints);
+
+      /* objective gradient */
+      for (const auto[i, derivative]: current_iterate.objective_gradient) {
+         rhs[i] += problem.objective_sign * derivative;
+      }
+      DEBUG << "LB duals:\n"; print_vector(DEBUG, current_iterate.multipliers.lower_bounds);
+      DEBUG << "UB duals:\n"; print_vector(DEBUG, current_iterate.multipliers.upper_bounds);
+      /* variable bound constraints */
+      for (size_t i = 0; i < current_iterate.x.size(); i++) {
+         rhs[i] -= current_iterate.multipliers.lower_bounds[i];
+         rhs[i] -= current_iterate.multipliers.upper_bounds[i];
+      }
+      DEBUG << "Multipliers RHS:\n"; print_vector(DEBUG, rhs);
+
+      // solve the system
+      solver.factorize(matrix);
+      std::vector<double> solution = solver.solve(matrix, rhs);
+      DEBUG << "Solution: "; print_vector(DEBUG, solution);
+
+      // if multipliers too big, discard them. Otherwise, retrieve the least-square multipliers
+      if (norm_inf(solution, current_iterate.x.size(), problem.number_constraints) <= multipliers_max_size) {
+         for (size_t j = 0; j < problem.number_constraints; j++) {
+            multipliers[j] = solution[current_iterate.x.size() + j];
+         }
+      }
+   }
 
    virtual double compute_constraint_violation(const Problem& problem, const Iterate& iterate) const;
    static double compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier);

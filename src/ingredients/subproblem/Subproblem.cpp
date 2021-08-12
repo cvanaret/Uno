@@ -68,65 +68,6 @@ void Subproblem::set_constraints_bounds(const Problem& problem, const std::vecto
    }
 }
 
-void Subproblem::compute_least_square_multipliers(const Problem& problem, Iterate& current_iterate, std::vector<double>& multipliers, double
-multipliers_max_size) {
-   std::unique_ptr<LinearSolver> linear_solver = LinearSolverFactory::create("MA57");
-   Subproblem::compute_least_square_multipliers(problem, current_iterate, multipliers, *linear_solver, multipliers_max_size);
-}
-
-void Subproblem::compute_least_square_multipliers(const Problem& problem, Iterate& current_iterate, std::vector<double>& multipliers,
-      LinearSolver& solver, double multipliers_max_size) {
-   current_iterate.compute_objective_gradient(problem);
-   current_iterate.compute_constraints_jacobian(problem);
-
-   /******************************/
-   /* build the symmetric matrix */
-   /******************************/
-   COOSymmetricMatrix matrix(current_iterate.x.size() + problem.number_constraints, 0);
-
-   /* identity block */
-   for (size_t i = 0; i < current_iterate.x.size(); i++) {
-      matrix.insert(1., i, i);
-   }
-   /* Jacobian of general constraints */
-   for (size_t j = 0; j < problem.number_constraints; j++) {
-      for (const auto[variable_index, derivative]: current_iterate.constraints_jacobian[j]) {
-         matrix.insert(derivative, variable_index, current_iterate.x.size() + j);
-      }
-   }
-   DEBUG << "Multipliers estimation: KKT matrix:\n" << matrix << "\n";
-
-   /********************************/
-   /* generate the right-hand side */
-   /********************************/
-   std::vector<double> rhs(current_iterate.x.size() + problem.number_constraints);
-
-   /* objective gradient */
-   for (const auto[i, derivative]: current_iterate.objective_gradient) {
-      rhs[i] += problem.objective_sign * derivative;
-   }
-   DEBUG << "LB duals:\n"; print_vector(DEBUG, current_iterate.multipliers.lower_bounds);
-   DEBUG << "UB duals:\n"; print_vector(DEBUG, current_iterate.multipliers.upper_bounds);
-   /* variable bound constraints */
-   for (size_t i = 0; i < current_iterate.x.size(); i++) {
-      rhs[i] -= current_iterate.multipliers.lower_bounds[i];
-      rhs[i] -= current_iterate.multipliers.upper_bounds[i];
-   }
-   DEBUG << "Multipliers RHS:\n"; print_vector(DEBUG, rhs);
-
-   // solve the system
-   solver.factorize(matrix);
-   std::vector<double> solution = solver.solve(matrix, rhs);
-   DEBUG << "Solution: "; print_vector(DEBUG, solution);
-
-   // if multipliers too big, discard them. Otherwise, retrieve the least-square multipliers
-   if (norm_inf(solution, current_iterate.x.size(), problem.number_constraints) <= multipliers_max_size) {
-      for (size_t j = 0; j < problem.number_constraints; j++) {
-         multipliers[j] = solution[current_iterate.x.size() + j];
-      }
-   }
-}
-
 void Subproblem::compute_feasibility_linear_objective(const Iterate& current_iterate, const ConstraintPartition& constraint_partition) {
    /* objective function: sum of gradients of infeasible constraints */
    this->objective_gradient.clear();

@@ -5,9 +5,47 @@
 #include "LinearSolver.hpp"
 #include "Problem.hpp"
 
-class LinearSolverFactory {
+#ifdef HAS_MA57
+
+#include "MA57Solver.hpp"
+
+#endif
+
+#ifdef HAS_PARDISO
+#include "PardisoSolver.hpp"
+#endif
+
+template <typename MatrixType>
+class LinearSolverFactory;
+
+template<>
+class LinearSolverFactory<CSCSymmetricMatrix> {
 public:
-    static std::unique_ptr<LinearSolver> create(const std::string& linear_solver);
+   static std::unique_ptr<LinearSolver<CSCSymmetricMatrix> > create(const std::string& linear_solver_name) {
+      std::vector<std::string> possible_solvers;
+#ifdef HAS_PARDISO
+      if (linear_solver_name == "PARDISO") {
+         return std::make_unique<PardisoSolver>();
+      }
+      possible_solvers.emplace_back("PARDISO");
+#endif
+      throw std::invalid_argument("LinearSolver name " + linear_solver_name + " does not exist.");
+   }
+};
+
+template<>
+class LinearSolverFactory<COOSymmetricMatrix> {
+public:
+   static std::unique_ptr<LinearSolver<COOSymmetricMatrix> > create(const std::string& linear_solver_name) {
+      std::vector<std::string> possible_solvers;
+#ifdef HAS_MA57
+      if (linear_solver_name == "MA57") {
+         return std::make_unique<MA57Solver>();
+      }
+      possible_solvers.emplace_back("MA57");
+#endif
+      throw std::invalid_argument("LinearSolver name " + linear_solver_name + " does not exist.");
+   }
 };
 
 #endif // LINEARSOLVERFACTORY_H

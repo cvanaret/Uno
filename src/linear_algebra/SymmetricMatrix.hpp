@@ -26,6 +26,7 @@ public:
    virtual void for_each(const std::function<void (int, int, double)>& f) const = 0;
    /* build the matrix incrementally */
    virtual void insert(double term, int row_index, int column_index) = 0;
+   virtual void add_identity_multiple(double multiple) = 0;
 };
 
 //class UnoMatrix : public SymmetricMatrix {

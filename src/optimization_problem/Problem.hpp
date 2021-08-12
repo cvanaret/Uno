@@ -87,6 +87,8 @@ public:
    virtual void constraints_jacobian(const std::vector<double>& x, std::vector<SparseVector>& constraints_jacobian) const = 0;
    virtual void lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
          CSCSymmetricMatrix& hessian) const = 0;
+   virtual void lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
+         COOSymmetricMatrix& hessian) const = 0;
    virtual void set_initial_primal_point(std::vector<double>& x) = 0;
    virtual void set_initial_dual_point(std::vector<double>& multipliers) = 0;
 
@@ -137,6 +139,11 @@ public:
 
    void lagrangian_hessian(const std::vector<double>& /*x*/, double /*objective_multiplier*/, const std::vector<double>& /*multipliers*/,
          CSCSymmetricMatrix& /*hessian*/) const override {
+      assert(false && "not yet implemented");
+   }
+
+   void lagrangian_hessian(const std::vector<double>& /*x*/, double /*objective_multiplier*/, const std::vector<double>& /*multipliers*/,
+         COOSymmetricMatrix& /*hessian*/) const override {
       assert(false && "not yet implemented");
    }
 

@@ -36,7 +36,7 @@ void CSCSymmetricMatrix::insert(double /*term*/, int /*row_index*/, int /*column
    assert(false && "CSCSymmetricMatrix::insert is not implemented");
 }
 
-CSCSymmetricMatrix CSCSymmetricMatrix::add_identity_multiple(double multiple) {
+void CSCSymmetricMatrix::add_identity_multiple(double multiple) {
    /* initialize the damped matrix */
    std::vector<double> damped_matrix;
    std::vector<int> damped_column_start;
@@ -81,7 +81,7 @@ CSCSymmetricMatrix CSCSymmetricMatrix::add_identity_multiple(double multiple) {
       }
       damped_column_start.push_back(current_number_nonzeros);
    }
-   return {damped_matrix, damped_column_start, damped_row_number, (int) this->capacity};
+   *this = {damped_matrix, damped_column_start, damped_row_number, (int) this->capacity};
 }
 
 COOSymmetricMatrix CSCSymmetricMatrix::to_COO() {

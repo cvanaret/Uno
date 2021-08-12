@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <cassert>
-#include "SymmetricMatrix.hpp"
+#include "COOSymmetricMatrix.hpp"
 #include "LinearSolver.hpp"
 
 struct MA57Factorization {
@@ -25,7 +25,7 @@ struct MA57Factorization {
  *
  *  Interface to the sparse symmetric linear solver MA57
  */
-class MA57Solver : public LinearSolver {
+class MA57Solver : public LinearSolver<COOSymmetricMatrix> {
 public:
    MA57Solver();
    ~MA57Solver() override = default;
@@ -34,19 +34,6 @@ public:
    void do_symbolic_factorization(COOSymmetricMatrix& matrix) override;
    void do_numerical_factorization(COOSymmetricMatrix& matrix) override;
    std::vector<double> solve(COOSymmetricMatrix& matrix, const std::vector<double>& rhs) override;
-
-   void factorize(CSCSymmetricMatrix& /*matrix*/) override {
-      assert(false && "MA57Solver::factorize for CSC is not implemented");
-   }
-   void do_symbolic_factorization(CSCSymmetricMatrix& /*matrix*/) override {
-      assert(false && "MA57Solver::do_symbolic_factorization for CSC is not implemented");
-   }
-   void do_numerical_factorization(CSCSymmetricMatrix& /*matrix*/) override {
-      assert(false && "MA57Solver::do_numerical_factorization for CSC is not implemented");
-   }
-   std::vector<double> solve(CSCSymmetricMatrix& /*matrix*/, const std::vector<double>& /*rhs*/) override {
-      assert(false && "MA57Solver::solve for CSC is not implemented");
-   }
 
    [[nodiscard]] std::tuple<int, int, int> get_inertia() const override;
    [[nodiscard]] size_t number_negative_eigenvalues() const override;

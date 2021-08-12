@@ -7,8 +7,6 @@
 #include <vector>
 #include "Problem.hpp"
 #include "Iterate.hpp"
-#include "COOSymmetricMatrix.hpp"
-#include "CSCSymmetricMatrix.hpp"
 #include "LinearSolver.hpp"
 #include "LinearSolverFactory.hpp"
 
@@ -16,8 +14,8 @@
 template <class MatrixType>
 class HessianEvaluation {
 public:
-   explicit HessianEvaluation(size_t dimension, size_t hessian_maximum_number_nonzeros): dimension(dimension),
-         hessian(dimension, hessian_maximum_number_nonzeros) {
+   explicit HessianEvaluation(size_t dimension, size_t hessian_maximum_number_nonzeros): dimension(dimension), hessian(dimension,
+         hessian_maximum_number_nonzeros) {
    }
 
    virtual ~HessianEvaluation() = default;
@@ -29,7 +27,7 @@ public:
    virtual void compute(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
          const std::vector<double>& constraint_multipliers) = 0;
 
-   CSCSymmetricMatrix modify_inertia(CSCSymmetricMatrix& matrix, LinearSolver& linear_solver) {
+   MatrixType modify_inertia(MatrixType& matrix, LinearSolver<MatrixType>& linear_solver) {
       double beta = 1e-4;
 
       // Nocedal and Wright, p51
@@ -43,13 +41,12 @@ public:
       }
 
       if (0. < inertia) {
-         matrix = matrix.add_identity_multiple(inertia - previous_inertia);
+         matrix.add_identity_multiple(inertia - previous_inertia);
       }
-      COOSymmetricMatrix coo_hessian = matrix.to_COO();
 
       DEBUG << "Testing factorization with inertia term " << inertia << "\n";
-      linear_solver.do_symbolic_factorization(coo_hessian);
-      linear_solver.do_numerical_factorization(coo_hessian);
+      linear_solver.do_symbolic_factorization(matrix);
+      linear_solver.do_numerical_factorization(matrix);
 
       bool good_inertia = false;
       while (!good_inertia) {
@@ -61,10 +58,9 @@ public:
          else {
             previous_inertia = inertia;
             inertia = (inertia == 0.) ? beta : 2*inertia;
-            matrix = matrix.add_identity_multiple(inertia - previous_inertia);
-            coo_hessian = matrix.to_COO();
+            matrix.add_identity_multiple(inertia - previous_inertia);
             DEBUG << "Testing factorization with inertia term " << inertia << "\n";
-            linear_solver.do_numerical_factorization(coo_hessian);
+            linear_solver.do_numerical_factorization(matrix);
          }
       }
       return matrix;
@@ -92,7 +88,8 @@ template <class MatrixType>
 class ConvexifiedExactHessianEvaluation : public HessianEvaluation<MatrixType> {
 public:
    ConvexifiedExactHessianEvaluation(size_t dimension, size_t hessian_maximum_number_nonzeros, const std::string& linear_solver_name):
-      HessianEvaluation<MatrixType>(dimension, hessian_maximum_number_nonzeros), linear_solver_(LinearSolverFactory::create(linear_solver_name)) {
+      HessianEvaluation<MatrixType>(dimension, hessian_maximum_number_nonzeros), linear_solver_(LinearSolverFactory<MatrixType>::create
+      (linear_solver_name)) {
    }
    ~ConvexifiedExactHessianEvaluation() override = default;
 
@@ -107,7 +104,7 @@ public:
    }
 
 protected:
-   std::unique_ptr<LinearSolver> linear_solver_; /*!< Solver that computes the inertia */
+   std::unique_ptr<LinearSolver<MatrixType> > linear_solver_; /*!< Solver that computes the inertia */
 };
 
 template <class MatrixType>
@@ -128,7 +125,7 @@ public:
    }
 
 private:
-   CSCSymmetricMatrix previous_hessian_;
+   MatrixType previous_hessian_;
    std::vector<double> previous_x_;
 };
 

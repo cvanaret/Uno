@@ -14,6 +14,7 @@ public:
 
    void for_each(const std::function<void (int, int, double)>& f) const override;
    void insert(double term, int row_index, int column_index) override;
+   void add_identity_multiple(double multiple) override;
 
    double norm_1();
    /*COOSymmetricMatrix add_identity_multiple(double multiple);*/
