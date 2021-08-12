@@ -6,6 +6,7 @@
 #include <map>
 #include "QPSolver.hpp"
 #include "LPSolver.hpp"
+#include "CSCSymmetricMatrix.hpp"
 #include "SparseVector.hpp"
 
 enum BQPDMode {
@@ -18,7 +19,7 @@ enum BQPDMode {
  *
  *  Interface to the QP/LP solver BQPD
  */
-class BQPDSolver : public QPSolver {
+class BQPDSolver : public QPSolver<CSCSymmetricMatrix> {
 public:
    BQPDSolver(size_t number_variables, size_t number_constraints, size_t max_number_nonzeros, bool quadratic_programming);
 

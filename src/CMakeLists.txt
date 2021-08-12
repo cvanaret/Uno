@@ -45,10 +45,10 @@ set(SRC_FILES
     ingredients/subproblem/Subproblem.cpp
     ingredients/subproblem/SubproblemFactory.cpp
     ingredients/subproblem/Direction.cpp
-    ingredients/subproblem/InteriorPoint.cpp
+    ingredients/subproblem/InteriorPoint.hpp
     ingredients/subproblem/SLP.cpp
-    ingredients/subproblem/SQP.cpp
-    ingredients/subproblem/HessianEvaluation.cpp
+    ingredients/subproblem/SQP.hpp
+    ingredients/subproblem/HessianEvaluation.hpp
 
     linear_algebra/SymmetricMatrix.cpp
     linear_algebra/COOSymmetricMatrix.cpp
