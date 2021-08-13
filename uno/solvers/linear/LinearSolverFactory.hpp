@@ -15,7 +15,7 @@
 #include "PardisoSolver.hpp"
 #endif
 
-template <typename MatrixType>
+template <typename SparseSymmetricMatrix>
 class LinearSolverFactory;
 
 // specialize the template factory with concrete matrix types (CSC and COO)
@@ -28,7 +28,7 @@ public:
          return std::make_unique<PardisoSolver>();
       }
 #endif
-      throw std::invalid_argument("LinearSolver name " + linear_solver_name + " does not exist.");
+      throw std::invalid_argument("CSC linear solver " + linear_solver_name + " does not exist.");
    }
 };
 
@@ -41,7 +41,7 @@ public:
          return std::make_unique<MA57Solver>();
       }
 #endif
-      throw std::invalid_argument("LinearSolver name " + linear_solver_name + " does not exist.");
+      throw std::invalid_argument("COO linear solver " + linear_solver_name + " does not exist.");
    }
 };
 

@@ -5,10 +5,6 @@
 #include <functional>
 #include "SparseVector.hpp"
 
-enum MatrixType {
-   COO, CSC
-};
-
 class SymmetricMatrix {
 public:
    int dimension;

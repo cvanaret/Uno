@@ -29,7 +29,7 @@ public:
    virtual void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) = 0;
 
    // direction computation
-   virtual Direction compute_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) = 0;
+   virtual Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) = 0;
    virtual Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate);
 
    // feasibility subproblem
@@ -45,16 +45,16 @@ public:
    static double push_variable_to_interior(double variable_value, const Range& variable_bounds);
    void set_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints);
 
-   template <class MatrixType>
+   template <class SparseSymmetricMatrix>
    static void compute_least_square_multipliers(const Problem& problem, Iterate& current_iterate, std::vector<double>& multipliers,
-         LinearSolver<MatrixType>& solver, double multipliers_max_size = 1e3) {
+         LinearSolver<SparseSymmetricMatrix>& solver, double multipliers_max_size = 1e3) {
       current_iterate.compute_objective_gradient(problem);
       current_iterate.compute_constraints_jacobian(problem);
 
       /******************************/
       /* build the symmetric matrix */
       /******************************/
-      MatrixType matrix(current_iterate.x.size() + problem.number_constraints, 0);
+      SparseSymmetricMatrix matrix(current_iterate.x.size() + problem.number_constraints, 0);
 
       /* identity block */
       for (size_t i = 0; i < current_iterate.x.size(); i++) {

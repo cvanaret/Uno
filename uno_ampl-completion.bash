@@ -1,5 +1,5 @@
 #/usr/bin/env bash
-_uno_completions() 
+_uno_ampl_completions() 
 {
     local cur prev opts base
     cur="${COMP_WORDS[COMP_CWORD]}"
@@ -41,4 +41,4 @@ _uno_completions()
 		_filedir
     fi
 }
-complete -F _uno_completions uno
+complete -F _uno_ampl_completions uno_ampl

@@ -9,13 +9,11 @@ l1Relaxation::l1Relaxation(Problem& problem, const Options& options, bool use_tr
    globalization_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
    penalty_parameter(stod(options.at("l1_relaxation_initial_parameter"))),
    parameters({10., 0.1, 0.1}) {
-   // generate elastic variables to relax the constraints
-   this->generate_elastic_variables(problem);
 
+   // generate elastic variables to relax the constraints
+   ConstraintRelaxationStrategy::generate_elastic_variables(problem, this->elastic_variables);
    // add bounds for nonnegative elastic variables to the subproblem
-   for (size_t i = problem.number_variables; i < problem.number_variables + this->elastic_variables.size(); i++) {
-      this->subproblem->variables_bounds[i] = {0., INFINITY};
-   }
+   this->set_elastic_bounds_in_subproblem(problem, this->elastic_variables.size());
 }
 
 Iterate l1Relaxation::initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
@@ -33,17 +31,7 @@ void l1Relaxation::generate_subproblem(const Problem& problem, Iterate& current_
    // preprocess the subproblem: scale the objective gradient and introduce the elastic variables
    // scale the objective gradient and (possibly) and Hessian
    this->subproblem->generate(problem, current_iterate, this->penalty_parameter, trust_region_radius);
-
-   // add the positive elastic variables
-   for (const auto& [j, i]: elastic_variables.positive) {
-      this->subproblem->objective_gradient[i] = 1.;
-      this->subproblem->constraints_jacobian[j][i] = -1.;
-   }
-   // add the negative elastic variables
-   for (const auto& [j, i]: elastic_variables.negative) {
-      this->subproblem->objective_gradient[i] = 1.;
-      this->subproblem->constraints_jacobian[j][i] = 1.;
-   }
+   this->add_elastic_variables_to_subproblem(this->elastic_variables);
 }
 
 Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
@@ -52,13 +40,13 @@ Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, const
    Direction direction = this->compute_byrd_steering_rule(statistics, problem, current_iterate);
 
    // remove the temporary elastic variables
-   this->postprocess_direction(problem, direction);
+   this->remove_elastic_variables(problem, direction);
    return direction;
 }
 
 Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Direction& /*direction*/) {
    this->update_objective_multiplier(problem, current_iterate, 0.);
-   return this->subproblem->compute_direction(statistics, problem, current_iterate);
+   return this->subproblem->solve(statistics, problem, current_iterate);
 }
 
 bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate,
@@ -107,16 +95,16 @@ void l1Relaxation::update_objective_multiplier(const Problem& problem, const Ite
    }
 }
 
-Direction l1Relaxation::compute_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
-   Direction direction = this->subproblem->compute_direction(statistics, problem, current_iterate);
+Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
+   Direction direction = this->subproblem->solve(statistics, problem, current_iterate);
    assert(direction.constraint_partition.infeasible.empty() && "Infeasible constraints found, although direction is feasible");
    direction.objective_multiplier = this->penalty_parameter;
    return direction;
 }
 
-Direction l1Relaxation::compute_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
+Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
    this->update_objective_multiplier(problem, current_iterate, objective_multiplier);
-   Direction direction = this->subproblem->compute_direction(statistics, problem, current_iterate);
+   Direction direction = this->subproblem->solve(statistics, problem, current_iterate);
    assert(direction.constraint_partition.infeasible.empty() && "Infeasible constraints found, although direction is feasible");
    direction.objective_multiplier = objective_multiplier;
    return direction;
@@ -124,7 +112,7 @@ Direction l1Relaxation::compute_direction(Statistics& statistics, const Problem&
 
 Direction l1Relaxation::compute_byrd_steering_rule(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
    /* stage a: compute the step within trust region */
-   Direction direction = this->compute_direction(statistics, problem, current_iterate);
+   Direction direction = this->solve_subproblem(statistics, problem, current_iterate);
 
    /* penalty update: if penalty parameter is already 0, no need to decrease it */
    if (0. < this->penalty_parameter) {
@@ -138,10 +126,10 @@ Direction l1Relaxation::compute_byrd_steering_rule(Statistics& statistics, const
 
          /* stage c: solve the ideal l1 penalty problem with a zero penalty (no objective) */
          DEBUG << "Compute ideal solution (param = 0):\n";
-         Direction ideal_direction = this->compute_direction(statistics, problem, current_iterate, 0.);
+         Direction ideal_direction = this->solve_subproblem(statistics, problem, current_iterate, 0.);
 
          /* compute the ideal error (with a zero penalty parameter) */
-         const double ideal_error = this->compute_error(problem, current_iterate, ideal_direction.multipliers, 0.);
+         const double ideal_error = l1Relaxation::compute_error(problem, current_iterate, ideal_direction.multipliers, 0.);
          DEBUG << "Ideal error: " << ideal_error << "\n";
          if (ideal_error == 0.) {
             /* stage f: update the penalty parameter */
@@ -177,7 +165,7 @@ Direction l1Relaxation::compute_byrd_steering_rule(Statistics& statistics, const
                   }
                   else {
                      DEBUG << "\nAttempting to solve with penalty parameter " << this->penalty_parameter << "\n";
-                     direction = this->compute_direction(statistics, problem, current_iterate, this->penalty_parameter);
+                     direction = this->solve_subproblem(statistics, problem, current_iterate, this->penalty_parameter);
 
                      linearized_residual = this->compute_linearized_constraint_residual(direction.x);
                      DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
@@ -190,7 +178,7 @@ Direction l1Relaxation::compute_byrd_steering_rule(Statistics& statistics, const
             double term = ideal_error / std::max(1., current_iterate.progress.infeasibility);
             this->penalty_parameter = std::min(this->penalty_parameter, term * term);
             if (this->penalty_parameter < updated_penalty_parameter) {
-               direction = this->compute_direction(statistics, problem, current_iterate, this->penalty_parameter);
+               direction = this->solve_subproblem(statistics, problem, current_iterate, this->penalty_parameter);
             }
 
          } // end else
@@ -220,23 +208,6 @@ size_t l1Relaxation::count_elastic_variables(const Problem& problem) {
    return number_variables;
 }
 
-void l1Relaxation::generate_elastic_variables(const Problem& problem) {
-   // generate elastic variables p and n on the fly to relax the constraints
-   size_t elastic_index = problem.number_variables;
-   for (size_t j = 0; j < problem.number_constraints; j++) {
-      if (-INFINITY < problem.constraint_bounds[j].lb) {
-         // nonpositive variable n that captures the negative part of the constraint violation
-         this->elastic_variables.negative[j] = elastic_index;
-         elastic_index++;
-      }
-      if (problem.constraint_bounds[j].ub < INFINITY) {
-         // nonnegative variable p that captures the positive part of the constraint violation
-         this->elastic_variables.positive[j] = elastic_index;
-         elastic_index++;
-      }
-   }
-}
-
 double l1Relaxation::compute_linearized_constraint_residual(std::vector<double>& direction) {
    double residual = 0.;
    // l1 residual of the linearized constraints: sum of elastic variables
@@ -261,7 +232,7 @@ double l1Relaxation::compute_error(const Problem& problem, Iterate& iterate, Mul
    return error;
 }
 
-void l1Relaxation::postprocess_direction(const Problem& problem, Direction& direction) {
+void l1Relaxation::remove_elastic_variables(const Problem& problem, Direction& direction) {
    // compute set of satisfied/violated constraints
 
    /* remove p and n */

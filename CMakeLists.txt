@@ -22,47 +22,70 @@ set(CMAKE_CXX_FLAGS_DEBUG "-pg")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 # directories
-set(DIRECTORIES . ingredients ingredients/constraint_relaxation ingredients/mechanism ingredients/strategy ingredients/subproblem interfaces interfaces/AMPL linear_algebra logger optimization_problem solvers solvers/linear solvers/QP solvers/NLP tools)
+set(DIRECTORIES
+    uno
+    uno/ingredients
+    uno/ingredients/constraint_relaxation
+    uno/ingredients/mechanism
+    uno/ingredients/strategy
+    uno/ingredients/subproblem
+    uno/interfaces
+    uno/interfaces/AMPL
+    uno/linear_algebra
+    uno/logger
+    uno/optimization_problem
+    uno/solvers
+    uno/solvers/linear
+    uno/solvers/QP
+    uno/solvers/NLP
+    uno/tools)
 
 # source files
 set(SRC_FILES
-    Uno.cpp
+    uno/Uno.cpp
 
-    ingredients/mechanism/GlobalizationMechanism.cpp
-    ingredients/mechanism/GlobalizationMechanismFactory.cpp
-    ingredients/mechanism/BacktrackingLineSearch.cpp
-    ingredients/mechanism/TrustRegion.cpp
+    uno/ingredients/mechanism/GlobalizationMechanism.cpp
+    uno/ingredients/mechanism/GlobalizationMechanismFactory.cpp
+    uno/ingredients/mechanism/BacktrackingLineSearch.cpp
+    uno/ingredients/mechanism/TrustRegion.cpp
 
-    ingredients/strategy/GlobalizationStrategyFactory.cpp
-    ingredients/strategy/FilterStrategy.cpp ingredients/strategy/Filter.cpp
-    ingredients/strategy/l1MeritFunction.cpp
+    uno/ingredients/strategy/GlobalizationStrategyFactory.cpp
+    uno/ingredients/strategy/FilterStrategy.cpp
+    uno/ingredients/strategy/Filter.cpp
+    uno/ingredients/strategy/l1MeritFunction.cpp
 
-    ingredients/constraint_relaxation/ConstraintRelaxationStrategy.cpp
-    ingredients/constraint_relaxation/ConstraintRelaxationStrategyFactory.cpp
-    ingredients/constraint_relaxation/l1Relaxation.cpp
-    ingredients/constraint_relaxation/FeasibilityRestoration.cpp
+    uno/ingredients/constraint_relaxation/ConstraintRelaxationStrategy.cpp
+    uno/ingredients/constraint_relaxation/ConstraintRelaxationStrategyFactory.cpp
+    uno/ingredients/constraint_relaxation/l1Relaxation.cpp
+    uno/ingredients/constraint_relaxation/FeasibilityRestoration.cpp
     
-    ingredients/subproblem/Subproblem.cpp
-    ingredients/subproblem/SubproblemFactory.cpp
-    ingredients/subproblem/Direction.cpp
-    ingredients/subproblem/InteriorPoint.hpp
-    ingredients/subproblem/SLP.cpp
-    ingredients/subproblem/SQP.hpp
-    ingredients/subproblem/HessianEvaluation.hpp
+    uno/ingredients/subproblem/Subproblem.cpp
+    uno/ingredients/subproblem/SubproblemFactory.cpp
+    uno/ingredients/subproblem/Direction.cpp
+    uno/ingredients/subproblem/SLP.cpp
+    uno/ingredients/subproblem/SQP.hpp
+    uno/ingredients/subproblem/InteriorPoint.hpp
+    uno/ingredients/subproblem/HessianEvaluation.hpp
 
-    linear_algebra/SymmetricMatrix.cpp
-    linear_algebra/COOSymmetricMatrix.cpp
-    linear_algebra/CSCSymmetricMatrix.cpp
-    linear_algebra/Vector.cpp
+    uno/linear_algebra/SymmetricMatrix.cpp
+    uno/linear_algebra/COOSymmetricMatrix.cpp
+    uno/linear_algebra/CSCSymmetricMatrix.cpp
+    uno/linear_algebra/Vector.cpp
     
-    optimization_problem/Problem.cpp optimization_problem/Constraint.cpp
-    optimization_problem/Preprocessing.cpp optimization_problem/Iterate.cpp
+    uno/optimization_problem/Problem.cpp
+    uno/optimization_problem/Constraint.cpp
+    uno/optimization_problem/Preprocessing.cpp
+    uno/optimization_problem/Iterate.cpp
 
-    solvers/linear/LinearSolverFactory.cpp
-	solvers/QP/QPSolverFactory.cpp
-    solvers/QP/LPSolver.hpp solvers/QP/QPSolver.hpp
+    uno/solvers/linear/LinearSolverFactory.hpp
+	uno/solvers/QP/QPSolverFactory.hpp
+    uno/solvers/QP/LPSolver.hpp
+    uno/solvers/QP/QPSolver.hpp
 
-    tools/Logger.hpp tools/Statistics.cpp tools/Timer.cpp tools/Options.cpp
+    uno/tools/Logger.hpp
+    uno/tools/Statistics.cpp
+    uno/tools/Timer.cpp
+    uno/tools/Options.cpp
 )
 
 # find libraries
@@ -89,13 +112,13 @@ foreach(library_name IN LISTS OPTIONAL_LIBS)
         
         # add the corresponding sources
         if(${library_name} STREQUAL amplsolver)
-            list(APPEND SRC_FILES interfaces/AMPL/AMPLModel.cpp)
+            list(APPEND SRC_FILES uno/interfaces/AMPL/AMPLModel.cpp)
         elseif(${library_name} STREQUAL bqpd)
-            list(APPEND SRC_FILES solvers/QP/BQPDSolver.cpp solvers/QP/wdotd.f)
+            list(APPEND SRC_FILES uno/solvers/QP/BQPDSolver.cpp uno/solvers/QP/wdotd.f)
         elseif(${library_name} STREQUAL ma57)
-            list(APPEND SRC_FILES solvers/linear/MA57Solver.cpp)
+            list(APPEND SRC_FILES uno/solvers/linear/MA57Solver.cpp)
         elseif(${library_name} STREQUAL pardiso)
-            list(APPEND SRC_FILES solvers/linear/PardisoSolver.cpp)
+            list(APPEND SRC_FILES uno/solvers/linear/PardisoSolver.cpp)
         endif()
 	endif()
 endforeach(library_name)
@@ -133,7 +156,7 @@ target_link_libraries(uno PUBLIC ${LIBS})
 ########
 # main #
 ########
-add_executable(uno_ampl main.cpp)
+add_executable(uno_ampl uno/main.cpp)
 target_link_libraries(uno_ampl PUBLIC uno)
 
 ####################
@@ -141,9 +164,9 @@ target_link_libraries(uno_ampl PUBLIC uno)
 ####################
 find_package(GTest CONFIG REQUIRED)
 if(NOT ${GTest}_DIR STREQUAL "${GTest}-NOTFOUND")
-	add_executable(run_unit_tests unit_tests/tests.cpp)
-	target_include_directories(run_unit_tests PUBLIC ${DIRECTORIES})
-	target_link_libraries(run_unit_tests PUBLIC GTest::gtest ${LIBS})
+	add_executable(run_unotest unotest/tests.cpp)
+	target_include_directories(run_unotest PUBLIC ${DIRECTORIES})
+	target_link_libraries(run_unotest PUBLIC GTest::gtest ${LIBS})
 endif()
 
 #############

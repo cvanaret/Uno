@@ -11,12 +11,6 @@ struct RelaxationParameters {
    double epsilon2;
 };
 
-struct ElasticVariables {
-   std::map<size_t, size_t> positive;
-   std::map<size_t, size_t> negative;
-   [[nodiscard]] size_t size() const { return this->positive.size() + this->negative.size(); }
-};
-
 class l1Relaxation: public ConstraintRelaxationStrategy {
 public:
    l1Relaxation(Problem& problem, const Options& options, bool use_trust_region);
@@ -38,15 +32,14 @@ protected:
    /* problem reformulation with elastic variables. Constraints l <= c(x) = u are reformulated as l <= c(x) - p + n <= u */
    ElasticVariables elastic_variables;
 
-   Direction compute_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate);
-   Direction compute_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double objective_multiplier);
+   Direction solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate);
+   Direction solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double objective_multiplier);
    Direction compute_byrd_steering_rule(Statistics& statistics, const Problem& problem, Iterate& current_iterate);
    void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier);
    static size_t count_elastic_variables(const Problem& problem);
-   void generate_elastic_variables(const Problem& problem);
    double compute_linearized_constraint_residual(std::vector<double>& direction);
-   double compute_error(const Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter);
-   void postprocess_direction(const Problem& problem, Direction& direction);
+   static double compute_error(const Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter);
+   void remove_elastic_variables(const Problem& problem, Direction& direction);
    void recover_l1qp_active_set_(const Problem& problem, const Direction& direction);
 };
 

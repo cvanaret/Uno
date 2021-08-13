@@ -31,7 +31,7 @@ void FeasibilityRestoration::generate_subproblem(const Problem& problem, Iterate
 
 Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
    // solve the original subproblem
-   Direction direction = this->subproblem->compute_direction(statistics, problem, current_iterate);
+   Direction direction = this->subproblem->solve(statistics, problem, current_iterate);
    DEBUG << "\n" << direction;
 
    if (direction.status != INFEASIBLE) {
@@ -44,7 +44,7 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
       // infeasible subproblem: form the feasibility problem
       this->form_feasibility_problem(problem, current_iterate, direction.x, constraint_partition);
       // solve the feasibility subproblem
-      direction = this->subproblem->compute_direction(statistics, problem, current_iterate);
+      direction = this->subproblem->solve(statistics, problem, current_iterate);
       direction.objective_multiplier = 0.;
       direction.is_relaxed = true;
       DEBUG << "\n" << direction;
@@ -73,7 +73,7 @@ void FeasibilityRestoration::form_feasibility_problem(const Problem& problem, co
 Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Direction& direction) {
    assert(this->current_phase == OPTIMALITY && "FeasibilityRestoration is already in the feasibility restoration phase");
    this->form_feasibility_problem(problem, current_iterate, direction.x, direction.constraint_partition);
-   return this->subproblem->compute_direction(statistics, problem, current_iterate);
+   return this->subproblem->solve(statistics, problem, current_iterate);
 }
 
 bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate,
