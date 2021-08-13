@@ -11,8 +11,7 @@ std::unique_ptr<Subproblem> SubproblemFactory::create(const Problem& problem, si
       const std::string& QP_solver_name = options.at("QP_solver");
       // determine the sparse matrix format
       if (QP_solver_name == "BQPD") {
-         return std::make_unique<SQP<CSCSymmetricMatrix> >(problem, number_variables, problem.number_constraints, QP_solver_name,
-               options.at("hessian"), use_trust_region);
+         return std::make_unique<SQP<BQPDSolver> >(problem, number_variables, problem.number_constraints, options.at("hessian"), use_trust_region);
       }
       else {
          assert(false && "SubproblemFactory::create: unknown QP solver");

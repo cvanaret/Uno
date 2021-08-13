@@ -11,6 +11,9 @@
 template <class SparseSymmetricMatrix>
 class QPSolver : public LPSolver {
 public:
+   // make this type accessible in templates
+   using matrix_type = SparseSymmetricMatrix;
+
    QPSolver() = default;
    ~QPSolver() override = default;
    virtual Direction solve_QP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector& linear_objective,

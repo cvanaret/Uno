@@ -4,35 +4,21 @@
 #include <memory>
 #include "QPSolver.hpp"
 
-#ifdef HAS_BQPD
-#include "BQPDSolver.hpp"
-#endif
-
-template<class SparseSymmetricMatrix>
+template<class QPSolverType>
 class QPSolverFactory;
 
-// specialize the template factory with concrete matrix types (CSC and COO)
-template<>
-class QPSolverFactory<CSCSymmetricMatrix> {
-public:
-   static std::unique_ptr<QPSolver<CSCSymmetricMatrix> > create(const std::string& QP_solver_name, size_t number_variables, size_t number_constraints,
-         size_t maximum_number_nonzeros, bool quadratic_programming) {
+// specialize the template factory with concrete solver types
 #ifdef HAS_BQPD
-      if (QP_solver_name == "BQPD") {
-         return std::make_unique<BQPDSolver>(number_variables, number_constraints, maximum_number_nonzeros, quadratic_programming);
-      }
-#endif
-      throw std::invalid_argument("CSC QP solver " + QP_solver_name + " does not exist.");
-   }
-};
+#include "BQPDSolver.hpp"
 
 template<>
-class QPSolverFactory<COOSymmetricMatrix> {
+class QPSolverFactory<BQPDSolver> {
 public:
-   static std::unique_ptr<QPSolver<COOSymmetricMatrix> > create(const std::string& QP_solver_name, size_t /*number_variables*/, size_t
-   /*number_constraints*/, size_t /*maximum_number_nonzeros*/, bool /*quadratic_programming*/) {
-      throw std::invalid_argument("COO QP solver " + QP_solver_name + " does not exist.");
+   static std::unique_ptr<QPSolver<typename BQPDSolver::matrix_type> > create(size_t number_variables, size_t number_constraints,
+         size_t maximum_number_nonzeros, bool quadratic_programming) {
+      return std::make_unique<BQPDSolver>(number_variables, number_constraints, maximum_number_nonzeros, quadratic_programming);
    }
 };
+#endif
 
 #endif // QPSOLVERFACTORY_H

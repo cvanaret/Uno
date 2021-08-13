@@ -7,17 +7,17 @@
 #include "solvers/QP/QPSolver.hpp"
 #include "solvers/QP/QPSolverFactory.hpp"
 
-template<class SparseSymmetricMatrix>
+template<typename QPSolverType>
 class SQP : public Subproblem {
 public:
-   SQP(const Problem& problem, size_t number_variables, size_t number_constraints, const std::string& QP_solver_name,
-         const std::string& hessian_evaluation_method, bool use_trust_region) :
+   SQP(const Problem& problem, size_t number_variables, size_t number_constraints, const std::string& hessian_evaluation_method,
+         bool use_trust_region) :
          Subproblem(number_variables, number_constraints),
          // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
-         solver(QPSolverFactory<SparseSymmetricMatrix>::create(QP_solver_name, number_variables, number_constraints,
+         solver(QPSolverFactory<QPSolverType>::create(number_variables, number_constraints,
                problem.hessian_maximum_number_nonzeros + number_variables, true)),
          /* if no trust region is used, the problem should be convexified by controlling the inertia of the Hessian */
-         hessian_evaluation(HessianEvaluationFactory<SparseSymmetricMatrix>::create(hessian_evaluation_method, problem.number_variables,
+         hessian_evaluation(HessianEvaluationFactory<typename QPSolverType::matrix_type>::create(hessian_evaluation_method, problem.number_variables,
                problem.hessian_maximum_number_nonzeros + problem.number_variables, !use_trust_region)),
          initial_point(number_variables) {
    }
@@ -94,8 +94,9 @@ public:
 
 protected:
    /* use references to allow polymorphism */
-   const std::unique_ptr<QPSolver<SparseSymmetricMatrix> > solver; /*!< Solver that solves the subproblem */
-   const std::unique_ptr<HessianEvaluation<SparseSymmetricMatrix> > hessian_evaluation; /*!< Strategy to compute or approximate the Hessian */
+   const std::unique_ptr <QPSolver<typename QPSolverType::matrix_type>> solver; /*!< Solver that solves the subproblem */
+   const std::unique_ptr <HessianEvaluation<typename QPSolverType::matrix_type>> hessian_evaluation; /*!< Strategy to compute or approximate the
+ * Hessian */
    std::vector<double> initial_point;
 };
 
