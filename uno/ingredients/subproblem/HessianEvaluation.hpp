@@ -80,28 +80,28 @@ public:
    }
 };
 
-template <class SparseSymmetricMatrix>
-class ConvexifiedExactHessianEvaluation : public HessianEvaluation<SparseSymmetricMatrix> {
-public:
-   ConvexifiedExactHessianEvaluation(size_t dimension, size_t hessian_maximum_number_nonzeros, const std::string& linear_solver_name):
-      HessianEvaluation<SparseSymmetricMatrix>(dimension, hessian_maximum_number_nonzeros), linear_solver(LinearSolverFactory<SparseSymmetricMatrix>::create
-      (linear_solver_name)) {
-   }
-   ~ConvexifiedExactHessianEvaluation() override = default;
-
-   void compute(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
-         const std::vector<double>& constraint_multipliers) override {
-      /* compute Hessian */
-      problem.lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, this->hessian);
-      this->evaluation_count++;
-      /* modify the inertia to make the problem strictly convex */
-      DEBUG << "hessian before convexification: " << this->hessian;
-      this->hessian = this->modify_inertia(this->hessian, *this->linear_solver);
-   }
-
-protected:
-   std::unique_ptr<LinearSolver<SparseSymmetricMatrix> > linear_solver; /*!< Solver that computes the inertia */
-};
+//template <class SparseSymmetricMatrix>
+//class ConvexifiedExactHessianEvaluation : public HessianEvaluation<SparseSymmetricMatrix> {
+//public:
+//   ConvexifiedExactHessianEvaluation(size_t dimension, size_t hessian_maximum_number_nonzeros, const std::string& linear_solver_name):
+//      HessianEvaluation<SparseSymmetricMatrix>(dimension, hessian_maximum_number_nonzeros), linear_solver(LinearSolverFactory<MA57Solver>::create
+//      (linear_solver_name)) {
+//   }
+//   ~ConvexifiedExactHessianEvaluation() override = default;
+//
+//   void compute(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
+//         const std::vector<double>& constraint_multipliers) override {
+//      /* compute Hessian */
+//      problem.lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, this->hessian);
+//      this->evaluation_count++;
+//      /* modify the inertia to make the problem strictly convex */
+//      DEBUG << "hessian before convexification: " << this->hessian;
+//      this->hessian = this->modify_inertia(this->hessian, *this->linear_solver);
+//   }
+//
+//protected:
+//   std::unique_ptr<LinearSolver<COOSymmetricMatrix> > linear_solver; /*!< Solver that computes the inertia */
+//};
 
 template <class SparseSymmetricMatrix>
 class HessianEvaluationFactory {
@@ -110,11 +110,11 @@ public:
          size_t hessian_maximum_number_nonzeros, bool convexify) {
       if (hessian_evaluation_method == "exact") {
          if (convexify) {
-            return std::make_unique<ConvexifiedExactHessianEvaluation<SparseSymmetricMatrix> >(dimension, hessian_maximum_number_nonzeros, "MA57");
+         //   return std::make_unique<ConvexifiedExactHessianEvaluation<SparseSymmetricMatrix> >(dimension, hessian_maximum_number_nonzeros, "MA57");
          }
-         else {
+         //else {
             return std::make_unique<ExactHessianEvaluation<SparseSymmetricMatrix> >(dimension, hessian_maximum_number_nonzeros);
-         }
+         //}
       }
       else {
          throw std::invalid_argument("Hessian evaluation method " + hessian_evaluation_method + " does not exist");
