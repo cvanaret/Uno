@@ -24,18 +24,18 @@ struct UnstableInertiaCorrection : public std::exception {
    }
 };
 
-template <class SparseSymmetricMatrix>
+template<typename LinearSolverType>
 class InteriorPoint : public Subproblem {
 public:
-   InteriorPoint(const Problem& problem, size_t number_variables, size_t number_constraints, const std::string& linear_solver_name, const
-   std::string& hessian_evaluation_method, bool use_trust_region) :
+   InteriorPoint(const Problem& problem, size_t number_variables, size_t number_constraints, const std::string& hessian_evaluation_method,
+         bool use_trust_region) :
    // add the slacks to the variables
          Subproblem(number_variables + problem.inequality_constraints.size(), number_constraints),
          /* if no trust region is used, the problem should be convexified. However, the inertia of the augmented matrix will be corrected later */
-         hessian_evaluation(HessianEvaluationFactory<SparseSymmetricMatrix>::create(hessian_evaluation_method, problem.number_variables, problem
-               .hessian_maximum_number_nonzeros, false)),
+         hessian_evaluation(HessianEvaluationFactory<typename LinearSolverType::matrix_type>::create(hessian_evaluation_method,
+               problem.number_variables, problem.hessian_maximum_number_nonzeros, false)),
          kkt_matrix(this->number_variables + number_constraints, problem.hessian_maximum_number_nonzeros),
-         linear_solver(LinearSolverFactory<SparseSymmetricMatrix>::create(linear_solver_name)),
+         linear_solver(LinearSolverFactory<LinearSolverType>::create()),
          parameters({0.99, 1e10, 100., 0.2, 1.5, 10., 1e10}),
          rhs(this->number_variables + number_constraints),
          lower_delta_z(this->number_variables), upper_delta_z(this->number_variables) {
@@ -120,7 +120,7 @@ public:
 
       /* compute least-square multipliers */
       if (0 < problem.number_constraints) {
-         //Subproblem::compute_least_square_multipliers<SparseSymmetricMatrix>(problem, first_iterate, first_iterate.multipliers.constraints,
+         //Subproblem::compute_least_square_multipliers<typename LinearSolverType::matrix_type>(problem, first_iterate, first_iterate.multipliers.constraints,
          //      this->linear_solver);
       }
 
@@ -284,15 +284,15 @@ public:
 private:
    /* barrier parameter */
    double barrier_parameter{0.1};
-   const std::unique_ptr<HessianEvaluation<SparseSymmetricMatrix> > hessian_evaluation;
-   SparseSymmetricMatrix kkt_matrix;
-   const std::unique_ptr<LinearSolver<SparseSymmetricMatrix> > linear_solver; /*!< Solver that solves the subproblem */
+   const std::unique_ptr <HessianEvaluation<typename LinearSolverType::matrix_type>> hessian_evaluation;
+   typename LinearSolverType::matrix_type kkt_matrix;
+   const std::unique_ptr <LinearSolver<typename LinearSolverType::matrix_type>> linear_solver; /*!< Solver that solves the subproblem */
    /* constants */
    const InteriorPointParameters parameters;
 
    /* data structures */
-   std::set<size_t> lower_bounded_variables; /* indices of the lower-bounded variables */
-   std::set<size_t> upper_bounded_variables; /* indices of the upper-bounded variables */
+   std::set <size_t> lower_bounded_variables; /* indices of the lower-bounded variables */
+   std::set <size_t> upper_bounded_variables; /* indices of the upper-bounded variables */
 
    bool force_symbolic_factorization{true};
    double inertia_hessian{0.};
@@ -338,7 +338,7 @@ private:
       }
    }
 
-   void factorize(SparseSymmetricMatrix& kkt_matrix, FunctionType problem_type) {
+   void factorize(typename LinearSolverType::matrix_type& kkt_matrix, FunctionType problem_type) {
       // compute the symbolic factorization only when:
       // the problem has a non constant Hessian (ie is not an LP or a QP) or it is the first factorization
       // TODO: for QPs as well, but only when the sparsity pattern is constant
@@ -401,10 +401,10 @@ private:
       return dual_length;
    }
 
-   SparseSymmetricMatrix assemble_kkt_matrix(const Problem& problem, Iterate& current_iterate) {
+   typename LinearSolverType::matrix_type assemble_kkt_matrix(const Problem& problem, Iterate& current_iterate) {
       /* compute the Lagrangian Hessian */
       // TODO fix capacity problem
-      SparseSymmetricMatrix kkt_matrix = this->hessian_evaluation->hessian;
+      typename LinearSolverType::matrix_type kkt_matrix = this->hessian_evaluation->hessian;
       kkt_matrix.dimension = this->number_variables + problem.number_constraints;
 
       /* diagonal terms: bounds of primals and slacks */
@@ -424,7 +424,8 @@ private:
       return kkt_matrix;
    }
 
-   void modify_inertia(SparseSymmetricMatrix& kkt_matrix, size_t size_first_block, size_t size_second_block, FunctionType problem_type) {
+   void modify_inertia(typename LinearSolverType::matrix_type& kkt_matrix, size_t size_first_block, size_t size_second_block,
+         FunctionType problem_type) {
       this->inertia_hessian = 0.;
       this->inertia_constraints = 0.;
       DEBUG << "Testing factorization with inertia term " << this->inertia_hessian << "\n";

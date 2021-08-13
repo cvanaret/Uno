@@ -14,11 +14,6 @@ enum BQPDMode {
    UNCHANGED_ACTIVE_SET_AND_REDUCED_HESSIAN = 5, UNCHANGED_ACTIVE_SET_AND_JACOBIAN_AND_REDUCED_HESSIAN = 6,
 };
 
-/*! \class BQPDSolver
- * \brief Interface for BQPD
- *
- *  Interface to the QP/LP solver BQPD
- */
 class BQPDSolver : public QPSolver<CSCSymmetricMatrix> {
 public:
    BQPDSolver(size_t number_variables, size_t number_constraints, size_t max_number_nonzeros, bool quadratic_programming);
@@ -52,11 +47,6 @@ private:
    int peq_solution_, ifail_;
    std::vector<double> solution;
 
-   /*!
-    *  Create a SubproblemSolution from BQPD's solution
-    *
-    * \param d: optimal solution
-    */
    Direction generate_direction();
    Status int_to_status_(int ifail);
    Direction solve_subproblem(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector&

@@ -3,9 +3,9 @@
 #include "SLP.hpp"
 #include "InteriorPoint.hpp"
 
-std::unique_ptr<Subproblem> SubproblemFactory::create(const Problem& problem, size_t number_variables, const std::string& subproblem_type,
+std::unique_ptr <Subproblem> SubproblemFactory::create(const Problem& problem, size_t number_variables, const std::string& subproblem_type,
       const Options& options, bool use_trust_region) {
-   const std::vector<std::string> possible_methods = {"SQP", "SLP", "IPM"};
+   const std::vector <std::string> possible_methods = {"SQP", "SLP", "IPM"};
    /* active-set methods */
    if (subproblem_type == "SQP") {
       const std::string& QP_solver_name = options.at("QP_solver");
@@ -22,20 +22,20 @@ std::unique_ptr<Subproblem> SubproblemFactory::create(const Problem& problem, si
       const std::string& QP_solver_name = options.at("QP_solver");
       return std::make_unique<SLP>(number_variables, problem.number_constraints, QP_solver_name);
    }
-   /* interior point method */
+      /* interior point method */
    else if (subproblem_type == "IPM") {
       const std::string& linear_solver_name = options.at("linear_solver");
       // determine the sparse matrix format
       if (linear_solver_name == "MA57") {
-         return std::make_unique<InteriorPoint<COOSymmetricMatrix> >(problem, number_variables, problem.number_constraints, linear_solver_name,
-               options.at("hessian"), use_trust_region);
+         return std::make_unique<InteriorPoint<MA57Solver> >(problem, number_variables, problem.number_constraints, options.at("hessian"),
+               use_trust_region);
       }
       else if (linear_solver_name == "PARDISO") {
-         return std::make_unique<InteriorPoint<CSCSymmetricMatrix> >(problem, number_variables, problem.number_constraints, linear_solver_name,
-               options.at("hessian"), use_trust_region);
+         return std::make_unique<InteriorPoint<PardisoSolver> >(problem, number_variables, problem.number_constraints, options.at("hessian"),
+               use_trust_region);
       }
       else {
-         assert(false && "SubproblemFactory::create: unknown QP solver");
+         assert(false && "SubproblemFactory::create: unknown linear solver");
       }
 
    }

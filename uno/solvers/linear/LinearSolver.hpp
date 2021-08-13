@@ -6,6 +6,9 @@
 template <class SparseSymmetricMatrix>
 class LinearSolver {
 public:
+   // make this type accessible in templates
+   using matrix_type = SparseSymmetricMatrix;
+
    LinearSolver() = default;
    virtual ~LinearSolver() = default;
 

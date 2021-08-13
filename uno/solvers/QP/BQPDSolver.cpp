@@ -24,8 +24,8 @@ extern "C" {
 }
 
 /* preallocate a bunch of stuff */
-BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_t maximum_number_nonzeros, bool quadratic_programming)
-      : QPSolver(), n_(number_variables), m_(number_constraints), maximum_number_nonzeros_(maximum_number_nonzeros), lb_(n_ + m_),
+BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_t maximum_number_nonzeros, bool quadratic_programming) :
+      QPSolver(), n_(number_variables), m_(number_constraints), maximum_number_nonzeros_(maximum_number_nonzeros), lb_(n_ + m_),
       ub_(n_ + m_), use_fortran_(1), jacobian_(n_ * (m_ + 1)), jacobian_sparsity_(n_ * (m_ + 1) + m_ + 3),
       kmax_(quadratic_programming ? 500 : 0), mlp_(1000), mxwk0_(2000000), mxiwk0_(500000), info_(100), alp_(mlp_), lp_(mlp_), ls_(n_ + m_),
       w_(n_ + m_), gradient_solution_(n_), residuals_(n_ + m_), e_(n_ + m_),
