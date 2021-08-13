@@ -1,5 +1,5 @@
 #include "SLP.hpp"
-#include "QPSolverFactory.hpp"
+#include "solvers/QP/QPSolverFactory.hpp"
 
 SLP::SLP(size_t number_variables, size_t number_constraints, const std::string& /*QP_solver_name*/) :
       Subproblem(number_variables, number_constraints),

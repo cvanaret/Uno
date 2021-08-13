@@ -4,7 +4,7 @@
 #include <iostream>
 #include <memory>
 #include "Subproblem.hpp"
-#include "Options.hpp"
+#include "tools/Options.hpp"
 
 class SubproblemFactory {
 	public:

@@ -1,6 +1,5 @@
 #include <cassert>
 #include "Subproblem.hpp"
-#include "LinearSolverFactory.hpp"
 
 Subproblem::Subproblem(size_t number_variables, size_t number_constraints) :
       number_variables(number_variables),

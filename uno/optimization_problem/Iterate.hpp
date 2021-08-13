@@ -5,7 +5,6 @@
 #include <vector>
 #include "Problem.hpp"
 #include "Constraint.hpp"
-#include "SymmetricMatrix.hpp"
 
 enum TerminationStatus {
    NOT_OPTIMAL = 0, KKT_POINT, /* feasible stationary point */

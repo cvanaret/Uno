@@ -4,8 +4,8 @@
 #include <vector>
 #include <map>
 #include <unordered_map>
-#include "Problem.hpp"
-#include "Constraint.hpp"
+#include "optimization_problem/Problem.hpp"
+#include "optimization_problem/Constraint.hpp"
 
 extern "C" {
 #include "asl_pfgh.h"

@@ -8,8 +8,8 @@
 #include <vector>
 #include <set>
 #include <functional>
-#include "Logger.hpp"
 #include "SparseVector.hpp"
+#include "tools/Logger.hpp"
 
 enum Norm {L1_NORM = 1, L2_NORM = 2, L2_SQUARED_NORM, INF_NORM};
 

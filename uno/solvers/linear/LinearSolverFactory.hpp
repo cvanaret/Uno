@@ -3,7 +3,6 @@
 
 #include <memory>
 #include "LinearSolver.hpp"
-#include "Problem.hpp"
 
 #ifdef HAS_MA57
 

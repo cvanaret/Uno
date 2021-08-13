@@ -1,5 +1,5 @@
 #include "Preprocessing.hpp"
-#include "BQPDSolver.hpp"
+#include "solvers/QP/BQPDSolver.hpp"
 
 void Preprocessing::apply(const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
    /* linear constraints */

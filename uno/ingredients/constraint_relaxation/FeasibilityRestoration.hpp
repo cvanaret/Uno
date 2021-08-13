@@ -2,8 +2,8 @@
 #define FEASIBILITYRESTORATION_H
 
 #include "ConstraintRelaxationStrategy.hpp"
-#include "GlobalizationStrategy.hpp"
-#include "Options.hpp"
+#include "ingredients/strategy/GlobalizationStrategy.hpp"
+#include "tools/Options.hpp"
 
 enum Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 

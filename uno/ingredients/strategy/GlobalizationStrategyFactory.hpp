@@ -4,8 +4,7 @@
 #include <iostream>
 #include <memory>
 #include "GlobalizationStrategy.hpp"
-#include "Subproblem.hpp"
-#include "Options.hpp"
+#include "tools/Options.hpp"
 
 class GlobalizationStrategyFactory {
 public:

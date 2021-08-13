@@ -3,12 +3,9 @@
 
 #include <cmath>
 #include <optional>
-#include "ConstraintRelaxationStrategy.hpp"
-#include "Problem.hpp"
-#include "Subproblem.hpp"
-#include "Iterate.hpp"
-#include "Direction.hpp"
-#include "Statistics.hpp"
+#include "optimization_problem/Iterate.hpp"
+#include "ingredients/subproblem/Direction.hpp"
+#include "tools/Statistics.hpp"
 
 /*! \class GlobalizationStrategy
  * \brief Step acceptance strategy
@@ -17,12 +14,6 @@
  */
 class GlobalizationStrategy {
 public:
-   /*!
-    *  Constructor that takes an optimization problem and a tolerance
-    *
-    * \param problem: optimization problem
-    * \param constants: set of constants
-    */
    GlobalizationStrategy() = default;
    virtual ~GlobalizationStrategy() = default;
 

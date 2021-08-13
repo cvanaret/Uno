@@ -1,8 +1,6 @@
 #include "GlobalizationMechanismFactory.hpp"
-#include "TrustRegion.hpp"
-#include "BacktrackingLineSearch.hpp"
-//#include "DualUpdate.hpp"
-//#include "TrustLineSearch.hpp"
+#include "ingredients/mechanism/TrustRegion.hpp"
+#include "ingredients/mechanism/BacktrackingLineSearch.hpp"
 
 std::unique_ptr<GlobalizationMechanism> GlobalizationMechanismFactory::create(const std::string& mechanism_type, ConstraintRelaxationStrategy&
 constraint_relaxation_strategy, const Options& options) {

@@ -2,11 +2,9 @@
 #define FILTER_H
 
 #include <ostream>
-#include <vector>
 #include <list>
-#include <map>
 #include <memory>
-#include "Options.hpp"
+#include "tools/Options.hpp"
 
 struct FilterConstants {
     double Beta; /*!< Margin around filter */

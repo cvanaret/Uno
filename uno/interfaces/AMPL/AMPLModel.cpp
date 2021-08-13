@@ -1,7 +1,7 @@
 #include <cassert>
 #include "AMPLModel.hpp"
-#include "Logger.hpp"
-#include "Vector.hpp"
+#include "linear_algebra/Vector.hpp"
+#include "tools/Logger.hpp"
 
 /* TODO: avoid using implicit AMPL macros */
 

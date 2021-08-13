@@ -2,8 +2,6 @@
 #include "SQP.hpp"
 #include "SLP.hpp"
 #include "InteriorPoint.hpp"
-#include "QPSolverFactory.hpp"
-#include "Vector.hpp"
 
 std::unique_ptr<Subproblem> SubproblemFactory::create(const Problem& problem, size_t number_variables, const std::string& subproblem_type,
       const Options& options, bool use_trust_region) {

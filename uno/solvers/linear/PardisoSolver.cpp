@@ -1,7 +1,6 @@
 #include <iostream>
 #include <cassert>
 #include "PardisoSolver.hpp"
-#include "Vector.hpp"
 
 extern "C" {
    void pardisoinit(long int* pt, const int* mtype, const int* solver, int* iparm, double* dparm, int* error);

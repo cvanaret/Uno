@@ -3,11 +3,11 @@
 
 #include <vector>
 #include <cmath>
-#include "Statistics.hpp"
-#include "Subproblem.hpp"
-#include "Direction.hpp"
-#include "Problem.hpp"
-#include "Iterate.hpp"
+#include "ingredients/subproblem/Subproblem.hpp"
+#include "ingredients/subproblem/Direction.hpp"
+#include "optimization_problem/Problem.hpp"
+#include "optimization_problem/Iterate.hpp"
+#include "tools/Statistics.hpp"
 
 struct ElasticVariables {
    std::map<size_t, size_t> positive;

@@ -5,7 +5,7 @@
 #include <memory>
 #include <map>
 #include "ConstraintRelaxationStrategy.hpp"
-#include "Options.hpp"
+#include "tools/Options.hpp"
 
 class ConstraintRelaxationStrategyFactory {
 public:

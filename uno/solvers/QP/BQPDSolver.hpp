@@ -6,8 +6,8 @@
 #include <map>
 #include "QPSolver.hpp"
 #include "LPSolver.hpp"
-#include "CSCSymmetricMatrix.hpp"
-#include "SparseVector.hpp"
+#include "linear_algebra/CSCSymmetricMatrix.hpp"
+#include "linear_algebra/SparseVector.hpp"
 
 enum BQPDMode {
    COLD_START = 0, ACTIVE_SET_EQUALITIES = 1, USER_DEFINED = 2, UNCHANGED_ACTIVE_SET = 3, UNCHANGED_ACTIVE_SET_AND_JACOBIAN = 4,

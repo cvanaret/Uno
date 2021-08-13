@@ -1,7 +1,7 @@
 #include <cassert>
 #include "l1Relaxation.hpp"
-#include "GlobalizationStrategyFactory.hpp"
-#include "SubproblemFactory.hpp"
+#include "ingredients/strategy/GlobalizationStrategyFactory.hpp"
+#include "ingredients/subproblem/SubproblemFactory.hpp"
 
 l1Relaxation::l1Relaxation(Problem& problem, const Options& options, bool use_trust_region) :
    ConstraintRelaxationStrategy(SubproblemFactory::create(problem, l1Relaxation::count_elastic_variables(problem),

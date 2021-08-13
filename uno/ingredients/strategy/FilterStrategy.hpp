@@ -5,7 +5,7 @@
 #include <memory>
 #include "GlobalizationStrategy.hpp"
 #include "Filter.hpp"
-#include "Options.hpp"
+#include "tools/Options.hpp"
 
 /*! \class TwoPhaseConstants
  * \brief Constants for filter and tube strategies

@@ -3,8 +3,8 @@
 
 #include <vector>
 #include <cassert>
-#include "CSCSymmetricMatrix.hpp"
 #include "LinearSolver.hpp"
+#include "linear_algebra/CSCSymmetricMatrix.hpp"
 
 enum PardisoPhase {
    ANALYSIS = 11,

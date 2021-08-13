@@ -4,13 +4,13 @@
 #include <cmath>
 #include <vector>
 #include <memory>
-#include "Statistics.hpp"
-#include "Problem.hpp"
-#include "Iterate.hpp"
+#include "optimization_problem/Problem.hpp"
+#include "optimization_problem/Iterate.hpp"
 #include "Direction.hpp"
-#include "Constraint.hpp"
-#include "Vector.hpp"
-#include "LinearSolver.hpp"
+#include "optimization_problem/Constraint.hpp"
+#include "linear_algebra/Vector.hpp"
+#include "solvers/linear/LinearSolver.hpp"
+#include "tools/Statistics.hpp"
 
 /*! \class Subproblem
  * \brief Subproblem

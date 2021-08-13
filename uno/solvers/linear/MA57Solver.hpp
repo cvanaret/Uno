@@ -3,8 +3,8 @@
 
 #include <vector>
 #include <cassert>
-#include "COOSymmetricMatrix.hpp"
 #include "LinearSolver.hpp"
+#include "linear_algebra/COOSymmetricMatrix.hpp"
 
 struct MA57Factorization {
    int n;
