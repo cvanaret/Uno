@@ -1,8 +1,8 @@
 #include <cmath>
 #include <assert.h>
 #include "TrustRegion.hpp"
-#include "Vector.hpp"
-#include "Logger.hpp"
+#include "linear_algebra/Vector.hpp"
+#include "tools/Logger.hpp"
 
 TrustRegion::TrustRegion(ConstraintRelaxationStrategy& constraint_relaxation_strategy, double initial_radius, int max_iterations) :
       GlobalizationMechanism(constraint_relaxation_strategy, max_iterations), radius(initial_radius) {

@@ -2,8 +2,8 @@
 #define LPSOLVER_H
 
 #include <vector>
-#include "Direction.hpp"
-#include "SparseVector.hpp"
+#include "ingredients/subproblem/Direction.hpp"
+#include "linear_algebra/SparseVector.hpp"
 
 /*! \class LPSolver
  * \brief LP solver

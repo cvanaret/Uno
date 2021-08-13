@@ -1,8 +1,7 @@
 #include <cmath>
 #include <cassert>
 #include "BacktrackingLineSearch.hpp"
-#include "Logger.hpp"
-#include "InteriorPoint.hpp"
+#include "tools/Logger.hpp"
 
 BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, int max_iterations, double backtracking_ratio):
    GlobalizationMechanism(constraint_relaxation_strategy, max_iterations), backtracking_ratio(backtracking_ratio) {

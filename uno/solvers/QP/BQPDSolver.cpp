@@ -1,8 +1,8 @@
 #include <cmath>
 #include <cassert>
 #include "BQPDSolver.hpp"
-#include "Logger.hpp"
-#include "Vector.hpp"
+#include "tools/Logger.hpp"
+#include "linear_algebra/Vector.hpp"
 
 #define BIG 1e30
 

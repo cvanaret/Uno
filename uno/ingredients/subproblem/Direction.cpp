@@ -1,6 +1,6 @@
 #include "Direction.hpp"
-#include "Logger.hpp"
-#include "Vector.hpp"
+#include "tools/Logger.hpp"
+#include "linear_algebra/Vector.hpp"
 
 Direction::Direction(size_t number_variables, size_t number_constraints):
    x(number_variables), multipliers(number_variables, number_constraints), constraint_partition(number_constraints) {

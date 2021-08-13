@@ -5,16 +5,14 @@
 #include <cassert>
 #include <vector>
 #include <map>
-#include "AMPLModel.hpp"
-#include "SubproblemFactory.hpp"
-#include "FeasibilityRestoration.hpp"
-#include "GlobalizationStrategyFactory.hpp"
-#include "GlobalizationMechanismFactory.hpp"
-#include <ConstraintRelaxationStrategyFactory.hpp>
-#include "FeasibilityRestoration.hpp"
+#include "interfaces/AMPL/AMPLModel.hpp"
+#include "ingredients/subproblem/SubproblemFactory.hpp"
+#include "ingredients/strategy/GlobalizationStrategyFactory.hpp"
+#include "ingredients/mechanism/GlobalizationMechanismFactory.hpp"
+#include "ingredients/constraint_relaxation/ConstraintRelaxationStrategyFactory.hpp"
 #include "Uno.hpp"
-#include "Logger.hpp"
-#include "Options.hpp"
+#include "tools/Logger.hpp"
+#include "tools/Options.hpp"
 
 // new overload to track heap allocations
 size_t total_allocations = 0;

@@ -1,12 +1,9 @@
 #ifndef GLOBALIZATIONMECHANISMFACTORY_H
 #define GLOBALIZATIONMECHANISMFACTORY_H
 
-#include <iostream>
-#include <memory>
-#include <map>
 #include "GlobalizationMechanism.hpp"
-#include "GlobalizationStrategy.hpp"
-#include "Options.hpp"
+#include "ingredients/constraint_relaxation/ConstraintRelaxationStrategy.hpp"
+#include "tools/Options.hpp"
 
 class GlobalizationMechanismFactory {
 public:

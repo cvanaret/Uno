@@ -4,7 +4,7 @@
 #include <exception>
 #include <set>
 #include "Subproblem.hpp"
-#include "LinearSolver.hpp"
+#include "solvers/linear/LinearSolver.hpp"
 #include "HessianEvaluation.hpp"
 
 struct InteriorPointParameters {

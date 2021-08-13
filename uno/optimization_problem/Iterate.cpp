@@ -1,7 +1,7 @@
 #include <limits>
 #include "Iterate.hpp"
-#include "Vector.hpp"
-#include "Logger.hpp"
+#include "linear_algebra/Vector.hpp"
+#include "tools/Logger.hpp"
 
 int Iterate::number_eval_objective = 0;
 int Iterate::number_eval_constraints = 0;

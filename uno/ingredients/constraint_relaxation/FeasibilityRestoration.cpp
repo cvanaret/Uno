@@ -1,7 +1,7 @@
 #include <cassert>
 #include "FeasibilityRestoration.hpp"
 #include "GlobalizationStrategyFactory.hpp"
-#include "SubproblemFactory.hpp"
+#include "ingredients/subproblem/SubproblemFactory.hpp"
 
 FeasibilityRestoration::FeasibilityRestoration(const Problem& problem, const Options& options, bool use_trust_region) :
    ConstraintRelaxationStrategy(SubproblemFactory::create(problem, problem.number_variables, options.at("subproblem"),

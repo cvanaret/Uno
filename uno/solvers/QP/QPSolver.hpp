@@ -3,7 +3,6 @@
 
 #include <vector>
 #include "LPSolver.hpp"
-#include "Direction.hpp"
 
 /*! \class QPSolver
  * \brief QP solver

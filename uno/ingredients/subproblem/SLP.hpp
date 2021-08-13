@@ -2,7 +2,7 @@
 #define SLP_H
 
 #include "Subproblem.hpp"
-#include "LPSolver.hpp"
+#include "solvers/QP/LPSolver.hpp"
 
 class SLP : public Subproblem {
 public:

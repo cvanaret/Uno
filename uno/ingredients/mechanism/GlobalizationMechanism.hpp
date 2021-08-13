@@ -1,9 +1,9 @@
 #ifndef GLOBALIZATIONMECHANISM_H
 #define GLOBALIZATIONMECHANISM_H
 
-#include "Problem.hpp"
-#include "GlobalizationStrategy.hpp"
-#include "Statistics.hpp"
+#include "ingredients/constraint_relaxation/ConstraintRelaxationStrategy.hpp"
+#include "optimization_problem/Problem.hpp"
+#include "tools/Statistics.hpp"
 
 /*! \class GlobalizationMechanism
  * \brief Step control strategy

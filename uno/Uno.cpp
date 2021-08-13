@@ -1,10 +1,10 @@
 #include <cmath>
 #include "Uno.hpp"
-#include "Iterate.hpp"
-#include "Logger.hpp"
-#include "Statistics.hpp"
-#include "Timer.hpp"
-#include "Preprocessing.hpp"
+#include "optimization_problem/Iterate.hpp"
+#include "optimization_problem/Preprocessing.hpp"
+#include "tools/Logger.hpp"
+#include "tools/Statistics.hpp"
+#include "tools/Timer.hpp"
 
 Uno::Uno(GlobalizationMechanism& globalization_mechanism, double tolerance, int max_iterations) : globalization_mechanism(
       globalization_mechanism), tolerance(tolerance), max_iterations(max_iterations) {

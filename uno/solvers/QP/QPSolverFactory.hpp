@@ -3,7 +3,6 @@
 
 #include <memory>
 #include "QPSolver.hpp"
-#include "Problem.hpp"
 
 #ifdef HAS_BQPD
 #include "BQPDSolver.hpp"

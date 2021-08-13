@@ -1,5 +1,5 @@
 #include "l1MeritFunction.hpp"
-#include "Logger.hpp"
+#include "tools/Logger.hpp"
 
 /*
  * Infeasibility detection and SQP methods for nonlinear optimization 

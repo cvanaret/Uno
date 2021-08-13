@@ -1,9 +1,9 @@
 #ifndef L1RELAXATION_H
 #define L1RELAXATION_H
 
-#include "GlobalizationStrategy.hpp"
 #include "ConstraintRelaxationStrategy.hpp"
-#include "Options.hpp"
+#include "ingredients/strategy/GlobalizationStrategy.hpp"
+#include "tools/Options.hpp"
 
 struct RelaxationParameters {
    double tau;

@@ -3,8 +3,6 @@
 
 #include <vector>
 #include "GlobalizationStrategy.hpp"
-#include "ConstraintRelaxationStrategy.hpp"
-#include "Constraint.hpp"
 
 class l1MeritFunction : public GlobalizationStrategy {
 public:

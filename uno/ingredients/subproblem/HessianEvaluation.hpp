@@ -5,10 +5,9 @@
 #include <map>
 #include <memory>
 #include <vector>
-#include "Problem.hpp"
-#include "Iterate.hpp"
-#include "LinearSolver.hpp"
-#include "LinearSolverFactory.hpp"
+#include "optimization_problem/Problem.hpp"
+#include "solvers/linear/LinearSolver.hpp"
+#include "solvers/linear/LinearSolverFactory.hpp"
 
 // virtual (abstract) class
 template <class SparseSymmetricMatrix>

@@ -4,8 +4,8 @@
 #include <cassert>
 #include "Subproblem.hpp"
 #include "HessianEvaluation.hpp"
-#include "QPSolver.hpp"
-#include "QPSolverFactory.hpp"
+#include "solvers/QP/QPSolver.hpp"
+#include "solvers/QP/QPSolverFactory.hpp"
 
 template<class SparseSymmetricMatrix>
 class SQP : public Subproblem {

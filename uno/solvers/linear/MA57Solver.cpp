@@ -1,7 +1,7 @@
 #include <iostream>
-#include "MA57Solver.hpp"
-#include "Vector.hpp"
 #include <cassert>
+#include "MA57Solver.hpp"
+#include "linear_algebra/Vector.hpp"
 
 extern "C" {
 // MA57
