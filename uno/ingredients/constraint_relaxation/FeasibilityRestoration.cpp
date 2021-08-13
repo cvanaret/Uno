@@ -1,6 +1,6 @@
 #include <cassert>
 #include "FeasibilityRestoration.hpp"
-#include "GlobalizationStrategyFactory.hpp"
+#include "ingredients/strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 
 FeasibilityRestoration::FeasibilityRestoration(const Problem& problem, const Options& options, bool use_trust_region) :

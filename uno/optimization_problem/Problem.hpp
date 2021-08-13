@@ -6,9 +6,9 @@
 #include <map>
 #include <cassert>
 #include "Constraint.hpp"
-#include "CSCSymmetricMatrix.hpp"
-#include "SparseVector.hpp"
-#include "Vector.hpp"
+#include "linear_algebra/CSCSymmetricMatrix.hpp"
+#include "linear_algebra/SparseVector.hpp"
+#include "linear_algebra/Vector.hpp"
 
 enum FunctionType {
    LINEAR = 0, /*!< Linear function */

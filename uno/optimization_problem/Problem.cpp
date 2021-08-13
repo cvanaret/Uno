@@ -3,7 +3,7 @@
 #include <cassert>
 #include <utility>
 #include "Problem.hpp"
-#include "Vector.hpp"
+#include "linear_algebra/Vector.hpp"
 
 std::map<FunctionType, std::string> Problem::type_to_string = {
       {LINEAR, "linear"},
