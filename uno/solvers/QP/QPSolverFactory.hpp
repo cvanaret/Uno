@@ -9,7 +9,7 @@
 #include "BQPDSolver.hpp"
 #endif
 
-template<class MatrixType>
+template<class SparseSymmetricMatrix>
 class QPSolverFactory;
 
 // specialize the template factory with concrete matrix types (CSC and COO)
@@ -23,7 +23,7 @@ public:
          return std::make_unique<BQPDSolver>(number_variables, number_constraints, maximum_number_nonzeros, quadratic_programming);
       }
 #endif
-      throw std::invalid_argument("QPSolver name " + QP_solver_name + " does not exist.");
+      throw std::invalid_argument("CSC QP solver " + QP_solver_name + " does not exist.");
    }
 };
 
@@ -32,7 +32,7 @@ class QPSolverFactory<COOSymmetricMatrix> {
 public:
    static std::unique_ptr<QPSolver<COOSymmetricMatrix> > create(const std::string& QP_solver_name, size_t /*number_variables*/, size_t
    /*number_constraints*/, size_t /*maximum_number_nonzeros*/, bool /*quadratic_programming*/) {
-      throw std::invalid_argument("QPSolver name " + QP_solver_name + " does not exist.");
+      throw std::invalid_argument("COO QP solver " + QP_solver_name + " does not exist.");
    }
 };
 

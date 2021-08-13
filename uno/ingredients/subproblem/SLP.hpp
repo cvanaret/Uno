@@ -12,7 +12,7 @@ public:
    void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
    void set_initial_point(const std::vector<double>& point) override;
 
-   Direction compute_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
+   Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
    double compute_predicted_reduction(const Direction& direction, double step_length) const override;
    int get_hessian_evaluation_count() const override;
 

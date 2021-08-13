@@ -9,6 +9,12 @@
 #include "Problem.hpp"
 #include "Iterate.hpp"
 
+struct ElasticVariables {
+   std::map<size_t, size_t> positive;
+   std::map<size_t, size_t> negative;
+   [[nodiscard]] size_t size() const { return this->positive.size() + this->negative.size(); }
+};
+
 class ConstraintRelaxationStrategy {
 public:
    explicit ConstraintRelaxationStrategy(std::unique_ptr<Subproblem> subproblem);
@@ -18,8 +24,8 @@ public:
 
    virtual Direction compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) = 0;
    virtual Direction solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Direction& direction) = 0;
+
    Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate);
-   void update_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
 
    virtual bool is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate, const Direction&
    direction, double step_length) = 0;
@@ -31,6 +37,10 @@ public:
 
 protected:
    std::unique_ptr<Subproblem> subproblem;
+
+   static void generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables);
+   void set_elastic_bounds_in_subproblem(const Problem& problem, size_t number_elastic_variables) const;
+   void add_elastic_variables_to_subproblem(const ElasticVariables& elastic_variables);
 };
 
 #endif //CONSTRAINTRELAXATIONSTRATEGY_H
