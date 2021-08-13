@@ -8,15 +8,11 @@ project(UNO VERSION 1.0
 			DESCRIPTION "Unifying Framework for Optimization" 
             LANGUAGES CXX C Fortran)
 
-# set C++17 and enable languages
+# set C++17 and enable other languages
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_BUILD_TYPE Release)
 enable_language(CXX C Fortran)
 
-#if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
-#endif()
-
-#set(CMAKE_Fortran_FLAGS "-cpp")
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wunused-value -Wno-conversion")
 set(CMAKE_CXX_FLAGS_DEBUG "-pg")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
@@ -46,7 +42,7 @@ set(SRC_FILES
     uno/ingredients/subproblem/Subproblem.cpp
     uno/ingredients/subproblem/SubproblemFactory.cpp
     uno/ingredients/subproblem/Direction.cpp
-    uno/ingredients/subproblem/SLP.cpp
+    uno/ingredients/subproblem/SLP.hpp
     uno/ingredients/subproblem/SQP.hpp
     uno/ingredients/subproblem/InteriorPoint.hpp
     uno/ingredients/subproblem/HessianEvaluation.hpp
