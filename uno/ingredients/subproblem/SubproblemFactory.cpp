@@ -16,11 +16,15 @@ std::unique_ptr <Subproblem> SubproblemFactory::create(const Problem& problem, s
       else {
          assert(false && "SubproblemFactory::create: unknown QP solver");
       }
-
    }
    else if (subproblem_type == "SLP") {
-      const std::string& QP_solver_name = options.at("QP_solver");
-      return std::make_unique<SLP>(number_variables, problem.number_constraints, QP_solver_name);
+      const std::string& LP_solver_name = options.at("QP_solver");
+      if (LP_solver_name == "BQPD") {
+         return std::make_unique<SLP<BQPDSolver> >(number_variables, problem.number_constraints);
+      }
+      else {
+         assert(false && "SubproblemFactory::create: unknown LP solver");
+      }
    }
       /* interior point method */
    else if (subproblem_type == "IPM") {
