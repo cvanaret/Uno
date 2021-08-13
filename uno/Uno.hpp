@@ -1,8 +1,8 @@
 #ifndef UNO_H
 #define UNO_H
 
-#include "Problem.hpp"
-#include "GlobalizationMechanism.hpp"
+#include "optimization_problem/Problem.hpp"
+#include "ingredients/mechanism/GlobalizationMechanism.hpp"
 
 struct Result {
    TerminationStatus status;

@@ -22,23 +22,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-pg")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 # directories
-set(DIRECTORIES
-    uno
-    uno/ingredients
-    uno/ingredients/constraint_relaxation
-    uno/ingredients/mechanism
-    uno/ingredients/strategy
-    uno/ingredients/subproblem
-    uno/interfaces
-    uno/interfaces/AMPL
-    uno/linear_algebra
-    uno/logger
-    uno/optimization_problem
-    uno/solvers
-    uno/solvers/linear
-    uno/solvers/QP
-    uno/solvers/NLP
-    uno/tools)
+set(DIRECTORIES uno)
 
 # source files
 set(SRC_FILES
