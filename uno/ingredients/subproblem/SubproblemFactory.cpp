@@ -18,7 +18,7 @@ std::unique_ptr <Subproblem> SubproblemFactory::create(const Problem& problem, s
       }
    }
    else if (subproblem_type == "SLP") {
-      const std::string& LP_solver_name = options.at("QP_solver");
+      const std::string& LP_solver_name = options.at("LP_solver");
       if (LP_solver_name == "BQPD") {
          return std::make_unique<SLP<BQPDSolver> >(number_variables, problem.number_constraints);
       }
