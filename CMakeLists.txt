@@ -121,17 +121,12 @@ endforeach(library_name)
 #######
 add_library(uno STATIC ${SRC_FILES})
 target_include_directories(uno PUBLIC ${DIRECTORIES})
-# copy the configuration file
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/uno.cfg DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
-if(MSVC)
-  target_compile_options(uno PRIVATE /W4 /WX)
-else()
-  target_compile_options(uno PRIVATE -Wall -pedantic)
-endif()
 
 # link the libraries
 target_link_libraries(uno PUBLIC ${LIBS})
+
+# copy the configuration file
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/uno.cfg DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 ########
 # main #

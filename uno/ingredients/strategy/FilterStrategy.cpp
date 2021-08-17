@@ -4,12 +4,12 @@
 
 FilterStrategy::FilterStrategy(FilterStrategyParameters& strategy_parameters, const Options& options) :
       GlobalizationStrategy(), filter(FilterFactory::create(options)), initial_filter_upper_bound(INFINITY),
-      parameters_(strategy_parameters) {
+      parameters(strategy_parameters) {
 }
 
 void FilterStrategy::initialize(Statistics& /*statistics*/, const Iterate& first_iterate) {
    /* set the filter upper bound */
-   double upper_bound = std::max(this->parameters_.ubd, this->parameters_.fact * first_iterate.progress.infeasibility);
+   double upper_bound = std::max(this->parameters.ubd, this->parameters.fact * first_iterate.progress.infeasibility);
    this->filter->upper_bound = upper_bound;
    this->initial_filter_upper_bound = upper_bound;
 }
@@ -46,20 +46,21 @@ bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, ProgressMeasur
          .objective);
          DEBUG << "Actual reduction: " << actual_reduction << "\n";
 
-         /* reverse switching condition: predicted reduction is not promising */
-         if (predicted_reduction < this->parameters_.Delta * std::pow(current_progress.infeasibility, 2)) {
+         /* switching condition violated: predicted reduction is not promising */
+         if (!FilterStrategy::switching_condition(predicted_reduction, current_progress.infeasibility, this->parameters.Delta)) {
             filter->add(current_progress.infeasibility, current_progress.objective);
-            DEBUG << "Trial iterate was accepted by switching condition\n";
+            DEBUG << "Trial iterate was accepted by violating switching condition\n";
             DEBUG << "Current iterate was added to the filter\n";
             accept = true;
          }
          /* Armijo sufficient decrease condition: predicted_reduction should be positive */
-         else if (actual_reduction >= this->parameters_.Sigma * std::max(0., predicted_reduction - 1e-9)) {
-            DEBUG << "Trial iterate was accepted by Armijo condition\n";
+         else if (FilterStrategy::armijo_condition(predicted_reduction, actual_reduction, this->parameters.Sigma)) {
+            DEBUG << "Trial iterate was accepted by satisfying Armijo condition\n";
             accept = true;
          }
-         else {
-            DEBUG << "Armijo condition not satisfied: " << actual_reduction << " < " << this->parameters_.Sigma * std::max(0., predicted_reduction
+         else { // switching condition holds, but not Armijo condition
+            filter->add(current_progress.infeasibility, current_progress.objective);
+            DEBUG << "Armijo condition not satisfied: " << actual_reduction << " < " << this->parameters.Sigma * std::max(0., predicted_reduction
             - 1e-9) << "\n";
          }
       }
@@ -71,4 +72,12 @@ bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, ProgressMeasur
       DEBUG << "Not filter acceptable\n";
    }
    return accept;
+}
+
+bool FilterStrategy::switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) {
+   return predicted_reduction > switching_fraction * std::pow(current_infeasibility, 2);
+}
+
+bool FilterStrategy::armijo_condition(double predicted_reduction, double actual_reduction, double decrease_fraction) {
+   return actual_reduction >= decrease_fraction * std::max(0., predicted_reduction - 1e-9);
 }

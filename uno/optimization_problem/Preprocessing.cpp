@@ -23,9 +23,12 @@ void Preprocessing::apply(const Problem& problem, std::vector<double>& x, Multip
          BQPDSolver solver(problem.number_variables, number_constraints, problem.number_variables, true);
 
          CSCSymmetricMatrix hessian = CSCSymmetricMatrix::identity(problem.number_variables);
-         SparseVector linear_objective; // empty
+         SparseVector linear_objective(0); // empty
          // constraints Jacobian
          std::vector<SparseVector> constraints_jacobian(number_constraints);
+         for (size_t j = 0; j < problem.number_constraints; j++) {
+            constraints_jacobian[j].reserve(problem.number_variables);
+         }
          for (const auto[j, linear_constraint_index]: problem.linear_constraints) {
             problem.constraint_gradient(x, j, constraints_jacobian[linear_constraint_index]);
          }

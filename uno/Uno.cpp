@@ -48,6 +48,7 @@ Result Uno::solve(const Problem& problem, std::vector<double>& x, Multipliers& m
          // compute the status of the new iterate
          termination_status = this->check_termination(problem, new_iterate, direction_norm, objective_multiplier);
          current_iterate = std::move(new_iterate);
+
       }
    }
    catch (std::invalid_argument& exception) {

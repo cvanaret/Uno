@@ -26,9 +26,6 @@ protected:
    ConstraintRelaxationStrategy& relaxation_strategy;
    int max_iterations; /*!< Maximum number of iterations */
    int number_iterations{0}; /*!< Current number of iterations */
-   // preallocated vector to receive the trial primal variables
-   std::vector<double> trial_primals_;
-   std::vector<double> trial_duals_;
 
    Iterate assemble_trial_iterate(const Iterate& current_iterate, Direction& direction, double step_length);
    static void print_warning(const char* message);

@@ -1,6 +1,7 @@
 #include "ConstraintRelaxationStrategy.hpp"
 
-ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(std::unique_ptr<Subproblem> subproblem): subproblem(std::move(subproblem)) {
+ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(std::unique_ptr<Subproblem> subproblem): subproblem(std::move(subproblem)),
+number_variables(this->subproblem->number_variables), number_constraints(this->subproblem->number_constraints) {
 }
 
 void ConstraintRelaxationStrategy::generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables) {
@@ -43,6 +44,14 @@ Direction ConstraintRelaxationStrategy::compute_second_order_correction(const Pr
    return this->subproblem->compute_second_order_correction(problem, trial_iterate);
 }
 
+int ConstraintRelaxationStrategy::get_number_variables() const {
+   return this->number_variables;
+}
+
+int ConstraintRelaxationStrategy::get_number_constraints() const {
+   return this->number_constraints;
+}
+
 int ConstraintRelaxationStrategy::get_hessian_evaluation_count() const {
    return this->subproblem->get_hessian_evaluation_count();
 }
@@ -50,6 +59,7 @@ int ConstraintRelaxationStrategy::get_hessian_evaluation_count() const {
 int ConstraintRelaxationStrategy::get_number_subproblems_solved() const {
    return this->subproblem->number_subproblems_solved;
 }
+
 void ConstraintRelaxationStrategy::register_accepted_iterate(Iterate& iterate) {
    this->subproblem->register_accepted_iterate(iterate);
 }

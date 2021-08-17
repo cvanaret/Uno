@@ -7,20 +7,20 @@ Subproblem::Subproblem(size_t number_variables, size_t number_constraints) :
       variables_bounds(number_variables),
       constraints_multipliers(number_constraints),
       // objective_gradient is a SparseVector
+      objective_gradient(number_variables),
       // constraints_jacobian is a vector of SparseVectors
       constraints_jacobian(number_constraints),
       constraints_bounds(number_constraints),
       number_subproblems_solved(0), subproblem_definition_changed(false) {
-}
-
-void Subproblem::evaluate_constraints(const Problem& problem, Iterate& iterate) const {
-   iterate.compute_constraints(problem);
+   for (size_t j = 0; j < this->number_constraints; j++) {
+      this->constraints_jacobian[j].reserve(this->number_variables);
+   }
 }
 
 Iterate Subproblem::generate_initial_iterate(Statistics& /*statistics*/, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
    Iterate first_iterate(x, multipliers);
    /* compute the optimality and feasibility measures of the initial point */
-   this->evaluate_constraints(problem, first_iterate);
+   first_iterate.compute_constraints(problem);
    this->compute_progress_measures(problem, first_iterate);
    return first_iterate;
 }
@@ -108,7 +108,7 @@ double Subproblem::compute_first_order_error(const Problem& problem, Iterate& it
 }
 
 /* complementary slackness error. Use abs/1e-8 to safeguard */
-double Subproblem::compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) {
+double Subproblem::compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const {
    double error = 0.;
    /* bound constraints */
    for (size_t i = 0; i < problem.number_variables; i++) {
@@ -141,17 +141,13 @@ double Subproblem::compute_complementarity_error(const Problem& problem, Iterate
    return error;
 }
 
-double Subproblem::compute_constraint_violation(const Problem& problem, const Iterate& iterate) const {
-   return problem.compute_constraint_violation(iterate.constraints, L1_NORM);
-}
-
 void Subproblem::compute_errors(const Problem& problem, Iterate& iterate, double objective_multiplier) const {
    iterate.compute_constraints(problem);
-   iterate.errors.constraints = this->compute_constraint_violation(problem, iterate);
+   iterate.errors.constraints = problem.compute_constraint_violation(iterate.constraints, L1_NORM);
    // compute the KKT error only if the objective multiplier is positive
    iterate.errors.KKT = Subproblem::compute_first_order_error(problem, iterate, 0. < objective_multiplier ? objective_multiplier : 1.);
    iterate.errors.FJ = Subproblem::compute_first_order_error(problem, iterate, 0.);
-   iterate.errors.complementarity = Subproblem::compute_complementarity_error(problem, iterate, iterate.multipliers);
+   iterate.errors.complementarity = this->compute_complementarity_error(problem, iterate, iterate.multipliers);
 }
 
 Direction Subproblem::compute_second_order_correction(const Problem& /*problem*/, Iterate& /*trial_iterate*/) {

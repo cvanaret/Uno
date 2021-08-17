@@ -28,22 +28,22 @@ private:
    size_t n_, m_;
    size_t maximum_number_nonzeros_;
    std::vector<double> lb_, ub_; // lower and upper bounds of variables and constraints
-   short use_fortran_;
+   const short fortran_shift{1};
 
    std::vector<double> jacobian_;
    std::vector<int> jacobian_sparsity_;
-   int kmax_, mlp_, mxwk0_, mxiwk0_;
-   std::vector<int> info_;
+   int kmax_, mlp_{1000}, mxwk0_{2000000}, mxiwk0_{500000};
+   std::array<int, 100> info_{};
    std::vector<double> alp_;
    std::vector<int> lp_, ls_;
    std::vector<double> w_, gradient_solution_, residuals_, e_;
    int size_hessian_sparsity_, size_hessian_workspace_, size_hessian_sparsity_workspace_;
    std::vector<double> hessian_;
    std::vector<int> hessian_sparsity_;
-   int k_;
-   BQPDMode mode_;
-   int iprint_, nout_;
-   double fmin_, f_solution_;
+   int k_{0};
+   BQPDMode mode_{COLD_START};
+   int iprint_{0}, nout_{6};
+   double fmin_{-1e20}, f_solution_;
    int peq_solution_, ifail_;
    std::vector<double> solution;
 

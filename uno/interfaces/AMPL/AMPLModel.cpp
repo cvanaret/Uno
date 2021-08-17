@@ -6,12 +6,6 @@
 /* TODO: avoid using implicit AMPL macros */
 
 ASL* generate_asl(std::string file_name) {
-//    SufDecl suffixes[] = {
-//        /* suffix "uncertain" for variables or constraints */
-//        {const_cast<char*> (UNCERTAIN_SUFFIX), 0, ASL_Sufkind_var},
-//        {const_cast<char*> (UNCERTAINTY_SET_SUFFIX), 0, ASL_Sufkind_con}
-//    };
-
    ASL* asl = ASL_alloc(ASL_read_pfgh);
    FILE* nl = jac0dim_ASL(asl, const_cast<char*> (file_name.data()), (fint) file_name.size());
    /* indices start at 0 */
@@ -28,7 +22,6 @@ ASL* generate_asl(std::string file_name) {
    asl->i.pi0_ = (double*) M1zapalloc(sizeof(double) * n_con);
 
    /* read the file_name.nl file */
-//    suf_declare_ASL(asl, suffixes, sizeof (suffixes) / sizeof (SufDecl));
    pfgh_read_ASL(asl, nl, ASL_findgroups);
 
    return asl;
@@ -38,10 +31,8 @@ ASL* generate_asl(std::string file_name) {
 AMPLModel::AMPLModel(std::string file_name) : AMPLModel(file_name, generate_asl(file_name)) {
 }
 
-AMPLModel::AMPLModel(std::string file_name, ASL* asl) : Problem(file_name, asl->i.n_var_, asl->i.n_con_,
-      NONLINEAR), // asl->i.nlc_ + asl->i.nlo_ > 0),
-//variable_uncertain(asl->i.n_var_),
-//constraint_is_uncertainty_set(asl->i.n_con_),
+AMPLModel::AMPLModel(std::string file_name, ASL* asl) : Problem(file_name, asl->i.n_var_, asl->i.n_con_, NONLINEAR),
+// asl->i.nlc_ + asl->i.nlo_ > 0),
       asl_(asl), ampl_tmp_gradient_(asl->i.n_var_) {
    this->asl_->i.congrd_mode = 0;
 
@@ -66,26 +57,15 @@ AMPLModel::~AMPLModel() {
    ASL_free((ASL * *) & this->asl_);
 }
 
-bool is_discrete(ASL* asl, int index) {
-   return ((asl->i.nlvb_ - asl->i.nlvbi_ <= index && index < asl->i.nlvb_) ||
-           (asl->i.nlvc_ - asl->i.nlvci_ <= index && index < asl->i.nlvc_) ||
-           (asl->i.nlvo_ - asl->i.nlvoi_ <= index && index < asl->i.nlvo_) ||
-           (asl->i.n_var_ - asl->i.niv_ - asl->i.nbv_ <= index && index < asl->i.n_var_));
-}
-
 void AMPLModel::generate_variables_() {
-//    SufDesc* uncertain_suffixes = suf_get_ASL(this->asl_, UNCERTAIN_SUFFIX, ASL_Sufkind_var);
-
    for (size_t i = 0; i < this->number_variables; i++) {
       this->variables_names[i] = var_name_ASL(this->asl_, i);
-      //this->variable_discrete[i] = is_discrete(this->asl_, i);
-      double lb = (this->asl_->i.LUv_ != NULL) ? this->asl_->i.LUv_[2 * i] : -INFINITY;
-      double ub = (this->asl_->i.LUv_ != NULL) ? this->asl_->i.LUv_[2 * i + 1] : INFINITY;
+      double lb = (this->asl_->i.LUv_ != nullptr) ? this->asl_->i.LUv_[2 * i] : -INFINITY;
+      double ub = (this->asl_->i.LUv_ != nullptr) ? this->asl_->i.LUv_[2 * i + 1] : INFINITY;
       if (lb == ub) {
          WARNING << "Variable x" << i << " has identical bounds\n";
       }
       this->variables_bounds[i] = {lb, ub};
-      //this->variable_uncertain[i] = false; //(uncertain_suffixes->u.i != NULL && uncertain_suffixes->u.i[i] == 1);
    }
    this->determine_bounds_types(this->variables_bounds, this->variable_status);
 }
@@ -110,7 +90,7 @@ void AMPLModel::evaluate_objective_gradient(const std::vector<double>& x, Sparse
 
    /* partial derivatives in same order as variables in this->asl_->i.Ograd_[0] */
    ograd* ampl_variables_tmp = this->asl_->i.Ograd_[0];
-   while (ampl_variables_tmp != NULL) {
+   while (ampl_variables_tmp != nullptr) {
       double partial_derivative = this->ampl_tmp_gradient_[ampl_variables_tmp->varno];
       /* if maximization, take the opposite */
       if (this->objective_sign < 0.) {
@@ -158,7 +138,7 @@ void AMPLModel::constraint_gradient(const std::vector<double>& x, int j, SparseV
    /* partial derivatives in ampl_gradient in same order as variables in this->asl_->i.Cgrad_[j] */
    cgrad* ampl_variables_tmp = this->asl_->i.Cgrad_[j];
    int cpt = 0;
-   while (ampl_variables_tmp != NULL) {
+   while (ampl_variables_tmp != nullptr) {
       /* keep the gradient sparse */
       if (this->ampl_tmp_gradient_[cpt] != 0.) {
          gradient[ampl_variables_tmp->varno] = this->ampl_tmp_gradient_[cpt];
@@ -166,7 +146,6 @@ void AMPLModel::constraint_gradient(const std::vector<double>& x, int j, SparseV
       ampl_variables_tmp = ampl_variables_tmp->next;
       cpt++;
    }
-
    this->asl_->i.congrd_mode = congrd_mode_backup;
 }
 
@@ -177,14 +156,11 @@ void AMPLModel::constraints_jacobian(const std::vector<double>& x, std::vector<S
 }
 
 void AMPLModel::generate_constraints_() {
-   //SufDesc* uncertain_suffixes = suf_get_ASL(this->asl_, UNCERTAINTY_SET_SUFFIX, ASL_Sufkind_con);
-
    for (size_t j = 0; j < this->number_constraints; j++) {
       this->constraint_name[j] = con_name_ASL(this->asl_, j);
-      double lb = (this->asl_->i.LUrhs_ != NULL) ? this->asl_->i.LUrhs_[2 * j] : -INFINITY;
-      double ub = (this->asl_->i.LUrhs_ != NULL) ? this->asl_->i.LUrhs_[2 * j + 1] : INFINITY;
+      double lb = (this->asl_->i.LUrhs_ != nullptr) ? this->asl_->i.LUrhs_[2 * j] : -INFINITY;
+      double ub = (this->asl_->i.LUrhs_ != nullptr) ? this->asl_->i.LUrhs_[2 * j + 1] : INFINITY;
       this->constraint_bounds[j] = {lb, ub};
-      //this->constraint_is_uncertainty_set[j] = false; //(uncertain_suffixes->u.i != NULL && uncertain_suffixes->u.i[j] == 1);
    }
    this->determine_bounds_types(this->constraint_bounds, this->constraint_status);
    this->determine_constraints();
@@ -194,7 +170,7 @@ void AMPLModel::set_function_types_(std::string file_name) {
    /* allocate a temporary ASL to read Hessian sparsity pattern */
    ASL* asl = ASL_alloc(ASL_read_fg);
    // char* stub = getstops(file_name, option_info);
-   //if (file_name == NULL) {
+   //if (file_name == nullptr) {
    //	usage_ASL(option_info, 1);
    //}
 
@@ -257,9 +233,10 @@ void AMPLModel::set_function_types_(std::string file_name) {
 void AMPLModel::initialize_lagrangian_hessian_() {
    /* compute the maximum number of nonzero elements, provided that all multipliers are non-zero */
    /* fint (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri); */
-   int objective_number = 0;
-   int upper_triangular = 1;
-   this->hessian_maximum_number_nonzeros = (*(this->asl_)->p.Sphset)(this->asl_, NULL, objective_number, 1, 1, upper_triangular);
+   const int objective_number = -1;
+   const int upper_triangular = 1;
+   this->hessian_maximum_number_nonzeros = (*(this->asl_)->p.Sphset)(this->asl_, nullptr, objective_number, 1, 1, upper_triangular);
+   this->ampl_tmp_hessian.reserve(this->hessian_maximum_number_nonzeros);
 
    // use Lagrangian scale: in AMPL, the Lagrangian is f + lambda.g, while Uno uses f - lambda.g
    int nerror;
@@ -275,16 +252,11 @@ bool are_all_zeros(const std::vector<double>& multipliers) {
    return true;
 }
 
-size_t AMPLModel::compute_hessian_number_nonzeros(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers) const {
-   /* register the vector of variables */
-   (*(this->asl_)->p.Xknown)(this->asl_, (double*) x.data(), 0);
-
-   /* set the multiplier for the objective function */
-   int objective_number = -1;
-
+size_t AMPLModel::compute_hessian_number_nonzeros(double objective_multiplier, const std::vector<double>& multipliers) const {
    /* compute the sparsity */
-   bool all_zeros_multipliers = are_all_zeros(multipliers);
-   int upper_triangular = 1;
+   const int objective_number = -1;
+   const int upper_triangular = 1;
+   const bool all_zeros_multipliers = are_all_zeros(multipliers);
    size_t number_non_zeros = (*(this->asl_)->p.Sphset)(this->asl_, nullptr, objective_number, (objective_multiplier > 0.),
          !all_zeros_multipliers, upper_triangular);
    return number_non_zeros;
@@ -304,23 +276,39 @@ bool in_increasing_order(const int* array, size_t length) {
 
 void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
       CSCSymmetricMatrix& hessian) const {
-   size_t number_non_zeros = this->compute_hessian_number_nonzeros(x, objective_multiplier, multipliers);
+   // register the vector of variables
+   (*(this->asl_)->p.Xknown)(this->asl_, (double*) x.data(), 0);
+
+   // compute the number of nonzeros
+   const size_t number_non_zeros = this->fixed_hessian_sparsity ? this->hessian_maximum_number_nonzeros :
+         this->compute_hessian_number_nonzeros(objective_multiplier, multipliers);
    assert(hessian.capacity >= number_non_zeros);
 
-   /* evaluate the Hessian */
+   // evaluate the Hessian: store the matrix in a preallocated array this->ampl_tmp_hessian
    clear(hessian.matrix);
-   int objective_number = -1;
-   double* objective_multiplier_pointer = (objective_multiplier != 0.) ? &objective_multiplier : nullptr;
-   bool all_zeros_multipliers = are_all_zeros(multipliers);
-   (*(this->asl_)->p.Sphes)(this->asl_, 0, hessian.matrix.data(), objective_number, objective_multiplier_pointer,
-         all_zeros_multipliers ? nullptr : (double*) multipliers.data());
+   const int objective_number = -1;
+   if (this->fixed_hessian_sparsity) {
+      (*(this->asl_)->p.Sphes)(this->asl_, 0, (double*) this->ampl_tmp_hessian.data(), objective_number, &objective_multiplier,
+            (double*) multipliers.data());
+   }
+   else {
+      double* objective_multiplier_pointer = (objective_multiplier != 0.) ? &objective_multiplier : nullptr;
+      bool all_zeros_multipliers = are_all_zeros(multipliers);
+      (*(this->asl_)->p.Sphes)(this->asl_, 0, (double*) this->ampl_tmp_hessian.data(), objective_number, objective_multiplier_pointer,
+            all_zeros_multipliers ? nullptr : (double*) multipliers.data());
+   }
+
+   // copy the nonzeros in the Hessian
+   for (size_t k = 0; k < number_non_zeros; k++) {
+      hessian.matrix[k] = this->ampl_tmp_hessian[k];
+   }
    hessian.number_nonzeros = number_non_zeros;
 
    // generate the sparsity pattern in the right sparse format
    const int* ampl_column_start = this->asl_->i.sputinfo_->hcolstarts;
    const int* ampl_row_index = this->asl_->i.sputinfo_->hrownos;
    // check that the column pointers are sorted in increasing order
-   assert(in_increasing_order(ampl_column_start, this->number_variables + 1) && "the array of column starts is not ordered");
+   assert(in_increasing_order(ampl_column_start, this->number_variables + 1) && "AMPLModel::lagrangian_hessian: column starts are not ordered");
 
    for (size_t k = 0; k < this->number_variables + 1; k++) {
       hessian.column_start[k] = ampl_column_start[k];
@@ -335,16 +323,27 @@ void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objectiv
 
 void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
       COOSymmetricMatrix& hessian) const {
-   size_t number_non_zeros = this->compute_hessian_number_nonzeros(x, objective_multiplier, multipliers);
+   // register the vector of variables
+   (*(this->asl_)->p.Xknown)(this->asl_, (double*) x.data(), 0);
+
+   // compute the number of nonzeros
+   const size_t number_non_zeros = this->fixed_hessian_sparsity ? this->hessian_maximum_number_nonzeros :
+         this->compute_hessian_number_nonzeros(objective_multiplier, multipliers);
    assert(hessian.capacity >= number_non_zeros);
 
    /* evaluate the Hessian */
    clear(hessian.matrix);
-   int objective_number = -1;
-   double* objective_multiplier_pointer = (objective_multiplier != 0.) ? &objective_multiplier : nullptr;
-   bool all_zeros_multipliers = are_all_zeros(multipliers);
-   (*(this->asl_)->p.Sphes)(this->asl_, 0, hessian.matrix.data(), objective_number, objective_multiplier_pointer,
-         all_zeros_multipliers ? nullptr : (double*) multipliers.data());
+   const int objective_number = -1;
+   if (this->fixed_hessian_sparsity) {
+      (*(this->asl_)->p.Sphes)(this->asl_, 0, (double*) hessian.matrix.data(), objective_number, &objective_multiplier,
+            (double*) multipliers.data());
+   }
+   else {
+      double* objective_multiplier_pointer = (objective_multiplier != 0.) ? &objective_multiplier : nullptr;
+      bool all_zeros_multipliers = are_all_zeros(multipliers);
+      (*(this->asl_)->p.Sphes)(this->asl_, 0, (double*) hessian.matrix.data(), objective_number, objective_multiplier_pointer,
+            all_zeros_multipliers ? nullptr : (double*) multipliers.data());
+   }
    hessian.number_nonzeros = number_non_zeros;
 
    // generate the sparsity pattern in the right sparse format

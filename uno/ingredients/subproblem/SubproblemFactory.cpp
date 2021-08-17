@@ -11,7 +11,7 @@ std::unique_ptr <Subproblem> SubproblemFactory::create(const Problem& problem, s
       const std::string& QP_solver_name = options.at("QP_solver");
       // determine the sparse matrix format
       if (QP_solver_name == "BQPD") {
-         return std::make_unique<SQP<BQPDSolver> >(problem, number_variables, problem.number_constraints, options.at("hessian"), use_trust_region);
+         return std::make_unique<SQP<BQPDSolver>>(problem, number_variables, problem.number_constraints, options.at("hessian"), use_trust_region);
       }
       else {
          assert(false && "SubproblemFactory::create: unknown QP solver");
@@ -20,7 +20,7 @@ std::unique_ptr <Subproblem> SubproblemFactory::create(const Problem& problem, s
    else if (subproblem_type == "SLP") {
       const std::string& LP_solver_name = options.at("LP_solver");
       if (LP_solver_name == "BQPD") {
-         return std::make_unique<SLP<BQPDSolver> >(number_variables, problem.number_constraints);
+         return std::make_unique<SLP<BQPDSolver>>(problem, number_variables, problem.number_constraints);
       }
       else {
          assert(false && "SubproblemFactory::create: unknown LP solver");
@@ -29,14 +29,15 @@ std::unique_ptr <Subproblem> SubproblemFactory::create(const Problem& problem, s
       /* interior point method */
    else if (subproblem_type == "IPM") {
       const std::string& linear_solver_name = options.at("linear_solver");
+      const double tolerance = std::stod(options.at("tolerance"));
       // determine the sparse matrix format
       if (linear_solver_name == "MA57") {
-         return std::make_unique<InteriorPoint<MA57Solver> >(problem, number_variables, problem.number_constraints, options.at("hessian"),
+         return std::make_unique<InteriorPoint<MA57Solver>>(problem, number_variables, problem.number_constraints, options.at("hessian"), tolerance,
                use_trust_region);
       }
       else if (linear_solver_name == "PARDISO") {
-         return std::make_unique<InteriorPoint<PardisoSolver> >(problem, number_variables, problem.number_constraints, options.at("hessian"),
-               use_trust_region);
+         return std::make_unique<InteriorPoint<PardisoSolver>>(problem, number_variables, problem.number_constraints, options.at("hessian"),
+               tolerance, use_trust_region);
       }
       else {
          assert(false && "SubproblemFactory::create: unknown linear solver");

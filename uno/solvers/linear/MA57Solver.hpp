@@ -45,6 +45,7 @@ private:
    std::array<double, 5> cntl{};
    std::array<int, 20> icntl{};
    std::array<double, 20> rinfo{};
+   std::array<int, 40> info{};
    const int nrhs{1}; // number of right hand side being solved
    const int job{1};
 

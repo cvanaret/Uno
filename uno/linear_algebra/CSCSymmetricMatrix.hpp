@@ -4,6 +4,11 @@
 #include "SymmetricMatrix.hpp"
 #include "COOSymmetricMatrix.hpp"
 
+enum CSCDiagonal {
+   SPARSE,
+   EXPLICIT
+};
+
 class CSCSymmetricMatrix : public SymmetricMatrix {
    /* Compressed Sparse Column */
 public:

@@ -1,8 +1,6 @@
 #ifndef HESSIANEVALUATION_H
 #define HESSIANEVALUATION_H
 
-#include <ostream>
-#include <map>
 #include <memory>
 #include <vector>
 #include "optimization_problem/Problem.hpp"

@@ -12,11 +12,6 @@ Iterate TrustRegion::initialize(Statistics& statistics, const Problem& problem, 
    statistics.add_column("TR radius", Statistics::double_width, 30);
    // generate the initial point
    Iterate first_iterate = this->relaxation_strategy.initialize(statistics, problem, x, multipliers);
-
-   // preallocate trial_iterate
-   this->trial_primals_.resize(first_iterate.x.size());
-   this->trial_duals_.resize(multipliers.constraints.size());
-
    return first_iterate;
 }
 
