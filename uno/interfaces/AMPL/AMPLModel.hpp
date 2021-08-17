@@ -51,6 +51,7 @@ private:
 
    ASL* asl_; /*!< Instance of the AMPL Solver Library class */
    std::vector<double> ampl_tmp_gradient_;
+   std::vector<double> ampl_tmp_hessian;
 
    void generate_variables_();
    void initialize_objective_();
@@ -59,7 +60,7 @@ private:
    //void create_constraint_variables_(int j, cgrad* ampl_variables);
    void set_function_types_(std::string file_name);
    void initialize_lagrangian_hessian_();
-   size_t compute_hessian_number_nonzeros(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers) const;
+   size_t compute_hessian_number_nonzeros(double objective_multiplier, const std::vector<double>& multipliers) const;
    void generate_sparsity_pattern(CSCSymmetricMatrix& hessian, size_t number_non_zeros) const;
 };
 

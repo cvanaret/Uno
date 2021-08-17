@@ -42,6 +42,9 @@ void get_command_options(int argc, char* argv[], Options& options) {
             options["constraint-relaxation"] = "feasibility-restoration";
             options["strategy"] = "filter";
             options["subproblem"] = "IPM";
+            options["Beta"] = "0.99999";
+            options["Gamma"] = "1e-5";
+            options["Sigma"] = "1e-4";
             i++;
          }
          else if (name == "filtersqp") {

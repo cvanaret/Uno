@@ -4,16 +4,19 @@
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 
 l1Relaxation::l1Relaxation(Problem& problem, const Options& options, bool use_trust_region) :
-   ConstraintRelaxationStrategy(SubproblemFactory::create(problem, l1Relaxation::count_elastic_variables(problem),
-         options.at("subproblem"), options, use_trust_region)),
-   globalization_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
-   penalty_parameter(stod(options.at("l1_relaxation_initial_parameter"))),
-   parameters({10., 0.1, 0.1}) {
+      ConstraintRelaxationStrategy(SubproblemFactory::create(problem, problem.number_variables + l1Relaxation::count_elastic_variables(problem),
+            options.at("subproblem"), options, use_trust_region)),
+      globalization_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
+      penalty_parameter(stod(options.at("l1_relaxation_initial_parameter"))),
+      parameters({10., 0.1, 0.1}) {
 
    // generate elastic variables to relax the constraints
    ConstraintRelaxationStrategy::generate_elastic_variables(problem, this->elastic_variables);
    // add bounds for nonnegative elastic variables to the subproblem
    this->set_elastic_bounds_in_subproblem(problem, this->elastic_variables.size());
+
+   // elastic variables are temporary and are discarded when passed to mechanism
+   this->number_variables -= l1Relaxation::count_elastic_variables(problem);
 }
 
 Iterate l1Relaxation::initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
@@ -44,7 +47,8 @@ Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, const
    return direction;
 }
 
-Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Direction& /*direction*/) {
+Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate,
+      Direction& /*direction*/) {
    this->update_objective_multiplier(problem, current_iterate, 0.);
    return this->subproblem->solve(statistics, problem, current_iterate);
 }
@@ -64,7 +68,7 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
       accept = true;
    }
    else {
-      this->subproblem->evaluate_constraints(problem, trial_iterate);
+      trial_iterate.compute_constraints(problem);
       // compute the predicted reduction (a mixture of the subproblem's and of the l1 relaxation's)
       const double predicted_reduction = this->compute_predicted_reduction(problem, current_iterate, direction, step_length);
       // invoke the globalization strategy for acceptance
@@ -145,8 +149,11 @@ Direction l1Relaxation::compute_byrd_steering_rule(Statistics& statistics, const
                if (!condition1) {
                   /* stage d: reach a fraction of the ideal decrease */
                   if ((ideal_linearized_residual == 0. && linearized_residual == 0) || (ideal_linearized_residual != 0. &&
-                                                                                        current_iterate.progress.infeasibility - linearized_residual >= this->parameters.epsilon1 *
-                                                                                                                                                        (current_iterate.progress.infeasibility - ideal_linearized_residual))) {
+                                                                                        current_iterate.progress.infeasibility -
+                                                                                        linearized_residual >= this->parameters.epsilon1 *
+                                                                                                               (current_iterate.progress
+                                                                                                                      .infeasibility -
+                                                                                                                ideal_linearized_residual))) {
                      condition1 = true;
                      DEBUG << "Condition 1 is true\n";
                   }
@@ -196,7 +203,7 @@ Direction l1Relaxation::compute_byrd_steering_rule(Statistics& statistics, const
 }
 
 size_t l1Relaxation::count_elastic_variables(const Problem& problem) {
-   size_t number_variables = problem.number_variables;
+   size_t number_variables = 0;
    for (size_t j = 0; j < problem.number_constraints; j++) {
       if (-INFINITY < problem.constraint_bounds[j].lb) {
          number_variables++;
@@ -223,9 +230,9 @@ double l1Relaxation::compute_linearized_constraint_residual(std::vector<double>&
 }
 
 /* measure that combines KKT error and complementarity error */
-double l1Relaxation::compute_error(const Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter) {
+double l1Relaxation::compute_error(const Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter) const {
    /* complementarity error */
-   double error = Subproblem::compute_complementarity_error(problem, iterate, multipliers);
+   double error = this->subproblem->compute_complementarity_error(problem, iterate, multipliers);
    /* KKT error */
    std::vector<double> lagrangian_gradient = iterate.lagrangian_gradient(problem, penalty_parameter, multipliers);
    error += norm_1(lagrangian_gradient);
@@ -243,12 +250,12 @@ void l1Relaxation::remove_elastic_variables(const Problem& problem, Direction& d
    direction.norm = norm_inf(direction.x);
 
    /* remove contribution of positive part variables */
-   for (auto& [j, i]: elastic_variables.positive) {
+   for (auto&[j, i]: elastic_variables.positive) {
       this->subproblem->objective_gradient.erase(i);
       this->subproblem->constraints_jacobian[j].erase(i);
    }
    /* remove contribution of negative part variables */
-   for (auto& [j, i]: elastic_variables.negative) {
+   for (auto&[j, i]: elastic_variables.negative) {
       this->subproblem->objective_gradient.erase(i);
       this->subproblem->constraints_jacobian[j].erase(i);
    }

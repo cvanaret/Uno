@@ -11,13 +11,11 @@ public:
    std::vector<int> column_indices;
 
    COOSymmetricMatrix(int dimension, size_t capacity);
+   COOSymmetricMatrix(int dimension, std::vector<double> matrix, std::vector<int> row_indices, std::vector<int> column_indices);
 
    void for_each(const std::function<void (int, int, double)>& f) const override;
    void insert(double term, int row_index, int column_index) override;
    void add_identity_multiple(double multiple) override;
-
-   double norm_1();
-   /*COOSymmetricMatrix add_identity_multiple(double multiple);*/
 
    friend std::ostream& operator<<(std::ostream& stream, COOSymmetricMatrix& matrix);
    friend std::ostream& operator<<(std::ostream& stream, const COOSymmetricMatrix& matrix);

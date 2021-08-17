@@ -15,15 +15,13 @@ std::map<FunctionType, std::string> Problem::type_to_string = {
 
 Problem::Problem(std::string name, int number_variables, int number_constraints, FunctionType type) :
       name(std::move(name)), number_variables(number_variables), number_constraints(number_constraints), type(type),
-      objective_sign(1.), objective_type(NONLINEAR),
       // allocate all vectors
       variables_names(number_variables),
       //variable_discrete(number_variables),
       variables_bounds(number_variables), variable_status(number_variables),
       constraint_name(number_constraints),
       //constraint_variables(number_constraints),
-      constraint_bounds(number_constraints), constraint_type(number_constraints), constraint_status(number_constraints),
-      hessian_maximum_number_nonzeros(0) {
+      constraint_bounds(number_constraints), constraint_type(number_constraints), constraint_status(number_constraints) {
 }
 
 std::vector<double> Problem::evaluate_constraints(const std::vector<double>& x) const {

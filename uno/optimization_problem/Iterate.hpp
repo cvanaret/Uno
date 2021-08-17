@@ -44,21 +44,21 @@ public:
    static int number_eval_jacobian;
 
    // functions
-   double objective; /*!< Objective value */
-   bool is_objective_computed;
+   double objective{std::numeric_limits<double>::infinity()}; /*!< Objective value */
+   bool is_objective_computed{false};
 
    std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
-   bool are_constraints_computed;
+   bool are_constraints_computed{false};
 
    SparseVector objective_gradient; /*!< Sparse Jacobian of the evaluate_objective */
-   bool is_objective_gradient_computed; /*!< Flag that indicates if the evaluate_objective gradient has already been computed */
+   bool is_objective_gradient_computed{false}; /*!< Flag that indicates if the evaluate_objective gradient has already been computed */
 
    std::vector<SparseVector> constraints_jacobian; /*!< Sparse Jacobian of the constraints */
-   bool is_constraints_jacobian_computed; /*!< Flag that indicates if the constraint Jacobian has already been computed */
+   bool is_constraints_jacobian_computed{false}; /*!< Flag that indicates if the constraint Jacobian has already been computed */
 
    // residuals
-   Errors errors;
-   ProgressMeasures progress;
+   Errors errors{0., 0., 0., 0.};
+   ProgressMeasures progress{0., 0.};
 
    void compute_objective(const Problem& problem);
    void compute_constraints(const Problem& problem);
@@ -68,5 +68,7 @@ public:
 
    friend std::ostream& operator<<(std::ostream& stream, const Iterate& iterate);
 };
+
+void reset(Iterate& iterate);
 
 #endif // ITERATE_H

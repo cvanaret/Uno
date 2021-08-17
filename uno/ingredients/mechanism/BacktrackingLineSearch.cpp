@@ -13,11 +13,6 @@ Iterate BacktrackingLineSearch::initialize(Statistics& statistics, const Problem
 
    // generate the initial point
    Iterate first_iterate = this->relaxation_strategy.initialize(statistics, problem, x, multipliers);
-
-   // preallocate trial_iterate
-   this->trial_primals_.resize(first_iterate.x.size());
-   this->trial_duals_.resize(multipliers.constraints.size());
-
    return first_iterate;
 }
 
@@ -51,15 +46,18 @@ current_iterate) {
             // compute a (temporary) SOC direction
             Direction direction_soc = this->relaxation_strategy.compute_second_order_correction(problem, trial_iterate);
 
-            // assemble the (temporary) trial iterate
+            // assemble the (temporary) SOC trial iterate
             Iterate trial_iterate_soc = this->assemble_trial_iterate(current_iterate, direction_soc, this->step_length);
 
-            if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate_soc, direction_soc, this->step_length)) {
+            if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate_soc, direction_soc,
+                  this->step_length)) {
                this->add_statistics(statistics, direction_soc);
                statistics.add_statistic("SOC", "x");
 
                // let the subproblem know the accepted iterate
-               this->relaxation_strategy.register_accepted_iterate(trial_iterate);
+               this->relaxation_strategy.register_accepted_iterate(trial_iterate_soc);
+               trial_iterate_soc.multipliers.lower_bounds = trial_iterate.multipliers.lower_bounds;
+               trial_iterate_soc.multipliers.upper_bounds = trial_iterate.multipliers.upper_bounds;
                return std::make_tuple(std::move(trial_iterate_soc), direction_soc.norm, direction_soc.objective_multiplier);
             }
             else {

@@ -39,7 +39,9 @@ public:
    void notify(Iterate& current_iterate) override;
 
 private:
-   const FilterStrategyParameters parameters_; /*!< Set of constants */
+   const FilterStrategyParameters parameters; /*!< Set of constants */
+   static bool switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction);
+   static bool armijo_condition(double predicted_reduction, double actual_reduction, double decrease_fraction);
 };
 
 #endif // FILTERSTRATEGY_H

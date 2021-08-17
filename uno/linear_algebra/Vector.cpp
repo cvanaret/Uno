@@ -144,7 +144,8 @@ double norm_inf(const std::vector<SparseVector>& m) {
    // compute maximum row index
    unsigned int number_rows = 0;
    for (size_t j = 0; j < m.size(); j++) {
-      number_rows = std::max(number_rows, 1 + m[j].begin()->first);
+      // TODO
+      //number_rows = std::max(number_rows, 1 + m[j].begin()->first);
    }
    // read the matrix column-wise and fill in the row_vectors norm vector
    std::vector<double> row_vectors(number_rows);
@@ -221,6 +222,20 @@ double dot(const SparseVector& x, const SparseVector& y) {
       }
    }
    return dot;
+}
+
+void print_vector(std::ostream &stream, const SparseVector& x, const char end) {
+   for (const auto [i, xi]: x) {
+      stream << "x[" << i << "] = " << xi << ", ";
+   }
+   stream << end;
+}
+
+void print_vector(const Level& level, const SparseVector& x, const char end) {
+   for (const auto [i, xi]: x) {
+      level << "x[" << i << "] = " << xi << ", ";
+   }
+   level << end;
 }
 
 std::string join(const std::vector<std::string>& vector, const std::string& separator) {

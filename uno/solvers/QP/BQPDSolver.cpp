@@ -26,17 +26,16 @@ extern "C" {
 /* preallocate a bunch of stuff */
 BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_t maximum_number_nonzeros, bool quadratic_programming)
       : QPSolver(), n_(number_variables), m_(number_constraints), maximum_number_nonzeros_(maximum_number_nonzeros), lb_(n_ + m_),
-      ub_(n_ + m_), use_fortran_(1), jacobian_(n_ * (m_ + 1)), jacobian_sparsity_(n_ * (m_ + 1) + m_ + 3),
-      kmax_(quadratic_programming ? 500 : 0), mlp_(1000), mxwk0_(2000000), mxiwk0_(500000), info_(100), alp_(mlp_), lp_(mlp_), ls_(n_ + m_),
+      ub_(n_ + m_), jacobian_(n_ * (m_ + 1)), jacobian_sparsity_(n_ * (m_ + 1) + m_ + 3),
+      kmax_(quadratic_programming ? 500 : 0), alp_(mlp_), lp_(mlp_), ls_(n_ + m_),
       w_(n_ + m_), gradient_solution_(n_), residuals_(n_ + m_), e_(n_ + m_),
       size_hessian_sparsity_(quadratic_programming ? maximum_number_nonzeros + n_ + 3 : 0),
       size_hessian_workspace_(maximum_number_nonzeros_ + kmax_ * (kmax_ + 9) / 2 + 2 * n_ + m_ + mxwk0_),
       size_hessian_sparsity_workspace_(size_hessian_sparsity_ + kmax_ + mxiwk0_), hessian_(size_hessian_workspace_),
-      hessian_sparsity_(size_hessian_sparsity_workspace_), k_(0), mode_(COLD_START), iprint_(0), nout_(6), fmin_(-1e20),
-      solution(number_variables) {
+      hessian_sparsity_(size_hessian_sparsity_workspace_), solution(number_variables) {
    // active set
    for (size_t i = 0; i < this->n_ + this->m_; i++) {
-      this->ls_[i] = i + this->use_fortran_;
+      this->ls_[i] = i + this->fortran_shift;
    }
 }
 
@@ -49,18 +48,18 @@ Direction BQPDSolver::solve_QP(const std::vector<Range>& variables_bounds, const
    /* Hessian sparsity */
    this->hessian_sparsity_[0] = hessian.number_nonzeros + 1;
    for (int i = 0; i < hessian.number_nonzeros; i++) {
-      this->hessian_sparsity_[i + 1] = hessian.row_index[i] + this->use_fortran_;
+      this->hessian_sparsity_[i + 1] = hessian.row_index[i] + this->fortran_shift;
    }
    for (int i = 0; i < hessian.dimension + 1; i++) {
       this->hessian_sparsity_[hessian.number_nonzeros + i + 1] =
-            hessian.column_start[i] + this->use_fortran_;
+            hessian.column_start[i] + this->fortran_shift;
    }
 
    // if extra variables have been introduced, correct hessian.column_start
    int i = hessian.number_nonzeros + hessian.dimension + 2;
    int last_value = hessian.column_start[hessian.dimension];
    for (size_t j = hessian.dimension; j < this->n_; j++) {
-      this->hessian_sparsity_[i] = last_value + this->use_fortran_;
+      this->hessian_sparsity_[i] = last_value + this->fortran_shift;
       i++;
    }
 
@@ -100,13 +99,13 @@ linear_objective, const std::vector<SparseVector>& constraints_jacobian, const s
    int current_index = 0;
    for (const auto[i, derivative]: linear_objective) {
       this->jacobian_[current_index] = derivative;
-      this->jacobian_sparsity_[current_index + 1] = i + this->use_fortran_;
+      this->jacobian_sparsity_[current_index + 1] = i + this->fortran_shift;
       current_index++;
    }
    for (size_t j = 0; j < this->m_; j++) {
       for (const auto[i, derivative]: constraints_jacobian[j]) {
          this->jacobian_[current_index] = derivative;
-         this->jacobian_sparsity_[current_index + 1] = i + this->use_fortran_;
+         this->jacobian_sparsity_[current_index + 1] = i + this->fortran_shift;
          current_index++;
       }
    }
@@ -167,7 +166,7 @@ Direction BQPDSolver::generate_direction() {
 
    /* active constraints */
    for (size_t j = 0; j < this->n_ - this->k_; j++) {
-      size_t index = std::abs(this->ls_[j]) - this->use_fortran_;
+      size_t index = std::abs(this->ls_[j]) - this->fortran_shift;
 
       if (index < this->n_) {
          // bound constraint
@@ -198,7 +197,7 @@ Direction BQPDSolver::generate_direction() {
 
    /* inactive constraints */
    for (size_t j = this->n_ - this->k_; j < this->n_ + this->m_; j++) {
-      size_t index = std::abs(this->ls_[j]) - this->use_fortran_;
+      size_t index = std::abs(this->ls_[j]) - this->fortran_shift;
 
       if (this->n_ <= index) { // general constraints
          int constraint_index = index - this->n_;
@@ -222,6 +221,5 @@ Direction BQPDSolver::generate_direction() {
 
 Status BQPDSolver::int_to_status_(int ifail) {
    assert(0 <= ifail && ifail <= 9 && "BQPDSolver.int_to_status: ifail does not belong to [0, 9]");
-   Status status = static_cast<Status> (ifail);
-   return status;
+   return static_cast<Status> (ifail);
 }

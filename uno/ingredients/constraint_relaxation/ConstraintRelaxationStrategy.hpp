@@ -32,11 +32,15 @@ public:
    virtual double compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, const Direction& direction, double step_length) = 0;
    virtual void register_accepted_iterate(Iterate& iterate);
 
+   int get_number_variables() const;
+   int get_number_constraints() const;
    [[nodiscard]] int get_hessian_evaluation_count() const;
    [[nodiscard]] int get_number_subproblems_solved() const;
 
 protected:
    std::unique_ptr<Subproblem> subproblem;
+   size_t number_variables;
+   size_t number_constraints;
 
    static void generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables);
    void set_elastic_bounds_in_subproblem(const Problem& problem, size_t number_elastic_variables) const;

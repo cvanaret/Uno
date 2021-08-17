@@ -4,5 +4,5 @@ ConstraintPartition::ConstraintPartition(size_t number_constraints) : constraint
 }
 
 Multipliers::Multipliers(size_t number_variables, size_t number_constraints) : lower_bounds(number_variables),
-      upper_bounds(number_variables), constraints(number_constraints), objective(1.) {
+      upper_bounds(number_variables), constraints(number_constraints) {
 }

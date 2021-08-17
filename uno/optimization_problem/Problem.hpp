@@ -56,9 +56,9 @@ public:
    FunctionType type;
 
    /* objective */
-   double objective_sign; /*!< Sign of the evaluate_objective function (1: minimization, -1: maximization) */
+   double objective_sign{1.}; /*!< Sign of the evaluate_objective function (1: minimization, -1: maximization) */
    std::string objective_name;
-   FunctionType objective_type; /*!< Type of the evaluate_objective (LINEAR, QUADRATIC, NONLINEAR) */
+   FunctionType objective_type{NONLINEAR}; /*!< Type of the evaluate_objective (LINEAR, QUADRATIC, NONLINEAR) */
 
    /* variables */
    std::vector<std::string> variables_names;
@@ -75,8 +75,10 @@ public:
    std::map<int, int> equality_constraints; /*!< inequality constraints */
    std::map<int, int> inequality_constraints; /*!< inequality constraints */
    std::map<int, int> linear_constraints;
+
    /* Hessian */
-   int hessian_maximum_number_nonzeros; /*!< Number of nonzero elements in the Hessian */
+   int hessian_maximum_number_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */
+   const bool fixed_hessian_sparsity{false};
 
    // purely virtual functions
    [[nodiscard]] virtual double evaluate_objective(const std::vector<double>& x) const = 0;

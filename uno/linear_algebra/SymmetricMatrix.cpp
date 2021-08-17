@@ -8,6 +8,10 @@
 SymmetricMatrix::SymmetricMatrix(int dimension, size_t capacity) : dimension(dimension), capacity(capacity) {
 }
 
+void SymmetricMatrix::reset() {
+   this->number_nonzeros = 0;
+}
+
 std::vector<double> SymmetricMatrix::product(const std::vector<double>& vector) const {
    assert(this->dimension == (int) vector.size() && "The matrix and the vector do not have the same size");
 

@@ -54,7 +54,6 @@ void MA57Solver::do_symbolic_factorization(COOSymmetricMatrix& matrix) {
    }
 
    /* symbolic factorization */
-   std::array<int, 40> info{};
    ma57ad_(/* const */ &n,
          /* const */ &nnz,
          /* const */ matrix.row_indices.data(),
@@ -63,8 +62,10 @@ void MA57Solver::do_symbolic_factorization(COOSymmetricMatrix& matrix) {
          /* const */ keep.data(),
          /* out */ iwork.data(),
          /* const */ this->icntl.data(),
-         /* out */ info.data(),
+         /* out */ this->info.data(),
          /* out */ this->rinfo.data());
+
+   assert(info[0] == 0 && "MA57: the symbolic factorization failed");
 
    /* reindex the matrix (Fortran compliance) */
    for (int k = 0; k < matrix.number_nonzeros; k++) {
@@ -72,7 +73,6 @@ void MA57Solver::do_symbolic_factorization(COOSymmetricMatrix& matrix) {
       matrix.column_indices[k]--;
    }
 
-   // TODO check that info[0] == 0
    int lfact = 2 * info[8];
    std::vector<double> fact(lfact);
    int lifact = 2 * info[9];

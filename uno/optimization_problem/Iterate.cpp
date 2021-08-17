@@ -8,23 +8,17 @@ int Iterate::number_eval_constraints = 0;
 int Iterate::number_eval_jacobian = 0;
 
 Iterate::Iterate(const std::vector<double>& x, const Multipliers& multipliers) : x(x), multipliers(multipliers),
-      objective(std::numeric_limits<double>::infinity()), is_objective_computed(false),
-      constraints(multipliers.constraints.size()), are_constraints_computed(false),
-      is_objective_gradient_computed(false),
-      constraints_jacobian(multipliers.constraints.size()), is_constraints_jacobian_computed(false),
-      errors({0., 0., 0., 0.}),
-      progress({0., 0.}) {
-   objective_gradient.reserve(x.size());
+      constraints(multipliers.constraints.size()), objective_gradient(x.size()), constraints_jacobian(multipliers.constraints.size()) {
+   for (size_t j = 0; j < multipliers.constraints.size(); j++) {
+      constraints_jacobian[j].reserve(x.size());
+   }
 }
 
 Iterate::Iterate(size_t number_variables, size_t number_constraints) : x(number_variables), multipliers(number_variables, number_constraints),
-      objective(std::numeric_limits<double>::infinity()), is_objective_computed(false),
-      constraints(multipliers.constraints.size()), are_constraints_computed(false),
-      is_objective_gradient_computed(false),
-      constraints_jacobian(number_constraints), is_constraints_jacobian_computed(false),
-      errors({0., 0., 0., 0.}),
-      progress({0., 0.}) {
-   objective_gradient.reserve(number_variables);
+      constraints(multipliers.constraints.size()), objective_gradient(number_variables), constraints_jacobian(number_constraints) {
+   for (size_t j = 0; j < multipliers.constraints.size(); j++) {
+      constraints_jacobian[j].reserve(x.size());
+   }
 }
 
 void Iterate::compute_objective(const Problem& problem) {
@@ -115,4 +109,13 @@ std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
    stream << "Optimality measure: " << iterate.progress.objective << "\n";
    stream << "Feasibility measure: " << iterate.progress.infeasibility << "\n";
    return stream;
+}
+
+void reset(Iterate& iterate) {
+   iterate.is_objective_computed = false;
+   iterate.are_constraints_computed = false;
+   iterate.is_objective_gradient_computed = false;
+   iterate.is_constraints_jacobian_computed = false;
+   iterate.errors = {0., 0., 0., 0.};
+   iterate.progress = {0., 0.};
 }

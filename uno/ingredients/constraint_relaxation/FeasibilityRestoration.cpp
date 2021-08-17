@@ -108,7 +108,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
          this->phase_1_strategy->notify(current_iterate);
       }
 
-      this->subproblem->evaluate_constraints(problem, trial_iterate);
+      trial_iterate.compute_constraints(problem);
       if (this->current_phase == FEASIBILITY_RESTORATION) {
          // if restoration phase, recompute progress measures of trial point
          this->compute_infeasibility_measures(problem, trial_iterate, direction.constraint_partition);
