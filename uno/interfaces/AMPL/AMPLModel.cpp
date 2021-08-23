@@ -316,6 +316,11 @@ void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objectiv
    for (size_t k = 0; k < number_non_zeros; k++) {
       hessian.row_index[k] = ampl_row_index[k];
    }
+   // if the subproblem has more variables (slacks, elastic, ...) than the AMPL model, rectify the sparse representation
+   assert(this->number_variables <= hessian.dimension);
+   for (size_t k = this->number_variables; k < hessian.dimension; k++) {
+      hessian.column_start[k+1] = hessian.column_start[this->number_variables];
+   }
 
    /* unregister the vector of variables */
    this->asl_->i.x_known = 0;
