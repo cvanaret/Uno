@@ -161,6 +161,7 @@ Direction BQPDSolver::generate_direction() {
    Direction direction(this->n_, this->m_);
    copy_from(direction.x, this->solution);
    direction.status = this->int_to_status_(this->ifail_);
+   assert(direction.status != UNBOUNDED_PROBLEM && "BQPD: the problem is unbounded");
    direction.norm = norm_inf(this->solution);
    direction.objective = this->f_solution_;
 
