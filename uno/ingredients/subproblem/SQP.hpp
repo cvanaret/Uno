@@ -36,7 +36,7 @@ hessian_evaluation_method, bool use_trust_region) :
       solver(QPSolverFactory<QPSolverType>::create(number_variables, number_constraints,
             problem.hessian_maximum_number_nonzeros + number_variables, true)),
       /* if no trust region is used, the problem should be convexified by controlling the inertia of the Hessian */
-      hessian_evaluation(HessianEvaluationFactory<typename QPSolverType::matrix_type>::create(hessian_evaluation_method, problem.number_variables,
+      hessian_evaluation(HessianEvaluationFactory<typename QPSolverType::matrix_type>::create(hessian_evaluation_method, number_variables,
             problem.hessian_maximum_number_nonzeros + problem.number_variables, !use_trust_region)),
       initial_point(number_variables) {
 }
