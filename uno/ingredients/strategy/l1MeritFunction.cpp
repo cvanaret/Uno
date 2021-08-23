@@ -6,7 +6,7 @@
  * http://epubs.siam.org/doi/pdf/10.1137/080738222
  */
 
-l1MeritFunction::l1MeritFunction() : GlobalizationStrategy() {
+l1MeritFunction::l1MeritFunction(double decrease_fraction) : GlobalizationStrategy(), decrease_fraction(decrease_fraction) {
 }
 
 void l1MeritFunction::initialize(Statistics& statistics, const Iterate& /*first_iterate*/) {
@@ -29,7 +29,7 @@ bool l1MeritFunction::check_acceptance(Statistics& statistics, ProgressMeasures&
    const double actual_reduction = current_exact_l1_penalty - trial_exact_l1_penalty;
    DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << actual_reduction << "\n\n";
    // Armijo sufficient decrease condition
-   if (actual_reduction >= this->decrease_fraction_ * predicted_reduction) {
+   if (actual_reduction >= this->decrease_fraction * predicted_reduction) {
       accept = true;
    }
 
