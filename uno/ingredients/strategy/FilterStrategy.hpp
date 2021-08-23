@@ -13,7 +13,7 @@
  *  Set of constants to control the filter and tube strategies
  */
 struct FilterStrategyParameters {
-   double Sigma; /*!< Sufficient reduction constant */
+   double decrease_fraction; /*!< Sufficient reduction constant */
    double Delta; /*!< Switching constant */
    double ubd;
    double fact;
@@ -40,6 +40,7 @@ public:
 
 private:
    const FilterStrategyParameters parameters; /*!< Set of constants */
+
    static bool switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction);
    static bool armijo_condition(double predicted_reduction, double actual_reduction, double decrease_fraction);
 };

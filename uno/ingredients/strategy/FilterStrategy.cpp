@@ -54,14 +54,13 @@ bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, ProgressMeasur
             accept = true;
          }
          /* Armijo sufficient decrease condition: predicted_reduction should be positive */
-         else if (FilterStrategy::armijo_condition(predicted_reduction, actual_reduction, this->parameters.Sigma)) {
+         else if (FilterStrategy::armijo_condition(predicted_reduction, actual_reduction, this->parameters.decrease_fraction)) {
             DEBUG << "Trial iterate was accepted by satisfying Armijo condition\n";
             accept = true;
          }
          else { // switching condition holds, but not Armijo condition
             filter->add(current_progress.infeasibility, current_progress.objective);
-            DEBUG << "Armijo condition not satisfied: " << actual_reduction << " < " << this->parameters.Sigma * std::max(0., predicted_reduction
-            - 1e-9) << "\n";
+            DEBUG << "Armijo condition not satisfied\n";
          }
       }
       else {

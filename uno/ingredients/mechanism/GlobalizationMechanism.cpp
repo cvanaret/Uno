@@ -3,7 +3,6 @@
 GlobalizationMechanism::GlobalizationMechanism(ConstraintRelaxationStrategy& constraint_relaxation_strategy, int max_iterations) :
       relaxation_strategy(constraint_relaxation_strategy),
       max_iterations(max_iterations) {
-   std::cout << "RELAX: " << this->relaxation_strategy.get_number_variables() << ",  " << this->relaxation_strategy.get_number_constraints() << "\n";
 }
 
 Iterate GlobalizationMechanism::assemble_trial_iterate(const Iterate& current_iterate, Direction& direction, double step_length) {
