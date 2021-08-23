@@ -44,7 +44,7 @@ void get_command_options(int argc, char* argv[], Options& options) {
             options["subproblem"] = "IPM";
             options["Beta"] = "0.99999";
             options["Gamma"] = "1e-5";
-            options["Sigma"] = "1e-4";
+            options["decrease_fraction"] = "1e-4";
             i++;
          }
          else if (name == "filtersqp") {
@@ -52,6 +52,14 @@ void get_command_options(int argc, char* argv[], Options& options) {
             options["constraint-relaxation"] = "feasibility-restoration";
             options["strategy"] = "filter";
             options["subproblem"] = "SQP";
+            i++;
+         }
+         else if (name == "byrd") {
+            options["mechanism"] = "LS";
+            options["constraint-relaxation"] = "l1-relaxation";
+            options["strategy"] = "l1-penalty";
+            options["subproblem"] = "SQP";
+            options["decrease_fraction"] = "1e-8";
             i++;
          }
          // standard options
