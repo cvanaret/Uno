@@ -28,7 +28,7 @@ template<typename LinearSolverType>
 class InteriorPoint : public Subproblem {
 public:
    InteriorPoint(const Problem& problem, size_t number_variables, size_t number_constraints, const std::string& hessian_evaluation_method,
-         double tolerance, bool use_trust_region);
+         double initial_barrier_parameter, double tolerance, bool use_trust_region);
    ~InteriorPoint() override = default;
 
    void set_initial_point(const std::vector<double>& initial_point) override;
@@ -45,7 +45,7 @@ public:
 
 private:
    /* barrier parameter */
-   double barrier_parameter{0.1};
+   double barrier_parameter;
    const double tolerance;
    const std::unique_ptr <HessianEvaluation<typename LinearSolverType::matrix_type>> hessian_evaluation;
    typename LinearSolverType::matrix_type kkt_matrix;
@@ -90,10 +90,10 @@ private:
 
 template<typename LinearSolverType>
 inline InteriorPoint<LinearSolverType>::InteriorPoint(const Problem& problem, size_t number_variables, size_t number_constraints, const std::string&
-hessian_evaluation_method, double tolerance, bool use_trust_region) :
+hessian_evaluation_method, double initial_barrier_parameter, double tolerance, bool use_trust_region) :
 // add the slacks to the variables
       Subproblem(number_variables + problem.inequality_constraints.size(), number_constraints),
-      tolerance(tolerance),
+      barrier_parameter(initial_barrier_parameter), tolerance(tolerance),
       /* if no trust region is used, the problem should be convexified. However, the inertia of the augmented matrix will be corrected later */
       hessian_evaluation(HessianEvaluationFactory<typename LinearSolverType::matrix_type>::create(hessian_evaluation_method,
             problem.number_variables, problem.hessian_maximum_number_nonzeros, false)),
@@ -354,14 +354,14 @@ inline void InteriorPoint<LinearSolverType>::register_accepted_iterate(Iterate& 
       const double coefficient = this->barrier_parameter / (iterate.x[i] - this->variables_bounds[i].lb);
       const double lb = coefficient / this->parameters.kappa;
       const double ub = coefficient * this->parameters.kappa;
-      assert(lb <= ub && "The bounds for are in the wrong order");
+      assert(lb <= ub && "IPM bound multiplier reset: the bounds are in the wrong order");
       iterate.multipliers.lower_bounds[i] = std::max(std::min(iterate.multipliers.lower_bounds[i], ub), lb);
    }
    for (size_t i: this->upper_bounded_variables) {
       const double coefficient = this->barrier_parameter / (iterate.x[i] - this->variables_bounds[i].ub);
       const double lb = coefficient * this->parameters.kappa;
       const double ub = coefficient / this->parameters.kappa;
-      assert(lb <= ub && "The bounds are in the wrong order");
+      assert(lb <= ub && "IPM bound multiplier reset: the bounds are in the wrong order");
       iterate.multipliers.upper_bounds[i] = std::max(std::min(iterate.multipliers.upper_bounds[i], ub), lb);
    }
 }
