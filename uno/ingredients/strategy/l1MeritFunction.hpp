@@ -9,7 +9,7 @@ public:
    /*!
     *  Constructor that takes an optimization problem and a set of constants
     */
-   explicit l1MeritFunction();
+   explicit l1MeritFunction(double decrease_fraction);
 
    void initialize(Statistics& statistics, const Iterate& first_iterate) override;
    bool check_acceptance(Statistics& statistics, ProgressMeasures& current_progress, ProgressMeasures& trial_progress, double objective_multiplier,
@@ -18,7 +18,7 @@ public:
    void notify(Iterate& current_iterate) override;
 
 private:
-   const double decrease_fraction_{1e-8};
+   const double decrease_fraction;
 };
 
 #endif // PENALTYMERITFUNCTION_H
