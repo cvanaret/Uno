@@ -92,7 +92,6 @@ void CSCSymmetricMatrix::add_identity_multiple(double factor) {
             this->column_start[k]++;
          }
          this->number_nonzeros++;
-         this->current_insertion_index++;
          this->remaining_column_padding[j]--;
       }
       overall_padding_size += this->remaining_column_padding[j];
