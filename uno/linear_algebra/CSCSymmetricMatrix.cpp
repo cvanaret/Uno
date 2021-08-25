@@ -40,6 +40,7 @@ void CSCSymmetricMatrix::for_each(const std::function<void (int, int, double)>& 
 void CSCSymmetricMatrix::insert(double term, int row_index, int column_index) {
    assert(this->current_insertion_index <= this->matrix.capacity() && "The matrix does not have sufficient capacity");
    assert(column_index == this->current_column && "The previous columns should be finalized");
+
    this->matrix[this->current_insertion_index] = term;
    this->row_index[this->current_insertion_index] = row_index;
    this->column_start[column_index + 1]++;
@@ -53,6 +54,7 @@ void CSCSymmetricMatrix::finalize(size_t column_index) {
    // add padding
    this->current_insertion_index += this->remaining_column_padding[column_index];
 
+   // start the next column at the current start
    if (column_index < this->dimension - 1) {
       this->column_start[column_index + 2] = this->column_start[column_index + 1];
       this->current_column++;
@@ -146,11 +148,17 @@ std::ostream& operator<<(std::ostream& stream, CSCSymmetricMatrix& matrix) {
 
 std::ostream& operator<<(std::ostream& stream, const CSCSymmetricMatrix& matrix) {
    stream << matrix.number_nonzeros << " non zeros\n";
-   stream << "W = ";
-   print_vector(stream, matrix.matrix, '\n', 0, matrix.number_nonzeros);
+   stream << "W =";
+   matrix.for_each([&](size_t /*i*/, size_t /*j*/, double entry) {
+      stream << " " << entry;
+   });
+   stream << "\n";
    stream << "with column start: ";
    print_vector(stream, matrix.column_start, '\n', 0, matrix.dimension + 1);
-   stream << "and row index: ";
-   print_vector(stream, matrix.row_index, '\n', 0, matrix.number_nonzeros);
+   stream << "and row index:";
+   matrix.for_each([&](size_t i, size_t /*j*/, double /*entry*/) {
+      stream << " " << i;
+   });
+   stream << "\n";
    return stream;
 }
