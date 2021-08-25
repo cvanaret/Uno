@@ -15,12 +15,12 @@
 
 CSCSymmetricMatrix::CSCSymmetricMatrix(int dimension, size_t capacity, size_t padding_size) : SymmetricMatrix(dimension, capacity),
 matrix(capacity + dimension*padding_size), column_start(dimension + 1), row_index(capacity + dimension*padding_size),
-padding_size(padding_size), remaining_column_padding(dimension, padding_size) {
+remaining_column_padding(dimension, padding_size) {
 }
 
 CSCSymmetricMatrix::CSCSymmetricMatrix(std::vector<double> matrix, const std::vector<int>& column_start, std::vector<int> row_number, int
 capacity) : SymmetricMatrix((int) column_start.size() - 1, capacity), matrix(std::move(matrix)), column_start(column_start), row_index(std::move
-(row_number)), padding_size(0), remaining_column_padding(dimension, 0) {
+(row_number)), remaining_column_padding(dimension, 0) {
    assert(false && "padding should be fixed");
 }
 
@@ -51,7 +51,7 @@ void CSCSymmetricMatrix::finalize(size_t column_index) {
    assert(column_index == this->current_column && "You are not finalizing the current column");
    assert(column_index < this->dimension && "The dimension of the matrix was exceeded");
    // add padding
-   this->current_insertion_index += this->padding_size;
+   this->current_insertion_index += this->remaining_column_padding[column_index];
 
    if (column_index < this->dimension - 1) {
       this->column_start[column_index + 2] = this->column_start[column_index + 1];
