@@ -38,13 +38,6 @@ void scale(SparseVector& x, double scaling_factor) {
    }
 }
 
-void copy_from(std::vector<double>& destination, const std::vector<double>& source) {
-   assert(destination.size() == source.size());
-   for (size_t i = 0; i < source.size(); i++) {
-      destination[i] = source[i];
-   }
-}
-
 /* compute ||x||_1 */
 double norm_1(const std::vector<double>& x) {
    double norm = 0.;
