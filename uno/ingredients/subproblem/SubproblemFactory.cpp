@@ -30,15 +30,16 @@ std::unique_ptr <Subproblem> SubproblemFactory::create(const Problem& problem, s
    else if (subproblem_type == "IPM") {
       const std::string& linear_solver_name = options.at("linear_solver");
       const double initial_barrier_parameter = std::stod(options.at("initial_barrier_parameter"));
+      const double default_multiplier = std::stod(options.at("default_multiplier"));
       const double tolerance = std::stod(options.at("tolerance"));
       // determine the sparse matrix format
       if (linear_solver_name == "MA57") {
          return std::make_unique<InteriorPoint<MA57Solver>>(problem, number_variables, problem.number_constraints, options.at("hessian"),
-               initial_barrier_parameter, tolerance, use_trust_region);
+               initial_barrier_parameter, default_multiplier, tolerance, use_trust_region);
       }
       else if (linear_solver_name == "PARDISO") {
          return std::make_unique<InteriorPoint<PardisoSolver>>(problem, number_variables, problem.number_constraints, options.at("hessian"),
-               initial_barrier_parameter, tolerance, use_trust_region);
+               initial_barrier_parameter, default_multiplier, tolerance, use_trust_region);
       }
       else {
          assert(false && "SubproblemFactory::create: unknown linear solver");
