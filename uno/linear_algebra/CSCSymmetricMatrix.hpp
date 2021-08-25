@@ -15,7 +15,6 @@ public:
    std::vector<double> matrix;
    std::vector<int> column_start;
    std::vector<int> row_index;
-   const size_t padding_size;
 
    CSCSymmetricMatrix(int dimension, size_t maximum_number_nonzeros, size_t padding_size = 0);
    CSCSymmetricMatrix(std::vector<double> matrix, const std::vector<int>& column_start, std::vector<int> row_number, int capacity);
