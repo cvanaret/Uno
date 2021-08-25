@@ -371,17 +371,11 @@ void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objectiv
 /* initial primal point */
 void AMPLModel::set_initial_primal_point(std::vector<double>& x) {
    assert(x.size() >= this->number_variables);
-   double* ampl_x0 = this->asl_->i.X0_;
-   for (size_t i = 0; i < this->number_variables; i++) {
-      x[i] = ampl_x0[i];
-   }
+   std::copy(this->asl_->i.X0_, this->asl_->i.X0_ + this->number_variables, begin(x));
 }
 
 /* initial dual point */
 void AMPLModel::set_initial_dual_point(std::vector<double>& multipliers) {
    assert(multipliers.size() >= this->number_constraints);
-   double* ampl_multipliers0 = this->asl_->i.pi0_;
-   for (size_t j = 0; j < this->number_constraints; j++) {
-      multipliers[j] = ampl_multipliers0[j];
-   }
+   std::copy(this->asl_->i.pi0_, this->asl_->i.pi0_ + this->number_constraints, begin(multipliers));
 }
