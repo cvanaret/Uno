@@ -28,7 +28,7 @@ template<typename LinearSolverType>
 class InteriorPoint : public Subproblem {
 public:
    InteriorPoint(const Problem& problem, size_t number_variables, size_t number_constraints, const std::string& hessian_evaluation_method,
-         double initial_barrier_parameter, double tolerance, bool use_trust_region);
+         double initial_barrier_parameter, double default_multiplier, double tolerance, bool use_trust_region);
    ~InteriorPoint() override = default;
 
    void set_initial_point(const std::vector<double>& initial_point) override;
@@ -56,11 +56,10 @@ private:
    std::set <size_t> lower_bounded_variables; /* indices of the lower-bounded variables */
    std::set <size_t> upper_bounded_variables; /* indices of the upper-bounded variables */
 
-   bool force_symbolic_factorization{true};
    double inertia_hessian{0.};
    double inertia_hessian_last_{0.};
    double inertia_constraints{0.};
-   double default_multiplier_{1.};
+   double default_multiplier_;
    size_t iteration{0};
    size_t number_factorizations_{0};
 
@@ -90,7 +89,7 @@ private:
 
 template<typename LinearSolverType>
 inline InteriorPoint<LinearSolverType>::InteriorPoint(const Problem& problem, size_t number_variables, size_t number_constraints, const std::string&
-hessian_evaluation_method, double initial_barrier_parameter, double tolerance, bool use_trust_region) :
+hessian_evaluation_method, double initial_barrier_parameter, double default_multiplier, double tolerance, bool use_trust_region) :
 // add the slacks to the variables
       Subproblem(number_variables + problem.inequality_constraints.size(), number_constraints),
       barrier_parameter(initial_barrier_parameter), tolerance(tolerance),
@@ -102,6 +101,7 @@ hessian_evaluation_method, double initial_barrier_parameter, double tolerance, b
                                                               this->number_variables * number_constraints /* Jacobian */),
       linear_solver(LinearSolverFactory<LinearSolverType>::create()),
       parameters({0.99, 1e10, 100., 0.2, 1.5, 10., 1e10}),
+      default_multiplier_(default_multiplier),
       barrier_constraints(number_constraints),
       rhs(this->number_variables + number_constraints),
       lower_delta_z(this->number_variables), upper_delta_z(this->number_variables) {

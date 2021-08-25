@@ -22,6 +22,7 @@ public:
    Subproblem(size_t number_variables, size_t number_constraints);
    virtual ~Subproblem() = default;
 
+   // virtual methods implemented by subclasses
    virtual Iterate generate_initial_iterate(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers);
    virtual void generate(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) = 0;
    virtual void set_trust_region(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
@@ -31,16 +32,19 @@ public:
    virtual Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) = 0;
    virtual Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate);
 
-   // feasibility subproblem
-   void compute_feasibility_linear_objective(const Iterate& current_iterate, const ConstraintPartition& constraint_partition);
-   void generate_feasibility_bounds(const Problem& problem, const std::vector<double>& current_constraints, const ConstraintPartition&
-   constraint_partition);
-
    // globalization metrics
    virtual double compute_predicted_reduction(const Direction& direction, double step_length) const = 0;
    virtual void compute_progress_measures(const Problem& problem, Iterate& iterate);
    virtual void register_accepted_iterate(Iterate& iterate);
 
+   virtual int get_hessian_evaluation_count() const = 0;
+   virtual void set_initial_point(const std::vector<double>& initial_point) = 0;
+
+   // available methods
+   // feasibility subproblem
+   void compute_feasibility_linear_objective(const Iterate& current_iterate, const ConstraintPartition& constraint_partition);
+   void generate_feasibility_bounds(const Problem& problem, const std::vector<double>& current_constraints, const ConstraintPartition&
+   constraint_partition);
    static double push_variable_to_interior(double variable_value, const Range& variable_bounds);
    void set_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints);
 
@@ -50,8 +54,7 @@ public:
 
    static double compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier);
    void compute_errors(const Problem& problem, Iterate& iterate, double objective_multiplier) const;
-   virtual int get_hessian_evaluation_count() const = 0;
-   virtual void set_initial_point(const std::vector<double>& initial_point) = 0;
+
    double compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const;
 
    const size_t number_variables;
