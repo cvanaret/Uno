@@ -50,6 +50,7 @@ set(SRC_FILES
     uno/linear_algebra/SymmetricMatrix.cpp
     uno/linear_algebra/COOSymmetricMatrix.cpp
     uno/linear_algebra/CSCSymmetricMatrix.cpp
+    uno/linear_algebra/SparseVector.cpp
     uno/linear_algebra/Vector.cpp
     
     uno/optimization_problem/Problem.cpp
@@ -139,9 +140,15 @@ target_link_libraries(uno_ampl PUBLIC uno)
 ####################
 find_package(GTest CONFIG REQUIRED)
 if(NOT ${GTest}_DIR STREQUAL "${GTest}-NOTFOUND")
-	add_executable(run_unotest unotest/tests.cpp)
-	target_include_directories(run_unotest PUBLIC ${DIRECTORIES})
-	target_link_libraries(run_unotest PUBLIC GTest::gtest ${LIBS})
+    set(TESTS_SRC_FILES
+        unotest/unotest.cpp
+        unotest/MA57SolverTests.cpp
+        unotest/CSCSymmetricMatrixTests.cpp
+    )
+
+	add_executable(run_unotest ${TESTS_SRC_FILES})
+	#target_include_directories(run_unotest PUBLIC ${DIRECTORIES})
+	target_link_libraries(run_unotest PUBLIC GTest::gtest uno)
 endif()
 
 #############
