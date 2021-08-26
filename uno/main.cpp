@@ -62,7 +62,7 @@ void run_uno(const std::string& problem_name, const Options& options) {
    std::cout << "Heap allocations: " << total_allocations << "\n";
 }
 
-Level Logger::logger_level = DEBUG;
+Level Logger::logger_level = INFO;
 
 int main(int argc, char* argv[]) {
    if (1 < argc) {
