@@ -17,6 +17,10 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wunused-value -Wno-conversion")
 set(CMAKE_CXX_FLAGS_DEBUG "-pg")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
+# optional Gtest
+option(WITH_GTEST "Enable GoogleTest" OFF)
+message(STATUS "GoogleTest: WITH_GTEST=${WITH_GTEST}")
+
 # directories
 set(DIRECTORIES uno)
 
@@ -53,10 +57,10 @@ set(SRC_FILES
     uno/linear_algebra/SparseVector.cpp
     uno/linear_algebra/Vector.cpp
     
-    uno/optimization_problem/Problem.cpp
-    uno/optimization_problem/Constraint.cpp
-    uno/optimization_problem/Preprocessing.cpp
-    uno/optimization_problem/Iterate.cpp
+    uno/optimization/Problem.cpp
+    uno/optimization/Constraint.cpp
+    uno/optimization/Preprocessing.cpp
+    uno/optimization/Iterate.cpp
 
     uno/solvers/linear/LinearSolverFactory.hpp
 	uno/solvers/QP/QPSolverFactory.hpp
@@ -90,6 +94,7 @@ foreach(library_name IN LISTS OPTIONAL_LIBS)
 		# include the corresponding directory
 		get_filename_component(directory ${${library_name}} DIRECTORY)
 		include_directories(${directory})
+        message(STATUS "Library ${library_name} was found")
         
         # add the corresponding sources
         if(${library_name} STREQUAL amplsolver)
@@ -118,7 +123,7 @@ foreach(library_name IN LISTS REQUIRED_LIBS)
 endforeach(library_name)
 
 #######
-# UNO #
+# Uno #
 #######
 add_library(uno STATIC ${SRC_FILES})
 target_include_directories(uno PUBLIC ${DIRECTORIES})
@@ -135,20 +140,20 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/uno.cfg DESTINATION ${CMAKE_CURRENT_BINARY
 add_executable(uno_ampl uno/main.cpp)
 target_link_libraries(uno_ampl PUBLIC uno)
 
-####################
-# gtest unit tests #
-####################
-find_package(GTest CONFIG REQUIRED)
-if(NOT ${GTest}_DIR STREQUAL "${GTest}-NOTFOUND")
-    set(TESTS_SRC_FILES
-        unotest/unotest.cpp
-        unotest/MA57SolverTests.cpp
-        unotest/CSCSymmetricMatrixTests.cpp
-    )
-
-	add_executable(run_unotest ${TESTS_SRC_FILES})
-	#target_include_directories(run_unotest PUBLIC ${DIRECTORIES})
-	target_link_libraries(run_unotest PUBLIC GTest::gtest uno)
+#########################
+# GoogleTest unit tests #
+#########################
+if(WITH_GTEST)
+    find_package(GTest CONFIG REQUIRED)
+    if(NOT ${GTest}_DIR STREQUAL "${GTest}-NOTFOUND")
+        set(TESTS_SRC_FILES
+            unotest/unotest.cpp
+            unotest/MA57SolverTests.cpp
+            unotest/CSCSymmetricMatrixTests.cpp
+        )
+        add_executable(run_unotest ${TESTS_SRC_FILES})
+        target_link_libraries(run_unotest PUBLIC GTest::gtest uno)
+    endif()
 endif()
 
 #############
