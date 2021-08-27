@@ -1,22 +1,30 @@
-# UNO (Unifying Framework for Optimization)
+# What is Uno?
+Uno (Unifying Framework for Optimization) is a C++ framework aiming at unifying most of the methods for solving nonlinearly constrained optimization problems.
 
-UNO is a C++ framework aiming at unifying most of the methods for solving nonlinearly constrained optimization problems.
+# How to cite Uno?
 
-## Table of contents
-* [Installation instructions](#installation-instructions)
-* [Compilation instructions](#compilation-instructions)
-* [Unit tests](#unit-tests)
-* [Autocompletion](#autocompletion)
+Please cite the article:  
+**Uno: an open-source framework for unifying nonlinear optimization methods**. Charlie Vanaret and Sven Leyffer
 
-## Installation instructions
+Its bibtex entry is:  
+
+# Contributions
+
+Developed by Charlie Vanaret (Technische Universität Berlin)
+
+# License
+
+TBD
+
+# Installation instructions
 
 * download optional interfaces:
-  * AMPL: http://www.netlib.org/ampl/solvers/
+    * AMPL: http://www.netlib.org/ampl/solvers/
 
 * download optional solvers:
-  * BQPD: https://www.mcs.anl.gov/~leyffer/solvers.html
-  * MA57: http://www.hsl.rl.ac.uk/catalogue/ma57.html
-  * PARDISO: https://www.pardiso-project.org/
+    * BQPD: https://www.mcs.anl.gov/~leyffer/solvers.html
+    * MA57: http://www.hsl.rl.ac.uk/catalogue/ma57.html
+    * PARDISO: https://www.pardiso-project.org/
 
 * install BLAS, LAPACK and f2c:
 ```
@@ -27,7 +35,7 @@ sudo apt-get install libblas-dev liblapack-dev libf2c2-dev
 sudo apt-get install cmake cmake-curses-gui
 ```
 
-## Compilation instructions
+# Compilation instructions
 1. Create a build directory in src/:
 ```
   cd src/ && mkdir build
@@ -55,7 +63,7 @@ sudo apt-get install cmake cmake-curses-gui
 
 To compile the code with different configurations, simply create a build directory for each configuration and perform instructions 1 to 6.
 
-## Unit tests
+# Unit tests
 7. Install the GoogleTest suite:
 ```
   sudo apt-get install googletest
@@ -66,7 +74,7 @@ To compile the code with different configurations, simply create a build directo
   ./run_unit_tests
 ```
 
-## Autocompletion
+# Autocompletion
 To benefit from autocompletion, install the file uno-completion.bash:
 ```
   sudo cp uno-completion.bash /etc/bash_completion.d/
