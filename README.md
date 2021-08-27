@@ -67,8 +67,8 @@ To compile the code with different configurations, simply create a build directo
 ```
 
 ## Autocompletion
-To benefit from autocompletion, install the file uno-completion.bash:
+To benefit from autocompletion, install the file uno_ampl-completion.bash:
 ```
-  sudo cp uno-completion.bash /etc/bash_completion.d/
+  sudo cp uno_ampl-completion.bash /etc/bash_completion.d/
 ```
 and open a new terminal.
