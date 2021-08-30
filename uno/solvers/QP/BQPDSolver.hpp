@@ -28,7 +28,7 @@ private:
    size_t n_, m_;
    size_t maximum_number_nonzeros_;
    std::vector<double> lb_, ub_; // lower and upper bounds of variables and constraints
-   const short fortran_shift{1};
+   const size_t fortran_shift{1};
 
    std::vector<double> jacobian_;
    std::vector<int> jacobian_sparsity_;

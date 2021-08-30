@@ -5,7 +5,7 @@
 #include "SymmetricMatrix.hpp"
 #include "Vector.hpp"
 
-SymmetricMatrix::SymmetricMatrix(int dimension, size_t capacity) : dimension(dimension), capacity(capacity) {
+SymmetricMatrix::SymmetricMatrix(size_t dimension, size_t capacity) : dimension(dimension), capacity(capacity) {
 }
 
 void SymmetricMatrix::reset() {

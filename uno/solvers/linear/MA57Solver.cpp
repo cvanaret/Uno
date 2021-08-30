@@ -39,7 +39,7 @@ void MA57Solver::factorize(COOSymmetricMatrix& matrix) {
 }
 
 void MA57Solver::do_symbolic_factorization(COOSymmetricMatrix& matrix) {
-   const int n = matrix.dimension;
+   const int n = (int) matrix.dimension;
    const int nnz = (int) matrix.number_nonzeros;
 
    /* sparsity pattern */
@@ -48,7 +48,7 @@ void MA57Solver::do_symbolic_factorization(COOSymmetricMatrix& matrix) {
    std::vector<int> iwork(5 * n);
 
    /* reindex the matrix (Fortran compliance) */
-   for (int k = 0; k < matrix.number_nonzeros; k++) {
+   for (size_t k = 0; k < matrix.number_nonzeros; k++) {
       matrix.row_indices[k]++;
       matrix.column_indices[k]++;
    }
@@ -68,7 +68,7 @@ void MA57Solver::do_symbolic_factorization(COOSymmetricMatrix& matrix) {
    assert(info[0] == 0 && "MA57: the symbolic factorization failed");
 
    /* reindex the matrix (Fortran compliance) */
-   for (int k = 0; k < matrix.number_nonzeros; k++) {
+   for (size_t k = 0; k < matrix.number_nonzeros; k++) {
       matrix.row_indices[k]--;
       matrix.column_indices[k]--;
    }
@@ -82,8 +82,8 @@ void MA57Solver::do_symbolic_factorization(COOSymmetricMatrix& matrix) {
 }
 
 void MA57Solver::do_numerical_factorization(COOSymmetricMatrix& matrix) {
-   assert(this->factorization.n == matrix.dimension && "MA57Solver: the dimensions do not match");
-   assert(this->factorization.nnz == matrix.number_nonzeros && "MA57Solver: the numbers of nonzeros do not match");
+   assert(this->factorization.n == (int) matrix.dimension && "MA57Solver: the dimensions do not match");
+   assert(this->factorization.nnz == (int) matrix.number_nonzeros && "MA57Solver: the numbers of nonzeros do not match");
 
    /* numerical factorization */
    ma57bd_(&this->factorization.n,

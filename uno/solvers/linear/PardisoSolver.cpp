@@ -38,7 +38,7 @@ void PardisoSolver::do_symbolic_factorization(CSCSymmetricMatrix& matrix) {
    for (int i = 0; i < this->n + 1; i++) {
       matrix.column_start[i]++;
    }
-   for (int i = 0; i < matrix.number_nonzeros; i++) {
+   for (size_t i = 0; i < matrix.number_nonzeros; i++) {
       matrix.row_index[i]++;
    }
 
@@ -83,7 +83,7 @@ std::vector<double> PardisoSolver::solve(CSCSymmetricMatrix& matrix, const std::
    for (int i = 0; i < this->n + 1; i++) {
       matrix.column_start[i]--;
    }
-   for (int i = 0; i < matrix.number_nonzeros; i++) {
+   for (size_t i = 0; i < matrix.number_nonzeros; i++) {
       matrix.row_index[i]--;
    }
 

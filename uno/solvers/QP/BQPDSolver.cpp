@@ -42,15 +42,15 @@ BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_
 Direction BQPDSolver::solve_QP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector&
    linear_objective, const std::vector<SparseVector>& constraints_jacobian, const CSCSymmetricMatrix& hessian, const std::vector<double>& initial_point) {
    /* Hessian */
-   for (int i = 0; i < hessian.number_nonzeros; i++) {
+   for (size_t i = 0; i < hessian.number_nonzeros; i++) {
       this->hessian_[i] = hessian.matrix[i];
    }
    /* Hessian sparsity */
    this->hessian_sparsity_[0] = hessian.number_nonzeros + 1;
-   for (int i = 0; i < hessian.number_nonzeros; i++) {
+   for (size_t i = 0; i < hessian.number_nonzeros; i++) {
       this->hessian_sparsity_[i + 1] = hessian.row_index[i] + this->fortran_shift;
    }
-   for (int i = 0; i < hessian.dimension + 1; i++) {
+   for (size_t i = 0; i < hessian.dimension + 1; i++) {
       this->hessian_sparsity_[hessian.number_nonzeros + i + 1] =
             hessian.column_start[i] + this->fortran_shift;
    }
