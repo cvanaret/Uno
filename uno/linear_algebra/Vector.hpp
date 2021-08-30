@@ -118,5 +118,6 @@ void print_vector(std::ostream& stream, const SparseVector& x, const char end = 
 void print_vector(const Level& level, const SparseVector& x, const char end = '\n');
 
 std::string join(std::vector <std::string>& vector, const std::string& separator);
+bool in_increasing_order(const int* array, size_t length);
 
 #endif // VECTOR_H
