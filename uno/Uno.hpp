@@ -1,7 +1,7 @@
 #ifndef UNO_H
 #define UNO_H
 
-#include "optimization_problem/Problem.hpp"
+#include "optimization/Problem.hpp"
 #include "ingredients/mechanism/GlobalizationMechanism.hpp"
 
 struct Result {

@@ -24,24 +24,30 @@ void* operator new(size_t size) {
 }
 
 void run_uno(const std::string& problem_name, const Options& options) {
+   const std::string_view mechanism_type = options.at("mechanism");
+   const std::string_view constraint_relaxation_type = options.at("constraint-relaxation");
+   const std::string_view subproblem_type = options.at("subproblem");
+
    // TODO: use a factory
    // AMPL model
    auto problem = std::make_unique<AMPLModel>(problem_name);
    std::cout << "Heap allocations after AMPL: " << total_allocations << "\n";
 
-   /* create the constraint relaxation strategy and the subproblem */
-   bool use_trust_region = (options.at("mechanism") == "TR");
-   auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(options.at("constraint-relaxation"), *problem, options,
-         use_trust_region);
+   /* create the subproblem */
+   const bool use_trust_region = (mechanism_type == "TR");
+   const size_t number_variables = ConstraintRelaxationStrategyFactory::get_number_variables(constraint_relaxation_type, *problem);
+   auto subproblem = SubproblemFactory::create(*problem, number_variables, subproblem_type, options, use_trust_region);
+
+   /* create the constraint relaxation strategy */
+   auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(constraint_relaxation_type, *problem, *subproblem, options);
    std::cout << "Heap allocations after ConstraintRelax, Subproblem and Solver: " << total_allocations << "\n";
 
    /* create the globalization mechanism */
-   auto mechanism = GlobalizationMechanismFactory::create(options.at("mechanism"), *constraint_relaxation_strategy, options);
+   auto mechanism = GlobalizationMechanismFactory::create(mechanism_type, *constraint_relaxation_strategy, options);
    std::cout << "Heap allocations after Mechanism: " << total_allocations << "\n";
 
    double tolerance = std::stod(options.at("tolerance"));
    int max_iterations = std::stoi(options.at("max_iterations"));
-   bool use_preprocessing = (options.at("preprocessing") == "yes");
    Uno uno = Uno(*mechanism, tolerance, max_iterations);
 
    /* initial primal and dual points */
@@ -51,6 +57,7 @@ void run_uno(const std::string& problem_name, const Options& options) {
    problem->set_initial_dual_point(multipliers.constraints);
 
    std::cout << "Heap allocations before solving: " << total_allocations << "\n";
+   bool use_preprocessing = (options.at("preprocessing") == "yes");
    Result result = uno.solve(*problem, x, multipliers, use_preprocessing);
 
    /* remove auxiliary variables */

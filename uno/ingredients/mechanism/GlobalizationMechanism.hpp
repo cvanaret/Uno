@@ -2,7 +2,7 @@
 #define GLOBALIZATIONMECHANISM_H
 
 #include "ingredients/constraint_relaxation/ConstraintRelaxationStrategy.hpp"
-#include "optimization_problem/Problem.hpp"
+#include "optimization/Problem.hpp"
 #include "tools/Statistics.hpp"
 
 /*! \class GlobalizationMechanism

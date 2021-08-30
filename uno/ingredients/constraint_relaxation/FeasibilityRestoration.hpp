@@ -9,7 +9,7 @@ enum Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 
 class FeasibilityRestoration : public ConstraintRelaxationStrategy {
 public:
-   FeasibilityRestoration(const Problem& problem, const Options& options, bool use_trust_region);
+   FeasibilityRestoration(Subproblem& subproblem, const Options& options);
    Iterate initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
 
    // direction computation
@@ -20,6 +20,8 @@ public:
    bool is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length) override;
    double compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, const Direction& direction, double step_length) override;
+
+   static size_t get_number_variables(const Problem& problem);
 
 private:
    const std::unique_ptr<GlobalizationStrategy> phase_1_strategy;

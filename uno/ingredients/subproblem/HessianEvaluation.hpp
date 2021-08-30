@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <vector>
-#include "optimization_problem/Problem.hpp"
+#include "optimization/Problem.hpp"
 #include "solvers/linear/LinearSolver.hpp"
 #include "solvers/linear/LinearSolverFactory.hpp"
 

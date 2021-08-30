@@ -2,15 +2,27 @@
 #include "FeasibilityRestoration.hpp"
 #include "l1Relaxation.hpp"
 
-std::unique_ptr<ConstraintRelaxationStrategy> ConstraintRelaxationStrategyFactory::create(const std::string& constraint_relaxation_type,
-      Problem& problem, const Options& options, bool use_trust_region) {
+size_t ConstraintRelaxationStrategyFactory::get_number_variables(std::string_view constraint_relaxation_type, const Problem& problem) {
    if (constraint_relaxation_type == "feasibility-restoration") {
-      return std::make_unique<FeasibilityRestoration>(problem, options, use_trust_region);
+      return FeasibilityRestoration::get_number_variables(problem);
    }
    else if (constraint_relaxation_type == "l1-relaxation") {
-      return std::make_unique<l1Relaxation>(problem, options, use_trust_region);
+      return l1Relaxation::get_number_variables(problem);
    }
    else {
-      throw std::invalid_argument("ConstraintRelaxationStrategy type " + constraint_relaxation_type + " does not exist");
+      throw std::invalid_argument("ConstraintRelaxationStrategy type does not exist");
+   }
+}
+
+std::unique_ptr<ConstraintRelaxationStrategy> ConstraintRelaxationStrategyFactory::create(std::string_view constraint_relaxation_type,
+      Problem& problem, Subproblem& subproblem, const Options& options) {
+   if (constraint_relaxation_type == "feasibility-restoration") {
+      return std::make_unique<FeasibilityRestoration>(subproblem, options);
+   }
+   else if (constraint_relaxation_type == "l1-relaxation") {
+      return std::make_unique<l1Relaxation>(problem, subproblem, options);
+   }
+   else {
+      throw std::invalid_argument("ConstraintRelaxationStrategy type does not exist");
    }
 }

@@ -4,7 +4,7 @@
 #include <ostream>
 #include <vector>
 #include <cmath>
-#include "optimization_problem/Constraint.hpp"
+#include "optimization/Constraint.hpp"
 
 /* see bqpd.f */
 enum Status {

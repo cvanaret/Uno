@@ -5,8 +5,8 @@
 #include <cmath>
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem/Direction.hpp"
-#include "optimization_problem/Problem.hpp"
-#include "optimization_problem/Iterate.hpp"
+#include "optimization/Problem.hpp"
+#include "optimization/Iterate.hpp"
 #include "tools/Statistics.hpp"
 
 struct ElasticVariables {
@@ -17,7 +17,7 @@ struct ElasticVariables {
 
 class ConstraintRelaxationStrategy {
 public:
-   explicit ConstraintRelaxationStrategy(std::unique_ptr<Subproblem> subproblem);
+   explicit ConstraintRelaxationStrategy(Subproblem& subproblem);
    virtual Iterate initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
 
    virtual void generate_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) = 0;
@@ -32,13 +32,11 @@ public:
    virtual double compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, const Direction& direction, double step_length) = 0;
    virtual void register_accepted_iterate(Iterate& iterate);
 
-   int get_number_variables() const;
-   int get_number_constraints() const;
    [[nodiscard]] int get_hessian_evaluation_count() const;
    [[nodiscard]] int get_number_subproblems_solved() const;
 
 protected:
-   std::unique_ptr<Subproblem> subproblem;
+   Subproblem& subproblem;
    size_t number_variables;
    size_t number_constraints;
 

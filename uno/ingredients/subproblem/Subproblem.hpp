@@ -4,9 +4,9 @@
 #include <cmath>
 #include <vector>
 #include <memory>
-#include "optimization_problem/Problem.hpp"
-#include "optimization_problem/Iterate.hpp"
-#include "optimization_problem/Constraint.hpp"
+#include "optimization/Problem.hpp"
+#include "optimization/Iterate.hpp"
+#include "optimization/Constraint.hpp"
 #include "Direction.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "solvers/linear/LinearSolver.hpp"

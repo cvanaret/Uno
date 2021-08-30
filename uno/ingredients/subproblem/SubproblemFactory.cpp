@@ -3,7 +3,7 @@
 #include "SLP.hpp"
 #include "InteriorPoint.hpp"
 
-std::unique_ptr <Subproblem> SubproblemFactory::create(const Problem& problem, size_t number_variables, const std::string& subproblem_type,
+std::unique_ptr <Subproblem> SubproblemFactory::create(const Problem& problem, size_t number_variables, std::string_view subproblem_type,
       const Options& options, bool use_trust_region) {
    const std::vector <std::string> possible_methods = {"SQP", "SLP", "IPM"};
    /* active-set methods */
@@ -46,5 +46,5 @@ std::unique_ptr <Subproblem> SubproblemFactory::create(const Problem& problem, s
       }
 
    }
-   throw std::invalid_argument("Subproblem method " + subproblem_type + " does not exist.");
+   throw std::invalid_argument("Subproblem method does not exist.");
 }
