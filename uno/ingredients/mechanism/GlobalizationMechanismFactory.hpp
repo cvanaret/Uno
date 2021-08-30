@@ -7,7 +7,7 @@
 
 class GlobalizationMechanismFactory {
 public:
-    static std::unique_ptr<GlobalizationMechanism> create(const std::string& mechanism_type, ConstraintRelaxationStrategy&
+    static std::unique_ptr<GlobalizationMechanism> create(std::string_view mechanism_type, ConstraintRelaxationStrategy&
     constraint_relaxation_strategy, const Options& options);
 };
 

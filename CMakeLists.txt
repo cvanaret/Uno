@@ -14,6 +14,7 @@ set(CMAKE_BUILD_TYPE Release)
 enable_language(CXX C Fortran)
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wunused-value -Wno-conversion")
+#  -Wconversion
 set(CMAKE_CXX_FLAGS_DEBUG "-pg")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 

@@ -1,7 +1,7 @@
 #include <cmath>
 #include "Uno.hpp"
-#include "optimization_problem/Iterate.hpp"
-#include "optimization_problem/Preprocessing.hpp"
+#include "optimization/Iterate.hpp"
+#include "optimization/Preprocessing.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/Timer.hpp"
