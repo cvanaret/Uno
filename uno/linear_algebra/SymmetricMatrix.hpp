@@ -7,11 +7,11 @@
 
 class SymmetricMatrix {
 public:
-   int dimension;
-   int number_nonzeros{0};
+   size_t dimension;
+   size_t number_nonzeros{0};
    size_t capacity;
 
-   SymmetricMatrix(int dimension, size_t capacity);
+   SymmetricMatrix(size_t dimension, size_t capacity);
    virtual ~SymmetricMatrix() = default;
 
    void reset();
@@ -22,7 +22,7 @@ public:
 
    virtual void for_each(const std::function<void (int, int, double)>& f) const = 0;
    /* build the matrix incrementally */
-   virtual void insert(double term, int row_index, int column_index) = 0;
+   virtual void insert(double term, size_t row_index, size_t column_index) = 0;
    virtual void add_identity_multiple(double multiple) = 0;
 };
 
