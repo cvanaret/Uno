@@ -23,18 +23,9 @@ void clear(std::vector<double>& x) {
    }
 }
 
-void clear(SparseVector& x) {
-   x.clear();
-}
-
 void scale(std::vector<double>& x, double scaling_factor) {
    for (double& xi: x) {
       xi *= scaling_factor;
-   }
-}
-void scale(SparseVector& x, double scaling_factor) {
-   for (auto& element: x) {
-      element.second *= scaling_factor;
    }
 }
 
@@ -43,25 +34,6 @@ double norm_1(const std::vector<double>& x) {
    double norm = 0.;
    for (double xi: x) {
       norm += std::abs(xi);
-   }
-   return norm;
-}
-
-double norm_1(const SparseVector& x) {
-   double norm = 0.;
-   for (std::pair<int, double> term: x) {
-      double xi = term.second;
-      norm += std::abs(xi);
-   }
-   return norm;
-}
-
-// https://en.wikipedia.org/wiki/Matrix_norm#Special_cases
-double norm_1(const std::vector<SparseVector>& m) {
-   double norm = 0.;
-   for (const auto& column: m) {
-      double column_norm = norm_1(column);
-      norm = std::max(norm, column_norm);
    }
    return norm;
 }
@@ -83,15 +55,6 @@ double norm_2_squared(const std::vector<double>& x) {
    return norm_squared;
 }
 
-double norm_2_squared(const SparseVector& x) {
-   double norm_squared = 0.;
-   for (std::pair<int, double> term: x) {
-      double xi = term.second;
-      norm_squared += xi * xi;
-   }
-   return norm_squared;
-}
-
 double norm_2_squared(const std::function<double(int i)>& f, size_t size) {
    double norm = 0.;
    for (size_t i = 0; i < size; i++) {
@@ -106,10 +69,6 @@ double norm_2(const std::vector<double>& x) {
    return std::sqrt(norm_2_squared(x));
 }
 
-double norm_2(const SparseVector& x) {
-   return std::sqrt(norm_2_squared(x));
-}
-
 double norm_2(const std::function<double(int i)>& f, size_t size) {
    return std::sqrt(norm_2_squared(f, size));
 }
@@ -119,38 +78,6 @@ double norm_inf(const std::vector<double>& x, size_t start, size_t length) {
    double norm = 0.;
    for (size_t i = start; i < std::min<size_t>(start + length, x.size()); i++) {
       norm = std::max(norm, std::abs(x[i]));
-   }
-   return norm;
-}
-
-double norm_inf(const SparseVector& x) {
-   double norm = 0.;
-   for (std::pair<int, double> term: x) {
-      double xi = term.second;
-      norm = std::max(norm, std::abs(xi));
-   }
-   return norm;
-}
-
-// https://en.wikipedia.org/wiki/Matrix_norm#Special_cases
-double norm_inf(const std::vector<SparseVector>& m) {
-   // compute maximum row index
-   unsigned int number_rows = 0;
-   for (size_t j = 0; j < m.size(); j++) {
-      // TODO
-      //number_rows = std::max(number_rows, 1 + m[j].begin()->first);
-   }
-   // read the matrix column-wise and fill in the row_vectors norm vector
-   std::vector<double> row_vectors(number_rows);
-   for (size_t j = 0; j < m.size(); j++) {
-      for (const auto[i, value]: m[j]) {
-         row_vectors[i] += std::abs(value);
-      }
-   }
-   // compute the maximal component of the row_vectors vector
-   double norm = 0.;
-   for (double& row_vector : row_vectors) {
-      norm = std::max(norm, row_vector);
    }
    return norm;
 }
@@ -182,53 +109,13 @@ double norm(const std::function<double(size_t i)>& f, size_t size, Norm norm) {
    }
 }
 
-/* dot products */
-
+/* dot product */
 double dot(const std::vector<double>& x, const std::vector<double>& y) {
    double dot = 0.;
    for (size_t i = 0; i < std::min(x.size(), y.size()); i++) {
       dot += x[i] * y[i];
    }
    return dot;
-}
-
-double dot(const std::vector<double>& x, const SparseVector& y) {
-   double dot = 0.;
-   for (const auto[i, yi]: y) {
-      if (i < x.size()) {
-         dot += x[i] * yi;
-      }
-      else {
-         throw std::length_error("Vector.dot: x and y have different sizes");
-      }
-   }
-   return dot;
-}
-
-double dot(const SparseVector& x, const SparseVector& y) {
-   double dot = 0.;
-   for (const auto[i, xi]: x) {
-      try {
-         dot += xi * y.at(i);
-      }
-      catch (std::out_of_range&) {
-      }
-   }
-   return dot;
-}
-
-void print_vector(std::ostream &stream, const SparseVector& x, const char end) {
-   for (const auto [i, xi]: x) {
-      stream << "x[" << i << "] = " << xi << ", ";
-   }
-   stream << end;
-}
-
-void print_vector(const Level& level, const SparseVector& x, const char end) {
-   for (const auto [i, xi]: x) {
-      level << "x[" << i << "] = " << xi << ", ";
-   }
-   level << end;
 }
 
 std::string join(const std::vector<std::string>& vector, const std::string& separator) {
@@ -241,4 +128,16 @@ std::string join(const std::vector<std::string>& vector, const std::string& sepa
       s.append(vector[i]);
    }
    return s;
+}
+
+// check that an array of integers is in increasing order (x[i] <= x[i+1])
+bool in_increasing_order(const int* array, size_t length) {
+   size_t i = 0;
+   while (i < length-1) {
+      if (array[i] > array[i+1]) {
+         return false;
+      }
+      i++;
+   }
+   return true;
 }

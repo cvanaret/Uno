@@ -125,7 +125,7 @@ void AMPLModel::evaluate_constraints(const std::vector<double>& x, std::vector<d
 
 /* sparse gradient */
 void AMPLModel::constraint_gradient(const std::vector<double>& x, int j, SparseVector& gradient) const {
-   int congrd_mode_backup = this->asl_->i.congrd_mode;
+   const int congrd_mode_backup = this->asl_->i.congrd_mode;
    this->asl_->i.congrd_mode = 1; // sparse computation
 
    /* compute the AMPL gradient */
@@ -260,18 +260,6 @@ size_t AMPLModel::compute_hessian_number_nonzeros(double objective_multiplier, c
    size_t number_non_zeros = (*(this->asl_)->p.Sphset)(this->asl_, nullptr, objective_number, (objective_multiplier > 0.),
          !all_zeros_multipliers, upper_triangular);
    return number_non_zeros;
-}
-
-// check that an array of integers is in increasing order (x[i] <= x[i+1])
-bool in_increasing_order(const int* array, size_t length) {
-   size_t i = 0;
-   while (i < length-1) {
-      if (array[i] > array[i+1]) {
-         return false;
-      }
-      i++;
-   }
-   return true;
 }
 
 void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
