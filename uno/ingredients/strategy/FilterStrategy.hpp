@@ -28,10 +28,6 @@ class FilterStrategy : public GlobalizationStrategy {
 public:
    FilterStrategy(FilterStrategyParameters& strategy_constants, const Options& options);
 
-   /* use pointers to allow polymorphism */
-   const std::unique_ptr<Filter> filter;
-   double initial_filter_upper_bound;
-
    void initialize(Statistics& statistics, const Iterate& first_iterate) override;
    bool check_acceptance(Statistics& statistics, ProgressMeasures& current_progress, ProgressMeasures& trial_progress, double objective_multiplier,
          double predicted_reduction) override;
@@ -39,6 +35,9 @@ public:
    void notify(Iterate& current_iterate) override;
 
 private:
+   /* use pointers to allow polymorphism */
+   const std::unique_ptr<Filter> filter;
+   double initial_filter_upper_bound;
    const FilterStrategyParameters parameters; /*!< Set of constants */
 
    static bool switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction);
