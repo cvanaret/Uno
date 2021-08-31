@@ -32,13 +32,6 @@ void COOSymmetricMatrix::insert(double term, size_t row_index, size_t column_ind
    this->number_nonzeros++;
 }
 
-std::ostream& operator<<(std::ostream& stream, COOSymmetricMatrix& matrix) {
-   matrix.for_each([&](int i, int j, double entry) {
-      stream << "m(" << i << ", " << j << ") = " << entry << "\n";
-   });
-   return stream;
-}
-
 std::ostream& operator<<(std::ostream& stream, const COOSymmetricMatrix& matrix) {
    matrix.for_each([&](int i, int j, double entry) {
       stream << "m(" << i << ", " << j << ") = " << entry << "\n";

@@ -30,7 +30,6 @@ public:
 
    static CSCSymmetricMatrix identity(int dimension);
 
-   friend std::ostream& operator<<(std::ostream& stream, CSCSymmetricMatrix& matrix);
    friend std::ostream& operator<<(std::ostream& stream, const CSCSymmetricMatrix& matrix);
 
 protected:
