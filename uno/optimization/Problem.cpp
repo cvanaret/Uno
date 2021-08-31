@@ -34,24 +34,23 @@ std::vector<double> Problem::evaluate_constraints(const std::vector<double>& x) 
 
 void Problem::determine_bounds_types(std::vector<Range>& bounds, std::vector<ConstraintType>& status) {
    assert(bounds.size() == status.size());
-
-   for (size_t i = 0; i < bounds.size(); i++) {
-      if (bounds[i].lb == bounds[i].ub) {
-         status[i] = EQUAL_BOUNDS;
+   std::transform(begin(bounds), end(bounds), begin(status), [](const Range& bounds_i) {
+      if (bounds_i.lb == bounds_i.ub) {
+         return EQUAL_BOUNDS;
       }
-      else if (-INFINITY < bounds[i].lb && bounds[i].ub < INFINITY) {
-         status[i] = BOUNDED_BOTH_SIDES;
+      else if (-INFINITY < bounds_i.lb && bounds_i.ub < INFINITY) {
+         return BOUNDED_BOTH_SIDES;
       }
-      else if (-INFINITY < bounds[i].lb) {
-         status[i] = BOUNDED_LOWER;
+      else if (-INFINITY < bounds_i.lb) {
+         return BOUNDED_LOWER;
       }
-      else if (bounds[i].ub < INFINITY) {
-         status[i] = BOUNDED_UPPER;
+      else if (bounds_i.ub < INFINITY) {
+         return BOUNDED_UPPER;
       }
       else {
-         status[i] = UNBOUNDED;
+         return UNBOUNDED;
       }
-   }
+   });
 }
 
 void Problem::determine_constraints() {

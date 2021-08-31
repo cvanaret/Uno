@@ -23,12 +23,12 @@ int Statistics::double_width = 18;
 int Statistics::char_width = 7;
 
 void Statistics::add_column(std::string name, int width, int order) {
-   this->columns_[order] = name;
-   this->widths_[std::move(name)] = width;
+   this->columns[order] = name;
+   this->widths[std::move(name)] = width;
 }
 
 void Statistics::add_statistic(std::string name, std::string value) {
-   this->current_line_[std::move(name)] = std::move(value);
+   this->current_line[std::move(name)] = std::move(value);
 }
 
 void Statistics::add_statistic(std::string name, int value) {
@@ -45,12 +45,12 @@ void Statistics::print_header(bool first_occurrence) {
    /* line above */
    std::cout << (first_occurrence ? Statistics::symbols["top-left"] : Statistics::symbols["left-mid"]);
    int k = 0;
-   for (const std::pair<const int, std::string>& element: this->columns_) {
+   for (const std::pair<const int, std::string>& element: this->columns) {
       if (0 < k) {
          std::cout << (first_occurrence ? Statistics::symbols["top-mid"] : Statistics::symbols["mid-mid"]);
       }
       std::string header = element.second;
-      for (int j = 0; j < this->widths_[header]; j++) {
+      for (int j = 0; j < this->widths[header]; j++) {
          std::cout << Statistics::symbols["top"];
       }
       k++;
@@ -59,13 +59,13 @@ void Statistics::print_header(bool first_occurrence) {
    /* headers */
    std::cout << Statistics::symbols["left"];
    k = 0;
-   for (const std::pair<const int, std::string>& element: this->columns_) {
+   for (const std::pair<const int, std::string>& element: this->columns) {
       if (0 < k) {
          std::cout << Statistics::symbols["middle"];
       }
       std::string header = element.second;
       std::cout << " " << header;
-      for (size_t j = 0; j < this->widths_[header] - header.size() - 1; j++) {
+      for (size_t j = 0; j < this->widths[header] - header.size() - 1; j++) {
          std::cout << " ";
       }
       k++;
@@ -79,12 +79,12 @@ void Statistics::print_current_line() {
    }
    std::cout << Statistics::symbols["left-mid"];
    int k = 0;
-   for (const std::pair<const int, std::string>& element: this->columns_) {
+   for (const std::pair<const int, std::string>& element: this->columns) {
       if (0 < k) {
          std::cout << Statistics::symbols["mid-mid"];
       }
       std::string header = element.second;
-      for (int j = 0; j < this->widths_[header]; j++) {
+      for (int j = 0; j < this->widths[header]; j++) {
          std::cout << Statistics::symbols["bottom"];
       }
       k++;
@@ -93,14 +93,14 @@ void Statistics::print_current_line() {
    /* headers */
    std::cout << Statistics::symbols["left"];
    k = 0;
-   for (const std::pair<const int, std::string>& element: this->columns_) {
+   for (const std::pair<const int, std::string>& element: this->columns) {
       if (0 < k) {
          std::cout << Statistics::symbols["middle"];
       }
       const std::string& header = element.second;
       size_t size;
       try {
-         std::string value = this->current_line_.at(header);
+         std::string value = this->current_line.at(header);
          std::cout << " " << value;
          size = 1 + value.size();
       }
@@ -108,7 +108,7 @@ void Statistics::print_current_line() {
          std::cout << " -";
          size = 2;
       }
-      int number_spaces = this->widths_[header] - size;
+      int number_spaces = this->widths[header] - size;
       if (number_spaces < 0) {
          number_spaces = 0;
       }
@@ -124,12 +124,12 @@ void Statistics::print_current_line() {
 void Statistics::print_footer() {
    std::cout << Statistics::symbols["bottom-left"];
    int k = 0;
-   for (const std::pair<const int, std::string>& element: this->columns_) {
+   for (const std::pair<const int, std::string>& element: this->columns) {
       if (0 < k) {
          std::cout << Statistics::symbols["bottom-mid"];
       }
       std::string header = element.second;
-      for (int j = 0; j < this->widths_[header]; j++) {
+      for (int j = 0; j < this->widths[header]; j++) {
          std::cout << Statistics::symbols["bottom"];
       }
       k++;
@@ -138,5 +138,5 @@ void Statistics::print_footer() {
 }
 
 void Statistics::new_line() {
-   this->current_line_.clear();
+   this->current_line.clear();
 }
