@@ -7,7 +7,8 @@ l1Relaxation::l1Relaxation(Problem& problem, Subproblem& subproblem, const Optio
       ConstraintRelaxationStrategy(subproblem),
       globalization_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
       penalty_parameter(stod(options.at("l1_relaxation_initial_parameter"))),
-      parameters({10., 0.1, 0.1}) {
+      parameters({10., 0.1, 0.1}),
+      elastic_variables(ConstraintRelaxationStrategy::count_elastic_variables(problem)) {
    assert(this->subproblem.number_variables == l1Relaxation::get_number_variables(problem) && "The number of variables is inconsistent");
 
    // generate elastic variables to relax the constraints
@@ -88,6 +89,14 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
 void l1Relaxation::update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) {
    this->subproblem.update_objective_multiplier(problem, current_iterate, objective_multiplier);
    // add the positive elastic variables
+   elastic_variables.positive.for_each([&](size_t /*j*/, size_t i) {
+      this->subproblem.objective_gradient[i] = 1.;
+   });
+   elastic_variables.negative.for_each([&](size_t /*j*/, size_t i) {
+      this->subproblem.objective_gradient[i] = 1.;
+   });
+
+   /*
    for (const auto& element: elastic_variables.positive) {
       const size_t i = element.second;
       this->subproblem.objective_gradient[i] = 1.;
@@ -97,6 +106,7 @@ void l1Relaxation::update_objective_multiplier(const Problem& problem, const Ite
       const size_t i = element.second;
       this->subproblem.objective_gradient[i] = 1.;
    }
+    */
 }
 
 Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
@@ -206,19 +216,6 @@ Direction l1Relaxation::compute_byrd_steering_rule(Statistics& statistics, const
    return direction;
 }
 
-size_t l1Relaxation::count_elastic_variables(const Problem& problem) {
-   size_t number_variables = 0;
-   for (size_t j = 0; j < problem.number_constraints; j++) {
-      if (-INFINITY < problem.constraint_bounds[j].lb) {
-         number_variables++;
-      }
-      if (problem.constraint_bounds[j].ub < INFINITY) {
-         number_variables++;
-      }
-   }
-   return number_variables;
-}
-
 size_t l1Relaxation::get_number_variables(const Problem& problem) {
    return problem.number_variables + l1Relaxation::count_elastic_variables(problem);
 }
@@ -226,6 +223,14 @@ size_t l1Relaxation::get_number_variables(const Problem& problem) {
 double l1Relaxation::compute_linearized_constraint_residual(std::vector<double>& direction) {
    double residual = 0.;
    // l1 residual of the linearized constraints: sum of elastic variables
+   this->elastic_variables.positive.for_each([&](size_t /*j*/, size_t i) {
+      residual += direction[i];
+   });
+   this->elastic_variables.negative.for_each([&](size_t /*j*/, size_t i) {
+      residual += direction[i];
+   });
+
+   /*
    for (const auto& element: this->elastic_variables.positive) {
       size_t i = element.second;
       residual += direction[i];
@@ -234,6 +239,7 @@ double l1Relaxation::compute_linearized_constraint_residual(std::vector<double>&
       size_t i = element.second;
       residual += direction[i];
    }
+    */
    return residual;
 }
 
@@ -257,16 +263,26 @@ void l1Relaxation::remove_elastic_variables(const Problem& problem, Direction& d
    direction.multipliers.upper_bounds.resize(problem.number_variables);
    direction.norm = norm_inf(direction.x);
 
-   /* remove contribution of positive part variables */
+   elastic_variables.positive.for_each([&](size_t j, size_t i) {
+      this->subproblem.objective_gradient.erase(i);
+      this->subproblem.constraints_jacobian[j].erase(i);
+   });
+   elastic_variables.negative.for_each([&](size_t j, size_t i) {
+      this->subproblem.objective_gradient.erase(i);
+      this->subproblem.constraints_jacobian[j].erase(i);
+   });
+   /*
+   // remove contribution of positive part variables
    for (auto&[j, i]: elastic_variables.positive) {
       this->subproblem.objective_gradient.erase(i);
       this->subproblem.constraints_jacobian[j].erase(i);
    }
-   /* remove contribution of negative part variables */
+   // remove contribution of negative part variables
    for (auto&[j, i]: elastic_variables.negative) {
       this->subproblem.objective_gradient.erase(i);
       this->subproblem.constraints_jacobian[j].erase(i);
    }
+    */
 }
 
 double l1Relaxation::compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, const Direction& direction, double step_length) {
@@ -294,6 +310,7 @@ void l1Relaxation::recover_l1qp_active_set_(const Problem& problem, const Direct
       //direction.active_set.bounds.at_upper_bound.erase(i);
    }
    // constraints: only when p-n = 0
+   /*
    for (size_t j = 0; j < direction.multipliers.constraints.size(); j++) {
       // compute constraint violation
       double constraint_violation = 0.;
@@ -316,4 +333,5 @@ void l1Relaxation::recover_l1qp_active_set_(const Problem& problem, const Direct
          //direction.active_set.constraints.at_upper_bound.erase(j);
       }
    }
+    */
 }

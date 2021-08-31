@@ -5,13 +5,17 @@
 #include <cmath>
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem/Direction.hpp"
+#include "linear_algebra/SparseVector.hpp"
 #include "optimization/Problem.hpp"
 #include "optimization/Iterate.hpp"
 #include "tools/Statistics.hpp"
 
 struct ElasticVariables {
-   std::map<size_t, size_t> positive;
-   std::map<size_t, size_t> negative;
+   //std::map<size_t, size_t> positive;
+   //std::map<size_t, size_t> negative;
+   SparseVector2<size_t> positive;
+   SparseVector2<size_t> negative;
+   ElasticVariables(size_t capacity): positive(capacity), negative(capacity) {}
    [[nodiscard]] size_t size() const { return this->positive.size() + this->negative.size(); }
 };
 
@@ -40,6 +44,7 @@ protected:
    size_t number_variables;
    size_t number_constraints;
 
+   static size_t count_elastic_variables(const Problem& problem);
    static void generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables);
    void set_elastic_bounds_in_subproblem(const Problem& problem, size_t number_elastic_variables) const;
    void add_elastic_variables_to_subproblem(const ElasticVariables& elastic_variables);
