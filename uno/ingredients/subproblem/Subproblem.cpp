@@ -1,6 +1,22 @@
 #include <cassert>
 #include "Subproblem.hpp"
 
+
+std::array<Direction, 1> SQPTest::compute_directions() {
+   Direction d(2, 3);
+   return {d};
+}
+
+std::array<Direction, 2> SLQPTest::compute_directions() {
+   Direction d(2, 3);
+   return {d, d};
+}
+
+void function_test() {
+   SLQPTest slqp_test;
+   std::array<Direction, slqp_test.number_directions> directions = slqp_test.compute_directions();
+}
+
 Subproblem::Subproblem(size_t number_variables, size_t number_constraints) :
       number_variables(number_variables),
       number_constraints(number_constraints),
@@ -43,10 +59,6 @@ double Subproblem::push_variable_to_interior(double variable_value, const Range&
    variable_value = std::max(variable_value, variable_bounds.lb + perturbation_lb);
    variable_value = std::min(variable_value, variable_bounds.ub - perturbation_ub);
    return variable_value;
-}
-
-void Subproblem::set_trust_region(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {
-   this->set_variables_bounds(problem, current_iterate, trust_region_radius);
 }
 
 void Subproblem::set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {
