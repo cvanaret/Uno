@@ -151,6 +151,7 @@ if(WITH_GTEST)
             unotest/unotest.cpp
             unotest/MA57SolverTests.cpp
             unotest/CSCSymmetricMatrixTests.cpp
+            unotest/SparseVectorTests.cpp
         )
         add_executable(run_unotest ${TESTS_SRC_FILES})
         target_link_libraries(run_unotest PUBLIC GTest::gtest uno)
