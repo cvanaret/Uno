@@ -13,7 +13,7 @@ void SymmetricMatrix::reset() {
 }
 
 std::vector<double> SymmetricMatrix::product(const std::vector<double>& vector) const {
-   assert(this->dimension == (int) vector.size() && "The matrix and the vector do not have the same size");
+   assert(this->dimension == vector.size() && "The matrix and the vector do not have the same size");
 
    /* create (n, 1) result */
    std::vector<double> result(vector.size());
