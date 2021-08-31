@@ -34,6 +34,7 @@ std::vector<double> Problem::evaluate_constraints(const std::vector<double>& x) 
 
 void Problem::determine_bounds_types(std::vector<Range>& bounds, std::vector<ConstraintType>& status) {
    assert(bounds.size() == status.size());
+   // build the "status" vector as a mapping (map/transform operation) of the "bounds" vector
    std::transform(begin(bounds), end(bounds), begin(status), [](const Range& bounds_i) {
       if (bounds_i.lb == bounds_i.ub) {
          return EQUAL_BOUNDS;
