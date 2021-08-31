@@ -64,11 +64,18 @@ std::vector<double> Iterate::lagrangian_gradient(const Problem& problem, double 
       this->compute_objective_gradient(problem);
 
       /* scale the objective gradient */
+      this->objective_gradient.for_each([&](size_t i, double derivative) {
+         if (i < problem.number_variables) {
+            lagrangian_gradient[i] += objective_multiplier * derivative;
+         }
+      });
+      /*
       for (const auto[i, derivative]: this->objective_gradient) {
          if (i < problem.number_variables) {
             lagrangian_gradient[i] += objective_multiplier * derivative;
          }
       }
+       */
    }
    /* bound constraints */
    for (size_t i = 0; i < problem.number_variables; i++) {

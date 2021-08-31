@@ -82,7 +82,7 @@ public:
 
    // purely virtual functions
    [[nodiscard]] virtual double evaluate_objective(const std::vector<double>& x) const = 0;
-   virtual void evaluate_objective_gradient(const std::vector<double>& x, SparseVector& gradient) const = 0;
+   virtual void evaluate_objective_gradient(const std::vector<double>& x, SparseVector2<double>& gradient) const = 0;
    [[nodiscard]] virtual double evaluate_constraint(int j, const std::vector<double>& x) const = 0;
    virtual void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const = 0;
    virtual void constraint_gradient(const std::vector<double>& x, int j, SparseVector& gradient) const = 0;
@@ -107,64 +107,64 @@ protected:
    void determine_constraints();
 };
 
-template<size_t N, size_t M, size_t MAX_HESSIAN_NNZ>
-class CppProblem : public Problem {
-public:
-   CppProblem(std::string name, double (* objective)(const std::vector<double>& x), void (* objective_gradient)(const std::vector<double>& x,
-         std::vector<double>& gradient)): Problem(name, N, M, NONLINEAR), objective(objective), objective_gradient(objective_gradient),
-         current_variable(0), current_constraint(0) {
-   }
-
-   [[nodiscard]] double evaluate_objective(const std::vector<double>& x) const override {
-      return this->objective(x);
-   }
-
-   void evaluate_objective_gradient(const std::vector<double>& /*x*/, SparseVector& /*gradient*/) const override {
-      assert(false && "not yet implemented");
-   }
-
-   [[nodiscard]] double evaluate_constraint(int /*j*/, const std::vector<double>& /*x*/) const override {
-      return 0.;
-   }
-
-   void evaluate_constraints(const std::vector<double>& /*x*/, std::vector<double>& /*constraints*/) const override {
-      assert(false && "not yet implemented");
-   }
-
-   void constraint_gradient(const std::vector<double>& /*x*/, int /*j*/, SparseVector& /*gradient*/) const override {
-      assert(false && "not yet implemented");
-   }
-
-   void constraints_jacobian(const std::vector<double>& /*x*/, std::vector<SparseVector>& /*constraints_jacobian*/) const override {
-      assert(false && "not yet implemented");
-   }
-
-   void lagrangian_hessian(const std::vector<double>& /*x*/, double /*objective_multiplier*/, const std::vector<double>& /*multipliers*/,
-         CSCSymmetricMatrix& /*hessian*/) const override {
-      assert(false && "not yet implemented");
-   }
-
-   void lagrangian_hessian(const std::vector<double>& /*x*/, double /*objective_multiplier*/, const std::vector<double>& /*multipliers*/,
-         COOSymmetricMatrix& /*hessian*/) const override {
-      assert(false && "not yet implemented");
-   }
-
-   /* initial point */
-   void set_initial_primal_point(std::vector<double>& /*x*/) override {
-      assert(false && "not yet implemented");
-   }
-
-   void set_initial_dual_point(std::vector<double>& /*multipliers*/) override {
-      assert(false && "not yet implemented");
-   }
-
-private:
-   double (* objective)(const std::vector<double>& x);
-   void (* objective_gradient)(const std::vector<double>& x, std::vector<double>& gradient);
-   std::vector<double (*)(const std::vector<double>& x)> constraints;
-   int current_variable;
-   int current_constraint;
-};
+//template<size_t N, size_t M, size_t MAX_HESSIAN_NNZ>
+//class CppProblem : public Problem {
+//public:
+//   CppProblem(std::string name, double (* objective)(const std::vector<double>& x), void (* objective_gradient)(const std::vector<double>& x,
+//         std::vector<double>& gradient)): Problem(name, N, M, NONLINEAR), objective(objective), objective_gradient(objective_gradient),
+//         current_variable(0), current_constraint(0) {
+//   }
+//
+//   [[nodiscard]] double evaluate_objective(const std::vector<double>& x) const override {
+//      return this->objective(x);
+//   }
+//
+//   void evaluate_objective_gradient(const std::vector<double>& /*x*/, SparseVector& /*gradient*/) const override {
+//      assert(false && "not yet implemented");
+//   }
+//
+//   [[nodiscard]] double evaluate_constraint(int /*j*/, const std::vector<double>& /*x*/) const override {
+//      return 0.;
+//   }
+//
+//   void evaluate_constraints(const std::vector<double>& /*x*/, std::vector<double>& /*constraints*/) const override {
+//      assert(false && "not yet implemented");
+//   }
+//
+//   void constraint_gradient(const std::vector<double>& /*x*/, int /*j*/, SparseVector& /*gradient*/) const override {
+//      assert(false && "not yet implemented");
+//   }
+//
+//   void constraints_jacobian(const std::vector<double>& /*x*/, std::vector<SparseVector>& /*constraints_jacobian*/) const override {
+//      assert(false && "not yet implemented");
+//   }
+//
+//   void lagrangian_hessian(const std::vector<double>& /*x*/, double /*objective_multiplier*/, const std::vector<double>& /*multipliers*/,
+//         CSCSymmetricMatrix& /*hessian*/) const override {
+//      assert(false && "not yet implemented");
+//   }
+//
+//   void lagrangian_hessian(const std::vector<double>& /*x*/, double /*objective_multiplier*/, const std::vector<double>& /*multipliers*/,
+//         COOSymmetricMatrix& /*hessian*/) const override {
+//      assert(false && "not yet implemented");
+//   }
+//
+//   // initial point
+//   void set_initial_primal_point(std::vector<double>& /*x*/) override {
+//      assert(false && "not yet implemented");
+//   }
+//
+//   void set_initial_dual_point(std::vector<double>& /*multipliers*/) override {
+//      assert(false && "not yet implemented");
+//   }
+//
+//private:
+//   double (* objective)(const std::vector<double>& x);
+//   void (* objective_gradient)(const std::vector<double>& x, std::vector<double>& gradient);
+//   std::vector<double (*)(const std::vector<double>& x)> constraints;
+//   int current_variable;
+//   int current_constraint;
+//};
 
 // https://stackoverflow.com/questions/53252321/how-to-write-a-function-that-can-take-in-an-array-or-a-vector
 //template<class Container>

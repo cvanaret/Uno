@@ -90,10 +90,10 @@ void l1Relaxation::update_objective_multiplier(const Problem& problem, const Ite
    this->subproblem.update_objective_multiplier(problem, current_iterate, objective_multiplier);
    // add the positive elastic variables
    elastic_variables.positive.for_each([&](size_t /*j*/, size_t i) {
-      this->subproblem.objective_gradient[i] = 1.;
+      this->subproblem.objective_gradient.insert(i, 1.);
    });
    elastic_variables.negative.for_each([&](size_t /*j*/, size_t i) {
-      this->subproblem.objective_gradient[i] = 1.;
+      this->subproblem.objective_gradient.insert(i, 1.);
    });
 
    /*
@@ -264,11 +264,11 @@ void l1Relaxation::remove_elastic_variables(const Problem& problem, Direction& d
    direction.norm = norm_inf(direction.x);
 
    elastic_variables.positive.for_each([&](size_t j, size_t i) {
-      this->subproblem.objective_gradient.erase(i);
+      //this->subproblem.objective_gradient.erase(i);
       this->subproblem.constraints_jacobian[j].erase(i);
    });
    elastic_variables.negative.for_each([&](size_t j, size_t i) {
-      this->subproblem.objective_gradient.erase(i);
+      //this->subproblem.objective_gradient.erase(i);
       this->subproblem.constraints_jacobian[j].erase(i);
    });
    /*

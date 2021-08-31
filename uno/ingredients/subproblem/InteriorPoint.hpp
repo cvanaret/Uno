@@ -234,10 +234,10 @@ inline void InteriorPoint<LinearSolverType>::generate(const Problem& problem, It
    this->objective_gradient.clear();
    problem.evaluate_objective_gradient(current_iterate.x, this->objective_gradient);
    for (size_t i: this->lower_bounded_variables) {
-      this->objective_gradient[i] -= this->barrier_parameter / (current_iterate.x[i] - this->variables_bounds[i].lb);
+      this->objective_gradient.insert(i, -this->barrier_parameter / (current_iterate.x[i] - this->variables_bounds[i].lb));
    }
    for (size_t i: this->upper_bounded_variables) {
-      this->objective_gradient[i] -= this->barrier_parameter / (current_iterate.x[i] - this->variables_bounds[i].ub);
+      this->objective_gradient.insert(i, -this->barrier_parameter / (current_iterate.x[i] - this->variables_bounds[i].ub));
    }
 
    // Hessian (scaled by the objective multiplier)
@@ -255,7 +255,7 @@ inline void InteriorPoint<LinearSolverType>::update_objective_multiplier(const P
 
    // scale objective gradient
    if (objective_multiplier == 0.) {
-      clear(this->objective_gradient);
+      this->objective_gradient.clear();
    }
    else if (objective_multiplier < 1.) {
       this->objective_gradient = current_iterate.objective_gradient;
@@ -574,9 +574,14 @@ inline void InteriorPoint<LinearSolverType>::generate_kkt_rhs(const Iterate& cur
    clear(this->rhs);
 
    /* barrier objective gradient */
+   this->objective_gradient.for_each([&](size_t i, double derivative) {
+      this->rhs[i] = -derivative;
+   });
+   /*
    for (const auto[i, derivative]: this->objective_gradient) {
       this->rhs[i] = -derivative;
    }
+    */
 
    /* constraint: evaluations and gradients */
    for (size_t j = 0; j < current_iterate.constraints.size(); j++) {

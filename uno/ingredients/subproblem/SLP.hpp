@@ -62,7 +62,7 @@ template<typename LPSolverType>
 inline void SLP<LPSolverType>::update_objective_multiplier(const Problem& /*problem*/, const Iterate& current_iterate, double objective_multiplier) {
    // scale objective gradient
    if (objective_multiplier == 0.) {
-      clear(this->objective_gradient);
+      this->objective_gradient.clear();
    }
    else if (objective_multiplier < 1.) {
       this->objective_gradient = current_iterate.objective_gradient;

@@ -80,7 +80,7 @@ double AMPLModel::evaluate_objective(const std::vector<double>& x) const {
 }
 
 /* sparse gradient */
-void AMPLModel::evaluate_objective_gradient(const std::vector<double>& x, SparseVector& gradient) const {
+void AMPLModel::evaluate_objective_gradient(const std::vector<double>& x, SparseVector2<double>& gradient) const {
    /* compute the AMPL gradient (always in dense format) */
    int nerror = 0;
    (*(this->asl_)->p.Objgrd)(this->asl_, 0, (double*) x.data(), (double*) this->ampl_tmp_gradient_.data(), &nerror);
@@ -96,7 +96,8 @@ void AMPLModel::evaluate_objective_gradient(const std::vector<double>& x, Sparse
       if (this->objective_sign < 0.) {
          partial_derivative = -partial_derivative;
       }
-      gradient[ampl_variables_tmp->varno] = partial_derivative;
+      gradient.insert(ampl_variables_tmp->varno, partial_derivative);
+      //gradient[ampl_variables_tmp->varno] = partial_derivative;
       ampl_variables_tmp = ampl_variables_tmp->next;
    }
 }

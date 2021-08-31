@@ -80,7 +80,7 @@ public:
    // when the subproblem is reformulated (e.g. when slacks are introduced), the bounds may be altered
    std::vector <Range> variables_bounds;
    std::vector<double> constraints_multipliers;
-   SparseVector objective_gradient;
+   SparseVector2<double> objective_gradient;
    std::vector <SparseVector> constraints_jacobian;
    std::vector <Range> constraints_bounds;
    // Hessian is optional and depends on the subproblem
@@ -123,9 +123,14 @@ inline void Subproblem::compute_least_square_multipliers(const Problem& problem,
    clear(rhs);
 
    /* objective gradient */
+   /*
    for (const auto[i, derivative]: current_iterate.objective_gradient) {
       rhs[i] += problem.objective_sign * derivative;
    }
+    */
+   current_iterate.objective_gradient.for_each([&](size_t i, double derivative) {
+      rhs[i] += problem.objective_sign * derivative;
+   });
 
    /* variable bound constraints */
    for (size_t i = 0; i < current_iterate.x.size(); i++) {

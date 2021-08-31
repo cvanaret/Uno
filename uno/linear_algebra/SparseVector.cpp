@@ -90,6 +90,19 @@ double dot(const std::vector<double>& x, const SparseVector& y) {
    return dot;
 }
 
+double dot(const std::vector<double>& x, const SparseVector2<double>& y) {
+   double dot = 0.;
+   y.for_each([&](size_t i, double yi) {
+      if (i < x.size()) {
+         dot += x[i] * yi;
+      }
+      else {
+         throw std::length_error("Vector.dot: x and y have different sizes");
+      }
+   });
+   return dot;
+}
+
 double dot(const SparseVector& x, const SparseVector& y) {
    double dot = 0.;
    for (const auto[i, xi]: x) {
@@ -114,4 +127,10 @@ void print_vector(const Level& level, const SparseVector& x, const char end) {
       level << "x[" << i << "] = " << xi << ", ";
    }
    level << end;
+}
+
+void scale(SparseVector2<double>& x, double factor) {
+   x.transform([=](double entry) {
+      return factor*entry;
+   });
 }

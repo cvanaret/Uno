@@ -85,10 +85,10 @@ void Subproblem::compute_feasibility_linear_objective(const Iterate& current_ite
    for (int j: constraint_partition.infeasible) {
       for (const auto [i, derivative]: current_iterate.constraints_jacobian[j]) {
          if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
-            this->objective_gradient[i] -= derivative;
+            this->objective_gradient.insert(i, -derivative);
          }
          else {
-            this->objective_gradient[i] += derivative;
+            this->objective_gradient.insert(i, derivative);
          }
       }
    }
