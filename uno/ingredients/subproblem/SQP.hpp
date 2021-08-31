@@ -71,7 +71,7 @@ inline void SQP<QPSolverType>::update_objective_multiplier(const Problem& proble
 
    // scale objective gradient
    if (objective_multiplier == 0.) {
-      clear(this->objective_gradient);
+      this->objective_gradient.clear();
    }
    else if (objective_multiplier < 1.) {
       this->objective_gradient = current_iterate.objective_gradient;

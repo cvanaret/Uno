@@ -25,7 +25,7 @@ public:
 
    /* objective */
    [[nodiscard]] double evaluate_objective(const std::vector<double>& x) const override;
-   void evaluate_objective_gradient(const std::vector<double>& x, SparseVector& gradient) const override;
+   void evaluate_objective_gradient(const std::vector<double>& x, SparseVector2<double>& gradient) const override;
 
    /* constraints */
    //std::vector<bool> constraint_is_uncertainty_set;

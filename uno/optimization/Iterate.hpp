@@ -50,7 +50,7 @@ public:
    std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
    bool are_constraints_computed{false};
 
-   SparseVector objective_gradient; /*!< Sparse Jacobian of the evaluate_objective */
+   SparseVector2<double> objective_gradient; /*!< Sparse Jacobian of the evaluate_objective */
    bool is_objective_gradient_computed{false}; /*!< Flag that indicates if the evaluate_objective gradient has already been computed */
 
    std::vector<SparseVector> constraints_jacobian; /*!< Sparse Jacobian of the constraints */
