@@ -42,7 +42,7 @@ void CSCSymmetricMatrix::for_each(const std::function<void (int, int, double)>& 
 
 void CSCSymmetricMatrix::for_each(size_t column_index, const std::function<void (int, double)>& f) const {
    const size_t overall_padding_size = std::accumulate(begin(this->remaining_column_padding), begin(this->remaining_column_padding) + column_index,
-         0, std::plus<int>());
+         0);
    // work on the active elements (ignore the padding slots)
    for (int k = (int) (this->column_start[column_index] + overall_padding_size); k < (int) (this->column_start[column_index + 1] + overall_padding_size); k++) {
       int i = this->row_index[k];
