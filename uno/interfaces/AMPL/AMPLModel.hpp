@@ -2,8 +2,6 @@
 #define AMPLMODEL_H
 
 #include <vector>
-#include <map>
-#include <unordered_map>
 #include "optimization/Problem.hpp"
 #include "optimization/Constraint.hpp"
 
