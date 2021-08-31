@@ -167,24 +167,6 @@ CSCSymmetricMatrix CSCSymmetricMatrix::identity(int dimension) {
    return identity;
 }
 
-std::ostream& operator<<(std::ostream& stream, CSCSymmetricMatrix& matrix) {
-   stream << matrix.dimension << " variables\n";
-   stream << matrix.number_nonzeros << " non zeros\n";
-   stream << "W =";
-   matrix.for_each([&](size_t /*i*/, size_t /*j*/, double entry) {
-      stream << " " << entry;
-   });
-   stream << "\n";
-   stream << "with column start: ";
-   print_vector(stream, matrix.column_start, '\n', 0, matrix.dimension + 1);
-   stream << "and row index:";
-   matrix.for_each([&](size_t i, size_t /*j*/, double /*entry*/) {
-      stream << " " << i;
-   });
-   stream << "\n";
-   return stream;
-}
-
 std::ostream& operator<<(std::ostream& stream, const CSCSymmetricMatrix& matrix) {
    stream << matrix.dimension << " variables\n";
    stream << matrix.number_nonzeros << " non zeros\n";
