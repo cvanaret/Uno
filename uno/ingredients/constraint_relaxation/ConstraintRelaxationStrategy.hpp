@@ -11,8 +11,6 @@
 #include "tools/Statistics.hpp"
 
 struct ElasticVariables {
-   //std::map<size_t, size_t> positive;
-   //std::map<size_t, size_t> negative;
    SparseVector2<size_t> positive;
    SparseVector2<size_t> negative;
    ElasticVariables(size_t capacity): positive(capacity), negative(capacity) {}

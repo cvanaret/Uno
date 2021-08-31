@@ -98,22 +98,6 @@ void print_vector(const Level& level, const std::set <T>& x, const char end = '\
    level << end;
 }
 
-template<typename T, typename U>
-void print_vector(std::ostream& stream, const std::map <T, U>& x, const char end = '\n') {
-   for (const auto[i, xi]: x) {
-      stream << "x[" << i << "] = " << xi << ", ";
-   }
-   stream << end;
-}
-
-template<typename T, typename U>
-void print_vector(const Level& level, const std::map <T, U>& x, const char end = '\n') {
-   for (const auto[i, xi]: x) {
-      level << "x[" << i << "] = " << xi << ", ";
-   }
-   level << end;
-}
-
 void print_vector(std::ostream& stream, const SparseVector& x, const char end = '\n');
 void print_vector(const Level& level, const SparseVector& x, const char end = '\n');
 
