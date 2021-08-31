@@ -22,9 +22,9 @@ public:
 
 private:
    size_t iteration{0};
-   std::map<int, std::string> columns_;
-   std::map<std::string, int> widths_;
-   std::map<std::string, std::string> current_line_;
+   std::map<int, std::string> columns;
+   std::map<std::string, int> widths;
+   std::map<std::string, std::string> current_line;
 };
 
 #endif // STATISTICS_H
