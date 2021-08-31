@@ -1,38 +1,6 @@
 #include "SparseVector.hpp"
 #include <cmath>
 
-// SparseVector2 methods
-
-SparseVector2::SparseVector2(size_t capacity): indices(capacity), elements(capacity) {
-}
-
-void SparseVector2::for_each(const std::function<void (size_t, double)>& f) const {
-   for (size_t i = 0; i < this->number_nonzeros; i++) {
-      f(this->indices[i], this->elements[i]);
-   }
-}
-
-size_t SparseVector2::size() const {
-   return this->number_nonzeros;
-}
-
-void SparseVector2::insert(size_t index, double value) {
-   assert(this->number_nonzeros < this->elements.size() && "The capacity of the sparse vector is too low");
-   this->indices[this->number_nonzeros] = index;
-   this->elements[this->number_nonzeros] = value;
-   this->number_nonzeros++;
-}
-
-void SparseVector2::clear() {
-   this->number_nonzeros = 0;
-}
-
-void SparseVector2::transform(const std::function<double (double)>& f) {
-   for (size_t i = 0; i < this->number_nonzeros; i++) {
-      this->elements[i] = f(this->elements[i]);
-   }
-}
-
 // free functions
 
 void clear(SparseVector& x) {
@@ -45,7 +13,7 @@ void scale(SparseVector& x, double scaling_factor) {
    }
 }
 
-double norm_1(const SparseVector2& x) {
+double norm_1(const SparseVector2<double>& x) {
    double norm = 0.;
    x.for_each([&](size_t /*index*/, double value) {
       norm += std::abs(value);
