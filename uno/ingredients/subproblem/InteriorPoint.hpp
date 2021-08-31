@@ -110,7 +110,7 @@ hessian_evaluation_method, double initial_barrier_parameter, double default_mult
       this->variables_bounds[i] = problem.variables_bounds[i];
    }
 
-   // register the original constraints bounds
+   // constraints are transformed into "c(x) = 0"
    for (size_t j = 0; j < problem.number_constraints; j++) {
       this->constraints_bounds[j] = {0., 0.};
    }
