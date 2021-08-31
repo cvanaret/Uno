@@ -4,6 +4,7 @@
 #include <cassert>
 #include <unordered_map>
 #include <functional>
+#include <ostream>
 #include "tools/Logger.hpp"
 
 using SparseVector = std::unordered_map<size_t, double>;
@@ -19,6 +20,9 @@ public:
    void insert(size_t index, T value);
    void transform(const std::function<T (T)>& f);
    void clear();
+
+   template <typename U>
+   friend std::ostream& operator<<(std::ostream& stream, const SparseVector2<U>& x);
 
 protected:
    std::vector<size_t> indices;
@@ -70,6 +74,15 @@ void SparseVector2<T>::transform(const std::function<T (T)>& f) {
    for (size_t i = 0; i < this->number_nonzeros; i++) {
       this->values[i] = f(this->values[i]);
    }
+}
+
+template <typename T>
+std::ostream& operator<<(std::ostream& stream, const SparseVector2<T>& x) {
+   stream << x.size() << " non zeros\n";
+   x.for_each([&](size_t index, T entry) {
+      stream << "index: " << index << " = " << entry << "\n";
+   });
+   return stream;
 }
 
 // free functions

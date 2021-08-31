@@ -38,7 +38,6 @@ protected:
    Direction solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double objective_multiplier);
    Direction compute_byrd_steering_rule(Statistics& statistics, const Problem& problem, Iterate& current_iterate);
    void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier);
-   static size_t count_elastic_variables(const Problem& problem);
    double compute_linearized_constraint_residual(std::vector<double>& direction);
    double compute_error(const Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter) const;
    void remove_elastic_variables(const Problem& problem, Direction& direction);
