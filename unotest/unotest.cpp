@@ -1,26 +1,13 @@
 #include <gtest/gtest.h>
+#include "tools/Logger.hpp"
+
+Level Logger::logger_level = INFO;
 
 // https://www.eriksmistad.no/getting-started-with-google-test-on-ubuntu/
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
-
-//void test_factorization() {
-//    int fortran_indexing = 1;
-//    int n = 2;
-//    COOSymmetricMatrix coo_matrix(n, fortran_indexing);
-//    coo_matrix.add_term(6050.0001, 0, 0);
-//    coo_matrix.add_term(-2774, 0, 1);
-//    coo_matrix.add_term(1e-4, 1, 1);
-//    
-//    MA57Solver solver;
-//    MA57Factorization factorization = solver.factorize(coo_matrix);
-//    std::cout << "Dimension: " << coo_matrix.dimension << "\n";
-//    std::cout << "Singular ? " << factorization.matrix_is_singular() << "\n";
-//    std::cout << "Rank ? " << factorization.rank() << "\n";
-//    std::cout << "Negative eigenvalues ? " << factorization.number_negative_eigenvalues() << "\n";
-//}
 
 //void test_mask_matrix() {
 //    int n = 4;
@@ -71,25 +58,6 @@ int main(int argc, char **argv) {
 //    std::vector<double> x = {123.};
 //    double f_x = f(x);
 //    std::cout << "f(x) = " << f_x << "\n";
-//}
-
-// Matrix
-
-//void test_matrix() {
-//    int fortran_indexing = 0;
-//    ArgonotMatrix matrix(3, fortran_indexing);
-//    matrix.add_term(1., 0, 0);
-//    matrix.add_term(2., 0, 2);
-//    matrix.add_term(3., 1, 2);
-//    matrix.add_term(4., 2, 0);
-//    matrix.add_term(5., 2, 1);
-//    matrix.add_term(6., 2, 2);
-//    CSCSymmetricMatrix csc_matrix = matrix.to_CSC();
-//    std::cout << "Before\n" << csc_matrix;
-//    
-//    csc_matrix = csc_matrix.add_identity_multiple(100.);
-//    
-//    std::cout << "After\n" << csc_matrix;
 //}
 
 // sparse vector
@@ -154,33 +122,6 @@ int main(int argc, char **argv) {
     //double f_x = f(x);
     //std::cout << "f(x) = " << f_x << "\n";
 //}
-
-//// test of add_identity_multiple
-//std::vector<double> matrix(6);
-//matrix[0] = matrix[1] = matrix[2] = matrix[3] = matrix[4] = matrix[5] = 1.;
-//std::vector<int> column_start(5);
-//column_start[0] = 1;
-//column_start[1] = 2;
-//column_start[2] = 3;
-//column_start[3] = 4;
-//column_start[4] = 7;
-//std::vector<int> row_number(6);
-//row_number[0] = 1;
-//row_number[1] = 1;
-//row_number[2] = 2;
-//row_number[3] = 1;
-//row_number[4] = 3;
-//row_number[5] = 4;
-//Matrix m(matrix, column_start, row_number);
-//m.display();
-
-//Matrix m_damped = add_identity_multiple(m, 100.);
-//m_damped.display();
-
-//// expect 
-//W = 101 1 100 1 100 1 1 101 
-//with column start: 1 2 4 6 9 
-//and row number: 1 1 2 2 3 1 3 4 
 
 //void test_product() {
 //std::vector<double> m(5);

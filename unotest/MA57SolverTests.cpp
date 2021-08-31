@@ -32,3 +32,21 @@ A[4][4] = 1;
 //std::cout << "\n";
 //return;
 //}
+
+
+
+//void test_factorization() {
+//    int fortran_indexing = 1;
+//    int n = 2;
+//    COOSymmetricMatrix coo_matrix(n, fortran_indexing);
+//    coo_matrix.add_term(6050.0001, 0, 0);
+//    coo_matrix.add_term(-2774, 0, 1);
+//    coo_matrix.add_term(1e-4, 1, 1);
+//
+//    MA57Solver solver;
+//    MA57Factorization factorization = solver.factorize(coo_matrix);
+//    std::cout << "Dimension: " << coo_matrix.dimension << "\n";
+//    std::cout << "Singular ? " << factorization.matrix_is_singular() << "\n";
+//    std::cout << "Rank ? " << factorization.rank() << "\n";
+//    std::cout << "Negative eigenvalues ? " << factorization.number_negative_eigenvalues() << "\n";
+//}
