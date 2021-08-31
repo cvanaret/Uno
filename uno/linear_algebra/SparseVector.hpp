@@ -9,6 +9,10 @@
 
 using SparseVector = std::unordered_map<size_t, double>;
 
+// SparseVector2 is a sparse vector that uses contiguous memory. It contains:
+// - a vector of indices of type size_t
+// - a vector of values of type T
+// the indices are unique but not sorted
 template <typename T>
 class SparseVector2 {
 public:
