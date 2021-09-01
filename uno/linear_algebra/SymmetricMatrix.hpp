@@ -17,7 +17,7 @@ public:
    void reset();
    [[nodiscard]] std::vector<double> product(const std::vector<double>& vector) const;
    [[nodiscard]] double quadratic_product(const std::vector<double>& x, const std::vector<double>& y) const;
-   void add_outer_product(const SparseVector2<double>& x, double scaling_factor = 1.);
+   void add_outer_product(const SparseVector<double>& x, double scaling_factor = 1.);
    [[nodiscard]] double smallest_diagonal_entry() const;
 
    virtual void for_each(const std::function<void (int, int, double)>& f) const = 0;

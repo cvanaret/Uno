@@ -13,8 +13,8 @@ class LPSolver {
 public:
    LPSolver() = default;
    virtual ~LPSolver() = default;
-   virtual Direction solve_LP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector2<double>&
-   linear_objective, const std::vector<SparseVector2<double>>& constraints_jacobian, const std::vector<double>& initial_point) = 0;
+   virtual Direction solve_LP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector<double>&
+   linear_objective, const std::vector<SparseVector<double>>& constraints_jacobian, const std::vector<double>& initial_point) = 0;
 };
 
 #endif // LPSOLVER_H

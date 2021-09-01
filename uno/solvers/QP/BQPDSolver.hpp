@@ -18,11 +18,11 @@ class BQPDSolver: public QPSolver<CSCSymmetricMatrix> {
 public:
    BQPDSolver(size_t number_variables, size_t number_constraints, size_t max_number_nonzeros, bool quadratic_programming);
 
-   Direction solve_LP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector2<double>&
-         linear_objective, const std::vector<SparseVector2<double>>& constraints_jacobian, const std::vector<double>& initial_point) override;
+   Direction solve_LP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector<double>&
+         linear_objective, const std::vector<SparseVector<double>>& constraints_jacobian, const std::vector<double>& initial_point) override;
 
-   Direction solve_QP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector2<double>&
-         linear_objective, const std::vector<SparseVector2<double>>& constraints_jacobian, const CSCSymmetricMatrix& hessian, const std::vector<double>&
+   Direction solve_QP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector<double>&
+         linear_objective, const std::vector<SparseVector<double>>& constraints_jacobian, const CSCSymmetricMatrix& hessian, const std::vector<double>&
                initial_point) override;
 
 private:
@@ -50,8 +50,8 @@ private:
 
    Direction generate_direction();
    Status int_to_status_(int ifail);
-   Direction solve_subproblem(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector2<double>&
-   linear_objective, const std::vector<SparseVector2<double>>& constraints_jacobian, const std::vector<double>& x);
+   Direction solve_subproblem(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector<double>&
+   linear_objective, const std::vector<SparseVector<double>>& constraints_jacobian, const std::vector<double>& x);
 };
 
 #endif // BQPDSOLVER_H
