@@ -89,10 +89,10 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
 void l1Relaxation::update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) {
    this->subproblem.update_objective_multiplier(problem, current_iterate, objective_multiplier);
    // add the positive elastic variables
-   elastic_variables.positive.for_each([&](size_t /*j*/, size_t i) {
+   elastic_variables.positive.for_each_value([&](size_t i) {
       this->subproblem.objective_gradient.insert(i, 1.);
    });
-   elastic_variables.negative.for_each([&](size_t /*j*/, size_t i) {
+   elastic_variables.negative.for_each_value([&](size_t i) {
       this->subproblem.objective_gradient.insert(i, 1.);
    });
 
@@ -223,10 +223,10 @@ size_t l1Relaxation::get_number_variables(const Problem& problem) {
 double l1Relaxation::compute_linearized_constraint_residual(std::vector<double>& direction) {
    double residual = 0.;
    // l1 residual of the linearized constraints: sum of elastic variables
-   this->elastic_variables.positive.for_each([&](size_t /*j*/, size_t i) {
+   this->elastic_variables.positive.for_each_value([&](size_t i) {
       residual += direction[i];
    });
-   this->elastic_variables.negative.for_each([&](size_t /*j*/, size_t i) {
+   this->elastic_variables.negative.for_each_value([&](size_t i) {
       residual += direction[i];
    });
 
