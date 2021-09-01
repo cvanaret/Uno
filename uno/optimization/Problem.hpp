@@ -82,11 +82,11 @@ public:
 
    // purely virtual functions
    [[nodiscard]] virtual double evaluate_objective(const std::vector<double>& x) const = 0;
-   virtual void evaluate_objective_gradient(const std::vector<double>& x, SparseVector2<double>& gradient) const = 0;
+   virtual void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const = 0;
    [[nodiscard]] virtual double evaluate_constraint(int j, const std::vector<double>& x) const = 0;
    virtual void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const = 0;
-   virtual void constraint_gradient(const std::vector<double>& x, int j, SparseVector2<double>& gradient) const = 0;
-   virtual void constraints_jacobian(const std::vector<double>& x, std::vector<SparseVector2<double>>& constraints_jacobian) const = 0;
+   virtual void constraint_gradient(const std::vector<double>& x, int j, SparseVector<double>& gradient) const = 0;
+   virtual void constraints_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraints_jacobian) const = 0;
    virtual void lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
          CSCSymmetricMatrix& hessian) const = 0;
    virtual void lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
@@ -119,7 +119,7 @@ protected:
 //      return this->objective(x);
 //   }
 //
-//   void evaluate_objective_gradient(const std::vector<double>& /*x*/, SparseVector2<double>& /*gradient*/) const override {
+//   void evaluate_objective_gradient(const std::vector<double>& /*x*/, SparseVector<double>& /*gradient*/) const override {
 //      assert(false && "not yet implemented");
 //   }
 //
@@ -131,11 +131,11 @@ protected:
 //      assert(false && "not yet implemented");
 //   }
 //
-//   void constraint_gradient(const std::vector<double>& /*x*/, int /*j*/, SparseVector2<double>& /*gradient*/) const override {
+//   void constraint_gradient(const std::vector<double>& /*x*/, int /*j*/, SparseVector<double>& /*gradient*/) const override {
 //      assert(false && "not yet implemented");
 //   }
 //
-//   void constraints_jacobian(const std::vector<double>& /*x*/, std::vector<SparseVector2<double>>& /*constraints_jacobian*/) const override {
+//   void constraints_jacobian(const std::vector<double>& /*x*/, std::vector<SparseVector<double>>& /*constraints_jacobian*/) const override {
 //      assert(false && "not yet implemented");
 //   }
 //

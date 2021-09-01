@@ -3,7 +3,7 @@
 
 // free functions
 
-double norm_1(const SparseVector2<double>& x) {
+double norm_1(const SparseVector<double>& x) {
    double norm = 0.;
    x.for_each_value([&](double value) {
       norm += std::abs(value);
@@ -11,7 +11,7 @@ double norm_1(const SparseVector2<double>& x) {
    return norm;
 }
 
-double dot(const std::vector<double>& x, const SparseVector2<double>& y) {
+double dot(const std::vector<double>& x, const SparseVector<double>& y) {
    double dot = 0.;
    y.for_each([&](size_t i, double yi) {
       if (i < x.size()) {
@@ -24,7 +24,7 @@ double dot(const std::vector<double>& x, const SparseVector2<double>& y) {
    return dot;
 }
 
-void scale(SparseVector2<double>& x, double factor) {
+void scale(SparseVector<double>& x, double factor) {
    x.transform([=](double entry) {
       return factor*entry;
    });

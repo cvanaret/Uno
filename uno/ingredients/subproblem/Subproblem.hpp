@@ -80,8 +80,8 @@ public:
    // when the subproblem is reformulated (e.g. when slacks are introduced), the bounds may be altered
    std::vector <Range> variables_bounds;
    std::vector<double> constraints_multipliers;
-   SparseVector2<double> objective_gradient;
-   std::vector <SparseVector2<double>> constraints_jacobian;
+   SparseVector<double> objective_gradient;
+   std::vector <SparseVector<double>> constraints_jacobian;
    std::vector <Range> constraints_bounds;
    // Hessian is optional and depends on the subproblem
 

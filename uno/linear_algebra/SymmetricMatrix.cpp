@@ -37,7 +37,7 @@ double SymmetricMatrix::quadratic_product(const std::vector<double>& x, const st
    return result;
 }
 
-void SymmetricMatrix::add_outer_product(const SparseVector2<double>& x, double scaling_factor) {
+void SymmetricMatrix::add_outer_product(const SparseVector<double>& x, double scaling_factor) {
    /* perform matrix addition: A + rho x x^T */
    x.for_each([&](size_t row_index, double row_term) {
       x.for_each([&](size_t column_index, double column_term) {

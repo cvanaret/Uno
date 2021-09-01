@@ -11,8 +11,8 @@
 #include "tools/Statistics.hpp"
 
 struct ElasticVariables {
-   SparseVector2<size_t> positive;
-   SparseVector2<size_t> negative;
+   SparseVector<size_t> positive;
+   SparseVector<size_t> negative;
    ElasticVariables(size_t capacity): positive(capacity), negative(capacity) {}
    [[nodiscard]] size_t size() const { return this->positive.size() + this->negative.size(); }
 };
