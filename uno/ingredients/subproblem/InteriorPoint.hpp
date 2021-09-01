@@ -577,11 +577,6 @@ inline void InteriorPoint<LinearSolverType>::generate_kkt_rhs(const Iterate& cur
    this->objective_gradient.for_each([&](size_t i, double derivative) {
       this->rhs[i] = -derivative;
    });
-   /*
-   for (const auto[i, derivative]: this->objective_gradient) {
-      this->rhs[i] = -derivative;
-   }
-    */
 
    /* constraint: evaluations and gradients */
    for (size_t j = 0; j < current_iterate.constraints.size(); j++) {

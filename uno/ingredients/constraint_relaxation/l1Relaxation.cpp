@@ -88,25 +88,13 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
 
 void l1Relaxation::update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) {
    this->subproblem.update_objective_multiplier(problem, current_iterate, objective_multiplier);
-   // add the positive elastic variables
-   elastic_variables.positive.for_each_value([&](size_t i) {
-      this->subproblem.objective_gradient.insert(i, 1.);
-   });
-   elastic_variables.negative.for_each_value([&](size_t i) {
-      this->subproblem.objective_gradient.insert(i, 1.);
-   });
 
-   /*
-   for (const auto& element: elastic_variables.positive) {
-      const size_t i = element.second;
-      this->subproblem.objective_gradient[i] = 1.;
-   }
-   // add the negative elastic variables
-   for (const auto& element: elastic_variables.negative) {
-      const size_t i = element.second;
-      this->subproblem.objective_gradient[i] = 1.;
-   }
-    */
+   // add the elastic variables to the objective gradient
+   auto insert_variable_into_gradient = [&](size_t i) {
+      this->subproblem.objective_gradient.insert(i, 1.);
+   };
+   elastic_variables.positive.for_each_value(insert_variable_into_gradient);
+   elastic_variables.negative.for_each_value(insert_variable_into_gradient);
 }
 
 Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
@@ -223,23 +211,11 @@ size_t l1Relaxation::get_number_variables(const Problem& problem) {
 double l1Relaxation::compute_linearized_constraint_residual(std::vector<double>& direction) {
    double residual = 0.;
    // l1 residual of the linearized constraints: sum of elastic variables
-   this->elastic_variables.positive.for_each_value([&](size_t i) {
+   auto add_variable_contribution = [&](size_t i) {
       residual += direction[i];
-   });
-   this->elastic_variables.negative.for_each_value([&](size_t i) {
-      residual += direction[i];
-   });
-
-   /*
-   for (const auto& element: this->elastic_variables.positive) {
-      size_t i = element.second;
-      residual += direction[i];
-   }
-   for (const auto& element: this->elastic_variables.negative) {
-      size_t i = element.second;
-      residual += direction[i];
-   }
-    */
+   };
+   this->elastic_variables.positive.for_each_value(add_variable_contribution);
+   this->elastic_variables.negative.for_each_value(add_variable_contribution);
    return residual;
 }
 
