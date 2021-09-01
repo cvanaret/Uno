@@ -15,7 +15,7 @@ void scale(SparseVector& x, double scaling_factor) {
 
 double norm_1(const SparseVector2<double>& x) {
    double norm = 0.;
-   x.for_each([&](size_t /*index*/, double value) {
+   x.for_each_value([&](double value) {
       norm += std::abs(value);
    });
    return norm;
