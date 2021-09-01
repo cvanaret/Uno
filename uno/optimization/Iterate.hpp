@@ -53,7 +53,7 @@ public:
    SparseVector2<double> objective_gradient; /*!< Sparse Jacobian of the evaluate_objective */
    bool is_objective_gradient_computed{false}; /*!< Flag that indicates if the evaluate_objective gradient has already been computed */
 
-   std::vector<SparseVector> constraints_jacobian; /*!< Sparse Jacobian of the constraints */
+   std::vector<SparseVector2<double>> constraints_jacobian; /*!< Sparse Jacobian of the constraints */
    bool is_constraints_jacobian_computed{false}; /*!< Flag that indicates if the constraint Jacobian has already been computed */
 
    // residuals

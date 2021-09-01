@@ -7,18 +7,20 @@ int Iterate::number_eval_objective = 0;
 int Iterate::number_eval_constraints = 0;
 int Iterate::number_eval_jacobian = 0;
 
-Iterate::Iterate(const std::vector<double>& x, const Multipliers& multipliers) : x(x), multipliers(multipliers),
-      constraints(multipliers.constraints.size()), objective_gradient(x.size()), constraints_jacobian(multipliers.constraints.size()) {
-   for (size_t j = 0; j < multipliers.constraints.size(); j++) {
-      constraints_jacobian[j].reserve(x.size());
-   }
+Iterate::Iterate(const std::vector<double>& x, const Multipliers& multipliers) :
+   x(x),
+   multipliers(multipliers),
+   constraints(multipliers.constraints.size()),
+   objective_gradient(x.size()),
+   constraints_jacobian(multipliers.constraints.size(), x.size()) {
 }
 
-Iterate::Iterate(size_t number_variables, size_t number_constraints) : x(number_variables), multipliers(number_variables, number_constraints),
-      constraints(multipliers.constraints.size()), objective_gradient(number_variables), constraints_jacobian(number_constraints) {
-   for (size_t j = 0; j < multipliers.constraints.size(); j++) {
-      constraints_jacobian[j].reserve(x.size());
-   }
+Iterate::Iterate(size_t number_variables, size_t number_constraints) :
+   x(number_variables),
+   multipliers(number_variables, number_constraints),
+   constraints(multipliers.constraints.size()),
+   objective_gradient(number_variables),
+   constraints_jacobian(number_constraints, number_variables) {
 }
 
 void Iterate::compute_objective(const Problem& problem) {
@@ -87,11 +89,11 @@ std::vector<double> Iterate::lagrangian_gradient(const Problem& problem, double 
    for (size_t j = 0; j < problem.number_constraints; j++) {
       double multiplier_j = multipliers.constraints[j];
       if (multiplier_j != 0.) {
-         for (const auto[i, derivative]: this->constraints_jacobian[j]) {
+         this->constraints_jacobian[j].for_each([&](size_t i, double derivative) {
             if (i < problem.number_variables) {
                lagrangian_gradient[i] -= multiplier_j * derivative;
             }
-         }
+         });
       }
    }
    return lagrangian_gradient;

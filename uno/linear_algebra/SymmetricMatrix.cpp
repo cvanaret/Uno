@@ -37,17 +37,17 @@ double SymmetricMatrix::quadratic_product(const std::vector<double>& x, const st
    return result;
 }
 
-void SymmetricMatrix::add_outer_product(const SparseVector& x, double scaling_factor) {
+void SymmetricMatrix::add_outer_product(const SparseVector2<double>& x, double scaling_factor) {
    /* perform matrix addition: A + rho x x^T */
-   for (const auto[row_index, row_term]: x) {
-      for (const auto[column_index, column_term]: x) {
+   x.for_each([&](size_t row_index, double row_term) {
+      x.for_each([&](size_t column_index, double column_term) {
          // upper triangular matrix
          if (row_index <= column_index) {
             // add product of components
             this->insert(scaling_factor * row_term * column_term, (int) row_index, (int) column_index);
          }
-      }
-   }
+      });
+   });
 }
 
 double SymmetricMatrix::smallest_diagonal_entry() const {

@@ -25,7 +25,7 @@ void Preprocessing::apply(const Problem& problem, std::vector<double>& x, Multip
          CSCSymmetricMatrix hessian = CSCSymmetricMatrix::identity(problem.number_variables);
          SparseVector2<double> linear_objective(0); // empty
          // constraints Jacobian
-         std::vector<SparseVector> constraints_jacobian(number_constraints);
+         std::vector<SparseVector2<double>> constraints_jacobian(number_constraints, problem.number_variables);
          for (size_t j = 0; j < problem.number_constraints; j++) {
             constraints_jacobian[j].reserve(problem.number_variables);
          }
