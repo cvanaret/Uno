@@ -119,12 +119,12 @@ const {
 //    return this->objective_gradient_(x);
 //}
 //
-//SparseVector CppProblem::objective_sparse_gradient(std::vector<double>& x) {
+//SparseVector2<double> CppProblem::objective_sparse_gradient(std::vector<double>& x) {
 //    std::vector<double> dense_gradient = this->objective_gradient_(x);
-//    SparseVector sparse_gradient;
+//    SparseVector2<double> sparse_gradient;
 //    for (size_t i = 0; i < dense_gradient.size(); i++) {
 //        if (dense_gradient[i] != 0.) {
-//            sparse_gradient[i] = dense_gradient[i];
+//            sparse_gradient.insert(i, dense_gradient[i]);
 //        }
 //    }
 //    return sparse_gradient;

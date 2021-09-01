@@ -21,17 +21,6 @@ double norm_1(const SparseVector2<double>& x) {
    return norm;
 }
 
-
-//// https://en.wikipedia.org/wiki/Matrix_norm#Special_cases
-//double norm_1(const std::vector <SparseVector>& m) {
-//   double norm = 0.;
-//   for (const auto& column: m) {
-//      double column_norm = norm_1(column);
-//      norm = std::max(norm, column_norm);
-//   }
-//   return norm;
-//}
-
 double norm_2_squared(const SparseVector& x) {
    double norm_squared = 0.;
    for (std::pair<int, double> term: x) {
@@ -50,29 +39,6 @@ double norm_inf(const SparseVector& x) {
    for (std::pair<int, double> term: x) {
       double xi = term.second;
       norm = std::max(norm, std::abs(xi));
-   }
-   return norm;
-}
-
-// https://en.wikipedia.org/wiki/Matrix_norm#Special_cases
-double norm_inf(const std::vector<SparseVector>& m) {
-   // compute maximum row index
-   unsigned int number_rows = 0;
-   for (size_t j = 0; j < m.size(); j++) {
-      // TODO
-      //number_rows = std::max(number_rows, 1 + m[j].begin()->first);
-   }
-   // read the matrix column-wise and fill in the row_vectors norm vector
-   std::vector<double> row_vectors(number_rows);
-   for (size_t j = 0; j < m.size(); j++) {
-      for (const auto[i, value]: m[j]) {
-         row_vectors[i] += std::abs(value);
-      }
-   }
-   // compute the maximal component of the row_vectors vector
-   double norm = 0.;
-   for (double& row_vector : row_vectors) {
-      norm = std::max(norm, row_vector);
    }
    return norm;
 }
@@ -133,4 +99,12 @@ void scale(SparseVector2<double>& x, double factor) {
    x.transform([=](double entry) {
       return factor*entry;
    });
+}
+
+std::ostream& operator<<(std::ostream& stream, const SparseVector& x) {
+   stream << x.size() << " non zeros\n";
+   for (const auto [index, entry]: x) {
+      stream << "index: " << index << " = " << entry << "\n";
+   }
+   return stream;
 }

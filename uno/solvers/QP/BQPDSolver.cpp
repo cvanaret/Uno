@@ -85,8 +85,7 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
    DEBUG << "objective gradient: ";
    DEBUG << linear_objective;
    for (size_t j = 0; j < constraints_jacobian.size(); j++) {
-      DEBUG << "gradient c" << j << ": ";
-      print_vector(DEBUG, constraints_jacobian[j]);
+      DEBUG << "gradient c" << j << ": " << constraints_jacobian[j];
    }
    for (size_t i = 0; i < variables_bounds.size(); i++) {
       DEBUG << "Δx" << i << " in [" << variables_bounds[i].lb << ", " << variables_bounds[i].ub << "]\n";

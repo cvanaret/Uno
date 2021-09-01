@@ -97,18 +97,16 @@ std::ostream& operator<<(std::ostream& stream, const SparseVector2<T>& x) {
    return stream;
 }
 
+std::ostream& operator<<(std::ostream& stream, const SparseVector& x);
+
 // free functions
 
 void clear(SparseVector& x);
 void scale(SparseVector& x, double scaling_factor);
 double norm_1(const SparseVector2<double>& x);
-// https://en.wikipedia.org/wiki/Matrix_norm#Special_cases
-//double norm_1(const std::vector<SparseVector>& m);
 double norm_2_squared(const SparseVector& x);
 double norm_2(const SparseVector& x);
 double norm_inf(const SparseVector& x);
-// https://en.wikipedia.org/wiki/Matrix_norm#Special_cases
-double norm_inf(const std::vector<SparseVector>& m);
 double dot(const std::vector<double>& x, const SparseVector& y);
 double dot(const std::vector<double>& x, const SparseVector2<double>& y);
 double dot(const SparseVector& x, const SparseVector& y);
