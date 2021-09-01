@@ -2,21 +2,23 @@
 #include <iomanip>
 #include "Statistics.hpp"
 
-std::map<std::string, std::string>Statistics::symbols = {{"top",          "─"},
-                                                         {"top-mid",      "┬"},
-                                                         {"top-left",     "┌"},
-                                                         {"top-right",    "┐"},
-                                                         {"bottom",       "─"},
-                                                         {"bottom-mid",   "┴"},
-                                                         {"bottom-left",  "└"},
-                                                         {"bottom-right", "┘"},
-                                                         {"left",         "│"},
-                                                         {"left-mid",     "├"},
-                                                         {"mid",          "─"},
-                                                         {"mid-mid",      "┼"},
-                                                         {"right",        "│"},
-                                                         {"right-mid",    "┤"},
-                                                         {"middle",       "│"}};
+std::map <std::string, std::string>Statistics::symbols = {
+      {"top", "─"},
+      {"top-mid", "┬"},
+      {"top-left", "┌"},
+      {"top-right", "┐"},
+      {"bottom", "─"},
+      {"bottom-mid", "┴"},
+      {"bottom-left", "└"},
+      {"bottom-right", "┘"},
+      {"left", "│"},
+      {"left-mid", "├"},
+      {"mid", "─"},
+      {"mid-mid", "┼"},
+      {"right", "│"},
+      {"right-mid", "┤"},
+      {"middle", "│"}
+};
 
 int Statistics::int_width = 7;
 int Statistics::double_width = 18;
@@ -108,11 +110,8 @@ void Statistics::print_current_line() {
          std::cout << " -";
          size = 2;
       }
-      int number_spaces = this->widths[header] - size;
-      if (number_spaces < 0) {
-         number_spaces = 0;
-      }
-      for (int j = 0; j < number_spaces; j++) {
+      size_t number_spaces = std::max<int>(0, this->widths[header] - size);
+      for (size_t j = 0; j < number_spaces; j++) {
          std::cout << " ";
       }
       k++;

@@ -31,7 +31,7 @@ void run_uno(const std::string& problem_name, const Options& options) {
    // TODO: use a factory
    // AMPL model
    auto problem = std::make_unique<AMPLModel>(problem_name);
-   std::cout << "Heap allocations after AMPL: " << total_allocations << "\n";
+   INFO << "Heap allocations after AMPL: " << total_allocations << "\n";
 
    /* create the subproblem */
    const bool use_trust_region = (mechanism_type == "TR");
@@ -40,11 +40,11 @@ void run_uno(const std::string& problem_name, const Options& options) {
 
    /* create the constraint relaxation strategy */
    auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(constraint_relaxation_type, *problem, *subproblem, options);
-   std::cout << "Heap allocations after ConstraintRelax, Subproblem and Solver: " << total_allocations << "\n";
+   INFO << "Heap allocations after ConstraintRelax, Subproblem and Solver: " << total_allocations << "\n";
 
    /* create the globalization mechanism */
    auto mechanism = GlobalizationMechanismFactory::create(mechanism_type, *constraint_relaxation_strategy, options);
-   std::cout << "Heap allocations after Mechanism: " << total_allocations << "\n";
+   INFO << "Heap allocations after Mechanism: " << total_allocations << "\n";
 
    double tolerance = std::stod(options.at("tolerance"));
    int max_iterations = std::stoi(options.at("max_iterations"));
@@ -56,7 +56,7 @@ void run_uno(const std::string& problem_name, const Options& options) {
    problem->set_initial_primal_point(x);
    problem->set_initial_dual_point(multipliers.constraints);
 
-   std::cout << "Heap allocations before solving: " << total_allocations << "\n";
+   INFO << "Heap allocations before solving: " << total_allocations << "\n";
    bool use_preprocessing = (options.at("preprocessing") == "yes");
    Result result = uno.solve(*problem, x, multipliers, use_preprocessing);
 
@@ -66,7 +66,7 @@ void run_uno(const std::string& problem_name, const Options& options) {
    result.solution.multipliers.upper_bounds.resize(problem->number_variables);
    bool print_solution = (options.at("print_solution") == "yes");
    result.display(print_solution);
-   std::cout << "Heap allocations: " << total_allocations << "\n";
+   INFO << "Heap allocations: " << total_allocations << "\n";
 }
 
 Level Logger::logger_level = INFO;
