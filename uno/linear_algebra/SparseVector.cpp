@@ -12,16 +12,12 @@ double norm_1(const SparseVector<double>& x) {
 }
 
 double dot(const std::vector<double>& x, const SparseVector<double>& y) {
-   double dot = 0.;
+   double dot_product = 0.;
    y.for_each([&](size_t i, double yi) {
-      if (i < x.size()) {
-         dot += x[i] * yi;
-      }
-      else {
-         throw std::length_error("Vector.dot: x and y have different sizes");
-      }
+      assert(i < x.size() && "Vector.dot: x and y have different sizes");
+      dot_product += x[i] * yi;
    });
-   return dot;
+   return dot_product;
 }
 
 void scale(SparseVector<double>& x, double factor) {
