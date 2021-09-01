@@ -2,12 +2,9 @@
 #define SPARSEVECTOR_H
 
 #include <cassert>
-#include <unordered_map>
 #include <functional>
 #include <ostream>
 #include "tools/Logger.hpp"
-
-using SparseVector = std::unordered_map<size_t, double>;
 
 // SparseVector2 is a sparse vector that uses contiguous memory. It contains:
 // - a vector of indices of type size_t
@@ -113,21 +110,10 @@ std::ostream& operator<<(std::ostream& stream, const SparseVector2<T>& x) {
    return stream;
 }
 
-std::ostream& operator<<(std::ostream& stream, const SparseVector& x);
-
 // free functions
 
-void clear(SparseVector& x);
-void scale(SparseVector& x, double scaling_factor);
 double norm_1(const SparseVector2<double>& x);
-double norm_2_squared(const SparseVector& x);
-double norm_2(const SparseVector& x);
-double norm_inf(const SparseVector& x);
-double dot(const std::vector<double>& x, const SparseVector& y);
 double dot(const std::vector<double>& x, const SparseVector2<double>& y);
-double dot(const SparseVector& x, const SparseVector& y);
-void print_vector(std::ostream &stream, const SparseVector& x, const char end);
-void print_vector(const Level& level, const SparseVector& x, const char end);
 void scale(SparseVector2<double>& x, double factor);
 
 #endif // SPARSEVECTOR_H

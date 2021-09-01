@@ -263,14 +263,14 @@ void l1Relaxation::remove_elastic_variables(const Problem& problem, Direction& d
    direction.multipliers.upper_bounds.resize(problem.number_variables);
    direction.norm = norm_inf(direction.x);
 
-   elastic_variables.positive.for_each([&](size_t j, size_t i) {
+   //elastic_variables.positive.for_each([&](size_t j, size_t i) {
       //this->subproblem.objective_gradient.erase(i);
-      this->subproblem.constraints_jacobian[j].erase(i);
-   });
-   elastic_variables.negative.for_each([&](size_t j, size_t i) {
+      //this->subproblem.constraints_jacobian[j].erase(i);
+   //});
+   //elastic_variables.negative.for_each([&](size_t j, size_t i) {
       //this->subproblem.objective_gradient.erase(i);
-      this->subproblem.constraints_jacobian[j].erase(i);
-   });
+      //this->subproblem.constraints_jacobian[j].erase(i);
+   //});
    /*
    // remove contribution of positive part variables
    for (auto&[j, i]: elastic_variables.positive) {

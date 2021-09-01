@@ -44,23 +44,12 @@ void ConstraintRelaxationStrategy::add_elastic_variables_to_subproblem(const Ela
    // add the positive elastic variables
    elastic_variables.positive.for_each([&](size_t j, size_t i) {
       this->subproblem.objective_gradient.insert(i, 1.);
-      this->subproblem.constraints_jacobian[j][i] = -1.;
+      this->subproblem.constraints_jacobian[j].insert(i, -1.);
    });
    elastic_variables.negative.for_each([&](size_t j, size_t i) {
       this->subproblem.objective_gradient.insert(i, 1.);
-      this->subproblem.constraints_jacobian[j][i] = 1.;
+      this->subproblem.constraints_jacobian[j].insert(i, 1.);
    });
-   /*
-   for (const auto& [j, i]: elastic_variables.positive) {
-      this->subproblem.objective_gradient[i] = 1.;
-      this->subproblem.constraints_jacobian[j][i] = -1.;
-   }
-   // add the negative elastic variables
-   for (const auto& [j, i]: elastic_variables.negative) {
-      this->subproblem.objective_gradient[i] = 1.;
-      this->subproblem.constraints_jacobian[j][i] = 1.;
-   }
-    */
 }
 
 Direction ConstraintRelaxationStrategy::compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) {

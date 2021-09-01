@@ -22,10 +22,8 @@ Subproblem::Subproblem(size_t number_variables, size_t number_constraints) :
       number_constraints(number_constraints),
       variables_bounds(number_variables),
       constraints_multipliers(number_constraints),
-      // objective_gradient is a SparseVector
-      objective_gradient(number_variables),
-      // constraints_jacobian is a vector of SparseVectors
-      constraints_jacobian(number_constraints),
+      objective_gradient(number_variables), // SparseVector
+      constraints_jacobian(number_constraints, number_variables), // vector of SparseVectors
       constraints_bounds(number_constraints),
       number_subproblems_solved(0), subproblem_definition_changed(false) {
    for (size_t j = 0; j < this->number_constraints; j++) {
@@ -83,14 +81,14 @@ void Subproblem::compute_feasibility_linear_objective(const Iterate& current_ite
    /* objective function: sum of gradients of infeasible constraints */
    this->objective_gradient.clear();
    for (int j: constraint_partition.infeasible) {
-      for (const auto [i, derivative]: current_iterate.constraints_jacobian[j]) {
+      current_iterate.constraints_jacobian[j].for_each([&](size_t i, double derivative) {
          if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
             this->objective_gradient.insert(i, -derivative);
          }
          else {
             this->objective_gradient.insert(i, derivative);
          }
-      }
+      });
    }
 }
 

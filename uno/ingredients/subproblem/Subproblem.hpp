@@ -81,7 +81,7 @@ public:
    std::vector <Range> variables_bounds;
    std::vector<double> constraints_multipliers;
    SparseVector2<double> objective_gradient;
-   std::vector <SparseVector> constraints_jacobian;
+   std::vector <SparseVector2<double>> constraints_jacobian;
    std::vector <Range> constraints_bounds;
    // Hessian is optional and depends on the subproblem
 
@@ -110,10 +110,11 @@ inline void Subproblem::compute_least_square_multipliers(const Problem& problem,
       matrix.insert(1., i, i);
    }
    /* Jacobian of general constraints */
+   const size_t n = current_iterate.x.size();
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      for (const auto[variable_index, derivative]: current_iterate.constraints_jacobian[j]) {
-         matrix.insert(derivative, variable_index, current_iterate.x.size() + j);
-      }
+      current_iterate.constraints_jacobian[j].for_each([&](size_t i, double derivative) {
+         matrix.insert(derivative, i, n + j);
+      });
    }
    DEBUG << "KKT matrix for least-square multipliers:\n" << matrix << "\n";
 
@@ -123,11 +124,6 @@ inline void Subproblem::compute_least_square_multipliers(const Problem& problem,
    clear(rhs);
 
    /* objective gradient */
-   /*
-   for (const auto[i, derivative]: current_iterate.objective_gradient) {
-      rhs[i] += problem.objective_sign * derivative;
-   }
-    */
    current_iterate.objective_gradient.for_each([&](size_t i, double derivative) {
       rhs[i] += problem.objective_sign * derivative;
    });

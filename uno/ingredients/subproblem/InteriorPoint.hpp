@@ -188,7 +188,7 @@ inline Iterate InteriorPoint<LinearSolverType>::generate_initial_iterate(Statist
    for (const auto[j, i]: problem.inequality_constraints) {
       double slack_value = Subproblem::push_variable_to_interior(first_iterate.constraints[j], problem.constraint_bounds[j]);
       first_iterate.x[problem.number_variables + i] = slack_value;
-      first_iterate.constraints_jacobian[j][problem.number_variables + i] = -1.;
+      first_iterate.constraints_jacobian[j].insert(problem.number_variables + i, -1.);
    }
 
    /* compute least-square multipliers */
@@ -227,7 +227,7 @@ inline void InteriorPoint<LinearSolverType>::generate(const Problem& problem, It
    problem.constraints_jacobian(current_iterate.x, this->constraints_jacobian);
    // add the slack variables
    for (const auto[j, i]: problem.inequality_constraints) {
-      this->constraints_jacobian[j][problem.number_variables + i] = -1.;
+      this->constraints_jacobian[j].insert(problem.number_variables + i, -1.);
    }
 
    // objective gradient
@@ -488,9 +488,9 @@ inline void InteriorPoint<LinearSolverType>::assemble_kkt_matrix(const Problem& 
 
    /* Jacobian of general constraints */
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      for (const auto[i, derivative]: this->constraints_jacobian[j]) {
+      this->constraints_jacobian[j].for_each([&](size_t i, double derivative) {
          this->kkt_matrix.insert(derivative, i, this->number_variables + j);
-      }
+      });
    }
 }
 
@@ -587,9 +587,9 @@ inline void InteriorPoint<LinearSolverType>::generate_kkt_rhs(const Iterate& cur
    for (size_t j = 0; j < current_iterate.constraints.size(); j++) {
       // Lagrangian
       if (this->constraints_multipliers[j] != 0.) {
-         for (const auto[i, derivative]: this->constraints_jacobian[j]) {
+         this->constraints_jacobian[j].for_each([&](size_t i, double derivative) {
             this->rhs[i] += this->constraints_multipliers[j] * derivative;
-         }
+         });
       }
       // constraints
       this->rhs[this->number_variables + j] = -this->barrier_constraints[j];

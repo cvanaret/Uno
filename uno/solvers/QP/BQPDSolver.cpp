@@ -40,7 +40,7 @@ BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_
 }
 
 Direction BQPDSolver::solve_QP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector2<double>&
-   linear_objective, const std::vector<SparseVector>& constraints_jacobian, const CSCSymmetricMatrix& hessian, const std::vector<double>& initial_point) {
+   linear_objective, const std::vector<SparseVector2<double>>& constraints_jacobian, const CSCSymmetricMatrix& hessian, const std::vector<double>& initial_point) {
    /* Hessian */
    for (size_t i = 0; i < hessian.number_nonzeros; i++) {
       this->hessian_[i] = hessian.matrix[i];
@@ -68,12 +68,12 @@ Direction BQPDSolver::solve_QP(const std::vector<Range>& variables_bounds, const
 }
 
 Direction BQPDSolver::solve_LP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector2<double>&
-   linear_objective, const std::vector<SparseVector>& constraints_jacobian, const std::vector<double>& initial_point) {
+   linear_objective, const std::vector<SparseVector2<double>>& constraints_jacobian, const std::vector<double>& initial_point) {
    return this->solve_subproblem(variables_bounds, constraints_bounds, linear_objective, constraints_jacobian, initial_point);
 }
 
 Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds,
-      const SparseVector2<double>& linear_objective, const std::vector<SparseVector>& constraints_jacobian, const std::vector<double>& x) {
+      const SparseVector2<double>& linear_objective, const std::vector<SparseVector2<double>>& constraints_jacobian, const std::vector<double>& x) {
    /* initialize wsc_ common block (Hessian & workspace for bqpd) */
    // setting the common block here ensures that several instances of BQPD can run simultaneously
    wsc_.kk = this->maximum_number_nonzeros_;
@@ -101,19 +101,12 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
       this->jacobian_sparsity_[current_index + 1] = i + this->fortran_shift;
       current_index++;
    });
-   /*
-   for (const auto[i, derivative]: linear_objective) {
-      this->jacobian_[current_index] = derivative;
-      this->jacobian_sparsity_[current_index + 1] = i + this->fortran_shift;
-      current_index++;
-   }
-    */
    for (size_t j = 0; j < this->m_; j++) {
-      for (const auto[i, derivative]: constraints_jacobian[j]) {
+      constraints_jacobian[j].for_each([&](size_t i, double derivative) {
          this->jacobian_[current_index] = derivative;
          this->jacobian_sparsity_[current_index + 1] = i + this->fortran_shift;
          current_index++;
-      }
+      });
    }
    current_index++;
    this->jacobian_sparsity_[0] = current_index;
