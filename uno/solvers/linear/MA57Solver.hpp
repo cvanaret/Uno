@@ -7,7 +7,6 @@
 #include "linear_algebra/COOSymmetricMatrix.hpp"
 
 struct MA57Factorization {
-   int n;
    int nnz;
    std::vector<double> fact;
    int lfact;
@@ -15,7 +14,6 @@ struct MA57Factorization {
    int lifact;
    int lkeep;
    std::vector<int> keep;
-   std::vector<int> iwork;
    std::array<int, 40> info;
 };
 
@@ -27,13 +25,13 @@ struct MA57Factorization {
  */
 class MA57Solver : public LinearSolver<COOSymmetricMatrix> {
 public:
-   MA57Solver();
+   MA57Solver(size_t dimension);
    ~MA57Solver() override = default;
 
    void factorize(COOSymmetricMatrix& matrix) override;
    void do_symbolic_factorization(COOSymmetricMatrix& matrix) override;
    void do_numerical_factorization(COOSymmetricMatrix& matrix) override;
-   std::vector<double> solve(COOSymmetricMatrix& matrix, const std::vector<double>& rhs) override;
+   void solve(COOSymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) override;
 
    [[nodiscard]] std::tuple<int, int, int> get_inertia() const override;
    [[nodiscard]] size_t number_negative_eigenvalues() const override;
@@ -41,6 +39,11 @@ public:
    [[nodiscard]] int rank() const override;
 
 private:
+   const size_t dimension;
+
+   std::vector<int> iwork;
+   int lwork;
+   std::vector<double> work;
    /* for ma57id_ (default values of controlling parameters) */
    std::array<double, 5> cntl{};
    std::array<int, 20> icntl{};
@@ -48,6 +51,7 @@ private:
    std::array<int, 40> info{};
    const int nrhs{1}; // number of right hand side being solved
    const int job{1};
+   std::vector<double> residuals;
 
    MA57Factorization factorization;
    bool use_iterative_refinement{false};
