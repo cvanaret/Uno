@@ -5,8 +5,8 @@
 #include "ingredients/strategy/GlobalizationStrategy.hpp"
 #include "tools/Options.hpp"
 
-struct RelaxationParameters {
-   double tau;
+struct l1RelaxationParameters {
+   double decrease_factor;
    double epsilon1;
    double epsilon2;
 };
@@ -30,9 +30,9 @@ public:
 protected:
    const std::unique_ptr <GlobalizationStrategy> globalization_strategy;
    double penalty_parameter;
-   const RelaxationParameters parameters;
    /* problem reformulation with elastic variables. Constraints l <= c(x) = u are reformulated as l <= c(x) - p + n <= u */
    ElasticVariables elastic_variables;
+   const l1RelaxationParameters parameters;
 
    Direction solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate);
    Direction solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double objective_multiplier);
