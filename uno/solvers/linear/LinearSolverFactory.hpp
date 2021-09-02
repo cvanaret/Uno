@@ -14,7 +14,7 @@ class LinearSolverFactory;
 template<>
 class LinearSolverFactory<PardisoSolver> {
 public:
-   static std::unique_ptr<LinearSolver<typename PardisoSolver::matrix_type> > create() {
+   static std::unique_ptr<LinearSolver<typename PardisoSolver::matrix_type>> create(size_t /*dimension*/) {
       return std::make_unique<PardisoSolver>();
    }
 };
@@ -26,8 +26,8 @@ public:
 template<>
 class LinearSolverFactory<MA57Solver> {
 public:
-   static std::unique_ptr<LinearSolver<typename MA57Solver::matrix_type> > create() {
-      return std::make_unique<MA57Solver>();
+   static std::unique_ptr<LinearSolver<typename MA57Solver::matrix_type>> create(size_t dimension) {
+      return std::make_unique<MA57Solver>(dimension);
    }
 };
 #endif

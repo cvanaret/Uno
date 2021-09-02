@@ -64,6 +64,7 @@ private:
    size_t number_factorizations_{0};
 
    /* preallocated vectors */
+   std::vector<double> solution_IPM;
    std::vector<double> barrier_constraints;
    std::vector<double> rhs;
    std::vector<double> lower_delta_z;
@@ -97,11 +98,11 @@ hessian_evaluation_method, double initial_barrier_parameter, double default_mult
       hessian_evaluation(HessianEvaluationFactory<typename LinearSolverType::matrix_type>::create(hessian_evaluation_method,
             problem.number_variables, problem.hessian_maximum_number_nonzeros, false)),
       kkt_matrix(this->number_variables + number_constraints, problem.hessian_maximum_number_nonzeros + this->number_variables /* regularization */ +
-                                                              2 * this->number_variables /* diagonal barrier terms */ +
-                                                              this->number_variables * number_constraints /* Jacobian */),
-      linear_solver(LinearSolverFactory<LinearSolverType>::create()),
+            2 * this->number_variables /* diagonal barrier terms */ + this->number_variables * number_constraints /* Jacobian */),
+      linear_solver(LinearSolverFactory<LinearSolverType>::create(this->number_variables + number_constraints)),
       parameters({0.99, 1e10, 100., 0.2, 1.5, 10., 1e10}),
       default_multiplier_(default_multiplier),
+      solution_IPM(this->number_variables + number_constraints),
       barrier_constraints(number_constraints),
       rhs(this->number_variables + number_constraints),
       lower_delta_z(this->number_variables), upper_delta_z(this->number_variables) {
@@ -282,11 +283,11 @@ inline Direction InteriorPoint<LinearSolverType>::solve(Statistics& statistics, 
    this->generate_kkt_rhs(current_iterate);
 
    /* compute the solution (Δx, -Δλ) */
-   std::vector<double> solution_IPM = this->linear_solver->solve(this->kkt_matrix, this->rhs);
+   this->linear_solver->solve(this->kkt_matrix, this->rhs, this->solution_IPM);
    this->number_subproblems_solved++;
 
    /* generate IPM direction */
-   Direction direction = this->generate_direction(problem, current_iterate, solution_IPM);
+   Direction direction = this->generate_direction(problem, current_iterate, this->solution_IPM);
 
    statistics.add_statistic("barrier param.", this->barrier_parameter);
    return direction;
@@ -312,11 +313,11 @@ inline Direction InteriorPoint<LinearSolverType>::compute_second_order_correctio
    DEBUG << "\n";
 
    /* compute the solution (Δx, -Δλ) */
-   std::vector<double> solution_IPM = this->linear_solver->solve(kkt_matrix, this->rhs);
+   this->linear_solver->solve(kkt_matrix, this->rhs, this->solution_IPM);
    this->number_subproblems_solved++;
 
    /* generate IPM direction */
-   Direction direction_soc = this->generate_direction(problem, trial_iterate, solution_IPM);
+   Direction direction_soc = this->generate_direction(problem, trial_iterate, this->solution_IPM);
    DEBUG << "SOC direction:\n" << direction_soc << "\n";
    return direction_soc;
 }

@@ -65,7 +65,7 @@ void PardisoSolver::do_numerical_factorization(CSCSymmetricMatrix& matrix) {
    assert(error == 0 && "Error occurred during Pardiso numerical factorization");
 }
 
-std::vector<double> PardisoSolver::solve(CSCSymmetricMatrix& matrix, const std::vector<double>& rhs) {
+void PardisoSolver::solve(CSCSymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) {
    // check the given vectors for infinite and NaN values
    int error;
    pardiso_chkvec(&this->n, &this->nrhs, rhs.data(), &error);
@@ -74,9 +74,8 @@ std::vector<double> PardisoSolver::solve(CSCSymmetricMatrix& matrix, const std::
    /* Back substitution and iterative refinement */
    int phase = (int) SOLVE;
    this->iparm[7] = 1; /* Max numbers of iterative refinement steps. */
-   std::vector<double> x(this->n);
    pardiso(this->pt.data(), &maxfct, &mnum, &this->mtype, &phase, &this->n, matrix.matrix.data(), matrix.column_start.data(), matrix.row_index.data(),
-         nullptr, &nrhs, this->iparm.data(), &msglvl, rhs.data(), x.data(), &error, this->dparm.data());
+         nullptr, &nrhs, this->iparm.data(), &msglvl, rhs.data(), result.data(), &error, this->dparm.data());
    assert(error == 0 && "Error during Pardiso solve");
 
    /* Convert matrix back to 0-based C-notation */
@@ -91,7 +90,6 @@ std::vector<double> PardisoSolver::solve(CSCSymmetricMatrix& matrix, const std::
    phase = (int) MEMORY_DEALLOCATION;
    pardiso(this->pt.data(), &this->maxfct, &this->mnum, &this->mtype, &phase, &this->n, nullptr, matrix.column_start.data(),
          matrix.row_index.data(), nullptr, &this->nrhs, this->iparm.data(), &this->msglvl, nullptr, nullptr, &error, this->dparm.data());
-   return x;
 }
 
 std::tuple<int, int, int> PardisoSolver::get_inertia() const {

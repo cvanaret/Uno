@@ -30,7 +30,7 @@ public:
    void factorize(CSCSymmetricMatrix& matrix) override;
    void do_symbolic_factorization(CSCSymmetricMatrix& matrix) override;
    void do_numerical_factorization(CSCSymmetricMatrix& matrix) override;
-   std::vector<double> solve(CSCSymmetricMatrix& matrix, const std::vector<double>& rhs) override;
+   void solve(CSCSymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) override;
 
    [[nodiscard]] std::tuple<int, int, int> get_inertia() const override;
    [[nodiscard]] size_t number_positive_eigenvalues() const;
