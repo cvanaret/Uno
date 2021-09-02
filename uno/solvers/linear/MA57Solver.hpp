@@ -14,7 +14,6 @@ struct MA57Factorization {
    int lifact;
    int lkeep;
    std::vector<int> keep;
-   std::array<int, 40> info;
 };
 
 /*! \class MA57Solver
