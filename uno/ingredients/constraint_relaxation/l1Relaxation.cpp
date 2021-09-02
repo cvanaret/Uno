@@ -7,8 +7,9 @@ l1Relaxation::l1Relaxation(Problem& problem, Subproblem& subproblem, const Optio
       ConstraintRelaxationStrategy(subproblem),
       globalization_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
       penalty_parameter(stod(options.at("l1_relaxation_initial_parameter"))),
-      parameters({10., 0.1, 0.1}),
-      elastic_variables(ConstraintRelaxationStrategy::count_elastic_variables(problem)) {
+      elastic_variables(ConstraintRelaxationStrategy::count_elastic_variables(problem)),
+      parameters({stod(options.at("l1_relaxation_decrease_factor")), stod(options.at("l1_relaxation_epsilon1")),
+            stod(options.at("l1_relaxation_epsilon2"))}) {
    assert(this->subproblem.number_variables == l1Relaxation::get_number_variables(problem) && "The number of variables is inconsistent");
 
    // generate elastic variables to relax the constraints
@@ -156,9 +157,7 @@ Direction l1Relaxation::compute_byrd_steering_rule(Statistics& statistics, const
                      direction = this->solve_subproblem(statistics, problem, current_iterate, this->penalty_parameter);
                   }
                }
-   
-   
-   
+
                /* decrease penalty parameter to satisfy 2 conditions */
                bool condition1 = false, condition2 = false;
                while (!condition2) {
@@ -178,7 +177,7 @@ Direction l1Relaxation::compute_byrd_steering_rule(Statistics& statistics, const
                      DEBUG << "Condition 2 is true\n";
                   }
                   if (!condition2) {
-                     this->penalty_parameter /= this->parameters.tau;
+                     this->penalty_parameter /= this->parameters.decrease_factor;
                      if (this->penalty_parameter < 1e-10) {
                         this->penalty_parameter = 0.;
                         condition2 = true;

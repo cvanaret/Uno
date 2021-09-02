@@ -1,9 +1,9 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
-#include <unordered_map>
+#include <map>
 
-using Options = std::unordered_map<std::string, std::string>;
+using Options = std::map<std::string, std::string>;
 
 Options get_options(const std::string& file_name);
 void get_command_options(int argc, char* argv[], Options& options);
