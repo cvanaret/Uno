@@ -66,6 +66,10 @@ void MA57Solver::do_symbolic_factorization(COOSymmetricMatrix& matrix) {
          /* out */ this->rinfo.data());
 
    assert(info[0] == 0 && "MA57: the symbolic factorization failed");
+   int lfact = 2 * this->info[8];
+   std::vector<double> fact(lfact);
+   int lifact = 2 * this->info[9];
+   std::vector<int> ifact(lifact);
 
    /* reindex the matrix (Fortran compliance) */
    for (size_t k = 0; k < matrix.number_nonzeros; k++) {
@@ -73,12 +77,8 @@ void MA57Solver::do_symbolic_factorization(COOSymmetricMatrix& matrix) {
       matrix.column_indices[k]--;
    }
 
-   int lfact = 2 * info[8];
-   std::vector<double> fact(lfact);
-   int lifact = 2 * info[9];
-   std::vector<int> ifact(lifact);
    // build the factorization object
-   this->factorization = {nnz, fact, lfact, ifact, lifact, lkeep, keep, info};
+   this->factorization = {nnz, std::move(fact), lfact, std::move(ifact), lifact, lkeep, std::move(keep)};
 }
 
 void MA57Solver::do_numerical_factorization(COOSymmetricMatrix& matrix) {
@@ -96,7 +96,7 @@ void MA57Solver::do_numerical_factorization(COOSymmetricMatrix& matrix) {
          /* const */ &this->factorization.lifact,
          /* const */ &this->factorization.lkeep,
          /* const */ this->factorization.keep.data(), this->iwork.data(), this->icntl.data(), this->cntl.data(),
-         /* out */ this->factorization.info.data(),
+         /* out */ this->info.data(),
          /* out */ this->rinfo.data());
 }
 
@@ -112,7 +112,7 @@ void MA57Solver::solve(COOSymmetricMatrix& matrix, const std::vector<double>& rh
       ma57dd_(&this->job, &n, (int*) &this->factorization.nnz, matrix.matrix.data(), matrix.row_indices.data(), matrix.column_indices.data(),
             this->factorization.fact.data(), &this->factorization.lfact, this->factorization.ifact.data(), &this->factorization.lifact,
             rhs.data(), result.data(), this->residuals.data(), this->work.data(), this->iwork.data(), this->icntl.data(),
-            this->cntl.data(), this->factorization.info.data(), this->rinfo.data());
+            this->cntl.data(), this->info.data(), this->rinfo.data());
    }
    else {
       // copy rhs into result (overwritten by MA57)
@@ -120,7 +120,7 @@ void MA57Solver::solve(COOSymmetricMatrix& matrix, const std::vector<double>& rh
 
       ma57cd_(&this->job, &n, this->factorization.fact.data(), &this->factorization.lfact, this->factorization.ifact.data(),
             &this->factorization.lifact, &this->nrhs, result.data(), &lrhs, this->work.data(), &this->lwork, this->iwork.data(),
-            this->icntl.data(), this->factorization.info.data());
+            this->icntl.data(), this->info.data());
    }
 }
 
@@ -133,13 +133,13 @@ std::tuple<int, int, int> MA57Solver::get_inertia() const {
 }
 
 size_t MA57Solver::number_negative_eigenvalues() const {
-   return this->factorization.info[23];
+   return this->info[23];
 }
 
 bool MA57Solver::matrix_is_singular() const {
-   return (this->factorization.info[0] == 4);
+   return (this->info[0] == 4);
 }
 
 int MA57Solver::rank() const {
-   return this->factorization.info[24];
+   return this->info[24];
 }
