@@ -10,21 +10,21 @@ std::unique_ptr <Subproblem> SubproblemFactory::create(const Problem& problem, s
    if (subproblem_type == "SQP") {
       const std::string& QP_solver_name = options.at("QP_solver");
       // determine the sparse matrix format
+#ifdef HAS_MA57
       if (QP_solver_name == "BQPD") {
          return std::make_unique<SQP<BQPDSolver>>(problem, number_variables, problem.number_constraints, options.at("hessian"), use_trust_region);
       }
-      else {
-         assert(false && "SubproblemFactory::create: unknown QP solver");
-      }
+#endif
+      assert(false && "SubproblemFactory::create: unknown QP solver");
    }
    else if (subproblem_type == "SLP") {
       const std::string& LP_solver_name = options.at("LP_solver");
+#ifdef HAS_MA57
       if (LP_solver_name == "BQPD") {
          return std::make_unique<SLP<BQPDSolver>>(problem, number_variables, problem.number_constraints);
       }
-      else {
-         assert(false && "SubproblemFactory::create: unknown LP solver");
-      }
+#endif
+      assert(false && "SubproblemFactory::create: unknown LP solver");
    }
       /* interior point method */
    else if (subproblem_type == "IPM") {
@@ -33,18 +33,19 @@ std::unique_ptr <Subproblem> SubproblemFactory::create(const Problem& problem, s
       const double default_multiplier = std::stod(options.at("default_multiplier"));
       const double tolerance = std::stod(options.at("tolerance"));
       // determine the sparse matrix format
+#ifdef HAS_MA57
       if (linear_solver_name == "MA57") {
          return std::make_unique<InteriorPoint<MA57Solver>>(problem, number_variables, problem.number_constraints, options.at("hessian"),
                initial_barrier_parameter, default_multiplier, tolerance, use_trust_region);
       }
-      else if (linear_solver_name == "PARDISO") {
+#endif
+#ifdef HAS_PARDISO
+      if (linear_solver_name == "PARDISO") {
          return std::make_unique<InteriorPoint<PardisoSolver>>(problem, number_variables, problem.number_constraints, options.at("hessian"),
                initial_barrier_parameter, default_multiplier, tolerance, use_trust_region);
       }
-      else {
-         assert(false && "SubproblemFactory::create: unknown linear solver");
-      }
-
+#endif
+      assert(false && "SubproblemFactory::create: unknown linear solver");
    }
    throw std::invalid_argument("Subproblem method does not exist.");
 }
