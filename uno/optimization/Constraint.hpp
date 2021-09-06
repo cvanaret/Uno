@@ -2,7 +2,6 @@
 #define CONSTRAINT_H
 
 #include <vector>
-#include <set>
 
 enum ConstraintType { EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES, UNBOUNDED };
 
