@@ -2,7 +2,6 @@
 #define IPM_H
 
 #include <exception>
-#include <set>
 #include "Subproblem.hpp"
 #include "solvers/linear/LinearSolver.hpp"
 #include "HessianEvaluation.hpp"
@@ -53,8 +52,8 @@ private:
    const InteriorPointParameters parameters;
 
    /* data structures */
-   std::set <size_t> lower_bounded_variables; /* indices of the lower-bounded variables */
-   std::set <size_t> upper_bounded_variables; /* indices of the upper-bounded variables */
+   std::vector<size_t> lower_bounded_variables; /* indices of the lower-bounded variables */
+   std::vector<size_t> upper_bounded_variables; /* indices of the upper-bounded variables */
 
    double inertia_hessian{0.};
    double inertia_hessian_last_{0.};
@@ -85,6 +84,7 @@ private:
    Direction generate_direction(const Problem& problem, const Iterate& current_iterate, std::vector<double>& solution_IPM);
    double compute_KKT_error_scaling(const Iterate& current_iterate) const;
    double compute_central_complementarity_error(const Iterate& iterate) const;
+   void print_soc_iteration(const Direction& direction_soc) const;
 };
 
 
@@ -119,20 +119,20 @@ hessian_evaluation_method, double initial_barrier_parameter, double default_mult
    // identify the bounded variables
    for (size_t i = 0; i < problem.number_variables; i++) {
       if (use_trust_region || (problem.variable_status[i] == BOUNDED_LOWER || problem.variable_status[i] == BOUNDED_BOTH_SIDES)) {
-         this->lower_bounded_variables.insert(i);
+         this->lower_bounded_variables.push_back(i);
       }
       if (use_trust_region || (problem.variable_status[i] == BOUNDED_UPPER || problem.variable_status[i] == BOUNDED_BOTH_SIDES)) {
-         this->upper_bounded_variables.insert(i);
+         this->upper_bounded_variables.push_back(i);
       }
    }
    /* identify the inequality constraint slacks */
    for (const auto[j, i]: problem.inequality_constraints) {
       size_t slack_index = number_variables + i;
       if (problem.constraint_status[j] == BOUNDED_LOWER || problem.constraint_status[j] == BOUNDED_BOTH_SIDES) {
-         this->lower_bounded_variables.insert(slack_index);
+         this->lower_bounded_variables.push_back(slack_index);
       }
       if (problem.constraint_status[j] == BOUNDED_UPPER || problem.constraint_status[j] == BOUNDED_BOTH_SIDES) {
-         this->upper_bounded_variables.insert(slack_index);
+         this->upper_bounded_variables.push_back(slack_index);
       }
       // register the bounds of the slacks
       this->variables_bounds[slack_index] = problem.constraint_bounds[j];
@@ -299,8 +299,6 @@ inline Direction InteriorPoint<LinearSolverType>::solve(Statistics& statistics, 
 
 template<typename LinearSolverType>
 inline Direction InteriorPoint<LinearSolverType>::compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) {
-   DEBUG << "Entered SOC computation\n";
-   DEBUG << "KKT matrix:\n" << this->kkt_matrix << "\n";
    for (const auto& element: problem.equality_constraints) {
       size_t j = element.first;
       this->rhs[this->number_variables + j] -= trial_iterate.constraints[j] - problem.constraint_bounds[j].lb;
@@ -308,9 +306,6 @@ inline Direction InteriorPoint<LinearSolverType>::compute_second_order_correctio
    for (const auto[j, i]: problem.inequality_constraints) {
       this->rhs[this->number_variables + j] -= trial_iterate.constraints[j] - trial_iterate.x[problem.number_variables + i];
    }
-   DEBUG << "SOC RHS: ";
-   print_vector(DEBUG, this->rhs);
-   DEBUG << "\n";
 
    /* compute the solution (Δx, -Δλ) */
    this->linear_solver->solve(kkt_matrix, this->rhs, this->solution_IPM);
@@ -318,8 +313,18 @@ inline Direction InteriorPoint<LinearSolverType>::compute_second_order_correctio
 
    /* generate IPM direction */
    Direction direction_soc = this->generate_direction(problem, trial_iterate, this->solution_IPM);
-   DEBUG << "SOC direction:\n" << direction_soc << "\n";
+   this->print_soc_iteration(direction_soc);
    return direction_soc;
+}
+
+template<typename LinearSolverType>
+void InteriorPoint<LinearSolverType>::print_soc_iteration(const Direction& direction_soc) const {
+   DEBUG << "Entered SOC computation\n";
+   DEBUG << "KKT matrix:\n" << this->kkt_matrix << "\n";
+   DEBUG << "SOC RHS: ";
+   print_vector(DEBUG, this->rhs);
+   DEBUG << "\n";
+   DEBUG << "SOC direction:\n" << direction_soc << "\n";
 }
 
 template<typename LinearSolverType>
