@@ -49,8 +49,8 @@ Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, const
    return direction;
 }
 
-Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate,
-      Direction& /*direction*/) {
+Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, const Direction&
+/*direction*/) {
    this->update_objective_multiplier(problem, current_iterate, 0.);
    return this->subproblem.solve(statistics, problem, current_iterate);
 }
