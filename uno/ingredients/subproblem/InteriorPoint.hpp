@@ -81,7 +81,7 @@ private:
    void generate_kkt_rhs(const Iterate& current_iterate);
    void compute_lower_bound_dual_displacements(const Iterate& current_iterate, const std::vector<double>& solution);
    void compute_upper_bound_dual_displacements(const Iterate& current_iterate, const std::vector<double>& solution);
-   Direction generate_direction(const Problem& problem, const Iterate& current_iterate, std::vector<double>& solution_IPM);
+   void generate_direction(const Problem& problem, const Iterate& current_iterate, std::vector<double>& solution_IPM);
    double compute_KKT_error_scaling(const Iterate& current_iterate) const;
    double compute_central_complementarity_error(const Iterate& iterate) const;
    void print_soc_iteration(const Direction& direction_soc) const;
@@ -287,10 +287,9 @@ inline Direction InteriorPoint<LinearSolverType>::solve(Statistics& statistics, 
    this->number_subproblems_solved++;
 
    /* generate IPM direction */
-   Direction direction = this->generate_direction(problem, current_iterate, this->solution_IPM);
-
+   this->generate_direction(problem, current_iterate, this->solution_IPM);
    statistics.add_statistic("barrier param.", this->barrier_parameter);
-   return direction;
+   return this->direction;
    //   catch (const UnstableInertiaCorrection& e) {
    //      /* unstable factorization during optimality phase */
    //      throw "InteriorPoint: inertia correction failed";
@@ -312,9 +311,9 @@ inline Direction InteriorPoint<LinearSolverType>::compute_second_order_correctio
    this->number_subproblems_solved++;
 
    /* generate IPM direction */
-   Direction direction_soc = this->generate_direction(problem, trial_iterate, this->solution_IPM);
-   this->print_soc_iteration(direction_soc);
-   return direction_soc;
+   this->generate_direction(problem, trial_iterate, this->solution_IPM);
+   this->print_soc_iteration(this->direction);
+   return this->direction;
 }
 
 template<typename LinearSolverType>
@@ -623,23 +622,21 @@ solution) {
 }
 
 template<typename LinearSolverType>
-inline Direction InteriorPoint<LinearSolverType>::generate_direction(const Problem& problem, const Iterate& current_iterate,
+inline void InteriorPoint<LinearSolverType>::generate_direction(const Problem& problem, const Iterate& current_iterate,
       std::vector<double>& solution_IPM) {
    /* retrieve +Δλ (Nocedal p590) */
    for (size_t j = this->number_variables; j < solution_IPM.size(); j++) {
       solution_IPM[j] = -solution_IPM[j];
    }
 
-   Direction direction(this->number_variables, problem.number_constraints);
-
    // "fraction to boundary" rule for primal variables and constraints multipliers
    const double tau = std::max(this->parameters.tau_min, 1. - this->barrier_parameter);
    const double primal_step_length = this->primal_fraction_to_boundary(current_iterate, solution_IPM, tau);
    for (size_t i = 0; i < this->number_variables; i++) {
-      direction.x[i] = primal_step_length * solution_IPM[i];
+      this->direction.x[i] = primal_step_length * solution_IPM[i];
    }
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      direction.multipliers.constraints[j] = primal_step_length * solution_IPM[number_variables + j];
+      this->direction.multipliers.constraints[j] = primal_step_length * solution_IPM[number_variables + j];
    }
 
    /* compute bound multiplier displacements Δz */
@@ -649,14 +646,14 @@ inline Direction InteriorPoint<LinearSolverType>::generate_direction(const Probl
    // "fraction to boundary" rule for bound multipliers
    const double dual_step_length = this->dual_fraction_to_boundary(current_iterate, tau);
    for (size_t i = 0; i < number_variables; i++) {
-      direction.multipliers.lower_bounds[i] = current_iterate.multipliers.lower_bounds[i] + dual_step_length * this->lower_delta_z[i];
-      direction.multipliers.upper_bounds[i] = current_iterate.multipliers.upper_bounds[i] + dual_step_length * this->upper_delta_z[i];
+      this->direction.multipliers.lower_bounds[i] = current_iterate.multipliers.lower_bounds[i] + dual_step_length * this->lower_delta_z[i];
+      this->direction.multipliers.upper_bounds[i] = current_iterate.multipliers.upper_bounds[i] + dual_step_length * this->upper_delta_z[i];
    }
 
-   direction.status = OPTIMAL;
-   direction.norm = norm_inf(direction.x, 0, this->number_variables);
+   this->direction.status = OPTIMAL;
+   this->direction.norm = norm_inf(direction.x, 0, this->number_variables);
    /* evaluate the barrier objective */
-   direction.objective = this->compute_barrier_directional_derivative(direction.x);
+   this->direction.objective = this->compute_barrier_directional_derivative(direction.x);
 
    DEBUG << "IPM solution:\n";
    DEBUG << "Δx: ";
@@ -671,7 +668,6 @@ inline Direction InteriorPoint<LinearSolverType>::generate_direction(const Probl
    print_vector(DEBUG, this->upper_delta_z);
    DEBUG << "primal length = " << primal_step_length << "\n";
    DEBUG << "dual length = " << dual_step_length << "\n\n";
-   return direction;
 }
 
 template<typename LinearSolverType>
