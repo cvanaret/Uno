@@ -41,7 +41,6 @@ struct Multipliers {
    std::vector<double> constraints; /*!< Multipliers of the general constraints */
    double objective{1.};
 
-   Multipliers() = default;
    Multipliers(size_t number_variables, size_t number_constraints);
 };
 

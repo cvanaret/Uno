@@ -51,7 +51,7 @@ void FeasibilityRestoration::form_feasibility_problem(const Problem& problem, co
 phase_2_primal_direction, const ConstraintPartition& constraint_partition) {
    // set the multipliers of the violated constraints
    FeasibilityRestoration::set_restoration_multipliers(this->subproblem.constraints_multipliers, constraint_partition);
-   
+
    // compute the objective gradient and (possibly) Hessian
    this->subproblem.update_objective_multiplier(problem, current_iterate, 0.);
    this->subproblem.compute_feasibility_linear_objective(current_iterate, constraint_partition);
@@ -61,11 +61,11 @@ phase_2_primal_direction, const ConstraintPartition& constraint_partition) {
 
 Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate,
       const Direction& phase_2_direction) {
-   assert(!phase_2_direction.constraint_partition.infeasible.empty() && "The direction is infeasible but no constraint is infeasible");
+   ConstraintPartition constraint_partition = phase_2_direction.constraint_partition;
+   assert(!constraint_partition.infeasible.empty() && "The direction is infeasible but no constraint is infeasible");
    DEBUG << "\nSolving the feasibility subproblem\n";
 
    // infeasible subproblem: form the feasibility problem
-   ConstraintPartition constraint_partition = phase_2_direction.constraint_partition;
    this->form_feasibility_problem(problem, current_iterate, phase_2_direction.x, constraint_partition);
 
    // solve the feasibility subproblem
