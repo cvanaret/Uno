@@ -84,10 +84,11 @@ public:
    std::vector <SparseVector<double>> constraints_jacobian;
    std::vector <Range> constraints_bounds;
    // Hessian is optional and depends on the subproblem
+   Direction direction;
 
-   int number_subproblems_solved;
+   int number_subproblems_solved{0};
    // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it
-   bool subproblem_definition_changed;
+   bool subproblem_definition_changed{false};
 
 protected:
    virtual void set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);

@@ -25,7 +25,7 @@ Subproblem::Subproblem(size_t number_variables, size_t number_constraints) :
       objective_gradient(number_variables), // SparseVector
       constraints_jacobian(number_constraints, number_variables), // vector of SparseVectors
       constraints_bounds(number_constraints),
-      number_subproblems_solved(0), subproblem_definition_changed(false) {
+      direction(number_variables, number_constraints) {
    for (size_t j = 0; j < this->number_constraints; j++) {
       this->constraints_jacobian[j].reserve(this->number_variables);
    }
