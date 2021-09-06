@@ -15,7 +15,7 @@ Iterate TrustRegion::initialize(Statistics& statistics, const Problem& problem, 
    return first_iterate;
 }
 
-std::tuple<Iterate, double, double> TrustRegion::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate&
+std::tuple<Iterate, double> TrustRegion::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate&
 current_iterate) {
    this->number_iterations = 0;
 
@@ -33,11 +33,11 @@ current_iterate) {
          /* set bound multipliers of active trust region to 0 */
          TrustRegion::rectify_active_set(direction, this->radius);
 
-         // assemble the trial iterate
-         Iterate trial_iterate = this->assemble_trial_iterate(current_iterate, direction, 1.);
+         // assemble the trial iterate by taking a full step
+         Iterate trial_iterate = this->assemble_trial_iterate(current_iterate, direction, this->full_step_length);
 
          // check whether the trial step is accepted
-         if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate, direction, 1.)) {
+         if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate, direction, this->full_step_length)) {
             this->add_statistics(statistics, direction);
 
             // increase the radius if trust region is active
@@ -47,7 +47,7 @@ current_iterate) {
 
             // let the subproblem know the accepted iterate
             this->relaxation_strategy.register_accepted_iterate(trial_iterate);
-            return std::make_tuple(std::move(trial_iterate), direction.norm, direction.objective_multiplier);
+            return std::make_tuple(std::move(trial_iterate), direction.norm);
          }
          else {
             /* if the step is rejected, decrease the radius */
@@ -78,7 +78,7 @@ void TrustRegion::add_statistics(Statistics& statistics, const Direction& direct
 }
 
 void TrustRegion::rectify_active_set(Direction& direction, double radius) {
-   assert (0 < radius);
+   assert(0 < radius);
    /* update active set and set multipliers for bound constraints active at trust region to 0 */
    for (auto it = direction.active_set.bounds.at_lower_bound.begin(); it != direction.active_set.bounds.at_lower_bound.end();) {
       int i = *it;
