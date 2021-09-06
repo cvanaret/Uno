@@ -25,7 +25,7 @@ public:
    virtual void generate_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) = 0;
 
    virtual Direction compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) = 0;
-   virtual Direction solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Direction& direction) = 0;
+   virtual Direction solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, const Direction& direction) = 0;
 
    Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate);
 

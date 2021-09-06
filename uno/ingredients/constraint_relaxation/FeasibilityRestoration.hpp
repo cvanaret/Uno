@@ -15,7 +15,7 @@ public:
    // direction computation
    void generate_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
    Direction compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
-   Direction solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Direction& direction) override;
+   Direction solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, const Direction& direction) override;
 
    bool is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length) override;
@@ -26,9 +26,9 @@ public:
 private:
    const std::unique_ptr<GlobalizationStrategy> phase_1_strategy;
    const std::unique_ptr<GlobalizationStrategy> phase_2_strategy;
-   Phase current_phase;
+   Phase current_phase{OPTIMALITY};
 
-   void form_feasibility_problem(const Problem& problem, const Iterate& current_iterate, const std::vector<double>& phase_2_direction, const
+   void form_feasibility_problem(const Problem& problem, const Iterate& current_iterate, const std::vector<double>& phase_2_primal_direction, const
    ConstraintPartition& constraint_partition);
    static void set_restoration_multipliers(std::vector<double>& constraints_multipliers, const ConstraintPartition& constraint_partition);
    void compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const ConstraintPartition& constraint_partition);

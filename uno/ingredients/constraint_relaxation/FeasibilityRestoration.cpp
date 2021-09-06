@@ -7,8 +7,7 @@ FeasibilityRestoration::FeasibilityRestoration(Subproblem& subproblem, const Opt
       ConstraintRelaxationStrategy(subproblem),
       /* create the globalization strategy */
       phase_1_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
-      phase_2_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
-      current_phase(OPTIMALITY) {
+      phase_2_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)) {
 }
 
 Iterate FeasibilityRestoration::initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
@@ -16,7 +15,7 @@ Iterate FeasibilityRestoration::initialize(Statistics& statistics, const Problem
 
    /* initialize the subproblem */
    Iterate first_iterate = this->subproblem.generate_initial_iterate(statistics, problem, x, multipliers);
-   this->subproblem.compute_errors(problem, first_iterate, 1.);
+   this->subproblem.compute_errors(problem, first_iterate, problem.objective_sign);
 
    this->phase_1_strategy->initialize(statistics, first_iterate);
    this->phase_2_strategy->initialize(statistics, first_iterate);
@@ -31,23 +30,13 @@ void FeasibilityRestoration::generate_subproblem(const Problem& problem, Iterate
 Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
    // solve the original subproblem
    Direction direction = this->subproblem.solve(statistics, problem, current_iterate);
+   direction.objective_multiplier = problem.objective_sign;
    DEBUG << "\n" << direction;
 
-   if (direction.status != INFEASIBLE) {
-      direction.objective_multiplier = problem.objective_sign;
-   }
-   else {
-      assert(!direction.constraint_partition.infeasible.empty() && "Infeasible direction requires infeasible constraints");
-      DEBUG << "\nSwitching to feasibility restoration\n";
-      ConstraintPartition constraint_partition = direction.constraint_partition;
-      // infeasible subproblem: form the feasibility problem
-      this->form_feasibility_problem(problem, current_iterate, direction.x, constraint_partition);
-      // solve the feasibility subproblem
-      direction = this->subproblem.solve(statistics, problem, current_iterate);
-      direction.objective_multiplier = 0.;
-      direction.is_relaxed = true;
+   if (direction.status == INFEASIBLE) {
+      // try to minimize the constraint violation by solving the feasibility subproblem
+      direction = this->solve_feasibility_problem(statistics, problem, current_iterate, direction);
       DEBUG << "\n" << direction;
-      direction.constraint_partition = constraint_partition;
    }
    return direction;
 }
@@ -59,21 +48,32 @@ double FeasibilityRestoration::compute_predicted_reduction(const Problem& /*prob
 }
 
 void FeasibilityRestoration::form_feasibility_problem(const Problem& problem, const Iterate& current_iterate, const std::vector<double>&
-phase_2_direction, const ConstraintPartition& constraint_partition) {
+phase_2_primal_direction, const ConstraintPartition& constraint_partition) {
    // set the multipliers of the violated constraints
    FeasibilityRestoration::set_restoration_multipliers(this->subproblem.constraints_multipliers, constraint_partition);
+   
    // compute the objective gradient and (possibly) Hessian
    this->subproblem.update_objective_multiplier(problem, current_iterate, 0.);
    this->subproblem.compute_feasibility_linear_objective(current_iterate, constraint_partition);
    this->subproblem.generate_feasibility_bounds(problem, current_iterate.constraints, constraint_partition);
-   this->subproblem.set_initial_point(phase_2_direction);
+   this->subproblem.set_initial_point(phase_2_primal_direction);
 }
 
 Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate,
-      Direction& direction) {
-   assert(this->current_phase == OPTIMALITY && "FeasibilityRestoration is already in the feasibility restoration phase");
-   this->form_feasibility_problem(problem, current_iterate, direction.x, direction.constraint_partition);
-   return this->subproblem.solve(statistics, problem, current_iterate);
+      const Direction& phase_2_direction) {
+   assert(!phase_2_direction.constraint_partition.infeasible.empty() && "The direction is infeasible but no constraint is infeasible");
+   DEBUG << "\nSolving the feasibility subproblem\n";
+
+   // infeasible subproblem: form the feasibility problem
+   ConstraintPartition constraint_partition = phase_2_direction.constraint_partition;
+   this->form_feasibility_problem(problem, current_iterate, phase_2_direction.x, constraint_partition);
+
+   // solve the feasibility subproblem
+   Direction feasibility_direction = this->subproblem.solve(statistics, problem, current_iterate);
+   feasibility_direction.constraint_partition = constraint_partition;
+   feasibility_direction.objective_multiplier = 0.;
+   feasibility_direction.is_relaxed = true;
+   return feasibility_direction;
 }
 
 bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate,
