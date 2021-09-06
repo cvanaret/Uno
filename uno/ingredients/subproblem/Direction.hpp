@@ -29,6 +29,7 @@ class Direction {
 public:
    Direction(size_t number_variables, size_t number_constraints);
    Direction(std::vector<double>& x, Multipliers& multipliers);
+
    std::vector<double> x; /*!< Primal variables */
    Multipliers multipliers; /*!< Multipliers */
    double objective_multiplier{1.}; /*!< Objective multiplier */
