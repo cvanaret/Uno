@@ -12,6 +12,7 @@ Iterate GlobalizationMechanism::assemble_trial_iterate(const Iterate& current_it
    add_vectors(current_iterate.multipliers.constraints, direction.multipliers.constraints, step_length, trial_iterate.multipliers.constraints);
    copy_from(trial_iterate.multipliers.lower_bounds, direction.multipliers.lower_bounds);
    copy_from(trial_iterate.multipliers.upper_bounds, direction.multipliers.upper_bounds);
+   trial_iterate.multipliers.objective = direction.objective_multiplier;
    return trial_iterate;
 }
 

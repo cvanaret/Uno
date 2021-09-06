@@ -36,25 +36,21 @@ Result Uno::solve(const Problem& problem, std::vector<double>& x, Multipliers& m
       while (!this->termination_criterion(termination_status, major_iterations)) {
          statistics.new_line();
          major_iterations++;
-         DEBUG << "\n########## Outer iteration " << major_iterations << "\n";
+         DEBUG << "\n### Outer iteration " << major_iterations << "\n";
          DEBUG << "Current iterate\n" << current_iterate << "\n";
 
          /* compute an acceptable iterate by solving a subproblem at the current point */
-         auto [new_iterate, direction_norm, objective_multiplier] = this->globalization_mechanism.compute_acceptable_iterate(statistics, problem, current_iterate);
+         auto [new_iterate, direction_norm] = this->globalization_mechanism.compute_acceptable_iterate(statistics, problem, current_iterate);
 
          Uno::add_statistics(statistics, new_iterate, major_iterations);
          if (Logger::logger_level == INFO) statistics.print_current_line();
 
          // compute the status of the new iterate
-         termination_status = this->check_termination(problem, new_iterate, direction_norm, objective_multiplier);
+         termination_status = this->check_termination(problem, new_iterate, direction_norm);
          current_iterate = std::move(new_iterate);
-
       }
    }
-   catch (std::invalid_argument& exception) {
-      ERROR << exception.what();
-   }
-   catch (std::runtime_error& exception) {
+   catch (std::exception& exception) {
       ERROR << exception.what();
    }
    if (Logger::logger_level == INFO) statistics.print_footer();
@@ -95,7 +91,7 @@ bool Uno::termination_criterion(TerminationStatus current_status, int iteration)
    return current_status != NOT_OPTIMAL || this->max_iterations <= iteration;
 }
 
-TerminationStatus Uno::check_termination(const Problem& problem, Iterate& current_iterate, double step_norm, double objective_multiplier) const {
+TerminationStatus Uno::check_termination(const Problem& problem, Iterate& current_iterate, double step_norm) const {
    TerminationStatus status = NOT_OPTIMAL;
 
    if (current_iterate.errors.complementarity <= this->tolerance * (double) (current_iterate.x.size() + problem.number_constraints)) {
@@ -120,13 +116,13 @@ TerminationStatus Uno::check_termination(const Problem& problem, Iterate& curren
    }
 
    // if convergence, correct the multipliers
-   if (status != NOT_OPTIMAL && 0. < objective_multiplier) {
+   if (status != NOT_OPTIMAL && 0. < current_iterate.multipliers.objective) {
       for (double& multiplier_j: current_iterate.multipliers.constraints) {
-         multiplier_j /= objective_multiplier;
+         multiplier_j /= current_iterate.multipliers.objective;
       }
       for (size_t i = 0; i < current_iterate.x.size(); i++) {
-         current_iterate.multipliers.lower_bounds[i] /= objective_multiplier;
-         current_iterate.multipliers.upper_bounds[i] /= objective_multiplier;
+         current_iterate.multipliers.lower_bounds[i] /= current_iterate.multipliers.objective;
+         current_iterate.multipliers.upper_bounds[i] /= current_iterate.multipliers.objective;
       }
    }
    return status;

@@ -16,7 +16,7 @@ Iterate BacktrackingLineSearch::initialize(Statistics& statistics, const Problem
    return first_iterate;
 }
 
-std::tuple<Iterate, double, double> BacktrackingLineSearch::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate&
+std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate&
 current_iterate) {
    /* compute the directions */
    this->relaxation_strategy.generate_subproblem(problem, current_iterate, INFINITY);
@@ -40,7 +40,7 @@ current_iterate) {
 
             // let the subproblem know the accepted iterate
             this->relaxation_strategy.register_accepted_iterate(trial_iterate);
-            return std::make_tuple(std::move(trial_iterate), direction.norm, direction.objective_multiplier);
+            return std::make_tuple(std::move(trial_iterate), direction.norm);
          }
          else if (this->number_iterations == 1 && trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility) { // reject
             // compute a (temporary) SOC direction
@@ -58,7 +58,7 @@ current_iterate) {
                this->relaxation_strategy.register_accepted_iterate(trial_iterate_soc);
                trial_iterate_soc.multipliers.lower_bounds = trial_iterate.multipliers.lower_bounds;
                trial_iterate_soc.multipliers.upper_bounds = trial_iterate.multipliers.upper_bounds;
-               return std::make_tuple(std::move(trial_iterate_soc), direction_soc.norm, direction_soc.objective_multiplier);
+               return std::make_tuple(std::move(trial_iterate_soc), direction_soc.norm);
             }
             else {
                /* decrease the step length */
