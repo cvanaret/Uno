@@ -9,47 +9,45 @@ Direction::Direction(size_t number_variables, size_t number_constraints):
 
 Direction::Direction(std::vector<double>& x, Multipliers& multipliers) : x(x), multipliers(multipliers), constraint_partition(multipliers
 .constraints.size()) {
-   this->active_set.bounds.at_lower_bound.reserve(x.size());
-   this->active_set.bounds.at_lower_bound.reserve(x.size());
-   this->active_set.constraints.at_lower_bound.reserve(multipliers.constraints.size());
-   this->active_set.constraints.at_upper_bound.reserve(multipliers.constraints.size());
-   this->constraint_partition.feasible.reserve(multipliers.constraints.size());
-   this->constraint_partition.infeasible.reserve(multipliers.constraints.size());
+   const size_t number_variables = x.size();
+   const size_t number_constraints = multipliers.constraints.size();
+   this->active_set.bounds.at_lower_bound.reserve(number_variables);
+   this->active_set.bounds.at_lower_bound.reserve(number_variables);
+   this->active_set.constraints.at_lower_bound.reserve(number_constraints);
+   this->active_set.constraints.at_upper_bound.reserve(number_constraints);
+   this->constraint_partition.feasible.reserve(number_constraints);
+   this->constraint_partition.infeasible.reserve(number_constraints);
+}
+
+std::string status_to_string(Status status) {
+   switch (status) {
+      case OPTIMAL:
+         return "optimal";
+      case UNBOUNDED_PROBLEM:
+         return "unbounded problem";
+      case BOUND_INCONSISTENCY:
+         return "inconsistent bounds";
+      case INFEASIBLE:
+         return "infeasible";
+      case INCORRECT_PARAMETER:
+         return "incorrect parameter";
+      case LP_INSUFFICIENT_SPACE:
+         return "insufficient LP space";
+      case HESSIAN_INSUFFICIENT_SPACE:
+         return "insufficient Hessian space";
+      case SPARSE_INSUFFICIENT_SPACE:
+         return "insufficient sparse space";
+      case MAX_RESTARTS_REACHED:
+         return "max restarts reached";
+      case UNDEFINED:
+         return "undefined";
+      default:
+         return "unknown status, something went wrong";
+   }
 }
 
 std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
-   if (direction.status == OPTIMAL) {
-      stream << "Status: optimal\n";
-   }
-   else if (direction.status == UNBOUNDED_PROBLEM) {
-      stream << "Status: unbounded\n";
-   }
-   else if (direction.status == BOUND_INCONSISTENCY) {
-      stream << "Status: bound inconsistency\n";
-   }
-   else if (direction.status == INFEASIBLE) {
-      stream << "Status: infeasible subproblem\n";
-   }
-   else if (direction.status == INCORRECT_PARAMETER) {
-      stream << "Status: incorrect parameter\n";
-   }
-   else if (direction.status == LP_INSUFFICIENT_SPACE) {
-      stream << "Status: insufficient space for the LP\n";
-   }
-   else if (direction.status == HESSIAN_INSUFFICIENT_SPACE) {
-      stream << "Status: insufficient space for the Hessian\n";
-   }
-   else if (direction.status == SPARSE_INSUFFICIENT_SPACE) {
-      stream << "Status: insufficient space for the sparsity pattern\n";
-   }
-   else if (direction.status == MAX_RESTARTS_REACHED) {
-      stream << "Status: maximum number of restarts reached\n";
-   }
-   else {
-      stream << "Status " << direction.status << ": Beware peasant, something went wrong\n";
-   }
-
-   //stream << MAGENTA;
+   stream << "Status: " << status_to_string(direction.status) << "\n";
    stream << "d^* = ";
    print_vector(stream, direction.x);
 
