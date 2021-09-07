@@ -42,8 +42,8 @@ void get_command_options(int argc, char* argv[], Options& options) {
             options["constraint-relaxation"] = "feasibility-restoration";
             options["strategy"] = "filter";
             options["subproblem"] = "IPM";
-            options["Beta"] = "0.99999";
-            options["Gamma"] = "1e-5";
+            options["filter_Beta"] = "0.99999";
+            options["filter_Gamma"] = "1e-5";
             options["decrease_fraction"] = "1e-4";
             i++;
          }
