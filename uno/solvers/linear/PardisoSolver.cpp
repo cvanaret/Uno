@@ -10,7 +10,7 @@ void pardiso_chkmatrix(const int* mtype, const int* n, double* matrix, int* colu
 void pardiso_chkvec(const int* n, const int* nrhs, const double* rhs, int* error);
 }
 
-PardisoSolver::PardisoSolver(): LinearSolver() {
+PardisoSolver::PardisoSolver(size_t dimension): LinearSolver(dimension) {
    /* Setup Pardiso control parameters */
    int error = 0;
    pardisoinit(this->pt.data(), &this->mtype, &this->solver, this->iparm.data(), this->dparm.data(), &error);
@@ -26,18 +26,8 @@ void PardisoSolver::factorize(CSCSymmetricMatrix& matrix) {
 }
 
 void PardisoSolver::do_symbolic_factorization(CSCSymmetricMatrix& matrix) {
-   this->number_variables = matrix.dimension;
-   /* RHS and solution vectors. */
-   /*
-   std::vector<double> b(this->number_variables);
-   for (size_t i = 0; i < this->number_variables; i++) {
-      b[i] = (double) (i + 1);
-   }
-    */
-   std::vector<double> x(this->number_variables);
-
    /* convert matrix from 0-based C-notation to Fortran 1-based notation */
-   for (size_t i = 0; i < this->number_variables + 1; i++) {
+   for (size_t i = 0; i < this->dimension + 1; i++) {
       matrix.column_start[i]++;
    }
    for (size_t i = 0; i < matrix.number_nonzeros; i++) {
@@ -46,13 +36,13 @@ void PardisoSolver::do_symbolic_factorization(CSCSymmetricMatrix& matrix) {
 
    /* check the consistency of the given matrix. Use this functionality only for debugging purposes */
    int error;
-   pardiso_chkmatrix(&this->mtype, (int*) &this->number_variables, matrix.matrix.data(), matrix.column_start.data(), matrix.row_index.data(), &error);
+   pardiso_chkmatrix(&this->mtype, (int*) &this->dimension, matrix.matrix.data(), matrix.column_start.data(), matrix.row_index.data(), &error);
    assert(error == 0 && "Consistency error in Pardiso matrix");
 
    /* Reordering and Symbolic Factorization.  This step also allocates all memory that is necessary for the factorization */
    const int phase = (int) ANALYSIS;
    this->iparm[2] = 4; // Number of processors
-   pardiso(this->pt.data(), &this->maxfct, &this->mnum, &this->mtype, &phase, (int*) &this->number_variables, matrix.matrix.data(),
+   pardiso(this->pt.data(), &this->maxfct, &this->mnum, &this->mtype, &phase, (int*) &this->dimension, matrix.matrix.data(),
          matrix.column_start.data(), matrix.row_index.data(), nullptr, &this->nrhs, this->iparm.data(), &this->msglvl, nullptr, nullptr, &error,
          this->dparm.data());
    assert(error == 0 && "Error during Pardiso symbolic factorization");
@@ -63,7 +53,7 @@ void PardisoSolver::do_numerical_factorization(CSCSymmetricMatrix& matrix) {
    const int phase = (int) NUMERICAL_FACTORIZATION;
    this->iparm[32] = 1; /* compute determinant */
    int error;
-   pardiso(this->pt.data(), &this->maxfct, &this->mnum, &this->mtype, &phase, (int*) &this->number_variables, matrix.matrix.data(),
+   pardiso(this->pt.data(), &this->maxfct, &this->mnum, &this->mtype, &phase, (int*) &this->dimension, matrix.matrix.data(),
          matrix.column_start.data(), matrix.row_index.data(), nullptr, &this->nrhs, this->iparm.data(), &this->msglvl, nullptr, nullptr, &error,
          this->dparm.data());
    assert(error == 0 && "Error occurred during Pardiso numerical factorization");
@@ -72,18 +62,18 @@ void PardisoSolver::do_numerical_factorization(CSCSymmetricMatrix& matrix) {
 void PardisoSolver::solve(CSCSymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) {
    // check the given vectors for infinite and NaN values
    int error;
-   pardiso_chkvec((int*) &this->number_variables, &this->nrhs, rhs.data(), &error);
+   pardiso_chkvec((int*) &this->dimension, &this->nrhs, rhs.data(), &error);
    assert(error == 0 && "Error in Pardiso right-hand side");
 
    /* Back substitution and iterative refinement */
    int phase = (int) SOLVE;
    this->iparm[7] = 1; /* Max numbers of iterative refinement steps. */
-   pardiso(this->pt.data(), &maxfct, &mnum, &this->mtype, &phase, (int*) &this->number_variables, matrix.matrix.data(), matrix.column_start.data(),
+   pardiso(this->pt.data(), &maxfct, &mnum, &this->mtype, &phase, (int*) &this->dimension, matrix.matrix.data(), matrix.column_start.data(),
          matrix.row_index.data(), nullptr, &nrhs, this->iparm.data(), &msglvl, rhs.data(), result.data(), &error, this->dparm.data());
    assert(error == 0 && "Error during Pardiso solve");
 
    /* Convert matrix back to 0-based C-notation */
-   for (size_t i = 0; i < this->number_variables + 1; i++) {
+   for (size_t i = 0; i < this->dimension + 1; i++) {
       matrix.column_start[i]--;
    }
    for (size_t i = 0; i < matrix.number_nonzeros; i++) {
@@ -92,7 +82,7 @@ void PardisoSolver::solve(CSCSymmetricMatrix& matrix, const std::vector<double>&
 
    /* Release internal memory. */
    phase = (int) MEMORY_DEALLOCATION;
-   pardiso(this->pt.data(), &this->maxfct, &this->mnum, &this->mtype, &phase, (int*) &this->number_variables, nullptr, matrix.column_start.data(),
+   pardiso(this->pt.data(), &this->maxfct, &this->mnum, &this->mtype, &phase, (int*) &this->dimension, nullptr, matrix.column_start.data(),
          matrix.row_index.data(), nullptr, &this->nrhs, this->iparm.data(), &this->msglvl, nullptr, nullptr, &error, this->dparm.data());
 }
 
@@ -100,7 +90,7 @@ std::tuple<size_t, size_t, size_t> PardisoSolver::get_inertia() const {
    const size_t rank = this->rank();
    const size_t number_positive_eigenvalues = this->number_positive_eigenvalues();
    const size_t number_negative_eigenvalues = this->number_negative_eigenvalues();
-   const size_t number_zero_eigenvalues = this->number_variables - rank;
+   const size_t number_zero_eigenvalues = this->dimension - rank;
    return std::make_tuple(number_positive_eigenvalues, number_negative_eigenvalues, number_zero_eigenvalues);
 }
 

@@ -24,7 +24,7 @@ enum PardisoPhase {
  */
 class PardisoSolver : public LinearSolver<CSCSymmetricMatrix> {
 public:
-   PardisoSolver();
+   PardisoSolver(size_t dimension);
    ~PardisoSolver() override = default;
 
    void factorize(CSCSymmetricMatrix& matrix) override;
@@ -39,7 +39,6 @@ public:
    [[nodiscard]] size_t rank() const override;
 
 private:
-   size_t number_variables;
    /* Internal solver memory pointer pt,                  */
    /* 32-bit: int pt[64]; 64-bit: long int pt[64]         */
    /* or void *pt[64] should be OK on both architectures  */
