@@ -38,7 +38,9 @@ private:
    std::vector<double> alp_;
    std::vector<int> lp_, ls_;
    std::vector<double> w_, gradient_solution_, residuals_, e_;
-   int size_hessian_sparsity_, size_hessian_workspace_, size_hessian_sparsity_workspace_;
+   size_t size_hessian_sparsity_;
+   size_t size_hessian_workspace_;
+   size_t size_hessian_sparsity_workspace_;
    std::vector<double> hessian_;
    std::vector<int> hessian_sparsity_;
    int k_{0};

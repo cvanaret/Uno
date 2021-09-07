@@ -72,9 +72,9 @@ public:
    std::vector<FunctionType> constraint_type; /*!< Types of the constraints (LINEAR, QUADRATIC, NONLINEAR) */
    std::vector<ConstraintType> constraint_status; /*!< Status of the constraints (EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES,
  * UNBOUNDED) */
-   std::map<int, int> equality_constraints; /*!< inequality constraints */
-   std::map<int, int> inequality_constraints; /*!< inequality constraints */
-   std::map<int, int> linear_constraints;
+   std::map<size_t, size_t> equality_constraints; /*!< inequality constraints */
+   std::map<size_t, size_t> inequality_constraints; /*!< inequality constraints */
+   std::map<size_t, size_t> linear_constraints;
 
    /* Hessian */
    int hessian_maximum_number_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */
@@ -85,7 +85,7 @@ public:
    virtual void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const = 0;
    [[nodiscard]] virtual double evaluate_constraint(int j, const std::vector<double>& x) const = 0;
    virtual void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const = 0;
-   virtual void constraint_gradient(const std::vector<double>& x, int j, SparseVector<double>& gradient) const = 0;
+   virtual void constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const = 0;
    virtual void constraints_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraints_jacobian) const = 0;
    virtual void lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
          CSCSymmetricMatrix& hessian) const = 0;
@@ -100,7 +100,7 @@ public:
    void project_point_in_bounds(std::vector<double>& x) const;
    [[nodiscard]] double compute_constraint_violation(double constraint, size_t j) const;
    [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const;
-   [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, const std::vector<int>& constraint_set, Norm
+   [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, const std::vector<size_t>& constraint_set, Norm
    residual_norm) const;
 
 protected:

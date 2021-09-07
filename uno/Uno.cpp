@@ -56,8 +56,8 @@ Result Uno::solve(const Problem& problem, std::vector<double>& x, Multipliers& m
    if (Logger::logger_level == INFO) statistics.print_footer();
    timer.stop();
 
-   int number_subproblems_solved = this->globalization_mechanism.get_number_subproblems_solved();
-   int hessian_evaluation_count = this->globalization_mechanism.get_hessian_evaluation_count();
+   const int number_subproblems_solved = this->globalization_mechanism.get_number_subproblems_solved();
+   const int hessian_evaluation_count = this->globalization_mechanism.get_hessian_evaluation_count();
    Result result =
          {termination_status, std::move(current_iterate), problem.number_variables, problem.number_constraints, major_iterations, timer.get_time(),
           Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_jacobian, hessian_evaluation_count,
@@ -93,21 +93,22 @@ bool Uno::termination_criterion(TerminationStatus current_status, int iteration)
 
 TerminationStatus Uno::check_termination(const Problem& problem, Iterate& current_iterate, double step_norm) const {
    TerminationStatus status = NOT_OPTIMAL;
+   const size_t number_variables = current_iterate.x.size();
 
-   if (current_iterate.errors.complementarity <= this->tolerance * (double) (current_iterate.x.size() + problem.number_constraints)) {
+   if (current_iterate.errors.complementarity <= this->tolerance * (double) (number_variables + problem.number_constraints)) {
       // feasible and KKT point
-      if (current_iterate.errors.KKT <= this->tolerance * std::sqrt(current_iterate.x.size())) {
-         if (current_iterate.errors.constraints <= this->tolerance * (double) current_iterate.x.size()) {
+      if (current_iterate.errors.KKT <= this->tolerance * std::sqrt(number_variables)) {
+         if (current_iterate.errors.constraints <= this->tolerance * (double) number_variables) {
             status = KKT_POINT;
          }
       }
       // infeasible and FJ point
-      else if (0 < problem.number_constraints && current_iterate.errors.FJ <= this->tolerance * std::sqrt(current_iterate.x.size())) {
+      else if (0 < problem.number_constraints && current_iterate.errors.FJ <= this->tolerance * std::sqrt(number_variables)) {
          status = FJ_POINT;
       }
    }
    else if (step_norm <= this->tolerance / 100.) {
-      if (current_iterate.errors.constraints <= this->tolerance * (double) current_iterate.x.size()) {
+      if (current_iterate.errors.constraints <= this->tolerance * (double) number_variables) {
          status = FEASIBLE_SMALL_STEP;
       }
       else {
@@ -117,12 +118,13 @@ TerminationStatus Uno::check_termination(const Problem& problem, Iterate& curren
 
    // if convergence, correct the multipliers
    if (status != NOT_OPTIMAL && 0. < current_iterate.multipliers.objective) {
+      const double objective_multiplier = current_iterate.multipliers.objective;
       for (double& multiplier_j: current_iterate.multipliers.constraints) {
-         multiplier_j /= current_iterate.multipliers.objective;
+         multiplier_j /= objective_multiplier;
       }
-      for (size_t i = 0; i < current_iterate.x.size(); i++) {
-         current_iterate.multipliers.lower_bounds[i] /= current_iterate.multipliers.objective;
-         current_iterate.multipliers.upper_bounds[i] /= current_iterate.multipliers.objective;
+      for (size_t i = 0; i < number_variables; i++) {
+         current_iterate.multipliers.lower_bounds[i] /= objective_multiplier;
+         current_iterate.multipliers.upper_bounds[i] /= objective_multiplier;
       }
    }
    return status;

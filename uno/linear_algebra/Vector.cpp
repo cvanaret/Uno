@@ -55,7 +55,7 @@ double norm_2_squared(const std::vector<double>& x) {
    return norm_squared;
 }
 
-double norm_2_squared(const std::function<double(int i)>& f, size_t size) {
+double norm_2_squared(const std::function<double(size_t i)>& f, size_t size) {
    double norm = 0.;
    for (size_t i = 0; i < size; i++) {
       double x_i = f(i);
@@ -82,7 +82,7 @@ double norm_inf(const std::vector<double>& x, size_t start, size_t length) {
    return norm;
 }
 
-double norm_inf(const std::function<double(int i)>& f, size_t size) {
+double norm_inf(const std::function<double(size_t i)>& f, size_t size) {
    double norm = 0.;
    for (size_t i = 0; i < size; i++) {
       norm = std::max(norm, std::abs(f(i)));

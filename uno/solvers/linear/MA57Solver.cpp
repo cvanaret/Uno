@@ -23,7 +23,7 @@ lifact, const double rhs[], double x[], double resid[], double work[], int iwork
 }
 
 MA57Solver::MA57Solver(size_t dimension) : LinearSolver(), dimension(dimension), iwork(5*dimension),
-   lwork((int) (1.2 * dimension)), work(this->lwork), residuals(dimension) {
+   lwork((int) (1.2 * (double) dimension)), work(this->lwork), residuals(dimension) {
    /* set the default values of the controlling parameters */
    ma57id_(this->cntl.data(), this->icntl.data());
    // suppress warning messages
@@ -85,9 +85,9 @@ void MA57Solver::do_numerical_factorization(COOSymmetricMatrix& matrix) {
    assert(this->dimension == matrix.dimension && "MA57Solver: the dimension of the matrix is inconsistent");
    assert(this->factorization.nnz == (int) matrix.number_nonzeros && "MA57Solver: the numbers of nonzeros do not match");
 
-   const int n = this->dimension;
+   const size_t n = this->dimension;
    /* numerical factorization */
-   ma57bd_(&n,
+   ma57bd_((int*) &n,
          (int*) &this->factorization.nnz,
          /* const */ matrix.matrix.data(),
          /* out */ this->factorization.fact.data(),
@@ -102,14 +102,14 @@ void MA57Solver::do_numerical_factorization(COOSymmetricMatrix& matrix) {
 
 void MA57Solver::solve(COOSymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) {
    /* solve */
-   const int n = this->dimension;
-   const int lrhs = n; // integer, length of rhs
+   const size_t n = this->dimension;
+   const int lrhs = (int) n; // integer, length of rhs
 
    // solve the linear system
    if (this->use_iterative_refinement) {
       assert(false && "TODO in MA57Solver::solve: reindex matrix");
 
-      ma57dd_(&this->job, &n, (int*) &this->factorization.nnz, matrix.matrix.data(), matrix.row_indices.data(), matrix.column_indices.data(),
+      ma57dd_(&this->job, (int*) &n, (int*) &this->factorization.nnz, matrix.matrix.data(), matrix.row_indices.data(), matrix.column_indices.data(),
             this->factorization.fact.data(), &this->factorization.lfact, this->factorization.ifact.data(), &this->factorization.lifact,
             rhs.data(), result.data(), this->residuals.data(), this->work.data(), this->iwork.data(), this->icntl.data(),
             this->cntl.data(), this->info.data(), this->rinfo.data());
@@ -118,17 +118,17 @@ void MA57Solver::solve(COOSymmetricMatrix& matrix, const std::vector<double>& rh
       // copy rhs into result (overwritten by MA57)
       copy_from(result, rhs);
 
-      ma57cd_(&this->job, &n, this->factorization.fact.data(), &this->factorization.lfact, this->factorization.ifact.data(),
+      ma57cd_(&this->job, (int*) &n, this->factorization.fact.data(), &this->factorization.lfact, this->factorization.ifact.data(),
             &this->factorization.lifact, &this->nrhs, result.data(), &lrhs, this->work.data(), &this->lwork, this->iwork.data(),
             this->icntl.data(), this->info.data());
    }
 }
 
-std::tuple<int, int, int> MA57Solver::get_inertia() const {
-   const int rank = this->rank();
-   const int number_negative_eigenvalues = (int) this->number_negative_eigenvalues();
-   const int number_positive_eigenvalues = rank - number_negative_eigenvalues;
-   const int number_zero_eigenvalues = (int) this->dimension - rank;
+std::tuple<size_t, size_t, size_t> MA57Solver::get_inertia() const {
+   const size_t rank = this->rank();
+   const size_t number_negative_eigenvalues = this->number_negative_eigenvalues();
+   const size_t number_positive_eigenvalues = rank - number_negative_eigenvalues;
+   const size_t number_zero_eigenvalues = this->dimension - rank;
    return std::make_tuple(number_positive_eigenvalues, number_negative_eigenvalues, number_zero_eigenvalues);
 }
 
@@ -140,6 +140,6 @@ bool MA57Solver::matrix_is_singular() const {
    return (this->info[0] == 4);
 }
 
-int MA57Solver::rank() const {
+size_t MA57Solver::rank() const {
    return this->info[24];
 }

@@ -28,7 +28,7 @@ public:
    void remove_variables(const std::vector<int>& variable_indices);
    COOSymmetricMatrix to_COO();
 
-   static CSCSymmetricMatrix identity(int dimension);
+   static CSCSymmetricMatrix identity(size_t dimension);
 
    friend std::ostream& operator<<(std::ostream& stream, const CSCSymmetricMatrix& matrix);
 

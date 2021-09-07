@@ -59,7 +59,7 @@ AMPLModel::~AMPLModel() {
 
 void AMPLModel::generate_variables_() {
    for (size_t i = 0; i < this->number_variables; i++) {
-      this->variables_names[i] = var_name_ASL(this->asl_, i);
+      this->variables_names[i] = var_name_ASL(this->asl_, (int) i);
       double lb = (this->asl_->i.LUv_ != nullptr) ? this->asl_->i.LUv_[2 * i] : -INFINITY;
       double ub = (this->asl_->i.LUv_ != nullptr) ? this->asl_->i.LUv_[2 * i + 1] : INFINITY;
       if (lb == ub) {
@@ -125,13 +125,13 @@ void AMPLModel::evaluate_constraints(const std::vector<double>& x, std::vector<d
 }
 
 /* sparse gradient */
-void AMPLModel::constraint_gradient(const std::vector<double>& x, int j, SparseVector<double>& gradient) const {
+void AMPLModel::constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const {
    const int congrd_mode_backup = this->asl_->i.congrd_mode;
    this->asl_->i.congrd_mode = 1; // sparse computation
 
    /* compute the AMPL gradient */
    int nerror = 0;
-   (*(this->asl_)->p.Congrd)(this->asl_, j, (double*) x.data(), (double*) this->ampl_tmp_gradient_.data(), &nerror);
+   (*(this->asl_)->p.Congrd)(this->asl_, (int) j, (double*) x.data(), (double*) this->ampl_tmp_gradient_.data(), &nerror);
    if (0 < nerror) {
       throw GradientNumericalError();
    }
@@ -158,7 +158,7 @@ void AMPLModel::constraints_jacobian(const std::vector<double>& x, std::vector<S
 
 void AMPLModel::generate_constraints_() {
    for (size_t j = 0; j < this->number_constraints; j++) {
-      this->constraint_name[j] = con_name_ASL(this->asl_, j);
+      this->constraint_name[j] = con_name_ASL(this->asl_, (int) j);
       double lb = (this->asl_->i.LUrhs_ != nullptr) ? this->asl_->i.LUrhs_[2 * j] : -INFINITY;
       double ub = (this->asl_->i.LUrhs_ != nullptr) ? this->asl_->i.LUrhs_[2 * j + 1] : INFINITY;
       this->constraint_bounds[j] = {lb, ub};
@@ -194,7 +194,7 @@ void AMPLModel::set_function_types_(std::string file_name) {
    this->type = LINEAR;
    int current_linear_constraint = 0;
    for (size_t j = 0; j < this->number_constraints; j++) {
-      fint qp = nqpcheck_ASL(asl, -(j + 1), &rowq, &colqp, &delsqp);
+      fint qp = nqpcheck_ASL(asl, (int) -(j + 1), &rowq, &colqp, &delsqp);
 
       if (0 < qp) {
          this->constraint_type[j] = QUADRATIC;
@@ -347,8 +347,8 @@ void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objectiv
    for (size_t j = 0; j < this->number_variables; j++) {
       for (int k = ampl_column_start[j]; k < ampl_column_start[j + 1]; k++) {
          size_t i = ampl_row_index[k];
-         hessian.row_indices[index] = i;
-         hessian.column_indices[index] = j;
+         hessian.row_indices[index] = (int) i;
+         hessian.column_indices[index] = (int) j;
          index++;
       }
    }

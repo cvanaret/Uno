@@ -31,7 +31,7 @@ public:
    //std::vector<bool> constraint_is_uncertainty_set;
    [[nodiscard]] double evaluate_constraint(int j, const std::vector<double>& x) const override;
    void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const override;
-   void constraint_gradient(const std::vector<double>& x, int j, SparseVector<double>& gradient) const override;
+   void constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const override;
    void constraints_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraints_jacobian) const override;
 
    /* Hessian */

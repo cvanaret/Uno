@@ -142,7 +142,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
 
 void FeasibilityRestoration::set_restoration_multipliers(std::vector<double>& constraints_multipliers, const ConstraintPartition&
 constraint_partition) {
-   for (int j: constraint_partition.infeasible) {
+   for (size_t j: constraint_partition.infeasible) {
       if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
          constraints_multipliers[j] = 1.;
       }

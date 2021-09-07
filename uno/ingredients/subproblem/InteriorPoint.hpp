@@ -277,7 +277,7 @@ inline Direction InteriorPoint<LinearSolverType>::solve(Statistics& statistics, 
    this->modify_inertia(problem, this->kkt_matrix, this->number_variables, problem.number_constraints);
    DEBUG << "KKT matrix:\n" << this->kkt_matrix << "\n";
    auto[number_pos, number_neg, number_zero] = this->linear_solver->get_inertia();
-   assert(number_pos == (int) this->number_variables && number_neg == (int) problem.number_constraints && number_zero == 0);
+   assert(number_pos == this->number_variables && number_neg == problem.number_constraints && number_zero == 0);
 
    /* right-hand side */
    this->generate_kkt_rhs(current_iterate);
@@ -341,7 +341,7 @@ inline void InteriorPoint<LinearSolverType>::compute_progress_measures(const Pro
          return iterate.constraints[j] - problem.constraint_bounds[j].lb;
       }
       else {
-         const int i = problem.inequality_constraints.at(j);
+         const size_t i = problem.inequality_constraints.at(j);
          return iterate.constraints[j] - iterate.x[problem.number_variables + i];
       }
    };

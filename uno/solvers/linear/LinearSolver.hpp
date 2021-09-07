@@ -18,10 +18,10 @@ public:
    virtual void do_numerical_factorization(SparseSymmetricMatrix& matrix) = 0;
    virtual void solve(SparseSymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) = 0;
 
-   [[nodiscard]] virtual std::tuple<int, int, int> get_inertia() const = 0;
+   [[nodiscard]] virtual std::tuple<size_t, size_t, size_t> get_inertia() const = 0;
    [[nodiscard]] virtual size_t number_negative_eigenvalues() const = 0;
    [[nodiscard]] virtual bool matrix_is_singular() const = 0;
-   [[nodiscard]] virtual int rank() const = 0;
+   [[nodiscard]] virtual size_t rank() const = 0;
 };
 
 #endif // LINEARSOLVER_H

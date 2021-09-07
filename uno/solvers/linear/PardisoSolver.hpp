@@ -32,14 +32,14 @@ public:
    void do_numerical_factorization(CSCSymmetricMatrix& matrix) override;
    void solve(CSCSymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) override;
 
-   [[nodiscard]] std::tuple<int, int, int> get_inertia() const override;
+   [[nodiscard]] std::tuple<size_t, size_t, size_t> get_inertia() const override;
    [[nodiscard]] size_t number_positive_eigenvalues() const;
    [[nodiscard]] size_t number_negative_eigenvalues() const override;
    [[nodiscard]] bool matrix_is_singular() const override;
-   [[nodiscard]] int rank() const override;
+   [[nodiscard]] size_t rank() const override;
 
 private:
-   int n;
+   size_t number_variables;
    /* Internal solver memory pointer pt,                  */
    /* 32-bit: int pt[64]; 64-bit: long int pt[64]         */
    /* or void *pt[64] should be OK on both architectures  */
