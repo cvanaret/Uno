@@ -110,7 +110,7 @@ void Statistics::print_current_line() {
          std::cout << " -";
          size = 2;
       }
-      size_t number_spaces = std::max(0, (int) this->widths[header] - (int) size);
+      size_t number_spaces = (size <= this->widths[header]) ? this->widths[header] - size : 0;
       for (size_t j = 0; j < number_spaces; j++) {
          std::cout << " ";
       }
