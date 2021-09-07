@@ -38,8 +38,6 @@ public:
    [[nodiscard]] size_t rank() const override;
 
 private:
-   const size_t dimension;
-
    std::vector<int> iwork;
    int lwork;
    std::vector<double> work;

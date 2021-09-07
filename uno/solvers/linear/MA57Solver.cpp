@@ -22,7 +22,7 @@ lifact, const double rhs[], double x[], double resid[], double work[], int iwork
       double cntl[], int info[], double rinfo[]);
 }
 
-MA57Solver::MA57Solver(size_t dimension) : LinearSolver(), dimension(dimension), iwork(5*dimension),
+MA57Solver::MA57Solver(size_t dimension) : LinearSolver(dimension), iwork(5*dimension),
    lwork((int) (1.2 * (double) dimension)), work(this->lwork), residuals(dimension) {
    /* set the default values of the controlling parameters */
    ma57id_(this->cntl.data(), this->icntl.data());

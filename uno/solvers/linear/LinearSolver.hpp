@@ -9,7 +9,7 @@ public:
    // make this type accessible in templates
    using matrix_type = SparseSymmetricMatrix;
 
-   LinearSolver() = default;
+   LinearSolver(size_t dimension): dimension(dimension) {};
    virtual ~LinearSolver() = default;
 
    // matrix is not declared const, since Fortran-based solvers may need to temporarily reindex the coordinates
@@ -22,6 +22,9 @@ public:
    [[nodiscard]] virtual size_t number_negative_eigenvalues() const = 0;
    [[nodiscard]] virtual bool matrix_is_singular() const = 0;
    [[nodiscard]] virtual size_t rank() const = 0;
+
+protected:
+   const size_t dimension;
 };
 
 #endif // LINEARSOLVER_H
