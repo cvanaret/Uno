@@ -32,10 +32,10 @@ public:
    void do_numerical_factorization(COOSymmetricMatrix& matrix) override;
    void solve(COOSymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) override;
 
-   [[nodiscard]] std::tuple<int, int, int> get_inertia() const override;
+   [[nodiscard]] std::tuple<size_t, size_t, size_t> get_inertia() const override;
    [[nodiscard]] size_t number_negative_eigenvalues() const override;
    [[nodiscard]] bool matrix_is_singular() const override;
-   [[nodiscard]] int rank() const override;
+   [[nodiscard]] size_t rank() const override;
 
 private:
    const size_t dimension;

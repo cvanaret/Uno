@@ -28,12 +28,12 @@ double norm_1(const std::vector<double>& x);
 double norm_1(const std::function<double(size_t i)>& f, size_t size);
 
 double norm_2_squared(const std::vector<double>& x);
-double norm_2_squared(const std::function<double(int i)>& f, size_t size);
+double norm_2_squared(const std::function<double(size_t i)>& f, size_t size);
 double norm_2(const std::vector<double>& x);
 double norm_2(const std::function<double(int i)>& f, size_t size);
 
 double norm_inf(const std::vector<double>& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max());
-double norm_inf(const std::function<double(int i)>& f, size_t size);
+double norm_inf(const std::function<double(size_t i)>& f, size_t size);
 
 double dot(const std::vector<double>& x, const std::vector<double>& y);
 

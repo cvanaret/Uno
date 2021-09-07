@@ -80,7 +80,7 @@ void Subproblem::set_constraints_bounds(const Problem& problem, const std::vecto
 void Subproblem::compute_feasibility_linear_objective(const Iterate& current_iterate, const ConstraintPartition& constraint_partition) {
    /* objective function: sum of gradients of infeasible constraints */
    this->objective_gradient.clear();
-   for (int j: constraint_partition.infeasible) {
+   for (size_t j: constraint_partition.infeasible) {
       current_iterate.constraints_jacobian[j].for_each([&](size_t i, double derivative) {
          if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
             this->objective_gradient.insert(i, -derivative);

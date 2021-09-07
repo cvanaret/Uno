@@ -32,7 +32,7 @@ void CSCSymmetricMatrix::for_each(const std::function<void (int, int, double)>& 
    size_t overall_padding_size = 0;
    for (size_t j = 0; j < this->dimension; j++) {
       // work on the active elements (ignore the padding slots)
-      for (int k = (int) (this->column_start[j] + overall_padding_size); k < (int) (this->column_start[j + 1] + overall_padding_size); k++) {
+      for (size_t k = this->column_start[j] + overall_padding_size; k < this->column_start[j + 1] + overall_padding_size; k++) {
          int i = this->row_index[k];
          f(i, (int) j, this->matrix[k]);
       }
@@ -157,10 +157,10 @@ COOSymmetricMatrix CSCSymmetricMatrix::to_COO() {
    return coo_matrix;
 }
 
-CSCSymmetricMatrix CSCSymmetricMatrix::identity(int dimension) {
+CSCSymmetricMatrix CSCSymmetricMatrix::identity(size_t dimension) {
    // no padding
    CSCSymmetricMatrix identity(dimension, dimension, 0);
-   for (int i = 0; i < dimension; i++) {
+   for (size_t i = 0; i < dimension; i++) {
       identity.insert(1., i, i);
       identity.finalize(i);
    }

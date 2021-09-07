@@ -33,6 +33,9 @@ bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, ProgressMeasur
    DEBUG << "Current: η = " << current_progress.infeasibility << ", ω = " << current_progress.objective << "\n";
    DEBUG << "Trial:   η = " << trial_progress.infeasibility << ", ω = " << trial_progress.objective << "\n";
    DEBUG << "Predicted reduction (should be positive): " << predicted_reduction << "\n";
+   const double actual_reduction = filter->compute_actual_reduction(current_progress.objective, current_progress.infeasibility, trial_progress
+         .objective);
+   DEBUG << "Actual reduction: " << actual_reduction << "\n";
    DEBUG << *this->filter << "\n";
 
    bool accept = false;

@@ -55,8 +55,8 @@ void Problem::determine_bounds_types(std::vector<Range>& bounds, std::vector<Con
 }
 
 void Problem::determine_constraints() {
-   int current_equality_constraint = 0;
-   int current_inequality_constraint = 0;
+   size_t current_equality_constraint = 0;
+   size_t current_inequality_constraint = 0;
    for (size_t j = 0; j < this->number_constraints; j++) {
       if (this->constraint_status[j] == EQUAL_BOUNDS) {
          this->equality_constraints[j] = current_equality_constraint;
@@ -94,10 +94,10 @@ double Problem::compute_constraint_violation(const std::vector<double>& constrai
 }
 
 /* compute ||c_S|| for a given set S */
-double Problem::compute_constraint_violation(const std::vector<double>& constraints, const std::vector<int>& constraint_set, Norm residual_norm)
+double Problem::compute_constraint_violation(const std::vector<double>& constraints, const std::vector<size_t>& constraint_set, Norm residual_norm)
 const {
    auto residual_function = [&](size_t k) {
-      int j = constraint_set[k];
+      size_t j = constraint_set[k];
       return this->compute_constraint_violation(constraints[j], j);
    };
    return norm(residual_function, constraint_set.size(), residual_norm);

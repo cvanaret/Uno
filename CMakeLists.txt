@@ -13,8 +13,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Release)
 enable_language(CXX C Fortran)
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wunused-value -Wno-conversion")
-#  -Wconversion
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wunused-value -Wconversion")
 set(CMAKE_CXX_FLAGS_DEBUG "-pg")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
@@ -77,7 +76,7 @@ set(SRC_FILES
 # find libraries
 set(LIBS "")
 set(OPTIONAL_LIBS amplsolver ma57 pardiso metis bqpd CACHE STRING "Optional libraries")
-set(REQUIRED_LIBS blas lapack dl gomp)
+set(REQUIRED_LIBS dl blas lapack gomp)
 
 # automatic detection of optional libraries
 foreach(library_name IN LISTS OPTIONAL_LIBS)
