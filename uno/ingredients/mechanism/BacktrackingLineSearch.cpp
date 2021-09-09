@@ -7,13 +7,12 @@ BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& con
    GlobalizationMechanism(constraint_relaxation_strategy, max_iterations), backtracking_ratio(backtracking_ratio) {
 }
 
-Iterate BacktrackingLineSearch::initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+void BacktrackingLineSearch::initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) {
    statistics.add_column("SOC", Statistics::char_width, 9);
    statistics.add_column("LS step length", Statistics::double_width, 30);
 
    // generate the initial point
-   Iterate first_iterate = this->relaxation_strategy.initialize(statistics, problem, x, multipliers);
-   return first_iterate;
+   this->relaxation_strategy.initialize(statistics, problem, first_iterate);
 }
 
 std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate&

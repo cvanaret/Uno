@@ -2,9 +2,8 @@
 #include <fstream>
 #include <sstream>
 #include <memory>
-#include <cassert>
 #include <vector>
-#include <map>
+#include <functional>
 #include "interfaces/AMPL/AMPLModel.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 #include "ingredients/strategy/GlobalizationStrategyFactory.hpp"
@@ -18,10 +17,18 @@
 size_t total_allocations = 0;
 
 void* operator new(size_t size) {
-   // std::cout << "Allocating " << size << " bytes\n";
+   //std::cout << "Allocating " << size << " bytes\n";
    total_allocations += size;
    return malloc(size);
 }
+
+struct PredictedReduction {
+   const double full_step_value;
+   const std::function<double (double step_length)> partial_step_value;
+
+   PredictedReduction(double full_step_value, const std::function<double ()>& partial_step_value);
+   double evaluate(double step_length);
+};
 
 void run_uno(const std::string& problem_name, const Options& options) {
    const std::string_view mechanism_type = options.at("mechanism");
@@ -46,19 +53,18 @@ void run_uno(const std::string& problem_name, const Options& options) {
    auto mechanism = GlobalizationMechanismFactory::create(mechanism_type, *constraint_relaxation_strategy, options);
    INFO << "Heap allocations after Mechanism: " << total_allocations << "\n";
 
-   double tolerance = std::stod(options.at("tolerance"));
-   int max_iterations = std::stoi(options.at("max_iterations"));
+   const double tolerance = std::stod(options.at("tolerance"));
+   const int max_iterations = std::stoi(options.at("max_iterations"));
    Uno uno = Uno(*mechanism, tolerance, max_iterations);
 
    /* initial primal and dual points */
-   std::vector<double> x(problem->number_variables);
-   Multipliers multipliers(problem->number_variables, problem->number_constraints);
-   problem->set_initial_primal_point(x);
-   problem->set_initial_dual_point(multipliers.constraints);
+   Iterate first_iterate(problem->number_variables, problem->number_constraints);
+   problem->set_initial_primal_point(first_iterate.x);
+   problem->set_initial_dual_point(first_iterate.multipliers.constraints);
 
    INFO << "Heap allocations before solving: " << total_allocations << "\n";
    bool use_preprocessing = (options.at("preprocessing") == "yes");
-   Result result = uno.solve(*problem, x, multipliers, use_preprocessing);
+   Result result = uno.solve(*problem, first_iterate, use_preprocessing);
 
    /* remove auxiliary variables */
    result.solution.x.resize(problem->number_variables);

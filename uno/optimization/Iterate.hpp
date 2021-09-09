@@ -7,9 +7,11 @@
 #include "Constraint.hpp"
 
 enum TerminationStatus {
-   NOT_OPTIMAL = 0, KKT_POINT, /* feasible stationary point */
+   NOT_OPTIMAL = 0,
+   KKT_POINT, /* feasible stationary point */
    FJ_POINT, /* infeasible stationary point */
-   FEASIBLE_SMALL_STEP, INFEASIBLE_SMALL_STEP
+   FEASIBLE_SMALL_STEP,
+   INFEASIBLE_SMALL_STEP
 };
 
 struct Errors {
@@ -34,7 +36,6 @@ public:
    /*!
     *  Constructor
     */
-   Iterate(const std::vector<double>& x, const Multipliers& multipliers);
    Iterate(size_t number_variables, size_t number_constraints);
 
    std::vector<double> x; /*!< \f$\mathbb{R}^n\f$ primal variables */

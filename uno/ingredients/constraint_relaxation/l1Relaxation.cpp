@@ -3,13 +3,12 @@
 #include "ingredients/strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 
-l1Relaxation::l1Relaxation(Problem& problem, Subproblem& subproblem, const Options& options) :
+l1Relaxation::l1Relaxation(Problem& problem, Subproblem& subproblem, const l1RelaxationParameters& parameters, const Options& options) :
       ConstraintRelaxationStrategy(subproblem),
       globalization_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
-      penalty_parameter(stod(options.at("l1_relaxation_initial_parameter"))),
+      penalty_parameter(parameters.initial_parameter),
       elastic_variables(ConstraintRelaxationStrategy::count_elastic_variables(problem)),
-      parameters({stod(options.at("l1_relaxation_decrease_factor")), stod(options.at("l1_relaxation_epsilon1")),
-            stod(options.at("l1_relaxation_epsilon2"))}) {
+      parameters(parameters) {
    assert(this->subproblem.number_variables == l1Relaxation::get_number_variables(problem) && "The number of variables is inconsistent");
 
    // generate elastic variables to relax the constraints
@@ -21,15 +20,14 @@ l1Relaxation::l1Relaxation(Problem& problem, Subproblem& subproblem, const Optio
    this->number_variables -= l1Relaxation::count_elastic_variables(problem);
 }
 
-Iterate l1Relaxation::initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+void l1Relaxation::initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) {
    statistics.add_column("penalty param.", Statistics::double_width, 4);
 
    // initialize the subproblem
-   Iterate first_iterate = this->subproblem.generate_initial_iterate(statistics, problem, x, multipliers);
+   this->subproblem.initialize(statistics, problem, first_iterate);
    this->subproblem.compute_errors(problem, first_iterate, this->penalty_parameter);
 
    this->globalization_strategy->initialize(statistics, first_iterate);
-   return first_iterate;
 }
 
 void l1Relaxation::generate_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) {
@@ -71,7 +69,7 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
    }
    else {
       trial_iterate.compute_constraints(problem);
-      // compute the predicted reduction (a mixture of the subproblem's and of the l1 relaxation's)
+      // compute the predicted reduction (both the subproblem and the l1 relaxation strategy contribute)
       const double predicted_reduction = this->compute_predicted_reduction(problem, current_iterate, direction, step_length);
       // invoke the globalization strategy for acceptance
       accept = this->globalization_strategy->check_acceptance(statistics, current_iterate.progress, trial_iterate.progress,

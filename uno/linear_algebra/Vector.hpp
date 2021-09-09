@@ -17,9 +17,9 @@ void clear(std::vector<double>& x);
 void scale(std::vector<double>& x, double scaling_factor);
 
 template <typename T>
-void copy_from(std::vector<T>& destination, const std::vector<T>& source) {
-   assert(destination.size() == source.size());
-   for (size_t i = 0; i < source.size(); i++) {
+void copy_from(std::vector<T>& destination, const std::vector<T>& source, size_t length = std::numeric_limits<size_t>::max()) {
+   length = std::min(length, std::min(source.size(), destination.size()));
+   for (size_t i = 0; i < length; i++) {
       destination[i] = source[i];
    }
 }

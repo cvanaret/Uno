@@ -7,14 +7,6 @@ int Iterate::number_eval_objective = 0;
 int Iterate::number_eval_constraints = 0;
 int Iterate::number_eval_jacobian = 0;
 
-Iterate::Iterate(const std::vector<double>& x, const Multipliers& multipliers) :
-   x(x),
-   multipliers(multipliers),
-   constraints(multipliers.constraints.size()),
-   objective_gradient(x.size()),
-   constraints_jacobian(multipliers.constraints.size(), x.size()) {
-}
-
 Iterate::Iterate(size_t number_variables, size_t number_constraints) :
    x(number_variables),
    multipliers(number_variables, number_constraints),

@@ -20,7 +20,7 @@ struct ElasticVariables {
 class ConstraintRelaxationStrategy {
 public:
    explicit ConstraintRelaxationStrategy(Subproblem& subproblem);
-   virtual Iterate initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) = 0;
+   virtual void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) = 0;
 
    virtual void generate_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) = 0;
 

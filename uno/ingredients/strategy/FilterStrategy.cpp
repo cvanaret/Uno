@@ -2,9 +2,9 @@
 #include <cmath>
 #include "FilterStrategy.hpp"
 
-FilterStrategy::FilterStrategy(FilterStrategyParameters& strategy_parameters, const Options& options) :
+FilterStrategy::FilterStrategy(FilterStrategyParameters strategy_parameters, const Options& options) :
       GlobalizationStrategy(), filter(FilterFactory::create(options)), initial_filter_upper_bound(INFINITY),
-      parameters(strategy_parameters) {
+      parameters(std::move(strategy_parameters)) {
 }
 
 void FilterStrategy::initialize(Statistics& /*statistics*/, const Iterate& first_iterate) {

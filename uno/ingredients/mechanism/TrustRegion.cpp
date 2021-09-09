@@ -8,11 +8,10 @@ TrustRegion::TrustRegion(ConstraintRelaxationStrategy& constraint_relaxation_str
       GlobalizationMechanism(constraint_relaxation_strategy, max_iterations), radius(initial_radius) {
 }
 
-Iterate TrustRegion::initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+void TrustRegion::initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) {
    statistics.add_column("TR radius", Statistics::double_width, 30);
    // generate the initial point
-   Iterate first_iterate = this->relaxation_strategy.initialize(statistics, problem, x, multipliers);
-   return first_iterate;
+   this->relaxation_strategy.initialize(statistics, problem, first_iterate);
 }
 
 std::tuple<Iterate, double> TrustRegion::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate&

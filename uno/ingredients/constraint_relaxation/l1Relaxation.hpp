@@ -6,6 +6,7 @@
 #include "tools/Options.hpp"
 
 struct l1RelaxationParameters {
+   double initial_parameter;
    double decrease_factor;
    double epsilon1;
    double epsilon2;
@@ -13,8 +14,8 @@ struct l1RelaxationParameters {
 
 class l1Relaxation : public ConstraintRelaxationStrategy {
 public:
-   l1Relaxation(Problem& problem, Subproblem& subproblem, const Options& options);
-   Iterate initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
+   l1Relaxation(Problem& problem, Subproblem& subproblem, const l1RelaxationParameters& parameters, const Options& options);
+   void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) override;
 
    // direction computation
    void generate_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) override;

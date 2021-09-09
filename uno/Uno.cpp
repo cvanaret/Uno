@@ -10,7 +10,7 @@ Uno::Uno(GlobalizationMechanism& globalization_mechanism, double tolerance, int 
       globalization_mechanism), tolerance(tolerance), max_iterations(max_iterations) {
 }
 
-Result Uno::solve(const Problem& problem, std::vector<double>& x, Multipliers& multipliers, bool use_preprocessing) {
+Result Uno::solve(const Problem& problem, Iterate& current_iterate, bool use_preprocessing) {
    Timer timer{};
    timer.start();
    int major_iterations = 0;
@@ -20,15 +20,15 @@ Result Uno::solve(const Problem& problem, std::vector<double>& x, Multipliers& m
    std::cout << "Problem type: " << Problem::type_to_string[problem.type] << "\n";
 
    /* project x into the bounds */
-   problem.project_point_in_bounds(x);
+   problem.project_point_in_bounds(current_iterate.x);
    if (use_preprocessing) {
       /* preprocessing phase: satisfy linear constraints */
-      Preprocessing::apply(problem, x, multipliers);
+      Preprocessing::apply(problem, current_iterate);
    }
 
    Statistics statistics = Uno::create_statistics();
    /* use the current point to initialize the strategies and generate the initial iterate */
-   Iterate current_iterate = this->globalization_mechanism.initialize(statistics, problem, x, multipliers);
+   this->globalization_mechanism.initialize(statistics, problem, current_iterate);
 
    TerminationStatus termination_status = NOT_OPTIMAL;
    try {
@@ -79,7 +79,7 @@ Statistics Uno::create_statistics() {
 }
 
 void Uno::add_statistics(Statistics& statistics, const Iterate& new_iterate, int major_iterations) {
-   statistics.add_statistic("major", major_iterations);
+   statistics.add_statistic(std::string("major"), major_iterations);
    statistics.add_statistic("f", new_iterate.objective);
    statistics.add_statistic("||c||", new_iterate.errors.constraints);
    statistics.add_statistic("complementarity", new_iterate.errors.complementarity);

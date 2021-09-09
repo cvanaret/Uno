@@ -12,7 +12,7 @@ class TrustRegion : public GlobalizationMechanism {
 public:
    TrustRegion(ConstraintRelaxationStrategy& constraint_relaxation_strategy, double initial_radius, int max_iterations);
 
-   Iterate initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
+   void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) override;
    std::tuple<Iterate, double> compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
 
 private:

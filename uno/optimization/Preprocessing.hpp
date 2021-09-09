@@ -3,11 +3,11 @@
 
 #include <vector>
 #include "Problem.hpp"
-#include "Constraint.hpp"
+#include "Iterate.hpp"
 
 class Preprocessing {
 public:
-   static void apply(const Problem& problem, std::vector<double>& x, Multipliers& multipliers);
+   static void apply(const Problem& problem, Iterate& first_iterate);
 };
 
 #endif //PREPROCESSING_H
