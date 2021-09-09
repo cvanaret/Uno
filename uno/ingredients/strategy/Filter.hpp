@@ -42,7 +42,7 @@ public:
     friend std::ostream& operator<<(std::ostream &stream, Filter& filter);
     
 protected:
-    std::list<FilterEntry> entries_;
+    std::list<FilterEntry> entries_{};
 };
 
 /*! \class NonmonotoneFilter

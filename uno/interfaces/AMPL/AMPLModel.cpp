@@ -42,9 +42,6 @@ AMPLModel::AMPLModel(std::string file_name, ASL* asl) : Problem(file_name, asl->
    /* variables */
    this->generate_variables_();
 
-   /* objective function */
-   this->initialize_objective_();
-
    /* constraints */
    this->generate_constraints_();
    set_function_types_(file_name);
@@ -59,7 +56,6 @@ AMPLModel::~AMPLModel() {
 
 void AMPLModel::generate_variables_() {
    for (size_t i = 0; i < this->number_variables; i++) {
-      this->variables_names[i] = var_name_ASL(this->asl_, (int) i);
       double lb = (this->asl_->i.LUv_ != nullptr) ? this->asl_->i.LUv_[2 * i] : -INFINITY;
       double ub = (this->asl_->i.LUv_ != nullptr) ? this->asl_->i.LUv_[2 * i + 1] : INFINITY;
       if (lb == ub) {
@@ -100,11 +96,6 @@ void AMPLModel::evaluate_objective_gradient(const std::vector<double>& x, Sparse
       //gradient[ampl_variables_tmp->varno] = partial_derivative;
       ampl_variables_tmp = ampl_variables_tmp->next;
    }
-}
-
-void AMPLModel::initialize_objective_() {
-   this->objective_name = obj_name_ASL(this->asl_, 0);
-   //this->create_objective_variables_(this->asl_->i.Ograd_[0]);
 }
 
 double AMPLModel::evaluate_constraint(int j, const std::vector<double>& x) const {
@@ -158,7 +149,6 @@ void AMPLModel::constraints_jacobian(const std::vector<double>& x, std::vector<S
 
 void AMPLModel::generate_constraints_() {
    for (size_t j = 0; j < this->number_constraints; j++) {
-      this->constraint_name[j] = con_name_ASL(this->asl_, (int) j);
       double lb = (this->asl_->i.LUrhs_ != nullptr) ? this->asl_->i.LUrhs_[2 * j] : -INFINITY;
       double ub = (this->asl_->i.LUrhs_ != nullptr) ? this->asl_->i.LUrhs_[2 * j + 1] : INFINITY;
       this->constraint_bounds[j] = {lb, ub};

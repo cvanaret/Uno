@@ -52,8 +52,8 @@ private:
    const InteriorPointParameters parameters;
 
    /* data structures */
-   std::vector<size_t> lower_bounded_variables; /* indices of the lower-bounded variables */
-   std::vector<size_t> upper_bounded_variables; /* indices of the upper-bounded variables */
+   std::vector<size_t> lower_bounded_variables{}; /* indices of the lower-bounded variables */
+   std::vector<size_t> upper_bounded_variables{}; /* indices of the upper-bounded variables */
 
    double inertia_hessian{0.};
    double inertia_hessian_last_{0.};

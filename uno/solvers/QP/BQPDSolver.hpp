@@ -46,8 +46,8 @@ private:
    int k_{0};
    BQPDMode mode_{COLD_START};
    int iprint_{0}, nout_{6};
-   double fmin_{-1e20}, f_solution_;
-   int peq_solution_, ifail_;
+   double fmin_{-1e20}, f_solution_{};
+   int peq_solution_{}, ifail_{};
    std::vector<double> solution;
 
    Direction generate_direction();

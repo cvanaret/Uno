@@ -6,6 +6,8 @@
 
 class Statistics {
 public:
+   Statistics() = default;
+
    static std::map<std::string, std::string> symbols;
    static int int_width;
    static int double_width;
@@ -22,9 +24,9 @@ public:
 
 private:
    size_t iteration{0};
-   std::map<int, std::string> columns;
-   std::map<std::string, size_t> widths;
-   std::map<std::string, std::string> current_line;
+   std::map<int, std::string> columns{};
+   std::map<std::string, size_t> widths{};
+   std::map<std::string, std::string> current_line{};
 };
 
 #endif // STATISTICS_H

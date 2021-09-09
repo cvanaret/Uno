@@ -12,9 +12,9 @@ enum CSCDiagonal {
 class CSCSymmetricMatrix : public SymmetricMatrix {
    /* Compressed Sparse Column */
 public:
-   std::vector<double> matrix;
-   std::vector<int> column_start;
-   std::vector<int> row_index;
+   std::vector<double> matrix{};
+   std::vector<int> column_start{};
+   std::vector<int> row_index{};
 
    CSCSymmetricMatrix(size_t dimension, size_t maximum_number_nonzeros, size_t padding_size = 0);
    CSCSymmetricMatrix(std::vector<double> matrix, const std::vector<int>& column_start, std::vector<int> row_number, int capacity);

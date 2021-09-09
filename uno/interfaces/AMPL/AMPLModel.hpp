@@ -48,11 +48,10 @@ private:
    AMPLModel(std::string file_name, ASL* asl);
 
    ASL* asl_; /*!< Instance of the AMPL Solver Library class */
-   std::vector<double> ampl_tmp_gradient_;
-   std::vector<double> ampl_tmp_hessian;
+   std::vector<double> ampl_tmp_gradient_{};
+   std::vector<double> ampl_tmp_hessian{};
 
    void generate_variables_();
-   void initialize_objective_();
    void generate_constraints_();
    //void create_objective_variables_(ograd* ampl_variables);
    //void create_constraint_variables_(int j, cgrad* ampl_variables);

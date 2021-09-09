@@ -8,12 +8,14 @@
 
 struct MA57Factorization {
    int nnz;
-   std::vector<double> fact;
+   std::vector<double> fact{};
    int lfact;
-   std::vector<int> ifact;
+   std::vector<int> ifact{};
    int lifact;
    int lkeep;
-   std::vector<int> keep;
+   std::vector<int> keep{};
+
+   MA57Factorization() = default;
 };
 
 /*! \class MA57Solver
@@ -50,7 +52,7 @@ private:
    const int job{1};
    std::vector<double> residuals;
 
-   MA57Factorization factorization;
+   MA57Factorization factorization{};
    bool use_iterative_refinement{false};
 };
 

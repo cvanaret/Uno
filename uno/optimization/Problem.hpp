@@ -57,24 +57,20 @@ public:
 
    /* objective */
    double objective_sign{1.}; /*!< Sign of the evaluate_objective function (1: minimization, -1: maximization) */
-   std::string objective_name;
    FunctionType objective_type{NONLINEAR}; /*!< Type of the evaluate_objective (LINEAR, QUADRATIC, NONLINEAR) */
 
    /* variables */
-   std::vector<std::string> variables_names;
-   //std::vector<bool> variable_discrete;
    std::vector<Range> variables_bounds;
    std::vector<ConstraintType> variable_status; /*!< Status of the variables (EQUALITY, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES) */
 
    /* constraints */
-   std::vector<std::string> constraint_name;
    std::vector<Range> constraint_bounds;
    std::vector<FunctionType> constraint_type; /*!< Types of the constraints (LINEAR, QUADRATIC, NONLINEAR) */
    std::vector<ConstraintType> constraint_status; /*!< Status of the constraints (EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES,
  * UNBOUNDED) */
-   std::map<size_t, size_t> equality_constraints; /*!< inequality constraints */
-   std::map<size_t, size_t> inequality_constraints; /*!< inequality constraints */
-   std::map<size_t, size_t> linear_constraints;
+   std::map<size_t, size_t> equality_constraints{}; /*!< inequality constraints */
+   std::map<size_t, size_t> inequality_constraints{}; /*!< inequality constraints */
+   std::map<size_t, size_t> linear_constraints{};
 
    /* Hessian */
    int hessian_maximum_number_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */
