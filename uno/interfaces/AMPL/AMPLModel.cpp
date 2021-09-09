@@ -33,28 +33,28 @@ AMPLModel::AMPLModel(std::string file_name) : AMPLModel(file_name, generate_asl(
 
 AMPLModel::AMPLModel(std::string file_name, ASL* asl) : Problem(file_name, asl->i.n_var_, asl->i.n_con_, NONLINEAR),
 // asl->i.nlc_ + asl->i.nlo_ > 0),
-      asl_(asl), ampl_tmp_gradient_(asl->i.n_var_) {
+      asl_(asl), ampl_tmp_gradient(asl->i.n_var_) {
    this->asl_->i.congrd_mode = 0;
 
    /* dimensions */
    this->objective_sign = (this->asl_->i.objtype_[0] == 1) ? -1. : 1.;
 
    /* variables */
-   this->generate_variables_();
+   this->generate_variables();
 
    /* constraints */
-   this->generate_constraints_();
-   set_function_types_(file_name);
+   this->generate_constraints();
+   set_function_types(file_name);
 
    /* Lagrangian Hessian */
-   this->initialize_lagrangian_hessian_();
+   this->initialize_lagrangian_hessian();
 }
 
 AMPLModel::~AMPLModel() {
    ASL_free(&this->asl_);
 }
 
-void AMPLModel::generate_variables_() {
+void AMPLModel::generate_variables() {
    for (size_t i = 0; i < this->number_variables; i++) {
       double lb = (this->asl_->i.LUv_ != nullptr) ? this->asl_->i.LUv_[2 * i] : -INFINITY;
       double ub = (this->asl_->i.LUv_ != nullptr) ? this->asl_->i.LUv_[2 * i + 1] : INFINITY;
@@ -79,7 +79,7 @@ double AMPLModel::evaluate_objective(const std::vector<double>& x) const {
 void AMPLModel::evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const {
    /* compute the AMPL gradient (always in dense format) */
    int nerror = 0;
-   (*(this->asl_)->p.Objgrd)(this->asl_, 0, (double*) x.data(), (double*) this->ampl_tmp_gradient_.data(), &nerror);
+   (*(this->asl_)->p.Objgrd)(this->asl_, 0, (double*) x.data(), (double*) this->ampl_tmp_gradient.data(), &nerror);
    if (0 < nerror) {
       throw GradientNumericalError();
    }
@@ -87,7 +87,7 @@ void AMPLModel::evaluate_objective_gradient(const std::vector<double>& x, Sparse
    /* partial derivatives in same order as variables in this->asl_->i.Ograd_[0] */
    ograd* ampl_variables_tmp = this->asl_->i.Ograd_[0];
    while (ampl_variables_tmp != nullptr) {
-      double partial_derivative = this->ampl_tmp_gradient_[ampl_variables_tmp->varno];
+      double partial_derivative = this->ampl_tmp_gradient[ampl_variables_tmp->varno];
       /* if maximization, take the opposite */
       if (this->objective_sign < 0.) {
          partial_derivative = -partial_derivative;
@@ -122,7 +122,7 @@ void AMPLModel::constraint_gradient(const std::vector<double>& x, size_t j, Spar
 
    /* compute the AMPL gradient */
    int nerror = 0;
-   (*(this->asl_)->p.Congrd)(this->asl_, (int) j, (double*) x.data(), (double*) this->ampl_tmp_gradient_.data(), &nerror);
+   (*(this->asl_)->p.Congrd)(this->asl_, (int) j, (double*) x.data(), (double*) this->ampl_tmp_gradient.data(), &nerror);
    if (0 < nerror) {
       throw GradientNumericalError();
    }
@@ -132,8 +132,8 @@ void AMPLModel::constraint_gradient(const std::vector<double>& x, size_t j, Spar
    int cpt = 0;
    while (ampl_variables_tmp != nullptr) {
       /* keep the gradient sparse */
-      if (this->ampl_tmp_gradient_[cpt] != 0.) {
-         gradient.insert(ampl_variables_tmp->varno, this->ampl_tmp_gradient_[cpt]);
+      if (this->ampl_tmp_gradient[cpt] != 0.) {
+         gradient.insert(ampl_variables_tmp->varno, this->ampl_tmp_gradient[cpt]);
       }
       ampl_variables_tmp = ampl_variables_tmp->next;
       cpt++;
@@ -147,7 +147,7 @@ void AMPLModel::constraints_jacobian(const std::vector<double>& x, std::vector<S
    }
 }
 
-void AMPLModel::generate_constraints_() {
+void AMPLModel::generate_constraints() {
    for (size_t j = 0; j < this->number_constraints; j++) {
       double lb = (this->asl_->i.LUrhs_ != nullptr) ? this->asl_->i.LUrhs_[2 * j] : -INFINITY;
       double ub = (this->asl_->i.LUrhs_ != nullptr) ? this->asl_->i.LUrhs_[2 * j + 1] : INFINITY;
@@ -157,7 +157,7 @@ void AMPLModel::generate_constraints_() {
    this->determine_constraints();
 }
 
-void AMPLModel::set_function_types_(std::string file_name) {
+void AMPLModel::set_function_types(std::string file_name) {
    /* allocate a temporary ASL to read Hessian sparsity pattern */
    ASL* asl = ASL_alloc(ASL_read_fg);
    // char* stub = getstops(file_name, option_info);
@@ -220,7 +220,7 @@ void AMPLModel::set_function_types_(std::string file_name) {
    ASL_free(&asl);
 }
 
-void AMPLModel::initialize_lagrangian_hessian_() {
+void AMPLModel::initialize_lagrangian_hessian() {
    /* compute the maximum number of nonzero elements, provided that all multipliers are non-zero */
    /* fint (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri); */
    const int objective_number = -1;
@@ -229,7 +229,7 @@ void AMPLModel::initialize_lagrangian_hessian_() {
    this->ampl_tmp_hessian.reserve(this->hessian_maximum_number_nonzeros);
 
    // use Lagrangian scale: in AMPL, the Lagrangian is f + lambda.g, while Uno uses f - lambda.g
-   int nerror;
+   int nerror{};
    lagscale_ASL(this->asl_, -1., &nerror);
 }
 
