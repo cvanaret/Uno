@@ -25,7 +25,6 @@ Result Uno::solve(const Problem& problem, Iterate& current_iterate, bool use_pre
       /* preprocessing phase: satisfy linear constraints */
       Preprocessing::apply(problem, current_iterate);
    }
-
    Statistics statistics = Uno::create_statistics();
    /* use the current point to initialize the strategies and generate the initial iterate */
    this->globalization_mechanism.initialize(statistics, problem, current_iterate);

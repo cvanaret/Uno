@@ -8,29 +8,28 @@
 #include "solvers/linear/LinearSolverFactory.hpp"
 
 // virtual (abstract) class
-template<class SparseSymmetricMatrix>
+template<class SYMMETRIC_MATRIX>
 class HessianEvaluation {
 public:
    explicit HessianEvaluation(size_t dimension, size_t hessian_maximum_number_nonzeros);
    virtual ~HessianEvaluation() = default;
 
-   SparseSymmetricMatrix hessian;
+   SYMMETRIC_MATRIX hessian;
    int evaluation_count{0};
 
    virtual void compute(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
          const std::vector<double>& constraint_multipliers) = 0;
 
-   SparseSymmetricMatrix modify_inertia(SparseSymmetricMatrix& matrix, LinearSolver <SparseSymmetricMatrix>& linear_solver);
+   SYMMETRIC_MATRIX modify_inertia(SYMMETRIC_MATRIX& matrix, LinearSolver<SYMMETRIC_MATRIX>& linear_solver);
 };
 
-template<class SparseSymmetricMatrix>
-inline HessianEvaluation<SparseSymmetricMatrix>::HessianEvaluation(size_t dimension, size_t hessian_maximum_number_nonzeros):
+template<class SYMMETRIC_MATRIX>
+inline HessianEvaluation<SYMMETRIC_MATRIX>::HessianEvaluation(size_t dimension, size_t hessian_maximum_number_nonzeros):
       hessian(dimension, hessian_maximum_number_nonzeros) {
 }
 
-template<class SparseSymmetricMatrix>
-inline SparseSymmetricMatrix HessianEvaluation<SparseSymmetricMatrix>::modify_inertia(SparseSymmetricMatrix& matrix,
-      LinearSolver <SparseSymmetricMatrix>& linear_solver) {
+template<class SYMMETRIC_MATRIX>
+inline SYMMETRIC_MATRIX HessianEvaluation<SYMMETRIC_MATRIX>::modify_inertia(SYMMETRIC_MATRIX& matrix, LinearSolver<SYMMETRIC_MATRIX>& linear_solver) {
    const double beta = 1e-4;
 
    // Nocedal and Wright, p51
@@ -71,10 +70,10 @@ inline SparseSymmetricMatrix HessianEvaluation<SparseSymmetricMatrix>::modify_in
 
 // Exact Hessian
 
-template<class SparseSymmetricMatrix>
-class ExactHessianEvaluation : public HessianEvaluation<SparseSymmetricMatrix> {
+template<class SYMMETRIC_MATRIX>
+class ExactHessianEvaluation : public HessianEvaluation<SYMMETRIC_MATRIX> {
 public:
-   explicit ExactHessianEvaluation(size_t dimension, size_t hessian_maximum_number_nonzeros) : HessianEvaluation<SparseSymmetricMatrix>(dimension,
+   explicit ExactHessianEvaluation(size_t dimension, size_t hessian_maximum_number_nonzeros) : HessianEvaluation<SYMMETRIC_MATRIX>(dimension,
          hessian_maximum_number_nonzeros) {
    }
 
@@ -88,11 +87,11 @@ public:
    }
 };
 
-//template <class SparseSymmetricMatrix>
-//class ConvexifiedExactHessianEvaluation : public HessianEvaluation<SparseSymmetricMatrix> {
+//template <class SYMMETRIC_MATRIX>
+//class ConvexifiedExactHessianEvaluation : public HessianEvaluation<SYMMETRIC_MATRIX> {
 //public:
 //   ConvexifiedExactHessianEvaluation(size_t dimension, size_t hessian_maximum_number_nonzeros, const std::string& linear_solver_name):
-//      HessianEvaluation<SparseSymmetricMatrix>(dimension, hessian_maximum_number_nonzeros), linear_solver(LinearSolverFactory<MA57Solver>::create
+//      HessianEvaluation<SYMMETRIC_MATRIX>(dimension, hessian_maximum_number_nonzeros), linear_solver(LinearSolverFactory<MA57Solver>::create
 //      (linear_solver_name)) {
 //   }
 //   ~ConvexifiedExactHessianEvaluation() override = default;
@@ -111,17 +110,17 @@ public:
 //   std::unique_ptr<LinearSolver<COOSymmetricMatrix> > linear_solver; /*!< Solver that computes the inertia */
 //};
 
-template<class SparseSymmetricMatrix>
+template<class SYMMETRIC_MATRIX>
 class HessianEvaluationFactory {
 public:
-   static std::unique_ptr <HessianEvaluation<SparseSymmetricMatrix>> create(const std::string& hessian_evaluation_method, size_t dimension,
+   static std::unique_ptr <HessianEvaluation<SYMMETRIC_MATRIX>> create(const std::string& hessian_evaluation_method, size_t dimension,
          size_t hessian_maximum_number_nonzeros, bool convexify) {
       if (hessian_evaluation_method == "exact") {
          if (convexify) {
-            //   return std::make_unique<ConvexifiedExactHessianEvaluation<SparseSymmetricMatrix> >(dimension, hessian_maximum_number_nonzeros, "MA57");
+            //   return std::make_unique<ConvexifiedExactHessianEvaluation<SYMMETRIC_MATRIX> >(dimension, hessian_maximum_number_nonzeros, "MA57");
          }
          //else {
-         return std::make_unique<ExactHessianEvaluation<SparseSymmetricMatrix> >(dimension, hessian_maximum_number_nonzeros);
+         return std::make_unique<ExactHessianEvaluation<SYMMETRIC_MATRIX> >(dimension, hessian_maximum_number_nonzeros);
          //}
       }
       else {

@@ -26,7 +26,10 @@ void PardisoSolver::factorize(CSCSymmetricMatrix& matrix) {
 }
 
 void PardisoSolver::do_symbolic_factorization(CSCSymmetricMatrix& matrix) {
-   /* convert matrix from 0-based C-notation to Fortran 1-based notation */
+   // force zero diagonal elements to appear
+   matrix.force_explicit_diagonal_elements();
+
+   // convert matrix from 0-based C-notation to Fortran 1-based notation
    for (size_t i = 0; i < this->dimension + 1; i++) {
       matrix.column_start[i]++;
    }
