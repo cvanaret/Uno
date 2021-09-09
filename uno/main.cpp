@@ -16,11 +16,13 @@
 // new overload to track heap allocations
 size_t total_allocations = 0;
 
+/*
 void* operator new(size_t size) {
    //std::cout << "Allocating " << size << " bytes\n";
    total_allocations += size;
    return malloc(size);
 }
+ */
 
 struct PredictedReduction {
    const double full_step_value;

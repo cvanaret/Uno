@@ -671,7 +671,7 @@ inline double InteriorPoint<LinearSolverType>::compute_KKT_error_scaling(const I
    const double norm_1_constraint_multipliers = norm_1(current_iterate.multipliers.constraints);
    const double norm_1_bound_multipliers = norm_1(current_iterate.multipliers.lower_bounds) + norm_1(current_iterate.multipliers.upper_bounds);
    const double norm_1_multipliers = norm_1_constraint_multipliers + norm_1_bound_multipliers;
-   const double total_size = (double) (current_iterate.x.size() + current_iterate.multipliers.constraints.size());
+   const double total_size = static_cast<double>(current_iterate.x.size() + current_iterate.multipliers.constraints.size());
    const double sd = std::max(this->parameters.smax, norm_1_multipliers / total_size) / this->parameters.smax;
    return sd;
 }
@@ -692,7 +692,7 @@ inline double InteriorPoint<LinearSolverType>::compute_central_complementarity_e
 
    /* scaling */
    const double bound_multipliers_norm = norm_1(iterate.multipliers.lower_bounds) + norm_1(iterate.multipliers.upper_bounds);
-   const double sc = std::max(this->parameters.smax, bound_multipliers_norm / (double) iterate.x.size()) / this->parameters.smax;
+   const double sc = std::max(this->parameters.smax, bound_multipliers_norm / static_cast<double>(iterate.x.size())) / this->parameters.smax;
    return norm_1(residual_function, iterate.x.size()) / sc;
 }
 
