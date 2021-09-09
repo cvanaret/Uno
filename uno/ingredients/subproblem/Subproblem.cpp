@@ -1,22 +1,6 @@
 #include <cassert>
 #include "Subproblem.hpp"
 
-
-std::array<Direction, 1> SQPTest::compute_directions() {
-   Direction d(2, 3);
-   return {d};
-}
-
-std::array<Direction, 2> SLQPTest::compute_directions() {
-   Direction d(2, 3);
-   return {d, d};
-}
-
-void function_test() {
-   SLQPTest slqp_test;
-   std::array<Direction, slqp_test.number_directions> directions = slqp_test.compute_directions();
-}
-
 Subproblem::Subproblem(size_t number_variables, size_t number_constraints) :
       number_variables(number_variables), number_constraints(number_constraints),
       variables_bounds(number_variables), constraints_multipliers(number_constraints),
