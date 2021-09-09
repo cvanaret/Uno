@@ -22,7 +22,7 @@ column_start(dimension + 1), remaining_column_padding(dimension, padding_size) {
 }
 
 CSCSymmetricMatrix::CSCSymmetricMatrix(std::vector<double> matrix, const std::vector<int>& column_start, std::vector<int> row_number, int
-capacity) : SymmetricMatrix((int) column_start.size() - 1, capacity), matrix(std::move(matrix)), column_start(column_start), row_index(std::move
+capacity) : SymmetricMatrix(column_start.size() - 1, capacity), matrix(std::move(matrix)), column_start(column_start), row_index(std::move
 (row_number)), remaining_column_padding(dimension, 0) {
    assert(false && "padding should be fixed");
 }
@@ -34,7 +34,7 @@ void CSCSymmetricMatrix::for_each(const std::function<void (int, int, double)>& 
       // work on the active elements (ignore the padding slots)
       for (size_t k = this->column_start[j] + overall_padding_size; k < this->column_start[j + 1] + overall_padding_size; k++) {
          int i = this->row_index[k];
-         f(i, (int) j, this->matrix[k]);
+         f(i, static_cast<int>(j), this->matrix[k]);
       }
       overall_padding_size += this->remaining_column_padding[j];
    }
@@ -44,7 +44,7 @@ void CSCSymmetricMatrix::for_each(size_t column_index, const std::function<void 
    const size_t overall_padding_size = std::accumulate(begin(this->remaining_column_padding), begin(this->remaining_column_padding) + column_index,
          0);
    // work on the active elements (ignore the padding slots)
-   for (int k = (int) (this->column_start[column_index] + overall_padding_size); k < (int) (this->column_start[column_index + 1] + overall_padding_size); k++) {
+   for (size_t k = this->column_start[column_index] + overall_padding_size; k < this->column_start[column_index + 1] + overall_padding_size; k++) {
       int i = this->row_index[k];
       f(i, this->matrix[k]);
    }
@@ -54,7 +54,7 @@ void CSCSymmetricMatrix::insert(double term, size_t row_index, size_t column_ind
    assert(column_index == this->current_column && "The previous columns should be finalized");
 
    this->matrix.push_back(term);
-   this->row_index.push_back((int) row_index);
+   this->row_index.push_back(static_cast<int>(row_index));
    this->column_start[column_index + 1]++;
    this->number_nonzeros++;
 }
@@ -85,7 +85,7 @@ void CSCSymmetricMatrix::add_identity_multiple(double factor) {
       if (0 < number_elements) {
          const size_t last_element_index = this->column_start[j+1] - 1 + overall_padding_size;
          const int i = this->row_index[last_element_index];
-         if (i == (int) j) {
+         if (i == static_cast<int>(j)) {
             // the diagonal element already exists: simply add factor
             this->matrix[last_element_index] += factor;
          }
@@ -103,7 +103,7 @@ void CSCSymmetricMatrix::add_identity_multiple(double factor) {
          const size_t last_element_index = this->column_start[j+1] - 1 + overall_padding_size;
          // insert the new diagonal element at the first padding slot
          this->matrix[last_element_index+1] = factor;
-         this->row_index[last_element_index+1] = (int) j;
+         this->row_index[last_element_index+1] = static_cast<int>(j);
          // shift the next column starts
          for (size_t k = j + 1; k < this->dimension + 1; k++) {
             this->column_start[k]++;

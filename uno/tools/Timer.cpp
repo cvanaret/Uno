@@ -9,5 +9,5 @@ void Timer::stop() {
 }
 
 double Timer::get_time() const {
-   return (double) (this->end_time - this->start_time) / (double) CLOCKS_PER_SEC;
+   return static_cast<double>(this->end_time - this->start_time) / static_cast<double>(CLOCKS_PER_SEC);
 }

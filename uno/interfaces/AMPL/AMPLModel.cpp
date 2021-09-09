@@ -7,7 +7,7 @@
 
 ASL* generate_asl(std::string file_name) {
    ASL* asl = ASL_alloc(ASL_read_pfgh);
-   FILE* nl = jac0dim_ASL(asl, file_name.data(), (fint) file_name.size());
+   FILE* nl = jac0dim_ASL(asl, file_name.data(), static_cast<fint>(file_name.size()));
    /* indices start at 0 */
    asl->i.Fortran_ = 0;
 
@@ -18,8 +18,8 @@ ASL* generate_asl(std::string file_name) {
    }
 
    /* preallocate initial primal and dual solutions */
-   asl->i.X0_ = (double*) M1zapalloc(sizeof(double) * n_var);
-   asl->i.pi0_ = (double*) M1zapalloc(sizeof(double) * n_con);
+   asl->i.X0_ = static_cast<double*>(M1zapalloc_ASL(&asl->i, sizeof(double) * n_var));
+   asl->i.pi0_ = static_cast<double*>(M1zapalloc_ASL(&asl->i, sizeof(double) * n_con));
 
    /* read the file_name.nl file */
    pfgh_read_ASL(asl, nl, ASL_findgroups);
@@ -68,7 +68,7 @@ void AMPLModel::generate_variables() {
 
 double AMPLModel::evaluate_objective(const std::vector<double>& x) const {
    int nerror = 0;
-   double result = this->objective_sign * (*(this->asl_)->p.Objval)(this->asl_, 0, (double*) x.data(), &nerror);
+   double result = this->objective_sign * (*(this->asl_)->p.Objval)(this->asl_, 0, const_cast<double*>(x.data()), &nerror);
    if (0 < nerror) {
       throw FunctionNumericalError();
    }
@@ -79,7 +79,7 @@ double AMPLModel::evaluate_objective(const std::vector<double>& x) const {
 void AMPLModel::evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const {
    /* compute the AMPL gradient (always in dense format) */
    int nerror = 0;
-   (*(this->asl_)->p.Objgrd)(this->asl_, 0, (double*) x.data(), (double*) this->ampl_tmp_gradient.data(), &nerror);
+   (*(this->asl_)->p.Objgrd)(this->asl_, 0, const_cast<double*>(x.data()), const_cast<double*>(this->ampl_tmp_gradient.data()), &nerror);
    if (0 < nerror) {
       throw GradientNumericalError();
    }
@@ -100,7 +100,7 @@ void AMPLModel::evaluate_objective_gradient(const std::vector<double>& x, Sparse
 
 double AMPLModel::evaluate_constraint(int j, const std::vector<double>& x) const {
    int nerror = 0;
-   double result = (*(this->asl_)->p.Conival)(this->asl_, j, (double *) x.data(), &nerror);
+   double result = (*(this->asl_)->p.Conival)(this->asl_, j, const_cast<double*>(x.data()), &nerror);
    if (0 < nerror) {
       throw FunctionNumericalError();
    }
@@ -109,7 +109,7 @@ double AMPLModel::evaluate_constraint(int j, const std::vector<double>& x) const
 
 void AMPLModel::evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const {
    int nerror = 0;
-   (*(this->asl_)->p.Conval)(this->asl_, (double *) x.data(), constraints.data(), &nerror);
+   (*(this->asl_)->p.Conval)(this->asl_, const_cast<double*>(x.data()), constraints.data(), &nerror);
    if (0 < nerror) {
       throw FunctionNumericalError();
    }
@@ -122,7 +122,8 @@ void AMPLModel::constraint_gradient(const std::vector<double>& x, size_t j, Spar
 
    /* compute the AMPL gradient */
    int nerror = 0;
-   (*(this->asl_)->p.Congrd)(this->asl_, (int) j, (double*) x.data(), (double*) this->ampl_tmp_gradient.data(), &nerror);
+   (*(this->asl_)->p.Congrd)(this->asl_, static_cast<int>(j), const_cast<double*>(x.data()), const_cast<double*>(this->ampl_tmp_gradient.data()),
+         &nerror);
    if (0 < nerror) {
       throw GradientNumericalError();
    }
@@ -165,12 +166,12 @@ void AMPLModel::set_function_types(std::string file_name) {
    //	usage_ASL(option_info, 1);
    //}
 
-   FILE* nl = jac0dim_ASL(asl, file_name.data(), (fint) file_name.size());
+   FILE* nl = jac0dim_ASL(asl, file_name.data(), static_cast<fint>(file_name.size()));
    /* specific read function */
    qp_read_ASL(asl, nl, ASL_findgroups);
 
    /* constraints */
-   if ((unsigned int) asl->i.n_con_ != this->number_constraints) {
+   if (asl->i.n_con_ != static_cast<int>(this->number_constraints)) {
       throw std::length_error("AMPLModel.set_function_types: inconsistent number of constraints");
    }
    this->constraint_type.reserve(this->number_constraints);
@@ -183,7 +184,7 @@ void AMPLModel::set_function_types(std::string file_name) {
    fint* colqp;
    double* delsqp;
    for (size_t j = 0; j < this->number_constraints; j++) {
-      fint qp = nqpcheck_ASL(asl, (int) -(j + 1), &rowq, &colqp, &delsqp);
+      fint qp = nqpcheck_ASL(asl, static_cast<int>(-(j + 1)), &rowq, &colqp, &delsqp);
 
       if (0 < qp) {
          this->constraint_type[j] = QUADRATIC;
@@ -255,7 +256,7 @@ size_t AMPLModel::compute_hessian_number_nonzeros(double objective_multiplier, c
 void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
       CSCSymmetricMatrix& hessian) const {
    // register the vector of variables
-   (*(this->asl_)->p.Xknown)(this->asl_, (double*) x.data(), 0);
+   (*(this->asl_)->p.Xknown)(this->asl_, const_cast<double*>(x.data()), 0);
 
    // compute the number of nonzeros
    const size_t number_non_zeros = this->fixed_hessian_sparsity ? this->hessian_maximum_number_nonzeros :
@@ -266,14 +267,14 @@ void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objectiv
    clear(hessian.matrix);
    const int objective_number = -1;
    if (this->fixed_hessian_sparsity) {
-      (*(this->asl_)->p.Sphes)(this->asl_, 0, (double*) this->ampl_tmp_hessian.data(), objective_number, &objective_multiplier,
-            (double*) multipliers.data());
+      (*(this->asl_)->p.Sphes)(this->asl_, 0, const_cast<double*>(this->ampl_tmp_hessian.data()), objective_number, &objective_multiplier,
+            const_cast<double*>(multipliers.data()));
    }
    else {
       double* objective_multiplier_pointer = (objective_multiplier != 0.) ? &objective_multiplier : nullptr;
       bool all_zeros_multipliers = are_all_zeros(multipliers);
-      (*(this->asl_)->p.Sphes)(this->asl_, 0, (double*) this->ampl_tmp_hessian.data(), objective_number, objective_multiplier_pointer,
-            all_zeros_multipliers ? nullptr : (double*) multipliers.data());
+      (*(this->asl_)->p.Sphes)(this->asl_, 0, const_cast<double*>(this->ampl_tmp_hessian.data()), objective_number, objective_multiplier_pointer,
+            all_zeros_multipliers ? nullptr : const_cast<double*>(multipliers.data()));
    }
 
    // copy the nonzeros in the Hessian
@@ -307,7 +308,7 @@ void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objectiv
 void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
       COOSymmetricMatrix& hessian) const {
    // register the vector of variables
-   (*(this->asl_)->p.Xknown)(this->asl_, (double*) x.data(), 0);
+   (*(this->asl_)->p.Xknown)(this->asl_, const_cast<double*>(x.data()), 0);
 
    // compute the number of nonzeros
    const size_t number_non_zeros = this->fixed_hessian_sparsity ? this->hessian_maximum_number_nonzeros :
@@ -318,13 +319,14 @@ void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objectiv
    clear(hessian.matrix);
    const int objective_number = -1;
    if (this->fixed_hessian_sparsity) {
-      (*(this->asl_)->p.Sphes)(this->asl_, 0, hessian.matrix.data(), objective_number, &objective_multiplier, (double*) multipliers.data());
+      (*(this->asl_)->p.Sphes)(this->asl_, 0, hessian.matrix.data(), objective_number, &objective_multiplier,
+            const_cast<double*>(multipliers.data()));
    }
    else {
       double* objective_multiplier_pointer = (objective_multiplier != 0.) ? &objective_multiplier : nullptr;
       bool all_zeros_multipliers = are_all_zeros(multipliers);
       (*(this->asl_)->p.Sphes)(this->asl_, 0, hessian.matrix.data(), objective_number, objective_multiplier_pointer,
-            all_zeros_multipliers ? nullptr : (double*) multipliers.data());
+            all_zeros_multipliers ? nullptr : const_cast<double*>(multipliers.data()));
    }
    hessian.number_nonzeros = number_non_zeros;
 
@@ -335,8 +337,8 @@ void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objectiv
    for (size_t j = 0; j < this->number_variables; j++) {
       for (int k = ampl_column_start[j]; k < ampl_column_start[j + 1]; k++) {
          size_t i = ampl_row_index[k];
-         hessian.row_indices[index] = (int) i;
-         hessian.column_indices[index] = (int) j;
+         hessian.row_indices[index] = static_cast<int>(i);
+         hessian.column_indices[index] = static_cast<int>(j);
          index++;
       }
    }

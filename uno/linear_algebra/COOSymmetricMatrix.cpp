@@ -27,8 +27,8 @@ void COOSymmetricMatrix::for_each(const std::function<void(int, int, double)>& f
 
 void COOSymmetricMatrix::insert(double term, size_t row_index, size_t column_index) {
    this->matrix[this->number_nonzeros] = term;
-   this->row_indices[this->number_nonzeros] = (int) row_index;
-   this->column_indices[this->number_nonzeros] = (int) column_index;
+   this->row_indices[this->number_nonzeros] = static_cast<int>(row_index);
+   this->column_indices[this->number_nonzeros] = static_cast<int>(column_index);
    this->number_nonzeros++;
 }
 

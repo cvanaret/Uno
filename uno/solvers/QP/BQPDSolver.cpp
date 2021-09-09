@@ -18,8 +18,8 @@ extern "C" {
    } kktalphac_;
 
    extern void
-   bqpd_(int* n, int* m, int* k, int* kmax, double* a, int* la, double* x, double* bl, double* bu, double* f, double* fmin, double* g,
-         double* r, double* w, double* e, int* ls, double* alp, int* lp, int* mlp, int* peq, double* ws, int* lws, int* mode, int* ifail,
+   bqpd_(const int* n, const int* m, int* k, int* kmax, double* a, int* la, double* x, double* bl, double* bu, double* f, double* fmin, double* g,
+         double* r, double* w, double* e, int* ls, double* alp, int* lp, int* mlp, int* peq, double* ws, int* lws, const int* mode, int* ifail,
          int* info, int* iprint, int* nout);
 }
 
@@ -37,7 +37,7 @@ BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_
       solution(number_variables) {
    // active set
    for (size_t i = 0; i < this->n_ + this->m_; i++) {
-      this->ls_[i] = (int) (i + this->fortran_shift);
+      this->ls_[i] = static_cast<int>(i + this->fortran_shift);
    }
 }
 
@@ -48,19 +48,19 @@ Direction BQPDSolver::solve_QP(const std::vector<Range>& variables_bounds, const
       this->hessian_[i] = hessian.matrix[i];
    }
    /* Hessian sparsity */
-   this->hessian_sparsity_[0] = (int) (hessian.number_nonzeros + 1);
+   this->hessian_sparsity_[0] = static_cast<int>(hessian.number_nonzeros + 1);
    for (size_t i = 0; i < hessian.number_nonzeros; i++) {
-      this->hessian_sparsity_[i + 1] = (int) (hessian.row_index[i] + this->fortran_shift);
+      this->hessian_sparsity_[i + 1] = static_cast<int>(hessian.row_index[i] + this->fortran_shift);
    }
    for (size_t i = 0; i < hessian.dimension + 1; i++) {
-      this->hessian_sparsity_[hessian.number_nonzeros + i + 1] = (int) (hessian.column_start[i] + this->fortran_shift);
+      this->hessian_sparsity_[hessian.number_nonzeros + i + 1] = static_cast<int>(hessian.column_start[i] + this->fortran_shift);
    }
 
    // if extra variables have been introduced, correct hessian.column_start
    size_t i = hessian.number_nonzeros + hessian.dimension + 2;
    size_t last_value = hessian.column_start[hessian.dimension];
    for (size_t j = hessian.dimension; j < this->n_; j++) {
-      this->hessian_sparsity_[i] = (int) (last_value + this->fortran_shift);
+      this->hessian_sparsity_[i] = static_cast<int>(last_value + this->fortran_shift);
       i++;
    }
 
@@ -77,10 +77,10 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
       const SparseVector<double>& linear_objective, const std::vector<SparseVector<double>>& constraints_jacobian, const std::vector<double>& x) {
    /* initialize wsc_ common block (Hessian & workspace for bqpd) */
    // setting the common block here ensures that several instances of BQPD can run simultaneously
-   wsc_.kk = (int) this->maximum_number_nonzeros_;
-   wsc_.ll = (int) this->size_hessian_sparsity_;
-   wsc_.mxws = (int) this->size_hessian_workspace_;
-   wsc_.mxlws = (int) this->size_hessian_sparsity_workspace_;
+   wsc_.kk = static_cast<int>(this->maximum_number_nonzeros_);
+   wsc_.ll = static_cast<int>(this->size_hessian_sparsity_);
+   wsc_.mxws = static_cast<int>(this->size_hessian_workspace_);
+   wsc_.mxlws = static_cast<int>(this->size_hessian_sparsity_workspace_);
    kktalphac_.alpha = 0; // inertia control
 
    DEBUG << "objective gradient: ";
@@ -99,13 +99,13 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
    int current_index = 0;
    linear_objective.for_each([&](size_t i, double derivative) {
       this->jacobian_[current_index] = derivative;
-      this->jacobian_sparsity_[current_index + 1] = (int) (i + this->fortran_shift);
+      this->jacobian_sparsity_[current_index + 1] = static_cast<int>(i + this->fortran_shift);
       current_index++;
    });
    for (size_t j = 0; j < this->m_; j++) {
       constraints_jacobian[j].for_each([&](size_t i, double derivative) {
          this->jacobian_[current_index] = derivative;
-         this->jacobian_sparsity_[current_index + 1] = (int) (i + this->fortran_shift);
+         this->jacobian_sparsity_[current_index + 1] = static_cast<int>(i + this->fortran_shift);
          current_index++;
       });
    }
@@ -113,14 +113,14 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
    this->jacobian_sparsity_[0] = current_index;
    // header
    size_t size = 1;
-   this->jacobian_sparsity_[current_index] = (int) size;
+   this->jacobian_sparsity_[current_index] = static_cast<int>(size);
    current_index++;
    size += linear_objective.size();
-   this->jacobian_sparsity_[current_index] = (int) size;
+   this->jacobian_sparsity_[current_index] = static_cast<int>(size);
    current_index++;
    for (size_t j = 0; j < this->m_; j++) {
       size += constraints_jacobian[j].size();
-      this->jacobian_sparsity_[current_index] = (int) size;
+      this->jacobian_sparsity_[current_index] = static_cast<int>(size);
       current_index++;
    }
 
@@ -138,8 +138,10 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
    copy_from(this->solution, x);
 
    /* call BQPD */
-   int mode = (int) this->mode_;
-   bqpd_((int*) &this->n_, (int*) &this->m_, &this->k_, &this->kmax_, this->jacobian_.data(), this->jacobian_sparsity_.data(),
+   const int n = static_cast<int>(this->n_);
+   const int m = static_cast<int>(this->m_);
+   const int mode = static_cast<int>(this->mode_);
+   bqpd_(&n, &m, &this->k_, &this->kmax_, this->jacobian_.data(), this->jacobian_sparsity_.data(),
          this->solution.data(),this->lb_.data(), this->ub_.data(), &this->f_solution_, &this->fmin_, this->gradient_solution_.data(),
          this->residuals_.data(),this->w_.data(), this->e_.data(), this->ls_.data(), this->alp_.data(), this->lp_.data(),
          &this->mlp_, &this->peq_solution_,this->hessian_.data(), this->hessian_sparsity_.data(), &mode, &this->ifail_,

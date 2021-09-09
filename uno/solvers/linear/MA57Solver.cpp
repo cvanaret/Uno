@@ -23,7 +23,8 @@ lifact, const double rhs[], double x[], double resid[], double work[], int iwork
 }
 
 MA57Solver::MA57Solver(size_t dimension) : LinearSolver(dimension), iwork(5*dimension),
-   lwork((int) (1.2 * (double) dimension)), work(this->lwork), residuals(dimension) {
+   lwork(static_cast<int>(1.2 * static_cast<double>(dimension))),
+   work(this->lwork), residuals(dimension) {
    /* set the default values of the controlling parameters */
    ma57id_(this->cntl.data(), this->icntl.data());
    // suppress warning messages
@@ -40,8 +41,8 @@ void MA57Solver::factorize(COOSymmetricMatrix& matrix) {
 
 void MA57Solver::do_symbolic_factorization(COOSymmetricMatrix& matrix) {
    assert(matrix.dimension == this->dimension && "MA57Solver: the dimension of the matrix is inconsistent");
-   const int n = (int) matrix.dimension;
-   const int nnz = (int) matrix.number_nonzeros;
+   const int n = static_cast<int>(matrix.dimension);
+   const int nnz = static_cast<int>(matrix.number_nonzeros);
 
    /* sparsity pattern */
    const int lkeep = 5 * n + nnz + std::max(n, nnz) + 42;
@@ -83,12 +84,12 @@ void MA57Solver::do_symbolic_factorization(COOSymmetricMatrix& matrix) {
 
 void MA57Solver::do_numerical_factorization(COOSymmetricMatrix& matrix) {
    assert(this->dimension == matrix.dimension && "MA57Solver: the dimension of the matrix is inconsistent");
-   assert(this->factorization.nnz == (int) matrix.number_nonzeros && "MA57Solver: the numbers of nonzeros do not match");
+   assert(this->factorization.nnz == static_cast<int>(matrix.number_nonzeros) && "MA57Solver: the numbers of nonzeros do not match");
 
-   const size_t n = this->dimension;
+   const int n = static_cast<int>(this->dimension);
    /* numerical factorization */
-   ma57bd_((int*) &n,
-         (int*) &this->factorization.nnz,
+   ma57bd_(&n,
+         &this->factorization.nnz,
          /* const */ matrix.matrix.data(),
          /* out */ this->factorization.fact.data(),
          /* const */ &this->factorization.lfact,
@@ -102,14 +103,14 @@ void MA57Solver::do_numerical_factorization(COOSymmetricMatrix& matrix) {
 
 void MA57Solver::solve(COOSymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) {
    /* solve */
-   const size_t n = this->dimension;
-   const int lrhs = (int) n; // integer, length of rhs
+   const int n = static_cast<int>(this->dimension);
+   const int lrhs = n; // integer, length of rhs
 
    // solve the linear system
    if (this->use_iterative_refinement) {
       assert(false && "TODO in MA57Solver::solve: reindex matrix");
 
-      ma57dd_(&this->job, (int*) &n, (int*) &this->factorization.nnz, matrix.matrix.data(), matrix.row_indices.data(), matrix.column_indices.data(),
+      ma57dd_(&this->job, &n, &this->factorization.nnz, matrix.matrix.data(), matrix.row_indices.data(), matrix.column_indices.data(),
             this->factorization.fact.data(), &this->factorization.lfact, this->factorization.ifact.data(), &this->factorization.lifact,
             rhs.data(), result.data(), this->residuals.data(), this->work.data(), this->iwork.data(), this->icntl.data(),
             this->cntl.data(), this->info.data(), this->rinfo.data());
@@ -118,7 +119,7 @@ void MA57Solver::solve(COOSymmetricMatrix& matrix, const std::vector<double>& rh
       // copy rhs into result (overwritten by MA57)
       copy_from(result, rhs);
 
-      ma57cd_(&this->job, (int*) &n, this->factorization.fact.data(), &this->factorization.lfact, this->factorization.ifact.data(),
+      ma57cd_(&this->job, &n, this->factorization.fact.data(), &this->factorization.lfact, this->factorization.ifact.data(),
             &this->factorization.lifact, &this->nrhs, result.data(), &lrhs, this->work.data(), &this->lwork, this->iwork.data(),
             this->icntl.data(), this->info.data());
    }

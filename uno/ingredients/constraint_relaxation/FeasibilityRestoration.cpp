@@ -127,7 +127,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
    }
 
    if (accept) {
-      statistics.add_statistic("phase", (int) direction.is_relaxed ? FEASIBILITY_RESTORATION : OPTIMALITY);
+      statistics.add_statistic("phase", static_cast<int>(direction.is_relaxed ? FEASIBILITY_RESTORATION : OPTIMALITY));
       if (direction.is_relaxed) {
          /* correct multipliers for infeasibility problem */
          FeasibilityRestoration::set_restoration_multipliers(trial_iterate.multipliers.constraints, direction.constraint_partition);

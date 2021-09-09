@@ -95,10 +95,10 @@ TerminationStatus Uno::check_termination(const Problem& problem, Iterate& curren
    TerminationStatus status = NOT_OPTIMAL;
    const size_t number_variables = current_iterate.x.size();
 
-   if (current_iterate.errors.complementarity <= this->tolerance * (double) (number_variables + problem.number_constraints)) {
+   if (current_iterate.errors.complementarity <= this->tolerance * static_cast<double>(number_variables + problem.number_constraints)) {
       // feasible and KKT point
       if (current_iterate.errors.KKT <= this->tolerance * std::sqrt(number_variables)) {
-         if (current_iterate.errors.constraints <= this->tolerance * (double) number_variables) {
+         if (current_iterate.errors.constraints <= this->tolerance * static_cast<double>(number_variables)) {
             status = KKT_POINT;
          }
       }
@@ -108,7 +108,7 @@ TerminationStatus Uno::check_termination(const Problem& problem, Iterate& curren
       }
    }
    else if (step_norm <= this->tolerance / 100.) {
-      if (current_iterate.errors.constraints <= this->tolerance * (double) number_variables) {
+      if (current_iterate.errors.constraints <= this->tolerance * static_cast<double>(number_variables)) {
          status = FEASIBLE_SMALL_STEP;
       }
       else {

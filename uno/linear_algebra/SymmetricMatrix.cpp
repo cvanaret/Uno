@@ -44,7 +44,7 @@ void SymmetricMatrix::add_outer_product(const SparseVector<double>& x, double sc
          // upper triangular matrix
          if (row_index <= column_index) {
             // add product of components
-            this->insert(scaling_factor * row_term * column_term, (int) row_index, (int) column_index);
+            this->insert(scaling_factor * row_term * column_term, row_index, column_index);
          }
       });
    });
