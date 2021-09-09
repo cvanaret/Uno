@@ -28,8 +28,8 @@ public:
    friend std::ostream& operator<<(std::ostream& stream, const SparseVector<U>& x);
 
 protected:
-   std::vector<size_t> indices;
-   std::vector<T> values;
+   std::vector<size_t> indices{};
+   std::vector<T> values{};
    size_t number_nonzeros{0};
 };
 

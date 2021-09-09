@@ -11,21 +11,21 @@ enum ConstraintType { EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_S
 *  Description of the active or infeasible constraints: at lower or upper bound at the optimum solution
 */
 struct ActiveConstraints {
-   std::vector<size_t> at_lower_bound; /*!< List of constraint indices at their lower bound */
-   std::vector<size_t> at_upper_bound; /*!< List of constraint indices at their upper bound */
+   std::vector<size_t> at_lower_bound{}; /*!< List of constraint indices at their lower bound */
+   std::vector<size_t> at_upper_bound{}; /*!< List of constraint indices at their upper bound */
 };
 
 struct ActiveSet {
-   ActiveConstraints constraints; /*!< List of general constraints */
-   ActiveConstraints bounds; /*!< List of bound constraints */
+   ActiveConstraints constraints{}; /*!< List of general constraints */
+   ActiveConstraints bounds{}; /*!< List of bound constraints */
 };
 
 enum ConstraintFeasibility { FEASIBLE, INFEASIBLE_LOWER, INFEASIBLE_UPPER };
 
 struct ConstraintPartition {
-   std::vector<size_t> feasible; /*!< Indices of the feasible constraints */
-   std::vector<size_t> infeasible; /*!< Indices of the infeasible constraints */
-   std::vector<ConstraintFeasibility> constraint_feasibility;
+   std::vector<size_t> feasible{}; /*!< Indices of the feasible constraints */
+   std::vector<size_t> infeasible{}; /*!< Indices of the infeasible constraints */
+   std::vector<ConstraintFeasibility> constraint_feasibility{};
 
    explicit ConstraintPartition(size_t number_constraints);
 };

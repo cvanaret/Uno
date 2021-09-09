@@ -39,8 +39,8 @@ public:
 
    double norm{0.}; /*!< Norm of \f$x\f$ */
    double objective{INFINITY}; /*!< Objective value */
-   ActiveSet active_set; /*!< Active set */
-   std::vector<int> inactive_set; /*!< Inactive set */
+   ActiveSet active_set{}; /*!< Active set */
+   std::vector<int> inactive_set{}; /*!< Inactive set */
    ConstraintPartition constraint_partition; /*!< Partition of feasible and infeasible constraints */
 
    friend std::ostream& operator<<(std::ostream& stream, const Direction& step);
