@@ -477,8 +477,8 @@ inline void InteriorPoint<LinearSolverType>::assemble_kkt_matrix(const Problem& 
    // assume that the Hessian is sorted
    size_t current_column = 0;
    this->hessian_evaluation->hessian.for_each([&](int i, int j, double entry) {
-      if (j != current_column) {
-         for (size_t column = current_column; column < j; column++) {
+      if (j != static_cast<int>(current_column)) {
+         for (size_t column = current_column; column < static_cast<size_t>(j); column++) {
             this->kkt_matrix.finalize(column);
             current_column++;
          }
