@@ -18,25 +18,20 @@ void function_test() {
 }
 
 Subproblem::Subproblem(size_t number_variables, size_t number_constraints) :
-      number_variables(number_variables),
-      number_constraints(number_constraints),
-      variables_bounds(number_variables),
-      constraints_multipliers(number_constraints),
+      number_variables(number_variables), number_constraints(number_constraints),
+      variables_bounds(number_variables), constraints_multipliers(number_constraints),
       objective_gradient(number_variables), // SparseVector
       constraints_jacobian(number_constraints, number_variables), // vector of SparseVectors
-      constraints_bounds(number_constraints),
-      direction(number_variables, number_constraints) {
-   for (size_t j = 0; j < this->number_constraints; j++) {
-      this->constraints_jacobian[j].reserve(this->number_variables);
+      constraints_bounds(number_constraints), direction(number_variables, number_constraints) {
+   for (auto& constraint_gradient: this->constraints_jacobian) {
+      constraint_gradient.reserve(this->number_variables);
    }
 }
 
-Iterate Subproblem::generate_initial_iterate(Statistics& /*statistics*/, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
-   Iterate first_iterate(x, multipliers);
+void Subproblem::initialize(Statistics& /*statistics*/, const Problem& problem, Iterate& first_iterate) {
    /* compute the optimality and feasibility measures of the initial point */
    first_iterate.compute_constraints(problem);
    this->compute_progress_measures(problem, first_iterate);
-   return first_iterate;
 }
 
 void Subproblem::compute_progress_measures(const Problem& problem, Iterate& iterate) {
@@ -95,20 +90,15 @@ void Subproblem::compute_feasibility_linear_objective(const Iterate& current_ite
 void Subproblem::generate_feasibility_bounds(const Problem& problem, const std::vector<double>& current_constraints, const ConstraintPartition&
 constraint_partition) {
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      double lb, ub;
       if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
-         lb = -INFINITY;
-         ub = problem.constraint_bounds[j].lb - current_constraints[j];
+         this->constraints_bounds[j] = {-INFINITY, problem.constraint_bounds[j].lb - current_constraints[j]};
       }
       else if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_UPPER) {
-         lb = problem.constraint_bounds[j].ub - current_constraints[j];
-         ub = INFINITY;
+         this->constraints_bounds[j] = {problem.constraint_bounds[j].ub - current_constraints[j], INFINITY};
       }
       else { // FEASIBLE
-         lb = problem.constraint_bounds[j].lb - current_constraints[j];
-         ub = problem.constraint_bounds[j].ub - current_constraints[j];
+         this->constraints_bounds[j] = {problem.constraint_bounds[j].lb - current_constraints[j], problem.constraint_bounds[j].ub - current_constraints[j]};
       }
-      this->constraints_bounds[j] = {lb, ub};
    }
 }
 
@@ -117,7 +107,7 @@ double Subproblem::compute_first_order_error(const Problem& problem, Iterate& it
    return norm_1(lagrangian_gradient);
 }
 
-/* complementary slackness error. Use abs/1e-8 to safeguard */
+/* complementary slackness error */
 double Subproblem::compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const {
    double error = 0.;
    /* bound constraints */

@@ -26,7 +26,7 @@ struct FilterStrategyParameters {
  */
 class FilterStrategy : public GlobalizationStrategy {
 public:
-   FilterStrategy(FilterStrategyParameters& strategy_constants, const Options& options);
+   FilterStrategy(FilterStrategyParameters strategy_constants, const Options& options);
 
    void initialize(Statistics& statistics, const Iterate& first_iterate) override;
    bool check_acceptance(Statistics& statistics, ProgressMeasures& current_progress, ProgressMeasures& trial_progress, double objective_multiplier,

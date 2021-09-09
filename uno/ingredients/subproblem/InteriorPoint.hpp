@@ -32,7 +32,7 @@ public:
 
    void set_initial_point(const std::vector<double>& initial_point) override;
    void set_constraints(const Problem& problem, Iterate& iterate);
-   Iterate generate_initial_iterate(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
+   void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) override;
    void generate(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
    void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
    Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
@@ -91,7 +91,7 @@ private:
 template<typename LinearSolverType>
 inline InteriorPoint<LinearSolverType>::InteriorPoint(const Problem& problem, size_t number_variables, size_t number_constraints, const std::string&
 hessian_evaluation_method, double initial_barrier_parameter, double default_multiplier, double tolerance, bool use_trust_region) :
-// add the slacks to the variables
+      // add the slacks to the variables
       Subproblem(number_variables + problem.inequality_constraints.size(), number_constraints),
       barrier_parameter(initial_barrier_parameter), tolerance(tolerance),
       /* if no trust region is used, the problem should be convexified. However, the inertia of the augmented matrix will be corrected later */
@@ -158,30 +158,26 @@ inline void InteriorPoint<LinearSolverType>::set_constraints(const Problem& prob
 }
 
 template<typename LinearSolverType>
-inline Iterate InteriorPoint<LinearSolverType>::generate_initial_iterate(Statistics& statistics, const Problem& problem, std::vector<double>& x,
-      Multipliers& multipliers) {
+inline void InteriorPoint<LinearSolverType>::initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) {
    statistics.add_column("barrier param.", Statistics::double_width, 8);
 
    // resize to the new size (primals + slacks)
-   x.resize(this->number_variables);
-   multipliers.lower_bounds.resize(this->number_variables);
-   multipliers.upper_bounds.resize(this->number_variables);
+   first_iterate.x.resize(this->number_variables);
+   first_iterate.multipliers.lower_bounds.resize(this->number_variables);
+   first_iterate.multipliers.upper_bounds.resize(this->number_variables);
 
    /* make the initial point strictly feasible */
    for (size_t i = 0; i < problem.number_variables; i++) {
-      x[i] = Subproblem::push_variable_to_interior(x[i], problem.variables_bounds[i]);
+      first_iterate.x[i] = Subproblem::push_variable_to_interior(first_iterate.x[i], problem.variables_bounds[i]);
    }
 
    /* set the bound multipliers */
    for (size_t i: this->lower_bounded_variables) {
-      multipliers.lower_bounds[i] = this->default_multiplier_;
+      first_iterate.multipliers.lower_bounds[i] = this->default_multiplier_;
    }
    for (size_t i: this->upper_bounded_variables) {
-      multipliers.upper_bounds[i] = -this->default_multiplier_;
+      first_iterate.multipliers.upper_bounds[i] = -this->default_multiplier_;
    }
-
-   /* generate the first iterate */
-   Iterate first_iterate(x, multipliers);
 
    /* initialize the slacks and add contribution to the constraint Jacobian */
    first_iterate.compute_constraints(problem);
@@ -209,7 +205,6 @@ inline Iterate InteriorPoint<LinearSolverType>::generate_initial_iterate(Statist
    /* compute the optimality and feasibility measures of the initial point */
    this->set_constraints(problem, first_iterate);
    this->compute_progress_measures(problem, first_iterate);
-   return first_iterate;
 }
 
 template<typename LinearSolverType>

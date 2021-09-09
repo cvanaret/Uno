@@ -20,7 +20,12 @@ std::unique_ptr<ConstraintRelaxationStrategy> ConstraintRelaxationStrategyFactor
       return std::make_unique<FeasibilityRestoration>(subproblem, options);
    }
    else if (constraint_relaxation_type == "l1-relaxation") {
-      return std::make_unique<l1Relaxation>(problem, subproblem, options);
+      const double initial_parameter = stod(options.at("l1_relaxation_initial_parameter"));
+      const double decrease_factor = stod(options.at("l1_relaxation_decrease_factor"));
+      const double epsilon1 = stod(options.at("l1_relaxation_epsilon1"));
+      const double epsilon2 = stod(options.at("l1_relaxation_epsilon2"));
+      l1RelaxationParameters parameters({initial_parameter, decrease_factor, epsilon1, epsilon2});
+      return std::make_unique<l1Relaxation>(problem, subproblem, parameters, options);
    }
    else {
       throw std::invalid_argument("ConstraintRelaxationStrategy type does not exist");

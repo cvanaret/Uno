@@ -42,7 +42,7 @@ public:
    virtual ~Subproblem() = default;
 
    // virtual methods implemented by subclasses
-   virtual Iterate generate_initial_iterate(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers);
+   virtual void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate);
    virtual void generate(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) = 0;
    virtual void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) = 0;
 

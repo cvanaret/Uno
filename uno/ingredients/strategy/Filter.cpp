@@ -226,9 +226,9 @@ double NonmonotoneFilter::compute_actual_reduction(double current_objective, dou
 /* FilterFactory class */
 
 std::unique_ptr<Filter> FilterFactory::create(const Options& options) {
-   double Beta = stod(options.at("filter_Beta"));
-   double Gamma = stod(options.at("filter_Gamma"));
-   FilterConstants filter_constants = {Beta, Gamma};
+   double beta = stod(options.at("filter_Beta"));
+   double gamma = stod(options.at("filter_Gamma"));
+   FilterConstants filter_constants = {beta, gamma};
    std::string filter_type = options.at("strategy");
 
    if (filter_type == "filter") {

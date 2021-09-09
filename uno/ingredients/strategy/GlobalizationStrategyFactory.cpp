@@ -10,9 +10,9 @@ std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(con
    else if (strategy_type == "filter" || strategy_type == "nonmonotone-filter") {
       const double decrease_fraction = stod(options.at("decrease_fraction"));
       const double delta = stod(options.at("filter_Delta"));
-      const double ubd = stod(options.at("filter_ubd"));
+      const double upper_bound = stod(options.at("filter_ubd"));
       const double fact = stod(options.at("filter_fact"));
-      FilterStrategyParameters strategy_parameters = {decrease_fraction, delta, ubd, fact};
+      FilterStrategyParameters strategy_parameters = {decrease_fraction, delta, upper_bound, fact};
       return std::make_unique<FilterStrategy>(strategy_parameters, options);
    }
    else {

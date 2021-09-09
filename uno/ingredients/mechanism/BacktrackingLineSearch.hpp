@@ -13,7 +13,7 @@ public:
    explicit BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, int max_iterations = 7, double backtracking_ratio
    = 0.5);
 
-   Iterate initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) override;
+   void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) override;
    std::tuple<Iterate, double> compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
 
 private:

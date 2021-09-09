@@ -10,16 +10,15 @@ FeasibilityRestoration::FeasibilityRestoration(Subproblem& subproblem, const Opt
       phase_2_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)) {
 }
 
-Iterate FeasibilityRestoration::initialize(Statistics& statistics, const Problem& problem, std::vector<double>& x, Multipliers& multipliers) {
+void FeasibilityRestoration::initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) {
    statistics.add_column("phase", Statistics::int_width, 4);
 
    /* initialize the subproblem */
-   Iterate first_iterate = this->subproblem.generate_initial_iterate(statistics, problem, x, multipliers);
+   this->subproblem.initialize(statistics, problem, first_iterate);
    this->subproblem.compute_errors(problem, first_iterate, problem.objective_sign);
 
    this->phase_1_strategy->initialize(statistics, first_iterate);
    this->phase_2_strategy->initialize(statistics, first_iterate);
-   return first_iterate;
 }
 
 void FeasibilityRestoration::generate_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) {
