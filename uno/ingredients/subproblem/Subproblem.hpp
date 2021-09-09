@@ -13,24 +13,6 @@
 #include "solvers/linear/LinearSolver.hpp"
 #include "tools/Statistics.hpp"
 
-template <size_t NUMBER_DIRECTIONS>
-class SubproblemTest {
-public:
-   static constexpr size_t number_directions = NUMBER_DIRECTIONS;
-
-   virtual std::array<Direction, NUMBER_DIRECTIONS> compute_directions() = 0;
-};
-
-class SQPTest: public SubproblemTest<1> {
-public:
-   std::array<Direction, 1> compute_directions() override;
-};
-
-class SLQPTest: public SubproblemTest<2> {
-public:
-   std::array<Direction, 2> compute_directions() override;
-};
-
 /*! \class Subproblem
  * \brief Subproblem
  *

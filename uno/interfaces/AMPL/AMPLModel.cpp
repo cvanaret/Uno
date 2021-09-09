@@ -7,7 +7,7 @@
 
 ASL* generate_asl(std::string file_name) {
    ASL* asl = ASL_alloc(ASL_read_pfgh);
-   FILE* nl = jac0dim_ASL(asl, const_cast<char*> (file_name.data()), (fint) file_name.size());
+   FILE* nl = jac0dim_ASL(asl, file_name.data(), (fint) file_name.size());
    /* indices start at 0 */
    asl->i.Fortran_ = 0;
 
@@ -54,7 +54,7 @@ AMPLModel::AMPLModel(std::string file_name, ASL* asl) : Problem(file_name, asl->
 }
 
 AMPLModel::~AMPLModel() {
-   ASL_free((ASL * *) & this->asl_);
+   ASL_free(&this->asl_);
 }
 
 void AMPLModel::generate_variables_() {
@@ -175,13 +175,9 @@ void AMPLModel::set_function_types_(std::string file_name) {
    //	usage_ASL(option_info, 1);
    //}
 
-   FILE* nl = jac0dim(const_cast<char*> (file_name.data()), (fint) file_name.size());
+   FILE* nl = jac0dim_ASL(asl, file_name.data(), (fint) file_name.size());
    /* specific read function */
    qp_read_ASL(asl, nl, ASL_findgroups);
-
-   fint* rowq;
-   fint* colqp;
-   double* delsqp;
 
    /* constraints */
    if ((unsigned int) asl->i.n_con_ != this->number_constraints) {
@@ -193,6 +189,9 @@ void AMPLModel::set_function_types_(std::string file_name) {
    // determine if the problem is nonlinear (nonquadratic objective or nonlinear constraints)
    this->type = LINEAR;
    int current_linear_constraint = 0;
+   fint* rowq;
+   fint* colqp;
+   double* delsqp;
    for (size_t j = 0; j < this->number_constraints; j++) {
       fint qp = nqpcheck_ASL(asl, (int) -(j + 1), &rowq, &colqp, &delsqp);
 
@@ -228,7 +227,7 @@ void AMPLModel::set_function_types_(std::string file_name) {
    qp_opify_ASL(asl);
 
    /* deallocate memory */
-   ASL_free((ASL * *) & asl);
+   ASL_free(&asl);
 }
 
 void AMPLModel::initialize_lagrangian_hessian_() {
@@ -329,13 +328,12 @@ void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objectiv
    clear(hessian.matrix);
    const int objective_number = -1;
    if (this->fixed_hessian_sparsity) {
-      (*(this->asl_)->p.Sphes)(this->asl_, 0, (double*) hessian.matrix.data(), objective_number, &objective_multiplier,
-            (double*) multipliers.data());
+      (*(this->asl_)->p.Sphes)(this->asl_, 0, hessian.matrix.data(), objective_number, &objective_multiplier, (double*) multipliers.data());
    }
    else {
       double* objective_multiplier_pointer = (objective_multiplier != 0.) ? &objective_multiplier : nullptr;
       bool all_zeros_multipliers = are_all_zeros(multipliers);
-      (*(this->asl_)->p.Sphes)(this->asl_, 0, (double*) hessian.matrix.data(), objective_number, objective_multiplier_pointer,
+      (*(this->asl_)->p.Sphes)(this->asl_, 0, hessian.matrix.data(), objective_number, objective_multiplier_pointer,
             all_zeros_multipliers ? nullptr : (double*) multipliers.data());
    }
    hessian.number_nonzeros = number_non_zeros;
