@@ -63,6 +63,10 @@ double SymmetricMatrix::smallest_diagonal_entry() const {
    return smallest_entry;
 }
 
+void SymmetricMatrix::finalize(size_t /*column_index*/) {
+   // by default, do nothing
+}
+
 /* 
  * Uno matrix: bijection between indices and single key + sparse vector (map)
  */

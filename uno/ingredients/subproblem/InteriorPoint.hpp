@@ -474,7 +474,15 @@ template<typename LinearSolverType>
 inline void InteriorPoint<LinearSolverType>::assemble_kkt_matrix(const Problem& problem, Iterate& current_iterate) {
    this->kkt_matrix.reset();
    // copy the Lagrangian Hessian
+   // assume that the Hessian is sorted
+   size_t current_column = 0;
    this->hessian_evaluation->hessian.for_each([&](int i, int j, double entry) {
+      if (j != current_column) {
+         for (size_t column = current_column; column < j; column++) {
+            this->kkt_matrix.finalize(column);
+            current_column++;
+         }
+      }
       this->kkt_matrix.insert(entry, i, j);
    });
 
@@ -491,6 +499,7 @@ inline void InteriorPoint<LinearSolverType>::assemble_kkt_matrix(const Problem& 
       this->constraints_jacobian[j].for_each([&](size_t i, double derivative) {
          this->kkt_matrix.insert(derivative, i, this->number_variables + j);
       });
+      this->kkt_matrix.finalize(j);
    }
 }
 

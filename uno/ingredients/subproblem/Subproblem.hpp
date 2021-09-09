@@ -91,6 +91,7 @@ inline void Subproblem::compute_least_square_multipliers(const Problem& problem,
    /* identity block */
    for (size_t i = 0; i < current_iterate.x.size(); i++) {
       matrix.insert(1., i, i);
+      matrix.finalize(i);
    }
    /* Jacobian of general constraints */
    const size_t n = current_iterate.x.size();
@@ -98,6 +99,7 @@ inline void Subproblem::compute_least_square_multipliers(const Problem& problem,
       current_iterate.constraints_jacobian[j].for_each([&](size_t i, double derivative) {
          matrix.insert(derivative, i, n + j);
       });
+      matrix.finalize(n + j);
    }
    DEBUG << "KKT matrix for least-square multipliers:\n" << matrix << "\n";
 

@@ -23,6 +23,7 @@ public:
    virtual void for_each(const std::function<void (int, int, double)>& f) const = 0;
    /* build the matrix incrementally */
    virtual void insert(double term, size_t row_index, size_t column_index) = 0;
+   virtual void finalize(size_t column_index);
    virtual void add_identity_multiple(double multiple) = 0;
 };
 

@@ -134,7 +134,7 @@ std::tuple<size_t, size_t, size_t> MA57Solver::get_inertia() const {
 }
 
 size_t MA57Solver::number_negative_eigenvalues() const {
-   return this->info[23];
+   return static_cast<size_t>(this->info[23]);
 }
 
 bool MA57Solver::matrix_is_singular() const {
@@ -142,5 +142,5 @@ bool MA57Solver::matrix_is_singular() const {
 }
 
 size_t MA57Solver::rank() const {
-   return this->info[24];
+   return static_cast<size_t>(this->info[24]);
 }
