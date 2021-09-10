@@ -57,6 +57,8 @@ public:
    std::vector<SparseVector<double>> constraints_jacobian; /*!< Sparse Jacobian of the constraints */
    bool is_constraints_jacobian_computed{false}; /*!< Flag that indicates if the constraint Jacobian has already been computed */
 
+   std::vector<double> lagrangian_gradient;
+
    // residuals
    Errors errors{0., 0., 0., 0.};
    ProgressMeasures progress{0., 0.};
@@ -65,7 +67,7 @@ public:
    void compute_constraints(const Problem& problem);
    void compute_objective_gradient(const Problem& problem);
    void compute_constraints_jacobian(const Problem& problem);
-   std::vector<double> lagrangian_gradient(const Problem& problem, double objective_multiplier, const Multipliers& multipliers);
+   void evaluate_lagrangian_gradient(const Problem& problem, double objective_multiplier, const Multipliers& multipliers);
 
    friend std::ostream& operator<<(std::ostream& stream, const Iterate& iterate);
 };

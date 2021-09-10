@@ -221,8 +221,8 @@ double l1Relaxation::compute_error(const Problem& problem, Iterate& iterate, Mul
    /* complementarity error */
    double error = this->subproblem.compute_complementarity_error(problem, iterate, multipliers);
    /* KKT error */
-   std::vector<double> lagrangian_gradient = iterate.lagrangian_gradient(problem, penalty_parameter, multipliers);
-   error += norm_1(lagrangian_gradient);
+   iterate.evaluate_lagrangian_gradient(problem, penalty_parameter, multipliers);
+   error += norm_1(iterate.lagrangian_gradient);
    return error;
 }
 

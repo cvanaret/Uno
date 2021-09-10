@@ -12,7 +12,8 @@ Iterate::Iterate(size_t number_variables, size_t number_constraints) :
    multipliers(number_variables, number_constraints),
    constraints(multipliers.constraints.size()),
    objective_gradient(number_variables),
-   constraints_jacobian(number_constraints, number_variables) {
+   constraints_jacobian(number_constraints, number_variables),
+   lagrangian_gradient(number_variables) {
 }
 
 void Iterate::compute_objective(const Problem& problem) {
@@ -50,9 +51,9 @@ void Iterate::compute_constraints_jacobian(const Problem& problem) {
    }
 }
 
-std::vector<double> Iterate::lagrangian_gradient(const Problem& problem, double objective_multiplier, const Multipliers& multipliers) {
-   std::vector<double> lagrangian_gradient(problem.number_variables);
-
+void Iterate::evaluate_lagrangian_gradient(const Problem& problem, double objective_multiplier, const Multipliers& multipliers) {
+   clear(this->lagrangian_gradient);
+   
    /* objective gradient */
    if (objective_multiplier != 0.) {
       this->compute_objective_gradient(problem);
@@ -60,13 +61,13 @@ std::vector<double> Iterate::lagrangian_gradient(const Problem& problem, double 
       /* scale the objective gradient */
       this->objective_gradient.for_each([&](size_t i, double derivative) {
          if (i < problem.number_variables) {
-            lagrangian_gradient[i] += objective_multiplier * derivative;
+            this->lagrangian_gradient[i] += objective_multiplier * derivative;
          }
       });
    }
    /* bound constraints */
    for (size_t i = 0; i < problem.number_variables; i++) {
-      lagrangian_gradient[i] -= multipliers.lower_bounds[i] + multipliers.upper_bounds[i];
+      this->lagrangian_gradient[i] -= multipliers.lower_bounds[i] + multipliers.upper_bounds[i];
    }
 
    /* constraints */
@@ -76,12 +77,11 @@ std::vector<double> Iterate::lagrangian_gradient(const Problem& problem, double 
       if (multiplier_j != 0.) {
          this->constraints_jacobian[j].for_each([&](size_t i, double derivative) {
             if (i < problem.number_variables) {
-               lagrangian_gradient[i] -= multiplier_j * derivative;
+               this->lagrangian_gradient[i] -= multiplier_j * derivative;
             }
          });
       }
    }
-   return lagrangian_gradient;
 }
 
 std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
