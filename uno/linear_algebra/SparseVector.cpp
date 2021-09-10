@@ -15,7 +15,7 @@ double norm_1(const SparseVector<double>& x) {
 double dot(const std::vector<double>& x, const SparseVector<double>& y) {
    double dot_product = 0.;
    y.for_each([&](size_t i, double yi) {
-      assert(i < x.size() && "Vector.dot: x and y have different sizes");
+      assert(i < x.size() && "Vector.dot: the sparse vector y is larger than the dense vector x");
       dot_product += x[i] * yi;
    });
    return dot_product;
