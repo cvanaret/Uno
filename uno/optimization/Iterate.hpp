@@ -70,6 +70,4 @@ public:
    friend std::ostream& operator<<(std::ostream& stream, const Iterate& iterate);
 };
 
-void reset(Iterate& iterate);
-
 #endif // ITERATE_H

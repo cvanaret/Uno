@@ -104,12 +104,3 @@ std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
    stream << "Feasibility measure: " << iterate.progress.infeasibility << "\n";
    return stream;
 }
-
-void reset(Iterate& iterate) {
-   iterate.is_objective_computed = false;
-   iterate.are_constraints_computed = false;
-   iterate.is_objective_gradient_computed = false;
-   iterate.is_constraints_jacobian_computed = false;
-   iterate.errors = {0., 0., 0., 0.};
-   iterate.progress = {0., 0.};
-}
