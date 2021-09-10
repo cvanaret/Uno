@@ -23,8 +23,9 @@ public:
    Direction solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, const Direction& direction) override;
 
    bool is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         double step_length) override;
-   double compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, const Direction& direction, double step_length) override;
+         PredictedReductionModel& predicted_reduction_model, double step_length) override;
+   double compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, const Direction& direction, PredictedReductionModel&
+   predicted_reduction_model, double step_length) override;
 
    static size_t get_number_variables(const Problem& problem);
 

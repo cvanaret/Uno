@@ -18,19 +18,11 @@ size_t total_allocations = 0;
 
 /*
 void* operator new(size_t size) {
-   //std::cout << "Allocating " << size << " bytes\n";
+   std::cout << "Allocating " << size << " bytes\n";
    total_allocations += size;
    return malloc(size);
 }
  */
-
-struct PredictedReduction {
-   const double full_step_value;
-   const std::function<double (double step_length)> partial_step_value;
-
-   PredictedReduction(double full_step_value, const std::function<double ()>& partial_step_value);
-   double evaluate(double step_length);
-};
 
 void run_uno(const std::string& problem_name, const Options& options) {
    const std::string_view mechanism_type = options.at("mechanism");

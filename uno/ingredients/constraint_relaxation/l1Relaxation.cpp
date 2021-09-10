@@ -47,6 +47,23 @@ Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, const
    return direction;
 }
 
+double l1Relaxation::compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, const Direction& direction, PredictedReductionModel&
+predicted_reduction_model, double step_length) {
+   // compute the predicted reduction of the l1 relaxation as a postprocessing of the predicted reduction of the subproblem
+   if (step_length == 1.) {
+      return current_iterate.errors.constraints + predicted_reduction_model.evaluate(step_length);
+   }
+   else {
+      // determine the linearized constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
+      auto residual_function = [&](size_t j) {
+         const double component_j = current_iterate.constraints[j] + step_length * dot(direction.x, current_iterate.constraints_jacobian[j]);
+         return problem.compute_constraint_violation(component_j, j);
+      };
+      const double linearized_constraint_violation = norm_1(residual_function, problem.number_constraints);
+      return current_iterate.errors.constraints - linearized_constraint_violation + predicted_reduction_model.evaluate(step_length);
+   }
+}
+
 Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, const Direction&
 /*direction*/) {
    this->update_objective_multiplier(problem, current_iterate, 0.);
@@ -54,23 +71,22 @@ Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, const 
 }
 
 bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate,
-      const Direction& direction, double step_length) {
+      const Direction& direction, PredictedReductionModel& predicted_reduction_model, double step_length) {
    // check if subproblem definition changed
    if (this->subproblem.subproblem_definition_changed) {
       this->globalization_strategy->reset();
       this->subproblem.subproblem_definition_changed = false;
       this->subproblem.compute_progress_measures(problem, current_iterate);
    }
-   const double step_norm = step_length * direction.norm;
 
    bool accept = false;
-   if (step_norm == 0.) {
+   if (direction.norm == 0.) {
       accept = true;
    }
    else {
       trial_iterate.compute_constraints(problem);
       // compute the predicted reduction (both the subproblem and the l1 relaxation strategy contribute)
-      const double predicted_reduction = this->compute_predicted_reduction(problem, current_iterate, direction, step_length);
+      const double predicted_reduction = this->compute_predicted_reduction(problem, current_iterate, direction, predicted_reduction_model, step_length);
       // invoke the globalization strategy for acceptance
       accept = this->globalization_strategy->check_acceptance(statistics, current_iterate.progress, trial_iterate.progress,
             this->penalty_parameter, predicted_reduction);
@@ -256,23 +272,6 @@ void l1Relaxation::remove_elastic_variables(const Problem& problem, Direction& d
       this->subproblem.constraints_jacobian[j].erase(i);
    }
     */
-}
-
-double l1Relaxation::compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, const Direction& direction, double step_length) {
-   // compute the predicted reduction of the l1 relaxation as a postprocessing of the predicted reduction of the subproblem
-   if (step_length == 1.) {
-      return current_iterate.errors.constraints + this->subproblem.compute_predicted_reduction(direction, step_length);;
-   }
-   else {
-      // determine the linearized constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
-      auto residual_function = [&](size_t j) {
-         const double component_j = current_iterate.constraints[j] + step_length * dot(direction.x, current_iterate.constraints_jacobian[j]);
-         return problem.compute_constraint_violation(component_j, j);
-      };
-      const double linearized_constraint_violation = norm_1(residual_function, problem.number_constraints);
-      return current_iterate.errors.constraints - linearized_constraint_violation + this->subproblem.compute_predicted_reduction(direction,
-            step_length);
-   }
 }
 
 void l1Relaxation::recover_l1qp_active_set_(const Problem& problem, const Direction& direction) {

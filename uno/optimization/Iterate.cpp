@@ -53,7 +53,7 @@ void Iterate::compute_constraints_jacobian(const Problem& problem) {
 
 void Iterate::evaluate_lagrangian_gradient(const Problem& problem, double objective_multiplier, const Multipliers& multipliers) {
    clear(this->lagrangian_gradient);
-   
+
    /* objective gradient */
    if (objective_multiplier != 0.) {
       this->compute_objective_gradient(problem);

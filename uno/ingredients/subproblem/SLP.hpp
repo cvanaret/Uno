@@ -14,7 +14,7 @@ public:
    void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
    void set_initial_point(const std::vector<double>& point) override;
    Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
-   double compute_predicted_reduction(const Direction& direction, double step_length) const override;
+   PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const override;
    int get_hessian_evaluation_count() const override;
 
 private:
@@ -89,10 +89,14 @@ inline Direction SLP<LPSolverType>::solve(Statistics& /*statistics*/, const Prob
    return direction;
 }
 
-template<typename LPSolverType>
-inline double SLP<LPSolverType>::compute_predicted_reduction(const Direction& direction, double step_length) const {
-   // the predicted reduction is linear in the step length
-   return -step_length * direction.objective;
+template<typename QPSolverType>
+inline PredictedReductionModel SLP<QPSolverType>::generate_predicted_reduction_model(const Problem& /*problem*/, const Direction& direction) const {
+   return PredictedReductionModel(-direction.objective, [&]() { // capture direction by reference
+      // return a function of the step length that cheaply assembles the predicted reduction
+      return [=](double step_length) { // capture the expensive quantities by value
+         return -step_length * direction.objective;
+      };
+   });
 }
 
 template<typename LPSolverType>

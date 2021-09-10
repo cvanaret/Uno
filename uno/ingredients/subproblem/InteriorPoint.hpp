@@ -36,7 +36,7 @@ public:
    void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
    Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
    Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) override;
-   double compute_predicted_reduction(const Direction& direction, double step_length) const override;
+   PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const override;
    void compute_progress_measures(const Problem& problem, Iterate& iterate) override;
    void register_accepted_iterate(Iterate& iterate) override;
    int get_hessian_evaluation_count() const override;
@@ -321,15 +321,16 @@ void InteriorPoint<LinearSolverType>::print_soc_iteration(const Direction& direc
 }
 
 template<typename LinearSolverType>
-inline double InteriorPoint<LinearSolverType>::compute_predicted_reduction(const Direction& direction, double step_length) const {
-   // the predicted reduction is linear
-   return -step_length * direction.objective;
+inline PredictedReductionModel InteriorPoint<LinearSolverType>::generate_predicted_reduction_model(const Problem& /*problem*/, const Direction& direction) const {
+   return PredictedReductionModel(-direction.objective, [&]() {
+      return [=](double step_length) {
+         return -step_length * direction.objective;
+      };
+   });
 }
 
 template<typename LinearSolverType>
 inline void InteriorPoint<LinearSolverType>::compute_progress_measures(const Problem& problem, Iterate& iterate) {
-   //const double constraint_violation = problem.compute_constraint_violation(iterate.constraints, L1_NORM);
-
    auto residual_function = [&](size_t j) {
       if (problem.constraint_status[j] == EQUAL_BOUNDS) {
          return iterate.constraints[j] - problem.constraint_bounds[j].lb;

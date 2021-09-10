@@ -13,6 +13,20 @@
 #include "solvers/linear/LinearSolver.hpp"
 #include "tools/Statistics.hpp"
 
+struct PredictedReductionModel {
+   // predicted reduction for a full step
+   const double full_step_value;
+
+   // this function, when evaluated, precomputes expensive quantities and returns a function of the step length
+   const std::function<std::function<double (double step_length)> ()> partial_step_creator;
+
+   // predicted reduction, function of the step length
+   std::function<double (double step_length)> partial_step_function{nullptr};
+
+   PredictedReductionModel(double full_step_value, const std::function<std::function<double(double step_length)>()>& partial_step_creator);
+   double evaluate(double step_length);
+};
+
 /*! \class Subproblem
  * \brief Subproblem
  *
@@ -33,7 +47,7 @@ public:
    virtual Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate);
 
    // globalization metrics
-   virtual double compute_predicted_reduction(const Direction& direction, double step_length) const = 0;
+   virtual PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const = 0;
    virtual void compute_progress_measures(const Problem& problem, Iterate& iterate);
    virtual void register_accepted_iterate(Iterate& iterate);
 

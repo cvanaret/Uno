@@ -14,6 +14,7 @@ row_indices(capacity), column_indices(capacity) {
 COOSymmetricMatrix::COOSymmetricMatrix(size_t dimension, std::vector<double> matrix, std::vector<int> row_indices, std::vector<int> column_indices) :
       SymmetricMatrix(dimension, matrix.capacity()), matrix(std::move(matrix)), row_indices(std::move(row_indices)),
       column_indices(std::move(column_indices)) {
+   assert(false && "COOSymmetricMatrix constructor 2");
 }
 
 // generic iterator

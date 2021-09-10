@@ -1,6 +1,26 @@
 #include <cassert>
 #include "Subproblem.hpp"
 
+// PredictedReductionModel
+PredictedReductionModel::PredictedReductionModel(double full_step_value,
+      const std::function<std::function<double (double step_length)> ()>& partial_step_creator):
+      full_step_value(full_step_value), partial_step_creator(partial_step_creator) {
+}
+
+double PredictedReductionModel::evaluate(double step_length) {
+   if (step_length == 1.) {
+      return this->full_step_value;
+   }
+   else {
+      if (this->partial_step_function == nullptr) {
+         // compute the complicated stuff
+         this->partial_step_function = this->partial_step_creator();
+      }
+      return this->partial_step_function(step_length);
+   }
+}
+
+// Subproblem
 Subproblem::Subproblem(size_t number_variables, size_t number_constraints) :
       number_variables(number_variables), number_constraints(number_constraints),
       variables_bounds(number_variables), constraints_multipliers(number_constraints),
