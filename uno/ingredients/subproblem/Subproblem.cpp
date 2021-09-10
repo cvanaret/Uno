@@ -87,8 +87,8 @@ constraint_partition) {
 }
 
 double Subproblem::compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier) {
-   std::vector<double> lagrangian_gradient = iterate.lagrangian_gradient(problem, objective_multiplier, iterate.multipliers);
-   return norm_1(lagrangian_gradient);
+   iterate.evaluate_lagrangian_gradient(problem, objective_multiplier, iterate.multipliers);
+   return norm_1(iterate.lagrangian_gradient);
 }
 
 /* complementary slackness error */
