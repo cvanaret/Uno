@@ -26,14 +26,15 @@ public:
                initial_point) override;
 
 private:
-   size_t n, m;
+   size_t number_variables, number_constraints;
    size_t maximum_number_nonzeros;
    std::vector<double> lb, ub; // lower and upper bounds of variables and constraints
    const size_t fortran_shift{1};
 
    std::vector<double> jacobian;
    std::vector<int> jacobian_sparsity;
-   int kmax, mlp{1000}, mxwk0{2000000}, mxiwk0{500000};
+   int kmax, mlp{1000};
+   size_t mxwk0{2000000}, mxiwk0{500000};
    std::array<int, 100> info{};
    std::vector<double> alp;
    std::vector<int> lp, ls;
@@ -41,19 +42,18 @@ private:
    size_t size_hessian_sparsity;
    size_t size_hessian_workspace;
    size_t size_hessian_sparsity_workspace;
-   std::vector<double> hessian;
+   std::vector<double> hessian_values;
    std::vector<int> hessian_sparsity;
    int k{0};
    BQPDMode mode{COLD_START};
    int iprint{0}, nout{6};
-   double fmin{-1e20}, f_solution{};
+   double fmin{-1e20};
    int peq_solution{}, ifail{};
-   std::vector<double> solution;
 
-   Direction generate_direction();
-   Status int_to_status(int ifail);
+   static Status int_to_status(int ifail);
    Direction solve_subproblem(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector<double>&
-   linear_objective, const std::vector<SparseVector<double>>& constraints_jacobian, const std::vector<double>& x);
+   linear_objective, const std::vector<SparseVector<double>>& constraints_jacobian, const std::vector<double>& initial_point);
+   void analyze_constraints(Direction& direction);
 };
 
 #endif // BQPDSOLVER_H

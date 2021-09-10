@@ -10,12 +10,12 @@ class SLP : public Subproblem {
 public:
    SLP(const Problem& problem, size_t number_variables, size_t number_constraints);
 
-   void generate(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
+   void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
    void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
    void set_initial_point(const std::vector<double>& point) override;
    Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
-   PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const override;
-   int get_hessian_evaluation_count() const override;
+   [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const override;
+   [[nodiscard]] int get_hessian_evaluation_count() const override;
 
 private:
    /* use pointers to allow polymorphism */
@@ -35,7 +35,7 @@ inline SLP<LPSolverType>::SLP(const Problem& problem, size_t number_variables, s
 }
 
 template<typename LPSolverType>
-inline void SLP<LPSolverType>::generate(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) {
+inline void SLP<LPSolverType>::create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) {
    copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
    /* compute first- and second-order information */
    problem.evaluate_constraints(current_iterate.x, current_iterate.constraints);

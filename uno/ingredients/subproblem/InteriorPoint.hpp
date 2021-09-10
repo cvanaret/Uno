@@ -32,17 +32,17 @@ public:
    void set_initial_point(const std::vector<double>& initial_point) override;
    void set_constraints(const Problem& problem, Iterate& iterate);
    void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) override;
-   void generate(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
+   void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
    void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
    Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
    Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) override;
-   PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const override;
+   [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const override;
    void compute_progress_measures(const Problem& problem, Iterate& iterate) override;
    void register_accepted_iterate(Iterate& iterate) override;
-   int get_hessian_evaluation_count() const override;
+   [[nodiscard]] int get_hessian_evaluation_count() const override;
 
 private:
-   /* barrier parameter */
+   // barrier parameter
    double barrier_parameter;
    const double tolerance;
    const std::unique_ptr <HessianEvaluation<typename LinearSolverType::matrix_type>> hessian_evaluation;
@@ -50,9 +50,9 @@ private:
    const std::unique_ptr <LinearSolver<typename LinearSolverType::matrix_type>> linear_solver;
    const InteriorPointParameters parameters;
 
-   /* data structures */
-   std::vector<size_t> lower_bounded_variables{}; /* indices of the lower-bounded variables */
-   std::vector<size_t> upper_bounded_variables{}; /* indices of the upper-bounded variables */
+   // data structures
+   std::vector<size_t> lower_bounded_variables{}; // indices of the lower-bounded variables
+   std::vector<size_t> upper_bounded_variables{}; // indices of the upper-bounded variables
 
    double inertia_hessian{0.};
    double inertia_hessian_last{0.};
@@ -61,7 +61,7 @@ private:
    size_t iteration{0};
    size_t number_factorizations{0};
 
-   /* preallocated vectors */
+   // preallocated vectors
    std::vector<double> solution_IPM;
    std::vector<double> barrier_constraints;
    std::vector<double> rhs;
@@ -81,8 +81,8 @@ private:
    void compute_lower_bound_dual_displacements(const Iterate& current_iterate, const std::vector<double>& solution);
    void compute_upper_bound_dual_displacements(const Iterate& current_iterate, const std::vector<double>& solution);
    void generate_direction(const Problem& problem, const Iterate& current_iterate, std::vector<double>& solution_IPM);
-   double compute_KKT_error_scaling(const Iterate& current_iterate) const;
-   double compute_central_complementarity_error(const Iterate& iterate) const;
+   [[nodiscard]] double compute_KKT_error_scaling(const Iterate& current_iterate) const;
+   [[nodiscard]] double compute_central_complementarity_error(const Iterate& iterate) const;
    void print_soc_iteration(const Direction& direction_soc) const;
 };
 
@@ -93,7 +93,7 @@ hessian_evaluation_method, double initial_barrier_parameter, double default_mult
       // add the slacks to the variables
       Subproblem(number_variables + problem.inequality_constraints.size(), number_constraints),
       barrier_parameter(initial_barrier_parameter), tolerance(tolerance),
-      /* if no trust region is used, the problem should be convexified. However, the inertia of the augmented matrix will be corrected later */
+      // if no trust region is used, the problem should be convexified. However, the inertia of the augmented matrix will be corrected later
       hessian_evaluation(HessianEvaluationFactory<typename LinearSolverType::matrix_type>::create(hessian_evaluation_method,
             problem.number_variables, problem.hessian_maximum_number_nonzeros, false)),
       kkt_matrix(this->number_variables + number_constraints, problem.hessian_maximum_number_nonzeros + this->number_variables /* regularization */ +
@@ -124,7 +124,7 @@ hessian_evaluation_method, double initial_barrier_parameter, double default_mult
          this->upper_bounded_variables.push_back(i);
       }
    }
-   /* identify the inequality constraint slacks */
+   // identify the inequality constraint slacks
    for (const auto[j, i]: problem.inequality_constraints) {
       size_t slack_index = number_variables + i;
       if (problem.constraint_status[j] == BOUNDED_LOWER || problem.constraint_status[j] == BOUNDED_BOTH_SIDES) {
@@ -165,12 +165,12 @@ inline void InteriorPoint<LinearSolverType>::initialize(Statistics& statistics, 
    first_iterate.multipliers.lower_bounds.resize(this->number_variables);
    first_iterate.multipliers.upper_bounds.resize(this->number_variables);
 
-   /* make the initial point strictly feasible */
+   // make the initial point strictly feasible
    for (size_t i = 0; i < problem.number_variables; i++) {
       first_iterate.x[i] = Subproblem::push_variable_to_interior(first_iterate.x[i], problem.variables_bounds[i]);
    }
 
-   /* set the bound multipliers */
+   // set the bound multipliers
    for (size_t i: this->lower_bounded_variables) {
       first_iterate.multipliers.lower_bounds[i] = this->default_multiplier;
    }
@@ -178,7 +178,7 @@ inline void InteriorPoint<LinearSolverType>::initialize(Statistics& statistics, 
       first_iterate.multipliers.upper_bounds[i] = -this->default_multiplier;
    }
 
-   /* initialize the slacks and add contribution to the constraint Jacobian */
+   // initialize the slacks and add contribution to the constraint Jacobian
    first_iterate.compute_constraints(problem);
    first_iterate.compute_constraints_jacobian(problem);
    for (const auto[j, i]: problem.inequality_constraints) {
@@ -187,7 +187,7 @@ inline void InteriorPoint<LinearSolverType>::initialize(Statistics& statistics, 
       first_iterate.constraints_jacobian[j].insert(problem.number_variables + i, -1.);
    }
 
-   /* compute least-square multipliers */
+   // compute least-square multipliers
    if (0 < problem.number_constraints) {
       Subproblem::compute_least_square_multipliers(problem, this->kkt_matrix, this->rhs, *this->linear_solver, first_iterate,
             first_iterate.multipliers.constraints);
@@ -201,20 +201,21 @@ inline void InteriorPoint<LinearSolverType>::initialize(Statistics& statistics, 
    DEBUG << "variable ub: ";
    print_vector(DEBUG, this->upper_bounded_variables);
 
-   /* compute the optimality and feasibility measures of the initial point */
+   // compute the optimality and feasibility measures of the initial point
    this->set_constraints(problem, first_iterate);
    this->compute_progress_measures(problem, first_iterate);
 }
 
 template<typename LinearSolverType>
-inline void InteriorPoint<LinearSolverType>::generate(const Problem& problem, Iterate& current_iterate, double objective_multiplier,
-      double trust_region_radius) {// update the barrier parameter if the current iterate solves the subproblem
+inline void InteriorPoint<LinearSolverType>::create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier,
+      double trust_region_radius) {
+   // update the barrier parameter if the current iterate solves the subproblem
    this->update_barrier_parameter(current_iterate);
    DEBUG << "mu is " << this->barrier_parameter << "\n";
 
    this->set_constraints(problem, current_iterate);
    copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
-   /* compute first- and second-order information */
+   // compute first- and second-order information
    // constraint Jacobian
    for (auto& row: this->constraints_jacobian) {
       row.clear();
@@ -238,7 +239,7 @@ inline void InteriorPoint<LinearSolverType>::generate(const Problem& problem, It
    // Hessian (scaled by the objective multiplier)
    this->update_objective_multiplier(problem, current_iterate, objective_multiplier);
 
-   /* bounds of the variables */
+   // bounds of the variables
    this->set_variables_bounds(problem, current_iterate, trust_region_radius);
 }
 
@@ -264,28 +265,28 @@ inline Direction InteriorPoint<LinearSolverType>::solve(Statistics& statistics, 
    /************************/
    /* solve the KKT system */
    /************************/
-   /* assemble and factorize the KKT matrix */
+   // assemble and factorize the KKT matrix
    this->assemble_kkt_matrix(problem, current_iterate);
    this->factorize(problem, this->kkt_matrix);
-   /* inertia correction */
+   // inertia correction
    this->modify_inertia(problem, this->kkt_matrix, this->number_variables, problem.number_constraints);
    DEBUG << "KKT matrix:\n" << this->kkt_matrix << "\n";
    auto[number_pos, number_neg, number_zero] = this->linear_solver->get_inertia();
    assert(number_pos == this->number_variables && number_neg == problem.number_constraints && number_zero == 0);
 
-   /* right-hand side */
+   // right-hand side
    this->generate_kkt_rhs(current_iterate);
 
-   /* compute the solution (Δx, -Δλ) */
+   // compute the solution (Δx, -Δλ)
    this->linear_solver->solve(this->kkt_matrix, this->rhs, this->solution_IPM);
    this->number_subproblems_solved++;
 
-   /* generate IPM direction */
+   // generate IPM direction
    this->generate_direction(problem, current_iterate, this->solution_IPM);
    statistics.add_statistic("barrier param.", this->barrier_parameter);
    return this->direction;
    //   catch (const UnstableInertiaCorrection& e) {
-   //      /* unstable factorization during optimality phase */
+   //      // unstable factorization during optimality phase
    //      throw "InteriorPoint: inertia correction failed";
    //   }
 }
@@ -300,11 +301,11 @@ inline Direction InteriorPoint<LinearSolverType>::compute_second_order_correctio
       this->rhs[this->number_variables + j] -= trial_iterate.constraints[j] - trial_iterate.x[problem.number_variables + i];
    }
 
-   /* compute the solution (Δx, -Δλ) */
+   // compute the solution (Δx, -Δλ)
    this->linear_solver->solve(kkt_matrix, this->rhs, this->solution_IPM);
    this->number_subproblems_solved++;
 
-   /* generate IPM direction */
+   // generate IPM direction
    this->generate_direction(problem, trial_iterate, this->solution_IPM);
    this->print_soc_iteration(this->direction);
    return this->direction;
@@ -342,7 +343,7 @@ inline void InteriorPoint<LinearSolverType>::compute_progress_measures(const Pro
    };
    const double constraint_violation = norm_1(residual_function, problem.number_constraints);
 
-   /* compute barrier objective */
+   // compute barrier objective
    const double objective = this->evaluate_barrier_function(problem, iterate);
    iterate.progress = {constraint_violation, objective};
 }
@@ -374,13 +375,13 @@ inline int InteriorPoint<LinearSolverType>::get_hessian_evaluation_count() const
 template<typename LinearSolverType>
 inline void InteriorPoint<LinearSolverType>::update_barrier_parameter(const Iterate& current_iterate) {
    const double tolerance_fraction = this->tolerance / 10.;
-   /* scaled error terms */
+   // scaled error terms
    const double sd = this->compute_KKT_error_scaling(current_iterate);
    const double KKTerror = current_iterate.errors.KKT / sd;
    const double central_complementarity_error = this->compute_central_complementarity_error(current_iterate);
    const double error = std::max({KKTerror, current_iterate.errors.constraints, central_complementarity_error});
 
-   /* update of the barrier problem */
+   // update of the barrier problem
    while (error <= this->parameters.k_epsilon * this->barrier_parameter && tolerance_fraction < this->barrier_parameter) {
       this->barrier_parameter = std::max(tolerance_fraction, std::min(this->parameters.k_mu * this->barrier_parameter,
             std::pow(this->barrier_parameter, this->parameters.theta_mu)));
@@ -393,7 +394,7 @@ inline void InteriorPoint<LinearSolverType>::update_barrier_parameter(const Iter
 template<typename LinearSolverType>
 inline void InteriorPoint<LinearSolverType>::set_variables_bounds(const Problem& problem, const Iterate& current_iterate,
       double trust_region_radius) {
-   /* here, we work with the original bounds  */
+   // here, we work with the original bounds
    // very important: apply the trust region only on the original variables (not the slacks)
    for (size_t i = 0; i < problem.number_variables; i++) {
       double lb = std::max(current_iterate.x[i] - trust_region_radius, problem.variables_bounds[i].lb);
@@ -421,7 +422,7 @@ inline double InteriorPoint<LinearSolverType>::compute_barrier_directional_deriv
 template<typename LinearSolverType>
 inline double InteriorPoint<LinearSolverType>::evaluate_barrier_function(const Problem& problem, Iterate& iterate) {
    double objective = 0.;
-   /* bound constraints */
+   // bound constraints
    for (size_t i: this->lower_bounded_variables) {
       objective -= std::log(iterate.x[i] - this->variables_bounds[i].lb);
    }
@@ -429,7 +430,7 @@ inline double InteriorPoint<LinearSolverType>::evaluate_barrier_function(const P
       objective -= std::log(this->variables_bounds[i].ub - iterate.x[i]);
    }
    objective *= this->barrier_parameter;
-   /* original objective */
+   // original objective
    iterate.compute_objective(problem);
    objective += iterate.objective;
    return objective;
@@ -486,7 +487,7 @@ inline void InteriorPoint<LinearSolverType>::assemble_kkt_matrix(const Problem& 
       this->kkt_matrix.insert(entry, i, j);
    });
 
-   /* diagonal terms: bounds of primals and slacks */
+   // diagonal terms: bounds of primals and slacks
    for (size_t i: this->lower_bounded_variables) {
       this->kkt_matrix.insert(current_iterate.multipliers.lower_bounds[i] / (current_iterate.x[i] - this->variables_bounds[i].lb), i, i);
    }
@@ -494,7 +495,7 @@ inline void InteriorPoint<LinearSolverType>::assemble_kkt_matrix(const Problem& 
       this->kkt_matrix.insert(current_iterate.multipliers.upper_bounds[i] / (current_iterate.x[i] - this->variables_bounds[i].ub), i, i);
    }
 
-   /* Jacobian of general constraints */
+   // Jacobian of general constraints
    for (size_t j = 0; j < problem.number_constraints; j++) {
       this->constraints_jacobian[j].for_each([&](size_t i, double derivative) {
          this->kkt_matrix.insert(derivative, i, this->number_variables + j);
@@ -579,15 +580,15 @@ size_first_block, size_t size_second_block) {
 
 template<typename LinearSolverType>
 inline void InteriorPoint<LinearSolverType>::generate_kkt_rhs(const Iterate& current_iterate) {
-   /* generate the right-hand side */
+   // generate the right-hand side
    clear(this->rhs);
 
-   /* barrier objective gradient */
+   // barrier objective gradient
    this->objective_gradient.for_each([&](size_t i, double derivative) {
       this->rhs[i] = -derivative;
    });
 
-   /* constraint: evaluations and gradients */
+   // constraint: evaluations and gradients
    for (size_t j = 0; j < current_iterate.constraints.size(); j++) {
       // Lagrangian
       if (this->constraints_multipliers[j] != 0.) {
@@ -628,7 +629,7 @@ solution) {
 template<typename LinearSolverType>
 inline void InteriorPoint<LinearSolverType>::generate_direction(const Problem& problem, const Iterate& current_iterate,
       std::vector<double>& solution_IPM) {
-   /* retrieve +Δλ (Nocedal p590) */
+   // retrieve +Δλ (Nocedal p590)
    for (size_t j = this->number_variables; j < solution_IPM.size(); j++) {
       solution_IPM[j] = -solution_IPM[j];
    }
@@ -643,7 +644,7 @@ inline void InteriorPoint<LinearSolverType>::generate_direction(const Problem& p
       this->direction.multipliers.constraints[j] = primal_step_length * solution_IPM[number_variables + j];
    }
 
-   /* compute bound multiplier displacements Δz */
+   // compute bound multiplier displacements Δz
    this->compute_lower_bound_dual_displacements(current_iterate, solution_IPM);
    this->compute_upper_bound_dual_displacements(current_iterate, solution_IPM);
 
@@ -656,7 +657,7 @@ inline void InteriorPoint<LinearSolverType>::generate_direction(const Problem& p
 
    this->direction.status = OPTIMAL;
    this->direction.norm = norm_inf(direction.x, 0, this->number_variables);
-   /* evaluate the barrier objective */
+   // evaluate the barrier objective
    this->direction.objective = this->compute_barrier_directional_derivative(direction.x);
 
    DEBUG << "IPM solution:\n";
@@ -676,18 +677,18 @@ inline void InteriorPoint<LinearSolverType>::generate_direction(const Problem& p
 
 template<typename LinearSolverType>
 inline double InteriorPoint<LinearSolverType>::compute_KKT_error_scaling(const Iterate& current_iterate) const {
-   /* KKT error */
+   // KKT error
    const double norm_1_constraint_multipliers = norm_1(current_iterate.multipliers.constraints);
    const double norm_1_bound_multipliers = norm_1(current_iterate.multipliers.lower_bounds) + norm_1(current_iterate.multipliers.upper_bounds);
    const double norm_1_multipliers = norm_1_constraint_multipliers + norm_1_bound_multipliers;
-   const double total_size = static_cast<double>(current_iterate.x.size() + current_iterate.multipliers.constraints.size());
-   const double sd = std::max(this->parameters.smax, norm_1_multipliers / total_size) / this->parameters.smax;
+   const size_t total_size = current_iterate.x.size() + current_iterate.multipliers.constraints.size();
+   const double sd = std::max(this->parameters.smax, norm_1_multipliers / static_cast<double>(total_size)) / this->parameters.smax;
    return sd;
 }
 
 template<typename LinearSolverType>
 inline double InteriorPoint<LinearSolverType>::compute_central_complementarity_error(const Iterate& iterate) const {
-   /* variable bound constraints */
+   // variable bound constraints
    const auto residual_function = [&](size_t i) {
       double result = 0.;
       if (-INFINITY < this->variables_bounds[i].lb) {
@@ -699,7 +700,7 @@ inline double InteriorPoint<LinearSolverType>::compute_central_complementarity_e
       return result;
    };
 
-   /* scaling */
+   // scaling
    const double bound_multipliers_norm = norm_1(iterate.multipliers.lower_bounds) + norm_1(iterate.multipliers.upper_bounds);
    const double sc = std::max(this->parameters.smax, bound_multipliers_norm / static_cast<double>(iterate.x.size())) / this->parameters.smax;
    return norm_1(residual_function, iterate.x.size()) / sc;

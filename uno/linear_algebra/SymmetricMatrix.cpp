@@ -131,7 +131,7 @@ void SymmetricMatrix::finalize(size_t /*column_index*/) {
 //   return coo_matrix;
 //}
 //
-///* generate a COO matrix by removing some variables (e.g. reduced Hessian in EQP problems) */
+///* create_current_subproblem a COO matrix by removing some variables (e.g. reduced Hessian in EQP problems) */
 ///* mask contains (i_origin, i_reduced) pairs, where i_origin is the original index, and i_reduced is the index in the reduced matrix */
 //COOSymmetricMatrix UnoMatrix::to_COO(const std::unordered_map<size_t, size_t>& mask) {
 //   COOSymmetricMatrix coo_matrix(this->dimension, this->capacity);

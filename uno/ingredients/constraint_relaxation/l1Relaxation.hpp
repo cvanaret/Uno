@@ -18,7 +18,7 @@ public:
    void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) override;
 
    // direction computation
-   void generate_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
+   void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
    Direction compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
    Direction solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, const Direction& direction) override;
 
@@ -43,7 +43,7 @@ protected:
    double compute_linearized_constraint_residual(std::vector<double>& direction) const;
    double compute_error(const Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter) const;
    void remove_elastic_variables(const Problem& problem, Direction& direction);
-   void recover_l1qp_active_set(const Problem& problem, const Direction& direction);
+   void recover_active_set(const Problem& problem, const Direction& direction);
 };
 
 #endif //L1RELAXATION_H

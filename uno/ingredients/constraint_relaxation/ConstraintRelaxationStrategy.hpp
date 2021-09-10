@@ -13,7 +13,7 @@
 struct ElasticVariables {
    SparseVector<size_t> positive;
    SparseVector<size_t> negative;
-   ElasticVariables(size_t capacity): positive(capacity), negative(capacity) {}
+   explicit ElasticVariables(size_t capacity): positive(capacity), negative(capacity) {}
    [[nodiscard]] size_t size() const { return this->positive.size() + this->negative.size(); }
 };
 
@@ -23,7 +23,7 @@ public:
    virtual ~ConstraintRelaxationStrategy() = default;
 
    virtual void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) = 0;
-   virtual void generate_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) = 0;
+   virtual void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) = 0;
 
    virtual Direction compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) = 0;
    virtual Direction solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, const Direction& direction) = 0;

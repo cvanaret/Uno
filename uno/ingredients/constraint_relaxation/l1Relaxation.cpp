@@ -30,9 +30,9 @@ void l1Relaxation::initialize(Statistics& statistics, const Problem& problem, It
    this->globalization_strategy->initialize(statistics, first_iterate);
 }
 
-void l1Relaxation::generate_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+void l1Relaxation::create_current_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) {
    // preprocess the subproblem: scale the derivatives and introduce the elastic variables
-   this->subproblem.generate(problem, current_iterate, this->penalty_parameter, trust_region_radius);
+   this->subproblem.create_current_subproblem(problem, current_iterate, this->penalty_parameter, trust_region_radius);
    this->add_elastic_variables_to_subproblem(this->elastic_variables);
 }
 
@@ -243,8 +243,6 @@ double l1Relaxation::compute_error(const Problem& problem, Iterate& iterate, Mul
 }
 
 void l1Relaxation::remove_elastic_variables(const Problem& problem, Direction& direction) {
-   // compute set of satisfied/violated constraints
-
    /* remove p and n */
    // TODO change that!!!
    direction.x.resize(problem.number_variables);
@@ -252,15 +250,16 @@ void l1Relaxation::remove_elastic_variables(const Problem& problem, Direction& d
    direction.multipliers.upper_bounds.resize(problem.number_variables);
    direction.norm = norm_inf(direction.x);
 
-   auto erase_elastic_variables = [&](size_t j, size_t i) {
+   const auto erase_elastic_variables = [&](size_t j, size_t i) {
       this->subproblem.objective_gradient.erase(i);
       this->subproblem.constraints_jacobian[j].erase(i);
    };
    elastic_variables.positive.for_each(erase_elastic_variables);
    elastic_variables.negative.for_each(erase_elastic_variables);
+   this->recover_active_set(problem, direction);
 }
 
-void l1Relaxation::recover_l1qp_active_set(const Problem& problem, const Direction& direction) {
+void l1Relaxation::recover_active_set(const Problem& problem, const Direction& direction) {
    // TODO
    // remove extra variables p and n
    for (size_t i = problem.number_variables; i < direction.x.size(); i++) {

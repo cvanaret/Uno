@@ -21,9 +21,9 @@ void FeasibilityRestoration::initialize(Statistics& statistics, const Problem& p
    this->phase_2_strategy->initialize(statistics, first_iterate);
 }
 
-void FeasibilityRestoration::generate_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) {
+void FeasibilityRestoration::create_current_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) {
    // simply generate the subproblem
-   this->subproblem.generate(problem, current_iterate, problem.objective_sign, trust_region_radius);
+   this->subproblem.create_current_subproblem(problem, current_iterate, problem.objective_sign, trust_region_radius);
 }
 
 Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
