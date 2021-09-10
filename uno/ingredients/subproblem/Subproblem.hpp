@@ -18,12 +18,12 @@ struct PredictedReductionModel {
    const double full_step_value;
 
    // this function, when evaluated, precomputes expensive quantities and returns a function of the step length
-   const std::function<std::function<double (double step_length)> ()> partial_step_creator;
+   const std::function<std::function<double (double step_length)> ()> partial_step_precomputation;
 
    // predicted reduction, function of the step length
    std::function<double (double step_length)> partial_step_function{nullptr};
 
-   PredictedReductionModel(double full_step_value, const std::function<std::function<double(double step_length)>()>& partial_step_creator);
+   PredictedReductionModel(double full_step_value, const std::function<std::function<double(double step_length)>()>& partial_step_precomputation);
    double evaluate(double step_length);
 };
 

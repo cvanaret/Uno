@@ -27,10 +27,10 @@ current_iterate) {
    this->number_iterations = 0;
    bool failure = false;
    while (!failure) {
-      while (!this->termination_()) {
+      while (!this->termination()) {
          assert(0 < this->step_length && this->step_length <= 1);
          this->number_iterations++;
-         this->print_iteration_();
+         this->print_iteration();
 
          // assemble the trial iterate
          Iterate trial_iterate = this->assemble_trial_iterate(current_iterate, direction, this->step_length);
@@ -105,10 +105,10 @@ void BacktrackingLineSearch::decrease_step_length() {
    this->step_length *= this->backtracking_ratio;
 }
 
-bool BacktrackingLineSearch::termination_() {
+bool BacktrackingLineSearch::termination() {
    return (this->max_iterations < this->number_iterations);
 }
 
-void BacktrackingLineSearch::print_iteration_() {
+void BacktrackingLineSearch::print_iteration() {
    DEBUG << "\n\tLINE SEARCH iteration " << this->number_iterations << ", step_length " << this->step_length << "\n";
 }

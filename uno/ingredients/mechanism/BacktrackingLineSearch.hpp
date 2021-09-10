@@ -22,8 +22,8 @@ private:
    const double backtracking_ratio;
    const double min_step_length{1e-6};
 
-   bool termination_();
-   void print_iteration_();
+   bool termination();
+   void print_iteration();
    void add_statistics(Statistics& statistics, const Direction& direction);
    void decrease_step_length();
 };

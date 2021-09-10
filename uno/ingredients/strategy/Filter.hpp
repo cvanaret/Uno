@@ -42,7 +42,7 @@ public:
     friend std::ostream& operator<<(std::ostream &stream, Filter& filter);
     
 protected:
-    std::list<FilterEntry> entries_{};
+    std::list<FilterEntry> entries{};
 };
 
 /*! \class NonmonotoneFilter
@@ -59,10 +59,7 @@ public:
     bool improves_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure, double trial_optimality_measure) override;
     double compute_actual_reduction(double current_objective, double current_residual, double trial_objective) override;
 private:
-    void shift_left_(int start, int length);
-    void shift_right_(int start, int length);
-
-    int number_dominated_entries_; /*!< Memory of filter */
+    const int number_dominated_entries; /*!< Memory of filter */
 };
 
 class FilterFactory {

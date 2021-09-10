@@ -31,8 +31,7 @@ void l1Relaxation::initialize(Statistics& statistics, const Problem& problem, It
 }
 
 void l1Relaxation::generate_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) {
-   // preprocess the subproblem: scale the objective gradient and introduce the elastic variables
-   // scale the objective gradient and (possibly) and Hessian
+   // preprocess the subproblem: scale the derivatives and introduce the elastic variables
    this->subproblem.generate(problem, current_iterate, this->penalty_parameter, trust_region_radius);
    this->add_elastic_variables_to_subproblem(this->elastic_variables);
 }
@@ -40,7 +39,7 @@ void l1Relaxation::generate_subproblem(const Problem& problem, Iterate& current_
 Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
    DEBUG << "penalty parameter: " << this->penalty_parameter << "\n";
    // use Byrd's steering rules to update the penalty parameter and compute descent directions
-   Direction direction = this->compute_byrd_steering_rule(statistics, problem, current_iterate);
+   Direction direction = this->solve_with_steering_rule(statistics, problem, current_iterate);
 
    // remove the temporary elastic variables
    this->remove_elastic_variables(problem, direction);
@@ -129,13 +128,13 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& 
    return direction;
 }
 
-Direction l1Relaxation::compute_byrd_steering_rule(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
-   /* stage a: compute the step within trust region */
+Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
+   // stage a: compute the step within trust region
    Direction direction = this->solve_subproblem(statistics, problem, current_iterate);
 
-   /* penalty update: if penalty parameter is already 0, no need to decrease it */
+   // penalty update: if penalty parameter is already 0, no need to decrease it
    if (0. < this->penalty_parameter) {
-      /* check infeasibility */
+      // check infeasibility
       double linearized_residual = this->compute_linearized_constraint_residual(direction.x);
       DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
 
@@ -143,23 +142,23 @@ Direction l1Relaxation::compute_byrd_steering_rule(Statistics& statistics, const
       if (linearized_residual != 0.) {
          const double current_penalty_parameter = this->penalty_parameter;
 
-         /* stage c: compute the lowest possible constraint violation (penalty = 0) */
+         // stage c: compute the lowest possible constraint violation (penalty = 0)
          DEBUG << "Compute ideal solution (param = 0):\n";
          Direction direction_lowest_violation = this->solve_subproblem(statistics, problem, current_iterate, 0.);
          const double residual_lowest_violation = this->compute_linearized_constraint_residual(direction_lowest_violation.x);
          DEBUG << "Ideal linearized residual mk(dk): " << residual_lowest_violation << "\n\n";
 
          if (!(0. < current_iterate.errors.constraints && residual_lowest_violation == current_iterate.errors.constraints)) {
-            /* compute the ideal error (with a zero penalty parameter) */
+            // compute the ideal error (with a zero penalty parameter)
             const double error_lowest_violation = l1Relaxation::compute_error(problem, current_iterate, direction_lowest_violation.multipliers, 0.);
             DEBUG << "Ideal error: " << error_lowest_violation << "\n";
             if (error_lowest_violation == 0.) {
-               /* stage f: update the penalty parameter */
+               // stage f: update the penalty parameter
                this->penalty_parameter = 0.;
                direction = direction_lowest_violation;
             }
             else {
-               /* stage f: update the penalty parameter */
+               // stage f: update the penalty parameter
                const double updated_penalty_parameter = this->penalty_parameter;
                const double term = error_lowest_violation / std::max(1., current_iterate.errors.constraints);
                this->penalty_parameter = std::min(this->penalty_parameter, term * term);
@@ -172,11 +171,11 @@ Direction l1Relaxation::compute_byrd_steering_rule(Statistics& statistics, const
                   }
                }
 
-               /* decrease penalty parameter to satisfy 2 conditions */
+               // decrease penalty parameter to satisfy 2 conditions
                bool condition1 = false, condition2 = false;
                while (!condition2) {
                   if (!condition1) {
-                     /* stage d: reach a fraction of the ideal decrease */
+                     // stage d: reach a fraction of the ideal decrease
                      if ((residual_lowest_violation == 0. && linearized_residual == 0) || (residual_lowest_violation != 0. &&
                      current_iterate.errors.constraints - linearized_residual >= this->parameters.epsilon1 *
                      (current_iterate.errors.constraints - residual_lowest_violation))) {
@@ -184,7 +183,7 @@ Direction l1Relaxation::compute_byrd_steering_rule(Statistics& statistics, const
                         DEBUG << "Condition 1 is true\n";
                      }
                   }
-                  /* stage e: further decrease penalty parameter if necessary */
+                  // stage e: further decrease penalty parameter if necessary
                   if (condition1 && current_iterate.errors.constraints - direction.objective >=
                                     this->parameters.epsilon2 * (current_iterate.errors.constraints - direction_lowest_violation.objective)) {
                      condition2 = true;
@@ -221,7 +220,7 @@ size_t l1Relaxation::get_number_variables(const Problem& problem) {
    return problem.number_variables + l1Relaxation::count_elastic_variables(problem);
 }
 
-double l1Relaxation::compute_linearized_constraint_residual(std::vector<double>& direction) {
+double l1Relaxation::compute_linearized_constraint_residual(std::vector<double>& direction) const {
    double residual = 0.;
    // l1 residual of the linearized constraints: sum of elastic variables
    auto add_variable_contribution = [&](size_t i) {
@@ -232,11 +231,11 @@ double l1Relaxation::compute_linearized_constraint_residual(std::vector<double>&
    return residual;
 }
 
-/* measure that combines KKT error and complementarity error */
+// measure that combines KKT error and complementarity error
 double l1Relaxation::compute_error(const Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter) const {
-   /* complementarity error */
+   // complementarity error
    double error = this->subproblem.compute_complementarity_error(problem, iterate, multipliers);
-   /* KKT error */
+   // KKT error
    iterate.evaluate_lagrangian_gradient(problem, penalty_parameter, multipliers);
    error += norm_1(iterate.lagrangian_gradient);
    return error;
@@ -274,7 +273,7 @@ void l1Relaxation::remove_elastic_variables(const Problem& problem, Direction& d
     */
 }
 
-void l1Relaxation::recover_l1qp_active_set_(const Problem& problem, const Direction& direction) {
+void l1Relaxation::recover_l1qp_active_set(const Problem& problem, const Direction& direction) {
    // TODO
    // remove extra variables p and n
    for (size_t i = problem.number_variables; i < direction.x.size(); i++) {

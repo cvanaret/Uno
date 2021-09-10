@@ -103,12 +103,12 @@ const {
 
 //CppProblem::CppProblem(std::string name, int number_variables, int number_constraints, double (*objective)(std::vector<double> x), std::vector<double> (*objective_gradient)(std::vector<double> x)):
 //Problem(name, number_variables, number_constraints),
-//objective_(objective),
+//objective(objective),
 //objective_gradient_(objective_gradient) {
 //}
 //
 //double CppProblem::objective(std::vector<double>& x) {
-//    return this->objective_(x);
+//    return this->objective(x);
 //}
 //
 //std::vector<double> CppProblem::objective_dense_gradient(std::vector<double>& x) {
