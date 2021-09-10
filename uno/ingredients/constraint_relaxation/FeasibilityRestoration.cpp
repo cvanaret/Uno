@@ -40,10 +40,10 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
    return direction;
 }
 
-double FeasibilityRestoration::compute_predicted_reduction(const Problem& /*problem*/, Iterate& /*current_iterate*/, const Direction& direction,
-      double step_length) {
+double FeasibilityRestoration::compute_predicted_reduction(const Problem& /*problem*/, Iterate& /*current_iterate*/, const Direction& /*direction*/,
+      PredictedReductionModel& predicted_reduction_model, double step_length) {
    // the predicted reduction is simply that of the subproblem (the objective multiplier was set accordingly)
-   return this->subproblem.compute_predicted_reduction(direction, step_length);
+   return predicted_reduction_model.evaluate(step_length);
 }
 
 void FeasibilityRestoration::form_feasibility_problem(const Problem& problem, const Iterate& current_iterate, const std::vector<double>&
@@ -76,17 +76,16 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
 }
 
 bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate,
-      const Direction& direction, double step_length) {
+      const Direction& direction, PredictedReductionModel& predicted_reduction_model, double step_length) {
    // check if subproblem definition changed
    if (this->subproblem.subproblem_definition_changed) {
       this->phase_2_strategy->reset();
       this->subproblem.subproblem_definition_changed = false;
       this->subproblem.compute_progress_measures(problem, current_iterate);
    }
-   const double step_norm = step_length * direction.norm;
 
    bool accept = false;
-   if (step_norm == 0.) {
+   if (direction.norm == 0.) {
       accept = true;
    }
    else {
@@ -117,7 +116,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
       }
 
       // evaluate the predicted reduction
-      const double predicted_reduction = this->compute_predicted_reduction(problem, current_iterate, direction, step_length);
+      const double predicted_reduction = this->compute_predicted_reduction(problem, current_iterate, direction, predicted_reduction_model, step_length);
 
       // pick the current strategy
       GlobalizationStrategy& strategy = (this->current_phase == OPTIMALITY) ? *this->phase_2_strategy : *this->phase_1_strategy;

@@ -26,13 +26,6 @@ private:
    void print_iteration_();
    void add_statistics(Statistics& statistics, const Direction& direction);
    void decrease_step_length();
-
-   /*
-   double quadratic_interpolation_(Problem& problem, Iterate& current_iterate, std::vector<double> direction, double steplength = 1.);
-   double cubic_interpolation_(Problem& problem, Iterate& current_iterate, std::vector<double> direction, double steplength1, double steplength2);
-   double minimize_quadratic_(double a, double b);
-   double minimize_cubic_(double a, double b, double c);
-    */
 };
 
 #endif // LINESEARCH_H

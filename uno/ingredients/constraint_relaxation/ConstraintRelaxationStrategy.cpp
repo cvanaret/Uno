@@ -56,6 +56,10 @@ Direction ConstraintRelaxationStrategy::compute_second_order_correction(const Pr
    return this->subproblem.compute_second_order_correction(problem, trial_iterate);
 }
 
+PredictedReductionModel ConstraintRelaxationStrategy::generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const {
+   return this->subproblem.generate_predicted_reduction_model(problem, direction);
+}
+
 int ConstraintRelaxationStrategy::get_hessian_evaluation_count() const {
    return this->subproblem.get_hessian_evaluation_count();
 }

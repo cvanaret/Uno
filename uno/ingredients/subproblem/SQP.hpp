@@ -17,7 +17,7 @@ public:
    void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
    void set_initial_point(const std::vector<double>& point) override;
    Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
-   double compute_predicted_reduction(const Direction& direction, double step_length) const override;
+   PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const override;
    int get_hessian_evaluation_count() const override;
 
 protected:
@@ -99,17 +99,16 @@ inline Direction SQP<QPSolverType>::solve(Statistics& /*statistics*/, const Prob
 }
 
 template<typename QPSolverType>
-inline double SQP<QPSolverType>::compute_predicted_reduction(const Direction& direction, double step_length) const {
-   // the predicted reduction is quadratic in the step length
-   if (step_length == 1.) {
-      return -direction.objective;
-   }
-   else {
+inline PredictedReductionModel SQP<QPSolverType>::generate_predicted_reduction_model(const Problem& /*problem*/, const Direction& direction) const {
+   return PredictedReductionModel(-direction.objective, [&]() { // capture this and direction by reference
+      // precompute expensive quantities
       double linear_term = dot(direction.x, this->objective_gradient);
       double quadratic_term = this->hessian_evaluation->hessian.quadratic_product(direction.x, direction.x) / 2.;
-      std::cout << "QUAD: " << quadratic_term << ", LIN: " << linear_term << "\n";
-      return -step_length * (linear_term + step_length * quadratic_term);
-   }
+      // return a function of the step length that cheaply assembles the predicted reduction
+      return [=](double step_length) { // capture the expensive quantities by value
+         return -step_length * (linear_term + step_length * quadratic_term);
+      };
+   });
 }
 
 template<typename QPSolverType>

@@ -17,11 +17,12 @@ void BacktrackingLineSearch::initialize(Statistics& statistics, const Problem& p
 
 std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate&
 current_iterate) {
-   /* compute the direction */
+   // compute the direction
    this->relaxation_strategy.generate_subproblem(problem, current_iterate, INFINITY);
    Direction direction = this->relaxation_strategy.compute_feasible_direction(statistics, problem, current_iterate);
+   PredictedReductionModel predicted_reduction_model = this->relaxation_strategy.generate_predicted_reduction_model(problem, direction);
 
-   /* step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ... */
+   // step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ...
    this->step_length = 1.;
    this->number_iterations = 0;
    bool failure = false;
@@ -36,7 +37,8 @@ current_iterate) {
 
          try {
             // check whether the trial step is accepted
-            if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate, direction, this->step_length)) {
+            if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate, direction, predicted_reduction_model,
+                  this->step_length)) {
                this->add_statistics(statistics, direction);
 
                // let the subproblem know the accepted iterate
@@ -51,7 +53,7 @@ current_iterate) {
                Iterate trial_iterate_soc = this->assemble_trial_iterate(current_iterate, direction_soc, this->step_length);
 
                if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate_soc, direction_soc,
-                     this->step_length)) {
+                     predicted_reduction_model, this->step_length)) {
                   this->add_statistics(statistics, direction_soc);
                   statistics.add_statistic("SOC", "x");
 
@@ -62,7 +64,7 @@ current_iterate) {
                   return std::make_tuple(std::move(trial_iterate_soc), direction_soc.norm);
                }
                else {
-                  /* decrease the step length */
+                  // decrease the step length
                   DEBUG << "SOC step discarded\n\n";
                   statistics.add_statistic("SOC", "-");
                   this->decrease_step_length();
