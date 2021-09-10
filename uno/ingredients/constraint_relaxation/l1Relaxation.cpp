@@ -43,6 +43,7 @@ Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, const
 
    // remove the temporary elastic variables
    this->remove_elastic_variables(problem, direction);
+   std::cout << direction;
    return direction;
 }
 
@@ -251,26 +252,12 @@ void l1Relaxation::remove_elastic_variables(const Problem& problem, Direction& d
    direction.multipliers.upper_bounds.resize(problem.number_variables);
    direction.norm = norm_inf(direction.x);
 
-   //elastic_variables.positive.for_each([&](size_t j, size_t i) {
-      //this->subproblem.objective_gradient.erase(i);
-      //this->subproblem.constraints_jacobian[j].erase(i);
-   //});
-   //elastic_variables.negative.for_each([&](size_t j, size_t i) {
-      //this->subproblem.objective_gradient.erase(i);
-      //this->subproblem.constraints_jacobian[j].erase(i);
-   //});
-   /*
-   // remove contribution of positive part variables
-   for (auto&[j, i]: elastic_variables.positive) {
+   auto erase_elastic_variables = [&](size_t j, size_t i) {
       this->subproblem.objective_gradient.erase(i);
       this->subproblem.constraints_jacobian[j].erase(i);
-   }
-   // remove contribution of negative part variables
-   for (auto&[j, i]: elastic_variables.negative) {
-      this->subproblem.objective_gradient.erase(i);
-      this->subproblem.constraints_jacobian[j].erase(i);
-   }
-    */
+   };
+   elastic_variables.positive.for_each(erase_elastic_variables);
+   elastic_variables.negative.for_each(erase_elastic_variables);
 }
 
 void l1Relaxation::recover_l1qp_active_set(const Problem& problem, const Direction& direction) {

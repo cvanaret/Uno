@@ -15,13 +15,13 @@
 
 struct PredictedReductionModel {
    // predicted reduction for a full step
-   const double full_step_value;
+   const double full_step_predicted_reduction;
 
    // this function, when evaluated, precomputes expensive quantities and returns a function of the step length
    const std::function<std::function<double (double step_length)> ()> partial_step_precomputation;
 
    // predicted reduction, function of the step length
-   std::function<double (double step_length)> partial_step_function{nullptr};
+   std::function<double (double step_length)> partial_step_predicted_reduction{nullptr};
 
    PredictedReductionModel(double full_step_value, const std::function<std::function<double(double step_length)>()>& partial_step_precomputation);
    double evaluate(double step_length);
@@ -47,11 +47,11 @@ public:
    virtual Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate);
 
    // globalization metrics
-   virtual PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const = 0;
+   [[nodiscard]] virtual PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const = 0;
    virtual void compute_progress_measures(const Problem& problem, Iterate& iterate);
    virtual void register_accepted_iterate(Iterate& iterate);
 
-   virtual int get_hessian_evaluation_count() const = 0;
+   [[nodiscard]] virtual int get_hessian_evaluation_count() const = 0;
    virtual void set_initial_point(const std::vector<double>& initial_point) = 0;
 
    // available methods

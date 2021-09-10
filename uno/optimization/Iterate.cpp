@@ -12,7 +12,7 @@ Iterate::Iterate(size_t number_variables, size_t number_constraints) :
    multipliers(number_variables, number_constraints),
    constraints(multipliers.constraints.size()),
    objective_gradient(number_variables),
-   constraints_jacobian(number_constraints, number_variables),
+   constraints_jacobian(number_constraints),
    lagrangian_gradient(number_variables) {
 }
 
