@@ -13,7 +13,7 @@ public:
    void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) override;
 
    // direction computation
-   void generate_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
+   void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
    Direction compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
    Direction solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, const Direction& direction) override;
 

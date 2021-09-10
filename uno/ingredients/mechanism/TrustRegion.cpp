@@ -25,7 +25,7 @@ current_iterate) {
          this->print_iteration();
 
          // generate the subproblem
-         this->relaxation_strategy.generate_subproblem(problem, current_iterate, this->radius);
+         this->relaxation_strategy.create_current_subproblem(problem, current_iterate, this->radius);
 
          // compute the direction within the trust region
          Direction direction = this->relaxation_strategy.compute_feasible_direction(statistics, problem, current_iterate);
