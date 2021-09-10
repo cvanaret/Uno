@@ -26,32 +26,32 @@ public:
                initial_point) override;
 
 private:
-   size_t n_, m_;
-   size_t maximum_number_nonzeros_;
-   std::vector<double> lb_, ub_; // lower and upper bounds of variables and constraints
+   size_t n, m;
+   size_t maximum_number_nonzeros;
+   std::vector<double> lb, ub; // lower and upper bounds of variables and constraints
    const size_t fortran_shift{1};
 
-   std::vector<double> jacobian_;
-   std::vector<int> jacobian_sparsity_;
-   int kmax_, mlp_{1000}, mxwk0_{2000000}, mxiwk0_{500000};
-   std::array<int, 100> info_{};
-   std::vector<double> alp_;
-   std::vector<int> lp_, ls_;
-   std::vector<double> w_, gradient_solution_, residuals_, e_;
-   size_t size_hessian_sparsity_;
-   size_t size_hessian_workspace_;
-   size_t size_hessian_sparsity_workspace_;
-   std::vector<double> hessian_;
-   std::vector<int> hessian_sparsity_;
-   int k_{0};
-   BQPDMode mode_{COLD_START};
-   int iprint_{0}, nout_{6};
-   double fmin_{-1e20}, f_solution_{};
-   int peq_solution_{}, ifail_{};
+   std::vector<double> jacobian;
+   std::vector<int> jacobian_sparsity;
+   int kmax, mlp{1000}, mxwk0{2000000}, mxiwk0{500000};
+   std::array<int, 100> info{};
+   std::vector<double> alp;
+   std::vector<int> lp, ls;
+   std::vector<double> w, gradient_solution, residuals, e;
+   size_t size_hessian_sparsity;
+   size_t size_hessian_workspace;
+   size_t size_hessian_sparsity_workspace;
+   std::vector<double> hessian;
+   std::vector<int> hessian_sparsity;
+   int k{0};
+   BQPDMode mode{COLD_START};
+   int iprint{0}, nout{6};
+   double fmin{-1e20}, f_solution{};
+   int peq_solution{}, ifail{};
    std::vector<double> solution;
 
    Direction generate_direction();
-   Status int_to_status_(int ifail);
+   Status int_to_status(int ifail);
    Direction solve_subproblem(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector<double>&
    linear_objective, const std::vector<SparseVector<double>>& constraints_jacobian, const std::vector<double>& x);
 };

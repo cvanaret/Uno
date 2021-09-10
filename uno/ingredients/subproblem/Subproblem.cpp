@@ -3,8 +3,8 @@
 
 // PredictedReductionModel
 PredictedReductionModel::PredictedReductionModel(double full_step_value,
-      const std::function<std::function<double (double step_length)> ()>& partial_step_creator):
-      full_step_value(full_step_value), partial_step_creator(partial_step_creator) {
+      const std::function<std::function<double (double step_length)> ()>& partial_step_precomputation):
+      full_step_value(full_step_value), partial_step_precomputation(partial_step_precomputation) {
 }
 
 double PredictedReductionModel::evaluate(double step_length) {
@@ -14,7 +14,7 @@ double PredictedReductionModel::evaluate(double step_length) {
    else {
       if (this->partial_step_function == nullptr) {
          // compute the complicated stuff
-         this->partial_step_function = this->partial_step_creator();
+         this->partial_step_function = this->partial_step_precomputation();
       }
       return this->partial_step_function(step_length);
    }

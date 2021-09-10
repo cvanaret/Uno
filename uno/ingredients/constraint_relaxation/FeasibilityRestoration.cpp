@@ -5,7 +5,7 @@
 
 FeasibilityRestoration::FeasibilityRestoration(Subproblem& subproblem, const Options& options) :
       ConstraintRelaxationStrategy(subproblem),
-      /* create the globalization strategy */
+      // create the globalization strategy
       phase_1_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
       phase_2_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)) {
 }
@@ -13,7 +13,7 @@ FeasibilityRestoration::FeasibilityRestoration(Subproblem& subproblem, const Opt
 void FeasibilityRestoration::initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) {
    statistics.add_column("phase", Statistics::int_width, 4);
 
-   /* initialize the subproblem */
+   // initialize the subproblem
    this->subproblem.initialize(statistics, problem, first_iterate);
    this->subproblem.compute_errors(problem, first_iterate, problem.objective_sign);
 
@@ -89,14 +89,14 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
       accept = true;
    }
    else {
-      /* possibly go from 1 (restoration) to phase 2 (optimality) */
+      // possibly go from 1 (restoration) to phase 2 (optimality)
       if (!direction.is_relaxed && this->current_phase == FEASIBILITY_RESTORATION) {
          // TODO && this->filter_optimality->accept(trial_iterate.progress.feasibility, trial_iterate.progress.objective))
          this->current_phase = OPTIMALITY;
          DEBUG << "Switching from restoration to optimality phase\n";
          this->subproblem.compute_progress_measures(problem, current_iterate);
       }
-         /* possibly go from phase 2 (optimality) to 1 (restoration) */
+         // possibly go from phase 2 (optimality) to 1 (restoration)
       else if (direction.is_relaxed && this->current_phase == OPTIMALITY) {
          this->current_phase = FEASIBILITY_RESTORATION;
          DEBUG << "Switching from optimality to restoration phase\n";
@@ -128,7 +128,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
    if (accept) {
       statistics.add_statistic("phase", static_cast<int>(direction.is_relaxed ? FEASIBILITY_RESTORATION : OPTIMALITY));
       if (direction.is_relaxed) {
-         /* correct multipliers for infeasibility problem */
+         // correct multipliers for infeasibility problem
          FeasibilityRestoration::set_restoration_multipliers(trial_iterate.multipliers.constraints, direction.constraint_partition);
       }
       // compute the errors

@@ -55,11 +55,11 @@ private:
    std::vector<size_t> upper_bounded_variables{}; /* indices of the upper-bounded variables */
 
    double inertia_hessian{0.};
-   double inertia_hessian_last_{0.};
+   double inertia_hessian_last{0.};
    double inertia_constraints{0.};
-   double default_multiplier_;
+   double default_multiplier;
    size_t iteration{0};
-   size_t number_factorizations_{0};
+   size_t number_factorizations{0};
 
    /* preallocated vectors */
    std::vector<double> solution_IPM;
@@ -100,7 +100,7 @@ hessian_evaluation_method, double initial_barrier_parameter, double default_mult
             2 * this->number_variables /* diagonal barrier terms */ + this->number_variables * number_constraints /* Jacobian */),
       linear_solver(LinearSolverFactory<LinearSolverType>::create(this->number_variables + number_constraints)),
       parameters({0.99, 1e10, 100., 0.2, 1.5, 10.}),
-      default_multiplier_(default_multiplier),
+      default_multiplier(default_multiplier),
       solution_IPM(this->number_variables + number_constraints),
       barrier_constraints(number_constraints),
       rhs(this->number_variables + number_constraints),
@@ -172,10 +172,10 @@ inline void InteriorPoint<LinearSolverType>::initialize(Statistics& statistics, 
 
    /* set the bound multipliers */
    for (size_t i: this->lower_bounded_variables) {
-      first_iterate.multipliers.lower_bounds[i] = this->default_multiplier_;
+      first_iterate.multipliers.lower_bounds[i] = this->default_multiplier;
    }
    for (size_t i: this->upper_bounded_variables) {
-      first_iterate.multipliers.upper_bounds[i] = -this->default_multiplier_;
+      first_iterate.multipliers.upper_bounds[i] = -this->default_multiplier;
    }
 
    /* initialize the slacks and add contribution to the constraint Jacobian */
@@ -406,11 +406,11 @@ template<typename LinearSolverType>
 inline void InteriorPoint<LinearSolverType>::factorize(const Problem& problem, typename LinearSolverType::matrix_type& kkt_matrix) {
    // compute the symbolic factorization only when:
    // the problem has a non-constant augmented system (ie is not an LP or a QP) or it is the first factorization
-   if (this->number_factorizations_ == 0 || !problem.fixed_hessian_sparsity || problem.type == NONLINEAR) {
+   if (this->number_factorizations == 0 || !problem.fixed_hessian_sparsity || problem.type == NONLINEAR) {
       this->linear_solver->do_symbolic_factorization(kkt_matrix);
    }
    this->linear_solver->do_numerical_factorization(kkt_matrix);
-   this->number_factorizations_++;
+   this->number_factorizations++;
 }
 
 template<typename LinearSolverType>
@@ -526,11 +526,11 @@ size_first_block, size_t size_second_block) {
          this->inertia_constraints = 0.;
       }
       // inertia term for Hessian
-      if (this->inertia_hessian_last_ == 0.) {
+      if (this->inertia_hessian_last == 0.) {
          this->inertia_hessian = 1e-4;
       }
       else {
-         this->inertia_hessian = std::max(1e-20, this->inertia_hessian_last_ / 3.);
+         this->inertia_hessian = std::max(1e-20, this->inertia_hessian_last / 3.);
       }
    }
 
@@ -552,10 +552,10 @@ size_first_block, size_t size_second_block) {
       if (!this->linear_solver->matrix_is_singular() && this->linear_solver->number_negative_eigenvalues() == size_second_block) {
          good_inertia = true;
          DEBUG << "Factorization was a success\n";
-         this->inertia_hessian_last_ = this->inertia_hessian;
+         this->inertia_hessian_last = this->inertia_hessian;
       }
       else {
-         if (this->inertia_hessian_last_ == 0.) {
+         if (this->inertia_hessian_last == 0.) {
             this->inertia_hessian *= 100.;
          }
          else {
