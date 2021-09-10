@@ -13,7 +13,6 @@ struct InteriorPointParameters {
    double k_mu;
    double theta_mu;
    double k_epsilon;
-   double kappa;
 };
 
 struct UnstableInertiaCorrection : public std::exception {
@@ -100,7 +99,7 @@ hessian_evaluation_method, double initial_barrier_parameter, double default_mult
       kkt_matrix(this->number_variables + number_constraints, problem.hessian_maximum_number_nonzeros + this->number_variables /* regularization */ +
             2 * this->number_variables /* diagonal barrier terms */ + this->number_variables * number_constraints /* Jacobian */),
       linear_solver(LinearSolverFactory<LinearSolverType>::create(this->number_variables + number_constraints)),
-      parameters({0.99, 1e10, 100., 0.2, 1.5, 10., 1e10}),
+      parameters({0.99, 1e10, 100., 0.2, 1.5, 10.}),
       default_multiplier_(default_multiplier),
       solution_IPM(this->number_variables + number_constraints),
       barrier_constraints(number_constraints),
@@ -352,15 +351,15 @@ inline void InteriorPoint<LinearSolverType>::register_accepted_iterate(Iterate& 
    // rescale the bound multipliers (Eq (16) in Ipopt paper)
    for (size_t i: this->lower_bounded_variables) {
       const double coefficient = this->barrier_parameter / (iterate.x[i] - this->variables_bounds[i].lb);
-      const double lb = coefficient / this->parameters.kappa;
-      const double ub = coefficient * this->parameters.kappa;
+      const double lb = coefficient / this->parameters.k_sigma;
+      const double ub = coefficient * this->parameters.k_sigma;
       assert(lb <= ub && "IPM bound multiplier reset: the bounds are in the wrong order");
       iterate.multipliers.lower_bounds[i] = std::max(std::min(iterate.multipliers.lower_bounds[i], ub), lb);
    }
    for (size_t i: this->upper_bounded_variables) {
       const double coefficient = this->barrier_parameter / (iterate.x[i] - this->variables_bounds[i].ub);
-      const double lb = coefficient * this->parameters.kappa;
-      const double ub = coefficient / this->parameters.kappa;
+      const double lb = coefficient * this->parameters.k_sigma;
+      const double ub = coefficient / this->parameters.k_sigma;
       assert(lb <= ub && "IPM bound multiplier reset: the bounds are in the wrong order");
       iterate.multipliers.upper_bounds[i] = std::max(std::min(iterate.multipliers.upper_bounds[i], ub), lb);
    }

@@ -276,9 +276,9 @@ double l1Relaxation::compute_predicted_reduction(const Problem& problem, Iterate
 }
 
 void l1Relaxation::recover_l1qp_active_set_(const Problem& problem, const Direction& direction) {
+   // TODO
    // remove extra variables p and n
    for (size_t i = problem.number_variables; i < direction.x.size(); i++) {
-      // TODO
       //direction.active_set.bounds.at_lower_bound.erase(i);
       //direction.active_set.bounds.at_upper_bound.erase(i);
    }
@@ -301,7 +301,6 @@ void l1Relaxation::recover_l1qp_active_set_(const Problem& problem, const Direct
       }
       // update active set
       if (0. < constraint_violation) {
-         // TODO
          //direction.active_set.constraints.at_lower_bound.erase(j);
          //direction.active_set.constraints.at_upper_bound.erase(j);
       }
