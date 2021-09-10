@@ -81,7 +81,7 @@ current_iterate) {
       }
       // if step length is too small, run restoration phase
       if (this->step_length < this->min_step_length && 0. < direction.multipliers.objective) {
-         assert(false);
+         assert(false && "LS max iterations");
          //if (0. < current_iterate.progress.feasibility && !direction.is_relaxed) {
          // reset the line search with the restoration solution
          direction = this->relaxation_strategy.solve_feasibility_problem(statistics, problem, current_iterate, direction);

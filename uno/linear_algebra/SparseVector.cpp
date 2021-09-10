@@ -1,4 +1,5 @@
 #include "SparseVector.hpp"
+#include "Vector.hpp"
 #include <cmath>
 
 // free functions

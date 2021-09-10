@@ -90,11 +90,12 @@ inline Direction SQP<QPSolverType>::solve(Statistics& /*statistics*/, const Prob
    /* compute QP direction */
    Direction direction = this->solver->solve_QP(this->variables_bounds, this->constraints_bounds, this->objective_gradient,
          this->constraints_jacobian, this->hessian_evaluation->hessian, this->initial_point);
+   this->number_subproblems_solved++;
+
    // compute dual displacements (SQP methods usually compute the new duals, not the displacements)
    for (size_t j = 0; j < problem.number_constraints; j++) {
       direction.multipliers.constraints[j] -= current_iterate.multipliers.constraints[j];
    }
-   this->number_subproblems_solved++;
    return direction;
 }
 
@@ -104,6 +105,7 @@ inline PredictedReductionModel SQP<QPSolverType>::generate_predicted_reduction_m
       // precompute expensive quantities
       double linear_term = dot(direction.x, this->objective_gradient);
       double quadratic_term = this->hessian_evaluation->hessian.quadratic_product(direction.x, direction.x) / 2.;
+      std::cout << "EXPENSIVE STUFF\n";
       // return a function of the step length that cheaply assembles the predicted reduction
       return [=](double step_length) { // capture the expensive quantities by value
          return -step_length * (linear_term + step_length * quadratic_term);

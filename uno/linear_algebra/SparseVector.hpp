@@ -13,14 +13,14 @@
 template <typename T>
 class SparseVector {
 public:
-   SparseVector(size_t capacity);
+   explicit SparseVector(size_t capacity = 0);
    void for_each(const std::function<void (size_t, T)>& f) const;
-   void for_each_key(const std::function<void (size_t)>& f) const;
    void for_each_value(const std::function<void (T)>& f) const;
-   size_t size() const;
+   [[nodiscard]] size_t size() const;
    void reserve(size_t capacity);
 
    void insert(size_t index, T value);
+   void erase(size_t index);
    void transform(const std::function<T (T)>& f);
    void clear();
 
@@ -44,13 +44,6 @@ template <typename T>
 void SparseVector<T>::for_each(const std::function<void (size_t, T)>& f) const {
    for (size_t i = 0; i < this->number_nonzeros; i++) {
       f(this->indices[i], this->values[i]);
-   }
-}
-
-template <typename T>
-void SparseVector<T>::for_each_key(const std::function<void (size_t)>& f) const {
-   for (size_t i = 0; i < this->number_nonzeros; i++) {
-      f(this->indices[i]);
    }
 }
 
@@ -84,6 +77,18 @@ void SparseVector<T>::insert(size_t index, T value) {
    else {
       // *element is the index at which the index was found
       this->values[*element] += value;
+   }
+}
+
+template <typename T>
+void SparseVector<T>::erase(size_t index) {
+   auto element = std::find(begin(this->indices), end(this->indices), index);
+   // if the index is found
+   if (element != end(this->indices)) {
+      // move the last element to this spot
+      this->indices[*element] = this->indices[this->number_nonzeros - 1];
+      this->values[*element] = this->values[this->number_nonzeros - 1];
+      this->number_nonzeros--;
    }
 }
 

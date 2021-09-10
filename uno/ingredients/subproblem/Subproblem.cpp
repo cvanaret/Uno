@@ -4,19 +4,20 @@
 // PredictedReductionModel
 PredictedReductionModel::PredictedReductionModel(double full_step_value,
       const std::function<std::function<double (double step_length)> ()>& partial_step_precomputation):
-      full_step_value(full_step_value), partial_step_precomputation(partial_step_precomputation) {
+      full_step_predicted_reduction(full_step_value), partial_step_precomputation(partial_step_precomputation) {
 }
 
 double PredictedReductionModel::evaluate(double step_length) {
    if (step_length == 1.) {
-      return this->full_step_value;
+      return this->full_step_predicted_reduction;
    }
    else {
-      if (this->partial_step_function == nullptr) {
+      // unique evaluation of partial_step_precomputation
+      if (this->partial_step_predicted_reduction == nullptr) {
          // compute the complicated stuff
-         this->partial_step_function = this->partial_step_precomputation();
+         this->partial_step_predicted_reduction = this->partial_step_precomputation();
       }
-      return this->partial_step_function(step_length);
+      return this->partial_step_predicted_reduction(step_length);
    }
 }
 
@@ -25,7 +26,7 @@ Subproblem::Subproblem(size_t number_variables, size_t number_constraints) :
       number_variables(number_variables), number_constraints(number_constraints),
       variables_bounds(number_variables), constraints_multipliers(number_constraints),
       objective_gradient(number_variables), // SparseVector
-      constraints_jacobian(number_constraints, number_variables), // vector of SparseVectors
+      constraints_jacobian(number_constraints), // vector of SparseVectors
       constraints_bounds(number_constraints), direction(number_variables, number_constraints) {
    for (auto& constraint_gradient: this->constraints_jacobian) {
       constraint_gradient.reserve(this->number_variables);
