@@ -83,31 +83,6 @@ int main(int argc, char **argv) {
 //}
 
 
-//// predicted reduction
-
-//struct PredictedReduction {
-   //std::function<double (double)> partial_step{nullptr};
-
-   //double evaluate(const Problem& problem, const Direction& direction, double step_length);
-//};
-
-//double PredictedReduction::evaluate(const Problem& problem, const Direction& direction, double step_length) {
-   //if (step_length == 1.) {
-      //return -direction.objective;
-   //}
-   //else {
-      //if (this->partial_step == nullptr) {
-         //double complicated_stuff = problem.objective(direction.x);
-         //std::cout << "COMPLICATED STUFF COMPUTED ONCE\n";
-         //// construct a lambda that captures by value
-         //this->partial_step = [=](double step_length) {
-            //return -step_length*complicated_stuff;
-         //};
-      //}
-      //return this->partial_step(step_length);
-   //}
-//}
-
 //double f(const std::vector<double>& x) {
     //return 2*x[0];
 //}
