@@ -4,8 +4,8 @@ if(${CMAKE_VERSION} VERSION_LESS 3.12)
 endif()
 
 # define the project name
-project(UNO VERSION 1.0
-			DESCRIPTION "Unifying Framework for Optimization" 
+project(Uno VERSION 1.0
+			DESCRIPTION "Uno: Unifying Framework for Optimization" 
             LANGUAGES CXX C Fortran)
 
 # set C++17 and enable other languages
@@ -150,6 +150,7 @@ if(WITH_GTEST)
             unotest/unotest.cpp
             unotest/MA57SolverTests.cpp
             unotest/CSCSymmetricMatrixTests.cpp
+            unotest/PredictedReductionModelTests.cpp
             unotest/SparseVectorTests.cpp
         )
         add_executable(run_unotest ${TESTS_SRC_FILES})
