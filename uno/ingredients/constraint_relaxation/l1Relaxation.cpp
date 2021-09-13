@@ -43,7 +43,6 @@ Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, const
 
    // remove the temporary elastic variables
    this->remove_elastic_variables(problem, direction);
-   std::cout << direction;
    return direction;
 }
 

@@ -1,20 +1,23 @@
+#include <cassert>
 #include "Direction.hpp"
 #include "tools/Logger.hpp"
 #include "linear_algebra/Vector.hpp"
 
 Direction::Direction(size_t number_variables, size_t number_constraints):
-   x(number_variables), multipliers(number_variables, number_constraints), constraint_partition(number_constraints) {
-
+   x(number_variables), multipliers(number_variables, number_constraints) {
 }
 
 Direction::Direction(std::vector<double>& x, Multipliers& multipliers) : x(x), multipliers(multipliers), constraint_partition(multipliers
 .constraints.size()) {
+   assert(false);
+   /*
    const size_t number_variables = x.size();
    const size_t number_constraints = multipliers.constraints.size();
    this->active_set.bounds.at_lower_bound.reserve(number_variables);
    this->active_set.bounds.at_lower_bound.reserve(number_variables);
    this->active_set.constraints.at_lower_bound.reserve(number_constraints);
    this->active_set.constraints.at_upper_bound.reserve(number_constraints);
+    */
 }
 
 std::string status_to_string(Status status) {

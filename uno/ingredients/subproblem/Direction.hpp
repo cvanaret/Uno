@@ -42,7 +42,7 @@ public:
    double objective{INFINITY}; /*!< Objective value */
    ActiveSet active_set{}; /*!< Active set */
    std::vector<int> inactive_set{}; /*!< Inactive set */
-   std::optional<ConstraintPartition> constraint_partition; /*!< Partition of feasible and infeasible constraints */
+   std::optional<ConstraintPartition> constraint_partition{std::nullopt}; /*!< Optional partition of feasible and infeasible constraints */
 
    friend std::ostream& operator<<(std::ostream& stream, const Direction& step);
 };
