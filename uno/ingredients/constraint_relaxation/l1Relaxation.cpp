@@ -31,7 +31,7 @@ void l1Relaxation::initialize(Statistics& statistics, const Problem& problem, It
 }
 
 void l1Relaxation::create_current_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) {
-   // preprocess the subproblem: scale the derivatives and introduce the elastic variables
+   // scale the derivatives and introduce the elastic variables
    this->subproblem.create_current_subproblem(problem, current_iterate, this->penalty_parameter, trust_region_radius);
    this->add_elastic_variables_to_subproblem(this->elastic_variables);
 }
@@ -65,7 +65,7 @@ predicted_reduction_model, double step_length) {
 }
 
 Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, const Direction&
-/*direction*/) {
+/*phase_2_direction*/) {
    this->update_objective_multiplier(problem, current_iterate, 0.);
    return this->subproblem.solve(statistics, problem, current_iterate);
 }
@@ -102,7 +102,7 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
 }
 
 void l1Relaxation::update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) {
-   this->subproblem.update_objective_multiplier(problem, current_iterate, objective_multiplier);
+   this->subproblem.set_objective_multiplier(problem, current_iterate, objective_multiplier);
 
    // add the elastic variables to the objective gradient
    auto insert_variable_into_gradient = [&](size_t i) {
@@ -114,7 +114,10 @@ void l1Relaxation::update_objective_multiplier(const Problem& problem, const Ite
 
 Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
    Direction direction = this->subproblem.solve(statistics, problem, current_iterate);
-   assert(direction.constraint_partition.infeasible.empty() && "Infeasible constraints found, although direction is feasible");
+   if (direction.constraint_partition.has_value()) {
+      const ConstraintPartition& constraint_partition = direction.constraint_partition.value();
+      assert(constraint_partition.infeasible.empty() && "Infeasible constraints found, although direction is feasible");
+   }
    direction.objective_multiplier = this->penalty_parameter;
    DEBUG << "\n" << direction;
    return direction;
@@ -123,7 +126,10 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& 
 Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
    this->update_objective_multiplier(problem, current_iterate, objective_multiplier);
    Direction direction = this->subproblem.solve(statistics, problem, current_iterate);
-   assert(direction.constraint_partition.infeasible.empty() && "Infeasible constraints found, although direction is feasible");
+   if (direction.constraint_partition.has_value()) {
+      const ConstraintPartition& constraint_partition = direction.constraint_partition.value();
+      assert(constraint_partition.infeasible.empty() && "Infeasible constraints found, although direction is feasible");
+   }
    direction.objective_multiplier = objective_multiplier;
    DEBUG << "\n" << direction;
    return direction;

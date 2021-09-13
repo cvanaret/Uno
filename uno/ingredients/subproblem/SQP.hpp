@@ -14,7 +14,7 @@ public:
          bool use_trust_region);
 
    void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
-   void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
+   void set_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
    void set_initial_point(const std::vector<double>& point) override;
    Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const override;
@@ -52,7 +52,7 @@ inline void SQP<QPSolverType>::create_current_subproblem(const Problem& problem,
    problem.constraints_jacobian(current_iterate.x, this->constraints_jacobian);
    this->objective_gradient.clear();
    problem.evaluate_objective_gradient(current_iterate.x, this->objective_gradient);
-   this->update_objective_multiplier(problem, current_iterate, objective_multiplier);
+   this->set_objective_multiplier(problem, current_iterate, objective_multiplier);
 
    /* bounds of the variables */
    this->set_variables_bounds(problem, current_iterate, trust_region_radius);
@@ -65,7 +65,7 @@ inline void SQP<QPSolverType>::create_current_subproblem(const Problem& problem,
 }
 
 template<typename QPSolverType>
-inline void SQP<QPSolverType>::update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) {
+inline void SQP<QPSolverType>::set_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) {
    // evaluate the Hessian
    this->hessian_evaluation->compute(problem, current_iterate.x, objective_multiplier, this->constraints_multipliers);
 
@@ -105,7 +105,6 @@ inline PredictedReductionModel SQP<QPSolverType>::generate_predicted_reduction_m
       // precompute expensive quantities
       double linear_term = dot(direction.x, this->objective_gradient);
       double quadratic_term = this->hessian_evaluation->hessian.quadratic_product(direction.x, direction.x) / 2.;
-      std::cout << "EXPENSIVE STUFF\n";
       // return a function of the step length that cheaply assembles the predicted reduction
       return [=](double step_length) { // capture the expensive quantities by value
          return -step_length * (linear_term + step_length * quadratic_term);

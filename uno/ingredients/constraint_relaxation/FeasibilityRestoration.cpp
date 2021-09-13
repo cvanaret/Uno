@@ -52,7 +52,7 @@ phase_2_primal_direction, const ConstraintPartition& constraint_partition) {
    FeasibilityRestoration::set_restoration_multipliers(this->subproblem.constraints_multipliers, constraint_partition);
 
    // compute the objective gradient and (possibly) Hessian
-   this->subproblem.update_objective_multiplier(problem, current_iterate, 0.);
+   this->subproblem.set_objective_multiplier(problem, current_iterate, 0.);
    this->subproblem.compute_feasibility_linear_objective(current_iterate, constraint_partition);
    this->subproblem.generate_feasibility_bounds(problem, current_iterate.constraints, constraint_partition);
    this->subproblem.set_initial_point(phase_2_primal_direction);
@@ -60,19 +60,22 @@ phase_2_primal_direction, const ConstraintPartition& constraint_partition) {
 
 Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate,
       const Direction& phase_2_direction) {
-   ConstraintPartition constraint_partition = phase_2_direction.constraint_partition;
-   assert(!constraint_partition.infeasible.empty() && "The direction is infeasible but no constraint is infeasible");
-   DEBUG << "\nSolving the feasibility subproblem\n";
+   if (phase_2_direction.constraint_partition.has_value()) {
+      ConstraintPartition constraint_partition = phase_2_direction.constraint_partition.value();
+      assert(!constraint_partition.infeasible.empty() && "The direction is infeasible but no constraint is infeasible");
+      DEBUG << "\nSolving the feasibility subproblem\n";
 
-   // infeasible subproblem: form the feasibility problem
-   this->form_feasibility_problem(problem, current_iterate, phase_2_direction.x, constraint_partition);
+      // infeasible subproblem: form the feasibility problem
+      this->form_feasibility_problem(problem, current_iterate, phase_2_direction.x, constraint_partition);
 
-   // solve the feasibility subproblem
-   Direction feasibility_direction = this->subproblem.solve(statistics, problem, current_iterate);
-   feasibility_direction.constraint_partition = constraint_partition;
-   feasibility_direction.objective_multiplier = 0.;
-   feasibility_direction.is_relaxed = true;
-   return feasibility_direction;
+      // solve the feasibility subproblem
+      Direction feasibility_direction = this->subproblem.solve(statistics, problem, current_iterate);
+      feasibility_direction.constraint_partition = constraint_partition;
+      feasibility_direction.objective_multiplier = 0.;
+      feasibility_direction.is_relaxed = true;
+      return feasibility_direction;
+   }
+   assert(false && "No constraint partition found");
 }
 
 bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate,
@@ -127,9 +130,9 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
 
    if (accept) {
       statistics.add_statistic("phase", static_cast<int>(direction.is_relaxed ? FEASIBILITY_RESTORATION : OPTIMALITY));
-      if (direction.is_relaxed) {
+      if (direction.is_relaxed && direction.constraint_partition.has_value()) {
          // correct multipliers for infeasibility problem
-         FeasibilityRestoration::set_restoration_multipliers(trial_iterate.multipliers.constraints, direction.constraint_partition);
+         FeasibilityRestoration::set_restoration_multipliers(trial_iterate.multipliers.constraints, direction.constraint_partition.value());
       }
       // compute the errors
       trial_iterate.compute_objective(problem);
@@ -152,13 +155,18 @@ constraint_partition) {
 }
 
 void FeasibilityRestoration::compute_infeasibility_measures(const Problem& problem, Iterate& iterate,
-      const ConstraintPartition& constraint_partition) {
+      const std::optional<ConstraintPartition>& constraint_partition) {
    iterate.compute_constraints(problem);
    // feasibility measure: residual of all constraints
    double feasibility = problem.compute_constraint_violation(iterate.constraints, L1_NORM);
    // optimality measure: residual of linearly infeasible constraints
-   double objective = problem.compute_constraint_violation(iterate.constraints, constraint_partition.infeasible, L1_NORM);
-   iterate.progress = {feasibility, objective};
+   if (constraint_partition.has_value()) {
+      double objective = problem.compute_constraint_violation(iterate.constraints, constraint_partition.value().infeasible, L1_NORM);
+      iterate.progress = {feasibility, objective};
+   }
+   else {
+      assert(false && "FeasibilityRestoration::compute_infeasibility_measures: no constraint partition is known");
+   }
 }
 
 size_t FeasibilityRestoration::get_number_variables(const Problem& problem) {

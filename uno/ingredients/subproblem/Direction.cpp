@@ -15,8 +15,6 @@ Direction::Direction(std::vector<double>& x, Multipliers& multipliers) : x(x), m
    this->active_set.bounds.at_lower_bound.reserve(number_variables);
    this->active_set.constraints.at_lower_bound.reserve(number_constraints);
    this->active_set.constraints.at_upper_bound.reserve(number_constraints);
-   this->constraint_partition.feasible.reserve(number_constraints);
-   this->constraint_partition.infeasible.reserve(number_constraints);
 }
 
 std::string status_to_string(Status status) {
@@ -76,23 +74,26 @@ std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
    }
    stream << "\n";
 
-   stream << "general feasible =";
-   for (size_t j: direction.constraint_partition.feasible) {
-      stream << " c" << j;
-   }
-   stream << "\n";
+   if (direction.constraint_partition.has_value()) {
+      const ConstraintPartition& constraint_partition = direction.constraint_partition.value();
+      stream << "general feasible =";
+      for (size_t j: constraint_partition.feasible) {
+         stream << " c" << j;
+      }
+      stream << "\n";
 
-   stream << "general infeasible =";
-   for (size_t j: direction.constraint_partition.infeasible) {
-      stream << " c" << j;
-      if (direction.constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
-         stream << " (lower)";
+      stream << "general infeasible =";
+      for (size_t j: constraint_partition.infeasible) {
+         stream << " c" << j;
+         if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
+            stream << " (lower)";
+         }
+         else if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_UPPER) {
+            stream << " (upper)";
+         }
       }
-      else if (direction.constraint_partition.constraint_feasibility[j] == INFEASIBLE_UPPER) {
-         stream << " (upper)";
-      }
+      stream << "\n";
    }
-   stream << "\n";
 
    stream << "lower bound multipliers = ";
    print_vector(stream, direction.multipliers.lower_bounds);

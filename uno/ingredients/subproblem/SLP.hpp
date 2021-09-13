@@ -11,7 +11,7 @@ public:
    SLP(const Problem& problem, size_t number_variables, size_t number_constraints);
 
    void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
-   void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
+   void set_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
    void set_initial_point(const std::vector<double>& point) override;
    Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const override;
@@ -46,7 +46,7 @@ inline void SLP<LPSolverType>::create_current_subproblem(const Problem& problem,
 
    this->objective_gradient.clear();
    problem.evaluate_objective_gradient(current_iterate.x, this->objective_gradient);
-   this->update_objective_multiplier(problem, current_iterate, objective_multiplier);
+   this->set_objective_multiplier(problem, current_iterate, objective_multiplier);
 
    /* bounds of the variables */
    this->set_variables_bounds(problem, current_iterate, trust_region_radius);
@@ -59,7 +59,7 @@ inline void SLP<LPSolverType>::create_current_subproblem(const Problem& problem,
 }
 
 template<typename LPSolverType>
-inline void SLP<LPSolverType>::update_objective_multiplier(const Problem& /*problem*/, const Iterate& current_iterate, double objective_multiplier) {
+inline void SLP<LPSolverType>::set_objective_multiplier(const Problem& /*problem*/, const Iterate& current_iterate, double objective_multiplier) {
    // scale objective gradient
    if (objective_multiplier == 0.) {
       this->objective_gradient.clear();
