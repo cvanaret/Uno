@@ -1,6 +1,7 @@
 #ifndef FEASIBILITYRESTORATION_H
 #define FEASIBILITYRESTORATION_H
 
+#include <optional>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/strategy/GlobalizationStrategy.hpp"
 #include "tools/Options.hpp"
@@ -32,7 +33,7 @@ private:
    void form_feasibility_problem(const Problem& problem, const Iterate& current_iterate, const std::vector<double>& phase_2_primal_direction, const
    ConstraintPartition& constraint_partition);
    static void set_restoration_multipliers(std::vector<double>& constraints_multipliers, const ConstraintPartition& constraint_partition);
-   void compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const ConstraintPartition& constraint_partition);
+   void compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const std::optional<ConstraintPartition>& constraint_partition);
 };
 
 #endif //FEASIBILITYRESTORATION_H

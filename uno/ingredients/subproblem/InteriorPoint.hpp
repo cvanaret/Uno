@@ -33,7 +33,7 @@ public:
    void set_constraints(const Problem& problem, Iterate& iterate);
    void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) override;
    void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
-   void update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
+   void set_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
    Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
    Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) override;
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const override;
@@ -237,14 +237,14 @@ inline void InteriorPoint<LinearSolverType>::create_current_subproblem(const Pro
    }
 
    // Hessian (scaled by the objective multiplier)
-   this->update_objective_multiplier(problem, current_iterate, objective_multiplier);
+   this->set_objective_multiplier(problem, current_iterate, objective_multiplier);
 
    // bounds of the variables
    this->set_variables_bounds(problem, current_iterate, trust_region_radius);
 }
 
 template<typename LinearSolverType>
-inline void InteriorPoint<LinearSolverType>::update_objective_multiplier(const Problem& problem, const Iterate& current_iterate,
+inline void InteriorPoint<LinearSolverType>::set_objective_multiplier(const Problem& problem, const Iterate& current_iterate,
       double objective_multiplier) {
    // evaluate the Hessian
    this->hessian_evaluation->compute(problem, current_iterate.x, objective_multiplier, this->constraints_multipliers);
