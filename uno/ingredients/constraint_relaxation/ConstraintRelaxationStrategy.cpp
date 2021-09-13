@@ -34,21 +34,13 @@ void ConstraintRelaxationStrategy::generate_elastic_variables(const Problem& pro
    }
 }
 
-void ConstraintRelaxationStrategy::set_elastic_bounds_in_subproblem(const Problem& problem, size_t number_elastic_variables) const {
-   for (size_t i = problem.number_variables; i < problem.number_variables + number_elastic_variables; i++) {
-      this->subproblem.variables_bounds[i] = {0., INFINITY};
-   }
-}
-
 void ConstraintRelaxationStrategy::add_elastic_variables_to_subproblem(const ElasticVariables& elastic_variables) {
    // add the positive elastic variables
    elastic_variables.positive.for_each([&](size_t j, size_t i) {
-      this->subproblem.objective_gradient.insert(i, 1.);
-      this->subproblem.constraints_jacobian[j].insert(i, -1.);
+      this->subproblem.add_variable(i, 0., INFINITY, 1., j, -1.);
    });
    elastic_variables.negative.for_each([&](size_t j, size_t i) {
-      this->subproblem.objective_gradient.insert(i, 1.);
-      this->subproblem.constraints_jacobian[j].insert(i, 1.);
+      this->subproblem.add_variable(i, 0., INFINITY, 1., j, 1.);
    });
 }
 

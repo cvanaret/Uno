@@ -3,11 +3,12 @@
 #include "ingredients/strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 
-FeasibilityRestoration::FeasibilityRestoration(Subproblem& subproblem, const Options& options) :
+FeasibilityRestoration::FeasibilityRestoration(const Problem& problem, Subproblem& subproblem, const Options& options) :
       ConstraintRelaxationStrategy(subproblem),
       // create the globalization strategy
       phase_1_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
-      phase_2_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)) {
+      phase_2_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
+      elastic_variables(ConstraintRelaxationStrategy::count_elastic_variables(problem)) {
 }
 
 void FeasibilityRestoration::initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) {
@@ -157,15 +158,16 @@ constraint_partition) {
 void FeasibilityRestoration::compute_infeasibility_measures(const Problem& problem, Iterate& iterate,
       const std::optional<ConstraintPartition>& constraint_partition) {
    iterate.compute_constraints(problem);
-   // feasibility measure: residual of all constraints
-   double feasibility = problem.compute_constraint_violation(iterate.constraints, L1_NORM);
    // optimality measure: residual of linearly infeasible constraints
    if (constraint_partition.has_value()) {
+      // feasibility measure: residual of all constraints
+      double feasibility = problem.compute_constraint_violation(iterate.constraints, L1_NORM);
       double objective = problem.compute_constraint_violation(iterate.constraints, constraint_partition.value().infeasible, L1_NORM);
       iterate.progress = {feasibility, objective};
    }
    else {
-      assert(false && "FeasibilityRestoration::compute_infeasibility_measures: no constraint partition is known");
+      // if no constraint partition is available, simply compute the standard progress measures
+      this->subproblem.compute_progress_measures(problem, iterate);
    }
 }
 

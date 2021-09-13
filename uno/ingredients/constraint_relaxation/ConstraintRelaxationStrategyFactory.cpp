@@ -17,7 +17,7 @@ size_t ConstraintRelaxationStrategyFactory::get_number_variables(std::string_vie
 std::unique_ptr<ConstraintRelaxationStrategy> ConstraintRelaxationStrategyFactory::create(std::string_view constraint_relaxation_type,
       Problem& problem, Subproblem& subproblem, const Options& options) {
    if (constraint_relaxation_type == "feasibility-restoration") {
-      return std::make_unique<FeasibilityRestoration>(subproblem, options);
+      return std::make_unique<FeasibilityRestoration>(problem, subproblem, options);
    }
    else if (constraint_relaxation_type == "l1-relaxation") {
       const double initial_parameter = stod(options.at("l1_relaxation_initial_parameter"));

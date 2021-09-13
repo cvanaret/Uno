@@ -47,7 +47,6 @@ protected:
 
    static size_t count_elastic_variables(const Problem& problem);
    static void generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables);
-   void set_elastic_bounds_in_subproblem(const Problem& problem, size_t number_elastic_variables) const;
    void add_elastic_variables_to_subproblem(const ElasticVariables& elastic_variables);
 };
 

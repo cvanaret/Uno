@@ -41,6 +41,7 @@ public:
    virtual void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate);
    virtual void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) = 0;
    virtual void set_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) = 0;
+   virtual void add_variable(size_t i, double lb, double ub, double objective_term, size_t j, double jacobian_term);
 
    // direction computation
    virtual Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) = 0;

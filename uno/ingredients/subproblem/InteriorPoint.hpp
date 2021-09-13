@@ -34,6 +34,7 @@ public:
    void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) override;
    void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
    void set_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
+   void add_variable(size_t i, double lb, double ub, double objective_term, size_t j, double jacobian_term) override;
    Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
    Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) override;
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const override;
@@ -255,6 +256,17 @@ inline void InteriorPoint<LinearSolverType>::set_objective_multiplier(const Prob
    else if (objective_multiplier < 1.) {
       this->objective_gradient = current_iterate.objective_gradient;
       scale(this->objective_gradient, objective_multiplier);
+   }
+}
+
+template<typename LinearSolverType>
+inline void InteriorPoint<LinearSolverType>::add_variable(size_t i, double lb, double ub, double objective_term, size_t j, double jacobian_term) {
+   Subproblem::add_variable(i, lb, ub, objective_term, j, jacobian_term);
+   if (-INFINITY < lb) {
+      this->lower_bounded_variables.push_back(i);
+   }
+   if (ub < INFINITY) {
+      this->lower_bounded_variables.push_back(i);
    }
 }
 
