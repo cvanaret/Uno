@@ -13,8 +13,6 @@ l1Relaxation::l1Relaxation(Problem& problem, Subproblem& subproblem, const l1Rel
 
    // generate elastic variables to relax the constraints
    ConstraintRelaxationStrategy::generate_elastic_variables(problem, this->elastic_variables);
-   // add bounds for nonnegative elastic variables to the subproblem
-   this->set_elastic_bounds_in_subproblem(problem, this->elastic_variables.size());
 
    // elastic variables are temporary and are discarded when passed to mechanism
    this->number_variables -= l1Relaxation::count_elastic_variables(problem);
@@ -65,7 +63,7 @@ predicted_reduction_model, double step_length) {
 
 Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, const Direction&
 /*phase_2_direction*/) {
-   this->update_objective_multiplier(problem, current_iterate, 0.);
+   this->set_objective_multiplier(problem, current_iterate, 0.);
    return this->subproblem.solve(statistics, problem, current_iterate);
 }
 
@@ -100,15 +98,10 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
    return accept;
 }
 
-void l1Relaxation::update_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) {
+void l1Relaxation::set_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) {
    this->subproblem.set_objective_multiplier(problem, current_iterate, objective_multiplier);
-
-   // add the elastic variables to the objective gradient
-   auto insert_variable_into_gradient = [&](size_t i) {
-      this->subproblem.objective_gradient.insert(i, 1.);
-   };
-   elastic_variables.positive.for_each_value(insert_variable_into_gradient);
-   elastic_variables.negative.for_each_value(insert_variable_into_gradient);
+   // add the elastic variables to the objective gradient and constraint Jacobian
+   this->add_elastic_variables_to_subproblem(this->elastic_variables);
 }
 
 Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
@@ -123,7 +116,7 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& 
 }
 
 Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
-   this->update_objective_multiplier(problem, current_iterate, objective_multiplier);
+   this->set_objective_multiplier(problem, current_iterate, objective_multiplier);
    Direction direction = this->subproblem.solve(statistics, problem, current_iterate);
    if (direction.constraint_partition.has_value()) {
       const ConstraintPartition& constraint_partition = direction.constraint_partition.value();

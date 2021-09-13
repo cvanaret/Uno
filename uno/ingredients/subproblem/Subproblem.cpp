@@ -39,6 +39,12 @@ void Subproblem::initialize(Statistics& /*statistics*/, const Problem& problem, 
    this->compute_progress_measures(problem, first_iterate);
 }
 
+void Subproblem::add_variable(size_t i, double lb, double ub, double objective_term, size_t j, double jacobian_term) {
+   this->variables_bounds[i] = {lb, ub};
+   this->objective_gradient.insert(i, objective_term);
+   this->constraints_jacobian[j].insert(i, jacobian_term);
+}
+
 void Subproblem::compute_progress_measures(const Problem& problem, Iterate& iterate) {
    iterate.compute_constraints(problem);
    // feasibility measure: residual of all constraints

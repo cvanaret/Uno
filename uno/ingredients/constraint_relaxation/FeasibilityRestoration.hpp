@@ -10,7 +10,7 @@ enum Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 
 class FeasibilityRestoration : public ConstraintRelaxationStrategy {
 public:
-   FeasibilityRestoration(Subproblem& subproblem, const Options& options);
+   FeasibilityRestoration(const Problem& problem, Subproblem& subproblem, const Options& options);
    void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) override;
 
    // direction computation
@@ -29,6 +29,8 @@ private:
    const std::unique_ptr<GlobalizationStrategy> phase_1_strategy;
    const std::unique_ptr<GlobalizationStrategy> phase_2_strategy;
    Phase current_phase{OPTIMALITY};
+   /* possible problem reformulation with elastic variables. Constraints l <= c(x) <= u are reformulated as l <= c(x) - p + n <= u */
+   ElasticVariables elastic_variables;
 
    void form_feasibility_problem(const Problem& problem, const Iterate& current_iterate, const std::vector<double>& phase_2_primal_direction, const
    ConstraintPartition& constraint_partition);
