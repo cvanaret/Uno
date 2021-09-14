@@ -18,7 +18,7 @@ void BacktrackingLineSearch::initialize(Statistics& statistics, const Problem& p
 std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate&
 current_iterate) {
    // compute the direction
-   this->relaxation_strategy.create_current_subproblem(problem, current_iterate, INFINITY);
+   this->relaxation_strategy.create_current_subproblem(problem, current_iterate, std::numeric_limits<double>::infinity());
    Direction direction = this->relaxation_strategy.compute_feasible_direction(statistics, problem, current_iterate);
    PredictedReductionModel predicted_reduction_model = this->relaxation_strategy.generate_predicted_reduction_model(problem, direction);
 

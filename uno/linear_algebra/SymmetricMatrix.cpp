@@ -51,13 +51,13 @@ void SymmetricMatrix::add_outer_product(const SparseVector<double>& x, double sc
 }
 
 double SymmetricMatrix::smallest_diagonal_entry() const {
-   double smallest_entry = INFINITY;
+   double smallest_entry = std::numeric_limits<double>::infinity();
    this->for_each([&](size_t i, size_t j, double entry) {
       if (i == j) {
          smallest_entry = std::min(smallest_entry, entry);
       }
    });
-   if (smallest_entry == INFINITY) {
+   if (smallest_entry == std::numeric_limits<double>::infinity()) {
       smallest_entry = 0.;
    }
    return smallest_entry;

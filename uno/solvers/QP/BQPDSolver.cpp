@@ -131,12 +131,12 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
 
    /* bounds */
    for (size_t i = 0; i < this->number_variables; i++) {
-      this->lb[i] = (variables_bounds[i].lb == -INFINITY) ? -BIG : variables_bounds[i].lb;
-      this->ub[i] = (variables_bounds[i].ub == INFINITY) ? BIG : variables_bounds[i].ub;
+      this->lb[i] = (variables_bounds[i].lb == -std::numeric_limits<double>::infinity()) ? -BIG : variables_bounds[i].lb;
+      this->ub[i] = (variables_bounds[i].ub == std::numeric_limits<double>::infinity()) ? BIG : variables_bounds[i].ub;
    }
    for (size_t j = 0; j < this->number_constraints; j++) {
-      this->lb[this->number_variables + j] = (constraints_bounds[j].lb == -INFINITY) ? -BIG : constraints_bounds[j].lb;
-      this->ub[this->number_variables + j] = (constraints_bounds[j].ub == INFINITY) ? BIG : constraints_bounds[j].ub;
+      this->lb[this->number_variables + j] = (constraints_bounds[j].lb == -std::numeric_limits<double>::infinity()) ? -BIG : constraints_bounds[j].lb;
+      this->ub[this->number_variables + j] = (constraints_bounds[j].ub == std::numeric_limits<double>::infinity()) ? BIG : constraints_bounds[j].ub;
    }
 
    /* initial point */

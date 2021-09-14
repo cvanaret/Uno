@@ -56,8 +56,8 @@ AMPLModel::~AMPLModel() {
 
 void AMPLModel::generate_variables() {
    for (size_t i = 0; i < this->number_variables; i++) {
-      double lb = (this->asl_->i.LUv_ != nullptr) ? this->asl_->i.LUv_[2 * i] : -INFINITY;
-      double ub = (this->asl_->i.LUv_ != nullptr) ? this->asl_->i.LUv_[2 * i + 1] : INFINITY;
+      double lb = (this->asl_->i.LUv_ != nullptr) ? this->asl_->i.LUv_[2 * i] : -std::numeric_limits<double>::infinity();
+      double ub = (this->asl_->i.LUv_ != nullptr) ? this->asl_->i.LUv_[2 * i + 1] : std::numeric_limits<double>::infinity();
       if (lb == ub) {
          WARNING << "Variable x" << i << " has identical bounds\n";
       }
@@ -150,8 +150,8 @@ void AMPLModel::constraints_jacobian(const std::vector<double>& x, std::vector<S
 
 void AMPLModel::generate_constraints() {
    for (size_t j = 0; j < this->number_constraints; j++) {
-      double lb = (this->asl_->i.LUrhs_ != nullptr) ? this->asl_->i.LUrhs_[2 * j] : -INFINITY;
-      double ub = (this->asl_->i.LUrhs_ != nullptr) ? this->asl_->i.LUrhs_[2 * j + 1] : INFINITY;
+      double lb = (this->asl_->i.LUrhs_ != nullptr) ? this->asl_->i.LUrhs_[2 * j] : -std::numeric_limits<double>::infinity();
+      double ub = (this->asl_->i.LUrhs_ != nullptr) ? this->asl_->i.LUrhs_[2 * j + 1] : std::numeric_limits<double>::infinity();
       this->constraint_bounds[j] = {lb, ub};
    }
    this->determine_bounds_types(this->constraint_bounds, this->constraint_status);
