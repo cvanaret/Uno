@@ -241,7 +241,7 @@ double l1Relaxation::compute_error(const Problem& problem, Iterate& iterate, Mul
 }
 
 void l1Relaxation::remove_elastic_variables(const Problem& problem, Direction& direction) {
-   /* remove p and n */
+   // remove p and n
    // TODO change that!!!
    direction.x.resize(problem.number_variables);
    direction.multipliers.lower_bounds.resize(problem.number_variables);

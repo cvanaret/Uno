@@ -133,7 +133,7 @@ hessian_evaluation_method, double initial_barrier_parameter, double default_mult
       if (problem.constraint_status[j] == BOUNDED_UPPER || problem.constraint_status[j] == BOUNDED_BOTH_SIDES) {
          this->upper_bounded_variables.push_back(slack_index);
       }
-      // register the bounds of the slacks
+      // store the bounds of the slacks
       this->variables_bounds[slack_index] = problem.constraint_bounds[j];
    }
 }

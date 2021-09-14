@@ -19,7 +19,7 @@ void l1MeritFunction::reset() {
 void l1MeritFunction::notify(Iterate& /*current_iterate*/) {
 }
 
-bool l1MeritFunction::check_acceptance(Statistics& statistics, ProgressMeasures& current_progress, ProgressMeasures& trial_progress,
+bool l1MeritFunction::check_acceptance(Statistics& statistics, const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
       double objective_multiplier, double predicted_reduction) {
    bool accept = false;
    /* compute current exact l1 penalty: rho f + ||c|| */

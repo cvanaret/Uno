@@ -29,8 +29,8 @@ public:
    FilterStrategy(FilterStrategyParameters strategy_constants, const Options& options);
 
    void initialize(Statistics& statistics, const Iterate& first_iterate) override;
-   bool check_acceptance(Statistics& statistics, ProgressMeasures& current_progress, ProgressMeasures& trial_progress, double objective_multiplier,
-         double predicted_reduction) override;
+   bool check_acceptance(Statistics& statistics, const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
+         double objective_multiplier, double predicted_reduction) override;
    void reset() override;
    void notify(Iterate& current_iterate) override;
 
