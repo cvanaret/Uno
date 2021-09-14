@@ -262,10 +262,10 @@ inline void InteriorPoint<LinearSolverType>::set_objective_multiplier(const Prob
 template<typename LinearSolverType>
 inline void InteriorPoint<LinearSolverType>::add_variable(size_t i, double lb, double ub, double objective_term, size_t j, double jacobian_term) {
    Subproblem::add_variable(i, lb, ub, objective_term, j, jacobian_term);
-   if (-INFINITY < lb) {
+   if (-std::numeric_limits<double>::infinity() < lb) {
       this->lower_bounded_variables.push_back(i);
    }
-   if (ub < INFINITY) {
+   if (ub < std::numeric_limits<double>::infinity()) {
       this->lower_bounded_variables.push_back(i);
    }
 }
@@ -702,10 +702,10 @@ inline double InteriorPoint<LinearSolverType>::compute_central_complementarity_e
    // variable bound constraints
    const auto residual_function = [&](size_t i) {
       double result = 0.;
-      if (-INFINITY < this->variables_bounds[i].lb) {
+      if (-std::numeric_limits<double>::infinity() < this->variables_bounds[i].lb) {
          result += iterate.multipliers.lower_bounds[i] * (iterate.x[i] - this->variables_bounds[i].lb) - this->barrier_parameter;
       }
-      if (this->variables_bounds[i].ub < INFINITY) {
+      if (this->variables_bounds[i].ub < std::numeric_limits<double>::infinity()) {
          result += iterate.multipliers.upper_bounds[i] * (iterate.x[i] - this->variables_bounds[i].ub) - this->barrier_parameter;
       }
       return result;

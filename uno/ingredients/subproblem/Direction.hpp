@@ -39,7 +39,7 @@ public:
    bool is_relaxed{false};
 
    double norm{0.}; /*!< Norm of \f$x\f$ */
-   double objective{INFINITY}; /*!< Objective value */
+   double objective{std::numeric_limits<double>::infinity()}; /*!< Objective value */
    ActiveSet active_set{}; /*!< Active set */
    std::vector<int> inactive_set{}; /*!< Inactive set */
    std::optional<ConstraintPartition> constraint_partition{std::nullopt}; /*!< Optional partition of feasible and infeasible constraints */

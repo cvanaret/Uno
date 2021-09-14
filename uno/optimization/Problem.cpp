@@ -35,13 +35,13 @@ void Problem::determine_bounds_types(std::vector<Range>& bounds, std::vector<Con
       if (bounds_i.lb == bounds_i.ub) {
          return EQUAL_BOUNDS;
       }
-      else if (-INFINITY < bounds_i.lb && bounds_i.ub < INFINITY) {
+      else if (-std::numeric_limits<double>::infinity() < bounds_i.lb && bounds_i.ub < std::numeric_limits<double>::infinity()) {
          return BOUNDED_BOTH_SIDES;
       }
-      else if (-INFINITY < bounds_i.lb) {
+      else if (-std::numeric_limits<double>::infinity() < bounds_i.lb) {
          return BOUNDED_LOWER;
       }
-      else if (bounds_i.ub < INFINITY) {
+      else if (bounds_i.ub < std::numeric_limits<double>::infinity()) {
          return BOUNDED_UPPER;
       }
       else {

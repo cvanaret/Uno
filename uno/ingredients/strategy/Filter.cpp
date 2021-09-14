@@ -8,7 +8,7 @@ Filter::Filter(FilterConstants& constants) : constants(constants) {
 
 void Filter::reset() {
    /* initialize the maximum filter size (not critical) */
-   this->upper_bound = INFINITY;
+   this->upper_bound = std::numeric_limits<double>::infinity();
    this->entries.clear();
 }
 

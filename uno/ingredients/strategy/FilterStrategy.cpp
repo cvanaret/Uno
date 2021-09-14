@@ -3,7 +3,7 @@
 #include "FilterStrategy.hpp"
 
 FilterStrategy::FilterStrategy(FilterStrategyParameters strategy_parameters, const Options& options) :
-      GlobalizationStrategy(), filter(FilterFactory::create(options)), initial_filter_upper_bound(INFINITY),
+      GlobalizationStrategy(), filter(FilterFactory::create(options)), initial_filter_upper_bound(std::numeric_limits<double>::infinity()),
       parameters(std::move(strategy_parameters)) {
 }
 

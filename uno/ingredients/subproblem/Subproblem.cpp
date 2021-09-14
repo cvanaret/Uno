@@ -102,10 +102,10 @@ void Subproblem::generate_feasibility_bounds(const Problem& problem, const std::
 constraint_partition) {
    for (size_t j = 0; j < problem.number_constraints; j++) {
       if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
-         this->constraints_bounds[j] = {-INFINITY, problem.constraint_bounds[j].lb - current_constraints[j]};
+         this->constraints_bounds[j] = {-std::numeric_limits<double>::infinity(), problem.constraint_bounds[j].lb - current_constraints[j]};
       }
       else if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_UPPER) {
-         this->constraints_bounds[j] = {problem.constraint_bounds[j].ub - current_constraints[j], INFINITY};
+         this->constraints_bounds[j] = {problem.constraint_bounds[j].ub - current_constraints[j], std::numeric_limits<double>::infinity()};
       }
       else { // FEASIBLE
          this->constraints_bounds[j] = {problem.constraint_bounds[j].lb - current_constraints[j], problem.constraint_bounds[j].ub - current_constraints[j]};
@@ -123,10 +123,10 @@ double Subproblem::compute_complementarity_error(const Problem& problem, Iterate
    double error = 0.;
    /* bound constraints */
    for (size_t i = 0; i < problem.number_variables; i++) {
-      if (-INFINITY < problem.variables_bounds[i].lb) {
+      if (-std::numeric_limits<double>::infinity() < problem.variables_bounds[i].lb) {
          error += std::abs(multipliers.lower_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].lb));
       }
-      if (problem.variables_bounds[i].ub < INFINITY) {
+      if (problem.variables_bounds[i].ub < std::numeric_limits<double>::infinity()) {
          error += std::abs(multipliers.upper_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].ub));
       }
    }
@@ -142,10 +142,10 @@ double Subproblem::compute_complementarity_error(const Problem& problem, Iterate
          // violated upper: the multiplier is -1 at optimum
          error += std::abs((1. + multiplier_j) * (iterate.constraints[j] - problem.constraint_bounds[j].ub));
       }
-      else if (-INFINITY < problem.constraint_bounds[j].lb && 0. < multiplier_j) {
+      else if (-std::numeric_limits<double>::infinity() < problem.constraint_bounds[j].lb && 0. < multiplier_j) {
          error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraint_bounds[j].lb));
       }
-      else if (problem.constraint_bounds[j].ub < INFINITY && multiplier_j < 0.) {
+      else if (problem.constraint_bounds[j].ub < std::numeric_limits<double>::infinity() && multiplier_j < 0.) {
          error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraint_bounds[j].ub));
       }
    }
