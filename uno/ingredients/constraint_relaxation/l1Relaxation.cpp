@@ -53,7 +53,7 @@ predicted_reduction_model, double step_length) {
    else {
       // determine the linearized constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
       auto residual_function = [&](size_t j) {
-         const double component_j = current_iterate.constraints[j] + step_length * dot(direction.x, current_iterate.constraints_jacobian[j]);
+         const double component_j = current_iterate.constraints[j] + step_length * dot(direction.x, current_iterate.constraint_jacobian[j]);
          return problem.compute_constraint_violation(component_j, j);
       };
       const double linearized_constraint_violation = norm_1(residual_function, problem.number_constraints);
@@ -250,7 +250,7 @@ void l1Relaxation::remove_elastic_variables(const Problem& problem, Direction& d
 
    const auto erase_elastic_variables = [&](size_t j, size_t i) {
       this->subproblem.objective_gradient.erase(i);
-      this->subproblem.constraints_jacobian[j].erase(i);
+      this->subproblem.constraint_jacobian[j].erase(i);
    };
    elastic_variables.positive.for_each(erase_elastic_variables);
    elastic_variables.negative.for_each(erase_elastic_variables);

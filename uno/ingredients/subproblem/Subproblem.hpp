@@ -79,7 +79,7 @@ public:
    std::vector <Range> variables_bounds;
    std::vector<double> constraints_multipliers;
    SparseVector<double> objective_gradient;
-   std::vector <SparseVector<double>> constraints_jacobian;
+   std::vector <SparseVector<double>> constraint_jacobian;
    std::vector <Range> constraints_bounds;
    // Hessian is optional and depends on the subproblem
    Direction direction;
@@ -97,7 +97,7 @@ template<class SparseSymmetricMatrix>
 inline void Subproblem::compute_least_square_multipliers(const Problem& problem, SparseSymmetricMatrix& matrix, std::vector<double>& rhs, LinearSolver
 <SparseSymmetricMatrix>& solver, Iterate& current_iterate, std::vector<double>& multipliers, double multipliers_max_size) {
    current_iterate.evaluate_objective_gradient(problem);
-   current_iterate.evaluate_constraints_jacobian(problem);
+   current_iterate.evaluate_constraint_jacobian(problem);
 
    /******************************/
    /* build the symmetric matrix */
@@ -112,7 +112,7 @@ inline void Subproblem::compute_least_square_multipliers(const Problem& problem,
    /* Jacobian of general constraints */
    const size_t n = current_iterate.x.size();
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      current_iterate.constraints_jacobian[j].for_each([&](size_t i, double derivative) {
+      current_iterate.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
          matrix.insert(derivative, i, n + j);
       });
       matrix.finalize(n + j);

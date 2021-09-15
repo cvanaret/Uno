@@ -17,7 +17,7 @@ struct InteriorPointParameters {
 
 struct UnstableInertiaCorrection : public std::exception {
 
-   [[nodiscard]] const char* what() const throw() {
+   [[nodiscard]] const char* what() const throw() override {
       return "The inertia correction got unstable (delta_w > 1e40)";
    }
 };
@@ -76,7 +76,7 @@ private:
    double evaluate_barrier_function(const Problem& problem, Iterate& iterate);
    double primal_fraction_to_boundary(const Iterate& current_iterate, const std::vector<double>& ipm_solution, double tau);
    double dual_fraction_to_boundary(const Iterate& current_iterate, double tau);
-   void assemble_kkt_matrix(const Problem& problem, Iterate& current_iterate);
+   void assemble_kkt_matrix(Iterate& current_iterate);
    void modify_inertia(const Problem& problem, typename LinearSolverType::matrix_type& kkt_matrix, size_t size_first_block, size_t size_second_block);
    void generate_kkt_rhs(const Iterate& current_iterate);
    void compute_lower_bound_dual_displacements(const Iterate& current_iterate, const std::vector<double>& solution);
@@ -122,7 +122,7 @@ hessian_evaluation_method, double initial_barrier_parameter, double default_mult
    // identify the inequality constraint slacks
    DEBUG << problem.inequality_constraints.size() << " slacks\n";
    for (const auto[j, i]: problem.inequality_constraints) {
-      size_t slack_index = number_variables + i;
+      const size_t slack_index = number_variables + i;
       if (problem.constraint_status[j] == BOUNDED_LOWER || problem.constraint_status[j] == BOUNDED_BOTH_SIDES) {
          this->lower_bounded_variables.push_back(slack_index);
       }
@@ -144,7 +144,7 @@ inline void InteriorPoint<LinearSolverType>::set_constraints(const Problem& prob
    iterate.evaluate_constraints(problem);
    // transform the constraints into "= 0" equalities
    for (const auto& element: problem.equality_constraints) {
-      size_t j = element.first;
+      const size_t j = element.first;
       this->barrier_constraints[j] = iterate.constraints[j] - problem.constraint_bounds[j].lb;
    }
    for (const auto[j, i]: problem.inequality_constraints) {
@@ -166,11 +166,11 @@ inline void InteriorPoint<LinearSolverType>::initialize(Statistics& statistics, 
 
    // initialize the slacks and add contribution to the constraint Jacobian
    first_iterate.evaluate_constraints(problem);
-   first_iterate.evaluate_constraints_jacobian(problem);
+   first_iterate.evaluate_constraint_jacobian(problem);
    for (const auto[j, i]: problem.inequality_constraints) {
       const double slack_value = Subproblem::push_variable_to_interior(first_iterate.constraints[j], problem.constraint_bounds[j]);
       first_iterate.x[problem.number_variables + i] = slack_value;
-      first_iterate.constraints_jacobian[j].insert(problem.number_variables + i, -1.);
+      first_iterate.constraint_jacobian[j].insert(problem.number_variables + i, -1.);
    }
 
    // compute least-square multipliers
@@ -197,19 +197,18 @@ inline void InteriorPoint<LinearSolverType>::create_current_subproblem(const Pro
       double trust_region_radius) {
    // update the barrier parameter if the current iterate solves the subproblem
    this->update_barrier_parameter(current_iterate);
-   DEBUG << "mu is " << this->barrier_parameter << "\n";
 
    this->set_constraints(problem, current_iterate);
    copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
 
    // constraint Jacobian
-   for (auto& row: this->constraints_jacobian) {
+   for (auto& row: this->constraint_jacobian) {
       row.clear();
    }
-   problem.evaluate_constraints_jacobian(current_iterate.x, this->constraints_jacobian);
+   problem.evaluate_constraint_jacobian(current_iterate.x, this->constraint_jacobian);
    // add the slack variables
    for (const auto[j, i]: problem.inequality_constraints) {
-      this->constraints_jacobian[j].insert(problem.number_variables + i, -1.);
+      this->constraint_jacobian[j].insert(problem.number_variables + i, -1.);
    }
 
    // build a model of the objective scaled by the objective multiplier
@@ -252,7 +251,7 @@ inline Direction InteriorPoint<LinearSolverType>::solve(Statistics& statistics, 
    /* solve the KKT system */
    /************************/
    // assemble and factorize the KKT matrix
-   this->assemble_kkt_matrix(problem, current_iterate);
+   this->assemble_kkt_matrix(current_iterate);
    this->factorize(problem, this->kkt_matrix);
    // inertia correction
    this->modify_inertia(problem, this->kkt_matrix, this->number_variables, problem.number_constraints);
@@ -279,6 +278,7 @@ inline Direction InteriorPoint<LinearSolverType>::solve(Statistics& statistics, 
 
 template<typename LinearSolverType>
 inline Direction InteriorPoint<LinearSolverType>::compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) {
+   // modify the RHS by adding the values of the constraints
    for (const auto& element: problem.equality_constraints) {
       size_t j = element.first;
       this->rhs[this->number_variables + j] -= trial_iterate.constraints[j] - problem.constraint_bounds[j].lb;
@@ -375,6 +375,7 @@ inline void InteriorPoint<LinearSolverType>::update_barrier_parameter(const Iter
       // signal the redefinition of the problem to the globalization strategy
       this->subproblem_definition_changed = true;
    }
+   DEBUG << "mu is " << this->barrier_parameter << "\n";
 }
 
 template<typename LinearSolverType>
@@ -458,7 +459,7 @@ inline double InteriorPoint<LinearSolverType>::dual_fraction_to_boundary(const I
 }
 
 template<typename LinearSolverType>
-inline void InteriorPoint<LinearSolverType>::assemble_kkt_matrix(const Problem& problem, Iterate& current_iterate) {
+inline void InteriorPoint<LinearSolverType>::assemble_kkt_matrix(Iterate& current_iterate) {
    this->kkt_matrix.reset();
    // copy the Lagrangian Hessian
    // assume that the Hessian is sorted
@@ -482,8 +483,8 @@ inline void InteriorPoint<LinearSolverType>::assemble_kkt_matrix(const Problem& 
    }
 
    // Jacobian of general constraints
-   for (size_t j = 0; j < problem.number_constraints; j++) {
-      this->constraints_jacobian[j].for_each([&](size_t i, double derivative) {
+   for (size_t j = 0; j < this->number_constraints; j++) {
+      this->constraint_jacobian[j].for_each([&](size_t i, double derivative) {
          this->kkt_matrix.insert(derivative, i, this->number_variables + j);
       });
       this->kkt_matrix.finalize(j);
@@ -578,7 +579,7 @@ inline void InteriorPoint<LinearSolverType>::generate_kkt_rhs(const Iterate& cur
    for (size_t j = 0; j < current_iterate.constraints.size(); j++) {
       // Lagrangian
       if (this->constraints_multipliers[j] != 0.) {
-         this->constraints_jacobian[j].for_each([&](size_t i, double derivative) {
+         this->constraint_jacobian[j].for_each([&](size_t i, double derivative) {
             this->rhs[i] += this->constraints_multipliers[j] * derivative;
          });
       }

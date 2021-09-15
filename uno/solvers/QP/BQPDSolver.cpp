@@ -44,7 +44,7 @@ BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_
 }
 
 Direction BQPDSolver::solve_QP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector<double>&
-linear_objective, const std::vector<SparseVector<double>>& constraints_jacobian, const CSCSymmetricMatrix& hessian,
+linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian, const CSCSymmetricMatrix& hessian,
       const std::vector<double>& initial_point) {
    /* Hessian */
    for (size_t i = 0; i < hessian.number_nonzeros; i++) {
@@ -69,16 +69,16 @@ linear_objective, const std::vector<SparseVector<double>>& constraints_jacobian,
    }
 
    DEBUG << "Hessian: " << hessian;
-   return this->solve_subproblem(variables_bounds, constraints_bounds, linear_objective, constraints_jacobian, initial_point);
+   return this->solve_subproblem(variables_bounds, constraints_bounds, linear_objective, constraint_jacobian, initial_point);
 }
 
 Direction BQPDSolver::solve_LP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector<double>&
-linear_objective, const std::vector<SparseVector<double>>& constraints_jacobian, const std::vector<double>& initial_point) {
-   return this->solve_subproblem(variables_bounds, constraints_bounds, linear_objective, constraints_jacobian, initial_point);
+linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian, const std::vector<double>& initial_point) {
+   return this->solve_subproblem(variables_bounds, constraints_bounds, linear_objective, constraint_jacobian, initial_point);
 }
 
 Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds,
-      const SparseVector<double>& linear_objective, const std::vector<SparseVector<double>>& constraints_jacobian,
+      const SparseVector<double>& linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian,
       const std::vector<double>& initial_point) {
    /* initialize wsc_ common block (Hessian & workspace for bqpd) */
    // setting the common block here ensures that several instances of BQPD can run simultaneously
@@ -90,8 +90,8 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
 
    DEBUG << "objective gradient: ";
    DEBUG << linear_objective;
-   for (size_t j = 0; j < constraints_jacobian.size(); j++) {
-      DEBUG << "gradient c" << j << ": " << constraints_jacobian[j];
+   for (size_t j = 0; j < constraint_jacobian.size(); j++) {
+      DEBUG << "gradient c" << j << ": " << constraint_jacobian[j];
    }
    for (size_t i = 0; i < variables_bounds.size(); i++) {
       DEBUG << "Δx" << i << " in [" << variables_bounds[i].lb << ", " << variables_bounds[i].ub << "]\n";
@@ -108,7 +108,7 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
       current_index++;
    });
    for (size_t j = 0; j < this->number_constraints; j++) {
-      constraints_jacobian[j].for_each([&](size_t i, double derivative) {
+      constraint_jacobian[j].for_each([&](size_t i, double derivative) {
          this->jacobian[current_index] = derivative;
          this->jacobian_sparsity[current_index + 1] = static_cast<int>(i + this->fortran_shift);
          current_index++;
@@ -124,7 +124,7 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
    this->jacobian_sparsity[current_index] = static_cast<int>(size);
    current_index++;
    for (size_t j = 0; j < this->number_constraints; j++) {
-      size += constraints_jacobian[j].size();
+      size += constraint_jacobian[j].size();
       this->jacobian_sparsity[current_index] = static_cast<int>(size);
       current_index++;
    }

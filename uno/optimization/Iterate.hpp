@@ -46,8 +46,8 @@ public:
    SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the evaluate_objective */
    bool is_objective_gradient_computed{false}; /*!< Flag that indicates if the evaluate_objective gradient has already been computed */
 
-   std::vector<SparseVector<double>> constraints_jacobian; /*!< Sparse Jacobian of the constraints */
-   bool is_constraints_jacobian_computed{false}; /*!< Flag that indicates if the constraint Jacobian has already been computed */
+   std::vector<SparseVector<double>> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
+   bool is_constraint_jacobian_computed{false}; /*!< Flag that indicates if the constraint Jacobian has already been computed */
 
    std::vector<double> lagrangian_gradient;
 
@@ -58,7 +58,7 @@ public:
    void evaluate_objective(const Problem& problem);
    void evaluate_constraints(const Problem& problem);
    void evaluate_objective_gradient(const Problem& problem);
-   void evaluate_constraints_jacobian(const Problem& problem);
+   void evaluate_constraint_jacobian(const Problem& problem);
    void evaluate_lagrangian_gradient(const Problem& problem, double objective_multiplier, const Multipliers& multipliers);
 
    void change_number_variables(size_t number_variables);

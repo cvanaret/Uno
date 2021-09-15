@@ -25,12 +25,12 @@ void Preprocessing::apply(const Problem& problem, Iterate& first_iterate) {
          CSCSymmetricMatrix hessian = CSCSymmetricMatrix::identity(problem.number_variables);
          SparseVector<double> linear_objective(0); // empty
          // constraints Jacobian
-         std::vector<SparseVector<double>> constraints_jacobian(number_constraints);
+         std::vector<SparseVector<double>> constraint_jacobian(number_constraints);
          for (size_t j = 0; j < problem.number_constraints; j++) {
-            constraints_jacobian[j].reserve(problem.number_variables);
+            constraint_jacobian[j].reserve(problem.number_variables);
          }
          for (const auto[j, linear_constraint_index]: problem.linear_constraints) {
-            problem.evaluate_constraint_gradient(first_iterate.x, j, constraints_jacobian[linear_constraint_index]);
+            problem.evaluate_constraint_gradient(first_iterate.x, j, constraint_jacobian[linear_constraint_index]);
          }
          // variables bounds
          std::vector<Range> variables_bounds(problem.number_variables);
@@ -44,7 +44,7 @@ void Preprocessing::apply(const Problem& problem, Iterate& first_iterate) {
                   {problem.constraint_bounds[j].lb - first_iterate.constraints[j], problem.constraint_bounds[j].ub - first_iterate.constraints[j]};
          }
          std::vector<double> d0(problem.number_variables);
-         Direction direction = solver.solve_QP(variables_bounds, constraints_bounds, linear_objective, constraints_jacobian, hessian, d0);
+         Direction direction = solver.solve_QP(variables_bounds, constraints_bounds, linear_objective, constraint_jacobian, hessian, d0);
          if (direction.status == INFEASIBLE) {
             throw std::runtime_error("Linear constraints cannot be satisfied");
          }

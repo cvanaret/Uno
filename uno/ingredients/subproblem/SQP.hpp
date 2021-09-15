@@ -21,7 +21,7 @@ public:
    [[nodiscard]] int get_hessian_evaluation_count() const override;
 
 protected:
-   /* use pointers to allow polymorphism */
+   // use pointers to allow polymorphism
    const std::unique_ptr <QPSolver<typename QPSolverType::matrix_type>> solver; /*!< Solver that solves the subproblem */
    const std::unique_ptr <HessianEvaluation<typename QPSolverType::matrix_type>> hessian_evaluation; /*!< Strategy to compute or approximate the
  * Hessian */
@@ -35,7 +35,7 @@ hessian_evaluation_method, bool use_trust_region) :
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
       solver(QPSolverFactory<QPSolverType>::create(number_variables, number_constraints,
             problem.hessian_maximum_number_nonzeros + number_variables, true)),
-      /* if no trust region is used, the problem should be convexified by controlling the inertia of the Hessian */
+      // if no trust region is used, the problem should be convexified by controlling the inertia of the Hessian
       hessian_evaluation(HessianEvaluationFactory<typename QPSolverType::matrix_type>::create(hessian_evaluation_method, number_variables,
             problem.hessian_maximum_number_nonzeros + problem.number_variables, !use_trust_region)),
       initial_point(number_variables) {
@@ -46,12 +46,11 @@ inline void SQP<QPSolverType>::create_current_subproblem(const Problem& problem,
    copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
 
    // constraints
-   problem.evaluate_constraints(current_iterate.x, current_iterate.constraints);
-   for (auto& row: this->constraints_jacobian) {
-      row.clear();
-   }
+   current_iterate.evaluate_constraints(problem);
+
    // constraint Jacobian
-   problem.evaluate_constraints_jacobian(current_iterate.x, this->constraints_jacobian);
+   current_iterate.evaluate_constraint_jacobian(problem);
+   this->constraint_jacobian = current_iterate.constraint_jacobian;
 
    // objective
    this->build_objective_model(problem, current_iterate, objective_multiplier);
@@ -87,7 +86,7 @@ template<typename QPSolverType>
 inline Direction SQP<QPSolverType>::solve(Statistics& /*statistics*/, const Problem& problem, Iterate& current_iterate) {
    /* compute QP direction */
    Direction direction = this->solver->solve_QP(this->variables_bounds, this->constraints_bounds, this->objective_gradient,
-         this->constraints_jacobian, this->hessian_evaluation->hessian, this->initial_point);
+         this->constraint_jacobian, this->hessian_evaluation->hessian, this->initial_point);
    this->number_subproblems_solved++;
 
    // compute dual displacements (SQP methods usually compute the new duals, not the displacements)
