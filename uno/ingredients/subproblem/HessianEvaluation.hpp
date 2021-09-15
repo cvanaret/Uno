@@ -107,7 +107,7 @@ public:
 //   }
 //
 //protected:
-//   std::unique_ptr<LinearSolver<COOSymmetricMatrix> > linear_solver; /*!< Solver that computes the inertia */
+//   std::unique_ptr<LinearSolver<COOSymmetricMatrix>> linear_solver; /*!< Solver that computes the inertia */
 //};
 
 template<class SYMMETRIC_MATRIX>
@@ -117,10 +117,10 @@ public:
          size_t hessian_maximum_number_nonzeros, bool convexify) {
       if (hessian_evaluation_method == "exact") {
          if (convexify) {
-            //   return std::make_unique<ConvexifiedExactHessianEvaluation<SYMMETRIC_MATRIX> >(dimension, hessian_maximum_number_nonzeros, "MA57");
+            //   return std::make_unique<ConvexifiedExactHessianEvaluation<SYMMETRIC_MATRIX>>(dimension, hessian_maximum_number_nonzeros, "MA57");
          }
          //else {
-         return std::make_unique<ExactHessianEvaluation<SYMMETRIC_MATRIX> >(dimension, hessian_maximum_number_nonzeros);
+         return std::make_unique<ExactHessianEvaluation<SYMMETRIC_MATRIX>>(dimension, hessian_maximum_number_nonzeros);
          //}
       }
       else {
