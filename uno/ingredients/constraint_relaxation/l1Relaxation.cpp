@@ -63,7 +63,10 @@ predicted_reduction_model, double step_length) {
 
 Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, const Direction&
 /*phase_2_direction*/) {
-   this->set_objective_multiplier(problem, current_iterate, 0.);
+   this->subproblem.build_objective_model(problem, current_iterate, 0.);
+   // add the elastic variables to the objective gradient and constraint Jacobian
+   this->add_elastic_variables_to_subproblem(this->elastic_variables);
+
    return this->subproblem.solve(statistics, problem, current_iterate);
 }
 
@@ -81,7 +84,7 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
       accept = true;
    }
    else {
-      trial_iterate.compute_constraints(problem);
+      trial_iterate.evaluate_constraints(problem);
       // compute the predicted reduction (both the subproblem and the l1 relaxation strategy contribute)
       const double predicted_reduction = this->compute_predicted_reduction(problem, current_iterate, direction, predicted_reduction_model, step_length);
       // invoke the globalization strategy for acceptance
@@ -92,16 +95,10 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
       statistics.add_statistic("penalty param.", this->penalty_parameter);
 
       // compute the residuals
-      trial_iterate.compute_objective(problem);
+      trial_iterate.evaluate_objective(problem);
       this->subproblem.compute_errors(problem, trial_iterate, direction.objective_multiplier);
    }
    return accept;
-}
-
-void l1Relaxation::set_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) {
-   this->subproblem.set_objective_multiplier(problem, current_iterate, objective_multiplier);
-   // add the elastic variables to the objective gradient and constraint Jacobian
-   this->add_elastic_variables_to_subproblem(this->elastic_variables);
 }
 
 Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
@@ -116,7 +113,10 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& 
 }
 
 Direction l1Relaxation::resolve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
-   this->set_objective_multiplier(problem, current_iterate, objective_multiplier);
+   this->subproblem.build_objective_model(problem, current_iterate, objective_multiplier);
+   // add the elastic variables to the objective gradient and constraint Jacobian
+   this->add_elastic_variables_to_subproblem(this->elastic_variables);
+
    Direction direction = this->subproblem.solve(statistics, problem, current_iterate);
    if (direction.constraint_partition.has_value()) {
       const ConstraintPartition& constraint_partition = direction.constraint_partition.value();

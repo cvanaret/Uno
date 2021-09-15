@@ -40,7 +40,7 @@ public:
    // virtual methods implemented by subclasses
    virtual void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate);
    virtual void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) = 0;
-   virtual void set_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) = 0;
+   virtual void build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) = 0;
    virtual void add_variable(size_t i, double lb, double ub, double objective_term, size_t j, double jacobian_term);
 
    // direction computation
@@ -56,6 +56,7 @@ public:
    virtual void set_initial_point(const std::vector<double>& initial_point) = 0;
 
    // available methods
+   void set_scaled_objective_gradient(const Problem& problem, Iterate& current_iterate, double objective_multiplier);
    // feasibility subproblem
    void compute_feasibility_linear_objective(const Iterate& current_iterate, const ConstraintPartition& constraint_partition);
    void generate_feasibility_bounds(const Problem& problem, const std::vector<double>& current_constraints, const ConstraintPartition&
@@ -95,8 +96,8 @@ protected:
 template<class SparseSymmetricMatrix>
 inline void Subproblem::compute_least_square_multipliers(const Problem& problem, SparseSymmetricMatrix& matrix, std::vector<double>& rhs, LinearSolver
 <SparseSymmetricMatrix>& solver, Iterate& current_iterate, std::vector<double>& multipliers, double multipliers_max_size) {
-   current_iterate.compute_objective_gradient(problem);
-   current_iterate.compute_constraints_jacobian(problem);
+   current_iterate.evaluate_objective_gradient(problem);
+   current_iterate.evaluate_constraints_jacobian(problem);
 
    /******************************/
    /* build the symmetric matrix */

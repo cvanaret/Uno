@@ -16,7 +16,7 @@ Iterate::Iterate(size_t number_variables, size_t number_constraints) :
    lagrangian_gradient(number_variables) {
 }
 
-void Iterate::compute_objective(const Problem& problem) {
+void Iterate::evaluate_objective(const Problem& problem) {
    if (!this->is_objective_computed) {
       this->objective = problem.evaluate_objective(this->x);
       this->is_objective_computed = true;
@@ -24,7 +24,7 @@ void Iterate::compute_objective(const Problem& problem) {
    }
 }
 
-void Iterate::compute_constraints(const Problem& problem) {
+void Iterate::evaluate_constraints(const Problem& problem) {
    if (!this->are_constraints_computed) {
       problem.evaluate_constraints(this->x, this->constraints);
       this->are_constraints_computed = true;
@@ -32,7 +32,7 @@ void Iterate::compute_constraints(const Problem& problem) {
    }
 }
 
-void Iterate::compute_objective_gradient(const Problem& problem) {
+void Iterate::evaluate_objective_gradient(const Problem& problem) {
    if (!this->is_objective_gradient_computed) {
       this->objective_gradient.clear();
       problem.evaluate_objective_gradient(this->x, this->objective_gradient);
@@ -40,7 +40,7 @@ void Iterate::compute_objective_gradient(const Problem& problem) {
    }
 }
 
-void Iterate::compute_constraints_jacobian(const Problem& problem) {
+void Iterate::evaluate_constraints_jacobian(const Problem& problem) {
    if (!this->is_constraints_jacobian_computed) {
       for (auto& row: this->constraints_jacobian) {
          row.clear();
@@ -56,7 +56,7 @@ void Iterate::evaluate_lagrangian_gradient(const Problem& problem, double object
 
    /* objective gradient */
    if (objective_multiplier != 0.) {
-      this->compute_objective_gradient(problem);
+      this->evaluate_objective_gradient(problem);
 
       /* scale the objective gradient */
       this->objective_gradient.for_each([&](size_t i, double derivative) {
@@ -71,7 +71,7 @@ void Iterate::evaluate_lagrangian_gradient(const Problem& problem, double object
    }
 
    /* constraints */
-   this->compute_constraints_jacobian(problem);
+   this->evaluate_constraints_jacobian(problem);
    for (size_t j = 0; j < problem.number_constraints; j++) {
       double multiplier_j = multipliers.constraints[j];
       if (multiplier_j != 0.) {

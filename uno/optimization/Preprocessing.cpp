@@ -5,7 +5,7 @@ void Preprocessing::apply(const Problem& problem, Iterate& first_iterate) {
    /* linear constraints */
    INFO << "Preprocessing phase: the problem has " << problem.linear_constraints.size() << " linear constraints\n";
    if (!problem.linear_constraints.empty()) {
-      first_iterate.compute_constraints(problem);
+      first_iterate.evaluate_constraints(problem);
 
       int infeasible_linear_constraints = 0;
       for (const auto element: problem.linear_constraints) {

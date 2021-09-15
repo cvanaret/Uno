@@ -47,13 +47,13 @@ double FeasibilityRestoration::compute_predicted_reduction(const Problem& /*prob
    return predicted_reduction_model.evaluate(step_length);
 }
 
-void FeasibilityRestoration::form_feasibility_problem(const Problem& problem, const Iterate& current_iterate, const std::vector<double>&
+void FeasibilityRestoration::form_feasibility_problem(const Problem& problem, Iterate& current_iterate, const std::vector<double>&
 phase_2_primal_direction, const ConstraintPartition& constraint_partition) {
    // set the multipliers of the violated constraints
    FeasibilityRestoration::set_restoration_multipliers(this->subproblem.constraints_multipliers, constraint_partition);
 
    // compute the objective gradient and (possibly) Hessian
-   this->subproblem.set_objective_multiplier(problem, current_iterate, 0.);
+   this->subproblem.build_objective_model(problem, current_iterate, 0.);
    this->subproblem.compute_feasibility_linear_objective(current_iterate, constraint_partition);
    this->subproblem.generate_feasibility_bounds(problem, current_iterate.constraints, constraint_partition);
    this->subproblem.set_initial_point(phase_2_primal_direction);
@@ -110,7 +110,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
          this->phase_1_strategy->notify(current_iterate);
       }
 
-      trial_iterate.compute_constraints(problem);
+      trial_iterate.evaluate_constraints(problem);
       if (this->current_phase == FEASIBILITY_RESTORATION) {
          // if restoration phase, recompute progress measures of trial point
          this->compute_infeasibility_measures(problem, trial_iterate, direction.constraint_partition);
@@ -136,7 +136,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
          FeasibilityRestoration::set_restoration_multipliers(trial_iterate.multipliers.constraints, direction.constraint_partition.value());
       }
       // compute the errors
-      trial_iterate.compute_objective(problem);
+      trial_iterate.evaluate_objective(problem);
       this->subproblem.compute_errors(problem, trial_iterate, direction.objective_multiplier);
    }
    return accept;
@@ -157,7 +157,7 @@ constraint_partition) {
 
 void FeasibilityRestoration::compute_infeasibility_measures(const Problem& problem, Iterate& iterate,
       const std::optional<ConstraintPartition>& constraint_partition) {
-   iterate.compute_constraints(problem);
+   iterate.evaluate_constraints(problem);
    // optimality measure: residual of linearly infeasible constraints
    if (constraint_partition.has_value()) {
       // feasibility measure: residual of all constraints

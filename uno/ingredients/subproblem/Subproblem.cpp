@@ -35,7 +35,7 @@ Subproblem::Subproblem(size_t number_variables, size_t number_constraints) :
 
 void Subproblem::initialize(Statistics& /*statistics*/, const Problem& problem, Iterate& first_iterate) {
    /* compute the optimality and feasibility measures of the initial point */
-   first_iterate.compute_constraints(problem);
+   first_iterate.evaluate_constraints(problem);
    this->compute_progress_measures(problem, first_iterate);
 }
 
@@ -46,11 +46,11 @@ void Subproblem::add_variable(size_t i, double lb, double ub, double objective_t
 }
 
 void Subproblem::compute_progress_measures(const Problem& problem, Iterate& iterate) {
-   iterate.compute_constraints(problem);
+   iterate.evaluate_constraints(problem);
    // feasibility measure: residual of all constraints
    iterate.errors.constraints = problem.compute_constraint_violation(iterate.constraints, L1_NORM);
    // optimality
-   iterate.compute_objective(problem);
+   iterate.evaluate_objective(problem);
    iterate.progress = {iterate.errors.constraints, iterate.objective};
 }
 
@@ -80,6 +80,20 @@ void Subproblem::set_constraints_bounds(const Problem& problem, const std::vecto
       double lb = problem.constraint_bounds[j].lb - current_constraints[j];
       double ub = problem.constraint_bounds[j].ub - current_constraints[j];
       this->constraints_bounds[j] = {lb, ub};
+   }
+}
+
+void Subproblem::set_scaled_objective_gradient(const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
+   // scale objective gradient
+   current_iterate.evaluate_objective_gradient(problem);
+   if (objective_multiplier == 0.) {
+      this->objective_gradient.clear();
+   }
+   else {
+      this->objective_gradient = current_iterate.objective_gradient;
+      if (objective_multiplier != 1.) {
+         scale(this->objective_gradient, objective_multiplier);
+      }
    }
 }
 
@@ -131,7 +145,7 @@ double Subproblem::compute_complementarity_error(const Problem& problem, Iterate
       }
    }
    /* constraints */
-   iterate.compute_constraints(problem);
+   iterate.evaluate_constraints(problem);
    for (size_t j = 0; j < problem.number_constraints; j++) {
       double multiplier_j = multipliers.constraints[j];
       if (iterate.constraints[j] < problem.constraint_bounds[j].lb) {
@@ -153,7 +167,7 @@ double Subproblem::compute_complementarity_error(const Problem& problem, Iterate
 }
 
 void Subproblem::compute_errors(const Problem& problem, Iterate& iterate, double objective_multiplier) const {
-   iterate.compute_constraints(problem);
+   iterate.evaluate_constraints(problem);
    iterate.errors.constraints = problem.compute_constraint_violation(iterate.constraints, L1_NORM);
    // compute the KKT error only if the objective multiplier is positive
    iterate.errors.KKT = Subproblem::compute_first_order_error(problem, iterate, 0. < objective_multiplier ? objective_multiplier : 1.);

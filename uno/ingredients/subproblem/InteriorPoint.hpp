@@ -33,7 +33,7 @@ public:
    void set_constraints(const Problem& problem, Iterate& iterate);
    void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) override;
    void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
-   void set_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
+   void build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) override;
    void add_variable(size_t i, double lb, double ub, double objective_term, size_t j, double jacobian_term) override;
    Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
    Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) override;
@@ -141,7 +141,7 @@ inline void InteriorPoint<LinearSolverType>::set_initial_point(const std::vector
 
 template<typename LinearSolverType>
 inline void InteriorPoint<LinearSolverType>::set_constraints(const Problem& problem, Iterate& iterate) {
-   iterate.compute_constraints(problem);
+   iterate.evaluate_constraints(problem);
    // transform the constraints into "= 0" equalities
    for (const auto& element: problem.equality_constraints) {
       size_t j = element.first;
@@ -165,8 +165,8 @@ inline void InteriorPoint<LinearSolverType>::initialize(Statistics& statistics, 
    }
 
    // initialize the slacks and add contribution to the constraint Jacobian
-   first_iterate.compute_constraints(problem);
-   first_iterate.compute_constraints_jacobian(problem);
+   first_iterate.evaluate_constraints(problem);
+   first_iterate.evaluate_constraints_jacobian(problem);
    for (const auto[j, i]: problem.inequality_constraints) {
       const double slack_value = Subproblem::push_variable_to_interior(first_iterate.constraints[j], problem.constraint_bounds[j]);
       first_iterate.x[problem.number_variables + i] = slack_value;
@@ -212,36 +212,25 @@ inline void InteriorPoint<LinearSolverType>::create_current_subproblem(const Pro
       this->constraints_jacobian[j].insert(problem.number_variables + i, -1.);
    }
 
-   // objective gradient
-   this->objective_gradient.clear();
-   problem.evaluate_objective_gradient(current_iterate.x, this->objective_gradient);
-   for (size_t i: this->lower_bounded_variables) {
-      this->objective_gradient.insert(i, -this->barrier_parameter / (current_iterate.x[i] - this->variables_bounds[i].lb));
-   }
-   for (size_t i: this->upper_bounded_variables) {
-      this->objective_gradient.insert(i, -this->barrier_parameter / (current_iterate.x[i] - this->variables_bounds[i].ub));
-   }
-
-   // Hessian (scaled by the objective multiplier)
-   this->set_objective_multiplier(problem, current_iterate, objective_multiplier);
+   // build a model of the objective scaled by the objective multiplier
+   this->build_objective_model(problem, current_iterate, objective_multiplier);
 
    // bounds of the variables
    this->set_variables_bounds(problem, current_iterate, trust_region_radius);
 }
 
 template<typename LinearSolverType>
-inline void InteriorPoint<LinearSolverType>::set_objective_multiplier(const Problem& problem, const Iterate& current_iterate,
-      double objective_multiplier) {
+inline void InteriorPoint<LinearSolverType>::build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
    // evaluate the Hessian
    this->hessian_evaluation->compute(problem, current_iterate.x, objective_multiplier, this->constraints_multipliers);
 
-   // scale objective gradient
-   if (objective_multiplier == 0.) {
-      this->objective_gradient.clear();
+   // objective gradient
+   this->set_scaled_objective_gradient(problem, current_iterate, objective_multiplier);
+   for (size_t i: this->lower_bounded_variables) {
+      this->objective_gradient.insert(i, -this->barrier_parameter / (current_iterate.x[i] - this->variables_bounds[i].lb));
    }
-   else if (objective_multiplier < 1.) {
-      this->objective_gradient = current_iterate.objective_gradient;
-      scale(this->objective_gradient, objective_multiplier);
+   for (size_t i: this->upper_bounded_variables) {
+      this->objective_gradient.insert(i, -this->barrier_parameter / (current_iterate.x[i] - this->variables_bounds[i].ub));
    }
 }
 
@@ -428,7 +417,7 @@ inline double InteriorPoint<LinearSolverType>::evaluate_barrier_function(const P
    }
    objective *= this->barrier_parameter;
    // original objective
-   iterate.compute_objective(problem);
+   iterate.evaluate_objective(problem);
    objective += iterate.objective;
    return objective;
 }
