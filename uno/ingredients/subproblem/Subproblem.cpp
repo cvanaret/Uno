@@ -14,7 +14,7 @@ double PredictedReductionModel::evaluate(double step_length) {
    else {
       // unique evaluation of partial_step_precomputation
       if (this->partial_step_predicted_reduction == nullptr) {
-         // compute the complicated stuff
+         // precompute the complicated stuff
          this->partial_step_predicted_reduction = this->partial_step_precomputation();
       }
       return this->partial_step_predicted_reduction(step_length);

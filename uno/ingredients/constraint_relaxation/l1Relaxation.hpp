@@ -37,7 +37,7 @@ protected:
    const l1RelaxationParameters parameters;
 
    Direction solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate);
-   Direction solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double objective_multiplier);
+   Direction resolve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double objective_multiplier);
    Direction solve_with_steering_rule(Statistics& statistics, const Problem& problem, Iterate& current_iterate);
    void set_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier);
    double compute_linearized_constraint_residual(std::vector<double>& direction) const;

@@ -45,7 +45,7 @@ void Iterate::compute_constraints_jacobian(const Problem& problem) {
       for (auto& row: this->constraints_jacobian) {
          row.clear();
       }
-      problem.constraints_jacobian(this->x, this->constraints_jacobian);
+      problem.evaluate_constraints_jacobian(this->x, this->constraints_jacobian);
       this->is_constraints_jacobian_computed = true;
       Iterate::number_eval_jacobian++;
    }
@@ -82,6 +82,14 @@ void Iterate::evaluate_lagrangian_gradient(const Problem& problem, double object
          });
       }
    }
+}
+
+void Iterate::change_number_variables(size_t number_variables) {
+   this->x.resize(number_variables);
+   this->multipliers.lower_bounds.resize(number_variables);
+   this->multipliers.upper_bounds.resize(number_variables);
+   this->objective_gradient.reserve(number_variables);
+   this->lagrangian_gradient.resize(number_variables);
 }
 
 std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {

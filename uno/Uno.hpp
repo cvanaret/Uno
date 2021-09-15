@@ -4,6 +4,14 @@
 #include "optimization/Problem.hpp"
 #include "ingredients/mechanism/GlobalizationMechanism.hpp"
 
+enum TerminationStatus {
+   NOT_OPTIMAL = 0,
+   KKT_POINT, /* feasible stationary point */
+   FJ_POINT, /* infeasible stationary point */
+   FEASIBLE_SMALL_STEP,
+   INFEASIBLE_SMALL_STEP
+};
+
 struct Result {
    TerminationStatus status;
    Iterate solution;

@@ -30,7 +30,7 @@ void Preprocessing::apply(const Problem& problem, Iterate& first_iterate) {
             constraints_jacobian[j].reserve(problem.number_variables);
          }
          for (const auto[j, linear_constraint_index]: problem.linear_constraints) {
-            problem.constraint_gradient(first_iterate.x, j, constraints_jacobian[linear_constraint_index]);
+            problem.evaluate_constraint_gradient(first_iterate.x, j, constraints_jacobian[linear_constraint_index]);
          }
          // variables bounds
          std::vector<Range> variables_bounds(problem.number_variables);

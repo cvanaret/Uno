@@ -17,7 +17,7 @@ struct InteriorPointParameters {
 
 struct UnstableInertiaCorrection : public std::exception {
 
-   const char* what() const throw() {
+   [[nodiscard]] const char* what() const throw() {
       return "The inertia correction got unstable (delta_w > 1e40)";
    }
 };
@@ -71,7 +71,7 @@ private:
 
    void update_barrier_parameter(const Iterate& current_iterate);
    void set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;
-   void factorize(const Problem& problem, typename LinearSolverType::matrix_type& kkt_matrix);
+   void factorize(const Problem& problem, typename LinearSolverType::matrix_type& current_kkt_matrix);
    double compute_barrier_directional_derivative(const std::vector<double>& solution);
    double evaluate_barrier_function(const Problem& problem, Iterate& iterate);
    double primal_fraction_to_boundary(const Iterate& current_iterate, const std::vector<double>& ipm_solution, double tau);
@@ -100,15 +100,10 @@ hessian_evaluation_method, double initial_barrier_parameter, double default_mult
             2 * this->number_variables /* diagonal barrier terms */ + this->number_variables * number_constraints /* Jacobian */),
       linear_solver(LinearSolverFactory<LinearSolverType>::create(this->number_variables + number_constraints)),
       parameters({0.99, 1e10, 100., 0.2, 1.5, 10.}),
-      default_multiplier(default_multiplier),
-      solution_IPM(this->number_variables + number_constraints),
-      barrier_constraints(number_constraints),
-      rhs(this->number_variables + number_constraints),
-      lower_delta_z(this->number_variables), upper_delta_z(this->number_variables) {
+      default_multiplier(default_multiplier), solution_IPM(this->number_variables + number_constraints), barrier_constraints(number_constraints),
+      rhs(this->number_variables + number_constraints), lower_delta_z(this->number_variables), upper_delta_z(this->number_variables) {
    // register the original variables bounds
-   for (size_t i = 0; i < problem.number_variables; i++) {
-      this->variables_bounds[i] = problem.variables_bounds[i];
-   }
+   copy_from(this->variables_bounds, problem.variables_bounds, problem.number_variables);
 
    // constraints are transformed into "c(x) = 0"
    for (size_t j = 0; j < problem.number_constraints; j++) {
@@ -125,6 +120,7 @@ hessian_evaluation_method, double initial_barrier_parameter, double default_mult
       }
    }
    // identify the inequality constraint slacks
+   DEBUG << problem.inequality_constraints.size() << " slacks\n";
    for (const auto[j, i]: problem.inequality_constraints) {
       size_t slack_index = number_variables + i;
       if (problem.constraint_status[j] == BOUNDED_LOWER || problem.constraint_status[j] == BOUNDED_BOTH_SIDES) {
@@ -161,13 +157,26 @@ inline void InteriorPoint<LinearSolverType>::initialize(Statistics& statistics, 
    statistics.add_column("barrier param.", Statistics::double_width, 8);
 
    // resize to the new size (primals + slacks)
-   first_iterate.x.resize(this->number_variables);
-   first_iterate.multipliers.lower_bounds.resize(this->number_variables);
-   first_iterate.multipliers.upper_bounds.resize(this->number_variables);
+   first_iterate.change_number_variables(this->number_variables);
 
    // make the initial point strictly feasible
    for (size_t i = 0; i < problem.number_variables; i++) {
       first_iterate.x[i] = Subproblem::push_variable_to_interior(first_iterate.x[i], problem.variables_bounds[i]);
+   }
+
+   // initialize the slacks and add contribution to the constraint Jacobian
+   first_iterate.compute_constraints(problem);
+   first_iterate.compute_constraints_jacobian(problem);
+   for (const auto[j, i]: problem.inequality_constraints) {
+      const double slack_value = Subproblem::push_variable_to_interior(first_iterate.constraints[j], problem.constraint_bounds[j]);
+      first_iterate.x[problem.number_variables + i] = slack_value;
+      first_iterate.constraints_jacobian[j].insert(problem.number_variables + i, -1.);
+   }
+
+   // compute least-square multipliers
+   if (problem.is_constrained()) {
+      Subproblem::compute_least_square_multipliers(problem, this->kkt_matrix, this->rhs, *this->linear_solver, first_iterate,
+            first_iterate.multipliers.constraints);
    }
 
    // set the bound multipliers
@@ -177,29 +186,6 @@ inline void InteriorPoint<LinearSolverType>::initialize(Statistics& statistics, 
    for (size_t i: this->upper_bounded_variables) {
       first_iterate.multipliers.upper_bounds[i] = -this->default_multiplier;
    }
-
-   // initialize the slacks and add contribution to the constraint Jacobian
-   first_iterate.compute_constraints(problem);
-   first_iterate.compute_constraints_jacobian(problem);
-   for (const auto[j, i]: problem.inequality_constraints) {
-      double slack_value = Subproblem::push_variable_to_interior(first_iterate.constraints[j], problem.constraint_bounds[j]);
-      first_iterate.x[problem.number_variables + i] = slack_value;
-      first_iterate.constraints_jacobian[j].insert(problem.number_variables + i, -1.);
-   }
-
-   // compute least-square multipliers
-   if (0 < problem.number_constraints) {
-      Subproblem::compute_least_square_multipliers(problem, this->kkt_matrix, this->rhs, *this->linear_solver, first_iterate,
-            first_iterate.multipliers.constraints);
-   }
-
-   DEBUG << problem.inequality_constraints.size() << " slacks\n";
-   DEBUG << first_iterate.multipliers.lower_bounds.size() << " bound multipliers\n";
-   DEBUG << first_iterate.multipliers.constraints.size() << " constraint multipliers\n";
-   DEBUG << "variable lb: ";
-   print_vector(DEBUG, this->lower_bounded_variables);
-   DEBUG << "variable ub: ";
-   print_vector(DEBUG, this->upper_bounded_variables);
 
    // compute the optimality and feasibility measures of the initial point
    this->set_constraints(problem, first_iterate);
@@ -215,12 +201,12 @@ inline void InteriorPoint<LinearSolverType>::create_current_subproblem(const Pro
 
    this->set_constraints(problem, current_iterate);
    copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
-   // compute first- and second-order information
+
    // constraint Jacobian
    for (auto& row: this->constraints_jacobian) {
       row.clear();
    }
-   problem.constraints_jacobian(current_iterate.x, this->constraints_jacobian);
+   problem.evaluate_constraints_jacobian(current_iterate.x, this->constraints_jacobian);
    // add the slack variables
    for (const auto[j, i]: problem.inequality_constraints) {
       this->constraints_jacobian[j].insert(problem.number_variables + i, -1.);
@@ -415,13 +401,13 @@ inline void InteriorPoint<LinearSolverType>::set_variables_bounds(const Problem&
 }
 
 template<typename LinearSolverType>
-inline void InteriorPoint<LinearSolverType>::factorize(const Problem& problem, typename LinearSolverType::matrix_type& kkt_matrix) {
+inline void InteriorPoint<LinearSolverType>::factorize(const Problem& problem, typename LinearSolverType::matrix_type& current_kkt_matrix) {
    // compute the symbolic factorization only when:
    // the problem has a non-constant augmented system (ie is not an LP or a QP) or it is the first factorization
    if (this->number_factorizations == 0 || !problem.fixed_hessian_sparsity || problem.type == NONLINEAR) {
-      this->linear_solver->do_symbolic_factorization(kkt_matrix);
+      this->linear_solver->do_symbolic_factorization(current_kkt_matrix);
    }
-   this->linear_solver->do_numerical_factorization(kkt_matrix);
+   this->linear_solver->do_numerical_factorization(current_kkt_matrix);
    this->number_factorizations++;
 }
 
