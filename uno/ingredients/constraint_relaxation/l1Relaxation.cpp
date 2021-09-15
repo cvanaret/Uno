@@ -115,7 +115,7 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& 
    return direction;
 }
 
-Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
+Direction l1Relaxation::resolve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
    this->set_objective_multiplier(problem, current_iterate, objective_multiplier);
    Direction direction = this->subproblem.solve(statistics, problem, current_iterate);
    if (direction.constraint_partition.has_value()) {
@@ -143,7 +143,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const P
 
          // stage c: compute the lowest possible constraint violation (penalty = 0)
          DEBUG << "Compute ideal solution (param = 0):\n";
-         Direction direction_lowest_violation = this->solve_subproblem(statistics, problem, current_iterate, 0.);
+         Direction direction_lowest_violation = this->resolve_subproblem(statistics, problem, current_iterate, 0.);
          const double residual_lowest_violation = this->compute_linearized_constraint_residual(direction_lowest_violation.x);
          DEBUG << "Ideal linearized residual mk(dk): " << residual_lowest_violation << "\n\n";
 
@@ -166,7 +166,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const P
                      direction = direction_lowest_violation;
                   }
                   else {
-                     direction = this->solve_subproblem(statistics, problem, current_iterate, this->penalty_parameter);
+                     direction = this->resolve_subproblem(statistics, problem, current_iterate, this->penalty_parameter);
                   }
                }
 
@@ -196,7 +196,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const P
                      }
                      else {
                         DEBUG << "\nAttempting to solve with penalty parameter " << this->penalty_parameter << "\n";
-                        direction = this->solve_subproblem(statistics, problem, current_iterate, this->penalty_parameter);
+                        direction = this->resolve_subproblem(statistics, problem, current_iterate, this->penalty_parameter);
    
                         linearized_residual = this->compute_linearized_constraint_residual(direction.x);
                         DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";

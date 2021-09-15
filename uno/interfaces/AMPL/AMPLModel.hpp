@@ -31,13 +31,13 @@ public:
    //std::vector<bool> constraint_is_uncertainty_set;
    [[nodiscard]] double evaluate_constraint(int j, const std::vector<double>& x) const override;
    void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const override;
-   void constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const override;
-   void constraints_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraints_jacobian) const override;
+   void evaluate_constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const override;
+   void evaluate_constraints_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraints_jacobian) const override;
 
    /* Hessian */
-   void lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
+   void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
          CSCSymmetricMatrix& hessian) const override;
-   void lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
+   void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
          COOSymmetricMatrix& hessian) const;
 
    void set_initial_primal_point(std::vector<double>& x) override;

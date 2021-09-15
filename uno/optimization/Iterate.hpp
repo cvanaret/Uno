@@ -6,14 +6,6 @@
 #include "Problem.hpp"
 #include "Constraint.hpp"
 
-enum TerminationStatus {
-   NOT_OPTIMAL = 0,
-   KKT_POINT, /* feasible stationary point */
-   FJ_POINT, /* infeasible stationary point */
-   FEASIBLE_SMALL_STEP,
-   INFEASIBLE_SMALL_STEP
-};
-
 struct Errors {
    double constraints;
    double KKT;
@@ -68,6 +60,8 @@ public:
    void compute_objective_gradient(const Problem& problem);
    void compute_constraints_jacobian(const Problem& problem);
    void evaluate_lagrangian_gradient(const Problem& problem, double objective_multiplier, const Multipliers& multipliers);
+
+   void change_number_variables(size_t number_variables);
 
    friend std::ostream& operator<<(std::ostream& stream, const Iterate& iterate);
 };

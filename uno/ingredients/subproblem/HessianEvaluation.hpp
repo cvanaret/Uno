@@ -82,7 +82,7 @@ public:
    void compute(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
          const std::vector<double>& constraint_multipliers) override {
       /* compute Hessian */
-      problem.lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, this->hessian);
+      problem.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, this->hessian);
       this->evaluation_count++;
    }
 };

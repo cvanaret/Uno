@@ -49,7 +49,7 @@ inline void SQP<QPSolverType>::create_current_subproblem(const Problem& problem,
    for (auto& row: this->constraints_jacobian) {
       row.clear();
    }
-   problem.constraints_jacobian(current_iterate.x, this->constraints_jacobian);
+   problem.evaluate_constraints_jacobian(current_iterate.x, this->constraints_jacobian);
    this->objective_gradient.clear();
    problem.evaluate_objective_gradient(current_iterate.x, this->objective_gradient);
    this->set_objective_multiplier(problem, current_iterate, objective_multiplier);

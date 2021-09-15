@@ -98,6 +98,9 @@ const {
    };
    return norm(residual_function, constraint_set.size(), residual_norm);
 }
+bool Problem::is_constrained() const {
+   return (0 < this->number_constraints);
+}
 
 /* native C++ problem */
 

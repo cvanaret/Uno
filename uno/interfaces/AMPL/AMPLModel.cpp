@@ -116,7 +116,7 @@ void AMPLModel::evaluate_constraints(const std::vector<double>& x, std::vector<d
 }
 
 /* sparse gradient */
-void AMPLModel::constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const {
+void AMPLModel::evaluate_constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const {
    const int congrd_mode_backup = this->asl_->i.congrd_mode;
    this->asl_->i.congrd_mode = 1; // sparse computation
 
@@ -142,9 +142,9 @@ void AMPLModel::constraint_gradient(const std::vector<double>& x, size_t j, Spar
    this->asl_->i.congrd_mode = congrd_mode_backup;
 }
 
-void AMPLModel::constraints_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraints_jacobian) const {
+void AMPLModel::evaluate_constraints_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraints_jacobian) const {
    for (size_t j = 0; j < this->number_constraints; j++) {
-      this->constraint_gradient(x, j, constraints_jacobian[j]);
+      this->evaluate_constraint_gradient(x, j, constraints_jacobian[j]);
    }
 }
 
@@ -253,7 +253,7 @@ size_t AMPLModel::compute_hessian_number_nonzeros(double objective_multiplier, c
    return number_non_zeros;
 }
 
-void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
+void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
       CSCSymmetricMatrix& hessian) const {
    // register the vector of variables
    (*(this->asl_)->p.Xknown)(this->asl_, const_cast<double*>(x.data()), 0);
@@ -287,7 +287,7 @@ void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objectiv
    const int* ampl_column_start = this->asl_->i.sputinfo_->hcolstarts;
    const int* ampl_row_index = this->asl_->i.sputinfo_->hrownos;
    // check that the column pointers are sorted in increasing order
-   assert(in_increasing_order(ampl_column_start, this->number_variables + 1) && "AMPLModel::lagrangian_hessian: column starts are not ordered");
+   assert(in_increasing_order(ampl_column_start, this->number_variables + 1) && "AMPLModel::evaluate_lagrangian_hessian: column starts are not ordered");
 
    for (size_t k = 0; k < this->number_variables + 1; k++) {
       hessian.column_start[k] = ampl_column_start[k];
@@ -307,7 +307,7 @@ void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objectiv
    this->asl_->i.x_known = 0;
 }
 
-void AMPLModel::lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
+void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
       COOSymmetricMatrix& hessian) const {
    // register the vector of variables
    (*(this->asl_)->p.Xknown)(this->asl_, const_cast<double*>(x.data()), 0);
