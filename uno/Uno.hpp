@@ -13,6 +13,8 @@ enum TerminationStatus {
 };
 
 struct Result {
+   Result() = delete;
+
    TerminationStatus status;
    Iterate solution;
    size_t number_variables;
@@ -52,11 +54,11 @@ public:
     */
    Result solve(const Problem& problem, Iterate& first_iterate, bool use_preprocessing);
 
+private:
    GlobalizationMechanism& globalization_mechanism; /*!< Step control strategy (trust region or line-search) */
    double tolerance; /*!< Tolerance of the termination criteria */
    int max_iterations; /*!< Maximum number of iterations */
 
-private:
    static Statistics create_statistics();
    static void add_statistics(Statistics& statistics, const Iterate& new_iterate, int major_iterations);
    [[nodiscard]] bool termination_criterion(TerminationStatus current_status, int iteration) const;

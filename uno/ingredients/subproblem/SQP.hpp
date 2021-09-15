@@ -14,7 +14,7 @@ public:
          bool use_trust_region);
 
    void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
-   void set_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) override;
+   void build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) override;
    void set_initial_point(const std::vector<double>& point) override;
    Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const override;
@@ -44,39 +44,37 @@ hessian_evaluation_method, bool use_trust_region) :
 template<typename QPSolverType>
 inline void SQP<QPSolverType>::create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) {
    copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
-   /* compute first- and second-order information */
+
+   // constraints
    problem.evaluate_constraints(current_iterate.x, current_iterate.constraints);
    for (auto& row: this->constraints_jacobian) {
       row.clear();
    }
+   // constraint Jacobian
    problem.evaluate_constraints_jacobian(current_iterate.x, this->constraints_jacobian);
-   this->objective_gradient.clear();
-   problem.evaluate_objective_gradient(current_iterate.x, this->objective_gradient);
-   this->set_objective_multiplier(problem, current_iterate, objective_multiplier);
 
-   /* bounds of the variables */
+   // objective
+   this->build_objective_model(problem, current_iterate, objective_multiplier);
+
+   // bounds of the variables
    this->set_variables_bounds(problem, current_iterate, trust_region_radius);
 
-   /* bounds of the linearized constraints */
+   // bounds of the linearized constraints
    this->set_constraints_bounds(problem, current_iterate.constraints);
 
-   /* set the initial point */
+   // reset the initial point
    clear(this->initial_point);
 }
 
 template<typename QPSolverType>
-inline void SQP<QPSolverType>::set_objective_multiplier(const Problem& problem, const Iterate& current_iterate, double objective_multiplier) {
-   // evaluate the Hessian
+inline void SQP<QPSolverType>::build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
+   // Hessian
    this->hessian_evaluation->compute(problem, current_iterate.x, objective_multiplier, this->constraints_multipliers);
 
-   // scale objective gradient
-   if (objective_multiplier == 0.) {
-      this->objective_gradient.clear();
-   }
-   else if (objective_multiplier < 1.) {
-      this->objective_gradient = current_iterate.objective_gradient;
-      scale(this->objective_gradient, objective_multiplier);
-   }
+   // objective gradient
+   this->set_scaled_objective_gradient(problem, current_iterate, objective_multiplier);
+
+   // initial point
    clear(this->initial_point);
 }
 

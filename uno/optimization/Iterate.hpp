@@ -55,10 +55,10 @@ public:
    Errors errors{0., 0., 0., 0.};
    ProgressMeasures progress{0., 0.};
 
-   void compute_objective(const Problem& problem);
-   void compute_constraints(const Problem& problem);
-   void compute_objective_gradient(const Problem& problem);
-   void compute_constraints_jacobian(const Problem& problem);
+   void evaluate_objective(const Problem& problem);
+   void evaluate_constraints(const Problem& problem);
+   void evaluate_objective_gradient(const Problem& problem);
+   void evaluate_constraints_jacobian(const Problem& problem);
    void evaluate_lagrangian_gradient(const Problem& problem, double objective_multiplier, const Multipliers& multipliers);
 
    void change_number_variables(size_t number_variables);
