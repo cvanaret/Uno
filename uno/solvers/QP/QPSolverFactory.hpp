@@ -14,7 +14,7 @@ class QPSolverFactory;
 template<>
 class QPSolverFactory<BQPDSolver> {
 public:
-   static std::unique_ptr<QPSolver<typename BQPDSolver::matrix_type> > create(size_t number_variables, size_t number_constraints,
+   static std::unique_ptr<QPSolver<typename BQPDSolver::matrix_type>> create(size_t number_variables, size_t number_constraints,
          size_t maximum_number_nonzeros, bool quadratic_programming) {
       return std::make_unique<BQPDSolver>(number_variables, number_constraints, maximum_number_nonzeros, quadratic_programming);
    }
