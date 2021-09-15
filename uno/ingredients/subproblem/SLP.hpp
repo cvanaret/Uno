@@ -39,10 +39,10 @@ inline void SLP<LPSolverType>::create_current_subproblem(const Problem& problem,
    copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
    /* compute first- and second-order information */
    problem.evaluate_constraints(current_iterate.x, current_iterate.constraints);
-   for (auto& row: this->constraints_jacobian) {
+   for (auto& row: this->constraint_jacobian) {
       row.clear();
    }
-   problem.evaluate_constraints_jacobian(current_iterate.x, this->constraints_jacobian);
+   problem.evaluate_constraint_jacobian(current_iterate.x, this->constraint_jacobian);
 
    this->build_objective_model(problem, current_iterate, objective_multiplier);
 
@@ -73,13 +73,14 @@ inline void SLP<LPSolverType>::set_initial_point(const std::vector<double>& poin
 template<typename LPSolverType>
 inline Direction SLP<LPSolverType>::solve(Statistics& /*statistics*/, const Problem& problem, Iterate& current_iterate) {
    /* solve the LP */
-   Direction direction = this->solver->solve_LP(variables_bounds, constraints_bounds, this->objective_gradient, this->constraints_jacobian,
-         this->initial_point);
-   // compute dual displacements (SQP methods compute the new duals, not the displacements)
+   Direction direction = this->solver->solve_LP(this->variables_bounds, this->constraints_bounds, this->objective_gradient,
+         this->constraint_jacobian, this->initial_point);
+   this->number_subproblems_solved++;
+
+   // compute dual displacements (SLP methods usually compute the new duals, not the displacements)
    for (size_t j = 0; j < problem.number_constraints; j++) {
       direction.multipliers.constraints[j] -= current_iterate.multipliers.constraints[j];
    }
-   this->number_subproblems_solved++;
    return direction;
 }
 
