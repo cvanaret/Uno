@@ -4,7 +4,7 @@
 #include <exception>
 #include "Subproblem.hpp"
 #include "solvers/linear/LinearSolver.hpp"
-#include "HessianEvaluation.hpp"
+#include "HessianModel.hpp"
 
 struct InteriorPointParameters {
    double tau_min;
@@ -46,7 +46,7 @@ private:
    // barrier parameter
    double barrier_parameter;
    const double tolerance;
-   const std::unique_ptr <HessianEvaluation<typename LinearSolverType::matrix_type>> hessian_evaluation;
+   const std::unique_ptr <HessianModel<typename LinearSolverType::matrix_type>> hessian_model;
    typename LinearSolverType::matrix_type kkt_matrix;
    const std::unique_ptr <LinearSolver<typename LinearSolverType::matrix_type>> linear_solver;
    const InteriorPointParameters parameters;
@@ -94,7 +94,7 @@ hessian_evaluation_method, double initial_barrier_parameter, double default_mult
       Subproblem(number_variables + problem.inequality_constraints.size(), number_constraints),
       barrier_parameter(initial_barrier_parameter), tolerance(tolerance),
       // if no trust region is used, the problem should be convexified. However, the inertia of the augmented matrix will be corrected later
-      hessian_evaluation(HessianEvaluationFactory<typename LinearSolverType::matrix_type>::create(hessian_evaluation_method,
+      hessian_model(HessianModelFactory<typename LinearSolverType::matrix_type>::create(hessian_evaluation_method,
             problem.number_variables, problem.hessian_maximum_number_nonzeros, false)),
       kkt_matrix(this->number_variables + number_constraints, problem.hessian_maximum_number_nonzeros + this->number_variables /* regularization */ +
             2 * this->number_variables /* diagonal barrier terms */ + this->number_variables * number_constraints /* Jacobian */),
@@ -221,7 +221,7 @@ inline void InteriorPoint<LinearSolverType>::create_current_subproblem(const Pro
 template<typename LinearSolverType>
 inline void InteriorPoint<LinearSolverType>::build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
    // evaluate the Hessian
-   this->hessian_evaluation->compute(problem, current_iterate.x, objective_multiplier, this->constraints_multipliers);
+   this->hessian_model->evaluate(problem, current_iterate.x, objective_multiplier, this->constraints_multipliers);
 
    // objective gradient
    this->set_scaled_objective_gradient(problem, current_iterate, objective_multiplier);
@@ -355,7 +355,7 @@ inline void InteriorPoint<LinearSolverType>::register_accepted_iterate(Iterate& 
 
 template<typename LinearSolverType>
 inline int InteriorPoint<LinearSolverType>::get_hessian_evaluation_count() const {
-   return this->hessian_evaluation->evaluation_count;
+   return this->hessian_model->evaluation_count;
 }
 
 template<typename LinearSolverType>
@@ -464,7 +464,7 @@ inline void InteriorPoint<LinearSolverType>::assemble_kkt_matrix(Iterate& curren
    // copy the Lagrangian Hessian
    // assume that the Hessian is sorted
    size_t current_column = 0;
-   this->hessian_evaluation->hessian.for_each([&](int i, int j, double entry) {
+   this->hessian_model->hessian.for_each([&](int i, int j, double entry) {
       if (j != static_cast<int>(current_column)) {
          for (size_t column = current_column; column < static_cast<size_t>(j); column++) {
             this->kkt_matrix.finalize(column);

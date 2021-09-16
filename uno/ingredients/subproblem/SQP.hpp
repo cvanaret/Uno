@@ -3,7 +3,7 @@
 
 #include <cassert>
 #include "Subproblem.hpp"
-#include "HessianEvaluation.hpp"
+#include "HessianModel.hpp"
 #include "solvers/QP/QPSolver.hpp"
 #include "solvers/QP/QPSolverFactory.hpp"
 
@@ -23,7 +23,7 @@ public:
 protected:
    // use pointers to allow polymorphism
    const std::unique_ptr <QPSolver<typename QPSolverType::matrix_type>> solver; /*!< Solver that solves the subproblem */
-   const std::unique_ptr <HessianEvaluation<typename QPSolverType::matrix_type>> hessian_evaluation; /*!< Strategy to compute or approximate the
+   const std::unique_ptr <HessianModel<typename QPSolverType::matrix_type>> hessian_model; /*!< Strategy to evaluate or approximate the
  * Hessian */
    std::vector<double> initial_point;
 };
@@ -36,7 +36,7 @@ hessian_evaluation_method, bool use_trust_region) :
       solver(QPSolverFactory<QPSolverType>::create(number_variables, number_constraints,
             problem.hessian_maximum_number_nonzeros + number_variables, true)),
       // if no trust region is used, the problem should be convexified by controlling the inertia of the Hessian
-      hessian_evaluation(HessianEvaluationFactory<typename QPSolverType::matrix_type>::create(hessian_evaluation_method, number_variables,
+      hessian_model(HessianModelFactory<typename QPSolverType::matrix_type>::create(hessian_evaluation_method, number_variables,
             problem.hessian_maximum_number_nonzeros + problem.number_variables, !use_trust_region)),
       initial_point(number_variables) {
 }
@@ -68,7 +68,7 @@ inline void SQP<QPSolverType>::create_current_subproblem(const Problem& problem,
 template<typename QPSolverType>
 inline void SQP<QPSolverType>::build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
    // Hessian
-   this->hessian_evaluation->compute(problem, current_iterate.x, objective_multiplier, this->constraints_multipliers);
+   this->hessian_model->evaluate(problem, current_iterate.x, objective_multiplier, this->constraints_multipliers);
 
    // objective gradient
    this->set_scaled_objective_gradient(problem, current_iterate, objective_multiplier);
@@ -86,7 +86,7 @@ template<typename QPSolverType>
 inline Direction SQP<QPSolverType>::solve(Statistics& /*statistics*/, const Problem& problem, Iterate& current_iterate) {
    /* compute QP direction */
    Direction direction = this->solver->solve_QP(this->variables_bounds, this->constraints_bounds, this->objective_gradient,
-         this->constraint_jacobian, this->hessian_evaluation->hessian, this->initial_point);
+         this->constraint_jacobian, this->hessian_model->hessian, this->initial_point);
    this->number_subproblems_solved++;
 
    // compute dual displacements (SQP methods usually compute the new duals, not the displacements)
@@ -101,7 +101,7 @@ inline PredictedReductionModel SQP<QPSolverType>::generate_predicted_reduction_m
    return PredictedReductionModel(-direction.objective, [&]() { // capture this and direction by reference
       // precompute expensive quantities
       const double linear_term = dot(direction.x, this->objective_gradient);
-      const double quadratic_term = this->hessian_evaluation->hessian.quadratic_product(direction.x, direction.x) / 2.;
+      const double quadratic_term = this->hessian_model->hessian.quadratic_product(direction.x, direction.x) / 2.;
       // return a function of the step length that cheaply assembles the predicted reduction
       return [=](double step_length) { // capture the expensive quantities by value
          return -step_length * (linear_term + step_length * quadratic_term);
@@ -111,7 +111,7 @@ inline PredictedReductionModel SQP<QPSolverType>::generate_predicted_reduction_m
 
 template<typename QPSolverType>
 inline int SQP<QPSolverType>::get_hessian_evaluation_count() const {
-   return this->hessian_evaluation->evaluation_count;
+   return this->hessian_model->evaluation_count;
 }
 
 #endif // SQP_H
