@@ -3,7 +3,6 @@
 #include <cassert>
 #include <iomanip>
 #include "SymmetricMatrix.hpp"
-#include "Vector.hpp"
 
 SymmetricMatrix::SymmetricMatrix(size_t dimension, size_t capacity) : dimension(dimension), capacity(capacity) {
 }

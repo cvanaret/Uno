@@ -7,12 +7,12 @@
 #include "linear_algebra/COOSymmetricMatrix.hpp"
 
 struct MA57Factorization {
-   int nnz;
+   int nnz{};
    std::vector<double> fact{};
-   int lfact;
+   int lfact{};
    std::vector<int> ifact{};
-   int lifact;
-   int lkeep;
+   int lifact{};
+   int lkeep{};
    std::vector<int> keep{};
 
    MA57Factorization() = default;
@@ -26,7 +26,7 @@ struct MA57Factorization {
  */
 class MA57Solver : public LinearSolver<COOSymmetricMatrix> {
 public:
-   MA57Solver(size_t dimension);
+   explicit MA57Solver(size_t dimension);
    ~MA57Solver() override = default;
 
    void factorize(COOSymmetricMatrix& matrix) override;
