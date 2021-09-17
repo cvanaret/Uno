@@ -13,7 +13,7 @@ public:
    COOSymmetricMatrix(size_t dimension, size_t capacity);
    COOSymmetricMatrix(size_t dimension, std::vector<double> matrix, std::vector<int> row_indices, std::vector<int> column_indices);
 
-   void for_each(const std::function<void (int, int, double)>& f) const override;
+   void for_each(const std::function<void (size_t, size_t, double)>& f) const override;
    void insert(double term, size_t row_index, size_t column_index) override;
    void add_identity_multiple(double multiple) override;
 

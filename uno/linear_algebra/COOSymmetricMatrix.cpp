@@ -18,10 +18,10 @@ COOSymmetricMatrix::COOSymmetricMatrix(size_t dimension, std::vector<double> mat
 }
 
 // generic iterator
-void COOSymmetricMatrix::for_each(const std::function<void(int, int, double)>& f) const {
+void COOSymmetricMatrix::for_each(const std::function<void(size_t, size_t, double)>& f) const {
    for (size_t k = 0; k < this->number_nonzeros; k++) {
-      int i = this->row_indices[k];
-      int j = this->column_indices[k];
+      size_t i = static_cast<size_t>(this->row_indices[k]);
+      size_t j = static_cast<size_t>(this->column_indices[k]);
       f(i, j, this->matrix[k]);
    }
 }
