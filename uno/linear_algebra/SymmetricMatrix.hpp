@@ -20,7 +20,7 @@ public:
    void add_outer_product(const SparseVector<double>& x, double scaling_factor = 1.);
    [[nodiscard]] double smallest_diagonal_entry() const;
 
-   virtual void for_each(const std::function<void (int, int, double)>& f) const = 0;
+   virtual void for_each(const std::function<void (size_t, size_t, double)>& f) const = 0;
    /* build the matrix incrementally */
    virtual void insert(double term, size_t row_index, size_t column_index) = 0;
    virtual void finalize(size_t column_index);

@@ -18,10 +18,10 @@ public:
    size_t current_column{0};
 
    CSCSymmetricMatrix(size_t dimension, size_t maximum_number_nonzeros, size_t padding_size = 0);
-   CSCSymmetricMatrix(std::vector<double> matrix, const std::vector<int>& column_start, std::vector<int> row_number, int capacity);
+   CSCSymmetricMatrix(std::vector<double> matrix, const std::vector<int>& column_start, std::vector<int> row_number, size_t capacity);
 
-   void for_each(const std::function<void (int, int, double)>& f) const override;
-   void for_each(size_t column_index, const std::function<void (int, double)>& f) const;
+   void for_each(const std::function<void (size_t, size_t, double)>& f) const override;
+   void for_each(size_t column_index, const std::function<void (size_t, double)>& f) const;
    void insert(double term, size_t row_index, size_t column_index) override;
    void finalize(size_t column_index) override;
    void add_identity_multiple(double factor) override;
