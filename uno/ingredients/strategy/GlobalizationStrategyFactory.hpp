@@ -1,7 +1,6 @@
 #ifndef GLOBALIZATIONSTRATEGYFACTORY_H
 #define GLOBALIZATIONSTRATEGYFACTORY_H
 
-#include <iostream>
 #include <memory>
 #include "GlobalizationStrategy.hpp"
 #include "tools/Options.hpp"

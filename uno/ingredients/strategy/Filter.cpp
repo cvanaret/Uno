@@ -1,15 +1,13 @@
 #include <iostream>
-#include <cassert>
 #include <algorithm>
 #include "Filter.hpp"
-#include "linear_algebra/Vector.hpp"
 
 Filter::Filter(FilterConstants& constants) : constants(constants), infeasibility(this->max_size), optimality(this->max_size) {
    this->reset();
 }
 
 void Filter::reset() {
-   /* initialize the maximum filter size (not critical) */
+   // initialize the maximum filter size (not critical)
    this->upper_bound = std::numeric_limits<double>::infinity();
    this->number_entries = 0;
 }
@@ -28,7 +26,7 @@ void Filter::right_shift(size_t start, size_t shift_size) {
    }
 }
 
-/*  add (infeasibility_measure, optimality_measure) to the filter */
+//  add (infeasibility_measure, optimality_measure) to the filter
 void Filter::add(double infeasibility_measure, double optimality_measure) {
    // remove dominated filter entries
    // find position in filter without margin
@@ -73,17 +71,17 @@ void Filter::add(double infeasibility_measure, double optimality_measure) {
    this->number_entries++;
 }
 
-/* query: return true if (infeasibility_measure, optimality_measure) acceptable, false otherwise */
+// query: return true if (infeasibility_measure, optimality_measure) acceptable, false otherwise
 bool Filter::accept(double infeasibility_measure, double optimality_measure) {
-   /* check upper bound first */
+   // check upper bound first
    if (this->constants.Beta * this->upper_bound <= infeasibility_measure) {
       return false;
    }
-   
+
    auto infeasibility_position = std::lower_bound(std::begin(this->infeasibility), std::begin(this->infeasibility) + static_cast<long>(this->number_entries),
          infeasibility_measure/this->constants.Beta);
 
-   /* check acceptability */
+   // check acceptability
    if (infeasibility_position == std::begin(this->infeasibility)) {
       return true; // acceptable as left-most entry
    }
@@ -122,7 +120,7 @@ std::ostream& operator<<(std::ostream& stream, Filter& filter) {
    return stream;
 }
 
-/* NonmonotoneFilter class */
+// NonmonotoneFilter class
 
 NonmonotoneFilter::NonmonotoneFilter(FilterConstants& infeasibility_measure, size_t number_dominated_entries) :
       Filter(infeasibility_measure), max_number_dominated_entries(number_dominated_entries) {
@@ -203,7 +201,7 @@ bool NonmonotoneFilter::improves_current_iterate(double current_infeasibility_me
    return (number_dominated_entries <= this->max_number_dominated_entries);
 }
 
-/* compute_actual_reduction: check nonmonotone sufficient reduction condition */
+// compute_actual_reduction: check nonmonotone sufficient reduction condition
 double NonmonotoneFilter::compute_actual_reduction(double current_objective, double current_residual, double trial_objective) {
    // check NON-MONOTONE sufficient reduction condition
    // max penalty among most recent entries
@@ -218,7 +216,7 @@ double NonmonotoneFilter::compute_actual_reduction(double current_objective, dou
    return max_objective - trial_objective;
 }
 
-/* FilterFactory class */
+// FilterFactory class
 
 std::unique_ptr<Filter> FilterFactory::create(const Options& options) {
    double beta = stod(options.at("filter_Beta"));
@@ -227,8 +225,7 @@ std::unique_ptr<Filter> FilterFactory::create(const Options& options) {
    std::string filter_type = options.at("strategy");
 
    if (filter_type == "filter") {
-      return
-            std::make_unique<Filter>(filter_infeasibility_measure);
+      return std::make_unique<Filter>(filter_infeasibility_measure);
    }
    else if (filter_type == "nonmonotone-filter") {
       const int number_dominated_entries = stoi(options.at("nonmonotone_filter_number_dominated_entries"));

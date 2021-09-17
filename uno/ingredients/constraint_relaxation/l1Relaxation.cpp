@@ -227,11 +227,11 @@ double l1Relaxation::compute_linearized_constraint_residual(std::vector<double>&
 }
 
 // measure that combines KKT error and complementarity error
-double l1Relaxation::compute_error(const Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter) const {
+double l1Relaxation::compute_error(const Problem& problem, Iterate& iterate, Multipliers& multipliers, double current_penalty_parameter) const {
    // complementarity error
    double error = this->subproblem.compute_complementarity_error(problem, iterate, multipliers);
    // KKT error
-   iterate.evaluate_lagrangian_gradient(problem, penalty_parameter, multipliers);
+   iterate.evaluate_lagrangian_gradient(problem, current_penalty_parameter, multipliers);
    error += norm_1(iterate.lagrangian_gradient);
    return error;
 }

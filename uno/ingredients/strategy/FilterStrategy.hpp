@@ -8,15 +8,15 @@
 #include "tools/Options.hpp"
 
 /*! \class TwoPhaseConstants
- * \brief Constants for filter and tube strategies
+ * \brief Constants for filter strategy
  *
- *  Set of constants to control the filter and tube strategies
+ *  Set of constants to control the filter strategy
  */
 struct FilterStrategyParameters {
    double decrease_fraction; /*!< Sufficient reduction constant */
    double Delta; /*!< Switching constant */
-   double ubd;
-   double fact;
+   double upper_bound;
+   double infeasibility_factor;
 };
 
 /*! \class FilterStrategy
