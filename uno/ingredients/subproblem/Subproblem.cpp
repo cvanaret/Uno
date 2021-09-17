@@ -43,6 +43,14 @@ void Subproblem::add_variable(size_t i, double lb, double ub, double objective_t
    this->variables_bounds[i] = {lb, ub};
    this->objective_gradient.insert(i, objective_term);
    this->constraint_jacobian[j].insert(i, jacobian_term);
+   this->number_variables++;
+}
+
+void Subproblem::remove_variable(size_t i, size_t j) {
+   //this->variables_bounds[i] = {lb, ub};
+   this->objective_gradient.erase(i);
+   this->constraint_jacobian[j].erase(i);
+   this->number_variables--;
 }
 
 void Subproblem::compute_progress_measures(const Problem& problem, Iterate& iterate) {

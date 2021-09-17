@@ -4,15 +4,11 @@
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 
 l1Relaxation::l1Relaxation(Problem& problem, Subproblem& subproblem, const l1RelaxationParameters& parameters, const Options& options) :
-      ConstraintRelaxationStrategy(subproblem),
+      ConstraintRelaxationStrategy(problem, subproblem),
       globalization_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
       penalty_parameter(parameters.initial_parameter),
-      elastic_variables(ConstraintRelaxationStrategy::count_elastic_variables(problem)),
       parameters(parameters) {
    assert(this->subproblem.number_variables == l1Relaxation::get_number_variables(problem) && "The number of variables is inconsistent");
-
-   // generate elastic variables to relax the constraints
-   ConstraintRelaxationStrategy::generate_elastic_variables(problem, this->elastic_variables);
 
    // elastic variables are temporary and are discarded when passed to mechanism
    this->number_variables -= l1Relaxation::count_elastic_variables(problem);

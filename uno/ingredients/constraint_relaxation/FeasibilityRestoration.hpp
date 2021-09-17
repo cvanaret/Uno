@@ -29,11 +29,10 @@ private:
    const std::unique_ptr<GlobalizationStrategy> phase_1_strategy;
    const std::unique_ptr<GlobalizationStrategy> phase_2_strategy;
    Phase current_phase{OPTIMALITY};
-   /* possible problem reformulation with elastic variables. Constraints l <= c(x) <= u are reformulated as l <= c(x) - p + n <= u */
-   ElasticVariables elastic_variables;
 
    void form_feasibility_problem(const Problem& problem, Iterate& current_iterate, const std::vector<double>& phase_2_primal_direction, const
       ConstraintPartition& constraint_partition);
+   void form_feasibility_problem(const Problem& problem, Iterate& current_iterate, const std::vector<double>& phase_2_primal_direction);
    static void set_restoration_multipliers(std::vector<double>& constraints_multipliers, const ConstraintPartition& constraint_partition);
    void compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const std::optional<ConstraintPartition>& constraint_partition);
 };

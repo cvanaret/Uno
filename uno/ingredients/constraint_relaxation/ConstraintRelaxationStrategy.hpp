@@ -19,7 +19,7 @@ struct ElasticVariables {
 
 class ConstraintRelaxationStrategy {
 public:
-   explicit ConstraintRelaxationStrategy(Subproblem& subproblem);
+   ConstraintRelaxationStrategy(const Problem& problem, Subproblem& subproblem);
    virtual ~ConstraintRelaxationStrategy() = default;
 
    virtual void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) = 0;
@@ -44,6 +44,8 @@ protected:
    Subproblem& subproblem;
    size_t number_variables;
    size_t number_constraints;
+   /* possible problem reformulation with elastic variables. Constraints l <= c(x) <= u are reformulated as l <= c(x) - p + n <= u */
+   ElasticVariables elastic_variables;
 
    static size_t count_elastic_variables(const Problem& problem);
    static void generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables);
