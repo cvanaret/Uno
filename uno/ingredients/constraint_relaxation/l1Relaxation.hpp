@@ -38,7 +38,7 @@ protected:
    Direction resolve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double objective_multiplier);
    Direction solve_with_steering_rule(Statistics& statistics, const Problem& problem, Iterate& current_iterate);
    double compute_linearized_constraint_residual(std::vector<double>& direction) const;
-   double compute_error(const Problem& problem, Iterate& iterate, Multipliers& multipliers, double penalty_parameter) const;
+   double compute_error(const Problem& problem, Iterate& iterate, Multipliers& multipliers, double current_penalty_parameter) const;
    void remove_elastic_variables(const Problem& problem, Direction& direction);
    void recover_active_set(const Problem& problem, const Direction& direction);
 };

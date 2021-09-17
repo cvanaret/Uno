@@ -54,21 +54,29 @@ phase_2_primal_direction, const ConstraintPartition& constraint_partition) {
    // set the multipliers of the violated constraints
    FeasibilityRestoration::set_restoration_multipliers(this->subproblem.constraints_multipliers, constraint_partition);
 
-   // compute the objective gradient and (possibly) Hessian
+   // build the local model of the objective
    this->subproblem.build_objective_model(problem, current_iterate, 0.);
    this->subproblem.compute_feasibility_linear_objective(current_iterate, constraint_partition);
 
+   // update the bounds of the constraints
    this->subproblem.generate_feasibility_bounds(problem, current_iterate.constraints, constraint_partition);
+
+   // start from the phase-2 solution
    this->subproblem.set_initial_point(phase_2_primal_direction);
 }
 
 void FeasibilityRestoration::form_feasibility_problem(const Problem& problem, Iterate& current_iterate, const std::vector<double>&
 phase_2_primal_direction) {
+   assert(false && "must be implemented");
+
    // compute the objective model with a zero objective multiplier
    this->subproblem.build_objective_model(problem, current_iterate, 0.);
-   this->subproblem.set_initial_point(phase_2_primal_direction);
-   assert(false && "must be implemented");
+
+   // add elastic variables to relax the problem
    this->add_elastic_variables_to_subproblem(this->elastic_variables);
+
+   // start from the phase-2 solution
+   this->subproblem.set_initial_point(phase_2_primal_direction);
 }
 
 Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate,

@@ -4,12 +4,12 @@
 
 FilterStrategy::FilterStrategy(FilterStrategyParameters strategy_parameters, const Options& options) :
       GlobalizationStrategy(), filter(FilterFactory::create(options)), initial_filter_upper_bound(std::numeric_limits<double>::infinity()),
-      parameters(std::move(strategy_parameters)) {
+      parameters(strategy_parameters) {
 }
 
 void FilterStrategy::initialize(Statistics& /*statistics*/, const Iterate& first_iterate) {
    /* set the filter upper bound */
-   double upper_bound = std::max(this->parameters.ubd, this->parameters.fact * first_iterate.progress.infeasibility);
+   double upper_bound = std::max(this->parameters.upper_bound, this->parameters.infeasibility_factor * first_iterate.progress.infeasibility);
    this->filter->upper_bound = upper_bound;
    this->initial_filter_upper_bound = upper_bound;
 }
@@ -32,11 +32,7 @@ bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, const Progress
       double /*objective_multiplier*/, double predicted_reduction) {
    DEBUG << "Current: η = " << current_progress.infeasibility << ", ω = " << current_progress.objective << "\n";
    DEBUG << "Trial:   η = " << trial_progress.infeasibility << ", ω = " << trial_progress.objective << "\n";
-   DEBUG << "Predicted reduction (should be positive): " << predicted_reduction << "\n";
-   const double actual_reduction = filter->compute_actual_reduction(current_progress.objective, current_progress.infeasibility, trial_progress
-         .objective);
-   DEBUG << "Actual reduction: " << actual_reduction << "\n";
-   DEBUG << *this->filter << "\n";
+   DEBUG << "Predicted reduction: " << predicted_reduction << "\n";
 
    bool accept = false;
    /* check acceptance */
@@ -48,6 +44,7 @@ bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, const Progress
          const double actual_reduction = filter->compute_actual_reduction(current_progress.objective, current_progress.infeasibility, trial_progress
          .objective);
          DEBUG << "Actual reduction: " << actual_reduction << "\n";
+         DEBUG << *this->filter << "\n";
 
          /* switching condition violated: predicted reduction is not promising */
          if (!FilterStrategy::switching_condition(predicted_reduction, current_progress.infeasibility, this->parameters.Delta)) {

@@ -10,9 +10,6 @@ extern "C" {
 #include "getstub.h"
 }
 
-//#define UNCERTAIN_SUFFIX "uncertain"
-//#define UNCERTAINTY_SET_SUFFIX "uncertainty_set"
-
 /*! \class AMPLModel
  * \brief AMPL model
  *
