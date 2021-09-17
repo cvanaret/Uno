@@ -42,6 +42,7 @@ public:
    virtual void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) = 0;
    virtual void build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) = 0;
    virtual void add_variable(size_t i, double lb, double ub, double objective_term, size_t j, double jacobian_term);
+   virtual void remove_variable(size_t i, size_t j);
 
    // direction computation
    virtual Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) = 0;
@@ -73,7 +74,7 @@ public:
 
    double compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const;
 
-   const size_t number_variables;
+   size_t number_variables; // can be updated on the fly (elastic variables)
    const size_t number_constraints;
    // when the subproblem is reformulated (e.g. when slacks are introduced), the bounds may be altered
    std::vector <Range> variables_bounds;

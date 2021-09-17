@@ -32,8 +32,6 @@ public:
 protected:
    const std::unique_ptr <GlobalizationStrategy> globalization_strategy;
    double penalty_parameter;
-   /* problem reformulation with elastic variables. Constraints l <= c(x) <= u are reformulated as l <= c(x) - p + n <= u */
-   ElasticVariables elastic_variables;
    const l1RelaxationParameters parameters;
 
    Direction solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate);
