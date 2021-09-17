@@ -67,6 +67,7 @@ phase_2_primal_direction) {
    // compute the objective model with a zero objective multiplier
    this->subproblem.build_objective_model(problem, current_iterate, 0.);
    this->subproblem.set_initial_point(phase_2_primal_direction);
+   assert(false && "must be implemented");
    this->add_elastic_variables_to_subproblem(this->elastic_variables);
 }
 

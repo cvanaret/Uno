@@ -67,7 +67,7 @@ void Filter::add(double infeasibility_measure, double optimality_measure) {
    if (position < this->number_entries) {
       this->right_shift(position, 1);
    }
-   // add new entry to filter in position indx
+   // add new entry to filter
    this->infeasibility[position] = infeasibility_measure;
    this->optimality[position] = optimality_measure;
    this->number_entries++;
@@ -79,21 +79,22 @@ bool Filter::accept(double infeasibility_measure, double optimality_measure) {
    if (this->constants.Beta * this->upper_bound <= infeasibility_measure) {
       return false;
    }
-
-   size_t position = 0;
-   while (position < this->number_entries && infeasibility_measure >= this->constants.Beta * this->infeasibility[position]) {
-      position++;
-   }
+   
+   auto infeasibility_position = std::lower_bound(std::begin(this->infeasibility), std::begin(this->infeasibility) + static_cast<long>(this->number_entries),
+         infeasibility_measure/this->constants.Beta);
 
    /* check acceptability */
-   if (position == 0) {
+   if (infeasibility_position == std::begin(this->infeasibility)) {
       return true; // acceptable as left-most entry
    }
-   else if (optimality_measure <= this->optimality[position - 1] - this->constants.Gamma * infeasibility_measure) {
-      return true; // point acceptable
-   }
    else {
-      return false; // point rejected
+      infeasibility_position--;
+      if (optimality_measure <= *infeasibility_position - this->constants.Gamma * infeasibility_measure) {
+         return true; // point acceptable
+      }
+      else {
+         return false; // point rejected
+      }
    }
 }
 
@@ -210,7 +211,7 @@ double NonmonotoneFilter::compute_actual_reduction(double current_objective, dou
    for (size_t i = 0; i < this->max_number_dominated_entries; i++) {
       const double gamma = (current_residual < this->infeasibility[this->number_entries - i]) ? 1 / this->constants.Gamma : this->constants.Gamma;
       const double dash_objective = this->optimality[this->number_entries - i] + gamma * (this->infeasibility[this->number_entries - i] -
-                                                                                          current_residual);
+         current_residual);
       max_objective = std::max(max_objective, dash_objective);
    }
    // non-monotone actual reduction

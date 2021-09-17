@@ -35,8 +35,8 @@ public:
    friend std::ostream& operator<<(std::ostream& stream, Filter& filter);
 
 protected:
-   std::vector<double> infeasibility;
-   std::vector<double> optimality;
+   std::vector<double> infeasibility; // infeasibility increases
+   std::vector<double> optimality; // optimality decreases
    size_t number_entries{0};
 
    void left_shift(size_t start, size_t shift_size);
