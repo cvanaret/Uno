@@ -5,13 +5,11 @@
 
 l1Relaxation::l1Relaxation(Problem& problem, Subproblem& subproblem, const l1RelaxationParameters& parameters, const Options& options) :
       ConstraintRelaxationStrategy(problem, subproblem),
+      number_elastic_variables(l1Relaxation::count_elastic_variables(problem)),
       globalization_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
       penalty_parameter(parameters.initial_parameter),
       parameters(parameters) {
    assert(this->subproblem.number_variables == l1Relaxation::get_number_variables(problem) && "The number of variables is inconsistent");
-
-   // elastic variables are temporary and are discarded when passed to mechanism
-   this->number_variables -= l1Relaxation::count_elastic_variables(problem);
 }
 
 void l1Relaxation::initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) {
@@ -62,7 +60,6 @@ Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, const 
    this->subproblem.build_objective_model(problem, current_iterate, 0.);
    // add the elastic variables to the objective gradient and constraint Jacobian
    this->add_elastic_variables_to_subproblem(this->elastic_variables);
-
    return this->subproblem.solve(statistics, problem, current_iterate);
 }
 
@@ -248,6 +245,7 @@ void l1Relaxation::remove_elastic_variables(const Problem& problem, Direction& d
    };
    elastic_variables.positive.for_each(erase_elastic_variables);
    elastic_variables.negative.for_each(erase_elastic_variables);
+
    this->recover_active_set(problem, direction);
 }
 

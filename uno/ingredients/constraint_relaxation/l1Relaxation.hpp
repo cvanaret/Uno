@@ -30,6 +30,7 @@ public:
    static size_t get_number_variables(const Problem& problem);
 
 protected:
+   const size_t number_elastic_variables;
    const std::unique_ptr <GlobalizationStrategy> globalization_strategy;
    double penalty_parameter;
    const l1RelaxationParameters parameters;
