@@ -22,8 +22,8 @@ double PredictedReductionModel::evaluate(double step_length) {
 }
 
 // Subproblem
-Subproblem::Subproblem(size_t number_variables, size_t number_constraints) :
-      number_variables(number_variables), number_constraints(number_constraints),
+Subproblem::Subproblem(size_t number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy) :
+      number_variables(number_variables), number_constraints(number_constraints), soc_strategy(soc_strategy),
       variables_bounds(number_variables), constraints_multipliers(number_constraints),
       objective_gradient(number_variables), // SparseVector
       constraint_jacobian(number_constraints), // vector of SparseVectors
