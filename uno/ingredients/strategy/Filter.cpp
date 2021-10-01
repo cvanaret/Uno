@@ -109,10 +109,9 @@ double Filter::compute_actual_reduction(double current_objective, double /*curre
 }
 
 //! print: print the content of the filter
-
 std::ostream& operator<<(std::ostream& stream, Filter& filter) {
    stream << "************\n";
-   stream << "  Current filter (infeasibility_measuretraint residual, evaluate_objective):\n";
+   stream << "  Current filter (infeasibility, optimality):\n";
    for (size_t position = 0; position < filter.number_entries; position++) {
       stream << "\t" << filter.infeasibility[position] << "\t" << filter.optimality[position] << "\n";
    }
