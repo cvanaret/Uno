@@ -36,9 +36,10 @@ current_iterate) {
          Iterate trial_iterate = this->assemble_trial_iterate(current_iterate, direction, this->step_length);
 
          try {
+            const bool is_acceptable = this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate, direction,
+                  predicted_reduction_model, this->step_length);
             // check whether the trial step is accepted
-            if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate, direction, predicted_reduction_model,
-                  this->step_length)) {
+            if (is_acceptable) {
                this->add_statistics(statistics, direction);
 
                // let the subproblem know the accepted iterate

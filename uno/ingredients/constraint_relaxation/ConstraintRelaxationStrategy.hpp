@@ -43,9 +43,7 @@ public:
 
 protected:
    Subproblem& subproblem;
-   size_t number_variables;
-   size_t number_constraints;
-   /* possible problem reformulation with elastic variables. Constraints l <= c(x) <= u are reformulated as l <= c(x) - p + n <= u */
+   // possible problem reformulation with elastic variables. Constraints l <= c(x) <= u are reformulated as l <= c(x) - p + n <= u
    ElasticVariables elastic_variables;
 
    static size_t count_elastic_variables(const Problem& problem);

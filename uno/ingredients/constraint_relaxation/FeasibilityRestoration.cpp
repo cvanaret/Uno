@@ -67,7 +67,7 @@ phase_2_primal_direction, const ConstraintPartition& constraint_partition) {
 
 void FeasibilityRestoration::form_feasibility_problem(const Problem& problem, Iterate& current_iterate, const std::vector<double>&
 phase_2_primal_direction) {
-   assert(false && "must be implemented");
+   assert(false && "form_feasibility_problem without constraint partition: must be implemented");
 
    // compute the objective model with a zero objective multiplier
    this->subproblem.build_objective_model(problem, current_iterate, 0.);

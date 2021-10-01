@@ -1,7 +1,9 @@
 #include "ConstraintRelaxationStrategy.hpp"
 
 ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Problem& problem, Subproblem& subproblem):
-      subproblem(subproblem), number_variables(this->subproblem.number_variables), number_constraints(this->subproblem.number_constraints),
+      subproblem(subproblem),
+      //number_variables(this->subproblem.number_variables),
+      //number_constraints(this->subproblem.number_constraints),
       elastic_variables(ConstraintRelaxationStrategy::count_elastic_variables(problem)) {
    // generate elastic variables to relax the constraints
    ConstraintRelaxationStrategy::generate_elastic_variables(problem, this->elastic_variables);
