@@ -57,10 +57,17 @@ predicted_reduction_model, double step_length) {
 
 Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, const Direction&
 /*phase_2_direction*/) {
+   assert(0. < this->penalty_parameter && "l1Relaxation: the penalty parameter is already 0");
+
    this->subproblem.build_objective_model(problem, current_iterate, 0.);
    // add the elastic variables to the objective gradient and constraint Jacobian
    this->add_elastic_variables_to_subproblem(this->elastic_variables);
-   return this->subproblem.solve(statistics, problem, current_iterate);
+   Direction direction = this->subproblem.solve(statistics, problem, current_iterate);
+
+   // remove the temporary elastic variables
+   this->remove_elastic_variables(problem, direction);
+
+   return direction;
 }
 
 bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate,

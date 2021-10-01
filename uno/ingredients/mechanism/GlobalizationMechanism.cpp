@@ -6,15 +6,7 @@ GlobalizationMechanism::GlobalizationMechanism(ConstraintRelaxationStrategy& con
 }
 
 Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate, Direction& direction, double step_length) {
-   if (direction.norm == 0.) {
-      add_vectors(current_iterate.multipliers.constraints, direction.multipliers.constraints, step_length, current_iterate.multipliers.constraints);
-      copy_from(current_iterate.multipliers.lower_bounds, direction.multipliers.lower_bounds);
-      copy_from(current_iterate.multipliers.upper_bounds, direction.multipliers.upper_bounds);
-      current_iterate.multipliers.objective = direction.objective_multiplier;
-      current_iterate.progress = {0., 0.};
-      return current_iterate;
-   }
-   else {
+   if (0. < direction.norm) {
       Iterate trial_iterate(direction.x.size(), direction.multipliers.constraints.size());
       add_vectors(current_iterate.x, direction.x, step_length, trial_iterate.x);
       add_vectors(current_iterate.multipliers.constraints, direction.multipliers.constraints, step_length, trial_iterate.multipliers.constraints);
@@ -22,6 +14,14 @@ Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate,
       copy_from(trial_iterate.multipliers.upper_bounds, direction.multipliers.upper_bounds);
       trial_iterate.multipliers.objective = direction.objective_multiplier;
       return trial_iterate;
+   }
+   else {
+      add_vectors(current_iterate.multipliers.constraints, direction.multipliers.constraints, step_length, current_iterate.multipliers.constraints);
+      copy_from(current_iterate.multipliers.lower_bounds, direction.multipliers.lower_bounds);
+      copy_from(current_iterate.multipliers.upper_bounds, direction.multipliers.upper_bounds);
+      current_iterate.multipliers.objective = direction.objective_multiplier;
+      current_iterate.progress = {0., 0.};
+      return current_iterate;
    }
 }
 
