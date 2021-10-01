@@ -67,27 +67,33 @@ void SparseVector<T>::reserve(size_t capacity) {
 
 template <typename T>
 void SparseVector<T>::insert(size_t index, T value) {
-   auto element = std::find(begin(this->indices), end(this->indices), index);
+   const auto start_position = begin(this->indices);
+   const auto end_position = begin(this->indices) + this->number_nonzeros;
+   auto position = std::find(start_position, end_position, index);
    // if index is not found, add the new term, otherwise update it
-   if (element == end(this->indices)) {
+   if (position == end_position) {
       this->indices.push_back(index);
       this->values.push_back(value);
       this->number_nonzeros++;
    }
    else {
-      // *element is the index at which the index was found
-      this->values[*element] += value;
+      const auto element_index = position - start_position;
+      // element_index is the index at which the index was found
+      this->values[element_index] += value;
    }
 }
 
 template <typename T>
 void SparseVector<T>::erase(size_t index) {
-   auto element = std::find(begin(this->indices), end(this->indices), index);
+   const auto start_position = begin(this->indices);
+   const auto end_position = begin(this->indices) + this->number_nonzeros;
+   auto position = std::find(start_position, end_position, index);
    // if the index is found
-   if (element != end(this->indices)) {
+   if (position != end_position) {
       // move the last element to this spot
-      this->indices[*element] = this->indices[this->number_nonzeros - 1];
-      this->values[*element] = this->values[this->number_nonzeros - 1];
+      const auto element_index = position - start_position;
+      this->indices[element_index] = this->indices[this->number_nonzeros - 1];
+      this->values[element_index] = this->values[this->number_nonzeros - 1];
       this->indices.pop_back();
       this->values.pop_back();
       this->number_nonzeros--;
