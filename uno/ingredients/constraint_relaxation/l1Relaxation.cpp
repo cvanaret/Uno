@@ -85,6 +85,8 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
    }
    else {
       trial_iterate.evaluate_constraints(problem);
+      this->subproblem.compute_progress_measures(problem, trial_iterate);
+
       // compute the predicted reduction (both the subproblem and the l1 relaxation strategy contribute)
       const double predicted_reduction = this->compute_predicted_reduction(problem, current_iterate, direction, predicted_reduction_model, step_length);
       // invoke the globalization strategy for acceptance
@@ -99,30 +101,6 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
       this->subproblem.compute_errors(problem, trial_iterate, direction.objective_multiplier);
    }
    return accept;
-}
-
-Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
-   Direction direction = this->subproblem.solve(statistics, problem, current_iterate);
-   if (direction.constraint_partition.has_value()) {
-      const ConstraintPartition& constraint_partition = direction.constraint_partition.value();
-      assert(constraint_partition.infeasible.empty() && "solve_subproblem: infeasible constraints found, although direction is feasible");
-   }
-   direction.objective_multiplier = this->penalty_parameter;
-   DEBUG << "\n" << direction;
-   return direction;
-}
-
-Direction l1Relaxation::resolve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
-   this->subproblem.build_objective_model(problem, current_iterate, objective_multiplier);
-
-   Direction direction = this->subproblem.solve(statistics, problem, current_iterate);
-   if (direction.constraint_partition.has_value()) {
-      const ConstraintPartition& constraint_partition = direction.constraint_partition.value();
-      assert(constraint_partition.infeasible.empty() && "resolve_subproblem: infeasible constraints found, although direction is feasible");
-   }
-   direction.objective_multiplier = objective_multiplier;
-   DEBUG << "\n" << direction;
-   return direction;
 }
 
 Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
@@ -213,6 +191,30 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const P
    return direction;
 }
 
+Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
+   Direction direction = this->subproblem.solve(statistics, problem, current_iterate);
+   if (direction.constraint_partition.has_value()) {
+      const ConstraintPartition& constraint_partition = direction.constraint_partition.value();
+      assert(constraint_partition.infeasible.empty() && "solve_subproblem: infeasible constraints found, although direction is feasible");
+   }
+   direction.objective_multiplier = this->penalty_parameter;
+   DEBUG << "\n" << direction;
+   return direction;
+}
+
+Direction l1Relaxation::resolve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
+   this->subproblem.build_objective_model(problem, current_iterate, objective_multiplier);
+
+   Direction direction = this->subproblem.solve(statistics, problem, current_iterate);
+   if (direction.constraint_partition.has_value()) {
+      const ConstraintPartition& constraint_partition = direction.constraint_partition.value();
+      assert(constraint_partition.infeasible.empty() && "resolve_subproblem: infeasible constraints found, although direction is feasible");
+   }
+   direction.objective_multiplier = objective_multiplier;
+   DEBUG << "\n" << direction;
+   return direction;
+}
+
 size_t l1Relaxation::get_number_variables(const Problem& problem) {
    return problem.number_variables + l1Relaxation::count_elastic_variables(problem);
 }
@@ -239,7 +241,8 @@ double l1Relaxation::compute_error(const Problem& problem, Iterate& iterate, Mul
 }
 
 void l1Relaxation::remove_elastic_variables(const Problem& problem, Direction& direction) {
-   // remove p and n
+   // the primal variables and corresponding bound multipliers are organized as follows:
+   // original | elastic | subproblem-specific (may be empty)
    // TODO change that!!!
    direction.x.resize(problem.number_variables);
    direction.multipliers.lower_bounds.resize(problem.number_variables);
@@ -257,8 +260,7 @@ void l1Relaxation::remove_elastic_variables(const Problem& problem, Direction& d
 }
 
 void l1Relaxation::recover_active_set(const Problem& problem, const Direction& direction) {
-   // TODO
-   // remove extra variables p and n
+   // TODO remove elastic variables
    for (size_t i = problem.number_variables; i < direction.x.size(); i++) {
       //direction.active_set.bounds.at_lower_bound.erase(i);
       //direction.active_set.bounds.at_upper_bound.erase(i);
