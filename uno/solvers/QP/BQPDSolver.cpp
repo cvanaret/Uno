@@ -7,12 +7,12 @@
 #define BIG 1e30
 
 extern "C" {
-/* fortran common block used in bqpd/bqpd.f */
+// fortran common block used in bqpd/bqpd.f
 extern struct {
    int kk, ll, kkk, lll, mxws, mxlws;
 } wsc_;
 
-/* fortran common for inertia correction in wdotd */
+// fortran common for inertia correction in wdotd
 extern struct {
    double alpha;
 } kktalphac_;
@@ -23,7 +23,7 @@ bqpd_(const int* n, const int* m, int* k, int* kmax, double* a, int* la, double*
       int* info, int* iprint, int* nout);
 }
 
-/* preallocate a bunch of stuff */
+// preallocate a bunch of stuff
 BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_t maximum_number_nonzeros, bool quadratic_programming)
       : QPSolver(), number_variables(number_variables), number_constraints(number_constraints), maximum_number_nonzeros(maximum_number_nonzeros),
       lb(number_variables + number_constraints),
@@ -46,11 +46,11 @@ BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_
 Direction BQPDSolver::solve_QP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector<double>&
 linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian, const CSCSymmetricMatrix& hessian,
       const std::vector<double>& initial_point) {
-   /* Hessian */
+   // Hessian
    for (size_t i = 0; i < hessian.number_nonzeros; i++) {
       this->hessian_values[i] = hessian.matrix[i];
    }
-   /* Hessian sparsity */
+   // Hessian sparsity
    this->hessian_sparsity[0] = static_cast<int>(hessian.number_nonzeros + 1);
    for (size_t i = 0; i < hessian.number_nonzeros; i++) {
       this->hessian_sparsity[i + 1] = hessian.row_index[i] + static_cast<int>(this->fortran_shift);
@@ -77,10 +77,27 @@ linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian, 
    return this->solve_subproblem(variables_bounds, constraints_bounds, linear_objective, constraint_jacobian, initial_point);
 }
 
+bool all_variables_bounded(const std::vector<Range>& variables_bounds) {
+   return std::all_of(variables_bounds.cbegin(), variables_bounds.cend(), [](const Range& bounds) {
+      return -std::numeric_limits<double>::infinity() < bounds.lb && bounds.ub < std::numeric_limits<double>::infinity();
+   });
+}
+
+void check_unboundedness(Status status, const std::vector<Range>& variables_bounds) {
+   if (status == UNBOUNDED_PROBLEM) {
+      if (all_variables_bounded(variables_bounds)) {
+         assert(false && "BQPD: the problem is unbounded but the variables are bounded. A very negative objective value was probably reached");
+      }
+      else {
+         assert(false && "BQPD: the problem is unbounded");
+      }
+   }
+}
+
 Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds,
       const SparseVector<double>& linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian,
       const std::vector<double>& initial_point) {
-   /* initialize wsc_ common block (Hessian & workspace for bqpd) */
+   // initialize wsc_ common block (Hessian & workspace for bqpd)
    // setting the common block here ensures that several instances of BQPD can run simultaneously
    wsc_.kk = static_cast<int>(this->maximum_number_nonzeros);
    wsc_.ll = static_cast<int>(this->size_hessian_sparsity);
@@ -100,7 +117,7 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
       DEBUG << "linearized c" << j << " in [" << constraints_bounds[j].lb << ", " << constraints_bounds[j].ub << "]\n";
    }
 
-   /* Jacobian */
+   // Jacobian
    size_t current_index = 0;
    linear_objective.for_each([&](size_t i, double derivative) {
       this->jacobian[current_index] = derivative;
@@ -129,7 +146,7 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
       current_index++;
    }
 
-   /* bounds */
+   // bounds
    for (size_t i = 0; i < this->number_variables; i++) {
       this->lb[i] = (variables_bounds[i].lb == -std::numeric_limits<double>::infinity()) ? -BIG : variables_bounds[i].lb;
       this->ub[i] = (variables_bounds[i].ub == std::numeric_limits<double>::infinity()) ? BIG : variables_bounds[i].ub;
@@ -139,34 +156,26 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
       this->ub[this->number_variables + j] = (constraints_bounds[j].ub == std::numeric_limits<double>::infinity()) ? BIG : constraints_bounds[j].ub;
    }
 
-   /* initial point */
-
-
-   /* call BQPD */
    Direction direction(this->number_variables, this->number_constraints);
    copy_from(direction.x, initial_point);
-
    const int n = static_cast<int>(this->number_variables);
    const int m = static_cast<int>(this->number_constraints);
    const int mode = static_cast<int>(this->mode);
+   
+   // solve the LP/QP
    bqpd_(&n, &m, &this->k, &this->kmax, this->jacobian.data(), this->jacobian_sparsity.data(),
          direction.x.data(), this->lb.data(), this->ub.data(), &direction.objective, &this->fmin, this->gradient_solution.data(),
          this->residuals.data(), this->w.data(), this->e.data(), this->ls.data(), this->alp.data(), this->lp.data(),
          &this->mlp, &this->peq_solution, this->hessian_values.data(), this->hessian_sparsity.data(), &mode, &this->ifail,
          this->info.data(), &this->iprint, &this->nout);
+   check_unboundedness(direction.status, variables_bounds);
 
-   /* project solution into bounds */
-   for (unsigned int i = 0; i < direction.x.size(); i++) {
-      if (direction.x[i] < variables_bounds[i].lb) {
-         direction.x[i] = variables_bounds[i].lb;
-      }
-      else if (variables_bounds[i].ub < direction.x[i]) {
-         direction.x[i] = variables_bounds[i].ub;
-      }
+   // project solution into bounds
+   for (size_t i = 0; i < direction.x.size(); i++) {
+      direction.x[i] = std::min(std::max(direction.x[i], variables_bounds[i].lb), variables_bounds[i].ub);
    }
    direction.norm = norm_inf(direction.x);
    direction.status = BQPDSolver::int_to_status(this->ifail);
-   assert(direction.status != UNBOUNDED_PROBLEM && "BQPD: the problem is unbounded");
    this->analyze_constraints(direction);
    return direction;
 }
@@ -174,17 +183,17 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
 void BQPDSolver::analyze_constraints(Direction& direction) {
    ConstraintPartition constraint_partition(this->number_constraints);
 
-   /* active constraints */
+   // active constraints
    for (size_t j = 0; j < this->number_variables - this->k; j++) {
       size_t index = std::abs(this->ls[j]) - this->fortran_shift;
 
       if (index < this->number_variables) {
          // bound constraint
-         if (0 <= this->ls[j]) { /* lower bound active */
+         if (0 <= this->ls[j]) { // lower bound active
             direction.multipliers.lower_bounds[index] = this->residuals[index];
             direction.active_set.bounds.at_lower_bound.push_back(index);
          }
-         else { /* upper bound active */
+         else { // upper bound active */
             direction.multipliers.upper_bounds[index] = -this->residuals[index];
             direction.active_set.bounds.at_upper_bound.push_back(index);
          }
@@ -194,18 +203,18 @@ void BQPDSolver::analyze_constraints(Direction& direction) {
          size_t constraint_index = index - this->number_variables;
          constraint_partition.feasible.push_back(constraint_index);
          constraint_partition.constraint_feasibility[constraint_index] = FEASIBLE;
-         if (0 <= this->ls[j]) { /* lower bound active */
+         if (0 <= this->ls[j]) { // lower bound active
             direction.multipliers.constraints[constraint_index] = this->residuals[index];
             direction.active_set.constraints.at_lower_bound.push_back(constraint_index);
          }
-         else { /* upper bound active */
+         else { // upper bound active
             direction.multipliers.constraints[constraint_index] = -this->residuals[index];
             direction.active_set.constraints.at_upper_bound.push_back(constraint_index);
          }
       }
    }
 
-   /* inactive constraints */
+   // inactive constraints
    for (size_t j = this->number_variables - this->k; j < this->number_variables + this->number_constraints; j++) {
       size_t index = std::abs(this->ls[j]) - this->fortran_shift;
 
