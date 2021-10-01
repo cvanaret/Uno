@@ -101,7 +101,7 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& 
    Direction direction = this->subproblem.solve(statistics, problem, current_iterate);
    if (direction.constraint_partition.has_value()) {
       const ConstraintPartition& constraint_partition = direction.constraint_partition.value();
-      assert(constraint_partition.infeasible.empty() && "Infeasible constraints found, although direction is feasible");
+      assert(constraint_partition.infeasible.empty() && "solve_subproblem: infeasible constraints found, although direction is feasible");
    }
    direction.objective_multiplier = this->penalty_parameter;
    DEBUG << "\n" << direction;
@@ -110,13 +110,11 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& 
 
 Direction l1Relaxation::resolve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
    this->subproblem.build_objective_model(problem, current_iterate, objective_multiplier);
-   // add the elastic variables to the objective gradient and constraint Jacobian
-   this->add_elastic_variables_to_subproblem(this->elastic_variables);
 
    Direction direction = this->subproblem.solve(statistics, problem, current_iterate);
    if (direction.constraint_partition.has_value()) {
       const ConstraintPartition& constraint_partition = direction.constraint_partition.value();
-      assert(constraint_partition.infeasible.empty() && "Infeasible constraints found, although direction is feasible");
+      assert(constraint_partition.infeasible.empty() && "resolve_subproblem: infeasible constraints found, although direction is feasible");
    }
    direction.objective_multiplier = objective_multiplier;
    DEBUG << "\n" << direction;
