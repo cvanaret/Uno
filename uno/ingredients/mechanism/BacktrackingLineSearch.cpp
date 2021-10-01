@@ -26,6 +26,7 @@ current_iterate) {
    this->step_length = 1.;
    this->number_iterations = 0;
    bool failure = false;
+   bool feasibility_problem = false;
    while (!failure) {
       while (!this->termination()) {
          assert(0 < this->step_length && this->step_length <= 1);
@@ -82,13 +83,14 @@ current_iterate) {
          }
       }
       // if step length is too small, run restoration phase
-      if (this->step_length < this->min_step_length && 0. < direction.multipliers.objective) {
+      if (!feasibility_problem && this->step_length < this->min_step_length && 0. < direction.multipliers.objective) {
          //assert(false && "LS max iterations");
          //if (0. < current_iterate.progress.feasibility && !direction.is_relaxed) {
          // reset the line search with the restoration solution
          direction = this->relaxation_strategy.solve_feasibility_problem(statistics, problem, current_iterate, direction);
          this->step_length = 1.;
          this->number_iterations = 0;
+         feasibility_problem = true;
       }
       else {
          failure = true;
