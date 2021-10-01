@@ -10,7 +10,7 @@
 template<typename QPSolverType>
 class SQP : public Subproblem {
 public:
-   SQP(const Problem& problem, size_t number_variables, size_t number_constraints, const std::string& hessian_evaluation_method,
+   SQP(const Problem& problem, size_t number_constraint_relaxation_variables, size_t number_constraints, const std::string& hessian_evaluation_method,
          bool use_trust_region);
 
    void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
@@ -29,16 +29,16 @@ protected:
 };
 
 template<typename QPSolverType>
-inline SQP<QPSolverType>::SQP(const Problem& problem, size_t number_variables, size_t number_constraints, const std::string&
-hessian_evaluation_method, bool use_trust_region) :
-      Subproblem(number_variables, number_constraints),
+inline SQP<QPSolverType>::SQP(const Problem& problem, size_t number_constraint_relaxation_variables, size_t number_constraints,
+      const std::string& hessian_evaluation_method, bool use_trust_region) :
+      Subproblem(number_constraint_relaxation_variables, number_constraints, NO_SOC),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
-      solver(QPSolverFactory<QPSolverType>::create(number_variables, number_constraints,
-            problem.hessian_maximum_number_nonzeros + number_variables, true)),
+      solver(QPSolverFactory<QPSolverType>::create(number_constraint_relaxation_variables, number_constraints,
+            problem.hessian_maximum_number_nonzeros + number_constraint_relaxation_variables, true)),
       // if no trust region is used, the problem should be convexified by controlling the inertia of the Hessian
-      hessian_model(HessianModelFactory<typename QPSolverType::matrix_type>::create(hessian_evaluation_method, number_variables,
+      hessian_model(HessianModelFactory<typename QPSolverType::matrix_type>::create(hessian_evaluation_method, number_constraint_relaxation_variables,
             problem.hessian_maximum_number_nonzeros + problem.number_variables, !use_trust_region)),
-      initial_point(number_variables) {
+      initial_point(number_constraint_relaxation_variables) {
 }
 
 template<typename QPSolverType>

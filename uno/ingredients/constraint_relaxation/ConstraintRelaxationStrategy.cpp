@@ -63,6 +63,10 @@ int ConstraintRelaxationStrategy::get_number_subproblems_solved() const {
    return this->subproblem.number_subproblems_solved;
 }
 
+SecondOrderCorrection ConstraintRelaxationStrategy::soc_strategy() const {
+   return this->subproblem.soc_strategy;
+}
+
 void ConstraintRelaxationStrategy::register_accepted_iterate(Iterate& iterate) {
    this->subproblem.register_accepted_iterate(iterate);
 }

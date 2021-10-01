@@ -27,6 +27,12 @@ struct PredictedReductionModel {
    double evaluate(double step_length);
 };
 
+enum SecondOrderCorrection {
+   NO_SOC = 0,
+   SOC_UPON_ACCEPTANCE,
+   SOC_UPON_REJECTION
+};
+
 /*! \class Subproblem
  * \brief Subproblem
  *
@@ -34,7 +40,7 @@ struct PredictedReductionModel {
  */
 class Subproblem {
 public:
-   Subproblem(size_t number_variables, size_t number_constraints);
+   Subproblem(size_t number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy);
    virtual ~Subproblem() = default;
 
    // virtual methods implemented by subclasses
@@ -76,6 +82,7 @@ public:
 
    size_t number_variables; // can be updated on the fly (elastic variables)
    const size_t number_constraints;
+   const SecondOrderCorrection soc_strategy;
    // when the subproblem is reformulated (e.g. when slacks are introduced), the bounds may be altered
    std::vector <Range> variables_bounds;
    std::vector<double> constraints_multipliers;

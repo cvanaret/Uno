@@ -45,7 +45,8 @@ current_iterate) {
                this->relaxation_strategy.register_accepted_iterate(trial_iterate);
                return std::make_tuple(std::move(trial_iterate), direction.norm);
             }
-            else if (this->number_iterations == 1 && trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility) { // reject
+            else if (this->number_iterations == 1 && trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility &&
+                  this->relaxation_strategy.soc_strategy() == SOC_UPON_REJECTION) { // reject
                // compute a (temporary) SOC direction
                Direction direction_soc = this->relaxation_strategy.compute_second_order_correction(problem, trial_iterate);
 
