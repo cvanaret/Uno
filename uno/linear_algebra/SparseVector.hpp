@@ -88,6 +88,8 @@ void SparseVector<T>::erase(size_t index) {
       // move the last element to this spot
       this->indices[*element] = this->indices[this->number_nonzeros - 1];
       this->values[*element] = this->values[this->number_nonzeros - 1];
+      this->indices.pop_back();
+      this->values.pop_back();
       this->number_nonzeros--;
    }
 }
