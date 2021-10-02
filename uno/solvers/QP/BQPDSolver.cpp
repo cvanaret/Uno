@@ -168,6 +168,7 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
          this->residuals.data(), this->w.data(), this->e.data(), this->ls.data(), this->alp.data(), this->lp.data(),
          &this->mlp, &this->peq_solution, this->hessian_values.data(), this->hessian_sparsity.data(), &mode, &this->ifail,
          this->info.data(), &this->iprint, &this->nout);
+   direction.status = BQPDSolver::int_to_status(this->ifail);
    check_unboundedness(direction.status, variables_bounds);
 
    // project solution into bounds
@@ -175,7 +176,6 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
       direction.x[i] = std::min(std::max(direction.x[i], variables_bounds[i].lb), variables_bounds[i].ub);
    }
    direction.norm = norm_inf(direction.x);
-   direction.status = BQPDSolver::int_to_status(this->ifail);
    this->analyze_constraints(direction);
    return direction;
 }
