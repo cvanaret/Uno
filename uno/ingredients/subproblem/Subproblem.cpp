@@ -19,6 +19,7 @@ void Subproblem::initialize(Statistics& /*statistics*/, const Problem& problem, 
 }
 
 void Subproblem::add_variable(size_t i, double /*current_value*/, const Range& bounds, double objective_term, size_t j, double jacobian_term) {
+   assert(i < this->max_number_variables && "The index is larger than the preallocated size");
    this->variables_bounds[i] = bounds;
    this->objective_gradient.insert(i, objective_term);
    this->constraint_jacobian[j].insert(i, jacobian_term);
