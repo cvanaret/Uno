@@ -20,6 +20,7 @@ current_iterate) {
    // compute the direction
    this->relaxation_strategy.create_current_subproblem(problem, current_iterate, std::numeric_limits<double>::infinity());
    Direction direction = this->relaxation_strategy.compute_feasible_direction(statistics, problem, current_iterate);
+   BacktrackingLineSearch::check_unboundedness(direction);
    PredictedReductionModel predicted_reduction_model = this->relaxation_strategy.generate_predicted_reduction_model(problem, direction);
 
    // step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ...
@@ -88,6 +89,7 @@ current_iterate) {
          //if (0. < current_iterate.progress.feasibility && !direction.is_relaxed) {
          // reset the line search with the restoration solution
          direction = this->relaxation_strategy.solve_feasibility_problem(statistics, problem, current_iterate, direction);
+         BacktrackingLineSearch::check_unboundedness(direction);
          this->step_length = 1.;
          this->number_iterations = 0;
          feasibility_problem = true;
@@ -99,10 +101,8 @@ current_iterate) {
    throw std::runtime_error("Line search: maximum number of iterations reached");
 }
 
-void BacktrackingLineSearch::add_statistics(Statistics& statistics, const Direction& direction) {
-   statistics.add_statistic("minor", this->number_iterations);
-   statistics.add_statistic("LS step length", this->step_length);
-   statistics.add_statistic("step norm", this->step_length * direction.norm);
+void BacktrackingLineSearch::check_unboundedness(const Direction& direction) {
+   assert(direction.status != UNBOUNDED_PROBLEM && "Line-search subproblem is unbounded, although the inertia was adjusted. This should not happen");
 }
 
 void BacktrackingLineSearch::decrease_step_length() {
@@ -111,6 +111,12 @@ void BacktrackingLineSearch::decrease_step_length() {
 
 bool BacktrackingLineSearch::termination() {
    return (this->max_iterations < this->number_iterations);
+}
+
+void BacktrackingLineSearch::add_statistics(Statistics& statistics, const Direction& direction) {
+   statistics.add_statistic("minor", this->number_iterations);
+   statistics.add_statistic("LS step length", this->step_length);
+   statistics.add_statistic("step norm", this->step_length * direction.norm);
 }
 
 void BacktrackingLineSearch::print_iteration() {

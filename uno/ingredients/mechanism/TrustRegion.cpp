@@ -1,5 +1,5 @@
 #include <cmath>
-#include <assert.h>
+#include <cassert>
 #include "TrustRegion.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "tools/Logger.hpp"
@@ -29,6 +29,7 @@ current_iterate) {
 
          // compute the direction within the trust region
          Direction direction = this->relaxation_strategy.compute_feasible_direction(statistics, problem, current_iterate);
+         TrustRegion::check_unboundedness(direction);
          // set bound multipliers of active trust region to 0
          TrustRegion::rectify_active_set(direction, this->radius);
 
@@ -73,10 +74,8 @@ current_iterate) {
    }
 }
 
-void TrustRegion::add_statistics(Statistics& statistics, const Direction& direction) {
-   statistics.add_statistic("minor", this->number_iterations);
-   statistics.add_statistic("TR radius", this->radius);
-   statistics.add_statistic("step norm", direction.norm);
+void TrustRegion::check_unboundedness(const Direction& direction) {
+   assert(direction.status != UNBOUNDED_PROBLEM && "Trust-region subproblem is unbounded, this should not happen");
 }
 
 void TrustRegion::rectify_active_set(Direction& direction, double radius) {
@@ -102,6 +101,12 @@ void TrustRegion::rectify_active_set(Direction& direction, double radius) {
          ++it;
       }
    }
+}
+
+void TrustRegion::add_statistics(Statistics& statistics, const Direction& direction) {
+   statistics.add_statistic("minor", this->number_iterations);
+   statistics.add_statistic("TR radius", this->radius);
+   statistics.add_statistic("step norm", direction.norm);
 }
 
 bool TrustRegion::termination() {
