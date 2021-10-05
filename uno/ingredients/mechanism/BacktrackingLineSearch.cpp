@@ -34,7 +34,7 @@ current_iterate) {
          this->print_iteration();
 
          // assemble the trial iterate
-         Iterate trial_iterate = this->assemble_trial_iterate(current_iterate, direction, this->step_length);
+         Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, this->step_length);
 
          try {
             const bool is_acceptable = this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate, direction,

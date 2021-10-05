@@ -35,7 +35,7 @@ current_iterate) {
          PredictedReductionModel predicted_reduction_model = this->relaxation_strategy.generate_predicted_reduction_model(problem, direction);
 
          // assemble the trial iterate by taking a full step
-         Iterate trial_iterate = this->assemble_trial_iterate(current_iterate, direction, this->full_step_length);
+         Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, this->full_step_length);
 
          // check whether the trial step is accepted
          if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate, direction, predicted_reduction_model,
