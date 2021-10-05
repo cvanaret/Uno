@@ -49,6 +49,14 @@ void ConstraintRelaxationStrategy::add_elastic_variables_to_subproblem(const Ela
    });
 }
 
+void ConstraintRelaxationStrategy::remove_elastic_variables_from_subproblem(const ElasticVariables& elastic_variables) {
+   const auto erase_elastic_variables = [&](size_t j, size_t i) {
+      this->subproblem.remove_variable(i, j);
+   };
+   elastic_variables.positive.for_each(erase_elastic_variables);
+   elastic_variables.negative.for_each(erase_elastic_variables);
+}
+
 Direction ConstraintRelaxationStrategy::compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) {
    return this->subproblem.compute_second_order_correction(problem, trial_iterate);
 }
