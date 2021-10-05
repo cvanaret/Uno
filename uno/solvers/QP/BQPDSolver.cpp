@@ -77,23 +77,6 @@ linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian, 
    return this->solve_subproblem(variables_bounds, constraints_bounds, linear_objective, constraint_jacobian, initial_point);
 }
 
-bool all_variables_bounded(const std::vector<Range>& variables_bounds) {
-   return std::all_of(variables_bounds.cbegin(), variables_bounds.cend(), [](const Range& bounds) {
-      return -std::numeric_limits<double>::infinity() < bounds.lb && bounds.ub < std::numeric_limits<double>::infinity();
-   });
-}
-
-void check_unboundedness(Status status, const std::vector<Range>& variables_bounds) {
-   if (status == UNBOUNDED_PROBLEM) {
-      if (all_variables_bounded(variables_bounds)) {
-         assert(false && "BQPD: the problem is unbounded but the variables are bounded. A very negative objective value was probably reached");
-      }
-      else {
-         assert(false && "BQPD: the problem is unbounded");
-      }
-   }
-}
-
 Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds,
       const SparseVector<double>& linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian,
       const std::vector<double>& initial_point) {
@@ -169,7 +152,6 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
          &this->mlp, &this->peq_solution, this->hessian_values.data(), this->hessian_sparsity.data(), &mode, &this->ifail,
          this->info.data(), &this->iprint, &this->nout);
    direction.status = BQPDSolver::int_to_status(this->ifail);
-   check_unboundedness(direction.status, variables_bounds);
 
    // project solution into bounds
    for (size_t i = 0; i < direction.x.size(); i++) {
