@@ -50,6 +50,7 @@ protected:
    static size_t count_elastic_variables(const Problem& problem);
    static void generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables, size_t number_variables);
    void add_elastic_variables_to_subproblem(const ElasticVariables& elastic_variables);
+   void remove_elastic_variables_from_subproblem(const ElasticVariables& elastic_variables);
 };
 
 #endif //CONSTRAINTRELAXATIONSTRATEGY_H
