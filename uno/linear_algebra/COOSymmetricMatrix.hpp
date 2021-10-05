@@ -18,6 +18,9 @@ public:
    void add_identity_multiple(double multiple) override;
 
    friend std::ostream& operator<<(std::ostream& stream, const COOSymmetricMatrix& matrix);
+
+protected:
+   size_t find(size_t row_index, size_t column_index);
 };
 
 #endif // COOSYMMETRICMATRIX_H

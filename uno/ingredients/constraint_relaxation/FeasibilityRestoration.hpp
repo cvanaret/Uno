@@ -23,7 +23,7 @@ public:
    double compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, const Direction& direction, PredictedReductionModel&
    predicted_reduction_model, double step_length) override;
 
-   static size_t get_number_variables(const Problem& problem);
+   static size_t get_max_number_variables(const Problem& problem);
 
 private:
    const std::unique_ptr<GlobalizationStrategy> phase_1_strategy;

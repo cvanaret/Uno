@@ -3,7 +3,7 @@
 #include "SLP.hpp"
 #include "InteriorPoint.hpp"
 
-std::unique_ptr <Subproblem> SubproblemFactory::create(const Problem& problem, size_t number_variables, std::string_view subproblem_type,
+std::unique_ptr <Subproblem> SubproblemFactory::create(const Problem& problem, size_t max_number_variables, std::string_view subproblem_type,
       const Options& options, bool use_trust_region) {
    const std::vector <std::string> possible_methods = {"SQP", "SLP", "IPM"};
    /* active-set methods */
@@ -12,7 +12,7 @@ std::unique_ptr <Subproblem> SubproblemFactory::create(const Problem& problem, s
       // determine the sparse matrix format
 #ifdef HAS_MA57
       if (QP_solver_name == "BQPD") {
-         return std::make_unique<SQP<BQPDSolver>>(problem, number_variables, problem.number_constraints, options.at("hessian"), use_trust_region);
+         return std::make_unique<SQP<BQPDSolver>>(problem, max_number_variables, problem.number_constraints, options.at("hessian"), use_trust_region);
       }
 #endif
       assert(false && "SubproblemFactory::create: unknown QP solver");
@@ -21,7 +21,7 @@ std::unique_ptr <Subproblem> SubproblemFactory::create(const Problem& problem, s
       const std::string& LP_solver_name = options.at("LP_solver");
 #ifdef HAS_MA57
       if (LP_solver_name == "BQPD") {
-         return std::make_unique<SLP<BQPDSolver>>(problem, number_variables, problem.number_constraints);
+         return std::make_unique<SLP<BQPDSolver>>(problem, max_number_variables, problem.number_constraints);
       }
 #endif
       assert(false && "SubproblemFactory::create: unknown LP solver");
@@ -35,13 +35,13 @@ std::unique_ptr <Subproblem> SubproblemFactory::create(const Problem& problem, s
       // determine the sparse matrix format
 #ifdef HAS_MA57
       if (linear_solver_name == "MA57") {
-         return std::make_unique<InteriorPoint<MA57Solver>>(problem, number_variables, problem.number_constraints, options.at("hessian"),
+         return std::make_unique<InteriorPoint<MA57Solver>>(problem, max_number_variables, problem.number_constraints, options.at("hessian"),
                initial_barrier_parameter, default_multiplier, tolerance, use_trust_region);
       }
 #endif
 #ifdef HAS_PARDISO
       if (linear_solver_name == "PARDISO") {
-         return std::make_unique<InteriorPoint<PardisoSolver>>(problem, number_variables, problem.number_constraints, options.at("hessian"),
+         return std::make_unique<InteriorPoint<PardisoSolver>>(problem, max_number_variables, problem.number_constraints, options.at("hessian"),
                initial_barrier_parameter, default_multiplier, tolerance, use_trust_region);
       }
 #endif

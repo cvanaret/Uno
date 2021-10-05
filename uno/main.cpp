@@ -3,7 +3,6 @@
 #include <sstream>
 #include <memory>
 #include <vector>
-#include <functional>
 #include "interfaces/AMPL/AMPLModel.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 #include "ingredients/strategy/GlobalizationStrategyFactory.hpp"
@@ -36,8 +35,8 @@ void run_uno(const std::string& problem_name, const Options& options) {
 
    /* create the subproblem */
    const bool use_trust_region = (mechanism_type == "TR");
-   const size_t number_variables = ConstraintRelaxationStrategyFactory::get_number_variables(constraint_relaxation_type, *problem);
-   auto subproblem = SubproblemFactory::create(*problem, number_variables, subproblem_type, options, use_trust_region);
+   const size_t max_number_variables = ConstraintRelaxationStrategyFactory::get_max_number_variables(constraint_relaxation_type, *problem);
+   auto subproblem = SubproblemFactory::create(*problem, max_number_variables, subproblem_type, options, use_trust_region);
 
    /* create the constraint relaxation strategy */
    auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(constraint_relaxation_type, *problem, *subproblem, options);

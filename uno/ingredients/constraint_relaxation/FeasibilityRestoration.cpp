@@ -199,6 +199,6 @@ void FeasibilityRestoration::compute_infeasibility_measures(const Problem& probl
    }
 }
 
-size_t FeasibilityRestoration::get_number_variables(const Problem& problem) {
+size_t FeasibilityRestoration::get_max_number_variables(const Problem& problem) {
    return problem.number_variables;
 }
