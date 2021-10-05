@@ -27,7 +27,7 @@ protected:
    int max_iterations; /*!< Maximum number of iterations */
    int number_iterations{0}; /*!< Current number of iterations */
 
-   Iterate assemble_trial_iterate(Iterate& current_iterate, Direction& direction, double step_length);
+   static Iterate assemble_trial_iterate(Iterate& current_iterate, Direction& direction, double step_length);
    static void print_warning(const char* message);
 };
 
