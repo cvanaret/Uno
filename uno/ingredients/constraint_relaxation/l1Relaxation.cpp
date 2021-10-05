@@ -9,7 +9,6 @@ l1Relaxation::l1Relaxation(Problem& problem, Subproblem& subproblem, const l1Rel
       globalization_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
       penalty_parameter(parameters.initial_parameter),
       parameters(parameters) {
-   assert(this->subproblem.number_variables == l1Relaxation::get_number_variables(problem) && "The number of variables is inconsistent");
 }
 
 void l1Relaxation::initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) {
@@ -17,8 +16,8 @@ void l1Relaxation::initialize(Statistics& statistics, const Problem& problem, It
 
    // initialize the subproblem
    this->subproblem.initialize(statistics, problem, first_iterate);
-   this->subproblem.compute_errors(problem, first_iterate, this->penalty_parameter);
 
+   this->subproblem.compute_errors(problem, first_iterate, this->penalty_parameter);
    this->globalization_strategy->initialize(statistics, first_iterate);
 }
 
@@ -33,8 +32,8 @@ Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, const
    // use Byrd's steering rules to update the penalty parameter and compute descent directions
    Direction direction = this->solve_with_steering_rule(statistics, problem, current_iterate);
 
-   // remove the temporary elastic variables
-   this->remove_elastic_variables(problem, direction);
+   // remove the temporary elastic variables from the direction
+   this->remove_elastic_variables_from_direction(problem, direction);
    return direction;
 }
 
@@ -65,7 +64,7 @@ Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, const 
    Direction direction = this->subproblem.solve(statistics, problem, current_iterate);
 
    // remove the temporary elastic variables
-   this->remove_elastic_variables(problem, direction);
+   this->remove_elastic_variables_from_subproblem();
 
    return direction;
 }
@@ -199,11 +198,15 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& 
    }
    direction.objective_multiplier = this->penalty_parameter;
    DEBUG << "\n" << direction;
+
+   // remove the temporary elastic variables
+   this->remove_elastic_variables_from_subproblem();
    return direction;
 }
 
 Direction l1Relaxation::resolve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
    this->subproblem.build_objective_model(problem, current_iterate, objective_multiplier);
+   this->add_elastic_variables_to_subproblem(this->elastic_variables);
 
    Direction direction = this->subproblem.solve(statistics, problem, current_iterate);
    if (direction.constraint_partition.has_value()) {
@@ -212,10 +215,13 @@ Direction l1Relaxation::resolve_subproblem(Statistics& statistics, const Problem
    }
    direction.objective_multiplier = objective_multiplier;
    DEBUG << "\n" << direction;
+
+   // remove the temporary elastic variables
+   this->remove_elastic_variables_from_subproblem();
    return direction;
 }
 
-size_t l1Relaxation::get_number_variables(const Problem& problem) {
+size_t l1Relaxation::get_max_number_variables(const Problem& problem) {
    return problem.number_variables + l1Relaxation::count_elastic_variables(problem);
 }
 
@@ -240,23 +246,29 @@ double l1Relaxation::compute_error(const Problem& problem, Iterate& iterate, Mul
    return error;
 }
 
-void l1Relaxation::remove_elastic_variables(const Problem& problem, Direction& direction) {
-   // the primal variables and corresponding bound multipliers are organized as follows:
-   // original | elastic | subproblem-specific (may be empty)
-   // TODO change that!!!
-   direction.x.resize(problem.number_variables);
-   direction.multipliers.lower_bounds.resize(problem.number_variables);
-   direction.multipliers.upper_bounds.resize(problem.number_variables);
-   direction.norm = norm_inf(direction.x);
-
+void l1Relaxation::remove_elastic_variables_from_subproblem() {
    const auto erase_elastic_variables = [&](size_t j, size_t i) {
-      this->subproblem.objective_gradient.erase(i);
-      this->subproblem.constraint_jacobian[j].erase(i);
+      this->subproblem.remove_variable(i, j);
    };
    elastic_variables.positive.for_each(erase_elastic_variables);
    elastic_variables.negative.for_each(erase_elastic_variables);
+}
 
+void l1Relaxation::remove_elastic_variables_from_direction(const Problem& problem, Direction& direction) {
+   // the primal variables and corresponding bound multipliers are organized as follows:
+   // original | subproblem-specific (may be empty) | elastic
+   direction.x.resize(this->subproblem.number_variables);
+   direction.multipliers.lower_bounds.resize(this->subproblem.number_variables);
+   direction.multipliers.upper_bounds.resize(this->subproblem.number_variables);
+   direction.norm = norm_inf(direction.x);
+   // recover active set
    this->recover_active_set(problem, direction);
+}
+
+void l1Relaxation::remove_elastic_variables(std::vector<double>& x, size_t from_index, size_t to_index) {
+   const auto start_position = x.begin() + static_cast<long>(from_index);
+   const auto end_position = x.begin() + static_cast<long>(to_index);
+   x.erase(start_position, end_position);
 }
 
 void l1Relaxation::recover_active_set(const Problem& problem, const Direction& direction) {

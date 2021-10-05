@@ -8,7 +8,7 @@
 template<typename LPSolverType>
 class SLP : public Subproblem {
 public:
-   SLP(const Problem& problem, size_t number_constraint_relaxation_variables, size_t number_constraints);
+   SLP(const Problem& problem, size_t max_number_variables, size_t number_constraints);
 
    void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
    void build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) override;
@@ -24,10 +24,10 @@ private:
 };
 
 template<typename LPSolverType>
-inline SLP<LPSolverType>::SLP(const Problem& problem, size_t number_constraint_relaxation_variables, size_t number_constraints) :
-      Subproblem(number_constraint_relaxation_variables, number_constraints, NO_SOC),
-      solver(LPSolverFactory<LPSolverType>::create(number_constraint_relaxation_variables, number_constraints)),
-      initial_point(number_constraint_relaxation_variables) {
+inline SLP<LPSolverType>::SLP(const Problem& problem, size_t max_number_variables, size_t number_constraints) :
+      Subproblem(problem.number_variables, max_number_variables, number_constraints, NO_SOC),
+      solver(LPSolverFactory<LPSolverType>::create(max_number_variables, number_constraints)),
+      initial_point(max_number_variables) {
    // register the original constraints bounds
    for (size_t j = 0; j < problem.number_constraints; j++) {
       this->constraints_bounds[j] = problem.constraint_bounds[j];

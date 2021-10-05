@@ -27,7 +27,7 @@ public:
    double compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, const Direction& direction, PredictedReductionModel&
    predicted_reduction_model, double step_length) override;
 
-   static size_t get_number_variables(const Problem& problem);
+   static size_t get_max_number_variables(const Problem& problem);
 
 protected:
    const size_t number_elastic_variables;
@@ -40,7 +40,9 @@ protected:
    Direction solve_with_steering_rule(Statistics& statistics, const Problem& problem, Iterate& current_iterate);
    double compute_linearized_constraint_residual(std::vector<double>& direction) const;
    double compute_error(const Problem& problem, Iterate& iterate, Multipliers& multipliers, double current_penalty_parameter) const;
-   void remove_elastic_variables(const Problem& problem, Direction& direction);
+   void remove_elastic_variables_from_subproblem();
+   void remove_elastic_variables_from_direction(const Problem& problem, Direction& direction);
+   static void remove_elastic_variables(std::vector<double>& x, size_t from_index, size_t to_index);
    void recover_active_set(const Problem& problem, const Direction& direction);
 };
 

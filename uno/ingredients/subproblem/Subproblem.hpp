@@ -9,23 +9,10 @@
 #include "optimization/Iterate.hpp"
 #include "optimization/Constraint.hpp"
 #include "Direction.hpp"
+#include "PredictedReductionModel.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "solvers/linear/LinearSolver.hpp"
 #include "tools/Statistics.hpp"
-
-struct PredictedReductionModel {
-   // predicted reduction for a full step
-   const double full_step_predicted_reduction;
-
-   // this function, when evaluated, precomputes expensive quantities and returns a function of the step length
-   const std::function<std::function<double (double step_length)> ()> partial_step_precomputation;
-
-   // predicted reduction, function of the step length
-   std::function<double (double step_length)> partial_step_predicted_reduction{nullptr};
-
-   PredictedReductionModel(double full_step_value, const std::function<std::function<double(double step_length)>()>& partial_step_precomputation);
-   double evaluate(double step_length);
-};
 
 enum SecondOrderCorrection {
    NO_SOC = 0,
@@ -40,14 +27,14 @@ enum SecondOrderCorrection {
  */
 class Subproblem {
 public:
-   Subproblem(size_t number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy);
+   Subproblem(size_t number_variables, size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy);
    virtual ~Subproblem() = default;
 
    // virtual methods implemented by subclasses
    virtual void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate);
    virtual void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) = 0;
    virtual void build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) = 0;
-   virtual void add_variable(size_t i, double lb, double ub, double objective_term, size_t j, double jacobian_term);
+   virtual void add_variable(size_t i, double current_value, const Range& bounds, double objective_term, size_t j, double jacobian_term);
    virtual void remove_variable(size_t i, size_t j);
 
    // direction computation
@@ -61,6 +48,8 @@ public:
 
    [[nodiscard]] virtual int get_hessian_evaluation_count() const = 0;
    virtual void set_initial_point(const std::vector<double>& initial_point) = 0;
+   // compute the initial value of a variable within bounds
+   virtual double compute_initial_value(double value, const Range& bounds);
 
    // available methods
    void set_scaled_objective_gradient(const Problem& problem, Iterate& current_iterate, double objective_multiplier);
@@ -81,6 +70,7 @@ public:
    double compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const;
 
    size_t number_variables; // can be updated on the fly (elastic variables)
+   const size_t max_number_variables;
    const size_t number_constraints;
    const SecondOrderCorrection soc_strategy;
    // when the subproblem is reformulated (e.g. when slacks are introduced), the bounds may be altered

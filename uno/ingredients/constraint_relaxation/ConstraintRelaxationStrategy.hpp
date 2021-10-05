@@ -5,6 +5,7 @@
 #include <cmath>
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem/Direction.hpp"
+#include "ingredients/subproblem/PredictedReductionModel.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "optimization/Problem.hpp"
 #include "optimization/Iterate.hpp"
@@ -47,7 +48,7 @@ protected:
    ElasticVariables elastic_variables;
 
    static size_t count_elastic_variables(const Problem& problem);
-   static void generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables);
+   static void generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables, size_t number_variables);
    void add_elastic_variables_to_subproblem(const ElasticVariables& elastic_variables);
 };
 

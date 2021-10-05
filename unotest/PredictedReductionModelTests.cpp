@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "ingredients/subproblem/Subproblem.hpp"
+#include "ingredients/subproblem/PredictedReductionModel.hpp"
 
 TEST(PredictedReductionModel, Correctness) {
    const double full_step_predicted_reduction = 1.;

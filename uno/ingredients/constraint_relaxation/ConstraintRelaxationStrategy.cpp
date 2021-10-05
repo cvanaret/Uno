@@ -6,7 +6,7 @@ ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Problem& proble
       //number_constraints(this->subproblem.number_constraints),
       elastic_variables(ConstraintRelaxationStrategy::count_elastic_variables(problem)) {
    // generate elastic variables to relax the constraints
-   ConstraintRelaxationStrategy::generate_elastic_variables(problem, this->elastic_variables);
+   ConstraintRelaxationStrategy::generate_elastic_variables(problem, this->elastic_variables, subproblem.number_variables);
 }
 
 size_t ConstraintRelaxationStrategy::count_elastic_variables(const Problem& problem) {
@@ -22,9 +22,9 @@ size_t ConstraintRelaxationStrategy::count_elastic_variables(const Problem& prob
    return number_variables;
 }
 
-void ConstraintRelaxationStrategy::generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables) {
+void ConstraintRelaxationStrategy::generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables, size_t number_variables) {
    // generate elastic variables p and n on the fly to relax the constraints
-   size_t elastic_index = problem.number_variables;
+   size_t elastic_index = number_variables;
    for (size_t j = 0; j < problem.number_constraints; j++) {
       if (-std::numeric_limits<double>::infinity() < problem.constraint_bounds[j].lb) {
          // nonpositive variable n that captures the negative part of the constraint violation
@@ -42,10 +42,10 @@ void ConstraintRelaxationStrategy::generate_elastic_variables(const Problem& pro
 void ConstraintRelaxationStrategy::add_elastic_variables_to_subproblem(const ElasticVariables& elastic_variables) {
    // add the positive elastic variables
    elastic_variables.positive.for_each([&](size_t j, size_t i) {
-      this->subproblem.add_variable(i, 0., std::numeric_limits<double>::infinity(), 1., j, -1.);
+      this->subproblem.add_variable(i, 0., {0., std::numeric_limits<double>::infinity()}, 1., j, -1.);
    });
    elastic_variables.negative.for_each([&](size_t j, size_t i) {
-      this->subproblem.add_variable(i, 0., std::numeric_limits<double>::infinity(), 1., j, 1.);
+      this->subproblem.add_variable(i, 0., {0., std::numeric_limits<double>::infinity()}, 1., j, 1.);
    });
 }
 

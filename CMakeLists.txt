@@ -49,7 +49,8 @@ set(SRC_FILES
     uno/ingredients/subproblem/SLP.hpp
     uno/ingredients/subproblem/SQP.hpp
     uno/ingredients/subproblem/InteriorPoint.hpp
-    uno/ingredients/subproblem/HessianEvaluation.hpp
+    uno/ingredients/subproblem/HessianModel.hpp
+    uno/ingredients/subproblem/PredictedReductionModel.cpp
 
     uno/linear_algebra/SymmetricMatrix.cpp
     uno/linear_algebra/COOSymmetricMatrix.cpp

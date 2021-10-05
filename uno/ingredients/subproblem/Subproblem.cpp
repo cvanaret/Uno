@@ -1,35 +1,14 @@
 #include <cassert>
 #include "Subproblem.hpp"
 
-// PredictedReductionModel
-PredictedReductionModel::PredictedReductionModel(double full_step_value,
-      const std::function<std::function<double (double step_length)> ()>& partial_step_precomputation):
-      full_step_predicted_reduction(full_step_value), partial_step_precomputation(partial_step_precomputation) {
-}
-
-double PredictedReductionModel::evaluate(double step_length) {
-   if (step_length == 1.) {
-      return this->full_step_predicted_reduction;
-   }
-   else {
-      // unique evaluation of partial_step_precomputation
-      if (this->partial_step_predicted_reduction == nullptr) {
-         // precompute the complicated stuff
-         this->partial_step_predicted_reduction = this->partial_step_precomputation();
-      }
-      return this->partial_step_predicted_reduction(step_length);
-   }
-}
-
-// Subproblem
-Subproblem::Subproblem(size_t number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy) :
-      number_variables(number_variables), number_constraints(number_constraints), soc_strategy(soc_strategy),
-      variables_bounds(number_variables), constraints_multipliers(number_constraints),
-      objective_gradient(number_variables), // SparseVector
+Subproblem::Subproblem(size_t number_variables, size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy) :
+      number_variables(number_variables), max_number_variables(max_number_variables), number_constraints(number_constraints),
+      soc_strategy(soc_strategy), variables_bounds(max_number_variables), constraints_multipliers(number_constraints),
+      objective_gradient(max_number_variables), // SparseVector
       constraint_jacobian(number_constraints), // vector of SparseVectors
-      constraints_bounds(number_constraints), direction(number_variables, number_constraints) {
+      constraints_bounds(number_constraints), direction(max_number_variables, number_constraints) {
    for (auto& constraint_gradient: this->constraint_jacobian) {
-      constraint_gradient.reserve(this->number_variables);
+      constraint_gradient.reserve(this->max_number_variables);
    }
 }
 
@@ -39,15 +18,14 @@ void Subproblem::initialize(Statistics& /*statistics*/, const Problem& problem, 
    this->compute_progress_measures(problem, first_iterate);
 }
 
-void Subproblem::add_variable(size_t i, double lb, double ub, double objective_term, size_t j, double jacobian_term) {
-   this->variables_bounds[i] = {lb, ub};
+void Subproblem::add_variable(size_t i, double /*current_value*/, const Range& bounds, double objective_term, size_t j, double jacobian_term) {
+   this->variables_bounds[i] = bounds;
    this->objective_gradient.insert(i, objective_term);
    this->constraint_jacobian[j].insert(i, jacobian_term);
    this->number_variables++;
 }
 
 void Subproblem::remove_variable(size_t i, size_t j) {
-   //this->variables_bounds[i] = {lb, ub};
    this->objective_gradient.erase(i);
    this->constraint_jacobian[j].erase(i);
    this->number_variables--;
@@ -89,6 +67,11 @@ void Subproblem::set_constraints_bounds(const Problem& problem, const std::vecto
       double ub = problem.constraint_bounds[j].ub - current_constraints[j];
       this->constraints_bounds[j] = {lb, ub};
    }
+}
+
+double Subproblem::compute_initial_value(double value, const Range& /*bounds*/) {
+   // by default, ignore the bounds and keep the value unchanged
+   return value;
 }
 
 void Subproblem::set_scaled_objective_gradient(const Problem& problem, Iterate& current_iterate, double objective_multiplier) {

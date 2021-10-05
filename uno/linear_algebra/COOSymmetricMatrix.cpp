@@ -26,11 +26,30 @@ void COOSymmetricMatrix::for_each(const std::function<void(size_t, size_t, doubl
    }
 }
 
+size_t COOSymmetricMatrix::find(size_t row_index, size_t column_index) {
+   size_t position = 0;
+   while (position < this->number_nonzeros) {
+      if (this->row_indices[position] == static_cast<int>(row_index) && this->column_indices[position] == static_cast<int>(column_index)) {
+         break;
+      }
+      position++;
+   }
+   return position;
+}
+
 void COOSymmetricMatrix::insert(double term, size_t row_index, size_t column_index) {
-   this->matrix[this->number_nonzeros] = term;
-   this->row_indices[this->number_nonzeros] = static_cast<int>(row_index);
-   this->column_indices[this->number_nonzeros] = static_cast<int>(column_index);
-   this->number_nonzeros++;
+   /*
+   size_t position = this->find(row_index, column_index);
+   if (position < this->number_nonzeros) {
+      this->matrix[position] += term;
+   }
+   else {
+    */
+      this->matrix[this->number_nonzeros] = term;
+      this->row_indices[this->number_nonzeros] = static_cast<int>(row_index);
+      this->column_indices[this->number_nonzeros] = static_cast<int>(column_index);
+      this->number_nonzeros++;
+   //}
 }
 
 std::ostream& operator<<(std::ostream& stream, const COOSymmetricMatrix& matrix) {
