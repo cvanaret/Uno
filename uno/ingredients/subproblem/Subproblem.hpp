@@ -48,8 +48,6 @@ public:
 
    [[nodiscard]] virtual int get_hessian_evaluation_count() const = 0;
    virtual void set_initial_point(const std::vector<double>& initial_point) = 0;
-   // compute the initial value of a variable within bounds
-   virtual double compute_initial_value(double value, const Range& bounds);
 
    // available methods
    void set_scaled_objective_gradient(const Problem& problem, Iterate& current_iterate, double objective_multiplier);

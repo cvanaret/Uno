@@ -2,8 +2,6 @@
 
 ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Problem& problem, Subproblem& subproblem):
       subproblem(subproblem),
-      //number_variables(this->subproblem.number_variables),
-      //number_constraints(this->subproblem.number_constraints),
       elastic_variables(ConstraintRelaxationStrategy::count_elastic_variables(problem)),
       // save the original number of variables in the subproblem
       number_subproblem_variables(subproblem.number_variables) {
@@ -42,12 +40,13 @@ void ConstraintRelaxationStrategy::generate_elastic_variables(const Problem& pro
 }
 
 void ConstraintRelaxationStrategy::add_elastic_variables_to_subproblem() {
+   const double objective_coefficient = 1.;
    // add the positive elastic variables
    this->elastic_variables.positive.for_each([&](size_t j, size_t i) {
-      this->subproblem.add_variable(i, 0., {0., std::numeric_limits<double>::infinity()}, 1., j, -1.);
+      this->subproblem.add_variable(i, 0., {0., std::numeric_limits<double>::infinity()}, objective_coefficient, j, -1.);
    });
    this->elastic_variables.negative.for_each([&](size_t j, size_t i) {
-      this->subproblem.add_variable(i, 0., {0., std::numeric_limits<double>::infinity()}, 1., j, 1.);
+      this->subproblem.add_variable(i, 0., {0., std::numeric_limits<double>::infinity()}, objective_coefficient, j, 1.);
    });
 }
 

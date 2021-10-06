@@ -73,11 +73,6 @@ void Subproblem::set_constraints_bounds(const Problem& problem, const std::vecto
    }
 }
 
-double Subproblem::compute_initial_value(double value, const Range& /*bounds*/) {
-   // by default, ignore the bounds and keep the value unchanged
-   return value;
-}
-
 void Subproblem::set_scaled_objective_gradient(const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
    // scale objective gradient
    current_iterate.evaluate_objective_gradient(problem);
