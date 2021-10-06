@@ -20,6 +20,7 @@ void Subproblem::initialize(Statistics& /*statistics*/, const Problem& problem, 
 
 void Subproblem::add_variable(size_t i, double /*current_value*/, const Range& bounds, double objective_term, size_t j, double jacobian_term) {
    assert(i < this->max_number_variables && "The index is larger than the preallocated size");
+   assert(j < this->number_constraints && "The constraint index is larger than the preallocated size");
    this->variables_bounds[i] = bounds;
    this->objective_gradient.insert(i, objective_term);
    this->constraint_jacobian[j].insert(i, jacobian_term);
@@ -27,6 +28,8 @@ void Subproblem::add_variable(size_t i, double /*current_value*/, const Range& b
 }
 
 void Subproblem::remove_variable(size_t i, size_t j) {
+   assert(i < this->max_number_variables && "The variable index is larger than the preallocated size");
+   assert(j < this->number_constraints && "The constraint index is larger than the preallocated size");
    this->objective_gradient.erase(i);
    this->constraint_jacobian[j].erase(i);
    this->number_variables--;

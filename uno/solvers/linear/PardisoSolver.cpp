@@ -30,7 +30,7 @@ void PardisoSolver::do_symbolic_factorization(CSCSymmetricMatrix& matrix) {
    matrix.force_explicit_diagonal_elements();
 
    // convert matrix from 0-based C-notation to Fortran 1-based notation
-   for (size_t i = 0; i < this->dimension + 1; i++) {
+   for (size_t i = 0; i < this->max_dimension + 1; i++) {
       matrix.column_start[i]++;
    }
    for (size_t i = 0; i < matrix.number_nonzeros; i++) {
@@ -39,7 +39,7 @@ void PardisoSolver::do_symbolic_factorization(CSCSymmetricMatrix& matrix) {
 
    /* check the consistency of the given matrix. Use this functionality only for debugging purposes */
    int error;
-   const int dimension = static_cast<int>(this->dimension);
+   const int dimension = static_cast<int>(this->max_dimension);
    pardiso_chkmatrix(&this->mtype, &dimension, matrix.matrix.data(), matrix.column_start.data(), matrix.row_index.data(), &error);
    assert(error == 0 && "Consistency error in Pardiso matrix");
 
@@ -57,7 +57,7 @@ void PardisoSolver::do_numerical_factorization(CSCSymmetricMatrix& matrix) {
    const int phase = static_cast<int>(NUMERICAL_FACTORIZATION);
    this->iparm[32] = 1; /* compute determinant */
    int error;
-   const int dimension = static_cast<int>(this->dimension);
+   const int dimension = static_cast<int>(this->max_dimension);
    pardiso(this->pt.data(), &this->maxfct, &this->mnum, &this->mtype, &phase, &dimension, matrix.matrix.data(),
          matrix.column_start.data(), matrix.row_index.data(), nullptr, &this->nrhs, this->iparm.data(), &this->msglvl, nullptr, nullptr, &error,
          this->dparm.data());
@@ -67,7 +67,7 @@ void PardisoSolver::do_numerical_factorization(CSCSymmetricMatrix& matrix) {
 void PardisoSolver::solve(CSCSymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) {
    // check the given vectors for infinite and NaN values
    int error;
-   const int dimension = static_cast<int>(this->dimension);
+   const int dimension = static_cast<int>(this->max_dimension);
    pardiso_chkvec(&dimension, &this->nrhs, rhs.data(), &error);
    assert(error == 0 && "Error in Pardiso right-hand side");
 
@@ -79,7 +79,7 @@ void PardisoSolver::solve(CSCSymmetricMatrix& matrix, const std::vector<double>&
    assert(error == 0 && "Error during Pardiso solve");
 
    /* Convert matrix back to 0-based C-notation */
-   for (size_t i = 0; i < this->dimension + 1; i++) {
+   for (size_t i = 0; i < this->max_dimension + 1; i++) {
       matrix.column_start[i]--;
    }
    for (size_t i = 0; i < matrix.number_nonzeros; i++) {
@@ -96,7 +96,7 @@ std::tuple<size_t, size_t, size_t> PardisoSolver::get_inertia() const {
    const size_t rank = this->rank();
    const size_t number_positive_eigenvalues = this->number_positive_eigenvalues();
    const size_t number_negative_eigenvalues = this->number_negative_eigenvalues();
-   const size_t number_zero_eigenvalues = this->dimension - rank;
+   const size_t number_zero_eigenvalues = this->max_dimension - rank;
    return std::make_tuple(number_positive_eigenvalues, number_negative_eigenvalues, number_zero_eigenvalues);
 }
 

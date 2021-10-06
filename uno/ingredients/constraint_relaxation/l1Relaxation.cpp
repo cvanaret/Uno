@@ -24,13 +24,21 @@ void l1Relaxation::initialize(Statistics& statistics, const Problem& problem, It
 void l1Relaxation::create_current_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) {
    // scale the derivatives and introduce the elastic variables
    this->subproblem.create_current_subproblem(problem, current_iterate, this->penalty_parameter, trust_region_radius);
-   this->add_elastic_variables_to_subproblem(this->elastic_variables);
+   this->add_elastic_variables_to_subproblem();
 }
 
 Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
    DEBUG << "penalty parameter: " << this->penalty_parameter << "\n";
    // use Byrd's steering rules to update the penalty parameter and compute descent directions
    Direction direction = this->solve_with_steering_rule(statistics, problem, current_iterate);
+
+   // remove the temporary elastic variables from the direction
+   this->remove_elastic_variables_from_direction(problem, direction);
+   return direction;
+}
+
+Direction l1Relaxation::compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) {
+   Direction direction = ConstraintRelaxationStrategy::compute_second_order_correction(problem, trial_iterate);
 
    // remove the temporary elastic variables from the direction
    this->remove_elastic_variables_from_direction(problem, direction);
@@ -58,14 +66,9 @@ Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, const 
 /*phase_2_direction*/) {
    assert(0. < this->penalty_parameter && "l1Relaxation: the penalty parameter is already 0");
 
-   this->subproblem.build_objective_model(problem, current_iterate, 0.);
-   // add the elastic variables to the objective gradient and constraint Jacobian
-   this->add_elastic_variables_to_subproblem(this->elastic_variables);
-   Direction direction = this->subproblem.solve(statistics, problem, current_iterate);
-
+   Direction direction = this->resolve_subproblem(statistics, problem, current_iterate, 0.);
    // remove the temporary elastic variables
-   this->remove_elastic_variables_from_subproblem(this->elastic_variables);
-
+   this->remove_elastic_variables_from_direction(problem, direction);
    return direction;
 }
 
@@ -200,13 +203,13 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& 
    DEBUG << "\n" << direction;
 
    // remove the temporary elastic variables
-   this->remove_elastic_variables_from_subproblem(this->elastic_variables);
+   this->remove_elastic_variables_from_subproblem();
    return direction;
 }
 
 Direction l1Relaxation::resolve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
    this->subproblem.build_objective_model(problem, current_iterate, objective_multiplier);
-   this->add_elastic_variables_to_subproblem(this->elastic_variables);
+   this->add_elastic_variables_to_subproblem();
 
    Direction direction = this->subproblem.solve(statistics, problem, current_iterate);
    if (direction.constraint_partition.has_value()) {
@@ -217,7 +220,7 @@ Direction l1Relaxation::resolve_subproblem(Statistics& statistics, const Problem
    DEBUG << "\n" << direction;
 
    // remove the temporary elastic variables
-   this->remove_elastic_variables_from_subproblem(this->elastic_variables);
+   this->remove_elastic_variables_from_subproblem();
    return direction;
 }
 
@@ -249,9 +252,9 @@ double l1Relaxation::compute_error(const Problem& problem, Iterate& iterate, Mul
 void l1Relaxation::remove_elastic_variables_from_direction(const Problem& problem, Direction& direction) {
    // the primal variables and corresponding bound multipliers are organized as follows:
    // original | subproblem-specific (may be empty) | elastic
-   direction.x.resize(this->subproblem.number_variables);
-   direction.multipliers.lower_bounds.resize(this->subproblem.number_variables);
-   direction.multipliers.upper_bounds.resize(this->subproblem.number_variables);
+   direction.x.resize(this->number_subproblem_variables);
+   direction.multipliers.lower_bounds.resize(this->number_subproblem_variables);
+   direction.multipliers.upper_bounds.resize(this->number_subproblem_variables);
    direction.norm = norm_inf(direction.x);
    // recover active set
    this->recover_active_set(problem, direction);

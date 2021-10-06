@@ -9,14 +9,14 @@ public:
    // make this type accessible in templates
    using matrix_type = SparseSymmetricMatrix;
 
-   LinearSolver(size_t dimension): dimension(dimension) {};
+   explicit LinearSolver(size_t max_dimension): max_dimension(max_dimension) {};
    virtual ~LinearSolver() = default;
 
    // matrix is not declared const, since Fortran-based solvers may need to temporarily reindex the coordinates
-   virtual void factorize(SparseSymmetricMatrix& matrix) = 0;
-   virtual void do_symbolic_factorization(SparseSymmetricMatrix& matrix) = 0;
-   virtual void do_numerical_factorization(SparseSymmetricMatrix& matrix) = 0;
-   virtual void solve(SparseSymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) = 0;
+   virtual void factorize(size_t dimension, SparseSymmetricMatrix& matrix) = 0;
+   virtual void do_symbolic_factorization(size_t dimension, SparseSymmetricMatrix& matrix) = 0;
+   virtual void do_numerical_factorization(size_t dimension, SparseSymmetricMatrix& matrix) = 0;
+   virtual void solve(size_t dimension, SparseSymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) = 0;
 
    [[nodiscard]] virtual std::tuple<size_t, size_t, size_t> get_inertia() const = 0;
    [[nodiscard]] virtual size_t number_negative_eigenvalues() const = 0;
@@ -24,7 +24,7 @@ public:
    [[nodiscard]] virtual size_t rank() const = 0;
 
 protected:
-   const size_t dimension;
+   const size_t max_dimension;
 };
 
 #endif // LINEARSOLVER_H

@@ -22,9 +22,9 @@ lifact, const double rhs[], double x[], double resid[], double work[], int iwork
       double cntl[], int info[], double rinfo[]);
 }
 
-MA57Solver::MA57Solver(size_t dimension) : LinearSolver(dimension), iwork(5*dimension),
-   lwork(static_cast<int>(1.2 * static_cast<double>(dimension))),
-   work(this->lwork), residuals(dimension) {
+MA57Solver::MA57Solver(size_t max_dimension) : LinearSolver(max_dimension), iwork(5 * max_dimension),
+   lwork(static_cast<int>(1.2 * static_cast<double>(max_dimension))),
+   work(this->lwork), residuals(max_dimension) {
    /* set the default values of the controlling parameters */
    ma57id_(this->cntl.data(), this->icntl.data());
    // suppress warning messages
@@ -33,15 +33,15 @@ MA57Solver::MA57Solver(size_t dimension) : LinearSolver(dimension), iwork(5*dime
    this->icntl[8] = 1;
 }
 
-void MA57Solver::factorize(COOSymmetricMatrix& matrix) {
+void MA57Solver::factorize(size_t dimension, COOSymmetricMatrix& matrix) {
    // general factorization method: symbolic factorization and numerical factorization
-   this->do_symbolic_factorization(matrix);
-   this->do_numerical_factorization(matrix);
+   this->do_symbolic_factorization(dimension, matrix);
+   this->do_numerical_factorization(dimension, matrix);
 }
 
-void MA57Solver::do_symbolic_factorization(COOSymmetricMatrix& matrix) {
-   assert(matrix.dimension == this->dimension && "MA57Solver: the dimension of the matrix is inconsistent");
-   const int n = static_cast<int>(matrix.dimension);
+void MA57Solver::do_symbolic_factorization(size_t dimension, COOSymmetricMatrix& matrix) {
+   assert(dimension <= this->max_dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
+   const int n = static_cast<int>(dimension);
    const int nnz = static_cast<int>(matrix.number_nonzeros);
 
    /* sparsity pattern */
@@ -79,14 +79,14 @@ void MA57Solver::do_symbolic_factorization(COOSymmetricMatrix& matrix) {
    }
 
    // build the factorization object
-   this->factorization = {nnz, std::move(fact), lfact, std::move(ifact), lifact, lkeep, std::move(keep)};
+   this->factorization = {n, nnz, std::move(fact), lfact, std::move(ifact), lifact, lkeep, std::move(keep)};
 }
 
-void MA57Solver::do_numerical_factorization(COOSymmetricMatrix& matrix) {
-   assert(this->dimension == matrix.dimension && "MA57Solver: the dimension of the matrix is inconsistent");
+void MA57Solver::do_numerical_factorization(size_t dimension, COOSymmetricMatrix& matrix) {
+   assert(dimension <= this->max_dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
    assert(this->factorization.nnz == static_cast<int>(matrix.number_nonzeros) && "MA57Solver: the numbers of nonzeros do not match");
 
-   const int n = static_cast<int>(this->dimension);
+   const int n = static_cast<int>(dimension);
    /* numerical factorization */
    ma57bd_(&n,
          &this->factorization.nnz,
@@ -101,9 +101,9 @@ void MA57Solver::do_numerical_factorization(COOSymmetricMatrix& matrix) {
          /* out */ this->rinfo.data());
 }
 
-void MA57Solver::solve(COOSymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) {
+void MA57Solver::solve(size_t dimension, COOSymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) {
    /* solve */
-   const int n = static_cast<int>(this->dimension);
+   const int n = static_cast<int>(dimension);
    const int lrhs = n; // integer, length of rhs
 
    // solve the linear system
@@ -129,7 +129,7 @@ std::tuple<size_t, size_t, size_t> MA57Solver::get_inertia() const {
    const size_t rank = this->rank();
    const size_t number_negative_eigenvalues = this->number_negative_eigenvalues();
    const size_t number_positive_eigenvalues = rank - number_negative_eigenvalues;
-   const size_t number_zero_eigenvalues = this->dimension - rank;
+   const size_t number_zero_eigenvalues = static_cast<size_t>(this->factorization.n) - rank;
    return std::make_tuple(number_positive_eigenvalues, number_negative_eigenvalues, number_zero_eigenvalues);
 }
 

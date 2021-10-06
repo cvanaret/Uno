@@ -73,7 +73,7 @@ phase_2_primal_direction) {
    this->subproblem.build_objective_model(problem, current_iterate, 0.);
 
    // add elastic variables to relax the problem
-   this->add_elastic_variables_to_subproblem(this->elastic_variables);
+   this->add_elastic_variables_to_subproblem();
 
    // start from the phase-2 solution
    this->subproblem.set_initial_point(phase_2_primal_direction);
