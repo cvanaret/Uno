@@ -30,7 +30,6 @@ public:
    ~InteriorPoint() override = default;
 
    void set_initial_point(const std::vector<double>& initial_point) override;
-   double compute_initial_value(double value, const Range& bounds) override;
    void set_constraints(const Problem& problem, Iterate& iterate);
    void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) override;
    void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
@@ -92,6 +91,7 @@ private:
    void generate_direction(const Problem& problem, const Iterate& current_iterate);
    [[nodiscard]] double compute_KKT_error_scaling(const Iterate& current_iterate) const;
    [[nodiscard]] double compute_central_complementarity_error(const Iterate& iterate) const;
+   void set_current_iterate(const Iterate& iterate);
    void print_soc_iteration(const Direction& direction_soc) const;
 };
 
@@ -116,7 +116,6 @@ inline InteriorPoint<LinearSolverType>::InteriorPoint(const Problem& problem, si
       primal_iterate(this->max_number_variables),
       lower_bound_multipliers(this->max_number_variables),
       upper_bound_multipliers(this->max_number_variables),
-      //current_lower_bound_multipliers(this->max_number_variables), current_upper_bound_multipliers(this->max_number_variables),
       solution_IPM(this->max_number_variables + number_constraints),
       barrier_constraints(number_constraints), rhs(this->max_number_variables + number_constraints),
       lower_delta_z(this->max_number_variables), upper_delta_z(this->max_number_variables) {
@@ -158,12 +157,6 @@ inline void InteriorPoint<LinearSolverType>::set_initial_point(const std::vector
 }
 
 template<typename LinearSolverType>
-inline double InteriorPoint<LinearSolverType>::compute_initial_value(double value, const Range& bounds) {
-   // the initial value of a variable must be strictly within bounds
-   return Subproblem::push_variable_to_interior(value, bounds);
-}
-
-template<typename LinearSolverType>
 inline void InteriorPoint<LinearSolverType>::set_constraints(const Problem& problem, Iterate& iterate) {
    iterate.evaluate_constraints(problem);
    // transform the constraints into "= 0" equalities
@@ -185,20 +178,18 @@ inline void InteriorPoint<LinearSolverType>::initialize(Statistics& statistics, 
 
    // make the initial point strictly feasible wrt the bounds
    for (size_t i = 0; i < problem.number_variables; i++) {
-      first_iterate.x[i] = this->compute_initial_value(first_iterate.x[i], problem.variables_bounds[i]);
+      first_iterate.x[i] = Subproblem::push_variable_to_interior(first_iterate.x[i], problem.variables_bounds[i]);
    }
 
    // initialize the slacks and add contribution to the constraint Jacobian
    first_iterate.evaluate_constraints(problem);
    first_iterate.evaluate_constraint_jacobian(problem);
    for (const auto[j, i]: problem.inequality_constraints) {
-      const double slack_value = this->compute_initial_value(first_iterate.constraints[j], problem.constraint_bounds[j]);
+      const double slack_value = Subproblem::push_variable_to_interior(first_iterate.constraints[j], problem.constraint_bounds[j]);
       first_iterate.x[problem.number_variables + i] = slack_value;
       first_iterate.constraint_jacobian[j].insert(problem.number_variables + i, -1.);
    }
-   copy_from(this->primal_iterate, first_iterate.x);
-   copy_from(this->lower_bound_multipliers, first_iterate.multipliers.lower_bounds);
-   copy_from(this->upper_bound_multipliers, first_iterate.multipliers.upper_bounds);
+   this->set_current_iterate(first_iterate);
 
    // compute least-square multipliers
    if (problem.is_constrained()) {
@@ -225,10 +216,8 @@ inline void InteriorPoint<LinearSolverType>::create_current_subproblem(const Pro
    // update the barrier parameter if the current iterate solves the subproblem
    this->update_barrier_parameter(current_iterate);
 
-   // save the primal iterate in the local copy
-   copy_from(this->primal_iterate, current_iterate.x);
-   copy_from(this->lower_bound_multipliers, current_iterate.multipliers.lower_bounds);
-   copy_from(this->upper_bound_multipliers, current_iterate.multipliers.upper_bounds);
+   // save the current iterate locally
+   this->set_current_iterate(current_iterate);
 
    // constraints
    this->set_constraints(problem, current_iterate);
@@ -278,7 +267,7 @@ inline void InteriorPoint<LinearSolverType>::add_variable(size_t i, double curre
       this->upper_bound_multipliers[i] = -this->default_multiplier;
    }
    // save the current value
-   this->primal_iterate[i] = this->compute_initial_value(current_value, bounds);
+   this->primal_iterate[i] = Subproblem::push_variable_to_interior(current_value, bounds);
 }
 
 template<typename LinearSolverType>
@@ -325,10 +314,8 @@ inline Direction InteriorPoint<LinearSolverType>::solve(Statistics& statistics, 
 
 template<typename LinearSolverType>
 inline Direction InteriorPoint<LinearSolverType>::compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) {
-   // save the primal iterate in the local copy
-   copy_from(this->primal_iterate, trial_iterate.x);
-   copy_from(this->lower_bound_multipliers, trial_iterate.multipliers.lower_bounds);
-   copy_from(this->upper_bound_multipliers, trial_iterate.multipliers.upper_bounds);
+   // save the current iterate locally
+   this->set_current_iterate(trial_iterate);
 
    // modify the RHS by adding the values of the constraints
    for (const auto& element: problem.equality_constraints) {
@@ -738,6 +725,13 @@ inline double InteriorPoint<LinearSolverType>::compute_central_complementarity_e
    const double bound_multipliers_norm = norm_1(iterate.multipliers.lower_bounds) + norm_1(iterate.multipliers.upper_bounds);
    const double sc = std::max(this->parameters.smax, bound_multipliers_norm / static_cast<double>(this->number_variables)) / this->parameters.smax;
    return norm_1(residual_function, this->number_variables) / sc;
+}
+
+template<typename LinearSolverType>
+inline void InteriorPoint<LinearSolverType>::set_current_iterate(const Iterate& iterate) {
+   copy_from(this->primal_iterate, iterate.x);
+   copy_from(this->lower_bound_multipliers, iterate.multipliers.lower_bounds);
+   copy_from(this->upper_bound_multipliers, iterate.multipliers.upper_bounds);
 }
 
 #endif // IPM_H
