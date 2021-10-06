@@ -4,7 +4,9 @@ ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Problem& proble
       subproblem(subproblem),
       //number_variables(this->subproblem.number_variables),
       //number_constraints(this->subproblem.number_constraints),
-      elastic_variables(ConstraintRelaxationStrategy::count_elastic_variables(problem)) {
+      elastic_variables(ConstraintRelaxationStrategy::count_elastic_variables(problem)),
+      // save the original number of variables in the subproblem
+      number_subproblem_variables(subproblem.number_variables) {
    // generate elastic variables to relax the constraints
    ConstraintRelaxationStrategy::generate_elastic_variables(problem, this->elastic_variables, subproblem.number_variables);
 }
@@ -39,22 +41,22 @@ void ConstraintRelaxationStrategy::generate_elastic_variables(const Problem& pro
    }
 }
 
-void ConstraintRelaxationStrategy::add_elastic_variables_to_subproblem(const ElasticVariables& elastic_variables) {
+void ConstraintRelaxationStrategy::add_elastic_variables_to_subproblem() {
    // add the positive elastic variables
-   elastic_variables.positive.for_each([&](size_t j, size_t i) {
+   this->elastic_variables.positive.for_each([&](size_t j, size_t i) {
       this->subproblem.add_variable(i, 0., {0., std::numeric_limits<double>::infinity()}, 1., j, -1.);
    });
-   elastic_variables.negative.for_each([&](size_t j, size_t i) {
+   this->elastic_variables.negative.for_each([&](size_t j, size_t i) {
       this->subproblem.add_variable(i, 0., {0., std::numeric_limits<double>::infinity()}, 1., j, 1.);
    });
 }
 
-void ConstraintRelaxationStrategy::remove_elastic_variables_from_subproblem(const ElasticVariables& elastic_variables) {
+void ConstraintRelaxationStrategy::remove_elastic_variables_from_subproblem() {
    const auto erase_elastic_variables = [&](size_t j, size_t i) {
       this->subproblem.remove_variable(i, j);
    };
-   elastic_variables.positive.for_each(erase_elastic_variables);
-   elastic_variables.negative.for_each(erase_elastic_variables);
+   this->elastic_variables.positive.for_each(erase_elastic_variables);
+   this->elastic_variables.negative.for_each(erase_elastic_variables);
 }
 
 Direction ConstraintRelaxationStrategy::compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) {

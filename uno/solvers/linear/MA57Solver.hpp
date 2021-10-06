@@ -7,6 +7,7 @@
 #include "linear_algebra/COOSymmetricMatrix.hpp"
 
 struct MA57Factorization {
+   int n{};
    int nnz{};
    std::vector<double> fact{};
    int lfact{};
@@ -26,13 +27,13 @@ struct MA57Factorization {
  */
 class MA57Solver : public LinearSolver<COOSymmetricMatrix> {
 public:
-   explicit MA57Solver(size_t dimension);
+   explicit MA57Solver(size_t max_dimension);
    ~MA57Solver() override = default;
 
-   void factorize(COOSymmetricMatrix& matrix) override;
-   void do_symbolic_factorization(COOSymmetricMatrix& matrix) override;
-   void do_numerical_factorization(COOSymmetricMatrix& matrix) override;
-   void solve(COOSymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) override;
+   void factorize(size_t dimension, COOSymmetricMatrix& matrix) override;
+   void do_symbolic_factorization(size_t dimension, COOSymmetricMatrix& matrix) override;
+   void do_numerical_factorization(size_t dimension, COOSymmetricMatrix& matrix) override;
+   void solve(size_t dimension, COOSymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) override;
 
    [[nodiscard]] std::tuple<size_t, size_t, size_t> get_inertia() const override;
    [[nodiscard]] size_t number_negative_eigenvalues() const override;

@@ -134,9 +134,10 @@ inline void Subproblem::compute_least_square_multipliers(const Problem& problem,
    }
 
    // solve the system
+   const size_t dimension = current_iterate.x.size() + problem.number_constraints;
    std::vector<double> solution(matrix.dimension);
-   solver.factorize(matrix);
-   solver.solve(matrix, rhs, solution);
+   solver.factorize(dimension, matrix);
+   solver.solve(dimension, matrix, rhs, solution);
    DEBUG << "Solution: ";
    print_vector(DEBUG, solution);
 

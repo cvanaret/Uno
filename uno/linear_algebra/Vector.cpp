@@ -11,12 +11,6 @@ void add_vectors(const std::vector<double>& x, const std::vector<double>& y, dou
    }
 }
 
-std::vector<double> add_vectors(const std::vector<double>& x, const std::vector<double>& y, double scaling_factor) {
-   std::vector<double> result(x.size());
-   add_vectors(x, y, scaling_factor, result);
-   return result;
-}
-
 void clear(std::vector<double>& x) {
    for (double& xi: x) {
       xi = 0.;
