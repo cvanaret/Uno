@@ -63,7 +63,7 @@ public:
    <SparseSymmetricMatrix>& solver, Iterate& current_iterate, std::vector<double>& multipliers, double multipliers_max_size = 1e3);
 
    static double compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier);
-   void compute_errors(const Problem& problem, Iterate& iterate, double objective_multiplier) const;
+   void compute_optimality_conditions(const Problem& problem, Iterate& iterate, double objective_multiplier) const;
 
    double compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const;
 

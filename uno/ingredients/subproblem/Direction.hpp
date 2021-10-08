@@ -7,7 +7,7 @@
 #include <optional>
 #include "optimization/Constraint.hpp"
 
-/* see bqpd.f */
+// see bqpd.f
 enum Status {
    OPTIMAL = 0,
    UNBOUNDED_PROBLEM,
@@ -21,27 +21,20 @@ enum Status {
    UNDEFINED
 };
 
-/*! \struct SubproblemSolution
- * \brief Solution of a local subproblem
- *
- *  Description of a local solution
- */
 class Direction {
 public:
    Direction(size_t number_variables, size_t number_constraints);
-   Direction(std::vector<double>& x, Multipliers& multipliers);
 
    std::vector<double> x; /*!< Primal variables */
    Multipliers multipliers; /*!< Multipliers */
    double objective_multiplier{1.}; /*!< Objective multiplier */
 
    Status status{OPTIMAL}; /*!< Status of the solution */
-   bool is_relaxed{false};
+   bool relaxed_subproblem{false};
 
    double norm{0.}; /*!< Norm of \f$x\f$ */
    double objective{std::numeric_limits<double>::infinity()}; /*!< Objective value */
    ActiveSet active_set{}; /*!< Active set */
-   std::vector<int> inactive_set{}; /*!< Inactive set */
    std::optional<ConstraintPartition> constraint_partition{std::nullopt}; /*!< Optional partition of feasible and infeasible constraints */
 
    friend std::ostream& operator<<(std::ostream& stream, const Direction& step);
