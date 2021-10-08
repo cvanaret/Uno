@@ -94,7 +94,7 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
    DEBUG << "\nSolving the feasibility subproblem\n";
    Direction feasibility_direction = this->subproblem.solve(statistics, problem, current_iterate);
    feasibility_direction.objective_multiplier = 0.;
-   feasibility_direction.relaxed_subproblem = true;
+   feasibility_direction.subproblem_is_relaxed = true;
    if (phase_2_direction.constraint_partition.has_value()) {
       ConstraintPartition constraint_partition = phase_2_direction.constraint_partition.value();
       feasibility_direction.constraint_partition = constraint_partition;
@@ -122,14 +122,14 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
    }
    else {
       // possibly go from 1 (restoration) to phase 2 (optimality)
-      if (!direction.relaxed_subproblem && this->current_phase == FEASIBILITY_RESTORATION) {
+      if (!direction.subproblem_is_relaxed && this->current_phase == FEASIBILITY_RESTORATION) {
          // TODO && this->filter_optimality->accept(trial_iterate.progress.feasibility, trial_iterate.progress.objective))
          this->current_phase = OPTIMALITY;
          DEBUG << "Switching from restoration to optimality phase\n";
          this->subproblem.compute_progress_measures(problem, current_iterate);
       }
          // possibly go from phase 2 (optimality) to 1 (restoration)
-      else if (direction.relaxed_subproblem && this->current_phase == OPTIMALITY) {
+      else if (direction.subproblem_is_relaxed && this->current_phase == OPTIMALITY) {
          this->current_phase = FEASIBILITY_RESTORATION;
          DEBUG << "Switching from optimality to restoration phase\n";
          this->phase_2_strategy->notify(current_iterate);
@@ -158,8 +158,8 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
    }
 
    if (accept) {
-      statistics.add_statistic("phase", static_cast<int>(direction.relaxed_subproblem ? FEASIBILITY_RESTORATION : OPTIMALITY));
-      if (direction.relaxed_subproblem && direction.constraint_partition.has_value()) {
+      statistics.add_statistic("phase", static_cast<int>(direction.subproblem_is_relaxed ? FEASIBILITY_RESTORATION : OPTIMALITY));
+      if (direction.subproblem_is_relaxed && direction.constraint_partition.has_value()) {
          // correct multipliers for infeasibility problem
          FeasibilityRestoration::set_restoration_multipliers(trial_iterate.multipliers.constraints, direction.constraint_partition.value());
       }
@@ -170,13 +170,11 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
 
 void FeasibilityRestoration::set_restoration_multipliers(std::vector<double>& constraints_multipliers, const ConstraintPartition&
 constraint_partition) {
-   for (size_t j: constraint_partition.infeasible) {
-      if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
-         constraints_multipliers[j] = 1.;
-      }
-      else { // constraint_partition.constraint_feasibility[j] == INFEASIBLE_UPPER
-         constraints_multipliers[j] = -1.;
-      }
+   for (size_t j: constraint_partition.lower_bound_infeasible) {
+      constraints_multipliers[j] = 1.;
+   }
+   for (size_t j: constraint_partition.upper_bound_infeasible) {
+      constraints_multipliers[j] = -1.;
    }
    // otherwise, leave the multiplier as it is
 }

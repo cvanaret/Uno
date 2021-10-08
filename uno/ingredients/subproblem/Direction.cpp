@@ -72,15 +72,13 @@ std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
       }
       stream << "\n";
 
-      stream << "general infeasible =";
-      for (size_t j: constraint_partition.infeasible) {
-         stream << " c" << j;
-         if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
-            stream << " (lower)";
-         }
-         else if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_UPPER) {
-            stream << " (upper)";
-         }
+      stream << "\ngeneral lower infeasible =";
+      for (size_t j: constraint_partition.lower_bound_infeasible) {
+         stream << " c" << j << " ";
+      }
+      stream << "\ngeneral upper infeasible =";
+      for (size_t j: constraint_partition.upper_bound_infeasible) {
+         stream << " c" << j << " ";
       }
       stream << "\n";
    }
