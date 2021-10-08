@@ -17,7 +17,7 @@ void l1Relaxation::initialize(Statistics& statistics, const Problem& problem, It
    // initialize the subproblem
    this->subproblem.initialize(statistics, problem, first_iterate);
 
-   this->subproblem.compute_errors(problem, first_iterate, this->penalty_parameter);
+   this->subproblem.compute_optimality_conditions(problem, first_iterate, this->penalty_parameter);
    this->globalization_strategy->initialize(statistics, first_iterate);
 }
 
@@ -53,7 +53,7 @@ predicted_reduction_model, double step_length) {
    }
    else {
       // determine the linearized constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
-      auto residual_function = [&](size_t j) {
+      const auto residual_function = [&](size_t j) {
          const double component_j = current_iterate.constraints[j] + step_length * dot(direction.x, current_iterate.constraint_jacobian[j]);
          return problem.compute_constraint_violation(component_j, j);
       };
@@ -97,10 +97,7 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
    }
    if (accept) {
       statistics.add_statistic("penalty param.", this->penalty_parameter);
-
-      // compute the residuals
-      trial_iterate.evaluate_objective(problem);
-      this->subproblem.compute_errors(problem, trial_iterate, direction.objective_multiplier);
+      this->subproblem.compute_optimality_conditions(problem, trial_iterate, direction.objective_multiplier);
    }
    return accept;
 }

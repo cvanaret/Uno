@@ -15,7 +15,7 @@ void FeasibilityRestoration::initialize(Statistics& statistics, const Problem& p
 
    // initialize the subproblem
    this->subproblem.initialize(statistics, problem, first_iterate);
-   this->subproblem.compute_errors(problem, first_iterate, problem.objective_sign);
+   this->subproblem.compute_optimality_conditions(problem, first_iterate, problem.objective_sign);
 
    this->phase_1_strategy->initialize(statistics, first_iterate);
    this->phase_2_strategy->initialize(statistics, first_iterate);
@@ -94,7 +94,7 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
    DEBUG << "\nSolving the feasibility subproblem\n";
    Direction feasibility_direction = this->subproblem.solve(statistics, problem, current_iterate);
    feasibility_direction.objective_multiplier = 0.;
-   feasibility_direction.is_relaxed = true;
+   feasibility_direction.relaxed_subproblem = true;
    if (phase_2_direction.constraint_partition.has_value()) {
       ConstraintPartition constraint_partition = phase_2_direction.constraint_partition.value();
       feasibility_direction.constraint_partition = constraint_partition;
@@ -122,14 +122,14 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
    }
    else {
       // possibly go from 1 (restoration) to phase 2 (optimality)
-      if (!direction.is_relaxed && this->current_phase == FEASIBILITY_RESTORATION) {
+      if (!direction.relaxed_subproblem && this->current_phase == FEASIBILITY_RESTORATION) {
          // TODO && this->filter_optimality->accept(trial_iterate.progress.feasibility, trial_iterate.progress.objective))
          this->current_phase = OPTIMALITY;
          DEBUG << "Switching from restoration to optimality phase\n";
          this->subproblem.compute_progress_measures(problem, current_iterate);
       }
          // possibly go from phase 2 (optimality) to 1 (restoration)
-      else if (direction.is_relaxed && this->current_phase == OPTIMALITY) {
+      else if (direction.relaxed_subproblem && this->current_phase == OPTIMALITY) {
          this->current_phase = FEASIBILITY_RESTORATION;
          DEBUG << "Switching from optimality to restoration phase\n";
          this->phase_2_strategy->notify(current_iterate);
@@ -158,14 +158,12 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
    }
 
    if (accept) {
-      statistics.add_statistic("phase", static_cast<int>(direction.is_relaxed ? FEASIBILITY_RESTORATION : OPTIMALITY));
-      if (direction.is_relaxed && direction.constraint_partition.has_value()) {
+      statistics.add_statistic("phase", static_cast<int>(direction.relaxed_subproblem ? FEASIBILITY_RESTORATION : OPTIMALITY));
+      if (direction.relaxed_subproblem && direction.constraint_partition.has_value()) {
          // correct multipliers for infeasibility problem
          FeasibilityRestoration::set_restoration_multipliers(trial_iterate.multipliers.constraints, direction.constraint_partition.value());
       }
-      // compute the errors
-      trial_iterate.evaluate_objective(problem);
-      this->subproblem.compute_errors(problem, trial_iterate, direction.objective_multiplier);
+      this->subproblem.compute_optimality_conditions(problem, trial_iterate, direction.objective_multiplier);
    }
    return accept;
 }

@@ -156,7 +156,8 @@ double Subproblem::compute_complementarity_error(const Problem& problem, Iterate
    return error;
 }
 
-void Subproblem::compute_errors(const Problem& problem, Iterate& iterate, double objective_multiplier) const {
+void Subproblem::compute_optimality_conditions(const Problem& problem, Iterate& iterate, double objective_multiplier) const {
+   iterate.evaluate_objective(problem);
    iterate.evaluate_constraints(problem);
    iterate.errors.constraints = problem.compute_constraint_violation(iterate.constraints, L1_NORM);
    // compute the KKT error only if the objective multiplier is positive
