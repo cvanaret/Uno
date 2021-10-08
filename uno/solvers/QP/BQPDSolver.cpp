@@ -184,7 +184,6 @@ void BQPDSolver::analyze_constraints(Direction& direction) {
          // general constraint
          size_t constraint_index = index - this->number_variables;
          constraint_partition.feasible.push_back(constraint_index);
-         constraint_partition.constraint_feasibility[constraint_index] = FEASIBLE;
          if (0 <= this->ls[j]) { // lower bound active
             direction.multipliers.constraints[constraint_index] = this->residuals[index];
             direction.active_set.constraints.at_lower_bound.push_back(constraint_index);
@@ -205,15 +204,14 @@ void BQPDSolver::analyze_constraints(Direction& direction) {
          if (this->residuals[index] < 0.) { // infeasible constraint
             constraint_partition.infeasible.push_back(constraint_index);
             if (this->ls[j] < 0) { // upper bound violated
-               constraint_partition.constraint_feasibility[constraint_index] = INFEASIBLE_UPPER;
+               constraint_partition.upper_bound_infeasible.push_back(constraint_index);
             }
             else { // lower bound violated
-               constraint_partition.constraint_feasibility[constraint_index] = INFEASIBLE_LOWER;
+               constraint_partition.lower_bound_infeasible.push_back(constraint_index);
             }
          }
          else { // feasible constraint
             constraint_partition.feasible.push_back(constraint_index);
-            constraint_partition.constraint_feasibility[constraint_index] = FEASIBLE;
          }
       }
    }

@@ -30,7 +30,7 @@ public:
    double objective_multiplier{1.}; /*!< Objective multiplier */
 
    Status status{OPTIMAL}; /*!< Status of the solution */
-   bool relaxed_subproblem{false};
+   bool subproblem_is_relaxed{false};
 
    double norm{0.}; /*!< Norm of \f$x\f$ */
    double objective{std::numeric_limits<double>::infinity()}; /*!< Objective value */

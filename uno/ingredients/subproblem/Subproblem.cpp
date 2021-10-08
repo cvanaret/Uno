@@ -90,30 +90,28 @@ void Subproblem::set_scaled_objective_gradient(const Problem& problem, Iterate& 
 void Subproblem::compute_feasibility_linear_objective(const Iterate& current_iterate, const ConstraintPartition& constraint_partition) {
    /* objective function: sum of gradients of infeasible constraints */
    this->objective_gradient.clear();
-   for (size_t j: constraint_partition.infeasible) {
+   for (size_t j: constraint_partition.lower_bound_infeasible) {
       current_iterate.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
-         if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
-            this->objective_gradient.insert(i, -derivative);
-         }
-         else {
-            this->objective_gradient.insert(i, derivative);
-         }
+         this->objective_gradient.insert(i, -derivative);
+      });
+   }
+   for (size_t j: constraint_partition.upper_bound_infeasible) {
+      current_iterate.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
+         this->objective_gradient.insert(i, derivative);
       });
    }
 }
 
 void Subproblem::generate_feasibility_bounds(const Problem& problem, const std::vector<double>& current_constraints, const ConstraintPartition&
 constraint_partition) {
-   for (size_t j = 0; j < problem.number_constraints; j++) {
-      if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_LOWER) {
-         this->constraints_bounds[j] = {-std::numeric_limits<double>::infinity(), problem.constraint_bounds[j].lb - current_constraints[j]};
-      }
-      else if (constraint_partition.constraint_feasibility[j] == INFEASIBLE_UPPER) {
-         this->constraints_bounds[j] = {problem.constraint_bounds[j].ub - current_constraints[j], std::numeric_limits<double>::infinity()};
-      }
-      else { // FEASIBLE
-         this->constraints_bounds[j] = {problem.constraint_bounds[j].lb - current_constraints[j], problem.constraint_bounds[j].ub - current_constraints[j]};
-      }
+   for (size_t j: constraint_partition.feasible) {
+      this->constraints_bounds[j] = {problem.constraint_bounds[j].lb - current_constraints[j], problem.constraint_bounds[j].ub - current_constraints[j]};
+   }
+   for (size_t j: constraint_partition.lower_bound_infeasible) {
+      this->constraints_bounds[j] = {-std::numeric_limits<double>::infinity(), problem.constraint_bounds[j].lb - current_constraints[j]};
+   }
+   for (size_t j: constraint_partition.upper_bound_infeasible) {
+      this->constraints_bounds[j] = {problem.constraint_bounds[j].ub - current_constraints[j], std::numeric_limits<double>::infinity()};
    }
 }
 

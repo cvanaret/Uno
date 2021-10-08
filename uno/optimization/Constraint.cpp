@@ -1,6 +1,6 @@
 #include "Constraint.hpp"
 
-ConstraintPartition::ConstraintPartition(size_t number_constraints) : constraint_feasibility(number_constraints) {
+ConstraintPartition::ConstraintPartition(size_t number_constraints) {
    this->feasible.reserve(number_constraints);
    this->infeasible.reserve(number_constraints);
 }
