@@ -51,6 +51,8 @@ protected:
    static void generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables, size_t number_variables);
    void add_elastic_variables_to_subproblem();
    void remove_elastic_variables_from_subproblem();
+   void remove_elastic_variables_from_direction(const Problem& problem, Direction& direction);
+   void recover_active_set(const Problem& problem, Direction& direction);
 };
 
 #endif //CONSTRAINTRELAXATIONSTRATEGY_H

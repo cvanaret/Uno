@@ -47,9 +47,10 @@ double FeasibilityRestoration::compute_predicted_reduction(const Problem& /*prob
    return predicted_reduction_model.evaluate(step_length);
 }
 
+// with a constraint partition
 void FeasibilityRestoration::form_feasibility_problem(const Problem& problem, Iterate& current_iterate, const std::vector<double>&
 phase_2_primal_direction, const ConstraintPartition& constraint_partition) {
-   assert(!constraint_partition.infeasible.empty() && "The direction is infeasible but no constraint is infeasible");
+   assert(!constraint_partition.infeasible.empty() && "The subproblem is infeasible but no constraint is infeasible");
 
    // set the multipliers of the violated constraints
    FeasibilityRestoration::set_restoration_multipliers(this->subproblem.constraints_multipliers, constraint_partition);
@@ -65,10 +66,9 @@ phase_2_primal_direction, const ConstraintPartition& constraint_partition) {
    this->subproblem.set_initial_point(phase_2_primal_direction);
 }
 
+// without a constraint partition
 void FeasibilityRestoration::form_feasibility_problem(const Problem& problem, Iterate& current_iterate, const std::vector<double>&
 phase_2_primal_direction) {
-   assert(false && "form_feasibility_problem without constraint partition: must be implemented");
-
    // compute the objective model with a zero objective multiplier
    this->subproblem.build_objective_model(problem, current_iterate, 0.);
 
@@ -83,7 +83,7 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
       const Direction& phase_2_direction) {
    // form the feasibility problem (with or without constraint partition)
    if (phase_2_direction.constraint_partition.has_value()) {
-      ConstraintPartition constraint_partition = phase_2_direction.constraint_partition.value();
+      const ConstraintPartition& constraint_partition = phase_2_direction.constraint_partition.value();
       this->form_feasibility_problem(problem, current_iterate, phase_2_direction.x, constraint_partition);
    }
    else {
@@ -95,15 +95,15 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
    Direction feasibility_direction = this->subproblem.solve(statistics, problem, current_iterate);
    feasibility_direction.objective_multiplier = 0.;
    feasibility_direction.subproblem_is_relaxed = true;
+
    if (phase_2_direction.constraint_partition.has_value()) {
-      ConstraintPartition constraint_partition = phase_2_direction.constraint_partition.value();
+      const ConstraintPartition& constraint_partition = phase_2_direction.constraint_partition.value();
       feasibility_direction.constraint_partition = constraint_partition;
    }
    else {
-      // TODO remove elastic variables
-      std::cout << feasibility_direction << "\n";
-      assert(false && "TODO");
+      this->remove_elastic_variables_from_direction(problem, feasibility_direction);
    }
+   DEBUG << feasibility_direction << "\n";
    return feasibility_direction;
 }
 
@@ -138,7 +138,6 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
          this->phase_1_strategy->notify(current_iterate);
       }
 
-      trial_iterate.evaluate_constraints(problem);
       if (this->current_phase == FEASIBILITY_RESTORATION) {
          // if restoration phase, recompute progress measures of trial point
          this->compute_infeasibility_measures(problem, trial_iterate, direction.constraint_partition);
@@ -151,6 +150,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
       const double predicted_reduction = this->compute_predicted_reduction(problem, current_iterate, direction, predicted_reduction_model, step_length);
 
       // pick the current strategy
+      // TODO: pick phase-2 strategy if no constraint partition is available
       GlobalizationStrategy& strategy = (this->current_phase == OPTIMALITY) ? *this->phase_2_strategy : *this->phase_1_strategy;
       // invoke the globalization strategy for acceptance
       accept = strategy.check_acceptance(statistics, current_iterate.progress, trial_iterate.progress,
@@ -180,13 +180,14 @@ constraint_partition) {
 }
 
 void FeasibilityRestoration::compute_infeasibility_measures(const Problem& problem, Iterate& iterate,
-      const std::optional<ConstraintPartition>& constraint_partition) {
+      const std::optional<ConstraintPartition>& optional_constraint_partition) {
    iterate.evaluate_constraints(problem);
    // optimality measure: residual of linearly infeasible constraints
-   if (constraint_partition.has_value()) {
+   if (optional_constraint_partition.has_value()) {
+      const ConstraintPartition& constraint_partition = optional_constraint_partition.value();
       // feasibility measure: residual of all constraints
       double feasibility = problem.compute_constraint_violation(iterate.constraints, L1_NORM);
-      double objective = problem.compute_constraint_violation(iterate.constraints, constraint_partition.value().infeasible, L1_NORM);
+      double objective = problem.compute_constraint_violation(iterate.constraints, constraint_partition.infeasible, L1_NORM);
       iterate.progress = {feasibility, objective};
    }
    else {

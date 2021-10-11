@@ -357,6 +357,7 @@ inline PredictedReductionModel InteriorPoint<LinearSolverType>::generate_predict
 
 template<typename LinearSolverType>
 inline void InteriorPoint<LinearSolverType>::compute_progress_measures(const Problem& problem, Iterate& iterate) {
+   iterate.evaluate_constraints(problem);
    auto residual_function = [&](size_t j) {
       if (problem.constraint_status[j] == EQUAL_BOUNDS) {
          return iterate.constraints[j] - problem.constraint_bounds[j].lb;

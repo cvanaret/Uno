@@ -24,7 +24,7 @@ enum ConstraintFeasibility { FEASIBLE, INFEASIBLE_LOWER, INFEASIBLE_UPPER };
 
 struct ConstraintPartition {
    std::vector<size_t> feasible{}; /*!< Indices of the feasible constraints */
-   std::vector<size_t> infeasible{}; /*!< Indices of the lower-bound infeasible constraints */
+   std::vector<size_t> infeasible{}; /*!< Indices of the infeasible constraints */
    std::vector<size_t> lower_bound_infeasible{}; /*!< Indices of the lower-bound infeasible constraints */
    std::vector<size_t> upper_bound_infeasible{}; /*!< Indices of the upper_bound infeasible constraints */
 
