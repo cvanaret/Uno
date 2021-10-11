@@ -58,6 +58,65 @@ void ConstraintRelaxationStrategy::remove_elastic_variables_from_subproblem() {
    this->elastic_variables.negative.for_each(erase_elastic_variables);
 }
 
+void ConstraintRelaxationStrategy::remove_elastic_variables_from_direction(const Problem& problem, Direction& direction) {
+   // the primal variables and corresponding bound multipliers are organized as follows:
+   // original | subproblem-specific (may be empty) | elastic
+   direction.x.resize(this->number_subproblem_variables);
+   direction.multipliers.lower_bounds.resize(this->number_subproblem_variables);
+   direction.multipliers.upper_bounds.resize(this->number_subproblem_variables);
+   direction.norm = norm_inf(direction.x);
+   // recover active set
+   this->recover_active_set(problem, direction);
+}
+
+void ConstraintRelaxationStrategy::recover_active_set(const Problem& problem, Direction& direction) {
+   // TODO remove elastic variables
+   for (size_t i = problem.number_variables; i < direction.x.size(); i++) {
+      //direction.active_set.bounds.at_lower_bound.erase(i);
+      //direction.active_set.bounds.at_upper_bound.erase(i);
+   }
+   // constraints: only when p-n = 0
+   if (direction.constraint_partition.has_value()) {
+      ConstraintPartition& constraint_partition = direction.constraint_partition.value();
+      this->elastic_variables.positive.for_each([&](size_t j, size_t i) {
+         // if the component is strictly positive, the constraint is violated
+         if (0. < direction.x[i]) {
+            constraint_partition.lower_bound_infeasible.push_back(j);
+         }
+      });
+      this->elastic_variables.negative.for_each([&](size_t j, size_t i) {
+         // if the component is strictly positive, the constraint is violated
+         if (0. < direction.x[i]) {
+            constraint_partition.upper_bound_infeasible.push_back(j);
+         }
+      });
+   }
+
+   /*
+   for (size_t j = 0; j < direction.multipliers.constraints.size(); j++) {
+      // compute constraint violation
+      double constraint_violation = 0.;
+      try {
+         size_t i = this->elastic_variables.positive.at(j);
+         constraint_violation += direction.x[i];
+      }
+      catch (const std::out_of_range& e) {
+      }
+      try {
+         size_t i = this->elastic_variables.negative.at(j);
+         constraint_violation += direction.x[i];
+      }
+      catch (const std::out_of_range& e) {
+      }
+      // update active set
+      if (0. < constraint_violation) {
+         //direction.active_set.constraints.at_lower_bound.erase(j);
+         //direction.active_set.constraints.at_upper_bound.erase(j);
+      }
+   }
+    */
+}
+
 Direction ConstraintRelaxationStrategy::compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) {
    return this->subproblem.compute_second_order_correction(problem, trial_iterate);
 }

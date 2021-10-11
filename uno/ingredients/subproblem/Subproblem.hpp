@@ -65,7 +65,7 @@ public:
    static double compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier);
    void compute_optimality_conditions(const Problem& problem, Iterate& iterate, double objective_multiplier) const;
 
-   double compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const;
+   static double compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers);
 
    size_t number_variables; // can be updated on the fly (elastic variables)
    const size_t max_number_variables;

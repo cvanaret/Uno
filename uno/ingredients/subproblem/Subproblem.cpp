@@ -121,7 +121,7 @@ double Subproblem::compute_first_order_error(const Problem& problem, Iterate& it
 }
 
 /* complementary slackness error */
-double Subproblem::compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) const {
+double Subproblem::compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) {
    double error = 0.;
    /* bound constraints */
    for (size_t i = 0; i < problem.number_variables; i++) {
@@ -161,7 +161,7 @@ void Subproblem::compute_optimality_conditions(const Problem& problem, Iterate& 
    // compute the KKT error only if the objective multiplier is positive
    iterate.errors.KKT = Subproblem::compute_first_order_error(problem, iterate, 0. < objective_multiplier ? objective_multiplier : 1.);
    iterate.errors.FJ = Subproblem::compute_first_order_error(problem, iterate, 0.);
-   iterate.errors.complementarity = this->compute_complementarity_error(problem, iterate, iterate.multipliers);
+   iterate.errors.complementarity = Subproblem::compute_complementarity_error(problem, iterate, iterate.multipliers);
 }
 
 Direction Subproblem::compute_second_order_correction(const Problem& /*problem*/, Iterate& /*trial_iterate*/) {
