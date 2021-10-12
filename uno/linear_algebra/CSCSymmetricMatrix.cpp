@@ -143,6 +143,7 @@ void CSCSymmetricMatrix::remove_variables(const std::vector<int>& /*variable_ind
 }
 
 COOSymmetricMatrix CSCSymmetricMatrix::to_COO() {
+   assert(false && "Not implemented");
    /*
    COOSymmetricMatrix coo_matrix(this->dimension, this->capacity);
    this->for_each([&](int i, int j, double entry) {
@@ -150,11 +151,11 @@ COOSymmetricMatrix CSCSymmetricMatrix::to_COO() {
    });
    return coo_matrix;
     */
-   COOSymmetricMatrix coo_matrix(this->dimension, this->matrix, this->column_start, this->row_index);
+   //COOSymmetricMatrix coo_matrix(this->dimension, this->matrix, this->column_start, this->row_index);
    //this->for_each([&](int i, int j, double entry) {
    //   coo_matrix.insert(entry, i, j);
    //});
-   return coo_matrix;
+   //return coo_matrix;
 }
 
 CSCSymmetricMatrix CSCSymmetricMatrix::identity(size_t dimension) {

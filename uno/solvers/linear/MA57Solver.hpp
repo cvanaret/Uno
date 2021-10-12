@@ -27,7 +27,7 @@ struct MA57Factorization {
  */
 class MA57Solver : public LinearSolver<COOSymmetricMatrix> {
 public:
-   explicit MA57Solver(size_t max_dimension);
+   explicit MA57Solver(size_t max_dimension, size_t max_number_nonzeros);
    ~MA57Solver() override = default;
 
    void factorize(size_t dimension, COOSymmetricMatrix& matrix) override;
@@ -41,6 +41,10 @@ public:
    [[nodiscard]] size_t rank() const override;
 
 private:
+   // internal matrix representation
+   std::vector<int> row_indices;
+   std::vector<int> column_indices;
+
    std::vector<int> iwork;
    int lwork;
    std::vector<double> work;

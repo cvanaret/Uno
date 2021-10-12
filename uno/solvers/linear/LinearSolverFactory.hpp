@@ -28,8 +28,8 @@ public:
 template<>
 class LinearSolverFactory<MA57Solver> {
 public:
-   static std::unique_ptr<LinearSolver<typename MA57Solver::matrix_type>> create(size_t max_dimension) {
-      return std::make_unique<MA57Solver>(max_dimension);
+   static std::unique_ptr<LinearSolver<typename MA57Solver::matrix_type>> create(size_t max_dimension, size_t max_number_nonzeros) {
+      return std::make_unique<MA57Solver>(max_dimension, max_number_nonzeros);
    }
 };
 #endif

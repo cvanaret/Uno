@@ -7,11 +7,11 @@ class COOSymmetricMatrix : public SymmetricMatrix {
    /* Coordinate list */
 public:
    std::vector<double> matrix;
-   std::vector<int> row_indices;
-   std::vector<int> column_indices;
+   std::vector<size_t> row_indices;
+   std::vector<size_t> column_indices;
 
    COOSymmetricMatrix(size_t dimension, size_t capacity);
-   COOSymmetricMatrix(size_t dimension, std::vector<double> matrix, std::vector<int> row_indices, std::vector<int> column_indices);
+   COOSymmetricMatrix(size_t dimension, std::vector<double> matrix, std::vector<size_t> row_indices, std::vector<size_t> column_indices);
 
    void for_each(const std::function<void (size_t, size_t, double)>& f) const override;
    void insert(double term, size_t row_index, size_t column_index) override;

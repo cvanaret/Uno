@@ -11,7 +11,8 @@ COOSymmetricMatrix::COOSymmetricMatrix(size_t dimension, size_t capacity) : Symm
 row_indices(capacity), column_indices(capacity) {
 }
 
-COOSymmetricMatrix::COOSymmetricMatrix(size_t dimension, std::vector<double> matrix, std::vector<int> row_indices, std::vector<int> column_indices) :
+COOSymmetricMatrix::COOSymmetricMatrix(size_t dimension, std::vector<double> matrix, std::vector<size_t> row_indices, std::vector<size_t>
+      column_indices) :
       SymmetricMatrix(dimension, matrix.capacity()), matrix(std::move(matrix)), row_indices(std::move(row_indices)),
       column_indices(std::move(column_indices)) {
    assert(false && "COOSymmetricMatrix constructor 2");
@@ -20,8 +21,8 @@ COOSymmetricMatrix::COOSymmetricMatrix(size_t dimension, std::vector<double> mat
 // generic iterator
 void COOSymmetricMatrix::for_each(const std::function<void(size_t, size_t, double)>& f) const {
    for (size_t k = 0; k < this->number_nonzeros; k++) {
-      size_t i = static_cast<size_t>(this->row_indices[k]);
-      size_t j = static_cast<size_t>(this->column_indices[k]);
+      size_t i = this->row_indices[k];
+      size_t j = this->column_indices[k];
       f(i, j, this->matrix[k]);
    }
 }
@@ -29,7 +30,7 @@ void COOSymmetricMatrix::for_each(const std::function<void(size_t, size_t, doubl
 size_t COOSymmetricMatrix::find(size_t row_index, size_t column_index) {
    size_t position = 0;
    while (position < this->number_nonzeros) {
-      if (this->row_indices[position] == static_cast<int>(row_index) && this->column_indices[position] == static_cast<int>(column_index)) {
+      if (this->row_indices[position] == row_index && this->column_indices[position] == column_index) {
          break;
       }
       position++;
@@ -46,14 +47,14 @@ void COOSymmetricMatrix::insert(double term, size_t row_index, size_t column_ind
    else {
     */
       this->matrix[this->number_nonzeros] = term;
-      this->row_indices[this->number_nonzeros] = static_cast<int>(row_index);
-      this->column_indices[this->number_nonzeros] = static_cast<int>(column_index);
+      this->row_indices[this->number_nonzeros] = row_index;
+      this->column_indices[this->number_nonzeros] = column_index;
       this->number_nonzeros++;
    //}
 }
 
 std::ostream& operator<<(std::ostream& stream, const COOSymmetricMatrix& matrix) {
-   matrix.for_each([&](int i, int j, double entry) {
+   matrix.for_each([&](size_t i, size_t j, double entry) {
       stream << "m(" << i << ", " << j << ") = " << entry << "\n";
    });
    return stream;
