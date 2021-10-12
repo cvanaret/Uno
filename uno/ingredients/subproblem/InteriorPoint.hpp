@@ -111,7 +111,11 @@ inline InteriorPoint<LinearSolverType>::InteriorPoint(const Problem& problem, si
             + this->max_number_variables + number_constraints /* regularization */
             + 2 * this->max_number_variables /* diagonal barrier terms */
             + this->max_number_variables * number_constraints /* Jacobian */),
-      linear_solver(LinearSolverFactory<LinearSolverType>::create(this->max_number_variables + number_constraints)),
+      linear_solver(LinearSolverFactory<LinearSolverType>::create(this->max_number_variables + number_constraints,
+            problem.hessian_maximum_number_nonzeros
+            + this->max_number_variables + number_constraints /* regularization */
+            + 2 * this->max_number_variables /* diagonal barrier terms */
+            + this->max_number_variables * number_constraints /* Jacobian */)),
       parameters({0.99, 1e10, 100., 0.2, 1.5, 10.}), default_multiplier(default_multiplier),
       primal_iterate(this->max_number_variables),
       lower_bound_multipliers(this->max_number_variables),

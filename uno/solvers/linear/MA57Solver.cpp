@@ -22,9 +22,12 @@ lifact, const double rhs[], double x[], double resid[], double work[], int iwork
       double cntl[], int info[], double rinfo[]);
 }
 
-MA57Solver::MA57Solver(size_t max_dimension) : LinearSolver(max_dimension), iwork(5 * max_dimension),
+MA57Solver::MA57Solver(size_t max_dimension, size_t max_number_nonzeros) : LinearSolver(max_dimension),
+   iwork(5 * max_dimension),
    lwork(static_cast<int>(1.2 * static_cast<double>(max_dimension))),
    work(this->lwork), residuals(max_dimension) {
+   this->row_indices.reserve(max_number_nonzeros);
+   this->column_indices.reserve(max_number_nonzeros);
    /* set the default values of the controlling parameters */
    ma57id_(this->cntl.data(), this->icntl.data());
    // suppress warning messages
@@ -41,6 +44,16 @@ void MA57Solver::factorize(size_t dimension, COOSymmetricMatrix& matrix) {
 
 void MA57Solver::do_symbolic_factorization(size_t dimension, COOSymmetricMatrix& matrix) {
    assert(dimension <= this->max_dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
+   assert(matrix.number_nonzeros <= this->row_indices.capacity());
+
+   // build the internal matrix representation
+   this->row_indices.clear();
+   this->column_indices.clear();
+   matrix.for_each([&](size_t i, size_t j, double /*entry*/) {
+      this->row_indices.push_back(static_cast<int>(i) + 1);
+      this->column_indices.push_back(static_cast<int>(j) + 1);
+   });
+
    const int n = static_cast<int>(dimension);
    const int nnz = static_cast<int>(matrix.number_nonzeros);
 
@@ -48,17 +61,11 @@ void MA57Solver::do_symbolic_factorization(size_t dimension, COOSymmetricMatrix&
    const int lkeep = 5 * n + nnz + std::max(n, nnz) + 42;
    std::vector<int> keep(lkeep);
 
-   /* reindex the matrix (Fortran compliance) */
-   for (size_t k = 0; k < matrix.number_nonzeros; k++) {
-      matrix.row_indices[k]++;
-      matrix.column_indices[k]++;
-   }
-
    /* symbolic factorization */
    ma57ad_(/* const */ &n,
          /* const */ &nnz,
-         /* const */ matrix.row_indices.data(),
-         /* const */ matrix.column_indices.data(),
+         /* const */ this->row_indices.data(),
+         /* const */ this->column_indices.data(),
          /* const */ &lkeep,
          /* const */ keep.data(),
          /* out */ this->iwork.data(),
@@ -71,12 +78,6 @@ void MA57Solver::do_symbolic_factorization(size_t dimension, COOSymmetricMatrix&
    std::vector<double> fact(lfact);
    int lifact = 2 * this->info[9];
    std::vector<int> ifact(lifact);
-
-   /* reindex the matrix (Fortran compliance) */
-   for (size_t k = 0; k < matrix.number_nonzeros; k++) {
-      matrix.row_indices[k]--;
-      matrix.column_indices[k]--;
-   }
 
    // build the factorization object
    this->factorization = {n, nnz, std::move(fact), lfact, std::move(ifact), lifact, lkeep, std::move(keep)};
@@ -110,7 +111,7 @@ void MA57Solver::solve(size_t dimension, COOSymmetricMatrix& matrix, const std::
    if (this->use_iterative_refinement) {
       assert(false && "TODO in MA57Solver::solve: reindex matrix");
 
-      ma57dd_(&this->job, &n, &this->factorization.nnz, matrix.matrix.data(), matrix.row_indices.data(), matrix.column_indices.data(),
+      ma57dd_(&this->job, &n, &this->factorization.nnz, matrix.matrix.data(), this->row_indices.data(), this->column_indices.data(),
             this->factorization.fact.data(), &this->factorization.lfact, this->factorization.ifact.data(), &this->factorization.lifact,
             rhs.data(), result.data(), this->residuals.data(), this->work.data(), this->iwork.data(), this->icntl.data(),
             this->cntl.data(), this->info.data(), this->rinfo.data());
