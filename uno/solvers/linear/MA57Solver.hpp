@@ -30,10 +30,10 @@ public:
    explicit MA57Solver(size_t max_dimension, size_t max_number_nonzeros);
    ~MA57Solver() override = default;
 
-   void factorize(size_t dimension, COOSymmetricMatrix& matrix) override;
-   void do_symbolic_factorization(size_t dimension, COOSymmetricMatrix& matrix) override;
-   void do_numerical_factorization(size_t dimension, COOSymmetricMatrix& matrix) override;
-   void solve(size_t dimension, COOSymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) override;
+   void factorize(size_t dimension, const COOSymmetricMatrix& matrix) override;
+   void do_symbolic_factorization(size_t dimension, const COOSymmetricMatrix& matrix) override;
+   void do_numerical_factorization(size_t dimension, const COOSymmetricMatrix& matrix) override;
+   void solve(size_t dimension, const COOSymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) override;
 
    [[nodiscard]] std::tuple<size_t, size_t, size_t> get_inertia() const override;
    [[nodiscard]] size_t number_negative_eigenvalues() const override;
@@ -59,6 +59,7 @@ private:
 
    MA57Factorization factorization{};
    bool use_iterative_refinement{false};
+   void save_matrix_to_local_format(const COOSymmetricMatrix& matrix);
 };
 
 #endif // MA57SOLVER_H
