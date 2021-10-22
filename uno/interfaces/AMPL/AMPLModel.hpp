@@ -17,7 +17,7 @@ extern "C" {
  */
 class AMPLModel : public Problem {
 public:
-   explicit AMPLModel(std::string file_name);
+   explicit AMPLModel(const std::string& file_name);
    ~AMPLModel() override;
 
    /* objective */
@@ -33,16 +33,14 @@ public:
 
    /* Hessian */
    void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
-         CSCSymmetricMatrix& hessian) const override;
-   void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
-         COOSymmetricMatrix& hessian) const override;
+         SymmetricMatrix& hessian) const override;
 
    void set_initial_primal_point(std::vector<double>& x) override;
    void set_initial_dual_point(std::vector<double>& multipliers) override;
 
 private:
    // private constructor to pass the dimensions to the Problem base constructor
-   AMPLModel(std::string file_name, ASL* asl);
+   AMPLModel(const std::string& file_name, ASL* asl);
 
    ASL* asl_; /*!< Instance of the AMPL Solver Library class */
    std::vector<double> ampl_tmp_gradient{};

@@ -73,7 +73,7 @@ public:
    std::map<size_t, size_t> linear_constraints{};
 
    /* Hessian */
-   int hessian_maximum_number_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */
+   size_t hessian_maximum_number_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */
    const bool fixed_hessian_sparsity{false};
 
    // purely virtual functions
@@ -84,9 +84,7 @@ public:
    virtual void evaluate_constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const = 0;
    virtual void evaluate_constraint_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraint_jacobian) const = 0;
    virtual void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
-         CSCSymmetricMatrix& hessian) const = 0;
-   virtual void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
-         COOSymmetricMatrix& hessian) const = 0;
+         SymmetricMatrix& hessian) const = 0;
 
    virtual void set_initial_primal_point(std::vector<double>& x) = 0;
    virtual void set_initial_dual_point(std::vector<double>& multipliers) = 0;

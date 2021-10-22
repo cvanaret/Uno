@@ -35,8 +35,7 @@ BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_
       size_hessian_sparsity(quadratic_programming ? maximum_number_nonzeros + number_variables + 3 : 0),
       size_hessian_workspace(maximum_number_nonzeros + kmax * (kmax + 9) / 2 + 2 * number_variables + number_constraints + mxwk0),
       size_hessian_sparsity_workspace(size_hessian_sparsity + kmax + mxiwk0),
-      hessian_values(size_hessian_workspace),
-      hessian_sparsity(size_hessian_sparsity_workspace) {
+      hessian_values(size_hessian_workspace), hessian_sparsity(size_hessian_sparsity_workspace) {
    // active set
    for (size_t i = 0; i < this->number_variables + this->number_constraints; i++) {
       this->ls[i] = static_cast<int>(i + this->fortran_shift);
@@ -44,32 +43,34 @@ BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_
 }
 
 Direction BQPDSolver::solve_QP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector<double>&
-linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian, const CSCSymmetricMatrix& hessian,
+linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian, const SymmetricMatrix& hessian,
       const std::vector<double>& initial_point) {
-   // Hessian
-   for (size_t i = 0; i < hessian.number_nonzeros; i++) {
-      this->hessian_values[i] = hessian.matrix[i];
-   }
-   // Hessian sparsity
-   this->hessian_sparsity[0] = static_cast<int>(hessian.number_nonzeros + 1);
-   for (size_t i = 0; i < hessian.number_nonzeros; i++) {
-      this->hessian_sparsity[i + 1] = hessian.row_index[i] + static_cast<int>(this->fortran_shift);
-   }
-   for (size_t i = 0; i < hessian.dimension + 1; i++) {
-      this->hessian_sparsity[hessian.number_nonzeros + i + 1] = hessian.column_start[i] + static_cast<int>(this->fortran_shift);
-   }
-
-   // if extra variables have been introduced, correct hessian.column_start
-   // TODO move to HessianEvaluation
-   size_t i = hessian.number_nonzeros + hessian.dimension + 2;
-   const int last_value = hessian.column_start[hessian.dimension];
-   for (size_t j = hessian.dimension; j < this->number_variables; j++) {
-      this->hessian_sparsity[i] = last_value + static_cast<int>(this->fortran_shift);
-      i++;
-   }
-
-   DEBUG << "Hessian: " << hessian;
+   this->save_hessian_to_local_format(hessian);
    return this->solve_subproblem(variables_bounds, constraints_bounds, linear_objective, constraint_jacobian, initial_point);
+}
+
+void BQPDSolver::save_hessian_to_local_format(const SymmetricMatrix& hessian) {
+   const size_t header_size = 1;
+   size_t current_index = 0;
+   size_t current_column = 0;
+   this->hessian_sparsity[0] = static_cast<int>(hessian.number_nonzeros + 1);
+   for (size_t j = 0; j < hessian.dimension + 1; j++) {
+      this->hessian_sparsity[header_size + hessian.number_nonzeros + j] = 1;
+   }
+   // go through the entries
+   hessian.for_each([&](size_t i, size_t j, double entry) {
+      this->hessian_values[current_index] = entry;
+      this->hessian_sparsity[current_index + 1] = static_cast<int>(i) + 1;
+      // start the next column at the current start
+      assert(current_column <= j && "The Hessian terms are not ordered and cannot be stored in CSC format");
+      if (current_column < j) {
+         this->hessian_sparsity[header_size + hessian.number_nonzeros + j + 1] = this->hessian_sparsity[header_size + hessian.number_nonzeros + j];
+         current_column++;
+      }
+      this->hessian_sparsity[header_size + hessian.number_nonzeros + j + 1]++;
+      current_index++;
+   });
+   DEBUG << "Hessian: " << hessian;
 }
 
 Direction BQPDSolver::solve_LP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector<double>&
@@ -143,13 +144,13 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
    copy_from(direction.x, initial_point);
    const int n = static_cast<int>(this->number_variables);
    const int m = static_cast<int>(this->number_constraints);
-   const int mode = static_cast<int>(this->mode);
+   const int current_mode = static_cast<int>(this->mode);
    
    // solve the LP/QP
    bqpd_(&n, &m, &this->k, &this->kmax, this->jacobian.data(), this->jacobian_sparsity.data(),
          direction.x.data(), this->lb.data(), this->ub.data(), &direction.objective, &this->fmin, this->gradient_solution.data(),
          this->residuals.data(), this->w.data(), this->e.data(), this->ls.data(), this->alp.data(), this->lp.data(),
-         &this->mlp, &this->peq_solution, this->hessian_values.data(), this->hessian_sparsity.data(), &mode, &this->ifail,
+         &this->mlp, &this->peq_solution, this->hessian_values.data(), this->hessian_sparsity.data(), &current_mode, &this->ifail,
          this->info.data(), &this->iprint, &this->nout);
    direction.status = BQPDSolver::int_to_status(this->ifail);
 

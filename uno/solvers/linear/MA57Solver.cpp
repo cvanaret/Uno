@@ -36,13 +36,16 @@ MA57Solver::MA57Solver(size_t max_dimension, size_t max_number_nonzeros) : Linea
    this->icntl[8] = 1;
 }
 
-void MA57Solver::factorize(size_t dimension, const COOSymmetricMatrix& matrix) {
+void MA57Solver::factorize(size_t dimension, const SymmetricMatrix& matrix) {
    // general factorization method: symbolic factorization and numerical factorization
    this->do_symbolic_factorization(dimension, matrix);
    this->do_numerical_factorization(dimension, matrix);
 }
 
-void MA57Solver::do_symbolic_factorization(size_t dimension, const COOSymmetricMatrix& matrix) {
+void MA57Solver::do_symbolic_factorization(size_t dimension, const SymmetricMatrix& matrix) {
+   std::cout << "MA57Solver::do_symbolic_factorization\n";
+   std::cout << matrix;
+   std::cout << "matrix.number_nonzeros = " << matrix.number_nonzeros << ", capacity: " << this->row_indices.capacity() << "\n";
    assert(dimension <= this->max_dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
    assert(matrix.number_nonzeros <= this->row_indices.capacity());
 
@@ -54,7 +57,7 @@ void MA57Solver::do_symbolic_factorization(size_t dimension, const COOSymmetricM
 
    /* sparsity pattern */
    const int lkeep = 5 * n + nnz + std::max(n, nnz) + 42;
-   std::vector<int> keep(lkeep);
+   std::vector<int> keep(static_cast<size_t>(lkeep));
 
    /* symbolic factorization */
    ma57ad_(/* const */ &n,
@@ -68,17 +71,20 @@ void MA57Solver::do_symbolic_factorization(size_t dimension, const COOSymmetricM
          /* out */ this->info.data(),
          /* out */ this->rinfo.data());
 
-   assert(info[0] == 0 && "MA57: the symbolic factorization failed");
+   assert(0 <= info[0] && "MA57: the symbolic factorization failed");
+   if (0 < info[0]) {
+      WARNING << "MA57 has issued a warning: info(1) = " << info[0] << "\n";
+   }
    int lfact = 2 * this->info[8];
-   std::vector<double> fact(lfact);
+   std::vector<double> fact(static_cast<size_t>(lfact));
    int lifact = 2 * this->info[9];
-   std::vector<int> ifact(lifact);
+   std::vector<int> ifact(static_cast<size_t>(lifact));
 
-   // build the factorization object
+   // store the symbolic factorization
    this->factorization = {n, nnz, std::move(fact), lfact, std::move(ifact), lifact, lkeep, std::move(keep)};
 }
 
-void MA57Solver::do_numerical_factorization(size_t dimension, const COOSymmetricMatrix& matrix) {
+void MA57Solver::do_numerical_factorization(size_t dimension, const SymmetricMatrix& matrix) {
    assert(dimension <= this->max_dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
    assert(this->factorization.nnz == static_cast<int>(matrix.number_nonzeros) && "MA57Solver: the numbers of nonzeros do not match");
 
@@ -97,7 +103,7 @@ void MA57Solver::do_numerical_factorization(size_t dimension, const COOSymmetric
          /* out */ this->rinfo.data());
 }
 
-void MA57Solver::solve(size_t dimension, const COOSymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) {
+void MA57Solver::solve(size_t dimension, const SymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) {
    /* solve */
    const int n = static_cast<int>(dimension);
    const int lrhs = n; // integer, length of rhs
@@ -139,12 +145,12 @@ size_t MA57Solver::rank() const {
    return static_cast<size_t>(this->info[24]);
 }
 
-void MA57Solver::save_matrix_to_local_format(const COOSymmetricMatrix& matrix) {
+void MA57Solver::save_matrix_to_local_format(const SymmetricMatrix& matrix) {
    // build the internal matrix representation
    this->row_indices.clear();
    this->column_indices.clear();
    matrix.for_each([&](size_t i, size_t j, double /*entry*/) {
-      this->row_indices.push_back(static_cast<int>(i) + 1);
-      this->column_indices.push_back(static_cast<int>(j) + 1);
+      this->row_indices.push_back(static_cast<int>(i + this->fortran_shift));
+      this->column_indices.push_back(static_cast<int>(j + this->fortran_shift));
    });
 }

@@ -12,7 +12,13 @@ enum Norm { L1_NORM = 1, L2_NORM = 2, L2_SQUARED_NORM, INF_NORM };
 
 void add_vectors(const std::vector<double>& x, const std::vector<double>& y, double scaling_factor, std::vector<double>& result);
 
-void clear(std::vector<double>& x);
+template <typename T>
+void clear(std::vector<T>& x) {
+   for (T& xi: x) {
+      xi = T(0.);
+   }
+}
+
 void scale(std::vector<double>& x, double scaling_factor);
 
 template <typename T>
@@ -33,8 +39,6 @@ double norm_2(const std::function<double(int i)>& f, size_t size);
 
 double norm_inf(const std::vector<double>& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max());
 double norm_inf(const std::function<double(size_t i)>& f, size_t size);
-
-double dot(const std::vector<double>& x, const std::vector<double>& y);
 
 template<typename T>
 double norm(const T& x, Norm norm) {
@@ -59,8 +63,8 @@ double norm(const T& x, Norm norm) {
 double norm(const std::function<double(size_t i)>& f, size_t size, Norm norm);
 
 template<typename T>
-void print_vector(std::ostream& stream, const std::vector <T>& x, const char end = '\n', size_t start = 0,
-      size_t length = std::numeric_limits<size_t>::max()) {
+void print_vector(std::ostream& stream, const std::vector <T>& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max(),
+      const char end = '\n') {
    for (size_t i = start; i < std::min(start + length, x.size()); i++) {
       stream << x[i] << " ";
    }
@@ -68,15 +72,14 @@ void print_vector(std::ostream& stream, const std::vector <T>& x, const char end
 }
 
 template<typename T>
-void print_vector(const Level& level, const std::vector <T>& x, const char end = '\n', size_t start = 0,
-      size_t length = std::numeric_limits<size_t>::max()) {
+void print_vector(const Level& level, const std::vector <T>& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max(),
+      const char end = '\n') {
    for (size_t i = start; i < std::min(start + length, x.size()); i++) {
       level << x[i] << " ";
    }
    level << end;
 }
 
-std::string join(std::vector <std::string>& vector, const std::string& separator);
 bool in_increasing_order(const int* array, size_t length);
 
 #endif // VECTOR_H

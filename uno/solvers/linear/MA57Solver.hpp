@@ -25,15 +25,15 @@ struct MA57Factorization {
  *
  *  Interface to the sparse symmetric linear solver MA57
  */
-class MA57Solver : public LinearSolver<COOSymmetricMatrix> {
+class MA57Solver : public LinearSolver {
 public:
    explicit MA57Solver(size_t max_dimension, size_t max_number_nonzeros);
    ~MA57Solver() override = default;
 
-   void factorize(size_t dimension, const COOSymmetricMatrix& matrix) override;
-   void do_symbolic_factorization(size_t dimension, const COOSymmetricMatrix& matrix) override;
-   void do_numerical_factorization(size_t dimension, const COOSymmetricMatrix& matrix) override;
-   void solve(size_t dimension, const COOSymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) override;
+   void factorize(size_t dimension, const SymmetricMatrix& matrix) override;
+   void do_symbolic_factorization(size_t dimension, const SymmetricMatrix& matrix) override;
+   void do_numerical_factorization(size_t dimension, const SymmetricMatrix& matrix) override;
+   void solve(size_t dimension, const SymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) override;
 
    [[nodiscard]] std::tuple<size_t, size_t, size_t> get_inertia() const override;
    [[nodiscard]] size_t number_negative_eigenvalues() const override;
@@ -56,10 +56,11 @@ private:
    const int nrhs{1}; // number of right hand side being solved
    const int job{1};
    std::vector<double> residuals;
+   const size_t fortran_shift{1};
 
    MA57Factorization factorization{};
    bool use_iterative_refinement{false};
-   void save_matrix_to_local_format(const COOSymmetricMatrix& matrix);
+   void save_matrix_to_local_format(const SymmetricMatrix& matrix);
 };
 
 #endif // MA57SOLVER_H
