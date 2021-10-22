@@ -4,20 +4,20 @@
 #include <memory>
 #include "LPSolver.hpp"
 
-template<class LPSolverType>
-class LPSolverFactory;
-
-// specialize the template factory with concrete solver types
 #ifdef HAS_BQPD
 #include "BQPDSolver.hpp"
+#endif
 
-template<>
-class LPSolverFactory<BQPDSolver> {
+class LPSolverFactory {
 public:
-   static std::unique_ptr<BQPDSolver> create(size_t number_variables, size_t number_constraints) {
-      return std::make_unique<BQPDSolver>(number_variables, number_constraints, 0, false);
+   static std::unique_ptr<BQPDSolver> create(size_t number_variables, size_t number_constraints, const std::string& LP_solver_name) {
+#ifdef HAS_BQPD
+      if (LP_solver_name == "BQPD") {
+         return std::make_unique<BQPDSolver>(number_variables, number_constraints, 0, false);
+      }
+      throw std::invalid_argument("LP solver not found");
+#endif
    }
 };
-#endif
 
 #endif // LPSOLVERFACTORY_H

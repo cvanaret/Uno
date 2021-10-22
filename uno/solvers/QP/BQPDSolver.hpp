@@ -6,7 +6,7 @@
 #include <map>
 #include "QPSolver.hpp"
 #include "LPSolver.hpp"
-#include "linear_algebra/CSCSymmetricMatrix.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
 
 enum BQPDMode {
@@ -14,7 +14,7 @@ enum BQPDMode {
    UNCHANGED_ACTIVE_SET_AND_REDUCED_HESSIAN = 5, UNCHANGED_ACTIVE_SET_AND_JACOBIAN_AND_REDUCED_HESSIAN = 6,
 };
 
-class BQPDSolver : public QPSolver<CSCSymmetricMatrix> {
+class BQPDSolver : public QPSolver {
 public:
    BQPDSolver(size_t number_variables, size_t number_constraints, size_t max_number_nonzeros, bool quadratic_programming);
 
@@ -22,14 +22,13 @@ public:
    linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian, const std::vector<double>& initial_point) override;
 
    Direction solve_QP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector<double>&
-   linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian, const CSCSymmetricMatrix& hessian, const std::vector<double>&
-   initial_point) override;
+      linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian, const SymmetricMatrix& hessian, const std::vector<double>&
+      initial_point) override;
 
 private:
    size_t number_variables, number_constraints;
    size_t maximum_number_nonzeros;
    std::vector<double> lb, ub; // lower and upper bounds of variables and constraints
-   const size_t fortran_shift{1};
 
    std::vector<double> jacobian;
    std::vector<int> jacobian_sparsity;
@@ -49,11 +48,13 @@ private:
    int iprint{0}, nout{6};
    double fmin{-1e20};
    int peq_solution{}, ifail{};
+   const size_t fortran_shift{1};
 
    static Status int_to_status(int ifail);
    Direction solve_subproblem(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector<double>&
       linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian, const std::vector<double>& initial_point);
    void analyze_constraints(Direction& direction);
+   void save_hessian_to_local_format(const SymmetricMatrix& hessian);
 };
 
 #endif // BQPDSOLVER_H

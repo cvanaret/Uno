@@ -2,38 +2,32 @@
 #define CSCSYMMETRICMATRIX_H
 
 #include "SymmetricMatrix.hpp"
-#include "COOSymmetricMatrix.hpp"
-
-enum CSCDiagonal {
-   SPARSE,
-   EXPLICIT
-};
 
 class CSCSymmetricMatrix : public SymmetricMatrix {
-   /* Compressed Sparse Column */
+   // Compressed Sparse Column
 public:
-   std::vector<double> matrix{};
-   std::vector<int> column_start{};
-   std::vector<int> row_index{};
-   size_t current_column{0};
-
    CSCSymmetricMatrix(size_t dimension, size_t maximum_number_nonzeros, size_t padding_size = 0);
-   CSCSymmetricMatrix(std::vector<double> matrix, const std::vector<int>& column_start, std::vector<int> row_number, size_t capacity);
 
+   void reset() override;
    void for_each(const std::function<void (size_t, size_t, double)>& f) const override;
    void for_each(size_t column_index, const std::function<void (size_t, double)>& f) const;
    void insert(double term, size_t row_index, size_t column_index) override;
+   void pop() override;
    void finalize(size_t column_index) override;
    void add_identity_multiple(double factor) override;
+   [[nodiscard]] double smallest_diagonal_entry() const override;
+
    void force_explicit_diagonal_elements();
    void remove_variables(const std::vector<int>& variable_indices);
-   COOSymmetricMatrix to_COO();
 
    static CSCSymmetricMatrix identity(size_t dimension);
 
-   friend std::ostream& operator<<(std::ostream& stream, const CSCSymmetricMatrix& matrix);
+   void print(std::ostream& stream) const override;
 
 protected:
+   std::vector<size_t> column_starts{};
+   std::vector<size_t> row_indices{};
+   size_t current_column{0};
    // when elements are inserted one by one, keep track of the current column
    std::vector<size_t> remaining_column_padding;
 };

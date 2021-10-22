@@ -4,21 +4,21 @@
 #include <memory>
 #include "QPSolver.hpp"
 
-template<class QPSolverType>
-class QPSolverFactory;
-
-// specialize the template factory with concrete solver types
 #ifdef HAS_BQPD
 #include "BQPDSolver.hpp"
+#endif
 
-template<>
-class QPSolverFactory<BQPDSolver> {
+class QPSolverFactory {
 public:
-   static std::unique_ptr<QPSolver<typename BQPDSolver::matrix_type>> create(size_t number_variables, size_t number_constraints,
+   static std::unique_ptr<QPSolver> create(const std::string& QP_solver_name, size_t number_variables, size_t number_constraints,
          size_t maximum_number_nonzeros, bool quadratic_programming) {
-      return std::make_unique<BQPDSolver>(number_variables, number_constraints, maximum_number_nonzeros, quadratic_programming);
+#ifdef HAS_BQPD
+      if (QP_solver_name == "BQPD") {
+         return std::make_unique<BQPDSolver>(number_variables, number_constraints, maximum_number_nonzeros, quadratic_programming);
+      }
+#endif
+      throw std::invalid_argument("QP solver name is unknown");
    }
 };
-#endif
 
 #endif // QPSOLVERFACTORY_H

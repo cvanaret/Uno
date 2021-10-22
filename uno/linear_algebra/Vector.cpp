@@ -11,12 +11,6 @@ void add_vectors(const std::vector<double>& x, const std::vector<double>& y, dou
    }
 }
 
-void clear(std::vector<double>& x) {
-   for (double& xi: x) {
-      xi = 0.;
-   }
-}
-
 void scale(std::vector<double>& x, double scaling_factor) {
    for (double& xi: x) {
       xi *= scaling_factor;
@@ -101,27 +95,6 @@ double norm(const std::function<double(size_t i)>& f, size_t size, Norm norm) {
    else {
       throw std::out_of_range("The norm is not known");
    }
-}
-
-/* dot product */
-double dot(const std::vector<double>& x, const std::vector<double>& y) {
-   double dot = 0.;
-   for (size_t i = 0; i < std::min(x.size(), y.size()); i++) {
-      dot += x[i] * y[i];
-   }
-   return dot;
-}
-
-std::string join(const std::vector<std::string>& vector, const std::string& separator) {
-   std::string s;
-   if (!vector.empty()) {
-      s.append(vector[0]);
-   }
-   for (size_t i = 1; i < vector.size(); i++) {
-      s.append(separator);
-      s.append(vector[i]);
-   }
-   return s;
 }
 
 // check that an array of integers is in increasing order (x[i] <= x[i+1])

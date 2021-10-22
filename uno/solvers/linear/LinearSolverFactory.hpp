@@ -4,34 +4,30 @@
 #include <memory>
 #include "LinearSolver.hpp"
 
-template<typename LinearSolverType>
-class LinearSolverFactory;
-
-// specialize the template factory with concrete matrix types (CSC and COO)
-/*
-#ifdef HAS_PARDISO
-#include "PardisoSolver.hpp"
-
-template<>
-class LinearSolverFactory<PardisoSolver> {
-public:
-   static std::unique_ptr<LinearSolver<typename PardisoSolver::matrix_type>> create(size_t max_dimension) {
-      return std::make_unique<PardisoSolver>(max_dimension);
-   }
-};
-#endif
- */
-
 #ifdef HAS_MA57
 #include "MA57Solver.hpp"
+#endif
+#ifdef HAS_PARDISO
+#include "PardisoSolver.hpp"
+#endif
 
-template<>
-class LinearSolverFactory<MA57Solver> {
+class LinearSolverFactory {
 public:
-   static std::unique_ptr<LinearSolver<typename MA57Solver::matrix_type>> create(size_t max_dimension, size_t max_number_nonzeros) {
-      return std::make_unique<MA57Solver>(max_dimension, max_number_nonzeros);
+   static std::unique_ptr<LinearSolver> create(const std::string& linear_solver_name, size_t max_dimension, size_t max_number_nonzeros) {
+#ifdef HAS_MA57
+      if (linear_solver_name == "MA57") {
+         return std::make_unique<MA57Solver>(max_dimension, max_number_nonzeros);
+      }
+#endif
+/*
+#ifdef HAS_PARDISO
+      if (linear_solver_name == "PARDISO") {
+         return std::make_unique<PardisoSolver>(max_dimension, max_number_nonzeros);
+      }
+#endif
+ */
+      throw std::invalid_argument("Linear solver name is unknown");
    }
 };
-#endif
 
 #endif // LINEARSOLVERFACTORY_H
