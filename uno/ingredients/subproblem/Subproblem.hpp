@@ -57,9 +57,6 @@ public:
    static double push_variable_to_interior(double variable_value, const Range& variable_bounds);
    void set_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints);
 
-   static void compute_least_square_multipliers(const Problem& problem, SymmetricMatrix& matrix, std::vector<double>& rhs, LinearSolver& solver,
-         Iterate& current_iterate, std::vector<double>& multipliers, double multipliers_max_size = 1e3);
-
    static double compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier);
    static void compute_optimality_conditions(const Problem& problem, Iterate& iterate, double objective_multiplier) ;
 
