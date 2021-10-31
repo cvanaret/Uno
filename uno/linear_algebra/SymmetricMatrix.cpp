@@ -6,7 +6,7 @@
 #include "SymmetricMatrixFactory.hpp"
 
 SymmetricMatrix::SymmetricMatrix(size_t dimension, size_t capacity) : dimension(dimension), capacity(capacity) {
-   matrix.reserve(capacity);
+   entries.reserve(capacity);
 }
 
 void SymmetricMatrix::reset() {
@@ -40,12 +40,12 @@ double SymmetricMatrix::quadratic_product(const std::vector<double>& x, const st
 
 void SymmetricMatrix::add_outer_product(const SparseVector<double>& x, double scaling_factor) {
    // perform matrix addition: A + rho x x^T
-   x.for_each([&](size_t row_index, double row_term) {
-      x.for_each([&](size_t column_index, double column_term) {
+   x.for_each([&](size_t row_index, double row_entry) {
+      x.for_each([&](size_t column_index, double column_entry) {
          // upper triangular matrix
          if (row_index <= column_index) {
             // add product of components
-            this->insert(scaling_factor * row_term * column_term, row_index, column_index);
+            this->insert(scaling_factor * row_entry * column_entry, row_index, column_index);
          }
       });
    });

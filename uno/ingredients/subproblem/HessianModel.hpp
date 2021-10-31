@@ -1,5 +1,5 @@
-#ifndef HESSIANEVALUATION_H
-#define HESSIANEVALUATION_H
+#ifndef HESSIANMODEL_H
+#define HESSIANMODEL_H
 
 #include <memory>
 #include <vector>
@@ -13,13 +13,13 @@ public:
    virtual ~HessianModel() = default;
 
    std::unique_ptr<SymmetricMatrix> hessian;
-   int evaluation_count{0};
+   size_t evaluation_count{0};
 
    virtual void evaluate(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
          const std::vector<double>& constraint_multipliers, size_t number_variables) = 0;
 
    void adjust_dimension(size_t number_variables) const;
-   static void modify_inertia(SymmetricMatrix& matrix, LinearSolver& linear_solver);
+   static void regularize(SymmetricMatrix& matrix, LinearSolver& linear_solver);
 };
 
 // Exact Hessian
@@ -51,4 +51,4 @@ public:
          const std::string& sparse_format, bool convexify);
 };
 
-#endif // HESSIANEVALUATION_H
+#endif // HESSIANMODEL_H

@@ -25,11 +25,11 @@ Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate,
    }
 }
 
-int GlobalizationMechanism::get_hessian_evaluation_count() const {
+size_t GlobalizationMechanism::get_hessian_evaluation_count() const {
    return this->relaxation_strategy.get_hessian_evaluation_count();
 }
 
-int GlobalizationMechanism::get_number_subproblems_solved() const {
+size_t GlobalizationMechanism::get_number_subproblems_solved() const {
    return this->relaxation_strategy.get_number_subproblems_solved();
 }
 

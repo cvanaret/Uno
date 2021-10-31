@@ -4,7 +4,9 @@
 #include "tools/Logger.hpp"
 
 BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, int max_iterations, double backtracking_ratio):
-   GlobalizationMechanism(constraint_relaxation_strategy, max_iterations), backtracking_ratio(backtracking_ratio) {
+   GlobalizationMechanism(constraint_relaxation_strategy, max_iterations),
+   regularization_strategy(RegularizationStrategyFactory::create()),
+   backtracking_ratio(backtracking_ratio) {
 }
 
 void BacktrackingLineSearch::initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) {
@@ -34,9 +36,7 @@ current_iterate) {
          this->number_iterations++;
          this->print_iteration();
 
-         // assemble the trial iterate
          Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, this->step_length);
-
          try {
             const bool is_acceptable = this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate, direction,
                   predicted_reduction_model, this->step_length);
@@ -49,12 +49,12 @@ current_iterate) {
                return std::make_tuple(std::move(trial_iterate), direction.norm);
             }
             else if (this->number_iterations == 1 && trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility &&
-                  this->relaxation_strategy.soc_strategy() == SOC_UPON_REJECTION) { // reject
+                  this->relaxation_strategy.soc_strategy() == SOC_UPON_REJECTION) { // reject the full step: try a SOC step
                // compute a (temporary) SOC direction
                Direction direction_soc = this->relaxation_strategy.compute_second_order_correction(problem, trial_iterate);
 
                // assemble the (temporary) SOC trial iterate
-               Iterate trial_iterate_soc = this->assemble_trial_iterate(current_iterate, direction_soc, this->step_length);
+               Iterate trial_iterate_soc = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction_soc, this->step_length);
 
                if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate_soc, direction_soc,
                      predicted_reduction_model, this->step_length)) {
@@ -68,13 +68,12 @@ current_iterate) {
                   return std::make_tuple(std::move(trial_iterate_soc), direction_soc.norm);
                }
                else {
-                  // decrease the step length
                   DEBUG << "SOC step discarded\n\n";
                   statistics.add_statistic("SOC", "-");
                   this->decrease_step_length();
                }
             }
-            else {
+            else { // trial iterate not acceptable
                this->decrease_step_length();
             }
          }

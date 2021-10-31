@@ -7,7 +7,7 @@
 
 class Preprocessing {
 public:
-   static void apply(const Problem& problem, Iterate& first_iterate);
+   static void enforce_linear_constraints(const Problem& problem, Iterate& first_iterate);
 };
 
 #endif //PREPROCESSING_H

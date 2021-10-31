@@ -1,4 +1,3 @@
-#include <iostream>
 #include <cmath>
 #include "FilterStrategy.hpp"
 
@@ -8,14 +7,14 @@ FilterStrategy::FilterStrategy(FilterStrategyParameters strategy_parameters, con
 }
 
 void FilterStrategy::initialize(Statistics& /*statistics*/, const Iterate& first_iterate) {
-   /* set the filter upper bound */
+   // set the filter upper bound
    double upper_bound = std::max(this->parameters.upper_bound, this->parameters.infeasibility_factor * first_iterate.progress.infeasibility);
    this->filter->upper_bound = upper_bound;
    this->initial_filter_upper_bound = upper_bound;
 }
 
 void FilterStrategy::reset() {
-   /* re-initialize the restoration filter */
+   // re-initialize the restoration filter
    this->filter->reset();
    // TODO: we should set the ub of the optimality filter. But now, our 2 filters live independently...
    this->filter->upper_bound = this->initial_filter_upper_bound;
@@ -35,7 +34,7 @@ bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, const Progress
    DEBUG << "Predicted reduction: " << predicted_reduction << "\n";
 
    bool accept = false;
-   /* check acceptance */
+   // check acceptance
    bool acceptable = filter->accept(trial_progress.infeasibility, trial_progress.objective);
    if (acceptable) {
       // check acceptance wrt current x (h,f)
@@ -46,14 +45,14 @@ bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, const Progress
          DEBUG << "Actual reduction: " << actual_reduction << "\n";
          DEBUG << *this->filter << "\n";
 
-         /* switching condition violated: predicted reduction is not promising */
+         // switching condition violated: predicted reduction is not promising
          if (!FilterStrategy::switching_condition(predicted_reduction, current_progress.infeasibility, this->parameters.Delta)) {
             filter->add(current_progress.infeasibility, current_progress.objective);
             DEBUG << "Trial iterate was accepted by violating switching condition\n";
             DEBUG << "Current iterate was added to the filter\n";
             accept = true;
          }
-         /* Armijo sufficient decrease condition: predicted_reduction should be positive */
+         // Armijo sufficient decrease condition: predicted_reduction should be positive
          else if (FilterStrategy::armijo_condition(predicted_reduction, actual_reduction, this->parameters.decrease_fraction)) {
             DEBUG << "Trial iterate was accepted by satisfying Armijo condition\n";
             accept = true;

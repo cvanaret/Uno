@@ -14,7 +14,7 @@ std::map<FunctionType, std::string> Problem::type_to_string = {
 /* Abstract Problem class */
 
 Problem::Problem(std::string name, int number_variables, int number_constraints, FunctionType type) :
-      name(std::move(name)), number_variables(number_variables), number_constraints(number_constraints), type(type),
+      name(std::move(name)), number_variables(number_variables), number_constraints(number_constraints), problem_type(type),
       // allocate all vectors
       variables_bounds(number_variables), variable_status(number_variables),
       constraint_bounds(number_constraints), constraint_type(number_constraints), constraint_status(number_constraints) {

@@ -19,15 +19,15 @@ struct Result {
    Iterate solution;
    size_t number_variables;
    size_t number_constraints;
-   int iteration;
+   size_t iteration;
    double cpu_time;
-   int objective_evaluations;
-   int constraint_evaluations;
-   int jacobian_evaluations;
-   int hessian_evaluations;
-   int number_subproblems_solved;
+   size_t objective_evaluations;
+   size_t constraint_evaluations;
+   size_t jacobian_evaluations;
+   size_t hessian_evaluations;
+   size_t number_subproblems_solved;
 
-   void display(bool print_solution);
+   void print(bool print_solution) const;
 };
 
 /*! \class Uno
@@ -43,7 +43,7 @@ public:
     * \param globalization_strategy: strategy to promote global convergence
     * \param tolerance: tolerance for termination criteria
     */
-   Uno(GlobalizationMechanism& globalization_mechanism, double tolerance, int max_iterations);
+   Uno(GlobalizationMechanism& globalization_mechanism, double tolerance, size_t max_iterations);
 
    /*!
     *  Solve a given problem with initial primal and dual variables
@@ -57,11 +57,11 @@ public:
 private:
    GlobalizationMechanism& globalization_mechanism; /*!< Step control strategy (trust region or line-search) */
    double tolerance; /*!< Tolerance of the termination criteria */
-   int max_iterations; /*!< Maximum number of iterations */
+   size_t max_iterations; /*!< Maximum number of iterations */
 
    static Statistics create_statistics();
-   static void add_statistics(Statistics& statistics, const Iterate& new_iterate, int major_iterations);
-   [[nodiscard]] bool termination_criterion(TerminationStatus current_status, int iteration) const;
+   static void add_statistics(Statistics& statistics, const Iterate& new_iterate, size_t major_iterations);
+   [[nodiscard]] bool termination_criterion(TerminationStatus current_status, size_t iteration) const;
    TerminationStatus check_termination(const Problem& problem, Iterate& current_iterate, double step_norm) const;
 };
 

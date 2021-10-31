@@ -13,7 +13,7 @@ public:
    void set_initial_point(const std::vector<double>& point) override;
    Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const override;
-   [[nodiscard]] int get_hessian_evaluation_count() const override;
+   [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
 private:
    /* use pointers to allow polymorphism */

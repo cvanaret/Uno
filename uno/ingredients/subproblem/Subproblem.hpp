@@ -3,7 +3,6 @@
 
 #include <cmath>
 #include <vector>
-#include <array>
 #include <memory>
 #include "optimization/Problem.hpp"
 #include "optimization/Iterate.hpp"
@@ -46,7 +45,7 @@ public:
    virtual void compute_progress_measures(const Problem& problem, Iterate& iterate);
    virtual void register_accepted_iterate(Iterate& iterate);
 
-   [[nodiscard]] virtual int get_hessian_evaluation_count() const = 0;
+   [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
    virtual void set_initial_point(const std::vector<double>& initial_point) = 0;
 
    // available methods
@@ -62,7 +61,7 @@ public:
          Iterate& current_iterate, std::vector<double>& multipliers, double multipliers_max_size = 1e3);
 
    static double compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier);
-   void compute_optimality_conditions(const Problem& problem, Iterate& iterate, double objective_multiplier) const;
+   static void compute_optimality_conditions(const Problem& problem, Iterate& iterate, double objective_multiplier) ;
 
    static double compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers);
 
@@ -74,76 +73,17 @@ public:
    std::vector <Range> variables_bounds;
    std::vector<double> constraints_multipliers;
    SparseVector<double> objective_gradient;
-   std::vector <SparseVector<double>> constraint_jacobian;
+   std::vector <SparseVector<double>> constraints_jacobian;
    std::vector <Range> constraints_bounds;
    // Hessian is optional and depends on the subproblem
    Direction direction;
 
-   int number_subproblems_solved{0};
+   size_t number_subproblems_solved{0};
    // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it
    bool subproblem_definition_changed{false};
 
 protected:
    virtual void set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
 };
-
-// compute a least-square approximation of the multipliers by solving a linear system (uses existing linear system)
-inline void Subproblem::compute_least_square_multipliers(const Problem& problem, SymmetricMatrix& matrix, std::vector<double>& rhs,
-      LinearSolver& solver, Iterate& current_iterate, std::vector<double>& multipliers, double multipliers_max_size) {
-   current_iterate.evaluate_objective_gradient(problem);
-   current_iterate.evaluate_constraint_jacobian(problem);
-
-   /******************************/
-   /* build the symmetric matrix */
-   /******************************/
-   matrix.reset();
-
-   /* identity block */
-   for (size_t i = 0; i < current_iterate.x.size(); i++) {
-      matrix.insert(1., i, i);
-      matrix.finalize(i);
-   }
-   /* Jacobian of general constraints */
-   const size_t n = current_iterate.x.size();
-   for (size_t j = 0; j < problem.number_constraints; j++) {
-      current_iterate.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
-         matrix.insert(derivative, i, n + j);
-      });
-      matrix.finalize(n + j);
-   }
-   DEBUG << "KKT matrix for least-square multipliers:\n" << matrix << "\n";
-
-   /********************************/
-   /* generate the right-hand side */
-   /********************************/
-   clear(rhs);
-
-   /* objective gradient */
-   current_iterate.objective_gradient.for_each([&](size_t i, double derivative) {
-      rhs[i] += problem.objective_sign * derivative;
-   });
-
-   /* variable bound constraints */
-   for (size_t i = 0; i < current_iterate.x.size(); i++) {
-      rhs[i] -= current_iterate.multipliers.lower_bounds[i];
-      rhs[i] -= current_iterate.multipliers.upper_bounds[i];
-   }
-
-   // solve the system
-   const size_t dimension = current_iterate.x.size() + problem.number_constraints;
-   std::vector<double> solution(matrix.dimension);
-   solver.factorize(dimension, matrix);
-   solver.solve(dimension, matrix, rhs, solution);
-   DEBUG << "Solution: ";
-   print_vector(DEBUG, solution);
-
-   // if least-square multipliers too big, discard them. Otherwise, store them
-   const size_t number_variables = current_iterate.x.size();
-   if (norm_inf(solution, current_iterate.x.size(), problem.number_constraints) <= multipliers_max_size) {
-      for (size_t j = 0; j < problem.number_constraints; j++) {
-         multipliers[j] = solution[number_variables + j];
-      }
-   }
-}
 
 #endif // SUBPROBLEM_H

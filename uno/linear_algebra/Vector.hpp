@@ -42,7 +42,7 @@ double norm_inf(const std::function<double(size_t i)>& f, size_t size);
 
 template<typename T>
 double norm(const T& x, Norm norm) {
-   /* choose the right norm */
+   // choose the right norm
    if (norm == INF_NORM) {
       return norm_inf(x);
    }

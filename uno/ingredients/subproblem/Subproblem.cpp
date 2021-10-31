@@ -5,9 +5,9 @@ Subproblem::Subproblem(size_t number_variables, size_t max_number_variables, siz
       number_variables(number_variables), max_number_variables(max_number_variables), number_constraints(number_constraints),
       soc_strategy(soc_strategy), variables_bounds(max_number_variables), constraints_multipliers(number_constraints),
       objective_gradient(max_number_variables), // SparseVector
-      constraint_jacobian(number_constraints), // vector of SparseVectors
+      constraints_jacobian(number_constraints), // vector of SparseVectors
       constraints_bounds(number_constraints), direction(max_number_variables, number_constraints) {
-   for (auto& constraint_gradient: this->constraint_jacobian) {
+   for (auto& constraint_gradient: this->constraints_jacobian) {
       constraint_gradient.reserve(this->max_number_variables);
    }
 }
@@ -23,7 +23,7 @@ void Subproblem::add_variable(size_t i, double /*current_value*/, const Range& b
    assert(j < this->number_constraints && "The constraint index is larger than the preallocated size");
    this->variables_bounds[i] = bounds;
    this->objective_gradient.insert(i, objective_term);
-   this->constraint_jacobian[j].insert(i, jacobian_term);
+   this->constraints_jacobian[j].insert(i, jacobian_term);
    this->number_variables++;
 }
 
@@ -31,7 +31,7 @@ void Subproblem::remove_variable(size_t i, size_t j) {
    assert(i < this->max_number_variables && "The variable index is larger than the preallocated size");
    assert(j < this->number_constraints && "The constraint index is larger than the preallocated size");
    this->objective_gradient.erase(i);
-   this->constraint_jacobian[j].erase(i);
+   this->constraints_jacobian[j].erase(i);
    this->number_variables--;
 }
 
@@ -45,8 +45,8 @@ void Subproblem::compute_progress_measures(const Problem& problem, Iterate& iter
 }
 
 double Subproblem::push_variable_to_interior(double variable_value, const Range& variable_bounds) {
-   double k1 = 1e-2;
-   double k2 = 1e-2;
+   const double k1 = 1e-2;
+   const double k2 = 1e-2;
 
    double perturbation_lb = std::min(k1 * std::max(1., std::abs(variable_bounds.lb)), k2 * (variable_bounds.ub - variable_bounds.lb));
    double perturbation_ub = std::min(k1 * std::max(1., std::abs(variable_bounds.ub)), k2 * (variable_bounds.ub - variable_bounds.lb));
@@ -56,7 +56,7 @@ double Subproblem::push_variable_to_interior(double variable_value, const Range&
 }
 
 void Subproblem::set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {
-   /* bounds intersected with trust region  */
+   // bounds intersected with trust region
    // very important: apply the trust region only on the original variables
    for (size_t i = 0; i < problem.number_variables; i++) {
       double lb = std::max(-trust_region_radius, problem.variables_bounds[i].lb - current_iterate.x[i]);
@@ -88,15 +88,15 @@ void Subproblem::set_scaled_objective_gradient(const Problem& problem, Iterate& 
 }
 
 void Subproblem::compute_feasibility_linear_objective(const Iterate& current_iterate, const ConstraintPartition& constraint_partition) {
-   /* objective function: sum of gradients of infeasible constraints */
+   // objective function: sum of gradients of infeasible constraints
    this->objective_gradient.clear();
    for (size_t j: constraint_partition.lower_bound_infeasible) {
-      current_iterate.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
+      current_iterate.constraints_jacobian[j].for_each([&](size_t i, double derivative) {
          this->objective_gradient.insert(i, -derivative);
       });
    }
    for (size_t j: constraint_partition.upper_bound_infeasible) {
-      current_iterate.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
+      current_iterate.constraints_jacobian[j].for_each([&](size_t i, double derivative) {
          this->objective_gradient.insert(i, derivative);
       });
    }
@@ -120,10 +120,18 @@ double Subproblem::compute_first_order_error(const Problem& problem, Iterate& it
    return norm_1(iterate.lagrangian_gradient);
 }
 
-/* complementary slackness error */
+bool is_finite_lower_bound(double value) {
+   return -std::numeric_limits<double>::infinity() < value;
+}
+
+bool is_finite_upper_bound(double value) {
+   return value < std::numeric_limits<double>::infinity();
+}
+
+// complementary slackness error
 double Subproblem::compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) {
    double error = 0.;
-   /* bound constraints */
+   // bound constraints
    for (size_t i = 0; i < problem.number_variables; i++) {
       if (-std::numeric_limits<double>::infinity() < problem.variables_bounds[i].lb) {
          error += std::abs(multipliers.lower_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].lb));
@@ -132,7 +140,7 @@ double Subproblem::compute_complementarity_error(const Problem& problem, Iterate
          error += std::abs(multipliers.upper_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].ub));
       }
    }
-   /* constraints */
+   // constraints
    iterate.evaluate_constraints(problem);
    for (size_t j = 0; j < problem.number_constraints; j++) {
       double multiplier_j = multipliers.constraints[j];
@@ -144,17 +152,17 @@ double Subproblem::compute_complementarity_error(const Problem& problem, Iterate
          // violated upper: the multiplier is -1 at optimum
          error += std::abs((1. + multiplier_j) * (iterate.constraints[j] - problem.constraint_bounds[j].ub));
       }
-      else if (-std::numeric_limits<double>::infinity() < problem.constraint_bounds[j].lb && 0. < multiplier_j) {
+      else if (is_finite_lower_bound(problem.constraint_bounds[j].lb) && 0. < multiplier_j) {
          error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraint_bounds[j].lb));
       }
-      else if (problem.constraint_bounds[j].ub < std::numeric_limits<double>::infinity() && multiplier_j < 0.) {
+      else if (is_finite_upper_bound(problem.constraint_bounds[j].ub) && multiplier_j < 0.) {
          error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraint_bounds[j].ub));
       }
    }
    return error;
 }
 
-void Subproblem::compute_optimality_conditions(const Problem& problem, Iterate& iterate, double objective_multiplier) const {
+void Subproblem::compute_optimality_conditions(const Problem& problem, Iterate& iterate, double objective_multiplier) {
    iterate.evaluate_objective(problem);
    iterate.evaluate_constraints(problem);
    iterate.errors.constraints = problem.compute_constraint_violation(iterate.constraints, L1_NORM);
@@ -170,4 +178,60 @@ Direction Subproblem::compute_second_order_correction(const Problem& /*problem*/
 
 void Subproblem::register_accepted_iterate(Iterate& /*iterate*/) {
    // by default, do nothing
+}
+
+// compute a least-square approximation of the multipliers by solving a linear system (uses existing linear system)
+void Subproblem::compute_least_square_multipliers(const Problem& problem, SymmetricMatrix& matrix, std::vector<double>& rhs, LinearSolver& solver,
+      Iterate& current_iterate, std::vector<double>& multipliers, double multipliers_max_size) {
+   const size_t number_variables = current_iterate.x.size();
+   current_iterate.evaluate_objective_gradient(problem);
+   current_iterate.evaluate_constraints_jacobian(problem);
+
+   /******************************/
+   /* build the symmetric matrix */
+   /******************************/
+   matrix.reset();
+
+   // identity block
+   for (size_t i = 0; i < number_variables; i++) {
+      matrix.insert(1., i, i);
+      matrix.finalize(i);
+   }
+   // Jacobian of general constraints
+   for (size_t j = 0; j < problem.number_constraints; j++) {
+      current_iterate.constraints_jacobian[j].for_each([&](size_t i, double derivative) {
+         matrix.insert(derivative, i, number_variables + j);
+      });
+      matrix.finalize(number_variables + j);
+   }
+   DEBUG << "KKT matrix for least-square multipliers:\n" << matrix << "\n";
+
+   /********************************/
+   /* generate the right-hand side */
+   /********************************/
+   clear(rhs);
+
+   // objective gradient
+   current_iterate.objective_gradient.for_each([&](size_t i, double derivative) {
+      rhs[i] += problem.objective_sign * derivative;
+   });
+
+   // variable bound constraints
+   for (size_t i = 0; i < number_variables; i++) {
+      rhs[i] -= current_iterate.multipliers.lower_bounds[i] + current_iterate.multipliers.upper_bounds[i];
+   }
+
+   // solve the system
+   const size_t dimension = number_variables + problem.number_constraints;
+   std::vector<double> solution(matrix.dimension);
+   solver.factorize(dimension, matrix);
+   solver.solve(dimension, matrix, rhs, solution);
+   DEBUG << "Solution: "; print_vector(DEBUG, solution);
+
+   // if least-square multipliers too big, discard them. Otherwise, store them
+   if (norm_inf(solution, number_variables, problem.number_constraints) <= multipliers_max_size) {
+      for (size_t j = 0; j < problem.number_constraints; j++) {
+         multipliers[j] = solution[number_variables + j];
+      }
+   }
 }

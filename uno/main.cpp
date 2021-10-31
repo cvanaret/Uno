@@ -47,7 +47,7 @@ void run_uno(const std::string& problem_name, const Options& options) {
    INFO << "Heap allocations after Mechanism: " << total_allocations << "\n";
 
    const double tolerance = std::stod(options.at("tolerance"));
-   const int max_iterations = std::stoi(options.at("max_iterations"));
+   const size_t max_iterations = std::stoul(options.at("max_iterations"));
    Uno uno = Uno(*mechanism, tolerance, max_iterations);
 
    /* initial primal and dual points */
@@ -56,15 +56,15 @@ void run_uno(const std::string& problem_name, const Options& options) {
    problem->set_initial_dual_point(first_iterate.multipliers.constraints);
 
    INFO << "Heap allocations before solving: " << total_allocations << "\n";
-   bool use_preprocessing = (options.at("preprocessing") == "yes");
+   const bool use_preprocessing = (options.at("preprocessing") == "yes");
    Result result = uno.solve(*problem, first_iterate, use_preprocessing);
 
    /* remove auxiliary variables */
    result.solution.x.resize(problem->number_variables);
    result.solution.multipliers.lower_bounds.resize(problem->number_variables);
    result.solution.multipliers.upper_bounds.resize(problem->number_variables);
-   bool print_solution = (options.at("print_solution") == "yes");
-   result.display(print_solution);
+   const bool print_solution = (options.at("print_solution") == "yes");
+   result.print(print_solution);
    INFO << "Heap allocations: " << total_allocations << "\n";
 }
 

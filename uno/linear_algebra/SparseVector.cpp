@@ -1,9 +1,7 @@
 #include "SparseVector.hpp"
-#include "Vector.hpp"
 #include <cmath>
 
 // free functions
-
 double norm_1(const SparseVector<double>& x) {
    double norm = 0.;
    x.for_each_value([&](double value) {

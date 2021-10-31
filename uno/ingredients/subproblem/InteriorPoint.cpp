@@ -78,7 +78,6 @@ void InteriorPoint::set_constraints(const Problem& problem, Iterate& iterate) {
    }
 }
 
-
 inline void InteriorPoint::initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) {
    statistics.add_column("barrier param.", Statistics::double_width, 8);
 
@@ -92,11 +91,11 @@ inline void InteriorPoint::initialize(Statistics& statistics, const Problem& pro
 
    // initialize the slacks and add contribution to the constraint Jacobian
    first_iterate.evaluate_constraints(problem);
-   first_iterate.evaluate_constraint_jacobian(problem);
+   first_iterate.evaluate_constraints_jacobian(problem);
    for (const auto[j, i]: problem.inequality_constraints) {
       const double slack_value = Subproblem::push_variable_to_interior(first_iterate.constraints[j], problem.constraint_bounds[j]);
       first_iterate.x[problem.number_variables + i] = slack_value;
-      first_iterate.constraint_jacobian[j].insert(problem.number_variables + i, -1.);
+      first_iterate.constraints_jacobian[j].insert(problem.number_variables + i, -1.);
    }
    this->set_current_iterate(first_iterate);
 
@@ -132,10 +131,10 @@ void InteriorPoint::create_current_subproblem(const Problem& problem, Iterate& c
    copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
 
    // constraint Jacobian
-   problem.evaluate_constraint_jacobian(current_iterate.x, this->constraint_jacobian);
+   problem.evaluate_constraint_jacobian(current_iterate.x, this->constraints_jacobian);
    // add the slack variables
    for (const auto[j, i]: problem.inequality_constraints) {
-      this->constraint_jacobian[j].insert(problem.number_variables + i, -1.);
+      this->constraints_jacobian[j].insert(problem.number_variables + i, -1.);
    }
 
    // build a model of the objective scaled by the objective multiplier
@@ -187,11 +186,10 @@ void InteriorPoint::remove_variable(size_t i, size_t j) {
 
 Direction InteriorPoint::solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
    this->iteration++;
-   // assemble and factorize the KKT matrix
+   // assemble, factorize and regularize the KKT matrix
    this->assemble_kkt_matrix();
-   this->factorize(problem, *this->kkt_matrix);
-   // regularize the KKT matrix
-   this->regularize(problem, this->number_variables, problem.number_constraints);
+   this->factorize_kkt_matrix(problem);
+   this->regularize_kkt_matrix(problem, this->number_variables, problem.number_constraints);
    DEBUG << "KKT matrix:\n" << *this->kkt_matrix << "\n";
    auto[number_pos, number_neg, number_zero] = this->linear_solver->get_inertia();
    assert(number_pos == this->number_variables && number_neg == problem.number_constraints && number_zero == 0);
@@ -290,7 +288,7 @@ void InteriorPoint::register_accepted_iterate(Iterate& iterate) {
    }
 }
 
-int InteriorPoint::get_hessian_evaluation_count() const {
+size_t InteriorPoint::get_hessian_evaluation_count() const {
    return this->hessian_model->evaluation_count;
 }
 
@@ -323,13 +321,13 @@ void InteriorPoint::set_variables_bounds(const Problem& problem, const Iterate& 
    }
 }
 
-void InteriorPoint::factorize(const Problem& problem, SymmetricMatrix& current_kkt_matrix) {
+void InteriorPoint::factorize_kkt_matrix(const Problem& problem) {
    // compute the symbolic factorization only when:
    // the problem has a non-constant augmented system (ie is not an LP or a QP) or it is the first factorization
-   if (this->number_factorizations == 0 || !problem.fixed_hessian_sparsity || problem.type == NONLINEAR) {
-      this->linear_solver->do_symbolic_factorization(this->number_variables + this->number_constraints, current_kkt_matrix);
+   if (this->number_factorizations == 0 || !problem.fixed_hessian_sparsity || problem.problem_type == NONLINEAR) {
+      this->linear_solver->do_symbolic_factorization(this->number_variables + this->number_constraints, *this->kkt_matrix);
    }
-   this->linear_solver->do_numerical_factorization(this->number_variables + this->number_constraints, current_kkt_matrix);
+   this->linear_solver->do_numerical_factorization(this->number_variables + this->number_constraints, *this->kkt_matrix);
    this->number_factorizations++;
 }
 
@@ -387,8 +385,7 @@ double InteriorPoint::dual_fraction_to_boundary(double tau) {
 
 void InteriorPoint::assemble_kkt_matrix() {
    this->kkt_matrix->reset();
-   // copy the Lagrangian Hessian
-   // assume that the Hessian is sorted
+   // copy the Lagrangian Hessian in the top left block
    size_t current_column = 0;
    this->hessian_model->hessian->for_each([&](size_t i, size_t j, double entry) {
       for (size_t column = current_column; column < j; column++) {
@@ -408,14 +405,14 @@ void InteriorPoint::assemble_kkt_matrix() {
 
    // Jacobian of general constraints
    for (size_t j = 0; j < this->number_constraints; j++) {
-      this->constraint_jacobian[j].for_each([&](size_t i, double derivative) {
+      this->constraints_jacobian[j].for_each([&](size_t i, double derivative) {
          this->kkt_matrix->insert(derivative, i, this->number_variables + j);
       });
       this->kkt_matrix->finalize(j);
    }
 }
 
-void InteriorPoint::regularize(const Problem& problem, size_t size_first_block, size_t size_second_block) {
+void InteriorPoint::regularize_kkt_matrix(const Problem& problem, size_t size_first_block, size_t size_second_block) {
    DEBUG << "Original matrix\n" << *this->kkt_matrix << "\n";
    this->regularization_hessian = 0.;
    this->regularization_constraints = 0.;
@@ -459,7 +456,7 @@ void InteriorPoint::regularize(const Problem& problem, size_t size_first_block, 
    while (!good_inertia) {
       DEBUG << "Testing factorization with regularization factor " << this->regularization_hessian << "\n";
       DEBUG << *this->kkt_matrix << "\n";
-      this->factorize(problem, *this->kkt_matrix);
+      this->factorize_kkt_matrix(problem);
 
       if (!this->linear_solver->matrix_is_singular() && this->linear_solver->number_negative_eigenvalues() == size_second_block) {
          good_inertia = true;
@@ -476,10 +473,10 @@ void InteriorPoint::regularize(const Problem& problem, size_t size_first_block, 
 
          if (this->regularization_hessian <= this->regularization_failure_threshold) {
             for (size_t i = 0; i < size_first_block; i++) {
-               this->kkt_matrix->matrix[current_matrix_size + i] = this->regularization_hessian;
+               this->kkt_matrix->entries[current_matrix_size + i] = this->regularization_hessian;
             }
             for (size_t j = size_first_block; j < size_first_block + size_second_block; j++) {
-               this->kkt_matrix->matrix[current_matrix_size + j] = -this->regularization_constraints;
+               this->kkt_matrix->entries[current_matrix_size + j] = -this->regularization_constraints;
             }
          }
          else {
@@ -502,16 +499,14 @@ void InteriorPoint::generate_kkt_rhs(const Iterate& current_iterate) {
    for (size_t j = 0; j < current_iterate.constraints.size(); j++) {
       // Lagrangian
       if (this->constraints_multipliers[j] != 0.) {
-         this->constraint_jacobian[j].for_each([&](size_t i, double derivative) {
+         this->constraints_jacobian[j].for_each([&](size_t i, double derivative) {
             this->rhs[i] += this->constraints_multipliers[j] * derivative;
          });
       }
       // constraints
       this->rhs[this->number_variables + j] = -this->barrier_constraints[j];
    }
-   DEBUG << "RHS: ";
-   print_vector(DEBUG, this->rhs);
-   DEBUG << "\n";
+   DEBUG << "RHS: "; print_vector(DEBUG, this->rhs);
 }
 
 void InteriorPoint::compute_lower_bound_dual_direction(const std::vector<double>& solution) {

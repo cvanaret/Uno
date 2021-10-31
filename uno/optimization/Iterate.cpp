@@ -1,18 +1,17 @@
-#include <limits>
 #include "Iterate.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "tools/Logger.hpp"
 
-int Iterate::number_eval_objective = 0;
-int Iterate::number_eval_constraints = 0;
-int Iterate::number_eval_jacobian = 0;
+size_t Iterate::number_eval_objective = 0;
+size_t Iterate::number_eval_constraints = 0;
+size_t Iterate::number_eval_jacobian = 0;
 
 Iterate::Iterate(size_t number_variables, size_t number_constraints) :
    x(number_variables),
    multipliers(number_variables, number_constraints),
    constraints(multipliers.constraints.size()),
    objective_gradient(number_variables),
-   constraint_jacobian(number_constraints),
+   constraints_jacobian(number_constraints),
    lagrangian_gradient(number_variables) {
 }
 
@@ -40,42 +39,42 @@ void Iterate::evaluate_objective_gradient(const Problem& problem) {
    }
 }
 
-void Iterate::evaluate_constraint_jacobian(const Problem& problem) {
-   if (!this->is_constraint_jacobian_computed) {
-      for (auto& row: this->constraint_jacobian) {
+void Iterate::evaluate_constraints_jacobian(const Problem& problem) {
+   if (!this->is_constraints_jacobian_computed) {
+      for (auto& row: this->constraints_jacobian) {
          row.clear();
       }
-      problem.evaluate_constraint_jacobian(this->x, this->constraint_jacobian);
-      this->is_constraint_jacobian_computed = true;
+      problem.evaluate_constraint_jacobian(this->x, this->constraints_jacobian);
+      this->is_constraints_jacobian_computed = true;
       Iterate::number_eval_jacobian++;
    }
 }
 
-void Iterate::evaluate_lagrangian_gradient(const Problem& problem, double objective_multiplier, const Multipliers& multipliers) {
+void Iterate::evaluate_lagrangian_gradient(const Problem& problem, double objective_multiplier, const Multipliers& constraint_multipliers) {
    clear(this->lagrangian_gradient);
 
-   /* objective gradient */
+   // objective gradient
    if (objective_multiplier != 0.) {
       this->evaluate_objective_gradient(problem);
 
-      /* scale the objective gradient */
+      // scale the objective gradient
       this->objective_gradient.for_each([&](size_t i, double derivative) {
          if (i < problem.number_variables) {
             this->lagrangian_gradient[i] += objective_multiplier * derivative;
          }
       });
    }
-   /* bound constraints */
+   // bound constraints
    for (size_t i = 0; i < problem.number_variables; i++) {
-      this->lagrangian_gradient[i] -= multipliers.lower_bounds[i] + multipliers.upper_bounds[i];
+      this->lagrangian_gradient[i] -= constraint_multipliers.lower_bounds[i] + constraint_multipliers.upper_bounds[i];
    }
 
-   /* constraints */
-   this->evaluate_constraint_jacobian(problem);
+   // constraints
+   this->evaluate_constraints_jacobian(problem);
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      double multiplier_j = multipliers.constraints[j];
+      double multiplier_j = constraint_multipliers.constraints[j];
       if (multiplier_j != 0.) {
-         this->constraint_jacobian[j].for_each([&](size_t i, double derivative) {
+         this->constraints_jacobian[j].for_each([&](size_t i, double derivative) {
             if (i < problem.number_variables) {
                this->lagrangian_gradient[i] -= multiplier_j * derivative;
             }

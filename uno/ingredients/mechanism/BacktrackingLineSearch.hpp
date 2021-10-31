@@ -2,6 +2,7 @@
 #define LINESEARCH_H
 
 #include "GlobalizationMechanism.hpp"
+#include "RegularizationStrategy.hpp"
 
 /*! \class LineSearch
  * \brief Line-search
@@ -17,6 +18,7 @@ public:
    std::tuple<Iterate, double> compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
 
 private:
+   std::unique_ptr<RegularizationStrategy> regularization_strategy;
    double step_length{1.};
    /* ratio of step length update in ]0, 1[ */
    const double backtracking_ratio;
