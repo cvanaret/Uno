@@ -6,39 +6,39 @@
 #include "tools/Statistics.hpp"
 #include "tools/Timer.hpp"
 
-Uno::Uno(GlobalizationMechanism& globalization_mechanism, double tolerance, int max_iterations) : globalization_mechanism(
+Uno::Uno(GlobalizationMechanism& globalization_mechanism, double tolerance, size_t max_iterations) : globalization_mechanism(
       globalization_mechanism), tolerance(tolerance), max_iterations(max_iterations) {
 }
 
 Result Uno::solve(const Problem& problem, Iterate& current_iterate, bool use_preprocessing) {
    Timer timer{};
    timer.start();
-   int major_iterations = 0;
+   size_t major_iterations = 0;
 
    std::cout << "\nProblem " << problem.name << "\n";
    std::cout << problem.number_variables << " variables, " << problem.number_constraints << " constraints\n";
-   std::cout << "Problem type: " << Problem::type_to_string[problem.type] << "\n";
+   std::cout << "Problem type: " << Problem::type_to_string[problem.problem_type] << "\n";
 
-   /* project x into the bounds */
+   // project x into the bounds
    problem.project_point_in_bounds(current_iterate.x);
    if (use_preprocessing) {
-      /* preprocessing phase: satisfy linear constraints */
-      Preprocessing::apply(problem, current_iterate);
+      // preprocessing phase: satisfy linear constraints
+      Preprocessing::enforce_linear_constraints(problem, current_iterate);
    }
    Statistics statistics = Uno::create_statistics();
-   /* use the current point to initialize the strategies and generate the initial iterate */
+   // use the current point to initialize the strategies and generate the initial iterate
    this->globalization_mechanism.initialize(statistics, problem, current_iterate);
 
    TerminationStatus termination_status = NOT_OPTIMAL;
    try {
-      /* check for convergence */
+      // check for convergence
       while (!this->termination_criterion(termination_status, major_iterations)) {
          statistics.new_line();
          major_iterations++;
          DEBUG << "\n### Outer iteration " << major_iterations << "\n";
          DEBUG << "Current iterate\n" << current_iterate << "\n";
 
-         /* compute an acceptable iterate by solving a subproblem at the current point */
+         // compute an acceptable iterate by solving a subproblem at the current point
          auto [new_iterate, direction_norm] = this->globalization_mechanism.compute_acceptable_iterate(statistics, problem, current_iterate);
 
          Uno::add_statistics(statistics, new_iterate, major_iterations);
@@ -55,11 +55,10 @@ Result Uno::solve(const Problem& problem, Iterate& current_iterate, bool use_pre
    if (Logger::logger_level == INFO) statistics.print_footer();
    timer.stop();
 
-   const int number_subproblems_solved = this->globalization_mechanism.get_number_subproblems_solved();
-   const int hessian_evaluation_count = this->globalization_mechanism.get_hessian_evaluation_count();
-   Result result =
-         {termination_status, std::move(current_iterate), problem.number_variables, problem.number_constraints, major_iterations, timer.get_time(),
-          Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_jacobian, hessian_evaluation_count,
+   const size_t number_subproblems_solved = this->globalization_mechanism.get_number_subproblems_solved();
+   const size_t hessian_evaluation_count = this->globalization_mechanism.get_hessian_evaluation_count();
+   Result result = {termination_status, std::move(current_iterate), problem.number_variables, problem.number_constraints, major_iterations,
+         timer.get_time(), Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_jacobian, hessian_evaluation_count,
           number_subproblems_solved};
    return result;
 }
@@ -77,7 +76,7 @@ Statistics Uno::create_statistics() {
    return statistics;
 }
 
-void Uno::add_statistics(Statistics& statistics, const Iterate& new_iterate, int major_iterations) {
+void Uno::add_statistics(Statistics& statistics, const Iterate& new_iterate, size_t major_iterations) {
    statistics.add_statistic(std::string("major"), major_iterations);
    statistics.add_statistic("f", new_iterate.objective);
    statistics.add_statistic("||c||", new_iterate.errors.constraints);
@@ -86,7 +85,7 @@ void Uno::add_statistics(Statistics& statistics, const Iterate& new_iterate, int
    statistics.add_statistic("FJ", new_iterate.errors.FJ);
 }
 
-bool Uno::termination_criterion(TerminationStatus current_status, int iteration) const {
+bool Uno::termination_criterion(TerminationStatus current_status, size_t iteration) const {
    return current_status != NOT_OPTIMAL || this->max_iterations <= iteration;
 }
 
@@ -129,9 +128,9 @@ TerminationStatus Uno::check_termination(const Problem& problem, Iterate& curren
    return status;
 }
 
-void Result::display(bool print_solution) {
+void Result::print(bool print_solution) const {
    std::cout << "\n";
-   std::cout << "UNO v1: optimization summary\n";
+   std::cout << "Uno: optimization summary\n";
    std::cout << "==============================\n";
 
    std::cout << "Status:\t\t\t\t";

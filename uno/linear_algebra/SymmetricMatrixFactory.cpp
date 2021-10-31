@@ -8,7 +8,8 @@ std::unique_ptr<SymmetricMatrix> SymmetricMatrixFactory::create(const std::strin
       return std::make_unique<COOSymmetricMatrix>(dimension, capacity);
    }
    else if (symmetric_matrix_type == "CSC") {
-      return std::make_unique<CSCSymmetricMatrix>(dimension, capacity);
+      const size_t padding_size = 1;
+      return std::make_unique<CSCSymmetricMatrix>(dimension, capacity, padding_size);
    }
    throw std::invalid_argument("Symmetric matrix type unknown");
 }

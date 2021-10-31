@@ -7,8 +7,8 @@
 #include "tools/Options.hpp"
 
 struct FilterConstants {
-   double Beta; /*!< Margin around filter */
-   double Gamma; /*!< Margin around filter (sloping margin) */
+   double beta; /*!< Margin around filter */
+   double gamma; /*!< Margin around filter (sloping margin) */
 };
 
 /*! \class Filter

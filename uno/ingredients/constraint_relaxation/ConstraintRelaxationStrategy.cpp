@@ -125,11 +125,11 @@ PredictedReductionModel ConstraintRelaxationStrategy::generate_predicted_reducti
    return this->subproblem.generate_predicted_reduction_model(problem, direction);
 }
 
-int ConstraintRelaxationStrategy::get_hessian_evaluation_count() const {
+size_t ConstraintRelaxationStrategy::get_hessian_evaluation_count() const {
    return this->subproblem.get_hessian_evaluation_count();
 }
 
-int ConstraintRelaxationStrategy::get_number_subproblems_solved() const {
+size_t ConstraintRelaxationStrategy::get_number_subproblems_solved() const {
    return this->subproblem.number_subproblems_solved;
 }
 

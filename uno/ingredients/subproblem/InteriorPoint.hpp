@@ -41,7 +41,7 @@ public:
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const override;
    void compute_progress_measures(const Problem& problem, Iterate& iterate) override;
    void register_accepted_iterate(Iterate& iterate) override;
-   [[nodiscard]] int get_hessian_evaluation_count() const override;
+   [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
 private:
    // barrier parameter
@@ -78,13 +78,13 @@ private:
 
    void update_barrier_parameter(const Iterate& current_iterate);
    void set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;
-   void factorize(const Problem& problem, SymmetricMatrix& current_kkt_matrix);
+   void factorize_kkt_matrix(const Problem& problem);
    double compute_barrier_directional_derivative(const std::vector<double>& solution);
    double evaluate_barrier_function(const Problem& problem, Iterate& iterate);
    double primal_fraction_to_boundary(const std::vector<double>& ipm_solution, double tau);
    double dual_fraction_to_boundary(double tau);
    void assemble_kkt_matrix();
-   void regularize(const Problem& problem, size_t size_first_block, size_t size_second_block);
+   void regularize_kkt_matrix(const Problem& problem, size_t size_first_block, size_t size_second_block);
    void generate_kkt_rhs(const Iterate& current_iterate);
    void compute_lower_bound_dual_direction(const std::vector<double>& solution);
    void compute_upper_bound_dual_direction(const std::vector<double>& solution);

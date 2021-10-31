@@ -17,7 +17,7 @@ void scale(std::vector<double>& x, double scaling_factor) {
    }
 }
 
-/* compute ||x||_1 */
+// compute ||x||_1
 double norm_1(const std::vector<double>& x) {
    double norm = 0.;
    for (double xi: x) {
@@ -34,7 +34,7 @@ double norm_1(const std::function<double(size_t i)>& f, size_t size) {
    return norm;
 }
 
-/* compute ||x||^2_2 */
+// compute ||x||^2_2
 double norm_2_squared(const std::vector<double>& x) {
    double norm_squared = 0.;
    for (double xi: x) {
@@ -52,7 +52,7 @@ double norm_2_squared(const std::function<double(size_t i)>& f, size_t size) {
    return norm;
 }
 
-/* compute ||x||_2 */
+// compute ||x||_2
 double norm_2(const std::vector<double>& x) {
    return std::sqrt(norm_2_squared(x));
 }
@@ -61,7 +61,7 @@ double norm_2(const std::function<double(int i)>& f, size_t size) {
    return std::sqrt(norm_2_squared(f, size));
 }
 
-/* compute ||x||_infty */
+// compute ||x||_infty
 double norm_inf(const std::vector<double>& x, size_t start, size_t length) {
    double norm = 0.;
    for (size_t i = start; i < std::min<size_t>(start + length, x.size()); i++) {
@@ -79,7 +79,7 @@ double norm_inf(const std::function<double(size_t i)>& f, size_t size) {
 }
 
 double norm(const std::function<double(size_t i)>& f, size_t size, Norm norm) {
-   /* choose the right norm */
+   // choose the right norm
    if (norm == INF_NORM) {
       return norm_inf(f, size);
    }

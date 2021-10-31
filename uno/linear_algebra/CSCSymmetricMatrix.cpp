@@ -16,13 +16,13 @@
 CSCSymmetricMatrix::CSCSymmetricMatrix(size_t dimension, size_t capacity, size_t padding_size) : SymmetricMatrix(dimension, capacity),
 column_starts(dimension + 1), remaining_column_padding(dimension, padding_size) {
    const size_t capacity_with_padding = capacity + dimension*padding_size;
-   matrix.reserve(capacity_with_padding);
+   entries.reserve(capacity_with_padding);
    row_indices.reserve(capacity_with_padding);
 }
 
 void CSCSymmetricMatrix::reset() {
    SymmetricMatrix::reset();
-   this->matrix.clear();
+   this->entries.clear();
    this->row_indices.clear();
    clear(this->column_starts);
    this->current_column = 0;
@@ -35,7 +35,7 @@ void CSCSymmetricMatrix::for_each(const std::function<void (size_t, size_t, doub
       // work on the active elements (ignore the padding slots)
       for (size_t k = this->column_starts[j] + overall_padding_size; k < this->column_starts[j + 1] + overall_padding_size; k++) {
          const size_t i = this->row_indices[k];
-         const double entry = this->matrix[k];
+         const double entry = this->entries[k];
          f(i, j, entry);
       }
       overall_padding_size += this->remaining_column_padding[j];
@@ -49,7 +49,7 @@ void CSCSymmetricMatrix::for_each(size_t column_index, const std::function<void 
    // work on the active elements (ignore the padding slots)
    for (size_t k = this->column_starts[column_index] + overall_padding_size; k < this->column_starts[column_index + 1] + overall_padding_size; k++) {
       const size_t i = this->row_indices[k];
-      const double entry = this->matrix[k];
+      const double entry = this->entries[k];
       f(i, entry);
    }
 }
@@ -57,7 +57,7 @@ void CSCSymmetricMatrix::for_each(size_t column_index, const std::function<void 
 void CSCSymmetricMatrix::insert(double term, size_t row_index, size_t column_index) {
    assert(column_index == this->current_column && "The previous columns should be finalized");
 
-   this->matrix.push_back(term);
+   this->entries.push_back(term);
    this->row_indices.push_back(row_index);
    this->column_starts[column_index + 1]++;
    this->number_nonzeros++;
@@ -73,7 +73,7 @@ void CSCSymmetricMatrix::finalize(size_t column_index) {
 
    // add padding
    for (size_t k = 0; k < this->remaining_column_padding[column_index]; k++) {
-      this->matrix.push_back(0.);
+      this->entries.push_back(0.);
       this->row_indices.push_back(0);
    }
 
@@ -97,7 +97,7 @@ void CSCSymmetricMatrix::add_identity_multiple(double factor) {
          const size_t i = this->row_indices[last_entry_index];
          if (i == j) {
             // the diagonal element already exists: simply add factor
-            this->matrix[last_entry_index] += factor;
+            this->entries[last_entry_index] += factor;
             insert_new_element = false;
          }
          // otherwise, column terminates at a non-diagonal element
@@ -108,7 +108,7 @@ void CSCSymmetricMatrix::add_identity_multiple(double factor) {
          assert(0 < this->remaining_column_padding[j] && "Padding is not sufficient to insert a new element");
          const size_t last_element_index = this->column_starts[j + 1] - 1 + overall_padding_size;
          // insert the new diagonal element at the first padding slot
-         this->matrix[last_element_index+1] = factor;
+         this->entries[last_element_index + 1] = factor;
          this->row_indices[last_element_index + 1] = j;
          // shift the next column starts
          for (size_t k = j + 1; k < this->dimension + 1; k++) {
@@ -134,7 +134,7 @@ double CSCSymmetricMatrix::smallest_diagonal_entry() const {
          const size_t i = this->row_indices[last_entry_index];
          // if the entry is diagonal, update the smallest diagonal entry
          if (i == j) {
-            smallest_entry = std::min(smallest_entry, this->matrix[last_entry_index]);
+            smallest_entry = std::min(smallest_entry, this->entries[last_entry_index]);
          }
       }
       overall_padding_size += this->remaining_column_padding[j];
@@ -185,7 +185,7 @@ CSCSymmetricMatrix CSCSymmetricMatrix::identity(size_t dimension) {
 void CSCSymmetricMatrix::print(std::ostream& stream) const {
    stream << this->dimension << " variables, " << this->number_nonzeros << " non zeros:\n";
    stream << "W = ";
-   print_vector(stream, this->matrix, 0, this->number_nonzeros);
+   print_vector(stream, this->entries, 0, this->number_nonzeros);
    stream << "with column start: ";
    print_vector(stream, this->column_starts, 0, this->dimension + 1);
    stream << "and row index: ";

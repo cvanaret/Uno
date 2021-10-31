@@ -15,10 +15,10 @@ void SLP::create_current_subproblem(const Problem& problem, Iterate& current_ite
    copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
    /* compute first- and second-order information */
    problem.evaluate_constraints(current_iterate.x, current_iterate.constraints);
-   for (auto& row: this->constraint_jacobian) {
+   for (auto& row: this->constraints_jacobian) {
       row.clear();
    }
-   problem.evaluate_constraint_jacobian(current_iterate.x, this->constraint_jacobian);
+   problem.evaluate_constraint_jacobian(current_iterate.x, this->constraints_jacobian);
 
    this->build_objective_model(problem, current_iterate, objective_multiplier);
 
@@ -47,7 +47,7 @@ void SLP::set_initial_point(const std::vector<double>& point) {
 Direction SLP::solve(Statistics& /*statistics*/, const Problem& problem, Iterate& current_iterate) {
    /* solve the LP */
    Direction direction = this->solver->solve_LP(this->variables_bounds, this->constraints_bounds, this->objective_gradient,
-         this->constraint_jacobian, this->initial_point);
+         this->constraints_jacobian, this->initial_point);
    this->number_subproblems_solved++;
 
    // compute dual displacements (SLP methods usually compute the new duals, not the displacements)
@@ -66,7 +66,7 @@ PredictedReductionModel SLP::generate_predicted_reduction_model(const Problem& /
    });
 }
 
-int SLP::get_hessian_evaluation_count() const {
+size_t SLP::get_hessian_evaluation_count() const {
    // no second order evaluation is used
    return 0;
 }

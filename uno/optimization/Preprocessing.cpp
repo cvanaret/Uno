@@ -1,7 +1,7 @@
 #include "Preprocessing.hpp"
 #include "solvers/QP/BQPDSolver.hpp"
 
-void Preprocessing::apply(const Problem& problem, Iterate& first_iterate) {
+void Preprocessing::enforce_linear_constraints(const Problem& problem, Iterate& first_iterate) {
    /* linear constraints */
    INFO << "Preprocessing phase: the problem has " << problem.linear_constraints.size() << " linear constraints\n";
    if (!problem.linear_constraints.empty()) {

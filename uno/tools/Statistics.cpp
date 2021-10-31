@@ -37,6 +37,10 @@ void Statistics::add_statistic(std::string name, int value) {
    add_statistic(std::move(name), std::move(std::to_string(value)));
 }
 
+void Statistics::add_statistic(std::string name, size_t value) {
+   add_statistic(std::move(name), std::move(std::to_string(value)));
+}
+
 void Statistics::add_statistic(std::string name, double value) {
    std::ostringstream stream;
    stream << std::scientific << std::setprecision(6) << value;

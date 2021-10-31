@@ -73,6 +73,36 @@ void BQPDSolver::save_hessian_to_local_format(const SymmetricMatrix& hessian) {
    DEBUG << "Hessian: " << hessian;
 }
 
+void BQPDSolver::save_gradients_to_local_format(const SparseVector<double>& linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian) {
+   size_t current_index = 0;
+   linear_objective.for_each([&](size_t i, double derivative) {
+      this->jacobian[current_index] = derivative;
+      this->jacobian_sparsity[current_index + 1] = static_cast<int>(i + this->fortran_shift);
+      current_index++;
+   });
+   for (size_t j = 0; j < this->number_constraints; j++) {
+      constraint_jacobian[j].for_each([&](size_t i, double derivative) {
+         this->jacobian[current_index] = derivative;
+         this->jacobian_sparsity[current_index + 1] = static_cast<int>(i + this->fortran_shift);
+         current_index++;
+      });
+   }
+   current_index++;
+   this->jacobian_sparsity[0] = static_cast<int>(current_index);
+   // header
+   size_t size = 1;
+   this->jacobian_sparsity[current_index] = static_cast<int>(size);
+   current_index++;
+   size += linear_objective.size();
+   this->jacobian_sparsity[current_index] = static_cast<int>(size);
+   current_index++;
+   for (size_t j = 0; j < this->number_constraints; j++) {
+      size += constraint_jacobian[j].size();
+      this->jacobian_sparsity[current_index] = static_cast<int>(size);
+      current_index++;
+   }
+}
+
 Direction BQPDSolver::solve_LP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector<double>&
 linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian, const std::vector<double>& initial_point) {
    return this->solve_subproblem(variables_bounds, constraints_bounds, linear_objective, constraint_jacobian, initial_point);
@@ -102,33 +132,7 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
    }
 
    // Jacobian
-   size_t current_index = 0;
-   linear_objective.for_each([&](size_t i, double derivative) {
-      this->jacobian[current_index] = derivative;
-      this->jacobian_sparsity[current_index + 1] = static_cast<int>(i + this->fortran_shift);
-      current_index++;
-   });
-   for (size_t j = 0; j < this->number_constraints; j++) {
-      constraint_jacobian[j].for_each([&](size_t i, double derivative) {
-         this->jacobian[current_index] = derivative;
-         this->jacobian_sparsity[current_index + 1] = static_cast<int>(i + this->fortran_shift);
-         current_index++;
-      });
-   }
-   current_index++;
-   this->jacobian_sparsity[0] = static_cast<int>(current_index);
-   // header
-   size_t size = 1;
-   this->jacobian_sparsity[current_index] = static_cast<int>(size);
-   current_index++;
-   size += linear_objective.size();
-   this->jacobian_sparsity[current_index] = static_cast<int>(size);
-   current_index++;
-   for (size_t j = 0; j < this->number_constraints; j++) {
-      size += constraint_jacobian[j].size();
-      this->jacobian_sparsity[current_index] = static_cast<int>(size);
-      current_index++;
-   }
+   this->save_gradients_to_local_format(linear_objective, constraint_jacobian);
 
    // bounds
    for (size_t i = 0; i < this->number_variables; i++) {

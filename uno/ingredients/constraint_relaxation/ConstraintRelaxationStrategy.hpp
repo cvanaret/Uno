@@ -37,8 +37,8 @@ public:
    virtual void register_accepted_iterate(Iterate& iterate);
 
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const;
-   [[nodiscard]] int get_hessian_evaluation_count() const;
-   [[nodiscard]] int get_number_subproblems_solved() const;
+   [[nodiscard]] size_t get_hessian_evaluation_count() const;
+   [[nodiscard]] size_t get_number_subproblems_solved() const;
    [[nodiscard]] SecondOrderCorrection soc_strategy() const;
 
 protected:

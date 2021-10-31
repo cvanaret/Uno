@@ -53,7 +53,7 @@ public:
    std::string name;
    const size_t number_variables; /*!< Number of variables */
    const size_t number_constraints; /*!< Number of constraints */
-   FunctionType type;
+   FunctionType problem_type;
 
    /* objective */
    double objective_sign{1.}; /*!< Sign of the evaluate_objective function (1: minimization, -1: maximization) */

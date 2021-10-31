@@ -33,12 +33,11 @@ current_iterate) {
          // set bound multipliers of active trust region to 0
          TrustRegion::rectify_active_set(direction, this->radius);
 
-         PredictedReductionModel predicted_reduction_model = this->relaxation_strategy.generate_predicted_reduction_model(problem, direction);
-
          // assemble the trial iterate by taking a full step
          Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, this->full_step_length);
 
          // check whether the trial step is accepted
+         PredictedReductionModel predicted_reduction_model = this->relaxation_strategy.generate_predicted_reduction_model(problem, direction);
          if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate, direction, predicted_reduction_model,
                this->full_step_length)) {
             this->add_statistics(statistics, direction);

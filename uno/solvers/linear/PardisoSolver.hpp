@@ -27,14 +27,15 @@ public:
    PardisoSolver(size_t dimension);
    ~PardisoSolver() override = default;
 
-   void factorize(CSCSymmetricMatrix& matrix) override;
-   void do_symbolic_factorization(CSCSymmetricMatrix& matrix) override;
-   void do_numerical_factorization(CSCSymmetricMatrix& matrix) override;
-   void solve(CSCSymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) override;
+   void factorize(const CSCSymmetricMatrix& matrix) override;
+   void do_symbolic_factorization(const CSCSymmetricMatrix& matrix) override;
+   void do_numerical_factorization(const CSCSymmetricMatrix& matrix) override;
+   void solve(const CSCSymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) override;
 
    [[nodiscard]] std::tuple<size_t, size_t, size_t> get_inertia() const override;
    [[nodiscard]] size_t number_positive_eigenvalues() const;
    [[nodiscard]] size_t number_negative_eigenvalues() const override;
+   [[nodiscard]] bool matrix_is_positive_definite() const override;
    [[nodiscard]] bool matrix_is_singular() const override;
    [[nodiscard]] size_t rank() const override;
 

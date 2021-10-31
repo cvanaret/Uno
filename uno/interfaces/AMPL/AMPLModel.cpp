@@ -7,11 +7,11 @@
 
 ASL* generate_asl(std::string file_name) {
    ASL* asl = ASL_alloc(ASL_read_pfgh);
-   FILE* nl = jac0dim_ASL(asl, file_name.data(), static_cast<fint>(file_name.size()));
+   FILE* nl = jac0dim_ASL(asl, file_name.data(), static_cast<int>(file_name.size()));
    // indices start at 0
    asl->i.Fortran_ = 0;
 
-   fint n_discrete = nlogv + niv + nlvbi + nlvci + nlvoi;
+   int n_discrete = nlogv + niv + nlvbi + nlvci + nlvoi;
    if (0 < n_discrete) {
       WARNING << "Ignoring integrality of " << n_discrete << " variables.\n";
       asl->i.need_nl_ = 0;
@@ -168,7 +168,7 @@ void AMPLModel::set_function_types(std::string file_name) {
    //	usage_ASL(option_info, 1);
    //}
 
-   FILE* nl = jac0dim_ASL(asl, file_name.data(), static_cast<fint>(file_name.size()));
+   FILE* nl = jac0dim_ASL(asl, file_name.data(), static_cast<int>(file_name.size()));
    // specific read function
    qp_read_ASL(asl, nl, ASL_findgroups);
 
@@ -180,17 +180,17 @@ void AMPLModel::set_function_types(std::string file_name) {
 
    // determine the type of each constraint and objective function
    // determine if the problem is nonlinear (non-quadratic objective or nonlinear constraints)
-   this->type = LINEAR;
+   this->problem_type = LINEAR;
    size_t current_linear_constraint = 0;
-   fint* rowq;
-   fint* colqp;
+   int* rowq;
+   int* colqp;
    double* delsqp;
    for (size_t j = 0; j < this->number_constraints; j++) {
-      fint qp = nqpcheck_ASL(asl, static_cast<int>(-(j + 1)), &rowq, &colqp, &delsqp);
+      int qp = nqpcheck_ASL(asl, static_cast<int>(-(j + 1)), &rowq, &colqp, &delsqp);
 
       if (0 < qp) {
          this->constraint_type[j] = QUADRATIC;
-         this->type = NONLINEAR;
+         this->problem_type = NONLINEAR;
       }
       else if (qp == 0) {
          this->constraint_type[j] = LINEAR;
@@ -199,15 +199,15 @@ void AMPLModel::set_function_types(std::string file_name) {
       }
       else {
          this->constraint_type[j] = NONLINEAR;
-         this->type = NONLINEAR;
+         this->problem_type = NONLINEAR;
       }
    }
    // objective function
-   fint qp = nqpcheck_ASL(asl, 0, &rowq, &colqp, &delsqp);
+   int qp = nqpcheck_ASL(asl, 0, &rowq, &colqp, &delsqp);
    if (0 < qp) {
       this->objective_type = QUADRATIC;
-      if (this->type == LINEAR) {
-         this->type = QUADRATIC;
+      if (this->problem_type == LINEAR) {
+         this->problem_type = QUADRATIC;
       }
    }
    else if (qp == 0) {
@@ -215,7 +215,7 @@ void AMPLModel::set_function_types(std::string file_name) {
    }
    else {
       this->objective_type = NONLINEAR;
-      this->type = NONLINEAR;
+      this->problem_type = NONLINEAR;
    }
    qp_opify_ASL(asl);
 
@@ -225,7 +225,7 @@ void AMPLModel::set_function_types(std::string file_name) {
 
 void AMPLModel::initialize_lagrangian_hessian() {
    // compute the maximum number of nonzero elements, provided that all multipliers are non-zero
-   // fint (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri);
+   // int (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri);
    const int objective_number = -1;
    const int upper_triangular = 1;
    this->hessian_maximum_number_nonzeros = static_cast<size_t>((*(this->asl_)->p.Sphset)(this->asl_, nullptr, objective_number, 1, 1,

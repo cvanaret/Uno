@@ -55,6 +55,7 @@ private:
       linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian, const std::vector<double>& initial_point);
    void analyze_constraints(Direction& direction);
    void save_hessian_to_local_format(const SymmetricMatrix& hessian);
+   void save_gradients_to_local_format(const SparseVector<double>& linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian);
 };
 
 #endif // BQPDSOLVER_H

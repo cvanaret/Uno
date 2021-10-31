@@ -51,14 +51,14 @@ void Filter::add(double infeasibility_measure, double optimality_measure) {
 
    // check sufficient space available for new entry (remove last entry, if not)
    if (this->number_entries > this->max_size - 1) {
-      this->upper_bound = this->constants.Beta * std::max(this->upper_bound, this->infeasibility[this->number_entries - 1]);
+      this->upper_bound = this->constants.beta * std::max(this->upper_bound, this->infeasibility[this->number_entries - 1]);
       // create space in filter: remove last entry
       this->number_entries--;
    }
 
    // add new entry to the filter at position
    position = 0;
-   while (position < this->number_entries && infeasibility_measure >= this->constants.Beta * this->infeasibility[position]) {
+   while (position < this->number_entries && infeasibility_measure >= this->constants.beta * this->infeasibility[position]) {
       position++;
    }
    // shift entries by one to right to make room for new entry
@@ -74,12 +74,12 @@ void Filter::add(double infeasibility_measure, double optimality_measure) {
 // query: return true if (infeasibility_measure, optimality_measure) acceptable, false otherwise
 bool Filter::accept(double infeasibility_measure, double optimality_measure) {
    // check upper bound first
-   if (this->constants.Beta * this->upper_bound <= infeasibility_measure) {
+   if (this->constants.beta * this->upper_bound <= infeasibility_measure) {
       return false;
    }
 
    auto infeasibility_position = std::lower_bound(std::begin(this->infeasibility), std::begin(this->infeasibility) + static_cast<long>(this->number_entries),
-         infeasibility_measure/this->constants.Beta);
+         infeasibility_measure/this->constants.beta);
 
    // check acceptability
    if (infeasibility_position == std::begin(this->infeasibility)) {
@@ -87,7 +87,7 @@ bool Filter::accept(double infeasibility_measure, double optimality_measure) {
    }
    else {
       infeasibility_position--;
-      if (optimality_measure <= *infeasibility_position - this->constants.Gamma * infeasibility_measure) {
+      if (optimality_measure <= *infeasibility_position - this->constants.gamma * infeasibility_measure) {
          return true; // point acceptable
       }
       else {
@@ -100,8 +100,8 @@ bool Filter::accept(double infeasibility_measure, double optimality_measure) {
 
 bool Filter::improves_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure,
       double trial_optimality_measure) {
-   return (trial_optimality_measure <= current_optimality_measure - this->constants.Gamma * trial_infeasibility_measure) ||
-          (trial_infeasibility_measure < this->constants.Beta * current_infeasibility_measure);
+   return (trial_optimality_measure <= current_optimality_measure - this->constants.gamma * trial_infeasibility_measure) ||
+          (trial_infeasibility_measure < this->constants.beta * current_infeasibility_measure);
 }
 
 double Filter::compute_actual_reduction(double current_objective, double /*current_residual*/, double trial_objective) {
@@ -163,12 +163,12 @@ void NonmonotoneFilter::add(double infeasibility_measure, double optimality_meas
 size_t NonmonotoneFilter::compute_number_dominated_entries(double infeasibility_measure, double optimality_measure) {
    size_t number_dominated_entries = 0;
    for (size_t i = 0; i < this->number_entries; i++) {
-      if ((optimality_measure > this->optimality[i] - this->constants.Gamma * infeasibility_measure) &&
-          (infeasibility_measure >= this->constants.Beta * this->infeasibility[i])) {
+      if ((optimality_measure > this->optimality[i] - this->constants.gamma * infeasibility_measure) &&
+          (infeasibility_measure >= this->constants.beta * this->infeasibility[i])) {
          number_dominated_entries++;
       }
-      else if ((optimality_measure >= this->optimality[i] - this->constants.Gamma * infeasibility_measure) &&
-               (infeasibility_measure > this->constants.Beta * this->infeasibility[i])) {
+      else if ((optimality_measure >= this->optimality[i] - this->constants.gamma * infeasibility_measure) &&
+               (infeasibility_measure > this->constants.beta * this->infeasibility[i])) {
          number_dominated_entries++;
       }
    }
@@ -178,7 +178,7 @@ size_t NonmonotoneFilter::compute_number_dominated_entries(double infeasibility_
 //! accept: check if (infeasibility_measure, optimality_measure) acceptable
 bool NonmonotoneFilter::accept(double infeasibility_measure, double optimality_measure) {
    // check upper bound first
-   if (infeasibility_measure >= this->constants.Beta * this->upper_bound) {
+   if (infeasibility_measure >= this->constants.beta * this->upper_bound) {
       return false;
    }
 
@@ -193,8 +193,8 @@ bool NonmonotoneFilter::improves_current_iterate(double current_infeasibility_me
    // check acceptability wrt current point (non-monotone)
    size_t number_dominated_entries = this->compute_number_dominated_entries(trial_infeasibility_measure, trial_optimality_measure);
 
-   if ((trial_optimality_measure > current_optimality_measure - this->constants.Gamma * trial_infeasibility_measure) &&
-       (trial_infeasibility_measure > this->constants.Beta * current_infeasibility_measure)) {
+   if ((trial_optimality_measure > current_optimality_measure - this->constants.gamma * trial_infeasibility_measure) &&
+       (trial_infeasibility_measure > this->constants.beta * current_infeasibility_measure)) {
       number_dominated_entries++;
    }
    return (number_dominated_entries <= this->max_number_dominated_entries);
@@ -206,7 +206,7 @@ double NonmonotoneFilter::compute_actual_reduction(double current_objective, dou
    // max penalty among most recent entries
    double max_objective = current_objective;
    for (size_t i = 0; i < this->max_number_dominated_entries; i++) {
-      const double gamma = (current_residual < this->infeasibility[this->number_entries - i]) ? 1 / this->constants.Gamma : this->constants.Gamma;
+      const double gamma = (current_residual < this->infeasibility[this->number_entries - i]) ? 1 / this->constants.gamma : this->constants.gamma;
       const double dash_objective = this->optimality[this->number_entries - i] + gamma * (this->infeasibility[this->number_entries - i] -
          current_residual);
       max_objective = std::max(max_objective, dash_objective);

@@ -43,9 +43,9 @@ void MA57Solver::factorize(size_t dimension, const SymmetricMatrix& matrix) {
 }
 
 void MA57Solver::do_symbolic_factorization(size_t dimension, const SymmetricMatrix& matrix) {
-   std::cout << "MA57Solver::do_symbolic_factorization\n";
-   std::cout << matrix;
-   std::cout << "matrix.number_nonzeros = " << matrix.number_nonzeros << ", capacity: " << this->row_indices.capacity() << "\n";
+   //std::cout << "MA57Solver::do_symbolic_factorization\n";
+   //std::cout << matrix;
+   //std::cout << "matrix.number_nonzeros = " << matrix.number_nonzeros << ", capacity: " << this->row_indices.capacity() << "\n";
    assert(dimension <= this->max_dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
    assert(matrix.number_nonzeros <= this->row_indices.capacity());
 
@@ -92,7 +92,7 @@ void MA57Solver::do_numerical_factorization(size_t dimension, const SymmetricMat
    /* numerical factorization */
    ma57bd_(&n,
          &this->factorization.nnz,
-         /* const */ matrix.matrix.data(),
+         /* const */ matrix.entries.data(),
          /* out */ this->factorization.fact.data(),
          /* const */ &this->factorization.lfact,
          /* out*/ this->factorization.ifact.data(),
@@ -110,7 +110,7 @@ void MA57Solver::solve(size_t dimension, const SymmetricMatrix& matrix, const st
 
    // solve the linear system
    if (this->use_iterative_refinement) {
-      ma57dd_(&this->job, &n, &this->factorization.nnz, matrix.matrix.data(), this->row_indices.data(), this->column_indices.data(),
+      ma57dd_(&this->job, &n, &this->factorization.nnz, matrix.entries.data(), this->row_indices.data(), this->column_indices.data(),
             this->factorization.fact.data(), &this->factorization.lfact, this->factorization.ifact.data(), &this->factorization.lifact,
             rhs.data(), result.data(), this->residuals.data(), this->work.data(), this->iwork.data(), this->icntl.data(),
             this->cntl.data(), this->info.data(), this->rinfo.data());
@@ -126,6 +126,8 @@ void MA57Solver::solve(size_t dimension, const SymmetricMatrix& matrix, const st
 }
 
 std::tuple<size_t, size_t, size_t> MA57Solver::get_inertia() const {
+   // rank = number_positive_eigenvalues + number_negative_eigenvalues
+   // n = rank + number_zero_eigenvalues
    const size_t rank = this->rank();
    const size_t number_negative_eigenvalues = this->number_negative_eigenvalues();
    const size_t number_positive_eigenvalues = rank - number_negative_eigenvalues;
@@ -135,6 +137,11 @@ std::tuple<size_t, size_t, size_t> MA57Solver::get_inertia() const {
 
 size_t MA57Solver::number_negative_eigenvalues() const {
    return static_cast<size_t>(this->info[23]);
+}
+
+bool MA57Solver::matrix_is_positive_definite() const {
+   // positive definite = non-singular and no negative eigenvalues
+   return !this->matrix_is_singular() && this->number_negative_eigenvalues() == 0;
 }
 
 bool MA57Solver::matrix_is_singular() const {
