@@ -32,6 +32,7 @@ set(SRC_FILES
     uno/ingredients/mechanism/GlobalizationMechanismFactory.cpp
     uno/ingredients/mechanism/BacktrackingLineSearch.cpp
     uno/ingredients/mechanism/TrustRegion.cpp
+    uno/ingredients/mechanism/RegularizationStrategy.cpp
 
     uno/ingredients/strategy/GlobalizationStrategyFactory.cpp
     uno/ingredients/strategy/FilterStrategy.cpp
@@ -46,15 +47,16 @@ set(SRC_FILES
     uno/ingredients/subproblem/Subproblem.cpp
     uno/ingredients/subproblem/SubproblemFactory.cpp
     uno/ingredients/subproblem/Direction.cpp
-    uno/ingredients/subproblem/SLP.hpp
-    uno/ingredients/subproblem/SQP.hpp
-    uno/ingredients/subproblem/InteriorPoint.hpp
-    uno/ingredients/subproblem/HessianModel.hpp
+    uno/ingredients/subproblem/SLP.cpp
+    uno/ingredients/subproblem/SQP.cpp
+    uno/ingredients/subproblem/InteriorPoint.cpp
+    uno/ingredients/subproblem/HessianModel.cpp
     uno/ingredients/subproblem/PredictedReductionModel.cpp
 
     uno/linear_algebra/SymmetricMatrix.cpp
     uno/linear_algebra/COOSymmetricMatrix.cpp
     uno/linear_algebra/CSCSymmetricMatrix.cpp
+    uno/linear_algebra/SymmetricMatrixFactory.cpp
     uno/linear_algebra/SparseVector.cpp
     uno/linear_algebra/Vector.cpp
     
@@ -135,9 +137,9 @@ target_link_libraries(uno PUBLIC ${LIBS})
 # copy the configuration file
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/uno.cfg DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-########
-# main #
-########
+#############
+# AMPL main #
+#############
 add_executable(uno_ampl uno/main.cpp)
 target_link_libraries(uno_ampl PUBLIC uno)
 
@@ -158,10 +160,3 @@ if(WITH_GTEST)
         target_link_libraries(run_unotest PUBLIC GTest::gtest uno)
     endif()
 endif()
-
-#############
-# filter-al #
-#############
-#add_executable(filter-al filter-al/filter-al.cpp)
-#target_include_directories(filter-al PUBLIC ${DIRECTORIES})
-#target_link_libraries(filter-al PUBLIC ${LIBS})
