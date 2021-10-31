@@ -1,6 +1,7 @@
 #include "InteriorPoint.hpp"
 #include "solvers/linear/LinearSolverFactory.hpp"
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
+#include "optimization/Preprocessing.hpp"
 
 InteriorPoint::InteriorPoint(const Problem& problem, size_t max_number_variables, size_t number_constraints,
       const std::string& hessian_model, const std::string& linear_solver_name, const std::string& sparse_format, double initial_barrier_parameter,
@@ -101,7 +102,7 @@ inline void InteriorPoint::initialize(Statistics& statistics, const Problem& pro
 
    // compute least-square multipliers
    if (problem.is_constrained()) {
-      Subproblem::compute_least_square_multipliers(problem, *this->kkt_matrix, this->rhs, *this->linear_solver, first_iterate,
+      Preprocessing::compute_least_square_multipliers(problem, *this->kkt_matrix, this->rhs, *this->linear_solver, first_iterate,
             first_iterate.multipliers.constraints);
    }
 
