@@ -17,6 +17,15 @@ void scale(std::vector<double>& x, double scaling_factor) {
    }
 }
 
+double dot(const std::vector<double>& x, const std::vector<double>& y) {
+   assert(x.size() == y.size() && "Vector.dot: x and y have different sizes");
+   double result = 0.;
+   for (size_t i = 0; i < x.size(); i++) {
+      result += x[i]*y[i];
+   }
+   return result;
+}
+
 // compute ||x||_1
 double norm_1(const std::vector<double>& x) {
    double norm = 0.;

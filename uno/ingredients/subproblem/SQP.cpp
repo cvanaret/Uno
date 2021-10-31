@@ -68,7 +68,7 @@ PredictedReductionModel SQP::generate_predicted_reduction_model(const Problem& /
    return PredictedReductionModel(-direction.objective, [&]() { // capture this and direction by reference
       // precompute expensive quantities
       const double linear_term = dot(direction.x, this->objective_gradient);
-      const double quadratic_term = this->hessian_model->hessian->quadratic_product(direction.x, direction.x) / 2.;
+      const double quadratic_term = this->hessian_model->hessian->quadratic_product(direction.x, direction.x, this->number_variables) / 2.;
       // return a function of the step length that cheaply assembles the predicted reduction
       return [=](double step_length) { // capture the expensive quantities by value
          return -step_length * (linear_term + step_length * quadratic_term);
