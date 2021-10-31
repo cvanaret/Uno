@@ -29,6 +29,8 @@ void copy_from(std::vector<T>& destination, const std::vector<T>& source, size_t
    }
 }
 
+double dot(const std::vector<double>& x, const std::vector<double>& y);
+
 double norm_1(const std::vector<double>& x);
 double norm_1(const std::function<double(size_t i)>& f, size_t size);
 

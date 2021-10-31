@@ -17,7 +17,7 @@ public:
 
    virtual void reset();
    [[nodiscard]] std::vector<double> product(const std::vector<double>& vector) const;
-   [[nodiscard]] double quadratic_product(const std::vector<double>& x, const std::vector<double>& y) const;
+   [[nodiscard]] double quadratic_product(const std::vector<double>& x, const std::vector<double>& y, size_t block_size) const;
    void add_outer_product(const SparseVector<double>& x, double column_entry = 1.);
 
    virtual void for_each(const std::function<void (size_t, size_t, double)>& f) const = 0;
