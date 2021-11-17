@@ -45,7 +45,7 @@ struct FunctionNumericalError : NumericalError {
  */
 class Problem {
 public:
-   Problem(std::string name, int number_variables, int number_constraints, FunctionType problem_type);
+   Problem(std::string name, size_t number_variables, size_t number_constraints, FunctionType problem_type);
    virtual ~Problem() = default;
 
    static std::map<FunctionType, std::string> type_to_string;
@@ -56,8 +56,8 @@ public:
    FunctionType problem_type;
 
    /* objective */
-   double objective_sign{1.}; /*!< Sign of the evaluate_objective function (1: minimization, -1: maximization) */
-   FunctionType objective_type{NONLINEAR}; /*!< Type of the evaluate_objective (LINEAR, QUADRATIC, NONLINEAR) */
+   double objective_sign{1.}; /*!< Sign of the objective function (1: minimization, -1: maximization) */
+   FunctionType objective_type{NONLINEAR}; /*!< Type of the objective (LINEAR, QUADRATIC, NONLINEAR) */
 
    /* variables */
    std::vector<Range> variables_bounds;
@@ -91,7 +91,7 @@ public:
 
    // auxiliary functions
    [[nodiscard]] std::vector<double> evaluate_constraints(const std::vector<double>& x) const;
-   void determine_bounds_types(std::vector<Range>& variables_bounds, std::vector<ConstraintType>& status);
+   static void determine_bounds_types(std::vector<Range>& variables_bounds, std::vector<ConstraintType>& status);
    void project_point_in_bounds(std::vector<double>& x) const;
    [[nodiscard]] double compute_constraint_violation(double constraint, size_t j) const;
    [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const;

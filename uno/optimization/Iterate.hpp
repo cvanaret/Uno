@@ -34,8 +34,8 @@ public:
    bool are_constraints_computed{false};
    static size_t number_eval_constraints;
 
-   SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the evaluate_objective */
-   bool is_objective_gradient_computed{false}; /*!< Flag that indicates if the evaluate_objective gradient has already been computed */
+   SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
+   bool is_objective_gradient_computed{false}; /*!< Flag that indicates if the objective gradient has already been computed */
 
    std::vector<SparseVector<double>> constraints_jacobian; /*!< Sparse Jacobian of the constraints */
    bool is_constraints_jacobian_computed{false}; /*!< Flag that indicates if the constraint Jacobian has already been computed */

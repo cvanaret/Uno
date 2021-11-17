@@ -3,7 +3,7 @@
 #include "Vector.hpp"
 
 void add_vectors(const std::vector<double>& x, const std::vector<double>& y, double scaling_factor, std::vector<double>& result) {
-   assert(x.size() == y.size() && "Vector.add_vectors: x and y have different sizes");
+   assert(x.size() <= y.size() && "Vector.add_vectors: x is larger than y");
    assert(x.size() <= result.size() && "Vector.add_vectors: result is not large enough");
 
    for (size_t i = 0; i < x.size(); i++) {
