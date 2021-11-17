@@ -1,5 +1,6 @@
 #include <cassert>
 #include "Subproblem.hpp"
+#include "linear_algebra/SparseVector.hpp"
 
 Subproblem::Subproblem(size_t number_variables, size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy) :
       number_variables(number_variables), max_number_variables(max_number_variables), number_constraints(number_constraints),
@@ -13,13 +14,13 @@ Subproblem::Subproblem(size_t number_variables, size_t max_number_variables, siz
 }
 
 void Subproblem::initialize(Statistics& /*statistics*/, const Problem& problem, Iterate& first_iterate) {
-   /* compute the optimality and feasibility measures of the initial point */
+   // compute the optimality and feasibility measures of the initial point
    first_iterate.evaluate_constraints(problem);
    this->compute_progress_measures(problem, first_iterate);
 }
 
 void Subproblem::add_variable(size_t i, double /*current_value*/, const Range& bounds, double objective_term, size_t j, double jacobian_term) {
-   assert(i < this->max_number_variables && "The index is larger than the preallocated size");
+   assert(i < this->max_number_variables && "The variable index is larger than the preallocated size");
    assert(j < this->number_constraints && "The constraint index is larger than the preallocated size");
    this->variables_bounds[i] = bounds;
    this->objective_gradient.insert(i, objective_term);

@@ -1,4 +1,3 @@
-#include <cassert>
 #include "Direction.hpp"
 #include "tools/Logger.hpp"
 #include "linear_algebra/Vector.hpp"
@@ -39,7 +38,7 @@ std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
    stream << "d^* = ";
    print_vector(stream, direction.x);
 
-   stream << "evaluate_objective = " << direction.objective << "\n";
+   stream << "objective = " << direction.objective << "\n";
    stream << "norm = " << direction.norm << "\n";
 
    stream << "bound constraints active at lower bound =";

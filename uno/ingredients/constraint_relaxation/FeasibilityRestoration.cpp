@@ -149,16 +149,13 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
       // evaluate the predicted reduction
       const double predicted_reduction = this->compute_predicted_reduction(problem, current_iterate, direction, predicted_reduction_model, step_length);
 
-      // pick the current strategy
-      // TODO: pick phase-2 strategy if no constraint partition is available
-      GlobalizationStrategy& strategy = (this->current_phase == OPTIMALITY) ? *this->phase_2_strategy : *this->phase_1_strategy;
       // invoke the globalization strategy for acceptance
-      accept = strategy.check_acceptance(statistics, current_iterate.progress, trial_iterate.progress,
-            direction.objective_multiplier, predicted_reduction);
+      GlobalizationStrategy& strategy = this->pick_globalization_strategy(direction);
+      accept = strategy.check_acceptance(statistics, current_iterate.progress, trial_iterate.progress, direction.objective_multiplier, predicted_reduction);
    }
 
    if (accept) {
-      statistics.add_statistic("phase", static_cast<int>(direction.subproblem_is_relaxed ? FEASIBILITY_RESTORATION : OPTIMALITY));
+      statistics.add_statistic("phase", static_cast<int>(this->current_phase));
       if (direction.subproblem_is_relaxed && direction.constraint_partition.has_value()) {
          // correct multipliers for infeasibility problem
          FeasibilityRestoration::set_restoration_multipliers(trial_iterate.multipliers.constraints, direction.constraint_partition.value());
@@ -166,6 +163,16 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
       Subproblem::compute_optimality_conditions(problem, trial_iterate, direction.objective_multiplier);
    }
    return accept;
+}
+
+GlobalizationStrategy& FeasibilityRestoration::pick_globalization_strategy(const Direction& direction) const {
+   // phase 2 if in optimality phase or (infeasible direction and no constraint partition available)
+   if (this->current_phase == OPTIMALITY || (direction.subproblem_is_relaxed && !direction.constraint_partition.has_value())) {
+      return *this->phase_2_strategy;
+   }
+   else {
+      return *this->phase_1_strategy;
+   }
 }
 
 void FeasibilityRestoration::set_restoration_multipliers(std::vector<double>& constraints_multipliers, const ConstraintPartition&
@@ -197,5 +204,6 @@ void FeasibilityRestoration::compute_infeasibility_measures(const Problem& probl
 }
 
 size_t FeasibilityRestoration::get_max_number_variables(const Problem& problem) {
-   return problem.number_variables;
+   // primal variables + elastic variables
+   return problem.number_variables + ConstraintRelaxationStrategy::count_elastic_variables(problem);
 }
