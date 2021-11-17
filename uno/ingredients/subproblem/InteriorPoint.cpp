@@ -6,8 +6,9 @@
 InteriorPoint::InteriorPoint(const Problem& problem, size_t max_number_variables, size_t number_constraints,
       const std::string& hessian_model, const std::string& linear_solver_name, const std::string& sparse_format, double initial_barrier_parameter,
       double default_multiplier, double tolerance, bool use_trust_region) :
-// add the slacks to the variables
-      Subproblem(problem.number_variables + problem.inequality_constraints.size(), max_number_variables + problem.inequality_constraints.size(),
+      // add the slacks to the variables
+      Subproblem(problem.number_variables + problem.inequality_constraints.size(), // number_variables
+            max_number_variables + problem.inequality_constraints.size(), // max_number_variables
             number_constraints, SOC_UPON_REJECTION),
       barrier_parameter(initial_barrier_parameter), tolerance(tolerance),
       // if no trust region is used, the problem should be convexified. However, the inertia of the augmented matrix will be corrected later
@@ -159,8 +160,7 @@ void InteriorPoint::build_objective_model(const Problem& problem, Iterate& curre
    }
 }
 
-void InteriorPoint::add_variable(size_t i, double current_value, const Range& bounds, double objective_term, size_t j,
-      double jacobian_term) {
+void InteriorPoint::add_variable(size_t i, double current_value, const Range& bounds, double objective_term, size_t j, double jacobian_term) {
    // add the variable to the objective and the constraint Jacobian
    Subproblem::add_variable(i, current_value, bounds, objective_term, j, jacobian_term);
    // if necessary, register the variable as bounded
@@ -189,6 +189,8 @@ Direction InteriorPoint::solve(Statistics& statistics, const Problem& problem, I
    this->iteration++;
    // assemble, factorize and regularize the KKT matrix
    this->assemble_kkt_matrix();
+   this->kkt_matrix->dimension = this->number_variables + this->number_constraints;
+   // regularize the system
    this->factorize_kkt_matrix(problem);
    this->regularize_kkt_matrix(problem, this->number_variables, problem.number_constraints);
    DEBUG << "KKT matrix:\n" << *this->kkt_matrix << "\n";
@@ -507,7 +509,7 @@ void InteriorPoint::generate_kkt_rhs(const Iterate& current_iterate) {
       // constraints
       this->rhs[this->number_variables + j] = -this->barrier_constraints[j];
    }
-   DEBUG << "RHS: "; print_vector(DEBUG, this->rhs);
+   DEBUG << "RHS: "; print_vector(DEBUG, this->rhs, 0, this->number_variables + this->number_constraints);
 }
 
 void InteriorPoint::compute_lower_bound_dual_direction(const std::vector<double>& solution) {
@@ -567,8 +569,8 @@ void InteriorPoint::generate_direction(const Problem& problem, const Iterate& cu
             this->number_variables - (problem.number_variables + problem.inequality_constraints.size()));
    }
    DEBUG << "Δλ: "; print_vector(DEBUG, this->solution_IPM, this->number_variables, problem.number_constraints);
-   DEBUG << "Δz_L: "; print_vector(DEBUG, this->lower_delta_z);
-   DEBUG << "Δz_U: "; print_vector(DEBUG, this->upper_delta_z);
+   DEBUG << "Δz_L: "; print_vector(DEBUG, this->lower_delta_z, 0, this->number_variables);
+   DEBUG << "Δz_U: "; print_vector(DEBUG, this->upper_delta_z, 0, this->number_variables);
    DEBUG << "primal length = " << primal_step_length << "\n";
    DEBUG << "dual length = " << dual_step_length << "\n\n";
 }

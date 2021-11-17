@@ -221,7 +221,7 @@ Direction l1Relaxation::resolve_subproblem(Statistics& statistics, const Problem
 }
 
 size_t l1Relaxation::get_max_number_variables(const Problem& problem) {
-   return problem.number_variables + l1Relaxation::count_elastic_variables(problem);
+   return problem.number_variables + ConstraintRelaxationStrategy::count_elastic_variables(problem);
 }
 
 double l1Relaxation::compute_linearized_constraint_residual(std::vector<double>& direction) const {

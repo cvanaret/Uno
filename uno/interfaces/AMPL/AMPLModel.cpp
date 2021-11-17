@@ -31,7 +31,8 @@ ASL* generate_asl(std::string file_name) {
 AMPLModel::AMPLModel(const std::string& file_name) : AMPLModel(file_name, generate_asl(file_name)) {
 }
 
-AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) : Problem(file_name, asl->i.n_var_, asl->i.n_con_, NONLINEAR),
+AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
+      Problem(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_), NONLINEAR),
       asl_(asl), ampl_tmp_gradient(this->number_variables) {
    this->asl_->i.congrd_mode = 0;
 
@@ -62,7 +63,7 @@ void AMPLModel::generate_variables() {
       }
       this->variables_bounds[i] = {lb, ub};
    }
-   this->determine_bounds_types(this->variables_bounds, this->variable_status);
+   Problem::determine_bounds_types(this->variables_bounds, this->variable_status);
 }
 
 double AMPLModel::evaluate_objective(const std::vector<double>& x) const {
@@ -156,7 +157,7 @@ void AMPLModel::generate_constraints() {
       double ub = (this->asl_->i.LUrhs_ != nullptr) ? this->asl_->i.LUrhs_[2 * j + 1] : std::numeric_limits<double>::infinity();
       this->constraint_bounds[j] = {lb, ub};
    }
-   this->determine_bounds_types(this->constraint_bounds, this->constraint_status);
+   Problem::determine_bounds_types(this->constraint_bounds, this->constraint_status);
    this->determine_constraints();
 }
 

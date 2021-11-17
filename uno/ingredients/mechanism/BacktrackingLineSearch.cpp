@@ -94,6 +94,7 @@ current_iterate) {
          feasibility_problem = true;
       }
       else {
+         WARNING << "The feasibility problem failed to make progress\n";
          failure = true;
       }
    }
