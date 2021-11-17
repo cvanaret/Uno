@@ -25,10 +25,10 @@ lifact, const double rhs[], double x[], double resid[], double work[], int iwork
 MA57Solver::MA57Solver(size_t max_dimension, size_t max_number_nonzeros) : LinearSolver(max_dimension),
    iwork(5 * max_dimension),
    lwork(static_cast<int>(1.2 * static_cast<double>(max_dimension))),
-   work(this->lwork), residuals(max_dimension) {
+   work(static_cast<size_t>(this->lwork)), residuals(max_dimension) {
    this->row_indices.reserve(max_number_nonzeros);
    this->column_indices.reserve(max_number_nonzeros);
-   /* set the default values of the controlling parameters */
+   // set the default values of the controlling parameters
    ma57id_(this->cntl.data(), this->icntl.data());
    // suppress warning messages
    this->icntl[4] = 0;
@@ -43,9 +43,6 @@ void MA57Solver::factorize(size_t dimension, const SymmetricMatrix& matrix) {
 }
 
 void MA57Solver::do_symbolic_factorization(size_t dimension, const SymmetricMatrix& matrix) {
-   //std::cout << "MA57Solver::do_symbolic_factorization\n";
-   //std::cout << matrix;
-   //std::cout << "matrix.number_nonzeros = " << matrix.number_nonzeros << ", capacity: " << this->row_indices.capacity() << "\n";
    assert(dimension <= this->max_dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
    assert(matrix.number_nonzeros <= this->row_indices.capacity());
 
@@ -55,11 +52,11 @@ void MA57Solver::do_symbolic_factorization(size_t dimension, const SymmetricMatr
    const int n = static_cast<int>(dimension);
    const int nnz = static_cast<int>(matrix.number_nonzeros);
 
-   /* sparsity pattern */
+   // sparsity pattern
    const int lkeep = 5 * n + nnz + std::max(n, nnz) + 42;
    std::vector<int> keep(static_cast<size_t>(lkeep));
 
-   /* symbolic factorization */
+   // symbolic factorization
    ma57ad_(/* const */ &n,
          /* const */ &nnz,
          /* const */ this->row_indices.data(),
@@ -89,7 +86,7 @@ void MA57Solver::do_numerical_factorization(size_t dimension, const SymmetricMat
    assert(this->factorization.nnz == static_cast<int>(matrix.number_nonzeros) && "MA57Solver: the numbers of nonzeros do not match");
 
    const int n = static_cast<int>(dimension);
-   /* numerical factorization */
+   // numerical factorization
    ma57bd_(&n,
          &this->factorization.nnz,
          /* const */ matrix.entries.data(),
@@ -104,7 +101,7 @@ void MA57Solver::do_numerical_factorization(size_t dimension, const SymmetricMat
 }
 
 void MA57Solver::solve(size_t dimension, const SymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) {
-   /* solve */
+   // solve
    const int n = static_cast<int>(dimension);
    const int lrhs = n; // integer, length of rhs
 
