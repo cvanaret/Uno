@@ -11,9 +11,8 @@ std::map<FunctionType, std::string> Problem::type_to_string = {
       {NONLINEAR, "nonlinear"}
 };
 
-/* Abstract Problem class */
-
-Problem::Problem(std::string name, int number_variables, int number_constraints, FunctionType type) :
+// abstract Problem class
+Problem::Problem(std::string name, size_t number_variables, size_t number_constraints, FunctionType type) :
       name(std::move(name)), number_variables(number_variables), number_constraints(number_constraints), problem_type(type),
       // allocate all vectors
       variables_bounds(number_variables), variable_status(number_variables),
@@ -80,7 +79,7 @@ double Problem::compute_constraint_violation(double constraint, size_t j) const 
    return std::max(std::max(0., this->constraint_bounds[j].lb - constraint), constraint - this->constraint_bounds[j].ub);
 }
 
-/* compute ||c|| */
+// compute ||c||
 double Problem::compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const {
    // create a lambda to avoid allocating an std::vector
    auto residual_function = [&](size_t j) {
@@ -89,7 +88,7 @@ double Problem::compute_constraint_violation(const std::vector<double>& constrai
    return norm(residual_function, constraints.size(), residual_norm);
 }
 
-/* compute ||c_S|| for a given set S */
+// compute ||c_S|| for a given set of constraints
 double Problem::compute_constraint_violation(const std::vector<double>& constraints, const std::vector<size_t>& constraint_set, Norm residual_norm)
 const {
    auto residual_function = [&](size_t k) {
