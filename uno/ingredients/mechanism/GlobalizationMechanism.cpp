@@ -7,7 +7,7 @@ GlobalizationMechanism::GlobalizationMechanism(ConstraintRelaxationStrategy& con
 
 Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate, Direction& direction, double step_length) {
    if (0. < direction.norm) {
-      Iterate trial_iterate(direction.x.size(), direction.multipliers.constraints.size());
+      Iterate trial_iterate(current_iterate.x.size(), direction.multipliers.constraints.size());
       add_vectors(current_iterate.x, direction.x, step_length, trial_iterate.x);
       add_vectors(current_iterate.multipliers.constraints, direction.multipliers.constraints, step_length, trial_iterate.multipliers.constraints);
       copy_from(trial_iterate.multipliers.lower_bounds, direction.multipliers.lower_bounds);
