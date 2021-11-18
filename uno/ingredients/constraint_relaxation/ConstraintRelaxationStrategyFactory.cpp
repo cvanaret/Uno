@@ -14,7 +14,7 @@ size_t ConstraintRelaxationStrategyFactory::get_max_number_variables(std::string
    }
 }
 
-std::unique_ptr<ConstraintRelaxationStrategy> ConstraintRelaxationStrategyFactory::create(std::string_view constraint_relaxation_type,
+std::unique_ptr<ConstraintRelaxationStrategy> ConstraintRelaxationStrategyFactory::create(const std::string& constraint_relaxation_type,
       Problem& problem, Subproblem& subproblem, const Options& options) {
    if (constraint_relaxation_type == "feasibility-restoration") {
       return std::make_unique<FeasibilityRestoration>(problem, subproblem, options);
@@ -27,7 +27,5 @@ std::unique_ptr<ConstraintRelaxationStrategy> ConstraintRelaxationStrategyFactor
       l1RelaxationParameters parameters({initial_parameter, decrease_factor, epsilon1, epsilon2});
       return std::make_unique<l1Relaxation>(problem, subproblem, parameters, options);
    }
-   else {
-      throw std::invalid_argument("ConstraintRelaxationStrategy type does not exist");
-   }
+   throw std::invalid_argument("ConstraintRelaxationStrategy " + constraint_relaxation_type + " is not supported");
 }
