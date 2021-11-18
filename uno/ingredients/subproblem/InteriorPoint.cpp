@@ -190,7 +190,6 @@ Direction InteriorPoint::solve(Statistics& statistics, const Problem& problem, I
    // assemble, factorize and regularize the KKT matrix
    this->assemble_kkt_matrix();
    this->kkt_matrix->dimension = this->number_variables + this->number_constraints;
-   // regularize the system
    this->factorize_kkt_matrix(problem);
    this->regularize_kkt_matrix(problem, this->number_variables, problem.number_constraints);
    DEBUG << "KKT matrix:\n" << *this->kkt_matrix << "\n";

@@ -24,9 +24,9 @@ void* operator new(size_t size) {
 */
 
 void run_uno(const std::string& problem_name, const Options& options) {
-   const std::string_view mechanism_type = options.at("mechanism");
-   const std::string_view constraint_relaxation_type = options.at("constraint-relaxation");
-   const std::string_view subproblem_type = options.at("subproblem");
+   const std::string mechanism_type = options.at("mechanism");
+   const std::string constraint_relaxation_type = options.at("constraint-relaxation");
+   const std::string subproblem_type = options.at("subproblem");
 
    // TODO: use a factory
    // AMPL model

@@ -15,7 +15,5 @@ std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(con
       FilterStrategyParameters strategy_parameters = {decrease_fraction, delta, upper_bound, fact};
       return std::make_unique<FilterStrategy>(strategy_parameters, options);
    }
-   else {
-      throw std::invalid_argument("GlobalizationStrategy type " + strategy_type + " does not exist");
-   }
+   throw std::invalid_argument("GlobalizationStrategy " + strategy_type + " is not supported");
 }
