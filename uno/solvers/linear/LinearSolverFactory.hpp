@@ -7,9 +7,6 @@
 #ifdef HAS_MA57
 #include "MA57Solver.hpp"
 #endif
-#ifdef HAS_PARDISO
-#include "PardisoSolver.hpp"
-#endif
 
 class LinearSolverFactory {
 public:
@@ -19,13 +16,6 @@ public:
          return std::make_unique<MA57Solver>(max_dimension, max_number_nonzeros);
       }
 #endif
-/*
-#ifdef HAS_PARDISO
-      if (linear_solver_name == "PARDISO") {
-         return std::make_unique<PardisoSolver>(max_dimension, max_number_nonzeros);
-      }
-#endif
- */
       throw std::invalid_argument("Linear solver name is unknown");
    }
 };

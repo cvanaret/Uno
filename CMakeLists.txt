@@ -78,7 +78,7 @@ set(SRC_FILES
 
 # find libraries
 set(LIBS "")
-set(OPTIONAL_LIBS amplsolver ma57 pardiso metis bqpd CACHE STRING "Optional libraries")
+set(OPTIONAL_LIBS amplsolver ma57 metis bqpd CACHE STRING "Optional libraries")
 set(REQUIRED_LIBS dl blas lapack gomp)
 
 # automatic detection of optional libraries
@@ -106,8 +106,6 @@ foreach(library_name IN LISTS OPTIONAL_LIBS)
             list(APPEND SRC_FILES uno/solvers/QP/BQPDSolver.cpp uno/solvers/QP/wdotd.f)
         elseif(${library_name} STREQUAL ma57)
             list(APPEND SRC_FILES uno/solvers/linear/MA57Solver.cpp)
-        elseif(${library_name} STREQUAL pardiso)
-            list(APPEND SRC_FILES uno/solvers/linear/PardisoSolver.cpp)
         endif()
 	endif()
 endforeach(library_name)

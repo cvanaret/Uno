@@ -93,6 +93,7 @@ private:
    [[nodiscard]] double compute_central_complementarity_error(const Iterate& iterate) const;
    void set_current_iterate(const Iterate& iterate);
    void print_soc_iteration(const Direction& direction_soc) const;
+   void print_solution(const Problem& problem, double primal_step_length, double dual_step_length) const;
 };
 
 #endif // IPM_H
