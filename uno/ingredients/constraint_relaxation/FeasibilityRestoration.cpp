@@ -101,6 +101,7 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
       feasibility_direction.constraint_partition = constraint_partition;
    }
    else {
+      // remove the temporary elastic variables
       this->remove_elastic_variables_from_subproblem();
       this->remove_elastic_variables_from_direction(problem, feasibility_direction);
    }

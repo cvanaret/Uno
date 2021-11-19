@@ -189,7 +189,6 @@ Direction InteriorPoint::solve(Statistics& statistics, const Problem& problem, I
    this->iteration++;
    // assemble, factorize and regularize the KKT matrix
    this->assemble_kkt_matrix();
-   this->kkt_matrix->dimension = this->number_variables + this->number_constraints;
    this->factorize_kkt_matrix(problem);
    this->regularize_kkt_matrix(problem, this->number_variables, problem.number_constraints);
    auto[number_pos, number_neg, number_zero] = this->linear_solver->get_inertia();
@@ -386,6 +385,7 @@ double InteriorPoint::dual_fraction_to_boundary(double tau) {
 
 void InteriorPoint::assemble_kkt_matrix() {
    this->kkt_matrix->reset();
+   this->kkt_matrix->dimension = this->number_variables + this->number_constraints;
    // copy the Lagrangian Hessian in the top left block
    size_t current_column = 0;
    this->hessian_model->hessian->for_each([&](size_t i, size_t j, double entry) {
@@ -460,7 +460,7 @@ void InteriorPoint::regularize_kkt_matrix(const Problem& problem, size_t size_fi
 
       if (!this->linear_solver->matrix_is_singular() && this->linear_solver->number_negative_eigenvalues() == size_second_block) {
          good_inertia = true;
-         DEBUG << "Factorization was a success\n";
+         DEBUG << "Factorization was a success\n\n";
          this->previous_hessian_regularization = this->regularization_hessian;
       }
       else {
@@ -506,7 +506,7 @@ void InteriorPoint::generate_kkt_rhs(const Iterate& current_iterate) {
       // constraints
       this->rhs[this->number_variables + j] = -this->barrier_constraints[j];
    }
-   DEBUG << "RHS: "; print_vector(DEBUG, this->rhs, 0, this->number_variables + this->number_constraints);
+   DEBUG << "RHS: "; print_vector(DEBUG, this->rhs, 0, this->number_variables + this->number_constraints); DEBUG << "\n";
 }
 
 void InteriorPoint::compute_lower_bound_dual_direction(const std::vector<double>& solution) {
@@ -557,19 +557,7 @@ void InteriorPoint::generate_direction(const Problem& problem, const Iterate& cu
    this->direction.norm = norm_inf(direction.x, 0, this->number_variables);
    // evaluate the barrier objective
    this->direction.objective = this->compute_barrier_directional_derivative(direction.x);
-
-   DEBUG << "IPM solution:\n";
-   DEBUG << "Δx: "; print_vector(DEBUG, this->solution_IPM, 0, problem.number_variables);
-   DEBUG << "Δs: "; print_vector(DEBUG, this->solution_IPM, problem.number_variables, problem.inequality_constraints.size());
-   if (this->number_variables > problem.number_variables + problem.inequality_constraints.size()) {
-      DEBUG << "Δe: "; print_vector(DEBUG, this->solution_IPM, problem.number_variables + problem.inequality_constraints.size(),
-            this->number_variables - (problem.number_variables + problem.inequality_constraints.size()));
-   }
-   DEBUG << "Δλ: "; print_vector(DEBUG, this->solution_IPM, this->number_variables, problem.number_constraints);
-   DEBUG << "Δz_L: "; print_vector(DEBUG, this->lower_delta_z, 0, this->number_variables);
-   DEBUG << "Δz_U: "; print_vector(DEBUG, this->upper_delta_z, 0, this->number_variables);
-   DEBUG << "primal length = " << primal_step_length << "\n";
-   DEBUG << "dual length = " << dual_step_length << "\n\n";
+   this->print_solution(problem, primal_step_length, dual_step_length);
 }
 
 double InteriorPoint::compute_KKT_error_scaling(const Iterate& current_iterate) const {
@@ -605,4 +593,19 @@ void InteriorPoint::set_current_iterate(const Iterate& iterate) {
    copy_from(this->primal_iterate, iterate.x);
    copy_from(this->lower_bound_multipliers, iterate.multipliers.lower_bounds);
    copy_from(this->upper_bound_multipliers, iterate.multipliers.upper_bounds);
+}
+
+void InteriorPoint::print_solution(const Problem& problem, double primal_step_length, double dual_step_length) const {
+   DEBUG << "IPM solution:\n";
+   DEBUG << "Δx: "; print_vector(DEBUG, this->solution_IPM, 0, problem.number_variables);
+   DEBUG << "Δs: "; print_vector(DEBUG, this->solution_IPM, problem.number_variables, problem.inequality_constraints.size());
+   if (this->number_variables > problem.number_variables + problem.inequality_constraints.size()) {
+      DEBUG << "Δe: "; print_vector(DEBUG, this->solution_IPM, problem.number_variables + problem.inequality_constraints.size(),
+            this->number_variables - (problem.number_variables + problem.inequality_constraints.size()));
+   }
+   DEBUG << "Δλ: "; print_vector(DEBUG, this->solution_IPM, this->number_variables, problem.number_constraints);
+   DEBUG << "Δz_L: "; print_vector(DEBUG, this->lower_delta_z, 0, this->number_variables);
+   DEBUG << "Δz_U: "; print_vector(DEBUG, this->upper_delta_z, 0, this->number_variables);
+   DEBUG << "primal length = " << primal_step_length << "\n";
+   DEBUG << "dual length = " << dual_step_length << "\n\n";
 }
