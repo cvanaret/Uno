@@ -105,7 +105,9 @@ void Preprocessing::compute_least_square_multipliers(const Problem& problem, Sym
       rhs[i] -= current_iterate.multipliers.lower_bounds[i] + current_iterate.multipliers.upper_bounds[i];
    }
 
-   // solve the system
+   /********************/
+   /* solve the system */
+   /********************/
    const size_t dimension = number_variables + problem.number_constraints;
    std::vector<double> solution(matrix.dimension);
    solver.factorize(dimension, matrix);

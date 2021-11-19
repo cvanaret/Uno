@@ -101,6 +101,7 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
       feasibility_direction.constraint_partition = constraint_partition;
    }
    else {
+      this->remove_elastic_variables_from_subproblem();
       this->remove_elastic_variables_from_direction(problem, feasibility_direction);
    }
    DEBUG << feasibility_direction << "\n";
@@ -128,7 +129,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
          DEBUG << "Switching from restoration to optimality phase\n";
          this->subproblem.compute_progress_measures(problem, current_iterate);
       }
-         // possibly go from phase 2 (optimality) to 1 (restoration)
+      // possibly go from phase 2 (optimality) to 1 (restoration)
       else if (direction.subproblem_is_relaxed && this->current_phase == OPTIMALITY) {
          this->current_phase = FEASIBILITY_RESTORATION;
          DEBUG << "Switching from optimality to restoration phase\n";

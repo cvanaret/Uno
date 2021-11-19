@@ -10,16 +10,16 @@ ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Problem& proble
 }
 
 size_t ConstraintRelaxationStrategy::count_elastic_variables(const Problem& problem) {
-   size_t number_variables = 0;
+   size_t number_elastic_variables = 0;
    for (size_t j = 0; j < problem.number_constraints; j++) {
       if (-std::numeric_limits<double>::infinity() < problem.constraint_bounds[j].lb) {
-         number_variables++;
+         number_elastic_variables++;
       }
       if (problem.constraint_bounds[j].ub < std::numeric_limits<double>::infinity()) {
-         number_variables++;
+         number_elastic_variables++;
       }
    }
-   return number_variables;
+   return number_elastic_variables;
 }
 
 void ConstraintRelaxationStrategy::generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables, size_t number_variables) {

@@ -192,7 +192,6 @@ Direction InteriorPoint::solve(Statistics& statistics, const Problem& problem, I
    this->kkt_matrix->dimension = this->number_variables + this->number_constraints;
    this->factorize_kkt_matrix(problem);
    this->regularize_kkt_matrix(problem, this->number_variables, problem.number_constraints);
-   DEBUG << "KKT matrix:\n" << *this->kkt_matrix << "\n";
    auto[number_pos, number_neg, number_zero] = this->linear_solver->get_inertia();
    assert(number_pos == this->number_variables && number_neg == problem.number_constraints && number_zero == 0);
 
@@ -452,7 +451,6 @@ void InteriorPoint::regularize_kkt_matrix(const Problem& problem, size_t size_fi
       for (size_t j = size_first_block; j < size_first_block + size_second_block; j++) {
          this->kkt_matrix->insert(-this->regularization_constraints, j, j);
       }
-      DEBUG << "Inertia corrected\n" << *this->kkt_matrix << "\n";
    }
 
    while (!good_inertia) {
