@@ -4,19 +4,19 @@
 #include "Options.hpp"
 #include "Logger.hpp"
 
-Options get_options(const std::string& file_name) {
+Options get_default_options(const std::string& file_name) {
    std::ifstream file;
    file.open(file_name);
    if (!file) {
-      throw std::invalid_argument("The configuration file was not found");
+      throw std::invalid_argument("The option file was not found");
    }
    else {
-      /* register the default values */
+      // register the default options
       Options options;
       std::string key, value;
       std::string line;
       while (std::getline(file, line)) {
-         if (!line.empty() && line.find("#") != 0) {
+         if (!line.empty() && line.find('#') != 0) {
             std::istringstream iss;
             iss.str(line);
             iss >> key >> value;
@@ -28,45 +28,48 @@ Options get_options(const std::string& file_name) {
    }
 }
 
-void get_command_options(int argc, char* argv[], Options& options) {
+void find_preset(const std::string& preset, Options& options) {
+   // shortcuts for state-of-the-art combinations
+   if (preset == "ipopt") {
+      options["mechanism"] = "LS";
+      options["constraint-relaxation"] = "feasibility-restoration";
+      options["strategy"] = "filter";
+      options["subproblem"] = "IPM";
+      options["filter_Beta"] = "0.99999";
+      options["filter_Gamma"] = "1e-5";
+      options["decrease_fraction"] = "1e-4";
+   }
+   else if (preset == "filtersqp") {
+      options["mechanism"] = "TR";
+      options["constraint-relaxation"] = "feasibility-restoration";
+      options["strategy"] = "filter";
+      options["subproblem"] = "SQP";
+   }
+   else if (preset == "byrd") {
+      options["mechanism"] = "LS";
+      options["constraint-relaxation"] = "l1-relaxation";
+      options["strategy"] = "l1-penalty";
+      options["subproblem"] = "SQP";
+      options["decrease_fraction"] = "1e-8";
+   }
+}
+
+void get_command_line_options(int argc, char* argv[], Options& options) {
    /* build the (argument, value) map */
    int i = 1;
    while (i < argc - 1) {
       std::string argument_i = std::string(argv[i]);
-      std::string name = argument_i.substr(1);
-
       if (argument_i[0] == '-') {
-         // shortcuts for state-of-the-art combinations
-         if (name == "ipopt") {
-            options["mechanism"] = "LS";
-            options["constraint-relaxation"] = "feasibility-restoration";
-            options["strategy"] = "filter";
-            options["subproblem"] = "IPM";
-            options["filter_Beta"] = "0.99999";
-            options["filter_Gamma"] = "1e-5";
-            options["decrease_fraction"] = "1e-4";
-            i++;
-         }
-         else if (name == "filtersqp") {
-            options["mechanism"] = "TR";
-            options["constraint-relaxation"] = "feasibility-restoration";
-            options["strategy"] = "filter";
-            options["subproblem"] = "SQP";
-            i++;
-         }
-         else if (name == "byrd") {
-            options["mechanism"] = "LS";
-            options["constraint-relaxation"] = "l1-relaxation";
-            options["strategy"] = "l1-penalty";
-            options["subproblem"] = "SQP";
-            options["decrease_fraction"] = "1e-8";
-            i++;
-         }
-         // standard options
-         else if (i < argc - 1) {
-            std::string value_i = std::string(argv[i + 1]);
-            std::cout << "(" << argument_i << ", " << value_i << ")\n";
-            options[name] = value_i;
+         if (i < argc - 1) {
+            const std::string name = argument_i.substr(1);
+            const std::string value_i = std::string(argv[i + 1]);
+            if (name == "preset") {
+               find_preset(value_i, options);
+            }
+            else {
+               std::cout << "(" << argument_i << ", " << value_i << ")\n";
+               options[name] = value_i;
+            }
             i += 2;
          }
       }
