@@ -72,10 +72,10 @@ Level Logger::logger_level = INFO;
 
 int main(int argc, char* argv[]) {
    if (1 < argc) {
-      // get the options
-      Options options = get_options("uno.cfg");
+      // get the default options
+      Options options = get_default_options("uno.cfg");
       // get the command line options
-      get_command_options(argc, argv, options);
+      get_command_line_options(argc, argv, options);
       print_options(options);
       set_logger(options);
 
