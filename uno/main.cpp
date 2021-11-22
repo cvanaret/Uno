@@ -76,21 +76,23 @@ int main(int argc, char* argv[]) {
       Options options = get_default_options("uno.cfg");
       // get the command line options
       get_command_line_options(argc, argv, options);
-      print_options(options);
       set_logger(options.at("logger"));
 
+      print_options(options);
+
       if (std::string(argv[1]) == "-v") {
-         std::cout << "Welcome in UNO\n";
+         std::cout << "Welcome in Uno\n";
          std::cout << "To solve an AMPL problem, type ./uno_ampl path_to_file/file.nl\n";
          std::cout << "To choose a globalization mechanism, use the argument -mechanism [LS|TR]\n";
          std::cout << "To choose a globalization strategy, use the argument -strategy [penalty|filter|nonmonotone-filter]\n";
          std::cout << "To choose a constraint relaxation strategy, use the argument -constraint-relaxation [feasibility-restoration|l1-relaxation]\n";
          std::cout << "To choose a subproblem, use the argument -subproblem [SQP|SLP|IPM]\n";
-         std::cout << "The four options can be combined in the same command line. Autocompletion is active.\n";
+         std::cout << "To choose a preset, use the argument -preset [byrd|filtersqp|ipopt]\n";
+         std::cout << "The options can be combined in the same command line. Autocompletion is active.\n";
       }
       else {
+         // run Uno on the .nl file (last command line argument)
          std::string problem_name = std::string(argv[argc - 1]);
-         // run Uno
          run_uno_ampl(problem_name, options);
       }
    }
