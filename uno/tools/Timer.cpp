@@ -16,6 +16,6 @@ double Timer::get_duration() const {
 
 char* Timer::get_current_date() {
    const auto current_time = std::chrono::system_clock::now();
-   const auto current_time_2 = std::chrono::system_clock::to_time_t(current_time);
-   return std::ctime(&current_time_2);
+   const auto formatted_current_time = std::chrono::system_clock::to_time_t(current_time);
+   return std::ctime(&formatted_current_time);
 }

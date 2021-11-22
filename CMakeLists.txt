@@ -47,6 +47,7 @@ set(SRC_FILES
     uno/ingredients/subproblem/Subproblem.cpp
     uno/ingredients/subproblem/SubproblemFactory.cpp
     uno/ingredients/subproblem/Direction.cpp
+    uno/ingredients/subproblem/AugmentedSystem.cpp
     uno/ingredients/subproblem/SLP.cpp
     uno/ingredients/subproblem/SQP.cpp
     uno/ingredients/subproblem/InteriorPoint.cpp
