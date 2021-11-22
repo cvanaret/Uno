@@ -55,7 +55,7 @@ void find_preset(const std::string& preset, Options& options) {
 }
 
 void get_command_line_options(int argc, char* argv[], Options& options) {
-   /* build the (argument, value) map */
+   // build the (argument, value) map
    int i = 1;
    while (i < argc - 1) {
       std::string argument_i = std::string(argv[i]);
@@ -86,10 +86,8 @@ void print_options(const Options& options) {
    }
 }
 
-void set_logger(const Options& options) {
+void set_logger(const std::string& logger_level) {
    try {
-      const std::string logger_level = options.at("logger");
-
       if (logger_level == "ERROR") {
          Logger::logger_level = ERROR;
       }

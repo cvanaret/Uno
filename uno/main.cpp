@@ -23,7 +23,7 @@ void* operator new(size_t size) {
 }
 */
 
-void run_uno(const std::string& problem_name, const Options& options) {
+void run_uno_ampl(const std::string& problem_name, const Options& options) {
    const std::string mechanism_type = options.at("mechanism");
    const std::string constraint_relaxation_type = options.at("constraint-relaxation");
    const std::string subproblem_type = options.at("subproblem");
@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
       // get the command line options
       get_command_line_options(argc, argv, options);
       print_options(options);
-      set_logger(options);
+      set_logger(options.at("logger"));
 
       if (std::string(argv[1]) == "-v") {
          std::cout << "Welcome in UNO\n";
@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
       else {
          std::string problem_name = std::string(argv[argc - 1]);
          // run Uno
-         run_uno(problem_name, options);
+         run_uno_ampl(problem_name, options);
       }
    }
    return EXIT_SUCCESS;
