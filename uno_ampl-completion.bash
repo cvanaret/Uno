@@ -6,7 +6,7 @@ _uno_ampl_completions()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     #  The basic options to complete.
-    opts="-mechanism -strategy -constraint-relaxation -subproblem"
+    opts="-mechanism -strategy -constraint-relaxation -subproblem -preset"
 
     #  Complete the arguments to some of the basic commands.
     case "${prev}" in
@@ -28,6 +28,11 @@ _uno_ampl_completions()
 		-subproblem)
 			local subproblems="SQP SLP IPM"
             COMPREPLY=( $(compgen -W "${subproblems}" -- ${cur}) )
+            return 0
+            ;;
+        -preset)
+			local presets="filtersqp ipopt byrd"
+            COMPREPLY=( $(compgen -W "${presets}" -- ${cur}) )
             return 0
             ;;
         *)
