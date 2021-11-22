@@ -5,6 +5,7 @@
 #include "Subproblem.hpp"
 #include "solvers/linear/LinearSolver.hpp"
 #include "HessianModel.hpp"
+#include "AugmentedSystem.hpp"
 
 struct InteriorPointParameters {
    double tau_min;
@@ -13,13 +14,6 @@ struct InteriorPointParameters {
    double k_mu;
    double theta_mu;
    double k_epsilon;
-};
-
-struct UnstableInertiaCorrection : public std::exception {
-
-   [[nodiscard]] const char* what() const throw() override {
-      return "The inertia correction got unstable (delta_w > threshold)";
-   }
 };
 
 class InteriorPoint : public Subproblem {
@@ -44,25 +38,19 @@ public:
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
 private:
-   // barrier parameter
+   AugmentedSystem augmented_system;
    double barrier_parameter;
    const double tolerance;
    const std::unique_ptr<HessianModel> hessian_model;
-   std::unique_ptr<SymmetricMatrix> kkt_matrix;
    const std::unique_ptr<LinearSolver> linear_solver;
    const InteriorPointParameters parameters;
 
    // data structures
    std::vector<size_t> lower_bounded_variables{}; // indices of the lower-bounded variables
    std::vector<size_t> upper_bounded_variables{}; // indices of the upper-bounded variables
-
-   double regularization_hessian{0.};
-   double previous_hessian_regularization{0.};
-   double regularization_constraints{0.};
-   const double regularization_failure_threshold{1e8}; // 1e40
+   
    double default_multiplier;
    size_t iteration{0};
-   size_t number_factorizations{0};
 
    // local copy of primal iterate and bound multipliers
    std::vector<double> primal_iterate;
@@ -70,22 +58,19 @@ private:
    std::vector<double> upper_bound_multipliers;
 
    // preallocated vectors
-   std::vector<double> solution_IPM;
    std::vector<double> barrier_constraints;
-   std::vector<double> rhs;
    std::vector<double> lower_delta_z;
    std::vector<double> upper_delta_z;
 
    void update_barrier_parameter(const Iterate& current_iterate);
    void set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;
-   void factorize_kkt_matrix(const Problem& problem);
    double compute_barrier_directional_derivative(const std::vector<double>& solution);
    double evaluate_barrier_function(const Problem& problem, Iterate& iterate);
    double primal_fraction_to_boundary(const std::vector<double>& ipm_solution, double tau);
    double dual_fraction_to_boundary(double tau);
-   void assemble_kkt_matrix();
-   void regularize_kkt_matrix(const Problem& problem, size_t size_first_block, size_t size_second_block);
-   void generate_kkt_rhs(const Iterate& current_iterate);
+   void assemble_augmented_system(const Problem& problem);
+   void assemble_augmented_matrix();
+   void generate_augmented_rhs();
    void compute_lower_bound_dual_direction(const std::vector<double>& solution);
    void compute_upper_bound_dual_direction(const std::vector<double>& solution);
    void generate_direction(const Problem& problem, const Iterate& current_iterate);
