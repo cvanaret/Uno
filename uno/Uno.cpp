@@ -58,7 +58,7 @@ Result Uno::solve(const Problem& problem, Iterate& current_iterate, bool use_pre
    const size_t number_subproblems_solved = this->globalization_mechanism.get_number_subproblems_solved();
    const size_t hessian_evaluation_count = this->globalization_mechanism.get_hessian_evaluation_count();
    Result result = {termination_status, std::move(current_iterate), problem.number_variables, problem.number_constraints, major_iterations,
-         timer.get_time(), Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_jacobian, hessian_evaluation_count,
+         timer.get_duration(), Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_jacobian, hessian_evaluation_count,
           number_subproblems_solved};
    return result;
 }
@@ -131,6 +131,7 @@ TerminationStatus Uno::check_termination(const Problem& problem, Iterate& curren
 void Result::print(bool print_solution) const {
    std::cout << "\n";
    std::cout << "Uno: optimization summary\n";
+   std::cout << Timer::get_current_date();
    std::cout << "==============================\n";
 
    std::cout << "Status:\t\t\t\t";
