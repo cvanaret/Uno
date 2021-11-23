@@ -116,7 +116,7 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
 }
 
 void BQPDSolver::save_hessian_to_local_format(const SymmetricMatrix& hessian) {
-   std::cout << "Hessian:\n" << hessian;
+   //std::cout << "Hessian:\n" << hessian;
    const size_t header_size = 1;
    // pointers withing the single array
    int* row_indices = &this->hessian_sparsity[header_size];
@@ -151,8 +151,8 @@ void BQPDSolver::save_hessian_to_local_format(const SymmetricMatrix& hessian) {
          assert(false && "Column is not sorted");
       }
    }
-   std::cout << "Sparsity: "; print_vector(std::cout, this->hessian_sparsity, 0, header_size + hessian.number_nonzeros + hessian.dimension + 1);
-   assert(false);
+   //std::cout << "Sparsity: "; print_vector(std::cout, this->hessian_sparsity, 0, header_size + hessian.number_nonzeros + hessian.dimension + 1);
+   //assert(false);
    DEBUG << "Hessian: " << hessian;
 }
 
