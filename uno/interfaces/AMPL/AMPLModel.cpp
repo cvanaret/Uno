@@ -286,7 +286,7 @@ void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double
 
    // copy the nonzeros in the Hessian
    hessian.reset();
-   for (size_t j = 0; j < this->number_constraints; j++) {
+   for (size_t j = 0; j < this->number_variables; j++) {
       for (size_t k = static_cast<size_t>(ampl_column_start[j]); k < static_cast<size_t>(ampl_column_start[j + 1]); k++) {
          size_t i = static_cast<size_t>(ampl_row_index[k]);
          const double entry = this->ampl_tmp_hessian[k];
