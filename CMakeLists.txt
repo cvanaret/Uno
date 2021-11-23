@@ -151,7 +151,6 @@ if(WITH_GTEST)
         set(TESTS_SRC_FILES
             unotest/unotest.cpp
             unotest/MA57SolverTests.cpp
-            unotest/CSCSymmetricMatrixTests.cpp
             unotest/PredictedReductionModelTests.cpp
             unotest/SparseVectorTests.cpp
         )
@@ -159,3 +158,5 @@ if(WITH_GTEST)
         target_link_libraries(run_unotest PUBLIC GTest::gtest uno)
     endif()
 endif()
+
+# unotest/CSCSymmetricMatrixTests.cpp
