@@ -23,9 +23,9 @@ void AugmentedSystem::factorize_matrix(const Problem& problem, LinearSolver& lin
 void AugmentedSystem::regularize_matrix(const Problem& problem, LinearSolver& linear_solver, size_t size_first_block, size_t size_second_block,
       double constraint_regularization_parameter) {
    DEBUG << "Original matrix\n" << *this->matrix << "\n";
-   this->regularization_hessian = 0.;
-   this->regularization_constraints = 0.;
-   DEBUG << "Testing factorization with regularization factor " << this->regularization_hessian << "\n";
+   this->regularization_first_block = 0.;
+   this->regularization_second_block = 0.;
+   DEBUG << "Testing factorization with regularization factor " << this->regularization_first_block << "\n";
 
    bool good_inertia = false;
    if (!linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_second_block) {
@@ -37,54 +37,54 @@ void AugmentedSystem::regularize_matrix(const Problem& problem, LinearSolver& li
       // constraint regularization
       if (linear_solver.matrix_is_singular()) {
          DEBUG << "Matrix is singular\n";
-         this->regularization_constraints = 1e-8 * constraint_regularization_parameter;
+         this->regularization_second_block = 1e-8 * constraint_regularization_parameter;
       }
       else {
-         this->regularization_constraints = 0.;
+         this->regularization_second_block = 0.;
       }
       // Hessian regularization
-      if (this->previous_hessian_regularization == 0.) {
-         this->regularization_hessian = 1e-4;
+      if (this->previous_regularization_first_block == 0.) {
+         this->regularization_first_block = 1e-4;
       }
       else {
-         this->regularization_hessian = std::max(1e-20, this->previous_hessian_regularization / 3.);
+         this->regularization_first_block = std::max(1e-20, this->previous_regularization_first_block / 3.);
       }
    }
 
    size_t current_matrix_size = this->matrix->number_nonzeros;
    if (!good_inertia) {
       for (size_t i = 0; i < size_first_block; i++) {
-         this->matrix->insert(this->regularization_hessian, i, i);
+         this->matrix->insert(this->regularization_first_block, i, i);
       }
       for (size_t j = size_first_block; j < size_first_block + size_second_block; j++) {
-         this->matrix->insert(-this->regularization_constraints, j, j);
+         this->matrix->insert(-this->regularization_second_block, j, j);
       }
    }
 
    while (!good_inertia) {
-      DEBUG << "Testing factorization with regularization factor " << this->regularization_hessian << "\n";
+      DEBUG << "Testing factorization with regularization factor " << this->regularization_first_block << "\n";
       DEBUG << *this->matrix << "\n";
       this->factorize_matrix(problem, linear_solver, size_first_block + size_second_block);
 
       if (!linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_second_block) {
          good_inertia = true;
          DEBUG << "Factorization was a success\n\n";
-         this->previous_hessian_regularization = this->regularization_hessian;
+         this->previous_regularization_first_block = this->regularization_first_block;
       }
       else {
-         if (this->previous_hessian_regularization == 0.) {
-            this->regularization_hessian *= 100.;
+         if (this->previous_regularization_first_block == 0.) {
+            this->regularization_first_block *= 100.;
          }
          else {
-            this->regularization_hessian *= 8.;
+            this->regularization_first_block *= 8.;
          }
 
-         if (this->regularization_hessian <= this->regularization_failure_threshold) {
+         if (this->regularization_first_block <= this->regularization_failure_threshold) {
             for (size_t i = 0; i < size_first_block; i++) {
-               this->matrix->entries[current_matrix_size + i] = this->regularization_hessian;
+               this->matrix->entries[current_matrix_size + i] = this->regularization_first_block;
             }
             for (size_t j = size_first_block; j < size_first_block + size_second_block; j++) {
-               this->matrix->entries[current_matrix_size + j] = -this->regularization_constraints;
+               this->matrix->entries[current_matrix_size + j] = -this->regularization_second_block;
             }
          }
          else {

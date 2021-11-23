@@ -27,9 +27,9 @@ public:
 
 protected:
    size_t number_factorizations{0};
-   double regularization_hessian{0.};
-   double previous_hessian_regularization{0.};
-   double regularization_constraints{0.};
+   double regularization_first_block{0.};
+   double previous_regularization_first_block{0.};
+   double regularization_second_block{0.};
    const double regularization_failure_threshold{1e8}; // 1e40
 };
 
