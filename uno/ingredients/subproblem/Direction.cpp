@@ -34,7 +34,7 @@ std::string status_to_string(Status status) {
 }
 
 std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
-   stream << "Status: " << status_to_string(direction.status) << "\n";
+   stream << "\nStatus: " << status_to_string(direction.status) << "\n";
    stream << "d^* = ";
    print_vector(stream, direction.x);
 
@@ -69,8 +69,6 @@ std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
       for (size_t j: constraint_partition.feasible) {
          stream << " c" << j;
       }
-      stream << "\n";
-
       stream << "\ngeneral lower infeasible =";
       for (size_t j: constraint_partition.lower_bound_infeasible) {
          stream << " c" << j << " ";

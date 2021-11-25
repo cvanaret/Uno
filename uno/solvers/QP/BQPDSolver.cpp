@@ -115,24 +115,20 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
    return direction;
 }
 
+// save Hessian (in arbitrary format) to a "weak" CSC format: compressed columns but row indices are not sorted, nor unique
 void BQPDSolver::save_hessian_to_local_format(const SymmetricMatrix& hessian) {
-   //std::cout << "Hessian:\n" << hessian;
    const size_t header_size = 1;
    // pointers withing the single array
    int* row_indices = &this->hessian_sparsity[header_size];
    int* column_starts = &this->hessian_sparsity[header_size + hessian.number_nonzeros];
    // header
    this->hessian_sparsity[0] = static_cast<int>(hessian.number_nonzeros + 1);
+   // count the elements in each column
    for (size_t j = 0; j < hessian.dimension + 1; j++) {
       column_starts[j] = 0;
    }
-   // go through the entries
-   size_t current_index = 0;
    hessian.for_each([&](size_t i, size_t j, double entry) {
-      this->hessian_values[current_index] = entry;
-      row_indices[current_index] = static_cast<int>(i + this->fortran_shift);
       column_starts[j + 1]++;
-      current_index++;
    });
    // carry over the column starts
    for (size_t j = 1; j < hessian.dimension + 1; j++) {
@@ -140,19 +136,14 @@ void BQPDSolver::save_hessian_to_local_format(const SymmetricMatrix& hessian) {
       column_starts[j-1] += static_cast<int>(this->fortran_shift);
    }
    column_starts[hessian.dimension] += static_cast<int>(this->fortran_shift);
-   // sort the row indices in each column
-   for (size_t j = 0; j < hessian.dimension; j++) {
-      const bool is_sorted = std::is_sorted(std::begin(this->hessian_sparsity) + header_size + column_starts[j] - this->fortran_shift,
-                                             std::begin(this->hessian_sparsity) + header_size + column_starts[j+1] - this->fortran_shift);
-      if (is_sorted) {
-         DEBUG << "Column " << j << " is sorted\n";
-      }
-      else {
-         assert(false && "Column is not sorted");
-      }
-   }
-   //std::cout << "Sparsity: "; print_vector(std::cout, this->hessian_sparsity, 0, header_size + hessian.number_nonzeros + hessian.dimension + 1);
-   //assert(false);
+   // copy the entries
+   std::vector<int> current_indices(hessian.dimension);
+   hessian.for_each([&](size_t i, size_t j, double entry) {
+      int index = column_starts[j] - this->fortran_shift + current_indices[j];
+      this->hessian_values[index] = entry;
+      row_indices[index] = static_cast<int>(i + this->fortran_shift);
+      current_indices[j]++;
+   });
    DEBUG << "Hessian: " << hessian;
 }
 
