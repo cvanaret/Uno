@@ -3,7 +3,7 @@
 
 SQP::SQP(const Problem& problem, size_t max_number_variables, size_t number_constraints, const std::string& hessian_model,
       const std::string& QP_solver_name, const std::string& sparse_format, bool use_trust_region) :
-      Subproblem(problem.number_variables, max_number_variables, number_constraints, NO_SOC),
+      Subproblem(problem.number_variables, max_number_variables, number_constraints, NO_SOC, true),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
       solver(QPSolverFactory::create(QP_solver_name, max_number_variables, number_constraints,
             problem.hessian_maximum_number_nonzeros + max_number_variables, true)),

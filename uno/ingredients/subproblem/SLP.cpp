@@ -2,7 +2,7 @@
 #include "solvers/QP/LPSolverFactory.hpp"
 
 SLP::SLP(const Problem& problem, size_t max_number_variables, size_t number_constraints, const std::string& LP_solver_name) :
-      Subproblem(problem.number_variables, max_number_variables, number_constraints, NO_SOC),
+      Subproblem(problem.number_variables, max_number_variables, number_constraints, NO_SOC, false),
       solver(LPSolverFactory::create(max_number_variables, number_constraints, LP_solver_name)),
       initial_point(max_number_variables) {
    // register the original constraints bounds

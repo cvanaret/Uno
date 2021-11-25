@@ -2,12 +2,14 @@
 #include "Subproblem.hpp"
 #include "linear_algebra/SparseVector.hpp"
 
-Subproblem::Subproblem(size_t number_variables, size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy) :
+Subproblem::Subproblem(size_t number_variables, size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy,
+         bool is_second_order_method) :
       number_variables(number_variables), max_number_variables(max_number_variables), number_constraints(number_constraints),
       soc_strategy(soc_strategy), variables_bounds(max_number_variables), constraints_multipliers(number_constraints),
       objective_gradient(max_number_variables), // SparseVector
       constraints_jacobian(number_constraints), // vector of SparseVectors
-      constraints_bounds(number_constraints), direction(max_number_variables, number_constraints) {
+      constraints_bounds(number_constraints), direction(max_number_variables, number_constraints),
+      is_second_order_method(is_second_order_method) {
    for (auto& constraint_gradient: this->constraints_jacobian) {
       constraint_gradient.reserve(this->max_number_variables);
    }
