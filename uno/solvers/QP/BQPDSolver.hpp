@@ -48,9 +48,9 @@ private:
    int iprint{0}, nout{6};
    double fmin{-1e20};
    int peq_solution{}, ifail{};
-   const size_t fortran_shift{1};
+   const int fortran_shift{1};
 
-   static Status int_to_status(int ifail);
+   static Status status_to_int(int ifail);
    Direction solve_subproblem(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector<double>&
       linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian, const std::vector<double>& initial_point);
    void analyze_constraints(Direction& direction);

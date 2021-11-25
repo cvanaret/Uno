@@ -40,7 +40,7 @@ BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_
       hessian_values(size_hessian_workspace), hessian_sparsity(size_hessian_sparsity_workspace) {
    // active set
    for (size_t i = 0; i < this->number_variables + this->number_constraints; i++) {
-      this->ls[i] = static_cast<int>(i + this->fortran_shift);
+      this->ls[i] = static_cast<int>(i) + this->fortran_shift;
    }
 }
 
@@ -104,7 +104,7 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
          this->residuals.data(), this->w.data(), this->e.data(), this->ls.data(), this->alp.data(), this->lp.data(),
          &this->mlp, &this->peq_solution, this->hessian_values.data(), this->hessian_sparsity.data(), &current_mode, &this->ifail,
          this->info.data(), &this->iprint, &this->nout);
-   direction.status = BQPDSolver::int_to_status(this->ifail);
+   direction.status = BQPDSolver::status_to_int(this->ifail);
 
    // project solution into bounds
    for (size_t i = 0; i < direction.x.size(); i++) {
@@ -127,21 +127,22 @@ void BQPDSolver::save_hessian_to_local_format(const SymmetricMatrix& hessian) {
    for (size_t j = 0; j < hessian.dimension + 1; j++) {
       column_starts[j] = 0;
    }
-   hessian.for_each([&](size_t i, size_t j, double entry) {
+   hessian.for_each([&](size_t /*i*/, size_t j, double /*entry*/) {
       column_starts[j + 1]++;
    });
    // carry over the column starts
    for (size_t j = 1; j < hessian.dimension + 1; j++) {
       column_starts[j] += column_starts[j-1];
-      column_starts[j-1] += static_cast<int>(this->fortran_shift);
+      column_starts[j-1] += this->fortran_shift;
    }
-   column_starts[hessian.dimension] += static_cast<int>(this->fortran_shift);
+   column_starts[hessian.dimension] += this->fortran_shift;
    // copy the entries
    std::vector<int> current_indices(hessian.dimension);
    hessian.for_each([&](size_t i, size_t j, double entry) {
-      int index = column_starts[j] - this->fortran_shift + current_indices[j];
+      const size_t index = static_cast<size_t>(column_starts[j] + current_indices[j] - this->fortran_shift);
+      assert(index <= column_starts[j+1] && "BQPD: error in converting the Hessian matrix to the local format");
       this->hessian_values[index] = entry;
-      row_indices[index] = static_cast<int>(i + this->fortran_shift);
+      row_indices[index] = static_cast<int>(i) + this->fortran_shift;
       current_indices[j]++;
    });
    DEBUG << "Hessian: " << hessian;
@@ -151,13 +152,13 @@ void BQPDSolver::save_gradients_to_local_format(const SparseVector<double>& line
    size_t current_index = 0;
    linear_objective.for_each([&](size_t i, double derivative) {
       this->jacobian[current_index] = derivative;
-      this->jacobian_sparsity[current_index + 1] = static_cast<int>(i + this->fortran_shift);
+      this->jacobian_sparsity[current_index + 1] = static_cast<int>(i) + this->fortran_shift;
       current_index++;
    });
    for (size_t j = 0; j < this->number_constraints; j++) {
       constraint_jacobian[j].for_each([&](size_t i, double derivative) {
          this->jacobian[current_index] = derivative;
-         this->jacobian_sparsity[current_index + 1] = static_cast<int>(i + this->fortran_shift);
+         this->jacobian_sparsity[current_index + 1] = static_cast<int>(i) + this->fortran_shift;
          current_index++;
       });
    }
@@ -182,7 +183,7 @@ void BQPDSolver::analyze_constraints(Direction& direction) {
 
    // active constraints
    for (size_t j = 0; j < this->number_variables - this->k; j++) {
-      size_t index = std::abs(this->ls[j]) - this->fortran_shift;
+      const size_t index = static_cast<size_t>(std::abs(this->ls[j]) - this->fortran_shift);
 
       if (index < this->number_variables) {
          // bound constraint
@@ -233,7 +234,7 @@ void BQPDSolver::analyze_constraints(Direction& direction) {
    direction.constraint_partition = constraint_partition;
 }
 
-Status BQPDSolver::int_to_status(int ifail) {
-   assert(0 <= ifail && ifail <= 9 && "BQPDSolver.int_to_status: ifail does not belong to [0, 9]");
+Status BQPDSolver::status_to_int(int ifail) {
+   assert(0 <= ifail && ifail <= 9 && "BQPDSolver.status_to_int: ifail does not belong to [0, 9]");
    return static_cast<Status> (ifail);
 }
