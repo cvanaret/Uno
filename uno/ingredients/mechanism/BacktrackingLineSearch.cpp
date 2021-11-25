@@ -7,6 +7,7 @@ BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& con
    GlobalizationMechanism(constraint_relaxation_strategy, max_iterations),
    regularization_strategy(RegularizationStrategyFactory::create()),
    backtracking_ratio(backtracking_ratio) {
+   assert(0 < this->backtracking_ratio && this->backtracking_ratio < 1. && "The backtracking ratio should be in (0, 1)");
 }
 
 void BacktrackingLineSearch::initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) {
