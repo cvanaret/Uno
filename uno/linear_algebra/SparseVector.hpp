@@ -127,6 +127,7 @@ std::ostream& operator<<(std::ostream& stream, const SparseVector<T>& x) {
 // free functions
 
 double norm_1(const SparseVector<double>& x);
+double norm_inf(const SparseVector<double>& x);
 double dot(const std::vector<double>& x, const SparseVector<double>& y);
 void scale(SparseVector<double>& x, double factor);
 
