@@ -10,6 +10,7 @@
 #include "optimization/Problem.hpp"
 #include "optimization/Iterate.hpp"
 #include "tools/Statistics.hpp"
+#include "tools/Options.hpp"
 
 struct ElasticVariables {
    SparseVector<size_t> positive;
@@ -20,7 +21,7 @@ struct ElasticVariables {
 
 class ConstraintRelaxationStrategy {
 public:
-   ConstraintRelaxationStrategy(const Problem& problem, Subproblem& subproblem);
+   ConstraintRelaxationStrategy(const Problem& problem, const Options& options);
    virtual ~ConstraintRelaxationStrategy() = default;
 
    virtual void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) = 0;
@@ -42,9 +43,9 @@ public:
    [[nodiscard]] SecondOrderCorrection soc_strategy() const;
 
 protected:
-   Subproblem& subproblem;
    // possible problem reformulation with elastic variables. Constraints l <= c(x) <= u are reformulated as l <= c(x) - p + n <= u
    ElasticVariables elastic_variables;
+   std::unique_ptr<Subproblem> subproblem;
    const size_t number_subproblem_variables;
 
    static size_t count_elastic_variables(const Problem& problem);

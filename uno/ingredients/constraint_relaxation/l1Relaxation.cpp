@@ -3,8 +3,8 @@
 #include "ingredients/strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 
-l1Relaxation::l1Relaxation(Problem& problem, Subproblem& subproblem, const l1RelaxationParameters& parameters, const Options& options) :
-      ConstraintRelaxationStrategy(problem, subproblem),
+l1Relaxation::l1Relaxation(Problem& problem, const l1RelaxationParameters& parameters, const Options& options) :
+      ConstraintRelaxationStrategy(problem, options),
       number_elastic_variables(l1Relaxation::count_elastic_variables(problem)),
       globalization_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
       penalty_parameter(parameters.initial_parameter),
@@ -15,7 +15,7 @@ void l1Relaxation::initialize(Statistics& statistics, const Problem& problem, It
    statistics.add_column("penalty param.", Statistics::double_width, 4);
 
    // initialize the subproblem
-   this->subproblem.initialize(statistics, problem, first_iterate);
+   this->subproblem->initialize(statistics, problem, first_iterate);
 
    Subproblem::compute_optimality_conditions(problem, first_iterate, this->penalty_parameter);
    this->globalization_strategy->initialize(statistics, first_iterate);
@@ -23,7 +23,7 @@ void l1Relaxation::initialize(Statistics& statistics, const Problem& problem, It
 
 void l1Relaxation::create_current_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) {
    // scale the derivatives and introduce the elastic variables
-   this->subproblem.create_current_subproblem(problem, current_iterate, this->penalty_parameter, trust_region_radius);
+   this->subproblem->create_current_subproblem(problem, current_iterate, this->penalty_parameter, trust_region_radius);
    this->add_elastic_variables_to_subproblem();
 }
 
@@ -75,10 +75,10 @@ Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, const 
 bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate,
       const Direction& direction, PredictedReductionModel& predicted_reduction_model, double step_length) {
    // check if subproblem definition changed
-   if (this->subproblem.subproblem_definition_changed) {
+   if (this->subproblem->subproblem_definition_changed) {
       this->globalization_strategy->reset();
-      this->subproblem.subproblem_definition_changed = false;
-      this->subproblem.compute_progress_measures(problem, current_iterate);
+      this->subproblem->subproblem_definition_changed = false;
+      this->subproblem->compute_progress_measures(problem, current_iterate);
    }
 
    bool accept = false;
@@ -86,7 +86,7 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
       accept = true;
    }
    else {
-      this->subproblem.compute_progress_measures(problem, trial_iterate);
+      this->subproblem->compute_progress_measures(problem, trial_iterate);
 
       // compute the predicted reduction (both the subproblem and the l1 relaxation strategy contribute)
       const double predicted_reduction = this->compute_predicted_reduction(problem, current_iterate, direction, predicted_reduction_model, step_length);
@@ -190,7 +190,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const P
 }
 
 Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
-   Direction direction = this->subproblem.solve(statistics, problem, current_iterate);
+   Direction direction = this->subproblem->solve(statistics, problem, current_iterate);
    if (direction.constraint_partition.has_value()) {
       const ConstraintPartition& constraint_partition = direction.constraint_partition.value();
       assert(constraint_partition.infeasible.empty() && "solve_subproblem: infeasible constraints found, although direction is feasible");
@@ -204,10 +204,10 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& 
 }
 
 Direction l1Relaxation::resolve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
-   this->subproblem.build_objective_model(problem, current_iterate, objective_multiplier);
+   this->subproblem->build_objective_model(problem, current_iterate, objective_multiplier);
    this->add_elastic_variables_to_subproblem();
 
-   Direction direction = this->subproblem.solve(statistics, problem, current_iterate);
+   Direction direction = this->subproblem->solve(statistics, problem, current_iterate);
    if (direction.constraint_partition.has_value()) {
       const ConstraintPartition& constraint_partition = direction.constraint_partition.value();
       assert(constraint_partition.infeasible.empty() && "resolve_subproblem: infeasible constraints found, although direction is feasible");
@@ -218,10 +218,6 @@ Direction l1Relaxation::resolve_subproblem(Statistics& statistics, const Problem
    // remove the temporary elastic variables
    this->remove_elastic_variables_from_subproblem();
    return direction;
-}
-
-size_t l1Relaxation::get_max_number_variables(const Problem& problem) {
-   return problem.number_variables + ConstraintRelaxationStrategy::count_elastic_variables(problem);
 }
 
 double l1Relaxation::compute_linearized_constraint_residual(std::vector<double>& direction) const {

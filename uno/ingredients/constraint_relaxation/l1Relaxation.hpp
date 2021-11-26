@@ -14,7 +14,7 @@ struct l1RelaxationParameters {
 
 class l1Relaxation : public ConstraintRelaxationStrategy {
 public:
-   l1Relaxation(Problem& problem, Subproblem& subproblem, const l1RelaxationParameters& parameters, const Options& options);
+   l1Relaxation(Problem& problem, const l1RelaxationParameters& parameters, const Options& options);
    void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) override;
 
    // direction computation
@@ -27,8 +27,6 @@ public:
          PredictedReductionModel& predicted_reduction_model, double step_length) override;
    double compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, const Direction& direction, PredictedReductionModel&
    predicted_reduction_model, double step_length) override;
-
-   static size_t get_max_number_variables(const Problem& problem);
 
 protected:
    const size_t number_elastic_variables;

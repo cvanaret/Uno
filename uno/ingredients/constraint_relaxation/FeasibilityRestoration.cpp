@@ -3,8 +3,8 @@
 #include "ingredients/strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 
-FeasibilityRestoration::FeasibilityRestoration(const Problem& problem, Subproblem& subproblem, const Options& options) :
-      ConstraintRelaxationStrategy(problem, subproblem),
+FeasibilityRestoration::FeasibilityRestoration(const Problem& problem, const Options& options) :
+      ConstraintRelaxationStrategy(problem, options),
       // create the globalization strategy
       phase_1_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
       phase_2_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)) {
@@ -14,7 +14,7 @@ void FeasibilityRestoration::initialize(Statistics& statistics, const Problem& p
    statistics.add_column("phase", Statistics::int_width, 4);
 
    // initialize the subproblem
-   this->subproblem.initialize(statistics, problem, first_iterate);
+   this->subproblem->initialize(statistics, problem, first_iterate);
    Subproblem::compute_optimality_conditions(problem, first_iterate, problem.objective_sign);
 
    this->phase_1_strategy->initialize(statistics, first_iterate);
@@ -23,12 +23,12 @@ void FeasibilityRestoration::initialize(Statistics& statistics, const Problem& p
 
 void FeasibilityRestoration::create_current_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) {
    // simply generate the subproblem
-   this->subproblem.create_current_subproblem(problem, current_iterate, problem.objective_sign, trust_region_radius);
+   this->subproblem->create_current_subproblem(problem, current_iterate, problem.objective_sign, trust_region_radius);
 }
 
 Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
    // solve the original subproblem
-   Direction direction = this->subproblem.solve(statistics, problem, current_iterate);
+   Direction direction = this->subproblem->solve(statistics, problem, current_iterate);
    direction.objective_multiplier = problem.objective_sign;
    DEBUG << "\n" << direction;
 
@@ -53,30 +53,30 @@ phase_2_primal_direction, const ConstraintPartition& constraint_partition) {
    assert(!constraint_partition.infeasible.empty() && "The subproblem is infeasible but no constraint is infeasible");
 
    // set the multipliers of the violated constraints
-   FeasibilityRestoration::set_restoration_multipliers(this->subproblem.constraints_multipliers, constraint_partition);
+   FeasibilityRestoration::set_restoration_multipliers(this->subproblem->constraints_multipliers, constraint_partition);
 
    // build the local model of the objective
-   this->subproblem.build_objective_model(problem, current_iterate, 0.);
-   this->subproblem.compute_feasibility_linear_objective(current_iterate, constraint_partition);
+   this->subproblem->build_objective_model(problem, current_iterate, 0.);
+   this->subproblem->compute_feasibility_linear_objective(current_iterate, constraint_partition);
 
    // update the bounds of the constraints
-   this->subproblem.generate_feasibility_bounds(problem, current_iterate.constraints, constraint_partition);
+   this->subproblem->generate_feasibility_bounds(problem, current_iterate.constraints, constraint_partition);
 
    // start from the phase-2 solution
-   this->subproblem.set_initial_point(phase_2_primal_direction);
+   this->subproblem->set_initial_point(phase_2_primal_direction);
 }
 
 // without a constraint partition
 void FeasibilityRestoration::form_feasibility_problem(const Problem& problem, Iterate& current_iterate, const std::vector<double>&
 phase_2_primal_direction) {
    // compute the objective model with a zero objective multiplier
-   this->subproblem.build_objective_model(problem, current_iterate, 0.);
+   this->subproblem->build_objective_model(problem, current_iterate, 0.);
 
    // add elastic variables to relax the problem
    this->add_elastic_variables_to_subproblem();
 
    // start from the phase-2 solution
-   this->subproblem.set_initial_point(phase_2_primal_direction);
+   this->subproblem->set_initial_point(phase_2_primal_direction);
 }
 
 Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate,
@@ -92,7 +92,7 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
 
    // solve the feasibility subproblem
    DEBUG << "\nSolving the feasibility subproblem\n";
-   Direction feasibility_direction = this->subproblem.solve(statistics, problem, current_iterate);
+   Direction feasibility_direction = this->subproblem->solve(statistics, problem, current_iterate);
    feasibility_direction.objective_multiplier = 0.;
    feasibility_direction.subproblem_is_relaxed = true;
 
@@ -112,10 +112,10 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
 bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate,
       const Direction& direction, PredictedReductionModel& predicted_reduction_model, double step_length) {
    // check if subproblem definition changed
-   if (this->subproblem.subproblem_definition_changed) {
+   if (this->subproblem->subproblem_definition_changed) {
       this->phase_2_strategy->reset();
-      this->subproblem.subproblem_definition_changed = false;
-      this->subproblem.compute_progress_measures(problem, current_iterate);
+      this->subproblem->subproblem_definition_changed = false;
+      this->subproblem->compute_progress_measures(problem, current_iterate);
    }
 
    bool accept = false;
@@ -128,7 +128,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
          // TODO && this->filter_optimality->accept(trial_iterate.progress.feasibility, trial_iterate.progress.objective))
          this->current_phase = OPTIMALITY;
          DEBUG << "Switching from restoration to optimality phase\n";
-         this->subproblem.compute_progress_measures(problem, current_iterate);
+         this->subproblem->compute_progress_measures(problem, current_iterate);
       }
       // possibly go from phase 2 (optimality) to 1 (restoration)
       else if (direction.subproblem_is_relaxed && this->current_phase == OPTIMALITY) {
@@ -145,7 +145,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
          this->compute_infeasibility_measures(problem, trial_iterate, direction.constraint_partition);
       }
       else {
-         this->subproblem.compute_progress_measures(problem, trial_iterate);
+         this->subproblem->compute_progress_measures(problem, trial_iterate);
       }
 
       // evaluate the predicted reduction
@@ -201,11 +201,6 @@ void FeasibilityRestoration::compute_infeasibility_measures(const Problem& probl
    }
    else {
       // if no constraint partition is available, simply compute the standard progress measures
-      this->subproblem.compute_progress_measures(problem, iterate);
+      this->subproblem->compute_progress_measures(problem, iterate);
    }
-}
-
-size_t FeasibilityRestoration::get_max_number_variables(const Problem& problem) {
-   // primal variables + elastic variables
-   return problem.number_variables + ConstraintRelaxationStrategy::count_elastic_variables(problem);
 }

@@ -3,9 +3,12 @@
 #include "SLP.hpp"
 #include "InteriorPoint.hpp"
 
-std::unique_ptr<Subproblem> SubproblemFactory::create(const Problem& problem, size_t max_number_variables, const std::string& subproblem_type,
-      const Options& options, bool use_trust_region) {
+std::unique_ptr<Subproblem> SubproblemFactory::create(const Problem& problem, size_t max_number_variables, const Options& options) {
    const std::vector<std::string> possible_methods = {"SQP", "SLP", "IPM"};
+   const std::string subproblem_type = options.at("subproblem");
+   const std::string mechanism_type = options.at("mechanism");
+   const bool use_trust_region = (mechanism_type == "TR");
+
    // active-set methods
    if (subproblem_type == "SQP") {
       const std::string& hessian_model = options.at("hessian_model");

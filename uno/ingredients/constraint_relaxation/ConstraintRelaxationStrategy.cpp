@@ -1,12 +1,13 @@
 #include "ConstraintRelaxationStrategy.hpp"
+#include "ingredients/subproblem/SubproblemFactory.hpp"
 
-ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Problem& problem, Subproblem& subproblem):
-      subproblem(subproblem),
+ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Problem& problem, const Options& options):
       elastic_variables(ConstraintRelaxationStrategy::count_elastic_variables(problem)),
+      subproblem(SubproblemFactory::create(problem, problem.number_variables + ConstraintRelaxationStrategy::count_elastic_variables(problem), options)),
       // save the original number of variables in the subproblem
-      number_subproblem_variables(subproblem.number_variables) {
+      number_subproblem_variables(this->subproblem->number_variables) {
    // generate elastic variables to relax the constraints
-   ConstraintRelaxationStrategy::generate_elastic_variables(problem, this->elastic_variables, subproblem.number_variables);
+   ConstraintRelaxationStrategy::generate_elastic_variables(problem, this->elastic_variables, this->subproblem->number_variables);
 }
 
 size_t ConstraintRelaxationStrategy::count_elastic_variables(const Problem& problem) {
@@ -43,16 +44,16 @@ void ConstraintRelaxationStrategy::add_elastic_variables_to_subproblem() {
    const double objective_coefficient = 1.;
    // add the positive elastic variables
    this->elastic_variables.positive.for_each([&](size_t j, size_t i) {
-      this->subproblem.add_variable(i, 0., {0., std::numeric_limits<double>::infinity()}, objective_coefficient, j, -1.);
+      this->subproblem->add_variable(i, 0., {0., std::numeric_limits<double>::infinity()}, objective_coefficient, j, -1.);
    });
    this->elastic_variables.negative.for_each([&](size_t j, size_t i) {
-      this->subproblem.add_variable(i, 0., {0., std::numeric_limits<double>::infinity()}, objective_coefficient, j, 1.);
+      this->subproblem->add_variable(i, 0., {0., std::numeric_limits<double>::infinity()}, objective_coefficient, j, 1.);
    });
 }
 
 void ConstraintRelaxationStrategy::remove_elastic_variables_from_subproblem() {
    const auto erase_elastic_variables = [&](size_t j, size_t i) {
-      this->subproblem.remove_variable(i, j);
+      this->subproblem->remove_variable(i, j);
    };
    this->elastic_variables.positive.for_each(erase_elastic_variables);
    this->elastic_variables.negative.for_each(erase_elastic_variables);
@@ -118,25 +119,25 @@ void ConstraintRelaxationStrategy::recover_active_set(const Problem& problem, Di
 }
 
 Direction ConstraintRelaxationStrategy::compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) {
-   return this->subproblem.compute_second_order_correction(problem, trial_iterate);
+   return this->subproblem->compute_second_order_correction(problem, trial_iterate);
 }
 
 PredictedReductionModel ConstraintRelaxationStrategy::generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const {
-   return this->subproblem.generate_predicted_reduction_model(problem, direction);
+   return this->subproblem->generate_predicted_reduction_model(problem, direction);
 }
 
 size_t ConstraintRelaxationStrategy::get_hessian_evaluation_count() const {
-   return this->subproblem.get_hessian_evaluation_count();
+   return this->subproblem->get_hessian_evaluation_count();
 }
 
 size_t ConstraintRelaxationStrategy::get_number_subproblems_solved() const {
-   return this->subproblem.number_subproblems_solved;
+   return this->subproblem->number_subproblems_solved;
 }
 
 SecondOrderCorrection ConstraintRelaxationStrategy::soc_strategy() const {
-   return this->subproblem.soc_strategy;
+   return this->subproblem->soc_strategy;
 }
 
 void ConstraintRelaxationStrategy::register_accepted_iterate(Iterate& iterate) {
-   this->subproblem.register_accepted_iterate(iterate);
+   this->subproblem->register_accepted_iterate(iterate);
 }
