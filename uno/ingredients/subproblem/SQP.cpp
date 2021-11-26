@@ -7,7 +7,7 @@ SQP::SQP(const Problem& problem, size_t max_number_variables, size_t number_cons
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
       solver(QPSolverFactory::create(QP_solver_name, max_number_variables, number_constraints,
             problem.hessian_maximum_number_nonzeros + max_number_variables, true)),
-      // if no trust region is used, the problem should be convexified to guarantee boundedness
+      // if no trust region is used, the problem should be convexified to guarantee boundedness + descent direction
       hessian_model(HessianModelFactory::create(hessian_model, max_number_variables,
             problem.hessian_maximum_number_nonzeros + problem.number_variables, sparse_format, !use_trust_region)),
       initial_point(max_number_variables) {
@@ -52,7 +52,7 @@ void SQP::set_initial_point(const std::vector<double>& point) {
 }
 
 Direction SQP::solve(Statistics& /*statistics*/, const Problem& problem, Iterate& current_iterate) {
-   /* compute QP direction */
+   // compute QP direction
    Direction direction = this->solver->solve_QP(this->variables_bounds, this->constraints_bounds, this->objective_gradient,
          this->constraints_jacobian, *this->hessian_model->hessian, this->initial_point);
    this->number_subproblems_solved++;

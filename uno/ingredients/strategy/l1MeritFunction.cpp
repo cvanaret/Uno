@@ -6,7 +6,9 @@
  * http://epubs.siam.org/doi/pdf/10.1137/080738222
  */
 
-l1MeritFunction::l1MeritFunction(double decrease_fraction) : GlobalizationStrategy(), decrease_fraction(decrease_fraction) {
+l1MeritFunction::l1MeritFunction(const Options& options) :
+      GlobalizationStrategy(),
+      decrease_fraction(stod(options.at("armijo_decrease_fraction"))) {
 }
 
 void l1MeritFunction::initialize(Statistics& statistics, const Iterate& /*first_iterate*/) {

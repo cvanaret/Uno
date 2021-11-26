@@ -1,9 +1,12 @@
 #include "AugmentedSystem.hpp"
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
 
-AugmentedSystem::AugmentedSystem(const std::string& sparse_format, size_t max_dimension, size_t max_number_non_zeros):
+AugmentedSystem::AugmentedSystem(const std::string& sparse_format, size_t max_dimension, size_t max_number_non_zeros,
+      double regularization_failure_threshold):
    matrix(SymmetricMatrixFactory::create(sparse_format, max_dimension, max_number_non_zeros)),
-   rhs(max_dimension), solution(max_dimension) {
+   rhs(max_dimension),
+   solution(max_dimension),
+   regularization_failure_threshold(regularization_failure_threshold) {
 }
 
 void AugmentedSystem::solve(LinearSolver& linear_solver, size_t dimension) {

@@ -1,6 +1,7 @@
 #include <cassert>
 #include "Subproblem.hpp"
 #include "linear_algebra/SparseVector.hpp"
+#include "optimization/Constraint.hpp"
 
 Subproblem::Subproblem(size_t number_variables, size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy,
          bool is_second_order_method) :
@@ -123,23 +124,15 @@ double Subproblem::compute_first_order_error(const Problem& problem, Iterate& it
    return norm_1(iterate.lagrangian_gradient);
 }
 
-bool is_finite_lower_bound(double value) {
-   return -std::numeric_limits<double>::infinity() < value;
-}
-
-bool is_finite_upper_bound(double value) {
-   return value < std::numeric_limits<double>::infinity();
-}
-
 // complementary slackness error
 double Subproblem::compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) {
    double error = 0.;
    // bound constraints
    for (size_t i = 0; i < problem.number_variables; i++) {
-      if (-std::numeric_limits<double>::infinity() < problem.variables_bounds[i].lb) {
+      if (is_finite_lower_bound(problem.variables_bounds[i].lb)) {
          error += std::abs(multipliers.lower_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].lb));
       }
-      if (problem.variables_bounds[i].ub < std::numeric_limits<double>::infinity()) {
+      if (is_finite_upper_bound(problem.variables_bounds[i].ub)) {
          error += std::abs(multipliers.upper_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].ub));
       }
    }

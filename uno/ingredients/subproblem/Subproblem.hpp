@@ -1,7 +1,6 @@
 #ifndef SUBPROBLEM_H
 #define SUBPROBLEM_H
 
-#include <cmath>
 #include <vector>
 #include <memory>
 #include "optimization/Problem.hpp"
@@ -68,11 +67,11 @@ public:
    const size_t number_constraints;
    const SecondOrderCorrection soc_strategy;
    // when the subproblem is reformulated (e.g. when slacks are introduced), the bounds may be altered
-   std::vector <Range> variables_bounds;
+   std::vector<Range> variables_bounds;
    std::vector<double> constraints_multipliers;
    SparseVector<double> objective_gradient;
-   std::vector <SparseVector<double>> constraints_jacobian;
-   std::vector <Range> constraints_bounds;
+   std::vector<SparseVector<double>> constraints_jacobian;
+   std::vector<Range> constraints_bounds;
    // Hessian is optional and depends on the subproblem
    Direction direction;
 

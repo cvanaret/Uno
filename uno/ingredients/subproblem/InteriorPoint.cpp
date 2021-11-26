@@ -5,7 +5,7 @@
 
 InteriorPoint::InteriorPoint(const Problem& problem, size_t max_number_variables, size_t number_constraints,
       const std::string& hessian_model, const std::string& linear_solver_name, const std::string& sparse_format, double initial_barrier_parameter,
-      double default_multiplier, double tolerance, bool use_trust_region) :
+      double default_multiplier, double tolerance, bool use_trust_region, const Options& options) :
       // add the slacks to the variables
       Subproblem(problem.number_variables + problem.inequality_constraints.size(), // number_variables
             max_number_variables + problem.inequality_constraints.size(), // max_number_variables
@@ -14,7 +14,8 @@ InteriorPoint::InteriorPoint(const Problem& problem, size_t max_number_variables
             problem.hessian_maximum_number_nonzeros
             + this->max_number_variables + number_constraints /* regularization */
             + 2 * this->max_number_variables /* diagonal barrier terms */
-            + this->max_number_variables * number_constraints /* Jacobian */),
+            + this->max_number_variables * number_constraints /* Jacobian */,
+            stod(options.at("LS_regularization_failure_threshold"))),
       barrier_parameter(initial_barrier_parameter), tolerance(tolerance),
       // if no trust region is used, the problem should be convexified. However, the inertia of the augmented matrix will be corrected later
       hessian_model(HessianModelFactory::create(hessian_model, this->max_number_variables, problem.hessian_maximum_number_nonzeros, sparse_format,
@@ -24,7 +25,15 @@ InteriorPoint::InteriorPoint(const Problem& problem, size_t max_number_variables
             + this->max_number_variables + number_constraints /* regularization */
             + 2 * this->max_number_variables /* diagonal barrier terms */
             + this->max_number_variables * number_constraints /* Jacobian */)),
-      parameters({0.99, 1e10, 100., 0.2, 1.5, 10.}), default_multiplier(default_multiplier),
+      parameters({stod(options.at("tau_min")),
+            stod(options.at("k_sigma")),
+            stod(options.at("smax")),
+            stod(options.at("k_mu")),
+            stod(options.at("theta_mu")),
+            stod(options.at("k_epsilon")),
+            stod(options.at("barrier_update_fraction")),
+            stod(options.at("regularization_barrier_exponent"))}),
+      default_multiplier(default_multiplier),
       primal_iterate(this->max_number_variables),
       lower_bound_multipliers(this->max_number_variables),
       upper_bound_multipliers(this->max_number_variables),
@@ -101,8 +110,8 @@ inline void InteriorPoint::initialize(Statistics& statistics, const Problem& pro
 
    // compute least-square multipliers
    if (problem.is_constrained()) {
-      Preprocessing::compute_least_square_multipliers(problem, *this->augmented_system.matrix, this->augmented_system.rhs, *this->linear_solver, first_iterate,
-            first_iterate.multipliers.constraints);
+      Preprocessing::compute_least_square_multipliers(problem, *this->augmented_system.matrix, this->augmented_system.rhs, *this->linear_solver,
+            first_iterate, first_iterate.multipliers.constraints);
    }
 
    // set the bound multipliers
@@ -183,7 +192,7 @@ void InteriorPoint::assemble_augmented_system(const Problem& problem) {
    this->assemble_augmented_matrix();
    this->augmented_system.factorize_matrix(problem, *this->linear_solver, this->number_variables + this->number_constraints);
    this->augmented_system.regularize_matrix(problem, *this->linear_solver, this->number_variables, this->number_constraints,
-         std::pow(this->barrier_parameter, 0.25));
+         std::pow(this->barrier_parameter, this->parameters.regularization_barrier_exponent));
    auto[number_pos, number_neg, number_zero] = this->linear_solver->get_inertia();
    assert(number_pos == this->number_variables && number_neg == this->number_constraints && number_zero == 0);
 
@@ -218,11 +227,11 @@ void InteriorPoint::add_variable(size_t i, double current_value, const Range& bo
    // add the variable to the objective and the constraint Jacobian
    Subproblem::add_variable(i, current_value, bounds, objective_term, j, jacobian_term);
    // if necessary, register the variable as bounded
-   if (-std::numeric_limits<double>::infinity() < bounds.lb) {
+   if (is_finite_lower_bound(bounds.lb)) {
       this->lower_bounded_variables.push_back(i);
       this->lower_bound_multipliers[i] = this->default_multiplier;
    }
-   if (bounds.ub < std::numeric_limits<double>::infinity()) {
+   if (is_finite_upper_bound(bounds.ub)) {
       this->upper_bounded_variables.push_back(i);
       this->upper_bound_multipliers[i] = -this->default_multiplier;
    }
@@ -275,7 +284,7 @@ void InteriorPoint::compute_progress_measures(const Problem& problem, Iterate& i
 }
 
 void InteriorPoint::update_barrier_parameter(const Iterate& current_iterate) {
-   const double tolerance_fraction = this->tolerance / 10.;
+   const double tolerance_fraction = this->tolerance / this->parameters.barrier_update_fraction;
    // scaled error terms
    const double sd = this->compute_KKT_error_scaling(current_iterate);
    const double KKTerror = current_iterate.errors.KKT / sd;
@@ -473,10 +482,10 @@ double InteriorPoint::compute_central_complementarity_error(const Iterate& itera
    // variable bound constraints
    const auto residual_function = [&](size_t i) {
       double result = 0.;
-      if (-std::numeric_limits<double>::infinity() < this->variables_bounds[i].lb) {
+      if (is_finite_lower_bound(this->variables_bounds[i].lb)) {
          result += iterate.multipliers.lower_bounds[i] * (iterate.x[i] - this->variables_bounds[i].lb) - this->barrier_parameter;
       }
-      if (this->variables_bounds[i].ub < std::numeric_limits<double>::infinity()) {
+      if (is_finite_upper_bound(this->variables_bounds[i].ub)) {
          result += iterate.multipliers.upper_bounds[i] * (iterate.x[i] - this->variables_bounds[i].ub) - this->barrier_parameter;
       }
       return result;

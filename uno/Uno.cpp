@@ -6,8 +6,11 @@
 #include "tools/Statistics.hpp"
 #include "tools/Timer.hpp"
 
-Uno::Uno(GlobalizationMechanism& globalization_mechanism, double tolerance, size_t max_iterations) : globalization_mechanism(
-      globalization_mechanism), tolerance(tolerance), max_iterations(max_iterations) {
+Uno::Uno(GlobalizationMechanism& globalization_mechanism, const Options& options) :
+      globalization_mechanism(globalization_mechanism),
+      tolerance(std::stod(options.at("tolerance"))),
+      max_iterations(std::stoul(options.at("max_iterations"))),
+      small_step_factor(std::stod(options.at("small_step_factor"))) {
 }
 
 Result Uno::solve(const Problem& problem, Iterate& current_iterate, bool use_preprocessing) {
@@ -105,7 +108,7 @@ TerminationStatus Uno::check_termination(const Problem& problem, Iterate& curren
          status = FJ_POINT;
       }
    }
-   else if (step_norm <= this->tolerance / 100.) {
+   else if (step_norm <= this->tolerance / this->small_step_factor) {
       if (current_iterate.errors.constraints <= this->tolerance * static_cast<double>(number_variables)) {
          status = FEASIBLE_SMALL_STEP;
       }
@@ -114,8 +117,8 @@ TerminationStatus Uno::check_termination(const Problem& problem, Iterate& curren
       }
    }
 
-   // if convergence, correct the multipliers
-   if (status != NOT_OPTIMAL && 0. < current_iterate.multipliers.objective) {
+   // if convergence, scale the multipliers with the objective multiplier
+   if (status != NOT_OPTIMAL && 0. < current_iterate.multipliers.objective && current_iterate.multipliers.objective != 1.) {
       const double objective_multiplier = current_iterate.multipliers.objective;
       for (double& multiplier_j: current_iterate.multipliers.constraints) {
          multiplier_j /= objective_multiplier;

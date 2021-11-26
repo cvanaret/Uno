@@ -14,9 +14,11 @@
  */
 struct FilterStrategyParameters {
    double decrease_fraction; /*!< Sufficient reduction constant */
-   double Delta; /*!< Switching constant */
+   double delta; /*!< Switching constant */
    double upper_bound;
    double infeasibility_factor;
+   double infeasibility_exponent;
+   double armijo_tolerance;
 };
 
 /*! \class FilterStrategy
@@ -26,7 +28,7 @@ struct FilterStrategyParameters {
  */
 class FilterStrategy : public GlobalizationStrategy {
 public:
-   FilterStrategy(FilterStrategyParameters strategy_constants, const Options& options);
+   explicit FilterStrategy(const Options& options);
 
    void initialize(Statistics& statistics, const Iterate& first_iterate) override;
    bool check_acceptance(Statistics& statistics, const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
@@ -37,11 +39,11 @@ public:
 private:
    // use pointers to allow polymorphism
    const std::unique_ptr<Filter> filter;
-   double initial_filter_upper_bound;
+   double initial_filter_upper_bound{std::numeric_limits<double>::infinity()};
    const FilterStrategyParameters parameters; /*!< Set of constants */
 
-   static bool switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction);
-   static bool armijo_condition(double predicted_reduction, double actual_reduction, double decrease_fraction);
+   [[nodiscard]] bool switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const;
+   [[nodiscard]] bool armijo_condition(double predicted_reduction, double actual_reduction, double decrease_fraction) const;
 };
 
 #endif // FILTERSTRATEGY_H

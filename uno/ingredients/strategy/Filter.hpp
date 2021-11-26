@@ -18,11 +18,11 @@ struct FilterConstants {
  */
 class Filter {
 public:
-   explicit Filter(FilterConstants& constants);
+   explicit Filter(const Options& options);
    virtual ~Filter() = default;
 
    double upper_bound{std::numeric_limits<double>::infinity()}; /*!< Upper bound on constraint violation */
-   const size_t max_size{50}; /*!< Max filter size */
+   const size_t max_size; /*!< Max filter size */
    const FilterConstants constants; /*!< Set of constants */
 
    void reset();
@@ -50,7 +50,7 @@ protected:
  */
 class NonmonotoneFilter : public Filter {
 public:
-   NonmonotoneFilter(FilterConstants& constants, size_t number_dominated_entries);
+   explicit NonmonotoneFilter(const Options& options);
 
    void add(double infeasibility_measure, double optimality_measure) override;
    bool accept(double infeasibility_measure, double optimality_measure) override;

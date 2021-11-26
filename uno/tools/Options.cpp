@@ -37,7 +37,7 @@ void find_preset(const std::string& preset, Options& options) {
       options["subproblem"] = "IPM";
       options["filter_Beta"] = "0.99999";
       options["filter_Gamma"] = "1e-5";
-      options["decrease_fraction"] = "1e-4";
+      options["armijo_decrease_fraction"] = "1e-4";
       options["LS_backtracking_ratio"] = "0.5";
    }
    else if (preset == "filtersqp") {
@@ -51,7 +51,7 @@ void find_preset(const std::string& preset, Options& options) {
       options["constraint-relaxation"] = "l1-relaxation";
       options["strategy"] = "l1-penalty";
       options["subproblem"] = "SQP";
-      options["decrease_fraction"] = "1e-8";
+      options["armijo_decrease_fraction"] = "1e-8";
       options["LS_backtracking_ratio"] = "0.5";
    }
 }

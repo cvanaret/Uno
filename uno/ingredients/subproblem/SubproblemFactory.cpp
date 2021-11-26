@@ -30,7 +30,7 @@ std::unique_ptr<Subproblem> SubproblemFactory::create(const Problem& problem, si
       const double default_multiplier = std::stod(options.at("default_multiplier"));
       const double tolerance = std::stod(options.at("tolerance"));
       return std::make_unique<InteriorPoint>(problem, max_number_variables, problem.number_constraints, hessian_model, linear_solver_name,
-            sparse_format, initial_barrier_parameter, default_multiplier, tolerance, use_trust_region);
+            sparse_format, initial_barrier_parameter, default_multiplier, tolerance, use_trust_region, options);
    }
    throw std::invalid_argument("Subproblem method " + subproblem_type + " is not supported");
 }
