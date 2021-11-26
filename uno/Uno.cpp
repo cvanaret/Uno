@@ -13,7 +13,7 @@ Uno::Uno(GlobalizationMechanism& globalization_mechanism, const Options& options
       small_step_factor(std::stod(options.at("small_step_factor"))) {
 }
 
-Result Uno::solve(const Problem& problem, Iterate& current_iterate, bool use_preprocessing) {
+Result Uno::solve(const Problem& problem, Iterate& current_iterate, bool enforce_linear_constraints) {
    Timer timer{};
    timer.start();
    size_t major_iterations = 0;
@@ -24,8 +24,7 @@ Result Uno::solve(const Problem& problem, Iterate& current_iterate, bool use_pre
 
    // project x into the bounds
    problem.project_point_in_bounds(current_iterate.x);
-   if (use_preprocessing) {
-      // preprocessing phase: satisfy linear constraints
+   if (enforce_linear_constraints) {
       Preprocessing::enforce_linear_constraints(problem, current_iterate);
    }
    Statistics statistics = Uno::create_statistics();

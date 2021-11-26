@@ -45,8 +45,8 @@ void run_uno_ampl(const std::string& problem_name, const Options& options) {
    problem->get_initial_dual_point(first_iterate.multipliers.constraints);
 
    INFO << "Heap allocations before solving: " << total_allocations << "\n";
-   const bool use_preprocessing = (options.at("preprocessing") == "yes");
-   Result result = uno.solve(*problem, first_iterate, use_preprocessing);
+   const bool enforce_linear_constraints = (options.at("enforce_linear_constraints") == "yes");
+   Result result = uno.solve(*problem, first_iterate, enforce_linear_constraints);
 
    // remove auxiliary variables
    result.solution.x.resize(problem->number_variables);
