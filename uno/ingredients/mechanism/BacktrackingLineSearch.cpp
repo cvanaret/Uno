@@ -3,10 +3,11 @@
 #include "BacktrackingLineSearch.hpp"
 #include "tools/Logger.hpp"
 
-BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, int max_iterations, double backtracking_ratio):
-   GlobalizationMechanism(constraint_relaxation_strategy, max_iterations),
+BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options):
+   GlobalizationMechanism(constraint_relaxation_strategy, std::stoi(options.at("LS_max_iterations"))),
    regularization_strategy(RegularizationStrategyFactory::create()),
-   backtracking_ratio(backtracking_ratio) {
+   backtracking_ratio(std::stod(options.at("LS_backtracking_ratio"))),
+   min_step_length(std::stod(options.at("LS_min_step_length"))) {
    assert(0 < this->backtracking_ratio && this->backtracking_ratio < 1. && "The backtracking ratio should be in (0, 1)");
 }
 

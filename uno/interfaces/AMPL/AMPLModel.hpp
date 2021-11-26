@@ -35,8 +35,8 @@ public:
    void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
          SymmetricMatrix& hessian) const override;
 
-   void set_initial_primal_point(std::vector<double>& x) override;
-   void set_initial_dual_point(std::vector<double>& multipliers) override;
+   void get_initial_primal_point(std::vector<double>& x) override;
+   void get_initial_dual_point(std::vector<double>& multipliers) override;
 
 private:
    // private constructor to pass the dimensions to the Problem base constructor

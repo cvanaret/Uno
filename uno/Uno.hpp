@@ -41,23 +41,21 @@ public:
     *  Constructor
     *
     * \param globalization_strategy: strategy to promote global convergence
-    * \param tolerance: tolerance for termination criteria
     */
-   Uno(GlobalizationMechanism& globalization_mechanism, double tolerance, size_t max_iterations);
+   Uno(GlobalizationMechanism& globalization_mechanism, const Options& options);
 
    /*!
     *  Solve a given problem with initial primal and dual variables
     *
     * \param problem: optimization problem
-    * \param x: primal variables
-    * \param multipliers: Lagrange multipliers/dual variables
     */
    Result solve(const Problem& problem, Iterate& first_iterate, bool use_preprocessing);
 
 private:
    GlobalizationMechanism& globalization_mechanism; /*!< Step control strategy (trust region or line-search) */
-   double tolerance; /*!< Tolerance of the termination criteria */
-   size_t max_iterations; /*!< Maximum number of iterations */
+   const double tolerance; /*!< Tolerance of the termination criteria */
+   const size_t max_iterations; /*!< Maximum number of iterations */
+   const double small_step_factor{100.};
 
    static Statistics create_statistics();
    static void add_statistics(Statistics& statistics, const Iterate& new_iterate, size_t major_iterations);

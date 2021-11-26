@@ -24,30 +24,25 @@ void* operator new(size_t size) {
 */
 
 void run_uno_ampl(const std::string& problem_name, const Options& options) {
-   const std::string mechanism_type = options.at("mechanism");
-   const std::string constraint_relaxation_type = options.at("constraint-relaxation");
-
    // TODO: use a factory
    // AMPL model
    auto problem = std::make_unique<AMPLModel>(problem_name);
    INFO << "Heap allocations after AMPL: " << total_allocations << "\n";
 
    // create the constraint relaxation strategy
-   auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(constraint_relaxation_type, *problem, options);
+   auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(*problem, options);
    INFO << "Heap allocations after ConstraintRelax, Subproblem and Solver: " << total_allocations << "\n";
 
    // create the globalization mechanism
-   auto mechanism = GlobalizationMechanismFactory::create(mechanism_type, *constraint_relaxation_strategy, options);
+   auto mechanism = GlobalizationMechanismFactory::create(*constraint_relaxation_strategy, options);
    INFO << "Heap allocations after Mechanism: " << total_allocations << "\n";
 
-   const double tolerance = std::stod(options.at("tolerance"));
-   const size_t max_iterations = std::stoul(options.at("max_iterations"));
-   Uno uno = Uno(*mechanism, tolerance, max_iterations);
+   Uno uno = Uno(*mechanism, options);
 
    // initial primal and dual points
    Iterate first_iterate(problem->number_variables, problem->number_constraints);
-   problem->set_initial_primal_point(first_iterate.x);
-   problem->set_initial_dual_point(first_iterate.multipliers.constraints);
+   problem->get_initial_primal_point(first_iterate.x);
+   problem->get_initial_dual_point(first_iterate.multipliers.constraints);
 
    INFO << "Heap allocations before solving: " << total_allocations << "\n";
    const bool use_preprocessing = (options.at("preprocessing") == "yes");

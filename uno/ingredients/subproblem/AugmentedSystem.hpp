@@ -19,7 +19,7 @@ public:
    std::vector<double> rhs;
    std::vector<double> solution;
 
-   AugmentedSystem(const std::string& sparse_format, size_t max_dimension, size_t max_number_non_zeros);
+   AugmentedSystem(const std::string& sparse_format, size_t max_dimension, size_t max_number_non_zeros, double regularization_failure_threshold);
    void solve(LinearSolver& linear_solver, size_t dimension);
    void factorize_matrix(const Problem& problem, LinearSolver& linear_solver, size_t dimension);
    void regularize_matrix(const Problem& problem, LinearSolver& linear_solver, size_t size_first_block, size_t size_second_block,
@@ -30,7 +30,7 @@ protected:
    double regularization_first_block{0.};
    double previous_regularization_first_block{0.};
    double regularization_second_block{0.};
-   const double regularization_failure_threshold{1e8}; // 1e40
+   const double regularization_failure_threshold;
 };
 
 #endif // AUGMENTEDSYSTEM_H

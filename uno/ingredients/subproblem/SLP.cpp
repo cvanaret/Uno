@@ -13,7 +13,7 @@ SLP::SLP(const Problem& problem, size_t max_number_variables, size_t number_cons
 
 void SLP::create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) {
    copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
-   /* compute first- and second-order information */
+   // compute first- and second-order information
    problem.evaluate_constraints(current_iterate.x, current_iterate.constraints);
    for (auto& row: this->constraints_jacobian) {
       row.clear();
@@ -22,13 +22,13 @@ void SLP::create_current_subproblem(const Problem& problem, Iterate& current_ite
 
    this->build_objective_model(problem, current_iterate, objective_multiplier);
 
-   /* bounds of the variables */
+   // bounds of the variables
    this->set_variables_bounds(problem, current_iterate, trust_region_radius);
 
-   /* bounds of the linearized constraints */
+   // bounds of the linearized constraints
    this->set_constraints_bounds(problem, current_iterate.constraints);
 
-   /* set the initial point */
+   // set the initial point
    clear(this->initial_point);
 }
 
@@ -45,7 +45,7 @@ void SLP::set_initial_point(const std::vector<double>& point) {
 }
 
 Direction SLP::solve(Statistics& /*statistics*/, const Problem& problem, Iterate& current_iterate) {
-   /* solve the LP */
+   // solve the LP
    Direction direction = this->solver->solve_LP(this->variables_bounds, this->constraints_bounds, this->objective_gradient,
          this->constraints_jacobian, this->initial_point);
    this->number_subproblems_solved++;

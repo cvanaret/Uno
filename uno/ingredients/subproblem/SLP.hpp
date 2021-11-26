@@ -16,7 +16,7 @@ public:
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
 private:
-   /* use pointers to allow polymorphism */
+   // use pointers to allow polymorphism
    const std::unique_ptr<LPSolver> solver; /*!< Solver that solves the subproblem */
    std::vector<double> initial_point;
 };

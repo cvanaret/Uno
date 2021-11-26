@@ -3,12 +3,14 @@
 #include "ingredients/strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 
-l1Relaxation::l1Relaxation(Problem& problem, const l1RelaxationParameters& parameters, const Options& options) :
+l1Relaxation::l1Relaxation(Problem& problem, const Options& options) :
       ConstraintRelaxationStrategy(problem, options),
-      number_elastic_variables(l1Relaxation::count_elastic_variables(problem)),
       globalization_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
-      penalty_parameter(parameters.initial_parameter),
-      parameters(parameters) {
+      penalty_parameter(stod(options.at("l1_relaxation_initial_parameter"))),
+      parameters({stod(options.at("l1_relaxation_decrease_factor")),
+                  stod(options.at("l1_relaxation_epsilon1")),
+                  stod(options.at("l1_relaxation_epsilon2"))}),
+      penalty_threshold(stod(options.at("l1_relaxation_penalty_threshold"))) {
 }
 
 void l1Relaxation::initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) {
@@ -66,7 +68,8 @@ Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, const 
 /*phase_2_direction*/) {
    assert(0. < this->penalty_parameter && "l1Relaxation: the penalty parameter is already 0");
 
-   Direction direction = this->resolve_subproblem(statistics, problem, current_iterate, 0.);
+   const double objective_multiplier = 0.;
+   Direction direction = this->resolve_subproblem(statistics, problem, current_iterate, objective_multiplier);
    // remove the temporary elastic variables
    this->remove_elastic_variables_from_direction(problem, direction);
    return direction;
@@ -164,7 +167,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const P
                   }
                   if (!condition2) {
                      this->penalty_parameter /= this->parameters.decrease_factor;
-                     if (this->penalty_parameter < 1e-10) {
+                     if (this->penalty_parameter < this->penalty_threshold) {
                         this->penalty_parameter = 0.;
                         condition2 = true;
                      }

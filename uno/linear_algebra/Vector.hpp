@@ -65,7 +65,7 @@ double norm(const T& x, Norm norm) {
 double norm(const std::function<double(size_t i)>& f, size_t size, Norm norm);
 
 template<typename T>
-void print_vector(std::ostream& stream, const std::vector <T>& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max(),
+void print_vector(std::ostream& stream, const std::vector<T>& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max(),
       const char end = '\n') {
    for (size_t i = start; i < std::min(start + length, x.size()); i++) {
       stream << x[i] << " ";
@@ -74,7 +74,7 @@ void print_vector(std::ostream& stream, const std::vector <T>& x, size_t start =
 }
 
 template<typename T>
-void print_vector(const Level& level, const std::vector <T>& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max(),
+void print_vector(const Level& level, const std::vector<T>& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max(),
       const char end = '\n') {
    for (size_t i = start; i < std::min(start + length, x.size()); i++) {
       level << x[i] << " ";

@@ -56,7 +56,8 @@ phase_2_primal_direction, const ConstraintPartition& constraint_partition) {
    FeasibilityRestoration::set_restoration_multipliers(this->subproblem->constraints_multipliers, constraint_partition);
 
    // build the local model of the objective
-   this->subproblem->build_objective_model(problem, current_iterate, 0.);
+   const double objective_multiplier = 0.;
+   this->subproblem->build_objective_model(problem, current_iterate, objective_multiplier);
    this->subproblem->compute_feasibility_linear_objective(current_iterate, constraint_partition);
 
    // update the bounds of the constraints
@@ -70,7 +71,8 @@ phase_2_primal_direction, const ConstraintPartition& constraint_partition) {
 void FeasibilityRestoration::form_feasibility_problem(const Problem& problem, Iterate& current_iterate, const std::vector<double>&
 phase_2_primal_direction) {
    // compute the objective model with a zero objective multiplier
-   this->subproblem->build_objective_model(problem, current_iterate, 0.);
+   const double objective_multiplier = 0.;
+   this->subproblem->build_objective_model(problem, current_iterate, objective_multiplier);
 
    // add elastic variables to relax the problem
    this->add_elastic_variables_to_subproblem();
@@ -179,6 +181,7 @@ GlobalizationStrategy& FeasibilityRestoration::pick_globalization_strategy(const
 
 void FeasibilityRestoration::set_restoration_multipliers(std::vector<double>& constraints_multipliers, const ConstraintPartition&
 constraint_partition) {
+   // the values are derived from the KKT conditions of the feasibility problem
    for (size_t j: constraint_partition.lower_bound_infeasible) {
       constraints_multipliers[j] = 1.;
    }

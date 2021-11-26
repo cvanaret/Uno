@@ -2,7 +2,12 @@
 #include <algorithm>
 #include "Filter.hpp"
 
-Filter::Filter(FilterConstants& constants) : constants(constants), infeasibility(this->max_size), optimality(this->max_size) {
+Filter::Filter(const Options& options) :
+      max_size(stoul(options.at("filter_max_size"))),
+      constants({stod(options.at("filter_Beta")),
+                 stod(options.at("filter_Gamma"))}),
+      infeasibility(this->max_size),
+      optimality(this->max_size) {
    this->reset();
 }
 
@@ -96,8 +101,7 @@ bool Filter::accept(double infeasibility_measure, double optimality_measure) {
    }
 }
 
-//! improves_current_iterate: check acceptable wrt current point 
-
+//! improves_current_iterate: check acceptable wrt current point
 bool Filter::improves_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure,
       double trial_optimality_measure) {
    return (trial_optimality_measure <= current_optimality_measure - this->constants.gamma * trial_infeasibility_measure) ||
@@ -120,9 +124,8 @@ std::ostream& operator<<(std::ostream& stream, Filter& filter) {
 }
 
 // NonmonotoneFilter class
-
-NonmonotoneFilter::NonmonotoneFilter(FilterConstants& infeasibility_measure, size_t number_dominated_entries) :
-      Filter(infeasibility_measure), max_number_dominated_entries(number_dominated_entries) {
+NonmonotoneFilter::NonmonotoneFilter(const Options& options) :
+      Filter(options), max_number_dominated_entries(stoul(options.at("nonmonotone_filter_number_dominated_entries"))) {
 }
 
 //! add (infeasibility_measure, optimality_measure) to the filter
@@ -218,17 +221,12 @@ double NonmonotoneFilter::compute_actual_reduction(double current_objective, dou
 // FilterFactory class
 
 std::unique_ptr<Filter> FilterFactory::create(const Options& options) {
-   double beta = stod(options.at("filter_Beta"));
-   double gamma = stod(options.at("filter_Gamma"));
-   FilterConstants filter_infeasibility_measure = {beta, gamma};
    std::string filter_type = options.at("strategy");
-
    if (filter_type == "filter") {
-      return std::make_unique<Filter>(filter_infeasibility_measure);
+      return std::make_unique<Filter>(options);
    }
    else if (filter_type == "nonmonotone-filter") {
-      const int number_dominated_entries = stoi(options.at("nonmonotone_filter_number_dominated_entries"));
-      return std::make_unique<NonmonotoneFilter>(filter_infeasibility_measure, number_dominated_entries);
+      return std::make_unique<NonmonotoneFilter>(options);
    }
    else {
       throw std::invalid_argument("Filter type " + filter_type + " does not exist");

@@ -11,8 +11,7 @@
  */
 class BacktrackingLineSearch : public GlobalizationMechanism {
 public:
-   explicit BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, int max_iterations = 7, double backtracking_ratio
-   = 0.5);
+   explicit BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);
 
    void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) override;
    std::tuple<Iterate, double> compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
@@ -22,7 +21,7 @@ private:
    double step_length{1.};
    /* ratio of step length update in ]0, 1[ */
    const double backtracking_ratio;
-   const double min_step_length{1e-6};
+   const double min_step_length;
 
    bool termination();
    void print_iteration();

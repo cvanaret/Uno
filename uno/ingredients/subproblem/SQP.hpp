@@ -20,8 +20,7 @@ public:
 protected:
    // use pointers to allow polymorphism
    const std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
-   const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the
- * Hessian */
+   const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
    std::vector<double> initial_point;
 };
 

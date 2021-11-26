@@ -86,8 +86,8 @@ public:
    virtual void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
          SymmetricMatrix& hessian) const = 0;
 
-   virtual void set_initial_primal_point(std::vector<double>& x) = 0;
-   virtual void set_initial_dual_point(std::vector<double>& multipliers) = 0;
+   virtual void get_initial_primal_point(std::vector<double>& x) = 0;
+   virtual void get_initial_dual_point(std::vector<double>& multipliers) = 0;
 
    // auxiliary functions
    [[nodiscard]] std::vector<double> evaluate_constraints(const std::vector<double>& x) const;

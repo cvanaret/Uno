@@ -4,8 +4,13 @@
 #include "linear_algebra/Vector.hpp"
 #include "tools/Logger.hpp"
 
-TrustRegion::TrustRegion(ConstraintRelaxationStrategy& constraint_relaxation_strategy, double initial_radius, int max_iterations) :
-      GlobalizationMechanism(constraint_relaxation_strategy, max_iterations), radius(initial_radius) {
+TrustRegion::TrustRegion(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options) :
+      GlobalizationMechanism(constraint_relaxation_strategy, std::stoi(options.at("TR_max_iterations"))),
+      radius(stod(options.at("TR_radius"))),
+      increase_factor(stod(options.at("TR_increase_factor"))),
+      decrease_factor(stod(options.at("TR_decrease_factor"))),
+      activity_tolerance(stod(options.at("TR_activity_tolerance"))),
+      min_radius(stod(options.at("TR_min_radius"))) {
 }
 
 void TrustRegion::initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) {
@@ -34,12 +39,13 @@ current_iterate) {
          TrustRegion::rectify_active_set(direction, this->radius);
 
          // assemble the trial iterate by taking a full step
-         Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, this->full_step_length);
+         const double full_step_length = 1.;
+         Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, full_step_length);
 
          // check whether the trial step is accepted
          PredictedReductionModel predicted_reduction_model = this->relaxation_strategy.generate_predicted_reduction_model(problem, direction);
          if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate, direction, predicted_reduction_model,
-               this->full_step_length)) {
+               full_step_length)) {
             this->add_statistics(statistics, direction);
 
             // increase the radius if trust region is active

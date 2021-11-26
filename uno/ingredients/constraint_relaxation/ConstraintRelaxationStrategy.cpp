@@ -1,5 +1,6 @@
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
+#include "optimization/Constraint.hpp"
 
 ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Problem& problem, const Options& options):
       elastic_variables(ConstraintRelaxationStrategy::count_elastic_variables(problem)),
@@ -13,10 +14,10 @@ ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Problem& proble
 size_t ConstraintRelaxationStrategy::count_elastic_variables(const Problem& problem) {
    size_t number_elastic_variables = 0;
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      if (-std::numeric_limits<double>::infinity() < problem.constraint_bounds[j].lb) {
+      if (is_finite_lower_bound(problem.constraint_bounds[j].lb)) {
          number_elastic_variables++;
       }
-      if (problem.constraint_bounds[j].ub < std::numeric_limits<double>::infinity()) {
+      if (is_finite_upper_bound(problem.constraint_bounds[j].ub)) {
          number_elastic_variables++;
       }
    }
@@ -27,12 +28,12 @@ void ConstraintRelaxationStrategy::generate_elastic_variables(const Problem& pro
    // generate elastic variables p and n on the fly to relax the constraints
    size_t elastic_index = number_variables;
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      if (-std::numeric_limits<double>::infinity() < problem.constraint_bounds[j].lb) {
+      if (is_finite_lower_bound(problem.constraint_bounds[j].lb)) {
          // nonpositive variable n that captures the negative part of the constraint violation
          elastic_variables.negative.insert(j, elastic_index);
          elastic_index++;
       }
-      if (problem.constraint_bounds[j].ub < std::numeric_limits<double>::infinity()) {
+      if (is_finite_upper_bound(problem.constraint_bounds[j].ub)) {
          // nonnegative variable p that captures the positive part of the constraint violation
          elastic_variables.positive.insert(j, elastic_index);
          elastic_index++;

@@ -6,6 +6,7 @@
 #include "solvers/linear/LinearSolver.hpp"
 #include "HessianModel.hpp"
 #include "AugmentedSystem.hpp"
+#include "tools/Options.hpp"
 
 struct InteriorPointParameters {
    double tau_min;
@@ -14,13 +15,15 @@ struct InteriorPointParameters {
    double k_mu;
    double theta_mu;
    double k_epsilon;
+   double barrier_update_fraction;
+   double regularization_barrier_exponent;
 };
 
 class InteriorPoint : public Subproblem {
 public:
    InteriorPoint(const Problem& problem, size_t max_number_variables, size_t number_constraints, const std::string& hessian_model,
          const std::string& linear_solver_name, const std::string& sparse_format, double initial_barrier_parameter, double default_multiplier,
-         double tolerance, bool use_trust_region);
+         double tolerance, bool use_trust_region, const Options& options);
    ~InteriorPoint() override = default;
 
    void set_initial_point(const std::vector<double>& initial_point) override;

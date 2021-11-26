@@ -6,7 +6,6 @@
 #include "tools/Options.hpp"
 
 struct l1RelaxationParameters {
-   double initial_parameter;
    double decrease_factor;
    double epsilon1;
    double epsilon2;
@@ -14,7 +13,7 @@ struct l1RelaxationParameters {
 
 class l1Relaxation : public ConstraintRelaxationStrategy {
 public:
-   l1Relaxation(Problem& problem, const l1RelaxationParameters& parameters, const Options& options);
+   l1Relaxation(Problem& problem, const Options& options);
    void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) override;
 
    // direction computation
@@ -29,10 +28,10 @@ public:
    predicted_reduction_model, double step_length) override;
 
 protected:
-   const size_t number_elastic_variables;
-   const std::unique_ptr <GlobalizationStrategy> globalization_strategy;
+   const std::unique_ptr<GlobalizationStrategy> globalization_strategy;
    double penalty_parameter;
    const l1RelaxationParameters parameters;
+   const double penalty_threshold;
 
    Direction solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate);
    Direction resolve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double objective_multiplier);
