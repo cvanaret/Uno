@@ -49,7 +49,7 @@ public:
     *
     * \param problem: optimization problem
     */
-   Result solve(const Problem& problem, Iterate& first_iterate, bool use_preprocessing);
+   Result solve(const Problem& problem, Iterate& first_iterate, bool enforce_linear_constraints);
 
 private:
    GlobalizationMechanism& globalization_mechanism; /*!< Step control strategy (trust region or line-search) */
