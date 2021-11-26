@@ -26,20 +26,14 @@ void* operator new(size_t size) {
 void run_uno_ampl(const std::string& problem_name, const Options& options) {
    const std::string mechanism_type = options.at("mechanism");
    const std::string constraint_relaxation_type = options.at("constraint-relaxation");
-   const std::string subproblem_type = options.at("subproblem");
 
    // TODO: use a factory
    // AMPL model
    auto problem = std::make_unique<AMPLModel>(problem_name);
    INFO << "Heap allocations after AMPL: " << total_allocations << "\n";
 
-   // create the subproblem
-   const bool use_trust_region = (mechanism_type == "TR");
-   const size_t max_number_variables = ConstraintRelaxationStrategyFactory::get_max_number_variables(constraint_relaxation_type, *problem);
-   auto subproblem = SubproblemFactory::create(*problem, max_number_variables, subproblem_type, options, use_trust_region);
-
    // create the constraint relaxation strategy
-   auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(constraint_relaxation_type, *problem, *subproblem, options);
+   auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(constraint_relaxation_type, *problem, options);
    INFO << "Heap allocations after ConstraintRelax, Subproblem and Solver: " << total_allocations << "\n";
 
    // create the globalization mechanism
