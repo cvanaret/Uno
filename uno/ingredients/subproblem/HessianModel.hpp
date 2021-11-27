@@ -16,9 +16,10 @@ public:
    size_t evaluation_count{0};
 
    virtual void evaluate(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
-         const std::vector<double>& constraint_multipliers, size_t number_variables) = 0;
+         const std::vector<double>& constraint_multipliers) = 0;
+   virtual void finalize(size_t number_variables);
 
-   void adjust_dimension(size_t number_variables) const;
+protected:
    static void regularize(SymmetricMatrix& matrix, LinearSolver& linear_solver);
 };
 
@@ -28,7 +29,7 @@ public:
    explicit ExactHessian(size_t dimension, size_t hessian_maximum_number_nonzeros, const std::string& sparse_format);
 
    void evaluate(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
-         const std::vector<double>& constraint_multipliers, size_t number_variables) override;
+         const std::vector<double>& constraint_multipliers) override;
 };
 
 // Hessian with convexification (inertia correction)
@@ -38,7 +39,8 @@ public:
          const std::string& linear_solver_name);
 
    void evaluate(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
-         const std::vector<double>& constraint_multipliers, size_t number_variables) override;
+         const std::vector<double>& constraint_multipliers) override;
+   void finalize(size_t number_variables) override;
 
 protected:
    std::unique_ptr<LinearSolver> linear_solver; /*!< Solver that computes the inertia */
