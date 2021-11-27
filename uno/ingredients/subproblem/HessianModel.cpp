@@ -6,7 +6,7 @@ HessianModel::HessianModel(size_t dimension, size_t hessian_maximum_number_nonze
       hessian(SymmetricMatrixFactory::create(sparse_format, dimension, hessian_maximum_number_nonzeros)) {
 }
 
-void HessianModel::adjust_dimension(size_t number_variables) const {
+void HessianModel::finalize(size_t number_variables) {
    // if the subproblem has more variables (slacks, elastic, ...) than the original problem, rectify the sparse representation
    // this assumes that all additional variables appear linearly in the functions
    for (size_t j = this->hessian->dimension; j < number_variables; j++) {
@@ -56,10 +56,9 @@ ExactHessian::ExactHessian(size_t dimension, size_t hessian_maximum_number_nonze
 }
 
 void ExactHessian::evaluate(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
-      const std::vector<double>& constraint_multipliers, size_t number_variables) {
-   // compute Hessian
+      const std::vector<double>& constraint_multipliers) {
+   // evaluate Lagrangian Hessian
    problem.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, *this->hessian);
-   this->adjust_dimension(number_variables);
    this->evaluation_count++;
 }
 
@@ -70,11 +69,14 @@ ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t hessian_maximum_
 }
 
 void ConvexifiedHessian::evaluate(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
-      const std::vector<double>& constraint_multipliers, size_t number_variables) {
-   // compute Hessian
+      const std::vector<double>& constraint_multipliers) {
+   // evaluate Lagrangian Hessian
    problem.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, *this->hessian);
-   this->adjust_dimension(number_variables);
    this->evaluation_count++;
+}
+
+void ConvexifiedHessian::finalize(size_t number_variables) {
+   HessianModel::finalize(number_variables);
    // make the problem strictly convex
    DEBUG << "hessian before convexification: " << *this->hessian;
    HessianModel::regularize(*this->hessian, *this->linear_solver);

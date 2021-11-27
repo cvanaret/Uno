@@ -38,7 +38,7 @@ void SQP::create_current_subproblem(const Problem& problem, Iterate& current_ite
 
 void SQP::build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
    // Hessian
-   this->hessian_model->evaluate(problem, current_iterate.x, objective_multiplier, this->constraints_multipliers, this->number_variables);
+   this->hessian_model->evaluate(problem, current_iterate.x, objective_multiplier, this->constraints_multipliers);
 
    // objective gradient
    this->set_scaled_objective_gradient(problem, current_iterate, objective_multiplier);
@@ -52,6 +52,7 @@ void SQP::set_initial_point(const std::vector<double>& point) {
 }
 
 Direction SQP::solve(Statistics& /*statistics*/, const Problem& problem, Iterate& current_iterate) {
+   this->hessian_model->finalize(this->number_variables);
    // compute QP direction
    Direction direction = this->solver->solve_QP(this->variables_bounds, this->constraints_bounds, this->objective_gradient,
          this->constraints_jacobian, *this->hessian_model->hessian, this->initial_point);
