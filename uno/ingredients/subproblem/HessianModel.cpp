@@ -15,13 +15,45 @@ void HessianModel::finalize(size_t number_variables) {
    this->hessian->dimension = number_variables;
 }
 
+// Exact Hessian
+ExactHessian::ExactHessian(size_t dimension, size_t hessian_maximum_number_nonzeros, const Options& options) :
+   HessianModel(dimension, hessian_maximum_number_nonzeros, options.at("sparse_format")) {
+}
+
+void ExactHessian::evaluate(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
+      const std::vector<double>& constraint_multipliers) {
+   // evaluate Lagrangian Hessian
+   problem.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, *this->hessian);
+   this->evaluation_count++;
+}
+
+// Convexified Hessian
+ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t hessian_maximum_number_nonzeros, const Options& options):
+      HessianModel(dimension, hessian_maximum_number_nonzeros, options.at("sparse_format")),
+      linear_solver(LinearSolverFactory::create(options.at("linear_solver"), dimension, hessian_maximum_number_nonzeros)),
+      regularization_initial_value(stod(options.at("regularization_initial_value"))) {
+}
+
+void ConvexifiedHessian::evaluate(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
+      const std::vector<double>& constraint_multipliers) {
+   // evaluate Lagrangian Hessian
+   problem.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, *this->hessian);
+   this->evaluation_count++;
+}
+
+void ConvexifiedHessian::finalize(size_t number_variables) {
+   HessianModel::finalize(number_variables);
+   // make the problem strictly convex
+   DEBUG << "hessian before convexification: " << *this->hessian;
+   this->regularize(*this->hessian);
+}
+
 // Nocedal and Wright, p51
-void HessianModel::regularize(SymmetricMatrix& matrix, LinearSolver& linear_solver) {
-   const double beta = 1e-4;
+void ConvexifiedHessian::regularize(SymmetricMatrix& matrix) {
    const double smallest_diagonal_entry = matrix.smallest_diagonal_entry();
    DEBUG << "The minimal diagonal entry of the matrix is " << matrix.smallest_diagonal_entry() << "\n";
 
-   double regularization = (smallest_diagonal_entry <= 0.) ? beta - smallest_diagonal_entry : 0.;
+   double regularization = (smallest_diagonal_entry <= 0.) ? this->regularization_initial_value - smallest_diagonal_entry : 0.;
    bool good_inertia = false;
    bool regularized = false;
    while (!good_inertia) {
@@ -36,63 +68,29 @@ void HessianModel::regularize(SymmetricMatrix& matrix, LinearSolver& linear_solv
          matrix.add_identity_multiple(regularization);
          regularized = true;
       }
-      linear_solver.do_symbolic_factorization(matrix);
-      linear_solver.do_numerical_factorization(matrix);
+      this->linear_solver->do_symbolic_factorization(matrix);
+      this->linear_solver->do_numerical_factorization(matrix);
 
-      if (linear_solver.matrix_is_positive_definite()) {
+      if (this->linear_solver->matrix_is_positive_definite()) {
          good_inertia = true;
          DEBUG << "Factorization was a success with regularization factor " << regularization << "\n";
       }
       else {
-         DEBUG << "rank: " << linear_solver.rank() << ", negative eigenvalues: " << linear_solver.number_negative_eigenvalues() << "\n";
-         regularization = (regularization == 0.) ? beta : 2 * regularization;
+         DEBUG << "rank: " << this->linear_solver->rank() << ", negative eigenvalues: " << this->linear_solver->number_negative_eigenvalues() << "\n";
+         regularization = (regularization == 0.) ? this->regularization_initial_value : 2 * regularization;
       }
    }
 }
 
-// Exact Hessian
-ExactHessian::ExactHessian(size_t dimension, size_t hessian_maximum_number_nonzeros, const std::string& sparse_format) :
-   HessianModel(dimension, hessian_maximum_number_nonzeros, sparse_format) {
-}
-
-void ExactHessian::evaluate(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
-      const std::vector<double>& constraint_multipliers) {
-   // evaluate Lagrangian Hessian
-   problem.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, *this->hessian);
-   this->evaluation_count++;
-}
-
-// Convexified Hessian
-ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t hessian_maximum_number_nonzeros, const std::string& sparse_format,
-      const std::string& linear_solver_name):
-      HessianModel(dimension, hessian_maximum_number_nonzeros, sparse_format),
-      linear_solver(LinearSolverFactory::create(linear_solver_name, dimension, hessian_maximum_number_nonzeros)) {
-}
-
-void ConvexifiedHessian::evaluate(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
-      const std::vector<double>& constraint_multipliers) {
-   // evaluate Lagrangian Hessian
-   problem.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, *this->hessian);
-   this->evaluation_count++;
-}
-
-void ConvexifiedHessian::finalize(size_t number_variables) {
-   HessianModel::finalize(number_variables);
-   // make the problem strictly convex
-   DEBUG << "hessian before convexification: " << *this->hessian;
-   HessianModel::regularize(*this->hessian, *this->linear_solver);
-}
-
 // Factory
 std::unique_ptr<HessianModel> HessianModelFactory::create(const std::string& hessian_model, size_t dimension, size_t hessian_maximum_number_nonzeros,
-      const std::string& sparse_format, bool convexify) {
+      bool convexify, const Options& options) {
    if (hessian_model == "exact") {
       if (convexify) {
-         //const std::string& linear_solver_name = options.at("linear_solver");
-         return std::make_unique<ConvexifiedHessian>(dimension, hessian_maximum_number_nonzeros, sparse_format, "MA57");
+         return std::make_unique<ConvexifiedHessian>(dimension, hessian_maximum_number_nonzeros, options);
       }
       else {
-         return std::make_unique<ExactHessian>(dimension, hessian_maximum_number_nonzeros, sparse_format);
+         return std::make_unique<ExactHessian>(dimension, hessian_maximum_number_nonzeros, options);
       }
    }
    throw std::invalid_argument("Hessian model " + hessian_model + " does not exist");

@@ -21,9 +21,7 @@ struct InteriorPointParameters {
 
 class InteriorPoint : public Subproblem {
 public:
-   InteriorPoint(const Problem& problem, size_t max_number_variables, size_t number_constraints, const std::string& hessian_model,
-         const std::string& linear_solver_name, const std::string& sparse_format, double initial_barrier_parameter, double default_multiplier,
-         double tolerance, bool use_trust_region, const Options& options);
+   InteriorPoint(const Problem& problem, size_t max_number_variables, const Options& options);
    ~InteriorPoint() override = default;
 
    void set_initial_point(const std::vector<double>& initial_point) override;

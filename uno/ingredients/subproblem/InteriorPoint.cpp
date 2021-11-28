@@ -3,28 +3,27 @@
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
 #include "optimization/Preprocessing.hpp"
 
-InteriorPoint::InteriorPoint(const Problem& problem, size_t max_number_variables, size_t number_constraints,
-      const std::string& hessian_model, const std::string& linear_solver_name, const std::string& sparse_format, double initial_barrier_parameter,
-      double default_multiplier, double tolerance, bool use_trust_region, const Options& options) :
+InteriorPoint::InteriorPoint(const Problem& problem, size_t max_number_variables, const Options& options):
       // add the slacks to the variables
       Subproblem(problem.number_variables + problem.inequality_constraints.size(), // number_variables
             max_number_variables + problem.inequality_constraints.size(), // max_number_variables
-            number_constraints, SOC_UPON_REJECTION, true),
-      augmented_system(sparse_format, this->max_number_variables + number_constraints,
+            problem.number_constraints, SOC_UPON_REJECTION, true),
+      augmented_system(options.at("sparse_format"), this->max_number_variables + problem.number_constraints,
             problem.hessian_maximum_number_nonzeros
-            + this->max_number_variables + number_constraints /* regularization */
+            + this->max_number_variables + problem.number_constraints /* regularization */
             + 2 * this->max_number_variables /* diagonal barrier terms */
-            + this->max_number_variables * number_constraints /* Jacobian */,
+            + this->max_number_variables * problem.number_constraints /* Jacobian */,
             stod(options.at("LS_regularization_failure_threshold"))),
-      barrier_parameter(initial_barrier_parameter), tolerance(tolerance),
+      barrier_parameter(std::stod(options.at("initial_barrier_parameter"))),
+      tolerance(std::stod(options.at("tolerance"))),
       // if no trust region is used, the problem should be convexified. However, the inertia of the augmented matrix will be corrected later
-      hessian_model(HessianModelFactory::create(hessian_model, this->max_number_variables, problem.hessian_maximum_number_nonzeros, sparse_format,
-            false)),
-      linear_solver(LinearSolverFactory::create(linear_solver_name, this->max_number_variables + number_constraints,
+      hessian_model(HessianModelFactory::create(options.at("hessian_model"), this->max_number_variables, problem.hessian_maximum_number_nonzeros,
+            false, options)),
+      linear_solver(LinearSolverFactory::create(options.at("linear_solver"), this->max_number_variables + problem.number_constraints,
             problem.hessian_maximum_number_nonzeros
-            + this->max_number_variables + number_constraints /* regularization */
+            + this->max_number_variables + problem.number_constraints /* regularization */
             + 2 * this->max_number_variables /* diagonal barrier terms */
-            + this->max_number_variables * number_constraints /* Jacobian */)),
+            + this->max_number_variables * problem.number_constraints /* Jacobian */)),
       parameters({stod(options.at("tau_min")),
             stod(options.at("k_sigma")),
             stod(options.at("smax")),
@@ -33,11 +32,11 @@ InteriorPoint::InteriorPoint(const Problem& problem, size_t max_number_variables
             stod(options.at("k_epsilon")),
             stod(options.at("barrier_update_fraction")),
             stod(options.at("regularization_barrier_exponent"))}),
-      default_multiplier(default_multiplier),
+      default_multiplier(std::stod(options.at("default_multiplier"))),
       primal_iterate(this->max_number_variables),
       lower_bound_multipliers(this->max_number_variables),
       upper_bound_multipliers(this->max_number_variables),
-      barrier_constraints(number_constraints),
+      barrier_constraints(problem.number_constraints),
       lower_delta_z(this->max_number_variables), upper_delta_z(this->max_number_variables) {
    // register the original variables bounds
    copy_from(this->variables_bounds, problem.variables_bounds, problem.number_variables);
@@ -48,6 +47,7 @@ InteriorPoint::InteriorPoint(const Problem& problem, size_t max_number_variables
    }
 
    // identify the bounded variables
+   const bool use_trust_region = (options.at("mechanism") == "TR");
    for (size_t i = 0; i < problem.number_variables; i++) {
       if (use_trust_region || (problem.variable_status[i] == BOUNDED_LOWER || problem.variable_status[i] == BOUNDED_BOTH_SIDES)) {
          this->lower_bounded_variables.push_back(i);

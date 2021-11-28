@@ -3,10 +3,11 @@
 
 #include "Subproblem.hpp"
 #include "solvers/QP/LPSolver.hpp"
+#include "tools/Options.hpp"
 
 class SLP : public Subproblem {
 public:
-   SLP(const Problem& problem, size_t max_number_variables, size_t number_constraints, const std::string& LP_solver_name);
+   SLP(const Problem& problem, size_t max_number_variables, const Options& options);
 
    void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
    void build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) override;
