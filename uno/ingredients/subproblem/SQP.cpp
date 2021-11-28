@@ -1,15 +1,14 @@
 #include "SQP.hpp"
 #include "solvers/QP/QPSolverFactory.hpp"
 
-SQP::SQP(const Problem& problem, size_t max_number_variables, size_t number_constraints, const std::string& hessian_model,
-      const std::string& QP_solver_name, const std::string& sparse_format, bool use_trust_region) :
-      Subproblem(problem.number_variables, max_number_variables, number_constraints, NO_SOC, true),
+SQP::SQP(const Problem& problem, size_t max_number_variables, const Options& options) :
+      Subproblem(problem.number_variables, max_number_variables, problem.number_constraints, NO_SOC, true),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
-      solver(QPSolverFactory::create(QP_solver_name, max_number_variables, number_constraints,
+      solver(QPSolverFactory::create(options.at("QP_solver"), max_number_variables, number_constraints,
             problem.hessian_maximum_number_nonzeros + max_number_variables, true)),
       // if no trust region is used, the problem should be convexified to guarantee boundedness + descent direction
-      hessian_model(HessianModelFactory::create(hessian_model, max_number_variables,
-            problem.hessian_maximum_number_nonzeros + max_number_variables, sparse_format, !use_trust_region)),
+      hessian_model(HessianModelFactory::create(options.at("hessian_model"), max_number_variables,
+            problem.hessian_maximum_number_nonzeros + max_number_variables, options.at("mechanism") != "TR", options)),
       initial_point(max_number_variables) {
 }
 

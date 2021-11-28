@@ -4,11 +4,11 @@
 #include "Subproblem.hpp"
 #include "HessianModel.hpp"
 #include "solvers/QP/QPSolver.hpp"
+#include "tools/Options.hpp"
 
 class SQP : public Subproblem {
 public:
-   SQP(const Problem& problem, size_t max_number_variables, size_t number_constraints, const std::string& hessian_model,
-         const std::string& QP_solver_name, const std::string& sparse_format, bool use_trust_region);
+   SQP(const Problem& problem, size_t max_number_variables, const Options& options);
 
    void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
    void build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) override;
