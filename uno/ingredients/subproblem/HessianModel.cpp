@@ -6,7 +6,7 @@ HessianModel::HessianModel(size_t dimension, size_t hessian_maximum_number_nonze
       hessian(SymmetricMatrixFactory::create(sparse_format, dimension, hessian_maximum_number_nonzeros)) {
 }
 
-void HessianModel::finalize(size_t number_variables) {
+void HessianModel::adjust_number_variables(size_t number_variables) {
    // if the subproblem has more variables (slacks, elastic, ...) than the original problem, rectify the sparse representation
    // this assumes that all additional variables appear linearly in the functions
    for (size_t j = this->hessian->dimension; j < number_variables; j++) {
@@ -34,22 +34,20 @@ ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t hessian_maximum_
       regularization_initial_value(stod(options.at("regularization_initial_value"))) {
 }
 
-void ConvexifiedHessian::evaluate(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
-      const std::vector<double>& constraint_multipliers) {
+void ConvexifiedHessian::evaluate(const Problem& problem, const std::vector<double>& primal_variables,
+      double objective_multiplier, const std::vector<double>& constraint_multipliers) {
    // evaluate Lagrangian Hessian
    problem.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, *this->hessian);
    this->evaluation_count++;
-}
-
-void ConvexifiedHessian::finalize(size_t number_variables) {
-   HessianModel::finalize(number_variables);
-   // make the problem strictly convex
+   // regularize (only on the original variables) to make the problem strictly convex
    DEBUG << "hessian before convexification: " << *this->hessian;
    this->regularize(*this->hessian);
 }
 
 // Nocedal and Wright, p51
 void ConvexifiedHessian::regularize(SymmetricMatrix& matrix) {
+   //assert(size_block_to_regularize <= matrix.dimension && "The block to regularize is larger than the matrix");
+
    const double smallest_diagonal_entry = matrix.smallest_diagonal_entry();
    DEBUG << "The minimal diagonal entry of the matrix is " << matrix.smallest_diagonal_entry() << "\n";
 
@@ -78,6 +76,7 @@ void ConvexifiedHessian::regularize(SymmetricMatrix& matrix) {
       else {
          DEBUG << "rank: " << this->linear_solver->rank() << ", negative eigenvalues: " << this->linear_solver->number_negative_eigenvalues() << "\n";
          regularization = (regularization == 0.) ? this->regularization_initial_value : 2 * regularization;
+         assert(regularization < std::numeric_limits<double>::infinity() && "The regularization coefficient diverged");
       }
    }
 }

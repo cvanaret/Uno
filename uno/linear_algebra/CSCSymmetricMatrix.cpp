@@ -84,7 +84,7 @@ void CSCSymmetricMatrix::finalize(size_t column_index) {
    }
 }
 
-void CSCSymmetricMatrix::add_identity_multiple(double factor) {
+void CSCSymmetricMatrix::add_identity_multiple(double multiple) {
    size_t overall_padding_size = 0;
    // go through each column
    for (size_t j = 0; j < this->dimension; j++) {
@@ -97,7 +97,7 @@ void CSCSymmetricMatrix::add_identity_multiple(double factor) {
          const size_t i = this->row_indices[last_entry_index];
          if (i == j) {
             // the diagonal element already exists: simply add factor
-            this->entries[last_entry_index] += factor;
+            this->entries[last_entry_index] += multiple;
             insert_new_element = false;
          }
          // otherwise, column terminates at a non-diagonal element
@@ -108,7 +108,7 @@ void CSCSymmetricMatrix::add_identity_multiple(double factor) {
          assert(0 < this->remaining_column_padding[j] && "Padding is not sufficient to insert a new element");
          const size_t last_element_index = this->column_starts[j + 1] - 1 + overall_padding_size;
          // insert the new diagonal element at the first padding slot
-         this->entries[last_element_index + 1] = factor;
+         this->entries[last_element_index + 1] = multiple;
          this->row_indices[last_element_index + 1] = j;
          // shift the next column starts
          for (size_t k = j + 1; k < this->dimension + 1; k++) {
