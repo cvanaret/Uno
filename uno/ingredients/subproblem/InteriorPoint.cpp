@@ -174,7 +174,7 @@ Direction InteriorPoint::solve(Statistics& statistics, const Problem& problem, I
    this->assemble_augmented_system(problem);
 
    // compute the solution (Δx, -Δλ)
-   this->augmented_system.solve(*this->linear_solver, this->number_variables + this->number_constraints);
+   this->augmented_system.solve(*this->linear_solver);
    this->number_subproblems_solved++;
 
    // generate IPM direction
@@ -191,7 +191,7 @@ Direction InteriorPoint::solve(Statistics& statistics, const Problem& problem, I
 void InteriorPoint::assemble_augmented_system(const Problem& problem) {
    // assemble, factorize and regularize the KKT matrix
    this->assemble_augmented_matrix();
-   this->augmented_system.factorize_matrix(problem, *this->linear_solver, this->number_variables + this->number_constraints);
+   this->augmented_system.factorize_matrix(problem, *this->linear_solver);
    this->augmented_system.regularize_matrix(problem, *this->linear_solver, this->number_variables, this->number_constraints,
          std::pow(this->barrier_parameter, this->parameters.regularization_barrier_exponent));
    auto[number_pos, number_neg, number_zero] = this->linear_solver->get_inertia();
@@ -215,7 +215,7 @@ Direction InteriorPoint::compute_second_order_correction(const Problem& problem,
    }
 
    // compute the solution (Δx, -Δλ)
-   this->augmented_system.solve(*this->linear_solver, this->number_variables + this->number_constraints);
+   this->augmented_system.solve(*this->linear_solver);
    this->number_subproblems_solved++;
 
    // generate IPM direction
