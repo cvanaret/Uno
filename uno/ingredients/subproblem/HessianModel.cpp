@@ -64,7 +64,8 @@ void ExactHessian::evaluate(const Problem& problem, const std::vector<double>& p
 
 // Convexified Hessian
 ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t hessian_maximum_number_nonzeros, const std::string& sparse_format,
-      const std::string& linear_solver_name) : HessianModel(dimension, hessian_maximum_number_nonzeros, sparse_format),
+      const std::string& linear_solver_name):
+      HessianModel(dimension, hessian_maximum_number_nonzeros, sparse_format),
       linear_solver(LinearSolverFactory::create(linear_solver_name, dimension, hessian_maximum_number_nonzeros)) {
 }
 

@@ -39,15 +39,11 @@ class Uno {
 public:
    /*!
     *  Constructor
-    *
-    * \param globalization_strategy: strategy to promote global convergence
     */
    Uno(GlobalizationMechanism& globalization_mechanism, const Options& options);
 
    /*!
     *  Solve a given problem with initial primal and dual variables
-    *
-    * \param problem: optimization problem
     */
    Result solve(const Problem& problem, Iterate& first_iterate, bool enforce_linear_constraints);
 
