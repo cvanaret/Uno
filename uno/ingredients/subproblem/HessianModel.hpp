@@ -18,7 +18,7 @@ public:
 
    virtual void evaluate(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
          const std::vector<double>& constraint_multipliers) = 0;
-   virtual void finalize(size_t number_variables);
+   void adjust_number_variables(size_t number_variables);
 };
 
 // Exact Hessian
@@ -37,7 +37,6 @@ public:
 
    void evaluate(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
          const std::vector<double>& constraint_multipliers) override;
-   void finalize(size_t number_variables) override;
 
 protected:
    std::unique_ptr<LinearSolver> linear_solver; /*!< Solver that computes the inertia */

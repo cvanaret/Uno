@@ -51,7 +51,7 @@ void SQP::set_initial_point(const std::vector<double>& point) {
 }
 
 Direction SQP::solve(Statistics& /*statistics*/, const Problem& problem, Iterate& current_iterate) {
-   this->hessian_model->finalize(this->number_variables);
+   this->hessian_model->adjust_number_variables(this->number_variables);
    // compute QP direction
    Direction direction = this->solver->solve_QP(this->variables_bounds, this->constraints_bounds, this->objective_gradient,
          this->constraints_jacobian, *this->hessian_model->hessian, this->initial_point);

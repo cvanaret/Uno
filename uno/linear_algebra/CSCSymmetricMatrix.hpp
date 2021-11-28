@@ -14,7 +14,7 @@ public:
    void insert(double term, size_t row_index, size_t column_index) override;
    void pop() override;
    void finalize(size_t column_index) override;
-   void add_identity_multiple(double factor) override;
+   void add_identity_multiple(double multiple) override;
    [[nodiscard]] double smallest_diagonal_entry() const override;
 
    void force_explicit_diagonal_elements();

@@ -170,7 +170,7 @@ void InteriorPoint::build_objective_model(const Problem& problem, Iterate& curre
 Direction InteriorPoint::solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
    this->iteration++;
    // set up the augmented system (with the right inertia)
-   this->hessian_model->finalize(this->number_variables);
+   this->hessian_model->adjust_number_variables(this->number_variables);
    this->assemble_augmented_system(problem);
 
    // compute the solution (Δx, -Δλ)
