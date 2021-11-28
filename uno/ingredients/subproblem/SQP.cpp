@@ -9,7 +9,7 @@ SQP::SQP(const Problem& problem, size_t max_number_variables, size_t number_cons
             problem.hessian_maximum_number_nonzeros + max_number_variables, true)),
       // if no trust region is used, the problem should be convexified to guarantee boundedness + descent direction
       hessian_model(HessianModelFactory::create(hessian_model, max_number_variables,
-            problem.hessian_maximum_number_nonzeros + problem.number_variables, sparse_format, !use_trust_region)),
+            problem.hessian_maximum_number_nonzeros + max_number_variables, sparse_format, !use_trust_region)),
       initial_point(max_number_variables) {
 }
 
