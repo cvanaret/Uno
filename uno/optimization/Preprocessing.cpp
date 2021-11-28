@@ -108,10 +108,9 @@ void Preprocessing::compute_least_square_multipliers(const Problem& problem, Sym
    /********************/
    /* solve the system */
    /********************/
-   const size_t dimension = number_variables + problem.number_constraints;
    std::vector<double> solution(matrix.dimension);
-   solver.factorize(dimension, matrix);
-   solver.solve(dimension, matrix, rhs, solution);
+   solver.factorize(matrix);
+   solver.solve(matrix, rhs, solution);
    DEBUG << "Solution: "; print_vector(DEBUG, solution);
 
    // if least-square multipliers too big, discard them. Otherwise, store them

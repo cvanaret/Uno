@@ -36,8 +36,8 @@ void HessianModel::regularize(SymmetricMatrix& matrix, LinearSolver& linear_solv
          matrix.add_identity_multiple(regularization);
          regularized = true;
       }
-      linear_solver.do_symbolic_factorization(matrix.dimension, matrix);
-      linear_solver.do_numerical_factorization(matrix.dimension, matrix);
+      linear_solver.do_symbolic_factorization(matrix);
+      linear_solver.do_numerical_factorization(matrix);
 
       if (linear_solver.matrix_is_positive_definite()) {
          good_inertia = true;
