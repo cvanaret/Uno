@@ -32,7 +32,7 @@ void SQP::create_current_subproblem(const Problem& problem, Iterate& current_ite
    this->set_constraints_bounds(problem, current_iterate.constraints);
 
    // reset the initial point
-   clear(this->initial_point);
+   initialize_vector(this->initial_point, 0.);
 }
 
 void SQP::build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
@@ -43,7 +43,7 @@ void SQP::build_objective_model(const Problem& problem, Iterate& current_iterate
    this->set_scaled_objective_gradient(problem, current_iterate, objective_multiplier);
 
    // initial point
-   clear(this->initial_point);
+   initialize_vector(this->initial_point, 0.);
 }
 
 void SQP::set_initial_point(const std::vector<double>& point) {

@@ -397,7 +397,7 @@ void InteriorPoint::assemble_augmented_matrix() {
 
 void InteriorPoint::generate_augmented_rhs() {
    // generate the right-hand side
-   clear(this->augmented_system.rhs);
+   initialize_vector(this->augmented_system.rhs, 0.);
 
    // barrier objective gradient
    this->objective_gradient.for_each([&](size_t i, double derivative) {
@@ -419,7 +419,7 @@ void InteriorPoint::generate_augmented_rhs() {
 }
 
 void InteriorPoint::compute_lower_bound_dual_direction(const std::vector<double>& solution) {
-   clear(this->lower_delta_z);
+   initialize_vector(this->lower_delta_z, 0.);
    for (size_t i: this->lower_bounded_variables) {
       const double distance_to_bound = this->primal_iterate[i] - this->variables_bounds[i].lb;
       this->lower_delta_z[i] = (this->barrier_parameter - solution[i] * this->lower_bound_multipliers[i]) / distance_to_bound -
@@ -428,7 +428,7 @@ void InteriorPoint::compute_lower_bound_dual_direction(const std::vector<double>
 }
 
 void InteriorPoint::compute_upper_bound_dual_direction(const std::vector<double>& solution) {
-   clear(this->upper_delta_z);
+   initialize_vector(this->upper_delta_z, 0.);
    for (size_t i: this->upper_bounded_variables) {
       const double distance_to_bound = this->primal_iterate[i] - this->variables_bounds[i].ub;
       this->upper_delta_z[i] = (this->barrier_parameter - solution[i] * this->upper_bound_multipliers[i]) / distance_to_bound -
