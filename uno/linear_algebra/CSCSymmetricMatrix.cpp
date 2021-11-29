@@ -24,7 +24,7 @@ void CSCSymmetricMatrix::reset() {
    SymmetricMatrix::reset();
    this->entries.clear();
    this->row_indices.clear();
-   clear(this->column_starts);
+   initialize_vector<size_t>(this->column_starts, 0);
    this->current_column = 0;
 }
 

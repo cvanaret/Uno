@@ -95,7 +95,7 @@ void Preprocessing::compute_least_square_multipliers(const Problem& problem, Sym
    /********************************/
    /* generate the right-hand side */
    /********************************/
-   clear(rhs);
+   initialize_vector(rhs, 0.);
 
    // objective gradient
    current_iterate.objective_gradient.for_each([&](size_t i, double derivative) {

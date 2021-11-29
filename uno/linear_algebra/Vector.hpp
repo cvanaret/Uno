@@ -13,9 +13,9 @@ enum Norm { L1_NORM = 1, L2_NORM = 2, L2_SQUARED_NORM, INF_NORM };
 void add_vectors(const std::vector<double>& x, const std::vector<double>& y, double scaling_factor, std::vector<double>& result);
 
 template <typename T>
-void clear(std::vector<T>& x) {
+void initialize_vector(std::vector<T>& x, T value) {
    for (T& xi: x) {
-      xi = T(0.);
+      xi = T(value);
    }
 }
 
