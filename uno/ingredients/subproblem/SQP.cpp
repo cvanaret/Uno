@@ -57,7 +57,7 @@ Direction SQP::solve(Statistics& /*statistics*/, const Problem& problem, Iterate
          this->constraints_jacobian, *this->hessian_model->hessian, this->initial_point);
    this->number_subproblems_solved++;
 
-   // compute dual displacements (SQP methods usually compute the new duals, not the displacements)
+   // compute dual *displacements* (note: SQP methods usually compute the new duals, not the displacements)
    for (size_t j = 0; j < problem.number_constraints; j++) {
       direction.multipliers.constraints[j] -= current_iterate.multipliers.constraints[j];
    }

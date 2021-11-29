@@ -51,7 +51,7 @@ public:
    void evaluate_constraints(const Problem& problem);
    void evaluate_objective_gradient(const Problem& problem);
    void evaluate_constraints_jacobian(const Problem& problem);
-   void evaluate_lagrangian_gradient(const Problem& problem, double objective_multiplier, const Multipliers& constraint_multipliers);
+   void evaluate_lagrangian_gradient(const Problem& problem, double objective_multiplier, const Multipliers& multipliers);
 
    void change_number_variables(size_t number_variables);
 

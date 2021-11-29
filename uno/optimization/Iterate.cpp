@@ -50,7 +50,7 @@ void Iterate::evaluate_constraints_jacobian(const Problem& problem) {
    }
 }
 
-void Iterate::evaluate_lagrangian_gradient(const Problem& problem, double objective_multiplier, const Multipliers& constraint_multipliers) {
+void Iterate::evaluate_lagrangian_gradient(const Problem& problem, double objective_multiplier, const Multipliers& multipliers) {
    initialize_vector(this->lagrangian_gradient, 0.);
 
    // objective gradient
@@ -66,13 +66,13 @@ void Iterate::evaluate_lagrangian_gradient(const Problem& problem, double object
    }
    // bound constraints
    for (size_t i = 0; i < problem.number_variables; i++) {
-      this->lagrangian_gradient[i] -= constraint_multipliers.lower_bounds[i] + constraint_multipliers.upper_bounds[i];
+      this->lagrangian_gradient[i] -= multipliers.lower_bounds[i] + multipliers.upper_bounds[i];
    }
 
    // constraints
    this->evaluate_constraints_jacobian(problem);
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      double multiplier_j = constraint_multipliers.constraints[j];
+      double multiplier_j = multipliers.constraints[j];
       if (multiplier_j != 0.) {
          this->constraints_jacobian[j].for_each([&](size_t i, double derivative) {
             if (i < problem.number_variables) {
