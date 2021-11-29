@@ -97,10 +97,9 @@ TerminationStatus Uno::check_termination(const Problem& problem, Iterate& curren
 
    if (current_iterate.errors.complementarity <= this->tolerance * static_cast<double>(number_variables + problem.number_constraints)) {
       // feasible and KKT point
-      if (current_iterate.errors.KKT <= this->tolerance * std::sqrt(number_variables)) {
-         if (current_iterate.errors.constraints <= this->tolerance * static_cast<double>(number_variables)) {
-            status = KKT_POINT;
-         }
+      if (current_iterate.errors.KKT <= this->tolerance * std::sqrt(number_variables) &&
+            current_iterate.errors.constraints <= this->tolerance * static_cast<double>(number_variables)) {
+         status = KKT_POINT;
       }
       // infeasible and FJ point
       else if (0 < problem.number_constraints && current_iterate.errors.FJ <= this->tolerance * std::sqrt(number_variables)) {
