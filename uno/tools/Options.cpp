@@ -51,8 +51,12 @@ void find_preset(const std::string& preset, Options& options) {
       options["constraint-relaxation"] = "l1-relaxation";
       options["strategy"] = "l1-penalty";
       options["subproblem"] = "SQP";
-      options["armijo_decrease_fraction"] = "1e-8";
+      options["l1_relaxation_initial_parameter"] = "1";
       options["LS_backtracking_ratio"] = "0.5";
+      options["armijo_decrease_fraction"] = "1e-8";
+      options["l1_relaxation_epsilon1"] = "0.1";
+      options["l1_relaxation_epsilon2"] = "0.1";
+      options["tolerance"] = "1e-6";
    }
 }
 

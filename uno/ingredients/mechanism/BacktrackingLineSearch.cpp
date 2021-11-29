@@ -34,7 +34,7 @@ current_iterate) {
    bool feasibility_problem = false;
    while (!failure) {
       while (!this->termination()) {
-         assert(0 < this->step_length && this->step_length <= 1);
+         assert(0 < this->step_length && this->step_length <= 1 && "The line-search step length is not in (0, 1]");
          this->number_iterations++;
          this->print_iteration();
 
