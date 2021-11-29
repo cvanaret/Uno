@@ -37,7 +37,8 @@ protected:
    Direction resolve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double objective_multiplier);
    Direction solve_with_steering_rule(Statistics& statistics, const Problem& problem, Iterate& current_iterate);
    double compute_linearized_constraint_residual(std::vector<double>& direction) const;
-   static double compute_error(const Problem& problem, Iterate& iterate, Multipliers& multipliers, double current_penalty_parameter);
+   static double compute_error(const Problem& problem, Iterate& iterate, Multipliers& multipliers_displacements, double current_penalty_parameter);
+   static void set_multipliers(const Problem& problem, const Iterate& current_iterate, std::vector<double>& constraints_multipliers);
 };
 
 #endif //L1RELAXATION_H

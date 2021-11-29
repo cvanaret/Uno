@@ -27,6 +27,22 @@ void l1Relaxation::create_current_subproblem(const Problem& problem, Iterate& cu
    // scale the derivatives and introduce the elastic variables
    this->subproblem->create_current_subproblem(problem, current_iterate, this->penalty_parameter, trust_region_radius);
    this->add_elastic_variables_to_subproblem();
+
+   // set the multipliers of the violated constraints
+   l1Relaxation::set_multipliers(problem, current_iterate, this->subproblem->constraints_multipliers);
+}
+
+void l1Relaxation::set_multipliers(const Problem& problem, const Iterate& current_iterate, std::vector<double>& constraints_multipliers) {
+   // the values are derived from the KKT conditions of the l1 problem
+   for (size_t j = 0; j < problem.number_constraints; j++) {
+      if (current_iterate.constraints[j] < problem.constraint_bounds[j].lb) { // lower bound infeasible
+         constraints_multipliers[j] = 1.;
+      }
+      else if (problem.constraint_bounds[j].ub < current_iterate.constraints[j]) { // upper bound infeasible
+         constraints_multipliers[j] = -1.;
+      }
+   }
+   // otherwise, leave the multiplier as it is
 }
 
 Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
@@ -235,7 +251,15 @@ double l1Relaxation::compute_linearized_constraint_residual(std::vector<double>&
 }
 
 // measure that combines KKT error and complementarity error
-double l1Relaxation::compute_error(const Problem& problem, Iterate& iterate, Multipliers& multipliers, double current_penalty_parameter) {
+double l1Relaxation::compute_error(const Problem& problem, Iterate& iterate, Multipliers& multipliers_displacements, double current_penalty_parameter) {
+   Multipliers multipliers(multipliers_displacements.lower_bounds.size(), multipliers_displacements.constraints.size());
+   multipliers.lower_bounds = multipliers_displacements.lower_bounds;
+   multipliers.upper_bounds = multipliers_displacements.upper_bounds;
+   multipliers.constraints = multipliers_displacements.constraints;
+   for (size_t j = 0; j < problem.number_constraints; j++) {
+      multipliers.constraints[j] += iterate.multipliers.constraints[j];
+   }
+
    // complementarity error
    double error = Subproblem::compute_complementarity_error(problem, iterate, multipliers);
    // KKT error
