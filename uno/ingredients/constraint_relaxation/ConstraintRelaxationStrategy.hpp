@@ -24,17 +24,18 @@ public:
    ConstraintRelaxationStrategy(const Problem& problem, const Options& options);
    virtual ~ConstraintRelaxationStrategy() = default;
 
-   virtual void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) = 0;
-   virtual void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) = 0;
+   virtual void initialize(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& first_iterate) = 0;
+   virtual void create_current_subproblem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double trust_region_radius) = 0;
 
-   virtual Direction compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) = 0;
-   virtual Direction solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, const Direction& direction) = 0;
+   virtual Direction compute_feasible_direction(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate) = 0;
+   virtual Direction solve_feasibility_problem(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
+         const Direction& direction) = 0;
    virtual Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate);
 
-   virtual bool is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate, const Direction&
-      direction, PredictedReductionModel& predicted_reduction_model, double step_length) = 0;
-   virtual double compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, const Direction& direction, PredictedReductionModel&
-   predicted_reduction_model, double step_length) = 0;
+   virtual bool is_acceptable(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
+         Iterate& trial_iterate, const Direction& direction, PredictedReductionModel& predicted_reduction_model, double step_length) = 0;
+   virtual double compute_predicted_reduction(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, const Direction& direction,
+         PredictedReductionModel& predicted_reduction_model, double step_length) = 0;
    virtual void register_accepted_iterate(Iterate& iterate);
 
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const;

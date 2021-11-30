@@ -3,6 +3,7 @@
 
 #include "ingredients/constraint_relaxation/ConstraintRelaxationStrategy.hpp"
 #include "optimization/Problem.hpp"
+#include "optimization/Scaling.hpp"
 #include "tools/Statistics.hpp"
 
 /*! \class GlobalizationMechanism
@@ -15,8 +16,9 @@ public:
    GlobalizationMechanism(ConstraintRelaxationStrategy& constraint_relaxation_strategy, int max_iterations);
    virtual ~GlobalizationMechanism() = default;
 
-   virtual void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) = 0;
-   virtual std::tuple<Iterate, double> compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate& current_iterate) = 0;
+   virtual void initialize(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& first_iterate) = 0;
+   virtual std::tuple<Iterate, double> compute_acceptable_iterate(Statistics& statistics, const Problem& problem, const Scaling& scaling,
+         Iterate& current_iterate) = 0;
 
    [[nodiscard]] size_t get_hessian_evaluation_count() const;
    [[nodiscard]] size_t get_number_subproblems_solved() const;

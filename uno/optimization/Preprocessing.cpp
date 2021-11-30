@@ -1,11 +1,11 @@
 #include "Preprocessing.hpp"
 #include "solvers/QP/BQPDSolver.hpp"
 
-void Preprocessing::enforce_linear_constraints(const Problem& problem, Iterate& first_iterate) {
+void Preprocessing::enforce_linear_constraints(const Problem& problem, const Scaling& scaling, Iterate& first_iterate) {
    INFO << "Preprocessing phase: the problem has " << problem.linear_constraints.size() << " linear constraints\n";
    if (!problem.linear_constraints.empty()) {
       // count the infeasible constraints
-      first_iterate.evaluate_constraints(problem);
+      first_iterate.evaluate_constraints(problem, scaling);
       int infeasible_linear_constraints = 0;
       for (const auto element: problem.linear_constraints) {
          size_t j = element.first;
@@ -67,11 +67,11 @@ void Preprocessing::enforce_linear_constraints(const Problem& problem, Iterate& 
 }
 
 // compute a least-square approximation of the multipliers by solving a linear system (uses existing linear system)
-void Preprocessing::compute_least_square_multipliers(const Problem& problem, SymmetricMatrix& matrix, std::vector<double>& rhs, LinearSolver& solver,
-      Iterate& current_iterate, std::vector<double>& multipliers, double multipliers_max_size) {
+void Preprocessing::compute_least_square_multipliers(const Problem& problem, const Scaling& scaling, SymmetricMatrix& matrix,
+      std::vector<double>& rhs, LinearSolver& solver, Iterate& current_iterate, std::vector<double>& multipliers, double multipliers_max_size) {
    const size_t number_variables = current_iterate.x.size();
-   current_iterate.evaluate_objective_gradient(problem);
-   current_iterate.evaluate_constraints_jacobian(problem);
+   current_iterate.evaluate_objective_gradient(problem, scaling);
+   current_iterate.evaluate_constraints_jacobian(problem, scaling);
 
    /******************************/
    /* build the symmetric matrix */
@@ -106,6 +106,7 @@ void Preprocessing::compute_least_square_multipliers(const Problem& problem, Sym
    for (size_t i = 0; i < number_variables; i++) {
       rhs[i] -= current_iterate.multipliers.lower_bounds[i] + current_iterate.multipliers.upper_bounds[i];
    }
+   DEBUG << "RHS for least-square multipliers: "; print_vector(DEBUG, rhs);
 
    /********************/
    /* solve the system */

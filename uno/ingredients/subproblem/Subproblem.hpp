@@ -30,9 +30,10 @@ public:
    virtual ~Subproblem() = default;
 
    // virtual methods implemented by subclasses
-   virtual void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate);
-   virtual void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) = 0;
-   virtual void build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) = 0;
+   virtual void initialize(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& first_iterate);
+   virtual void create_current_subproblem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier,
+         double trust_region_radius) = 0;
+   virtual void build_objective_model(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier) = 0;
    virtual void add_variable(size_t i, double current_value, const Range& bounds, double objective_term, size_t j, double jacobian_term);
    virtual void remove_variable(size_t i, size_t j);
 
@@ -42,14 +43,14 @@ public:
 
    // globalization metrics
    [[nodiscard]] virtual PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const = 0;
-   virtual void compute_progress_measures(const Problem& problem, Iterate& iterate);
+   virtual void compute_progress_measures(const Problem& problem, const Scaling& scaling, Iterate& iterate);
    virtual void register_accepted_iterate(Iterate& iterate);
 
    [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
    virtual void set_initial_point(const std::vector<double>& initial_point) = 0;
 
    // available methods
-   void set_scaled_objective_gradient(const Problem& problem, Iterate& current_iterate, double objective_multiplier);
+   void set_scaled_objective_gradient(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier);
    // feasibility subproblem
    void compute_feasibility_linear_objective(const Iterate& current_iterate, const ConstraintPartition& constraint_partition);
    void generate_feasibility_bounds(const Problem& problem, const std::vector<double>& current_constraints, const ConstraintPartition&
@@ -57,10 +58,10 @@ public:
    static double push_variable_to_interior(double variable_value, const Range& variable_bounds);
    void set_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints);
 
-   static double compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier);
-   static void compute_optimality_conditions(const Problem& problem, Iterate& iterate, double objective_multiplier) ;
+   static double compute_first_order_error(const Problem& problem, const Scaling& scaling, Iterate& iterate, double objective_multiplier);
+   static void compute_optimality_conditions(const Problem& problem, const Scaling& scaling, Iterate& iterate, double objective_multiplier) ;
 
-   static double compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers);
+   static double compute_complementarity_error(const Problem& problem, const Scaling& scaling, Iterate& iterate, const Multipliers& multipliers);
 
    size_t number_variables; // can be updated on the fly (elastic variables)
    const size_t max_number_variables;

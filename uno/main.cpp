@@ -4,7 +4,6 @@
 #include <memory>
 #include <vector>
 #include "interfaces/AMPL/AMPLModel.hpp"
-#include "ingredients/subproblem/SubproblemFactory.hpp"
 #include "ingredients/strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/mechanism/GlobalizationMechanismFactory.hpp"
 #include "ingredients/constraint_relaxation/ConstraintRelaxationStrategyFactory.hpp"
@@ -45,13 +44,27 @@ void run_uno_ampl(const std::string& problem_name, const Options& options) {
    problem->get_initial_dual_point(first_iterate.multipliers.constraints);
 
    INFO << "Heap allocations before solving: " << total_allocations << "\n";
+   const bool scale_functions = (options.at("scale_functions") == "yes");
    const bool enforce_linear_constraints = (options.at("enforce_linear_constraints") == "yes");
-   Result result = uno.solve(*problem, first_iterate, enforce_linear_constraints);
+   Result result = uno.solve(*problem, first_iterate, scale_functions, enforce_linear_constraints);
 
    // remove auxiliary variables
    result.solution.x.resize(problem->number_variables);
    result.solution.multipliers.lower_bounds.resize(problem->number_variables);
    result.solution.multipliers.upper_bounds.resize(problem->number_variables);
+
+   // unscale
+   /*
+   result.solution.objective /= result.scaling.get_objective_scaling();
+   for (size_t i = 0; i < result.solution.x.size(); i++) {
+      result.solution.multipliers.lower_bounds[i] /= result.scaling.get_objective_scaling();
+      result.solution.multipliers.upper_bounds[i] /= result.scaling.get_objective_scaling();
+   }
+   for (size_t j = 0; j < result.solution.multipliers.constraints.size(); j++) {
+      result.solution.multipliers.constraints[j] /= result.scaling.get_objective_scaling();
+   }
+    */
+
    const bool print_solution = (options.at("print_solution") == "yes");
    result.print(print_solution);
    INFO << "Heap allocations: " << total_allocations << "\n";
