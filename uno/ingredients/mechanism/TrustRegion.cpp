@@ -13,14 +13,14 @@ TrustRegion::TrustRegion(ConstraintRelaxationStrategy& constraint_relaxation_str
       min_radius(stod(options.at("TR_min_radius"))) {
 }
 
-void TrustRegion::initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) {
+void TrustRegion::initialize(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& first_iterate) {
    statistics.add_column("TR radius", Statistics::double_width, 30);
    // generate the initial point
-   this->relaxation_strategy.initialize(statistics, problem, first_iterate);
+   this->relaxation_strategy.initialize(statistics, problem, scaling, first_iterate);
 }
 
-std::tuple<Iterate, double> TrustRegion::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate&
-current_iterate) {
+std::tuple<Iterate, double> TrustRegion::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, const Scaling& scaling,
+      Iterate& current_iterate) {
    this->number_iterations = 0;
 
    while (!this->termination()) {
@@ -30,10 +30,10 @@ current_iterate) {
          this->print_iteration();
 
          // generate the subproblem
-         this->relaxation_strategy.create_current_subproblem(problem, current_iterate, this->radius);
+         this->relaxation_strategy.create_current_subproblem(problem, scaling, current_iterate, this->radius);
 
          // compute the direction within the trust region
-         Direction direction = this->relaxation_strategy.compute_feasible_direction(statistics, problem, current_iterate);
+         Direction direction = this->relaxation_strategy.compute_feasible_direction(statistics, problem, scaling, current_iterate);
          TrustRegion::check_unboundedness(direction);
          // set bound multipliers of active trust region to 0
          TrustRegion::rectify_active_set(direction, this->radius);
@@ -44,8 +44,8 @@ current_iterate) {
 
          // check whether the trial step is accepted
          PredictedReductionModel predicted_reduction_model = this->relaxation_strategy.generate_predicted_reduction_model(problem, direction);
-         if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate, direction, predicted_reduction_model,
-               full_step_length)) {
+         if (this->relaxation_strategy.is_acceptable(statistics, problem, scaling, current_iterate, trial_iterate, direction,
+               predicted_reduction_model, full_step_length)) {
             this->add_statistics(statistics, direction);
 
             // increase the radius if trust region is active

@@ -11,19 +11,19 @@ BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& con
    assert(0 < this->backtracking_ratio && this->backtracking_ratio < 1. && "The backtracking ratio should be in (0, 1)");
 }
 
-void BacktrackingLineSearch::initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) {
+void BacktrackingLineSearch::initialize(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& first_iterate) {
    statistics.add_column("SOC", Statistics::char_width, 9);
    statistics.add_column("LS step length", Statistics::double_width, 30);
 
    // generate the initial point
-   this->relaxation_strategy.initialize(statistics, problem, first_iterate);
+   this->relaxation_strategy.initialize(statistics, problem, scaling, first_iterate);
 }
 
-std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate&
-current_iterate) {
+std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, const Scaling& scaling,
+      Iterate& current_iterate) {
    // compute the direction
-   this->relaxation_strategy.create_current_subproblem(problem, current_iterate, std::numeric_limits<double>::infinity());
-   Direction direction = this->relaxation_strategy.compute_feasible_direction(statistics, problem, current_iterate);
+   this->relaxation_strategy.create_current_subproblem(problem, scaling, current_iterate, std::numeric_limits<double>::infinity());
+   Direction direction = this->relaxation_strategy.compute_feasible_direction(statistics, problem, scaling, current_iterate);
    BacktrackingLineSearch::check_unboundedness(direction);
    PredictedReductionModel predicted_reduction_model = this->relaxation_strategy.generate_predicted_reduction_model(problem, direction);
 
@@ -40,8 +40,8 @@ current_iterate) {
 
          Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, this->step_length);
          try {
-            const bool is_acceptable = this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate, direction,
-                  predicted_reduction_model, this->step_length);
+            const bool is_acceptable = this->relaxation_strategy.is_acceptable(statistics, problem, scaling, current_iterate, trial_iterate,
+                  direction, predicted_reduction_model, this->step_length);
             // check whether the trial step is accepted
             if (is_acceptable) {
                this->add_statistics(statistics, direction);
@@ -58,7 +58,7 @@ current_iterate) {
                // assemble the (temporary) SOC trial iterate
                Iterate trial_iterate_soc = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction_soc, this->step_length);
 
-               if (this->relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate_soc, direction_soc,
+               if (this->relaxation_strategy.is_acceptable(statistics, problem, scaling, current_iterate, trial_iterate_soc, direction_soc,
                      predicted_reduction_model, this->step_length)) {
                   this->add_statistics(statistics, direction_soc);
                   statistics.add_statistic("SOC", "x");
@@ -89,7 +89,7 @@ current_iterate) {
          //assert(false && "LS max iterations");
          //if (0. < current_iterate.progress.feasibility && !direction.is_relaxed) {
          // reset the line search with the restoration solution
-         direction = this->relaxation_strategy.solve_feasibility_problem(statistics, problem, current_iterate, direction);
+         direction = this->relaxation_strategy.solve_feasibility_problem(statistics, problem, scaling, current_iterate, direction);
          BacktrackingLineSearch::check_unboundedness(direction);
          this->step_length = 1.;
          this->number_iterations = 0;

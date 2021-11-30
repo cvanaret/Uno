@@ -11,16 +11,18 @@ SLP::SLP(const Problem& problem, size_t max_number_variables, const Options& opt
    }
 }
 
-void SLP::create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) {
+void SLP::create_current_subproblem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier,
+      double trust_region_radius) {
    copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
    // compute first- and second-order information
    problem.evaluate_constraints(current_iterate.x, current_iterate.constraints);
    for (auto& row: this->constraints_jacobian) {
       row.clear();
    }
-   problem.evaluate_constraint_jacobian(current_iterate.x, this->constraints_jacobian);
+   current_iterate.evaluate_constraints_jacobian(problem, scaling);
+   this->constraints_jacobian = current_iterate.constraints_jacobian;
 
-   this->build_objective_model(problem, current_iterate, objective_multiplier);
+   this->build_objective_model(problem, scaling, current_iterate, objective_multiplier);
 
    // bounds of the variables
    this->set_variables_bounds(problem, current_iterate, trust_region_radius);
@@ -32,9 +34,9 @@ void SLP::create_current_subproblem(const Problem& problem, Iterate& current_ite
    initialize_vector(this->initial_point, 0.);
 }
 
-void SLP::build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
+void SLP::build_objective_model(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier) {
    // objective gradient
-   this->set_scaled_objective_gradient(problem, current_iterate, objective_multiplier);
+   this->set_scaled_objective_gradient(problem, scaling, current_iterate, objective_multiplier);
 
    // initial point
    initialize_vector(this->initial_point, 0.);

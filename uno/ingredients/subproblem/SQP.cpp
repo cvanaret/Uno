@@ -12,18 +12,19 @@ SQP::SQP(const Problem& problem, size_t max_number_variables, const Options& opt
       initial_point(max_number_variables) {
 }
 
-void SQP::create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) {
+void SQP::create_current_subproblem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier,
+      double trust_region_radius) {
    copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
 
    // constraints
-   current_iterate.evaluate_constraints(problem);
+   current_iterate.evaluate_constraints(problem, scaling);
 
    // constraint Jacobian
-   current_iterate.evaluate_constraints_jacobian(problem);
+   current_iterate.evaluate_constraints_jacobian(problem, scaling);
    this->constraints_jacobian = current_iterate.constraints_jacobian;
 
    // objective
-   this->build_objective_model(problem, current_iterate, objective_multiplier);
+   this->build_objective_model(problem, scaling, current_iterate, objective_multiplier);
 
    // bounds of the variables
    this->set_variables_bounds(problem, current_iterate, trust_region_radius);
@@ -35,12 +36,12 @@ void SQP::create_current_subproblem(const Problem& problem, Iterate& current_ite
    initialize_vector(this->initial_point, 0.);
 }
 
-void SQP::build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
+void SQP::build_objective_model(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier) {
    // Hessian
-   this->hessian_model->evaluate(problem, current_iterate.x, objective_multiplier, this->constraints_multipliers);
+   this->hessian_model->evaluate(problem, scaling, current_iterate.x, objective_multiplier, this->constraints_multipliers);
 
    // objective gradient
-   this->set_scaled_objective_gradient(problem, current_iterate, objective_multiplier);
+   this->set_scaled_objective_gradient(problem, scaling, current_iterate, objective_multiplier);
 
    // initial point
    initialize_vector(this->initial_point, 0.);

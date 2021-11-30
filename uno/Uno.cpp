@@ -2,6 +2,7 @@
 #include "Uno.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/Preprocessing.hpp"
+#include "optimization/Scaling.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/Timer.hpp"
@@ -13,7 +14,7 @@ Uno::Uno(GlobalizationMechanism& globalization_mechanism, const Options& options
       small_step_factor(std::stod(options.at("small_step_factor"))) {
 }
 
-Result Uno::solve(const Problem& problem, Iterate& current_iterate, bool enforce_linear_constraints) {
+Result Uno::solve(const Problem& problem, Iterate& current_iterate, bool scale_functions, bool enforce_linear_constraints) {
    Timer timer{};
    timer.start();
    size_t major_iterations = 0;
@@ -24,12 +25,24 @@ Result Uno::solve(const Problem& problem, Iterate& current_iterate, bool enforce
 
    // project x into the bounds
    problem.project_point_in_bounds(current_iterate.x);
+
+   // initialize the function scaling
+   Scaling scaling(problem.number_constraints, 100.);
+   // function scaling
+   if (scale_functions) {
+      // evaluate the gradients
+      current_iterate.evaluate_objective_gradient(problem, scaling);
+      current_iterate.evaluate_constraints_jacobian(problem, scaling);
+      scaling.compute(current_iterate.objective_gradient, current_iterate.constraints_jacobian);
+   }
+   // linear constraints feasible at initial point
    if (enforce_linear_constraints) {
-      Preprocessing::enforce_linear_constraints(problem, current_iterate);
+      Preprocessing::enforce_linear_constraints(problem, scaling, current_iterate);
    }
    Statistics statistics = Uno::create_statistics();
+
    // use the current point to initialize the strategies and generate the initial iterate
-   this->globalization_mechanism.initialize(statistics, problem, current_iterate);
+   this->globalization_mechanism.initialize(statistics, problem, scaling, current_iterate);
 
    TerminationStatus termination_status = NOT_OPTIMAL;
    try {
@@ -41,7 +54,7 @@ Result Uno::solve(const Problem& problem, Iterate& current_iterate, bool enforce
          DEBUG << "Current iterate\n" << current_iterate << "\n";
 
          // compute an acceptable iterate by solving a subproblem at the current point
-         auto [new_iterate, direction_norm] = this->globalization_mechanism.compute_acceptable_iterate(statistics, problem, current_iterate);
+         auto [new_iterate, direction_norm] = this->globalization_mechanism.compute_acceptable_iterate(statistics, problem, scaling, current_iterate);
 
          Uno::add_statistics(statistics, new_iterate, major_iterations);
          if (Logger::logger_level == INFO) statistics.print_current_line();
@@ -59,7 +72,7 @@ Result Uno::solve(const Problem& problem, Iterate& current_iterate, bool enforce
 
    const size_t number_subproblems_solved = this->globalization_mechanism.get_number_subproblems_solved();
    const size_t hessian_evaluation_count = this->globalization_mechanism.get_hessian_evaluation_count();
-   Result result = {termination_status, std::move(current_iterate), problem.number_variables, problem.number_constraints, major_iterations,
+   Result result = {termination_status, std::move(current_iterate), scaling, problem.number_variables, problem.number_constraints, major_iterations,
          timer.get_duration(), Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_jacobian, hessian_evaluation_count,
           number_subproblems_solved};
    return result;

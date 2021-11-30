@@ -20,10 +20,15 @@ ExactHessian::ExactHessian(size_t dimension, size_t hessian_maximum_number_nonze
    HessianModel(dimension, hessian_maximum_number_nonzeros, options.at("sparse_format")) {
 }
 
-void ExactHessian::evaluate(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
+void ExactHessian::evaluate(const Problem& problem, const Scaling& scaling, const std::vector<double>& primal_variables, double objective_multiplier,
       const std::vector<double>& constraint_multipliers) {
    // evaluate Lagrangian Hessian
-   problem.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, *this->hessian);
+   const double scaled_objective_multiplier = objective_multiplier*scaling.get_objective_scaling();
+   std::vector<double> scaled_multipliers(problem.number_constraints);
+   for (size_t j = 0; j < problem.number_constraints; j++) {
+      scaled_multipliers[j] = scaling.get_constraint_scaling(j)*constraint_multipliers[j];
+   }
+   problem.evaluate_lagrangian_hessian(primal_variables, scaled_objective_multiplier, scaled_multipliers, *this->hessian);
    this->evaluation_count++;
 }
 
@@ -34,10 +39,15 @@ ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t hessian_maximum_
       regularization_initial_value(stod(options.at("regularization_initial_value"))) {
 }
 
-void ConvexifiedHessian::evaluate(const Problem& problem, const std::vector<double>& primal_variables,
+void ConvexifiedHessian::evaluate(const Problem& problem, const Scaling& scaling, const std::vector<double>& primal_variables,
       double objective_multiplier, const std::vector<double>& constraint_multipliers) {
    // evaluate Lagrangian Hessian
-   problem.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, *this->hessian);
+   const double scaled_objective_multiplier = objective_multiplier*scaling.get_objective_scaling();
+   std::vector<double> scaled_multipliers(problem.number_constraints);
+   for (size_t j = 0; j < problem.number_constraints; j++) {
+      scaled_multipliers[j] = scaling.get_constraint_scaling(j)*constraint_multipliers[j];
+   }
+   problem.evaluate_lagrangian_hessian(primal_variables, scaled_objective_multiplier, scaled_multipliers, *this->hessian);
    this->evaluation_count++;
    // regularize (only on the original variables) to make the problem strictly convex
    DEBUG << "hessian before convexification: " << *this->hessian;

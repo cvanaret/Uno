@@ -16,10 +16,10 @@ Subproblem::Subproblem(size_t number_variables, size_t max_number_variables, siz
    }
 }
 
-void Subproblem::initialize(Statistics& /*statistics*/, const Problem& problem, Iterate& first_iterate) {
+void Subproblem::initialize(Statistics& /*statistics*/, const Problem& problem, const Scaling& scaling, Iterate& first_iterate) {
    // compute the optimality and feasibility measures of the initial point
-   first_iterate.evaluate_constraints(problem);
-   this->compute_progress_measures(problem, first_iterate);
+   first_iterate.evaluate_constraints(problem, scaling);
+   this->compute_progress_measures(problem, scaling, first_iterate);
 }
 
 void Subproblem::add_variable(size_t i, double /*current_value*/, const Range& bounds, double objective_term, size_t j, double jacobian_term) {
@@ -39,12 +39,12 @@ void Subproblem::remove_variable(size_t i, size_t j) {
    this->number_variables--;
 }
 
-void Subproblem::compute_progress_measures(const Problem& problem, Iterate& iterate) {
-   iterate.evaluate_constraints(problem);
+void Subproblem::compute_progress_measures(const Problem& problem, const Scaling& scaling, Iterate& iterate) {
+   iterate.evaluate_constraints(problem, scaling);
    // feasibility measure: residual of all constraints
-   iterate.errors.constraints = problem.compute_constraint_violation(iterate.constraints, L1_NORM);
+   iterate.errors.constraints = problem.compute_constraint_violation(scaling, iterate.constraints, L1_NORM);
    // optimality
-   iterate.evaluate_objective(problem);
+   iterate.evaluate_objective(problem, scaling);
    iterate.progress = {iterate.errors.constraints, iterate.objective};
 }
 
@@ -77,9 +77,10 @@ void Subproblem::set_constraints_bounds(const Problem& problem, const std::vecto
    }
 }
 
-void Subproblem::set_scaled_objective_gradient(const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
+void Subproblem::set_scaled_objective_gradient(const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
+      double objective_multiplier) {
    // scale objective gradient
-   current_iterate.evaluate_objective_gradient(problem);
+   current_iterate.evaluate_objective_gradient(problem, scaling);
    if (objective_multiplier == 0.) {
       this->objective_gradient.clear();
    }
@@ -119,13 +120,13 @@ constraint_partition) {
    }
 }
 
-double Subproblem::compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier) {
-   iterate.evaluate_lagrangian_gradient(problem, objective_multiplier, iterate.multipliers);
+double Subproblem::compute_first_order_error(const Problem& problem, const Scaling& scaling, Iterate& iterate, double objective_multiplier) {
+   iterate.evaluate_lagrangian_gradient(problem, scaling, objective_multiplier, iterate.multipliers);
    return norm_1(iterate.lagrangian_gradient);
 }
 
 // complementary slackness error
-double Subproblem::compute_complementarity_error(const Problem& problem, Iterate& iterate, const Multipliers& multipliers) {
+double Subproblem::compute_complementarity_error(const Problem& problem, const Scaling& scaling, Iterate& iterate, const Multipliers& multipliers) {
    double error = 0.;
    // bound constraints
    for (size_t i = 0; i < problem.number_variables; i++) {
@@ -137,35 +138,37 @@ double Subproblem::compute_complementarity_error(const Problem& problem, Iterate
       }
    }
    // constraints
-   iterate.evaluate_constraints(problem);
+   iterate.evaluate_constraints(problem, scaling);
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      double multiplier_j = multipliers.constraints[j];
-      if (iterate.constraints[j] < problem.constraint_bounds[j].lb) {
+      const double multiplier_j = multipliers.constraints[j];
+      const double scaled_lower_bound = scaling.get_constraint_scaling(j)*problem.constraint_bounds[j].lb;
+      const double scaled_upper_bound = scaling.get_constraint_scaling(j)*problem.constraint_bounds[j].ub;
+      if (iterate.constraints[j] < scaled_lower_bound) {
          // violated lower: the multiplier is 1 at optimum
-         error += std::abs((1. - multiplier_j) * (problem.constraint_bounds[j].lb - iterate.constraints[j]));
+         error += std::abs((1. - multiplier_j) * (scaled_lower_bound - iterate.constraints[j]));
       }
-      else if (problem.constraint_bounds[j].ub < iterate.constraints[j]) {
+      else if (scaled_upper_bound < iterate.constraints[j]) {
          // violated upper: the multiplier is -1 at optimum
-         error += std::abs((1. + multiplier_j) * (iterate.constraints[j] - problem.constraint_bounds[j].ub));
+         error += std::abs((1. + multiplier_j) * (iterate.constraints[j] - scaled_upper_bound));
       }
-      else if (is_finite_lower_bound(problem.constraint_bounds[j].lb) && 0. < multiplier_j) {
-         error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraint_bounds[j].lb));
+      else if (is_finite_lower_bound(scaled_lower_bound) && 0. < multiplier_j) {
+         error += std::abs(multiplier_j * (iterate.constraints[j] - scaled_lower_bound));
       }
-      else if (is_finite_upper_bound(problem.constraint_bounds[j].ub) && multiplier_j < 0.) {
-         error += std::abs(multiplier_j * (iterate.constraints[j] - problem.constraint_bounds[j].ub));
+      else if (is_finite_upper_bound(scaled_upper_bound) && multiplier_j < 0.) {
+         error += std::abs(multiplier_j * (iterate.constraints[j] - scaled_upper_bound));
       }
    }
    return error;
 }
 
-void Subproblem::compute_optimality_conditions(const Problem& problem, Iterate& iterate, double objective_multiplier) {
-   iterate.evaluate_objective(problem);
-   iterate.evaluate_constraints(problem);
-   iterate.errors.constraints = problem.compute_constraint_violation(iterate.constraints, L1_NORM);
+void Subproblem::compute_optimality_conditions(const Problem& problem, const Scaling& scaling, Iterate& iterate, double objective_multiplier) {
+   iterate.evaluate_objective(problem, scaling);
+   iterate.evaluate_constraints(problem, scaling);
+   iterate.errors.constraints = problem.compute_constraint_violation(scaling, iterate.constraints, L1_NORM);
    // compute the KKT error only if the objective multiplier is positive
-   iterate.errors.KKT = Subproblem::compute_first_order_error(problem, iterate, 0. < objective_multiplier ? objective_multiplier : 1.);
-   iterate.errors.FJ = Subproblem::compute_first_order_error(problem, iterate, 0.);
-   iterate.errors.complementarity = Subproblem::compute_complementarity_error(problem, iterate, iterate.multipliers);
+   iterate.errors.KKT = Subproblem::compute_first_order_error(problem, scaling, iterate, 0. < objective_multiplier ? objective_multiplier : 1.);
+   iterate.errors.FJ = Subproblem::compute_first_order_error(problem, scaling, iterate, 0.);
+   iterate.errors.complementarity = Subproblem::compute_complementarity_error(problem, scaling, iterate, iterate.multipliers);
 }
 
 Direction Subproblem::compute_second_order_correction(const Problem& /*problem*/, Iterate& /*trial_iterate*/) {
