@@ -8,13 +8,13 @@ FilterStrategy::FilterStrategy(const Options& options) :
                   stod(options.at("filter_Delta")),
                   stod(options.at("filter_ubd")),
                   stod(options.at("filter_fact")),
-                  stod(options.at("filter_infeasibility_exponent")),
+                  stod(options.at("filter_switching_infeasibility_exponent")),
                   stod(options.at("filter_armijo_tolerance"))}) {
 }
 
 void FilterStrategy::initialize(Statistics& /*statistics*/, const Iterate& first_iterate) {
    // set the filter upper bound
-   double upper_bound = std::max(this->parameters.upper_bound, this->parameters.infeasibility_factor * first_iterate.progress.infeasibility);
+   double upper_bound = std::max(this->parameters.upper_bound, this->parameters.infeasibility_fraction * first_iterate.progress.infeasibility);
    this->filter->upper_bound = upper_bound;
    this->initial_filter_upper_bound = upper_bound;
 }
@@ -79,7 +79,7 @@ bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, const Progress
 }
 
 bool FilterStrategy::switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const {
-   return predicted_reduction > switching_fraction * std::pow(current_infeasibility, this->parameters.infeasibility_exponent);
+   return predicted_reduction > switching_fraction * std::pow(current_infeasibility, this->parameters.switching_infeasibility_exponent);
 }
 
 bool FilterStrategy::armijo_condition(double predicted_reduction, double actual_reduction, double decrease_fraction) const {

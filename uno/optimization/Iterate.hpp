@@ -54,7 +54,7 @@ public:
    void evaluate_constraints_jacobian(const Problem& problem, const Scaling& scaling);
    void evaluate_lagrangian_gradient(const Problem& problem, const Scaling& scaling, double objective_multiplier, const Multipliers& multipliers);
 
-   void change_number_variables(size_t number_variables);
+   void adjust_number_variables(size_t number_variables);
 
    friend std::ostream& operator<<(std::ostream& stream, const Iterate& iterate);
 };

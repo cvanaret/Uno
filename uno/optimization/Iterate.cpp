@@ -91,7 +91,7 @@ void Iterate::evaluate_lagrangian_gradient(const Problem& problem, const Scaling
    }
 }
 
-void Iterate::change_number_variables(size_t number_variables) {
+void Iterate::adjust_number_variables(size_t number_variables) {
    this->x.resize(number_variables);
    this->multipliers.lower_bounds.resize(number_variables);
    this->multipliers.upper_bounds.resize(number_variables);
