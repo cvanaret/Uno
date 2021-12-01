@@ -68,6 +68,7 @@ Result Uno::solve(const Problem& problem, Iterate& current_iterate, bool scale_f
       ERROR << exception.what();
    }
    if (Logger::logger_level == INFO) statistics.print_footer();
+   Uno::postsolve_solution(problem, scaling, current_iterate);
    timer.stop();
 
    const size_t number_subproblems_solved = this->globalization_mechanism.get_number_subproblems_solved();
@@ -127,19 +128,27 @@ TerminationStatus Uno::check_termination(const Problem& problem, Iterate& curren
          status = INFEASIBLE_SMALL_STEP;
       }
    }
+   return status;
+}
 
-   // if convergence, scale the multipliers with the objective multiplier
-   if (status != NOT_OPTIMAL && 0. < current_iterate.multipliers.objective && current_iterate.multipliers.objective != 1.) {
-      const double objective_multiplier = current_iterate.multipliers.objective;
-      for (double& multiplier_j: current_iterate.multipliers.constraints) {
-         multiplier_j /= objective_multiplier;
+void Uno::postsolve_solution(const Problem& problem, const Scaling& scaling, Iterate& current_iterate) {
+   // remove auxiliary variables
+   current_iterate.adjust_number_variables(problem.number_variables);
+
+   // objective value
+   current_iterate.objective /= scaling.get_objective_scaling();
+
+   // unscale the multipliers and the function values
+   if (0. < current_iterate.multipliers.objective) {
+      const double scaled_objective_multiplier = scaling.get_objective_scaling()*current_iterate.multipliers.objective;
+      for (size_t j = 0; j < problem.number_constraints; j++) {
+         current_iterate.multipliers.constraints[j] *= scaling.get_constraint_scaling(j)/scaled_objective_multiplier;
       }
-      for (size_t i = 0; i < number_variables; i++) {
-         current_iterate.multipliers.lower_bounds[i] /= objective_multiplier;
-         current_iterate.multipliers.upper_bounds[i] /= objective_multiplier;
+      for (size_t i = 0; i < problem.number_variables; i++) {
+         current_iterate.multipliers.lower_bounds[i] /= scaled_objective_multiplier;
+         current_iterate.multipliers.upper_bounds[i] /= scaled_objective_multiplier;
       }
    }
-   return status;
 }
 
 void Result::print(bool print_solution) const {

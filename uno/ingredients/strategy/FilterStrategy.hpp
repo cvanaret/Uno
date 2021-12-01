@@ -16,8 +16,8 @@ struct FilterStrategyParameters {
    double decrease_fraction; /*!< Sufficient reduction constant */
    double delta; /*!< Switching constant */
    double upper_bound;
-   double infeasibility_factor;
-   double infeasibility_exponent;
+   double infeasibility_fraction;
+   double switching_infeasibility_exponent;
    double armijo_tolerance;
 };
 

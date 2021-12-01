@@ -48,23 +48,6 @@ void run_uno_ampl(const std::string& problem_name, const Options& options) {
    const bool enforce_linear_constraints = (options.at("enforce_linear_constraints") == "yes");
    Result result = uno.solve(*problem, first_iterate, scale_functions, enforce_linear_constraints);
 
-   // remove auxiliary variables
-   result.solution.x.resize(problem->number_variables);
-   result.solution.multipliers.lower_bounds.resize(problem->number_variables);
-   result.solution.multipliers.upper_bounds.resize(problem->number_variables);
-
-   // unscale
-   /*
-   result.solution.objective /= result.scaling.get_objective_scaling();
-   for (size_t i = 0; i < result.solution.x.size(); i++) {
-      result.solution.multipliers.lower_bounds[i] /= result.scaling.get_objective_scaling();
-      result.solution.multipliers.upper_bounds[i] /= result.scaling.get_objective_scaling();
-   }
-   for (size_t j = 0; j < result.solution.multipliers.constraints.size(); j++) {
-      result.solution.multipliers.constraints[j] /= result.scaling.get_objective_scaling();
-   }
-    */
-
    const bool print_solution = (options.at("print_solution") == "yes");
    result.print(print_solution);
    INFO << "Heap allocations: " << total_allocations << "\n";

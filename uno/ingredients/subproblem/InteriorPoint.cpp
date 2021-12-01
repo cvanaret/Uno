@@ -91,7 +91,7 @@ inline void InteriorPoint::initialize(Statistics& statistics, const Problem& pro
    statistics.add_column("barrier param.", Statistics::double_width, 8);
 
    // resize to the new size (primals + slacks)
-   first_iterate.change_number_variables(this->number_variables);
+   first_iterate.adjust_number_variables(this->number_variables);
 
    // make the initial point strictly feasible wrt the bounds
    for (size_t i = 0; i < problem.number_variables; i++) {
@@ -290,6 +290,7 @@ void InteriorPoint::update_barrier_parameter(const Iterate& current_iterate) {
    const double KKTerror = current_iterate.errors.KKT / sd;
    const double central_complementarity_error = this->compute_central_complementarity_error(current_iterate);
    const double error = std::max({KKTerror, current_iterate.errors.constraints, central_complementarity_error});
+   DEBUG << "KKT error for barrier subproblem is " << error << "\n";
 
    // update of the barrier problem
    while (error <= this->parameters.k_epsilon * this->barrier_parameter && tolerance_fraction < this->barrier_parameter) {
