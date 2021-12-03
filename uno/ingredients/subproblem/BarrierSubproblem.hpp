@@ -1,5 +1,5 @@
-#ifndef IPM_H
-#define IPM_H
+#ifndef BARRIERSUBPROBLEM_H
+#define BARRIERSUBPROBLEM_H
 
 #include <exception>
 #include "Subproblem.hpp"
@@ -83,4 +83,4 @@ private:
    void print_solution(const Problem& problem, double primal_step_length, double dual_step_length) const;
 };
 
-#endif // IPM_H
+#endif // BARRIERSUBPROBLEM_H

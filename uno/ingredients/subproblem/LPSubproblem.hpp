@@ -1,5 +1,5 @@
-#ifndef SLP_H
-#define SLP_H
+#ifndef LPSUBPROBLEM_H
+#define LPSUBPROBLEM_H
 
 #include "Subproblem.hpp"
 #include "solvers/QP/LPSolver.hpp"
@@ -23,4 +23,4 @@ private:
    std::vector<double> initial_point;
 };
 
-#endif // SLP_H
+#endif // LPSUBPROBLEM_H
