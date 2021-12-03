@@ -1,7 +1,7 @@
-#include "SLP.hpp"
+#include "LPSubproblem.hpp"
 #include "solvers/QP/LPSolverFactory.hpp"
 
-SLP::SLP(const Problem& problem, size_t max_number_variables, const Options& options) :
+LPSubproblem::LPSubproblem(const Problem& problem, size_t max_number_variables, const Options& options) :
       Subproblem(problem.number_variables, max_number_variables, problem.number_constraints, NO_SOC, false),
       solver(LPSolverFactory::create(max_number_variables, problem.number_constraints, options.at("LP_solver"))),
       initial_point(max_number_variables) {
@@ -11,7 +11,7 @@ SLP::SLP(const Problem& problem, size_t max_number_variables, const Options& opt
    }
 }
 
-void SLP::create_current_subproblem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier,
+void LPSubproblem::create_current_subproblem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier,
       double trust_region_radius) {
    copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
    // compute first- and second-order information
@@ -34,7 +34,7 @@ void SLP::create_current_subproblem(const Problem& problem, const Scaling& scali
    initialize_vector(this->initial_point, 0.);
 }
 
-void SLP::build_objective_model(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier) {
+void LPSubproblem::build_objective_model(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier) {
    // objective gradient
    this->set_scaled_objective_gradient(problem, scaling, current_iterate, objective_multiplier);
 
@@ -42,11 +42,11 @@ void SLP::build_objective_model(const Problem& problem, const Scaling& scaling, 
    initialize_vector(this->initial_point, 0.);
 }
 
-void SLP::set_initial_point(const std::vector<double>& point) {
+void LPSubproblem::set_initial_point(const std::vector<double>& point) {
    copy_from(this->initial_point, point);
 }
 
-Direction SLP::solve(Statistics& /*statistics*/, const Problem& problem, Iterate& current_iterate) {
+Direction LPSubproblem::solve(Statistics& /*statistics*/, const Problem& problem, Iterate& current_iterate) {
    // solve the LP
    Direction direction = this->solver->solve_LP(this->variables_bounds, this->constraints_bounds, this->objective_gradient,
          this->constraints_jacobian, this->initial_point);
@@ -59,7 +59,7 @@ Direction SLP::solve(Statistics& /*statistics*/, const Problem& problem, Iterate
    return direction;
 }
 
-PredictedReductionModel SLP::generate_predicted_reduction_model(const Problem& /*problem*/, const Direction& direction) const {
+PredictedReductionModel LPSubproblem::generate_predicted_reduction_model(const Problem& /*problem*/, const Direction& direction) const {
    return PredictedReductionModel(-direction.objective, [&]() { // capture direction by reference
       // return a function of the step length that cheaply assembles the predicted reduction
       return [=](double step_length) { // capture the expensive quantities by value
@@ -68,7 +68,7 @@ PredictedReductionModel SLP::generate_predicted_reduction_model(const Problem& /
    });
 }
 
-size_t SLP::get_hessian_evaluation_count() const {
+size_t LPSubproblem::get_hessian_evaluation_count() const {
    // no second order evaluation is used
    return 0;
 }

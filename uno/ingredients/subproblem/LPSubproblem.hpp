@@ -1,14 +1,13 @@
-#ifndef SQP_H
-#define SQP_H
+#ifndef SLP_H
+#define SLP_H
 
 #include "Subproblem.hpp"
-#include "HessianModel.hpp"
-#include "solvers/QP/QPSolver.hpp"
+#include "solvers/QP/LPSolver.hpp"
 #include "tools/Options.hpp"
 
-class SQP : public Subproblem {
+class LPSubproblem : public Subproblem {
 public:
-   SQP(const Problem& problem, size_t max_number_variables, const Options& options);
+   LPSubproblem(const Problem& problem, size_t max_number_variables, const Options& options);
 
    void create_current_subproblem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier,
          double trust_region_radius) override;
@@ -18,11 +17,10 @@ public:
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
-protected:
+private:
    // use pointers to allow polymorphism
-   const std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
-   const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
+   const std::unique_ptr<LPSolver> solver; /*!< Solver that solves the subproblem */
    std::vector<double> initial_point;
 };
 
-#endif // SQP_H
+#endif // SLP_H

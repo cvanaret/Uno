@@ -26,7 +26,7 @@ _uno_ampl_completions()
             return 0
             ;;
 		-subproblem)
-			local subproblems="SQP SLP IPM"
+			local subproblems="QP LP barrier"
             COMPREPLY=( $(compgen -W "${subproblems}" -- ${cur}) )
             return 0
             ;;

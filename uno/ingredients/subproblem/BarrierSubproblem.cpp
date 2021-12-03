@@ -1,9 +1,9 @@
-#include "InteriorPoint.hpp"
+#include "BarrierSubproblem.hpp"
 #include "solvers/linear/LinearSolverFactory.hpp"
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
 #include "optimization/Preprocessing.hpp"
 
-InteriorPoint::InteriorPoint(const Problem& problem, size_t max_number_variables, const Options& options):
+BarrierSubproblem::BarrierSubproblem(const Problem& problem, size_t max_number_variables, const Options& options):
       // add the slacks to the variables
       Subproblem(problem.number_variables + problem.inequality_constraints.size(), // number_variables
             max_number_variables + problem.inequality_constraints.size(), // max_number_variables
@@ -71,11 +71,11 @@ InteriorPoint::InteriorPoint(const Problem& problem, size_t max_number_variables
    }
 }
 
-void InteriorPoint::set_initial_point(const std::vector<double>& /*initial_point*/) {
+void BarrierSubproblem::set_initial_point(const std::vector<double>& /*initial_point*/) {
    // do nothing
 }
 
-void InteriorPoint::set_constraints(const Problem& problem, const Scaling& scaling, Iterate& iterate) {
+void BarrierSubproblem::set_constraints(const Problem& problem, const Scaling& scaling, Iterate& iterate) {
    iterate.evaluate_constraints(problem, scaling);
    // transform the constraints into "= 0" equalities
    for (const auto& element: problem.equality_constraints) {
@@ -87,7 +87,7 @@ void InteriorPoint::set_constraints(const Problem& problem, const Scaling& scali
    }
 }
 
-inline void InteriorPoint::initialize(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& first_iterate) {
+inline void BarrierSubproblem::initialize(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& first_iterate) {
    statistics.add_column("barrier param.", Statistics::double_width, 8);
 
    // resize to the new size (primals + slacks)
@@ -127,7 +127,7 @@ inline void InteriorPoint::initialize(Statistics& statistics, const Problem& pro
    this->compute_progress_measures(problem, scaling, first_iterate);
 }
 
-void InteriorPoint::create_current_subproblem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier,
+void BarrierSubproblem::create_current_subproblem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier,
       double trust_region_radius) {
    // update the barrier parameter if the current iterate solves the subproblem
    this->update_barrier_parameter(current_iterate);
@@ -153,7 +153,7 @@ void InteriorPoint::create_current_subproblem(const Problem& problem, const Scal
    this->set_variables_bounds(problem, current_iterate, trust_region_radius);
 }
 
-void InteriorPoint::build_objective_model(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier) {
+void BarrierSubproblem::build_objective_model(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier) {
    // evaluate the Hessian
    this->hessian_model->evaluate(problem, scaling, current_iterate.x, objective_multiplier, this->constraints_multipliers);
 
@@ -167,7 +167,7 @@ void InteriorPoint::build_objective_model(const Problem& problem, const Scaling&
    }
 }
 
-Direction InteriorPoint::solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
+Direction BarrierSubproblem::solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
    this->iteration++;
    // set up the augmented system (with the right inertia)
    this->hessian_model->adjust_number_variables(this->number_variables);
@@ -188,7 +188,7 @@ Direction InteriorPoint::solve(Statistics& statistics, const Problem& problem, I
 //      throw "InteriorPoint: inertia correction failed";
 //   }
 
-void InteriorPoint::assemble_augmented_system(const Problem& problem) {
+void BarrierSubproblem::assemble_augmented_system(const Problem& problem) {
    // assemble, factorize and regularize the KKT matrix
    this->assemble_augmented_matrix();
    this->augmented_system.factorize_matrix(problem, *this->linear_solver);
@@ -201,7 +201,7 @@ void InteriorPoint::assemble_augmented_system(const Problem& problem) {
    this->generate_augmented_rhs();
 }
 
-Direction InteriorPoint::compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) {
+Direction BarrierSubproblem::compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) {
    // save the current iterate locally
    this->set_current_iterate(trial_iterate);
 
@@ -224,7 +224,7 @@ Direction InteriorPoint::compute_second_order_correction(const Problem& problem,
    return this->direction;
 }
 
-void InteriorPoint::add_variable(size_t i, double current_value, const Range& bounds, double objective_term, size_t j, double jacobian_term) {
+void BarrierSubproblem::add_variable(size_t i, double current_value, const Range& bounds, double objective_term, size_t j, double jacobian_term) {
    // add the variable to the objective and the constraint Jacobian
    Subproblem::add_variable(i, current_value, bounds, objective_term, j, jacobian_term);
    // if necessary, register the variable as bounded
@@ -240,7 +240,7 @@ void InteriorPoint::add_variable(size_t i, double current_value, const Range& bo
    this->primal_iterate[i] = Subproblem::push_variable_to_interior(current_value, bounds);
 }
 
-void InteriorPoint::remove_variable(size_t i, size_t j) {
+void BarrierSubproblem::remove_variable(size_t i, size_t j) {
    // remove the variable to the objective and the constraint Jacobian
    Subproblem::remove_variable(i, j);
    this->lower_bounded_variables.erase(std::remove(this->lower_bounded_variables.begin(), this->lower_bounded_variables.end(), i),
@@ -249,14 +249,14 @@ void InteriorPoint::remove_variable(size_t i, size_t j) {
          this->upper_bounded_variables.end());
 }
 
-void InteriorPoint::print_soc_iteration(const Direction& direction_soc) const {
+void BarrierSubproblem::print_soc_iteration(const Direction& direction_soc) const {
    DEBUG << "Entered SOC computation\n";
    DEBUG << "KKT matrix:\n" << *this->augmented_system.matrix << "\n";
    DEBUG << "SOC RHS: "; print_vector(DEBUG, this->augmented_system.rhs, 0, this->number_variables + this->number_constraints);
    DEBUG << "\nSOC direction:\n" << direction_soc << "\n";
 }
 
-PredictedReductionModel InteriorPoint::generate_predicted_reduction_model(const Problem& /*problem*/,
+PredictedReductionModel BarrierSubproblem::generate_predicted_reduction_model(const Problem& /*problem*/,
       const Direction& direction) const {
    return PredictedReductionModel(-direction.objective, [&]() {
       return [=](double step_length) {
@@ -265,7 +265,7 @@ PredictedReductionModel InteriorPoint::generate_predicted_reduction_model(const 
    });
 }
 
-void InteriorPoint::compute_progress_measures(const Problem& problem, const Scaling& scaling, Iterate& iterate) {
+void BarrierSubproblem::compute_progress_measures(const Problem& problem, const Scaling& scaling, Iterate& iterate) {
    iterate.evaluate_constraints(problem, scaling);
    auto residual_function = [&](size_t j) {
       if (problem.constraint_status[j] == EQUAL_BOUNDS) {
@@ -283,7 +283,7 @@ void InteriorPoint::compute_progress_measures(const Problem& problem, const Scal
    iterate.progress = {constraint_violation, barrier_objective};
 }
 
-void InteriorPoint::update_barrier_parameter(const Iterate& current_iterate) {
+void BarrierSubproblem::update_barrier_parameter(const Iterate& current_iterate) {
    const double tolerance_fraction = this->tolerance / this->parameters.barrier_update_fraction;
    // scaled error terms
    const double sd = this->compute_KKT_error_scaling(current_iterate);
@@ -303,7 +303,7 @@ void InteriorPoint::update_barrier_parameter(const Iterate& current_iterate) {
    DEBUG << "mu is " << this->barrier_parameter << "\n";
 }
 
-void InteriorPoint::set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {
+void BarrierSubproblem::set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {
    // here, we work with the original bounds
    // very important: apply the trust region only on the original variables (not the slacks)
    for (size_t i = 0; i < problem.number_variables; i++) {
@@ -313,11 +313,11 @@ void InteriorPoint::set_variables_bounds(const Problem& problem, const Iterate& 
    }
 }
 
-double InteriorPoint::compute_barrier_directional_derivative(const std::vector<double>& solution) {
+double BarrierSubproblem::compute_barrier_directional_derivative(const std::vector<double>& solution) {
    return dot(solution, this->objective_gradient);
 }
 
-double InteriorPoint::evaluate_barrier_function(const Problem& problem, const Scaling& scaling, Iterate& iterate) {
+double BarrierSubproblem::evaluate_barrier_function(const Problem& problem, const Scaling& scaling, Iterate& iterate) {
    double objective = 0.;
    // bound constraints
    for (size_t i: this->lower_bounded_variables) {
@@ -333,7 +333,7 @@ double InteriorPoint::evaluate_barrier_function(const Problem& problem, const Sc
    return objective;
 }
 
-double InteriorPoint::primal_fraction_to_boundary(const std::vector<double>& ipm_solution, double tau) {
+double BarrierSubproblem::primal_fraction_to_boundary(const std::vector<double>& ipm_solution, double tau) {
    double primal_length = 1.;
    for (size_t i: this->lower_bounded_variables) {
       if (ipm_solution[i] < 0.) {
@@ -350,7 +350,7 @@ double InteriorPoint::primal_fraction_to_boundary(const std::vector<double>& ipm
    return primal_length;
 }
 
-double InteriorPoint::dual_fraction_to_boundary(double tau) {
+double BarrierSubproblem::dual_fraction_to_boundary(double tau) {
    double dual_length = 1.;
    for (size_t i = 0; i < this->number_variables; i++) {
       if (this->lower_delta_z[i] < 0.) {
@@ -365,7 +365,7 @@ double InteriorPoint::dual_fraction_to_boundary(double tau) {
    return dual_length;
 }
 
-void InteriorPoint::assemble_augmented_matrix() {
+void BarrierSubproblem::assemble_augmented_matrix() {
    this->augmented_system.matrix->reset();
    this->augmented_system.matrix->dimension = this->number_variables + this->number_constraints;
    // copy the Lagrangian Hessian in the top left block
@@ -395,7 +395,7 @@ void InteriorPoint::assemble_augmented_matrix() {
    }
 }
 
-void InteriorPoint::generate_augmented_rhs() {
+void BarrierSubproblem::generate_augmented_rhs() {
    // generate the right-hand side
    initialize_vector(this->augmented_system.rhs, 0.);
 
@@ -418,7 +418,7 @@ void InteriorPoint::generate_augmented_rhs() {
    DEBUG << "RHS: "; print_vector(DEBUG, this->augmented_system.rhs, 0, this->number_variables + this->number_constraints); DEBUG << "\n";
 }
 
-void InteriorPoint::compute_lower_bound_dual_direction(const std::vector<double>& solution) {
+void BarrierSubproblem::compute_lower_bound_dual_direction(const std::vector<double>& solution) {
    initialize_vector(this->lower_delta_z, 0.);
    for (size_t i: this->lower_bounded_variables) {
       const double distance_to_bound = this->primal_iterate[i] - this->variables_bounds[i].lb;
@@ -427,7 +427,7 @@ void InteriorPoint::compute_lower_bound_dual_direction(const std::vector<double>
    }
 }
 
-void InteriorPoint::compute_upper_bound_dual_direction(const std::vector<double>& solution) {
+void BarrierSubproblem::compute_upper_bound_dual_direction(const std::vector<double>& solution) {
    initialize_vector(this->upper_delta_z, 0.);
    for (size_t i: this->upper_bounded_variables) {
       const double distance_to_bound = this->primal_iterate[i] - this->variables_bounds[i].ub;
@@ -436,7 +436,7 @@ void InteriorPoint::compute_upper_bound_dual_direction(const std::vector<double>
    }
 }
 
-void InteriorPoint::generate_direction(const Problem& problem, const Iterate& current_iterate) {
+void BarrierSubproblem::generate_direction(const Problem& problem, const Iterate& current_iterate) {
    // retrieve +Δλ (Nocedal p590)
    for (size_t j = this->number_variables; j < this->augmented_system.solution.size(); j++) {
       this->augmented_system.solution[j] = -this->augmented_system.solution[j];
@@ -469,7 +469,7 @@ void InteriorPoint::generate_direction(const Problem& problem, const Iterate& cu
    this->print_solution(problem, primal_step_length, dual_step_length);
 }
 
-double InteriorPoint::compute_KKT_error_scaling(const Iterate& current_iterate) const {
+double BarrierSubproblem::compute_KKT_error_scaling(const Iterate& current_iterate) const {
    // KKT error
    const double norm_1_constraint_multipliers = norm_1(current_iterate.multipliers.constraints);
    const double norm_1_bound_multipliers = norm_1(current_iterate.multipliers.lower_bounds) + norm_1(current_iterate.multipliers.upper_bounds);
@@ -479,7 +479,7 @@ double InteriorPoint::compute_KKT_error_scaling(const Iterate& current_iterate) 
    return sd;
 }
 
-double InteriorPoint::compute_central_complementarity_error(const Iterate& iterate) const {
+double BarrierSubproblem::compute_central_complementarity_error(const Iterate& iterate) const {
    // variable bound constraints
    const auto residual_function = [&](size_t i) {
       double result = 0.;
@@ -498,13 +498,13 @@ double InteriorPoint::compute_central_complementarity_error(const Iterate& itera
    return norm_1(residual_function, this->number_variables) / sc;
 }
 
-void InteriorPoint::set_current_iterate(const Iterate& iterate) {
+void BarrierSubproblem::set_current_iterate(const Iterate& iterate) {
    copy_from(this->primal_iterate, iterate.x);
    copy_from(this->lower_bound_multipliers, iterate.multipliers.lower_bounds);
    copy_from(this->upper_bound_multipliers, iterate.multipliers.upper_bounds);
 }
 
-void InteriorPoint::register_accepted_iterate(Iterate& iterate) {
+void BarrierSubproblem::register_accepted_iterate(Iterate& iterate) {
    // rescale the bound multipliers (Eq (16) in Ipopt paper)
    for (size_t i: this->lower_bounded_variables) {
       const double coefficient = this->barrier_parameter / (iterate.x[i] - this->variables_bounds[i].lb);
@@ -522,11 +522,11 @@ void InteriorPoint::register_accepted_iterate(Iterate& iterate) {
    }
 }
 
-size_t InteriorPoint::get_hessian_evaluation_count() const {
+size_t BarrierSubproblem::get_hessian_evaluation_count() const {
    return this->hessian_model->evaluation_count;
 }
 
-void InteriorPoint::print_solution(const Problem& problem, double primal_step_length, double dual_step_length) const {
+void BarrierSubproblem::print_solution(const Problem& problem, double primal_step_length, double dual_step_length) const {
    DEBUG << "IPM solution:\n";
    DEBUG << "Δx: "; print_vector(DEBUG, this->augmented_system.solution, 0, problem.number_variables);
    DEBUG << "Δs: "; print_vector(DEBUG, this->augmented_system.solution, problem.number_variables, problem.inequality_constraints.size());
