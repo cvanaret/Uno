@@ -1,7 +1,7 @@
-#include "SQP.hpp"
+#include "QPSubproblem.hpp"
 #include "solvers/QP/QPSolverFactory.hpp"
 
-SQP::SQP(const Problem& problem, size_t max_number_variables, const Options& options) :
+QPSubproblem::QPSubproblem(const Problem& problem, size_t max_number_variables, const Options& options) :
       Subproblem(problem.number_variables, max_number_variables, problem.number_constraints, NO_SOC, true),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
       solver(QPSolverFactory::create(options.at("QP_solver"), max_number_variables, number_constraints,
@@ -12,7 +12,7 @@ SQP::SQP(const Problem& problem, size_t max_number_variables, const Options& opt
       initial_point(max_number_variables) {
 }
 
-void SQP::create_current_subproblem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier,
+void QPSubproblem::create_current_subproblem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier,
       double trust_region_radius) {
    copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
 
@@ -36,7 +36,7 @@ void SQP::create_current_subproblem(const Problem& problem, const Scaling& scali
    initialize_vector(this->initial_point, 0.);
 }
 
-void SQP::build_objective_model(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier) {
+void QPSubproblem::build_objective_model(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier) {
    // Hessian
    this->hessian_model->evaluate(problem, scaling, current_iterate.x, objective_multiplier, this->constraints_multipliers);
 
@@ -47,11 +47,11 @@ void SQP::build_objective_model(const Problem& problem, const Scaling& scaling, 
    initialize_vector(this->initial_point, 0.);
 }
 
-void SQP::set_initial_point(const std::vector<double>& point) {
+void QPSubproblem::set_initial_point(const std::vector<double>& point) {
    copy_from(this->initial_point, point);
 }
 
-Direction SQP::solve(Statistics& /*statistics*/, const Problem& problem, Iterate& current_iterate) {
+Direction QPSubproblem::solve(Statistics& /*statistics*/, const Problem& problem, Iterate& current_iterate) {
    this->hessian_model->adjust_number_variables(this->number_variables);
    // compute QP direction
    Direction direction = this->solver->solve_QP(this->variables_bounds, this->constraints_bounds, this->objective_gradient,
@@ -65,7 +65,7 @@ Direction SQP::solve(Statistics& /*statistics*/, const Problem& problem, Iterate
    return direction;
 }
 
-PredictedReductionModel SQP::generate_predicted_reduction_model(const Problem& /*problem*/, const Direction& direction) const {
+PredictedReductionModel QPSubproblem::generate_predicted_reduction_model(const Problem& /*problem*/, const Direction& direction) const {
    return PredictedReductionModel(-direction.objective, [&]() { // capture this and direction by reference
       // precompute expensive quantities
       const double linear_term = dot(direction.x, this->objective_gradient);
@@ -77,6 +77,6 @@ PredictedReductionModel SQP::generate_predicted_reduction_model(const Problem& /
    });
 }
 
-size_t SQP::get_hessian_evaluation_count() const {
+size_t QPSubproblem::get_hessian_evaluation_count() const {
    return this->hessian_model->evaluation_count;
 }

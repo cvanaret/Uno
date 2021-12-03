@@ -34,7 +34,7 @@ void find_preset(const std::string& preset, Options& options) {
       options["mechanism"] = "LS";
       options["constraint-relaxation"] = "feasibility-restoration";
       options["strategy"] = "filter";
-      options["subproblem"] = "IPM";
+      options["subproblem"] = "barrier";
       options["filter_Beta"] = "0.99999";
       options["filter_Gamma"] = "1e-5";
       options["armijo_decrease_fraction"] = "1e-4";
@@ -46,13 +46,13 @@ void find_preset(const std::string& preset, Options& options) {
       options["mechanism"] = "TR";
       options["constraint-relaxation"] = "feasibility-restoration";
       options["strategy"] = "filter";
-      options["subproblem"] = "SQP";
+      options["subproblem"] = "QP";
    }
    else if (preset == "byrd") {
       options["mechanism"] = "LS";
       options["constraint-relaxation"] = "l1-relaxation";
       options["strategy"] = "l1-penalty";
-      options["subproblem"] = "SQP";
+      options["subproblem"] = "QP";
       options["l1_relaxation_initial_parameter"] = "1";
       options["LS_backtracking_ratio"] = "0.5";
       options["armijo_decrease_fraction"] = "1e-8";

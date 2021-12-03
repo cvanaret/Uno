@@ -19,10 +19,10 @@ struct InteriorPointParameters {
    double regularization_barrier_exponent;
 };
 
-class InteriorPoint : public Subproblem {
+class BarrierSubproblem : public Subproblem {
 public:
-   InteriorPoint(const Problem& problem, size_t max_number_variables, const Options& options);
-   ~InteriorPoint() override = default;
+   BarrierSubproblem(const Problem& problem, size_t max_number_variables, const Options& options);
+   ~BarrierSubproblem() override = default;
 
    void set_initial_point(const std::vector<double>& initial_point) override;
    void set_constraints(const Problem& problem, const Scaling& scaling, Iterate& iterate);
