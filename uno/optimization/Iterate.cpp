@@ -17,7 +17,9 @@ Iterate::Iterate(size_t number_variables, size_t number_constraints) :
 
 void Iterate::evaluate_objective(const Problem& problem, const Scaling& scaling) {
    if (!this->is_objective_computed) {
+      // evaluate the objective
       this->objective = problem.evaluate_objective(this->x);
+      // scale the objective
       this->objective *= scaling.get_objective_scaling();
       this->is_objective_computed = true;
       Iterate::number_eval_objective++;
@@ -26,7 +28,9 @@ void Iterate::evaluate_objective(const Problem& problem, const Scaling& scaling)
 
 void Iterate::evaluate_constraints(const Problem& problem, const Scaling& scaling) {
    if (!this->are_constraints_computed) {
+      // evaluate the constraints
       problem.evaluate_constraints(this->x, this->constraints);
+      // scale the constraints
       for (size_t j = 0; j < problem.number_constraints; j++) {
          this->constraints[j] *= scaling.get_constraint_scaling(j);
       }
@@ -38,7 +42,9 @@ void Iterate::evaluate_constraints(const Problem& problem, const Scaling& scalin
 void Iterate::evaluate_objective_gradient(const Problem& problem, const Scaling& scaling) {
    if (!this->is_objective_gradient_computed) {
       this->objective_gradient.clear();
+      // evaluate the objective gradient
       problem.evaluate_objective_gradient(this->x, this->objective_gradient);
+      // scale the objective gradient
       scale(this->objective_gradient, scaling.get_objective_scaling());
       this->is_objective_gradient_computed = true;
    }
@@ -49,7 +55,9 @@ void Iterate::evaluate_constraints_jacobian(const Problem& problem, const Scalin
       for (auto& row: this->constraints_jacobian) {
          row.clear();
       }
+      // evaluate the constraint Jacobian
       problem.evaluate_constraint_jacobian(this->x, this->constraints_jacobian);
+      // scale the constraint Jacobian
       for (size_t j = 0; j < problem.number_constraints; j++) {
          scale(this->constraints_jacobian[j], scaling.get_constraint_scaling(j));
       }
@@ -58,7 +66,9 @@ void Iterate::evaluate_constraints_jacobian(const Problem& problem, const Scalin
    }
 }
 
-void Iterate::evaluate_lagrangian_gradient(const Problem& problem, const Scaling& scaling, double objective_multiplier, const Multipliers& multipliers) {
+void Iterate::evaluate_lagrangian_gradient(const Problem& problem, const Scaling& scaling, double objective_multiplier,
+      const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bounds_multipliers,
+      const std::vector<double>& upper_bounds_multipliers) {
    initialize_vector(this->lagrangian_gradient, 0.);
 
    // objective gradient
@@ -75,13 +85,13 @@ void Iterate::evaluate_lagrangian_gradient(const Problem& problem, const Scaling
    }
    // bound constraints
    for (size_t i = 0; i < problem.number_variables; i++) {
-      this->lagrangian_gradient[i] -= multipliers.lower_bounds[i] + multipliers.upper_bounds[i];
+      this->lagrangian_gradient[i] -= lower_bounds_multipliers[i] + upper_bounds_multipliers[i];
    }
 
    // constraints
    this->evaluate_constraints_jacobian(problem, scaling);
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      double multiplier_j = multipliers.constraints[j];
+      const double multiplier_j = constraint_multipliers[j];
       if (multiplier_j != 0.) {
          this->constraints_jacobian[j].for_each([&](size_t i, double derivative) {
             // in case there are additional variables, ignore them

@@ -7,7 +7,8 @@ BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& con
    GlobalizationMechanism(constraint_relaxation_strategy, std::stoi(options.at("LS_max_iterations"))),
    regularization_strategy(RegularizationStrategyFactory::create()),
    backtracking_ratio(std::stod(options.at("LS_backtracking_ratio"))),
-   min_step_length(std::stod(options.at("LS_min_step_length"))) {
+   min_step_length(std::stod(options.at("LS_min_step_length"))),
+   use_second_order_correction(options.at("use_second_order_correction") == "yes") {
    assert(0 < this->backtracking_ratio && this->backtracking_ratio < 1. && "The backtracking ratio should be in (0, 1)");
 }
 
@@ -50,9 +51,9 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
                this->relaxation_strategy.register_accepted_iterate(trial_iterate);
                return std::make_tuple(std::move(trial_iterate), direction.norm);
             }
-            else if (this->number_iterations == 1 && trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility &&
-                  this->relaxation_strategy.soc_strategy() == SOC_UPON_REJECTION) { // reject the full step: try a SOC step
-               // compute a (temporary) SOC direction
+            else if (this->use_second_order_correction && this->relaxation_strategy.soc_strategy() == SOC_UPON_REJECTION &&
+                  this->number_iterations == 1 && trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility) {
+               // reject the full step: compute a (temporary) SOC direction
                Direction direction_soc = this->relaxation_strategy.compute_second_order_correction(problem, trial_iterate);
 
                // assemble the (temporary) SOC trial iterate

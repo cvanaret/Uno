@@ -23,6 +23,7 @@ private:
    /* ratio of step length update in ]0, 1[ */
    const double backtracking_ratio;
    const double min_step_length;
+   const bool use_second_order_correction;
 
    bool termination();
    void print_iteration();

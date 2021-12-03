@@ -61,7 +61,9 @@ public:
    static double compute_first_order_error(const Problem& problem, const Scaling& scaling, Iterate& iterate, double objective_multiplier);
    static void compute_optimality_conditions(const Problem& problem, const Scaling& scaling, Iterate& iterate, double objective_multiplier) ;
 
-   static double compute_complementarity_error(const Problem& problem, const Scaling& scaling, Iterate& iterate, const Multipliers& multipliers);
+   static double compute_complementarity_error(const Problem& problem, const Scaling& scaling, Iterate& iterate,
+         const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bounds_multipliers,
+         const std::vector<double>& upper_bounds_multipliers);
 
    size_t number_variables; // can be updated on the fly (elastic variables)
    const size_t max_number_variables;

@@ -34,8 +34,6 @@ public:
 
    virtual bool is_acceptable(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, PredictedReductionModel& predicted_reduction_model, double step_length) = 0;
-   virtual double compute_predicted_reduction(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, const Direction& direction,
-         PredictedReductionModel& predicted_reduction_model, double step_length) = 0;
    virtual void register_accepted_iterate(Iterate& iterate);
 
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const;
