@@ -105,30 +105,29 @@ bool Uno::termination_criterion(TerminationStatus current_status, size_t iterati
    return current_status != NOT_OPTIMAL || this->max_iterations <= iteration;
 }
 
-TerminationStatus Uno::check_termination(const Problem& problem, Iterate& current_iterate, double step_norm) const {
-   TerminationStatus status = NOT_OPTIMAL;
+TerminationStatus Uno::check_termination(const Problem& problem, const Iterate& current_iterate, double step_norm) const {
    const size_t number_variables = current_iterate.x.size();
 
    if (current_iterate.errors.complementarity <= this->tolerance * static_cast<double>(number_variables + problem.number_constraints)) {
       // feasible and KKT point
       if (current_iterate.errors.KKT <= this->tolerance * std::sqrt(number_variables) &&
             current_iterate.errors.constraints <= this->tolerance * static_cast<double>(number_variables)) {
-         status = KKT_POINT;
+         return KKT_POINT;
       }
       // infeasible and FJ point
       else if (0 < problem.number_constraints && current_iterate.errors.FJ <= this->tolerance * std::sqrt(number_variables)) {
-         status = FJ_POINT;
+         return FJ_POINT;
       }
    }
-   else if (step_norm <= this->tolerance / this->small_step_factor) {
+   if (step_norm <= this->tolerance / this->small_step_factor) {
       if (current_iterate.errors.constraints <= this->tolerance * static_cast<double>(number_variables)) {
-         status = FEASIBLE_SMALL_STEP;
+         return FEASIBLE_SMALL_STEP;
       }
       else {
-         status = INFEASIBLE_SMALL_STEP;
+         return INFEASIBLE_SMALL_STEP;
       }
    }
-   return status;
+   return NOT_OPTIMAL;
 }
 
 void Uno::postsolve_solution(const Problem& problem, const Scaling& scaling, Iterate& current_iterate) {
@@ -139,15 +138,13 @@ void Uno::postsolve_solution(const Problem& problem, const Scaling& scaling, Ite
    current_iterate.objective /= scaling.get_objective_scaling();
 
    // unscale the multipliers and the function values
-   if (0. < current_iterate.multipliers.objective) {
-      const double scaled_objective_multiplier = scaling.get_objective_scaling()*current_iterate.multipliers.objective;
-      for (size_t j = 0; j < problem.number_constraints; j++) {
-         current_iterate.multipliers.constraints[j] *= scaling.get_constraint_scaling(j)/scaled_objective_multiplier;
-      }
-      for (size_t i = 0; i < problem.number_variables; i++) {
-         current_iterate.multipliers.lower_bounds[i] /= scaled_objective_multiplier;
-         current_iterate.multipliers.upper_bounds[i] /= scaled_objective_multiplier;
-      }
+   const double scaled_objective_multiplier = scaling.get_objective_scaling();
+   for (size_t j = 0; j < problem.number_constraints; j++) {
+      current_iterate.multipliers.constraints[j] *= scaling.get_constraint_scaling(j)/scaled_objective_multiplier;
+   }
+   for (size_t i = 0; i < problem.number_variables; i++) {
+      current_iterate.multipliers.lower_bounds[i] /= scaled_objective_multiplier;
+      current_iterate.multipliers.upper_bounds[i] /= scaled_objective_multiplier;
    }
 }
 
