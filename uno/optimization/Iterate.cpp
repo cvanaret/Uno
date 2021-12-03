@@ -67,6 +67,7 @@ void Iterate::evaluate_lagrangian_gradient(const Problem& problem, const Scaling
 
       // scale the objective gradient
       this->objective_gradient.for_each([&](size_t i, double derivative) {
+         // in case there are additional variables, ignore them
          if (i < problem.number_variables) {
             this->lagrangian_gradient[i] += objective_multiplier * derivative;
          }
@@ -83,6 +84,7 @@ void Iterate::evaluate_lagrangian_gradient(const Problem& problem, const Scaling
       double multiplier_j = multipliers.constraints[j];
       if (multiplier_j != 0.) {
          this->constraints_jacobian[j].for_each([&](size_t i, double derivative) {
+            // in case there are additional variables, ignore them
             if (i < problem.number_variables) {
                this->lagrangian_gradient[i] -= multiplier_j * derivative;
             }
