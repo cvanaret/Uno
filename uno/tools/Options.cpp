@@ -40,6 +40,7 @@ void find_preset(const std::string& preset, Options& options) {
       options["armijo_decrease_fraction"] = "1e-4";
       options["LS_backtracking_ratio"] = "0.5";
       options["filter_switching_infeasibility_exponent"] = "1.1";
+      options["use_second_order_correction"] = "yes";
    }
    else if (preset == "filtersqp") {
       options["mechanism"] = "TR";

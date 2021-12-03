@@ -6,9 +6,11 @@
 #include "tools/Options.hpp"
 
 struct l1RelaxationParameters {
+   bool fixed_parameter;
    double decrease_factor;
    double epsilon1;
    double epsilon2;
+   double small_threshold;
 };
 
 class l1Relaxation : public ConstraintRelaxationStrategy {
@@ -25,21 +27,22 @@ public:
 
    bool is_acceptable(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, PredictedReductionModel& predicted_reduction_model, double step_length) override;
-   double compute_predicted_reduction(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, const Direction& direction,
-         PredictedReductionModel& predicted_reduction_model, double step_length) override;
 
 protected:
    const std::unique_ptr<GlobalizationStrategy> globalization_strategy;
    double penalty_parameter;
    const l1RelaxationParameters parameters;
-   const double penalty_threshold;
+   // preallocated temporary multipliers
+   std::vector<double> constraint_multipliers;
 
+   static double compute_predicted_reduction(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, const Direction& direction,
+         PredictedReductionModel& predicted_reduction_model, double step_length);
    Direction solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate);
    Direction resolve_subproblem(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
          double objective_multiplier);
    Direction solve_with_steering_rule(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate);
    double compute_linearized_constraint_residual(std::vector<double>& direction) const;
-   static double compute_error(const Problem& problem, const Scaling& scaling, Iterate& iterate, Multipliers& multipliers_displacements,
+   double compute_error(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, const Multipliers& multipliers_displacements,
          double current_penalty_parameter);
    static void set_multipliers(const Problem& problem, const Iterate& current_iterate, std::vector<double>& constraints_multipliers);
 };

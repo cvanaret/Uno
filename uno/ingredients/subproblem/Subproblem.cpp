@@ -121,26 +121,29 @@ constraint_partition) {
 }
 
 double Subproblem::compute_first_order_error(const Problem& problem, const Scaling& scaling, Iterate& iterate, double objective_multiplier) {
-   iterate.evaluate_lagrangian_gradient(problem, scaling, objective_multiplier, iterate.multipliers);
+   iterate.evaluate_lagrangian_gradient(problem, scaling, objective_multiplier, iterate.multipliers.constraints, iterate.multipliers.lower_bounds,
+         iterate.multipliers.upper_bounds);
    return norm_1(iterate.lagrangian_gradient);
 }
 
 // complementary slackness error
-double Subproblem::compute_complementarity_error(const Problem& problem, const Scaling& scaling, Iterate& iterate, const Multipliers& multipliers) {
+double Subproblem::compute_complementarity_error(const Problem& problem, const Scaling& scaling, Iterate& iterate,
+      const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bounds_multipliers,
+      const std::vector<double>& upper_bounds_multipliers) {
    double error = 0.;
    // bound constraints
    for (size_t i = 0; i < problem.number_variables; i++) {
       if (is_finite_lower_bound(problem.variables_bounds[i].lb)) {
-         error += std::abs(multipliers.lower_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].lb));
+         error += std::abs(lower_bounds_multipliers[i] * (iterate.x[i] - problem.variables_bounds[i].lb));
       }
       if (is_finite_upper_bound(problem.variables_bounds[i].ub)) {
-         error += std::abs(multipliers.upper_bounds[i] * (iterate.x[i] - problem.variables_bounds[i].ub));
+         error += std::abs(upper_bounds_multipliers[i] * (iterate.x[i] - problem.variables_bounds[i].ub));
       }
    }
    // constraints
    iterate.evaluate_constraints(problem, scaling);
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      const double multiplier_j = multipliers.constraints[j];
+      const double multiplier_j = constraint_multipliers[j];
       const double scaled_lower_bound = scaling.get_constraint_scaling(j)*problem.constraint_bounds[j].lb;
       const double scaled_upper_bound = scaling.get_constraint_scaling(j)*problem.constraint_bounds[j].ub;
       if (iterate.constraints[j] < scaled_lower_bound) {
@@ -168,7 +171,8 @@ void Subproblem::compute_optimality_conditions(const Problem& problem, const Sca
    // compute the KKT error only if the objective multiplier is positive
    iterate.errors.KKT = Subproblem::compute_first_order_error(problem, scaling, iterate, 0. < objective_multiplier ? objective_multiplier : 1.);
    iterate.errors.FJ = Subproblem::compute_first_order_error(problem, scaling, iterate, 0.);
-   iterate.errors.complementarity = Subproblem::compute_complementarity_error(problem, scaling, iterate, iterate.multipliers);
+   iterate.errors.complementarity = Subproblem::compute_complementarity_error(problem, scaling, iterate, iterate.multipliers.constraints,
+         iterate.multipliers.lower_bounds, iterate.multipliers.upper_bounds);
 }
 
 Direction Subproblem::compute_second_order_correction(const Problem& /*problem*/, Iterate& /*trial_iterate*/) {

@@ -52,7 +52,9 @@ public:
    void evaluate_constraints(const Problem& problem, const Scaling& scaling);
    void evaluate_objective_gradient(const Problem& problem, const Scaling& scaling);
    void evaluate_constraints_jacobian(const Problem& problem, const Scaling& scaling);
-   void evaluate_lagrangian_gradient(const Problem& problem, const Scaling& scaling, double objective_multiplier, const Multipliers& multipliers);
+   void evaluate_lagrangian_gradient(const Problem& problem, const Scaling& scaling, double objective_multiplier,
+         const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bounds_multipliers,
+         const std::vector<double>& upper_bounds_multipliers);
 
    void adjust_number_variables(size_t number_variables);
 

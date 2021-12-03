@@ -7,10 +7,12 @@ l1Relaxation::l1Relaxation(Problem& problem, const Options& options) :
       ConstraintRelaxationStrategy(problem, options),
       globalization_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
       penalty_parameter(stod(options.at("l1_relaxation_initial_parameter"))),
-      parameters({stod(options.at("l1_relaxation_decrease_factor")),
+      parameters({options.at("l1_relaxation_fixed_parameter") == "yes",
+                  stod(options.at("l1_relaxation_decrease_factor")),
                   stod(options.at("l1_relaxation_epsilon1")),
-                  stod(options.at("l1_relaxation_epsilon2"))}),
-      penalty_threshold(stod(options.at("l1_relaxation_penalty_threshold"))) {
+                  stod(options.at("l1_relaxation_epsilon2")),
+                  stod(options.at("l1_relaxation_small_threshold"))}),
+      constraint_multipliers(problem.number_constraints) {
 }
 
 void l1Relaxation::initialize(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& first_iterate) {
@@ -56,6 +58,8 @@ Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, const
 }
 
 Direction l1Relaxation::compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) {
+   // TODO: add elastic variables?
+   assert(false && "l1Relaxation::compute_second_order_correction: check that the elastic variables are in the problem");
    Direction direction = ConstraintRelaxationStrategy::compute_second_order_correction(problem, trial_iterate);
 
    // remove the temporary elastic variables from the direction
@@ -105,12 +109,11 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
       accept = true;
    }
    else {
-      this->subproblem->compute_progress_measures(problem, scaling, trial_iterate);
-
-      // compute the predicted reduction (both the subproblem and the l1 relaxation strategy contribute)
-      const double predicted_reduction = this->compute_predicted_reduction(problem, scaling, current_iterate, direction, predicted_reduction_model,
-            step_length);
+      // compute the predicted reduction
+      const double predicted_reduction = l1Relaxation::compute_predicted_reduction(problem, scaling, current_iterate, direction,
+            predicted_reduction_model, step_length);
       // invoke the globalization strategy for acceptance
+      this->subproblem->compute_progress_measures(problem, scaling, trial_iterate);
       accept = this->globalization_strategy->check_acceptance(statistics, current_iterate.progress, trial_iterate.progress,
             this->penalty_parameter, predicted_reduction);
    }
@@ -121,12 +124,15 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
    return accept;
 }
 
+// Infeasibility detection and SQP methods for nonlinear optimization
+// Richard H. Byrd, Frank E. Curtis and Jorge Nocedal
+// https://epubs.siam.org/doi/pdf/10.1137/080738222
 Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate) {
    // stage a: compute the step within trust region
    Direction direction = this->solve_subproblem(statistics, problem, current_iterate);
 
-   // penalty update: if penalty parameter is already 0, no need to decrease it
-   if (0. < this->penalty_parameter) {
+   // penalty update: if penalty parameter is already 0 or fixed by the user, no need to decrease it
+   if (0. < this->penalty_parameter && !this->parameters.fixed_parameter) {
       // check infeasibility
       double linearized_residual = this->compute_linearized_constraint_residual(direction.x);
       DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
@@ -156,6 +162,9 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const P
                const double updated_penalty_parameter = this->penalty_parameter;
                const double term = error_lowest_violation / std::max(1., current_iterate.errors.constraints);
                this->penalty_parameter = std::min(this->penalty_parameter, term * term);
+               if (this->penalty_parameter < this->parameters.small_threshold) {
+                  this->penalty_parameter = 0.;
+               }
                if (this->penalty_parameter < updated_penalty_parameter) {
                   if (this->penalty_parameter == 0.) {
                      direction = direction_lowest_violation;
@@ -185,14 +194,15 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const P
                   }
                   if (!condition2) {
                      this->penalty_parameter /= this->parameters.decrease_factor;
-                     if (this->penalty_parameter < this->penalty_threshold) {
+                     if (this->penalty_parameter < this->parameters.small_threshold) {
                         this->penalty_parameter = 0.;
+                        direction = direction_lowest_violation;
                         condition2 = true;
                      }
                      else {
                         DEBUG << "\nAttempting to solve with penalty parameter " << this->penalty_parameter << "\n";
                         direction = this->resolve_subproblem(statistics, problem, scaling, current_iterate, this->penalty_parameter);
-   
+
                         linearized_residual = this->compute_linearized_constraint_residual(direction.x);
                         DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
                      }
@@ -254,20 +264,19 @@ double l1Relaxation::compute_linearized_constraint_residual(std::vector<double>&
 }
 
 // measure that combines KKT error and complementarity error
-double l1Relaxation::compute_error(const Problem& problem, const Scaling& scaling, Iterate& iterate, Multipliers& multipliers_displacements, double
-current_penalty_parameter) {
-   Multipliers multipliers(multipliers_displacements.lower_bounds.size(), multipliers_displacements.constraints.size());
-   multipliers.lower_bounds = multipliers_displacements.lower_bounds;
-   multipliers.upper_bounds = multipliers_displacements.upper_bounds;
-   multipliers.constraints = multipliers_displacements.constraints;
+double l1Relaxation::compute_error(const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
+      const Multipliers& multipliers_displacements, double current_penalty_parameter) {
+   // assemble the trial constraints multipliers
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      multipliers.constraints[j] += iterate.multipliers.constraints[j];
+      this->constraint_multipliers[j] = current_iterate.multipliers.constraints[j] + multipliers_displacements.constraints[j];
    }
 
    // complementarity error
-   double error = Subproblem::compute_complementarity_error(problem, scaling, iterate, multipliers);
+   double error = Subproblem::compute_complementarity_error(problem, scaling, current_iterate, this->constraint_multipliers,
+         multipliers_displacements.lower_bounds, multipliers_displacements.upper_bounds);
    // KKT error
-   iterate.evaluate_lagrangian_gradient(problem, scaling, current_penalty_parameter, multipliers);
-   error += norm_1(iterate.lagrangian_gradient);
+   current_iterate.evaluate_lagrangian_gradient(problem, scaling, current_penalty_parameter, this->constraint_multipliers,
+         multipliers_displacements.lower_bounds, multipliers_displacements.upper_bounds);
+   error += norm_1(current_iterate.lagrangian_gradient);
    return error;
 }

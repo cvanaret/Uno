@@ -21,8 +21,6 @@ public:
 
    bool is_acceptable(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, PredictedReductionModel& predicted_reduction_model, double step_length) override;
-   double compute_predicted_reduction(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, const Direction& direction,
-         PredictedReductionModel& predicted_reduction_model, double step_length) override;
 
 private:
    const std::unique_ptr<GlobalizationStrategy> phase_1_strategy;
@@ -30,13 +28,11 @@ private:
    Phase current_phase{OPTIMALITY};
 
    void form_feasibility_problem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
-         const std::vector<double>& phase_2_primal_direction, const ConstraintPartition& constraint_partition);
-   void form_feasibility_problem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
-         const std::vector<double>& phase_2_primal_direction);
+         const std::vector<double>& phase_2_primal_direction, const std::optional<ConstraintPartition>& optional_constraint_partition);
+   GlobalizationStrategy& switch_phase(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, const Direction& direction);
    static void set_restoration_multipliers(std::vector<double>& constraints_multipliers, const ConstraintPartition& constraint_partition);
    void compute_infeasibility_measures(const Problem& problem, const Scaling& scaling, Iterate& iterate,
          const std::optional<ConstraintPartition>& optional_constraint_partition);
-   [[nodiscard]] GlobalizationStrategy& pick_globalization_strategy(const Direction& direction) const;
 };
 
 #endif //FEASIBILITYRESTORATION_H
