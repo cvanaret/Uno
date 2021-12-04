@@ -68,7 +68,7 @@ Result Uno::solve(const Problem& problem, Iterate& current_iterate, bool scale_f
       ERROR << exception.what();
    }
    if (Logger::logger_level == INFO) statistics.print_footer();
-   Uno::postsolve_solution(problem, scaling, current_iterate);
+   Uno::postsolve_solution(problem, scaling, current_iterate, termination_status);
    timer.stop();
 
    const size_t number_subproblems_solved = this->globalization_mechanism.get_number_subproblems_solved();
@@ -130,7 +130,7 @@ TerminationStatus Uno::check_termination(const Problem& problem, const Iterate& 
    return NOT_OPTIMAL;
 }
 
-void Uno::postsolve_solution(const Problem& problem, const Scaling& scaling, Iterate& current_iterate) {
+void Uno::postsolve_solution(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, const TerminationStatus& termination_status) {
    // remove auxiliary variables
    current_iterate.adjust_number_variables(problem.number_variables);
 
@@ -138,7 +138,8 @@ void Uno::postsolve_solution(const Problem& problem, const Scaling& scaling, Ite
    current_iterate.objective /= scaling.get_objective_scaling();
 
    // unscale the multipliers and the function values
-   const double scaled_objective_multiplier = scaling.get_objective_scaling();
+   const double scaled_objective_multiplier = scaling.get_objective_scaling()*(termination_status == KKT_POINT ?
+         current_iterate.multipliers.objective : 1.);
    for (size_t j = 0; j < problem.number_constraints; j++) {
       current_iterate.multipliers.constraints[j] *= scaling.get_constraint_scaling(j)/scaled_objective_multiplier;
    }

@@ -57,8 +57,8 @@ private:
    static Statistics create_statistics();
    static void add_statistics(Statistics& statistics, const Iterate& new_iterate, size_t major_iterations);
    [[nodiscard]] bool termination_criterion(TerminationStatus current_status, size_t iteration) const;
-   TerminationStatus check_termination(const Problem& problem, const Iterate& current_iterate, double step_norm) const;
-   static void postsolve_solution(const Problem& problem, const Scaling& scaling, Iterate& current_iterate);
+   [[nodiscard]] TerminationStatus check_termination(const Problem& problem, const Iterate& current_iterate, double step_norm) const;
+   static void postsolve_solution(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, const TerminationStatus& termination_status);
 };
 
 #endif // UNO_H
