@@ -137,7 +137,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const P
       double linearized_residual = this->compute_linearized_constraint_residual(direction.x);
       DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
 
-      // if problem had to be relaxed
+      // update the parameter only if the problem had to be relaxed
       if (linearized_residual != 0.) {
          const double current_penalty_parameter = this->penalty_parameter;
 
@@ -147,69 +147,67 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const P
          const double residual_lowest_violation = this->compute_linearized_constraint_residual(direction_lowest_violation.x);
          DEBUG << "Ideal linearized residual mk(dk): " << residual_lowest_violation << "\n\n";
 
-         if (!(0. < current_iterate.errors.constraints && residual_lowest_violation == current_iterate.errors.constraints)) {
-            // compute the ideal error (with a zero penalty parameter)
-            const double error_lowest_violation = l1Relaxation::compute_error(problem, scaling, current_iterate,
-                  direction_lowest_violation.multipliers, 0.);
-            DEBUG << "Ideal error: " << error_lowest_violation << "\n";
-            if (error_lowest_violation == 0.) {
-               // stage f: update the penalty parameter
+         // compute the ideal error (with a zero penalty parameter)
+         const double error_lowest_violation = l1Relaxation::compute_error(problem, scaling, current_iterate,
+               direction_lowest_violation.multipliers, 0.);
+         DEBUG << "Ideal error: " << error_lowest_violation << "\n";
+         if (error_lowest_violation == 0.) {
+            // stage f: update the penalty parameter
+            this->penalty_parameter = 0.;
+            direction = direction_lowest_violation;
+         }
+         else {
+            // stage f: update the penalty parameter
+            const double updated_penalty_parameter = this->penalty_parameter;
+            const double term = error_lowest_violation / std::max(1., current_iterate.errors.constraints);
+            this->penalty_parameter = std::min(this->penalty_parameter, term * term);
+            if (this->penalty_parameter < this->parameters.small_threshold) {
                this->penalty_parameter = 0.;
-               direction = direction_lowest_violation;
             }
-            else {
-               // stage f: update the penalty parameter
-               const double updated_penalty_parameter = this->penalty_parameter;
-               const double term = error_lowest_violation / std::max(1., current_iterate.errors.constraints);
-               this->penalty_parameter = std::min(this->penalty_parameter, term * term);
-               if (this->penalty_parameter < this->parameters.small_threshold) {
-                  this->penalty_parameter = 0.;
+            if (this->penalty_parameter < updated_penalty_parameter) {
+               if (this->penalty_parameter == 0.) {
+                  direction = direction_lowest_violation;
                }
-               if (this->penalty_parameter < updated_penalty_parameter) {
-                  if (this->penalty_parameter == 0.) {
+               else {
+                  direction = this->resolve_subproblem(statistics, problem, scaling, current_iterate, this->penalty_parameter);
+               }
+            }
+
+            // decrease penalty parameter to satisfy 2 conditions
+            bool condition1 = false, condition2 = false;
+            while (!condition2) {
+               if (!condition1) {
+                  // stage d: reach a fraction of the ideal decrease
+                  if ((residual_lowest_violation == 0. && linearized_residual == 0) || (residual_lowest_violation != 0. &&
+                  current_iterate.errors.constraints - linearized_residual >= this->parameters.epsilon1 *
+                  (current_iterate.errors.constraints - residual_lowest_violation))) {
+                     condition1 = true;
+                     DEBUG << "Condition 1 is true\n";
+                  }
+               }
+               // stage e: further decrease penalty parameter if necessary
+               if (condition1 && current_iterate.errors.constraints - direction.objective >=
+                                 this->parameters.epsilon2 * (current_iterate.errors.constraints - direction_lowest_violation.objective)) {
+                  condition2 = true;
+                  DEBUG << "Condition 2 is true\n";
+               }
+               if (!condition2) {
+                  this->penalty_parameter /= this->parameters.decrease_factor;
+                  if (this->penalty_parameter < this->parameters.small_threshold) {
+                     this->penalty_parameter = 0.;
                      direction = direction_lowest_violation;
+                     condition2 = true;
                   }
                   else {
+                     DEBUG << "\nAttempting to solve with penalty parameter " << this->penalty_parameter << "\n";
                      direction = this->resolve_subproblem(statistics, problem, scaling, current_iterate, this->penalty_parameter);
+
+                     linearized_residual = this->compute_linearized_constraint_residual(direction.x);
+                     DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
                   }
                }
-
-               // decrease penalty parameter to satisfy 2 conditions
-               bool condition1 = false, condition2 = false;
-               while (!condition2) {
-                  if (!condition1) {
-                     // stage d: reach a fraction of the ideal decrease
-                     if ((residual_lowest_violation == 0. && linearized_residual == 0) || (residual_lowest_violation != 0. &&
-                     current_iterate.errors.constraints - linearized_residual >= this->parameters.epsilon1 *
-                     (current_iterate.errors.constraints - residual_lowest_violation))) {
-                        condition1 = true;
-                        DEBUG << "Condition 1 is true\n";
-                     }
-                  }
-                  // stage e: further decrease penalty parameter if necessary
-                  if (condition1 && current_iterate.errors.constraints - direction.objective >=
-                                    this->parameters.epsilon2 * (current_iterate.errors.constraints - direction_lowest_violation.objective)) {
-                     condition2 = true;
-                     DEBUG << "Condition 2 is true\n";
-                  }
-                  if (!condition2) {
-                     this->penalty_parameter /= this->parameters.decrease_factor;
-                     if (this->penalty_parameter < this->parameters.small_threshold) {
-                        this->penalty_parameter = 0.;
-                        direction = direction_lowest_violation;
-                        condition2 = true;
-                     }
-                     else {
-                        DEBUG << "\nAttempting to solve with penalty parameter " << this->penalty_parameter << "\n";
-                        direction = this->resolve_subproblem(statistics, problem, scaling, current_iterate, this->penalty_parameter);
-
-                        linearized_residual = this->compute_linearized_constraint_residual(direction.x);
-                        DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
-                     }
-                  }
-               }
-            } // end else
-         }
+            }
+         } // end else
 
          if (this->penalty_parameter < current_penalty_parameter) {
             DEBUG << "\n*** Penalty parameter updated to " << this->penalty_parameter << "\n";
