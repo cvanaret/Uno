@@ -130,7 +130,7 @@ TerminationStatus Uno::check_termination(const Problem& problem, const Iterate& 
    return NOT_OPTIMAL;
 }
 
-void Uno::postsolve_solution(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, const TerminationStatus& termination_status) {
+void Uno::postsolve_solution(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, TerminationStatus termination_status) {
    // remove auxiliary variables
    current_iterate.adjust_number_variables(problem.number_variables);
 

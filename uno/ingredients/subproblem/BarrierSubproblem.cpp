@@ -202,9 +202,7 @@ void BarrierSubproblem::assemble_augmented_system(const Problem& problem) {
 }
 
 Direction BarrierSubproblem::compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) {
-   // save the current iterate locally
-   this->set_current_iterate(trial_iterate);
-
+   DEBUG << "\nEntered SOC computation\n";
    // modify the RHS by adding the values of the constraints
    for (const auto& element: problem.equality_constraints) {
       size_t j = element.first;
@@ -213,6 +211,7 @@ Direction BarrierSubproblem::compute_second_order_correction(const Problem& prob
    for (const auto[j, i]: problem.inequality_constraints) {
       this->augmented_system.rhs[this->number_variables + j] -= trial_iterate.constraints[j] - trial_iterate.x[problem.number_variables + i];
    }
+   DEBUG << "SOC RHS: "; print_vector(DEBUG, this->augmented_system.rhs, 0, this->number_variables + this->number_constraints);
 
    // compute the solution (Δx, -Δλ)
    this->augmented_system.solve(*this->linear_solver);
@@ -220,7 +219,6 @@ Direction BarrierSubproblem::compute_second_order_correction(const Problem& prob
 
    // generate IPM direction
    this->generate_direction(problem, trial_iterate);
-   this->print_soc_iteration(this->direction);
    return this->direction;
 }
 
@@ -247,13 +245,6 @@ void BarrierSubproblem::remove_variable(size_t i, size_t j) {
          this->lower_bounded_variables.end());
    this->upper_bounded_variables.erase(std::remove(this->upper_bounded_variables.begin(), this->upper_bounded_variables.end(), i),
          this->upper_bounded_variables.end());
-}
-
-void BarrierSubproblem::print_soc_iteration(const Direction& direction_soc) const {
-   DEBUG << "Entered SOC computation\n";
-   DEBUG << "KKT matrix:\n" << *this->augmented_system.matrix << "\n";
-   DEBUG << "SOC RHS: "; print_vector(DEBUG, this->augmented_system.rhs, 0, this->number_variables + this->number_constraints);
-   DEBUG << "\nSOC direction:\n" << direction_soc << "\n";
 }
 
 PredictedReductionModel BarrierSubproblem::generate_predicted_reduction_model(const Problem& /*problem*/,
@@ -510,14 +501,14 @@ void BarrierSubproblem::register_accepted_iterate(Iterate& iterate) {
       const double coefficient = this->barrier_parameter / (iterate.x[i] - this->variables_bounds[i].lb);
       const double lb = coefficient / this->parameters.k_sigma;
       const double ub = coefficient * this->parameters.k_sigma;
-      assert(lb <= ub && "IPM bound multiplier reset: the bounds are in the wrong order");
+      assert(lb <= ub && "IPM lower bound multiplier reset: the bounds are in the wrong order");
       iterate.multipliers.lower_bounds[i] = std::max(std::min(iterate.multipliers.lower_bounds[i], ub), lb);
    }
    for (size_t i: this->upper_bounded_variables) {
       const double coefficient = this->barrier_parameter / (iterate.x[i] - this->variables_bounds[i].ub);
       const double lb = coefficient * this->parameters.k_sigma;
       const double ub = coefficient / this->parameters.k_sigma;
-      assert(lb <= ub && "IPM bound multiplier reset: the bounds are in the wrong order");
+      assert(lb <= ub && "IPM upper bound multiplier reset: the bounds are in the wrong order");
       iterate.multipliers.upper_bounds[i] = std::max(std::min(iterate.multipliers.upper_bounds[i], ub), lb);
    }
 }
