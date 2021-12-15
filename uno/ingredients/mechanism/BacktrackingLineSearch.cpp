@@ -4,7 +4,7 @@
 #include "tools/Logger.hpp"
 
 BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options):
-   GlobalizationMechanism(constraint_relaxation_strategy, std::stoi(options.at("LS_max_iterations"))),
+   GlobalizationMechanism(constraint_relaxation_strategy),
    regularization_strategy(RegularizationStrategyFactory::create()),
    backtracking_ratio(std::stod(options.at("LS_backtracking_ratio"))),
    min_step_length(std::stod(options.at("LS_min_step_length"))),
@@ -86,7 +86,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
          }
       }
       // if step length is too small, run restoration phase
-      if (!feasibility_problem && this->step_length < this->min_step_length && 0. < direction.multipliers.objective) {
+      if (!feasibility_problem && 0. < direction.multipliers.objective) {
          //assert(false && "LS max iterations");
          //if (0. < current_iterate.progress.feasibility && !direction.is_relaxed) {
          // reset the line search with the restoration solution
@@ -112,8 +112,8 @@ void BacktrackingLineSearch::decrease_step_length() {
    this->step_length *= this->backtracking_ratio;
 }
 
-bool BacktrackingLineSearch::termination() {
-   return (this->max_iterations < this->number_iterations);
+bool BacktrackingLineSearch::termination() const {
+   return (this->step_length < this->min_step_length);
 }
 
 void BacktrackingLineSearch::add_statistics(Statistics& statistics, const Direction& direction) {
