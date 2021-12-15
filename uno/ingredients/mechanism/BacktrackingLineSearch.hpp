@@ -25,7 +25,7 @@ private:
    const double min_step_length;
    const bool use_second_order_correction;
 
-   bool termination();
+   bool termination() const;
    void print_iteration();
    void add_statistics(Statistics& statistics, const Direction& direction);
    static void check_unboundedness(const Direction& direction);

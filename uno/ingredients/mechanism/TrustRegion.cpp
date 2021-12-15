@@ -5,7 +5,7 @@
 #include "tools/Logger.hpp"
 
 TrustRegion::TrustRegion(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options) :
-      GlobalizationMechanism(constraint_relaxation_strategy, std::stoi(options.at("TR_max_iterations"))),
+      GlobalizationMechanism(constraint_relaxation_strategy),
       radius(stod(options.at("TR_radius"))),
       increase_factor(stod(options.at("TR_increase_factor"))),
       decrease_factor(stod(options.at("TR_decrease_factor"))),
@@ -68,10 +68,8 @@ std::tuple<Iterate, double> TrustRegion::compute_acceptable_iterate(Statistics& 
          this->radius /= this->decrease_factor;
       }
    }
-   if (this->max_iterations < this->number_iterations) {
-      throw std::runtime_error("Trust-region iteration limit reached");
-   } // radius gets too small
-   else if (this->radius < this->min_radius) { // 1e-16: something like machine precision
+   // radius gets too small
+   if (this->radius < this->min_radius) { // 1e-16: something like machine precision
       throw std::runtime_error("Trust-region radius became too small");
    }
    else {
@@ -115,7 +113,7 @@ void TrustRegion::add_statistics(Statistics& statistics, const Direction& direct
 }
 
 bool TrustRegion::termination() {
-   return (this->max_iterations < this->number_iterations || this->radius < this->min_radius);
+   return this->radius < this->min_radius;
 }
 
 void TrustRegion::print_iteration() {

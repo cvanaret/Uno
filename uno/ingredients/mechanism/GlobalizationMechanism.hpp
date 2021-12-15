@@ -13,7 +13,7 @@
  */
 class GlobalizationMechanism {
 public:
-   GlobalizationMechanism(ConstraintRelaxationStrategy& constraint_relaxation_strategy, int max_iterations);
+   explicit GlobalizationMechanism(ConstraintRelaxationStrategy& constraint_relaxation_strategy);
    virtual ~GlobalizationMechanism() = default;
 
    virtual void initialize(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& first_iterate) = 0;
@@ -26,8 +26,7 @@ public:
 protected:
    /* references to allow polymorphism */
    ConstraintRelaxationStrategy& relaxation_strategy;
-   int max_iterations; /*!< Maximum number of iterations */
-   int number_iterations{0}; /*!< Current number of iterations */
+   size_t number_iterations{0}; /*!< Current number of iterations */
 
    static Iterate assemble_trial_iterate(Iterate& current_iterate, Direction& direction, double step_length);
    static void print_warning(const char* message);

@@ -529,5 +529,5 @@ void BarrierSubproblem::print_solution(const Problem& problem, double primal_ste
    DEBUG << "Δz_L: "; print_vector(DEBUG, this->lower_delta_z, 0, this->number_variables);
    DEBUG << "Δz_U: "; print_vector(DEBUG, this->upper_delta_z, 0, this->number_variables);
    DEBUG << "primal length = " << primal_step_length << "\n";
-   DEBUG << "dual length = " << dual_step_length << "\n\n";
+   DEBUG << "dual length = " << dual_step_length << "\n";
 }
