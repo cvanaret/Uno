@@ -3,9 +3,10 @@
 #include "linear_algebra/SparseVector.hpp"
 #include "optimization/Constraint.hpp"
 
-Subproblem::Subproblem(size_t number_variables, size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy,
-         bool is_second_order_method) :
+Subproblem::Subproblem(size_t number_variables, size_t max_number_variables, size_t number_constraints, bool uses_slacks,
+      SecondOrderCorrection soc_strategy, bool is_second_order_method) :
       number_variables(number_variables), max_number_variables(max_number_variables), number_constraints(number_constraints),
+      uses_slacks(uses_slacks),
       soc_strategy(soc_strategy), variables_bounds(max_number_variables), constraints_multipliers(number_constraints),
       objective_gradient(max_number_variables), // SparseVector
       constraints_jacobian(number_constraints), // vector of SparseVectors

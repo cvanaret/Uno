@@ -7,7 +7,7 @@ BarrierSubproblem::BarrierSubproblem(const Problem& problem, size_t max_number_v
       // add the slacks to the variables
       Subproblem(problem.number_variables + problem.inequality_constraints.size(), // number_variables
             max_number_variables + problem.inequality_constraints.size(), // max_number_variables
-            problem.number_constraints, SOC_UPON_REJECTION, true),
+            problem.number_constraints, true, SOC_UPON_REJECTION, true),
       augmented_system(options.at("sparse_format"), this->max_number_variables + problem.number_constraints,
             problem.hessian_maximum_number_nonzeros
             + this->max_number_variables + problem.number_constraints /* regularization */

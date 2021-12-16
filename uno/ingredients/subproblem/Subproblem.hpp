@@ -25,7 +25,7 @@ enum SecondOrderCorrection {
  */
 class Subproblem {
 public:
-   Subproblem(size_t number_variables, size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy,
+   Subproblem(size_t number_variables, size_t max_number_variables, size_t number_constraints, bool uses_slacks, SecondOrderCorrection soc_strategy,
          bool is_second_order_method);
    virtual ~Subproblem() = default;
 
@@ -68,6 +68,7 @@ public:
    size_t number_variables; // can be updated on the fly (elastic variables)
    const size_t max_number_variables;
    const size_t number_constraints;
+   const bool uses_slacks;
    const SecondOrderCorrection soc_strategy;
    // when the subproblem is reformulated (e.g. when slacks are introduced), the bounds may be altered
    std::vector<Range> variables_bounds;

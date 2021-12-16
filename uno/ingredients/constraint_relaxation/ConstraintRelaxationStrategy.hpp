@@ -42,13 +42,15 @@ public:
    [[nodiscard]] SecondOrderCorrection soc_strategy() const;
 
 protected:
+   std::unique_ptr<Subproblem> subproblem;
    // possible problem reformulation with elastic variables. Constraints l <= c(x) <= u are reformulated as l <= c(x) - p + n <= u
    ElasticVariables elastic_variables;
-   std::unique_ptr<Subproblem> subproblem;
    const size_t number_subproblem_variables;
+   const double elastic_objective_coefficient;
 
-   static size_t count_elastic_variables(const Problem& problem);
-   static void generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables, size_t number_variables);
+   static size_t count_elastic_variables(const Problem& problem, bool subproblem_uses_slacks);
+   static void generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables, size_t number_variables,
+         bool subproblem_uses_slacks);
    void add_elastic_variables_to_subproblem();
    void remove_elastic_variables_from_subproblem();
    void remove_elastic_variables_from_direction(const Problem& problem, Direction& direction);
