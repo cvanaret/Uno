@@ -5,7 +5,7 @@
 
 BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options):
    GlobalizationMechanism(constraint_relaxation_strategy),
-   regularization_strategy(RegularizationStrategyFactory::create()),
+   regularization_strategy(RegularizationStrategyFactory::create()), // TODO use :)
    backtracking_ratio(std::stod(options.at("LS_backtracking_ratio"))),
    min_step_length(std::stod(options.at("LS_min_step_length"))),
    use_second_order_correction(options.at("use_second_order_correction") == "yes") {
@@ -45,10 +45,9 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
                   direction, predicted_reduction_model, this->step_length);
             // check whether the trial step is accepted
             if (is_acceptable) {
-               this->add_statistics(statistics, direction);
-
                // let the subproblem know the accepted iterate
                this->relaxation_strategy.register_accepted_iterate(trial_iterate);
+               this->add_statistics(statistics, direction);
                return std::make_tuple(std::move(trial_iterate), direction.norm);
             }
             else if (this->use_second_order_correction && this->relaxation_strategy.soc_strategy() == SOC_UPON_REJECTION &&
@@ -89,6 +88,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
       if (!feasibility_problem && 0. < direction.multipliers.objective) {
          //assert(false && "LS max iterations");
          //if (0. < current_iterate.progress.feasibility && !direction.is_relaxed) {
+         DEBUG << "The line search failed, switching to feasibility problem\n";
          // reset the line search with the restoration solution
          direction = this->relaxation_strategy.solve_feasibility_problem(statistics, problem, scaling, current_iterate, direction);
          BacktrackingLineSearch::check_unboundedness(direction);

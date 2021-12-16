@@ -3,37 +3,44 @@
 #include "optimization/Constraint.hpp"
 
 ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Problem& problem, const Options& options):
-      elastic_variables(ConstraintRelaxationStrategy::count_elastic_variables(problem)),
-      subproblem(SubproblemFactory::create(problem, problem.number_variables + ConstraintRelaxationStrategy::count_elastic_variables(problem), options)),
+      subproblem(SubproblemFactory::create(problem,
+            problem.number_variables + ConstraintRelaxationStrategy::count_elastic_variables(problem, true),
+            options)),
+      elastic_variables(ConstraintRelaxationStrategy::count_elastic_variables(problem, this->subproblem->uses_slacks)),
       // save the original number of variables in the subproblem
-      number_subproblem_variables(this->subproblem->number_variables) {
+      number_subproblem_variables(this->subproblem->number_variables),
+      elastic_objective_coefficient(stod(options.at("elastic_objective_coefficient"))) {
    // generate elastic variables to relax the constraints
-   ConstraintRelaxationStrategy::generate_elastic_variables(problem, this->elastic_variables, this->subproblem->number_variables);
+   ConstraintRelaxationStrategy::generate_elastic_variables(problem, this->elastic_variables, this->subproblem->number_variables,
+         this->subproblem->uses_slacks);
 }
 
-size_t ConstraintRelaxationStrategy::count_elastic_variables(const Problem& problem) {
+size_t ConstraintRelaxationStrategy::count_elastic_variables(const Problem& problem, bool subproblem_uses_slacks) {
    size_t number_elastic_variables = 0;
+   // if the subproblem uses slack variables, the bounds of the constraints are [0, 0]
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      if (is_finite_lower_bound(problem.constraint_bounds[j].lb)) {
+      if (subproblem_uses_slacks || is_finite_lower_bound(problem.constraint_bounds[j].lb)) {
          number_elastic_variables++;
       }
-      if (is_finite_upper_bound(problem.constraint_bounds[j].ub)) {
+      if (subproblem_uses_slacks || is_finite_upper_bound(problem.constraint_bounds[j].ub)) {
          number_elastic_variables++;
       }
    }
    return number_elastic_variables;
 }
 
-void ConstraintRelaxationStrategy::generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables, size_t number_variables) {
+void ConstraintRelaxationStrategy::generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables, size_t number_variables,
+      bool subproblem_uses_slacks) {
    // generate elastic variables p and n on the fly to relax the constraints
+   // if the subproblem uses slack variables, the bounds of the constraints are [0, 0]
    size_t elastic_index = number_variables;
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      if (is_finite_lower_bound(problem.constraint_bounds[j].lb)) {
+      if (subproblem_uses_slacks || is_finite_lower_bound(problem.constraint_bounds[j].lb)) {
          // nonpositive variable n that captures the negative part of the constraint violation
          elastic_variables.negative.insert(j, elastic_index);
          elastic_index++;
       }
-      if (is_finite_upper_bound(problem.constraint_bounds[j].ub)) {
+      if (subproblem_uses_slacks || is_finite_upper_bound(problem.constraint_bounds[j].ub)) {
          // nonnegative variable p that captures the positive part of the constraint violation
          elastic_variables.positive.insert(j, elastic_index);
          elastic_index++;
@@ -42,13 +49,12 @@ void ConstraintRelaxationStrategy::generate_elastic_variables(const Problem& pro
 }
 
 void ConstraintRelaxationStrategy::add_elastic_variables_to_subproblem() {
-   const double objective_coefficient = 1.;
    // add the positive elastic variables
-   this->elastic_variables.positive.for_each([&](size_t j, size_t i) {
-      this->subproblem->add_variable(i, 0., {0., std::numeric_limits<double>::infinity()}, objective_coefficient, j, -1.);
+   this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {
+      this->subproblem->add_variable(elastic_index, 0., {0., std::numeric_limits<double>::infinity()}, this->elastic_objective_coefficient, j, -1.);
    });
-   this->elastic_variables.negative.for_each([&](size_t j, size_t i) {
-      this->subproblem->add_variable(i, 0., {0., std::numeric_limits<double>::infinity()}, objective_coefficient, j, 1.);
+   this->elastic_variables.negative.for_each([&](size_t j, size_t elastic_index) {
+      this->subproblem->add_variable(elastic_index, 0., {0., std::numeric_limits<double>::infinity()}, this->elastic_objective_coefficient, j, 1.);
    });
 }
 
