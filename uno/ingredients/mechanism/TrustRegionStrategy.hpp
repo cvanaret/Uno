@@ -8,9 +8,9 @@
  *
  *  Trust region strategy
  */
-class TrustRegion : public GlobalizationMechanism {
+class TrustRegionStrategy : public GlobalizationMechanism {
 public:
-   TrustRegion(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);
+   TrustRegionStrategy(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);
 
    void initialize(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& first_iterate) override;
    std::tuple<Iterate, double> compute_acceptable_iterate(Statistics& statistics, const Problem& problem, const Scaling& scaling,

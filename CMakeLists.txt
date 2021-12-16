@@ -31,7 +31,7 @@ set(SRC_FILES
     uno/ingredients/mechanism/GlobalizationMechanism.cpp
     uno/ingredients/mechanism/GlobalizationMechanismFactory.cpp
     uno/ingredients/mechanism/BacktrackingLineSearch.cpp
-    uno/ingredients/mechanism/TrustRegion.cpp
+    uno/ingredients/mechanism/TrustRegionStrategy.cpp
     uno/ingredients/mechanism/RegularizationStrategy.cpp
 
     uno/ingredients/strategy/GlobalizationStrategyFactory.cpp

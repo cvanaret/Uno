@@ -1,10 +1,10 @@
 #include <cmath>
 #include <cassert>
-#include "TrustRegion.hpp"
+#include "TrustRegionStrategy.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "tools/Logger.hpp"
 
-TrustRegion::TrustRegion(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options) :
+TrustRegionStrategy::TrustRegionStrategy(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options) :
       GlobalizationMechanism(constraint_relaxation_strategy),
       radius(stod(options.at("TR_radius"))),
       increase_factor(stod(options.at("TR_increase_factor"))),
@@ -13,13 +13,13 @@ TrustRegion::TrustRegion(ConstraintRelaxationStrategy& constraint_relaxation_str
       min_radius(stod(options.at("TR_min_radius"))) {
 }
 
-void TrustRegion::initialize(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& first_iterate) {
+void TrustRegionStrategy::initialize(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& first_iterate) {
    statistics.add_column("TR radius", Statistics::double_width, 30);
    // generate the initial point
    this->relaxation_strategy.initialize(statistics, problem, scaling, first_iterate);
 }
 
-std::tuple<Iterate, double> TrustRegion::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, const Scaling& scaling,
+std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, const Scaling& scaling,
       Iterate& current_iterate) {
    this->number_iterations = 0;
 
@@ -34,9 +34,9 @@ std::tuple<Iterate, double> TrustRegion::compute_acceptable_iterate(Statistics& 
 
          // compute the direction within the trust region
          Direction direction = this->relaxation_strategy.compute_feasible_direction(statistics, problem, scaling, current_iterate);
-         TrustRegion::check_unboundedness(direction);
+         TrustRegionStrategy::check_unboundedness(direction);
          // set bound multipliers of active trust region to 0
-         TrustRegion::rectify_active_set(direction, this->radius);
+         TrustRegionStrategy::rectify_active_set(direction, this->radius);
 
          // assemble the trial iterate by taking a full step
          const double full_step_length = 1.;
@@ -77,11 +77,11 @@ std::tuple<Iterate, double> TrustRegion::compute_acceptable_iterate(Statistics& 
    }
 }
 
-void TrustRegion::check_unboundedness(const Direction& direction) {
+void TrustRegionStrategy::check_unboundedness(const Direction& direction) {
    assert(direction.status != UNBOUNDED_PROBLEM && "Trust-region subproblem is unbounded, this should not happen");
 }
 
-void TrustRegion::rectify_active_set(Direction& direction, double radius) {
+void TrustRegionStrategy::rectify_active_set(Direction& direction, double radius) {
    assert(0 < radius);
    // update active set and set multipliers for bound constraints active at trust region to 0
    for (auto it = direction.active_set.bounds.at_lower_bound.begin(); it != direction.active_set.bounds.at_lower_bound.end();) {
@@ -106,16 +106,16 @@ void TrustRegion::rectify_active_set(Direction& direction, double radius) {
    }
 }
 
-void TrustRegion::add_statistics(Statistics& statistics, const Direction& direction) {
+void TrustRegionStrategy::add_statistics(Statistics& statistics, const Direction& direction) {
    statistics.add_statistic("minor", this->number_iterations);
    statistics.add_statistic("TR radius", this->radius);
    statistics.add_statistic("step norm", direction.norm);
 }
 
-bool TrustRegion::termination() {
+bool TrustRegionStrategy::termination() {
    return this->radius < this->min_radius;
 }
 
-void TrustRegion::print_iteration() {
+void TrustRegionStrategy::print_iteration() {
    DEBUG << "\n\tTRUST REGION iteration " << this->number_iterations << ", radius " << this->radius << "\n";
 }
