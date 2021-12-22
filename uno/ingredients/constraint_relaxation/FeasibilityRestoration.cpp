@@ -15,7 +15,7 @@ void FeasibilityRestoration::initialize(Statistics& statistics, const Problem& p
 
    // initialize the subproblem
    this->subproblem->initialize(statistics, problem, scaling, first_iterate);
-   Subproblem::compute_optimality_conditions(problem, scaling, first_iterate, problem.objective_sign);
+   this->subproblem->compute_optimality_conditions(problem, scaling, first_iterate, problem.objective_sign);
 
    this->phase_1_strategy->initialize(statistics, first_iterate);
    this->phase_2_strategy->initialize(statistics, first_iterate);
@@ -134,7 +134,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
          // correct multipliers for infeasibility problem
          FeasibilityRestoration::set_restoration_multipliers(trial_iterate.multipliers.constraints, direction.constraint_partition.value());
       }
-      Subproblem::compute_optimality_conditions(problem, scaling, trial_iterate, direction.objective_multiplier);
+      this->subproblem->compute_optimality_conditions(problem, scaling, trial_iterate, direction.objective_multiplier);
    }
    return accept;
 }

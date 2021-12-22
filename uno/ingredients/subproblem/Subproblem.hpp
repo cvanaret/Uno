@@ -26,7 +26,7 @@ enum SecondOrderCorrection {
 class Subproblem {
 public:
    Subproblem(size_t number_variables, size_t max_number_variables, size_t number_constraints, bool uses_slacks, SecondOrderCorrection soc_strategy,
-         bool is_second_order_method);
+         bool is_second_order_method, Norm residual_norm);
    virtual ~Subproblem() = default;
 
    // virtual methods implemented by subclasses
@@ -58,8 +58,8 @@ public:
    static double push_variable_to_interior(double variable_value, const Range& variable_bounds);
    void set_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints);
 
-   static double compute_first_order_error(const Problem& problem, const Scaling& scaling, Iterate& iterate, double objective_multiplier);
-   static void compute_optimality_conditions(const Problem& problem, const Scaling& scaling, Iterate& iterate, double objective_multiplier) ;
+   double compute_first_order_error(const Problem& problem, const Scaling& scaling, Iterate& iterate, double objective_multiplier) const;
+   void compute_optimality_conditions(const Problem& problem, const Scaling& scaling, Iterate& iterate, double objective_multiplier) const;
 
    static double compute_complementarity_error(const Problem& problem, const Scaling& scaling, Iterate& iterate,
          const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bounds_multipliers,
@@ -83,6 +83,7 @@ public:
    // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it
    bool subproblem_definition_changed{false};
    const bool is_second_order_method;
+   const Norm residual_norm;
 
 protected:
    virtual void set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);

@@ -7,7 +7,7 @@ BarrierSubproblem::BarrierSubproblem(const Problem& problem, size_t max_number_v
       // add the slacks to the variables
       Subproblem(problem.number_variables + problem.inequality_constraints.size(), // number_variables
             max_number_variables + problem.inequality_constraints.size(), // max_number_variables
-            problem.number_constraints, true, SOC_UPON_REJECTION, true),
+            problem.number_constraints, true, SOC_UPON_REJECTION, true, norm_from_string(options.at("residual_norm"))),
       augmented_system(options.at("sparse_format"), this->max_number_variables + problem.number_constraints,
             problem.hessian_maximum_number_nonzeros
             + this->max_number_variables + problem.number_constraints /* regularization */
@@ -291,7 +291,7 @@ void BarrierSubproblem::update_barrier_parameter(const Iterate& current_iterate)
       // signal the redefinition of the problem to the globalization strategy
       this->subproblem_definition_changed = true;
    }
-   DEBUG << "mu is " << this->barrier_parameter << "\n";
+   DEBUG << "Barrier parameter mu = " << this->barrier_parameter << "\n";
 }
 
 void BarrierSubproblem::set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {

@@ -1,5 +1,5 @@
-#ifndef VECTOR_H
-#define VECTOR_H
+#ifndef UNO_VECTOR_H
+#define UNO_VECTOR_H
 
 #include <iostream>
 #include <limits>
@@ -8,7 +8,9 @@
 #include <functional>
 #include "tools/Logger.hpp"
 
-enum Norm { L1_NORM = 1, L2_NORM = 2, L2_SQUARED_NORM, INF_NORM };
+enum Norm {L1_NORM = 1, L2_NORM = 2, L2_SQUARED_NORM, INF_NORM};
+
+Norm norm_from_string(const std::string& norm_string);
 
 void add_vectors(const std::vector<double>& x, const std::vector<double>& y, double scaling_factor, std::vector<double>& result);
 
@@ -57,9 +59,7 @@ double norm(const T& x, Norm norm) {
    else if (norm == L1_NORM) {
       return norm_1(x);
    }
-   else {
-      throw std::out_of_range("The norm is not known");
-   }
+   throw std::out_of_range("The norm is not known");
 }
 
 double norm(const std::function<double(size_t i)>& f, size_t size, Norm norm);
@@ -84,4 +84,4 @@ void print_vector(const Level& level, const std::vector<T>& x, size_t start = 0,
 
 bool in_increasing_order(const int* array, size_t length);
 
-#endif // VECTOR_H
+#endif // UNO_VECTOR_H
