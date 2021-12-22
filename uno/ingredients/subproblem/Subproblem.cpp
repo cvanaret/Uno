@@ -4,14 +4,14 @@
 #include "optimization/Constraint.hpp"
 
 Subproblem::Subproblem(size_t number_variables, size_t max_number_variables, size_t number_constraints, bool uses_slacks,
-      SecondOrderCorrection soc_strategy, bool is_second_order_method) :
+      SecondOrderCorrection soc_strategy, bool is_second_order_method, Norm residual_norm) :
       number_variables(number_variables), max_number_variables(max_number_variables), number_constraints(number_constraints),
       uses_slacks(uses_slacks),
       soc_strategy(soc_strategy), variables_bounds(max_number_variables), constraints_multipliers(number_constraints),
       objective_gradient(max_number_variables), // SparseVector
       constraints_jacobian(number_constraints), // vector of SparseVectors
       constraints_bounds(number_constraints), direction(max_number_variables, number_constraints),
-      is_second_order_method(is_second_order_method) {
+      is_second_order_method(is_second_order_method), residual_norm(residual_norm) {
    for (auto& constraint_gradient: this->constraints_jacobian) {
       constraint_gradient.reserve(this->max_number_variables);
    }
@@ -43,7 +43,7 @@ void Subproblem::remove_variable(size_t i, size_t j) {
 void Subproblem::compute_progress_measures(const Problem& problem, const Scaling& scaling, Iterate& iterate) {
    iterate.evaluate_constraints(problem, scaling);
    // feasibility measure: residual of all constraints
-   iterate.errors.constraints = problem.compute_constraint_violation(scaling, iterate.constraints, L1_NORM);
+   iterate.errors.constraints = problem.compute_constraint_violation(scaling, iterate.constraints, this->residual_norm);
    // optimality
    iterate.evaluate_objective(problem, scaling);
    iterate.progress = {iterate.errors.constraints, iterate.objective};
@@ -121,10 +121,10 @@ constraint_partition) {
    }
 }
 
-double Subproblem::compute_first_order_error(const Problem& problem, const Scaling& scaling, Iterate& iterate, double objective_multiplier) {
+double Subproblem::compute_first_order_error(const Problem& problem, const Scaling& scaling, Iterate& iterate, double objective_multiplier) const {
    iterate.evaluate_lagrangian_gradient(problem, scaling, objective_multiplier, iterate.multipliers.constraints, iterate.multipliers.lower_bounds,
          iterate.multipliers.upper_bounds);
-   return norm_1(iterate.lagrangian_gradient);
+   return norm(iterate.lagrangian_gradient, this->residual_norm);
 }
 
 // complementary slackness error
@@ -165,13 +165,13 @@ double Subproblem::compute_complementarity_error(const Problem& problem, const S
    return error;
 }
 
-void Subproblem::compute_optimality_conditions(const Problem& problem, const Scaling& scaling, Iterate& iterate, double objective_multiplier) {
+void Subproblem::compute_optimality_conditions(const Problem& problem, const Scaling& scaling, Iterate& iterate, double objective_multiplier) const {
    iterate.evaluate_objective(problem, scaling);
    iterate.evaluate_constraints(problem, scaling);
-   iterate.errors.constraints = problem.compute_constraint_violation(scaling, iterate.constraints, L1_NORM);
+   iterate.errors.constraints = problem.compute_constraint_violation(scaling, iterate.constraints, this->residual_norm);
    // compute the KKT error only if the objective multiplier is positive
-   iterate.errors.KKT = Subproblem::compute_first_order_error(problem, scaling, iterate, 0. < objective_multiplier ? objective_multiplier : 1.);
-   iterate.errors.FJ = Subproblem::compute_first_order_error(problem, scaling, iterate, 0.);
+   iterate.errors.KKT = this->compute_first_order_error(problem, scaling, iterate, 0. < objective_multiplier ? objective_multiplier : 1.);
+   iterate.errors.FJ = this->compute_first_order_error(problem, scaling, iterate, 0.);
    iterate.errors.complementarity = Subproblem::compute_complementarity_error(problem, scaling, iterate, iterate.multipliers.constraints,
          iterate.multipliers.lower_bounds, iterate.multipliers.upper_bounds);
 }

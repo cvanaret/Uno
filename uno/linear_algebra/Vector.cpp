@@ -2,6 +2,19 @@
 #include <cassert>
 #include "Vector.hpp"
 
+Norm norm_from_string(const std::string& norm_string) {
+   if (norm_string == "L1") {
+      return L1_NORM;
+   }
+   else if (norm_string == "L2") {
+      return L2_NORM;
+   }
+   else if (norm_string == "INF") {
+      return INF_NORM;
+   }
+   throw std::out_of_range("The norm is not known");
+}
+
 void add_vectors(const std::vector<double>& x, const std::vector<double>& y, double scaling_factor, std::vector<double>& result) {
    assert(x.size() <= y.size() && "Vector.add_vectors: x is larger than y");
    assert(x.size() <= result.size() && "Vector.add_vectors: result is not large enough");

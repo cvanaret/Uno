@@ -21,7 +21,7 @@ void l1Relaxation::initialize(Statistics& statistics, const Problem& problem, co
    // initialize the subproblem
    this->subproblem->initialize(statistics, problem, scaling, first_iterate);
 
-   Subproblem::compute_optimality_conditions(problem, scaling, first_iterate, this->penalty_parameter);
+   this->subproblem->compute_optimality_conditions(problem, scaling, first_iterate, this->penalty_parameter);
    this->globalization_strategy->initialize(statistics, first_iterate);
 }
 
@@ -119,7 +119,7 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
    }
    if (accept) {
       statistics.add_statistic("penalty param.", this->penalty_parameter);
-      Subproblem::compute_optimality_conditions(problem, scaling, trial_iterate, direction.objective_multiplier);
+      this->subproblem->compute_optimality_conditions(problem, scaling, trial_iterate, direction.objective_multiplier);
    }
    return accept;
 }

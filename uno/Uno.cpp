@@ -188,8 +188,10 @@ void Result::print(bool print_solution) const {
       print_vector(std::cout, this->solution.multipliers.lower_bounds);
       std::cout << "Upper bound multipliers:\t";
       print_vector(std::cout, this->solution.multipliers.upper_bounds);
-      std::cout << "Constraint multipliers:\t\t";
-      print_vector(std::cout, this->solution.multipliers.constraints);
+      if (0 < this->solution.multipliers.constraints.size()) {
+         std::cout << "Constraint multipliers:\t\t";
+         print_vector(std::cout, this->solution.multipliers.constraints);
+      }
    }
 
    std::cout << "CPU time:\t\t\t" << this->cpu_time << "s\n";

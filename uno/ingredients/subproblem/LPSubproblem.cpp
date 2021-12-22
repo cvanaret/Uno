@@ -2,7 +2,8 @@
 #include "solvers/QP/LPSolverFactory.hpp"
 
 LPSubproblem::LPSubproblem(const Problem& problem, size_t max_number_variables, const Options& options) :
-      Subproblem(problem.number_variables, max_number_variables, problem.number_constraints, false, NO_SOC, false),
+      Subproblem(problem.number_variables, max_number_variables, problem.number_constraints, false, NO_SOC, false,
+            norm_from_string(options.at("residual_norm"))),
       solver(LPSolverFactory::create(max_number_variables, this->number_constraints, options.at("LP_solver"))),
       initial_point(max_number_variables) {
    // register the original constraints bounds
