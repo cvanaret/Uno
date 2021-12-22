@@ -53,8 +53,8 @@ double Subproblem::push_variable_to_interior(double variable_value, const Range&
    const double k1 = 1e-2;
    const double k2 = 1e-2;
 
-   double perturbation_lb = std::min(k1 * std::max(1., std::abs(variable_bounds.lb)), k2 * (variable_bounds.ub - variable_bounds.lb));
-   double perturbation_ub = std::min(k1 * std::max(1., std::abs(variable_bounds.ub)), k2 * (variable_bounds.ub - variable_bounds.lb));
+   const double perturbation_lb = std::min(k1 * std::max(1., std::abs(variable_bounds.lb)), k2 * (variable_bounds.ub - variable_bounds.lb));
+   const double perturbation_ub = std::min(k1 * std::max(1., std::abs(variable_bounds.ub)), k2 * (variable_bounds.ub - variable_bounds.lb));
    variable_value = std::max(variable_value, variable_bounds.lb + perturbation_lb);
    variable_value = std::min(variable_value, variable_bounds.ub - perturbation_ub);
    return variable_value;
@@ -64,16 +64,16 @@ void Subproblem::set_variables_bounds(const Problem& problem, const Iterate& cur
    // bounds intersected with trust region
    // very important: apply the trust region only on the original variables
    for (size_t i = 0; i < problem.number_variables; i++) {
-      double lb = std::max(-trust_region_radius, problem.variables_bounds[i].lb - current_iterate.x[i]);
-      double ub = std::min(trust_region_radius, problem.variables_bounds[i].ub - current_iterate.x[i]);
+      const double lb = std::max(-trust_region_radius, problem.variables_bounds[i].lb - current_iterate.x[i]);
+      const double ub = std::min(trust_region_radius, problem.variables_bounds[i].ub - current_iterate.x[i]);
       this->variables_bounds[i] = {lb, ub};
    }
 }
 
 void Subproblem::set_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints) {
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      double lb = problem.constraint_bounds[j].lb - current_constraints[j];
-      double ub = problem.constraint_bounds[j].ub - current_constraints[j];
+      const double lb = problem.constraint_bounds[j].lb - current_constraints[j];
+      const double ub = problem.constraint_bounds[j].ub - current_constraints[j];
       this->constraints_bounds[j] = {lb, ub};
    }
 }
