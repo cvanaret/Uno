@@ -81,11 +81,11 @@ void Subproblem::set_constraints_bounds(const Problem& problem, const std::vecto
 void Subproblem::set_scaled_objective_gradient(const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
       double objective_multiplier) {
    // scale objective gradient
-   current_iterate.evaluate_objective_gradient(problem, scaling);
    if (objective_multiplier == 0.) {
       this->objective_gradient.clear();
    }
    else {
+      current_iterate.evaluate_objective_gradient(problem, scaling);
       this->objective_gradient = current_iterate.objective_gradient;
       if (objective_multiplier != 1.) {
          scale(this->objective_gradient, objective_multiplier);
