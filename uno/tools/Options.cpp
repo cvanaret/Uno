@@ -42,12 +42,14 @@ void find_preset(const std::string& preset, Options& options) {
       options["filter_switching_infeasibility_exponent"] = "1.1";
       options["use_second_order_correction"] = "yes";
       options["elastic_objective_coefficient"] = "1000";
+      options["residual_norm"] = "INF";
    }
    else if (preset == "filtersqp") {
       options["mechanism"] = "TR";
       options["constraint-relaxation"] = "feasibility-restoration";
       options["strategy"] = "filter";
       options["subproblem"] = "QP";
+      options["residual_norm"] = "L1";
    }
    else if (preset == "byrd") {
       options["mechanism"] = "LS";
@@ -60,6 +62,7 @@ void find_preset(const std::string& preset, Options& options) {
       options["l1_relaxation_epsilon1"] = "0.1";
       options["l1_relaxation_epsilon2"] = "0.1";
       options["tolerance"] = "1e-6";
+      options["residual_norm"] = "L1";
    }
 }
 

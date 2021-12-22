@@ -43,19 +43,17 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
    return direction;
 }
 
-// with a constraint partition
 void FeasibilityRestoration::form_feasibility_problem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
       const std::vector<double>& phase_2_primal_direction, const std::optional<ConstraintPartition>& optional_constraint_partition) {
-   // compute the objective model with a zero objective multiplier
-   const double objective_multiplier = 0.;
-
    // if a constraint partition is given, form a partitioned feasibility problem
    if (optional_constraint_partition.has_value()) {
       const ConstraintPartition& constraint_partition = optional_constraint_partition.value();
       assert(!constraint_partition.infeasible.empty() && "The subproblem is infeasible but no constraint is infeasible");
       // set the multipliers of the violated constraints and compute the Hessian
       FeasibilityRestoration::set_restoration_multipliers(this->subproblem->constraints_multipliers, constraint_partition);
-      this->subproblem->build_objective_model(problem, scaling, current_iterate, objective_multiplier);
+
+      // compute the objective model with a zero objective multiplier
+      this->subproblem->build_objective_model(problem, scaling, current_iterate, 0.);
 
       // assemble the linear objective (sum of the gradients of the violated constraints)
       this->subproblem->compute_feasibility_linear_objective(current_iterate, constraint_partition);
@@ -65,7 +63,8 @@ void FeasibilityRestoration::form_feasibility_problem(const Problem& problem, co
    }
    else {
       // no constraint partition given, form an l1 feasibility problem by adding elastic variables
-      this->subproblem->build_objective_model(problem, scaling, current_iterate, objective_multiplier);
+      initialize_vector(this->subproblem->constraints_multipliers, 0.);
+      this->subproblem->build_objective_model(problem, scaling, current_iterate, 0.);
       this->add_elastic_variables_to_subproblem();
    }
    // start from the phase-2 solution

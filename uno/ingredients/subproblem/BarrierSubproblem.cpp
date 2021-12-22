@@ -154,6 +154,13 @@ void BarrierSubproblem::create_current_subproblem(const Problem& problem, const 
 }
 
 void BarrierSubproblem::build_objective_model(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier) {
+   // if we're building the feasibility subproblem, temporarily update the objective multiplier
+   if (objective_multiplier == 0.) {
+      this->barrier_parameter = std::max(this->barrier_parameter, current_iterate.errors.constraints);
+      DEBUG << "Barrier parameter mu temporarily updated to " << this->barrier_parameter << "\n";
+      assert(false && "BarrierSubproblem::build_objective_model with obj multiplier = 0: TBD");
+   }
+
    // evaluate the Hessian
    this->hessian_model->evaluate(problem, scaling, current_iterate.x, objective_multiplier, this->constraints_multipliers);
 

@@ -51,7 +51,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
                return std::make_tuple(std::move(trial_iterate), direction.norm);
             }
             else if (this->use_second_order_correction && this->relaxation_strategy.soc_strategy() == SOC_UPON_REJECTION &&
-                  this->number_iterations == 1 && trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility) {
+                  this->number_iterations == 1 && trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility && !feasibility_problem) {
                // reject the full step: compute a (temporary) SOC direction
                Direction direction_soc = this->relaxation_strategy.compute_second_order_correction(problem, trial_iterate);
 
