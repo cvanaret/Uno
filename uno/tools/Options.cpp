@@ -126,6 +126,7 @@ void set_logger(const std::string& logger_level) {
          Logger::logger_level = DEBUG;
       }
    }
-   catch (std::out_of_range&) {
+   catch (const std::out_of_range&) {
+      throw std::out_of_range("The logger level " + logger_level + " was not found");
    }
 }

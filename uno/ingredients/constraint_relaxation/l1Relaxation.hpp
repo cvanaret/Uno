@@ -37,9 +37,9 @@ protected:
 
    static double compute_predicted_reduction(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, const Direction& direction,
          PredictedReductionModel& predicted_reduction_model, double step_length);
-   Direction solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate);
+   Direction solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double current_penalty_parameter);
    Direction resolve_subproblem(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
-         double objective_multiplier);
+         double current_penalty_parameter);
    Direction solve_with_steering_rule(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate);
    double compute_linearized_constraint_residual(std::vector<double>& direction) const;
    double compute_error(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, const Multipliers& multipliers_displacements,
