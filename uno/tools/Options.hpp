@@ -3,11 +3,21 @@
 
 #include <map>
 
-using Options = std::map<std::string, std::string>;
+//using Options = std::map<std::string, std::string>;
+
+class Options {
+public:
+   Options() = default;
+   std::string& operator[](const std::string& key);
+   std::string at(const std::string& key) const;
+   void print() const;
+
+private:
+   std::map<std::string, std::string> options;
+};
 
 Options get_default_options(const std::string& file_name);
 void get_command_line_options(int argc, char* argv[], Options& options);
-void print_options(const Options& options);
 void set_logger(const std::string& logger_level);
 
 #endif // OPTIONS_H

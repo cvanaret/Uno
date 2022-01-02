@@ -4,6 +4,25 @@
 #include "Options.hpp"
 #include "Logger.hpp"
 
+std::string& Options::operator[](const std::string& key) {
+   return this->options[key];
+}
+
+std::string Options::at(const std::string& key) const {
+   try {
+      return this->options.at(key);
+   }
+   catch(const std::out_of_range&) {
+      throw std::out_of_range("The option " + key + " was not found");
+   }
+}
+
+void Options::print() const {
+   for (const auto& [key, value]: this->options) {
+      std::cout << "Option " << key << " = " << value << "\n";
+   }
+}
+
 Options get_default_options(const std::string& file_name) {
    std::ifstream file;
    file.open(file_name);
@@ -89,12 +108,6 @@ void get_command_line_options(int argc, char* argv[], Options& options) {
          std::cout << "Argument " << argument_i << " was ignored\n";
          i++;
       }
-   }
-}
-
-void print_options(const Options& options) {
-   for (const auto& [key, value]: options) {
-      std::cout << "Option " << key << " = " << value << "\n";
    }
 }
 
