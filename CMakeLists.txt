@@ -60,7 +60,6 @@ set(SRC_FILES
     uno/linear_algebra/SymmetricMatrixFactory.cpp
     uno/linear_algebra/SparseVector.cpp
     uno/linear_algebra/Vector.cpp
-    uno/linear_algebra/Expression.hpp
     
     uno/optimization/Problem.cpp
     uno/optimization/Constraint.cpp
