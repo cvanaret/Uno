@@ -5,20 +5,25 @@ GlobalizationMechanism::GlobalizationMechanism(ConstraintRelaxationStrategy& con
 }
 
 Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate, Direction& direction, double step_length) {
+   const auto take_dual_step = [&](Iterate& iterate) {
+      // take dual step
+      add_vectors(current_iterate.multipliers.constraints, direction.multipliers.constraints, step_length, iterate.multipliers.constraints);
+      copy_from(iterate.multipliers.lower_bounds, direction.multipliers.lower_bounds);
+      copy_from(iterate.multipliers.upper_bounds, direction.multipliers.upper_bounds);
+      iterate.multipliers.objective = direction.objective_multiplier;
+   };
    if (0. < direction.norm) {
       Iterate trial_iterate(current_iterate.x.size(), direction.multipliers.constraints.size());
+      // take primal step
       add_vectors(current_iterate.x, direction.x, step_length, trial_iterate.x);
-      add_vectors(current_iterate.multipliers.constraints, direction.multipliers.constraints, step_length, trial_iterate.multipliers.constraints);
-      copy_from(trial_iterate.multipliers.lower_bounds, direction.multipliers.lower_bounds);
-      copy_from(trial_iterate.multipliers.upper_bounds, direction.multipliers.upper_bounds);
-      trial_iterate.multipliers.objective = direction.objective_multiplier;
+      // take dual step
+      take_dual_step(trial_iterate);
       return trial_iterate;
    }
    else {
-      add_vectors(current_iterate.multipliers.constraints, direction.multipliers.constraints, step_length, current_iterate.multipliers.constraints);
-      copy_from(current_iterate.multipliers.lower_bounds, direction.multipliers.lower_bounds);
-      copy_from(current_iterate.multipliers.upper_bounds, direction.multipliers.upper_bounds);
-      current_iterate.multipliers.objective = direction.objective_multiplier;
+      // d = 0, no primal step to take
+      // take dual step
+      take_dual_step(current_iterate);
       current_iterate.progress = {0., 0.};
       return current_iterate;
    }
