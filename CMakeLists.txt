@@ -60,6 +60,7 @@ set(SRC_FILES
     uno/linear_algebra/SymmetricMatrixFactory.cpp
     uno/linear_algebra/SparseVector.cpp
     uno/linear_algebra/Vector.cpp
+    uno/linear_algebra/Expression.hpp
     
     uno/optimization/Problem.cpp
     uno/optimization/Constraint.cpp
@@ -134,8 +135,8 @@ target_include_directories(uno PUBLIC ${DIRECTORIES})
 # link the libraries
 target_link_libraries(uno PUBLIC ${LIBS})
 
-# copy the configuration file
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/uno.cfg DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+# copy the option file
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/uno.options DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 #############
 # AMPL main #

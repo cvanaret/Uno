@@ -11,7 +11,7 @@
 #include "tools/Logger.hpp"
 #include "tools/Options.hpp"
 
-// new overload to track heap allocations
+// new() overload to track heap allocations
 size_t total_allocations = 0;
 
 /*
@@ -58,7 +58,7 @@ Level Logger::logger_level = INFO;
 int main(int argc, char* argv[]) {
    if (1 < argc) {
       // get the default options
-      Options options = get_default_options("uno.cfg");
+      Options options = get_default_options("uno.options");
       // get the command line options
       get_command_line_options(argc, argv, options);
       set_logger(options.at("logger"));
