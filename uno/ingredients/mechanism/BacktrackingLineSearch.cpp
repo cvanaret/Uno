@@ -1,5 +1,6 @@
 #include <cmath>
 #include <cassert>
+#include <ingredients/subproblem/AugmentedSystem.hpp>
 #include "BacktrackingLineSearch.hpp"
 #include "tools/Logger.hpp"
 
@@ -32,60 +33,71 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
    this->step_length = 1.;
    this->number_iterations = 0;
    bool failure = false;
-   bool feasibility_problem = false;
+   bool solve_feasibility_problem = false;
+   bool in_feasibility_problem = false;
    while (!failure) {
-      while (!this->termination()) {
-         assert(0 < this->step_length && this->step_length <= 1 && "The line-search step length is not in (0, 1]");
-         this->number_iterations++;
-         this->print_iteration();
+      try {
+         while (!this->termination()) {
+            assert(0 < this->step_length && this->step_length <= 1 && "The line-search step length is not in (0, 1]");
+            this->number_iterations++;
+            this->print_iteration();
 
-         Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, this->step_length);
-         try {
-            const bool is_acceptable = this->relaxation_strategy.is_acceptable(statistics, problem, scaling, current_iterate, trial_iterate,
-                  direction, predicted_reduction_model, this->step_length);
-            // check whether the trial step is accepted
-            if (is_acceptable) {
-               // let the subproblem know the accepted iterate
-               this->relaxation_strategy.register_accepted_iterate(trial_iterate);
-               this->add_statistics(statistics, direction);
-               return std::make_tuple(std::move(trial_iterate), direction.norm);
-            }
-            else if (this->use_second_order_correction && this->relaxation_strategy.soc_strategy() == SOC_UPON_REJECTION &&
-                  this->number_iterations == 1 && trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility && !feasibility_problem) {
-               // reject the full step: compute a (temporary) SOC direction
-               Direction direction_soc = this->relaxation_strategy.compute_second_order_correction(problem, trial_iterate);
-
-               // assemble the (temporary) SOC trial iterate
-               Iterate trial_iterate_soc = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction_soc, this->step_length);
-
-               if (this->relaxation_strategy.is_acceptable(statistics, problem, scaling, current_iterate, trial_iterate_soc, direction_soc,
-                     predicted_reduction_model, this->step_length)) {
-                  this->add_statistics(statistics, direction_soc);
-                  statistics.add_statistic("SOC", "x");
-
+            Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, this->step_length);
+            try {
+               const bool is_acceptable = this->relaxation_strategy.is_acceptable(statistics, problem, scaling, current_iterate, trial_iterate,
+                     direction, predicted_reduction_model, this->step_length);
+               // check whether the trial step is accepted
+               if (is_acceptable) {
                   // let the subproblem know the accepted iterate
-                  this->relaxation_strategy.register_accepted_iterate(trial_iterate_soc);
-                  trial_iterate_soc.multipliers.lower_bounds = trial_iterate.multipliers.lower_bounds;
-                  trial_iterate_soc.multipliers.upper_bounds = trial_iterate.multipliers.upper_bounds;
-                  return std::make_tuple(std::move(trial_iterate_soc), direction_soc.norm);
+                  this->relaxation_strategy.register_accepted_iterate(trial_iterate);
+                  this->add_statistics(statistics, direction);
+                  return std::make_tuple(std::move(trial_iterate), direction.norm);
                }
-               else {
-                  DEBUG << "SOC step discarded\n\n";
-                  statistics.add_statistic("SOC", "-");
+               else if (this->use_second_order_correction && this->relaxation_strategy.soc_strategy() == SOC_UPON_REJECTION &&
+                        this->number_iterations == 1 && trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility &&
+                        !in_feasibility_problem) {
+                  // reject the full step: compute a (temporary) SOC direction
+                  Direction direction_soc = this->relaxation_strategy.compute_second_order_correction(problem, trial_iterate);
+
+                  // assemble the (temporary) SOC trial iterate
+                  Iterate trial_iterate_soc = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction_soc, this->step_length);
+
+                  if (this->relaxation_strategy.is_acceptable(statistics, problem, scaling, current_iterate, trial_iterate_soc, direction_soc,
+                        predicted_reduction_model, this->step_length)) {
+                     this->add_statistics(statistics, direction_soc);
+                     statistics.add_statistic("SOC", "x");
+
+                     // let the subproblem know the accepted iterate
+                     this->relaxation_strategy.register_accepted_iterate(trial_iterate_soc);
+                     trial_iterate_soc.multipliers.lower_bounds = trial_iterate.multipliers.lower_bounds;
+                     trial_iterate_soc.multipliers.upper_bounds = trial_iterate.multipliers.upper_bounds;
+                     return std::make_tuple(std::move(trial_iterate_soc), direction_soc.norm);
+                  }
+                  else {
+                     DEBUG << "SOC step discarded\n\n";
+                     statistics.add_statistic("SOC", "-");
+                     this->decrease_step_length();
+                  }
+               }
+               else { // trial iterate not acceptable
                   this->decrease_step_length();
                }
             }
-            else { // trial iterate not acceptable
+            catch (const NumericalError& e) {
+               GlobalizationMechanism::print_warning(e.what());
                this->decrease_step_length();
             }
          }
-         catch (const NumericalError& e) {
-            GlobalizationMechanism::print_warning(e.what());
-            this->decrease_step_length();
-         }
+         // if step length is too small, revert to solving the feasibility problem
+         solve_feasibility_problem = true;
       }
-      // if step length is too small, run restoration phase
-      if (!feasibility_problem && 0. < direction.multipliers.objective) {
+      catch (const UnstableInertiaCorrection&) {
+         // unstable factorization during optimality phase
+         solve_feasibility_problem = true;
+      }
+
+      // solve the feasibility problem
+      if (solve_feasibility_problem && !in_feasibility_problem && 0. < direction.multipliers.objective) {
          //assert(false && "LS max iterations");
          //if (0. < current_iterate.progress.feasibility && !direction.is_relaxed) {
          DEBUG << "The line search failed, switching to feasibility problem\n";
@@ -94,7 +106,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
          BacktrackingLineSearch::check_unboundedness(direction);
          this->step_length = 1.;
          this->number_iterations = 0;
-         feasibility_problem = true;
+         in_feasibility_problem = true;
       }
       else {
          WARNING << "The feasibility problem failed to make progress\n";
