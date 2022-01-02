@@ -8,7 +8,7 @@ std::string& Options::operator[](const std::string& key) {
    return this->options[key];
 }
 
-std::string Options::at(const std::string& key) const {
+const std::string& Options::at(const std::string& key) const {
    try {
       return this->options.at(key);
    }
@@ -27,7 +27,7 @@ Options get_default_options(const std::string& file_name) {
    std::ifstream file;
    file.open(file_name);
    if (!file) {
-      throw std::invalid_argument("The option file was not found");
+      throw std::invalid_argument("The option file " + file_name + " was not found");
    }
    else {
       // register the default options
