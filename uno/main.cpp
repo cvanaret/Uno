@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
       get_command_line_options(argc, argv, options);
       set_logger(options.at("logger"));
 
-      print_options(options);
+      options.print();
 
       if (std::string(argv[1]) == "-v") {
          std::cout << "Welcome in Uno\n";
