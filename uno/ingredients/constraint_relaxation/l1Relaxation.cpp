@@ -129,7 +129,7 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
 // https://epubs.siam.org/doi/pdf/10.1137/080738222
 Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate) {
    // stage a: compute the step within trust region
-   Direction direction = this->solve_subproblem(statistics, problem, current_iterate);
+   Direction direction = this->solve_subproblem(statistics, problem, current_iterate, this->penalty_parameter);
 
    // penalty update: if penalty parameter is already 0 or fixed by the user, no need to decrease it
    if (0. < this->penalty_parameter && !this->parameters.fixed_parameter) {
@@ -218,13 +218,15 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const P
    return direction;
 }
 
-Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
+Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double current_penalty_parameter) {
+   // solve the subproblem
    Direction direction = this->subproblem->solve(statistics, problem, current_iterate);
+   // enforce feasibility (by construction)
    if (direction.constraint_partition.has_value()) {
       const ConstraintPartition& constraint_partition = direction.constraint_partition.value();
       assert(constraint_partition.infeasible.empty() && "solve_subproblem: infeasible constraints found, although direction is feasible");
    }
-   direction.objective_multiplier = this->penalty_parameter;
+   direction.objective_multiplier = current_penalty_parameter;
    DEBUG << "\n" << direction;
 
    // remove the temporary elastic variables
@@ -233,21 +235,13 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& 
 }
 
 Direction l1Relaxation::resolve_subproblem(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
-      double objective_multiplier) {
-   this->subproblem->build_objective_model(problem, scaling, current_iterate, objective_multiplier);
+      double current_penalty_parameter) {
+   // recompute the objective model with the current objective multiplier
+   this->subproblem->build_objective_model(problem, scaling, current_iterate, current_penalty_parameter);
+   // relax the constraints
    this->add_elastic_variables_to_subproblem();
-
-   Direction direction = this->subproblem->solve(statistics, problem, current_iterate);
-   if (direction.constraint_partition.has_value()) {
-      const ConstraintPartition& constraint_partition = direction.constraint_partition.value();
-      assert(constraint_partition.infeasible.empty() && "resolve_subproblem: infeasible constraints found, although direction is feasible");
-   }
-   direction.objective_multiplier = objective_multiplier;
-   DEBUG << "\n" << direction;
-
-   // remove the temporary elastic variables
-   this->remove_elastic_variables_from_subproblem();
-   return direction;
+   // solve the subproblem
+   return this->solve_subproblem(statistics, problem, current_iterate, current_penalty_parameter);
 }
 
 double l1Relaxation::compute_linearized_constraint_residual(std::vector<double>& direction) const {
