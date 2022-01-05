@@ -42,6 +42,7 @@ public:
 private:
    AugmentedSystem augmented_system;
    double barrier_parameter;
+   double previous_barrier_parameter;
    const double tolerance;
    const std::unique_ptr<HessianModel> hessian_model;
    const std::unique_ptr<LinearSolver> linear_solver;
@@ -64,14 +65,18 @@ private:
    std::vector<double> lower_delta_z;
    std::vector<double> upper_delta_z;
 
+   bool in_feasibility_problem{false};
+   bool small_direction_at_previous_iteration{false};
+
    void update_barrier_parameter(const Iterate& current_iterate);
+   bool is_small_direction(const Iterate& current_iterate, const Direction& direction);
    void set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;
    double compute_barrier_directional_derivative(const std::vector<double>& solution);
    double evaluate_barrier_function(const Problem& problem, const Scaling& scaling, Iterate& iterate);
    double primal_fraction_to_boundary(const std::vector<double>& ipm_solution, double tau);
    double dual_fraction_to_boundary(double tau);
-   void assemble_augmented_system(const Problem& problem);
-   void assemble_augmented_matrix();
+   void assemble_augmented_system(const Problem& problem, const Iterate& current_iterate);
+   void assemble_augmented_matrix(const Iterate& current_iterate);
    void generate_augmented_rhs();
    void compute_lower_bound_dual_direction(const std::vector<double>& solution);
    void compute_upper_bound_dual_direction(const std::vector<double>& solution);

@@ -88,8 +88,7 @@ Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, const 
       const Direction& /*phase_2_direction*/) {
    assert(0. < this->penalty_parameter && "l1Relaxation: the penalty parameter is already 0");
 
-   const double objective_multiplier = 0.;
-   Direction direction = this->resolve_subproblem(statistics, problem, scaling, current_iterate, objective_multiplier);
+   Direction direction = this->resolve_subproblem(statistics, problem, scaling, current_iterate, 0.);
    // remove the temporary elastic variables
    this->remove_elastic_variables_from_direction(problem, direction);
    return direction;
