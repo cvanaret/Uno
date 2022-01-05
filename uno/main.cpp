@@ -1,8 +1,3 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <memory>
-#include <vector>
 #include "interfaces/AMPL/AMPLModel.hpp"
 #include "ingredients/strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/mechanism/GlobalizationMechanismFactory.hpp"

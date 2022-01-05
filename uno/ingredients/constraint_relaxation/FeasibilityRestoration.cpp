@@ -45,7 +45,7 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
 
 void FeasibilityRestoration::form_feasibility_problem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
       const std::vector<double>& phase_2_primal_direction, const std::optional<ConstraintPartition>& optional_constraint_partition) {
-   // if a constraint partition is given, form a partitioned feasibility problem
+   // if a constraint partition is given, form a partitioned l1 feasibility problem
    if (optional_constraint_partition.has_value()) {
       const ConstraintPartition& constraint_partition = optional_constraint_partition.value();
       assert(!constraint_partition.infeasible.empty() && "The subproblem is infeasible but no constraint is infeasible");
@@ -80,7 +80,6 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
    DEBUG << "\nSolving the feasibility subproblem\n";
    Direction feasibility_direction = this->subproblem->solve(statistics, problem, current_iterate);
    feasibility_direction.objective_multiplier = 0.;
-   feasibility_direction.subproblem_is_relaxed = true;
 
    if (phase_2_direction.constraint_partition.has_value()) {
       const ConstraintPartition& constraint_partition = phase_2_direction.constraint_partition.value();
@@ -102,6 +101,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
       this->phase_2_strategy->reset();
       this->subproblem->subproblem_definition_changed = false;
       this->subproblem->compute_progress_measures(problem, scaling, current_iterate);
+      DEBUG << "The subproblem definition changed, the progress measures are recomputed\n";
    }
 
    bool accept = false;
@@ -129,8 +129,8 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
 
    if (accept) {
       statistics.add_statistic("phase", static_cast<int>(this->current_phase));
-      if (direction.subproblem_is_relaxed && direction.constraint_partition.has_value()) {
-         // correct multipliers for infeasibility problem
+      // correct multipliers for infeasibility problem
+      if (direction.objective_multiplier == 0. && direction.constraint_partition.has_value()) {
          FeasibilityRestoration::set_restoration_multipliers(trial_iterate.multipliers.constraints, direction.constraint_partition.value());
       }
       this->subproblem->compute_optimality_conditions(problem, scaling, trial_iterate, direction.objective_multiplier);
@@ -141,14 +141,14 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
 GlobalizationStrategy& FeasibilityRestoration::switch_phase(const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
       const Direction& direction) {
    // possibly go from 1 (restoration) to phase 2 (optimality)
-   if (!direction.subproblem_is_relaxed && this->current_phase == FEASIBILITY_RESTORATION) {
+   if (0. < direction.objective_multiplier && this->current_phase == FEASIBILITY_RESTORATION) {
       // TODO && this->filter_optimality->accept(trial_iterate.progress.feasibility, trial_iterate.progress.objective))
       this->current_phase = OPTIMALITY;
       DEBUG << "Switching from restoration to optimality phase\n";
       this->subproblem->compute_progress_measures(problem, scaling, current_iterate);
    }
       // possibly go from phase 2 (optimality) to 1 (restoration)
-   else if (direction.subproblem_is_relaxed && this->current_phase == OPTIMALITY) {
+   else if (direction.objective_multiplier == 0. && this->current_phase == OPTIMALITY) {
       this->current_phase = FEASIBILITY_RESTORATION;
       DEBUG << "Switching from optimality to restoration phase\n";
       this->phase_2_strategy->notify(current_iterate);
@@ -157,7 +157,7 @@ GlobalizationStrategy& FeasibilityRestoration::switch_phase(const Problem& probl
       this->phase_1_strategy->notify(current_iterate);
    }
    // return the corresponding globalization strategy: phase 2 if in optimality phase or (infeasible direction and no constraint partition available)
-   if (this->current_phase == OPTIMALITY || (direction.subproblem_is_relaxed && !direction.constraint_partition.has_value())) {
+   if (this->current_phase == OPTIMALITY || (direction.objective_multiplier == 0. && !direction.constraint_partition.has_value())) {
       return *this->phase_2_strategy;
    }
    else {

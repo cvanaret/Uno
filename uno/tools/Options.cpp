@@ -47,9 +47,9 @@ Options get_default_options(const std::string& file_name) {
    }
 }
 
-void find_preset(const std::string& preset, Options& options) {
+void find_preset(const std::string& preset_name, Options& options) {
    // shortcuts for state-of-the-art combinations
-   if (preset == "ipopt") {
+   if (preset_name == "ipopt") {
       options["mechanism"] = "LS";
       options["constraint-relaxation"] = "feasibility-restoration";
       options["strategy"] = "filter";
@@ -63,14 +63,14 @@ void find_preset(const std::string& preset, Options& options) {
       options["elastic_objective_coefficient"] = "1000";
       options["residual_norm"] = "INF";
    }
-   else if (preset == "filtersqp") {
+   else if (preset_name == "filtersqp") {
       options["mechanism"] = "TR";
       options["constraint-relaxation"] = "feasibility-restoration";
       options["strategy"] = "filter";
       options["subproblem"] = "QP";
       options["residual_norm"] = "L1";
    }
-   else if (preset == "byrd") {
+   else if (preset_name == "byrd") {
       options["mechanism"] = "LS";
       options["constraint-relaxation"] = "l1-relaxation";
       options["strategy"] = "l1-penalty";
