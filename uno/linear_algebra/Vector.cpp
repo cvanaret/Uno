@@ -48,6 +48,7 @@ double norm_1(const std::vector<double>& x) {
    return norm;
 }
 
+// this version takes a callback as argument. This avoids forming the vector explicitly
 double norm_1(const std::function<double(size_t i)>& f, size_t size) {
    double norm = 0.;
    for (size_t i = 0; i < size; i++) {
@@ -65,6 +66,7 @@ double norm_2_squared(const std::vector<double>& x) {
    return norm_squared;
 }
 
+// this version takes a callback as argument. This avoids forming the vector explicitly
 double norm_2_squared(const std::function<double(size_t i)>& f, size_t size) {
    double norm = 0.;
    for (size_t i = 0; i < size; i++) {
@@ -79,7 +81,7 @@ double norm_2(const std::vector<double>& x) {
    return std::sqrt(norm_2_squared(x));
 }
 
-double norm_2(const std::function<double(int i)>& f, size_t size) {
+double norm_2(const std::function<double(size_t i)>& f, size_t size) {
    return std::sqrt(norm_2_squared(f, size));
 }
 
