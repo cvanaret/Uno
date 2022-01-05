@@ -10,11 +10,13 @@ BarrierSubproblem::BarrierSubproblem(const Problem& problem, size_t max_number_v
             problem.number_constraints, true, SOC_UPON_REJECTION, true, norm_from_string(options.at("residual_norm"))),
       augmented_system(options.at("sparse_format"), this->max_number_variables + problem.number_constraints,
             problem.hessian_maximum_number_nonzeros
+            + this->max_number_variables /* proximal term */
             + this->max_number_variables + problem.number_constraints /* regularization */
             + 2 * this->max_number_variables /* diagonal barrier terms */
             + this->max_number_variables * problem.number_constraints /* Jacobian */,
             stod(options.at("LS_regularization_failure_threshold"))),
       barrier_parameter(std::stod(options.at("initial_barrier_parameter"))),
+      previous_barrier_parameter(std::stod(options.at("initial_barrier_parameter"))),
       tolerance(std::stod(options.at("tolerance"))),
       // if no trust region is used, the problem should be convexified. However, the inertia of the augmented matrix will be corrected later
       hessian_model(HessianModelFactory::create(options.at("hessian_model"), this->max_number_variables, problem.hessian_maximum_number_nonzeros,
@@ -118,6 +120,7 @@ inline void BarrierSubproblem::initialize(Statistics& statistics, const Problem&
 
    // compute least-square multipliers
    if (problem.is_constrained()) {
+      this->augmented_system.matrix->dimension = this->number_variables + problem.number_constraints;
       Preprocessing::compute_least_square_multipliers(problem, scaling, *this->augmented_system.matrix, this->augmented_system.rhs,
             *this->linear_solver, first_iterate, first_iterate.multipliers.constraints);
    }
@@ -156,9 +159,13 @@ void BarrierSubproblem::create_current_subproblem(const Problem& problem, const 
 void BarrierSubproblem::build_objective_model(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier) {
    // if we're building the feasibility subproblem, temporarily update the objective multiplier
    if (objective_multiplier == 0.) {
+      this->in_feasibility_problem = true;
+      this->previous_barrier_parameter = this->barrier_parameter;
       this->barrier_parameter = std::max(this->barrier_parameter, current_iterate.errors.constraints);
       DEBUG << "Barrier parameter mu temporarily updated to " << this->barrier_parameter << "\n";
-      assert(false && "BarrierSubproblem::build_objective_model with obj multiplier = 0: TBD");
+   }
+   else {
+      this->in_feasibility_problem = false;
    }
 
    // evaluate the Hessian
@@ -176,9 +183,9 @@ void BarrierSubproblem::build_objective_model(const Problem& problem, const Scal
 
 Direction BarrierSubproblem::solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
    this->iteration++;
-   // set up the augmented system (with the right inertia)
+   // set up the augmented system (with the correct inertia)
    this->hessian_model->adjust_number_variables(this->number_variables);
-   this->assemble_augmented_system(problem);
+   this->assemble_augmented_system(problem, current_iterate);
 
    // compute the solution (Δx, -Δλ)
    this->augmented_system.solve(*this->linear_solver);
@@ -187,17 +194,18 @@ Direction BarrierSubproblem::solve(Statistics& statistics, const Problem& proble
    // generate IPM direction
    this->generate_direction(problem, current_iterate);
    statistics.add_statistic("barrier param.", this->barrier_parameter);
+
+   // determine if the direction is a "small direction" (Section 3.9 of the Ipopt paper) TODO
+   bool is_small_direction = this->is_small_direction(current_iterate, direction);
+   if (is_small_direction) {
+      DEBUG << "This is a small direction\n";
+   }
    return this->direction;
 }
 
-//   catch (const UnstableInertiaCorrection& e) {
-//      // unstable factorization during optimality phase
-//      throw "InteriorPoint: inertia correction failed";
-//   }
-
-void BarrierSubproblem::assemble_augmented_system(const Problem& problem) {
+void BarrierSubproblem::assemble_augmented_system(const Problem& problem, const Iterate& current_iterate) {
    // assemble, factorize and regularize the KKT matrix
-   this->assemble_augmented_matrix();
+   this->assemble_augmented_matrix(current_iterate);
    this->augmented_system.factorize_matrix(problem, *this->linear_solver);
    this->augmented_system.regularize_matrix(problem, *this->linear_solver, this->number_variables, this->number_constraints,
          std::pow(this->barrier_parameter, this->parameters.regularization_barrier_exponent));
@@ -232,17 +240,22 @@ Direction BarrierSubproblem::compute_second_order_correction(const Problem& prob
 void BarrierSubproblem::add_variable(size_t i, double current_value, const Range& bounds, double objective_term, size_t j, double jacobian_term) {
    // add the variable to the objective and the constraint Jacobian
    Subproblem::add_variable(i, current_value, bounds, objective_term, j, jacobian_term);
+
+   // set the current value
+   const double mu_over_rho = this->barrier_parameter/objective_term;
+   const double radical = std::pow(this->barrier_constraints[j], 2) + std::pow(mu_over_rho, 2);
+   // analytically, I find (mu_over_rho - jacobian_term*this->barrier_constraints[j] + std::sqrt(radical))/2., but Ipopt seems to use the following
+   this->primal_iterate[i] = (mu_over_rho - jacobian_term*this->barrier_constraints[j] + std::sqrt(radical))/2.;
+
    // if necessary, register the variable as bounded
    if (is_finite_lower_bound(bounds.lb)) {
       this->lower_bounded_variables.push_back(i);
-      this->lower_bound_multipliers[i] = this->default_multiplier;
+      this->lower_bound_multipliers[i] = this->barrier_parameter/this->primal_iterate[i];
    }
    if (is_finite_upper_bound(bounds.ub)) {
       this->upper_bounded_variables.push_back(i);
-      this->upper_bound_multipliers[i] = -this->default_multiplier;
+      this->upper_bound_multipliers[i] = -this->barrier_parameter/this->primal_iterate[i];
    }
-   // save the current value
-   this->primal_iterate[i] = Subproblem::push_variable_to_interior(current_value, bounds);
 }
 
 void BarrierSubproblem::remove_variable(size_t i, size_t j) {
@@ -282,7 +295,6 @@ void BarrierSubproblem::compute_progress_measures(const Problem& problem, const 
 }
 
 void BarrierSubproblem::update_barrier_parameter(const Iterate& current_iterate) {
-   const double tolerance_fraction = this->tolerance / this->parameters.barrier_update_fraction;
    // scaled error terms
    const double sd = this->compute_KKT_error_scaling(current_iterate);
    const double KKTerror = current_iterate.errors.KKT / sd;
@@ -290,15 +302,23 @@ void BarrierSubproblem::update_barrier_parameter(const Iterate& current_iterate)
    const double error = std::max({KKTerror, current_iterate.errors.constraints, central_complementarity_error});
    DEBUG << "KKT error for barrier subproblem is " << error << "\n";
 
-   // update of the barrier problem
+   // update of the barrier parameter (Eq. 7 in Ipopt paper)
+   const double tolerance_fraction = this->tolerance / this->parameters.barrier_update_fraction;
    while (error <= this->parameters.k_epsilon * this->barrier_parameter && tolerance_fraction < this->barrier_parameter) {
       this->barrier_parameter = std::max(tolerance_fraction, std::min(this->parameters.k_mu * this->barrier_parameter,
             std::pow(this->barrier_parameter, this->parameters.theta_mu)));
-      DEBUG << "IPM: mu updated to " << this->barrier_parameter << " and filter reset\n";
+      DEBUG << "Barrier parameter mu updated to " << this->barrier_parameter << " and filter reset\n";
       // signal the redefinition of the problem to the globalization strategy
       this->subproblem_definition_changed = true;
    }
-   DEBUG << "Barrier parameter mu = " << this->barrier_parameter << "\n";
+}
+
+bool BarrierSubproblem::is_small_direction(const Iterate& current_iterate, const Direction& direction) {
+   const auto relative_measure_function = [&](size_t i) {
+      return direction.x[i]/(1 + current_iterate.x[i]);
+   };
+   const double machine_epsilon = std::numeric_limits<double>::epsilon();
+   return norm_inf(relative_measure_function, this->number_variables) < 10. * machine_epsilon;
 }
 
 void BarrierSubproblem::set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {
@@ -363,7 +383,7 @@ double BarrierSubproblem::dual_fraction_to_boundary(double tau) {
    return dual_length;
 }
 
-void BarrierSubproblem::assemble_augmented_matrix() {
+void BarrierSubproblem::assemble_augmented_matrix(const Iterate& current_iterate) {
    this->augmented_system.matrix->reset();
    this->augmented_system.matrix->dimension = this->number_variables + this->number_constraints;
    // copy the Lagrangian Hessian in the top left block
@@ -382,6 +402,15 @@ void BarrierSubproblem::assemble_augmented_matrix() {
    }
    for (size_t i: this->upper_bounded_variables) {
       this->augmented_system.matrix->insert(this->upper_bound_multipliers[i] / (this->primal_iterate[i] - this->variables_bounds[i].ub), i, i);
+   }
+
+   // proximal term in feasibility problem
+   if (this->in_feasibility_problem) {
+      const double sqrt_mu = std::sqrt(this->barrier_parameter);
+      for (size_t i = 0; i < 2; i++) {
+         const double proximal_term = sqrt_mu*std::pow(std::min(1., 1/std::abs(current_iterate.x[i])), 2);
+         this->augmented_system.matrix->insert(proximal_term, i, i);
+      }
    }
 
    // Jacobian of general constraints
@@ -472,13 +501,13 @@ double BarrierSubproblem::compute_KKT_error_scaling(const Iterate& current_itera
    const double norm_1_constraint_multipliers = norm_1(current_iterate.multipliers.constraints);
    const double norm_1_bound_multipliers = norm_1(current_iterate.multipliers.lower_bounds) + norm_1(current_iterate.multipliers.upper_bounds);
    const double norm_1_multipliers = norm_1_constraint_multipliers + norm_1_bound_multipliers;
-   const size_t total_size = this->number_variables + current_iterate.multipliers.constraints.size();
+   const size_t total_size = this->number_variables + this->number_constraints;
    const double sd = std::max(this->parameters.smax, norm_1_multipliers / static_cast<double>(total_size)) / this->parameters.smax;
    return sd;
 }
 
 double BarrierSubproblem::compute_central_complementarity_error(const Iterate& iterate) const {
-   // variable bound constraints
+   // variable bounds
    const auto residual_function = [&](size_t i) {
       double result = 0.;
       if (is_finite_lower_bound(this->variables_bounds[i].lb)) {
@@ -503,7 +532,15 @@ void BarrierSubproblem::set_current_iterate(const Iterate& iterate) {
 }
 
 void BarrierSubproblem::register_accepted_iterate(Iterate& iterate) {
-   // rescale the bound multipliers (Eq (16) in Ipopt paper)
+   if (this->in_feasibility_problem) {
+       this->barrier_parameter = this->previous_barrier_parameter;
+       this->in_feasibility_problem = false;
+   }
+   if (this->in_feasibility_problem) {
+      // compute least-square multipliers TODO
+   }
+
+   // rescale the bound multipliers (Eq. 16 in Ipopt paper)
    for (size_t i: this->lower_bounded_variables) {
       const double coefficient = this->barrier_parameter / (iterate.x[i] - this->variables_bounds[i].lb);
       const double lb = coefficient / this->parameters.k_sigma;

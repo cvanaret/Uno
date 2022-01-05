@@ -1,6 +1,6 @@
 #include <cmath>
 #include <cassert>
-#include <ingredients/subproblem/AugmentedSystem.hpp>
+#include "ingredients/subproblem/AugmentedSystem.hpp"
 #include "BacktrackingLineSearch.hpp"
 #include "tools/Logger.hpp"
 
@@ -96,10 +96,9 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
          solve_feasibility_problem = true;
       }
 
-      // solve the feasibility problem
+      // solve the feasibility problem (if we aren't already solving it)
       if (solve_feasibility_problem && !in_feasibility_problem && 0. < direction.multipliers.objective) {
-         //assert(false && "LS max iterations");
-         //if (0. < current_iterate.progress.feasibility && !direction.is_relaxed) {
+         // TODO: test if 0. < current_iterate.progress.feasibility ?
          DEBUG << "The line search failed, switching to feasibility problem\n";
          // reset the line search with the restoration solution
          direction = this->relaxation_strategy.solve_feasibility_problem(statistics, problem, scaling, current_iterate, direction);
