@@ -1,5 +1,5 @@
-#ifndef LPSOLVERFACTORY_H
-#define LPSOLVERFACTORY_H
+#ifndef UNO_LPSOLVERFACTORY_H
+#define UNO_LPSOLVERFACTORY_H
 
 #include <memory>
 #include "LPSolver.hpp"
@@ -20,4 +20,4 @@ public:
    }
 };
 
-#endif // LPSOLVERFACTORY_H
+#endif // UNO_LPSOLVERFACTORY_H

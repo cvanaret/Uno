@@ -1,8 +1,6 @@
-#ifndef GLOBALIZATIONSTRATEGY_H
-#define GLOBALIZATIONSTRATEGY_H
+#ifndef UNO_GLOBALIZATIONSTRATEGY_H
+#define UNO_GLOBALIZATIONSTRATEGY_H
 
-#include <cmath>
-#include <optional>
 #include "optimization/Iterate.hpp"
 #include "ingredients/subproblem/Direction.hpp"
 #include "tools/Statistics.hpp"
@@ -24,4 +22,4 @@ public:
    virtual void notify(Iterate& current_iterate) = 0;
 };
 
-#endif // GLOBALIZATIONSTRATEGY_H
+#endif // UNO_GLOBALIZATIONSTRATEGY_H

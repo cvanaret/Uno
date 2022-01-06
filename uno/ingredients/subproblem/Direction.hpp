@@ -1,9 +1,7 @@
-#ifndef DIRECTION_H
-#define DIRECTION_H
+#ifndef UNO_DIRECTION_H
+#define UNO_DIRECTION_H
 
-#include <ostream>
 #include <vector>
-#include <cmath>
 #include <optional>
 #include "optimization/Constraint.hpp"
 
@@ -39,4 +37,4 @@ public:
    friend std::ostream& operator<<(std::ostream& stream, const Direction& step);
 };
 
-#endif // DIRECTION_H
+#endif // UNO_DIRECTION_H

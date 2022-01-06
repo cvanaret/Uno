@@ -1,5 +1,5 @@
-#ifndef SUBPROBLEM_H
-#define SUBPROBLEM_H
+#ifndef UNO_SUBPROBLEM_H
+#define UNO_SUBPROBLEM_H
 
 #include <vector>
 #include <memory>
@@ -89,4 +89,4 @@ protected:
    virtual void set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
 };
 
-#endif // SUBPROBLEM_H
+#endif // UNO_SUBPROBLEM_H

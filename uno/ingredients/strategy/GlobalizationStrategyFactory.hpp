@@ -1,5 +1,5 @@
-#ifndef GLOBALIZATIONSTRATEGYFACTORY_H
-#define GLOBALIZATIONSTRATEGYFACTORY_H
+#ifndef UNO_GLOBALIZATIONSTRATEGYFACTORY_H
+#define UNO_GLOBALIZATIONSTRATEGYFACTORY_H
 
 #include <memory>
 #include "GlobalizationStrategy.hpp"
@@ -10,4 +10,4 @@ public:
    static std::unique_ptr<GlobalizationStrategy> create(const std::string& strategy_type, const Options& options);
 };
 
-#endif // GLOBALIZATIONSTRATEGYFACTORY_H
+#endif // UNO_GLOBALIZATIONSTRATEGYFACTORY_H

@@ -1,5 +1,5 @@
-#ifndef QPSUBPROBLEM_H
-#define QPSUBPROBLEM_H
+#ifndef UNO_QPSUBPROBLEM_H
+#define UNO_QPSUBPROBLEM_H
 
 #include "Subproblem.hpp"
 #include "HessianModel.hpp"
@@ -25,4 +25,4 @@ protected:
    std::vector<double> initial_point;
 };
 
-#endif // QPSUBPROBLEM_H
+#endif // UNO_QPSUBPROBLEM_H

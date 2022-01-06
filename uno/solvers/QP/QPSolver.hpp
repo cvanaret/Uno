@@ -1,5 +1,5 @@
-#ifndef QPSOLVER_H
-#define QPSOLVER_H
+#ifndef UNO_QPSOLVER_H
+#define UNO_QPSOLVER_H
 
 #include <vector>
 #include "LPSolver.hpp"
@@ -20,4 +20,4 @@ public:
          linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian, const std::vector<double>& initial_point) override = 0;
 };
 
-#endif // QPSOLVER_H
+#endif // UNO_QPSOLVER_H

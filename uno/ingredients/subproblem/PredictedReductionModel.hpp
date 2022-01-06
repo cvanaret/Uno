@@ -1,5 +1,5 @@
-#ifndef PREDICTEDREDUCTIONMODEL_H
-#define PREDICTEDREDUCTIONMODEL_H
+#ifndef UNO_PREDICTEDREDUCTIONMODEL_H
+#define UNO_PREDICTEDREDUCTIONMODEL_H
 
 #include <functional>
 
@@ -17,4 +17,4 @@ struct PredictedReductionModel {
    double evaluate(double step_length);
 };
 
-#endif // PREDICTEDREDUCTIONMODEL_H
+#endif // UNO_PREDICTEDREDUCTIONMODEL_H

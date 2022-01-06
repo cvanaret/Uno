@@ -1,7 +1,6 @@
-#ifndef BARRIERSUBPROBLEM_H
-#define BARRIERSUBPROBLEM_H
+#ifndef UNO_BARRIERSUBPROBLEM_H
+#define UNO_BARRIERSUBPROBLEM_H
 
-#include <exception>
 #include "Subproblem.hpp"
 #include "solvers/linear/LinearSolver.hpp"
 #include "HessianModel.hpp"
@@ -87,4 +86,4 @@ private:
    void print_solution(const Problem& problem, double primal_step_length, double dual_step_length) const;
 };
 
-#endif // BARRIERSUBPROBLEM_H
+#endif // UNO_BARRIERSUBPROBLEM_H

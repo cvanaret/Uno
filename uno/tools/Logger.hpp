@@ -1,5 +1,5 @@
-#ifndef LOGGER_H
-#define LOGGER_H
+#ifndef UNO_LOGGER_H
+#define UNO_LOGGER_H
 
 #include <iostream>
 
@@ -37,4 +37,4 @@ const Level& operator<<(const Level& level, const T& element) {
     return level;
 }
 
-#endif // LOGGER_H
+#endif // UNO_LOGGER_H

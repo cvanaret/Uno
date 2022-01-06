@@ -1,7 +1,6 @@
-#ifndef ITERATE_H
-#define ITERATE_H
+#ifndef UNO_ITERATE_H
+#define UNO_ITERATE_H
 
-#include <ostream>
 #include <vector>
 #include "Problem.hpp"
 #include "Constraint.hpp"
@@ -61,4 +60,4 @@ public:
    friend std::ostream& operator<<(std::ostream& stream, const Iterate& iterate);
 };
 
-#endif // ITERATE_H
+#endif // UNO_ITERATE_H

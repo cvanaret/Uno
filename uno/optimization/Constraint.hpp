@@ -1,5 +1,5 @@
-#ifndef CONSTRAINT_H
-#define CONSTRAINT_H
+#ifndef UNO_CONSTRAINT_H
+#define UNO_CONSTRAINT_H
 
 #include <vector>
 
@@ -48,4 +48,4 @@ struct Multipliers {
 bool is_finite_lower_bound(double value);
 bool is_finite_upper_bound(double value);
 
-#endif // CONSTRAINT_H
+#endif // UNO_CONSTRAINT_H

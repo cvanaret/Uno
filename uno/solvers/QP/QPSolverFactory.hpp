@@ -1,5 +1,5 @@
-#ifndef QPSOLVERFACTORY_H
-#define QPSOLVERFACTORY_H
+#ifndef UNO_QPSOLVERFACTORY_H
+#define UNO_QPSOLVERFACTORY_H
 
 #include <memory>
 #include "QPSolver.hpp"
@@ -21,4 +21,4 @@ public:
    }
 };
 
-#endif // QPSOLVERFACTORY_H
+#endif // UNO_QPSOLVERFACTORY_H

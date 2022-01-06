@@ -1,5 +1,5 @@
-#ifndef SCALING_H
-#define SCALING_H
+#ifndef UNO_SCALING_H
+#define UNO_SCALING_H
 
 #include <vector>
 #include "linear_algebra/SparseVector.hpp"
@@ -17,4 +17,4 @@ protected:
    std::vector<double> constraints_scaling;
 };
 
-#endif // SCALING_H
+#endif // UNO_SCALING_H

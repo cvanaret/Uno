@@ -1,5 +1,5 @@
-#ifndef COOSYMMETRICMATRIX_H
-#define COOSYMMETRICMATRIX_H
+#ifndef UNO_COOSYMMETRICMATRIX_H
+#define UNO_COOSYMMETRICMATRIX_H
 
 #include "SymmetricMatrix.hpp"
 
@@ -24,4 +24,4 @@ protected:
    [[nodiscard]] size_t find(size_t row_index, size_t column_index) const;
 };
 
-#endif // COOSYMMETRICMATRIX_H
+#endif // UNO_COOSYMMETRICMATRIX_H

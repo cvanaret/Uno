@@ -1,9 +1,8 @@
-#ifndef SPARSEVECTOR_H
-#define SPARSEVECTOR_H
+#ifndef UNO_SPARSEVECTOR_H
+#define UNO_SPARSEVECTOR_H
 
 #include <cassert>
 #include <functional>
-#include <ostream>
 #include "tools/Logger.hpp"
 
 // SparseVector is a sparse vector that uses contiguous memory. It contains:
@@ -131,4 +130,4 @@ double norm_inf(const SparseVector<double>& x);
 double dot(const std::vector<double>& x, const SparseVector<double>& y);
 void scale(SparseVector<double>& x, double factor);
 
-#endif // SPARSEVECTOR_H
+#endif // UNO_SPARSEVECTOR_H

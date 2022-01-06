@@ -1,5 +1,5 @@
-#ifndef AUGMENTEDSYSTEM_H
-#define AUGMENTEDSYSTEM_H
+#ifndef UNO_AUGMENTEDSYSTEM_H
+#define UNO_AUGMENTEDSYSTEM_H
 
 #include <memory>
 #include "linear_algebra/SymmetricMatrix.hpp"
@@ -31,4 +31,4 @@ protected:
    const double regularization_failure_threshold;
 };
 
-#endif // AUGMENTEDSYSTEM_H
+#endif // UNO_AUGMENTEDSYSTEM_H

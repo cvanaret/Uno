@@ -1,5 +1,5 @@
-#ifndef LINESEARCH_H
-#define LINESEARCH_H
+#ifndef UNO_BACKTRACKINGLINESEARCH_H
+#define UNO_BACKTRACKINGLINESEARCH_H
 
 #include "GlobalizationMechanism.hpp"
 #include "RegularizationStrategy.hpp"
@@ -32,4 +32,4 @@ private:
    void decrease_step_length();
 };
 
-#endif // LINESEARCH_H
+#endif // UNO_BACKTRACKINGLINESEARCH_H

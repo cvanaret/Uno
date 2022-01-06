@@ -1,5 +1,5 @@
-#ifndef PREPROCESSING_H
-#define PREPROCESSING_H
+#ifndef UNO_PREPROCESSING_H
+#define UNO_PREPROCESSING_H
 
 #include <vector>
 #include "Problem.hpp"
@@ -13,4 +13,4 @@ public:
          LinearSolver& solver, Iterate& current_iterate, std::vector<double>& multipliers, double multipliers_max_size = 1e3);
 };
 
-#endif //PREPROCESSING_H
+#endif //UNO_PREPROCESSING_H

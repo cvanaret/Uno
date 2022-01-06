@@ -1,5 +1,5 @@
-#ifndef TIMER_H
-#define TIMER_H
+#ifndef UNO_TIMER_H
+#define UNO_TIMER_H
 
 #include <ctime>
 
@@ -15,4 +15,4 @@ private:
    std::clock_t start_time, end_time;
 };
 
-#endif //TIMER_H
+#endif //UNO_TIMER_H

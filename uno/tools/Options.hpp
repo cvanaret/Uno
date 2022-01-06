@@ -1,5 +1,5 @@
-#ifndef OPTIONS_H
-#define OPTIONS_H
+#ifndef UNO_OPTIONS_H
+#define UNO_OPTIONS_H
 
 #include <map>
 
@@ -18,4 +18,4 @@ Options get_default_options(const std::string& file_name);
 void get_command_line_options(int argc, char* argv[], Options& options);
 void set_logger(const std::string& logger_level);
 
-#endif // OPTIONS_H
+#endif // UNO_OPTIONS_H

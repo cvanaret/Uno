@@ -1,5 +1,5 @@
-#ifndef FEASIBILITYRESTORATION_H
-#define FEASIBILITYRESTORATION_H
+#ifndef UNO_FEASIBILITYRESTORATION_H
+#define UNO_FEASIBILITYRESTORATION_H
 
 #include <optional>
 #include "ConstraintRelaxationStrategy.hpp"
@@ -35,4 +35,4 @@ private:
          const std::optional<ConstraintPartition>& optional_constraint_partition);
 };
 
-#endif //FEASIBILITYRESTORATION_H
+#endif //UNO_FEASIBILITYRESTORATION_H

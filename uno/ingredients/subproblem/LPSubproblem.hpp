@@ -1,5 +1,5 @@
-#ifndef LPSUBPROBLEM_H
-#define LPSUBPROBLEM_H
+#ifndef UNO_LPSUBPROBLEM_H
+#define UNO_LPSUBPROBLEM_H
 
 #include "Subproblem.hpp"
 #include "solvers/QP/LPSolver.hpp"
@@ -23,4 +23,4 @@ private:
    std::vector<double> initial_point;
 };
 
-#endif // LPSUBPROBLEM_H
+#endif // UNO_LPSUBPROBLEM_H

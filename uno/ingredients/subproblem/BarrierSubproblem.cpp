@@ -1,3 +1,4 @@
+#include <cmath>
 #include "BarrierSubproblem.hpp"
 #include "solvers/linear/LinearSolverFactory.hpp"
 #include "linear_algebra/SymmetricMatrixFactory.hpp"

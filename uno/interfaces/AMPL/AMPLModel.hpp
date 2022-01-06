@@ -1,5 +1,5 @@
-#ifndef AMPLMODEL_H
-#define AMPLMODEL_H
+#ifndef UNO_AMPLMODEL_H
+#define UNO_AMPLMODEL_H
 
 #include <vector>
 #include "optimization/Problem.hpp"
@@ -54,4 +54,4 @@ private:
    void generate_sparsity_pattern(CSCSymmetricMatrix& hessian, size_t number_non_zeros) const;
 };
 
-#endif // AMPLMODEL_H
+#endif // UNO_AMPLMODEL_H
