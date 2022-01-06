@@ -195,7 +195,7 @@ void AMPLModel::set_function_types(std::string file_name) {
       }
       else if (qp == 0) {
          this->constraint_type[j] = LINEAR;
-         this->linear_constraints[j] = current_linear_constraint;
+         this->linear_constraints.insert(j, current_linear_constraint);
          current_linear_constraint++;
       }
       else {

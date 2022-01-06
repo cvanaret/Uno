@@ -14,6 +14,7 @@ class SparseVector {
 public:
    explicit SparseVector(size_t capacity = 0);
    void for_each(const std::function<void (size_t, T)>& f) const;
+   void for_each_key(const std::function<void (size_t)>& f) const;
    void for_each_value(const std::function<void (T)>& f) const;
    [[nodiscard]] size_t size() const;
    void reserve(size_t capacity);
@@ -22,6 +23,7 @@ public:
    void erase(size_t index);
    void transform(const std::function<T (T)>& f);
    void clear();
+   bool empty() const;
 
    template <typename U>
    friend std::ostream& operator<<(std::ostream& stream, const SparseVector<U>& x);
@@ -43,6 +45,13 @@ template <typename T>
 void SparseVector<T>::for_each(const std::function<void (size_t, T)>& f) const {
    for (size_t i = 0; i < this->number_nonzeros; i++) {
       f(this->indices[i], this->values[i]);
+   }
+}
+
+template <typename T>
+void SparseVector<T>::for_each_key(const std::function<void (size_t)>& f) const {
+   for (size_t i = 0; i < this->number_nonzeros; i++) {
+      f(this->indices[i]);
    }
 }
 
@@ -105,6 +114,11 @@ void SparseVector<T>::clear() {
    this->indices.clear();
    this->values.clear();
    this->number_nonzeros = 0;
+}
+
+template <typename T>
+bool SparseVector<T>::empty() const {
+   return (this->number_nonzeros == 0);
 }
 
 template <typename T>

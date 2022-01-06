@@ -16,7 +16,8 @@ Problem::Problem(std::string name, size_t number_variables, size_t number_constr
       name(std::move(name)), number_variables(number_variables), number_constraints(number_constraints), problem_type(type),
       // allocate all vectors
       variables_bounds(number_variables), variable_status(number_variables),
-      constraint_bounds(number_constraints), constraint_type(number_constraints), constraint_status(number_constraints) {
+      constraint_bounds(number_constraints), constraint_type(number_constraints), constraint_status(number_constraints),
+      equality_constraints(number_constraints), inequality_constraints(number_constraints), linear_constraints(number_constraints) {
 }
 
 std::vector<double> Problem::evaluate_constraints(const std::vector<double>& x) const {
@@ -54,11 +55,11 @@ void Problem::determine_constraints() {
    size_t current_inequality_constraint = 0;
    for (size_t j = 0; j < this->number_constraints; j++) {
       if (this->constraint_status[j] == EQUAL_BOUNDS) {
-         this->equality_constraints[j] = current_equality_constraint;
+         this->equality_constraints.insert(j, current_equality_constraint);
          current_equality_constraint++;
       }
       else {
-         this->inequality_constraints[j] = current_inequality_constraint;
+         this->inequality_constraints.insert(j, current_inequality_constraint);
          current_inequality_constraint++;
       }
    }
