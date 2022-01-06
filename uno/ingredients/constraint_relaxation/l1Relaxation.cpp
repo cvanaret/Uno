@@ -246,11 +246,11 @@ Direction l1Relaxation::resolve_subproblem(Statistics& statistics, const Problem
 double l1Relaxation::compute_linearized_constraint_residual(std::vector<double>& direction) const {
    double residual = 0.;
    // l1 residual of the linearized constraints: sum of elastic variables
-   auto add_variable_contribution = [&](size_t i) {
+   auto elastic_contribution = [&](size_t i) {
       residual += direction[i];
    };
-   this->elastic_variables.positive.for_each_value(add_variable_contribution);
-   this->elastic_variables.negative.for_each_value(add_variable_contribution);
+   this->elastic_variables.positive.for_each_value(elastic_contribution);
+   this->elastic_variables.negative.for_each_value(elastic_contribution);
    return residual;
 }
 

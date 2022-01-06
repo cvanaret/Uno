@@ -238,9 +238,9 @@ Direction BarrierSubproblem::compute_second_order_correction(const Problem& prob
    return this->direction;
 }
 
-void BarrierSubproblem::add_variable(size_t i, double current_value, const Range& bounds, double objective_term, size_t j, double jacobian_term) {
+void BarrierSubproblem::add_elastic_variable(size_t i, double objective_term, size_t j, double jacobian_term) {
    // add the variable to the objective and the constraint Jacobian
-   Subproblem::add_variable(i, current_value, bounds, objective_term, j, jacobian_term);
+   Subproblem::add_elastic_variable(i, objective_term, j, jacobian_term);
 
    // set the current value
    const double mu_over_rho = this->barrier_parameter/objective_term;
@@ -248,20 +248,14 @@ void BarrierSubproblem::add_variable(size_t i, double current_value, const Range
    // analytically, I find (mu_over_rho - jacobian_term*this->barrier_constraints[j] + std::sqrt(radical))/2., but Ipopt seems to use the following
    this->primal_iterate[i] = (mu_over_rho - jacobian_term*this->barrier_constraints[j] + std::sqrt(radical))/2.;
 
-   // if necessary, register the variable as bounded
-   if (is_finite_lower_bound(bounds.lb)) {
-      this->lower_bounded_variables.push_back(i);
-      this->lower_bound_multipliers[i] = this->barrier_parameter/this->primal_iterate[i];
-   }
-   if (is_finite_upper_bound(bounds.ub)) {
-      this->upper_bounded_variables.push_back(i);
-      this->upper_bound_multipliers[i] = -this->barrier_parameter/this->primal_iterate[i];
-   }
+   // register the variable as lower bounded
+   this->lower_bounded_variables.push_back(i);
+   this->lower_bound_multipliers[i] = this->barrier_parameter/this->primal_iterate[i];
 }
 
-void BarrierSubproblem::remove_variable(size_t i, size_t j) {
+void BarrierSubproblem::remove_elastic_variable(size_t i, size_t j) {
    // remove the variable to the objective and the constraint Jacobian
-   Subproblem::remove_variable(i, j);
+   Subproblem::remove_elastic_variable(i, j);
    this->lower_bounded_variables.erase(std::remove(this->lower_bounded_variables.begin(), this->lower_bounded_variables.end(), i),
          this->lower_bounded_variables.end());
    this->upper_bounded_variables.erase(std::remove(this->upper_bounded_variables.begin(), this->upper_bounded_variables.end(), i),

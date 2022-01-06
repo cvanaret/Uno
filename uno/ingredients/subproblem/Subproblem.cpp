@@ -23,16 +23,16 @@ void Subproblem::initialize(Statistics& /*statistics*/, const Problem& problem, 
    this->compute_progress_measures(problem, scaling, first_iterate);
 }
 
-void Subproblem::add_variable(size_t i, double /*current_value*/, const Range& bounds, double objective_term, size_t j, double jacobian_term) {
+void Subproblem::add_elastic_variable(size_t i, double objective_term, size_t j, double jacobian_term) {
    assert(i < this->max_number_variables && "The variable index is larger than the preallocated size");
    assert(j < this->number_constraints && "The constraint index is larger than the preallocated size");
-   this->variables_bounds[i] = bounds;
+   this->variables_bounds[i] = {0., std::numeric_limits<double>::infinity()};
    this->objective_gradient.insert(i, objective_term);
    this->constraints_jacobian[j].insert(i, jacobian_term);
    this->number_variables++;
 }
 
-void Subproblem::remove_variable(size_t i, size_t j) {
+void Subproblem::remove_elastic_variable(size_t i, size_t j) {
    assert(i < this->max_number_variables && "The variable index is larger than the preallocated size");
    assert(j < this->number_constraints && "The constraint index is larger than the preallocated size");
    this->objective_gradient.erase(i);

@@ -51,16 +51,16 @@ void ConstraintRelaxationStrategy::generate_elastic_variables(const Problem& pro
 void ConstraintRelaxationStrategy::add_elastic_variables_to_subproblem() {
    // add the positive elastic variables
    this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {
-      this->subproblem->add_variable(elastic_index, 0., {0., std::numeric_limits<double>::infinity()}, this->elastic_objective_coefficient, j, -1.);
+      this->subproblem->add_elastic_variable(elastic_index, this->elastic_objective_coefficient, j, -1.);
    });
    this->elastic_variables.negative.for_each([&](size_t j, size_t elastic_index) {
-      this->subproblem->add_variable(elastic_index, 0., {0., std::numeric_limits<double>::infinity()}, this->elastic_objective_coefficient, j, 1.);
+      this->subproblem->add_elastic_variable(elastic_index, this->elastic_objective_coefficient, j, 1.);
    });
 }
 
 void ConstraintRelaxationStrategy::remove_elastic_variables_from_subproblem() {
    const auto erase_elastic_variables = [&](size_t j, size_t i) {
-      this->subproblem->remove_variable(i, j);
+      this->subproblem->remove_elastic_variable(i, j);
    };
    this->elastic_variables.positive.for_each(erase_elastic_variables);
    this->elastic_variables.negative.for_each(erase_elastic_variables);
