@@ -1,8 +1,6 @@
-#ifndef FILTERSTRATEGY_H
-#define FILTERSTRATEGY_H
+#ifndef UNO_FILTERSTRATEGY_H
+#define UNO_FILTERSTRATEGY_H
 
-#include <iostream>
-#include <memory>
 #include "GlobalizationStrategy.hpp"
 #include "Filter.hpp"
 #include "tools/Options.hpp"
@@ -46,4 +44,4 @@ private:
    [[nodiscard]] bool armijo_condition(double predicted_reduction, double actual_reduction, double decrease_fraction) const;
 };
 
-#endif // FILTERSTRATEGY_H
+#endif // UNO_FILTERSTRATEGY_H

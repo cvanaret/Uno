@@ -1,5 +1,5 @@
-#ifndef LINEARSOLVER_H
-#define LINEARSOLVER_H
+#ifndef UNO_LINEARSOLVER_H
+#define UNO_LINEARSOLVER_H
 
 #include <vector>
 #include <linear_algebra/SymmetricMatrix.hpp>
@@ -25,4 +25,4 @@ protected:
    const size_t max_dimension;
 };
 
-#endif // LINEARSOLVER_H
+#endif // UNO_LINEARSOLVER_H

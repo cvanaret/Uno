@@ -1,10 +1,9 @@
-#ifndef PROBLEM_H
-#define PROBLEM_H
+#ifndef UNO_PROBLEM_H
+#define UNO_PROBLEM_H
 
 #include <string>
 #include <vector>
 #include <map>
-#include <cassert>
 #include "Constraint.hpp"
 #include "linear_algebra/CSCSymmetricMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
@@ -171,4 +170,4 @@ protected:
 //   });
 //}
 
-#endif // PROBLEM_H
+#endif // UNO_PROBLEM_H

@@ -1,5 +1,5 @@
-#ifndef L1RELAXATION_H
-#define L1RELAXATION_H
+#ifndef UNO_L1RELAXATION_H
+#define UNO_L1RELAXATION_H
 
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/strategy/GlobalizationStrategy.hpp"
@@ -47,4 +47,4 @@ protected:
    static void set_multipliers(const Problem& problem, const Iterate& current_iterate, std::vector<double>& constraints_multipliers);
 };
 
-#endif //L1RELAXATION_H
+#endif //UNO_L1RELAXATION_H

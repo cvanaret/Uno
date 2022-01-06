@@ -1,5 +1,5 @@
-#ifndef STATISTICS_H
-#define STATISTICS_H
+#ifndef UNO_STATISTICS_H
+#define UNO_STATISTICS_H
 
 #include <string>
 #include <map>
@@ -30,4 +30,4 @@ private:
    std::map<std::string, std::string> current_line{};
 };
 
-#endif // STATISTICS_H
+#endif // UNO_STATISTICS_H

@@ -1,7 +1,6 @@
-#ifndef FILTER_H
-#define FILTER_H
+#ifndef UNO_FILTER_H
+#define UNO_FILTER_H
 
-#include <ostream>
 #include <vector>
 #include <memory>
 #include "tools/Options.hpp"
@@ -69,4 +68,4 @@ public:
    static std::unique_ptr<Filter> create(const Options& options);
 };
 
-#endif // FILTER_H
+#endif // UNO_FILTER_H

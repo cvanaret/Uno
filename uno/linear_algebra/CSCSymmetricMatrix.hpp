@@ -1,5 +1,5 @@
-#ifndef CSCSYMMETRICMATRIX_H
-#define CSCSYMMETRICMATRIX_H
+#ifndef UNO_CSCSYMMETRICMATRIX_H
+#define UNO_CSCSYMMETRICMATRIX_H
 
 #include "SymmetricMatrix.hpp"
 
@@ -32,4 +32,4 @@ protected:
    std::vector<size_t> remaining_column_padding;
 };
 
-#endif // CSCSYMMETRICMATRIX_H
+#endif // UNO_CSCSYMMETRICMATRIX_H

@@ -1,5 +1,5 @@
-#ifndef LINEARSOLVERFACTORY_H
-#define LINEARSOLVERFACTORY_H
+#ifndef UNO_LINEARSOLVERFACTORY_H
+#define UNO_LINEARSOLVERFACTORY_H
 
 #include <memory>
 #include "LinearSolver.hpp"
@@ -20,4 +20,4 @@ public:
    }
 };
 
-#endif // LINEARSOLVERFACTORY_H
+#endif // UNO_LINEARSOLVERFACTORY_H

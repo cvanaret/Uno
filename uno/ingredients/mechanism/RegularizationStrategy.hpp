@@ -1,5 +1,5 @@
-#ifndef REGULARIZATIONSTRATEGY_H
-#define REGULARIZATIONSTRATEGY_H
+#ifndef UNO_REGULARIZATIONSTRATEGY_H
+#define UNO_REGULARIZATIONSTRATEGY_H
 
 #include <memory>
 
@@ -19,4 +19,4 @@ public:
    static std::unique_ptr<RegularizationStrategy> create();
 };
 
-#endif // REGULARIZATIONSTRATEGY_H
+#endif // UNO_REGULARIZATIONSTRATEGY_H

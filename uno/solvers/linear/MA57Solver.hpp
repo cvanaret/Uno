@@ -1,8 +1,7 @@
-#ifndef MA57SOLVER_H
-#define MA57SOLVER_H
+#ifndef UNO_MA57SOLVER_H
+#define UNO_MA57SOLVER_H
 
 #include <vector>
-#include <cassert>
 #include "LinearSolver.hpp"
 #include "linear_algebra/COOSymmetricMatrix.hpp"
 
@@ -64,4 +63,4 @@ private:
    void save_matrix_to_local_format(const SymmetricMatrix& matrix);
 };
 
-#endif // MA57SOLVER_H
+#endif // UNO_MA57SOLVER_H

@@ -1,9 +1,7 @@
-#ifndef BQPDSOLVER_H
-#define BQPDSOLVER_H
+#ifndef UNO_BQPDSOLVER_H
+#define UNO_BQPDSOLVER_H
 
-#include <iostream>
 #include <vector>
-#include <map>
 #include "QPSolver.hpp"
 #include "LPSolver.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
@@ -58,4 +56,4 @@ private:
    void save_gradients_to_local_format(const SparseVector<double>& linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian);
 };
 
-#endif // BQPDSOLVER_H
+#endif // UNO_BQPDSOLVER_H

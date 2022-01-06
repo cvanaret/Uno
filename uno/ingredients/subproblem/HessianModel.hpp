@@ -1,5 +1,5 @@
-#ifndef HESSIANMODEL_H
-#define HESSIANMODEL_H
+#ifndef UNO_HESSIANMODEL_H
+#define UNO_HESSIANMODEL_H
 
 #include <memory>
 #include <vector>
@@ -53,4 +53,4 @@ public:
          bool convexify, const Options& options);
 };
 
-#endif // HESSIANMODEL_H
+#endif // UNO_HESSIANMODEL_H

@@ -1,5 +1,5 @@
-#ifndef TRUSTREGION_H
-#define TRUSTREGION_H
+#ifndef UNO_TRUSTREGIONSTRATEGY_H
+#define UNO_TRUSTREGIONSTRATEGY_H
 
 #include "GlobalizationMechanism.hpp"
 
@@ -30,4 +30,4 @@ private:
    void print_iteration();
 };
 
-#endif // TRUSTREGION_H
+#endif // UNO_TRUSTREGIONSTRATEGY_H

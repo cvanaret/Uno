@@ -1,8 +1,6 @@
-#ifndef CONSTRAINTRELAXATIONSTRATEGY_H
-#define CONSTRAINTRELAXATIONSTRATEGY_H
+#ifndef UNO_CONSTRAINTRELAXATIONSTRATEGY_H
+#define UNO_CONSTRAINTRELAXATIONSTRATEGY_H
 
-#include <vector>
-#include <cmath>
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem/Direction.hpp"
 #include "ingredients/subproblem/PredictedReductionModel.hpp"
@@ -57,4 +55,4 @@ protected:
    void recover_active_set(const Problem& problem, Direction& direction);
 };
 
-#endif //CONSTRAINTRELAXATIONSTRATEGY_H
+#endif //UNO_CONSTRAINTRELAXATIONSTRATEGY_H

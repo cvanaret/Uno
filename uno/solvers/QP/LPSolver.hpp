@@ -1,5 +1,5 @@
-#ifndef LPSOLVER_H
-#define LPSOLVER_H
+#ifndef UNO_LPSOLVER_H
+#define UNO_LPSOLVER_H
 
 #include <vector>
 #include "ingredients/subproblem/Direction.hpp"
@@ -17,4 +17,4 @@ public:
       linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian, const std::vector<double>& initial_point) = 0;
 };
 
-#endif // LPSOLVER_H
+#endif // UNO_LPSOLVER_H

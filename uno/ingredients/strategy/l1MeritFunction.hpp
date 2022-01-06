@@ -1,15 +1,11 @@
-#ifndef PENALTYMERITFUNCTION_H
-#define PENALTYMERITFUNCTION_H
+#ifndef UNO_L1MERITFUNCTION_H
+#define UNO_L1MERITFUNCTION_H
 
-#include <vector>
 #include "GlobalizationStrategy.hpp"
 #include "tools/Options.hpp"
 
 class l1MeritFunction : public GlobalizationStrategy {
 public:
-   /*!
-    *  Constructor that takes an optimization problem and a set of constants
-    */
    explicit l1MeritFunction(const Options& options);
 
    void initialize(Statistics& statistics, const Iterate& first_iterate) override;
@@ -22,4 +18,4 @@ private:
    const double decrease_fraction;
 };
 
-#endif // PENALTYMERITFUNCTION_H
+#endif // UNO_L1MERITFUNCTION_H

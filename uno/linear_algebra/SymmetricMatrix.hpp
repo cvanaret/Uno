@@ -1,5 +1,5 @@
-#ifndef SYMMETRICMATRIX_H
-#define SYMMETRICMATRIX_H
+#ifndef UNO_SYMMETRICMATRIX_H
+#define UNO_SYMMETRICMATRIX_H
 
 #include <vector>
 #include <functional>
@@ -32,4 +32,4 @@ public:
    friend std::ostream& operator<<(std::ostream& stream, const SymmetricMatrix& matrix);
 };
 
-#endif // SYMMETRICMATRIX_H
+#endif // UNO_SYMMETRICMATRIX_H

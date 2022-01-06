@@ -1,5 +1,5 @@
-#ifndef GLOBALIZATIONMECHANISM_H
-#define GLOBALIZATIONMECHANISM_H
+#ifndef UNO_GLOBALIZATIONMECHANISM_H
+#define UNO_GLOBALIZATIONMECHANISM_H
 
 #include "ingredients/constraint_relaxation/ConstraintRelaxationStrategy.hpp"
 #include "optimization/Problem.hpp"
@@ -32,4 +32,4 @@ protected:
    static void print_warning(const char* message);
 };
 
-#endif // GLOBALIZATIONMECHANISM_H
+#endif // UNO_GLOBALIZATIONMECHANISM_H
