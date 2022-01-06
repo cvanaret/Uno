@@ -29,8 +29,8 @@ public:
    void create_current_subproblem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier,
          double trust_region_radius) override;
    void build_objective_model(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier) override;
-   void add_variable(size_t i, double current_value, const Range& bounds, double objective_term, size_t j, double jacobian_term) override;
-   void remove_variable(size_t i, size_t j) override;
+   void add_elastic_variable(size_t i, double objective_term, size_t j, double jacobian_term) override;
+   void remove_elastic_variable(size_t i, size_t j) override;
    Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
    Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) override;
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const override;
