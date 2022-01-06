@@ -7,12 +7,11 @@ void Preprocessing::enforce_linear_constraints(const Problem& problem, const Sca
       // count the infeasible constraints
       first_iterate.evaluate_constraints(problem, scaling);
       int infeasible_linear_constraints = 0;
-      for (const auto element: problem.linear_constraints) {
-         size_t j = element.first;
+      problem.linear_constraints.for_each_key([&](size_t j) {
          if (first_iterate.constraints[j] < problem.constraint_bounds[j].lb || problem.constraint_bounds[j].ub < first_iterate.constraints[j]) {
             infeasible_linear_constraints++;
          }
-      }
+      });
       INFO << "There are " << infeasible_linear_constraints << " infeasible linear constraints at the initial point\n";
 
       if (0 < infeasible_linear_constraints) {
@@ -29,9 +28,9 @@ void Preprocessing::enforce_linear_constraints(const Problem& problem, const Sca
          for (size_t j = 0; j < problem.number_constraints; j++) {
             constraint_jacobian[j].reserve(problem.number_variables);
          }
-         for (const auto[j, linear_constraint_index]: problem.linear_constraints) {
+         problem.linear_constraints.for_each([&](size_t j, size_t linear_constraint_index) {
             problem.evaluate_constraint_gradient(first_iterate.x, j, constraint_jacobian[linear_constraint_index]);
-         }
+         });
 
          // variables bounds
          std::vector<Range> variables_bounds(problem.number_variables);
@@ -41,13 +40,13 @@ void Preprocessing::enforce_linear_constraints(const Problem& problem, const Sca
 
          // constraints bounds
          std::vector<Range> constraints_bounds(number_constraints);
-         for (const auto[j, linear_constraint_index]: problem.linear_constraints) {
+         problem.linear_constraints.for_each([&](size_t j, size_t linear_constraint_index) {
             constraints_bounds[linear_constraint_index] =
                   {problem.constraint_bounds[j].lb - first_iterate.constraints[j], problem.constraint_bounds[j].ub - first_iterate.constraints[j]};
-         }
-         std::vector<double> d0(problem.number_variables);
+         });
 
          // solve the convex QP
+         std::vector<double> d0(problem.number_variables);
          Direction direction = solver.solve_QP(variables_bounds, constraints_bounds, linear_objective, constraint_jacobian, hessian, d0);
          if (direction.status == INFEASIBLE) {
             throw std::runtime_error("Linear constraints cannot be satisfied");
@@ -58,9 +57,9 @@ void Preprocessing::enforce_linear_constraints(const Problem& problem, const Sca
          first_iterate.multipliers.lower_bounds = direction.multipliers.lower_bounds;
          first_iterate.multipliers.upper_bounds = direction.multipliers.upper_bounds;
          // copy constraint multipliers
-         for (const auto[j, linear_constraint_index]: problem.linear_constraints) {
+         problem.linear_constraints.for_each([&](size_t j, size_t linear_constraint_index) {
             first_iterate.multipliers.constraints[j] = direction.multipliers.constraints[linear_constraint_index];
-         }
+         });
          INFO << "Linear feasible initial point: "; print_vector(INFO, first_iterate.x); INFO << "\n";
       }
    }

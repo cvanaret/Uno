@@ -61,7 +61,7 @@ BarrierSubproblem::BarrierSubproblem(const Problem& problem, size_t max_number_v
    }
    // identify the inequality constraint slacks
    DEBUG << problem.inequality_constraints.size() << " slacks\n";
-   for (const auto[j, i]: problem.inequality_constraints) {
+   problem.inequality_constraints.for_each([&](size_t j, size_t i) {
       const size_t slack_index = problem.number_variables + i;
       if (problem.constraint_status[j] == BOUNDED_LOWER || problem.constraint_status[j] == BOUNDED_BOTH_SIDES) {
          this->lower_bounded_variables.push_back(slack_index);
@@ -71,7 +71,7 @@ BarrierSubproblem::BarrierSubproblem(const Problem& problem, size_t max_number_v
       }
       // store the bounds of the slacks
       this->variables_bounds[slack_index] = problem.constraint_bounds[j];
-   }
+   });
 }
 
 void BarrierSubproblem::set_initial_point(const std::vector<double>& /*initial_point*/) {
@@ -81,13 +81,12 @@ void BarrierSubproblem::set_initial_point(const std::vector<double>& /*initial_p
 void BarrierSubproblem::set_constraints(const Problem& problem, const Scaling& scaling, Iterate& iterate) {
    iterate.evaluate_constraints(problem, scaling);
    // transform the constraints into "= 0" equalities
-   for (const auto& element: problem.equality_constraints) {
-      const size_t j = element.first;
+   problem.equality_constraints.for_each_key([&](size_t j) {
       this->barrier_constraints[j] = iterate.constraints[j] - problem.constraint_bounds[j].lb;
-   }
-   for (const auto[j, i]: problem.inequality_constraints) {
+   });
+   problem.inequality_constraints.for_each([&](size_t j, size_t i) {
       this->barrier_constraints[j] = iterate.constraints[j] - iterate.x[problem.number_variables + i];
-   }
+   });
 }
 
 inline void BarrierSubproblem::initialize(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& first_iterate) {
@@ -104,11 +103,11 @@ inline void BarrierSubproblem::initialize(Statistics& statistics, const Problem&
    // initialize the slacks and add contribution to the constraint Jacobian
    first_iterate.evaluate_constraints(problem, scaling);
    first_iterate.evaluate_constraints_jacobian(problem, scaling);
-   for (const auto[j, i]: problem.inequality_constraints) {
+   problem.inequality_constraints.for_each([&](size_t j, size_t i) {
       const double slack_value = Subproblem::push_variable_to_interior(first_iterate.constraints[j], problem.constraint_bounds[j]);
       first_iterate.x[problem.number_variables + i] = slack_value;
       first_iterate.constraints_jacobian[j].insert(problem.number_variables + i, -1.);
-   }
+   });
    this->set_current_iterate(first_iterate);
 
    // set the bound multipliers
@@ -146,9 +145,9 @@ void BarrierSubproblem::create_current_subproblem(const Problem& problem, const 
    // constraint Jacobian
    problem.evaluate_constraint_jacobian(current_iterate.x, this->constraints_jacobian);
    // add the slack variables
-   for (const auto[j, i]: problem.inequality_constraints) {
+   problem.inequality_constraints.for_each([&](size_t j, size_t i) {
       this->constraints_jacobian[j].insert(problem.number_variables + i, -1.);
-   }
+   });
 
    // build a model of the objective scaled by the objective multiplier
    this->build_objective_model(problem, scaling, current_iterate, objective_multiplier);
@@ -220,13 +219,12 @@ void BarrierSubproblem::assemble_augmented_system(const Problem& problem, const 
 Direction BarrierSubproblem::compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) {
    DEBUG << "\nEntered SOC computation\n";
    // modify the RHS by adding the values of the constraints
-   for (const auto& element: problem.equality_constraints) {
-      size_t j = element.first;
+   problem.equality_constraints.for_each_key([&](size_t j) {
       this->augmented_system.rhs[this->number_variables + j] -= trial_iterate.constraints[j] - problem.constraint_bounds[j].lb;
-   }
-   for (const auto[j, i]: problem.inequality_constraints) {
+   });
+   problem.inequality_constraints.for_each([&](size_t j, size_t i) {
       this->augmented_system.rhs[this->number_variables + j] -= trial_iterate.constraints[j] - trial_iterate.x[problem.number_variables + i];
-   }
+   });
    DEBUG << "SOC RHS: "; print_vector(DEBUG, this->augmented_system.rhs, 0, this->number_variables + this->number_constraints);
 
    // compute the solution (Δx, -Δλ)
@@ -239,7 +237,7 @@ Direction BarrierSubproblem::compute_second_order_correction(const Problem& prob
 }
 
 void BarrierSubproblem::add_elastic_variable(size_t i, double objective_term, size_t j, double jacobian_term) {
-   // add the variable to the objective and the constraint Jacobian
+   // add the variable to the objective and the gradient of constraint j
    Subproblem::add_elastic_variable(i, objective_term, j, jacobian_term);
 
    // set the current value
@@ -273,16 +271,13 @@ PredictedReductionModel BarrierSubproblem::generate_predicted_reduction_model(co
 
 void BarrierSubproblem::compute_progress_measures(const Problem& problem, const Scaling& scaling, Iterate& iterate) {
    iterate.evaluate_constraints(problem, scaling);
-   auto residual_function = [&](size_t j) {
-      if (problem.constraint_status[j] == EQUAL_BOUNDS) {
-         return iterate.constraints[j] - problem.constraint_bounds[j].lb;
-      }
-      else {
-         const size_t i = problem.inequality_constraints.at(j);
-         return iterate.constraints[j] - iterate.x[problem.number_variables + i];
-      }
-   };
-   const double constraint_violation = norm_1(residual_function, problem.number_constraints);
+   double constraint_violation = 0.;
+   problem.equality_constraints.for_each_key([&](size_t j) {
+      constraint_violation += std::abs(iterate.constraints[j] - problem.constraint_bounds[j].lb);
+   });
+   problem.inequality_constraints.for_each([&](size_t j, size_t i) {
+      constraint_violation += std::abs(iterate.constraints[j] - iterate.x[problem.number_variables + i]);
+   });
 
    // compute barrier objective
    const double barrier_objective = this->evaluate_barrier_function(problem, scaling, iterate);

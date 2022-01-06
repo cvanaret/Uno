@@ -68,9 +68,9 @@ public:
    std::vector<FunctionType> constraint_type; /*!< Types of the constraints (LINEAR, QUADRATIC, NONLINEAR) */
    std::vector<ConstraintType> constraint_status; /*!< Status of the constraints (EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES,
  * UNBOUNDED) */
-   std::map<size_t, size_t> equality_constraints{}; /*!< inequality constraints */
-   std::map<size_t, size_t> inequality_constraints{}; /*!< inequality constraints */
-   std::map<size_t, size_t> linear_constraints{};
+   SparseVector<size_t> equality_constraints; /*!< inequality constraints */
+   SparseVector<size_t> inequality_constraints; /*!< inequality constraints */
+   SparseVector<size_t> linear_constraints;
 
    /* Hessian */
    size_t hessian_maximum_number_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */
