@@ -20,8 +20,10 @@ struct ProgressMeasures {
 
 class Iterate {
 public:
-   Iterate(size_t number_variables, size_t number_constraints);
+   Iterate(size_t max_number_variables, size_t max_number_constraints);
 
+   size_t number_variables;
+   size_t number_constraints;
    std::vector<double> x; /*!< \f$\mathbb{R}^n\f$ primal variables */
    Multipliers multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
 
