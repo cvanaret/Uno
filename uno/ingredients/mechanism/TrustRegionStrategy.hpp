@@ -3,8 +3,8 @@
 
 #include "GlobalizationMechanism.hpp"
 
-/*! \class TrustRegion
- * \brief Trust region
+/*! \class TrustRegionStrategy
+ * \brief Trust region strategy
  *
  *  Trust region strategy
  */
@@ -25,7 +25,6 @@ private:
 
    static void rectify_active_set(Direction& direction, double radius);
    void add_statistics(Statistics& statistics, const Direction& direction);
-   static void check_unboundedness(const Direction& direction);
    bool termination();
    void print_iteration();
 };

@@ -34,18 +34,17 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
 
          // compute the direction within the trust region
          Direction direction = this->relaxation_strategy.compute_feasible_direction(statistics, problem, scaling, current_iterate);
-         TrustRegionStrategy::check_unboundedness(direction);
+         GlobalizationMechanism::check_unboundedness(direction);
          // set bound multipliers of active trust region to 0
          TrustRegionStrategy::rectify_active_set(direction, this->radius);
 
          // assemble the trial iterate by taking a full step
-         const double full_step_length = 1.;
-         Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, full_step_length);
+         Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, 1.);
 
          // check whether the trial step is accepted
          PredictedReductionModel predicted_reduction_model = this->relaxation_strategy.generate_predicted_reduction_model(problem, direction);
          if (this->relaxation_strategy.is_acceptable(statistics, problem, scaling, current_iterate, trial_iterate, direction,
-               predicted_reduction_model, full_step_length)) {
+               predicted_reduction_model, 1.)) {
             this->add_statistics(statistics, direction);
 
             // increase the radius if trust region is active
@@ -62,23 +61,19 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
             this->radius = std::min(this->radius, direction.norm) / this->decrease_factor;
          }
       }
-      catch (const NumericalError& e) {
+      catch (const std::exception& e) {
          GlobalizationMechanism::print_warning(e.what());
-         // if an evaluation error occurs, decrease the radius
+         // if an error occurs (evaluation or unstable inertia), decrease the radius
          this->radius /= this->decrease_factor;
       }
    }
    // radius gets too small
-   if (this->radius < this->min_radius) { // 1e-16: something like machine precision
+   if (this->radius < this->min_radius) {
       throw std::runtime_error("Trust-region radius became too small");
    }
    else {
       throw std::runtime_error("Trust-region failed with an unexpected error");
    }
-}
-
-void TrustRegionStrategy::check_unboundedness(const Direction& direction) {
-   assert(direction.status != UNBOUNDED_PROBLEM && "Trust-region subproblem is unbounded, this should not happen");
 }
 
 void TrustRegionStrategy::rectify_active_set(Direction& direction, double radius) {

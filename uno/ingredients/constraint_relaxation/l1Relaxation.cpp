@@ -85,7 +85,8 @@ double l1Relaxation::compute_predicted_reduction(const Problem& problem, const S
 }
 
 Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
-      const Direction& /*phase_2_direction*/) {
+      const std::optional<std::vector<double>>& /*optional_phase_2_primal_direction*/,
+      const std::optional<ConstraintPartition>& /*optional_constraint_partition*/) {
    assert(0. < this->penalty_parameter && "l1Relaxation: the penalty parameter is already 0");
 
    Direction direction = this->resolve_subproblem(statistics, problem, scaling, current_iterate, 0.);

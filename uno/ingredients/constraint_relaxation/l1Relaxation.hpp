@@ -23,7 +23,8 @@ public:
    Direction compute_feasible_direction(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate) override;
    Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) override;
    Direction solve_feasibility_problem(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
-         const Direction& phase_2_direction) override;
+         const std::optional<std::vector<double>>& optional_phase_2_primal_direction,
+         const std::optional<ConstraintPartition>& optional_constraint_partition) override;
 
    bool is_acceptable(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, PredictedReductionModel& predicted_reduction_model, double step_length) override;

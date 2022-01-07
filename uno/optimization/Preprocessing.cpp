@@ -19,7 +19,7 @@ void Preprocessing::enforce_linear_constraints(const Problem& problem, const Sca
          const size_t number_constraints = problem.linear_constraints.size();
          BQPDSolver solver(problem.number_variables, number_constraints, problem.number_variables, true);
 
-         // objective
+         // objective: use a proximal term
          CSCSymmetricMatrix hessian = CSCSymmetricMatrix::identity(problem.number_variables);
          SparseVector<double> linear_objective(0); // empty
 
@@ -41,8 +41,8 @@ void Preprocessing::enforce_linear_constraints(const Problem& problem, const Sca
          // constraints bounds
          std::vector<Range> constraints_bounds(number_constraints);
          problem.linear_constraints.for_each([&](size_t j, size_t linear_constraint_index) {
-            constraints_bounds[linear_constraint_index] =
-                  {problem.constraint_bounds[j].lb - first_iterate.constraints[j], problem.constraint_bounds[j].ub - first_iterate.constraints[j]};
+            constraints_bounds[linear_constraint_index] = {problem.constraint_bounds[j].lb - first_iterate.constraints[j],
+                                                           problem.constraint_bounds[j].ub - first_iterate.constraints[j]};
          });
 
          // solve the convex QP
@@ -67,7 +67,7 @@ void Preprocessing::enforce_linear_constraints(const Problem& problem, const Sca
 
 // compute a least-square approximation of the multipliers by solving a linear system (uses existing linear system)
 void Preprocessing::compute_least_square_multipliers(const Problem& problem, const Scaling& scaling, SymmetricMatrix& matrix,
-      std::vector<double>& rhs, LinearSolver& solver, Iterate& current_iterate, std::vector<double>& multipliers, double multipliers_max_size) {
+      std::vector<double>& rhs, LinearSolver& solver, Iterate& current_iterate, std::vector<double>& multipliers, double multipliers_max_norm) {
    const size_t number_variables = current_iterate.x.size();
    current_iterate.evaluate_objective_gradient(problem, scaling);
    current_iterate.evaluate_constraints_jacobian(problem, scaling);
@@ -116,7 +116,7 @@ void Preprocessing::compute_least_square_multipliers(const Problem& problem, con
    DEBUG << "Solution: "; print_vector(DEBUG, solution);
 
    // if least-square multipliers too big, discard them. Otherwise, store them
-   if (norm_inf(solution, number_variables, problem.number_constraints) <= multipliers_max_size) {
+   if (norm_inf(solution, number_variables, problem.number_constraints) <= multipliers_max_norm) {
       for (size_t j = 0; j < problem.number_constraints; j++) {
          multipliers[j] = solution[number_variables + j];
       }
