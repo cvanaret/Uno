@@ -17,7 +17,8 @@ public:
    void create_current_subproblem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double trust_region_radius) override;
    Direction compute_feasible_direction(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate) override;
    Direction solve_feasibility_problem(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
-         const Direction& direction) override;
+         const std::optional<std::vector<double>>& optional_phase_2_primal_direction,
+         const std::optional<ConstraintPartition>& optional_constraint_partition) override;
 
    bool is_acceptable(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, PredictedReductionModel& predicted_reduction_model, double step_length) override;
@@ -28,7 +29,8 @@ private:
    Phase current_phase{OPTIMALITY};
 
    void form_feasibility_problem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
-         const std::vector<double>& phase_2_primal_direction, const std::optional<ConstraintPartition>& optional_constraint_partition);
+         const std::optional<std::vector<double>>& optional_phase_2_primal_direction,
+         const std::optional<ConstraintPartition>& optional_constraint_partition);
    GlobalizationStrategy& switch_phase(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, const Direction& direction);
    static void set_restoration_multipliers(std::vector<double>& constraints_multipliers, const ConstraintPartition& constraint_partition);
    void compute_infeasibility_measures(const Problem& problem, const Scaling& scaling, Iterate& iterate,

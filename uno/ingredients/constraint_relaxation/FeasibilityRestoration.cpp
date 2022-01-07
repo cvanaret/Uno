@@ -37,14 +37,15 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
    // infeasible subproblem: form the feasibility problem
    if (direction.status == INFEASIBLE) {
       // try to minimize the constraint violation by solving the feasibility subproblem
-      direction = this->solve_feasibility_problem(statistics, problem, scaling, current_iterate, direction);
+      direction = this->solve_feasibility_problem(statistics, problem, scaling, current_iterate, direction.x, direction.constraint_partition);
       DEBUG << "\n" << direction;
    }
    return direction;
 }
 
 void FeasibilityRestoration::form_feasibility_problem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
-      const std::vector<double>& phase_2_primal_direction, const std::optional<ConstraintPartition>& optional_constraint_partition) {
+      const std::optional<std::vector<double>>& optional_phase_2_primal_direction,
+      const std::optional<ConstraintPartition>& optional_constraint_partition) {
    // if a constraint partition is given, form a partitioned l1 feasibility problem
    if (optional_constraint_partition.has_value()) {
       const ConstraintPartition& constraint_partition = optional_constraint_partition.value();
@@ -68,21 +69,25 @@ void FeasibilityRestoration::form_feasibility_problem(const Problem& problem, co
       this->add_elastic_variables_to_subproblem();
    }
    // start from the phase-2 solution
-   this->subproblem->set_initial_point(phase_2_primal_direction);
+   if (optional_phase_2_primal_direction.has_value()) {
+      const std::vector<double>& phase_2_primal_direction = optional_phase_2_primal_direction.value();
+      this->subproblem->set_initial_point(phase_2_primal_direction);
+   }
 }
 
 Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, const Problem& problem, const Scaling& scaling,
-      Iterate& current_iterate, const Direction& phase_2_direction) {
+      Iterate& current_iterate, const std::optional<std::vector<double>>& optional_phase_2_primal_direction,
+      const std::optional<ConstraintPartition>& optional_constraint_partition) {
    // form the feasibility problem (with or without constraint partition)
-   this->form_feasibility_problem(problem, scaling, current_iterate, phase_2_direction.x, phase_2_direction.constraint_partition);
+   this->form_feasibility_problem(problem, scaling, current_iterate, optional_phase_2_primal_direction, optional_constraint_partition);
 
    // solve the feasibility subproblem
    DEBUG << "\nSolving the feasibility subproblem\n";
    Direction feasibility_direction = this->subproblem->solve(statistics, problem, current_iterate);
    feasibility_direction.objective_multiplier = 0.;
 
-   if (phase_2_direction.constraint_partition.has_value()) {
-      const ConstraintPartition& constraint_partition = phase_2_direction.constraint_partition.value();
+   if (optional_constraint_partition.has_value()) {
+      const ConstraintPartition& constraint_partition = optional_constraint_partition.value();
       feasibility_direction.constraint_partition = constraint_partition;
    }
    else {
