@@ -16,7 +16,7 @@ TrustRegionStrategy::TrustRegionStrategy(ConstraintRelaxationStrategy& constrain
 void TrustRegionStrategy::initialize(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& first_iterate) {
    statistics.add_column("TR radius", Statistics::double_width, 30);
    // generate the initial point
-   this->relaxation_strategy.initialize(statistics, problem, scaling, first_iterate);
+   this->constraint_relaxation_strategy.initialize(statistics, problem, scaling, first_iterate);
 }
 
 std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, const Scaling& scaling,
@@ -30,10 +30,10 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
          this->print_iteration();
 
          // generate the subproblem
-         this->relaxation_strategy.create_current_subproblem(problem, scaling, current_iterate, this->radius);
+         this->constraint_relaxation_strategy.create_current_subproblem(problem, scaling, current_iterate, this->radius);
 
          // compute the direction within the trust region
-         Direction direction = this->relaxation_strategy.compute_feasible_direction(statistics, problem, scaling, current_iterate);
+         Direction direction = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, problem, scaling, current_iterate);
          GlobalizationMechanism::check_unboundedness(direction);
          // set bound multipliers of active trust region to 0
          TrustRegionStrategy::rectify_active_set(direction, this->radius);
@@ -42,8 +42,8 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
          Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, 1.);
 
          // check whether the trial step is accepted
-         PredictedReductionModel predicted_reduction_model = this->relaxation_strategy.generate_predicted_reduction_model(problem, direction);
-         if (this->relaxation_strategy.is_acceptable(statistics, problem, scaling, current_iterate, trial_iterate, direction,
+         PredictedReductionModel predicted_reduction_model = this->constraint_relaxation_strategy.generate_predicted_reduction_model(problem, direction);
+         if (this->constraint_relaxation_strategy.is_acceptable(statistics, problem, scaling, current_iterate, trial_iterate, direction,
                predicted_reduction_model, 1.)) {
             this->add_statistics(statistics, direction);
 
@@ -53,7 +53,7 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
             }
 
             // let the subproblem know the accepted iterate
-            this->relaxation_strategy.register_accepted_iterate(trial_iterate);
+            this->constraint_relaxation_strategy.register_accepted_iterate(trial_iterate);
             return std::make_tuple(std::move(trial_iterate), direction.norm);
          }
          else {

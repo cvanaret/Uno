@@ -1,7 +1,7 @@
 #include "GlobalizationMechanism.hpp"
 
 GlobalizationMechanism::GlobalizationMechanism(ConstraintRelaxationStrategy& constraint_relaxation_strategy) :
-      relaxation_strategy(constraint_relaxation_strategy) {
+      constraint_relaxation_strategy(constraint_relaxation_strategy) {
 }
 
 Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate, Direction& direction, double step_length) {
@@ -34,11 +34,11 @@ void GlobalizationMechanism::check_unboundedness(const Direction& direction) {
 }
 
 size_t GlobalizationMechanism::get_hessian_evaluation_count() const {
-   return this->relaxation_strategy.get_hessian_evaluation_count();
+   return this->constraint_relaxation_strategy.get_hessian_evaluation_count();
 }
 
 size_t GlobalizationMechanism::get_number_subproblems_solved() const {
-   return this->relaxation_strategy.get_number_subproblems_solved();
+   return this->constraint_relaxation_strategy.get_number_subproblems_solved();
 }
 
 void GlobalizationMechanism::print_warning(const char* message) {
