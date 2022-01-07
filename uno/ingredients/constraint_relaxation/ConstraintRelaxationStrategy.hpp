@@ -44,8 +44,8 @@ protected:
    std::unique_ptr<Subproblem> subproblem;
    // possible problem reformulation with elastic variables. Constraints l <= c(x) <= u are reformulated as l <= c(x) - p + n <= u
    ElasticVariables elastic_variables;
-   const size_t number_subproblem_variables;
    const double elastic_objective_coefficient;
+   const size_t number_subproblem_variables;
 
    static size_t count_elastic_variables(const Problem& problem, bool subproblem_uses_slacks);
    static void generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables, size_t number_variables,
@@ -54,6 +54,10 @@ protected:
    void remove_elastic_variables_from_subproblem();
    void remove_elastic_variables_from_direction(const Problem& problem, Direction& direction);
    void recover_active_set(const Problem& problem, Direction& direction);
+
+public:
+   const size_t max_number_subproblem_variables;
+   const size_t number_constraints;
 };
 
 #endif //UNO_CONSTRAINTRELAXATIONSTRATEGY_H

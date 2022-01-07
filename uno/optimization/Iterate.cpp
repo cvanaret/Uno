@@ -6,13 +6,13 @@ size_t Iterate::number_eval_objective = 0;
 size_t Iterate::number_eval_constraints = 0;
 size_t Iterate::number_eval_jacobian = 0;
 
-Iterate::Iterate(size_t number_variables, size_t number_constraints) :
-   x(number_variables),
-   multipliers(number_variables, number_constraints),
+Iterate::Iterate(size_t max_number_variables, size_t max_number_constraints) :
+   number_variables(max_number_variables), number_constraints(max_number_constraints),
+   x(max_number_variables), multipliers(max_number_variables, max_number_constraints),
    constraints(multipliers.constraints.size()),
-   objective_gradient(number_variables),
-   constraints_jacobian(number_constraints),
-   lagrangian_gradient(number_variables) {
+   objective_gradient(max_number_variables),
+   constraints_jacobian(max_number_constraints),
+   lagrangian_gradient(max_number_variables) {
 }
 
 void Iterate::evaluate_objective(const Problem& problem, const Scaling& scaling) {

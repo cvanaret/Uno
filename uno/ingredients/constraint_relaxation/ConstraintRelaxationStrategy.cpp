@@ -7,9 +7,11 @@ ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Problem& proble
             problem.number_variables + ConstraintRelaxationStrategy::count_elastic_variables(problem, true),
             options)),
       elastic_variables(ConstraintRelaxationStrategy::count_elastic_variables(problem, this->subproblem->uses_slacks)),
+      elastic_objective_coefficient(stod(options.at("elastic_objective_coefficient"))),
       // save the original number of variables in the subproblem
       number_subproblem_variables(this->subproblem->number_variables),
-      elastic_objective_coefficient(stod(options.at("elastic_objective_coefficient"))) {
+      max_number_subproblem_variables(this->subproblem->max_number_variables),
+      number_constraints(problem.number_constraints) {
    // generate elastic variables to relax the constraints
    ConstraintRelaxationStrategy::generate_elastic_variables(problem, this->elastic_variables, this->subproblem->number_variables,
          this->subproblem->uses_slacks);

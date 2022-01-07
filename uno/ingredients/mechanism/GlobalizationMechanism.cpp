@@ -1,7 +1,9 @@
 #include "GlobalizationMechanism.hpp"
 
 GlobalizationMechanism::GlobalizationMechanism(ConstraintRelaxationStrategy& constraint_relaxation_strategy) :
-      constraint_relaxation_strategy(constraint_relaxation_strategy) {
+      constraint_relaxation_strategy(constraint_relaxation_strategy),
+      // preallocate the trial iterate
+      trial_iterate(this->constraint_relaxation_strategy.max_number_subproblem_variables, this->constraint_relaxation_strategy.number_constraints) {
 }
 
 Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate, Direction& direction, double step_length) {
