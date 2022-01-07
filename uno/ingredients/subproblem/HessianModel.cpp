@@ -25,7 +25,7 @@ void ExactHessian::evaluate(const Problem& problem, const Scaling& scaling, cons
    // evaluate Lagrangian Hessian
    const double scaled_objective_multiplier = objective_multiplier*scaling.get_objective_scaling();
    // TODO preallocate this vector
-   std::vector<double> scaled_multipliers(problem.number_constraints);
+   static std::vector<double> scaled_multipliers(problem.number_constraints);
    for (size_t j = 0; j < problem.number_constraints; j++) {
       scaled_multipliers[j] = scaling.get_constraint_scaling(j)*constraint_multipliers[j];
    }
@@ -45,7 +45,7 @@ void ConvexifiedHessian::evaluate(const Problem& problem, const Scaling& scaling
    // evaluate Lagrangian Hessian
    const double scaled_objective_multiplier = objective_multiplier*scaling.get_objective_scaling();
    // TODO preallocate this vector
-   std::vector<double> scaled_multipliers(problem.number_constraints);
+   static std::vector<double> scaled_multipliers(problem.number_constraints);
    for (size_t j = 0; j < problem.number_constraints; j++) {
       scaled_multipliers[j] = scaling.get_constraint_scaling(j)*constraint_multipliers[j];
    }

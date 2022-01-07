@@ -146,8 +146,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const P
       DEBUG << "Ideal linearized residual mk(dk): " << residual_lowest_violation << "\n\n";
 
       // compute the ideal error (with a zero penalty parameter)
-      const double error_lowest_violation = l1Relaxation::compute_error(problem, scaling, current_iterate,
-            direction_lowest_violation.multipliers, 0.);
+      const double error_lowest_violation = l1Relaxation::compute_error(problem, scaling, current_iterate, direction_lowest_violation.multipliers, 0.);
       DEBUG << "Ideal error: " << error_lowest_violation << "\n";
       if (error_lowest_violation == 0.) {
          // stage f: update the penalty parameter
