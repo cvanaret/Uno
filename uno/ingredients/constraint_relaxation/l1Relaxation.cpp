@@ -156,17 +156,21 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const P
       else {
          // stage f: update the penalty parameter
          const double updated_penalty_parameter = this->penalty_parameter;
-         const double term = error_lowest_violation / std::max(1., current_iterate.errors.constraints);
-         this->penalty_parameter = std::min(this->penalty_parameter, term * term);
+         const double scaled_error = error_lowest_violation / std::max(1., current_iterate.errors.constraints);
+         const double scaled_error_square = scaled_error*scaled_error;
+         DEBUG << "Scaled error squared: " << scaled_error_square << "\n";
+         this->penalty_parameter = std::min(this->penalty_parameter, scaled_error_square);
          if (this->penalty_parameter < this->parameters.small_threshold) {
             this->penalty_parameter = 0.;
          }
          if (this->penalty_parameter < updated_penalty_parameter) {
             if (this->penalty_parameter == 0.) {
                direction = direction_lowest_violation;
+               linearized_residual = residual_lowest_violation;
             }
             else {
                direction = this->resolve_subproblem(statistics, problem, scaling, current_iterate, this->penalty_parameter);
+               linearized_residual = this->compute_linearized_constraint_residual(direction.x);
             }
          }
 
@@ -193,12 +197,12 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const P
                if (this->penalty_parameter < this->parameters.small_threshold) {
                   this->penalty_parameter = 0.;
                   direction = direction_lowest_violation;
+                  linearized_residual = residual_lowest_violation;
                   condition2 = true;
                }
                else {
                   DEBUG << "\nAttempting to solve with penalty parameter " << this->penalty_parameter << "\n";
                   direction = this->resolve_subproblem(statistics, problem, scaling, current_iterate, this->penalty_parameter);
-
                   linearized_residual = this->compute_linearized_constraint_residual(direction.x);
                   DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
                }
