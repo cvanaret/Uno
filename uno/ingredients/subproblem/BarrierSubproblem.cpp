@@ -189,6 +189,7 @@ Direction BarrierSubproblem::solve(Statistics& statistics, const Problem& proble
 
    // compute the solution (Δx, -Δλ)
    this->augmented_system.solve(*this->linear_solver);
+   assert(this->direction.status == OPTIMAL && "The barrier subproblem was not solved to optimality");
    this->number_subproblems_solved++;
 
    // generate IPM direction
