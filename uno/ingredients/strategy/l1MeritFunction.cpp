@@ -1,5 +1,4 @@
 #include "l1MeritFunction.hpp"
-#include "tools/Logger.hpp"
 
 /*
  * Infeasibility detection and SQP methods for nonlinear optimization 
@@ -7,8 +6,7 @@
  */
 
 l1MeritFunction::l1MeritFunction(const Options& options) :
-      GlobalizationStrategy(),
-      decrease_fraction(stod(options.at("armijo_decrease_fraction"))) {
+      GlobalizationStrategy(), decrease_fraction(stod(options.at("armijo_decrease_fraction"))) {
 }
 
 void l1MeritFunction::initialize(Statistics& statistics, const Iterate& /*first_iterate*/) {
@@ -29,7 +27,6 @@ bool l1MeritFunction::check_acceptance(Statistics& statistics, const ProgressMea
    const double trial_exact_l1_penalty = objective_multiplier * trial_progress.objective + trial_progress.infeasibility;
 
    const double actual_reduction = current_exact_l1_penalty - trial_exact_l1_penalty;
-   DEBUG << "Predicted reduction: " << predicted_reduction << ", actual: " << actual_reduction << "\n\n";
    // Armijo sufficient decrease condition
    if (actual_reduction >= this->decrease_fraction * predicted_reduction) {
       accept = true;

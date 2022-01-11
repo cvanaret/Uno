@@ -46,7 +46,7 @@ public:
    std::vector<double> lagrangian_gradient;
 
    // residuals
-   Errors errors{0., 0., 0., 0.};
+   Errors nonlinear_errors{0., 0., 0., 0.};
    ProgressMeasures progress{0., 0.};
 
    void evaluate_objective(const Problem& problem, const Scaling& scaling);

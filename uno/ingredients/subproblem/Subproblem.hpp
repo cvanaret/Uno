@@ -59,7 +59,7 @@ public:
    void set_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints);
 
    double compute_first_order_error(const Problem& problem, const Scaling& scaling, Iterate& iterate, double objective_multiplier) const;
-   void compute_optimality_conditions(const Problem& problem, const Scaling& scaling, Iterate& iterate, double objective_multiplier) const;
+   void compute_residuals(const Problem& problem, const Scaling& scaling, Iterate& iterate, double objective_multiplier) const;
 
    static double compute_complementarity_error(const Problem& problem, const Scaling& scaling, Iterate& iterate,
          const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bounds_multipliers,

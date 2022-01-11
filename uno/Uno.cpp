@@ -95,10 +95,10 @@ Statistics Uno::create_statistics() {
 void Uno::add_statistics(Statistics& statistics, const Iterate& new_iterate, size_t major_iterations) {
    statistics.add_statistic(std::string("major"), major_iterations);
    statistics.add_statistic("f", new_iterate.objective);
-   statistics.add_statistic("||c||", new_iterate.errors.constraints);
-   statistics.add_statistic("complementarity", new_iterate.errors.complementarity);
-   statistics.add_statistic("KKT", new_iterate.errors.KKT);
-   statistics.add_statistic("FJ", new_iterate.errors.FJ);
+   statistics.add_statistic("||c||", new_iterate.nonlinear_errors.constraints);
+   statistics.add_statistic("complementarity", new_iterate.nonlinear_errors.complementarity);
+   statistics.add_statistic("KKT", new_iterate.nonlinear_errors.KKT);
+   statistics.add_statistic("FJ", new_iterate.nonlinear_errors.FJ);
 }
 
 bool Uno::termination_criterion(TerminationStatus current_status, size_t iteration) const {
@@ -108,19 +108,19 @@ bool Uno::termination_criterion(TerminationStatus current_status, size_t iterati
 TerminationStatus Uno::check_termination(const Problem& problem, const Iterate& current_iterate, double step_norm) const {
    const size_t number_variables = current_iterate.x.size();
 
-   if (current_iterate.errors.complementarity <= this->tolerance * static_cast<double>(number_variables + problem.number_constraints)) {
+   if (current_iterate.nonlinear_errors.complementarity <= this->tolerance * static_cast<double>(number_variables + problem.number_constraints)) {
       // feasible and KKT point
-      if (current_iterate.errors.KKT <= this->tolerance * std::sqrt(number_variables) &&
-            current_iterate.errors.constraints <= this->tolerance * static_cast<double>(number_variables)) {
+      if (current_iterate.nonlinear_errors.KKT <= this->tolerance * std::sqrt(number_variables) &&
+          current_iterate.nonlinear_errors.constraints <= this->tolerance * static_cast<double>(number_variables)) {
          return KKT_POINT;
       }
       // infeasible and FJ point
-      else if (0 < problem.number_constraints && current_iterate.errors.FJ <= this->tolerance * std::sqrt(number_variables)) {
+      else if (0 < problem.number_constraints && current_iterate.nonlinear_errors.FJ <= this->tolerance * std::sqrt(number_variables)) {
          return FJ_POINT;
       }
    }
    if (step_norm <= this->tolerance / this->small_step_factor) {
-      if (current_iterate.errors.constraints <= this->tolerance * static_cast<double>(number_variables)) {
+      if (current_iterate.nonlinear_errors.constraints <= this->tolerance * static_cast<double>(number_variables)) {
          return FEASIBLE_SMALL_STEP;
       }
       else {
@@ -173,10 +173,10 @@ void Result::print(bool print_solution) const {
    }
 
    std::cout << "Objective value:\t\t" << this->solution.objective << "\n";
-   std::cout << "Constraint residual:\t\t" << this->solution.errors.constraints << "\n";
-   std::cout << "KKT residual:\t\t\t" << this->solution.errors.KKT << "\n";
-   std::cout << "FJ residual:\t\t\t" << this->solution.errors.FJ << "\n";
-   std::cout << "Complementarity residual:\t" << this->solution.errors.complementarity << "\n";
+   std::cout << "Constraint residual:\t\t" << this->solution.nonlinear_errors.constraints << "\n";
+   std::cout << "KKT residual:\t\t\t" << this->solution.nonlinear_errors.KKT << "\n";
+   std::cout << "FJ residual:\t\t\t" << this->solution.nonlinear_errors.FJ << "\n";
+   std::cout << "Complementarity residual:\t" << this->solution.nonlinear_errors.complementarity << "\n";
 
    std::cout << "Feasibility measure:\t\t" << this->solution.progress.infeasibility << "\n";
    std::cout << "Optimality measure:\t\t" << this->solution.progress.objective << "\n";

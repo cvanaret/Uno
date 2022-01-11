@@ -122,10 +122,10 @@ std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
    print_vector(stream, iterate.multipliers.constraints);
    stream << "Objective value: " << iterate.objective << "\n";
 
-   stream << "Constraint residual: " << iterate.errors.constraints << "\n";
-   stream << "KKT residual: " << iterate.errors.KKT << "\n";
-   stream << "FJ residual: " << iterate.errors.KKT << "\n";
-   stream << "Complementarity residual: " << iterate.errors.complementarity << "\n";
+   stream << "Constraint residual: " << iterate.nonlinear_errors.constraints << "\n";
+   stream << "KKT residual: " << iterate.nonlinear_errors.KKT << "\n";
+   stream << "FJ residual: " << iterate.nonlinear_errors.KKT << "\n";
+   stream << "Complementarity residual: " << iterate.nonlinear_errors.complementarity << "\n";
 
    stream << "Optimality measure: " << iterate.progress.objective << "\n";
    stream << "Feasibility measure: " << iterate.progress.infeasibility << "\n";

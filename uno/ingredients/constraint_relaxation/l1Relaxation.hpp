@@ -42,6 +42,8 @@ protected:
    Direction resolve_subproblem(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
          double current_penalty_parameter);
    Direction solve_with_steering_rule(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate);
+   [[nodiscard]] bool linearized_residual_sufficient_decrease(const Iterate& current_iterate, double linearized_residual, double residual_lowest_violation) const;
+   bool objective_sufficient_decrease(const Iterate& current_iterate, const Direction& direction, const Direction& direction_lowest_violation) const;
    double compute_linearized_constraint_residual(std::vector<double>& direction) const;
    double compute_error(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, const Multipliers& multipliers_displacements,
          double current_penalty_parameter);
