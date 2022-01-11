@@ -43,10 +43,10 @@ void Subproblem::remove_elastic_variable(size_t i, size_t j) {
 void Subproblem::compute_progress_measures(const Problem& problem, const Scaling& scaling, Iterate& iterate) {
    iterate.evaluate_constraints(problem, scaling);
    // feasibility measure: residual of all constraints
-   iterate.errors.constraints = problem.compute_constraint_violation(scaling, iterate.constraints, this->residual_norm);
+   iterate.nonlinear_errors.constraints = problem.compute_constraint_violation(scaling, iterate.constraints, this->residual_norm);
    // optimality
    iterate.evaluate_objective(problem, scaling);
-   iterate.progress = {iterate.errors.constraints, iterate.objective};
+   iterate.progress = {iterate.nonlinear_errors.constraints, iterate.objective};
 }
 
 double Subproblem::push_variable_to_interior(double variable_value, const Range& variable_bounds) {
@@ -164,14 +164,14 @@ double Subproblem::compute_complementarity_error(const Problem& problem, const S
    return error;
 }
 
-void Subproblem::compute_optimality_conditions(const Problem& problem, const Scaling& scaling, Iterate& iterate, double objective_multiplier) const {
+void Subproblem::compute_residuals(const Problem& problem, const Scaling& scaling, Iterate& iterate, double objective_multiplier) const {
    iterate.evaluate_objective(problem, scaling);
    iterate.evaluate_constraints(problem, scaling);
-   iterate.errors.constraints = problem.compute_constraint_violation(scaling, iterate.constraints, this->residual_norm);
+   iterate.nonlinear_errors.constraints = problem.compute_constraint_violation(scaling, iterate.constraints, this->residual_norm);
    // compute the KKT error only if the objective multiplier is positive
-   iterate.errors.KKT = this->compute_first_order_error(problem, scaling, iterate, 0. < objective_multiplier ? objective_multiplier : 1.);
-   iterate.errors.FJ = this->compute_first_order_error(problem, scaling, iterate, 0.);
-   iterate.errors.complementarity = Subproblem::compute_complementarity_error(problem, scaling, iterate, iterate.multipliers.constraints,
+   iterate.nonlinear_errors.KKT = this->compute_first_order_error(problem, scaling, iterate, 0. < objective_multiplier ? objective_multiplier : 1.);
+   iterate.nonlinear_errors.FJ = this->compute_first_order_error(problem, scaling, iterate, 0.);
+   iterate.nonlinear_errors.complementarity = Subproblem::compute_complementarity_error(problem, scaling, iterate, iterate.multipliers.constraints,
          iterate.multipliers.lower_bounds, iterate.multipliers.upper_bounds);
 }
 

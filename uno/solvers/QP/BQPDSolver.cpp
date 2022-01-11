@@ -1,7 +1,5 @@
-#include <cmath>
 #include <cassert>
 #include <algorithm>
-#include <iterator>
 #include "BQPDSolver.hpp"
 #include "tools/Logger.hpp"
 #include "linear_algebra/Vector.hpp"

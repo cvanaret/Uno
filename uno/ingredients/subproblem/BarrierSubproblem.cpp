@@ -161,7 +161,7 @@ void BarrierSubproblem::build_objective_model(const Problem& problem, const Scal
    if (objective_multiplier == 0.) {
       this->in_feasibility_problem = true;
       this->previous_barrier_parameter = this->barrier_parameter;
-      this->barrier_parameter = std::max(this->barrier_parameter, current_iterate.errors.constraints);
+      this->barrier_parameter = std::max(this->barrier_parameter, current_iterate.nonlinear_errors.constraints);
       DEBUG << "Barrier parameter mu temporarily updated to " << this->barrier_parameter << "\n";
    }
    else {
@@ -260,8 +260,7 @@ void BarrierSubproblem::remove_elastic_variable(size_t i, size_t j) {
          this->upper_bounded_variables.end());
 }
 
-PredictedReductionModel BarrierSubproblem::generate_predicted_reduction_model(const Problem& /*problem*/,
-      const Direction& direction) const {
+PredictedReductionModel BarrierSubproblem::generate_predicted_reduction_model(const Problem& /*problem*/, const Direction& direction) const {
    return PredictedReductionModel(-direction.objective, [&]() {
       return [=](double step_length) {
          return -step_length * direction.objective;
@@ -287,9 +286,9 @@ void BarrierSubproblem::compute_progress_measures(const Problem& problem, const 
 void BarrierSubproblem::update_barrier_parameter(const Iterate& current_iterate) {
    // scaled error terms
    const double sd = this->compute_KKT_error_scaling(current_iterate);
-   const double KKTerror = current_iterate.errors.KKT / sd;
+   const double KKTerror = current_iterate.nonlinear_errors.KKT / sd;
    const double central_complementarity_error = this->compute_central_complementarity_error(current_iterate);
-   const double error = std::max({KKTerror, current_iterate.errors.constraints, central_complementarity_error});
+   const double error = std::max({KKTerror, current_iterate.nonlinear_errors.constraints, central_complementarity_error});
    DEBUG << "KKT error for barrier subproblem is " << error << "\n";
 
    // update of the barrier parameter (Eq. 7 in Ipopt paper)

@@ -21,7 +21,7 @@ void l1Relaxation::initialize(Statistics& statistics, const Problem& problem, co
    // initialize the subproblem
    this->subproblem->initialize(statistics, problem, scaling, first_iterate);
 
-   this->subproblem->compute_optimality_conditions(problem, scaling, first_iterate, this->penalty_parameter);
+   this->subproblem->compute_residuals(problem, scaling, first_iterate, this->penalty_parameter);
    this->globalization_strategy->initialize(statistics, first_iterate);
 }
 
@@ -71,7 +71,7 @@ double l1Relaxation::compute_predicted_reduction(const Problem& problem, const S
       const Direction& direction, PredictedReductionModel& predicted_reduction_model, double step_length) {
    // compute the predicted reduction of the l1 relaxation as a postprocessing of the predicted reduction of the subproblem
    if (step_length == 1.) {
-      return current_iterate.errors.constraints + predicted_reduction_model.evaluate(step_length);
+      return current_iterate.nonlinear_errors.constraints + predicted_reduction_model.evaluate(step_length);
    }
    else {
       // determine the linearized constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
@@ -80,7 +80,7 @@ double l1Relaxation::compute_predicted_reduction(const Problem& problem, const S
          return problem.compute_constraint_violation(scaling, component_j, j);
       };
       const double linearized_constraint_violation = norm_1(residual_function, problem.number_constraints);
-      return current_iterate.errors.constraints - linearized_constraint_violation + predicted_reduction_model.evaluate(step_length);
+      return current_iterate.nonlinear_errors.constraints - linearized_constraint_violation + predicted_reduction_model.evaluate(step_length);
    }
 }
 
@@ -109,7 +109,7 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
       accept = true;
    }
    else {
-      // compute the predicted reduction
+      // evaluate the predicted reduction
       const double predicted_reduction = l1Relaxation::compute_predicted_reduction(problem, scaling, current_iterate, direction,
             predicted_reduction_model, step_length);
       // invoke the globalization strategy for acceptance
@@ -119,7 +119,7 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
    }
    if (accept) {
       statistics.add_statistic("penalty param.", this->penalty_parameter);
-      this->subproblem->compute_optimality_conditions(problem, scaling, trial_iterate, direction.objective_multiplier);
+      this->subproblem->compute_residuals(problem, scaling, trial_iterate, direction.objective_multiplier);
    }
    return accept;
 }
@@ -137,33 +137,29 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const P
       double linearized_residual = this->compute_linearized_constraint_residual(direction.x);
       DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
 
-      const double current_penalty_parameter = this->penalty_parameter;
+      // if the current direction is already feasible, terminate
+      if (0. < linearized_residual) {
+         const double current_penalty_parameter = this->penalty_parameter;
 
-      // stage c: compute the lowest possible constraint violation (penalty = 0)
-      DEBUG << "Compute ideal solution (param = 0):\n";
-      Direction direction_lowest_violation = this->resolve_subproblem(statistics, problem, scaling, current_iterate, 0.);
-      const double residual_lowest_violation = this->compute_linearized_constraint_residual(direction_lowest_violation.x);
-      DEBUG << "Ideal linearized residual mk(dk): " << residual_lowest_violation << "\n\n";
+         // stage c: compute the lowest possible constraint violation (penalty parameter = 0)
+         DEBUG << "Compute ideal solution (penalty parameter = 0):\n";
+         Direction direction_lowest_violation = this->resolve_subproblem(statistics, problem, scaling, current_iterate, 0.);
+         const double residual_lowest_violation = this->compute_linearized_constraint_residual(direction_lowest_violation.x);
+         DEBUG << "Lowest linearized residual mk(dk): " << residual_lowest_violation << "\n\n";
 
-      // compute the ideal error (with a zero penalty parameter)
-      const double error_lowest_violation = l1Relaxation::compute_error(problem, scaling, current_iterate, direction_lowest_violation.multipliers, 0.);
-      DEBUG << "Ideal error: " << error_lowest_violation << "\n";
-      if (error_lowest_violation == 0.) {
+         // compute the ideal error (with a zero penalty parameter)
+         const double error_lowest_violation = l1Relaxation::compute_error(problem, scaling, current_iterate, direction_lowest_violation.multipliers, 0.);
+         DEBUG << "Ideal error: " << error_lowest_violation << "\n";
+
          // stage f: update the penalty parameter
-         this->penalty_parameter = 0.;
-         direction = direction_lowest_violation;
-      }
-      else {
-         // stage f: update the penalty parameter
-         const double updated_penalty_parameter = this->penalty_parameter;
-         const double scaled_error = error_lowest_violation / std::max(1., current_iterate.errors.constraints);
+         const double scaled_error = error_lowest_violation / std::max(1., current_iterate.nonlinear_errors.constraints);
          const double scaled_error_square = scaled_error*scaled_error;
          DEBUG << "Scaled error squared: " << scaled_error_square << "\n";
          this->penalty_parameter = std::min(this->penalty_parameter, scaled_error_square);
          if (this->penalty_parameter < this->parameters.small_threshold) {
             this->penalty_parameter = 0.;
          }
-         if (this->penalty_parameter < updated_penalty_parameter) {
+         if (this->penalty_parameter < current_penalty_parameter) {
             if (this->penalty_parameter == 0.) {
                direction = direction_lowest_violation;
                linearized_residual = residual_lowest_violation;
@@ -174,53 +170,73 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const P
             }
          }
 
-         // decrease penalty parameter to satisfy 2 conditions
-         bool condition1 = false, condition2 = false;
-         while (!condition2) {
-            if (!condition1) {
-               // stage d: reach a fraction of the ideal decrease
-               if ((residual_lowest_violation == 0. && linearized_residual == 0) || (residual_lowest_violation != 0. &&
-               current_iterate.errors.constraints - linearized_residual >= this->parameters.epsilon1 *
-               (current_iterate.errors.constraints - residual_lowest_violation))) {
-                  condition1 = true;
-                  DEBUG << "Condition 1 is true\n";
+         if (0. < this->penalty_parameter) {
+            // decrease penalty parameter to satisfy 2 conditions
+            bool condition1 = false, condition2 = false;
+            while (!condition2) {
+               if (!condition1) {
+                  // stage d: reach a fraction of the ideal decrease
+                  if (this->linearized_residual_sufficient_decrease(current_iterate, linearized_residual, residual_lowest_violation)) {
+                     condition1 = true;
+                     DEBUG << "Condition 1 is true\n";
+                  }
                }
-            }
-            // stage e: further decrease penalty parameter if necessary
-            if (condition1 && current_iterate.errors.constraints - direction.objective >=
-                              this->parameters.epsilon2 * (current_iterate.errors.constraints - direction_lowest_violation.objective)) {
-               condition2 = true;
-               DEBUG << "Condition 2 is true\n";
-            }
-            if (!condition2) {
-               this->penalty_parameter /= this->parameters.decrease_factor;
-               if (this->penalty_parameter < this->parameters.small_threshold) {
-                  this->penalty_parameter = 0.;
-                  direction = direction_lowest_violation;
-                  linearized_residual = residual_lowest_violation;
+               // stage e: further decrease penalty parameter if necessary
+               if (condition1 && this->objective_sufficient_decrease(current_iterate, direction, direction_lowest_violation)) {
                   condition2 = true;
+                  DEBUG << "Condition 2 is true\n";
                }
-               else {
-                  DEBUG << "\nAttempting to solve with penalty parameter " << this->penalty_parameter << "\n";
-                  direction = this->resolve_subproblem(statistics, problem, scaling, current_iterate, this->penalty_parameter);
-                  linearized_residual = this->compute_linearized_constraint_residual(direction.x);
-                  DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
+               if (!condition2) {
+                  this->penalty_parameter /= this->parameters.decrease_factor;
+                  if (this->penalty_parameter < this->parameters.small_threshold) {
+                     this->penalty_parameter = 0.;
+                     direction = direction_lowest_violation;
+                     linearized_residual = residual_lowest_violation;
+                     condition2 = true;
+                  }
+                  else {
+                     DEBUG << "\nAttempting to solve with penalty parameter " << this->penalty_parameter << "\n";
+                     direction = this->resolve_subproblem(statistics, problem, scaling, current_iterate, this->penalty_parameter);
+                     linearized_residual = this->compute_linearized_constraint_residual(direction.x);
+                     DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
+                  }
                }
             }
          }
-      } // end else
 
-      if (this->penalty_parameter < current_penalty_parameter) {
-         DEBUG << "\n*** Penalty parameter updated to " << this->penalty_parameter << "\n";
-         this->globalization_strategy->reset();
+         if (this->penalty_parameter < current_penalty_parameter) {
+            DEBUG << "\n*** Penalty parameter updated to " << this->penalty_parameter << "\n";
+            //this->globalization_strategy->reset();
+         }
       }
    }
    return direction;
 }
 
+bool l1Relaxation::linearized_residual_sufficient_decrease(const Iterate& current_iterate, double linearized_residual, double residual_lowest_violation) const {
+   if (residual_lowest_violation == 0. && linearized_residual == 0) {
+      return true;
+   }
+   const double decrease_linearized_residual = current_iterate.nonlinear_errors.constraints - linearized_residual;
+   const double lowest_decrease_linearized_residual = current_iterate.nonlinear_errors.constraints - residual_lowest_violation;
+   if (residual_lowest_violation != 0. && decrease_linearized_residual >= this->parameters.epsilon1 * lowest_decrease_linearized_residual) {
+      return true;
+   }
+   return false;
+}
+
+bool l1Relaxation::objective_sufficient_decrease(const Iterate& current_iterate, const Direction& direction,
+      const Direction& direction_lowest_violation) const {
+   const double decrease_objective = current_iterate.nonlinear_errors.constraints - direction.objective;
+   const double lowest_decrease_objective = current_iterate.nonlinear_errors.constraints - direction_lowest_violation.objective;
+   return decrease_objective >= this->parameters.epsilon2 * lowest_decrease_objective;
+}
+
 Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double current_penalty_parameter) {
    // solve the subproblem
    Direction direction = this->subproblem->solve(statistics, problem, current_iterate);
+   std::cout << "Direction:\n" << direction;
+   assert(direction.status == OPTIMAL && "solve_subproblem: the subproblem was not solved to optimality");
    // enforce feasibility (by construction)
    if (direction.constraint_partition.has_value()) {
       const ConstraintPartition& constraint_partition = direction.constraint_partition.value();

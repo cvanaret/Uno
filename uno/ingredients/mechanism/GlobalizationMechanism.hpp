@@ -6,11 +6,6 @@
 #include "optimization/Scaling.hpp"
 #include "tools/Statistics.hpp"
 
-/*! \class GlobalizationMechanism
- * \brief Step control strategy
- *
- *  Strategy that promotes global convergence
- */
 class GlobalizationMechanism {
 public:
    explicit GlobalizationMechanism(ConstraintRelaxationStrategy& constraint_relaxation_strategy);
@@ -24,7 +19,7 @@ public:
    [[nodiscard]] size_t get_number_subproblems_solved() const;
 
 protected:
-   /* references to allow polymorphism */
+   // references to allow polymorphism
    ConstraintRelaxationStrategy& constraint_relaxation_strategy;
    size_t number_iterations{0}; /*!< Current number of iterations */
 
