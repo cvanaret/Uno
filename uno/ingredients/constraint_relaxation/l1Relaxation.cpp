@@ -235,7 +235,6 @@ bool l1Relaxation::objective_sufficient_decrease(const Iterate& current_iterate,
 Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double current_penalty_parameter) {
    // solve the subproblem
    Direction direction = this->subproblem->solve(statistics, problem, current_iterate);
-   std::cout << "Direction:\n" << direction;
    assert(direction.status == OPTIMAL && "solve_subproblem: the subproblem was not solved to optimality");
    // enforce feasibility (by construction)
    if (direction.constraint_partition.has_value()) {
