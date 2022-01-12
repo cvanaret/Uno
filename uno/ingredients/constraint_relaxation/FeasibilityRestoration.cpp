@@ -67,7 +67,7 @@ void FeasibilityRestoration::form_feasibility_problem(const Problem& problem, co
       // no constraint partition given, form an l1 feasibility problem by adding elastic variables
       initialize_vector(this->subproblem->constraints_multipliers, 0.);
       this->subproblem->build_objective_model(problem, scaling, current_iterate, 0.);
-      this->add_elastic_variables_to_subproblem();
+      this->add_elastic_variables_to_subproblem(current_iterate);
    }
    // start from the phase-2 solution
    if (optional_phase_2_primal_direction.has_value()) {
@@ -85,6 +85,7 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
    // solve the feasibility subproblem
    DEBUG << "\nSolving the feasibility subproblem\n";
    Direction feasibility_direction = this->subproblem->solve(statistics, problem, current_iterate);
+   DEBUG << feasibility_direction << "\n";
    assert(feasibility_direction.status == OPTIMAL && "The subproblem was not solved to optimality");
    feasibility_direction.objective_multiplier = 0.;
 
@@ -95,9 +96,8 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
    else {
       // remove the temporary elastic variables
       this->remove_elastic_variables_from_subproblem();
-      this->remove_elastic_variables_from_direction(problem, feasibility_direction);
+      //this->remove_elastic_variables_from_direction(problem, feasibility_direction);
    }
-   DEBUG << feasibility_direction << "\n";
    return feasibility_direction;
 }
 

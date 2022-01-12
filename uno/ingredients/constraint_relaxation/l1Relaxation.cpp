@@ -28,7 +28,7 @@ void l1Relaxation::initialize(Statistics& statistics, const Problem& problem, co
 void l1Relaxation::create_current_subproblem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double trust_region_radius) {
    // scale the derivatives and introduce the elastic variables
    this->subproblem->create_current_subproblem(problem, scaling, current_iterate, this->penalty_parameter, trust_region_radius);
-   this->add_elastic_variables_to_subproblem();
+   this->add_elastic_variables_to_subproblem(current_iterate);
 
    // set the multipliers of the violated constraints
    l1Relaxation::set_multipliers(problem, current_iterate, this->subproblem->constraints_multipliers);
@@ -251,7 +251,7 @@ Direction l1Relaxation::resolve_subproblem(Statistics& statistics, const Problem
    // recompute the objective model with the current objective multiplier
    this->subproblem->build_objective_model(problem, scaling, current_iterate, current_penalty_parameter);
    // relax the constraints
-   this->add_elastic_variables_to_subproblem();
+   this->add_elastic_variables_to_subproblem(current_iterate);
    // solve the subproblem
    return this->solve_subproblem(statistics, problem, current_iterate, current_penalty_parameter);
 }

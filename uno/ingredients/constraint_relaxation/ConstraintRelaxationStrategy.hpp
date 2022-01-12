@@ -50,7 +50,7 @@ protected:
    static size_t count_elastic_variables(const Problem& problem, bool subproblem_uses_slacks);
    static void generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables, size_t number_variables,
          bool subproblem_uses_slacks);
-   void add_elastic_variables_to_subproblem();
+   void add_elastic_variables_to_subproblem(Iterate& current_iterate);
    void remove_elastic_variables_from_subproblem();
    void remove_elastic_variables_from_direction(const Problem& problem, Direction& direction);
    void recover_active_set(const Problem& problem, Direction& direction);

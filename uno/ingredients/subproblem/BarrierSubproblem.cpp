@@ -159,13 +159,13 @@ void BarrierSubproblem::create_current_subproblem(const Problem& problem, const 
 void BarrierSubproblem::build_objective_model(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier) {
    // if we're building the feasibility subproblem, temporarily update the objective multiplier
    if (objective_multiplier == 0.) {
-      this->in_feasibility_problem = true;
+      this->solving_feasibility_problem = true;
       this->previous_barrier_parameter = this->barrier_parameter;
       this->barrier_parameter = std::max(this->barrier_parameter, current_iterate.nonlinear_errors.constraints);
       DEBUG << "Barrier parameter mu temporarily updated to " << this->barrier_parameter << "\n";
    }
    else {
-      this->in_feasibility_problem = false;
+      this->solving_feasibility_problem = false;
    }
 
    // evaluate the Hessian
@@ -237,15 +237,16 @@ Direction BarrierSubproblem::compute_second_order_correction(const Problem& prob
    return this->direction;
 }
 
-void BarrierSubproblem::add_elastic_variable(size_t i, double objective_term, size_t j, double jacobian_term) {
+void BarrierSubproblem::add_elastic_variable(Iterate& current_iterate, size_t i, double objective_term, size_t j, double jacobian_term) {
    // add the variable to the objective and the gradient of constraint j
-   Subproblem::add_elastic_variable(i, objective_term, j, jacobian_term);
+   Subproblem::add_elastic_variable(current_iterate, i, objective_term, j, jacobian_term);
 
    // set the current value
    const double mu_over_rho = this->barrier_parameter/objective_term;
    const double radical = std::pow(this->barrier_constraints[j], 2) + std::pow(mu_over_rho, 2);
    // analytically, I find (mu_over_rho - jacobian_term*this->barrier_constraints[j] + std::sqrt(radical))/2., but Ipopt seems to use the following
-   this->primal_iterate[i] = (mu_over_rho - jacobian_term*this->barrier_constraints[j] + std::sqrt(radical))/2.;
+   current_iterate.x.resize(this->number_variables);
+   current_iterate.x[i] = this->primal_iterate[i] = (mu_over_rho - jacobian_term*this->barrier_constraints[j] + std::sqrt(radical))/2.;
 
    // register the variable as lower bounded
    this->lower_bounded_variables.push_back(i);
@@ -395,7 +396,7 @@ void BarrierSubproblem::assemble_augmented_matrix(const Iterate& current_iterate
    }
 
    // proximal term in feasibility problem
-   if (this->in_feasibility_problem) {
+   if (this->solving_feasibility_problem) {
       const double sqrt_mu = std::sqrt(this->barrier_parameter);
       for (size_t i = 0; i < 2; i++) {
          const double proximal_term = sqrt_mu*std::pow(std::min(1., 1/std::abs(current_iterate.x[i])), 2);
@@ -522,11 +523,11 @@ void BarrierSubproblem::set_current_iterate(const Iterate& iterate) {
 }
 
 void BarrierSubproblem::register_accepted_iterate(Iterate& iterate) {
-   if (this->in_feasibility_problem) {
+   if (this->solving_feasibility_problem) {
        this->barrier_parameter = this->previous_barrier_parameter;
-       this->in_feasibility_problem = false;
+       this->solving_feasibility_problem = false;
    }
-   if (this->in_feasibility_problem) {
+   if (this->solving_feasibility_problem) {
       // compute least-square multipliers TODO
    }
 

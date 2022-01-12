@@ -50,13 +50,13 @@ void ConstraintRelaxationStrategy::generate_elastic_variables(const Problem& pro
    }
 }
 
-void ConstraintRelaxationStrategy::add_elastic_variables_to_subproblem() {
+void ConstraintRelaxationStrategy::add_elastic_variables_to_subproblem(Iterate& current_iterate) {
    // add the positive elastic variables
    this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {
-      this->subproblem->add_elastic_variable(elastic_index, this->elastic_objective_coefficient, j, -1.);
+      this->subproblem->add_elastic_variable(current_iterate, elastic_index, this->elastic_objective_coefficient, j, -1.);
    });
    this->elastic_variables.negative.for_each([&](size_t j, size_t elastic_index) {
-      this->subproblem->add_elastic_variable(elastic_index, this->elastic_objective_coefficient, j, 1.);
+      this->subproblem->add_elastic_variable(current_iterate, elastic_index, this->elastic_objective_coefficient, j, 1.);
    });
 }
 

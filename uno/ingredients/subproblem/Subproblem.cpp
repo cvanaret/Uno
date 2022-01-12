@@ -23,7 +23,7 @@ void Subproblem::initialize(Statistics& /*statistics*/, const Problem& problem, 
    this->compute_progress_measures(problem, scaling, first_iterate);
 }
 
-void Subproblem::add_elastic_variable(size_t i, double objective_term, size_t j, double jacobian_term) {
+void Subproblem::add_elastic_variable(Iterate& /*current_iterate*/, size_t i, double objective_term, size_t j, double jacobian_term) {
    assert(i < this->max_number_variables && "The variable index is larger than the preallocated size");
    assert(j < this->number_constraints && "The constraint index is larger than the preallocated size");
    this->variables_bounds[i] = {0., std::numeric_limits<double>::infinity()};
