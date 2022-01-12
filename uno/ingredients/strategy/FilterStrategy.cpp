@@ -43,9 +43,11 @@ bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, const Progress
    // check acceptance
    bool acceptable = filter->accept(trial_progress.infeasibility, trial_progress.objective);
    if (acceptable) {
+      DEBUG << "Filter acceptable\n";
       // check acceptance wrt current x (h,f)
       acceptable = filter->improves_current_iterate(current_progress.infeasibility, current_progress.objective, trial_progress.infeasibility, trial_progress.objective);
       if (acceptable) {
+         DEBUG << "Filter acceptable wrt current point\n";
          const double actual_reduction = filter->compute_actual_reduction(current_progress.objective, current_progress.infeasibility, trial_progress
          .objective);
          DEBUG << "Actual reduction: " << actual_reduction << "\n";

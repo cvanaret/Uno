@@ -29,7 +29,7 @@ public:
    void create_current_subproblem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier,
          double trust_region_radius) override;
    void build_objective_model(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier) override;
-   void add_elastic_variable(size_t i, double objective_term, size_t j, double jacobian_term) override;
+   void add_elastic_variable(Iterate& current_iterate, size_t i, double objective_term, size_t j, double jacobian_term) override;
    void remove_elastic_variable(size_t i, size_t j) override;
    Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
    Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) override;
@@ -64,8 +64,7 @@ private:
    std::vector<double> lower_delta_z;
    std::vector<double> upper_delta_z;
 
-   bool in_feasibility_problem{false};
-   bool small_direction_at_previous_iteration{false};
+   bool solving_feasibility_problem{false};
 
    void update_barrier_parameter(const Iterate& current_iterate);
    bool is_small_direction(const Iterate& current_iterate, const Direction& direction);

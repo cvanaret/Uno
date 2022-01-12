@@ -34,7 +34,7 @@ std::string status_to_string(Status status) {
 }
 
 std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
-   stream << "\nStatus: " << status_to_string(direction.status) << "\n";
+   stream << "\nDirection:\nStatus: " << status_to_string(direction.status) << "\n";
    stream << "d^* = ";
    print_vector(stream, direction.x);
 
