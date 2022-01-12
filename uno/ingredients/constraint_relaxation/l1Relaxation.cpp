@@ -232,6 +232,7 @@ bool l1Relaxation::objective_sufficient_decrease(const Iterate& current_iterate,
 Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double current_penalty_parameter) {
    // solve the subproblem
    Direction direction = this->subproblem->solve(statistics, problem, current_iterate);
+   DEBUG << "\n" << direction;
    assert(direction.status == OPTIMAL && "The subproblem was not solved to optimality");
    // enforce feasibility (by construction)
    if (direction.constraint_partition.has_value()) {
@@ -239,7 +240,6 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& 
       assert(constraint_partition.infeasible.empty() && "solve_subproblem: infeasible constraints found, although direction is feasible");
    }
    direction.objective_multiplier = current_penalty_parameter;
-   DEBUG << "\n" << direction;
 
    // remove the temporary elastic variables
    this->remove_elastic_variables_from_subproblem();
