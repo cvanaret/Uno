@@ -124,6 +124,19 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
    return accept;
 }
 
+void l1Relaxation::decrease_parameter_aggressively(const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
+      const Direction& direction_lowest_violation) {
+   // compute the ideal error (with a zero penalty parameter)
+   const double error_lowest_violation = l1Relaxation::compute_error(problem, scaling, current_iterate, direction_lowest_violation.multipliers, 0.);
+   DEBUG << "Ideal error: " << error_lowest_violation << "\n";
+
+   const double scaled_error = error_lowest_violation / std::max(1., current_iterate.nonlinear_errors.constraints);
+   const double scaled_error_square = scaled_error*scaled_error;
+   DEBUG << "Scaled error squared: " << scaled_error_square << "\n";
+   this->penalty_parameter = std::min(this->penalty_parameter, scaled_error_square);
+   this->penalty_parameter = std::max(0., this->penalty_parameter - this->parameters.small_threshold);
+}
+
 // Infeasibility detection and SQP methods for nonlinear optimization
 // Richard H. Byrd, Frank E. Curtis and Jorge Nocedal
 // https://epubs.siam.org/doi/pdf/10.1137/080738222
@@ -147,26 +160,18 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const P
          const double residual_lowest_violation = this->compute_linearized_constraint_residual(direction_lowest_violation.x);
          DEBUG << "Lowest linearized residual mk(dk): " << residual_lowest_violation << "\n\n";
 
-         // compute the ideal error (with a zero penalty parameter)
-         const double error_lowest_violation = l1Relaxation::compute_error(problem, scaling, current_iterate, direction_lowest_violation.multipliers, 0.);
-         DEBUG << "Ideal error: " << error_lowest_violation << "\n";
-
          // stage f: update the penalty parameter
-         const double scaled_error = error_lowest_violation / std::max(1., current_iterate.nonlinear_errors.constraints);
-         const double scaled_error_square = scaled_error*scaled_error;
-         DEBUG << "Scaled error squared: " << scaled_error_square << "\n";
-         this->penalty_parameter = std::min(this->penalty_parameter, scaled_error_square);
-         this->penalty_parameter = std::max(0., this->penalty_parameter - this->parameters.small_threshold);
+         this->decrease_parameter_aggressively(problem, scaling, current_iterate, direction_lowest_violation);
          if (this->penalty_parameter == 0.) {
             direction = direction_lowest_violation;
             linearized_residual = residual_lowest_violation;
          }
-         else if (this->penalty_parameter < current_penalty_parameter) {
-            direction = this->resolve_subproblem(statistics, problem, scaling, current_iterate, this->penalty_parameter);
-            linearized_residual = this->compute_linearized_constraint_residual(direction.x);
-         }
+         else {
+            if (this->penalty_parameter < current_penalty_parameter) {
+               direction = this->resolve_subproblem(statistics, problem, scaling, current_iterate, this->penalty_parameter);
+               linearized_residual = this->compute_linearized_constraint_residual(direction.x);
+            }
 
-         if (0. < this->penalty_parameter) {
             // further decrease penalty parameter to satisfy 2 conditions
             bool condition1 = false, condition2 = false;
             while (!condition2) {
@@ -209,22 +214,19 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const P
 }
 
 bool l1Relaxation::linearized_residual_sufficient_decrease(const Iterate& current_iterate, double linearized_residual, double residual_lowest_violation) const {
-   if (residual_lowest_violation == 0. && linearized_residual == 0) {
-      return true;
+   if (residual_lowest_violation == 0.) {
+      return (linearized_residual == 0.);
    }
-   const double decrease_linearized_residual = current_iterate.nonlinear_errors.constraints - linearized_residual;
-   const double lowest_decrease_linearized_residual = current_iterate.nonlinear_errors.constraints - residual_lowest_violation;
-   if (residual_lowest_violation != 0. && decrease_linearized_residual >= this->parameters.epsilon1 * lowest_decrease_linearized_residual) {
-      return true;
-   }
-   return false;
+   const double linearized_residual_reduction = current_iterate.nonlinear_errors.constraints - linearized_residual;
+   const double lowest_linearized_residual_reduction = current_iterate.nonlinear_errors.constraints - residual_lowest_violation;
+   return (linearized_residual_reduction >= this->parameters.epsilon1 * lowest_linearized_residual_reduction);
 }
 
 bool l1Relaxation::objective_sufficient_decrease(const Iterate& current_iterate, const Direction& direction,
       const Direction& direction_lowest_violation) const {
    const double decrease_objective = current_iterate.nonlinear_errors.constraints - direction.objective;
    const double lowest_decrease_objective = current_iterate.nonlinear_errors.constraints - direction_lowest_violation.objective;
-   return decrease_objective >= this->parameters.epsilon2 * lowest_decrease_objective;
+   return (decrease_objective >= this->parameters.epsilon2 * lowest_decrease_objective);
 }
 
 Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double current_penalty_parameter) {

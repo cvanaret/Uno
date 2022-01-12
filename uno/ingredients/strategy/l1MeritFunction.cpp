@@ -21,12 +21,14 @@ void l1MeritFunction::notify(Iterate& /*current_iterate*/) {
 
 bool l1MeritFunction::check_acceptance(Statistics& statistics, const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
       double objective_multiplier, double predicted_reduction) {
-   bool accept = false;
-   /* compute current exact l1 penalty: rho f + ||c|| */
+   // compute current exact l1 penalty: rho f + ||c||
    const double current_exact_l1_penalty = objective_multiplier * current_progress.objective + current_progress.infeasibility;
    const double trial_exact_l1_penalty = objective_multiplier * trial_progress.objective + trial_progress.infeasibility;
-
    const double actual_reduction = current_exact_l1_penalty - trial_exact_l1_penalty;
+   DEBUG << "Predicted reduction: " << predicted_reduction << "\n";
+   DEBUG << "Actual reduction: " << actual_reduction << "\n";
+
+   bool accept = false;
    // Armijo sufficient decrease condition
    if (actual_reduction >= this->decrease_fraction * predicted_reduction) {
       accept = true;
@@ -34,6 +36,7 @@ bool l1MeritFunction::check_acceptance(Statistics& statistics, const ProgressMea
 
    if (accept) {
       statistics.add_statistic("penalty param.", objective_multiplier);
+      DEBUG << "Trial iterate was accepted by satisfying Armijo condition\n";
    }
    return accept;
 }
