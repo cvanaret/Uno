@@ -51,7 +51,6 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const Problem& problem
    // solve the LP
    Direction direction = this->solver->solve_LP(this->variables_bounds, this->constraints_bounds, this->objective_gradient,
          this->constraints_jacobian, this->initial_point);
-   assert(direction.status == OPTIMAL && "The LP subproblem was not solved to optimality");
    this->number_subproblems_solved++;
 
    // compute dual displacements (SLP methods usually compute the new duals, not the displacements)

@@ -57,7 +57,6 @@ Direction QPSubproblem::solve(Statistics& /*statistics*/, const Problem& problem
    // compute QP direction
    Direction direction = this->solver->solve_QP(this->variables_bounds, this->constraints_bounds, this->objective_gradient,
          this->constraints_jacobian, *this->hessian_model->hessian, this->initial_point);
-   assert(direction.status == OPTIMAL && "The QP subproblem was not solved to optimality");
    this->number_subproblems_solved++;
 
    // compute dual *displacements* (note: SQP methods usually compute the new duals, not the displacements)

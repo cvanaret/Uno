@@ -156,22 +156,18 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const P
          const double scaled_error_square = scaled_error*scaled_error;
          DEBUG << "Scaled error squared: " << scaled_error_square << "\n";
          this->penalty_parameter = std::min(this->penalty_parameter, scaled_error_square);
-         if (this->penalty_parameter < this->parameters.small_threshold) {
-            this->penalty_parameter = 0.;
+         this->penalty_parameter = std::max(0., this->penalty_parameter - this->parameters.small_threshold);
+         if (this->penalty_parameter == 0.) {
+            direction = direction_lowest_violation;
+            linearized_residual = residual_lowest_violation;
          }
-         if (this->penalty_parameter < current_penalty_parameter) {
-            if (this->penalty_parameter == 0.) {
-               direction = direction_lowest_violation;
-               linearized_residual = residual_lowest_violation;
-            }
-            else {
-               direction = this->resolve_subproblem(statistics, problem, scaling, current_iterate, this->penalty_parameter);
-               linearized_residual = this->compute_linearized_constraint_residual(direction.x);
-            }
+         else if (this->penalty_parameter < current_penalty_parameter) {
+            direction = this->resolve_subproblem(statistics, problem, scaling, current_iterate, this->penalty_parameter);
+            linearized_residual = this->compute_linearized_constraint_residual(direction.x);
          }
 
          if (0. < this->penalty_parameter) {
-            // decrease penalty parameter to satisfy 2 conditions
+            // further decrease penalty parameter to satisfy 2 conditions
             bool condition1 = false, condition2 = false;
             while (!condition2) {
                if (!condition1) {
@@ -188,8 +184,8 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const P
                }
                if (!condition2) {
                   this->penalty_parameter /= this->parameters.decrease_factor;
-                  if (this->penalty_parameter < this->parameters.small_threshold) {
-                     this->penalty_parameter = 0.;
+                  this->penalty_parameter = std::max(0., this->penalty_parameter - this->parameters.small_threshold);
+                  if (this->penalty_parameter == 0.) {
                      direction = direction_lowest_violation;
                      linearized_residual = residual_lowest_violation;
                      condition2 = true;
@@ -206,7 +202,6 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const P
 
          if (this->penalty_parameter < current_penalty_parameter) {
             DEBUG << "\n*** Penalty parameter updated to " << this->penalty_parameter << "\n";
-            //this->globalization_strategy->reset();
          }
       }
    }
@@ -235,6 +230,7 @@ bool l1Relaxation::objective_sufficient_decrease(const Iterate& current_iterate,
 Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Problem& problem, Iterate& current_iterate, double current_penalty_parameter) {
    // solve the subproblem
    Direction direction = this->subproblem->solve(statistics, problem, current_iterate);
+   assert(direction.status == OPTIMAL && "The subproblem was not solved to optimality");
    // enforce feasibility (by construction)
    if (direction.constraint_partition.has_value()) {
       const ConstraintPartition& constraint_partition = direction.constraint_partition.value();

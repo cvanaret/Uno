@@ -23,7 +23,7 @@ public:
    void erase(size_t index);
    void transform(const std::function<T (T)>& f);
    void clear();
-   bool empty() const;
+   [[nodiscard]] bool empty() const;
 
    template <typename U>
    friend std::ostream& operator<<(std::ostream& stream, const SparseVector<U>& x);
