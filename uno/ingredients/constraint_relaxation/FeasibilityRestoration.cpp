@@ -31,6 +31,7 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
       Iterate& current_iterate) {
    // solve the original subproblem
    Direction direction = this->subproblem->solve(statistics, problem, current_iterate);
+   assert((direction.status == OPTIMAL || direction.status == INFEASIBLE) && "The subproblem was not solved properly");
    direction.objective_multiplier = problem.objective_sign;
    DEBUG << "\n" << direction;
 
@@ -84,6 +85,7 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
    // solve the feasibility subproblem
    DEBUG << "\nSolving the feasibility subproblem\n";
    Direction feasibility_direction = this->subproblem->solve(statistics, problem, current_iterate);
+   assert(feasibility_direction.status == OPTIMAL && "The subproblem was not solved to optimality");
    feasibility_direction.objective_multiplier = 0.;
 
    if (optional_constraint_partition.has_value()) {
