@@ -39,7 +39,7 @@ Result Uno::solve(const Problem& problem, Iterate& current_iterate, bool scale_f
    if (enforce_linear_constraints) {
       Preprocessing::enforce_linear_constraints(problem, scaling, current_iterate);
    }
-   Statistics statistics = Uno::create_statistics();
+   Statistics statistics = Uno::create_statistics(problem);
 
    // use the current point to initialize the strategies and generate the initial iterate
    this->globalization_mechanism.initialize(statistics, problem, scaling, current_iterate);
@@ -56,7 +56,7 @@ Result Uno::solve(const Problem& problem, Iterate& current_iterate, bool scale_f
          // compute an acceptable iterate by solving a subproblem at the current point
          auto [new_iterate, direction_norm] = this->globalization_mechanism.compute_acceptable_iterate(statistics, problem, scaling, current_iterate);
 
-         Uno::add_statistics(statistics, new_iterate, major_iterations);
+         Uno::add_statistics(statistics, problem, new_iterate, major_iterations);
          if (Logger::logger_level == INFO) statistics.print_current_line();
 
          // compute the status of the new iterate
@@ -79,26 +79,34 @@ Result Uno::solve(const Problem& problem, Iterate& current_iterate, bool scale_f
    return result;
 }
 
-Statistics Uno::create_statistics() {
+Statistics Uno::create_statistics(const Problem& problem) {
    Statistics statistics;
    statistics.add_column("major", Statistics::int_width, 1);
    statistics.add_column("minor", Statistics::int_width, 2);
    statistics.add_column("step norm", Statistics::double_width, 31);
    statistics.add_column("f", Statistics::double_width, 100);
-   statistics.add_column("||c||", Statistics::double_width, 101);
+   if (0 < problem.number_constraints) {
+      statistics.add_column("||c||", Statistics::double_width, 101);
+   }
    statistics.add_column("complementarity", Statistics::double_width, 104);
    statistics.add_column("KKT", Statistics::double_width, 105);
-   statistics.add_column("FJ", Statistics::double_width, 106);
+   if (0 < problem.number_constraints) {
+      statistics.add_column("FJ", Statistics::double_width, 106);
+   }
    return statistics;
 }
 
-void Uno::add_statistics(Statistics& statistics, const Iterate& new_iterate, size_t major_iterations) {
+void Uno::add_statistics(Statistics& statistics, const Problem& problem, const Iterate& new_iterate, size_t major_iterations) {
    statistics.add_statistic(std::string("major"), major_iterations);
    statistics.add_statistic("f", new_iterate.objective);
-   statistics.add_statistic("||c||", new_iterate.nonlinear_errors.constraints);
+   if (0 < problem.number_constraints) {
+      statistics.add_statistic("||c||", new_iterate.nonlinear_errors.constraints);
+   }
    statistics.add_statistic("complementarity", new_iterate.nonlinear_errors.complementarity);
    statistics.add_statistic("KKT", new_iterate.nonlinear_errors.KKT);
-   statistics.add_statistic("FJ", new_iterate.nonlinear_errors.FJ);
+   if (0 < problem.number_constraints) {
+      statistics.add_statistic("FJ", new_iterate.nonlinear_errors.FJ);
+   }
 }
 
 bool Uno::termination_criterion(TerminationStatus current_status, size_t iteration) const {
