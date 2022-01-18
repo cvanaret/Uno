@@ -28,10 +28,11 @@ private:
    const std::unique_ptr<GlobalizationStrategy> phase_2_strategy;
    Phase current_phase{OPTIMALITY};
 
-   void form_feasibility_problem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
+   void create_current_feasibility_problem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
          const std::optional<std::vector<double>>& optional_phase_2_primal_direction,
          const std::optional<ConstraintPartition>& optional_constraint_partition);
-   GlobalizationStrategy& switch_phase(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, const Direction& direction);
+   GlobalizationStrategy& switch_phase(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, Iterate& trial_iterate,
+         const Direction& direction);
    static void set_restoration_multipliers(std::vector<double>& constraints_multipliers, const ConstraintPartition& constraint_partition);
    void compute_infeasibility_measures(const Problem& problem, const Scaling& scaling, Iterate& iterate,
          const std::optional<ConstraintPartition>& optional_constraint_partition);

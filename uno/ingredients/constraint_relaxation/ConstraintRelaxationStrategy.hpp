@@ -5,17 +5,11 @@
 #include "ingredients/subproblem/Direction.hpp"
 #include "ingredients/subproblem/PredictedReductionModel.hpp"
 #include "linear_algebra/SparseVector.hpp"
+#include "optimization/ElasticVariables.hpp"
 #include "optimization/Problem.hpp"
 #include "optimization/Iterate.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/Options.hpp"
-
-struct ElasticVariables {
-   SparseVector<size_t> positive;
-   SparseVector<size_t> negative;
-   explicit ElasticVariables(size_t capacity): positive(capacity), negative(capacity) {}
-   [[nodiscard]] size_t size() const { return this->positive.size() + this->negative.size(); }
-};
 
 class ConstraintRelaxationStrategy {
 public:
@@ -50,7 +44,10 @@ protected:
    static size_t count_elastic_variables(const Problem& problem, bool subproblem_uses_slacks);
    static void generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables, size_t number_variables,
          bool subproblem_uses_slacks);
-   void add_elastic_variables_to_subproblem(Iterate& current_iterate);
+   void evaluate_constraints(const Problem& problem, const Scaling& scaling, Iterate& iterate);
+   void evaluate_relaxed_constraints(const Problem& problem, const Scaling& scaling, Iterate& iterate);
+   static bool is_small_step(const Direction& direction);
+   void add_elastic_variables_to_subproblem(const Problem& problem, Iterate& current_iterate);
    void remove_elastic_variables_from_subproblem();
    void remove_elastic_variables_from_direction(const Problem& problem, Direction& direction);
    void recover_active_set(const Problem& problem, Direction& direction);

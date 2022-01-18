@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <memory>
+#include "optimization/ElasticVariables.hpp"
 #include "optimization/Problem.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/Constraint.hpp"
@@ -34,7 +35,11 @@ public:
    virtual void create_current_subproblem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier,
          double trust_region_radius) = 0;
    virtual void build_objective_model(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier) = 0;
-   virtual void add_elastic_variable(Iterate& current_iterate, size_t i, double objective_term, size_t j, double jacobian_term);
+   virtual void evaluate_constraints(const Problem& problem, const Scaling& scaling, Iterate& iterate);
+   virtual double compute_constraint_violation(const Problem& problem, const Scaling& scaling, Iterate& iterate) const;
+   virtual double compute_constraint_violation(const Problem& problem, const Scaling& scaling, Iterate& iterate,
+         const std::vector<size_t>& constraint_set) const;
+   virtual void add_elastic_variables(const Problem& problem, Iterate& current_iterate, double objective_coefficient);
    virtual void remove_elastic_variable(size_t i, size_t j);
 
    // direction computation
@@ -49,9 +54,9 @@ public:
    [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
    virtual void set_initial_point(const std::vector<double>& initial_point) = 0;
 
-   // available methods
    void set_scaled_objective_gradient(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier);
    // feasibility subproblem
+   void add_elastic_variable(size_t i, double objective_coefficient, size_t j, double constraint_coefficient);
    void compute_feasibility_linear_objective(const Iterate& current_iterate, const ConstraintPartition& constraint_partition);
    void generate_feasibility_bounds(const Problem& problem, const std::vector<double>& current_constraints, const ConstraintPartition&
    constraint_partition);
@@ -76,7 +81,6 @@ public:
    SparseVector<double> objective_gradient;
    std::vector<SparseVector<double>> constraints_jacobian;
    std::vector<Range> constraints_bounds;
-   // Hessian is optional and depends on the subproblem
    Direction direction;
 
    size_t number_subproblems_solved{0};

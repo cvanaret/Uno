@@ -19,16 +19,45 @@ Subproblem::Subproblem(size_t number_variables, size_t max_number_variables, siz
 
 void Subproblem::initialize(Statistics& /*statistics*/, const Problem& problem, const Scaling& scaling, Iterate& first_iterate) {
    // compute the optimality and feasibility measures of the initial point
-   first_iterate.evaluate_constraints(problem, scaling);
+   this->evaluate_constraints(problem, scaling, first_iterate);
    this->compute_progress_measures(problem, scaling, first_iterate);
 }
 
-void Subproblem::add_elastic_variable(Iterate& /*current_iterate*/, size_t i, double objective_term, size_t j, double jacobian_term) {
+void Subproblem::evaluate_constraints(const Problem& problem, const Scaling& scaling, Iterate& iterate) {
+   iterate.evaluate_constraints(problem, scaling);
+}
+
+double Subproblem::compute_constraint_violation(const Problem& problem, const Scaling& scaling, Iterate& iterate) const {
+   return problem.compute_constraint_violation(scaling, iterate.subproblem_constraints, this->residual_norm);
+}
+
+double Subproblem::compute_constraint_violation(const Problem& problem, const Scaling& scaling, Iterate& iterate,
+      const std::vector<size_t>& constraint_set) const {
+   return problem.compute_constraint_violation(scaling, iterate.subproblem_constraints, constraint_set, this->residual_norm);
+}
+
+void Subproblem::add_elastic_variables(const Problem& problem, Iterate& /*current_iterate*/, double objective_coefficient) {
+   // add at most 2 elastic variables per constraint
+   for (size_t j = 0; j < problem.number_constraints; j++) {
+      //const double constraint_j = current_iterate.subproblem_constraints[j];
+      // TODO: initialize one of the elastics if the constraint is violated at the current iterate
+      // negative part
+      if (is_finite_lower_bound(problem.constraint_bounds[j].lb)) {
+         Subproblem::add_elastic_variable(this->number_variables, objective_coefficient, j, 1.);
+      }
+      // positive part
+      if (is_finite_upper_bound(problem.constraint_bounds[j].ub)) {
+         Subproblem::add_elastic_variable(this->number_variables, objective_coefficient, j, -1.);
+      }
+   }
+}
+
+void Subproblem::add_elastic_variable(size_t i, double objective_coefficient, size_t j, double constraint_coefficient) {
    assert(i < this->max_number_variables && "The variable index is larger than the preallocated size");
    assert(j < this->number_constraints && "The constraint index is larger than the preallocated size");
    this->variables_bounds[i] = {0., std::numeric_limits<double>::infinity()};
-   this->objective_gradient.insert(i, objective_term);
-   this->constraints_jacobian[j].insert(i, jacobian_term);
+   this->objective_gradient.insert(i, objective_coefficient);
+   this->constraints_jacobian[j].insert(i, constraint_coefficient);
    this->number_variables++;
 }
 
@@ -41,9 +70,8 @@ void Subproblem::remove_elastic_variable(size_t i, size_t j) {
 }
 
 void Subproblem::compute_progress_measures(const Problem& problem, const Scaling& scaling, Iterate& iterate) {
-   iterate.evaluate_constraints(problem, scaling);
    // feasibility measure: residual of all constraints
-   iterate.nonlinear_errors.constraints = problem.compute_constraint_violation(scaling, iterate.constraints, this->residual_norm);
+   iterate.nonlinear_errors.constraints = problem.compute_constraint_violation(scaling, iterate.subproblem_constraints, this->residual_norm);
    // optimality
    iterate.evaluate_objective(problem, scaling);
    iterate.progress = {iterate.nonlinear_errors.constraints, iterate.objective};
@@ -94,7 +122,6 @@ void Subproblem::set_scaled_objective_gradient(const Problem& problem, const Sca
 
 void Subproblem::compute_feasibility_linear_objective(const Iterate& current_iterate, const ConstraintPartition& constraint_partition) {
    // objective function: sum of gradients of infeasible constraints
-   this->objective_gradient.clear();
    for (size_t j: constraint_partition.lower_bound_infeasible) {
       current_iterate.constraints_jacobian[j].for_each([&](size_t i, double derivative) {
          this->objective_gradient.insert(i, -derivative);
@@ -141,7 +168,6 @@ double Subproblem::compute_complementarity_error(const Problem& problem, const S
       }
    }
    // constraints
-   iterate.evaluate_constraints(problem, scaling);
    for (size_t j = 0; j < problem.number_constraints; j++) {
       const double multiplier_j = constraint_multipliers[j];
       const double scaled_lower_bound = scaling.get_constraint_scaling(j)*problem.constraint_bounds[j].lb;
@@ -166,8 +192,7 @@ double Subproblem::compute_complementarity_error(const Problem& problem, const S
 
 void Subproblem::compute_residuals(const Problem& problem, const Scaling& scaling, Iterate& iterate, double objective_multiplier) const {
    iterate.evaluate_objective(problem, scaling);
-   iterate.evaluate_constraints(problem, scaling);
-   iterate.nonlinear_errors.constraints = problem.compute_constraint_violation(scaling, iterate.constraints, this->residual_norm);
+   iterate.nonlinear_errors.constraints = this->compute_constraint_violation(problem, scaling, iterate);
    // compute the KKT error only if the objective multiplier is positive
    iterate.nonlinear_errors.KKT = this->compute_first_order_error(problem, scaling, iterate, 0. < objective_multiplier ? objective_multiplier : 1.);
    iterate.nonlinear_errors.FJ = this->compute_first_order_error(problem, scaling, iterate, 0.);

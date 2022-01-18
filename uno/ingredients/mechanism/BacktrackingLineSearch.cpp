@@ -39,6 +39,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
    Direction direction = this->compute_direction(statistics, problem, scaling, current_iterate);
    GlobalizationMechanism::check_unboundedness(direction);
    PredictedReductionModel predicted_reduction_model = this->constraint_relaxation_strategy.generate_predicted_reduction_model(problem, direction);
+   this->solving_feasibility_problem = false;
 
    // step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ...
    this->step_length = 1.;
@@ -131,5 +132,5 @@ void BacktrackingLineSearch::add_statistics(Statistics& statistics, const Direct
 }
 
 void BacktrackingLineSearch::print_iteration() {
-   DEBUG << "\n\tLINE SEARCH iteration " << this->number_iterations << ", step_length " << this->step_length << "\n";
+   DEBUG << "\tLINE SEARCH iteration " << this->number_iterations << ", step_length " << this->step_length << "\n";
 }

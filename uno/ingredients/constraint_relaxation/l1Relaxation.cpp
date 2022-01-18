@@ -28,8 +28,8 @@ void l1Relaxation::initialize(Statistics& statistics, const Problem& problem, co
 void l1Relaxation::create_current_subproblem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double trust_region_radius) {
    // scale the derivatives and introduce the elastic variables
    this->subproblem->create_current_subproblem(problem, scaling, current_iterate, this->penalty_parameter, trust_region_radius);
-   this->add_elastic_variables_to_subproblem(current_iterate);
-
+   // relax the constraints
+   this->add_elastic_variables_to_subproblem(problem, current_iterate);
    // set the multipliers of the violated constraints
    l1Relaxation::set_multipliers(problem, current_iterate, this->subproblem->constraints_multipliers);
 }
@@ -76,7 +76,7 @@ double l1Relaxation::compute_predicted_reduction(const Problem& problem, const S
    else {
       // determine the linearized constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
       const auto residual_function = [&](size_t j) {
-         const double component_j = current_iterate.constraints[j] + step_length * dot(direction.x, current_iterate.constraints_jacobian[j]);
+         const double component_j = current_iterate.subproblem_constraints[j] + step_length * dot(direction.x, current_iterate.constraints_jacobian[j]);
          return problem.compute_constraint_violation(scaling, component_j, j);
       };
       const double linearized_constraint_violation = norm_1(residual_function, problem.number_constraints);
@@ -105,7 +105,7 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
    }
 
    bool accept = false;
-   if (direction.norm == 0.) {
+   if (ConstraintRelaxationStrategy::is_small_step(direction)) {
       accept = true;
    }
    else {
@@ -113,6 +113,7 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
       const double predicted_reduction = l1Relaxation::compute_predicted_reduction(problem, scaling, current_iterate, direction,
             predicted_reduction_model, step_length);
       // invoke the globalization strategy for acceptance
+      this->evaluate_relaxed_constraints(problem, scaling, trial_iterate);
       this->subproblem->compute_progress_measures(problem, scaling, trial_iterate);
       accept = this->globalization_strategy->check_acceptance(statistics, current_iterate.progress, trial_iterate.progress,
             this->penalty_parameter, predicted_reduction);
@@ -251,7 +252,7 @@ Direction l1Relaxation::resolve_subproblem(Statistics& statistics, const Problem
    // recompute the objective model with the current objective multiplier
    this->subproblem->build_objective_model(problem, scaling, current_iterate, current_penalty_parameter);
    // relax the constraints
-   this->add_elastic_variables_to_subproblem(current_iterate);
+   this->add_elastic_variables_to_subproblem(problem, current_iterate);
    // solve the subproblem
    return this->solve_subproblem(statistics, problem, current_iterate, current_penalty_parameter);
 }

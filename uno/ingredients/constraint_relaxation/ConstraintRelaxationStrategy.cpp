@@ -50,14 +50,31 @@ void ConstraintRelaxationStrategy::generate_elastic_variables(const Problem& pro
    }
 }
 
-void ConstraintRelaxationStrategy::add_elastic_variables_to_subproblem(Iterate& current_iterate) {
-   // add the positive elastic variables
-   this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {
-      this->subproblem->add_elastic_variable(current_iterate, elastic_index, this->elastic_objective_coefficient, j, -1.);
+void ConstraintRelaxationStrategy::evaluate_constraints(const Problem& problem, const Scaling& scaling, Iterate& iterate) {
+   this->subproblem->evaluate_constraints(problem, scaling, iterate);
+}
+
+void ConstraintRelaxationStrategy::evaluate_relaxed_constraints(const Problem& problem, const Scaling& scaling, Iterate& iterate) {
+   // evaluate the constraints of the subproblem
+   this->evaluate_constraints(problem, scaling, iterate);
+   // add the elastic variables
+   this->elastic_variables.positive.for_each([&](size_t j, size_t i) {
+      iterate.subproblem_constraints[j] -= iterate.x[i];
    });
-   this->elastic_variables.negative.for_each([&](size_t j, size_t elastic_index) {
-      this->subproblem->add_elastic_variable(current_iterate, elastic_index, this->elastic_objective_coefficient, j, 1.);
+   this->elastic_variables.negative.for_each([&](size_t j, size_t i) {
+      iterate.subproblem_constraints[j] += iterate.x[i];
    });
+}
+
+bool ConstraintRelaxationStrategy::is_small_step(const Direction& direction) {
+   //return (direction.norm == 0.);
+   const double tolerance = 1e-8;
+   const double small_step_factor = 100.;
+   return (direction.norm <= tolerance / small_step_factor);
+}
+
+void ConstraintRelaxationStrategy::add_elastic_variables_to_subproblem(const Problem& problem, Iterate& current_iterate) {
+   this->subproblem->add_elastic_variables(problem, current_iterate, this->elastic_objective_coefficient);
 }
 
 void ConstraintRelaxationStrategy::remove_elastic_variables_from_subproblem() {
