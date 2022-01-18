@@ -1,5 +1,6 @@
 #include <cmath>
 #include "FilterStrategy.hpp"
+#include "tools/Logger.hpp"
 
 FilterStrategy::FilterStrategy(const Options& options) :
       GlobalizationStrategy(),
@@ -38,7 +39,7 @@ bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, const Progress
    DEBUG << "Current: η = " << current_progress.infeasibility << ", ω = " << current_progress.objective << "\n";
    DEBUG << "Trial:   η = " << trial_progress.infeasibility << ", ω = " << trial_progress.objective << "\n";
    DEBUG << "Predicted reduction: " << predicted_reduction << "\n";
-
+   
    bool accept = false;
    // check acceptance
    bool acceptable = filter->accept(trial_progress.infeasibility, trial_progress.objective);
