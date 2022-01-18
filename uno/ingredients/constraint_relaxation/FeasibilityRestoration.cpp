@@ -207,10 +207,10 @@ void FeasibilityRestoration::compute_infeasibility_measures(const Problem& probl
       this->evaluate_relaxed_constraints(problem, scaling, iterate);
       this->subproblem->compute_progress_measures(problem, scaling, iterate);
       // add elastic variables to the optimality measure
-      this->elastic_variables.negative.for_each_index([&](size_t i) {
+      this->elastic_variables.negative.for_each_value([&](size_t i) {
          iterate.progress.objective += this->elastic_objective_coefficient*iterate.x[i];
       });
-      this->elastic_variables.positive.for_each_index([&](size_t i) {
+      this->elastic_variables.positive.for_each_value([&](size_t i) {
          iterate.progress.objective += this->elastic_objective_coefficient*iterate.x[i];
       });
    }
