@@ -1,6 +1,7 @@
 #include <iostream>
 #include <algorithm>
 #include "Filter.hpp"
+#include "tools/Logger.hpp"
 
 Filter::Filter(const Options& options) :
       max_size(stoul(options.at("filter_max_size"))),
@@ -80,25 +81,24 @@ void Filter::add(double infeasibility_measure, double optimality_measure) {
 bool Filter::accept(double infeasibility_measure, double optimality_measure) {
    // check upper bound first
    if (this->constants.beta * this->upper_bound <= infeasibility_measure) {
+      DEBUG << "Rejected because of filter upper bound\n";
       return false;
    }
 
-   auto infeasibility_position = std::lower_bound(std::begin(this->infeasibility), std::begin(this->infeasibility) + static_cast<long>(this->number_entries),
-         infeasibility_measure/this->constants.beta);
+   size_t position = 0;
+   while (position < this->number_entries && infeasibility_measure >= this->constants.beta * this->infeasibility[position]) {
+      position++;
+   }
 
    // check acceptability
-   if (infeasibility_position == std::begin(this->infeasibility)) {
+   if (position == 0) {
       return true; // acceptable as left-most entry
    }
-   else {
-      infeasibility_position--;
-      if (optimality_measure <= *infeasibility_position - this->constants.gamma * infeasibility_measure) {
-         return true; // point acceptable
-      }
-      else {
-         return false; // point rejected
-      }
+   else if (optimality_measure <= this->optimality[position - 1] - this->constants.gamma * infeasibility_measure) {
+      return true; // point acceptable
    }
+   DEBUG << "Rejected because the optimality measure is not low enough\n";
+   return false;
 }
 
 //! improves_current_iterate: check acceptable wrt current point
