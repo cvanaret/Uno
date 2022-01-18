@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <memory>
-#include "optimization/ElasticVariables.hpp"
+#include "ingredients/constraint_relaxation/ElasticVariables.hpp"
 #include "optimization/Problem.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/Constraint.hpp"

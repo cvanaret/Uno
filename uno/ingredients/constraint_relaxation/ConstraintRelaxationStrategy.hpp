@@ -5,7 +5,7 @@
 #include "ingredients/subproblem/Direction.hpp"
 #include "ingredients/subproblem/PredictedReductionModel.hpp"
 #include "linear_algebra/SparseVector.hpp"
-#include "optimization/ElasticVariables.hpp"
+#include "ElasticVariables.hpp"
 #include "optimization/Problem.hpp"
 #include "optimization/Iterate.hpp"
 #include "tools/Statistics.hpp"
