@@ -77,6 +77,7 @@ bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, const Progress
    else {
       DEBUG << "Not filter acceptable\n";
    }
+   DEBUG << "\n";
    return accept;
 }
 

@@ -80,6 +80,7 @@ std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
       stream << "\n";
    }
 
+   stream << "objective multiplier = " << direction.objective_multiplier << "\n";
    stream << "lower bound multipliers = ";
    print_vector(stream, direction.multipliers.lower_bounds);
    stream << "upper bound multipliers = ";

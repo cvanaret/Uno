@@ -7,7 +7,7 @@ void Preprocessing::enforce_linear_constraints(const Problem& problem, const Sca
       // count the infeasible constraints
       first_iterate.evaluate_constraints(problem, scaling);
       int infeasible_linear_constraints = 0;
-      problem.linear_constraints.for_each_key([&](size_t j) {
+      problem.linear_constraints.for_each_index([&](size_t j) {
          if (first_iterate.constraints[j] < problem.constraint_bounds[j].lb || problem.constraint_bounds[j].ub < first_iterate.constraints[j]) {
             infeasible_linear_constraints++;
          }

@@ -24,12 +24,15 @@ public:
    ~BarrierSubproblem() override = default;
 
    void set_initial_point(const std::vector<double>& initial_point) override;
-   void set_constraints(const Problem& problem, const Scaling& scaling, Iterate& iterate);
    void initialize(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& first_iterate) override;
    void create_current_subproblem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier,
          double trust_region_radius) override;
    void build_objective_model(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier) override;
-   void add_elastic_variable(Iterate& current_iterate, size_t i, double objective_term, size_t j, double jacobian_term) override;
+   void evaluate_constraints(const Problem& problem, const Scaling& scaling, Iterate& iterate) override;
+   double compute_constraint_violation(const Problem& problem, const Scaling& scaling, Iterate& iterate) const override;
+   double compute_constraint_violation(const Problem& problem, const Scaling& scaling, Iterate& iterate, const std::vector<size_t>& constraint_set)
+      const override;
+   void add_elastic_variables(const Problem& problem, Iterate& current_iterate, double objective_coefficient) override;
    void remove_elastic_variable(size_t i, size_t j) override;
    Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
    Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) override;
@@ -60,12 +63,12 @@ private:
    std::vector<double> upper_bound_multipliers;
 
    // preallocated vectors
-   std::vector<double> barrier_constraints;
    std::vector<double> lower_delta_z;
    std::vector<double> upper_delta_z;
 
    bool solving_feasibility_problem{false};
 
+   static void add_slacks_to_iterate(const Problem& problem, const Scaling& scaling, Iterate& iterate);
    void update_barrier_parameter(const Iterate& current_iterate);
    bool is_small_direction(const Iterate& current_iterate, const Direction& direction);
    void set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;
@@ -75,7 +78,7 @@ private:
    double dual_fraction_to_boundary(double tau);
    void assemble_augmented_system(const Problem& problem, const Iterate& current_iterate);
    void assemble_augmented_matrix(const Iterate& current_iterate);
-   void generate_augmented_rhs();
+   void generate_augmented_rhs(const Iterate& current_iterate);
    void compute_lower_bound_dual_direction(const std::vector<double>& solution);
    void compute_upper_bound_dual_direction(const std::vector<double>& solution);
    void generate_direction(const Problem& problem, const Iterate& current_iterate);

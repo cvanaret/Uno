@@ -10,6 +10,7 @@ Iterate::Iterate(size_t max_number_variables, size_t max_number_constraints) :
    number_variables(max_number_variables), number_constraints(max_number_constraints),
    x(max_number_variables), multipliers(max_number_variables, max_number_constraints),
    constraints(multipliers.constraints.size()),
+   subproblem_constraints(multipliers.constraints.size()),
    objective_gradient(max_number_variables),
    constraints_jacobian(max_number_constraints),
    lagrangian_gradient(max_number_variables) {
@@ -33,6 +34,7 @@ void Iterate::evaluate_constraints(const Problem& problem, const Scaling& scalin
       // scale the constraints
       for (size_t j = 0; j < problem.number_constraints; j++) {
          this->constraints[j] *= scaling.get_constraint_scaling(j);
+         this->subproblem_constraints[j] = this->constraints[j];
       }
       this->are_constraints_computed = true;
       Iterate::number_eval_constraints++;
@@ -103,7 +105,7 @@ void Iterate::evaluate_lagrangian_gradient(const Problem& problem, const Scaling
    }
 }
 
-void Iterate::adjust_number_variables(size_t number_variables) {
+void Iterate::set_number_variables(size_t number_variables) {
    this->x.resize(number_variables);
    this->multipliers.lower_bounds.resize(number_variables);
    this->multipliers.upper_bounds.resize(number_variables);

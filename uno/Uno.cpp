@@ -85,12 +85,12 @@ Statistics Uno::create_statistics(const Problem& problem) {
    statistics.add_column("minor", Statistics::int_width, 2);
    statistics.add_column("step norm", Statistics::double_width, 31);
    statistics.add_column("f", Statistics::double_width, 100);
-   if (0 < problem.number_constraints) {
+   if (problem.is_constrained()) {
       statistics.add_column("||c||", Statistics::double_width, 101);
    }
    statistics.add_column("complementarity", Statistics::double_width, 104);
    statistics.add_column("KKT", Statistics::double_width, 105);
-   if (0 < problem.number_constraints) {
+   if (problem.is_constrained()) {
       statistics.add_column("FJ", Statistics::double_width, 106);
    }
    return statistics;
@@ -99,12 +99,12 @@ Statistics Uno::create_statistics(const Problem& problem) {
 void Uno::add_statistics(Statistics& statistics, const Problem& problem, const Iterate& new_iterate, size_t major_iterations) {
    statistics.add_statistic(std::string("major"), major_iterations);
    statistics.add_statistic("f", new_iterate.objective);
-   if (0 < problem.number_constraints) {
+   if (problem.is_constrained()) {
       statistics.add_statistic("||c||", new_iterate.nonlinear_errors.constraints);
    }
    statistics.add_statistic("complementarity", new_iterate.nonlinear_errors.complementarity);
    statistics.add_statistic("KKT", new_iterate.nonlinear_errors.KKT);
-   if (0 < problem.number_constraints) {
+   if (problem.is_constrained()) {
       statistics.add_statistic("FJ", new_iterate.nonlinear_errors.FJ);
    }
 }
@@ -123,7 +123,7 @@ TerminationStatus Uno::check_termination(const Problem& problem, const Iterate& 
          return KKT_POINT;
       }
       // infeasible and FJ point
-      else if (0 < problem.number_constraints && current_iterate.nonlinear_errors.FJ <= this->tolerance * std::sqrt(number_variables)) {
+      else if (problem.is_constrained() && current_iterate.nonlinear_errors.FJ <= this->tolerance * std::sqrt(number_variables)) {
          return FJ_POINT;
       }
    }
@@ -140,7 +140,7 @@ TerminationStatus Uno::check_termination(const Problem& problem, const Iterate& 
 
 void Uno::postsolve_solution(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, TerminationStatus termination_status) {
    // remove auxiliary variables
-   current_iterate.adjust_number_variables(problem.number_variables);
+   current_iterate.set_number_variables(problem.number_variables);
 
    // objective value
    current_iterate.objective /= scaling.get_objective_scaling();
@@ -196,7 +196,7 @@ void Result::print(bool print_solution) const {
       print_vector(std::cout, this->solution.multipliers.lower_bounds);
       std::cout << "Upper bound multipliers:\t";
       print_vector(std::cout, this->solution.multipliers.upper_bounds);
-      if (0 < this->solution.multipliers.constraints.size()) {
+      if (!this->solution.multipliers.constraints.empty()) {
          std::cout << "Constraint multipliers:\t\t";
          print_vector(std::cout, this->solution.multipliers.constraints);
       }

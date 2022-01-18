@@ -33,6 +33,7 @@ public:
    static size_t number_eval_objective;
 
    std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
+   std::vector<double> subproblem_constraints; /*!< Constraint values for the subproblem (size \f$m)\f$ */
    bool are_constraints_computed{false};
    static size_t number_eval_constraints;
 
@@ -57,7 +58,7 @@ public:
          const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bounds_multipliers,
          const std::vector<double>& upper_bounds_multipliers);
 
-   void adjust_number_variables(size_t number_variables);
+   void set_number_variables(size_t number_variables);
 
    friend std::ostream& operator<<(std::ostream& stream, const Iterate& iterate);
 };

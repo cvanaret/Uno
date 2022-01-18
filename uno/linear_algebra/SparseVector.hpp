@@ -14,12 +14,13 @@ class SparseVector {
 public:
    explicit SparseVector(size_t capacity = 0);
    void for_each(const std::function<void (size_t, T)>& f) const;
-   void for_each_key(const std::function<void (size_t)>& f) const;
+   void for_each_index(const std::function<void(size_t)>& f) const;
    void for_each_value(const std::function<void (T)>& f) const;
    [[nodiscard]] size_t size() const;
    void reserve(size_t capacity);
 
    void insert(size_t index, T value);
+   [[nodiscard]] T at(size_t index) const;
    void erase(size_t index);
    void transform(const std::function<T (T)>& f);
    void clear();
@@ -49,7 +50,7 @@ void SparseVector<T>::for_each(const std::function<void (size_t, T)>& f) const {
 }
 
 template <typename T>
-void SparseVector<T>::for_each_key(const std::function<void (size_t)>& f) const {
+void SparseVector<T>::for_each_index(const std::function<void(size_t)>& f) const {
    for (size_t i = 0; i < this->number_nonzeros; i++) {
       f(this->indices[i]);
    }
@@ -88,6 +89,21 @@ void SparseVector<T>::insert(size_t index, T value) {
       const auto element_index = std::distance(start_position, position);
       // element_index is the index at which the index was found
       this->values[element_index] += value;
+   }
+}
+
+template <typename T>
+T SparseVector<T>::at(size_t index) const {
+   const auto start_position = begin(this->indices);
+   const auto end_position = begin(this->indices) + this->number_nonzeros;
+   const auto position = std::find(start_position, end_position, index);
+   // if index is found
+   if (position != end_position) {
+      const auto element_index = std::distance(start_position, position);
+      return this->values[element_index];
+   }
+   else {
+      throw std::out_of_range("Element not found");
    }
 }
 
