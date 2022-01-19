@@ -149,7 +149,7 @@ void BarrierSubproblem::build_objective_model(const Problem& problem, const Scal
    if (objective_multiplier == 0.) {
       this->solving_feasibility_problem = true;
       this->previous_barrier_parameter = this->barrier_parameter;
-      this->barrier_parameter = std::max(this->barrier_parameter, current_iterate.nonlinear_errors.constraints);
+      this->barrier_parameter = std::max(this->barrier_parameter, norm_inf(current_iterate.subproblem_constraints));
       DEBUG << "Barrier parameter mu temporarily updated to " << this->barrier_parameter << "\n";
       this->subproblem_definition_changed = true;
    }
@@ -222,7 +222,7 @@ Direction BarrierSubproblem::solve(Statistics& statistics, const Problem& proble
 
 void BarrierSubproblem::assemble_augmented_system(const Problem& problem, const Iterate& current_iterate) {
    // assemble, factorize and regularize the KKT matrix
-   this->assemble_augmented_matrix(current_iterate);
+   this->assemble_augmented_matrix(problem, current_iterate);
    this->augmented_system.factorize_matrix(problem, *this->linear_solver);
    this->augmented_system.regularize_matrix(problem, *this->linear_solver, this->number_variables, this->number_constraints,
          std::pow(this->barrier_parameter, this->parameters.regularization_barrier_exponent));
@@ -363,6 +363,14 @@ double BarrierSubproblem::evaluate_barrier_function(const Problem& problem, cons
       iterate.evaluate_objective(problem, scaling);
       objective += iterate.objective;
    }
+   else if (this->use_proximal_term) {
+      const double sqrt_mu = std::sqrt(this->barrier_parameter);
+      for (size_t i = 0; i < this->number_variables; i++) {
+         const double dr = std::min(1., 1/std::abs(this->primal_iterate[i]));
+         const double proximal_term = sqrt_mu/2. * std::pow(dr*(iterate.x[i] - this->primal_iterate[i]), 2);
+         objective += proximal_term;
+      }
+   }
    return objective;
 }
 
@@ -398,7 +406,7 @@ double BarrierSubproblem::dual_fraction_to_boundary(double tau) {
    return dual_length;
 }
 
-void BarrierSubproblem::assemble_augmented_matrix(const Iterate& current_iterate) {
+void BarrierSubproblem::assemble_augmented_matrix(const Problem& problem, const Iterate& current_iterate) {
    this->augmented_system.matrix->reset();
    this->augmented_system.matrix->dimension = this->number_variables + this->number_constraints;
    // copy the Lagrangian Hessian in the top left block
@@ -420,9 +428,9 @@ void BarrierSubproblem::assemble_augmented_matrix(const Iterate& current_iterate
    }
 
    // proximal term in feasibility problem
-   if (this->solving_feasibility_problem) {
+   if (this->solving_feasibility_problem && this->use_proximal_term) {
       const double sqrt_mu = std::sqrt(this->barrier_parameter);
-      for (size_t i = 0; i < 2; i++) {
+      for (size_t i = 0; i < this->number_variables; i++) {
          const double proximal_term = sqrt_mu*std::pow(std::min(1., 1/std::abs(current_iterate.x[i])), 2);
          this->augmented_system.matrix->insert(proximal_term, i, i);
       }
