@@ -67,6 +67,7 @@ private:
    std::vector<double> upper_delta_z;
 
    bool solving_feasibility_problem{false};
+   const bool use_proximal_term{true};
 
    static void add_slacks_to_iterate(const Problem& problem, const Scaling& scaling, Iterate& iterate);
    void update_barrier_parameter(const Iterate& current_iterate);
@@ -77,7 +78,7 @@ private:
    double primal_fraction_to_boundary(const std::vector<double>& ipm_solution, double tau);
    double dual_fraction_to_boundary(double tau);
    void assemble_augmented_system(const Problem& problem, const Iterate& current_iterate);
-   void assemble_augmented_matrix(const Iterate& current_iterate);
+   void assemble_augmented_matrix(const Problem& problem, const Iterate& current_iterate);
    void generate_augmented_rhs(const Iterate& current_iterate);
    void compute_lower_bound_dual_direction(const std::vector<double>& solution);
    void compute_upper_bound_dual_direction(const std::vector<double>& solution);
