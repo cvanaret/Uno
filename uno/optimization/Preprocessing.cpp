@@ -69,13 +69,15 @@ void Preprocessing::enforce_linear_constraints(const Problem& problem, const Sca
 void Preprocessing::compute_least_square_multipliers(const Problem& problem, const Scaling& scaling, SymmetricMatrix& matrix,
       std::vector<double>& rhs, LinearSolver& solver, Iterate& current_iterate, std::vector<double>& multipliers, double multipliers_max_norm) {
    const size_t number_variables = current_iterate.x.size();
+   const size_t number_constraints = multipliers.size();
    current_iterate.evaluate_objective_gradient(problem, scaling);
-   current_iterate.evaluate_constraints_jacobian(problem, scaling);
+   current_iterate.evaluate_constraint_jacobian(problem, scaling);
 
    /******************************/
    /* build the symmetric matrix */
    /******************************/
    matrix.reset();
+   matrix.dimension = number_variables + number_constraints;
 
    // identity block
    for (size_t i = 0; i < number_variables; i++) {
@@ -84,7 +86,7 @@ void Preprocessing::compute_least_square_multipliers(const Problem& problem, con
    }
    // Jacobian of general constraints
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      current_iterate.constraints_jacobian[j].for_each([&](size_t i, double derivative) {
+      current_iterate.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
          matrix.insert(derivative, i, number_variables + j);
       });
       matrix.finalize(number_variables + j);
@@ -105,7 +107,7 @@ void Preprocessing::compute_least_square_multipliers(const Problem& problem, con
    for (size_t i = 0; i < number_variables; i++) {
       rhs[i] -= current_iterate.multipliers.lower_bounds[i] + current_iterate.multipliers.upper_bounds[i];
    }
-   DEBUG << "RHS for least-square multipliers: "; print_vector(DEBUG, rhs);
+   DEBUG << "RHS for least-square multipliers: "; print_vector(DEBUG, rhs, 0, matrix.dimension);
 
    /********************/
    /* solve the system */
@@ -113,7 +115,7 @@ void Preprocessing::compute_least_square_multipliers(const Problem& problem, con
    std::vector<double> solution(matrix.dimension);
    solver.factorize(matrix);
    solver.solve(matrix, rhs, solution);
-   DEBUG << "Solution: "; print_vector(DEBUG, solution);
+   DEBUG << "Solution: "; print_vector(DEBUG, solution, 0, matrix.dimension);
 
    // if least-square multipliers too big, discard them. Otherwise, store them
    if (norm_inf(solution, number_variables, problem.number_constraints) <= multipliers_max_norm) {

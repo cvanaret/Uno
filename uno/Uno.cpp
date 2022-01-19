@@ -26,14 +26,16 @@ Result Uno::solve(const Problem& problem, Iterate& current_iterate, bool scale_f
    // project x into the bounds
    problem.project_point_in_bounds(current_iterate.x);
 
-   // initialize the function scaling
+   // initialize the function scaling TODO put this constant in option file
    Scaling scaling(problem.number_constraints, 100.);
    // function scaling
    if (scale_functions) {
-      // evaluate the gradients
+      // evaluate the gradients at the current point. At this point, the scaling is neutral
       current_iterate.evaluate_objective_gradient(problem, scaling);
-      current_iterate.evaluate_constraints_jacobian(problem, scaling);
-      scaling.compute(current_iterate.objective_gradient, current_iterate.constraints_jacobian);
+      current_iterate.evaluate_constraint_jacobian(problem, scaling);
+      scaling.compute(current_iterate.objective_gradient, current_iterate.constraint_jacobian);
+      // forget about these evaluations
+      current_iterate.reset_evaluations();
    }
    // linear constraints feasible at initial point
    if (enforce_linear_constraints) {

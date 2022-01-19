@@ -57,10 +57,10 @@ Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, const
    return direction;
 }
 
-Direction l1Relaxation::compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) {
+Direction l1Relaxation::compute_second_order_correction(const Problem& problem, const Scaling& scaling, Iterate& trial_iterate) {
    // TODO: add elastic variables?
    assert(false && "l1Relaxation::compute_second_order_correction: check that the elastic variables are in the problem");
-   Direction direction = ConstraintRelaxationStrategy::compute_second_order_correction(problem, trial_iterate);
+   Direction direction = ConstraintRelaxationStrategy::compute_second_order_correction(problem, scaling, trial_iterate);
 
    // remove the temporary elastic variables from the direction
    this->remove_elastic_variables_from_direction(problem, direction);
@@ -76,7 +76,7 @@ double l1Relaxation::compute_predicted_reduction(const Problem& problem, const S
    else {
       // determine the linearized constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
       const auto residual_function = [&](size_t j) {
-         const double component_j = current_iterate.subproblem_constraints[j] + step_length * dot(direction.x, current_iterate.constraints_jacobian[j]);
+         const double component_j = current_iterate.subproblem_constraints[j] + step_length * dot(direction.x, current_iterate.constraint_jacobian[j]);
          return problem.compute_constraint_violation(scaling, component_j, j);
       };
       const double linearized_constraint_violation = norm_1(residual_function, problem.number_constraints);
@@ -163,6 +163,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, const P
 
          // stage f: update the penalty parameter
          this->decrease_parameter_aggressively(problem, scaling, current_iterate, direction_lowest_violation);
+         DEBUG << "Penalty parameter aggressively set to " << this->penalty_parameter << "\n";
          if (this->penalty_parameter == 0.) {
             direction = direction_lowest_violation;
             linearized_residual = residual_lowest_violation;

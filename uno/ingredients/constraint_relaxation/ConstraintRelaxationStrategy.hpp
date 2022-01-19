@@ -23,7 +23,7 @@ public:
    virtual Direction solve_feasibility_problem(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
          const std::optional<std::vector<double>>& optional_phase_2_primal_direction,
          const std::optional<ConstraintPartition>& optional_constraint_partition) = 0;
-   virtual Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate);
+   virtual Direction compute_second_order_correction(const Problem& problem, const Scaling& scaling, Iterate& trial_iterate);
 
    virtual bool is_acceptable(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, PredictedReductionModel& predicted_reduction_model, double step_length) = 0;

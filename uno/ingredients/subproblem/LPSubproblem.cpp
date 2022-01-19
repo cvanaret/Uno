@@ -17,11 +17,11 @@ void LPSubproblem::create_current_subproblem(const Problem& problem, const Scali
    copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
    // compute first- and second-order information
    problem.evaluate_constraints(current_iterate.x, current_iterate.constraints);
-   for (auto& row: this->constraints_jacobian) {
+   for (auto& row: this->constraint_jacobian) {
       row.clear();
    }
-   current_iterate.evaluate_constraints_jacobian(problem, scaling);
-   this->constraints_jacobian = current_iterate.constraints_jacobian;
+   current_iterate.evaluate_constraint_jacobian(problem, scaling);
+   this->constraint_jacobian = current_iterate.constraint_jacobian;
 
    this->build_objective_model(problem, scaling, current_iterate, objective_multiplier);
 
@@ -50,7 +50,7 @@ void LPSubproblem::set_initial_point(const std::vector<double>& point) {
 Direction LPSubproblem::solve(Statistics& /*statistics*/, const Problem& problem, Iterate& current_iterate) {
    // solve the LP
    Direction direction = this->solver->solve_LP(this->variables_bounds, this->constraints_bounds, this->objective_gradient,
-         this->constraints_jacobian, this->initial_point);
+         this->constraint_jacobian, this->initial_point);
    this->number_subproblems_solved++;
 
    // compute dual displacements (SLP methods usually compute the new duals, not the displacements)

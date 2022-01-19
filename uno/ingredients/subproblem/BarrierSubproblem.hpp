@@ -35,7 +35,7 @@ public:
    void add_elastic_variables(const Problem& problem, Iterate& current_iterate, double objective_coefficient) override;
    void remove_elastic_variable(size_t i, size_t j) override;
    Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
-   Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) override;
+   Direction compute_second_order_correction(const Problem& problem, const Scaling& scaling, Iterate& trial_iterate) override;
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const override;
    void compute_progress_measures(const Problem& problem, const Scaling& scaling, Iterate& iterate) override;
    void register_accepted_iterate(Iterate& iterate) override;
@@ -69,7 +69,7 @@ private:
    bool solving_feasibility_problem{false};
    const bool use_proximal_term{true};
 
-   static void add_slacks_to_iterate(const Problem& problem, const Scaling& scaling, Iterate& iterate);
+   void add_slacks_to_iterate(const Problem& problem, const Scaling& scaling, Iterate& iterate);
    void update_barrier_parameter(const Iterate& current_iterate);
    bool is_small_direction(const Iterate& current_iterate, const Direction& direction);
    void set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;

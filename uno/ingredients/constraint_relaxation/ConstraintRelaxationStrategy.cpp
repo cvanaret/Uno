@@ -144,8 +144,8 @@ void ConstraintRelaxationStrategy::recover_active_set(const Problem& problem, Di
     */
 }
 
-Direction ConstraintRelaxationStrategy::compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) {
-   return this->subproblem->compute_second_order_correction(problem, trial_iterate);
+Direction ConstraintRelaxationStrategy::compute_second_order_correction(const Problem& problem, const Scaling& scaling, Iterate& trial_iterate) {
+   return this->subproblem->compute_second_order_correction(problem, scaling, trial_iterate);
 }
 
 PredictedReductionModel ConstraintRelaxationStrategy::generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const {

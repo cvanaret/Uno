@@ -66,7 +66,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
                      this->number_iterations == 1 && trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility &&
                      !this->solving_feasibility_problem) {
                // reject the full step: compute a (temporary) SOC direction
-               Direction direction_soc = this->constraint_relaxation_strategy.compute_second_order_correction(problem, trial_iterate);
+               Direction direction_soc = this->constraint_relaxation_strategy.compute_second_order_correction(problem, scaling, trial_iterate);
 
                // assemble the (temporary) SOC trial iterate
                Iterate trial_iterate_soc = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction_soc, this->step_length);

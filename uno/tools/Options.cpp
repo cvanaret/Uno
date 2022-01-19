@@ -54,14 +54,15 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["constraint-relaxation"] = "feasibility-restoration";
       options["strategy"] = "filter";
       options["subproblem"] = "barrier";
-      options["filter_Beta"] = "0.99999";
-      options["filter_Gamma"] = "1e-5";
+      options["filter_beta"] = "0.99999";
+      options["filter_gamma"] = "1e-5";
       options["armijo_decrease_fraction"] = "1e-4";
       options["LS_backtracking_ratio"] = "0.5";
       options["filter_switching_infeasibility_exponent"] = "1.1";
       options["use_second_order_correction"] = "yes";
       options["elastic_objective_coefficient"] = "1000";
       options["residual_norm"] = "INF";
+      options["scale_functions"] = "yes";
    }
    else if (preset_name == "filtersqp") {
       options["mechanism"] = "TR";
