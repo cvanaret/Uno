@@ -21,8 +21,8 @@ void QPSubproblem::create_current_subproblem(const Problem& problem, const Scali
    current_iterate.evaluate_constraints(problem, scaling);
 
    // constraint Jacobian
-   current_iterate.evaluate_constraints_jacobian(problem, scaling);
-   this->constraints_jacobian = current_iterate.constraints_jacobian;
+   current_iterate.evaluate_constraint_jacobian(problem, scaling);
+   this->constraint_jacobian = current_iterate.constraint_jacobian;
 
    // objective
    this->build_objective_model(problem, scaling, current_iterate, objective_multiplier);
@@ -56,7 +56,7 @@ Direction QPSubproblem::solve(Statistics& /*statistics*/, const Problem& problem
    this->hessian_model->adjust_number_variables(this->number_variables);
    // compute QP direction
    Direction direction = this->solver->solve_QP(this->variables_bounds, this->constraints_bounds, this->objective_gradient,
-         this->constraints_jacobian, *this->hessian_model->hessian, this->initial_point);
+         this->constraint_jacobian, *this->hessian_model->hessian, this->initial_point);
    this->number_subproblems_solved++;
 
    // compute dual *displacements* (note: SQP methods usually compute the new duals, not the displacements)

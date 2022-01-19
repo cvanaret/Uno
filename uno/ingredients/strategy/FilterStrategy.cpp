@@ -6,7 +6,7 @@ FilterStrategy::FilterStrategy(const Options& options) :
       GlobalizationStrategy(),
       filter(FilterFactory::create(options)),
       parameters({stod(options.at("armijo_decrease_fraction")),
-                  stod(options.at("filter_Delta")),
+                  stod(options.at("filter_delta")),
                   stod(options.at("filter_ubd")),
                   stod(options.at("filter_fact")),
                   stod(options.at("filter_switching_infeasibility_exponent")),

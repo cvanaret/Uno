@@ -5,8 +5,8 @@
 
 Filter::Filter(const Options& options) :
       max_size(stoul(options.at("filter_max_size"))),
-      constants({stod(options.at("filter_Beta")),
-                 stod(options.at("filter_Gamma"))}),
+      constants({stod(options.at("filter_beta")),
+                 stod(options.at("filter_gamma"))}),
       infeasibility(this->max_size),
       optimality(this->max_size) {
    this->reset();

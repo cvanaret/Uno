@@ -44,7 +44,7 @@ public:
 
    // direction computation
    virtual Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) = 0;
-   virtual Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate);
+   virtual Direction compute_second_order_correction(const Problem& problem, const Scaling& scaling, Iterate& trial_iterate);
 
    // globalization metrics
    [[nodiscard]] virtual PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const = 0;
@@ -60,7 +60,7 @@ public:
    void compute_feasibility_linear_objective(const Iterate& current_iterate, const ConstraintPartition& constraint_partition);
    void generate_feasibility_bounds(const Problem& problem, const std::vector<double>& current_constraints, const ConstraintPartition&
    constraint_partition);
-   static double push_variable_to_interior(double variable_value, const Range& variable_bounds);
+   static double push_variable_to_interior(double variable_value, const Range& variable_bounds, double scaling_factor);
    void set_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints);
 
    double compute_first_order_error(const Problem& problem, const Scaling& scaling, Iterate& iterate, double objective_multiplier) const;
@@ -79,7 +79,7 @@ public:
    std::vector<Range> variables_bounds;
    std::vector<double> constraints_multipliers;
    SparseVector<double> objective_gradient;
-   std::vector<SparseVector<double>> constraints_jacobian;
+   std::vector<SparseVector<double>> constraint_jacobian;
    std::vector<Range> constraints_bounds;
    Direction direction;
 

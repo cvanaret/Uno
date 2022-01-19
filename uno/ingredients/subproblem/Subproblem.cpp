@@ -9,10 +9,10 @@ Subproblem::Subproblem(size_t number_variables, size_t max_number_variables, siz
       uses_slacks(uses_slacks),
       soc_strategy(soc_strategy), variables_bounds(max_number_variables), constraints_multipliers(number_constraints),
       objective_gradient(max_number_variables), // SparseVector
-      constraints_jacobian(number_constraints), // vector of SparseVectors
+      constraint_jacobian(number_constraints), // vector of SparseVectors
       constraints_bounds(number_constraints), direction(max_number_variables, number_constraints),
       is_second_order_method(is_second_order_method), residual_norm(residual_norm) {
-   for (auto& constraint_gradient: this->constraints_jacobian) {
+   for (auto& constraint_gradient: this->constraint_jacobian) {
       constraint_gradient.reserve(this->max_number_variables);
    }
 }
@@ -57,7 +57,7 @@ void Subproblem::add_elastic_variable(size_t i, double objective_coefficient, si
    assert(j < this->number_constraints && "The constraint index is larger than the preallocated size");
    this->variables_bounds[i] = {0., std::numeric_limits<double>::infinity()};
    this->objective_gradient.insert(i, objective_coefficient);
-   this->constraints_jacobian[j].insert(i, constraint_coefficient);
+   this->constraint_jacobian[j].insert(i, constraint_coefficient);
    this->number_variables++;
 }
 
@@ -65,7 +65,7 @@ void Subproblem::remove_elastic_variable(size_t i, size_t j) {
    assert(i < this->max_number_variables && "The variable index is larger than the preallocated size");
    assert(j < this->number_constraints && "The constraint index is larger than the preallocated size");
    this->objective_gradient.erase(i);
-   this->constraints_jacobian[j].erase(i);
+   this->constraint_jacobian[j].erase(i);
    this->number_variables--;
 }
 
@@ -77,14 +77,17 @@ void Subproblem::compute_progress_measures(const Problem& problem, const Scaling
    iterate.progress = {iterate.nonlinear_errors.constraints, iterate.objective};
 }
 
-double Subproblem::push_variable_to_interior(double variable_value, const Range& variable_bounds) {
+double Subproblem::push_variable_to_interior(double variable_value, const Range& variable_bounds, double scaling_factor) {
    const double k1 = 1e-2;
    const double k2 = 1e-2;
 
-   const double perturbation_lb = std::min(k1 * std::max(1., std::abs(variable_bounds.lb)), k2 * (variable_bounds.ub - variable_bounds.lb));
-   const double perturbation_ub = std::min(k1 * std::max(1., std::abs(variable_bounds.ub)), k2 * (variable_bounds.ub - variable_bounds.lb));
-   variable_value = std::max(variable_value, variable_bounds.lb + perturbation_lb);
-   variable_value = std::min(variable_value, variable_bounds.ub - perturbation_ub);
+   const double scaled_lb = scaling_factor*variable_bounds.lb;
+   const double scaled_ub = scaling_factor*variable_bounds.ub;
+   const double range = scaled_ub - scaled_lb;
+   const double perturbation_lb = std::min(k1 * std::max(1., std::abs(scaled_lb)), k2 * range);
+   const double perturbation_ub = std::min(k1 * std::max(1., std::abs(scaled_ub)), k2 * range);
+   variable_value = std::max(variable_value, scaled_lb + perturbation_lb);
+   variable_value = std::min(variable_value, scaled_ub - perturbation_ub);
    return variable_value;
 }
 
@@ -123,12 +126,12 @@ void Subproblem::set_scaled_objective_gradient(const Problem& problem, const Sca
 void Subproblem::compute_feasibility_linear_objective(const Iterate& current_iterate, const ConstraintPartition& constraint_partition) {
    // objective function: sum of gradients of infeasible constraints
    for (size_t j: constraint_partition.lower_bound_infeasible) {
-      current_iterate.constraints_jacobian[j].for_each([&](size_t i, double derivative) {
+      current_iterate.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
          this->objective_gradient.insert(i, -derivative);
       });
    }
    for (size_t j: constraint_partition.upper_bound_infeasible) {
-      current_iterate.constraints_jacobian[j].for_each([&](size_t i, double derivative) {
+      current_iterate.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
          this->objective_gradient.insert(i, derivative);
       });
    }
@@ -200,7 +203,7 @@ void Subproblem::compute_residuals(const Problem& problem, const Scaling& scalin
          iterate.multipliers.lower_bounds, iterate.multipliers.upper_bounds);
 }
 
-Direction Subproblem::compute_second_order_correction(const Problem& /*problem*/, Iterate& /*trial_iterate*/) {
+Direction Subproblem::compute_second_order_correction(const Problem& /*problem*/, const Scaling& /*scaling*/, Iterate& /*trial_iterate*/) {
    assert(false && "Subproblem::compute_second_order_correction");
 }
 
