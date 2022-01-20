@@ -25,6 +25,9 @@ void Subproblem::initialize(Statistics& /*statistics*/, const Problem& problem, 
 
 void Subproblem::evaluate_constraints(const Problem& problem, const Scaling& scaling, Iterate& iterate) {
    iterate.evaluate_constraints(problem, scaling);
+   for (size_t j = 0; j < problem.number_constraints; j++) {
+      iterate.subproblem_constraints[j] = iterate.constraints[j];
+   }
 }
 
 double Subproblem::compute_constraint_violation(const Problem& problem, const Scaling& scaling, Iterate& iterate) const {

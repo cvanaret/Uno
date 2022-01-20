@@ -3,8 +3,8 @@
 #include "ingredients/strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 
-l1Relaxation::l1Relaxation(Problem& problem, const Options& options) :
-      ConstraintRelaxationStrategy(problem, options),
+l1Relaxation::l1Relaxation(Problem& problem, const Scaling& scaling, const Options& options) :
+      ConstraintRelaxationStrategy(problem, scaling, options),
       globalization_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
       penalty_parameter(stod(options.at("l1_relaxation_initial_parameter"))),
       parameters({options.at("l1_relaxation_fixed_parameter") == "yes",

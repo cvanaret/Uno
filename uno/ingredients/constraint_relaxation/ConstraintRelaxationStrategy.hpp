@@ -13,7 +13,7 @@
 
 class ConstraintRelaxationStrategy {
 public:
-   ConstraintRelaxationStrategy(const Problem& problem, const Options& options);
+   ConstraintRelaxationStrategy(const Problem& problem, const Scaling& scaling, const Options& options);
    virtual ~ConstraintRelaxationStrategy() = default;
 
    virtual void initialize(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& first_iterate) = 0;

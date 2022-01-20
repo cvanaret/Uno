@@ -6,7 +6,7 @@
 
 class ConstraintRelaxationStrategyFactory {
 public:
-   static std::unique_ptr<ConstraintRelaxationStrategy> create(Problem& problem, const Options& options);
+   static std::unique_ptr<ConstraintRelaxationStrategy> create(Problem& problem, const Scaling& scaling, const Options& options);
 };
 
 #endif // UNO_CONSTRAINTRELAXATIONSTRATEGYFACTORY_H

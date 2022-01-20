@@ -4,7 +4,7 @@
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
 #include "optimization/Preprocessing.hpp"
 
-BarrierSubproblem::BarrierSubproblem(const Problem& problem, size_t max_number_variables, const Options& options):
+BarrierSubproblem::BarrierSubproblem(const Problem& problem, const Scaling& scaling, size_t max_number_variables, const Options& options):
       // add the slacks to the variables
       Subproblem(problem.number_variables + problem.inequality_constraints.size(), // number_variables
             max_number_variables + problem.inequality_constraints.size(), // max_number_variables
@@ -68,8 +68,9 @@ BarrierSubproblem::BarrierSubproblem(const Problem& problem, size_t max_number_v
       if (problem.constraint_status[j] == BOUNDED_UPPER || problem.constraint_status[j] == BOUNDED_BOTH_SIDES) {
          this->upper_bounded_variables.push_back(slack_index);
       }
-      // store the bounds of the slacks TODO scaling?
-      this->variables_bounds[slack_index] = problem.constraint_bounds[j];
+      // store the bounds of the slacks
+      const double scaling_factor = scaling.get_constraint_scaling(j);
+      this->variables_bounds[slack_index] = {scaling_factor*problem.constraint_bounds[j].lb, scaling_factor*problem.constraint_bounds[j].ub};
    });
 }
 
@@ -89,7 +90,7 @@ inline void BarrierSubproblem::initialize(Statistics& statistics, const Problem&
    }
 
    // initialize the slacks and add contribution to the constraint Jacobian
-   this->add_slacks_to_iterate(problem, scaling, first_iterate);
+   BarrierSubproblem::add_slacks_to_iterate(problem, scaling, first_iterate);
    this->set_current_iterate(first_iterate);
 
    // set the bound multipliers
@@ -109,13 +110,12 @@ inline void BarrierSubproblem::initialize(Statistics& statistics, const Problem&
 }
 
 void BarrierSubproblem::add_slacks_to_iterate(const Problem& problem, const Scaling& scaling, Iterate& iterate) {
-   this->evaluate_constraints(problem, scaling, iterate);
+   iterate.evaluate_constraints(problem, scaling);
    iterate.evaluate_constraint_jacobian(problem, scaling);
    problem.inequality_constraints.for_each([&](size_t j, size_t i) {
       const double scaling_factor = scaling.get_constraint_scaling(j);
       const double slack_value = Subproblem::push_variable_to_interior(iterate.constraints[j], problem.constraint_bounds[j], scaling_factor);
       iterate.x[problem.number_variables + i] = slack_value;
-      iterate.subproblem_constraints[j] -= slack_value;
       iterate.constraint_jacobian[j].insert(problem.number_variables + i, -1.);
    });
 }

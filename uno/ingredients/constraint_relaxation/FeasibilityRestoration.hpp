@@ -10,7 +10,7 @@ enum Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 
 class FeasibilityRestoration : public ConstraintRelaxationStrategy {
 public:
-   FeasibilityRestoration(const Problem& problem, const Options& options);
+   FeasibilityRestoration(const Problem& problem, const Scaling& scaling, const Options& options);
    void initialize(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& first_iterate) override;
 
    // direction computation

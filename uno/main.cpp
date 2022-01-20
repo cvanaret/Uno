@@ -23,8 +23,28 @@ void run_uno_ampl(const std::string& problem_name, const Options& options) {
    auto problem = std::make_unique<AMPLModel>(problem_name);
    INFO << "Heap allocations after AMPL: " << total_allocations << "\n";
 
+   // initial primal and dual points
+   Iterate first_iterate(problem->number_variables, problem->number_constraints);
+   problem->get_initial_primal_point(first_iterate.x);
+   problem->get_initial_dual_point(first_iterate.multipliers.constraints);
+   // project x into the bounds
+   problem->project_point_in_bounds(first_iterate.x);
+
+   // initialize the function scaling TODO put this constant in option file
+   Scaling scaling(problem->number_constraints, 100.);
+   // function scaling
+   const bool scale_functions = (options.at("scale_functions") == "yes");
+   if (scale_functions) {
+      // evaluate the gradients at the current point. At this point, the scaling is neutral
+      first_iterate.evaluate_objective_gradient(*problem, scaling);
+      first_iterate.evaluate_constraint_jacobian(*problem, scaling);
+      scaling.compute(first_iterate.objective_gradient, first_iterate.constraint_jacobian);
+      // forget about these evaluations
+      first_iterate.reset_evaluations();
+   }
+
    // create the constraint relaxation strategy
-   auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(*problem, options);
+   auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(*problem, scaling, options);
    INFO << "Heap allocations after ConstraintRelax, Subproblem and Solver: " << total_allocations << "\n";
 
    // create the globalization mechanism
@@ -33,15 +53,9 @@ void run_uno_ampl(const std::string& problem_name, const Options& options) {
 
    Uno uno = Uno(*mechanism, options);
 
-   // initial primal and dual points
-   Iterate first_iterate(problem->number_variables, problem->number_constraints);
-   problem->get_initial_primal_point(first_iterate.x);
-   problem->get_initial_dual_point(first_iterate.multipliers.constraints);
-
    INFO << "Heap allocations before solving: " << total_allocations << "\n";
-   const bool scale_functions = (options.at("scale_functions") == "yes");
    const bool enforce_linear_constraints = (options.at("enforce_linear_constraints") == "yes");
-   Result result = uno.solve(*problem, first_iterate, scale_functions, enforce_linear_constraints);
+   Result result = uno.solve(*problem, scaling, first_iterate, enforce_linear_constraints);
 
    const bool print_solution = (options.at("print_solution") == "yes");
    result.print(print_solution);
