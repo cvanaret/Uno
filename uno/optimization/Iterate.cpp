@@ -34,7 +34,7 @@ void Iterate::evaluate_constraints(const Problem& problem, const Scaling& scalin
       // scale the constraints
       for (size_t j = 0; j < problem.number_constraints; j++) {
          this->constraints[j] *= scaling.get_constraint_scaling(j);
-         this->subproblem_constraints[j] = this->constraints[j];
+         //this->subproblem_constraints[j] = this->constraints[j];
       }
       this->are_constraints_computed = true;
       Iterate::number_eval_constraints++;

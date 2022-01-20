@@ -20,7 +20,7 @@ struct InteriorPointParameters {
 
 class BarrierSubproblem : public Subproblem {
 public:
-   BarrierSubproblem(const Problem& problem, size_t max_number_variables, const Options& options);
+   BarrierSubproblem(const Problem& problem, const Scaling& scaling, size_t max_number_variables, const Options& options);
    ~BarrierSubproblem() override = default;
 
    void set_initial_point(const std::vector<double>& initial_point) override;
@@ -69,7 +69,7 @@ private:
    bool solving_feasibility_problem{false};
    const bool use_proximal_term{true};
 
-   void add_slacks_to_iterate(const Problem& problem, const Scaling& scaling, Iterate& iterate);
+   static void add_slacks_to_iterate(const Problem& problem, const Scaling& scaling, Iterate& iterate);
    void update_barrier_parameter(const Iterate& current_iterate);
    bool is_small_direction(const Iterate& current_iterate, const Direction& direction);
    void set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;

@@ -3,8 +3,8 @@
 #include "ingredients/strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 
-FeasibilityRestoration::FeasibilityRestoration(const Problem& problem, const Options& options) :
-      ConstraintRelaxationStrategy(problem, options),
+FeasibilityRestoration::FeasibilityRestoration(const Problem& problem, const Scaling& scaling, const Options& options) :
+      ConstraintRelaxationStrategy(problem, scaling, options),
       // create the globalization strategies (one for each phase)
       phase_1_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
       phase_2_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)) {
@@ -17,6 +17,7 @@ void FeasibilityRestoration::initialize(Statistics& statistics, const Problem& p
    this->subproblem->initialize(statistics, problem, scaling, first_iterate);
 
    // compute the progress measures and the residuals of the initial point
+   this->evaluate_constraints(problem, scaling, first_iterate);
    this->subproblem->compute_progress_measures(problem, scaling, first_iterate);
    this->subproblem->compute_residuals(problem, scaling, first_iterate, problem.objective_sign);
 

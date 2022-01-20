@@ -15,7 +15,7 @@ struct l1RelaxationParameters {
 
 class l1Relaxation : public ConstraintRelaxationStrategy {
 public:
-   l1Relaxation(Problem& problem, const Options& options);
+   l1Relaxation(Problem& problem, const Scaling& scaling, const Options& options);
    void initialize(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& first_iterate) override;
 
    // direction computation

@@ -46,7 +46,7 @@ public:
    /*!
     *  Solve a given problem with initial primal and dual variables
     */
-   Result solve(const Problem& problem, Iterate& first_iterate, bool scale_functions, bool enforce_linear_constraints);
+   Result solve(const Problem& problem, const Scaling& scaling, Iterate& first_iterate, bool enforce_linear_constraints);
 
 private:
    GlobalizationMechanism& globalization_mechanism; /*!< Step control strategy (trust region or line-search) */

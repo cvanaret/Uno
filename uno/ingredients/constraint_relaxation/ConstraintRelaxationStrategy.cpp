@@ -2,8 +2,8 @@
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 #include "optimization/Constraint.hpp"
 
-ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Problem& problem, const Options& options):
-      subproblem(SubproblemFactory::create(problem,
+ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Problem& problem, const Scaling& scaling, const Options& options):
+      subproblem(SubproblemFactory::create(problem, scaling,
             problem.number_variables + ConstraintRelaxationStrategy::count_elastic_variables(problem, true),
             options)),
       elastic_variables(ConstraintRelaxationStrategy::count_elastic_variables(problem, this->subproblem->uses_slacks)),
