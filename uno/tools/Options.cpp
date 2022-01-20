@@ -56,6 +56,8 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["subproblem"] = "barrier";
       options["filter_beta"] = "0.99999";
       options["filter_gamma"] = "1e-5";
+      options["filter_ubd"] = "1e4";
+      options["filter_fact"] = "1e4";
       options["armijo_decrease_fraction"] = "1e-4";
       options["LS_backtracking_ratio"] = "0.5";
       options["filter_switching_infeasibility_exponent"] = "1.1";
