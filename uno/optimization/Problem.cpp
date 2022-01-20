@@ -14,10 +14,9 @@ std::map<FunctionType, std::string> Problem::type_to_string = {
 // abstract Problem class
 Problem::Problem(std::string name, size_t number_variables, size_t number_constraints, FunctionType type) :
       name(std::move(name)), number_variables(number_variables), number_constraints(number_constraints), problem_type(type),
-      // allocate all vectors
-      variables_bounds(number_variables), variable_status(number_variables),
-      constraint_bounds(number_constraints), constraint_type(number_constraints), constraint_status(number_constraints),
-      equality_constraints(number_constraints), inequality_constraints(number_constraints), linear_constraints(number_constraints) {
+      equality_constraints(this->number_constraints),
+      inequality_constraints(this->number_constraints),
+      linear_constraints(this->number_constraints) {
 }
 
 std::vector<double> Problem::evaluate_constraints(const std::vector<double>& x) const {
@@ -54,7 +53,7 @@ void Problem::determine_constraints() {
    size_t current_equality_constraint = 0;
    size_t current_inequality_constraint = 0;
    for (size_t j = 0; j < this->number_constraints; j++) {
-      if (this->constraint_status[j] == EQUAL_BOUNDS) {
+      if (this->get_constraint_status(j) == EQUAL_BOUNDS) {
          this->equality_constraints.insert(j, current_equality_constraint);
          current_equality_constraint++;
       }
@@ -67,36 +66,35 @@ void Problem::determine_constraints() {
 
 void Problem::project_point_in_bounds(std::vector<double>& x) const {
    for (size_t i = 0; i < x.size(); i++) {
-      if (x[i] < this->variables_bounds[i].lb) {
-         x[i] = this->variables_bounds[i].lb;
+      if (x[i] < this->get_variable_lower_bound(i)) {
+         x[i] = this->get_variable_lower_bound(i);
       }
-      else if (this->variables_bounds[i].ub < x[i]) {
-         x[i] = this->variables_bounds[i].ub;
+      else if (this->get_variable_upper_bound(i) < x[i]) {
+         x[i] = this->get_variable_upper_bound(i);
       }
    }
 }
 
-double Problem::compute_constraint_violation(const Scaling& scaling, double constraint, size_t j) const {
-   const double scaled_lower_bound = scaling.get_constraint_scaling(j)*this->constraint_bounds[j].lb;
-   const double scaled_upper_bound = scaling.get_constraint_scaling(j)*this->constraint_bounds[j].ub;
-   return std::max(std::max(0., scaled_lower_bound - constraint), constraint - scaled_upper_bound);
+double Problem::compute_constraint_violation(double constraint, size_t j) const {
+   const double lower_bound = this->get_constraint_lower_bound(j);
+   const double upper_bound = this->get_constraint_upper_bound(j);
+   return std::max(std::max(0., lower_bound - constraint), constraint - upper_bound);
 }
 
 // compute ||c||
-double Problem::compute_constraint_violation(const Scaling& scaling, const std::vector<double>& constraints, Norm residual_norm) const {
+double Problem::compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const {
    // create a lambda to avoid allocating an std::vector
    auto residual_function = [&](size_t j) {
-      return this->compute_constraint_violation(scaling, constraints[j], j);
+      return this->compute_constraint_violation(constraints[j], j);
    };
    return norm(residual_function, constraints.size(), residual_norm);
 }
 
 // compute ||c_S|| for a given set of constraints
-double Problem::compute_constraint_violation(const Scaling& scaling, const std::vector<double>& constraints, const std::vector<size_t>& constraint_set,
-      Norm residual_norm) const {
+double Problem::compute_constraint_violation(const std::vector<double>& constraints, const std::vector<size_t>& constraint_set, Norm residual_norm) const {
    auto residual_function = [&](size_t k) {
       size_t j = constraint_set[k];
-      return this->compute_constraint_violation(scaling, constraints[j], j);
+      return this->compute_constraint_violation(constraints[j], j);
    };
    return norm(residual_function, constraint_set.size(), residual_norm);
 }

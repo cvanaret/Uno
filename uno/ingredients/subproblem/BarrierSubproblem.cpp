@@ -4,13 +4,13 @@
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
 #include "optimization/Preprocessing.hpp"
 
-BarrierSubproblem::BarrierSubproblem(const Problem& problem, const Scaling& scaling, size_t max_number_variables, const Options& options):
+BarrierSubproblem::BarrierSubproblem(const Problem& problem, size_t max_number_variables, const Options& options):
       // add the slacks to the variables
       Subproblem(problem.number_variables + problem.inequality_constraints.size(), // number_variables
             max_number_variables + problem.inequality_constraints.size(), // max_number_variables
             problem.number_constraints, true, SOC_UPON_REJECTION, true, norm_from_string(options.at("residual_norm"))),
       augmented_system(options.at("sparse_format"), this->max_number_variables + problem.number_constraints,
-            problem.hessian_maximum_number_nonzeros
+            problem.get_hessian_maximum_number_nonzeros()
             + this->max_number_variables /* proximal term */
             + this->max_number_variables + problem.number_constraints /* regularization */
             + 2 * this->max_number_variables /* diagonal barrier terms */
@@ -20,10 +20,10 @@ BarrierSubproblem::BarrierSubproblem(const Problem& problem, const Scaling& scal
       previous_barrier_parameter(std::stod(options.at("initial_barrier_parameter"))),
       tolerance(std::stod(options.at("tolerance"))),
       // if no trust region is used, the problem should be convexified. However, the inertia of the augmented matrix will be corrected later
-      hessian_model(HessianModelFactory::create(options.at("hessian_model"), this->max_number_variables, problem.hessian_maximum_number_nonzeros,
+      hessian_model(HessianModelFactory::create(options.at("hessian_model"), this->max_number_variables, problem.get_hessian_maximum_number_nonzeros(),
             false, options)),
       linear_solver(LinearSolverFactory::create(options.at("linear_solver"), this->max_number_variables + problem.number_constraints,
-            problem.hessian_maximum_number_nonzeros
+            problem.get_hessian_maximum_number_nonzeros()
             + this->max_number_variables + problem.number_constraints /* regularization */
             + 2 * this->max_number_variables /* diagonal barrier terms */
             + this->max_number_variables * problem.number_constraints /* Jacobian */)),
@@ -41,7 +41,9 @@ BarrierSubproblem::BarrierSubproblem(const Problem& problem, const Scaling& scal
       upper_bound_multipliers(this->max_number_variables),
       lower_delta_z(this->max_number_variables), upper_delta_z(this->max_number_variables) {
    // register the original variables bounds
-   copy_from(this->variables_bounds, problem.variables_bounds, problem.number_variables);
+   for (size_t i = 0; i < problem.number_variables; i++) {
+      this->variables_bounds[i] = {problem.get_variable_lower_bound(i), problem.get_variable_upper_bound(i)};
+   }
 
    // constraints are transformed into "c(x) = 0"
    for (size_t j = 0; j < problem.number_constraints; j++) {
@@ -51,10 +53,11 @@ BarrierSubproblem::BarrierSubproblem(const Problem& problem, const Scaling& scal
    // identify the bounded variables
    const bool use_trust_region = (options.at("mechanism") == "TR");
    for (size_t i = 0; i < problem.number_variables; i++) {
-      if (use_trust_region || (problem.variable_status[i] == BOUNDED_LOWER || problem.variable_status[i] == BOUNDED_BOTH_SIDES)) {
+      const ConstraintType variable_status = problem.get_variable_status(i);
+      if (use_trust_region || (variable_status == BOUNDED_LOWER || variable_status == BOUNDED_BOTH_SIDES)) {
          this->lower_bounded_variables.push_back(i);
       }
-      if (use_trust_region || (problem.variable_status[i] == BOUNDED_UPPER || problem.variable_status[i] == BOUNDED_BOTH_SIDES)) {
+      if (use_trust_region || (variable_status == BOUNDED_UPPER || variable_status == BOUNDED_BOTH_SIDES)) {
          this->upper_bounded_variables.push_back(i);
       }
    }
@@ -62,15 +65,15 @@ BarrierSubproblem::BarrierSubproblem(const Problem& problem, const Scaling& scal
    DEBUG << problem.inequality_constraints.size() << " slacks\n";
    problem.inequality_constraints.for_each([&](size_t j, size_t i) {
       const size_t slack_index = problem.number_variables + i;
-      if (problem.constraint_status[j] == BOUNDED_LOWER || problem.constraint_status[j] == BOUNDED_BOTH_SIDES) {
+      const ConstraintType constraint_status = problem.get_constraint_status(j);
+      if (constraint_status == BOUNDED_LOWER || constraint_status == BOUNDED_BOTH_SIDES) {
          this->lower_bounded_variables.push_back(slack_index);
       }
-      if (problem.constraint_status[j] == BOUNDED_UPPER || problem.constraint_status[j] == BOUNDED_BOTH_SIDES) {
+      if (constraint_status == BOUNDED_UPPER || constraint_status == BOUNDED_BOTH_SIDES) {
          this->upper_bounded_variables.push_back(slack_index);
       }
       // store the bounds of the slacks
-      const double scaling_factor = scaling.get_constraint_scaling(j);
-      this->variables_bounds[slack_index] = {scaling_factor*problem.constraint_bounds[j].lb, scaling_factor*problem.constraint_bounds[j].ub};
+      this->variables_bounds[slack_index] = {problem.get_constraint_lower_bound(j), problem.get_constraint_upper_bound(j)};
    });
 }
 
@@ -78,7 +81,7 @@ void BarrierSubproblem::set_initial_point(const std::vector<double>& /*initial_p
    // do nothing
 }
 
-inline void BarrierSubproblem::initialize(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& first_iterate) {
+inline void BarrierSubproblem::initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) {
    statistics.add_column("barrier param.", Statistics::double_width, 8);
 
    // resize to the new size (primals + slacks)
@@ -86,11 +89,12 @@ inline void BarrierSubproblem::initialize(Statistics& statistics, const Problem&
 
    // make the initial point strictly feasible wrt the bounds
    for (size_t i = 0; i < problem.number_variables; i++) {
-      first_iterate.x[i] = Subproblem::push_variable_to_interior(first_iterate.x[i], problem.variables_bounds[i], 1.);
+      const Range bounds = {problem.get_variable_lower_bound(i), problem.get_variable_upper_bound(i)};
+      first_iterate.x[i] = Subproblem::push_variable_to_interior(first_iterate.x[i], bounds);
    }
 
    // initialize the slacks and add contribution to the constraint Jacobian
-   BarrierSubproblem::add_slacks_to_iterate(problem, scaling, first_iterate);
+   BarrierSubproblem::add_slacks_to_iterate(problem, first_iterate);
    this->set_current_iterate(first_iterate);
 
    // set the bound multipliers
@@ -104,23 +108,23 @@ inline void BarrierSubproblem::initialize(Statistics& statistics, const Problem&
    // compute least-square multipliers
    if (problem.is_constrained()) {
       this->augmented_system.matrix->dimension = this->number_variables + problem.number_constraints;
-      Preprocessing::compute_least_square_multipliers(problem, scaling, *this->augmented_system.matrix, this->augmented_system.rhs,
-            *this->linear_solver, first_iterate, first_iterate.multipliers.constraints);
+      Preprocessing::compute_least_square_multipliers(problem, *this->augmented_system.matrix, this->augmented_system.rhs, *this->linear_solver,
+            first_iterate, first_iterate.multipliers.constraints);
    }
 }
 
-void BarrierSubproblem::add_slacks_to_iterate(const Problem& problem, const Scaling& scaling, Iterate& iterate) {
-   iterate.evaluate_constraints(problem, scaling);
-   iterate.evaluate_constraint_jacobian(problem, scaling);
+void BarrierSubproblem::add_slacks_to_iterate(const Problem& problem, Iterate& iterate) {
+   iterate.evaluate_constraints(problem);
+   iterate.evaluate_constraint_jacobian(problem);
    problem.inequality_constraints.for_each([&](size_t j, size_t i) {
-      const double scaling_factor = scaling.get_constraint_scaling(j);
-      const double slack_value = Subproblem::push_variable_to_interior(iterate.constraints[j], problem.constraint_bounds[j], scaling_factor);
+      const Range bounds = {problem.get_constraint_lower_bound(j), problem.get_constraint_upper_bound(j)};
+      const double slack_value = Subproblem::push_variable_to_interior(iterate.constraints[j], bounds);
       iterate.x[problem.number_variables + i] = slack_value;
       iterate.constraint_jacobian[j].insert(problem.number_variables + i, -1.);
    });
 }
 
-void BarrierSubproblem::create_current_subproblem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier,
+void BarrierSubproblem::create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier,
       double trust_region_radius) {
    // update the barrier parameter if the current iterate solves the subproblem
    this->update_barrier_parameter(current_iterate);
@@ -139,13 +143,13 @@ void BarrierSubproblem::create_current_subproblem(const Problem& problem, const 
    });
 
    // build a model of the objective scaled by the objective multiplier
-   this->build_objective_model(problem, scaling, current_iterate, objective_multiplier);
+   this->build_objective_model(problem, current_iterate, objective_multiplier);
 
    // variables and bounds
    this->set_variables_bounds(problem, current_iterate, trust_region_radius);
 }
 
-void BarrierSubproblem::build_objective_model(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier) {
+void BarrierSubproblem::build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
    // if we're building the feasibility subproblem, temporarily update the objective multiplier
    if (objective_multiplier == 0.) {
       this->solving_feasibility_problem = true;
@@ -159,10 +163,10 @@ void BarrierSubproblem::build_objective_model(const Problem& problem, const Scal
    }
 
    // evaluate the Hessian
-   this->hessian_model->evaluate(problem, scaling, current_iterate.x, objective_multiplier, this->constraints_multipliers);
+   this->hessian_model->evaluate(problem, current_iterate.x, objective_multiplier, this->constraints_multipliers);
 
    // objective gradient
-   this->set_scaled_objective_gradient(problem, scaling, current_iterate, objective_multiplier);
+   this->set_scaled_objective_gradient(problem, current_iterate, objective_multiplier);
    for (size_t i: this->lower_bounded_variables) {
       this->objective_gradient.insert(i, -this->barrier_parameter / (this->primal_iterate[i] - this->variables_bounds[i].lb));
    }
@@ -171,26 +175,24 @@ void BarrierSubproblem::build_objective_model(const Problem& problem, const Scal
    }
 }
 
-void BarrierSubproblem::evaluate_constraints(const Problem& problem, const Scaling& scaling, Iterate& iterate) {
+void BarrierSubproblem::evaluate_constraints(const Problem& problem, Iterate& iterate) {
    // evaluate the original constraints
-   Subproblem::evaluate_constraints(problem, scaling, iterate);
+   Subproblem::evaluate_constraints(problem, iterate);
    // add the slacks. It transforms the inequality constraints into "= 0" equalities
    problem.equality_constraints.for_each_index([&](size_t j) {
-      const double scaled_constant = scaling.get_constraint_scaling(j)*problem.constraint_bounds[j].lb;
-      iterate.subproblem_constraints[j] = iterate.constraints[j] - scaled_constant;
+      iterate.subproblem_constraints[j] = iterate.constraints[j] - problem.get_constraint_lower_bound(j);
    });
    problem.inequality_constraints.for_each([&](size_t j, size_t i) {
       iterate.subproblem_constraints[j] = iterate.constraints[j] - iterate.x[problem.number_variables + i];
    });
 }
 
-double BarrierSubproblem::compute_constraint_violation(const Problem& /*problem*/, const Scaling& /*scaling*/, Iterate& iterate) const {
+double BarrierSubproblem::compute_constraint_violation(const Problem& /*problem*/, Iterate& iterate) const {
    // constraints in the form "c(x) = 0"
    return norm_1(iterate.subproblem_constraints);
 }
 
-double BarrierSubproblem::compute_constraint_violation(const Problem& /*problem*/, const Scaling& /*scaling*/, Iterate& iterate,
-      const std::vector<size_t>& constraint_set) const {
+double BarrierSubproblem::compute_constraint_violation(const Problem& /*problem*/, Iterate& iterate, const std::vector<size_t>& constraint_set) const {
    // compute l1 norm of the set of violated constraints
    double constraint_violation = 0.;
    for (size_t j: constraint_set) {
@@ -235,12 +237,11 @@ void BarrierSubproblem::assemble_augmented_system(const Problem& problem, const 
    this->generate_augmented_rhs(current_iterate);
 }
 
-Direction BarrierSubproblem::compute_second_order_correction(const Problem& problem, const Scaling& scaling, Iterate& trial_iterate) {
+Direction BarrierSubproblem::compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) {
    DEBUG << "\nEntered SOC computation\n";
    // modify the RHS by adding the values of the constraints
    problem.equality_constraints.for_each_index([&](size_t j) {
-      const double scaled_constant = scaling.get_constraint_scaling(j)*problem.constraint_bounds[j].lb;
-      this->augmented_system.rhs[this->number_variables + j] -= trial_iterate.constraints[j] - scaled_constant;
+      this->augmented_system.rhs[this->number_variables + j] -= trial_iterate.constraints[j] - problem.get_constraint_lower_bound(j);
    });
    problem.inequality_constraints.for_each([&](size_t j, size_t i) {
       this->augmented_system.rhs[this->number_variables + j] -= trial_iterate.constraints[j] - trial_iterate.x[problem.number_variables + i];
@@ -303,10 +304,10 @@ PredictedReductionModel BarrierSubproblem::generate_predicted_reduction_model(co
    });
 }
 
-void BarrierSubproblem::compute_progress_measures(const Problem& problem, const Scaling& scaling, Iterate& iterate) {
+void BarrierSubproblem::compute_progress_measures(const Problem& problem, Iterate& iterate) {
    const double constraint_violation = norm_1(iterate.subproblem_constraints);
    // compute barrier objective
-   const double barrier_objective = this->evaluate_barrier_function(problem, scaling, iterate);
+   const double barrier_objective = this->evaluate_barrier_function(problem, iterate);
    iterate.progress = {constraint_violation, barrier_objective};
 }
 
@@ -341,8 +342,8 @@ void BarrierSubproblem::set_variables_bounds(const Problem& problem, const Itera
    // here, we work with the original bounds
    // very important: apply the trust region only on the original variables (not the slacks)
    for (size_t i = 0; i < problem.number_variables; i++) {
-      double lb = std::max(current_iterate.x[i] - trust_region_radius, problem.variables_bounds[i].lb);
-      double ub = std::min(current_iterate.x[i] + trust_region_radius, problem.variables_bounds[i].ub);
+      double lb = std::max(current_iterate.x[i] - trust_region_radius, problem.get_variable_lower_bound(i));
+      double ub = std::min(current_iterate.x[i] + trust_region_radius, problem.get_variable_upper_bound(i));
       this->variables_bounds[i] = {lb, ub};
    }
 }
@@ -351,7 +352,7 @@ double BarrierSubproblem::compute_barrier_directional_derivative(const std::vect
    return dot(solution, this->objective_gradient);
 }
 
-double BarrierSubproblem::evaluate_barrier_function(const Problem& problem, const Scaling& scaling, Iterate& iterate) {
+double BarrierSubproblem::evaluate_barrier_function(const Problem& problem, Iterate& iterate) {
    double objective = 0.;
    // bound constraints
    for (size_t i: this->lower_bounded_variables) {
@@ -363,7 +364,7 @@ double BarrierSubproblem::evaluate_barrier_function(const Problem& problem, cons
    objective *= this->barrier_parameter;
    if (!this->solving_feasibility_problem) {
       // original objective
-      iterate.evaluate_objective(problem, scaling);
+      iterate.evaluate_objective(problem);
       objective += iterate.objective;
    }
    else if (this->use_proximal_term) { // proximal term in feasibility problem

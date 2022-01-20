@@ -6,13 +6,9 @@ LPSubproblem::LPSubproblem(const Problem& problem, size_t max_number_variables, 
             norm_from_string(options.at("residual_norm"))),
       solver(LPSolverFactory::create(max_number_variables, this->number_constraints, options.at("LP_solver"))),
       initial_point(max_number_variables) {
-   // register the original constraints bounds
-   for (size_t j = 0; j < problem.number_constraints; j++) {
-      this->constraints_bounds[j] = problem.constraint_bounds[j];
-   }
 }
 
-void LPSubproblem::create_current_subproblem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier,
+void LPSubproblem::create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier,
       double trust_region_radius) {
    copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
    // compute first- and second-order information
@@ -20,10 +16,10 @@ void LPSubproblem::create_current_subproblem(const Problem& problem, const Scali
    for (auto& row: this->constraint_jacobian) {
       row.clear();
    }
-   current_iterate.evaluate_constraint_jacobian(problem, scaling);
+   current_iterate.evaluate_constraint_jacobian(problem);
    this->constraint_jacobian = current_iterate.constraint_jacobian;
 
-   this->build_objective_model(problem, scaling, current_iterate, objective_multiplier);
+   this->build_objective_model(problem, current_iterate, objective_multiplier);
 
    // bounds of the variables
    this->set_variables_bounds(problem, current_iterate, trust_region_radius);
@@ -35,9 +31,9 @@ void LPSubproblem::create_current_subproblem(const Problem& problem, const Scali
    initialize_vector(this->initial_point, 0.);
 }
 
-void LPSubproblem::build_objective_model(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier) {
+void LPSubproblem::build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
    // objective gradient
-   this->set_scaled_objective_gradient(problem, scaling, current_iterate, objective_multiplier);
+   this->set_scaled_objective_gradient(problem, current_iterate, objective_multiplier);
 
    // initial point
    initialize_vector(this->initial_point, 0.);

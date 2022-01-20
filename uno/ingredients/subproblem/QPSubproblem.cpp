@@ -6,26 +6,26 @@ QPSubproblem::QPSubproblem(const Problem& problem, size_t max_number_variables, 
             norm_from_string(options.at("residual_norm"))),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
       solver(QPSolverFactory::create(options.at("QP_solver"), max_number_variables, problem.number_constraints,
-            problem.hessian_maximum_number_nonzeros + max_number_variables, true)),
+            problem.get_hessian_maximum_number_nonzeros() + max_number_variables, true)),
       // if no trust region is used, the problem should be convexified to guarantee boundedness + descent direction
       hessian_model(HessianModelFactory::create(options.at("hessian_model"), max_number_variables,
-            problem.hessian_maximum_number_nonzeros + max_number_variables, options.at("mechanism") != "TR", options)),
+            problem.get_hessian_maximum_number_nonzeros() + max_number_variables, options.at("mechanism") != "TR", options)),
       initial_point(max_number_variables) {
 }
 
-void QPSubproblem::create_current_subproblem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier,
+void QPSubproblem::create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier,
       double trust_region_radius) {
    copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
 
    // constraints
-   current_iterate.evaluate_constraints(problem, scaling);
+   current_iterate.evaluate_constraints(problem);
 
    // constraint Jacobian
-   current_iterate.evaluate_constraint_jacobian(problem, scaling);
+   current_iterate.evaluate_constraint_jacobian(problem);
    this->constraint_jacobian = current_iterate.constraint_jacobian;
 
    // objective
-   this->build_objective_model(problem, scaling, current_iterate, objective_multiplier);
+   this->build_objective_model(problem, current_iterate, objective_multiplier);
 
    // bounds of the variables
    this->set_variables_bounds(problem, current_iterate, trust_region_radius);
@@ -37,12 +37,12 @@ void QPSubproblem::create_current_subproblem(const Problem& problem, const Scali
    initialize_vector(this->initial_point, 0.);
 }
 
-void QPSubproblem::build_objective_model(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double objective_multiplier) {
+void QPSubproblem::build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
    // Hessian
-   this->hessian_model->evaluate(problem, scaling, current_iterate.x, objective_multiplier, this->constraints_multipliers);
+   this->hessian_model->evaluate(problem, current_iterate.x, objective_multiplier, this->constraints_multipliers);
 
    // objective gradient
-   this->set_scaled_objective_gradient(problem, scaling, current_iterate, objective_multiplier);
+   this->set_scaled_objective_gradient(problem, current_iterate, objective_multiplier);
 
    // initial point
    initialize_vector(this->initial_point, 0.);

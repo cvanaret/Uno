@@ -1,14 +1,15 @@
 #include "Preprocessing.hpp"
 #include "solvers/QP/BQPDSolver.hpp"
 
-void Preprocessing::enforce_linear_constraints(const Problem& problem, const Scaling& scaling, Iterate& first_iterate) {
+void Preprocessing::enforce_linear_constraints(const Problem& problem, Iterate& first_iterate) {
    INFO << "Preprocessing phase: the problem has " << problem.linear_constraints.size() << " linear constraints\n";
    if (!problem.linear_constraints.empty()) {
       // count the infeasible constraints
-      first_iterate.evaluate_constraints(problem, scaling);
+      first_iterate.evaluate_constraints(problem);
       int infeasible_linear_constraints = 0;
       problem.linear_constraints.for_each_index([&](size_t j) {
-         if (first_iterate.constraints[j] < problem.constraint_bounds[j].lb || problem.constraint_bounds[j].ub < first_iterate.constraints[j]) {
+         if (first_iterate.constraints[j] < problem.get_constraint_lower_bound(j) ||
+            problem.get_constraint_upper_bound(j) < first_iterate.constraints[j]) {
             infeasible_linear_constraints++;
          }
       });
@@ -35,14 +36,15 @@ void Preprocessing::enforce_linear_constraints(const Problem& problem, const Sca
          // variables bounds
          std::vector<Range> variables_bounds(problem.number_variables);
          for (size_t i = 0; i < problem.number_variables; i++) {
-            variables_bounds[i] = {problem.variables_bounds[i].lb - first_iterate.x[i], problem.variables_bounds[i].ub - first_iterate.x[i]};
+            variables_bounds[i] = {problem.get_variable_lower_bound(i) - first_iterate.x[i],
+                                   problem.get_variable_upper_bound(i) - first_iterate.x[i]};
          }
 
          // constraints bounds
          std::vector<Range> constraints_bounds(number_constraints);
          problem.linear_constraints.for_each([&](size_t j, size_t linear_constraint_index) {
-            constraints_bounds[linear_constraint_index] = {problem.constraint_bounds[j].lb - first_iterate.constraints[j],
-                                                           problem.constraint_bounds[j].ub - first_iterate.constraints[j]};
+            constraints_bounds[linear_constraint_index] = {problem.get_constraint_lower_bound(j) - first_iterate.constraints[j],
+                                                           problem.get_constraint_upper_bound(j) - first_iterate.constraints[j]};
          });
 
          // solve the convex QP
@@ -66,12 +68,12 @@ void Preprocessing::enforce_linear_constraints(const Problem& problem, const Sca
 }
 
 // compute a least-square approximation of the multipliers by solving a linear system (uses existing linear system)
-void Preprocessing::compute_least_square_multipliers(const Problem& problem, const Scaling& scaling, SymmetricMatrix& matrix,
+void Preprocessing::compute_least_square_multipliers(const Problem& problem, SymmetricMatrix& matrix,
       std::vector<double>& rhs, LinearSolver& solver, Iterate& current_iterate, std::vector<double>& multipliers, double multipliers_max_norm) {
    const size_t number_variables = current_iterate.x.size();
    const size_t number_constraints = multipliers.size();
-   current_iterate.evaluate_objective_gradient(problem, scaling);
-   current_iterate.evaluate_constraint_jacobian(problem, scaling);
+   current_iterate.evaluate_objective_gradient(problem);
+   current_iterate.evaluate_constraint_jacobian(problem);
 
    /******************************/
    /* build the symmetric matrix */
