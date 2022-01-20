@@ -4,7 +4,6 @@
 #include <vector>
 #include "Problem.hpp"
 #include "Constraint.hpp"
-#include "Scaling.hpp"
 
 struct Errors {
    double constraints;
@@ -50,13 +49,12 @@ public:
    Errors nonlinear_errors{0., 0., 0., 0.};
    ProgressMeasures progress{0., 0.};
 
-   void evaluate_objective(const Problem& problem, const Scaling& scaling);
-   void evaluate_constraints(const Problem& problem, const Scaling& scaling);
-   void evaluate_objective_gradient(const Problem& problem, const Scaling& scaling);
-   void evaluate_constraint_jacobian(const Problem& problem, const Scaling& scaling);
-   void evaluate_lagrangian_gradient(const Problem& problem, const Scaling& scaling, double objective_multiplier,
-         const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bounds_multipliers,
-         const std::vector<double>& upper_bounds_multipliers);
+   void evaluate_objective(const Problem& problem);
+   void evaluate_constraints(const Problem& problem);
+   void evaluate_objective_gradient(const Problem& problem);
+   void evaluate_constraint_jacobian(const Problem& problem);
+   void evaluate_lagrangian_gradient(const Problem& problem, double objective_multiplier, const std::vector<double>& constraint_multipliers,
+         const std::vector<double>& lower_bounds_multipliers, const std::vector<double>& upper_bounds_multipliers);
 
    void set_number_variables(size_t number_variables);
    void reset_evaluations();

@@ -17,7 +17,6 @@ struct Result {
 
    TerminationStatus status;
    Iterate solution;
-   Scaling scaling;
    size_t number_variables;
    size_t number_constraints;
    size_t iteration;
@@ -46,7 +45,8 @@ public:
    /*!
     *  Solve a given problem with initial primal and dual variables
     */
-   Result solve(const Problem& problem, const Scaling& scaling, Iterate& first_iterate, bool enforce_linear_constraints);
+   Result solve(const Problem& problem, Iterate& first_iterate, bool enforce_linear_constraints);
+   static void postsolve_solution(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, TerminationStatus termination_status);
 
 private:
    GlobalizationMechanism& globalization_mechanism; /*!< Step control strategy (trust region or line-search) */
@@ -58,7 +58,6 @@ private:
    static void add_statistics(Statistics& statistics, const Problem& problem, const Iterate& new_iterate, size_t major_iterations);
    [[nodiscard]] bool termination_criterion(TerminationStatus current_status, size_t iteration) const;
    [[nodiscard]] TerminationStatus check_termination(const Problem& problem, const Iterate& current_iterate, double step_norm) const;
-   static void postsolve_solution(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, TerminationStatus termination_status);
 };
 
 #endif // UNO_H

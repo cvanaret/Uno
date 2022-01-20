@@ -13,19 +13,19 @@
 
 class ConstraintRelaxationStrategy {
 public:
-   ConstraintRelaxationStrategy(const Problem& problem, const Scaling& scaling, const Options& options);
+   ConstraintRelaxationStrategy(const Problem& problem, const Options& options);
    virtual ~ConstraintRelaxationStrategy() = default;
 
-   virtual void initialize(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& first_iterate) = 0;
-   virtual void create_current_subproblem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double trust_region_radius) = 0;
+   virtual void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) = 0;
+   virtual void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) = 0;
 
-   virtual Direction compute_feasible_direction(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate) = 0;
-   virtual Direction solve_feasibility_problem(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
+   virtual Direction compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) = 0;
+   virtual Direction solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate,
          const std::optional<std::vector<double>>& optional_phase_2_primal_direction,
          const std::optional<ConstraintPartition>& optional_constraint_partition) = 0;
-   virtual Direction compute_second_order_correction(const Problem& problem, const Scaling& scaling, Iterate& trial_iterate);
+   virtual Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate);
 
-   virtual bool is_acceptable(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
+   virtual bool is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, PredictedReductionModel& predicted_reduction_model, double step_length) = 0;
    virtual void register_accepted_iterate(Iterate& iterate);
 
@@ -44,8 +44,8 @@ protected:
    static size_t count_elastic_variables(const Problem& problem, bool subproblem_uses_slacks);
    static void generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables, size_t number_variables,
          bool subproblem_uses_slacks);
-   void evaluate_constraints(const Problem& problem, const Scaling& scaling, Iterate& iterate);
-   void evaluate_relaxed_constraints(const Problem& problem, const Scaling& scaling, Iterate& iterate);
+   void evaluate_constraints(const Problem& problem, Iterate& iterate);
+   void evaluate_relaxed_constraints(const Problem& problem, Iterate& iterate);
    static bool is_small_step(const Direction& direction);
    void add_elastic_variables_to_subproblem(const Problem& problem, Iterate& current_iterate);
    void remove_elastic_variables_from_subproblem();

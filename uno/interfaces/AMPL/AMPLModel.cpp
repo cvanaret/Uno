@@ -33,7 +33,14 @@ AMPLModel::AMPLModel(const std::string& file_name) : AMPLModel(file_name, genera
 
 AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
       Problem(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_), NONLINEAR),
-      asl_(asl), ampl_tmp_gradient(this->number_variables) {
+      asl_(asl),
+      // allocate vectors
+      variables_bounds(this->number_variables),
+      constraint_bounds(this->number_constraints),
+      variable_status(this->number_variables),
+      constraint_type(this->number_constraints),
+      constraint_status(this->number_constraints),
+      ampl_tmp_gradient(this->number_variables) {
    this->asl_->i.congrd_mode = 0;
 
    // dimensions
@@ -66,6 +73,14 @@ void AMPLModel::generate_variables() {
    Problem::determine_bounds_types(this->variables_bounds, this->variable_status);
 }
 
+double AMPLModel::get_variable_lower_bound(size_t i) const {
+   return this->variables_bounds[i].lb;
+}
+
+double AMPLModel::get_variable_upper_bound(size_t i) const {
+   return this->variables_bounds[i].ub;
+}
+
 double AMPLModel::evaluate_objective(const std::vector<double>& x) const {
    int nerror = 0;
    double result = this->objective_sign * (*(this->asl_)->p.Objval)(this->asl_, 0, const_cast<double*>(x.data()), &nerror);
@@ -87,12 +102,8 @@ void AMPLModel::evaluate_objective_gradient(const std::vector<double>& x, Sparse
    // partial derivatives in same order as variables in this->asl_->i.Ograd_[0]
    ograd* ampl_variables_tmp = this->asl_->i.Ograd_[0];
    while (ampl_variables_tmp != nullptr) {
-      size_t index = static_cast<size_t>(ampl_variables_tmp->varno);
-      double partial_derivative = this->ampl_tmp_gradient[index];
-      // if maximization, take the opposite
-      if (this->objective_sign < 0.) {
-         partial_derivative = -partial_derivative;
-      }
+      const size_t index = static_cast<size_t>(ampl_variables_tmp->varno);
+      const double partial_derivative = this->objective_sign*this->ampl_tmp_gradient[index];
       gradient.insert(index, partial_derivative);
       //gradient[ampl_variables_tmp->varno] = partial_derivative;
       ampl_variables_tmp = ampl_variables_tmp->next;
@@ -161,6 +172,14 @@ void AMPLModel::generate_constraints() {
    }
    Problem::determine_bounds_types(this->constraint_bounds, this->constraint_status);
    this->determine_constraints();
+}
+
+double AMPLModel::get_constraint_lower_bound(size_t j) const {
+   return this->constraint_bounds[j].lb;
+}
+
+double AMPLModel::get_constraint_upper_bound(size_t j) const {
+   return this->constraint_bounds[j].ub;
 }
 
 void AMPLModel::set_function_types(std::string file_name) {
@@ -299,6 +318,22 @@ void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double
    hessian.dimension = this->number_variables;
    // unregister the vector of variables
    this->asl_->i.x_known = 0;
+}
+
+ConstraintType AMPLModel::get_variable_status(size_t i) const {
+   return this->variable_status[i];
+}
+
+FunctionType AMPLModel::get_constraint_type(size_t j) const {
+   return this->constraint_type[j];
+}
+
+ConstraintType AMPLModel::get_constraint_status(size_t j) const {
+   return this->constraint_status[j];
+}
+
+size_t AMPLModel::get_hessian_maximum_number_nonzeros() const {
+   return this->hessian_maximum_number_nonzeros;
 }
 
 // initial primal point

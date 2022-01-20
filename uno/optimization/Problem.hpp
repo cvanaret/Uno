@@ -8,7 +8,6 @@
 #include "linear_algebra/CSCSymmetricMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "Scaling.hpp"
 
 enum FunctionType {
    LINEAR = 0, /*!< Linear function */
@@ -17,23 +16,23 @@ enum FunctionType {
 };
 
 struct NumericalError : public std::exception {
-   virtual const char* what() const throw() = 0;
+   [[nodiscard]] const char* what() const throw() override = 0;
 };
 
 struct HessianNumericalError : NumericalError {
-   [[nodiscard]] const char* what() const throw() {
+   [[nodiscard]] const char* what() const throw() override {
       return "A numerical error was encountered while evaluating the Hessian";
    }
 };
 
 struct GradientNumericalError : NumericalError {
-   [[nodiscard]] const char* what() const throw() {
+   [[nodiscard]] const char* what() const throw() override {
       return "A numerical error was encountered while evaluating a gradient";
    }
 };
 
 struct FunctionNumericalError : NumericalError {
-   [[nodiscard]] const char* what() const throw() {
+   [[nodiscard]] const char* what() const throw() override {
       return "A numerical error was encountered while evaluating a function";
    }
 };
@@ -55,28 +54,22 @@ public:
    const size_t number_constraints; /*!< Number of constraints */
    FunctionType problem_type;
 
-   /* objective */
+   // objective
    double objective_sign{1.}; /*!< Sign of the objective function (1: minimization, -1: maximization) */
    FunctionType objective_type{NONLINEAR}; /*!< Type of the objective (LINEAR, QUADRATIC, NONLINEAR) */
 
-   /* variables */
-   std::vector<Range> variables_bounds;
-   std::vector<ConstraintType> variable_status; /*!< Status of the variables (EQUALITY, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES) */
-
-   /* constraints */
-   std::vector<Range> constraint_bounds;
-   std::vector<FunctionType> constraint_type; /*!< Types of the constraints (LINEAR, QUADRATIC, NONLINEAR) */
-   std::vector<ConstraintType> constraint_status; /*!< Status of the constraints (EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES,
- * UNBOUNDED) */
    SparseVector<size_t> equality_constraints; /*!< inequality constraints */
    SparseVector<size_t> inequality_constraints; /*!< inequality constraints */
    SparseVector<size_t> linear_constraints;
 
-   /* Hessian */
-   size_t hessian_maximum_number_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */
+   // Hessian
    const bool fixed_hessian_sparsity{false};
 
    // purely virtual functions
+   [[nodiscard]] virtual double get_variable_lower_bound(size_t i) const = 0;
+   [[nodiscard]] virtual double get_variable_upper_bound(size_t i) const = 0;
+   [[nodiscard]] virtual double get_constraint_lower_bound(size_t j) const = 0;
+   [[nodiscard]] virtual double get_constraint_upper_bound(size_t j) const = 0;
    [[nodiscard]] virtual double evaluate_objective(const std::vector<double>& x) const = 0;
    virtual void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const = 0;
    virtual void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const = 0;
@@ -85,6 +78,11 @@ public:
    virtual void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
          SymmetricMatrix& hessian) const = 0;
 
+   [[nodiscard]] virtual ConstraintType get_variable_status(size_t i) const = 0;
+   [[nodiscard]] virtual FunctionType get_constraint_type(size_t j) const = 0;
+   [[nodiscard]] virtual ConstraintType get_constraint_status(size_t j) const = 0;
+   [[nodiscard]] virtual size_t get_hessian_maximum_number_nonzeros() const = 0;
+
    virtual void get_initial_primal_point(std::vector<double>& x) const = 0;
    virtual void get_initial_dual_point(std::vector<double>& multipliers) const = 0;
 
@@ -92,13 +90,14 @@ public:
    [[nodiscard]] std::vector<double> evaluate_constraints(const std::vector<double>& x) const;
    static void determine_bounds_types(std::vector<Range>& variables_bounds, std::vector<ConstraintType>& status);
    void project_point_in_bounds(std::vector<double>& x) const;
-   [[nodiscard]] double compute_constraint_violation(const Scaling& scaling, double constraint, size_t j) const;
-   [[nodiscard]] double compute_constraint_violation(const Scaling& scaling, const std::vector<double>& constraints, Norm residual_norm) const;
-   [[nodiscard]] double compute_constraint_violation(const Scaling& scaling, const std::vector<double>& constraints,
-         const std::vector<size_t>& constraint_set, Norm residual_norm) const;
+   [[nodiscard]] double compute_constraint_violation(double constraint, size_t j) const;
+   [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const;
+   [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, const std::vector<size_t>& constraint_set,
+         Norm residual_norm) const;
    [[nodiscard]] bool is_constrained() const;
 
 protected:
+   size_t hessian_maximum_number_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */
    void determine_constraints();
 };
 

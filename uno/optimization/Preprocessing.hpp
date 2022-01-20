@@ -8,9 +8,9 @@
 
 class Preprocessing {
 public:
-   static void enforce_linear_constraints(const Problem& problem, const Scaling& scaling, Iterate& first_iterate);
-   static void compute_least_square_multipliers(const Problem& problem, const Scaling& scaling, SymmetricMatrix& matrix, std::vector<double>& rhs,
-         LinearSolver& solver, Iterate& current_iterate, std::vector<double>& multipliers, double multipliers_max_norm = 1e3);
+   static void enforce_linear_constraints(const Problem& problem, Iterate& first_iterate);
+   static void compute_least_square_multipliers(const Problem& problem, SymmetricMatrix& matrix, std::vector<double>& rhs, LinearSolver& solver,
+         Iterate& current_iterate, std::vector<double>& multipliers, double multipliers_max_norm = 1e3);
 };
 
 #endif //UNO_PREPROCESSING_H

@@ -10,17 +10,17 @@ enum Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 
 class FeasibilityRestoration : public ConstraintRelaxationStrategy {
 public:
-   FeasibilityRestoration(const Problem& problem, const Scaling& scaling, const Options& options);
-   void initialize(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& first_iterate) override;
+   FeasibilityRestoration(const Problem& problem, const Options& options);
+   void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) override;
 
    // direction computation
-   void create_current_subproblem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, double trust_region_radius) override;
-   Direction compute_feasible_direction(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate) override;
-   Direction solve_feasibility_problem(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
+   void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) override;
+   Direction compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
+   Direction solve_feasibility_problem(Statistics& statistics, const Problem& problem, Iterate& current_iterate,
          const std::optional<std::vector<double>>& optional_phase_2_primal_direction,
          const std::optional<ConstraintPartition>& optional_constraint_partition) override;
 
-   bool is_acceptable(Statistics& statistics, const Problem& problem, const Scaling& scaling, Iterate& current_iterate, Iterate& trial_iterate,
+   bool is_acceptable(Statistics& statistics, const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, PredictedReductionModel& predicted_reduction_model, double step_length) override;
 
 private:
@@ -28,13 +28,13 @@ private:
    const std::unique_ptr<GlobalizationStrategy> phase_2_strategy;
    Phase current_phase{OPTIMALITY};
 
-   void create_current_feasibility_problem(const Problem& problem, const Scaling& scaling, Iterate& current_iterate,
+   void create_current_feasibility_problem(const Problem& problem, Iterate& current_iterate,
          const std::optional<std::vector<double>>& optional_phase_2_primal_direction,
          const std::optional<ConstraintPartition>& optional_constraint_partition);
-   GlobalizationStrategy& switch_phase(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, Iterate& trial_iterate,
+   GlobalizationStrategy& switch_phase(const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction);
    static void set_restoration_multipliers(std::vector<double>& constraints_multipliers, const ConstraintPartition& constraint_partition);
-   void compute_infeasibility_measures(const Problem& problem, const Scaling& scaling, Iterate& iterate,
+   void compute_infeasibility_measures(const Problem& problem, Iterate& iterate,
          const std::optional<ConstraintPartition>& optional_constraint_partition);
 };
 

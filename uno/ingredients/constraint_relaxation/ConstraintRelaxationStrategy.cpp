@@ -2,8 +2,8 @@
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 #include "optimization/Constraint.hpp"
 
-ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Problem& problem, const Scaling& scaling, const Options& options):
-      subproblem(SubproblemFactory::create(problem, scaling,
+ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Problem& problem, const Options& options):
+      subproblem(SubproblemFactory::create(problem,
             problem.number_variables + ConstraintRelaxationStrategy::count_elastic_variables(problem, true),
             options)),
       elastic_variables(ConstraintRelaxationStrategy::count_elastic_variables(problem, this->subproblem->uses_slacks)),
@@ -21,10 +21,10 @@ size_t ConstraintRelaxationStrategy::count_elastic_variables(const Problem& prob
    size_t number_elastic_variables = 0;
    // if the subproblem uses slack variables, the bounds of the constraints are [0, 0]
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      if (subproblem_uses_slacks || is_finite_lower_bound(problem.constraint_bounds[j].lb)) {
+      if (subproblem_uses_slacks || is_finite_lower_bound(problem.get_constraint_lower_bound(j))) {
          number_elastic_variables++;
       }
-      if (subproblem_uses_slacks || is_finite_upper_bound(problem.constraint_bounds[j].ub)) {
+      if (subproblem_uses_slacks || is_finite_upper_bound(problem.get_constraint_upper_bound(j))) {
          number_elastic_variables++;
       }
    }
@@ -37,12 +37,12 @@ void ConstraintRelaxationStrategy::generate_elastic_variables(const Problem& pro
    // if the subproblem uses slack variables, the bounds of the constraints are [0, 0]
    size_t elastic_index = number_variables;
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      if (subproblem_uses_slacks || is_finite_lower_bound(problem.constraint_bounds[j].lb)) {
+      if (subproblem_uses_slacks || is_finite_lower_bound(problem.get_constraint_lower_bound(j))) {
          // nonpositive variable n that captures the negative part of the constraint violation
          elastic_variables.negative.insert(j, elastic_index);
          elastic_index++;
       }
-      if (subproblem_uses_slacks || is_finite_upper_bound(problem.constraint_bounds[j].ub)) {
+      if (subproblem_uses_slacks || is_finite_upper_bound(problem.get_constraint_upper_bound(j))) {
          // nonnegative variable p that captures the positive part of the constraint violation
          elastic_variables.positive.insert(j, elastic_index);
          elastic_index++;
@@ -50,13 +50,13 @@ void ConstraintRelaxationStrategy::generate_elastic_variables(const Problem& pro
    }
 }
 
-void ConstraintRelaxationStrategy::evaluate_constraints(const Problem& problem, const Scaling& scaling, Iterate& iterate) {
-   this->subproblem->evaluate_constraints(problem, scaling, iterate);
+void ConstraintRelaxationStrategy::evaluate_constraints(const Problem& problem, Iterate& iterate) {
+   this->subproblem->evaluate_constraints(problem, iterate);
 }
 
-void ConstraintRelaxationStrategy::evaluate_relaxed_constraints(const Problem& problem, const Scaling& scaling, Iterate& iterate) {
+void ConstraintRelaxationStrategy::evaluate_relaxed_constraints(const Problem& problem, Iterate& iterate) {
    // evaluate the constraints of the subproblem
-   this->evaluate_constraints(problem, scaling, iterate);
+   this->evaluate_constraints(problem, iterate);
    // add the elastic variables
    this->elastic_variables.positive.for_each([&](size_t j, size_t i) {
       iterate.subproblem_constraints[j] -= iterate.x[i];
@@ -144,8 +144,8 @@ void ConstraintRelaxationStrategy::recover_active_set(const Problem& problem, Di
     */
 }
 
-Direction ConstraintRelaxationStrategy::compute_second_order_correction(const Problem& problem, const Scaling& scaling, Iterate& trial_iterate) {
-   return this->subproblem->compute_second_order_correction(problem, scaling, trial_iterate);
+Direction ConstraintRelaxationStrategy::compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) {
+   return this->subproblem->compute_second_order_correction(problem, trial_iterate);
 }
 
 PredictedReductionModel ConstraintRelaxationStrategy::generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const {
