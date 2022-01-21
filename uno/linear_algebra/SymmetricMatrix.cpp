@@ -1,9 +1,7 @@
 #include <exception>
-#include <cmath>
 #include <cassert>
 #include <iomanip>
 #include "SymmetricMatrix.hpp"
-#include "SymmetricMatrixFactory.hpp"
 
 SymmetricMatrix::SymmetricMatrix(size_t dimension, size_t capacity) : dimension(dimension), capacity(capacity) {
    entries.reserve(capacity);
@@ -59,7 +57,7 @@ void SymmetricMatrix::finalize(size_t /*column_index*/) {
 }
 
 std::ostream& operator<<(std::ostream& stream, const SymmetricMatrix& matrix) {
-   stream << "dim = " << matrix.dimension << ", nnz = " << matrix.number_nonzeros << "\n";
+   stream << matrix.dimension << " variables, " << matrix.number_nonzeros << " non zeros:\n";
    matrix.print(stream);
    return stream;
 }

@@ -183,7 +183,6 @@ CSCSymmetricMatrix CSCSymmetricMatrix::identity(size_t dimension) {
 }
 
 void CSCSymmetricMatrix::print(std::ostream& stream) const {
-   stream << this->dimension << " variables, " << this->number_nonzeros << " non zeros:\n";
    stream << "W = ";
    print_vector(stream, this->entries, 0, this->number_nonzeros);
    stream << "with column start: ";

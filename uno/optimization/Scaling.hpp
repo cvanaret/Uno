@@ -14,7 +14,7 @@ public:
 protected:
    const double gradient_threshold;
    double objective_scaling;
-   std::vector<double> constraints_scaling;
+   std::vector<double> constraint_scaling;
 };
 
 #endif // UNO_SCALING_H

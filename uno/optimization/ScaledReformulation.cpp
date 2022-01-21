@@ -6,19 +6,12 @@ ScaledReformulation::ScaledReformulation(const Problem& original_problem, const 
             original_problem.number_constraints, // number of constraints
             original_problem.problem_type), // problem type
       original_problem(original_problem),
-      scaling(scaling),
-      scaled_multipliers(this->number_constraints) {
+      scaling(scaling) {
    // check the scaling factors
    assert(0 <= this->scaling.get_objective_scaling() && "Objective scaling failed.");
    for (size_t j = 0; j < this->number_constraints; j++) {
       assert(0 <= this->scaling.get_constraint_scaling(j) && "Constraint scaling failed.");
    }
-   DEBUG << "Objective scaling: " << this->scaling.get_objective_scaling() << "\n";
-   DEBUG << "Constraint scaling: ";
-   for (size_t j = 0; j < this->number_constraints; j++) {
-      DEBUG << this->scaling.get_constraint_scaling(j);
-   }
-   DEBUG << "\n";
    // the constraint distribution is the same as in the original problem
    this->equality_constraints = this->original_problem.equality_constraints;
    this->inequality_constraints = this->original_problem.inequality_constraints;

@@ -3,7 +3,6 @@
 
 #include <vector>
 #include <memory>
-#include "ingredients/constraint_relaxation/ElasticVariables.hpp"
 #include "optimization/Problem.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/Constraint.hpp"
@@ -21,8 +20,6 @@ enum SecondOrderCorrection {
 
 /*! \class Subproblem
  * \brief Subproblem
- *
- *  Local approximation of a nonlinear optimization problem (virtual class) 
  */
 class Subproblem {
 public:
@@ -32,13 +29,13 @@ public:
 
    // virtual methods implemented by subclasses
    virtual void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate);
-   virtual void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier,
+   virtual void build_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier,
          double trust_region_radius) = 0;
    virtual void build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) = 0;
    virtual void evaluate_constraints(const Problem& problem, Iterate& iterate);
-   virtual double compute_constraint_violation(const Problem& problem, Iterate& iterate) const;
-   virtual double compute_constraint_violation(const Problem& problem, Iterate& iterate,
-         const std::vector<size_t>& constraint_set) const;
+   [[nodiscard]] virtual double compute_constraint_violation(const Problem& problem, Iterate& iterate) const;
+   [[nodiscard]] virtual double compute_constraint_violation(const Problem& problem, Iterate& iterate, const std::vector<size_t>& constraint_set)
+      const;
    virtual void add_elastic_variables(const Problem& problem, Iterate& current_iterate, double objective_coefficient);
    virtual void remove_elastic_variable(size_t i, size_t j);
 
@@ -61,7 +58,7 @@ public:
    void generate_feasibility_bounds(const Problem& problem, const std::vector<double>& current_constraints, const ConstraintPartition&
    constraint_partition);
    static double push_variable_to_interior(double variable_value, const Range& variable_bounds);
-   void set_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints);
+   void set_constraint_bounds(const Problem& problem, const std::vector<double>& current_constraints);
 
    double compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier) const;
    void compute_residuals(const Problem& problem, Iterate& iterate, double objective_multiplier) const;
@@ -76,10 +73,10 @@ public:
    const SecondOrderCorrection soc_strategy;
    // when the subproblem is reformulated (e.g. when slacks are introduced), the bounds may be altered
    std::vector<Range> variables_bounds;
-   std::vector<double> constraints_multipliers;
+   std::vector<double> constraint_multipliers;
    SparseVector<double> objective_gradient;
    std::vector<SparseVector<double>> constraint_jacobian;
-   std::vector<Range> constraints_bounds;
+   std::vector<Range> constraint_bounds;
    Direction direction;
 
    size_t number_subproblems_solved{0};

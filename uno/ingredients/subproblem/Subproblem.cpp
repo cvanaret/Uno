@@ -4,13 +4,13 @@
 #include "optimization/Constraint.hpp"
 
 Subproblem::Subproblem(size_t number_variables, size_t max_number_variables, size_t number_constraints, bool uses_slacks,
-      SecondOrderCorrection soc_strategy, bool is_second_order_method, Norm residual_norm) :
+      SecondOrderCorrection soc_strategy, bool is_second_order_method, Norm residual_norm):
       number_variables(number_variables), max_number_variables(max_number_variables), number_constraints(number_constraints),
       uses_slacks(uses_slacks),
-      soc_strategy(soc_strategy), variables_bounds(max_number_variables), constraints_multipliers(number_constraints),
+      soc_strategy(soc_strategy), variables_bounds(max_number_variables), constraint_multipliers(number_constraints),
       objective_gradient(max_number_variables), // SparseVector
       constraint_jacobian(number_constraints), // vector of SparseVectors
-      constraints_bounds(number_constraints), direction(max_number_variables, number_constraints),
+      constraint_bounds(number_constraints), direction(max_number_variables, number_constraints),
       is_second_order_method(is_second_order_method), residual_norm(residual_norm) {
    for (auto& constraint_gradient: this->constraint_jacobian) {
       constraint_gradient.reserve(this->max_number_variables);
@@ -34,8 +34,7 @@ double Subproblem::compute_constraint_violation(const Problem& problem, Iterate&
    return problem.compute_constraint_violation(iterate.subproblem_constraints, this->residual_norm);
 }
 
-double Subproblem::compute_constraint_violation(const Problem& problem, Iterate& iterate,
-      const std::vector<size_t>& constraint_set) const {
+double Subproblem::compute_constraint_violation(const Problem& problem, Iterate& iterate, const std::vector<size_t>& constraint_set) const {
    return problem.compute_constraint_violation(iterate.subproblem_constraints, constraint_set, this->residual_norm);
 }
 
@@ -102,11 +101,11 @@ void Subproblem::set_variables_bounds(const Problem& problem, const Iterate& cur
    }
 }
 
-void Subproblem::set_constraints_bounds(const Problem& problem, const std::vector<double>& current_constraints) {
+void Subproblem::set_constraint_bounds(const Problem& problem, const std::vector<double>& current_constraints) {
    for (size_t j = 0; j < problem.number_constraints; j++) {
       const double lb = problem.get_constraint_lower_bound(j) - current_constraints[j];
       const double ub = problem.get_constraint_upper_bound(j) - current_constraints[j];
-      this->constraints_bounds[j] = {lb, ub};
+      this->constraint_bounds[j] = {lb, ub};
    }
 }
 
@@ -141,14 +140,14 @@ void Subproblem::compute_feasibility_linear_objective(const Iterate& current_ite
 void Subproblem::generate_feasibility_bounds(const Problem& problem, const std::vector<double>& current_constraints, const ConstraintPartition&
 constraint_partition) {
    for (size_t j: constraint_partition.feasible) {
-      this->constraints_bounds[j] = {problem.get_constraint_lower_bound(j) - current_constraints[j],
+      this->constraint_bounds[j] = {problem.get_constraint_lower_bound(j) - current_constraints[j],
             problem.get_constraint_upper_bound(j) - current_constraints[j]};
    }
    for (size_t j: constraint_partition.lower_bound_infeasible) {
-      this->constraints_bounds[j] = {-std::numeric_limits<double>::infinity(), problem.get_constraint_lower_bound(j) - current_constraints[j]};
+      this->constraint_bounds[j] = {-std::numeric_limits<double>::infinity(), problem.get_constraint_lower_bound(j) - current_constraints[j]};
    }
    for (size_t j: constraint_partition.upper_bound_infeasible) {
-      this->constraints_bounds[j] = {problem.get_constraint_upper_bound(j) - current_constraints[j], std::numeric_limits<double>::infinity()};
+      this->constraint_bounds[j] = {problem.get_constraint_upper_bound(j) - current_constraints[j], std::numeric_limits<double>::infinity()};
    }
 }
 

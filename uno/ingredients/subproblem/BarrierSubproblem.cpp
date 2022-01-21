@@ -1,4 +1,5 @@
 #include <cmath>
+#include <optimization/SlackReformulation.hpp>
 #include "BarrierSubproblem.hpp"
 #include "solvers/linear/LinearSolverFactory.hpp"
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
@@ -47,7 +48,7 @@ BarrierSubproblem::BarrierSubproblem(const Problem& problem, size_t max_number_v
 
    // constraints are transformed into "c(x) = 0"
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      this->constraints_bounds[j] = {0., 0.};
+      this->constraint_bounds[j] = {0., 0.};
    }
 
    // identify the bounded variables
@@ -124,7 +125,7 @@ void BarrierSubproblem::add_slacks_to_iterate(const Problem& problem, Iterate& i
    });
 }
 
-void BarrierSubproblem::create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier,
+void BarrierSubproblem::build_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier,
       double trust_region_radius) {
    // update the barrier parameter if the current iterate solves the subproblem
    this->update_barrier_parameter(current_iterate);
@@ -133,9 +134,10 @@ void BarrierSubproblem::create_current_subproblem(const Problem& problem, Iterat
    this->set_current_iterate(current_iterate);
 
    // constraints multipliers
-   copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
+   copy_from(this->constraint_multipliers, current_iterate.multipliers.constraints);
 
    // constraint Jacobian
+   current_iterate.evaluate_constraint_jacobian(problem);
    this->constraint_jacobian = current_iterate.constraint_jacobian;
    // add the slack variables
    problem.inequality_constraints.for_each([&](size_t j, size_t i) {
@@ -163,7 +165,7 @@ void BarrierSubproblem::build_objective_model(const Problem& problem, Iterate& c
    }
 
    // evaluate the Hessian
-   this->hessian_model->evaluate(problem, current_iterate.x, objective_multiplier, this->constraints_multipliers);
+   this->hessian_model->evaluate(problem, current_iterate.x, objective_multiplier, this->constraint_multipliers);
 
    // objective gradient
    this->set_scaled_objective_gradient(problem, current_iterate, objective_multiplier);
@@ -461,9 +463,9 @@ void BarrierSubproblem::generate_augmented_rhs(const Iterate& current_iterate) {
    // constraint: evaluations and gradients
    for (size_t j = 0; j < this->number_constraints; j++) {
       // Lagrangian
-      if (this->constraints_multipliers[j] != 0.) {
+      if (this->constraint_multipliers[j] != 0.) {
          this->constraint_jacobian[j].for_each([&](size_t i, double derivative) {
-            this->augmented_system.rhs[i] += this->constraints_multipliers[j] * derivative;
+            this->augmented_system.rhs[i] += this->constraint_multipliers[j] * derivative;
          });
       }
       // constraints

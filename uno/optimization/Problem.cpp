@@ -19,14 +19,6 @@ Problem::Problem(std::string name, size_t number_variables, size_t number_constr
       linear_constraints(this->number_constraints) {
 }
 
-std::vector<double> Problem::evaluate_constraints(const std::vector<double>& x) const {
-   // allocate an empty vector
-   std::vector<double> constraints(this->number_constraints);
-   // evaluate the constraints in place
-   this->evaluate_constraints(x, constraints);
-   return constraints;
-}
-
 void Problem::determine_bounds_types(std::vector<Range>& bounds, std::vector<ConstraintType>& status) {
    assert(bounds.size() == status.size());
    // build the "status" vector as a mapping (map/transform operation) of the "bounds" vector
@@ -93,7 +85,7 @@ double Problem::compute_constraint_violation(const std::vector<double>& constrai
 // compute ||c_S|| for a given set of constraints
 double Problem::compute_constraint_violation(const std::vector<double>& constraints, const std::vector<size_t>& constraint_set, Norm residual_norm) const {
    auto residual_function = [&](size_t k) {
-      size_t j = constraint_set[k];
+      const size_t j = constraint_set[k];
       return this->compute_constraint_violation(constraints[j], j);
    };
    return norm(residual_function, constraint_set.size(), residual_norm);
@@ -102,7 +94,7 @@ bool Problem::is_constrained() const {
    return (0 < this->number_constraints);
 }
 
-/* native C++ problem */
+// native C++ problem
 
 //CppProblem::CppProblem(std::string name, int number_variables, int number_constraints, double (*objective)(std::vector<double> x), std::vector<double> (*objective_gradient)(std::vector<double> x)):
 //Problem(name, number_variables, number_constraints),

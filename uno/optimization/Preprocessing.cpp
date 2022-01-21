@@ -41,15 +41,15 @@ void Preprocessing::enforce_linear_constraints(const Problem& problem, Iterate& 
          }
 
          // constraints bounds
-         std::vector<Range> constraints_bounds(number_constraints);
+         std::vector<Range> constraint_bounds(number_constraints);
          problem.linear_constraints.for_each([&](size_t j, size_t linear_constraint_index) {
-            constraints_bounds[linear_constraint_index] = {problem.get_constraint_lower_bound(j) - first_iterate.constraints[j],
+            constraint_bounds[linear_constraint_index] = {problem.get_constraint_lower_bound(j) - first_iterate.constraints[j],
                                                            problem.get_constraint_upper_bound(j) - first_iterate.constraints[j]};
          });
 
          // solve the convex QP
          std::vector<double> d0(problem.number_variables);
-         Direction direction = solver.solve_QP(variables_bounds, constraints_bounds, linear_objective, constraint_jacobian, hessian, d0);
+         Direction direction = solver.solve_QP(variables_bounds, constraint_bounds, linear_objective, constraint_jacobian, hessian, d0);
          if (direction.status == INFEASIBLE) {
             throw std::runtime_error("Linear constraints cannot be satisfied");
          }

@@ -8,9 +8,9 @@ LPSubproblem::LPSubproblem(const Problem& problem, size_t max_number_variables, 
       initial_point(max_number_variables) {
 }
 
-void LPSubproblem::create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier,
+void LPSubproblem::build_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier,
       double trust_region_radius) {
-   copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
+   copy_from(this->constraint_multipliers, current_iterate.multipliers.constraints);
    // compute first- and second-order information
    problem.evaluate_constraints(current_iterate.x, current_iterate.constraints);
    for (auto& row: this->constraint_jacobian) {
@@ -25,7 +25,7 @@ void LPSubproblem::create_current_subproblem(const Problem& problem, Iterate& cu
    this->set_variables_bounds(problem, current_iterate, trust_region_radius);
 
    // bounds of the linearized constraints
-   this->set_constraints_bounds(problem, current_iterate.constraints);
+   this->set_constraint_bounds(problem, current_iterate.constraints);
 
    // set the initial point
    initialize_vector(this->initial_point, 0.);
@@ -45,7 +45,7 @@ void LPSubproblem::set_initial_point(const std::vector<double>& point) {
 
 Direction LPSubproblem::solve(Statistics& /*statistics*/, const Problem& problem, Iterate& current_iterate) {
    // solve the LP
-   Direction direction = this->solver->solve_LP(this->variables_bounds, this->constraints_bounds, this->objective_gradient,
+   Direction direction = this->solver->solve_LP(this->variables_bounds, this->constraint_bounds, this->objective_gradient,
          this->constraint_jacobian, this->initial_point);
    this->number_subproblems_solved++;
 
