@@ -42,19 +42,19 @@ BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_
    }
 }
 
-Direction BQPDSolver::solve_QP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector<double>&
+Direction BQPDSolver::solve_QP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraint_bounds, const SparseVector<double>&
 linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian, const SymmetricMatrix& hessian,
       const std::vector<double>& initial_point) {
    this->save_hessian_to_local_format(hessian);
-   return this->solve_subproblem(variables_bounds, constraints_bounds, linear_objective, constraint_jacobian, initial_point);
+   return this->solve_subproblem(variables_bounds, constraint_bounds, linear_objective, constraint_jacobian, initial_point);
 }
 
-Direction BQPDSolver::solve_LP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds, const SparseVector<double>&
+Direction BQPDSolver::solve_LP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraint_bounds, const SparseVector<double>&
 linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian, const std::vector<double>& initial_point) {
-   return this->solve_subproblem(variables_bounds, constraints_bounds, linear_objective, constraint_jacobian, initial_point);
+   return this->solve_subproblem(variables_bounds, constraint_bounds, linear_objective, constraint_jacobian, initial_point);
 }
 
-Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraints_bounds,
+Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraint_bounds,
       const SparseVector<double>& linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian,
       const std::vector<double>& initial_point) {
    // initialize wsc_ common block (Hessian & workspace for bqpd)
@@ -73,8 +73,8 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
    for (size_t i = 0; i < variables_bounds.size(); i++) {
       DEBUG << "Δx" << i << " in [" << variables_bounds[i].lb << ", " << variables_bounds[i].ub << "]\n";
    }
-   for (size_t j = 0; j < constraints_bounds.size(); j++) {
-      DEBUG << "linearized c" << j << " in [" << constraints_bounds[j].lb << ", " << constraints_bounds[j].ub << "]\n";
+   for (size_t j = 0; j < constraint_bounds.size(); j++) {
+      DEBUG << "linearized c" << j << " in [" << constraint_bounds[j].lb << ", " << constraint_bounds[j].ub << "]\n";
    }
 
    // Jacobian
@@ -86,8 +86,8 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
       this->ub[i] = (variables_bounds[i].ub == std::numeric_limits<double>::infinity()) ? BIG : variables_bounds[i].ub;
    }
    for (size_t j = 0; j < this->number_constraints; j++) {
-      this->lb[this->number_variables + j] = (constraints_bounds[j].lb == -std::numeric_limits<double>::infinity()) ? -BIG : constraints_bounds[j].lb;
-      this->ub[this->number_variables + j] = (constraints_bounds[j].ub == std::numeric_limits<double>::infinity()) ? BIG : constraints_bounds[j].ub;
+      this->lb[this->number_variables + j] = (constraint_bounds[j].lb == -std::numeric_limits<double>::infinity()) ? -BIG : constraint_bounds[j].lb;
+      this->ub[this->number_variables + j] = (constraint_bounds[j].ub == std::numeric_limits<double>::infinity()) ? BIG : constraint_bounds[j].ub;
    }
 
    Direction direction(this->number_variables, this->number_constraints);

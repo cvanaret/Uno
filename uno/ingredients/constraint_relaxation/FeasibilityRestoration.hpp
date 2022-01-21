@@ -33,7 +33,7 @@ private:
          const std::optional<ConstraintPartition>& optional_constraint_partition);
    GlobalizationStrategy& switch_phase(const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction);
-   static void set_restoration_multipliers(std::vector<double>& constraints_multipliers, const ConstraintPartition& constraint_partition);
+   static void set_restoration_multipliers(std::vector<double>& constraint_multipliers, const ConstraintPartition& constraint_partition);
    void compute_infeasibility_measures(const Problem& problem, Iterate& iterate,
          const std::optional<ConstraintPartition>& optional_constraint_partition);
 };

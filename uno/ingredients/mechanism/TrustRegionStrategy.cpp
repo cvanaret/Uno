@@ -106,7 +106,7 @@ void TrustRegionStrategy::add_statistics(Statistics& statistics, const Direction
    statistics.add_statistic("step norm", direction.norm);
 }
 
-bool TrustRegionStrategy::termination() {
+bool TrustRegionStrategy::termination() const {
    return this->radius < this->min_radius;
 }
 

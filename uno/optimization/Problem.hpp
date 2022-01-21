@@ -70,6 +70,7 @@ public:
    [[nodiscard]] virtual double get_variable_upper_bound(size_t i) const = 0;
    [[nodiscard]] virtual double get_constraint_lower_bound(size_t j) const = 0;
    [[nodiscard]] virtual double get_constraint_upper_bound(size_t j) const = 0;
+
    [[nodiscard]] virtual double evaluate_objective(const std::vector<double>& x) const = 0;
    virtual void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const = 0;
    virtual void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const = 0;
@@ -87,7 +88,6 @@ public:
    virtual void get_initial_dual_point(std::vector<double>& multipliers) const = 0;
 
    // auxiliary functions
-   [[nodiscard]] std::vector<double> evaluate_constraints(const std::vector<double>& x) const;
    static void determine_bounds_types(std::vector<Range>& variables_bounds, std::vector<ConstraintType>& status);
    void project_point_in_bounds(std::vector<double>& x) const;
    [[nodiscard]] double compute_constraint_violation(double constraint, size_t j) const;

@@ -13,9 +13,9 @@ QPSubproblem::QPSubproblem(const Problem& problem, size_t max_number_variables, 
       initial_point(max_number_variables) {
 }
 
-void QPSubproblem::create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier,
+void QPSubproblem::build_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier,
       double trust_region_radius) {
-   copy_from(this->constraints_multipliers, current_iterate.multipliers.constraints);
+   copy_from(this->constraint_multipliers, current_iterate.multipliers.constraints);
 
    // constraints
    current_iterate.evaluate_constraints(problem);
@@ -31,7 +31,7 @@ void QPSubproblem::create_current_subproblem(const Problem& problem, Iterate& cu
    this->set_variables_bounds(problem, current_iterate, trust_region_radius);
 
    // bounds of the linearized constraints
-   this->set_constraints_bounds(problem, current_iterate.constraints);
+   this->set_constraint_bounds(problem, current_iterate.constraints);
 
    // reset the initial point
    initialize_vector(this->initial_point, 0.);
@@ -39,7 +39,7 @@ void QPSubproblem::create_current_subproblem(const Problem& problem, Iterate& cu
 
 void QPSubproblem::build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
    // Hessian
-   this->hessian_model->evaluate(problem, current_iterate.x, objective_multiplier, this->constraints_multipliers);
+   this->hessian_model->evaluate(problem, current_iterate.x, objective_multiplier, this->constraint_multipliers);
 
    // objective gradient
    this->set_scaled_objective_gradient(problem, current_iterate, objective_multiplier);
@@ -55,7 +55,7 @@ void QPSubproblem::set_initial_point(const std::vector<double>& point) {
 Direction QPSubproblem::solve(Statistics& /*statistics*/, const Problem& problem, Iterate& current_iterate) {
    this->hessian_model->adjust_number_variables(this->number_variables);
    // compute QP direction
-   Direction direction = this->solver->solve_QP(this->variables_bounds, this->constraints_bounds, this->objective_gradient,
+   Direction direction = this->solver->solve_QP(this->variables_bounds, this->constraint_bounds, this->objective_gradient,
          this->constraint_jacobian, *this->hessian_model->hessian, this->initial_point);
    this->number_subproblems_solved++;
 

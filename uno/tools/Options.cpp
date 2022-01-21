@@ -18,8 +18,9 @@ const std::string& Options::at(const std::string& key) const {
 }
 
 void Options::print() const {
+   std::cout << "Options:\n";
    for (const auto& [key, value]: this->options) {
-      std::cout << "Option " << key << " = " << value << "\n";
+      std::cout << "- " << key << " = " << value << "\n";
    }
 }
 
@@ -101,14 +102,13 @@ void get_command_line_options(int argc, char* argv[], Options& options) {
                find_preset(value_i, options);
             }
             else {
-               std::cout << "(" << argument_i << ", " << value_i << ")\n";
                options[name] = value_i;
             }
             i += 2;
          }
       }
       else {
-         std::cout << "Argument " << argument_i << " was ignored\n";
+         WARNING << "Argument " << argument_i << " was ignored\n";
          i++;
       }
    }

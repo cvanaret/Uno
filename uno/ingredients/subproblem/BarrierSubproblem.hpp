@@ -25,13 +25,12 @@ public:
 
    void set_initial_point(const std::vector<double>& initial_point) override;
    void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) override;
-   void create_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier,
-         double trust_region_radius) override;
+   void build_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
    void build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) override;
    void evaluate_constraints(const Problem& problem, Iterate& iterate) override;
-   double compute_constraint_violation(const Problem& problem, Iterate& iterate) const override;
-   double compute_constraint_violation(const Problem& problem, Iterate& iterate, const std::vector<size_t>& constraint_set)
-      const override;
+   [[nodiscard]] double compute_constraint_violation(const Problem& problem, Iterate& iterate) const override;
+   [[nodiscard]] double compute_constraint_violation(const Problem& problem, Iterate& iterate, const std::vector<size_t>& constraint_set) const
+      override;
    void add_elastic_variables(const Problem& problem, Iterate& current_iterate, double objective_coefficient) override;
    void remove_elastic_variable(size_t i, size_t j) override;
    Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
@@ -50,7 +49,7 @@ private:
    const std::unique_ptr<LinearSolver> linear_solver;
    const InteriorPointParameters parameters;
 
-   // data structures
+   // lists of bounded variables
    std::vector<size_t> lower_bounded_variables{}; // indices of the lower-bounded variables
    std::vector<size_t> upper_bounded_variables{}; // indices of the upper-bounded variables
 
@@ -62,7 +61,7 @@ private:
    std::vector<double> lower_bound_multipliers;
    std::vector<double> upper_bound_multipliers;
 
-   // preallocated vectors
+   // preallocated vectors for bound multiplier displacements
    std::vector<double> lower_delta_z;
    std::vector<double> upper_delta_z;
 

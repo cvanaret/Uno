@@ -28,7 +28,7 @@ void FeasibilityRestoration::initialize(Statistics& statistics, const Problem& p
 
 void FeasibilityRestoration::create_current_subproblem(const Problem& problem, Iterate& current_iterate,
       double trust_region_radius) {
-   this->subproblem->create_current_subproblem(problem, current_iterate, problem.objective_sign, trust_region_radius);
+   this->subproblem->build_current_subproblem(problem, current_iterate, problem.objective_sign, trust_region_radius);
 }
 
 Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
@@ -117,7 +117,7 @@ void FeasibilityRestoration::create_current_feasibility_problem(const Problem& p
       const ConstraintPartition& constraint_partition = optional_constraint_partition.value();
       assert(!constraint_partition.infeasible.empty() && "The subproblem is infeasible but no constraint is infeasible");
       // set the multipliers of the violated constraints
-      FeasibilityRestoration::set_restoration_multipliers(this->subproblem->constraints_multipliers, constraint_partition);
+      FeasibilityRestoration::set_restoration_multipliers(this->subproblem->constraint_multipliers, constraint_partition);
 
       // compute the objective model with a zero objective multiplier
       this->subproblem->objective_gradient.clear();
@@ -131,7 +131,7 @@ void FeasibilityRestoration::create_current_feasibility_problem(const Problem& p
    }
    else {
       // no constraint partition given, form an l1 feasibility problem by adding elastic variables
-      initialize_vector(this->subproblem->constraints_multipliers, 0.);
+      initialize_vector(this->subproblem->constraint_multipliers, 0.);
       this->subproblem->build_objective_model(problem, current_iterate, 0.);
       this->add_elastic_variables_to_subproblem(problem, current_iterate);
    }
@@ -179,14 +179,14 @@ GlobalizationStrategy& FeasibilityRestoration::switch_phase(const Problem& probl
    return (this->current_phase == OPTIMALITY) ? *this->phase_2_strategy : *this->phase_1_strategy;
 }
 
-void FeasibilityRestoration::set_restoration_multipliers(std::vector<double>& constraints_multipliers, const ConstraintPartition&
+void FeasibilityRestoration::set_restoration_multipliers(std::vector<double>& constraint_multipliers, const ConstraintPartition&
 constraint_partition) {
-   // the values are derived from the KKT conditions of the feasibility problem
+   // the values {1, -1} are derived from the KKT conditions of the feasibility problem
    for (size_t j: constraint_partition.lower_bound_infeasible) {
-      constraints_multipliers[j] = 1.;
+      constraint_multipliers[j] = 1.;
    }
    for (size_t j: constraint_partition.upper_bound_infeasible) {
-      constraints_multipliers[j] = -1.;
+      constraint_multipliers[j] = -1.;
    }
    // otherwise, leave the multiplier as it is
 }

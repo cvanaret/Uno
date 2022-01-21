@@ -24,7 +24,7 @@ private:
 
    static void rectify_active_set(Direction& direction, double radius);
    void add_statistics(Statistics& statistics, const Direction& direction);
-   bool termination();
+   bool termination() const;
    void print_iteration();
 };
 

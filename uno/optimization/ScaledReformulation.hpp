@@ -31,7 +31,6 @@ public:
 private:
    const Problem& original_problem;
    const Scaling& scaling;
-   std::vector<double> scaled_multipliers;
 };
 
 #endif // UNO_SCALEDREFORMULATION_H

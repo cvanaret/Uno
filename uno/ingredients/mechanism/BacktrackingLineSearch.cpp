@@ -6,7 +6,6 @@
 
 BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options):
    GlobalizationMechanism(constraint_relaxation_strategy),
-   regularization_strategy(RegularizationStrategyFactory::create()), // TODO use :)
    backtracking_ratio(std::stod(options.at("LS_backtracking_ratio"))),
    min_step_length(std::stod(options.at("LS_min_step_length"))),
    use_second_order_correction(options.at("use_second_order_correction") == "yes") {

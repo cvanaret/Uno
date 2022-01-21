@@ -46,7 +46,7 @@ protected:
    [[nodiscard]] bool objective_sufficient_decrease(const Iterate& current_iterate, const Direction& direction, const Direction& direction_lowest_violation) const;
    double compute_linearized_constraint_residual(std::vector<double>& direction) const;
    double compute_error(const Problem& problem, Iterate& current_iterate, const Multipliers& multipliers_displacements, double current_penalty_parameter);
-   static void set_multipliers(const Problem& problem, const Iterate& current_iterate, std::vector<double>& constraints_multipliers);
+   static void set_multipliers(const Problem& problem, const Iterate& current_iterate, std::vector<double>& constraint_multipliers);
 };
 
 #endif //UNO_L1RELAXATION_H

@@ -27,21 +27,21 @@ void l1Relaxation::initialize(Statistics& statistics, const Problem& problem, It
 
 void l1Relaxation::create_current_subproblem(const Problem& problem, Iterate& current_iterate, double trust_region_radius) {
    // scale the derivatives and introduce the elastic variables
-   this->subproblem->create_current_subproblem(problem, current_iterate, this->penalty_parameter, trust_region_radius);
+   this->subproblem->build_current_subproblem(problem, current_iterate, this->penalty_parameter, trust_region_radius);
    // relax the constraints
    this->add_elastic_variables_to_subproblem(problem, current_iterate);
    // set the multipliers of the violated constraints
-   l1Relaxation::set_multipliers(problem, current_iterate, this->subproblem->constraints_multipliers);
+   l1Relaxation::set_multipliers(problem, current_iterate, this->subproblem->constraint_multipliers);
 }
 
-void l1Relaxation::set_multipliers(const Problem& problem, const Iterate& current_iterate, std::vector<double>& constraints_multipliers) {
-   // the values are derived from the KKT conditions of the l1 problem
+void l1Relaxation::set_multipliers(const Problem& problem, const Iterate& current_iterate, std::vector<double>& constraint_multipliers) {
+   // the values {1, -1} are derived from the KKT conditions of the l1 problem
    for (size_t j = 0; j < problem.number_constraints; j++) {
       if (current_iterate.constraints[j] < problem.get_constraint_lower_bound(j)) { // lower bound infeasible
-         constraints_multipliers[j] = 1.;
+         constraint_multipliers[j] = 1.;
       }
       else if (problem.get_constraint_upper_bound(j) < current_iterate.constraints[j]) { // upper bound infeasible
-         constraints_multipliers[j] = -1.;
+         constraint_multipliers[j] = -1.;
       }
    }
    // otherwise, leave the multiplier as it is

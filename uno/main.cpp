@@ -4,8 +4,10 @@
 #include "ingredients/constraint_relaxation/ConstraintRelaxationStrategyFactory.hpp"
 #include "Uno.hpp"
 #include "optimization/ScaledReformulation.hpp"
+#include "optimization/SlackReformulation.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Options.hpp"
+#include "linear_algebra/CSCSymmetricMatrix.hpp"
 
 // new() overload to track heap allocations
 size_t total_allocations = 0;
@@ -67,6 +69,46 @@ void run_uno_ampl(const std::string& problem_name, const Options& options) {
 
 Level Logger::logger_level = INFO;
 
+void test_problem_with_slacks(const std::string& problem_name) {
+   auto original_problem = std::make_unique<AMPLModel>(problem_name);
+   // add slacks
+   const Problem& problem_to_solve = SlackReformulation(*original_problem);
+
+   // create the first iterate
+   Iterate first_iterate(problem_to_solve.number_variables, problem_to_solve.number_constraints);
+   problem_to_solve.get_initial_primal_point(first_iterate.x);
+   problem_to_solve.get_initial_dual_point(first_iterate.multipliers.constraints);
+
+   // set slack values
+   for (size_t i = original_problem->number_variables; i < problem_to_solve.number_variables; i++) {
+      const Range bounds = {problem_to_solve.get_variable_lower_bound(i), problem_to_solve.get_variable_upper_bound(i)};
+      first_iterate.x[i] = Subproblem::push_variable_to_interior(0., bounds);
+   }
+
+   std::cout << "x = "; print_vector(std::cout, first_iterate.x);
+   std::cout << "multipliers = "; print_vector(std::cout, first_iterate.multipliers.constraints);
+
+   for (size_t i = 0; i < problem_to_solve.number_variables; i++) {
+      std::cout << "Bounds of x" << i << ": [" << problem_to_solve.get_variable_lower_bound(i) << ", " <<
+         problem_to_solve.get_variable_upper_bound(i) << "]\n";
+   }
+   for (size_t j = 0; j < problem_to_solve.number_constraints; j++) {
+      std::cout << "Bounds of c" << j << ": [" << problem_to_solve.get_constraint_lower_bound(j) << ", " <<
+                problem_to_solve.get_constraint_upper_bound(j) << "]\n";
+   }
+
+   // evaluations
+   SparseVector<double> gradient(problem_to_solve.number_variables);
+   for (size_t j = 0; j < problem_to_solve.number_constraints; j++) {
+      problem_to_solve.evaluate_constraint_gradient(first_iterate.x, j, gradient);
+      std::cout << gradient;
+   }
+
+   CSCSymmetricMatrix hessian(problem_to_solve.number_variables, problem_to_solve.get_hessian_maximum_number_nonzeros());
+   problem_to_solve.evaluate_lagrangian_hessian(first_iterate.x, 1., first_iterate.multipliers.constraints, hessian);
+   std::cout << hessian;
+}
+
 int main(int argc, char* argv[]) {
    if (1 < argc) {
       // get the default options
@@ -84,7 +126,7 @@ int main(int argc, char* argv[]) {
          std::cout << "To choose a globalization strategy, use the argument -strategy [penalty|filter|nonmonotone-filter]\n";
          std::cout << "To choose a constraint relaxation strategy, use the argument -constraint-relaxation [feasibility-restoration|l1-relaxation]\n";
          std::cout << "To choose a subproblem, use the argument -subproblem [QP|LP|barrier]\n";
-         std::cout << "To choose a preset, use the argument -preset [byrd|filtersqp|ipopt]\n";
+         std::cout << "To choose a preset, use the argument -preset [filtersqp|ipopt|byrd]\n";
          std::cout << "The options can be combined in the same command line. Autocompletion is active.\n";
       }
       else {
