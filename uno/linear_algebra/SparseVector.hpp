@@ -146,9 +146,9 @@ void SparseVector<T>::transform(const std::function<T (T)>& f) {
 
 template <typename T>
 std::ostream& operator<<(std::ostream& stream, const SparseVector<T>& x) {
-   stream << x.size() << " non zeros\n";
+   stream << "Sparse vector with " << x.size() << " non zeros\n";
    x.for_each([&](size_t index, T entry) {
-      stream << "index: " << index << " = " << entry << "\n";
+      stream << "index " << index << ", value " << entry << "\n";
    });
    return stream;
 }

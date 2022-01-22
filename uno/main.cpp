@@ -5,6 +5,7 @@
 #include "Uno.hpp"
 #include "optimization/ScaledReformulation.hpp"
 #include "optimization/SlackReformulation.hpp"
+#include "optimization/ElasticReformulation.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Options.hpp"
 #include "linear_algebra/CSCSymmetricMatrix.hpp"
@@ -77,7 +78,7 @@ void test_problem_with_slacks(const std::string& problem_name) {
    // add slacks
    const Problem& problem_to_solve = SlackReformulation(*original_problem);
 
-   // create the first iterate
+   // create the first iterate (slacks set to 0)
    Iterate first_iterate(problem_to_solve.number_variables, problem_to_solve.number_constraints);
    problem_to_solve.get_initial_primal_point(first_iterate.x);
    problem_to_solve.get_initial_dual_point(first_iterate.multipliers.constraints);
@@ -102,6 +103,48 @@ void test_problem_with_slacks(const std::string& problem_name) {
 
    // evaluations
    std::vector<SparseVector<double>> jacobian(problem_to_solve.number_constraints);
+   for (size_t j = 0; j < problem_to_solve.number_constraints; j++) {
+      jacobian[j].reserve(problem_to_solve.number_variables);
+   }
+   problem_to_solve.evaluate_constraint_jacobian(first_iterate.x, jacobian);
+   for (size_t j = 0; j < problem_to_solve.number_constraints; j++) {
+      std::cout << jacobian[j];
+   }
+
+   CSCSymmetricMatrix hessian(problem_to_solve.number_variables, problem_to_solve.get_hessian_maximum_number_nonzeros());
+   problem_to_solve.evaluate_lagrangian_hessian(first_iterate.x, 1., first_iterate.multipliers.constraints, hessian);
+   std::cout << hessian;
+}
+
+void test_problem_with_elastics(const std::string& problem_name) {
+   auto original_problem = std::make_unique<AMPLModel>(problem_name);
+   // add slacks
+   const Problem& problem_to_solve = ElasticReformulation(*original_problem, 1.);
+
+   // create the first iterate (slacks set to 0)
+   Iterate first_iterate(problem_to_solve.number_variables, problem_to_solve.number_constraints);
+   problem_to_solve.get_initial_primal_point(first_iterate.x);
+   problem_to_solve.get_initial_dual_point(first_iterate.multipliers.constraints);
+
+   std::cout << "x = "; print_vector(std::cout, first_iterate.x);
+   std::cout << "multipliers = "; print_vector(std::cout, first_iterate.multipliers.constraints);
+
+   std::cout << "Variables\n";
+   for (size_t i = 0; i < problem_to_solve.number_variables; i++) {
+      std::cout << "Bounds of x" << i << ": [" << problem_to_solve.get_variable_lower_bound(i) << ", " <<
+                problem_to_solve.get_variable_upper_bound(i) << "]\n";
+   }
+   std::cout << "Constraints\n";
+   for (size_t j = 0; j < problem_to_solve.number_constraints; j++) {
+      std::cout << "Bounds of c" << j << ": [" << problem_to_solve.get_constraint_lower_bound(j) << ", " <<
+                problem_to_solve.get_constraint_upper_bound(j) << "]\n";
+   }
+
+   // evaluations
+   std::vector<SparseVector<double>> jacobian(problem_to_solve.number_constraints);
+   for (size_t j = 0; j < problem_to_solve.number_constraints; j++) {
+      jacobian[j].reserve(problem_to_solve.number_variables);
+   }
    problem_to_solve.evaluate_constraint_jacobian(first_iterate.x, jacobian);
    for (size_t j = 0; j < problem_to_solve.number_constraints; j++) {
       std::cout << jacobian[j];

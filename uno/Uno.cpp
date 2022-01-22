@@ -21,7 +21,7 @@ Result Uno::solve(const Problem& problem, Iterate& current_iterate, bool enforce
 
    std::cout << "\nProblem " << problem.name << "\n";
    std::cout << problem.number_variables << " variables, " << problem.number_constraints << " constraints\n";
-   std::cout << "Problem type: " << Problem::type_to_string[problem.problem_type] << "\n";
+   std::cout << "Problem type: " << Problem::type_to_string[problem.problem_type] << "\n\n";
 
    // linear constraints feasible at initial point
    if (enforce_linear_constraints) {

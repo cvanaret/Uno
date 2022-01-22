@@ -69,8 +69,8 @@ void Preprocessing::enforce_linear_constraints(const Problem& problem, Iterate& 
 }
 
 // compute a least-square approximation of the multipliers by solving a linear system (uses existing linear system)
-void Preprocessing::compute_least_square_multipliers(const Problem& problem, SymmetricMatrix& matrix,
-      std::vector<double>& rhs, LinearSolver& solver, Iterate& current_iterate, std::vector<double>& multipliers, double multipliers_max_norm) {
+void Preprocessing::compute_least_square_multipliers(const Problem& problem, SymmetricMatrix& matrix, std::vector<double>& rhs, LinearSolver& solver,
+      Iterate& current_iterate, std::vector<double>& multipliers, double multipliers_max_norm) {
    const size_t number_variables = current_iterate.x.size();
    const size_t number_constraints = multipliers.size();
    current_iterate.evaluate_objective_gradient(problem);
@@ -80,8 +80,6 @@ void Preprocessing::compute_least_square_multipliers(const Problem& problem, Sym
    /* build the symmetric matrix */
    /******************************/
    matrix.reset();
-   matrix.dimension = number_variables + number_constraints;
-
    // identity block
    for (size_t i = 0; i < number_variables; i++) {
       matrix.insert(1., i, i);
@@ -100,12 +98,10 @@ void Preprocessing::compute_least_square_multipliers(const Problem& problem, Sym
    /* generate the right-hand side */
    /********************************/
    initialize_vector(rhs, 0.);
-
    // objective gradient
    current_iterate.objective_gradient.for_each([&](size_t i, double derivative) {
       rhs[i] += problem.objective_sign * derivative;
    });
-
    // variable bound constraints
    for (size_t i = 0; i < number_variables; i++) {
       rhs[i] -= current_iterate.multipliers.lower_bounds[i] + current_iterate.multipliers.upper_bounds[i];

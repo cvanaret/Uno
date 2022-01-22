@@ -34,6 +34,8 @@ public:
    [[nodiscard]] size_t get_number_subproblems_solved() const;
    [[nodiscard]] SecondOrderCorrection soc_strategy() const;
 
+   static void generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables, size_t number_variables);
+
 protected:
    std::unique_ptr<Subproblem> subproblem;
    // possible problem reformulation with elastic variables. Constraints l <= c(x) <= u are reformulated as l <= c(x) - p + n <= u
@@ -42,7 +44,6 @@ protected:
    const size_t number_subproblem_variables;
 
    static size_t count_elastic_variables(const Problem& problem);
-   static void generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables, size_t number_variables);
    void evaluate_relaxed_constraints(const Problem& problem, Iterate& iterate) const;
    static bool is_small_step(const Direction& direction);
    void add_elastic_variables_to_subproblem(const Problem& problem, Iterate& current_iterate);
