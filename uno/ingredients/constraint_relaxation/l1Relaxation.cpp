@@ -31,7 +31,7 @@ void l1Relaxation::create_current_subproblem(const Problem& problem, Iterate& cu
    // relax the constraints
    this->add_elastic_variables_to_subproblem(problem, current_iterate);
    // set the multipliers of the violated constraints
-   l1Relaxation::set_multipliers(problem, current_iterate, this->subproblem->constraint_multipliers);
+   l1Relaxation::set_multipliers(problem, current_iterate, current_iterate.multipliers.constraints);
 }
 
 void l1Relaxation::set_multipliers(const Problem& problem, const Iterate& current_iterate, std::vector<double>& constraint_multipliers) {
@@ -76,7 +76,7 @@ double l1Relaxation::compute_predicted_reduction(const Problem& problem, Iterate
    else {
       // determine the linearized constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
       const auto residual_function = [&](size_t j) {
-         const double component_j = current_iterate.subproblem_constraints[j] + step_length * dot(direction.x, current_iterate.constraint_jacobian[j]);
+         const double component_j = current_iterate.constraints[j] + step_length * dot(direction.x, current_iterate.constraint_jacobian[j]);
          return problem.compute_constraint_violation(component_j, j);
       };
       const double linearized_constraint_violation = norm_1(residual_function, problem.number_constraints);

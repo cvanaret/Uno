@@ -13,9 +13,15 @@ ScaledReformulation::ScaledReformulation(const Problem& original_problem, const 
       assert(0 <= this->scaling.get_constraint_scaling(j) && "Constraint scaling failed.");
    }
    // the constraint distribution is the same as in the original problem
-   this->equality_constraints = this->original_problem.equality_constraints;
-   this->inequality_constraints = this->original_problem.inequality_constraints;
-   this->linear_constraints = this->original_problem.linear_constraints;
+   this->original_problem.equality_constraints.for_each([&](size_t j, size_t i) {
+      this->equality_constraints.insert(j, i);
+   });
+   this->original_problem.inequality_constraints.for_each([&](size_t j, size_t i) {
+      this->inequality_constraints.insert(j, i);
+   });
+   this->original_problem.linear_constraints.for_each([&](size_t j, size_t i) {
+      this->linear_constraints.insert(j, i);
+   });
 }
 
 inline double ScaledReformulation::get_variable_lower_bound(size_t i) const {
@@ -58,16 +64,12 @@ inline void ScaledReformulation::evaluate_constraints(const std::vector<double>&
    }
 }
 
-inline void ScaledReformulation::evaluate_constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const {
-   this->original_problem.evaluate_constraint_gradient(x, j, gradient);
-   // scale
-   scale(gradient, this->scaling.get_constraint_scaling(j));
-}
-
 inline void ScaledReformulation::evaluate_constraint_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraint_jacobian) const {
+   // evaluate
+   this->original_problem.evaluate_constraint_jacobian(x, constraint_jacobian);
+   // scale
    for (size_t j = 0; j < this->number_constraints; j++) {
-      // scaled evaluation
-      this->evaluate_constraint_gradient(x, j, constraint_jacobian[j]);
+      scale(constraint_jacobian[j], this->scaling.get_constraint_scaling(j));
    }
 }
 

@@ -10,19 +10,14 @@ LPSubproblem::LPSubproblem(const Problem& problem, size_t max_number_variables, 
 
 void LPSubproblem::build_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier,
       double trust_region_radius) {
-   copy_from(this->constraint_multipliers, current_iterate.multipliers.constraints);
    // compute first- and second-order information
-   problem.evaluate_constraints(current_iterate.x, current_iterate.constraints);
-   for (auto& row: this->constraint_jacobian) {
-      row.clear();
-   }
+   current_iterate.evaluate_constraints(problem);
    current_iterate.evaluate_constraint_jacobian(problem);
-   this->constraint_jacobian = current_iterate.constraint_jacobian;
 
    this->build_objective_model(problem, current_iterate, objective_multiplier);
 
    // bounds of the variables
-   this->set_variables_bounds(problem, current_iterate, trust_region_radius);
+   this->set_current_variable_bounds(problem, current_iterate, trust_region_radius);
 
    // bounds of the linearized constraints
    this->set_constraint_bounds(problem, current_iterate.constraints);
@@ -45,8 +40,8 @@ void LPSubproblem::set_initial_point(const std::vector<double>& point) {
 
 Direction LPSubproblem::solve(Statistics& /*statistics*/, const Problem& problem, Iterate& current_iterate) {
    // solve the LP
-   Direction direction = this->solver->solve_LP(this->variables_bounds, this->constraint_bounds, this->objective_gradient,
-         this->constraint_jacobian, this->initial_point);
+   Direction direction = this->solver->solve_LP(this->current_variable_bounds, this->constraint_bounds, this->objective_gradient,
+         current_iterate.constraint_jacobian, this->initial_point);
    this->number_subproblems_solved++;
 
    // compute dual displacements (SLP methods usually compute the new duals, not the displacements)

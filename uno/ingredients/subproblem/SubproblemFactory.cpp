@@ -3,8 +3,7 @@
 #include "LPSubproblem.hpp"
 #include "BarrierSubproblem.hpp"
 
-std::unique_ptr<Subproblem> SubproblemFactory::create(const Problem& problem, size_t max_number_variables,
-      const Options& options) {
+std::unique_ptr<Subproblem> SubproblemFactory::create(const Problem& problem, size_t max_number_variables, const Options& options) {
    const std::vector<std::string> possible_methods = {"QP", "LP", "barrier"};
    const std::string subproblem_type = options.at("subproblem");
    // active-set methods

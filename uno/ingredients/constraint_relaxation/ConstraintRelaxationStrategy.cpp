@@ -50,19 +50,15 @@ void ConstraintRelaxationStrategy::generate_elastic_variables(const Problem& pro
    }
 }
 
-void ConstraintRelaxationStrategy::evaluate_constraints(const Problem& problem, Iterate& iterate) {
-   this->subproblem->evaluate_constraints(problem, iterate);
-}
-
-void ConstraintRelaxationStrategy::evaluate_relaxed_constraints(const Problem& problem, Iterate& iterate) {
+void ConstraintRelaxationStrategy::evaluate_relaxed_constraints(const Problem& problem, Iterate& iterate) const {
    // evaluate the constraints of the subproblem
-   this->evaluate_constraints(problem, iterate);
+   iterate.evaluate_constraints(problem);
    // add the elastic variables
    this->elastic_variables.positive.for_each([&](size_t j, size_t i) {
-      iterate.subproblem_constraints[j] -= iterate.x[i];
+      iterate.constraints[j] -= iterate.x[i];
    });
    this->elastic_variables.negative.for_each([&](size_t j, size_t i) {
-      iterate.subproblem_constraints[j] += iterate.x[i];
+      iterate.constraints[j] += iterate.x[i];
    });
 }
 

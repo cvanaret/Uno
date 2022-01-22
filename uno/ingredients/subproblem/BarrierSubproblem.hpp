@@ -27,10 +27,6 @@ public:
    void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) override;
    void build_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
    void build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) override;
-   void evaluate_constraints(const Problem& problem, Iterate& iterate) override;
-   [[nodiscard]] double compute_constraint_violation(const Problem& problem, Iterate& iterate) const override;
-   [[nodiscard]] double compute_constraint_violation(const Problem& problem, Iterate& iterate, const std::vector<size_t>& constraint_set) const
-      override;
    void add_elastic_variables(const Problem& problem, Iterate& current_iterate, double objective_coefficient) override;
    void remove_elastic_variable(size_t i, size_t j) override;
    Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
@@ -48,18 +44,11 @@ private:
    const std::unique_ptr<HessianModel> hessian_model;
    const std::unique_ptr<LinearSolver> linear_solver;
    const InteriorPointParameters parameters;
+   const double default_multiplier;
 
    // lists of bounded variables
    std::vector<size_t> lower_bounded_variables{}; // indices of the lower-bounded variables
    std::vector<size_t> upper_bounded_variables{}; // indices of the upper-bounded variables
-
-   double default_multiplier;
-   size_t iteration{0};
-
-   // local copy of primal iterate and bound multipliers
-   std::vector<double> primal_iterate;
-   std::vector<double> lower_bound_multipliers;
-   std::vector<double> upper_bound_multipliers;
 
    // preallocated vectors for bound multiplier displacements
    std::vector<double> lower_delta_z;
@@ -68,23 +57,21 @@ private:
    bool solving_feasibility_problem{false};
    const bool use_proximal_term{true};
 
-   static void add_slacks_to_iterate(const Problem& problem, Iterate& iterate);
    void update_barrier_parameter(const Iterate& current_iterate);
    bool is_small_direction(const Iterate& current_iterate, const Direction& direction);
-   void set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;
+   void set_current_variable_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;
    double compute_barrier_directional_derivative(const std::vector<double>& solution);
    double evaluate_barrier_function(const Problem& problem, Iterate& iterate);
-   double primal_fraction_to_boundary(const std::vector<double>& ipm_solution, double tau);
-   double dual_fraction_to_boundary(double tau);
+   double primal_fraction_to_boundary(const Iterate& current_iterate, const std::vector<double>& ipm_solution, double tau);
+   double dual_fraction_to_boundary(const Iterate& current_iterate, double tau);
    void assemble_augmented_system(const Problem& problem, const Iterate& current_iterate);
    void assemble_augmented_matrix(const Problem& problem, const Iterate& current_iterate);
    void generate_augmented_rhs(const Iterate& current_iterate);
-   void compute_lower_bound_dual_direction(const std::vector<double>& solution);
-   void compute_upper_bound_dual_direction(const std::vector<double>& solution);
+   void compute_lower_bound_dual_direction(const Iterate& current_iterate, const std::vector<double>& solution);
+   void compute_upper_bound_dual_direction(const Iterate& current_iterate, const std::vector<double>& solution);
    void generate_direction(const Problem& problem, const Iterate& current_iterate);
    [[nodiscard]] double compute_KKT_error_scaling(const Iterate& current_iterate) const;
    [[nodiscard]] double compute_central_complementarity_error(const Iterate& iterate) const;
-   void set_current_iterate(const Iterate& iterate);
    void print_solution(const Problem& problem, double primal_step_length, double dual_step_length) const;
 };
 

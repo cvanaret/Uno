@@ -30,8 +30,9 @@ void Preprocessing::enforce_linear_constraints(const Problem& problem, Iterate& 
             constraint_jacobian[j].reserve(problem.number_variables);
          }
          problem.linear_constraints.for_each([&](size_t j, size_t linear_constraint_index) {
-            problem.evaluate_constraint_gradient(first_iterate.x, j, constraint_jacobian[linear_constraint_index]);
+            //problem.evaluate_constraint_gradient(first_iterate.x, j, constraint_jacobian[linear_constraint_index]);
          });
+         assert(false && "Preprocessing::enforce_linear_constraints must be fixed");
 
          // variables bounds
          std::vector<Range> variables_bounds(problem.number_variables);

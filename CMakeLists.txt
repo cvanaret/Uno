@@ -67,6 +67,7 @@ set(SRC_FILES
     uno/optimization/Preprocessing.cpp
     uno/optimization/Scaling.cpp
     uno/optimization/ScaledReformulation.cpp
+    uno/optimization/SlackReformulation.cpp
 
     uno/solvers/linear/LinearSolverFactory.hpp
 	uno/solvers/QP/QPSolverFactory.hpp
