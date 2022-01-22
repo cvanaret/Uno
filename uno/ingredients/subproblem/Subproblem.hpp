@@ -23,7 +23,7 @@ enum SecondOrderCorrection {
  */
 class Subproblem {
 public:
-   Subproblem(size_t number_variables, size_t max_number_variables, size_t number_constraints, bool uses_slacks, SecondOrderCorrection soc_strategy,
+   Subproblem(size_t number_variables, size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy,
          bool is_second_order_method, Norm residual_norm);
    virtual ~Subproblem() = default;
 
@@ -41,7 +41,12 @@ public:
 
    // globalization metrics
    [[nodiscard]] virtual PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const = 0;
+   double compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier) const;
    virtual void compute_progress_measures(const Problem& problem, Iterate& iterate);
+   static double compute_complementarity_error(const Problem& problem, Iterate& iterate, const std::vector<double>& constraint_multipliers,
+         const std::vector<double>& lower_bounds_multipliers, const std::vector<double>& upper_bounds_multipliers);
+   void compute_residuals(const Problem& problem, Iterate& iterate, double objective_multiplier) const;
+
    virtual void register_accepted_iterate(Iterate& iterate);
 
    [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
@@ -56,16 +61,9 @@ public:
    static double push_variable_to_interior(double variable_value, const Range& variable_bounds);
    void set_constraint_bounds(const Problem& problem, const std::vector<double>& current_constraints);
 
-   double compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier) const;
-   void compute_residuals(const Problem& problem, Iterate& iterate, double objective_multiplier) const;
-
-   static double compute_complementarity_error(const Problem& problem, Iterate& iterate, const std::vector<double>& constraint_multipliers,
-         const std::vector<double>& lower_bounds_multipliers, const std::vector<double>& upper_bounds_multipliers);
-
    size_t number_variables; // can be updated on the fly (elastic variables)
    const size_t max_number_variables;
    const size_t number_constraints;
-   const bool uses_slacks;
    const SecondOrderCorrection soc_strategy;
    // when the subproblem is reformulated (e.g. when slacks are introduced), the bounds may be altered
    std::vector<Range> current_variable_bounds;

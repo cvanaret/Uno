@@ -4,45 +4,43 @@
 
 ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Problem& problem, const Options& options):
       subproblem(SubproblemFactory::create(problem,
-            problem.number_variables + ConstraintRelaxationStrategy::count_elastic_variables(problem, true),
+            problem.number_variables + ConstraintRelaxationStrategy::count_elastic_variables(problem),
             options)),
-      elastic_variables(ConstraintRelaxationStrategy::count_elastic_variables(problem, this->subproblem->uses_slacks)),
+      elastic_variables(ConstraintRelaxationStrategy::count_elastic_variables(problem)),
       elastic_objective_coefficient(stod(options.at("elastic_objective_coefficient"))),
       // save the original number of variables in the subproblem
       number_subproblem_variables(this->subproblem->number_variables),
       max_number_subproblem_variables(this->subproblem->max_number_variables),
       number_constraints(problem.number_constraints) {
    // generate elastic variables to relax the constraints
-   ConstraintRelaxationStrategy::generate_elastic_variables(problem, this->elastic_variables, this->subproblem->number_variables,
-         this->subproblem->uses_slacks);
+   ConstraintRelaxationStrategy::generate_elastic_variables(problem, this->elastic_variables, this->subproblem->number_variables);
 }
 
-size_t ConstraintRelaxationStrategy::count_elastic_variables(const Problem& problem, bool subproblem_uses_slacks) {
+size_t ConstraintRelaxationStrategy::count_elastic_variables(const Problem& problem) {
    size_t number_elastic_variables = 0;
    // if the subproblem uses slack variables, the bounds of the constraints are [0, 0]
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      if (subproblem_uses_slacks || is_finite_lower_bound(problem.get_constraint_lower_bound(j))) {
+      if (is_finite_lower_bound(problem.get_constraint_lower_bound(j))) {
          number_elastic_variables++;
       }
-      if (subproblem_uses_slacks || is_finite_upper_bound(problem.get_constraint_upper_bound(j))) {
+      if (is_finite_upper_bound(problem.get_constraint_upper_bound(j))) {
          number_elastic_variables++;
       }
    }
    return number_elastic_variables;
 }
 
-void ConstraintRelaxationStrategy::generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables, size_t number_variables,
-      bool subproblem_uses_slacks) {
+void ConstraintRelaxationStrategy::generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables, size_t number_variables) {
    // generate elastic variables p and n on the fly to relax the constraints
    // if the subproblem uses slack variables, the bounds of the constraints are [0, 0]
    size_t elastic_index = number_variables;
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      if (subproblem_uses_slacks || is_finite_lower_bound(problem.get_constraint_lower_bound(j))) {
+      if (is_finite_lower_bound(problem.get_constraint_lower_bound(j))) {
          // nonpositive variable n that captures the negative part of the constraint violation
          elastic_variables.negative.insert(j, elastic_index);
          elastic_index++;
       }
-      if (subproblem_uses_slacks || is_finite_upper_bound(problem.get_constraint_upper_bound(j))) {
+      if (is_finite_upper_bound(problem.get_constraint_upper_bound(j))) {
          // nonnegative variable p that captures the positive part of the constraint violation
          elastic_variables.positive.insert(j, elastic_index);
          elastic_index++;

@@ -3,10 +3,9 @@
 #include "linear_algebra/SparseVector.hpp"
 #include "optimization/Constraint.hpp"
 
-Subproblem::Subproblem(size_t number_variables, size_t max_number_variables, size_t number_constraints, bool uses_slacks,
-      SecondOrderCorrection soc_strategy, bool is_second_order_method, Norm residual_norm):
+Subproblem::Subproblem(size_t number_variables, size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy,
+         bool is_second_order_method, Norm residual_norm):
       number_variables(number_variables), max_number_variables(max_number_variables), number_constraints(number_constraints),
-      uses_slacks(uses_slacks),
       soc_strategy(soc_strategy), current_variable_bounds(max_number_variables),
       objective_gradient(max_number_variables), // SparseVector
       constraint_bounds(number_constraints), direction(max_number_variables, number_constraints),
@@ -46,15 +45,6 @@ void Subproblem::remove_elastic_variable(size_t i, size_t j) {
    assert(j < this->number_constraints && "The constraint index is larger than the preallocated size");
    this->objective_gradient.erase(i);
    this->number_variables--;
-}
-
-void Subproblem::compute_progress_measures(const Problem& problem, Iterate& iterate) {
-   // feasibility measure: constraint violation
-   iterate.evaluate_constraints(problem);
-   iterate.nonlinear_errors.constraints = problem.compute_constraint_violation(iterate.constraints, this->residual_norm);
-   // optimality measure: objective value
-   iterate.evaluate_objective(problem);
-   iterate.progress = {iterate.nonlinear_errors.constraints, iterate.objective};
 }
 
 double Subproblem::push_variable_to_interior(double variable_value, const Range& variable_bounds) {
@@ -171,8 +161,17 @@ double Subproblem::compute_complementarity_error(const Problem& problem, Iterate
    return error;
 }
 
-void Subproblem::compute_residuals(const Problem& problem, Iterate& iterate, double objective_multiplier) const {
+void Subproblem::compute_progress_measures(const Problem& problem, Iterate& iterate) {
+   // feasibility measure: constraint violation
+   iterate.evaluate_constraints(problem);
+   iterate.nonlinear_errors.constraints = problem.compute_constraint_violation(iterate.constraints, this->residual_norm);
+   // optimality measure: objective value
    iterate.evaluate_objective(problem);
+   iterate.progress = {iterate.nonlinear_errors.constraints, iterate.objective};
+}
+
+void Subproblem::compute_residuals(const Problem& problem, Iterate& iterate, double objective_multiplier) const {
+   iterate.evaluate_constraints(problem);
    iterate.nonlinear_errors.constraints = problem.compute_constraint_violation(iterate.constraints, this->residual_norm);
    // compute the KKT error only if the objective multiplier is positive
    iterate.nonlinear_errors.KKT = this->compute_first_order_error(problem, iterate, 0. < objective_multiplier ? objective_multiplier : 1.);

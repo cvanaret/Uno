@@ -41,9 +41,8 @@ protected:
    const double elastic_objective_coefficient;
    const size_t number_subproblem_variables;
 
-   static size_t count_elastic_variables(const Problem& problem, bool subproblem_uses_slacks);
-   static void generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables, size_t number_variables,
-         bool subproblem_uses_slacks);
+   static size_t count_elastic_variables(const Problem& problem);
+   static void generate_elastic_variables(const Problem& problem, ElasticVariables& elastic_variables, size_t number_variables);
    void evaluate_relaxed_constraints(const Problem& problem, Iterate& iterate) const;
    static bool is_small_step(const Direction& direction);
    void add_elastic_variables_to_subproblem(const Problem& problem, Iterate& current_iterate);

@@ -2,7 +2,7 @@
 #include "solvers/QP/QPSolverFactory.hpp"
 
 QPSubproblem::QPSubproblem(const Problem& problem, size_t max_number_variables, const Options& options) :
-      Subproblem(problem.number_variables, max_number_variables, problem.number_constraints, false, NO_SOC, true,
+      Subproblem(problem.number_variables, max_number_variables, problem.number_constraints, NO_SOC, true,
             norm_from_string(options.at("residual_norm"))),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
       solver(QPSolverFactory::create(options.at("QP_solver"), max_number_variables, problem.number_constraints,
