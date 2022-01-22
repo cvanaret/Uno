@@ -225,7 +225,9 @@ PredictedReductionModel BarrierSubproblem::generate_predicted_reduction_model(co
 }
 
 void BarrierSubproblem::compute_progress_measures(const Problem& problem, Iterate& iterate) {
-   const double constraint_violation = norm_1(iterate.constraints);
+   // feasibility measure: constraint violation
+   iterate.evaluate_constraints(problem);
+   const double constraint_violation = problem.compute_constraint_violation(iterate.constraints, L1_NORM);
    // compute barrier objective
    const double barrier_objective = this->evaluate_barrier_function(problem, iterate);
    iterate.progress = {constraint_violation, barrier_objective};
