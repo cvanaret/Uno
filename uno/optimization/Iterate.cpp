@@ -9,7 +9,7 @@ size_t Iterate::number_eval_jacobian = 0;
 Iterate::Iterate(size_t max_number_variables, size_t max_number_constraints) :
    number_variables(max_number_variables), number_constraints(max_number_constraints),
    x(max_number_variables), multipliers(max_number_variables, max_number_constraints),
-   constraints(multipliers.constraints.size()),
+   constraints(max_number_constraints),
    objective_gradient(max_number_variables),
    constraint_jacobian(max_number_constraints),
    lagrangian_gradient(max_number_variables) {

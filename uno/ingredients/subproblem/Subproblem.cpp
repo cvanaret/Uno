@@ -13,10 +13,8 @@ Subproblem::Subproblem(size_t number_variables, size_t max_number_variables, siz
       is_second_order_method(is_second_order_method), residual_norm(residual_norm) {
 }
 
-void Subproblem::initialize(Statistics& /*statistics*/, const Problem& problem, Iterate& first_iterate) {
-   // compute the optimality and feasibility measures of the initial point
-   first_iterate.evaluate_constraints(problem);
-   this->compute_progress_measures(problem, first_iterate);
+void Subproblem::initialize(Statistics& /*statistics*/, const Problem& /*problem*/, Iterate& /*first_iterate*/) {
+   // by default, do nothing
 }
 
 void Subproblem::add_elastic_variables(const Problem& problem, Iterate& /*current_iterate*/, double objective_coefficient) {
@@ -51,9 +49,10 @@ void Subproblem::remove_elastic_variable(size_t i, size_t j) {
 }
 
 void Subproblem::compute_progress_measures(const Problem& problem, Iterate& iterate) {
-   // feasibility measure: residual of all constraints
+   // feasibility measure: constraint violation
+   iterate.evaluate_constraints(problem);
    iterate.nonlinear_errors.constraints = problem.compute_constraint_violation(iterate.constraints, this->residual_norm);
-   // optimality
+   // optimality measure: objective value
    iterate.evaluate_objective(problem);
    iterate.progress = {iterate.nonlinear_errors.constraints, iterate.objective};
 }

@@ -21,7 +21,11 @@ void l1Relaxation::initialize(Statistics& statistics, const Problem& problem, It
    // initialize the subproblem
    this->subproblem->initialize(statistics, problem, first_iterate);
 
+   // compute the progress measures and the residuals of the initial point
+   this->subproblem->compute_progress_measures(problem, first_iterate);
    this->subproblem->compute_residuals(problem, first_iterate, this->penalty_parameter);
+
+   // initialize the globalization strategy
    this->globalization_strategy->initialize(statistics, first_iterate);
 }
 

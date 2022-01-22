@@ -17,7 +17,6 @@ void FeasibilityRestoration::initialize(Statistics& statistics, const Problem& p
    this->subproblem->initialize(statistics, problem, first_iterate);
 
    // compute the progress measures and the residuals of the initial point
-   first_iterate.evaluate_constraints(problem);
    this->subproblem->compute_progress_measures(problem, first_iterate);
    this->subproblem->compute_residuals(problem, first_iterate, problem.objective_sign);
 
