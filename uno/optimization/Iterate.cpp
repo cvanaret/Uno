@@ -10,10 +10,12 @@ Iterate::Iterate(size_t max_number_variables, size_t max_number_constraints) :
    number_variables(max_number_variables), number_constraints(max_number_constraints),
    x(max_number_variables), multipliers(max_number_variables, max_number_constraints),
    constraints(multipliers.constraints.size()),
-   subproblem_constraints(multipliers.constraints.size()),
    objective_gradient(max_number_variables),
    constraint_jacobian(max_number_constraints),
    lagrangian_gradient(max_number_variables) {
+   for (auto& constraint_gradient: this->constraint_jacobian) {
+      constraint_gradient.reserve(max_number_variables);
+   }
 }
 
 void Iterate::evaluate_objective(const Problem& problem) {

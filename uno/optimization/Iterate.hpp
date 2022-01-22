@@ -32,7 +32,6 @@ public:
    static size_t number_eval_objective;
 
    std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
-   std::vector<double> subproblem_constraints; /*!< Constraint values for the subproblem (size \f$m)\f$ */
    bool are_constraints_computed{false};
    static size_t number_eval_constraints;
 

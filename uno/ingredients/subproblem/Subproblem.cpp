@@ -7,41 +7,22 @@ Subproblem::Subproblem(size_t number_variables, size_t max_number_variables, siz
       SecondOrderCorrection soc_strategy, bool is_second_order_method, Norm residual_norm):
       number_variables(number_variables), max_number_variables(max_number_variables), number_constraints(number_constraints),
       uses_slacks(uses_slacks),
-      soc_strategy(soc_strategy), variables_bounds(max_number_variables), constraint_multipliers(number_constraints),
+      soc_strategy(soc_strategy), current_variable_bounds(max_number_variables),
       objective_gradient(max_number_variables), // SparseVector
-      constraint_jacobian(number_constraints), // vector of SparseVectors
       constraint_bounds(number_constraints), direction(max_number_variables, number_constraints),
       is_second_order_method(is_second_order_method), residual_norm(residual_norm) {
-   for (auto& constraint_gradient: this->constraint_jacobian) {
-      constraint_gradient.reserve(this->max_number_variables);
-   }
 }
 
 void Subproblem::initialize(Statistics& /*statistics*/, const Problem& problem, Iterate& first_iterate) {
    // compute the optimality and feasibility measures of the initial point
-   this->evaluate_constraints(problem, first_iterate);
+   first_iterate.evaluate_constraints(problem);
    this->compute_progress_measures(problem, first_iterate);
-}
-
-void Subproblem::evaluate_constraints(const Problem& problem, Iterate& iterate) {
-   iterate.evaluate_constraints(problem);
-   for (size_t j = 0; j < problem.number_constraints; j++) {
-      iterate.subproblem_constraints[j] = iterate.constraints[j];
-   }
-}
-
-double Subproblem::compute_constraint_violation(const Problem& problem, Iterate& iterate) const {
-   return problem.compute_constraint_violation(iterate.subproblem_constraints, this->residual_norm);
-}
-
-double Subproblem::compute_constraint_violation(const Problem& problem, Iterate& iterate, const std::vector<size_t>& constraint_set) const {
-   return problem.compute_constraint_violation(iterate.subproblem_constraints, constraint_set, this->residual_norm);
 }
 
 void Subproblem::add_elastic_variables(const Problem& problem, Iterate& /*current_iterate*/, double objective_coefficient) {
    // add at most 2 elastic variables per constraint
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      //const double constraint_j = current_iterate.subproblem_constraints[j];
+      //const double constraint_j = current_iterate.constraints[j];
       // TODO: initialize one of the elastics if the constraint is violated at the current iterate
       // negative part
       if (is_finite_lower_bound(problem.get_constraint_lower_bound(j))) {
@@ -57,9 +38,8 @@ void Subproblem::add_elastic_variables(const Problem& problem, Iterate& /*curren
 void Subproblem::add_elastic_variable(size_t i, double objective_coefficient, size_t j, double constraint_coefficient) {
    assert(i < this->max_number_variables && "The variable index is larger than the preallocated size");
    assert(j < this->number_constraints && "The constraint index is larger than the preallocated size");
-   this->variables_bounds[i] = {0., std::numeric_limits<double>::infinity()};
+   this->current_variable_bounds[i] = {0., std::numeric_limits<double>::infinity()};
    this->objective_gradient.insert(i, objective_coefficient);
-   this->constraint_jacobian[j].insert(i, constraint_coefficient);
    this->number_variables++;
 }
 
@@ -67,13 +47,12 @@ void Subproblem::remove_elastic_variable(size_t i, size_t j) {
    assert(i < this->max_number_variables && "The variable index is larger than the preallocated size");
    assert(j < this->number_constraints && "The constraint index is larger than the preallocated size");
    this->objective_gradient.erase(i);
-   this->constraint_jacobian[j].erase(i);
    this->number_variables--;
 }
 
 void Subproblem::compute_progress_measures(const Problem& problem, Iterate& iterate) {
    // feasibility measure: residual of all constraints
-   iterate.nonlinear_errors.constraints = problem.compute_constraint_violation(iterate.subproblem_constraints, this->residual_norm);
+   iterate.nonlinear_errors.constraints = problem.compute_constraint_violation(iterate.constraints, this->residual_norm);
    // optimality
    iterate.evaluate_objective(problem);
    iterate.progress = {iterate.nonlinear_errors.constraints, iterate.objective};
@@ -91,13 +70,13 @@ double Subproblem::push_variable_to_interior(double variable_value, const Range&
    return variable_value;
 }
 
-void Subproblem::set_variables_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {
+void Subproblem::set_current_variable_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {
    // bounds intersected with trust region
    // very important: apply the trust region only on the original variables
    for (size_t i = 0; i < problem.number_variables; i++) {
       const double lb = std::max(-trust_region_radius, problem.get_variable_lower_bound(i) - current_iterate.x[i]);
       const double ub = std::min(trust_region_radius, problem.get_variable_upper_bound(i) - current_iterate.x[i]);
-      this->variables_bounds[i] = {lb, ub};
+      this->current_variable_bounds[i] = {lb, ub};
    }
 }
 
@@ -195,7 +174,7 @@ double Subproblem::compute_complementarity_error(const Problem& problem, Iterate
 
 void Subproblem::compute_residuals(const Problem& problem, Iterate& iterate, double objective_multiplier) const {
    iterate.evaluate_objective(problem);
-   iterate.nonlinear_errors.constraints = this->compute_constraint_violation(problem, iterate);
+   iterate.nonlinear_errors.constraints = problem.compute_constraint_violation(iterate.constraints, this->residual_norm);
    // compute the KKT error only if the objective multiplier is positive
    iterate.nonlinear_errors.KKT = this->compute_first_order_error(problem, iterate, 0. < objective_multiplier ? objective_multiplier : 1.);
    iterate.nonlinear_errors.FJ = this->compute_first_order_error(problem, iterate, 0.);

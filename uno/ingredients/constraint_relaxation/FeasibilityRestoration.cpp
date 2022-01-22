@@ -17,7 +17,7 @@ void FeasibilityRestoration::initialize(Statistics& statistics, const Problem& p
    this->subproblem->initialize(statistics, problem, first_iterate);
 
    // compute the progress measures and the residuals of the initial point
-   this->evaluate_constraints(problem, first_iterate);
+   first_iterate.evaluate_constraints(problem);
    this->subproblem->compute_progress_measures(problem, first_iterate);
    this->subproblem->compute_residuals(problem, first_iterate, problem.objective_sign);
 
@@ -117,7 +117,7 @@ void FeasibilityRestoration::create_current_feasibility_problem(const Problem& p
       const ConstraintPartition& constraint_partition = optional_constraint_partition.value();
       assert(!constraint_partition.infeasible.empty() && "The subproblem is infeasible but no constraint is infeasible");
       // set the multipliers of the violated constraints
-      FeasibilityRestoration::set_restoration_multipliers(this->subproblem->constraint_multipliers, constraint_partition);
+      FeasibilityRestoration::set_restoration_multipliers(current_iterate.multipliers.constraints, constraint_partition);
 
       // compute the objective model with a zero objective multiplier
       this->subproblem->objective_gradient.clear();
@@ -127,11 +127,11 @@ void FeasibilityRestoration::create_current_feasibility_problem(const Problem& p
       this->subproblem->compute_feasibility_linear_objective(current_iterate, constraint_partition);
 
       // update the bounds of the constraints
-      this->subproblem->generate_feasibility_bounds(problem, current_iterate.subproblem_constraints, constraint_partition);
+      this->subproblem->generate_feasibility_bounds(problem, current_iterate.constraints, constraint_partition);
    }
    else {
       // no constraint partition given, form an l1 feasibility problem by adding elastic variables
-      initialize_vector(this->subproblem->constraint_multipliers, 0.);
+      initialize_vector(current_iterate.multipliers.constraints, 0.);
       this->subproblem->build_objective_model(problem, current_iterate, 0.);
       this->add_elastic_variables_to_subproblem(problem, current_iterate);
    }
@@ -153,7 +153,7 @@ GlobalizationStrategy& FeasibilityRestoration::switch_phase(const Problem& probl
          // remove elastics from the current iterate
          current_iterate.set_number_variables(this->number_subproblem_variables);
       }
-      this->evaluate_constraints(problem, current_iterate);
+      current_iterate.evaluate_constraints(problem);
       this->subproblem->compute_progress_measures(problem, current_iterate);
    }
    // possibly go from phase 2 (optimality) to 1 (restoration)
@@ -169,7 +169,7 @@ GlobalizationStrategy& FeasibilityRestoration::switch_phase(const Problem& probl
    // evaluate the progress measures of the trial iterate
    if (this->current_phase == OPTIMALITY) {
       trial_iterate.set_number_variables(this->number_subproblem_variables);
-      this->evaluate_constraints(problem, trial_iterate);
+      trial_iterate.evaluate_constraints(problem);
       this->subproblem->compute_progress_measures(problem, trial_iterate);
    }
    else { // restoration phase
@@ -197,9 +197,10 @@ void FeasibilityRestoration::compute_infeasibility_measures(const Problem& probl
    if (optional_constraint_partition.has_value()) {
       const ConstraintPartition& constraint_partition = optional_constraint_partition.value();
       // feasibility measure: residual of all constraints
-      this->evaluate_constraints(problem, iterate);
-      const double feasibility_measure = this->subproblem->compute_constraint_violation(problem, iterate);
-      const double objective_measure = this->subproblem->compute_constraint_violation(problem, iterate, constraint_partition.infeasible);
+      iterate.evaluate_constraints(problem);
+      const double feasibility_measure = problem.compute_constraint_violation(iterate.constraints, this->subproblem->residual_norm);
+      const double objective_measure = problem.compute_constraint_violation(iterate.constraints, constraint_partition.infeasible,
+            this->subproblem->residual_norm);
       iterate.progress = {feasibility_measure, objective_measure};
    }
    else {

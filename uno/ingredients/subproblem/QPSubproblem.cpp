@@ -15,20 +15,17 @@ QPSubproblem::QPSubproblem(const Problem& problem, size_t max_number_variables, 
 
 void QPSubproblem::build_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier,
       double trust_region_radius) {
-   copy_from(this->constraint_multipliers, current_iterate.multipliers.constraints);
-
    // constraints
    current_iterate.evaluate_constraints(problem);
 
    // constraint Jacobian
    current_iterate.evaluate_constraint_jacobian(problem);
-   this->constraint_jacobian = current_iterate.constraint_jacobian;
 
    // objective
    this->build_objective_model(problem, current_iterate, objective_multiplier);
 
    // bounds of the variables
-   this->set_variables_bounds(problem, current_iterate, trust_region_radius);
+   this->set_current_variable_bounds(problem, current_iterate, trust_region_radius);
 
    // bounds of the linearized constraints
    this->set_constraint_bounds(problem, current_iterate.constraints);
@@ -39,7 +36,7 @@ void QPSubproblem::build_current_subproblem(const Problem& problem, Iterate& cur
 
 void QPSubproblem::build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
    // Hessian
-   this->hessian_model->evaluate(problem, current_iterate.x, objective_multiplier, this->constraint_multipliers);
+   this->hessian_model->evaluate(problem, current_iterate.x, objective_multiplier, current_iterate.multipliers.constraints);
 
    // objective gradient
    this->set_scaled_objective_gradient(problem, current_iterate, objective_multiplier);
@@ -55,8 +52,8 @@ void QPSubproblem::set_initial_point(const std::vector<double>& point) {
 Direction QPSubproblem::solve(Statistics& /*statistics*/, const Problem& problem, Iterate& current_iterate) {
    this->hessian_model->adjust_number_variables(this->number_variables);
    // compute QP direction
-   Direction direction = this->solver->solve_QP(this->variables_bounds, this->constraint_bounds, this->objective_gradient,
-         this->constraint_jacobian, *this->hessian_model->hessian, this->initial_point);
+   Direction direction = this->solver->solve_QP(this->current_variable_bounds, this->constraint_bounds, this->objective_gradient,
+         current_iterate.constraint_jacobian, *this->hessian_model->hessian, this->initial_point);
    this->number_subproblems_solved++;
 
    // compute dual *displacements* (note: SQP methods usually compute the new duals, not the displacements)

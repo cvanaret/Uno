@@ -26,26 +26,29 @@ void run_uno_ampl(const std::string& problem_name, const Options& options) {
    auto original_problem = std::make_unique<AMPLModel>(problem_name);
    INFO << "Heap allocations after AMPL: " << total_allocations << "\n";
 
+   auto reformulated_problem = std::make_unique<SlackReformulation>(*original_problem);
+   //const Problem& reformulated_problem = (options.at("subproblem") == "barrier") ? SlackReformulation(*original_problem) : *original_problem;
+
    // initial primal and dual points
-   Iterate first_iterate(original_problem->number_variables, original_problem->number_constraints);
-   original_problem->get_initial_primal_point(first_iterate.x);
-   original_problem->get_initial_dual_point(first_iterate.multipliers.constraints);
+   Iterate first_iterate(reformulated_problem->number_variables, reformulated_problem->number_constraints);
+   reformulated_problem->get_initial_primal_point(first_iterate.x);
+   reformulated_problem->get_initial_dual_point(first_iterate.multipliers.constraints);
    // project x into the bounds
-   original_problem->project_point_in_bounds(first_iterate.x);
+   reformulated_problem->project_point_in_bounds(first_iterate.x);
 
    // initialize the function scaling TODO put this constant in option file
-   Scaling scaling(original_problem->number_constraints, 100.);
+   Scaling scaling(reformulated_problem->number_constraints, 100.);
    // function scaling
    const bool scale_functions = (options.at("scale_functions") == "yes");
    if (scale_functions) {
       // evaluate the gradients at the current point
-      first_iterate.evaluate_objective_gradient(*original_problem);
-      first_iterate.evaluate_constraint_jacobian(*original_problem);
+      first_iterate.evaluate_objective_gradient(*reformulated_problem);
+      first_iterate.evaluate_constraint_jacobian(*reformulated_problem);
       scaling.compute(first_iterate.objective_gradient, first_iterate.constraint_jacobian);
       // forget about these evaluations
       first_iterate.reset_evaluations();
    }
-   const Problem& problem_to_solve = ScaledReformulation(*original_problem, scaling);
+   const Problem& problem_to_solve = ScaledReformulation(*reformulated_problem, scaling);
 
    // create the constraint relaxation strategy
    auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(problem_to_solve, options);
@@ -60,7 +63,7 @@ void run_uno_ampl(const std::string& problem_name, const Options& options) {
    INFO << "Heap allocations before solving: " << total_allocations << "\n";
    const bool enforce_linear_constraints = (options.at("enforce_linear_constraints") == "yes");
    Result result = uno.solve(problem_to_solve, first_iterate, enforce_linear_constraints);
-   Uno::postsolve_solution(*original_problem, scaling, result.solution, result.status);
+   Uno::postsolve_solution(*reformulated_problem, scaling, result.solution, result.status);
 
    const bool print_solution = (options.at("print_solution") == "yes");
    result.print(print_solution);
@@ -98,10 +101,10 @@ void test_problem_with_slacks(const std::string& problem_name) {
    }
 
    // evaluations
-   SparseVector<double> gradient(problem_to_solve.number_variables);
+   std::vector<SparseVector<double>> jacobian(problem_to_solve.number_constraints);
+   problem_to_solve.evaluate_constraint_jacobian(first_iterate.x, jacobian);
    for (size_t j = 0; j < problem_to_solve.number_constraints; j++) {
-      problem_to_solve.evaluate_constraint_gradient(first_iterate.x, j, gradient);
-      std::cout << gradient;
+      std::cout << jacobian[j];
    }
 
    CSCSymmetricMatrix hessian(problem_to_solve.number_variables, problem_to_solve.get_hessian_maximum_number_nonzeros());

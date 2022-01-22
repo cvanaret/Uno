@@ -1,17 +1,17 @@
-#ifndef UNO_SCALEDREFORMULATION_H
-#define UNO_SCALEDREFORMULATION_H
+#ifndef UNO_SLACKREFORMULATION_H
+#define UNO_SLACKREFORMULATION_H
 
 #include "Problem.hpp"
-#include "Scaling.hpp"
 
-class ScaledReformulation: public Problem {
+class SlackReformulation: public Problem {
 public:
-   ScaledReformulation(const Problem& original_problem, const Scaling& scaling);
+   explicit SlackReformulation(const Problem& original_problem);
 
    [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
    [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
    [[nodiscard]] double get_constraint_lower_bound(size_t j) const override;
    [[nodiscard]] double get_constraint_upper_bound(size_t j) const override;
+
    [[nodiscard]] double evaluate_objective(const std::vector<double>& x) const override;
    void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const override;
    void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const override;
@@ -27,9 +27,9 @@ public:
    void get_initial_primal_point(std::vector<double>& x) const override;
    void get_initial_dual_point(std::vector<double>& multipliers) const override;
 
-private:
+protected:
    const Problem& original_problem;
-   const Scaling& scaling;
+   std::vector<size_t> inequality_constraint_of_slack;
 };
 
-#endif // UNO_SCALEDREFORMULATION_H
+#endif // UNO_SLACKREFORMULATION_H
