@@ -53,7 +53,7 @@ void run_uno_ampl(const std::string& problem_name, const Options& options) {
 
    // create the constraint relaxation strategy
    auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(problem_to_solve, options);
-   INFO << "Heap allocations after ConstraintRelax, Subproblem and Solver: " << total_allocations << "\n";
+   INFO << "Heap allocations after ConstraintRelaxation, Subproblem and Solver: " << total_allocations << "\n";
 
    // create the globalization mechanism
    auto mechanism = GlobalizationMechanismFactory::create(*constraint_relaxation_strategy, options);
@@ -118,8 +118,12 @@ void test_problem_with_slacks(const std::string& problem_name) {
 
 void test_problem_with_elastics(const std::string& problem_name) {
    auto original_problem = std::make_unique<AMPLModel>(problem_name);
-   // add slacks
-   const Problem& problem_to_solve = ElasticFeasibilityProblem(*original_problem, 1.);
+   // add elastics and proximal term
+   const double objective_multiplier = 1.;
+   const double elastic_objective_coefficient = 1.;
+   const double proximal_coefficient = 1.;
+   const Problem& problem_to_solve = ElasticFeasibilityProblem(*original_problem, objective_multiplier, elastic_objective_coefficient,
+         proximal_coefficient);
 
    // create the first iterate (slacks set to 0)
    Iterate first_iterate(problem_to_solve.number_variables, problem_to_solve.number_constraints);
