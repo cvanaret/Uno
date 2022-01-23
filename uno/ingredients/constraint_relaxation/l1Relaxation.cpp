@@ -110,6 +110,7 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, const Problem& problem,
 
    bool accept = false;
    if (ConstraintRelaxationStrategy::is_small_step(direction)) {
+      this->subproblem->compute_progress_measures(problem, trial_iterate);
       accept = true;
    }
    else {
@@ -274,19 +275,19 @@ double l1Relaxation::compute_linearized_constraint_residual(std::vector<double>&
 }
 
 // measure that combines KKT error and complementarity error
-double l1Relaxation::compute_error(const Problem& problem, Iterate& current_iterate,
-      const Multipliers& multipliers_displacements, double current_penalty_parameter) {
+double l1Relaxation::compute_error(const Problem& problem, Iterate& current_iterate, const Multipliers& multiplier_displacements,
+      double current_penalty_parameter) {
    // assemble the trial constraints multipliers
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      this->constraint_multipliers[j] = current_iterate.multipliers.constraints[j] + multipliers_displacements.constraints[j];
+      this->constraint_multipliers[j] = current_iterate.multipliers.constraints[j] + multiplier_displacements.constraints[j];
    }
 
    // complementarity error
    double error = Subproblem::compute_complementarity_error(problem, current_iterate, this->constraint_multipliers,
-         multipliers_displacements.lower_bounds, multipliers_displacements.upper_bounds);
+         multiplier_displacements.lower_bounds, multiplier_displacements.upper_bounds);
    // KKT error
    current_iterate.evaluate_lagrangian_gradient(problem, current_penalty_parameter, this->constraint_multipliers,
-         multipliers_displacements.lower_bounds, multipliers_displacements.upper_bounds);
+         multiplier_displacements.lower_bounds, multiplier_displacements.upper_bounds);
    error += norm_1(current_iterate.lagrangian_gradient);
    return error;
 }

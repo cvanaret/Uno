@@ -34,6 +34,8 @@ public:
    virtual void build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) = 0;
    virtual void add_elastic_variables(const Problem& problem, Iterate& current_iterate, double objective_coefficient);
    virtual void remove_elastic_variable(size_t i, size_t j);
+   [[nodiscard]] virtual double get_proximal_coefficient() const;
+   virtual void add_proximal_term_to_hessian(const std::function<double(size_t i)>& compute_proximal_term);
 
    // direction computation
    virtual Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) = 0;

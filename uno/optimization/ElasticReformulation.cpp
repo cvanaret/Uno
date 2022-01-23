@@ -60,7 +60,7 @@ inline double ElasticReformulation::compute_elastic_residual(const std::vector<d
 inline double ElasticReformulation::evaluate_objective(const std::vector<double>& x) const {
    // return rho*f(x) + e^T p + e^T n
    double objective = this->compute_elastic_residual(x);
-   if (0. < this->objective_multiplier) {
+   if (this->objective_multiplier != 0.) {
       objective += this->objective_multiplier*this->original_problem.evaluate_objective(x);
    }
    return objective;
@@ -68,7 +68,7 @@ inline double ElasticReformulation::evaluate_objective(const std::vector<double>
 
 inline void ElasticReformulation::evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const {
    // scale nabla f(x) by rho
-   if (0. < this->objective_multiplier) {
+   if (this->objective_multiplier != 0.) {
       this->original_problem.evaluate_objective_gradient(x, gradient);
       scale(gradient, this->objective_multiplier);
    }
@@ -147,4 +147,9 @@ inline void ElasticReformulation::get_initial_primal_point(std::vector<double>& 
 
 inline void ElasticReformulation::get_initial_dual_point(std::vector<double>& multipliers) const {
    this->original_problem.get_initial_dual_point(multipliers);
+}
+
+inline void ElasticReformulation::set_objective_multiplier(double new_objective_multiplier) {
+   // update the objective multiplier
+   this->objective_multiplier = new_objective_multiplier;
 }

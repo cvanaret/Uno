@@ -28,12 +28,14 @@ public:
    void get_initial_primal_point(std::vector<double>& x) const override;
    void get_initial_dual_point(std::vector<double>& multipliers) const override;
 
+   void set_objective_multiplier(double new_objective_multiplier);
+
 protected:
    const Problem& original_problem;
-   const double objective_multiplier;
+   double objective_multiplier;
    ElasticVariables elastic_variables;
 
-   double compute_elastic_residual(const std::vector<double>& x) const;
+   [[nodiscard]] double compute_elastic_residual(const std::vector<double>& x) const;
 };
 
 #endif // UNO_ELASTICREFORMULATION_H

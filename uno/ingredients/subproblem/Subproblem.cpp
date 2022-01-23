@@ -47,6 +47,15 @@ void Subproblem::remove_elastic_variable(size_t i, size_t j) {
    this->number_variables--;
 }
 
+double Subproblem::get_proximal_coefficient() const {
+   // by default, return 1.
+   return 1.;
+}
+
+void Subproblem::add_proximal_term_to_hessian(const std::function<double(size_t i)>& /*compute_proximal_term*/) {
+   // by default, do nothing
+}
+
 double Subproblem::push_variable_to_interior(double variable_value, const Range& variable_bounds) {
    const double k1 = 1e-2;
    const double k2 = 1e-2;
