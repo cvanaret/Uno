@@ -4,9 +4,9 @@
 #include "Problem.hpp"
 #include "ingredients/constraint_relaxation/ElasticVariables.hpp"
 
-class ElasticReformulation: public Problem {
+class ElasticFeasibilityProblem: public Problem {
 public:
-   explicit ElasticReformulation(const Problem& original_problem, double objective_multiplier);
+   explicit ElasticFeasibilityProblem(const Problem& original_problem, double objective_multiplier);
 
    [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
    [[nodiscard]] double get_variable_upper_bound(size_t i) const override;

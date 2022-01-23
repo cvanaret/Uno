@@ -5,7 +5,7 @@
 #include "Uno.hpp"
 #include "optimization/ScaledReformulation.hpp"
 #include "optimization/SlackReformulation.hpp"
-#include "optimization/ElasticReformulation.hpp"
+#include "optimization/ElasticFeasibilityProblem.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Options.hpp"
 #include "linear_algebra/CSCSymmetricMatrix.hpp"
@@ -119,7 +119,7 @@ void test_problem_with_slacks(const std::string& problem_name) {
 void test_problem_with_elastics(const std::string& problem_name) {
    auto original_problem = std::make_unique<AMPLModel>(problem_name);
    // add slacks
-   const Problem& problem_to_solve = ElasticReformulation(*original_problem, 1.);
+   const Problem& problem_to_solve = ElasticFeasibilityProblem(*original_problem, 1.);
 
    // create the first iterate (slacks set to 0)
    Iterate first_iterate(problem_to_solve.number_variables, problem_to_solve.number_constraints);
