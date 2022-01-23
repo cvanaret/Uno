@@ -48,6 +48,7 @@ void COOSymmetricMatrix::insert(double term, size_t row_index, size_t column_ind
    }
    // otherwise, add an entry
    else {
+      assert(this->number_nonzeros <= row_indices.size() && "The COO matrix doesn't have a sufficient capacity");
       this->entries.push_back(term);
       this->row_indices.push_back(row_index);
       this->column_indices.push_back(column_index);
