@@ -29,6 +29,8 @@ public:
    void build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) override;
    void add_elastic_variables(const Problem& problem, Iterate& current_iterate, double objective_coefficient) override;
    void remove_elastic_variable(size_t i, size_t j) override;
+   [[nodiscard]] double get_proximal_coefficient() const override;
+   void add_proximal_term_to_hessian(const std::function<double(size_t i)>& compute_proximal_term) override;
    Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
    Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) override;
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const override;
@@ -55,7 +57,6 @@ private:
    std::vector<double> upper_delta_z;
 
    bool solving_feasibility_problem{false};
-   const bool use_proximal_term{true};
 
    void update_barrier_parameter(const Iterate& current_iterate);
    bool is_small_direction(const Iterate& current_iterate, const Direction& direction);
@@ -65,7 +66,7 @@ private:
    double primal_fraction_to_boundary(const Iterate& current_iterate, const std::vector<double>& ipm_solution, double tau);
    double dual_fraction_to_boundary(const Iterate& current_iterate, double tau);
    void assemble_augmented_system(const Problem& problem, const Iterate& current_iterate);
-   void assemble_augmented_matrix(const Problem& problem, const Iterate& current_iterate);
+   void assemble_augmented_matrix(const Iterate& current_iterate);
    void generate_augmented_rhs(const Iterate& current_iterate);
    void compute_lower_bound_dual_direction(const Iterate& current_iterate, const std::vector<double>& solution);
    void compute_upper_bound_dual_direction(const Iterate& current_iterate, const std::vector<double>& solution);

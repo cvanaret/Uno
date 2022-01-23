@@ -1,4 +1,6 @@
 #include <cassert>
+#include <cmath>
+#include <functional>
 #include "FeasibilityRestoration.hpp"
 #include "ingredients/strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
@@ -82,6 +84,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
 
    bool accept = false;
    if (ConstraintRelaxationStrategy::is_small_step(direction)) {
+      this->subproblem->compute_progress_measures(problem, trial_iterate);
       accept = true;
    }
    else {
@@ -108,6 +111,13 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, const Problem
    return accept;
 }
 
+void FeasibilityRestoration::add_proximal_term_to_subproblem(const Iterate& current_iterate) {
+   // define a diagonal, inverse, quadratic proximal term
+   this->subproblem->add_proximal_term_to_hessian([&](size_t i) {
+      return std::pow(std::min(1., 1 / std::abs(current_iterate.x[i])), 2);
+   });
+}
+
 void FeasibilityRestoration::create_current_feasibility_problem(const Problem& problem, Iterate& current_iterate,
       const std::optional<std::vector<double>>& optional_phase_2_primal_direction,
       const std::optional<ConstraintPartition>& optional_constraint_partition) {
@@ -121,6 +131,9 @@ void FeasibilityRestoration::create_current_feasibility_problem(const Problem& p
       // compute the objective model with a zero objective multiplier
       this->subproblem->objective_gradient.clear();
       this->subproblem->build_objective_model(problem, current_iterate, 0.);
+      if (this->use_proximal_term) {
+         this->add_proximal_term_to_subproblem(current_iterate);
+      }
 
       // assemble the linear objective (sum of the gradients of the violated constraints)
       this->subproblem->compute_feasibility_linear_objective(current_iterate, constraint_partition);
@@ -132,6 +145,9 @@ void FeasibilityRestoration::create_current_feasibility_problem(const Problem& p
       // no constraint partition given, form an l1 feasibility problem by adding elastic variables
       initialize_vector(current_iterate.multipliers.constraints, 0.);
       this->subproblem->build_objective_model(problem, current_iterate, 0.);
+      if (this->use_proximal_term) {
+         this->add_proximal_term_to_subproblem(current_iterate);
+      }
       this->add_elastic_variables_to_subproblem(problem, current_iterate);
    }
    // start from the phase-2 solution
@@ -173,6 +189,9 @@ GlobalizationStrategy& FeasibilityRestoration::switch_phase(const Problem& probl
    }
    else { // restoration phase
       this->compute_infeasibility_measures(problem, trial_iterate, direction.constraint_partition);
+      if (this->use_proximal_term) {
+         this->add_proximal_term_to_progress_measures(current_iterate, trial_iterate);
+      }
    }
    // return the globalization strategy of the current phase
    return (this->current_phase == OPTIMALITY) ? *this->phase_2_strategy : *this->phase_1_strategy;
@@ -213,5 +232,15 @@ void FeasibilityRestoration::compute_infeasibility_measures(const Problem& probl
       this->elastic_variables.positive.for_each_value([&](size_t i) {
          iterate.progress.objective += this->elastic_objective_coefficient*iterate.x[i];
       });
+   }
+}
+
+void FeasibilityRestoration::add_proximal_term_to_progress_measures(const Iterate& current_iterate, Iterate& trial_iterate) {
+   const double coefficient = this->subproblem->get_proximal_coefficient();
+   for (size_t i = 0; i < this->subproblem->number_variables; i++) {
+      const double dr = std::min(1., 1/std::abs(current_iterate.x[i]));
+      // measure weighted distance between trial iterate and current iterate
+      const double proximal_term = coefficient * std::pow(dr*(trial_iterate.x[i] - current_iterate.x[i]), 2);
+      trial_iterate.progress.objective += proximal_term;
    }
 }

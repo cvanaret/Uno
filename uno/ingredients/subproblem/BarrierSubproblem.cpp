@@ -123,6 +123,7 @@ void BarrierSubproblem::build_objective_model(const Problem& problem, Iterate& c
    for (size_t i: this->upper_bounded_variables) {
       this->objective_gradient.insert(i, -this->barrier_parameter / (current_iterate.x[i] - this->current_variable_bounds[i].ub));
    }
+   this->augmented_system.matrix->reset();
 }
 
 Direction BarrierSubproblem::solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
@@ -149,7 +150,7 @@ Direction BarrierSubproblem::solve(Statistics& statistics, const Problem& proble
 
 void BarrierSubproblem::assemble_augmented_system(const Problem& problem, const Iterate& current_iterate) {
    // assemble, factorize and regularize the KKT matrix
-   this->assemble_augmented_matrix(problem, current_iterate);
+   this->assemble_augmented_matrix(current_iterate);
    this->augmented_system.factorize_matrix(problem, *this->linear_solver);
    this->augmented_system.regularize_matrix(problem, *this->linear_solver, this->number_variables, this->number_constraints,
          std::pow(this->barrier_parameter, this->parameters.regularization_barrier_exponent));
@@ -178,6 +179,7 @@ Direction BarrierSubproblem::compute_second_order_correction(const Problem& prob
 }
 
 void BarrierSubproblem::add_elastic_variables(const Problem& problem, Iterate& current_iterate, double objective_coefficient) {
+   assert(false && "BarrierSubproblem::add_elastic_variables TODO");
    current_iterate.x.resize(this->number_variables + 2*problem.number_constraints);
    // add 2 elastic variables per constraint
    // analytically, I find
@@ -214,6 +216,19 @@ void BarrierSubproblem::remove_elastic_variable(size_t i, size_t j) {
          this->lower_bounded_variables.end());
    this->upper_bounded_variables.erase(std::remove(this->upper_bounded_variables.begin(), this->upper_bounded_variables.end(), i),
          this->upper_bounded_variables.end());
+}
+
+double BarrierSubproblem::get_proximal_coefficient() const {
+   return std::sqrt(this->barrier_parameter)/2.;
+}
+
+void BarrierSubproblem::add_proximal_term_to_hessian(const std::function<double(size_t i)>& compute_proximal_term) {
+   const double sqrt_mu = 2 * this->get_proximal_coefficient();
+   // for each variable, add a diagonal proximal entry to the augmented system
+   for (size_t i = 0; i < this->number_variables; i++) {
+      const double proximal_term = sqrt_mu*compute_proximal_term(i);
+      this->augmented_system.matrix->insert(proximal_term, i, i);
+   }
 }
 
 PredictedReductionModel BarrierSubproblem::generate_predicted_reduction_model(const Problem& /*problem*/, const Direction& direction) const {
@@ -288,15 +303,6 @@ double BarrierSubproblem::evaluate_barrier_function(const Problem& problem, Iter
       iterate.evaluate_objective(problem);
       objective += iterate.objective;
    }
-   else if (this->use_proximal_term) { // proximal term in feasibility problem
-      assert(false && "barrier proximal term to do");
-      //const double sqrt_mu = std::sqrt(this->barrier_parameter);
-      for (size_t i = 0; i < this->number_variables; i++) {
-         //const double dr = std::min(1., 1/std::abs(this->primal_iterate[i]));
-         //const double proximal_term = sqrt_mu/2. * std::pow(dr*(iterate.x[i] - this->primal_iterate[i]), 2);
-         //objective += proximal_term;
-      }
-   }
    return objective;
 }
 
@@ -332,8 +338,7 @@ double BarrierSubproblem::dual_fraction_to_boundary(const Iterate& current_itera
    return dual_length;
 }
 
-void BarrierSubproblem::assemble_augmented_matrix(const Problem& /*problem*/, const Iterate& current_iterate) {
-   this->augmented_system.matrix->reset();
+void BarrierSubproblem::assemble_augmented_matrix(const Iterate& current_iterate) {
    this->augmented_system.matrix->dimension = this->number_variables + this->number_constraints;
    // copy the Lagrangian Hessian in the top left block
    size_t current_column = 0;
@@ -353,15 +358,6 @@ void BarrierSubproblem::assemble_augmented_matrix(const Problem& /*problem*/, co
    for (size_t i: this->upper_bounded_variables) {
       const double diagonal_term = current_iterate.multipliers.upper_bounds[i] / (current_iterate.x[i] - this->current_variable_bounds[i].ub);
       this->augmented_system.matrix->insert(diagonal_term, i, i);
-   }
-
-   // proximal term in feasibility problem
-   if (this->solving_feasibility_problem && this->use_proximal_term) {
-      const double sqrt_mu = std::sqrt(this->barrier_parameter);
-      for (size_t i = 0; i < this->number_variables; i++) {
-         const double proximal_term = sqrt_mu*std::pow(std::min(1., 1/std::abs(current_iterate.x[i])), 2);
-         this->augmented_system.matrix->insert(proximal_term, i, i);
-      }
    }
 
    // Jacobian of general constraints

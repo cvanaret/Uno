@@ -27,15 +27,17 @@ private:
    const std::unique_ptr<GlobalizationStrategy> phase_1_strategy;
    const std::unique_ptr<GlobalizationStrategy> phase_2_strategy;
    Phase current_phase{OPTIMALITY};
+   const bool use_proximal_term{true};
 
+   void add_proximal_term_to_subproblem(const Iterate& current_iterate);
    void create_current_feasibility_problem(const Problem& problem, Iterate& current_iterate,
          const std::optional<std::vector<double>>& optional_phase_2_primal_direction,
          const std::optional<ConstraintPartition>& optional_constraint_partition);
    GlobalizationStrategy& switch_phase(const Problem& problem, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction);
    static void set_restoration_multipliers(std::vector<double>& constraint_multipliers, const ConstraintPartition& constraint_partition);
-   void compute_infeasibility_measures(const Problem& problem, Iterate& iterate,
-         const std::optional<ConstraintPartition>& optional_constraint_partition);
+   void compute_infeasibility_measures(const Problem& problem, Iterate& iterate, const std::optional<ConstraintPartition>& optional_constraint_partition);
+   void add_proximal_term_to_progress_measures(const Iterate& current_iterate, Iterate& trial_iterate);
 };
 
 #endif //UNO_FEASIBILITYRESTORATION_H

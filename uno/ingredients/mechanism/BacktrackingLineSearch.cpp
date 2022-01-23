@@ -56,6 +56,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
                   direction, predicted_reduction_model, this->step_length);
             // check whether the trial step is accepted
             if (is_acceptable) {
+               DEBUG << "Trial step accepted\n";
                // let the subproblem know the accepted iterate
                this->constraint_relaxation_strategy.register_accepted_iterate(trial_iterate);
                this->add_statistics(statistics, direction);
@@ -72,6 +73,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
 
                if (this->constraint_relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate_soc, direction_soc,
                      predicted_reduction_model, this->step_length)) {
+                  DEBUG << "Trial SOC step accepted\n";
                   this->add_statistics(statistics, direction_soc);
                   statistics.add_statistic("SOC", "x");
 
