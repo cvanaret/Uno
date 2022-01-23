@@ -1,7 +1,7 @@
-#include "ElasticReformulation.hpp"
+#include "ElasticFeasibilityProblem.hpp"
 #include "ingredients/constraint_relaxation/ConstraintRelaxationStrategy.hpp"
 
-ElasticReformulation::ElasticReformulation(const Problem& original_problem, double objective_multiplier):
+ElasticFeasibilityProblem::ElasticFeasibilityProblem(const Problem& original_problem, double objective_multiplier):
       Problem(original_problem.name + "_slacks", // name
             original_problem.number_variables + original_problem.inequality_constraints.size(), // number of variables
             original_problem.number_constraints, // number of constraints
@@ -20,7 +20,7 @@ ElasticReformulation::ElasticReformulation(const Problem& original_problem, doub
    ConstraintRelaxationStrategy::generate_elastic_variables(this->original_problem, this->elastic_variables, this->original_problem.number_variables);
 }
 
-inline double ElasticReformulation::get_variable_lower_bound(size_t i) const {
+inline double ElasticFeasibilityProblem::get_variable_lower_bound(size_t i) const {
    if (i < this->original_problem.number_variables) { // original variable
       return this->original_problem.get_variable_lower_bound(i);
    }
@@ -29,7 +29,7 @@ inline double ElasticReformulation::get_variable_lower_bound(size_t i) const {
    }
 }
 
-inline double ElasticReformulation::get_variable_upper_bound(size_t i) const {
+inline double ElasticFeasibilityProblem::get_variable_upper_bound(size_t i) const {
    if (i < this->original_problem.number_variables) { // original variable
       return this->original_problem.get_variable_upper_bound(i);
    }
@@ -38,15 +38,15 @@ inline double ElasticReformulation::get_variable_upper_bound(size_t i) const {
    }
 }
 
-inline double ElasticReformulation::get_constraint_lower_bound(size_t j) const {
+inline double ElasticFeasibilityProblem::get_constraint_lower_bound(size_t j) const {
    return this->original_problem.get_constraint_lower_bound(j);
 }
 
-inline double ElasticReformulation::get_constraint_upper_bound(size_t j) const {
+inline double ElasticFeasibilityProblem::get_constraint_upper_bound(size_t j) const {
    return this->original_problem.get_constraint_upper_bound(j);
 }
 
-inline double ElasticReformulation::compute_elastic_residual(const std::vector<double>& x) const {
+inline double ElasticFeasibilityProblem::compute_elastic_residual(const std::vector<double>& x) const {
    double residual = 0.;
    // l1 residual of the linearized constraints: sum of elastic variables
    auto elastic_contribution = [&](size_t i) {
@@ -57,7 +57,7 @@ inline double ElasticReformulation::compute_elastic_residual(const std::vector<d
    return residual;
 }
 
-inline double ElasticReformulation::evaluate_objective(const std::vector<double>& x) const {
+inline double ElasticFeasibilityProblem::evaluate_objective(const std::vector<double>& x) const {
    // return rho*f(x) + e^T p + e^T n
    double objective = this->compute_elastic_residual(x);
    if (this->objective_multiplier != 0.) {
@@ -66,7 +66,7 @@ inline double ElasticReformulation::evaluate_objective(const std::vector<double>
    return objective;
 }
 
-inline void ElasticReformulation::evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const {
+inline void ElasticFeasibilityProblem::evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const {
    // scale nabla f(x) by rho
    if (this->objective_multiplier != 0.) {
       this->original_problem.evaluate_objective_gradient(x, gradient);
@@ -81,7 +81,7 @@ inline void ElasticReformulation::evaluate_objective_gradient(const std::vector<
    });
 }
 
-inline void ElasticReformulation::evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const {
+inline void ElasticFeasibilityProblem::evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const {
    this->original_problem.evaluate_constraints(x, constraints);
    // add the contribution of the elastics
    this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {
@@ -92,7 +92,7 @@ inline void ElasticReformulation::evaluate_constraints(const std::vector<double>
    });
 }
 
-inline void ElasticReformulation::evaluate_constraint_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraint_jacobian) const {
+inline void ElasticFeasibilityProblem::evaluate_constraint_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraint_jacobian) const {
    this->original_problem.evaluate_constraint_jacobian(x, constraint_jacobian);
    // add the contribution of the elastics
    this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {
@@ -103,7 +103,7 @@ inline void ElasticReformulation::evaluate_constraint_jacobian(const std::vector
    });
 }
 
-inline void ElasticReformulation::evaluate_lagrangian_hessian(const std::vector<double>& x, double /*objective_multiplier*/,
+inline void ElasticFeasibilityProblem::evaluate_lagrangian_hessian(const std::vector<double>& x, double /*objective_multiplier*/,
       const std::vector<double>& multipliers, SymmetricMatrix& hessian) const {
    this->original_problem.evaluate_lagrangian_hessian(x, this->objective_multiplier, multipliers, hessian);
    // extend the dimension of the Hessian by finalizing the remaining columns (note: the elastics do not enter the Hessian)
@@ -113,7 +113,7 @@ inline void ElasticReformulation::evaluate_lagrangian_hessian(const std::vector<
    }
 }
 
-inline ConstraintType ElasticReformulation::get_variable_status(size_t i) const {
+inline ConstraintType ElasticFeasibilityProblem::get_variable_status(size_t i) const {
    if (i < this->original_problem.number_variables) { // original variable
       return this->original_problem.get_variable_status(i);
    }
@@ -122,19 +122,19 @@ inline ConstraintType ElasticReformulation::get_variable_status(size_t i) const 
    }
 }
 
-inline FunctionType ElasticReformulation::get_constraint_type(size_t j) const {
+inline FunctionType ElasticFeasibilityProblem::get_constraint_type(size_t j) const {
    return this->original_problem.get_constraint_type(j);
 }
 
-inline ConstraintType ElasticReformulation::get_constraint_status(size_t j) const {
+inline ConstraintType ElasticFeasibilityProblem::get_constraint_status(size_t j) const {
    return this->original_problem.get_constraint_status(j);
 }
 
-inline size_t ElasticReformulation::get_hessian_maximum_number_nonzeros() const {
+inline size_t ElasticFeasibilityProblem::get_hessian_maximum_number_nonzeros() const {
    return this->original_problem.get_hessian_maximum_number_nonzeros();
 }
 
-inline void ElasticReformulation::get_initial_primal_point(std::vector<double>& x) const {
+inline void ElasticFeasibilityProblem::get_initial_primal_point(std::vector<double>& x) const {
    this->original_problem.get_initial_primal_point(x);
    // add the contribution of the elastics
    this->elastic_variables.positive.for_each_value([&](size_t elastic_index) {
@@ -145,11 +145,11 @@ inline void ElasticReformulation::get_initial_primal_point(std::vector<double>& 
    });
 }
 
-inline void ElasticReformulation::get_initial_dual_point(std::vector<double>& multipliers) const {
+inline void ElasticFeasibilityProblem::get_initial_dual_point(std::vector<double>& multipliers) const {
    this->original_problem.get_initial_dual_point(multipliers);
 }
 
-inline void ElasticReformulation::set_objective_multiplier(double new_objective_multiplier) {
+inline void ElasticFeasibilityProblem::set_objective_multiplier(double new_objective_multiplier) {
    // update the objective multiplier
    this->objective_multiplier = new_objective_multiplier;
 }
