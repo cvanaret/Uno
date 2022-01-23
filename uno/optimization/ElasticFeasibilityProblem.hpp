@@ -1,12 +1,14 @@
 #ifndef UNO_ELASTICREFORMULATION_H
 #define UNO_ELASTICREFORMULATION_H
 
+#include <vector>
 #include "Problem.hpp"
 #include "ingredients/constraint_relaxation/ElasticVariables.hpp"
 
 class ElasticFeasibilityProblem: public Problem {
 public:
-   explicit ElasticFeasibilityProblem(const Problem& original_problem, double objective_multiplier);
+   ElasticFeasibilityProblem(const Problem& original_problem, double objective_multiplier, double elastic_objective_coefficient,
+         double proximal_coefficient);
 
    [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
    [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
@@ -29,13 +31,21 @@ public:
    void get_initial_dual_point(std::vector<double>& multipliers) const override;
 
    void set_objective_multiplier(double new_objective_multiplier);
+   void set_proximal_coefficient(double new_proximal_coefficient);
+   void set_proximal_reference_point(const std::vector<double>& new_proximal_reference_point);
 
 protected:
    const Problem& original_problem;
    double objective_multiplier;
+   // elastic variables
    ElasticVariables elastic_variables;
+   double elastic_objective_coefficient;
+   // proximal term
+   double proximal_coefficient;
+   std::vector<double> proximal_reference_point;
 
    [[nodiscard]] double compute_elastic_residual(const std::vector<double>& x) const;
+   [[nodiscard]] double get_proximal_weight(size_t i) const;
 };
 
 #endif // UNO_ELASTICREFORMULATION_H
