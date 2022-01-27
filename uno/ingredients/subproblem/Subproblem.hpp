@@ -32,20 +32,18 @@ public:
    virtual void build_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier,
          double trust_region_radius) = 0;
    virtual void build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) = 0;
-   virtual void add_elastic_variables(const Problem& problem, Iterate& current_iterate, double objective_coefficient);
-   virtual void remove_elastic_variable(size_t i, size_t j);
    [[nodiscard]] virtual double get_proximal_coefficient() const;
-   virtual void add_proximal_term_to_hessian(const std::function<double(size_t i)>& compute_proximal_term);
 
    // direction computation
    virtual Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) = 0;
    virtual Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate);
 
    // globalization metrics
-   [[nodiscard]] virtual PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const = 0;
+   [[nodiscard]] virtual PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Iterate& current_iterate,
+         const Direction& direction) const = 0;
    double compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier) const;
    virtual void compute_progress_measures(const Problem& problem, Iterate& iterate);
-   static double compute_complementarity_error(const Problem& problem, Iterate& iterate, const std::vector<double>& constraint_multipliers,
+   static double compute_complementarity_error(const Problem& problem, const Iterate& iterate, const std::vector<double>& constraint_multipliers,
          const std::vector<double>& lower_bounds_multipliers, const std::vector<double>& upper_bounds_multipliers);
    void compute_residuals(const Problem& problem, Iterate& iterate, double objective_multiplier) const;
 
@@ -55,11 +53,6 @@ public:
    virtual void set_initial_point(const std::vector<double>& initial_point) = 0;
 
    void set_scaled_objective_gradient(const Problem& problem, Iterate& current_iterate, double objective_multiplier);
-   // feasibility subproblem
-   void add_elastic_variable(size_t i, double objective_coefficient, size_t j, double constraint_coefficient);
-   void compute_feasibility_linear_objective(const Iterate& current_iterate, const ConstraintPartition& constraint_partition);
-   void generate_feasibility_bounds(const Problem& problem, const std::vector<double>& current_constraints, const ConstraintPartition&
-      constraint_partition);
    static double push_variable_to_interior(double variable_value, const Range& variable_bounds);
    void set_constraint_bounds(const Problem& problem, const std::vector<double>& current_constraints);
 
@@ -67,7 +60,6 @@ public:
    const size_t max_number_variables;
    const size_t number_constraints;
    const SecondOrderCorrection soc_strategy;
-   // when the subproblem is reformulated (e.g. when slacks are introduced), the bounds may be altered
    std::vector<Range> current_variable_bounds;
    SparseVector<double> objective_gradient;
    std::vector<Range> constraint_bounds;

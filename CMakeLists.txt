@@ -66,9 +66,9 @@ set(SRC_FILES
     uno/optimization/Iterate.cpp
     uno/optimization/Preprocessing.cpp
     uno/optimization/Scaling.cpp
-    uno/optimization/ScaledReformulation.cpp
-    uno/optimization/SlackReformulation.cpp
-    uno/optimization/ElasticFeasibilityProblem.cpp
+    uno/optimization/ScaledReformulation.hpp
+    uno/optimization/SlackReformulation.hpp
+    uno/optimization/l1ElasticReformulation.hpp
 
     uno/solvers/linear/LinearSolverFactory.hpp
 	uno/solvers/QP/QPSolverFactory.hpp

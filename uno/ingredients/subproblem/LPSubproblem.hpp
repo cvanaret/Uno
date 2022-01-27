@@ -13,7 +13,8 @@ public:
    void build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) override;
    void set_initial_point(const std::vector<double>& point) override;
    [[nodiscard]] Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
-   [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const override;
+   [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Iterate& current_iterate,
+         const Direction& direction) const override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
 private:

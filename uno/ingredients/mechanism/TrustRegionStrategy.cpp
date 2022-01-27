@@ -13,13 +13,13 @@ TrustRegionStrategy::TrustRegionStrategy(ConstraintRelaxationStrategy& constrain
       min_radius(stod(options.at("TR_min_radius"))) {
 }
 
-void TrustRegionStrategy::initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) {
+void TrustRegionStrategy::initialize(Statistics& statistics, Iterate& first_iterate) {
    statistics.add_column("TR radius", Statistics::double_width, 30);
    // generate the initial point
-   this->constraint_relaxation_strategy.initialize(statistics, problem, first_iterate);
+   this->constraint_relaxation_strategy.initialize(statistics, first_iterate);
 }
 
-std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate& current_iterate) {
+std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Statistics& statistics, Iterate& current_iterate) {
    this->number_iterations = 0;
 
    while (!this->termination()) {
@@ -29,10 +29,10 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
          this->print_iteration();
 
          // generate the subproblem
-         this->constraint_relaxation_strategy.create_current_subproblem(problem, current_iterate, this->radius);
+         this->constraint_relaxation_strategy.create_current_subproblem(current_iterate, this->radius);
 
          // compute the direction within the trust region
-         Direction direction = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, problem, current_iterate);
+         Direction direction = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate);
          GlobalizationMechanism::check_unboundedness(direction);
          // set bound multipliers of active trust region to 0
          TrustRegionStrategy::rectify_active_set(direction, this->radius);
@@ -41,9 +41,9 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
          Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, 1.);
 
          // check whether the trial step is accepted
-         PredictedReductionModel predicted_reduction_model = this->constraint_relaxation_strategy.generate_predicted_reduction_model(problem, direction);
-         if (this->constraint_relaxation_strategy.is_acceptable(statistics, problem, current_iterate, trial_iterate, direction,
-               predicted_reduction_model, 1.)) {
+         PredictedReductionModel predicted_reduction_model = this->constraint_relaxation_strategy.generate_predicted_reduction_model(current_iterate,
+               direction);
+         if (this->constraint_relaxation_strategy.is_acceptable(statistics, current_iterate, trial_iterate, direction, predicted_reduction_model, 1.)) {
             this->add_statistics(statistics, direction);
 
             // increase the radius if trust region is active

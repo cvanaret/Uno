@@ -5,10 +5,11 @@
 #include "Uno.hpp"
 #include "optimization/ScaledReformulation.hpp"
 #include "optimization/SlackReformulation.hpp"
-#include "optimization/ElasticFeasibilityProblem.hpp"
+#include "optimization/l1ElasticReformulation.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Options.hpp"
 #include "linear_algebra/CSCSymmetricMatrix.hpp"
+#include "linear_algebra/COOSymmetricMatrix.hpp"
 
 // new() overload to track heap allocations
 size_t total_allocations = 0;
@@ -27,8 +28,8 @@ void run_uno_ampl(const std::string& problem_name, const Options& options) {
    auto original_problem = std::make_unique<AMPLModel>(problem_name);
    INFO << "Heap allocations after AMPL: " << total_allocations << "\n";
 
-   auto reformulated_problem = std::make_unique<SlackReformulation>(*original_problem);
-   //const Problem& reformulated_problem = (options.at("subproblem") == "barrier") ? SlackReformulation(*original_problem) : *original_problem;
+   //auto reformulated_problem = std::make_unique<SlackReformulation>(*original_problem);
+   Problem* reformulated_problem = original_problem.get();
 
    // initial primal and dual points
    Iterate first_iterate(reformulated_problem->number_variables, reformulated_problem->number_constraints);
@@ -122,13 +123,14 @@ void test_problem_with_elastics(const std::string& problem_name) {
    const double objective_multiplier = 1.;
    const double elastic_objective_coefficient = 1.;
    const double proximal_coefficient = 1.;
-   const Problem& problem_to_solve = ElasticFeasibilityProblem(*original_problem, objective_multiplier, elastic_objective_coefficient,
-         proximal_coefficient);
+   l1ElasticReformulation problem_to_solve = l1ElasticReformulation(*original_problem, objective_multiplier,
+         elastic_objective_coefficient, proximal_coefficient);
 
    // create the first iterate (slacks set to 0)
    Iterate first_iterate(problem_to_solve.number_variables, problem_to_solve.number_constraints);
    problem_to_solve.get_initial_primal_point(first_iterate.x);
    problem_to_solve.get_initial_dual_point(first_iterate.multipliers.constraints);
+   //problem_to_solve.set_proximal_reference_point(first_iterate.x);
 
    std::cout << "x = "; print_vector(std::cout, first_iterate.x);
    std::cout << "multipliers = "; print_vector(std::cout, first_iterate.multipliers.constraints);
@@ -145,16 +147,21 @@ void test_problem_with_elastics(const std::string& problem_name) {
    }
 
    // evaluations
+   SparseVector<double> gradient(problem_to_solve.number_variables);
+   problem_to_solve.evaluate_objective_gradient(first_iterate.x, gradient);
+   std::cout << "Objective gradient:\n" << gradient;
+
    std::vector<SparseVector<double>> jacobian(problem_to_solve.number_constraints);
    for (size_t j = 0; j < problem_to_solve.number_constraints; j++) {
       jacobian[j].reserve(problem_to_solve.number_variables);
    }
    problem_to_solve.evaluate_constraint_jacobian(first_iterate.x, jacobian);
+   std::cout << "Jacobian:\n";
    for (size_t j = 0; j < problem_to_solve.number_constraints; j++) {
       std::cout << jacobian[j];
    }
 
-   CSCSymmetricMatrix hessian(problem_to_solve.number_variables, problem_to_solve.get_hessian_maximum_number_nonzeros());
+   COOSymmetricMatrix hessian(problem_to_solve.number_variables, problem_to_solve.get_hessian_maximum_number_nonzeros());
    problem_to_solve.evaluate_lagrangian_hessian(first_iterate.x, 1., first_iterate.multipliers.constraints, hessian);
    std::cout << hessian;
 }

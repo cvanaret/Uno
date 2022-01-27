@@ -12,8 +12,8 @@ class TrustRegionStrategy : public GlobalizationMechanism {
 public:
    TrustRegionStrategy(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);
 
-   void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) override;
-   std::tuple<Iterate, double> compute_acceptable_iterate(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
+   void initialize(Statistics& statistics, Iterate& first_iterate) override;
+   std::tuple<Iterate, double> compute_acceptable_iterate(Statistics& statistics, Iterate& current_iterate) override;
 
 private:
    double radius; /*!< Current trust region radius */

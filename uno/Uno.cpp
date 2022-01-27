@@ -30,7 +30,7 @@ Result Uno::solve(const Problem& problem, Iterate& current_iterate, bool enforce
    Statistics statistics = Uno::create_statistics(problem);
 
    // use the current point to initialize the strategies and generate the initial iterate
-   this->globalization_mechanism.initialize(statistics, problem, current_iterate);
+   this->globalization_mechanism.initialize(statistics, current_iterate);
 
    TerminationStatus termination_status = NOT_OPTIMAL;
    try {
@@ -42,7 +42,7 @@ Result Uno::solve(const Problem& problem, Iterate& current_iterate, bool enforce
          DEBUG << "Current iterate\n" << current_iterate << "\n";
 
          // compute an acceptable iterate by solving a subproblem at the current point
-         auto [new_iterate, direction_norm] = this->globalization_mechanism.compute_acceptable_iterate(statistics, problem, current_iterate);
+         auto [new_iterate, direction_norm] = this->globalization_mechanism.compute_acceptable_iterate(statistics, current_iterate);
 
          Uno::add_statistics(statistics, problem, new_iterate, major_iterations);
          if (Logger::logger_level == INFO) statistics.print_current_line();

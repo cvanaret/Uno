@@ -16,44 +16,9 @@ void Subproblem::initialize(Statistics& /*statistics*/, const Problem& /*problem
    // by default, do nothing
 }
 
-void Subproblem::add_elastic_variables(const Problem& problem, Iterate& /*current_iterate*/, double objective_coefficient) {
-   // add at most 2 elastic variables per constraint
-   for (size_t j = 0; j < problem.number_constraints; j++) {
-      //const double constraint_j = current_iterate.constraints[j];
-      // TODO: initialize one of the elastics if the constraint is violated at the current iterate
-      // negative part
-      if (is_finite_lower_bound(problem.get_constraint_lower_bound(j))) {
-         Subproblem::add_elastic_variable(this->number_variables, objective_coefficient, j, 1.);
-      }
-      // positive part
-      if (is_finite_upper_bound(problem.get_constraint_upper_bound(j))) {
-         Subproblem::add_elastic_variable(this->number_variables, objective_coefficient, j, -1.);
-      }
-   }
-}
-
-void Subproblem::add_elastic_variable(size_t i, double objective_coefficient, size_t j, double constraint_coefficient) {
-   assert(i < this->max_number_variables && "The variable index is larger than the preallocated size");
-   assert(j < this->number_constraints && "The constraint index is larger than the preallocated size");
-   this->current_variable_bounds[i] = {0., std::numeric_limits<double>::infinity()};
-   this->objective_gradient.insert(i, objective_coefficient);
-   this->number_variables++;
-}
-
-void Subproblem::remove_elastic_variable(size_t i, size_t j) {
-   assert(i < this->max_number_variables && "The variable index is larger than the preallocated size");
-   assert(j < this->number_constraints && "The constraint index is larger than the preallocated size");
-   this->objective_gradient.erase(i);
-   this->number_variables--;
-}
-
 double Subproblem::get_proximal_coefficient() const {
    // by default, return 1.
    return 1.;
-}
-
-void Subproblem::add_proximal_term_to_hessian(const std::function<double(size_t i)>& /*compute_proximal_term*/) {
-   // by default, do nothing
 }
 
 double Subproblem::push_variable_to_interior(double variable_value, const Range& variable_bounds) {
@@ -100,34 +65,6 @@ void Subproblem::set_scaled_objective_gradient(const Problem& problem, Iterate& 
    }
 }
 
-void Subproblem::compute_feasibility_linear_objective(const Iterate& current_iterate, const ConstraintPartition& constraint_partition) {
-   // objective function: sum of gradients of infeasible constraints
-   for (size_t j: constraint_partition.lower_bound_infeasible) {
-      current_iterate.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
-         this->objective_gradient.insert(i, -derivative);
-      });
-   }
-   for (size_t j: constraint_partition.upper_bound_infeasible) {
-      current_iterate.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
-         this->objective_gradient.insert(i, derivative);
-      });
-   }
-}
-
-void Subproblem::generate_feasibility_bounds(const Problem& problem, const std::vector<double>& current_constraints, const ConstraintPartition&
-constraint_partition) {
-   for (size_t j: constraint_partition.feasible) {
-      this->constraint_bounds[j] = {problem.get_constraint_lower_bound(j) - current_constraints[j],
-            problem.get_constraint_upper_bound(j) - current_constraints[j]};
-   }
-   for (size_t j: constraint_partition.lower_bound_infeasible) {
-      this->constraint_bounds[j] = {-std::numeric_limits<double>::infinity(), problem.get_constraint_lower_bound(j) - current_constraints[j]};
-   }
-   for (size_t j: constraint_partition.upper_bound_infeasible) {
-      this->constraint_bounds[j] = {problem.get_constraint_upper_bound(j) - current_constraints[j], std::numeric_limits<double>::infinity()};
-   }
-}
-
 double Subproblem::compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier) const {
    iterate.evaluate_lagrangian_gradient(problem, objective_multiplier, iterate.multipliers.constraints, iterate.multipliers.lower_bounds,
          iterate.multipliers.upper_bounds);
@@ -135,7 +72,7 @@ double Subproblem::compute_first_order_error(const Problem& problem, Iterate& it
 }
 
 // complementary slackness error
-double Subproblem::compute_complementarity_error(const Problem& problem, Iterate& iterate, const std::vector<double>& constraint_multipliers,
+double Subproblem::compute_complementarity_error(const Problem& problem, const Iterate& iterate, const std::vector<double>& constraint_multipliers,
       const std::vector<double>& lower_bounds_multipliers, const std::vector<double>& upper_bounds_multipliers) {
    double error = 0.;
    // bound constraints
@@ -173,7 +110,7 @@ double Subproblem::compute_complementarity_error(const Problem& problem, Iterate
 void Subproblem::compute_progress_measures(const Problem& problem, Iterate& iterate) {
    // feasibility measure: constraint violation
    iterate.evaluate_constraints(problem);
-   iterate.nonlinear_errors.constraints = problem.compute_constraint_violation(iterate.constraints, this->residual_norm);
+   iterate.nonlinear_errors.constraints = problem.compute_constraint_violation(iterate.x, iterate.constraints);
    // optimality measure: objective value
    iterate.evaluate_objective(problem);
    iterate.progress = {iterate.nonlinear_errors.constraints, iterate.objective};
@@ -181,7 +118,7 @@ void Subproblem::compute_progress_measures(const Problem& problem, Iterate& iter
 
 void Subproblem::compute_residuals(const Problem& problem, Iterate& iterate, double objective_multiplier) const {
    iterate.evaluate_constraints(problem);
-   iterate.nonlinear_errors.constraints = problem.compute_constraint_violation(iterate.constraints, this->residual_norm);
+   iterate.nonlinear_errors.constraints = problem.compute_constraint_violation(iterate.x, iterate.constraints);
    // compute the KKT error only if the objective multiplier is positive
    iterate.nonlinear_errors.KKT = this->compute_first_order_error(problem, iterate, 0. < objective_multiplier ? objective_multiplier : 1.);
    iterate.nonlinear_errors.FJ = this->compute_first_order_error(problem, iterate, 0.);
