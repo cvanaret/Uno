@@ -22,9 +22,11 @@ void l1MeritFunction::notify(Iterate& /*current_iterate*/) {
 bool l1MeritFunction::check_acceptance(Statistics& statistics, const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
       double objective_multiplier, double predicted_reduction) {
    // compute current exact l1 penalty: rho f + ||c||
-   const double current_exact_l1_penalty = objective_multiplier * current_progress.objective + current_progress.infeasibility;
-   const double trial_exact_l1_penalty = objective_multiplier * trial_progress.objective + trial_progress.infeasibility;
-   const double actual_reduction = current_exact_l1_penalty - trial_exact_l1_penalty;
+   const double current_exact_l1_merit = objective_multiplier * current_progress.objective + current_progress.infeasibility;
+   const double trial_exact_l1_merit = objective_multiplier * trial_progress.objective + trial_progress.infeasibility;
+   DEBUG << "Current l1 merit: " << current_exact_l1_merit << "\n";
+   DEBUG << "Trial l1 merit: " << trial_exact_l1_merit << "\n";
+   const double actual_reduction = current_exact_l1_merit - trial_exact_l1_merit;
    DEBUG << "Predicted reduction: " << predicted_reduction << "\n";
    DEBUG << "Actual reduction: " << actual_reduction << "\n";
 

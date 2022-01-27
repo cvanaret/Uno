@@ -10,7 +10,6 @@ BarrierSubproblem::BarrierSubproblem(const Problem& problem, size_t max_number_v
             problem.number_constraints, SOC_UPON_REJECTION, true, norm_from_string(options.at("residual_norm"))),
       augmented_system(options.at("sparse_format"), this->max_number_variables + problem.number_constraints,
             problem.get_hessian_maximum_number_nonzeros()
-            + this->max_number_variables /* proximal term */
             + this->max_number_variables + problem.number_constraints /* regularization */
             + 2 * this->max_number_variables /* diagonal barrier terms */
             + this->max_number_variables * problem.number_constraints /* Jacobian */,
@@ -178,60 +177,12 @@ Direction BarrierSubproblem::compute_second_order_correction(const Problem& prob
    return this->direction;
 }
 
-void BarrierSubproblem::add_elastic_variables(const Problem& problem, Iterate& current_iterate, double objective_coefficient) {
-   assert(false && "BarrierSubproblem::add_elastic_variables TODO");
-   current_iterate.x.resize(this->number_variables + 2*problem.number_constraints);
-   // add 2 elastic variables per constraint
-   // analytically, I find
-   //    n = (mu_over_rho - jacobian_term*this->barrier_constraints[j] + std::sqrt(radical))/2.
-   // but Ipopt seems to use the following
-   //    n = (mu_over_rho + jacobian_term*this->barrier_constraints[j] + std::sqrt(radical))/2.
-   for (size_t j = 0; j < problem.number_constraints; j++) {
-      // precomputations
-      const double constraint_j = current_iterate.constraints[j];
-      const double mu_over_rho = this->barrier_parameter / objective_coefficient;
-      const double radical = std::pow(constraint_j, 2) + std::pow(mu_over_rho, 2);
-      const double sqrt_radical = std::sqrt(radical);
-
-      // negative part
-      current_iterate.x[this->number_variables] = current_iterate.x[this->number_variables] = (mu_over_rho - constraint_j + sqrt_radical) / 2.;
-      // register the variable as lower bounded
-      this->lower_bounded_variables.push_back(this->number_variables);
-      current_iterate.multipliers.lower_bounds[this->number_variables] = this->barrier_parameter/current_iterate.x[this->number_variables];
-      Subproblem::add_elastic_variable(this->number_variables, objective_coefficient, j, 1.);
-
-      // positive part
-      current_iterate.x[this->number_variables] = current_iterate.x[this->number_variables] = (mu_over_rho + constraint_j + sqrt_radical) / 2.;
-      // register the variable as lower bounded
-      this->lower_bounded_variables.push_back(this->number_variables);
-      current_iterate.multipliers.lower_bounds[this->number_variables] = this->barrier_parameter/current_iterate.x[this->number_variables];
-      Subproblem::add_elastic_variable(this->number_variables, objective_coefficient, j, -1.);
-   }
-}
-
-void BarrierSubproblem::remove_elastic_variable(size_t i, size_t j) {
-   // remove the variable to the objective and the constraint Jacobian
-   Subproblem::remove_elastic_variable(i, j);
-   this->lower_bounded_variables.erase(std::remove(this->lower_bounded_variables.begin(), this->lower_bounded_variables.end(), i),
-         this->lower_bounded_variables.end());
-   this->upper_bounded_variables.erase(std::remove(this->upper_bounded_variables.begin(), this->upper_bounded_variables.end(), i),
-         this->upper_bounded_variables.end());
-}
-
 double BarrierSubproblem::get_proximal_coefficient() const {
    return std::sqrt(this->barrier_parameter)/2.;
 }
 
-void BarrierSubproblem::add_proximal_term_to_hessian(const std::function<double(size_t i)>& compute_proximal_term) {
-   const double sqrt_mu = 2 * this->get_proximal_coefficient();
-   // for each variable, add a diagonal proximal entry to the augmented system
-   for (size_t i = 0; i < this->number_variables; i++) {
-      const double proximal_term = sqrt_mu*compute_proximal_term(i);
-      this->augmented_system.matrix->insert(proximal_term, i, i);
-   }
-}
-
-PredictedReductionModel BarrierSubproblem::generate_predicted_reduction_model(const Problem& /*problem*/, const Direction& direction) const {
+PredictedReductionModel BarrierSubproblem::generate_predicted_reduction_model(const Problem& /*problem*/, const Iterate& /*current_iterate*/,
+      const Direction& direction) const {
    return PredictedReductionModel(-direction.objective, [&]() {
       return [=](double step_length) {
          return -step_length * direction.objective;

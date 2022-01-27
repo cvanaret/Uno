@@ -6,7 +6,9 @@ QPSubproblem::QPSubproblem(const Problem& problem, size_t max_number_variables, 
             norm_from_string(options.at("residual_norm"))),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
       solver(QPSolverFactory::create(options.at("QP_solver"), max_number_variables, problem.number_constraints,
-            problem.get_hessian_maximum_number_nonzeros() + max_number_variables, true)),
+            problem.get_hessian_maximum_number_nonzeros()
+            + max_number_variables, /* regularization */
+            true)),
       // if no trust region is used, the problem should be convexified to guarantee boundedness + descent direction
       hessian_model(HessianModelFactory::create(options.at("hessian_model"), max_number_variables,
             problem.get_hessian_maximum_number_nonzeros() + max_number_variables, options.at("mechanism") != "TR", options)),
@@ -39,7 +41,7 @@ void QPSubproblem::build_objective_model(const Problem& problem, Iterate& curren
    this->hessian_model->evaluate(problem, current_iterate.x, objective_multiplier, current_iterate.multipliers.constraints);
 
    // objective gradient
-   this->set_scaled_objective_gradient(problem, current_iterate, objective_multiplier);
+   current_iterate.evaluate_objective_gradient(problem);
 
    // initial point
    initialize_vector(this->initial_point, 0.);
@@ -50,9 +52,9 @@ void QPSubproblem::set_initial_point(const std::vector<double>& point) {
 }
 
 Direction QPSubproblem::solve(Statistics& /*statistics*/, const Problem& problem, Iterate& current_iterate) {
-   this->hessian_model->adjust_number_variables(this->number_variables);
+   this->hessian_model->adjust_number_variables(problem.number_variables);
    // compute QP direction
-   Direction direction = this->solver->solve_QP(this->current_variable_bounds, this->constraint_bounds, this->objective_gradient,
+   Direction direction = this->solver->solve_QP(this->current_variable_bounds, this->constraint_bounds, current_iterate.objective_gradient,
          current_iterate.constraint_jacobian, *this->hessian_model->hessian, this->initial_point);
    this->number_subproblems_solved++;
 
@@ -63,11 +65,12 @@ Direction QPSubproblem::solve(Statistics& /*statistics*/, const Problem& problem
    return direction;
 }
 
-PredictedReductionModel QPSubproblem::generate_predicted_reduction_model(const Problem& /*problem*/, const Direction& direction) const {
+PredictedReductionModel QPSubproblem::generate_predicted_reduction_model(const Problem& problem, const Iterate& current_iterate,
+      const Direction& direction) const {
    return PredictedReductionModel(-direction.objective, [&]() { // capture this and direction by reference
       // precompute expensive quantities
-      const double linear_term = dot(direction.x, this->objective_gradient);
-      const double quadratic_term = this->hessian_model->hessian->quadratic_product(direction.x, direction.x, this->number_variables) / 2.;
+      const double linear_term = dot(direction.x, current_iterate.objective_gradient);
+      const double quadratic_term = this->hessian_model->hessian->quadratic_product(direction.x, direction.x, problem.number_variables) / 2.;
       // return a function of the step length that cheaply assembles the predicted reduction
       return [=](double step_length) { // capture the expensive quantities by value
          return -step_length * (linear_term + step_length * quadratic_term);

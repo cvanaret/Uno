@@ -27,13 +27,11 @@ public:
    void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) override;
    void build_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
    void build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) override;
-   void add_elastic_variables(const Problem& problem, Iterate& current_iterate, double objective_coefficient) override;
-   void remove_elastic_variable(size_t i, size_t j) override;
    [[nodiscard]] double get_proximal_coefficient() const override;
-   void add_proximal_term_to_hessian(const std::function<double(size_t i)>& compute_proximal_term) override;
    Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
    Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) override;
-   [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Direction& direction) const override;
+   [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Iterate& current_iterate,
+         const Direction& direction) const override;
    void compute_progress_measures(const Problem& problem, Iterate& iterate) override;
    void register_accepted_iterate(Iterate& iterate) override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;

@@ -51,7 +51,8 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const Problem& problem
    return direction;
 }
 
-PredictedReductionModel LPSubproblem::generate_predicted_reduction_model(const Problem& /*problem*/, const Direction& direction) const {
+PredictedReductionModel LPSubproblem::generate_predicted_reduction_model(const Problem& /*problem*/, const Iterate& /*current_iterate*/,
+      const Direction& direction) const {
    return PredictedReductionModel(-direction.objective, [&]() { // capture direction by reference
       // return a function of the step length that cheaply assembles the predicted reduction
       return [=](double step_length) { // capture the expensive quantities by value
