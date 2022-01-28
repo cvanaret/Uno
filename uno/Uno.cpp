@@ -133,8 +133,8 @@ void Uno::postsolve_solution(const Problem& problem, const Scaling& scaling, Ite
    current_iterate.objective /= scaling.get_objective_scaling();
 
    // unscale the multipliers and the function values
-   const double scaled_objective_multiplier = scaling.get_objective_scaling()*(termination_status == KKT_POINT ?
-                                                                               current_iterate.multipliers.objective : 1.);
+   const bool is_feasible = (termination_status == KKT_POINT || termination_status == FEASIBLE_SMALL_STEP);
+   const double scaled_objective_multiplier = scaling.get_objective_scaling()*(is_feasible ? current_iterate.multipliers.objective : 1.);
    for (size_t j = 0; j < problem.number_constraints; j++) {
       current_iterate.multipliers.constraints[j] *= scaling.get_constraint_scaling(j)/scaled_objective_multiplier;
    }
