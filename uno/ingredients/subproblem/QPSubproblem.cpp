@@ -54,8 +54,9 @@ void QPSubproblem::set_initial_point(const std::vector<double>& point) {
 
 Direction QPSubproblem::solve(Statistics& /*statistics*/, const Problem& problem, Iterate& current_iterate) {
    // compute QP direction
-   Direction direction = this->solver->solve_QP(this->current_variable_bounds, this->constraint_bounds, current_iterate.objective_gradient,
-         current_iterate.constraint_jacobian, *this->hessian_model->hessian, this->initial_point);
+   Direction direction = this->solver->solve_QP(problem.number_variables, problem.number_constraints, this->current_variable_bounds,
+         this->constraint_bounds, current_iterate.objective_gradient, current_iterate.constraint_jacobian, *this->hessian_model->hessian,
+         this->initial_point);
    this->number_subproblems_solved++;
 
    // compute dual *displacements* (note: SQP methods usually compute the new duals, not the displacements)

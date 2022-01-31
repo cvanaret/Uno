@@ -50,7 +50,8 @@ void Preprocessing::enforce_linear_constraints(const Problem& problem, Iterate& 
 
          // solve the convex QP
          std::vector<double> d0(problem.number_variables);
-         Direction direction = solver.solve_QP(variables_bounds, constraint_bounds, linear_objective, constraint_jacobian, hessian, d0);
+         Direction direction = solver.solve_QP(problem.number_variables, problem.number_constraints, variables_bounds, constraint_bounds,
+               linear_objective, constraint_jacobian, hessian, d0);
          if (direction.status == INFEASIBLE) {
             throw std::runtime_error("Linear constraints cannot be satisfied");
          }
