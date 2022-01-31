@@ -3,9 +3,8 @@
 #include "linear_algebra/SparseVector.hpp"
 #include "optimization/Constraint.hpp"
 
-Subproblem::Subproblem(size_t number_variables, size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy,
+Subproblem::Subproblem(size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy,
          bool is_second_order_method, Norm residual_norm):
-      number_variables(number_variables), max_number_variables(max_number_variables), number_constraints(number_constraints),
       soc_strategy(soc_strategy), current_variable_bounds(max_number_variables),
       objective_gradient(max_number_variables), // SparseVector
       constraint_bounds(number_constraints), direction(max_number_variables, number_constraints),
@@ -14,11 +13,6 @@ Subproblem::Subproblem(size_t number_variables, size_t max_number_variables, siz
 
 void Subproblem::initialize(Statistics& /*statistics*/, const Problem& /*problem*/, Iterate& /*first_iterate*/) {
    // by default, do nothing
-}
-
-double Subproblem::get_proximal_coefficient() const {
-   // by default, return 1.
-   return 1.;
 }
 
 double Subproblem::push_variable_to_interior(double variable_value, const Range& variable_bounds) {
@@ -36,9 +30,14 @@ double Subproblem::push_variable_to_interior(double variable_value, const Range&
 void Subproblem::set_current_variable_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) {
    // bounds intersected with trust region
    // very important: apply the trust region only on the original variables
-   for (size_t i = 0; i < problem.number_variables; i++) {
+   for (size_t i = 0; i < problem.get_number_original_variables(); i++) {
       const double lb = std::max(-trust_region_radius, problem.get_variable_lower_bound(i) - current_iterate.x[i]);
       const double ub = std::min(trust_region_radius, problem.get_variable_upper_bound(i) - current_iterate.x[i]);
+      this->current_variable_bounds[i] = {lb, ub};
+   }
+   for (size_t i = problem.get_number_original_variables(); i < problem.number_variables; i++) {
+      const double lb = problem.get_variable_lower_bound(i) - current_iterate.x[i];
+      const double ub = problem.get_variable_upper_bound(i) - current_iterate.x[i];
       this->current_variable_bounds[i] = {lb, ub};
    }
 }
@@ -65,9 +64,8 @@ void Subproblem::set_scaled_objective_gradient(const Problem& problem, Iterate& 
    }
 }
 
-double Subproblem::compute_first_order_error(const Problem& problem, Iterate& iterate, double objective_multiplier) const {
-   iterate.evaluate_lagrangian_gradient(problem, objective_multiplier, iterate.multipliers.constraints, iterate.multipliers.lower_bounds,
-         iterate.multipliers.upper_bounds);
+double Subproblem::compute_first_order_error(const Problem& problem, Iterate& iterate) const {
+   iterate.evaluate_lagrangian_gradient(problem, iterate.multipliers.constraints, iterate.multipliers.lower_bounds, iterate.multipliers.upper_bounds);
    return norm(iterate.lagrangian_gradient, this->residual_norm);
 }
 
@@ -77,10 +75,10 @@ double Subproblem::compute_complementarity_error(const Problem& problem, const I
    double error = 0.;
    // bound constraints
    for (size_t i = 0; i < problem.number_variables; i++) {
-      if (is_finite_lower_bound(problem.get_variable_lower_bound(i))) {
+      if (is_finite(problem.get_variable_lower_bound(i))) {
          error += std::abs(lower_bounds_multipliers[i] * (iterate.x[i] - problem.get_variable_lower_bound(i)));
       }
-      if (is_finite_upper_bound(problem.get_variable_upper_bound(i))) {
+      if (is_finite(problem.get_variable_upper_bound(i))) {
          error += std::abs(upper_bounds_multipliers[i] * (iterate.x[i] - problem.get_variable_upper_bound(i)));
       }
    }
@@ -89,18 +87,18 @@ double Subproblem::compute_complementarity_error(const Problem& problem, const I
       const double multiplier_j = constraint_multipliers[j];
       const double lower_bound = problem.get_constraint_lower_bound(j);
       const double upper_bound = problem.get_constraint_upper_bound(j);
-      if (iterate.constraints[j] < lower_bound) {
-         // violated lower: the multiplier is 1 at optimum
+      if (iterate.constraints[j] < lower_bound) { // violated lower
+         // the optimal multiplier is 1
          error += std::abs((1. - multiplier_j) * (lower_bound - iterate.constraints[j]));
       }
-      else if (upper_bound < iterate.constraints[j]) {
-         // violated upper: the multiplier is -1 at optimum
+      else if (upper_bound < iterate.constraints[j]) { // violated upper
+         // the optimal multiplier is -1
          error += std::abs((1. + multiplier_j) * (iterate.constraints[j] - upper_bound));
       }
-      else if (is_finite_lower_bound(lower_bound) && 0. < multiplier_j) {
+      else if (is_finite(lower_bound) && 0. < multiplier_j) { // lower bound
          error += std::abs(multiplier_j * (iterate.constraints[j] - lower_bound));
       }
-      else if (is_finite_upper_bound(upper_bound) && multiplier_j < 0.) {
+      else if (is_finite(upper_bound) && multiplier_j < 0.) { // upper bound
          error += std::abs(multiplier_j * (iterate.constraints[j] - upper_bound));
       }
    }
@@ -110,18 +108,16 @@ double Subproblem::compute_complementarity_error(const Problem& problem, const I
 void Subproblem::compute_progress_measures(const Problem& problem, Iterate& iterate) {
    // feasibility measure: constraint violation
    iterate.evaluate_constraints(problem);
-   iterate.nonlinear_errors.constraints = problem.compute_constraint_violation(iterate.x, iterate.constraints);
+   iterate.nonlinear_errors.constraints = problem.compute_constraint_violation(iterate.constraints, L1_NORM);
    // optimality measure: objective value
    iterate.evaluate_objective(problem);
    iterate.progress = {iterate.nonlinear_errors.constraints, iterate.objective};
 }
 
-void Subproblem::compute_residuals(const Problem& problem, Iterate& iterate, double objective_multiplier) const {
+void Subproblem::compute_residuals(const Problem& problem, Iterate& iterate) const {
    iterate.evaluate_constraints(problem);
-   iterate.nonlinear_errors.constraints = problem.compute_constraint_violation(iterate.x, iterate.constraints);
-   // compute the KKT error only if the objective multiplier is positive
-   iterate.nonlinear_errors.KKT = this->compute_first_order_error(problem, iterate, 0. < objective_multiplier ? objective_multiplier : 1.);
-   iterate.nonlinear_errors.FJ = this->compute_first_order_error(problem, iterate, 0.);
+   iterate.nonlinear_errors.constraints = problem.compute_constraint_violation(iterate.constraints, L1_NORM);
+   iterate.nonlinear_errors.stationarity = this->compute_first_order_error(problem, iterate);
    iterate.nonlinear_errors.complementarity = Subproblem::compute_complementarity_error(problem, iterate, iterate.multipliers.constraints,
          iterate.multipliers.lower_bounds, iterate.multipliers.upper_bounds);
 }
@@ -130,6 +126,6 @@ Direction Subproblem::compute_second_order_correction(const Problem& /*problem*/
    assert(false && "Subproblem::compute_second_order_correction");
 }
 
-void Subproblem::register_accepted_iterate(Iterate& /*iterate*/) {
+void Subproblem::register_accepted_iterate(const Problem& /*problem*/, Iterate& /*iterate*/) {
    // by default, do nothing
 }

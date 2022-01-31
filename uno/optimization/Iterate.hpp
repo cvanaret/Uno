@@ -7,8 +7,7 @@
 
 struct Errors {
    double constraints;
-   double KKT;
-   double FJ;
+   double stationarity;
    double complementarity;
 };
 
@@ -45,14 +44,14 @@ public:
    std::vector<double> lagrangian_gradient;
 
    // residuals
-   Errors nonlinear_errors{0., 0., 0., 0.};
+   Errors nonlinear_errors{0., 0., 0.};
    ProgressMeasures progress{0., 0.};
 
    void evaluate_objective(const Problem& problem);
    void evaluate_constraints(const Problem& problem);
    void evaluate_objective_gradient(const Problem& problem);
    void evaluate_constraint_jacobian(const Problem& problem);
-   void evaluate_lagrangian_gradient(const Problem& problem, double objective_multiplier, const std::vector<double>& constraint_multipliers,
+   void evaluate_lagrangian_gradient(const Problem& problem, const std::vector<double>& constraint_multipliers,
          const std::vector<double>& lower_bounds_multipliers, const std::vector<double>& upper_bounds_multipliers);
 
    void set_number_variables(size_t number_variables);

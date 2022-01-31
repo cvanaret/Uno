@@ -112,6 +112,10 @@ TR_activity_tolerance 1e-6
 # minimum TR radius
 TR_min_radius 1e-16
 
+##### constraint relaxation options #####
+use_proximal_term no
+proximal_coefficient 1.
+
 ##### l1 relaxation options #####
 # initial value of the penalty parameter
 l1_relaxation_initial_parameter 1.

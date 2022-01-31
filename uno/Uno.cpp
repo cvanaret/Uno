@@ -76,10 +76,7 @@ Statistics Uno::create_statistics(const Problem& problem) {
       statistics.add_column("||c||", Statistics::double_width, 101);
    }
    statistics.add_column("complementarity", Statistics::double_width, 104);
-   statistics.add_column("KKT", Statistics::double_width, 105);
-   if (problem.is_constrained()) {
-      statistics.add_column("FJ", Statistics::double_width, 106);
-   }
+   statistics.add_column("stationarity", Statistics::double_width, 105);
    return statistics;
 }
 
@@ -90,10 +87,7 @@ void Uno::add_statistics(Statistics& statistics, const Problem& problem, const I
       statistics.add_statistic("||c||", new_iterate.nonlinear_errors.constraints);
    }
    statistics.add_statistic("complementarity", new_iterate.nonlinear_errors.complementarity);
-   statistics.add_statistic("KKT", new_iterate.nonlinear_errors.KKT);
-   if (problem.is_constrained()) {
-      statistics.add_statistic("FJ", new_iterate.nonlinear_errors.FJ);
-   }
+   statistics.add_statistic("stationarity", new_iterate.nonlinear_errors.stationarity);
 }
 
 bool Uno::termination_criterion(TerminationStatus current_status, size_t iteration) const {
@@ -105,12 +99,13 @@ TerminationStatus Uno::check_termination(const Problem& problem, const Iterate& 
 
    if (current_iterate.nonlinear_errors.complementarity <= this->tolerance * static_cast<double>(number_variables + problem.number_constraints)) {
       // feasible and KKT point
-      if (current_iterate.nonlinear_errors.KKT <= this->tolerance * std::sqrt(number_variables) &&
+      if (current_iterate.nonlinear_errors.stationarity <= this->tolerance * std::sqrt(number_variables) &&
           current_iterate.nonlinear_errors.constraints <= this->tolerance * static_cast<double>(number_variables)) {
          return KKT_POINT;
       }
       // infeasible and FJ point
-      else if (problem.is_constrained() && current_iterate.nonlinear_errors.FJ <= this->tolerance * std::sqrt(number_variables)) {
+      else if (problem.is_constrained() && current_iterate.multipliers.objective == 0. &&
+         current_iterate.nonlinear_errors.stationarity <= this->tolerance * std::sqrt(number_variables)) {
          return FJ_POINT;
       }
    }
@@ -135,12 +130,14 @@ void Uno::postsolve_solution(const Problem& problem, const Scaling& scaling, Ite
    // unscale the multipliers and the function values
    const bool is_feasible = (termination_status == KKT_POINT || termination_status == FEASIBLE_SMALL_STEP);
    const double scaled_objective_multiplier = scaling.get_objective_scaling()*(is_feasible ? current_iterate.multipliers.objective : 1.);
-   for (size_t j = 0; j < problem.number_constraints; j++) {
-      current_iterate.multipliers.constraints[j] *= scaling.get_constraint_scaling(j)/scaled_objective_multiplier;
-   }
-   for (size_t i = 0; i < problem.number_variables; i++) {
-      current_iterate.multipliers.lower_bounds[i] /= scaled_objective_multiplier;
-      current_iterate.multipliers.upper_bounds[i] /= scaled_objective_multiplier;
+   if (scaled_objective_multiplier != 0.) {
+      for (size_t j = 0; j < problem.number_constraints; j++) {
+         current_iterate.multipliers.constraints[j] *= scaling.get_constraint_scaling(j)/scaled_objective_multiplier;
+      }
+      for (size_t i = 0; i < problem.number_variables; i++) {
+         current_iterate.multipliers.lower_bounds[i] /= scaled_objective_multiplier;
+         current_iterate.multipliers.upper_bounds[i] /= scaled_objective_multiplier;
+      }
    }
 }
 
@@ -169,8 +166,7 @@ void Result::print(bool print_solution) const {
 
    std::cout << "Objective value:\t\t" << this->solution.objective << "\n";
    std::cout << "Constraint residual:\t\t" << this->solution.nonlinear_errors.constraints << "\n";
-   std::cout << "KKT residual:\t\t\t" << this->solution.nonlinear_errors.KKT << "\n";
-   std::cout << "FJ residual:\t\t\t" << this->solution.nonlinear_errors.FJ << "\n";
+   std::cout << "Stationarity residual:\t\t" << this->solution.nonlinear_errors.stationarity << "\n";
    std::cout << "Complementarity residual:\t" << this->solution.nonlinear_errors.complementarity << "\n";
 
    std::cout << "Feasibility measure:\t\t" << this->solution.progress.infeasibility << "\n";
@@ -187,6 +183,7 @@ void Result::print(bool print_solution) const {
          std::cout << "Constraint multipliers:\t\t";
          print_vector(std::cout, this->solution.multipliers.constraints);
       }
+      std::cout << "Objective multiplier:\t\t" << this->solution.multipliers.objective << "\n";
    }
 
    std::cout << "CPU time:\t\t\t" << this->cpu_time << "s\n";

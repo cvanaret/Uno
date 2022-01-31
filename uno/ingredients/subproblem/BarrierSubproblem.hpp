@@ -33,7 +33,7 @@ public:
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Iterate& current_iterate,
          const Direction& direction) const override;
    void compute_progress_measures(const Problem& problem, Iterate& iterate) override;
-   void register_accepted_iterate(Iterate& iterate) override;
+   void register_accepted_iterate(const Problem& problem, Iterate& iterate) override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
 private:
@@ -46,31 +46,27 @@ private:
    const InteriorPointParameters parameters;
    const double default_multiplier;
 
-   // lists of bounded variables
-   std::vector<size_t> lower_bounded_variables{}; // indices of the lower-bounded variables
-   std::vector<size_t> upper_bounded_variables{}; // indices of the upper-bounded variables
-
    // preallocated vectors for bound multiplier displacements
    std::vector<double> lower_delta_z;
    std::vector<double> upper_delta_z;
 
    bool solving_feasibility_problem{false};
 
-   void update_barrier_parameter(const Iterate& current_iterate);
-   bool is_small_direction(const Iterate& current_iterate, const Direction& direction);
+   void update_barrier_parameter(const Problem& problem, const Iterate& current_iterate);
+   bool is_small_direction(const Problem& problem, const Iterate& current_iterate, const Direction& direction);
    void set_current_variable_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;
    double compute_barrier_directional_derivative(const std::vector<double>& solution);
    double evaluate_barrier_function(const Problem& problem, Iterate& iterate);
-   double primal_fraction_to_boundary(const Iterate& current_iterate, const std::vector<double>& ipm_solution, double tau);
-   double dual_fraction_to_boundary(const Iterate& current_iterate, double tau);
+   double primal_fraction_to_boundary(const Problem& problem, const Iterate& current_iterate, const std::vector<double>& ipm_solution, double tau);
+   double dual_fraction_to_boundary(const Problem& problem, const Iterate& current_iterate, double tau);
    void assemble_augmented_system(const Problem& problem, const Iterate& current_iterate);
-   void assemble_augmented_matrix(const Iterate& current_iterate);
-   void generate_augmented_rhs(const Iterate& current_iterate);
-   void compute_lower_bound_dual_direction(const Iterate& current_iterate, const std::vector<double>& solution);
-   void compute_upper_bound_dual_direction(const Iterate& current_iterate, const std::vector<double>& solution);
+   void assemble_augmented_matrix(const Problem& problem, const Iterate& current_iterate);
+   void generate_augmented_rhs(const Problem& problem, const Iterate& current_iterate);
+   void compute_lower_bound_dual_direction(const Problem& problem, const Iterate& current_iterate, const std::vector<double>& solution);
+   void compute_upper_bound_dual_direction(const Problem& problem, const Iterate& current_iterate, const std::vector<double>& solution);
    void generate_direction(const Problem& problem, const Iterate& current_iterate);
-   [[nodiscard]] double compute_KKT_error_scaling(const Iterate& current_iterate) const;
-   [[nodiscard]] double compute_central_complementarity_error(const Iterate& iterate) const;
+   [[nodiscard]] double compute_KKT_error_scaling(const Problem& problem, const Iterate& current_iterate) const;
+   [[nodiscard]] double compute_central_complementarity_error(const Problem& problem, const Iterate& iterate) const;
    void print_solution(const Problem& problem, double primal_step_length, double dual_step_length) const;
 };
 

@@ -10,10 +10,6 @@ Multipliers::Multipliers(size_t number_variables, size_t number_constraints) : l
       upper_bounds(number_variables), constraints(number_constraints) {
 }
 
-bool is_finite_lower_bound(double value) {
-   return -std::numeric_limits<double>::infinity() < value;
-}
-
-bool is_finite_upper_bound(double value) {
-   return value < std::numeric_limits<double>::infinity();
+bool is_finite(double value) {
+   return std::abs(value) < std::numeric_limits<double>::infinity();
 }

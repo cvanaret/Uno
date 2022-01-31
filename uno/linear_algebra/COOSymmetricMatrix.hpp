@@ -12,7 +12,7 @@ public:
    void for_each(const std::function<void (size_t, size_t, double)>& f) const override;
    void insert(double term, size_t row_index, size_t column_index) override;
    void pop() override;
-   void add_identity_multiple(double multiple) override;
+   void add_identity_multiple(double multiple, size_t number_variables) override;
    [[nodiscard]] double smallest_diagonal_entry() const override;
 
    void print(std::ostream& stream) const override;

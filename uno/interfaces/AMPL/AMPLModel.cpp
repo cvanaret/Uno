@@ -71,6 +71,20 @@ void AMPLModel::generate_variables() {
       this->variables_bounds[i] = {lb, ub};
    }
    Problem::determine_bounds_types(this->variables_bounds, this->variable_status);
+   // figure out the bounded variables
+   for (size_t i = 0; i < this->number_variables; i++) {
+      const ConstraintType status = this->get_variable_status(i);
+      if (status == BOUNDED_LOWER || status == BOUNDED_BOTH_SIDES) {
+         this->lower_bounded_variables.push_back(i);
+      }
+      if (status == BOUNDED_UPPER || status == BOUNDED_BOTH_SIDES) {
+         this->upper_bounded_variables.push_back(i);
+      }
+   }
+}
+
+size_t AMPLModel::get_number_original_variables() const {
+   return this->number_variables;
 }
 
 double AMPLModel::get_variable_lower_bound(size_t i) const {

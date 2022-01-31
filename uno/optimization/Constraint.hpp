@@ -45,7 +45,6 @@ struct Multipliers {
    Multipliers(size_t number_variables, size_t number_constraints);
 };
 
-bool is_finite_lower_bound(double value);
-bool is_finite_upper_bound(double value);
+bool is_finite(double value);
 
 #endif // UNO_CONSTRAINT_H

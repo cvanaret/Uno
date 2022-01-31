@@ -57,24 +57,25 @@ void Iterate::evaluate_constraint_jacobian(const Problem& problem) {
    }
 }
 
-void Iterate::evaluate_lagrangian_gradient(const Problem& problem, double objective_multiplier, const std::vector<double>& constraint_multipliers,
+void Iterate::evaluate_lagrangian_gradient(const Problem& problem, const std::vector<double>& constraint_multipliers,
       const std::vector<double>& lower_bounds_multipliers, const std::vector<double>& upper_bounds_multipliers) {
+   const size_t number_original_variables = problem.get_number_original_variables();
    initialize_vector(this->lagrangian_gradient, 0.);
 
    // objective gradient
-   if (objective_multiplier != 0.) {
-      this->evaluate_objective_gradient(problem);
+   this->evaluate_objective_gradient(problem);
 
-      // scale the objective gradient
-      this->objective_gradient.for_each([&](size_t i, double derivative) {
-         // in case there are additional variables, ignore them
-         if (i < problem.number_variables) {
-            this->lagrangian_gradient[i] += objective_multiplier * derivative;
-         }
-      });
-   }
+   // scale the objective gradient with the objective multiplier
+   this->objective_gradient.for_each([&](size_t i, double derivative) {
+      // in case there are additional variables, ignore them
+      if (i < number_original_variables) {
+         //this->lagrangian_gradient[i] += objective_multiplier * derivative;
+         this->lagrangian_gradient[i] += derivative;
+      }
+   });
+
    // bound constraints
-   for (size_t i = 0; i < problem.number_variables; i++) {
+   for (size_t i = 0; i < number_original_variables; i++) {
       this->lagrangian_gradient[i] -= lower_bounds_multipliers[i] + upper_bounds_multipliers[i];
    }
 
@@ -85,7 +86,7 @@ void Iterate::evaluate_lagrangian_gradient(const Problem& problem, double object
       if (multiplier_j != 0.) {
          this->constraint_jacobian[j].for_each([&](size_t i, double derivative) {
             // in case there are additional variables, ignore them
-            if (i < problem.number_variables) {
+            if (i < number_original_variables) {
                this->lagrangian_gradient[i] -= multiplier_j * derivative;
             }
          });
@@ -120,8 +121,8 @@ std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
    stream << "Objective value: " << iterate.objective << "\n";
 
    stream << "Constraint residual: " << iterate.nonlinear_errors.constraints << "\n";
-   stream << "KKT residual: " << iterate.nonlinear_errors.KKT << "\n";
-   stream << "FJ residual: " << iterate.nonlinear_errors.KKT << "\n";
+   stream << "KKT residual: " << iterate.nonlinear_errors.stationarity << "\n";
+   stream << "FJ residual: " << iterate.nonlinear_errors.stationarity << "\n";
    stream << "Complementarity residual: " << iterate.nonlinear_errors.complementarity << "\n";
 
    stream << "Optimality measure: " << iterate.progress.objective << "\n";

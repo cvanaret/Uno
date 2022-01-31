@@ -61,11 +61,15 @@ public:
    SparseVector<size_t> equality_constraints; /*!< inequality constraints */
    SparseVector<size_t> inequality_constraints; /*!< inequality constraints */
    SparseVector<size_t> linear_constraints;
+   // lists of bounded variables
+   std::vector<size_t> lower_bounded_variables{}; // indices of the lower-bounded variables
+   std::vector<size_t> upper_bounded_variables{}; // indices of the upper-bounded variables
 
    // Hessian
    const bool fixed_hessian_sparsity{false};
 
    // purely virtual functions
+   [[nodiscard]] virtual size_t get_number_original_variables() const = 0;
    [[nodiscard]] virtual double get_variable_lower_bound(size_t i) const = 0;
    [[nodiscard]] virtual double get_variable_upper_bound(size_t i) const = 0;
    [[nodiscard]] virtual double get_constraint_lower_bound(size_t j) const = 0;
@@ -91,7 +95,6 @@ public:
    void project_point_in_bounds(std::vector<double>& x) const;
    [[nodiscard]] virtual double compute_constraint_violation(double constraint, size_t j) const;
    [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const;
-   [[nodiscard]] virtual double compute_constraint_violation(const std::vector<double>& x, const std::vector<double>& constraints) const;
    [[nodiscard]] double compute_constraint_lower_bound_violation(double constraint, size_t j) const;
    [[nodiscard]] double compute_constraint_upper_bound_violation(double constraint, size_t j) const;
    [[nodiscard]] bool is_constrained() const;

@@ -25,7 +25,7 @@ public:
    virtual void insert(double term, size_t row_index, size_t column_index) = 0;
    virtual void pop() = 0;
    virtual void finalize(size_t column_index);
-   virtual void add_identity_multiple(double multiple) = 0;
+   virtual void add_identity_multiple(double multiple, size_t number_variables) = 0;
    [[nodiscard]] virtual double smallest_diagonal_entry() const = 0;
 
    virtual void print(std::ostream& stream) const = 0;

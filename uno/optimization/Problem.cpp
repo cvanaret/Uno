@@ -26,13 +26,13 @@ void Problem::determine_bounds_types(std::vector<Range>& bounds, std::vector<Con
       if (bounds_i.lb == bounds_i.ub) {
          return EQUAL_BOUNDS;
       }
-      else if (is_finite_lower_bound(bounds_i.lb) && is_finite_upper_bound(bounds_i.ub)) {
+      else if (is_finite(bounds_i.lb) && is_finite(bounds_i.ub)) {
          return BOUNDED_BOTH_SIDES;
       }
-      else if (is_finite_lower_bound(bounds_i.lb)) {
+      else if (is_finite(bounds_i.lb)) {
          return BOUNDED_LOWER;
       }
-      else if (is_finite_upper_bound(bounds_i.ub)) {
+      else if (is_finite(bounds_i.ub)) {
          return BOUNDED_UPPER;
       }
       else {
@@ -90,13 +90,6 @@ double Problem::compute_constraint_violation(const std::vector<double>& constrai
       return this->compute_constraint_violation(constraints[j], j);
    };
    return norm(residual_function, constraints.size(), residual_norm);
-}
-
-double Problem::compute_constraint_violation(const std::vector<double>& /*x*/, const std::vector<double>& constraints) const {
-   auto residual_function = [&](size_t j) {
-      return this->compute_constraint_violation(constraints[j], j);
-   };
-   return norm(residual_function, constraints.size(), L1_NORM);
 }
 
 bool Problem::is_constrained() const {

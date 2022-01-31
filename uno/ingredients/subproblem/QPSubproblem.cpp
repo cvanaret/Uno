@@ -2,8 +2,7 @@
 #include "solvers/QP/QPSolverFactory.hpp"
 
 QPSubproblem::QPSubproblem(const Problem& problem, size_t max_number_variables, const Options& options) :
-      Subproblem(problem.number_variables, max_number_variables, problem.number_constraints, NO_SOC, true,
-            norm_from_string(options.at("residual_norm"))),
+      Subproblem(max_number_variables, problem.number_constraints, NO_SOC, true, norm_from_string(options.at("residual_norm"))),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
       solver(QPSolverFactory::create(options.at("QP_solver"), max_number_variables, problem.number_constraints,
             problem.get_hessian_maximum_number_nonzeros()
@@ -12,7 +11,8 @@ QPSubproblem::QPSubproblem(const Problem& problem, size_t max_number_variables, 
       // if no trust region is used, the problem should be convexified to guarantee boundedness + descent direction
       hessian_model(HessianModelFactory::create(options.at("hessian_model"), max_number_variables,
             problem.get_hessian_maximum_number_nonzeros() + max_number_variables, options.at("mechanism") != "TR", options)),
-      initial_point(max_number_variables) {
+      initial_point(max_number_variables),
+      proximal_coefficient(stod(options.at("proximal_coefficient"))) {
 }
 
 void QPSubproblem::build_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier,
@@ -39,6 +39,7 @@ void QPSubproblem::build_current_subproblem(const Problem& problem, Iterate& cur
 void QPSubproblem::build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
    // Hessian
    this->hessian_model->evaluate(problem, current_iterate.x, objective_multiplier, current_iterate.multipliers.constraints);
+   this->hessian_model->adjust_number_variables(problem.number_variables);
 
    // objective gradient
    current_iterate.evaluate_objective_gradient(problem);
@@ -52,7 +53,6 @@ void QPSubproblem::set_initial_point(const std::vector<double>& point) {
 }
 
 Direction QPSubproblem::solve(Statistics& /*statistics*/, const Problem& problem, Iterate& current_iterate) {
-   this->hessian_model->adjust_number_variables(problem.number_variables);
    // compute QP direction
    Direction direction = this->solver->solve_QP(this->current_variable_bounds, this->constraint_bounds, current_iterate.objective_gradient,
          current_iterate.constraint_jacobian, *this->hessian_model->hessian, this->initial_point);
@@ -80,4 +80,8 @@ PredictedReductionModel QPSubproblem::generate_predicted_reduction_model(const P
 
 size_t QPSubproblem::get_hessian_evaluation_count() const {
    return this->hessian_model->evaluation_count;
+}
+
+double QPSubproblem::get_proximal_coefficient() const {
+   return this->proximal_coefficient;
 }

@@ -66,6 +66,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["elastic_objective_coefficient"] = "1000";
       options["residual_norm"] = "INF";
       options["scale_functions"] = "yes";
+      options["use_proximal_term"] = "yes";
    }
    else if (preset_name == "filtersqp") {
       options["mechanism"] = "TR";
@@ -73,6 +74,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["strategy"] = "filter";
       options["subproblem"] = "QP";
       options["residual_norm"] = "L1";
+      options["use_proximal_term"] = "no";
    }
    else if (preset_name == "byrd") {
       options["mechanism"] = "LS";

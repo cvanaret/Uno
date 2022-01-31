@@ -122,9 +122,9 @@ void test_problem_with_elastics(const std::string& problem_name) {
    // add elastics and proximal term
    const double objective_multiplier = 1.;
    const double elastic_objective_coefficient = 1.;
-   const double proximal_coefficient = 1.;
-   l1ElasticReformulation problem_to_solve = l1ElasticReformulation(*original_problem, objective_multiplier,
-         elastic_objective_coefficient, proximal_coefficient);
+   const bool use_proximal_term = true;
+   l1ElasticReformulation problem_to_solve = l1ElasticReformulation(*original_problem, objective_multiplier, elastic_objective_coefficient,
+         use_proximal_term);
 
    // create the first iterate (slacks set to 0)
    Iterate first_iterate(problem_to_solve.number_variables, problem_to_solve.number_constraints);

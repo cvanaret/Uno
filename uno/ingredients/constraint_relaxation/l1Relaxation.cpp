@@ -24,7 +24,7 @@ void l1Relaxation::initialize(Statistics& statistics, Iterate& first_iterate) {
 
    // compute the progress measures and the residuals of the initial point
    this->subproblem->compute_progress_measures(this->relaxed_problem, first_iterate);
-   this->subproblem->compute_residuals(this->relaxed_problem, first_iterate, this->penalty_parameter);
+   this->subproblem->compute_residuals(this->relaxed_problem, first_iterate);
 
    // initialize the globalization strategy
    this->globalization_strategy->initialize(statistics, first_iterate);
@@ -33,6 +33,11 @@ void l1Relaxation::initialize(Statistics& statistics, Iterate& first_iterate) {
 void l1Relaxation::create_current_subproblem(Iterate& current_iterate, double trust_region_radius) {
    // reset the elastic variables
    this->relaxed_problem.reset_elastic_variables(current_iterate);
+
+   // set the proximal coefficient
+   this->relaxed_problem.set_proximal_coefficient(std::sqrt(this->penalty_parameter));
+   this->relaxed_problem.set_proximal_reference_point(current_iterate.x);
+
    // scale the derivatives and introduce the elastic variables
    this->subproblem->build_current_subproblem(this->relaxed_problem, current_iterate, this->penalty_parameter, trust_region_radius);
    // set the multipliers of the violated constraints
@@ -179,7 +184,7 @@ bool l1Relaxation::linearized_residual_sufficient_decrease(const Iterate& curren
 
 void l1Relaxation::decrease_parameter_aggressively(Iterate& current_iterate, const Direction& direction_lowest_violation) {
    // compute the ideal error (with a zero penalty parameter)
-   const double error_lowest_violation = l1Relaxation::compute_error(current_iterate, direction_lowest_violation.multipliers, 0.);
+   const double error_lowest_violation = l1Relaxation::compute_error(current_iterate, direction_lowest_violation.multipliers);
    DEBUG << "Ideal error: " << error_lowest_violation << "\n";
 
    const double scaled_error = error_lowest_violation / std::max(1., current_iterate.nonlinear_errors.constraints);
@@ -192,7 +197,6 @@ bool l1Relaxation::objective_sufficient_decrease(const Iterate& current_iterate,
       const Direction& direction_lowest_violation) const {
    const double decrease_objective = current_iterate.nonlinear_errors.constraints - direction.objective;
    const double lowest_decrease_objective = current_iterate.nonlinear_errors.constraints - direction_lowest_violation.objective;
-   std::cout << decrease_objective << " >= " << this->parameters.epsilon2 << "*" << lowest_decrease_objective << " ?\n";
    return (decrease_objective >= this->parameters.epsilon2 * lowest_decrease_objective);
 }
 
@@ -222,7 +226,7 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, Iterate& current_iterat
    }
    if (accept) {
       statistics.add_statistic("penalty param.", this->penalty_parameter);
-      this->subproblem->compute_residuals(this->relaxed_problem, trial_iterate, direction.objective_multiplier);
+      this->subproblem->compute_residuals(this->relaxed_problem, trial_iterate);
    }
    return accept;
 }
@@ -245,7 +249,7 @@ double l1Relaxation::compute_predicted_reduction(const Problem& problem, Iterate
 }
 
 // measure that combines KKT error and complementarity error
-double l1Relaxation::compute_error(Iterate& current_iterate, const Multipliers& multiplier_displacements, double current_penalty_parameter) {
+double l1Relaxation::compute_error(Iterate& current_iterate, const Multipliers& multiplier_displacements) {
    // assemble the trial constraints multipliers
    for (size_t j = 0; j < this->original_problem.number_constraints; j++) {
       this->constraint_multipliers[j] = current_iterate.multipliers.constraints[j] + multiplier_displacements.constraints[j];
@@ -255,8 +259,8 @@ double l1Relaxation::compute_error(Iterate& current_iterate, const Multipliers& 
    double error = Subproblem::compute_complementarity_error(this->original_problem, current_iterate, this->constraint_multipliers,
          multiplier_displacements.lower_bounds, multiplier_displacements.upper_bounds);
    // KKT error
-   current_iterate.evaluate_lagrangian_gradient(this->original_problem, current_penalty_parameter, this->constraint_multipliers,
-         multiplier_displacements.lower_bounds, multiplier_displacements.upper_bounds);
+   current_iterate.evaluate_lagrangian_gradient(this->original_problem, this->constraint_multipliers, multiplier_displacements.lower_bounds,
+         multiplier_displacements.upper_bounds);
    error += norm_1(current_iterate.lagrangian_gradient);
    return error;
 }
@@ -268,4 +272,9 @@ Direction l1Relaxation::compute_second_order_correction(Iterate& trial_iterate) 
 PredictedReductionModel l1Relaxation::generate_predicted_reduction_model(const Iterate& current_iterate, const Direction& direction) const {
    // the predicted reduction should be that of the original problem. It will then be post-processed in compute_predicted_reduction()
    return this->subproblem->generate_predicted_reduction_model(this->original_problem, current_iterate, direction);
+}
+
+void l1Relaxation::register_accepted_iterate(Iterate& iterate) {
+   // TODO check problem
+   this->subproblem->register_accepted_iterate(this->relaxed_problem, iterate);
 }

@@ -7,6 +7,7 @@ class SlackReformulation: public Problem {
 public:
    explicit SlackReformulation(const Problem& original_problem);
 
+   [[nodiscard]] size_t get_number_original_variables() const override;
    [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
    [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
    [[nodiscard]] double get_constraint_lower_bound(size_t j) const override;
@@ -43,10 +44,32 @@ inline SlackReformulation::SlackReformulation(const Problem& original_problem):
    for (size_t j = 0; j < this->number_constraints; j++) {
       this->equality_constraints.insert(j, j);
    }
+
+   // figure out bounded variables
+   for (size_t i: this->original_problem.lower_bounded_variables) {
+      this->lower_bounded_variables.push_back(i);
+   }
+   for (size_t i: this->original_problem.upper_bounded_variables) {
+      this->upper_bounded_variables.push_back(i);
+   }
+   this->original_problem.inequality_constraints.for_each([&](size_t j, size_t i) {
+      const size_t slack_index = i + this->original_problem.number_variables;
+      if (is_finite(this->original_problem.get_constraint_lower_bound(j))) {
+         this->lower_bounded_variables.push_back(slack_index);
+      }
+      if (is_finite(this->original_problem.get_constraint_upper_bound(j))) {
+         this->upper_bounded_variables.push_back(slack_index);
+      }
+   });
+
    // register the inequality constraint of each slack
    this->original_problem.inequality_constraints.for_each([&](size_t j, size_t i) {
       this->inequality_constraint_of_slack[i] = j;
    });
+}
+
+inline size_t SlackReformulation::get_number_original_variables() const {
+   return this->original_problem.get_number_original_variables();
 }
 
 inline double SlackReformulation::get_variable_lower_bound(size_t i) const {
