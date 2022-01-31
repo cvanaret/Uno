@@ -39,8 +39,8 @@ void LPSubproblem::set_initial_point(const std::vector<double>& point) {
 
 Direction LPSubproblem::solve(Statistics& /*statistics*/, const Problem& problem, Iterate& current_iterate) {
    // solve the LP
-   Direction direction = this->solver->solve_LP(this->current_variable_bounds, this->constraint_bounds, this->objective_gradient,
-         current_iterate.constraint_jacobian, this->initial_point);
+   Direction direction = this->solver->solve_LP(problem.number_variables, problem.number_constraints, this->current_variable_bounds,
+         this->constraint_bounds, this->objective_gradient, current_iterate.constraint_jacobian, this->initial_point);
    this->number_subproblems_solved++;
 
    // compute dual displacements (SLP methods usually compute the new duals, not the displacements)

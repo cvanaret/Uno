@@ -24,39 +24,42 @@ bqpd_(const int* n, const int* m, int* k, int* kmax, double* a, int* la, double*
 }
 
 // preallocate a bunch of stuff
-BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_t maximum_number_nonzeros, bool quadratic_programming):
-      QPSolver(), number_variables(number_variables), number_constraints(number_constraints), maximum_number_nonzeros(maximum_number_nonzeros),
-      lb(number_variables + number_constraints),
-      ub(number_variables + number_constraints), jacobian(number_variables * (number_constraints + 1)),
-      jacobian_sparsity(number_variables * (number_constraints + 1) + number_constraints + 3),
-      kmax(quadratic_programming ? 500 : 0), alp(mlp), lp(mlp), ls(number_variables + number_constraints),
-      w(number_variables + number_constraints), gradient_solution(number_variables), residuals(number_variables + number_constraints),
-      e(number_variables + number_constraints),
-      size_hessian_sparsity(quadratic_programming ? maximum_number_nonzeros + number_variables + 3 : 0),
-      size_hessian_workspace(maximum_number_nonzeros + kmax * (kmax + 9) / 2 + 2 * number_variables + number_constraints + mxwk0),
+BQPDSolver::BQPDSolver(size_t max_number_variables, size_t number_constraints, size_t maximum_number_nonzeros, bool quadratic_programming):
+      QPSolver(), maximum_number_nonzeros(maximum_number_nonzeros),
+      lb(max_number_variables + number_constraints),
+      ub(max_number_variables + number_constraints), jacobian(max_number_variables * (number_constraints + 1)),
+      jacobian_sparsity(max_number_variables * (number_constraints + 1) + number_constraints + 3),
+      kmax(quadratic_programming ? 500 : 0), alp(mlp), lp(mlp), ls(max_number_variables + number_constraints),
+      w(max_number_variables + number_constraints), gradient_solution(max_number_variables), residuals(max_number_variables + number_constraints),
+      e(max_number_variables + number_constraints),
+      size_hessian_sparsity(quadratic_programming ? maximum_number_nonzeros + max_number_variables + 3 : 0),
+      size_hessian_workspace(maximum_number_nonzeros + kmax * (kmax + 9) / 2 + 2 * max_number_variables + number_constraints + mxwk0),
       size_hessian_sparsity_workspace(size_hessian_sparsity + kmax + mxiwk0),
       hessian_values(size_hessian_workspace), hessian_sparsity(size_hessian_sparsity_workspace) {
    // active set
-   for (size_t i = 0; i < this->number_variables + this->number_constraints; i++) {
+   for (size_t i = 0; i < max_number_variables + number_constraints; i++) {
       this->ls[i] = static_cast<int>(i) + this->fortran_shift;
    }
 }
 
-Direction BQPDSolver::solve_QP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraint_bounds, const SparseVector<double>&
-linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian, const SymmetricMatrix& hessian,
-      const std::vector<double>& initial_point) {
+Direction BQPDSolver::solve_QP(size_t number_variables, size_t number_constraints, const std::vector<Range>& variables_bounds,
+      const std::vector<Range>& constraint_bounds, const SparseVector<double>& linear_objective,
+      const std::vector<SparseVector<double>>& constraint_jacobian, const SymmetricMatrix& hessian, const std::vector<double>& initial_point) {
    this->save_hessian_to_local_format(hessian);
-   return this->solve_subproblem(variables_bounds, constraint_bounds, linear_objective, constraint_jacobian, initial_point);
+   return this->solve_subproblem(number_variables, number_constraints, variables_bounds, constraint_bounds, linear_objective, constraint_jacobian,
+         initial_point);
 }
 
-Direction BQPDSolver::solve_LP(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraint_bounds, const SparseVector<double>&
-linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian, const std::vector<double>& initial_point) {
-   return this->solve_subproblem(variables_bounds, constraint_bounds, linear_objective, constraint_jacobian, initial_point);
+Direction BQPDSolver::solve_LP(size_t number_variables, size_t number_constraints, const std::vector<Range>& variables_bounds,
+      const std::vector<Range>& constraint_bounds, const SparseVector<double>& linear_objective,
+      const std::vector<SparseVector<double>>& constraint_jacobian, const std::vector<double>& initial_point) {
+   return this->solve_subproblem(number_variables, number_constraints, variables_bounds, constraint_bounds, linear_objective, constraint_jacobian,
+         initial_point);
 }
 
-Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bounds, const std::vector<Range>& constraint_bounds,
-      const SparseVector<double>& linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian,
-      const std::vector<double>& initial_point) {
+Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_constraints, const std::vector<Range>& variables_bounds,
+      const std::vector<Range>& constraint_bounds, const SparseVector<double>& linear_objective,
+      const std::vector<SparseVector<double>>& constraint_jacobian, const std::vector<double>& initial_point) {
    // initialize wsc_ common block (Hessian & workspace for bqpd)
    // setting the common block here ensures that several instances of BQPD can run simultaneously
    wsc_.kk = static_cast<int>(this->maximum_number_nonzeros);
@@ -67,33 +70,33 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
 
    DEBUG << "objective gradient: ";
    DEBUG << linear_objective;
-   for (size_t j = 0; j < constraint_jacobian.size(); j++) {
+   for (size_t j = 0; j < number_constraints; j++) {
       DEBUG << "gradient c" << j << ": " << constraint_jacobian[j];
    }
-   for (size_t i = 0; i < variables_bounds.size(); i++) {
+   for (size_t i = 0; i < number_variables; i++) {
       DEBUG << "Δx" << i << " in [" << variables_bounds[i].lb << ", " << variables_bounds[i].ub << "]\n";
    }
-   for (size_t j = 0; j < constraint_bounds.size(); j++) {
+   for (size_t j = 0; j < number_constraints; j++) {
       DEBUG << "linearized c" << j << " in [" << constraint_bounds[j].lb << ", " << constraint_bounds[j].ub << "]\n";
    }
 
    // Jacobian
-   this->save_gradients_to_local_format(linear_objective, constraint_jacobian);
+   this->save_gradients_to_local_format(number_constraints, linear_objective, constraint_jacobian);
 
    // bounds
-   for (size_t i = 0; i < this->number_variables; i++) {
+   for (size_t i = 0; i < number_variables; i++) {
       this->lb[i] = (variables_bounds[i].lb == -std::numeric_limits<double>::infinity()) ? -BIG : variables_bounds[i].lb;
       this->ub[i] = (variables_bounds[i].ub == std::numeric_limits<double>::infinity()) ? BIG : variables_bounds[i].ub;
    }
-   for (size_t j = 0; j < this->number_constraints; j++) {
-      this->lb[this->number_variables + j] = (constraint_bounds[j].lb == -std::numeric_limits<double>::infinity()) ? -BIG : constraint_bounds[j].lb;
-      this->ub[this->number_variables + j] = (constraint_bounds[j].ub == std::numeric_limits<double>::infinity()) ? BIG : constraint_bounds[j].ub;
+   for (size_t j = 0; j < number_constraints; j++) {
+      this->lb[number_variables + j] = (constraint_bounds[j].lb == -std::numeric_limits<double>::infinity()) ? -BIG : constraint_bounds[j].lb;
+      this->ub[number_variables + j] = (constraint_bounds[j].ub == std::numeric_limits<double>::infinity()) ? BIG : constraint_bounds[j].ub;
    }
 
-   Direction direction(this->number_variables, this->number_constraints);
+   Direction direction(number_variables, number_constraints);
    copy_from(direction.x, initial_point);
-   const int n = static_cast<int>(this->number_variables);
-   const int m = static_cast<int>(this->number_constraints);
+   const int n = static_cast<int>(number_variables);
+   const int m = static_cast<int>(number_constraints);
    const int current_mode = static_cast<int>(this->mode);
 
    // solve the LP/QP
@@ -105,11 +108,11 @@ Direction BQPDSolver::solve_subproblem(const std::vector<Range>& variables_bound
    direction.status = BQPDSolver::status_to_int(this->ifail);
 
    // project solution into bounds
-   for (size_t i = 0; i < direction.x.size(); i++) {
+   for (size_t i = 0; i < number_variables; i++) {
       direction.x[i] = std::min(std::max(direction.x[i], variables_bounds[i].lb), variables_bounds[i].ub);
    }
    direction.norm = norm_inf(direction.x);
-   this->analyze_constraints(direction);
+   this->analyze_constraints(number_variables, number_constraints, direction);
    return direction;
 }
 
@@ -146,14 +149,15 @@ void BQPDSolver::save_hessian_to_local_format(const SymmetricMatrix& hessian) {
    DEBUG << "Hessian: " << hessian;
 }
 
-void BQPDSolver::save_gradients_to_local_format(const SparseVector<double>& linear_objective, const std::vector<SparseVector<double>>& constraint_jacobian) {
+void BQPDSolver::save_gradients_to_local_format(size_t number_constraints, const SparseVector<double>& linear_objective,
+      const std::vector<SparseVector<double>>& constraint_jacobian) {
    size_t current_index = 0;
    linear_objective.for_each([&](size_t i, double derivative) {
       this->jacobian[current_index] = derivative;
       this->jacobian_sparsity[current_index + 1] = static_cast<int>(i) + this->fortran_shift;
       current_index++;
    });
-   for (size_t j = 0; j < this->number_constraints; j++) {
+   for (size_t j = 0; j < number_constraints; j++) {
       constraint_jacobian[j].for_each([&](size_t i, double derivative) {
          this->jacobian[current_index] = derivative;
          this->jacobian_sparsity[current_index + 1] = static_cast<int>(i) + this->fortran_shift;
@@ -169,21 +173,21 @@ void BQPDSolver::save_gradients_to_local_format(const SparseVector<double>& line
    size += linear_objective.size();
    this->jacobian_sparsity[current_index] = static_cast<int>(size);
    current_index++;
-   for (size_t j = 0; j < this->number_constraints; j++) {
+   for (size_t j = 0; j < number_constraints; j++) {
       size += constraint_jacobian[j].size();
       this->jacobian_sparsity[current_index] = static_cast<int>(size);
       current_index++;
    }
 }
 
-void BQPDSolver::analyze_constraints(Direction& direction) {
-   ConstraintPartition constraint_partition(this->number_constraints);
+void BQPDSolver::analyze_constraints(size_t number_variables, size_t number_constraints, Direction& direction) {
+   ConstraintPartition constraint_partition(number_constraints);
 
    // active constraints
-   for (size_t j = 0; j < this->number_variables - this->k; j++) {
+   for (size_t j = 0; j < number_variables - this->k; j++) {
       const size_t index = static_cast<size_t>(std::abs(this->ls[j]) - this->fortran_shift);
 
-      if (index < this->number_variables) {
+      if (index < number_variables) {
          // bound constraint
          if (0 <= this->ls[j]) { // lower bound active
             direction.multipliers.lower_bounds[index] = this->residuals[index];
@@ -196,7 +200,7 @@ void BQPDSolver::analyze_constraints(Direction& direction) {
       }
       else {
          // general constraint
-         size_t constraint_index = index - this->number_variables;
+         size_t constraint_index = index - number_variables;
          constraint_partition.feasible.push_back(constraint_index);
          if (0 <= this->ls[j]) { // lower bound active
             direction.multipliers.constraints[constraint_index] = this->residuals[index];
@@ -210,11 +214,11 @@ void BQPDSolver::analyze_constraints(Direction& direction) {
    }
 
    // inactive constraints
-   for (size_t j = this->number_variables - this->k; j < this->number_variables + this->number_constraints; j++) {
+   for (size_t j = number_variables - this->k; j < number_variables + number_constraints; j++) {
       size_t index = std::abs(this->ls[j]) - this->fortran_shift;
 
-      if (this->number_variables <= index) { // general constraints
-         size_t constraint_index = index - this->number_variables;
+      if (number_variables <= index) { // general constraints
+         size_t constraint_index = index - number_variables;
          if (this->residuals[index] < 0.) { // infeasible constraint
             constraint_partition.infeasible.push_back(constraint_index);
             if (this->ls[j] < 0) { // upper bound violated
