@@ -8,6 +8,7 @@ class ScaledReformulation: public Problem {
 public:
    ScaledReformulation(const Problem& original_problem, const Scaling& scaling);
 
+   [[nodiscard]] size_t get_number_original_variables() const override;
    [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
    [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
    [[nodiscard]] double get_constraint_lower_bound(size_t j) const override;
@@ -44,7 +45,8 @@ inline ScaledReformulation::ScaledReformulation(const Problem& original_problem,
    for (size_t j = 0; j < this->number_constraints; j++) {
       assert(0 <= this->scaling.get_constraint_scaling(j) && "Constraint scaling failed.");
    }
-   // the constraint distribution is the same as in the original problem
+
+   // the constraint repartition (inequality/equality, linear) is the same as in the original problem
    this->original_problem.equality_constraints.for_each([&](size_t j, size_t i) {
       this->equality_constraints.insert(j, i);
    });
@@ -54,6 +56,18 @@ inline ScaledReformulation::ScaledReformulation(const Problem& original_problem,
    this->original_problem.linear_constraints.for_each([&](size_t j, size_t i) {
       this->linear_constraints.insert(j, i);
    });
+
+   // figure out bounded variables
+   for (size_t i: this->original_problem.lower_bounded_variables) {
+      this->lower_bounded_variables.push_back(i);
+   }
+   for (size_t i: this->original_problem.upper_bounded_variables) {
+      this->upper_bounded_variables.push_back(i);
+   }
+}
+
+inline size_t ScaledReformulation::get_number_original_variables() const {
+   return this->original_problem.get_number_original_variables();
 }
 
 inline double ScaledReformulation::get_variable_lower_bound(size_t i) const {

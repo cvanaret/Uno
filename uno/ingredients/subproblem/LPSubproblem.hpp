@@ -16,6 +16,7 @@ public:
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Iterate& current_iterate,
          const Direction& direction) const override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
+   [[nodiscard]] double get_proximal_coefficient() const override;
 
 private:
    // use pointers to allow polymorphism

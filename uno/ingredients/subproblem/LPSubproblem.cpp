@@ -2,9 +2,8 @@
 #include "solvers/QP/LPSolverFactory.hpp"
 
 LPSubproblem::LPSubproblem(const Problem& problem, size_t max_number_variables, const Options& options) :
-      Subproblem(problem.number_variables, max_number_variables, problem.number_constraints, NO_SOC, false,
-            norm_from_string(options.at("residual_norm"))),
-      solver(LPSolverFactory::create(max_number_variables, this->number_constraints, options.at("LP_solver"))),
+      Subproblem(max_number_variables, problem.number_constraints, NO_SOC, false, norm_from_string(options.at("residual_norm"))),
+      solver(LPSolverFactory::create(max_number_variables, problem.number_constraints, options.at("LP_solver"))),
       initial_point(max_number_variables) {
 }
 
@@ -64,4 +63,8 @@ PredictedReductionModel LPSubproblem::generate_predicted_reduction_model(const P
 size_t LPSubproblem::get_hessian_evaluation_count() const {
    // no second order evaluation is used
    return 0;
+}
+
+double LPSubproblem::get_proximal_coefficient() const {
+   return 0.;
 }

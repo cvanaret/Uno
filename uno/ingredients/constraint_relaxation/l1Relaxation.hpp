@@ -28,6 +28,7 @@ public:
    [[nodiscard]] bool is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          PredictedReductionModel& predicted_reduction_model, double step_length) override;
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Iterate& current_iterate, const Direction& direction) const override;
+   void register_accepted_iterate(Iterate& iterate) override;
 
 protected:
    const std::unique_ptr<GlobalizationStrategy> globalization_strategy;
@@ -44,7 +45,7 @@ protected:
    void decrease_parameter_aggressively(Iterate& current_iterate, const Direction& direction_lowest_violation);
    [[nodiscard]] bool linearized_residual_sufficient_decrease(const Iterate& current_iterate, double linearized_residual, double residual_lowest_violation) const;
    [[nodiscard]] bool objective_sufficient_decrease(const Iterate& current_iterate, const Direction& direction, const Direction& direction_lowest_violation) const;
-   double compute_error(Iterate& current_iterate, const Multipliers& multiplier_displacements, double current_penalty_parameter);
+   double compute_error(Iterate& current_iterate, const Multipliers& multiplier_displacements);
    void set_multipliers(const Iterate& current_iterate, std::vector<double>& constraint_multipliers);
 };
 

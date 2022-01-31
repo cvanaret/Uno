@@ -23,6 +23,7 @@ public:
    [[nodiscard]] bool is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          PredictedReductionModel& predicted_reduction_model, double step_length) override;
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Iterate& current_iterate, const Direction& direction) const override;
+   void register_accepted_iterate(Iterate& iterate) override;
 
 private:
    const std::unique_ptr<GlobalizationStrategy> phase_1_strategy;

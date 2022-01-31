@@ -84,10 +84,12 @@ void CSCSymmetricMatrix::finalize(size_t column_index) {
    }
 }
 
-void CSCSymmetricMatrix::add_identity_multiple(double multiple) {
+void CSCSymmetricMatrix::add_identity_multiple(double multiple, size_t number_variables) {
+   assert(number_variables <= this->dimension && "The number of variables is larger than the matrix dimension");
+
    size_t overall_padding_size = 0;
    // go through each column
-   for (size_t j = 0; j < this->dimension; j++) {
+   for (size_t j = 0; j < number_variables; j++) {
       // check if the last element in the column is diagonal
       const size_t number_elements = this->column_starts[j + 1] - this->column_starts[j];
       // a new element will be inserted unless it already exists
@@ -146,7 +148,7 @@ double CSCSymmetricMatrix::smallest_diagonal_entry() const {
 }
 
 void CSCSymmetricMatrix::force_explicit_diagonal_elements() {
-   this->add_identity_multiple(0.);
+   this->add_identity_multiple(0., this->dimension);
 }
 
 void CSCSymmetricMatrix::remove_variables(const std::vector<int>& /*variable_indices*/) {

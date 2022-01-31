@@ -17,12 +17,14 @@ public:
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Iterate& current_iterate,
          const Direction& direction) const override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
+   [[nodiscard]] double get_proximal_coefficient() const override;
 
 protected:
    // use pointers to allow polymorphism
    const std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
    const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
    std::vector<double> initial_point;
+   const double proximal_coefficient;
 };
 
 #endif // UNO_QPSUBPROBLEM_H

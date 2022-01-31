@@ -6,7 +6,7 @@ ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Problem& proble
       // save the original problem
       original_problem(problem),
       // create the relaxed problem by introducing elastic variables
-      relaxed_problem(problem, objective_multiplier, stod(options.at("elastic_objective_coefficient")), 0.),
+      relaxed_problem(problem, objective_multiplier, stod(options.at("elastic_objective_coefficient")), (options.at("use_proximal_term") == "yes")),
       subproblem(SubproblemFactory::create(this->relaxed_problem, this->relaxed_problem.number_variables, options)),
       number_constraints(this->relaxed_problem.number_constraints) {
 }
@@ -78,8 +78,4 @@ size_t ConstraintRelaxationStrategy::get_number_subproblems_solved() const {
 
 SecondOrderCorrection ConstraintRelaxationStrategy::soc_strategy() const {
    return this->subproblem->soc_strategy;
-}
-
-void ConstraintRelaxationStrategy::register_accepted_iterate(Iterate& iterate) {
-   this->subproblem->register_accepted_iterate(iterate);
 }
