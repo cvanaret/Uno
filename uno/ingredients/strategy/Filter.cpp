@@ -36,22 +36,21 @@ void Filter::right_shift(size_t start, size_t shift_size) {
 void Filter::add(double infeasibility_measure, double optimality_measure) {
    // remove dominated filter entries
    // find position in filter without margin
-   size_t position = 0;
-   while (position < this->number_entries && infeasibility_measure >= this->infeasibility[position]) {
-      position++;
+   size_t start_position = 0;
+   while (start_position < this->number_entries && this->infeasibility[start_position] < infeasibility_measure) {
+      start_position++;
    }
 
    // find redundant entries starting from position
-   size_t end_position = position;
+   size_t end_position = start_position;
    while (end_position < this->number_entries && optimality_measure <= this->optimality[end_position]) {
       end_position++;
    }
-   end_position--;
 
    // remove entries [position:end_position] from filter
-   const size_t number_redundant_entries = end_position - position + 1;
+   const size_t number_redundant_entries = end_position - start_position;
    if (0 < number_redundant_entries) {
-      this->left_shift(position, number_redundant_entries);
+      this->left_shift(start_position, number_redundant_entries);
       this->number_entries -= number_redundant_entries;
    }
 
@@ -63,17 +62,17 @@ void Filter::add(double infeasibility_measure, double optimality_measure) {
    }
 
    // add new entry to the filter at position
-   position = 0;
-   while (position < this->number_entries && infeasibility_measure >= this->constants.beta * this->infeasibility[position]) {
-      position++;
+   start_position = 0;
+   while (start_position < this->number_entries && infeasibility_measure >= this->constants.beta * this->infeasibility[start_position]) {
+      start_position++;
    }
    // shift entries by one to right to make room for new entry
-   if (position < this->number_entries) {
-      this->right_shift(position, 1);
+   if (start_position < this->number_entries) {
+      this->right_shift(start_position, 1);
    }
    // add new entry to filter
-   this->infeasibility[position] = infeasibility_measure;
-   this->optimality[position] = optimality_measure;
+   this->infeasibility[start_position] = infeasibility_measure;
+   this->optimality[start_position] = optimality_measure;
    this->number_entries++;
 }
 
