@@ -14,9 +14,8 @@ public:
    void initialize(Statistics& statistics, Iterate& first_iterate) override;
 
    // direction computation
-   void create_current_subproblem(Iterate& current_iterate, double trust_region_radius) override;
-   [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate) override;
-   [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
+   [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, double trust_region_radius) override;
+   [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, double trust_region_radius,
          const std::optional<std::vector<double>>& optional_phase_2_solution) override;
    [[nodiscard]] Direction compute_second_order_correction(Iterate& trial_iterate) override;
 
@@ -30,8 +29,9 @@ private:
    const std::unique_ptr<GlobalizationStrategy> phase_2_strategy;
    Phase current_phase{OPTIMALITY};
 
-   void create_current_feasibility_problem(Iterate& current_iterate, const std::optional<std::vector<double>>& optional_phase_2_solution);
-   GlobalizationStrategy& switch_phase(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction);
+   [[nodiscard]] Direction solve_optimality_problem(Statistics& statistics, Iterate& current_iterate, double trust_region_radius);
+   [[nodiscard]] GlobalizationStrategy& switch_phase(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction);
+   void compute_restoration_progress_measures(Iterate& iterate, const std::vector<size_t>& constraint_set);
 };
 
 #endif //UNO_FEASIBILITYRESTORATION_H

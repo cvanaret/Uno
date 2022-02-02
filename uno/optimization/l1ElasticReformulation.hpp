@@ -26,19 +26,25 @@ public:
    [[nodiscard]] double compute_linearized_constraint_violation(const std::vector<double>& x) const;
    [[nodiscard]] double compute_elastic_residual(const std::vector<double>& x, const std::vector<double>& dx) const;
    [[nodiscard]] double compute_constraint_violation(double constraint, size_t j) const override;
+   [[nodiscard]] double compute_constraint_violation(const std::vector<double>& x, const std::vector<double>& constraints) const;
 
    [[nodiscard]] ConstraintType get_variable_status(size_t i) const override;
    [[nodiscard]] FunctionType get_constraint_type(size_t j) const override;
    [[nodiscard]] ConstraintType get_constraint_status(size_t j) const override;
    [[nodiscard]] size_t get_hessian_maximum_number_nonzeros() const override;
+   [[nodiscard]] std::vector<size_t> get_violated_linearized_constraints(const std::vector<double>& x) const;
 
    void get_initial_primal_point(std::vector<double>& x) const override;
    void get_initial_dual_point(std::vector<double>& multipliers) const override;
    void set_objective_multiplier(double new_objective_multiplier);
+
    void set_proximal_coefficient(double new_proximal_coefficient);
    void set_proximal_reference_point(const std::vector<double>& new_proximal_reference_point);
-   void set_elastic_variables(Iterate& first_iterate) const;
+
+   void set_elastic_variables(Iterate& iterate) const;
    void reset_elastic_variables(Iterate& first_iterate) const;
+   void add_elastics_to_constraints(const std::vector<double>& x, std::vector<double>& constraints) const;
+   void add_elastics_to_constraint_jacobian(std::vector<SparseVector<double>>& constraint_jacobian) const;
 
 protected:
    const Problem& original_problem;
@@ -126,15 +132,15 @@ inline double l1ElasticReformulation::get_constraint_upper_bound(size_t j) const
 }
 
 inline double l1ElasticReformulation::compute_linearized_constraint_violation(const std::vector<double>& x) const {
-   double residual = 0.;
+   double constraint_violation = 0.;
    // l1 residual of the linearized constraints: sum of elastic variables
    auto elastic_contribution = [&](size_t i) {
-      residual += x[i];
+      constraint_violation += x[i];
    };
    this->elastic_variables.positive.for_each_value(elastic_contribution);
    this->elastic_variables.negative.for_each_value(elastic_contribution);
-   assert(0 <= residual && "The elastic residual should not be negative");
-   return residual;
+   assert(0 <= constraint_violation && "The elastic residual should not be negative");
+   return constraint_violation;
 }
 
 inline double l1ElasticReformulation::compute_elastic_residual(const std::vector<double>& x, const std::vector<double>& dx) const {
@@ -153,14 +159,28 @@ inline double l1ElasticReformulation::compute_constraint_violation(double constr
    return this->original_problem.compute_constraint_violation(constraint, j);
 }
 
+inline double l1ElasticReformulation::compute_constraint_violation(const std::vector<double>& x, const std::vector<double>& constraints) const {
+   double constraint_violation = 0.;
+   const auto residual_function = [&](size_t j, size_t elastic_index) {
+      if (0. < x[elastic_index]) {
+         constraint_violation += this->compute_constraint_violation(constraints[j], j);
+      }
+   };
+   this->elastic_variables.positive.for_each(residual_function);
+   this->elastic_variables.negative.for_each(residual_function);
+   return constraint_violation;
+}
+
 // return rho*f(x) + coeff*(e^T p + e^T n) + proximal
 inline double l1ElasticReformulation::evaluate_objective(const std::vector<double>& x) const {
    // elastic contribution
-   double objective = this->elastic_objective_coefficient* this->compute_linearized_constraint_violation(x);
+   double objective = this->elastic_objective_coefficient*this->compute_linearized_constraint_violation(x);
+
    // original objective
    if (this->objective_multiplier != 0.) {
       objective += this->objective_multiplier*this->original_problem.evaluate_objective(x);
    }
+
    // proximal term
    if (this->use_proximal_term && 0. < this->proximal_coefficient) {
       double proximal_term = 0.;
@@ -183,12 +203,14 @@ inline void l1ElasticReformulation::evaluate_objective_gradient(const std::vecto
    else {
       gradient.clear();
    }
+
    // elastic contribution
    const auto insert_elastic_derivative = [&](size_t elastic_index) {
       gradient.insert(elastic_index, this->elastic_objective_coefficient);
    };
    this->elastic_variables.positive.for_each_value(insert_elastic_derivative);
    this->elastic_variables.negative.for_each_value(insert_elastic_derivative);
+
    // proximal term
    if (this->use_proximal_term && 0. < this->proximal_coefficient) {
       for (size_t i = 0; i < this->original_problem.number_variables; i++) {
@@ -200,8 +222,7 @@ inline void l1ElasticReformulation::evaluate_objective_gradient(const std::vecto
    }
 }
 
-inline void l1ElasticReformulation::evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const {
-   this->original_problem.evaluate_constraints(x, constraints);
+inline void l1ElasticReformulation::add_elastics_to_constraints(const std::vector<double>& x, std::vector<double>& constraints) const {
    // add the contribution of the elastics
    this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {
       constraints[j] -= x[elastic_index];
@@ -211,9 +232,7 @@ inline void l1ElasticReformulation::evaluate_constraints(const std::vector<doubl
    });
 }
 
-inline void l1ElasticReformulation::evaluate_constraint_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraint_jacobian) const {
-   this->original_problem.evaluate_constraint_jacobian(x, constraint_jacobian);
-   // add the contribution of the elastics
+inline void l1ElasticReformulation::add_elastics_to_constraint_jacobian(std::vector<SparseVector<double>>& constraint_jacobian) const {
    this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {
       constraint_jacobian[j].insert(elastic_index, -1.);
    });
@@ -222,10 +241,23 @@ inline void l1ElasticReformulation::evaluate_constraint_jacobian(const std::vect
    });
 }
 
+inline void l1ElasticReformulation::evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const {
+   this->original_problem.evaluate_constraints(x, constraints);
+   // add the contribution of the elastics
+   this->add_elastics_to_constraints(x, constraints);
+}
+
+inline void l1ElasticReformulation::evaluate_constraint_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraint_jacobian) const {
+   this->original_problem.evaluate_constraint_jacobian(x, constraint_jacobian);
+   // add the contribution of the elastics
+   this->add_elastics_to_constraint_jacobian(constraint_jacobian);
+}
+
 inline void l1ElasticReformulation::evaluate_lagrangian_hessian(const std::vector<double>& x, double /*objective_multiplier*/,
       const std::vector<double>& multipliers, SymmetricMatrix& hessian) const {
    this->original_problem.evaluate_lagrangian_hessian(x, this->objective_multiplier, multipliers, hessian);
    hessian.dimension = this->number_variables;
+
    // add proximal term for the original variables
    if (this->use_proximal_term && 0. < this->proximal_coefficient) {
       for (size_t i = 0; i < this->original_problem.number_variables; i++) {
@@ -283,11 +315,13 @@ inline void l1ElasticReformulation::set_objective_multiplier(double new_objectiv
 }
 
 inline void l1ElasticReformulation::set_proximal_coefficient(double new_proximal_coefficient) {
+   assert(0. <= new_proximal_coefficient && "The proximal coefficient is negative");
    // update the proximal coefficient
    this->proximal_coefficient = new_proximal_coefficient;
 }
 
 inline void l1ElasticReformulation::set_proximal_reference_point(const std::vector<double>& new_proximal_reference_point) {
+   assert(this->original_problem.number_variables <= new_proximal_reference_point.size() && "The proximal reference point is not long enough");
    // update the proximal reference point
    copy_from(this->proximal_reference_point, new_proximal_reference_point, this->original_problem.number_variables);
 }
@@ -324,18 +358,32 @@ inline void l1ElasticReformulation::generate_elastic_variables(const Problem& pr
    }
 }
 
+inline std::vector<size_t> l1ElasticReformulation::get_violated_linearized_constraints(const std::vector<double>& x) const {
+   // construct the list of linearized constraints that are violated
+   std::vector<size_t> violated_constraints;
+   violated_constraints.reserve(this->number_constraints);
+   const auto check_violated_constraints = [&](size_t j, size_t elastic_index) {
+      if (0. < x[elastic_index]) {
+         violated_constraints.push_back(j);
+      }
+   };
+   this->elastic_variables.positive.for_each(check_violated_constraints);
+   this->elastic_variables.negative.for_each(check_violated_constraints);
+   return violated_constraints;
+}
+
 inline double l1ElasticReformulation::get_proximal_weight(size_t i) const {
    // weight of each diagonal term of the proximal term
    return std::min(1., 1. / std::abs(this->proximal_reference_point[i]));
 }
 
-inline void l1ElasticReformulation::set_elastic_variables(Iterate& first_iterate) const {
-   first_iterate.set_number_variables(this->number_variables);
+inline void l1ElasticReformulation::set_elastic_variables(Iterate& iterate) const {
+   iterate.set_number_variables(this->number_variables);
    this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {
-      first_iterate.x[elastic_index] = this->compute_constraint_upper_bound_violation(first_iterate.constraints[j], j);
+      iterate.x[elastic_index] = this->compute_constraint_upper_bound_violation(iterate.constraints[j], j);
    });
    this->elastic_variables.negative.for_each([&](size_t j, size_t elastic_index) {
-      first_iterate.x[elastic_index] = this->compute_constraint_lower_bound_violation(first_iterate.constraints[j], j);
+      iterate.x[elastic_index] = this->compute_constraint_lower_bound_violation(iterate.constraints[j], j);
    });
 }
 

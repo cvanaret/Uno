@@ -24,7 +24,7 @@ Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate,
       // d = 0, no primal step to take
       // take dual step
       take_dual_step(current_iterate);
-      current_iterate.progress = {0., 0.};
+      current_iterate.nonlinear_progress = {0., 0.};
       return current_iterate;
    }
 }

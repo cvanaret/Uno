@@ -38,8 +38,7 @@ Result Uno::solve(const Problem& problem, Iterate& current_iterate, bool enforce
       while (!this->termination_criterion(termination_status, major_iterations)) {
          statistics.new_line();
          major_iterations++;
-         DEBUG << "\n### Outer iteration " << major_iterations << "\n";
-         DEBUG << "Current iterate\n" << current_iterate << "\n";
+         DEBUG << "### Outer iteration " << major_iterations << "\n";
 
          // compute an acceptable iterate by solving a subproblem at the current point
          auto [new_iterate, direction_norm] = this->globalization_mechanism.compute_acceptable_iterate(statistics, current_iterate);
@@ -169,8 +168,8 @@ void Result::print(bool print_solution) const {
    std::cout << "Stationarity residual:\t\t" << this->solution.nonlinear_errors.stationarity << "\n";
    std::cout << "Complementarity residual:\t" << this->solution.nonlinear_errors.complementarity << "\n";
 
-   std::cout << "Feasibility measure:\t\t" << this->solution.progress.infeasibility << "\n";
-   std::cout << "Optimality measure:\t\t" << this->solution.progress.objective << "\n";
+   std::cout << "Feasibility measure:\t\t" << this->solution.nonlinear_progress.infeasibility << "\n";
+   std::cout << "Optimality measure:\t\t" << this->solution.nonlinear_progress.objective << "\n";
 
    if (print_solution) {
       std::cout << "Primal solution:\t\t";

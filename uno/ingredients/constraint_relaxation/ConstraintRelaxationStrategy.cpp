@@ -11,6 +11,13 @@ ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Problem& proble
       number_constraints(this->relaxed_problem.number_constraints) {
 }
 
+void ConstraintRelaxationStrategy::compute_optimality_progress_measures(Iterate& iterate) {
+   iterate.evaluate_constraints(this->original_problem);
+   const double feasibility_measure = this->original_problem.compute_constraint_violation(iterate.constraints, L1_NORM);
+   const double optimality_measure = this->subproblem->compute_optimality_measure(this->original_problem, iterate);
+   iterate.nonlinear_progress = {feasibility_measure, optimality_measure};
+}
+
 bool ConstraintRelaxationStrategy::is_small_step(const Direction& direction) {
    // return (direction.norm == 0.);
    const double tolerance = 1e-8;

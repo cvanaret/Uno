@@ -111,7 +111,6 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
    for (size_t i = 0; i < number_variables; i++) {
       direction.x[i] = std::min(std::max(direction.x[i], variables_bounds[i].lb), variables_bounds[i].ub);
    }
-   direction.norm = norm_inf(direction.x);
    this->analyze_constraints(number_variables, number_constraints, direction);
    return direction;
 }

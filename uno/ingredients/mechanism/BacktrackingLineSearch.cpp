@@ -23,17 +23,17 @@ void BacktrackingLineSearch::initialize(Statistics& statistics, Iterate& first_i
 Direction BacktrackingLineSearch::compute_direction(Statistics& statistics, Iterate& current_iterate) {
    try {
       this->solving_feasibility_problem = false;
-      return this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate);
+      return this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, std::numeric_limits<double>::infinity());
    }
    catch (const UnstableInertiaCorrection&) {
       this->solving_feasibility_problem = true;
-      return this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, std::nullopt);
+      return this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, std::numeric_limits<double>::infinity(),
+            std::nullopt);
    }
 }
 
 std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(Statistics& statistics, Iterate& current_iterate) {
    // compute the direction
-   this->constraint_relaxation_strategy.create_current_subproblem(current_iterate, std::numeric_limits<double>::infinity());
    Direction direction = this->compute_direction(statistics, current_iterate);
    GlobalizationMechanism::check_unboundedness(direction);
    PredictedReductionModel predicted_reduction_model = this->constraint_relaxation_strategy.generate_predicted_reduction_model(current_iterate,
@@ -63,7 +63,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
                return std::make_tuple(std::move(trial_iterate), direction.norm);
             }
             else if (this->use_second_order_correction && this->constraint_relaxation_strategy.soc_strategy() == SOC_UPON_REJECTION &&
-                     this->number_iterations == 1 && trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility &&
+                     this->number_iterations == 1 && trial_iterate.nonlinear_progress.infeasibility >= current_iterate.nonlinear_progress.infeasibility &&
                      !this->solving_feasibility_problem) {
                // reject the full step: compute a (temporary) SOC direction
                Direction direction_soc = this->constraint_relaxation_strategy.compute_second_order_correction(trial_iterate);
@@ -103,7 +103,8 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
          // TODO: test if 0. < current_iterate.progress.feasibility ?
          DEBUG << "The line search failed, switching to feasibility problem\n";
          // reset the line search with the restoration solution
-         direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, direction.x);
+         direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate,
+               std::numeric_limits<double>::infinity(), direction.x);
          BacktrackingLineSearch::check_unboundedness(direction);
          this->step_length = 1.;
          this->number_iterations = 0;

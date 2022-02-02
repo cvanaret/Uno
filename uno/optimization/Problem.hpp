@@ -95,6 +95,8 @@ public:
    void project_point_in_bounds(std::vector<double>& x) const;
    [[nodiscard]] virtual double compute_constraint_violation(double constraint, size_t j) const;
    [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const;
+   [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, const std::vector<size_t>& constraint_set,
+         Norm residual_norm) const;
    [[nodiscard]] double compute_constraint_lower_bound_violation(double constraint, size_t j) const;
    [[nodiscard]] double compute_constraint_upper_bound_violation(double constraint, size_t j) const;
    [[nodiscard]] bool is_constrained() const;

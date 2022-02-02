@@ -41,11 +41,11 @@ public:
    // globalization metrics
    [[nodiscard]] virtual PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Iterate& current_iterate,
          const Direction& direction) const = 0;
-   double compute_first_order_error(const Problem& problem, Iterate& iterate) const;
-   virtual void compute_progress_measures(const Problem& problem, Iterate& iterate);
-   static double compute_complementarity_error(const Problem& problem, const Iterate& iterate, const std::vector<double>& constraint_multipliers,
+   [[nodiscard]] double compute_first_order_error(const Problem& problem, Iterate& iterate) const;
+   [[nodiscard]] virtual double compute_optimality_measure(const Problem& problem, Iterate& iterate);
+   [[nodiscard]] static double compute_complementarity_error(const Problem& problem, const Iterate& iterate, const std::vector<double>& constraint_multipliers,
          const std::vector<double>& lower_bounds_multipliers, const std::vector<double>& upper_bounds_multipliers);
-   void compute_residuals(const Problem& problem, Iterate& iterate) const;
+   void compute_nonlinear_residuals(const Problem& problem, Iterate& iterate) const;
 
    virtual void register_accepted_iterate(const Problem& problem, Iterate& iterate);
 
@@ -53,7 +53,7 @@ public:
    virtual void set_initial_point(const std::vector<double>& initial_point) = 0;
 
    void set_scaled_objective_gradient(const Problem& problem, Iterate& current_iterate, double objective_multiplier);
-   static double push_variable_to_interior(double variable_value, const Range& variable_bounds);
+   [[nodiscard]] static double push_variable_to_interior(double variable_value, const Range& variable_bounds);
    void set_constraint_bounds(const Problem& problem, const std::vector<double>& current_constraints);
 
    const SecondOrderCorrection soc_strategy;

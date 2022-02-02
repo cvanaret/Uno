@@ -83,6 +83,16 @@ double Problem::compute_constraint_violation(double constraint, size_t j) const 
    return std::max(lower_bound_violation, upper_bound_violation);
 }
 
+// compute ||c_S|| for a given set of constraints
+double Problem::compute_constraint_violation(const std::vector<double>& constraints, const std::vector<size_t>& constraint_set, Norm residual_norm) const {
+   auto residual_function = [&](size_t k) {
+      const size_t j = constraint_set[k];
+      return this->compute_constraint_violation(constraints[j], j);
+   };
+   return norm(residual_function, constraint_set.size(), residual_norm);
+}
+
+
 // compute ||c||
 double Problem::compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const {
    // create a lambda to avoid allocating an std::vector
