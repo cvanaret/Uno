@@ -43,9 +43,9 @@ public:
 
    std::vector<double> lagrangian_gradient;
 
-   // residuals
+   // residuals of nonlinear functions
    Errors nonlinear_errors{0., 0., 0.};
-   ProgressMeasures progress{0., 0.};
+   ProgressMeasures nonlinear_progress{0., 0.};
 
    void evaluate_objective(const Problem& problem);
    void evaluate_constraints(const Problem& problem);

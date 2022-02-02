@@ -125,7 +125,7 @@ std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
    stream << "FJ residual: " << iterate.nonlinear_errors.stationarity << "\n";
    stream << "Complementarity residual: " << iterate.nonlinear_errors.complementarity << "\n";
 
-   stream << "Optimality measure: " << iterate.progress.objective << "\n";
-   stream << "Feasibility measure: " << iterate.progress.infeasibility << "\n";
+   stream << "Optimality measure: " << iterate.nonlinear_progress.objective << "\n";
+   stream << "Feasibility measure: " << iterate.nonlinear_progress.infeasibility << "\n";
    return stream;
 }

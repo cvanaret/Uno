@@ -105,16 +105,13 @@ double Subproblem::compute_complementarity_error(const Problem& problem, const I
    return error;
 }
 
-void Subproblem::compute_progress_measures(const Problem& problem, Iterate& iterate) {
-   // feasibility measure: constraint violation
-   iterate.evaluate_constraints(problem);
-   iterate.nonlinear_errors.constraints = problem.compute_constraint_violation(iterate.constraints, L1_NORM);
+double Subproblem::compute_optimality_measure(const Problem& problem, Iterate& iterate) {
    // optimality measure: objective value
    iterate.evaluate_objective(problem);
-   iterate.progress = {iterate.nonlinear_errors.constraints, iterate.objective};
+   return iterate.objective;
 }
 
-void Subproblem::compute_residuals(const Problem& problem, Iterate& iterate) const {
+void Subproblem::compute_nonlinear_residuals(const Problem& problem, Iterate& iterate) const {
    iterate.evaluate_constraints(problem);
    iterate.nonlinear_errors.constraints = problem.compute_constraint_violation(iterate.constraints, L1_NORM);
    iterate.nonlinear_errors.stationarity = this->compute_first_order_error(problem, iterate);

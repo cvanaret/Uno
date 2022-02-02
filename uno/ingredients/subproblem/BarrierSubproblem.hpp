@@ -32,7 +32,7 @@ public:
    Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) override;
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Iterate& current_iterate,
          const Direction& direction) const override;
-   void compute_progress_measures(const Problem& problem, Iterate& iterate) override;
+   double compute_optimality_measure(const Problem& problem, Iterate& iterate) override;
    void register_accepted_iterate(const Problem& problem, Iterate& iterate) override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 

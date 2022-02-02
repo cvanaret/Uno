@@ -173,13 +173,8 @@ PredictedReductionModel BarrierSubproblem::generate_predicted_reduction_model(co
    });
 }
 
-void BarrierSubproblem::compute_progress_measures(const Problem& problem, Iterate& iterate) {
-   // feasibility measure: constraint violation
-   iterate.evaluate_constraints(problem);
-   const double constraint_violation = problem.compute_constraint_violation(iterate.constraints, L1_NORM);
-   // compute barrier objective
-   const double barrier_objective = this->evaluate_barrier_function(problem, iterate);
-   iterate.progress = {constraint_violation, barrier_objective};
+double BarrierSubproblem::compute_optimality_measure(const Problem& problem, Iterate& iterate) {
+   return this->evaluate_barrier_function(problem, iterate);
 }
 
 void BarrierSubproblem::update_barrier_parameter(const Problem& problem, const Iterate& current_iterate) {

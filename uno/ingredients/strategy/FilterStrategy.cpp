@@ -15,7 +15,7 @@ FilterStrategy::FilterStrategy(const Options& options) :
 
 void FilterStrategy::initialize(Statistics& /*statistics*/, const Iterate& first_iterate) {
    // set the filter upper bound
-   double upper_bound = std::max(this->parameters.upper_bound, this->parameters.infeasibility_fraction * first_iterate.progress.infeasibility);
+   double upper_bound = std::max(this->parameters.upper_bound, this->parameters.infeasibility_fraction * first_iterate.nonlinear_progress.infeasibility);
    this->filter->upper_bound = upper_bound;
    this->initial_filter_upper_bound = upper_bound;
 }
@@ -28,7 +28,7 @@ void FilterStrategy::reset() {
 }
 
 void FilterStrategy::notify(Iterate& current_iterate) {
-   this->filter->add(current_iterate.progress.infeasibility, current_iterate.progress.objective);
+   this->filter->add(current_iterate.nonlinear_progress.infeasibility, current_iterate.nonlinear_progress.objective);
 }
 
 /* check acceptability of step(s) (filter & sufficient reduction)
@@ -69,6 +69,7 @@ bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, const Progress
          else { // switching condition holds, but not Armijo condition
             filter->add(current_progress.infeasibility, current_progress.objective);
             DEBUG << "Armijo condition not satisfied\n";
+            DEBUG << "Current iterate was added to the filter\n";
          }
       }
       else {
