@@ -70,7 +70,6 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
 
    // build the objective model of the feasibility problem
    //initialize_vector(current_iterate.multipliers.constraints, 0.);
-   current_iterate.multipliers.constraints[0] = 1.;
    this->relaxed_problem.reset_elastic_variables(current_iterate);
    this->subproblem->build_current_subproblem(this->relaxed_problem, current_iterate, 0., trust_region_radius);
 
