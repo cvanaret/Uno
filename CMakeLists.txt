@@ -34,6 +34,7 @@ set(SRC_FILES
     uno/ingredients/mechanism/TrustRegionStrategy.cpp
     uno/ingredients/mechanism/RegularizationStrategy.cpp
 
+    uno/ingredients/strategy/GlobalizationStrategy.cpp
     uno/ingredients/strategy/GlobalizationStrategyFactory.cpp
     uno/ingredients/strategy/FilterStrategy.cpp
     uno/ingredients/strategy/Filter.cpp
