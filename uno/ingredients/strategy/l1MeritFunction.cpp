@@ -6,7 +6,7 @@
  */
 
 l1MeritFunction::l1MeritFunction(const Options& options) :
-      GlobalizationStrategy(), decrease_fraction(stod(options.at("armijo_decrease_fraction"))) {
+      GlobalizationStrategy(options), armijo_decrease_fraction(stod(options.at("armijo_decrease_fraction"))) {
 }
 
 void l1MeritFunction::initialize(Statistics& statistics, const Iterate& /*first_iterate*/) {
@@ -24,15 +24,13 @@ bool l1MeritFunction::check_acceptance(Statistics& statistics, const ProgressMea
    // compute current exact l1 penalty: rho f + ||c||
    const double current_exact_l1_merit = objective_multiplier * current_progress.objective + current_progress.infeasibility;
    const double trial_exact_l1_merit = objective_multiplier * trial_progress.objective + trial_progress.infeasibility;
-   DEBUG << "Current l1 merit: " << current_exact_l1_merit << "\n";
-   DEBUG << "Trial l1 merit: " << trial_exact_l1_merit << "\n";
-   const double actual_reduction = current_exact_l1_merit - trial_exact_l1_merit;
    DEBUG << "Predicted reduction: " << predicted_reduction << "\n";
-   DEBUG << "Actual reduction: " << actual_reduction << "\n";
+   const double actual_reduction = current_exact_l1_merit - trial_exact_l1_merit;
+   DEBUG << "Actual reduction: " << current_exact_l1_merit << " - " << trial_exact_l1_merit << " = " << actual_reduction << "\n";
 
    bool accept = false;
    // Armijo sufficient decrease condition
-   if (actual_reduction >= this->decrease_fraction * predicted_reduction) {
+   if (this->armijo_condition(predicted_reduction, actual_reduction)) {
       accept = true;
    }
 
