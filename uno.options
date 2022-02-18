@@ -64,6 +64,7 @@ linear_solver MA57
 
 ##### strategy options #####
 armijo_decrease_fraction 1e-4
+armijo_tolerance 1e-9
 
 ##### filter options #####
 # filter strategy options
@@ -73,7 +74,6 @@ filter_delta 0.999
 filter_ubd 1e2
 filter_fact 1.25
 filter_switching_infeasibility_exponent 2
-filter_armijo_tolerance 1e-9
 
 filter_max_size 50
 
@@ -134,7 +134,7 @@ l1_relaxation_small_threshold 1e-10
 
 elastic_objective_coefficient 1.
 
-##### IPM subproblem options #####
+##### barrier subproblem options #####
 initial_barrier_parameter 0.1
 default_multiplier 1
 # Ipopt parameters

@@ -15,7 +15,7 @@ public:
    void notify(Iterate& current_iterate) override;
 
 private:
-   const double decrease_fraction;
+   const double armijo_decrease_fraction;
 };
 
 #endif // UNO_L1MERITFUNCTION_H

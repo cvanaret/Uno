@@ -3,14 +3,12 @@
 #include "tools/Logger.hpp"
 
 FilterStrategy::FilterStrategy(const Options& options) :
-      GlobalizationStrategy(),
+      GlobalizationStrategy(options),
       filter(FilterFactory::create(options)),
-      parameters({stod(options.at("armijo_decrease_fraction")),
-                  stod(options.at("filter_delta")),
+      parameters({stod(options.at("filter_delta")),
                   stod(options.at("filter_ubd")),
                   stod(options.at("filter_fact")),
-                  stod(options.at("filter_switching_infeasibility_exponent")),
-                  stod(options.at("filter_armijo_tolerance"))}) {
+                  stod(options.at("filter_switching_infeasibility_exponent"))}) {
 }
 
 void FilterStrategy::initialize(Statistics& /*statistics*/, const Iterate& first_iterate) {
@@ -62,7 +60,7 @@ bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, const Progress
             accept = true;
          }
          // Armijo sufficient decrease condition: predicted_reduction should be positive
-         else if (this->armijo_condition(predicted_reduction, actual_reduction, this->parameters.decrease_fraction)) {
+         else if (this->armijo_condition(predicted_reduction, actual_reduction)) {
             DEBUG << "Trial iterate was accepted by satisfying Armijo condition\n";
             accept = true;
          }
@@ -85,8 +83,4 @@ bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, const Progress
 
 bool FilterStrategy::switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const {
    return predicted_reduction > switching_fraction * std::pow(current_infeasibility, this->parameters.switching_infeasibility_exponent);
-}
-
-bool FilterStrategy::armijo_condition(double predicted_reduction, double actual_reduction, double decrease_fraction) const {
-   return actual_reduction >= decrease_fraction * std::max(0., predicted_reduction - this->parameters.armijo_tolerance);
 }

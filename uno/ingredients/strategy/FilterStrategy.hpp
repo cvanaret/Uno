@@ -11,12 +11,10 @@
  *  Set of constants to control the filter strategy
  */
 struct FilterStrategyParameters {
-   double decrease_fraction; /*!< Sufficient reduction constant */
    double delta; /*!< Switching constant */
    double upper_bound;
    double infeasibility_fraction;
    double switching_infeasibility_exponent;
-   double armijo_tolerance;
 };
 
 /*! \class FilterStrategy
@@ -41,7 +39,6 @@ private:
    const FilterStrategyParameters parameters; /*!< Set of constants */
 
    [[nodiscard]] bool switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const;
-   [[nodiscard]] bool armijo_condition(double predicted_reduction, double actual_reduction, double decrease_fraction) const;
 };
 
 #endif // UNO_FILTERSTRATEGY_H
