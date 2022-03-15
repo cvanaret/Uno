@@ -88,7 +88,7 @@ void AugmentedSystem::regularize_matrix(const Problem& problem, LinearSolver& li
             }
          }
          else {
-            throw UnstableInertiaCorrection();
+            throw UnstableRegularization();
          }
       }
    }
