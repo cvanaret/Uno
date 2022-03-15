@@ -6,7 +6,7 @@
 #include "solvers/linear/LinearSolver.hpp"
 #include "optimization/Problem.hpp"
 
-struct UnstableInertiaCorrection : public std::exception {
+struct UnstableRegularization : public std::exception {
 
    [[nodiscard]] const char* what() const throw() override {
       return "The inertia correction got unstable (delta_w > threshold)";
