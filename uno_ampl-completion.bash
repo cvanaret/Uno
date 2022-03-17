@@ -31,7 +31,7 @@ _uno_ampl_completions()
             return 0
             ;;
         -preset)
-			local presets="filtersqp ipopt byrd"
+			local presets="filtersqp ipopt squid"
             COMPREPLY=( $(compgen -W "${presets}" -- ${cur}) )
             return 0
             ;;
