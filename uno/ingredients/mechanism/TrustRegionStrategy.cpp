@@ -11,10 +11,13 @@ TrustRegionStrategy::TrustRegionStrategy(ConstraintRelaxationStrategy& constrain
       decrease_factor(stod(options.at("TR_decrease_factor"))),
       activity_tolerance(stod(options.at("TR_activity_tolerance"))),
       min_radius(stod(options.at("TR_min_radius"))) {
+   assert(1. < this->increase_factor && "The TR increase factor should be > 1");
+   assert(1. < this->decrease_factor && "The TR decrease factor should be > 1");
 }
 
 void TrustRegionStrategy::initialize(Statistics& statistics, Iterate& first_iterate) {
    statistics.add_column("TR radius", Statistics::double_width, 30);
+
    // generate the initial point
    this->constraint_relaxation_strategy.initialize(statistics, first_iterate);
 }
@@ -29,7 +32,8 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
          this->print_iteration();
 
          // compute the direction within the trust region
-         Direction direction = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, this->radius);
+         this->constraint_relaxation_strategy.set_variable_bounds(current_iterate, this->radius);
+         Direction direction = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate);
          GlobalizationMechanism::check_unboundedness(direction);
          // set bound multipliers of active trust region to 0
          TrustRegionStrategy::rectify_active_set(direction, this->radius);
@@ -41,6 +45,7 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
          PredictedReductionModel predicted_reduction_model = this->constraint_relaxation_strategy.generate_predicted_reduction_model(current_iterate,
                direction);
          if (this->constraint_relaxation_strategy.is_acceptable(statistics, current_iterate, trial_iterate, direction, predicted_reduction_model, 1.)) {
+            DEBUG << "Trial step accepted\n\n";
             this->add_statistics(statistics, direction);
 
             // increase the radius if trust region is active

@@ -13,10 +13,10 @@ public:
    [[nodiscard]] double get_constraint_lower_bound(size_t j) const override;
    [[nodiscard]] double get_constraint_upper_bound(size_t j) const override;
 
-   [[nodiscard]] double evaluate_objective(const std::vector<double>& x) const override;
-   void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const override;
-   void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const override;
-   void evaluate_constraint_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraint_jacobian) const override;
+   [[nodiscard]] double evaluate_objective(Iterate& iterate) const override;
+   void evaluate_objective_gradient(Iterate& iterate) const override;
+   void evaluate_constraints(Iterate& iterate) const override;
+   void evaluate_constraint_jacobian(Iterate& iterate) const override;
    void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
          SymmetricMatrix& hessian) const override;
 
@@ -104,33 +104,33 @@ inline double SlackReformulation::get_constraint_upper_bound(size_t /*j*/) const
    return 0.;
 }
 
-inline double SlackReformulation::evaluate_objective(const std::vector<double>& x) const {
-   return this->original_problem.evaluate_objective(x);
+inline double SlackReformulation::evaluate_objective(Iterate& iterate) const {
+   return this->original_problem.evaluate_objective(iterate);
 }
 
-inline void SlackReformulation::evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const {
-   this->original_problem.evaluate_objective_gradient(x, gradient);
+inline void SlackReformulation::evaluate_objective_gradient(Iterate& iterate) const {
+   this->original_problem.evaluate_objective_gradient(iterate);
 }
 
-inline void SlackReformulation::evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const {
-   this->original_problem.evaluate_constraints(x, constraints);
+inline void SlackReformulation::evaluate_constraints(Iterate& iterate) const {
+   this->original_problem.evaluate_constraints(iterate);
    // inequality constraints: add the slacks
    this->original_problem.inequality_constraints.for_each([&](size_t j, size_t i) {
       const size_t slack_index = this->original_problem.number_variables + i;
-      constraints[j] -= x[slack_index];
+      iterate.problem_evaluations.constraints[j] -= iterate.x[slack_index];
    });
    // make sure the equality constraints are "c(x) = 0"
    this->original_problem.equality_constraints.for_each_index([&](size_t j) {
-      constraints[j] -= this->original_problem.get_constraint_lower_bound(j);
+      iterate.problem_evaluations.constraints[j] -= this->original_problem.get_constraint_lower_bound(j);
    });
 }
 
-inline void SlackReformulation::evaluate_constraint_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraint_jacobian) const {
-   this->original_problem.evaluate_constraint_jacobian(x, constraint_jacobian);
+inline void SlackReformulation::evaluate_constraint_jacobian(Iterate& iterate) const {
+   this->original_problem.evaluate_constraint_jacobian(iterate);
    // add the slack contributions
    this->original_problem.inequality_constraints.for_each([&](size_t j, size_t i) {
       const size_t slack_index = this->original_problem.number_variables + i;
-      constraint_jacobian[j].insert(slack_index, -1.);
+      iterate.problem_evaluations.constraint_jacobian[j].insert(slack_index, -1.);
    });
 }
 

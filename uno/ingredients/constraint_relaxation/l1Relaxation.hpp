@@ -18,9 +18,11 @@ public:
    l1Relaxation(const Problem& problem, const Options& options);
    void initialize(Statistics& statistics, Iterate& first_iterate) override;
 
+   void set_variable_bounds(const Iterate& current_iterate, double trust_region_radius) override;
+
    // direction computation
-   [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, double trust_region_radius) override;
-   [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, double trust_region_radius,
+   [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate) override;
+   [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
          const std::optional<std::vector<double>>& optional_phase_2_solution) override;
    [[nodiscard]] Direction compute_second_order_correction(Iterate& trial_iterate) override;
 
@@ -39,13 +41,13 @@ protected:
    static double compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, const Direction& direction,
          PredictedReductionModel& predicted_reduction_model, double step_length);
    Direction solve_subproblem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter);
-   Direction resolve_subproblem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter);
    Direction solve_with_steering_rule(Statistics& statistics, Iterate& current_iterate);
    void decrease_parameter_aggressively(Iterate& current_iterate, const Direction& direction_lowest_violation);
    [[nodiscard]] bool linearized_residual_sufficient_decrease(const Iterate& current_iterate, double linearized_residual, double residual_lowest_violation) const;
    [[nodiscard]] bool objective_sufficient_decrease(const Iterate& current_iterate, const Direction& direction, const Direction& direction_lowest_violation) const;
    double compute_error(Iterate& current_iterate, const Multipliers& multiplier_displacements);
    void set_multipliers(const Iterate& current_iterate, std::vector<double>& constraint_multipliers);
+   double compute_infeasibility_measure(Iterate& iterate) override;
 };
 
 #endif //UNO_L1RELAXATION_H

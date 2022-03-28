@@ -5,11 +5,12 @@
 #include "tools/Logger.hpp"
 
 BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options):
-   GlobalizationMechanism(constraint_relaxation_strategy),
-   backtracking_ratio(std::stod(options.at("LS_backtracking_ratio"))),
-   min_step_length(std::stod(options.at("LS_min_step_length"))),
-   use_second_order_correction(options.at("use_second_order_correction") == "yes") {
-   assert(0 < this->backtracking_ratio && this->backtracking_ratio < 1. && "The backtracking ratio should be in (0, 1)");
+      GlobalizationMechanism(constraint_relaxation_strategy),
+      backtracking_ratio(std::stod(options.at("LS_backtracking_ratio"))),
+      min_step_length(std::stod(options.at("LS_min_step_length"))),
+      use_second_order_correction(options.at("use_second_order_correction") == "yes") {
+   assert(0 < this->backtracking_ratio && this->backtracking_ratio < 1. && "The LS backtracking ratio should be in (0, 1)");
+   assert(0 < this->min_step_length && this->min_step_length < 1. && "The LS minimum step length should be in (0, 1)");
 }
 
 void BacktrackingLineSearch::initialize(Statistics& statistics, Iterate& first_iterate) {

@@ -51,7 +51,10 @@ void ConvexifiedHessian::regularize(SymmetricMatrix& matrix, size_t number_origi
    const double smallest_diagonal_entry = matrix.smallest_diagonal_entry();
    DEBUG << "The minimal diagonal entry of the matrix is " << matrix.smallest_diagonal_entry() << "\n";
 
+   double regularization = (smallest_diagonal_entry <= 0.) ? this->regularization_initial_value - smallest_diagonal_entry : 0.;
+   /*
    double regularization = (smallest_diagonal_entry <= 0.) ? this->regularization_initial_value - smallest_diagonal_entry : this->regularization_initial_value;
+   */
    bool good_inertia = false;
    bool regularized = false;
    while (!good_inertia) {

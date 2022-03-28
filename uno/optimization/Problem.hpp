@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include "Constraint.hpp"
+#include "Iterate.hpp"
 #include "linear_algebra/CSCSymmetricMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
@@ -75,17 +76,17 @@ public:
    [[nodiscard]] virtual double get_constraint_lower_bound(size_t j) const = 0;
    [[nodiscard]] virtual double get_constraint_upper_bound(size_t j) const = 0;
 
-   [[nodiscard]] virtual double evaluate_objective(const std::vector<double>& x) const = 0;
-   virtual void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const = 0;
-   virtual void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const = 0;
-   virtual void evaluate_constraint_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraint_jacobian) const = 0;
-   virtual void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
-         SymmetricMatrix& hessian) const = 0;
-
    [[nodiscard]] virtual ConstraintType get_variable_status(size_t i) const = 0;
    [[nodiscard]] virtual FunctionType get_constraint_type(size_t j) const = 0;
    [[nodiscard]] virtual ConstraintType get_constraint_status(size_t j) const = 0;
    [[nodiscard]] virtual size_t get_hessian_maximum_number_nonzeros() const = 0;
+
+   [[nodiscard]] virtual double evaluate_objective(Iterate& iterate) const = 0;
+   virtual void evaluate_objective_gradient(Iterate& iterate) const = 0;
+   virtual void evaluate_constraints(Iterate& iterate) const = 0;
+   virtual void evaluate_constraint_jacobian(Iterate& iterate) const = 0;
+   virtual void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
+         SymmetricMatrix& hessian) const = 0;
 
    virtual void get_initial_primal_point(std::vector<double>& x) const = 0;
    virtual void get_initial_dual_point(std::vector<double>& multipliers) const = 0;
