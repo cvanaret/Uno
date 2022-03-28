@@ -6,6 +6,7 @@
 #include "optimization/Problem.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/Constraint.hpp"
+#include "optimization/l1ElasticReformulation.hpp"
 #include "Direction.hpp"
 #include "PredictedReductionModel.hpp"
 #include "linear_algebra/Vector.hpp"
@@ -29,10 +30,15 @@ public:
 
    // virtual methods implemented by subclasses
    virtual void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate);
-   virtual void build_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier,
-         double trust_region_radius) = 0;
+   virtual void evaluate_objective_gradient(const Problem& problem, Iterate& current_iterate);
+   virtual void evaluate_constraint_jacobian(const Problem& problem, Iterate& current_iterate);
+
    virtual void build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) = 0;
+   virtual void build_constraint_model(const Problem& problem, Iterate& current_iterate) = 0;
+
+   void set_variable_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
    [[nodiscard]] virtual double get_proximal_coefficient() const = 0;
+   virtual void set_elastic_variables(const l1ElasticReformulation& problem, Iterate& current_iterate) = 0;
 
    // direction computation
    virtual Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) = 0;
@@ -47,19 +53,13 @@ public:
          const std::vector<double>& lower_bounds_multipliers, const std::vector<double>& upper_bounds_multipliers);
    void compute_nonlinear_residuals(const Problem& problem, Iterate& iterate) const;
 
-   virtual void register_accepted_iterate(const Problem& problem, Iterate& iterate);
+   virtual void postprocess_accepted_iterate(const Problem& problem, Iterate& iterate);
 
    [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
-   virtual void set_initial_point(const std::vector<double>& initial_point) = 0;
-
-   void set_scaled_objective_gradient(const Problem& problem, Iterate& current_iterate, double objective_multiplier);
-   [[nodiscard]] static double push_variable_to_interior(double variable_value, const Range& variable_bounds);
-   void set_constraint_bounds(const Problem& problem, const std::vector<double>& current_constraints);
+   virtual void set_initial_point(const std::optional<std::vector<double>>& optional_initial_point) = 0;
 
    const SecondOrderCorrection soc_strategy;
-   std::vector<Range> current_variable_bounds;
-   SparseVector<double> objective_gradient;
-   std::vector<Range> constraint_bounds;
+   std::vector<Range> variable_bounds;
    Direction direction;
 
    size_t number_subproblems_solved{0};
@@ -67,9 +67,6 @@ public:
    bool subproblem_definition_changed{false};
    const bool is_second_order_method;
    const Norm residual_norm;
-
-protected:
-   virtual void set_current_variable_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius);
 };
 
 #endif // UNO_SUBPROBLEM_H

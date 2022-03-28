@@ -95,6 +95,22 @@ double AMPLModel::get_variable_upper_bound(size_t i) const {
    return this->variables_bounds[i].ub;
 }
 
+double AMPLModel::evaluate_objective(Iterate& iterate) const {
+   return this->evaluate_objective(iterate.x);
+}
+
+void AMPLModel::evaluate_objective_gradient(Iterate& iterate) const {
+   this->evaluate_objective_gradient(iterate.x, iterate.problem_evaluations.objective_gradient);
+}
+
+void AMPLModel::evaluate_constraints(Iterate& iterate) const {
+   this->evaluate_constraints(iterate.x, iterate.problem_evaluations.constraints);
+}
+
+void AMPLModel::evaluate_constraint_jacobian(Iterate& iterate) const {
+   this->evaluate_constraint_jacobian(iterate.x, iterate.problem_evaluations.constraint_jacobian);
+}
+
 double AMPLModel::evaluate_objective(const std::vector<double>& x) const {
    int nerror = 0;
    double result = this->objective_sign * (*(this->asl_)->p.Objval)(this->asl_, 0, const_cast<double*>(x.data()), &nerror);

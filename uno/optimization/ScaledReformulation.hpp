@@ -13,10 +13,10 @@ public:
    [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
    [[nodiscard]] double get_constraint_lower_bound(size_t j) const override;
    [[nodiscard]] double get_constraint_upper_bound(size_t j) const override;
-   [[nodiscard]] double evaluate_objective(const std::vector<double>& x) const override;
-   void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const override;
-   void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const override;
-   void evaluate_constraint_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraint_jacobian) const override;
+   [[nodiscard]] double evaluate_objective(Iterate& iterate) const override;
+   void evaluate_objective_gradient(Iterate& iterate) const override;
+   void evaluate_constraints(Iterate& iterate) const override;
+   void evaluate_constraint_jacobian(Iterate& iterate) const override;
    void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
          SymmetricMatrix& hessian) const override;
 
@@ -90,32 +90,32 @@ inline double ScaledReformulation::get_constraint_upper_bound(size_t j) const {
    return this->scaling.get_constraint_scaling(j)*ub;
 }
 
-inline double ScaledReformulation::evaluate_objective(const std::vector<double>& x) const {
-   const double objective = this->original_problem.evaluate_objective(x);
+inline double ScaledReformulation::evaluate_objective(Iterate& iterate) const {
+   const double objective = this->original_problem.evaluate_objective(iterate);
    // scale
    return this->scaling.get_objective_scaling()*objective;
 }
 
-inline void ScaledReformulation::evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const {
-   this->original_problem.evaluate_objective_gradient(x, gradient);
+inline void ScaledReformulation::evaluate_objective_gradient(Iterate& iterate) const {
+   this->original_problem.evaluate_objective_gradient(iterate);
    // scale
-   scale(gradient, this->scaling.get_objective_scaling());
+   scale(iterate.problem_evaluations.objective_gradient, this->scaling.get_objective_scaling());
 }
 
-inline void ScaledReformulation::evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const {
-   this->original_problem.evaluate_constraints(x, constraints);
+inline void ScaledReformulation::evaluate_constraints(Iterate& iterate) const {
+   this->original_problem.evaluate_constraints(iterate);
    // scale
    for (size_t j = 0; j < this->number_constraints; j++) {
-      constraints[j] *= this->scaling.get_constraint_scaling(j);
+      iterate.problem_evaluations.constraints[j] *= this->scaling.get_constraint_scaling(j);
    }
 }
 
-inline void ScaledReformulation::evaluate_constraint_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraint_jacobian) const {
+inline void ScaledReformulation::evaluate_constraint_jacobian(Iterate& iterate) const {
    // evaluate
-   this->original_problem.evaluate_constraint_jacobian(x, constraint_jacobian);
+   this->original_problem.evaluate_constraint_jacobian(iterate);
    // scale
    for (size_t j = 0; j < this->number_constraints; j++) {
-      scale(constraint_jacobian[j], this->scaling.get_constraint_scaling(j));
+      scale(iterate.problem_evaluations.constraint_jacobian[j], this->scaling.get_constraint_scaling(j));
    }
 }
 

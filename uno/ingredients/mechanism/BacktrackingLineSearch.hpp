@@ -2,7 +2,6 @@
 #define UNO_BACKTRACKINGLINESEARCH_H
 
 #include "GlobalizationMechanism.hpp"
-#include "RegularizationStrategy.hpp"
 
 /*! \class LineSearch
  * \brief Line-search
@@ -19,7 +18,7 @@ public:
 private:
    double step_length{1.};
    bool solving_feasibility_problem{false};
-   /* ratio of step length update in ]0, 1[ */
+   // ratio of step length update in ]0, 1[
    const double backtracking_ratio;
    const double min_step_length;
    const bool use_second_order_correction;

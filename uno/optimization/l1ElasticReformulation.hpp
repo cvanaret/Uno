@@ -17,16 +17,15 @@ public:
    [[nodiscard]] double get_constraint_lower_bound(size_t j) const override;
    [[nodiscard]] double get_constraint_upper_bound(size_t j) const override;
 
-   [[nodiscard]] double evaluate_objective(const std::vector<double>& x) const override;
-   void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const override;
-   void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const override;
-   void evaluate_constraint_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraint_jacobian) const override;
+   [[nodiscard]] double evaluate_objective(Iterate& iterate) const override;
+   void evaluate_objective_gradient(Iterate& iterate) const override;
+   void evaluate_constraints(Iterate& iterate) const override;
+   void evaluate_constraint_jacobian(Iterate& iterate) const override;
    void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
          SymmetricMatrix& hessian) const override;
    [[nodiscard]] double compute_linearized_constraint_violation(const std::vector<double>& x) const;
-   [[nodiscard]] double compute_elastic_residual(const std::vector<double>& x, const std::vector<double>& dx) const;
+   [[nodiscard]] double compute_linearized_constraint_violation(const std::vector<double>& x, const std::vector<double>& dx) const;
    [[nodiscard]] double compute_constraint_violation(double constraint, size_t j) const override;
-   [[nodiscard]] double compute_constraint_violation(const std::vector<double>& x, const std::vector<double>& constraints) const;
 
    [[nodiscard]] ConstraintType get_variable_status(size_t i) const override;
    [[nodiscard]] FunctionType get_constraint_type(size_t j) const override;
@@ -41,8 +40,8 @@ public:
    void set_proximal_coefficient(double new_proximal_coefficient);
    void set_proximal_reference_point(const std::vector<double>& new_proximal_reference_point);
 
-   void set_elastic_variables(Iterate& iterate) const;
-   void reset_elastic_variables(Iterate& first_iterate) const;
+   // void set_elastic_variables(Iterate& iterate) const;
+   void reset_elastic_variables(Iterate& iterate) const;
    void add_elastics_to_constraints(const std::vector<double>& x, std::vector<double>& constraints) const;
    void add_elastics_to_constraint_jacobian(std::vector<SparseVector<double>>& constraint_jacobian) const;
 
@@ -139,46 +138,34 @@ inline double l1ElasticReformulation::compute_linearized_constraint_violation(co
    };
    this->elastic_variables.positive.for_each_value(elastic_contribution);
    this->elastic_variables.negative.for_each_value(elastic_contribution);
-   assert(0 <= constraint_violation && "The elastic residual should not be negative");
+   assert(0 <= constraint_violation && "The linearized constraint violation should not be negative");
    return constraint_violation;
 }
 
-inline double l1ElasticReformulation::compute_elastic_residual(const std::vector<double>& x, const std::vector<double>& dx) const {
-   double residual = 0.;
+inline double l1ElasticReformulation::compute_linearized_constraint_violation(const std::vector<double>& x, const std::vector<double>& dx) const {
+   double constraint_violation = 0.;
    // l1 residual of the linearized constraints: sum of elastic variables
    auto elastic_contribution = [&](size_t i) {
-      residual += (x[i] + dx[i]);
+      constraint_violation += (x[i] + dx[i]);
    };
    this->elastic_variables.positive.for_each_value(elastic_contribution);
    this->elastic_variables.negative.for_each_value(elastic_contribution);
-   assert(0 <= residual && "The elastic residual should not be negative");
-   return residual;
+   assert(0 <= constraint_violation && "The linearized constraint violation should not be negative");
+   return constraint_violation;
 }
 
 inline double l1ElasticReformulation::compute_constraint_violation(double constraint, size_t j) const {
    return this->original_problem.compute_constraint_violation(constraint, j);
 }
 
-inline double l1ElasticReformulation::compute_constraint_violation(const std::vector<double>& x, const std::vector<double>& constraints) const {
-   double constraint_violation = 0.;
-   const auto residual_function = [&](size_t j, size_t elastic_index) {
-      if (0. < x[elastic_index]) {
-         constraint_violation += this->compute_constraint_violation(constraints[j], j);
-      }
-   };
-   this->elastic_variables.positive.for_each(residual_function);
-   this->elastic_variables.negative.for_each(residual_function);
-   return constraint_violation;
-}
-
 // return rho*f(x) + coeff*(e^T p + e^T n) + proximal
-inline double l1ElasticReformulation::evaluate_objective(const std::vector<double>& x) const {
+inline double l1ElasticReformulation::evaluate_objective(Iterate& iterate) const {
    // elastic contribution
-   double objective = this->elastic_objective_coefficient*this->compute_linearized_constraint_violation(x);
+   double objective = this->elastic_objective_coefficient*this->compute_linearized_constraint_violation(iterate.x);
 
    // original objective
    if (this->objective_multiplier != 0.) {
-      objective += this->objective_multiplier*this->original_problem.evaluate_objective(x);
+      objective += this->objective_multiplier*this->original_problem.evaluate_objective(iterate);
    }
 
    // proximal term
@@ -187,26 +174,27 @@ inline double l1ElasticReformulation::evaluate_objective(const std::vector<doubl
       for (size_t i = 0; i < this->original_problem.number_variables; i++) {
          const double weight = this->get_proximal_weight(i);
          // weighted distance between trial iterate and current iterate
-         proximal_term += std::pow(weight * (x[i] - this->proximal_reference_point[i]), 2);
+         proximal_term += std::pow(weight * (iterate.x[i] - this->proximal_reference_point[i]), 2);
       }
       objective += this->proximal_coefficient*proximal_term;
    }
    return objective;
 }
 
-inline void l1ElasticReformulation::evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const {
+inline void l1ElasticReformulation::evaluate_objective_gradient(Iterate& iterate) const {
    // scale nabla f(x) by rho
    if (this->objective_multiplier != 0.) {
-      this->original_problem.evaluate_objective_gradient(x, gradient);
-      scale(gradient, this->objective_multiplier);
+      this->original_problem.evaluate_objective_gradient(iterate);
+      iterate.subproblem_evaluations.objective_gradient = iterate.problem_evaluations.objective_gradient;
+      scale(iterate.subproblem_evaluations.objective_gradient, this->objective_multiplier);
    }
    else {
-      gradient.clear();
+      iterate.subproblem_evaluations.objective_gradient.clear();
    }
 
    // elastic contribution
    const auto insert_elastic_derivative = [&](size_t elastic_index) {
-      gradient.insert(elastic_index, this->elastic_objective_coefficient);
+      iterate.subproblem_evaluations.objective_gradient.insert(elastic_index, this->elastic_objective_coefficient);
    };
    this->elastic_variables.positive.for_each_value(insert_elastic_derivative);
    this->elastic_variables.negative.for_each_value(insert_elastic_derivative);
@@ -216,8 +204,8 @@ inline void l1ElasticReformulation::evaluate_objective_gradient(const std::vecto
       for (size_t i = 0; i < this->original_problem.number_variables; i++) {
          const double weight = this->get_proximal_weight(i);
          // measure weighted distance between trial iterate and current iterate
-         const double derivative = this->proximal_coefficient * weight * (x[i] - this->proximal_reference_point[i]);
-         gradient.insert(i, derivative);
+         const double derivative = this->proximal_coefficient * weight * (iterate.x[i] - this->proximal_reference_point[i]);
+         iterate.subproblem_evaluations.objective_gradient.insert(i, derivative);
       }
    }
 }
@@ -241,16 +229,18 @@ inline void l1ElasticReformulation::add_elastics_to_constraint_jacobian(std::vec
    });
 }
 
-inline void l1ElasticReformulation::evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const {
-   this->original_problem.evaluate_constraints(x, constraints);
+inline void l1ElasticReformulation::evaluate_constraints(Iterate& iterate) const {
+   this->original_problem.evaluate_constraints(iterate);
+   iterate.subproblem_evaluations.constraints = iterate.problem_evaluations.constraints;
    // add the contribution of the elastics
-   this->add_elastics_to_constraints(x, constraints);
+   this->add_elastics_to_constraints(iterate.x, iterate.subproblem_evaluations.constraints);
 }
 
-inline void l1ElasticReformulation::evaluate_constraint_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraint_jacobian) const {
-   this->original_problem.evaluate_constraint_jacobian(x, constraint_jacobian);
+inline void l1ElasticReformulation::evaluate_constraint_jacobian(Iterate& iterate) const {
+   this->original_problem.evaluate_constraint_jacobian(iterate);
+   iterate.subproblem_evaluations.constraint_jacobian = iterate.problem_evaluations.constraint_jacobian;
    // add the contribution of the elastics
-   this->add_elastics_to_constraint_jacobian(constraint_jacobian);
+   this->add_elastics_to_constraint_jacobian(iterate.subproblem_evaluations.constraint_jacobian);
 }
 
 inline void l1ElasticReformulation::evaluate_lagrangian_hessian(const std::vector<double>& x, double /*objective_multiplier*/,
@@ -377,23 +367,25 @@ inline double l1ElasticReformulation::get_proximal_weight(size_t i) const {
    return std::min(1., 1. / std::abs(this->proximal_reference_point[i]));
 }
 
+/*
 inline void l1ElasticReformulation::set_elastic_variables(Iterate& iterate) const {
    iterate.set_number_variables(this->number_variables);
    this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {
-      iterate.x[elastic_index] = this->compute_constraint_upper_bound_violation(iterate.constraints[j], j);
+      iterate.x[elastic_index] = this->compute_constraint_upper_bound_violation(iterate.problem_evaluations.constraints[j], j);
    });
    this->elastic_variables.negative.for_each([&](size_t j, size_t elastic_index) {
-      iterate.x[elastic_index] = this->compute_constraint_lower_bound_violation(iterate.constraints[j], j);
+      iterate.x[elastic_index] = this->compute_constraint_lower_bound_violation(iterate.problem_evaluations.constraints[j], j);
    });
 }
+ */
 
-inline void l1ElasticReformulation::reset_elastic_variables(Iterate& first_iterate) const {
-   first_iterate.set_number_variables(this->number_variables);
+inline void l1ElasticReformulation::reset_elastic_variables(Iterate& iterate) const {
+   iterate.set_number_variables(this->number_variables);
    this->elastic_variables.positive.for_each_value([&](size_t elastic_index) {
-      first_iterate.x[elastic_index] = 0.;
+      iterate.x[elastic_index] = 0.;
    });
    this->elastic_variables.negative.for_each_value([&](size_t elastic_index) {
-      first_iterate.x[elastic_index] = 0.;
+      iterate.x[elastic_index] = 0.;
    });
 }
 

@@ -23,17 +23,23 @@ public:
    BarrierSubproblem(const Problem& problem, size_t max_number_variables, const Options& options);
    ~BarrierSubproblem() override = default;
 
-   void set_initial_point(const std::vector<double>& initial_point) override;
+   void set_initial_point(const std::optional<std::vector<double>>& optional_initial_point) override;
    void initialize(Statistics& statistics, const Problem& problem, Iterate& first_iterate) override;
-   void build_current_subproblem(const Problem& problem, Iterate& current_iterate, double objective_multiplier, double trust_region_radius) override;
+   void evaluate_objective_gradient(const Problem& problem, Iterate& current_iterate) override;
+   void evaluate_constraint_jacobian(const Problem& problem, Iterate& current_iterate) override;
+
    void build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) override;
+   void build_constraint_model(const Problem& problem, Iterate& current_iterate) override;
+
    [[nodiscard]] double get_proximal_coefficient() const override;
+   void set_elastic_variables(const l1ElasticReformulation& problem, Iterate& current_iterate) override;
+   [[nodiscard]] static double push_variable_to_interior(double variable_value, const Range& variable_bounds);
    Direction solve(Statistics& statistics, const Problem& problem, Iterate& current_iterate) override;
    Direction compute_second_order_correction(const Problem& problem, Iterate& trial_iterate) override;
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Problem& problem, const Iterate& current_iterate,
          const Direction& direction) const override;
    double compute_optimality_measure(const Problem& problem, Iterate& iterate) override;
-   void register_accepted_iterate(const Problem& problem, Iterate& iterate) override;
+   void postprocess_accepted_iterate(const Problem& problem, Iterate& iterate) override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
 private:
@@ -53,17 +59,16 @@ private:
    bool solving_feasibility_problem{false};
 
    void update_barrier_parameter(const Problem& problem, const Iterate& current_iterate);
-   bool is_small_direction(const Problem& problem, const Iterate& current_iterate, const Direction& direction);
-   void set_current_variable_bounds(const Problem& problem, const Iterate& current_iterate, double trust_region_radius) override;
-   double compute_barrier_directional_derivative(const std::vector<double>& solution);
+   static bool is_small_direction(const Problem& problem, const Iterate& current_iterate, const Direction& direction);
+   static double compute_barrier_directional_derivative(const Iterate& current_iterate, const std::vector<double>& solution);
    double evaluate_barrier_function(const Problem& problem, Iterate& iterate);
-   double primal_fraction_to_boundary(const Problem& problem, const Iterate& current_iterate, const std::vector<double>& ipm_solution, double tau);
+   double primal_fraction_to_boundary(const Problem& problem, const Iterate& current_iterate, double tau);
    double dual_fraction_to_boundary(const Problem& problem, const Iterate& current_iterate, double tau);
    void assemble_augmented_system(const Problem& problem, const Iterate& current_iterate);
    void assemble_augmented_matrix(const Problem& problem, const Iterate& current_iterate);
    void generate_augmented_rhs(const Problem& problem, const Iterate& current_iterate);
-   void compute_lower_bound_dual_direction(const Problem& problem, const Iterate& current_iterate, const std::vector<double>& solution);
-   void compute_upper_bound_dual_direction(const Problem& problem, const Iterate& current_iterate, const std::vector<double>& solution);
+   void compute_lower_bound_dual_direction(const Problem& problem, const Iterate& current_iterate);
+   void compute_upper_bound_dual_direction(const Problem& problem, const Iterate& current_iterate);
    void generate_direction(const Problem& problem, const Iterate& current_iterate);
    [[nodiscard]] double compute_KKT_error_scaling(const Problem& problem, const Iterate& current_iterate) const;
    [[nodiscard]] double compute_central_complementarity_error(const Problem& problem, const Iterate& iterate) const;

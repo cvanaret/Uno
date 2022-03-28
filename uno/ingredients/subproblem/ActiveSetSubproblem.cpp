@@ -20,6 +20,11 @@ void ActiveSetSubproblem::set_initial_point(const std::optional<std::vector<doub
    }
 }
 
+void ActiveSetSubproblem::set_elastic_variables(const l1ElasticReformulation& problem, Iterate& current_iterate) {
+   // reset (set to 0) the values of the elastic variables
+   problem.reset_elastic_variables(current_iterate);
+}
+
 void ActiveSetSubproblem::set_variable_displacement_bounds(const Problem& problem, const Iterate& current_iterate) {
    for (size_t i = 0; i < problem.number_variables; i++) {
       const double lb = this->variable_bounds[i].lb - current_iterate.x[i];
@@ -29,6 +34,7 @@ void ActiveSetSubproblem::set_variable_displacement_bounds(const Problem& proble
 }
 
 void ActiveSetSubproblem::set_linearized_constraint_bounds(const Problem& problem, const std::vector<double>& current_constraints) {
+   std::cout << "Current constraints: "; print_vector(std::cout, current_constraints);
    for (size_t j = 0; j < problem.number_constraints; j++) {
       const double lb = problem.get_constraint_lower_bound(j) - current_constraints[j];
       const double ub = problem.get_constraint_upper_bound(j) - current_constraints[j];

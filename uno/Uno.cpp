@@ -81,7 +81,7 @@ Statistics Uno::create_statistics(const Problem& problem) {
 
 void Uno::add_statistics(Statistics& statistics, const Problem& problem, const Iterate& new_iterate, size_t major_iterations) {
    statistics.add_statistic(std::string("major"), major_iterations);
-   statistics.add_statistic("f", new_iterate.objective);
+   statistics.add_statistic("f", new_iterate.problem_evaluations.objective);
    if (problem.is_constrained()) {
       statistics.add_statistic("||c||", new_iterate.nonlinear_errors.constraints);
    }
@@ -124,7 +124,7 @@ void Uno::postsolve_solution(const Problem& problem, const Scaling& scaling, Ite
    current_iterate.set_number_variables(problem.number_variables);
 
    // objective value
-   current_iterate.objective /= scaling.get_objective_scaling();
+   current_iterate.problem_evaluations.objective /= scaling.get_objective_scaling();
 
    // unscale the multipliers and the function values
    const bool is_feasible = (termination_status == KKT_POINT || termination_status == FEASIBLE_SMALL_STEP);
@@ -141,11 +141,6 @@ void Uno::postsolve_solution(const Problem& problem, const Scaling& scaling, Ite
 }
 
 void Result::print(bool print_solution) const {
-   std::cout << "\n";
-   std::cout << "Uno: optimization summary\n";
-   std::cout << Timer::get_current_date();
-   std::cout << "==============================\n";
-
    std::cout << "Status:\t\t\t\t";
    if (this->status == KKT_POINT) {
       std::cout << "Converged with KKT point\n";
@@ -163,7 +158,7 @@ void Result::print(bool print_solution) const {
       std::cout << "Irregular termination\n";
    }
 
-   std::cout << "Objective value:\t\t" << this->solution.objective << "\n";
+   std::cout << "Objective value:\t\t" << this->solution.problem_evaluations.objective << "\n";
    std::cout << "Constraint residual:\t\t" << this->solution.nonlinear_errors.constraints << "\n";
    std::cout << "Stationarity residual:\t\t" << this->solution.nonlinear_errors.stationarity << "\n";
    std::cout << "Complementarity residual:\t" << this->solution.nonlinear_errors.complementarity << "\n";

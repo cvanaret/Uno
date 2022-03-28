@@ -10,6 +10,7 @@ public:
    ~ActiveSetSubproblem() override = default;
 
    void set_initial_point(const std::optional<std::vector<double>>& optional_initial_point) override;
+   void set_elastic_variables(const l1ElasticReformulation& problem, Iterate& current_iterate) override;
 
 protected:
    std::vector<double> initial_point;

@@ -32,7 +32,6 @@ set(SRC_FILES
     uno/ingredients/mechanism/GlobalizationMechanismFactory.cpp
     uno/ingredients/mechanism/BacktrackingLineSearch.cpp
     uno/ingredients/mechanism/TrustRegionStrategy.cpp
-    uno/ingredients/mechanism/RegularizationStrategy.cpp
 
     uno/ingredients/strategy/GlobalizationStrategy.cpp
     uno/ingredients/strategy/GlobalizationStrategyFactory.cpp
@@ -49,6 +48,7 @@ set(SRC_FILES
     uno/ingredients/subproblem/SubproblemFactory.cpp
     uno/ingredients/subproblem/Direction.cpp
     uno/ingredients/subproblem/AugmentedSystem.cpp
+    uno/ingredients/subproblem/ActiveSetSubproblem.cpp
     uno/ingredients/subproblem/LPSubproblem.cpp
     uno/ingredients/subproblem/QPSubproblem.cpp
     uno/ingredients/subproblem/BarrierSubproblem.cpp
@@ -63,6 +63,7 @@ set(SRC_FILES
     uno/linear_algebra/Vector.cpp
     
     uno/optimization/Problem.cpp
+    uno/optimization/ProblemFactory.cpp
     uno/optimization/Constraint.cpp
     uno/optimization/Iterate.cpp
     uno/optimization/Preprocessing.cpp

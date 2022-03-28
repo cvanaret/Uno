@@ -18,11 +18,15 @@ public:
 
    virtual void initialize(Statistics& statistics, Iterate& first_iterate) = 0;
 
-   virtual Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, double trust_region_radius) = 0;
-   virtual Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, double trust_region_radius,
+   virtual void set_variable_bounds(const Iterate& current_iterate, double trust_region_radius) = 0;
+
+   // direction computation
+   virtual Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate) = 0;
+   virtual Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
          const std::optional<std::vector<double>>& optional_phase_2_solution) = 0;
    virtual Direction compute_second_order_correction(Iterate& trial_iterate) = 0;
 
+   // trial iterate acceptance
    virtual bool is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          PredictedReductionModel& predicted_reduction_model, double step_length) = 0;
    virtual void register_accepted_iterate(Iterate& iterate) = 0;
@@ -37,7 +41,7 @@ protected:
    l1ElasticReformulation relaxed_problem;
    std::unique_ptr<Subproblem> subproblem;
 
-   void compute_optimality_progress_measures(Iterate& iterate);
+   [[nodiscard]] virtual double compute_infeasibility_measure(Iterate& iterate) = 0;
    static bool is_small_step(const Direction& direction);
    void recover_active_set(const Problem& problem, Direction& direction);
 
