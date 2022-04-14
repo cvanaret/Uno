@@ -1,7 +1,7 @@
 #include "QPSubproblem.hpp"
 #include "solvers/QP/QPSolverFactory.hpp"
 
-QPSubproblem::QPSubproblem(const Problem& problem, size_t max_number_variables, const Options& options) :
+QPSubproblem::QPSubproblem(const NonlinearProblem& problem, size_t max_number_variables, const Options& options) :
       ActiveSetSubproblem(max_number_variables, problem.number_constraints, NO_SOC, true, norm_from_string(options.at("residual_norm"))),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
       solver(QPSolverFactory::create(options.at("QP_solver"), max_number_variables, problem.number_constraints,
@@ -20,30 +20,19 @@ QPSubproblem::QPSubproblem(const Problem& problem, size_t max_number_variables, 
    }
 }
 
-void QPSubproblem::build_objective_model(const Problem& problem, Iterate& current_iterate, double objective_multiplier) {
-
-}
-
-void QPSubproblem::build_constraint_model(const Problem& problem, Iterate& current_iterate) {
-
-}
-
-Direction QPSubproblem::solve(Statistics& /*statistics*/, const Problem& problem, Iterate& current_iterate) {
+Direction QPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem& problem, Iterate& current_iterate) {
    // Hessian
-   this->hessian_model->evaluate(problem, current_iterate.x, problem.objective_sign, current_iterate.multipliers.constraints);
+   this->hessian_model->evaluate(problem, current_iterate.x, current_iterate.multipliers.constraints);
    this->hessian_model->adjust_number_variables(problem.number_variables);
 
    // objective gradient
-   current_iterate.evaluate_objective_gradient(problem);
-   this->objective_gradient = current_iterate.problem_evaluations.objective_gradient;
+   problem.evaluate_objective_gradient(current_iterate, this->objective_gradient);
 
    // constraints
-   current_iterate.evaluate_constraints(problem);
-   this->constraints = current_iterate.problem_evaluations.constraints;
+   problem.evaluate_constraints(current_iterate, this->constraints);
 
    // constraint Jacobian
-   current_iterate.evaluate_constraint_jacobian(problem);
-   this->constraint_jacobian = current_iterate.problem_evaluations.constraint_jacobian;
+   problem.evaluate_constraint_jacobian(current_iterate, this->constraint_jacobian);
 
    // bounds of the variable displacements
    this->set_variable_displacement_bounds(problem, current_iterate);
@@ -59,8 +48,7 @@ Direction QPSubproblem::solve(Statistics& /*statistics*/, const Problem& problem
    return direction;
 }
 
-PredictedReductionModel QPSubproblem::generate_predicted_reduction_model(const Problem& problem, const Iterate& /*current_iterate*/,
-      const Direction& direction) const {
+PredictedReductionModel QPSubproblem::generate_predicted_reduction_model(const NonlinearProblem& problem, const Direction& direction) const {
    return PredictedReductionModel(-direction.objective, [&]() { // capture this and direction by reference
       // precompute expensive quantities
       const double linear_term = dot(direction.x, this->objective_gradient);

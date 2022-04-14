@@ -32,7 +32,7 @@ AMPLModel::AMPLModel(const std::string& file_name) : AMPLModel(file_name, genera
 }
 
 AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
-      Problem(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_), NONLINEAR),
+      Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_), NONLINEAR),
       asl_(asl),
       // allocate vectors
       variables_bounds(this->number_variables),
@@ -70,7 +70,7 @@ void AMPLModel::generate_variables() {
       }
       this->variables_bounds[i] = {lb, ub};
    }
-   Problem::determine_bounds_types(this->variables_bounds, this->variable_status);
+   Model::determine_bounds_types(this->variables_bounds, this->variable_status);
    // figure out the bounded variables
    for (size_t i = 0; i < this->number_variables; i++) {
       const ConstraintType status = this->get_variable_status(i);
@@ -93,22 +93,6 @@ double AMPLModel::get_variable_lower_bound(size_t i) const {
 
 double AMPLModel::get_variable_upper_bound(size_t i) const {
    return this->variables_bounds[i].ub;
-}
-
-double AMPLModel::evaluate_objective(Iterate& iterate) const {
-   return this->evaluate_objective(iterate.x);
-}
-
-void AMPLModel::evaluate_objective_gradient(Iterate& iterate) const {
-   this->evaluate_objective_gradient(iterate.x, iterate.problem_evaluations.objective_gradient);
-}
-
-void AMPLModel::evaluate_constraints(Iterate& iterate) const {
-   this->evaluate_constraints(iterate.x, iterate.problem_evaluations.constraints);
-}
-
-void AMPLModel::evaluate_constraint_jacobian(Iterate& iterate) const {
-   this->evaluate_constraint_jacobian(iterate.x, iterate.problem_evaluations.constraint_jacobian);
 }
 
 double AMPLModel::evaluate_objective(const std::vector<double>& x) const {
@@ -200,7 +184,7 @@ void AMPLModel::generate_constraints() {
       double ub = (this->asl_->i.LUrhs_ != nullptr) ? this->asl_->i.LUrhs_[2 * j + 1] : std::numeric_limits<double>::infinity();
       this->constraint_bounds[j] = {lb, ub};
    }
-   Problem::determine_bounds_types(this->constraint_bounds, this->constraint_status);
+   Model::determine_bounds_types(this->constraint_bounds, this->constraint_status);
    this->determine_constraints();
 }
 

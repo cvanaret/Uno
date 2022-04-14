@@ -6,7 +6,7 @@ HessianModel::HessianModel(size_t dimension, size_t hessian_maximum_number_nonze
       hessian(SymmetricMatrixFactory::create(sparse_format, dimension, hessian_maximum_number_nonzeros)) {
 }
 
-void HessianModel::adjust_number_variables(size_t number_variables) {
+void HessianModel::adjust_number_variables(size_t number_variables) const {
    // if the subproblem has more variables (slacks, elastic, ...) than the original problem, rectify the sparse representation
    // this assumes that all additional variables appear linearly in the functions
    for (size_t j = this->hessian->dimension; j < number_variables; j++) {
@@ -20,10 +20,9 @@ ExactHessian::ExactHessian(size_t dimension, size_t hessian_maximum_number_nonze
    HessianModel(dimension, hessian_maximum_number_nonzeros, options.at("sparse_format")) {
 }
 
-void ExactHessian::evaluate(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
-      const std::vector<double>& constraint_multipliers) {
+void ExactHessian::evaluate(const NonlinearProblem& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) {
    // evaluate Lagrangian Hessian
-   problem.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, *this->hessian);
+   problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, *this->hessian);
    this->evaluation_count++;
 }
 
@@ -34,10 +33,9 @@ ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t hessian_maximum_
       regularization_initial_value(stod(options.at("regularization_initial_value"))) {
 }
 
-void ConvexifiedHessian::evaluate(const Problem& problem, const std::vector<double>& primal_variables, double objective_multiplier,
-      const std::vector<double>& constraint_multipliers) {
+void ConvexifiedHessian::evaluate(const NonlinearProblem& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) {
    // evaluate Lagrangian Hessian
-   problem.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, *this->hessian);
+   problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, *this->hessian);
    this->evaluation_count++;
    // regularize (only on the original variables) to make the problem strictly convex
    DEBUG << "hessian before convexification: " << *this->hessian;

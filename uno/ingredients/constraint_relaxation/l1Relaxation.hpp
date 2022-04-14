@@ -15,7 +15,7 @@ struct l1RelaxationParameters {
 
 class l1Relaxation : public ConstraintRelaxationStrategy {
 public:
-   l1Relaxation(const Problem& problem, const Options& options);
+   l1Relaxation(const Model& model, const Options& options);
    void initialize(Statistics& statistics, Iterate& first_iterate) override;
 
    void set_variable_bounds(const Iterate& current_iterate, double trust_region_radius) override;
@@ -28,7 +28,7 @@ public:
 
    [[nodiscard]] bool is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          PredictedReductionModel& predicted_reduction_model, double step_length) override;
-   [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Iterate& current_iterate, const Direction& direction) const override;
+   [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Direction& direction) const override;
    void register_accepted_iterate(Iterate& iterate) override;
 
 protected:
@@ -38,7 +38,7 @@ protected:
    // preallocated temporary multipliers
    std::vector<double> constraint_multipliers;
 
-   static double compute_predicted_reduction(const Problem& problem, Iterate& current_iterate, const Direction& direction,
+   static double compute_predicted_reduction(const NonlinearProblem& problem, Iterate& current_iterate, const Direction& direction,
          PredictedReductionModel& predicted_reduction_model, double step_length);
    Direction solve_subproblem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter);
    Direction solve_with_steering_rule(Statistics& statistics, Iterate& current_iterate);

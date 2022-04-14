@@ -2,24 +2,24 @@
 #include <iostream>
 #include <cassert>
 #include <utility>
-#include "Problem.hpp"
+#include "Model.hpp"
 #include "linear_algebra/Vector.hpp"
 
-std::map<FunctionType, std::string> Problem::type_to_string = {
+std::map<FunctionType, std::string> Model::type_to_string = {
       {LINEAR, "linear"},
       {QUADRATIC, "quadratic"},
       {NONLINEAR, "nonlinear"}
 };
 
 // abstract Problem class
-Problem::Problem(std::string name, size_t number_variables, size_t number_constraints, FunctionType type) :
+Model::Model(std::string name, size_t number_variables, size_t number_constraints, FunctionType type) :
       name(std::move(name)), number_variables(number_variables), number_constraints(number_constraints), problem_type(type),
       equality_constraints(this->number_constraints),
       inequality_constraints(this->number_constraints),
       linear_constraints(this->number_constraints) {
 }
 
-void Problem::determine_bounds_types(std::vector<Range>& bounds, std::vector<ConstraintType>& status) {
+void Model::determine_bounds_types(std::vector<Range>& bounds, std::vector<ConstraintType>& status) {
    assert(bounds.size() == status.size());
    // build the "status" vector as a mapping (map/transform operation) of the "bounds" vector
    std::transform(begin(bounds), end(bounds), begin(status), [](const Range& bounds_i) {
@@ -41,7 +41,7 @@ void Problem::determine_bounds_types(std::vector<Range>& bounds, std::vector<Con
    });
 }
 
-void Problem::determine_constraints() {
+void Model::determine_constraints() {
    size_t current_equality_constraint = 0;
    size_t current_inequality_constraint = 0;
    for (size_t j = 0; j < this->number_constraints; j++) {
@@ -56,7 +56,7 @@ void Problem::determine_constraints() {
    }
 }
 
-void Problem::project_point_in_bounds(std::vector<double>& x) const {
+void Model::project_point_in_bounds(std::vector<double>& x) const {
    for (size_t i = 0; i < x.size(); i++) {
       if (x[i] < this->get_variable_lower_bound(i)) {
          x[i] = this->get_variable_lower_bound(i);
@@ -67,42 +67,7 @@ void Problem::project_point_in_bounds(std::vector<double>& x) const {
    }
 }
 
-double Problem::compute_constraint_lower_bound_violation(double constraint, size_t j) const {
-   const double lower_bound = this->get_constraint_lower_bound(j);
-   return std::max(0., lower_bound - constraint);
-}
-
-double Problem::compute_constraint_upper_bound_violation(double constraint, size_t j) const {
-   const double upper_bound = this->get_constraint_upper_bound(j);
-   return std::max(0., constraint - upper_bound);
-}
-
-double Problem::compute_constraint_violation(double constraint, size_t j) const {
-   const double lower_bound_violation = this->compute_constraint_lower_bound_violation(constraint, j);
-   const double upper_bound_violation = this->compute_constraint_upper_bound_violation(constraint, j);
-   return std::max(lower_bound_violation, upper_bound_violation);
-}
-
-// compute ||c_S|| for a given set of constraints
-double Problem::compute_constraint_violation(const std::vector<double>& constraints, const std::vector<size_t>& constraint_set, Norm residual_norm) const {
-   auto residual_function = [&](size_t k) {
-      const size_t j = constraint_set[k];
-      return this->compute_constraint_violation(constraints[j], j);
-   };
-   return norm(residual_function, constraint_set.size(), residual_norm);
-}
-
-
-// compute ||c||
-double Problem::compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const {
-   // create a lambda to avoid allocating an std::vector
-   auto residual_function = [&](size_t j) {
-      return this->compute_constraint_violation(constraints[j], j);
-   };
-   return norm(residual_function, constraints.size(), residual_norm);
-}
-
-bool Problem::is_constrained() const {
+bool Model::is_constrained() const {
    return (0 < this->number_constraints);
 }
 

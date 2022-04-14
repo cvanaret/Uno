@@ -2,7 +2,7 @@
 #define UNO_AMPLMODEL_H
 
 #include <vector>
-#include "optimization/Problem.hpp"
+#include "optimization/Model.hpp"
 #include "optimization/Constraint.hpp"
 
 extern "C" {
@@ -15,7 +15,7 @@ extern "C" {
  *
  *  Description of an AMPL model
  */
-class AMPLModel: public Problem {
+class AMPLModel: public Model {
 public:
    explicit AMPLModel(const std::string& file_name);
    ~AMPLModel() override;
@@ -26,13 +26,13 @@ public:
    [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
 
    // objective
-   [[nodiscard]] double evaluate_objective(Iterate& iterate) const override;
-   void evaluate_objective_gradient(Iterate& iterate) const override;
+   [[nodiscard]] double evaluate_objective(const std::vector<double>& x) const override;
+   void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const override;
 
    // constraints
-   //std::vector<bool> constraint_is_uncertainty_set;
-   void evaluate_constraints(Iterate& iterate) const override;
-   void evaluate_constraint_jacobian(Iterate& iterate) const override;
+   void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const override;
+   void evaluate_constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const override;
+   void evaluate_constraint_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraint_jacobian) const override;
    [[nodiscard]] double get_constraint_lower_bound(size_t j) const override;
    [[nodiscard]] double get_constraint_upper_bound(size_t j) const override;
 
@@ -66,12 +66,6 @@ private:
    void generate_variables();
    void generate_constraints();
    void set_function_types(std::string file_name);
-
-   [[nodiscard]] double evaluate_objective(const std::vector<double>& x) const;
-   void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const;
-   void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const;
-   void evaluate_constraint_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraint_jacobian) const;
-   void evaluate_constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const;
 
    void initialize_lagrangian_hessian();
    [[nodiscard]] size_t compute_hessian_number_nonzeros(double objective_multiplier, const std::vector<double>& multipliers) const;

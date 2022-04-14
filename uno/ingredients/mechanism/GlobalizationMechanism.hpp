@@ -2,7 +2,7 @@
 #define UNO_GLOBALIZATIONMECHANISM_H
 
 #include "ingredients/constraint_relaxation/ConstraintRelaxationStrategy.hpp"
-#include "optimization/Problem.hpp"
+#include "optimization/Model.hpp"
 #include "optimization/Scaling.hpp"
 #include "tools/Statistics.hpp"
 
