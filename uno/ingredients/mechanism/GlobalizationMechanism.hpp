@@ -22,7 +22,7 @@ protected:
    ConstraintRelaxationStrategy& constraint_relaxation_strategy;
    size_t number_iterations{0}; /*!< Current number of iterations */
 
-   static Iterate assemble_trial_iterate(Iterate& current_iterate, Direction& direction, double step_length);
+   static Iterate assemble_trial_iterate(Iterate& current_iterate, Direction& direction, double step_length = 1.);
    static void check_unboundedness(const Direction& direction);
    static void print_warning(const char* message);
 };

@@ -101,7 +101,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& curr
       const double predicted_reduction = predicted_reduction_model.evaluate(step_length);
 
       // invoke the globalization strategy for acceptance
-      accept = current_phase_strategy.check_acceptance(statistics, current_iterate.nonlinear_progress, trial_iterate.nonlinear_progress,
+      accept = current_phase_strategy.is_acceptable(statistics, current_iterate.nonlinear_progress, trial_iterate.nonlinear_progress,
             direction.objective_multiplier, predicted_reduction);
    }
 
