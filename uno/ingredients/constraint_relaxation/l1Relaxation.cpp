@@ -219,7 +219,7 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, Iterate& current_iterat
             predicted_reduction_model, step_length);
 
       // invoke the globalization strategy for acceptance
-      accept = this->globalization_strategy->check_acceptance(statistics, current_iterate.nonlinear_progress, trial_iterate.nonlinear_progress,
+      accept = this->globalization_strategy->is_acceptable(statistics, current_iterate.nonlinear_progress, trial_iterate.nonlinear_progress,
             this->penalty_parameter, predicted_reduction);
    }
    if (accept) {

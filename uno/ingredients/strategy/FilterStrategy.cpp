@@ -32,7 +32,7 @@ void FilterStrategy::notify(Iterate& current_iterate) {
 /* check acceptability of step(s) (filter & sufficient reduction)
  * precondition: feasible step
  * */
-bool FilterStrategy::check_acceptance(Statistics& /*statistics*/, const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
+bool FilterStrategy::is_acceptable(Statistics& /*statistics*/, const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
       double /*objective_multiplier*/, double predicted_reduction) {
    DEBUG << "Current: η = " << current_progress.infeasibility << ", ω = " << current_progress.objective << "\n";
    DEBUG << "Trial:   η = " << trial_progress.infeasibility << ", ω = " << trial_progress.objective << "\n";

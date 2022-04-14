@@ -29,7 +29,7 @@ public:
 
    // trial iterate acceptance
    virtual bool is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         PredictedReductionModel& predicted_reduction_model, double step_length) = 0;
+         PredictedReductionModel& predicted_reduction_model, double step_length = 1.) = 0;
    virtual void register_accepted_iterate(Iterate& iterate) = 0;
 
    [[nodiscard]] virtual PredictedReductionModel generate_predicted_reduction_model(const Direction& direction) const = 0;
