@@ -38,7 +38,9 @@ set(SRC_FILES
     uno/ingredients/strategy/FilterStrategy.cpp
     uno/ingredients/strategy/Filter.cpp
     uno/ingredients/strategy/l1MeritFunction.cpp
-
+    uno/ingredients/strategy/NonlinearProblem.cpp
+    uno/ingredients/strategy/l1RelaxedProblem.hpp
+    
     uno/ingredients/constraint_relaxation/ConstraintRelaxationStrategy.cpp
     uno/ingredients/constraint_relaxation/ConstraintRelaxationStrategyFactory.cpp
     uno/ingredients/constraint_relaxation/l1Relaxation.cpp
@@ -51,7 +53,6 @@ set(SRC_FILES
     uno/ingredients/subproblem/ActiveSetSubproblem.cpp
     uno/ingredients/subproblem/LPSubproblem.cpp
     uno/ingredients/subproblem/QPSubproblem.cpp
-    uno/ingredients/subproblem/BarrierSubproblem.cpp
     uno/ingredients/subproblem/HessianModel.cpp
     uno/ingredients/subproblem/PredictedReductionModel.cpp
 
@@ -62,18 +63,17 @@ set(SRC_FILES
     uno/linear_algebra/SparseVector.cpp
     uno/linear_algebra/Vector.cpp
     
-    uno/optimization/Problem.cpp
-    uno/optimization/ProblemFactory.cpp
+    uno/optimization/Model.cpp
+    uno/optimization/ModelFactory.cpp
     uno/optimization/Constraint.cpp
     uno/optimization/Iterate.cpp
     uno/optimization/Preprocessing.cpp
     uno/optimization/Scaling.cpp
-    uno/optimization/ScaledReformulation.hpp
-    uno/optimization/SlackReformulation.hpp
-    uno/optimization/l1ElasticReformulation.hpp
+    uno/optimization/ScaledModel.hpp
+    uno/optimization/EqualityConstrainedModel.hpp
 
     uno/solvers/linear/LinearSolverFactory.hpp
-	uno/solvers/QP/QPSolverFactory.hpp
+	 uno/solvers/QP/QPSolverFactory.hpp
     uno/solvers/QP/LPSolver.hpp
     uno/solvers/QP/QPSolver.hpp
 
@@ -151,18 +151,18 @@ target_link_libraries(uno_ampl PUBLIC uno)
 #########################
 # GoogleTest unit tests #
 #########################
-if(WITH_GTEST)
-    find_package(GTest CONFIG REQUIRED)
-    if(NOT ${GTest}_DIR STREQUAL "${GTest}-NOTFOUND")
-        set(TESTS_SRC_FILES
-            unotest/unotest.cpp
-            unotest/MA57SolverTests.cpp
-            unotest/PredictedReductionModelTests.cpp
-            unotest/SparseVectorTests.cpp
-        )
-        add_executable(run_unotest ${TESTS_SRC_FILES})
-        target_link_libraries(run_unotest PUBLIC GTest::gtest uno)
-    endif()
-endif()
+#if(WITH_GTEST)
+    #find_package(GTest CONFIG REQUIRED)
+    #if(NOT ${GTest}_DIR STREQUAL "${GTest}-NOTFOUND")
+        #set(TESTS_SRC_FILES
+            #unotest/unotest.cpp
+            #unotest/MA57SolverTests.cpp
+            #unotest/PredictedReductionModelTests.cpp
+            #unotest/SparseVectorTests.cpp
+        #)
+        #add_executable(run_unotest ${TESTS_SRC_FILES})
+        #target_link_libraries(run_unotest PUBLIC GTest::gtest uno)
+    #endif()
+#endif()
 
 # unotest/CSCSymmetricMatrixTests.cpp

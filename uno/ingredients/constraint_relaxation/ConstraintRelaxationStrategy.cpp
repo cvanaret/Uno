@@ -2,11 +2,11 @@
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 #include "optimization/Constraint.hpp"
 
-ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Problem& problem, double objective_multiplier, const Options& options):
-      // save the original problem
-      original_problem(problem),
+ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Model& model, double objective_multiplier, const Options& options):
+      // create the optimality problem
+      optimality_problem(model),
       // create the relaxed problem by introducing elastic variables
-      relaxed_problem(problem, objective_multiplier, stod(options.at("elastic_objective_coefficient")), (options.at("use_proximal_term") == "yes")),
+      relaxed_problem(model, objective_multiplier, stod(options.at("elastic_objective_coefficient")), (options.at("use_proximal_term") == "yes")),
       subproblem(SubproblemFactory::create(this->relaxed_problem, this->relaxed_problem.number_variables, options)),
       number_constraints(this->relaxed_problem.number_constraints) {
 }
@@ -18,9 +18,9 @@ bool ConstraintRelaxationStrategy::is_small_step(const Direction& direction) {
    return (direction.norm <= tolerance / small_step_factor);
 }
 
-void ConstraintRelaxationStrategy::recover_active_set(const Problem& problem, Direction& direction) {
+void ConstraintRelaxationStrategy::recover_active_set(const Model& model, Direction& direction) {
    // TODO remove elastic variables
-   for (size_t i = problem.number_variables; i < direction.x.size(); i++) {
+   for (size_t i = model.number_variables; i < direction.x.size(); i++) {
       //direction.active_set.bounds.at_lower_bound.erase(i);
       //direction.active_set.bounds.at_upper_bound.erase(i);
    }

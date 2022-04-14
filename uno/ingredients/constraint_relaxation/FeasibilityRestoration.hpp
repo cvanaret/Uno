@@ -10,7 +10,7 @@ enum Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 
 class FeasibilityRestoration : public ConstraintRelaxationStrategy {
 public:
-   FeasibilityRestoration(const Problem& problem, const Options& options);
+   FeasibilityRestoration(const Model& model, const Options& options);
    void initialize(Statistics& statistics, Iterate& first_iterate) override;
 
    void set_variable_bounds(const Iterate& current_iterate, double trust_region_radius) override;
@@ -23,7 +23,7 @@ public:
 
    [[nodiscard]] bool is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          PredictedReductionModel& predicted_reduction_model, double step_length) override;
-   [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Iterate& current_iterate, const Direction& direction) const override;
+   [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Direction& direction) const override;
    void register_accepted_iterate(Iterate& iterate) override;
 
 private:

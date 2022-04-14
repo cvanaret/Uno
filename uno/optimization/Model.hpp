@@ -1,25 +1,13 @@
-#ifndef UNO_PROBLEM_H
-#define UNO_PROBLEM_H
+#ifndef UNO_MODEL_H
+#define UNO_MODEL_H
 
 #include <string>
 #include <vector>
 #include <map>
 #include "Constraint.hpp"
-#include "Iterate.hpp"
 #include "linear_algebra/CSCSymmetricMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
-
-enum FunctionType {
-   LINEAR = 0, /*!< Linear function */
-   QUADRATIC, /*!< Quadratic function */
-   NONLINEAR /*!< Nonlinear function */
-};
-
-enum Smoothness {
-   SMOOTH = 0,
-   NONSMOOTH
-};
 
 struct NumericalError : public std::exception {
    [[nodiscard]] const char* what() const throw() override = 0;
@@ -48,10 +36,10 @@ struct FunctionNumericalError : NumericalError {
  *
  *  Description of an optimization problem
  */
-class Problem {
+class Model {
 public:
-   Problem(std::string name, size_t number_variables, size_t number_constraints, FunctionType problem_type);
-   virtual ~Problem() = default;
+   Model(std::string name, size_t number_variables, size_t number_constraints, FunctionType problem_type);
+   virtual ~Model() = default;
 
    static std::map<FunctionType, std::string> type_to_string;
 
@@ -86,10 +74,11 @@ public:
    [[nodiscard]] virtual ConstraintType get_constraint_status(size_t j) const = 0;
    [[nodiscard]] virtual size_t get_hessian_maximum_number_nonzeros() const = 0;
 
-   [[nodiscard]] virtual double evaluate_objective(Iterate& iterate) const = 0;
-   virtual void evaluate_objective_gradient(Iterate& iterate) const = 0;
-   virtual void evaluate_constraints(Iterate& iterate) const = 0;
-   virtual void evaluate_constraint_jacobian(Iterate& iterate) const = 0;
+   [[nodiscard]] virtual double evaluate_objective(const std::vector<double>& x) const = 0;
+   virtual void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const = 0;
+   virtual void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const = 0;
+   virtual void evaluate_constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const = 0;
+   virtual void evaluate_constraint_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraint_jacobian) const = 0;
    virtual void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
          SymmetricMatrix& hessian) const = 0;
 
@@ -99,12 +88,6 @@ public:
    // auxiliary functions
    static void determine_bounds_types(std::vector<Range>& variables_bounds, std::vector<ConstraintType>& status);
    void project_point_in_bounds(std::vector<double>& x) const;
-   [[nodiscard]] virtual double compute_constraint_violation(double constraint, size_t j) const;
-   [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const;
-   [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, const std::vector<size_t>& constraint_set,
-         Norm residual_norm) const;
-   [[nodiscard]] double compute_constraint_lower_bound_violation(double constraint, size_t j) const;
-   [[nodiscard]] double compute_constraint_upper_bound_violation(double constraint, size_t j) const;
    [[nodiscard]] bool is_constrained() const;
 
 protected:
@@ -179,4 +162,4 @@ protected:
 //   });
 //}
 
-#endif // UNO_PROBLEM_H
+#endif // UNO_MODEL_H

@@ -5,7 +5,7 @@
 #include "Constraint.hpp"
 #include "linear_algebra/SparseVector.hpp"
 
-class Problem;
+class Model;
 
 struct Errors {
    double constraints;
@@ -44,8 +44,7 @@ public:
    Multipliers multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
 
    // evaluations
-   Evaluations problem_evaluations;
-   Evaluations subproblem_evaluations;
+   Evaluations original_evaluations;
    // lazy evaluation flags
    bool is_objective_computed{false};
    bool are_constraints_computed{false};
@@ -62,11 +61,11 @@ public:
    static size_t number_eval_constraints;
    static size_t number_eval_jacobian;
 
-   void evaluate_objective(const Problem& problem);
-   void evaluate_constraints(const Problem& problem);
-   void evaluate_objective_gradient(const Problem& problem);
-   void evaluate_constraint_jacobian(const Problem& problem);
-   void evaluate_lagrangian_gradient(const Problem& problem, const std::vector<double>& constraint_multipliers,
+   void evaluate_objective(const Model& model);
+   void evaluate_constraints(const Model& model);
+   void evaluate_objective_gradient(const Model& model);
+   void evaluate_constraint_jacobian(const Model& model);
+   void evaluate_lagrangian_gradient(const Model& model, const std::vector<double>& constraint_multipliers,
          const std::vector<double>& lower_bounds_multipliers, const std::vector<double>& upper_bounds_multipliers);
 
    void set_number_variables(size_t number_variables);

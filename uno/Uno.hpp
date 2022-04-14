@@ -1,7 +1,7 @@
 #ifndef UNO_H
 #define UNO_H
 
-#include "optimization/Problem.hpp"
+#include "optimization/Model.hpp"
 #include "ingredients/mechanism/GlobalizationMechanism.hpp"
 
 enum TerminationStatus {
@@ -45,8 +45,8 @@ public:
    /*!
     *  Solve a given problem with initial primal and dual variables
     */
-   Result solve(const Problem& problem, Iterate& first_iterate, bool enforce_linear_constraints);
-   static void postsolve_solution(const Problem& problem, const Scaling& scaling, Iterate& current_iterate, TerminationStatus termination_status);
+   Result solve(const Model& model, Iterate& first_iterate, bool enforce_linear_constraints);
+   static void postsolve_solution(const Model& model, const Scaling& scaling, Iterate& current_iterate, TerminationStatus termination_status);
 
 private:
    GlobalizationMechanism& globalization_mechanism; /*!< Step control strategy (trust region or line-search) */
@@ -54,10 +54,10 @@ private:
    const size_t max_iterations; /*!< Maximum number of iterations */
    const double small_step_factor{100.};
 
-   static Statistics create_statistics(const Problem& problem);
-   static void add_statistics(Statistics& statistics, const Problem& problem, const Iterate& new_iterate, size_t major_iterations);
+   static Statistics create_statistics(const Model& model);
+   static void add_statistics(Statistics& statistics, const Model& model, const Iterate& new_iterate, size_t major_iterations);
    [[nodiscard]] bool termination_criterion(TerminationStatus current_status, size_t iteration) const;
-   [[nodiscard]] TerminationStatus check_termination(const Problem& problem, const Iterate& current_iterate, double step_norm) const;
+   [[nodiscard]] TerminationStatus check_termination(const Model& model, const Iterate& current_iterate, double step_norm) const;
 };
 
 #endif // UNO_H

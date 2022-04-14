@@ -13,17 +13,17 @@ void AugmentedSystem::solve(LinearSolver& linear_solver) {
    linear_solver.solve(*this->matrix, this->rhs, this->solution);
 }
 
-void AugmentedSystem::factorize_matrix(const Problem& problem, LinearSolver& linear_solver) {
+void AugmentedSystem::factorize_matrix(const Model& model, LinearSolver& linear_solver) {
    // compute the symbolic factorization only when:
    // the problem has a non-constant augmented system (ie is not an LP or a QP) or it is the first factorization
-   if (this->number_factorizations == 0 || !problem.fixed_hessian_sparsity || problem.problem_type == NONLINEAR) {
+   if (this->number_factorizations == 0 || !model.fixed_hessian_sparsity || model.problem_type == NONLINEAR) {
       linear_solver.do_symbolic_factorization(*this->matrix);
    }
    linear_solver.do_numerical_factorization(*this->matrix);
    this->number_factorizations++;
 }
 
-void AugmentedSystem::regularize_matrix(const Problem& problem, LinearSolver& linear_solver, size_t size_first_block, size_t size_second_block,
+void AugmentedSystem::regularize_matrix(const Model& model, LinearSolver& linear_solver, size_t size_first_block, size_t size_second_block,
       double constraint_regularization_parameter) {
    DEBUG << "Original matrix\n" << *this->matrix << "\n";
    double regularization_first_block = 0.;
@@ -64,7 +64,7 @@ void AugmentedSystem::regularize_matrix(const Problem& problem, LinearSolver& li
    while (!good_inertia) {
       DEBUG << "Testing factorization with regularization factor " << regularization_first_block << "\n";
       DEBUG << *this->matrix << "\n";
-      this->factorize_matrix(problem, linear_solver);
+      this->factorize_matrix(model, linear_solver);
 
       if (!linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_second_block) {
          good_inertia = true;
