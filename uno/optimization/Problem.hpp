@@ -16,6 +16,11 @@ enum FunctionType {
    NONLINEAR /*!< Nonlinear function */
 };
 
+enum Smoothness {
+   SMOOTH = 0,
+   NONSMOOTH
+};
+
 struct NumericalError : public std::exception {
    [[nodiscard]] const char* what() const throw() override = 0;
 };

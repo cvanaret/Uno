@@ -22,8 +22,13 @@ public:
 protected:
    // use pointers to allow polymorphism
    const std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
-   const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
    const double proximal_coefficient;
+
+   // evaluations
+   const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
+   SparseVector<double> objective_gradient;
+   std::vector<double> constraints;
+   std::vector<SparseVector<double>> constraint_jacobian;
 };
 
 #endif // UNO_QPSUBPROBLEM_H

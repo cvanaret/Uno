@@ -21,6 +21,11 @@ public:
 private:
    // use pointers to allow polymorphism
    const std::unique_ptr<LPSolver> solver; /*!< Solver that solves the subproblem */
+
+   // evaluations
+   SparseVector<double> objective_gradient;
+   std::vector<double> constraints;
+   std::vector<SparseVector<double>> constraint_jacobian;
 };
 
 #endif // UNO_LPSUBPROBLEM_H
