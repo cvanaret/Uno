@@ -15,14 +15,15 @@ void Subproblem::initialize(Statistics& /*statistics*/, const NonlinearProblem& 
 }
 
 void Subproblem::set_variable_bounds(const Model& model, const Iterate& current_iterate, double trust_region_radius) {
+   assert(false && "Need to pass the NonlinearProblem here");
    // bounds intersected with trust region
    // very important: apply the trust region only on the original variables
-   for (size_t i = 0; i < model.get_number_original_variables(); i++) {
+   for (size_t i = 0; i < model.number_variables; i++) {
       double lb = std::max(current_iterate.x[i] - trust_region_radius, model.get_variable_lower_bound(i));
       double ub = std::min(current_iterate.x[i] + trust_region_radius, model.get_variable_upper_bound(i));
       this->variable_bounds[i] = {lb, ub};
    }
-   for (size_t i = model.get_number_original_variables(); i < model.number_variables; i++) {
+   for (size_t i = model.number_variables; i < model.number_variables; i++) {
       const double lb = model.get_variable_lower_bound(i);
       const double ub = model.get_variable_upper_bound(i);
       this->variable_bounds[i] = {lb, ub};

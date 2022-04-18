@@ -7,7 +7,6 @@ class EqualityConstrainedModel: public Model {
 public:
    explicit EqualityConstrainedModel(const Model& original_model);
 
-   [[nodiscard]] size_t get_number_original_variables() const override;
    [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
    [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
    [[nodiscard]] double get_constraint_lower_bound(size_t j) const override;
@@ -67,10 +66,6 @@ inline EqualityConstrainedModel::EqualityConstrainedModel(const Model& original_
    this->original_model.inequality_constraints.for_each([&](size_t j, size_t i) {
       this->inequality_constraint_of_slack[i] = j;
    });
-}
-
-inline size_t EqualityConstrainedModel::get_number_original_variables() const {
-   return this->original_model.get_number_original_variables();
 }
 
 inline double EqualityConstrainedModel::get_variable_lower_bound(size_t i) const {

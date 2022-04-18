@@ -55,7 +55,7 @@ void Iterate::evaluate_constraint_jacobian(const Model& model) {
 
 void Iterate::evaluate_lagrangian_gradient(const Model& model, const std::vector<double>& constraint_multipliers,
       const std::vector<double>& lower_bounds_multipliers, const std::vector<double>& upper_bounds_multipliers) {
-   const size_t number_original_variables = model.get_number_original_variables();
+   const size_t number_original_variables = model.number_variables;
    initialize_vector(this->lagrangian_gradient, 0.);
 
    // objective gradient

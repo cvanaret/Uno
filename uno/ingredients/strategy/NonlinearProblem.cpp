@@ -1,15 +1,17 @@
 #include "NonlinearProblem.hpp"
 
-NonlinearProblem::NonlinearProblem(const Model& model, const std::string& name, size_t number_variables, size_t number_constraints,
-      FunctionType problem_type):
-      model(model), name(name), number_variables(number_variables), number_constraints(number_constraints), problem_type(problem_type) {
+NonlinearProblem::NonlinearProblem(const Model& model, size_t number_variables, size_t number_constraints):
+      model(model), number_variables(number_variables), number_constraints(number_constraints) {
 }
-
 
 void NonlinearProblem::evaluate_lagrangian_gradient(Iterate& iterate, std::vector<double>& lagrangian_gradient) const {
    iterate.evaluate_lagrangian_gradient(this->model, iterate.multipliers.constraints, iterate.multipliers.lower_bounds,
          iterate.multipliers.upper_bounds);
    lagrangian_gradient = iterate.lagrangian_gradient;
+}
+
+size_t NonlinearProblem::get_number_original_variables() const {
+   return this->model.number_variables;
 }
 
 double NonlinearProblem::compute_constraint_lower_bound_violation(double constraint, size_t j) const {

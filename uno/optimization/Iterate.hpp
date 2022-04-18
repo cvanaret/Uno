@@ -4,8 +4,7 @@
 #include <vector>
 #include "Constraint.hpp"
 #include "linear_algebra/SparseVector.hpp"
-
-class Model;
+#include "optimization/Model.hpp"
 
 struct Errors {
    double constraints;

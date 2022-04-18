@@ -17,22 +17,16 @@ public:
    void evaluate_constraint_jacobian(Iterate& iterate, std::vector<SparseVector<double>>& constraint_jacobian) const override;
    void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix& hessian) const override;
 
-   [[nodiscard]] size_t get_number_original_variables() const override;
    [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
    [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
    [[nodiscard]] double get_constraint_lower_bound(size_t j) const override;
    [[nodiscard]] double get_constraint_upper_bound(size_t j) const override;
 
-   [[nodiscard]] ConstraintType get_variable_status(size_t i) const override;
-   [[nodiscard]] FunctionType get_constraint_type(size_t j) const override;
-   [[nodiscard]] ConstraintType get_constraint_status(size_t j) const override;
    [[nodiscard]] size_t get_hessian_maximum_number_nonzeros() const override;
    [[nodiscard]] std::vector<size_t> get_violated_linearized_constraints(const std::vector<double>& x) const;
    [[nodiscard]] double compute_linearized_constraint_violation(const std::vector<double>& x) const;
    [[nodiscard]] double compute_linearized_constraint_violation(const std::vector<double>& x, const std::vector<double>& dx) const;
 
-   void get_initial_primal_point(std::vector<double>& x) const override;
-   void get_initial_dual_point(std::vector<double>& multipliers) const override;
    void set_objective_multiplier(double new_objective_multiplier);
 
    void set_proximal_coefficient(double new_proximal_coefficient);
@@ -60,8 +54,7 @@ protected:
 
 inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier,
       double elastic_objective_coefficient, bool use_proximal_term):
-      NonlinearProblem(model, model.name + "_l1", model.number_variables + l1RelaxedProblem::count_elastic_variables(model),
-            model.number_constraints, model.problem_type),
+      NonlinearProblem(model, model.number_variables + l1RelaxedProblem::count_elastic_variables(model), model.number_constraints),
       objective_multiplier(objective_multiplier),
       // elastic variables
       elastic_variables(this->number_constraints),
@@ -223,10 +216,6 @@ inline double l1RelaxedProblem::compute_linearized_constraint_violation(const st
    return constraint_violation;
 }
 
-inline size_t l1RelaxedProblem::get_number_original_variables() const {
-   return this->model.get_number_original_variables();
-}
-
 inline double l1RelaxedProblem::get_variable_lower_bound(size_t i) const {
    if (i < this->model.number_variables) { // original variable
       return this->model.get_variable_lower_bound(i);
@@ -253,41 +242,9 @@ inline double l1RelaxedProblem::get_constraint_upper_bound(size_t j) const {
    return this->model.get_constraint_upper_bound(j);
 }
 
-inline ConstraintType l1RelaxedProblem::get_variable_status(size_t i) const {
-   if (i < this->model.number_variables) { // original variable
-      return this->model.get_variable_status(i);
-   }
-   else { // elastic variable in [0, +inf[
-      return BOUNDED_LOWER;
-   }
-}
-
-inline FunctionType l1RelaxedProblem::get_constraint_type(size_t j) const {
-   return this->model.get_constraint_type(j);
-}
-
-inline ConstraintType l1RelaxedProblem::get_constraint_status(size_t j) const {
-   return this->model.get_constraint_status(j);
-}
-
 inline size_t l1RelaxedProblem::get_hessian_maximum_number_nonzeros() const {
    // add the proximal term
    return this->model.get_hessian_maximum_number_nonzeros() + (use_proximal_term ? this->model.number_variables : 0);
-}
-
-inline void l1RelaxedProblem::get_initial_primal_point(std::vector<double>& x) const {
-   this->model.get_initial_primal_point(x);
-   // add the contribution of the elastics
-   this->elastic_variables.positive.for_each_value([&](size_t elastic_index) {
-      x[elastic_index] = 0.;
-   });
-   this->elastic_variables.negative.for_each_value([&](size_t elastic_index) {
-      x[elastic_index] = 0.;
-   });
-}
-
-inline void l1RelaxedProblem::get_initial_dual_point(std::vector<double>& multipliers) const {
-   this->model.get_initial_dual_point(multipliers);
 }
 
 inline void l1RelaxedProblem::set_objective_multiplier(double new_objective_multiplier) {

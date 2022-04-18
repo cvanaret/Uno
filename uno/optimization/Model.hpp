@@ -63,7 +63,6 @@ public:
    const bool fixed_hessian_sparsity{false};
 
    // purely virtual functions
-   [[nodiscard]] virtual size_t get_number_original_variables() const = 0;
    [[nodiscard]] virtual double get_variable_lower_bound(size_t i) const = 0;
    [[nodiscard]] virtual double get_variable_upper_bound(size_t i) const = 0;
    [[nodiscard]] virtual double get_constraint_lower_bound(size_t j) const = 0;
