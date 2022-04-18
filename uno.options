@@ -37,6 +37,8 @@ sparse_format COO
 # scale the functions (yes|no)
 scale_functions no
 
+function_scaling_threshold 100
+
 # factor scaling
 function_scaling_factor 100
 
