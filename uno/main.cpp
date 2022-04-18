@@ -21,7 +21,7 @@ void* operator new(size_t size) {
    total_allocations += size;
    return malloc(size);
 }
-*/
+ */
 
 void run_uno_ampl(const std::string& model_name, const Options& options) {
    // AMPL model
@@ -115,49 +115,6 @@ void test_problem_with_slacks(const std::string& model_name) {
 
    CSCSymmetricMatrix hessian(model_to_solve.number_variables, model_to_solve.get_hessian_maximum_number_nonzeros());
    model_to_solve.evaluate_lagrangian_hessian(first_iterate.x, 1., first_iterate.multipliers.constraints, hessian);
-   std::cout << hessian;
-}
-
-void test_problem_with_elastics(const std::string& model_name) {
-   auto original_model = ModelFactory::create(model_name);
-   // add elastics and proximal term
-   const double objective_multiplier = 1.;
-   const double elastic_objective_coefficient = 1.;
-   const bool use_proximal_term = true;
-   l1RelaxedProblem relaxed_problem = l1RelaxedProblem(*original_model, objective_multiplier, elastic_objective_coefficient,
-         use_proximal_term);
-
-   // create the first iterate (slacks set to 0)
-   Iterate first_iterate(relaxed_problem.number_variables, relaxed_problem.number_constraints);
-   relaxed_problem.get_initial_primal_point(first_iterate.x);
-   relaxed_problem.get_initial_dual_point(first_iterate.multipliers.constraints);
-   //problem_to_solve.set_proximal_reference_point(first_iterate.x);
-
-   std::cout << "x = "; print_vector(std::cout, first_iterate.x);
-   std::cout << "multipliers = "; print_vector(std::cout, first_iterate.multipliers.constraints);
-
-   std::cout << "Variables\n";
-   for (size_t i = 0; i < relaxed_problem.number_variables; i++) {
-      std::cout << "Bounds of x" << i << ": [" << relaxed_problem.get_variable_lower_bound(i) << ", " <<
-                relaxed_problem.get_variable_upper_bound(i) << "]\n";
-   }
-   std::cout << "Constraints\n";
-   for (size_t j = 0; j < relaxed_problem.number_constraints; j++) {
-      std::cout << "Bounds of c" << j << ": [" << relaxed_problem.get_constraint_lower_bound(j) << ", " <<
-                relaxed_problem.get_constraint_upper_bound(j) << "]\n";
-   }
-
-   // evaluations
-   //relaxed_problem.evaluate_objective_gradient(first_iterate);
-   std::cout << "Objective gradient:\n" << first_iterate.original_evaluations.objective_gradient;
-   //relaxed_problem.evaluate_constraint_jacobian(first_iterate);
-   std::cout << "Jacobian:\n";
-   for (size_t j = 0; j < relaxed_problem.number_constraints; j++) {
-      std::cout << first_iterate.original_evaluations.constraint_jacobian[j];
-   }
-
-   COOSymmetricMatrix hessian(relaxed_problem.number_variables, relaxed_problem.get_hessian_maximum_number_nonzeros());
-   //relaxed_problem.evaluate_lagrangian_hessian(first_iterate.x, 1., first_iterate.multipliers.constraints, hessian);
    std::cout << hessian;
 }
 

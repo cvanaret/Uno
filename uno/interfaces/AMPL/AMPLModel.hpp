@@ -20,7 +20,6 @@ public:
    explicit AMPLModel(const std::string& file_name);
    ~AMPLModel() override;
 
-   [[nodiscard]] size_t get_number_original_variables() const override;
    // variables
    [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
    [[nodiscard]] double get_variable_upper_bound(size_t i) const override;

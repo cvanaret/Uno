@@ -8,7 +8,6 @@ class ScaledModel: public Model {
 public:
    ScaledModel(const Model& original_model, const Scaling& scaling);
 
-   [[nodiscard]] size_t get_number_original_variables() const override;
    [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
    [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
    [[nodiscard]] double get_constraint_lower_bound(size_t j) const override;
@@ -66,10 +65,6 @@ inline ScaledModel::ScaledModel(const Model& original_model, const Scaling& scal
    for (size_t i: this->original_model.upper_bounded_variables) {
       this->upper_bounded_variables.push_back(i);
    }
-}
-
-inline size_t ScaledModel::get_number_original_variables() const {
-   return this->original_model.get_number_original_variables();
 }
 
 inline double ScaledModel::get_variable_lower_bound(size_t i) const {

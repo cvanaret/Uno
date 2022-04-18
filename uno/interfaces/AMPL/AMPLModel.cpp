@@ -83,10 +83,6 @@ void AMPLModel::generate_variables() {
    }
 }
 
-size_t AMPLModel::get_number_original_variables() const {
-   return this->number_variables;
-}
-
 double AMPLModel::get_variable_lower_bound(size_t i) const {
    return this->variables_bounds[i].lb;
 }

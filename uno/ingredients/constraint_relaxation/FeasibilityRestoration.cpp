@@ -42,7 +42,7 @@ Direction FeasibilityRestoration::solve_optimality_problem(Statistics& statistic
    // solve the subproblem
    DEBUG << "Solving the optimality subproblem\n";
    Direction direction = this->subproblem->solve(statistics, this->optimality_problem, current_iterate);
-   direction.objective_multiplier = this->optimality_problem.objective_sign;
+   direction.objective_multiplier = 1.;
    direction.norm = norm_inf(direction.x, 0, this->optimality_problem.number_variables);
    DEBUG << direction << "\n";
 
