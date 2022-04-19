@@ -3,11 +3,10 @@
 #include "linear_algebra/SparseVector.hpp"
 #include "optimization/Constraint.hpp"
 
-Subproblem::Subproblem(size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy,
-         bool is_second_order_method, Norm residual_norm):
+Subproblem::Subproblem(size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy, Norm residual_norm):
       soc_strategy(soc_strategy), variable_bounds(max_number_variables),
       direction(max_number_variables, number_constraints),
-      is_second_order_method(is_second_order_method), residual_norm(residual_norm) {
+      residual_norm(residual_norm) {
 }
 
 void Subproblem::initialize(Statistics& /*statistics*/, const NonlinearProblem& /*problem*/, Iterate& /*first_iterate*/) {

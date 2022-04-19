@@ -24,8 +24,7 @@ enum SecondOrderCorrection {
  */
 class Subproblem {
 public:
-   Subproblem(size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy, bool is_second_order_method,
-         Norm residual_norm);
+   Subproblem(size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy, Norm residual_norm);
    virtual ~Subproblem() = default;
 
    // virtual methods implemented by subclasses
@@ -59,7 +58,6 @@ public:
    size_t number_subproblems_solved{0};
    // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it
    bool subproblem_definition_changed{false};
-   const bool is_second_order_method;
    const Norm residual_norm;
 };
 

@@ -57,9 +57,9 @@ public:
    [[nodiscard]] double compute_constraint_lower_bound_violation(double constraint, size_t j) const;
    [[nodiscard]] double compute_constraint_upper_bound_violation(double constraint, size_t j) const;
    [[nodiscard]] virtual double compute_constraint_violation(double constraint, size_t j) const;
-   [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, Norm norm_type) const;
+   [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const;
    [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, const std::vector<size_t>& constraint_set,
-         Norm norm_type) const;
+         Norm residual_norm) const;
 };
 
 inline NonlinearProblem::NonlinearProblem(const Model& model, size_t number_variables, size_t number_constraints):
@@ -98,21 +98,21 @@ inline double NonlinearProblem::compute_constraint_violation(double constraint, 
 
 // compute ||c_S|| for a given set of constraints
 inline double NonlinearProblem::compute_constraint_violation(const std::vector<double>& constraints, const std::vector<size_t>& constraint_set,
-      Norm norm_type) const {
+      Norm residual_norm) const {
    auto residual_function = [&](size_t k) {
       const size_t j = constraint_set[k];
       return this->compute_constraint_violation(constraints[j], j);
    };
-   return norm(residual_function, constraint_set.size(), norm_type);
+   return norm(residual_function, constraint_set.size(), residual_norm);
 }
 
 // compute ||c||
-inline double NonlinearProblem::compute_constraint_violation(const std::vector<double>& constraints, Norm norm_type) const {
+inline double NonlinearProblem::compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const {
    // create a lambda to avoid allocating an std::vector
    auto residual_function = [&](size_t j) {
       return this->compute_constraint_violation(constraints[j], j);
    };
-   return norm(residual_function, constraints.size(), norm_type);
+   return norm(residual_function, constraints.size(), residual_norm);
 }
 
 

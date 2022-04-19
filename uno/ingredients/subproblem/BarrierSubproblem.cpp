@@ -7,7 +7,7 @@
 
 BarrierSubproblem::BarrierSubproblem(const NonlinearProblem& problem, size_t max_number_variables, const Options& options):
       Subproblem(max_number_variables, // max_number_variables
-            problem.number_constraints, SOC_UPON_REJECTION, true, norm_from_string(options.at("residual_norm"))),
+            problem.number_constraints, SOC_UPON_REJECTION, norm_from_string(options.at("residual_norm"))),
       augmented_system(options.at("sparse_format"), max_number_variables + problem.number_constraints,
             problem.get_maximum_number_hessian_nonzeros()
             + max_number_variables + problem.number_constraints /* regularization */

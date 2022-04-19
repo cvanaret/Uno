@@ -1,8 +1,7 @@
 #include "ActiveSetSubproblem.hpp"
 
 ActiveSetSubproblem::ActiveSetSubproblem(size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy,
-      bool is_second_order_method, Norm residual_norm): Subproblem(max_number_variables, number_constraints, soc_strategy, is_second_order_method,
-      residual_norm),
+         Norm residual_norm): Subproblem(max_number_variables, number_constraints, soc_strategy, residual_norm),
       initial_point(max_number_variables),
       variable_displacement_bounds(max_number_variables),
       linearized_constraint_bounds(number_constraints) {
