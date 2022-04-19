@@ -115,7 +115,6 @@ void AMPLModel::evaluate_objective_gradient(const std::vector<double>& x, Sparse
       const size_t index = static_cast<size_t>(ampl_variables_tmp->varno);
       const double partial_derivative = this->objective_sign*this->ampl_tmp_gradient[index];
       gradient.insert(index, partial_derivative);
-      //gradient[ampl_variables_tmp->varno] = partial_derivative;
       ampl_variables_tmp = ampl_variables_tmp->next;
    }
 }

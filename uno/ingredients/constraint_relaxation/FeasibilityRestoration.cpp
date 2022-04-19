@@ -64,7 +64,7 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
    this->relaxed_problem.set_proximal_coefficient(this->subproblem->get_proximal_coefficient());
    this->relaxed_problem.set_proximal_reference_point(current_iterate.x);
 
-   // build the objective model of the feasibility problem
+   // build the objective model of the feasibility problem (TODO: move to subproblem)
    this->subproblem->set_elastic_variables(this->relaxed_problem, current_iterate);
 
    // start from the phase-2 solution
@@ -117,7 +117,6 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& curr
       else {
          this->subproblem->compute_nonlinear_residuals(this->relaxed_problem, trial_iterate);
       }
-      trial_iterate.evaluate_objective(this->optimality_problem.model);
    }
    return accept;
 }
