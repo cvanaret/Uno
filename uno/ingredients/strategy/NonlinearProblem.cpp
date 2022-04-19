@@ -54,39 +54,38 @@ double NonlinearProblem::compute_constraint_violation(const std::vector<double>&
 }
 
 
-   /*
-   const size_t number_original_variables = this->model.get_number_original_variables();
-   initialize_vector(this->lagrangian_gradient, 0.);
+/*
+const size_t number_original_variables = this->model.get_number_original_variables();
+initialize_vector(this->lagrangian_gradient, 0.);
 
-   // objective gradient
-   this->evaluate_objective_gradient(model);
+// objective gradient
+this->evaluate_objective_gradient(model);
 
-   // scale the objective gradient with the objective multiplier
-   this->original_evaluations.objective_gradient.for_each([&](size_t i, double derivative) {
-      // in case there are additional variables, ignore them
-      if (i < number_original_variables) {
-         //this->lagrangian_gradient[i] += objective_multiplier * derivative;
-         this->lagrangian_gradient[i] += derivative;
-      }
-   });
-
-   // bound constraints
-   for (size_t i = 0; i < number_original_variables; i++) {
-      this->lagrangian_gradient[i] -= lower_bounds_multipliers[i] + upper_bounds_multipliers[i];
+// scale the objective gradient with the objective multiplier
+this->original_evaluations.objective_gradient.for_each([&](size_t i, double derivative) {
+   // in case there are additional variables, ignore them
+   if (i < number_original_variables) {
+      //this->lagrangian_gradient[i] += objective_multiplier * derivative;
+      this->lagrangian_gradient[i] += derivative;
    }
+});
 
-   // constraints
-   this->evaluate_constraint_jacobian(model);
-   for (size_t j = 0; j < model.number_constraints; j++) {
-      const double multiplier_j = constraint_multipliers[j];
-      if (multiplier_j != 0.) {
-         this->original_evaluations.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
-            // in case there are additional variables, ignore them
-            if (i < number_original_variables) {
-               this->lagrangian_gradient[i] -= multiplier_j * derivative;
-            }
-         });
-      }
+// bound constraints
+for (size_t i = 0; i < number_original_variables; i++) {
+   this->lagrangian_gradient[i] -= lower_bounds_multipliers[i] + upper_bounds_multipliers[i];
+}
+
+// constraints
+this->evaluate_constraint_jacobian(model);
+for (size_t j = 0; j < model.number_constraints; j++) {
+   const double multiplier_j = constraint_multipliers[j];
+   if (multiplier_j != 0.) {
+      this->original_evaluations.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
+         // in case there are additional variables, ignore them
+         if (i < number_original_variables) {
+            this->lagrangian_gradient[i] -= multiplier_j * derivative;
+         }
+      });
    }
 }
- */
+*/
