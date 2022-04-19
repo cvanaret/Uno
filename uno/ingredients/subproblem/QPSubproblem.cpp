@@ -23,7 +23,6 @@ QPSubproblem::QPSubproblem(const NonlinearProblem& problem, size_t max_number_va
 Direction QPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem& problem, Iterate& current_iterate) {
    // Hessian
    this->hessian_model->evaluate(problem, current_iterate.x, current_iterate.multipliers.constraints);
-   this->hessian_model->adjust_number_variables(problem.number_variables);
 
    // objective gradient
    problem.evaluate_objective_gradient(current_iterate, this->objective_gradient);

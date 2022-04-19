@@ -6,15 +6,6 @@ HessianModel::HessianModel(size_t dimension, size_t hessian_maximum_number_nonze
       hessian(SymmetricMatrixFactory::create(sparse_format, dimension, hessian_maximum_number_nonzeros)) {
 }
 
-void HessianModel::adjust_number_variables(size_t number_variables) const {
-   // if the subproblem has more variables (slacks, elastic, ...) than the original problem, rectify the sparse representation
-   // this assumes that all additional variables appear linearly in the functions
-   for (size_t j = this->hessian->dimension; j < number_variables; j++) {
-      this->hessian->finalize(j);
-   }
-   this->hessian->dimension = number_variables;
-}
-
 // Exact Hessian
 ExactHessian::ExactHessian(size_t dimension, size_t hessian_maximum_number_nonzeros, const Options& options) :
    HessianModel(dimension, hessian_maximum_number_nonzeros, options.at("sparse_format")) {

@@ -46,12 +46,9 @@ public:
    [[nodiscard]] double compute_constraint_lower_bound_violation(double constraint, size_t j) const;
    [[nodiscard]] double compute_constraint_upper_bound_violation(double constraint, size_t j) const;
    [[nodiscard]] virtual double compute_constraint_violation(double constraint, size_t j) const;
-   [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const;
+   [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, Norm norm_type) const;
    [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, const std::vector<size_t>& constraint_set,
-         Norm residual_norm) const;
-
-protected:
-   size_t hessian_maximum_number_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */
+         Norm norm_type) const;
 };
 
 #endif // UNO_NONLINEARPROBLEM_H

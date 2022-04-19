@@ -110,7 +110,6 @@ Direction BarrierSubproblem::solve(Statistics& statistics, const Model& problem,
    current_iterate.evaluate_constraint_jacobian(problem);
 
    // set up the augmented system (with the correct inertia)
-   this->hessian_model->adjust_number_variables(problem.number_variables);
    this->assemble_augmented_system(problem, current_iterate);
 
    // compute the solution (Δx, -Δλ)
