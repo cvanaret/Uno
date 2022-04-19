@@ -51,8 +51,6 @@ protected:
    [[nodiscard]] static size_t count_elastic_variables(const Model& model);
    void generate_elastic_variables();
    [[nodiscard]] double get_proximal_weight(size_t i) const;
-   void add_elastics_to_constraints(const std::vector<double>& x, std::vector<double>& constraints) const;
-   void add_elastics_to_constraint_jacobian(std::vector<SparseVector<double>>& constraint_jacobian) const;
 };
 
 inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier,
@@ -164,37 +162,28 @@ inline double l1RelaxedProblem::predicted_reduction_contribution(const Iterate& 
    }
 }
 
-inline void l1RelaxedProblem::add_elastics_to_constraints(const std::vector<double>& x, std::vector<double>& constraints) const {
-   // add the contribution of the elastics
-   this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {
-      constraints[j] -= x[elastic_index];
-   });
-   this->elastic_variables.negative.for_each([&](size_t j, size_t elastic_index) {
-      constraints[j] += x[elastic_index];
-   });
-}
-
-inline void l1RelaxedProblem::add_elastics_to_constraint_jacobian(std::vector<SparseVector<double>>& constraint_jacobian) const {
-   this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {
-      constraint_jacobian[j].insert(elastic_index, -1.);
-   });
-   this->elastic_variables.negative.for_each([&](size_t j, size_t elastic_index) {
-      constraint_jacobian[j].insert(elastic_index, 1.);
-   });
-}
-
 inline void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
    iterate.evaluate_constraints(this->model);
    copy_from(constraints, iterate.original_evaluations.constraints);
    // add the contribution of the elastics
-   this->add_elastics_to_constraints(iterate.x, constraints);
+   this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {
+      constraints[j] -= iterate.x[elastic_index];
+   });
+   this->elastic_variables.negative.for_each([&](size_t j, size_t elastic_index) {
+      constraints[j] += iterate.x[elastic_index];
+   });
 }
 
 inline void l1RelaxedProblem::evaluate_constraint_jacobian(Iterate& iterate, std::vector<SparseVector<double>>& constraint_jacobian) const {
    iterate.evaluate_constraint_jacobian(this->model);
    constraint_jacobian = iterate.original_evaluations.constraint_jacobian;
    // add the contribution of the elastics
-   this->add_elastics_to_constraint_jacobian(constraint_jacobian);
+   this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {
+      constraint_jacobian[j].insert(elastic_index, -1.);
+   });
+   this->elastic_variables.negative.for_each([&](size_t j, size_t elastic_index) {
+      constraint_jacobian[j].insert(elastic_index, 1.);
+   });
 }
 
 inline void l1RelaxedProblem::evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers,
