@@ -156,7 +156,7 @@ GlobalizationStrategy& FeasibilityRestoration::switch_phase(Iterate& current_ite
 
 void FeasibilityRestoration::set_variable_bounds(const Iterate& current_iterate, double trust_region_radius) {
    // set the bounds of all the variables (primal + elastics)
-   this->subproblem->set_variable_bounds(this->relaxed_problem.model, current_iterate, trust_region_radius);
+   this->subproblem->set_variable_bounds(this->relaxed_problem, current_iterate, trust_region_radius);
 }
 
 Direction FeasibilityRestoration::compute_second_order_correction(Iterate& trial_iterate) {
