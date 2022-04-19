@@ -13,9 +13,6 @@ public:
       objective_multiplier, double predicted_reduction) override;
    void reset() override;
    void notify(Iterate& current_iterate) override;
-
-private:
-   const double armijo_decrease_fraction;
 };
 
 #endif // UNO_L1MERITFUNCTION_H

@@ -59,8 +59,8 @@ bool FilterStrategy::is_acceptable(Statistics& /*statistics*/, const ProgressMea
             DEBUG << "Current iterate was added to the filter\n";
             accept = true;
          }
-         // Armijo sufficient decrease condition: predicted_reduction should be positive
-         else if (this->armijo_condition(predicted_reduction, actual_reduction)) {
+         // Armijo sufficient decrease condition (predicted_reduction should be positive)
+         else if (this->armijo_sufficient_decrease(predicted_reduction, actual_reduction)) {
             DEBUG << "Trial iterate was accepted by satisfying Armijo condition\n";
             accept = true;
          }

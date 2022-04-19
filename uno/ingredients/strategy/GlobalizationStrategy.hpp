@@ -26,7 +26,7 @@ protected:
    const double armijo_decrease_fraction; /*!< Sufficient reduction constant */
    const double armijo_tolerance;
 
-   [[nodiscard]] bool armijo_condition(double predicted_reduction, double actual_reduction) const;
+   [[nodiscard]] bool armijo_sufficient_decrease(double predicted_reduction, double actual_reduction) const;
 };
 
 #endif // UNO_GLOBALIZATIONSTRATEGY_H

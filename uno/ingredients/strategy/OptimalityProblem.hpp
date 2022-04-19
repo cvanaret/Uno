@@ -18,6 +18,8 @@ public:
    void evaluate_constraint_jacobian(Iterate& iterate, std::vector<SparseVector<double>>& constraint_jacobian) const override;
    void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix& hessian) const override;
 
+   [[nodiscard]] double predicted_reduction_contribution(const Iterate& current_iterate, const Direction& direction, double step_length) const override;
+
    [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
    [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
    [[nodiscard]] double get_constraint_lower_bound(size_t j) const override;
@@ -67,6 +69,11 @@ inline void OptimalityProblem::evaluate_lagrangian_hessian(const std::vector<dou
    const double objective_multiplier = 1.;
    this->model.evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian);
    hessian.dimension = this->number_variables;
+}
+
+inline double OptimalityProblem::predicted_reduction_contribution(const Iterate& /*current_iterate*/, const Direction& /*direction*/,
+      double /*step_length*/) const {
+   return 0.;
 }
 
 inline double OptimalityProblem::get_variable_lower_bound(size_t i) const {
