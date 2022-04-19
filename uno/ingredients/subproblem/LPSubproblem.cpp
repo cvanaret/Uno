@@ -2,7 +2,7 @@
 #include "solvers/QP/LPSolverFactory.hpp"
 
 LPSubproblem::LPSubproblem(const NonlinearProblem& problem, size_t max_number_variables, const Options& options) :
-      ActiveSetSubproblem(max_number_variables, problem.number_constraints, NO_SOC, false, norm_from_string(options.at("residual_norm"))),
+      ActiveSetSubproblem(max_number_variables, problem.number_constraints, NO_SOC, norm_from_string(options.at("residual_norm"))),
       solver(LPSolverFactory::create(max_number_variables, problem.number_constraints, options.at("LP_solver"))),
       objective_gradient(max_number_variables),
       constraints(problem.number_constraints),
@@ -46,7 +46,7 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem
 }
 
 PredictedReductionModel LPSubproblem::generate_predicted_reduction_model(const NonlinearProblem& /*problem*/, const Direction& direction) const {
-   return PredictedReductionModel(-direction.objective, [&]() { // capture direction by reference
+   return PredictedReductionModel(-direction.objective, [&]() { // capture "direction" by reference
       // return a function of the step length that cheaply assembles the predicted reduction
       return [=](double step_length) { // capture the expensive quantities by value
          return -step_length * direction.objective;

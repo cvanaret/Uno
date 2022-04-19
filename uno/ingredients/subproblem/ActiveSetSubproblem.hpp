@@ -5,8 +5,7 @@
 
 class ActiveSetSubproblem : public Subproblem {
 public:
-   ActiveSetSubproblem(size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy, bool is_second_order_method,
-         Norm residual_norm);
+   ActiveSetSubproblem(size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy, Norm residual_norm);
    ~ActiveSetSubproblem() override = default;
 
    void set_initial_point(const std::optional<std::vector<double>>& optional_initial_point) override;

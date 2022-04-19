@@ -2,7 +2,7 @@
 #include "solvers/QP/QPSolverFactory.hpp"
 
 QPSubproblem::QPSubproblem(const NonlinearProblem& problem, size_t max_number_variables, const Options& options) :
-      ActiveSetSubproblem(max_number_variables, problem.number_constraints, NO_SOC, true, norm_from_string(options.at("residual_norm"))),
+      ActiveSetSubproblem(max_number_variables, problem.number_constraints, NO_SOC, norm_from_string(options.at("residual_norm"))),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
       solver(QPSolverFactory::create(options.at("QP_solver"), max_number_variables, problem.number_constraints,
             problem.get_maximum_number_hessian_nonzeros()
@@ -57,7 +57,7 @@ Direction QPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem
 }
 
 PredictedReductionModel QPSubproblem::generate_predicted_reduction_model(const NonlinearProblem& problem, const Direction& direction) const {
-   return PredictedReductionModel(-direction.objective, [&]() { // capture this and direction by reference
+   return PredictedReductionModel(-direction.objective, [&]() { // capture "this" and "direction" by reference
       // precompute expensive quantities
       const double linear_term = dot(direction.x, this->objective_gradient);
       const double quadratic_term = this->hessian_model->hessian->quadratic_product(direction.x, direction.x, problem.number_variables) / 2.;
