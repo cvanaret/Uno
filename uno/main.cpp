@@ -1,15 +1,12 @@
 #include "ingredients/strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/mechanism/GlobalizationMechanismFactory.hpp"
 #include "ingredients/constraint_relaxation/ConstraintRelaxationStrategyFactory.hpp"
-#include "ingredients/strategy/l1RelaxedProblem.hpp"
 #include "Uno.hpp"
 #include "optimization/ModelFactory.hpp"
 #include "optimization/ScaledModel.hpp"
 #include "optimization/EqualityConstrainedModel.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Options.hpp"
-#include "linear_algebra/CSCSymmetricMatrix.hpp"
-#include "linear_algebra/COOSymmetricMatrix.hpp"
 #include "tools/Timer.hpp"
 
 // new() overload to track heap allocations
@@ -28,8 +25,8 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
    auto original_model = ModelFactory::create(model_name);
    INFO << "Heap allocations after AMPL: " << total_allocations << "\n";
 
-   //auto reformulated_model = std::make_unique<EqualityConstrainedModel>(*original_model);
-   Model* reformulated_model = original_model.get();
+   auto reformulated_model = std::make_unique<EqualityConstrainedModel>(*original_model);
+   //Model* reformulated_model = original_model.get();
 
    // initial primal and dual points
    Iterate first_iterate(reformulated_model->number_variables, reformulated_model->number_constraints);
@@ -78,45 +75,6 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
 }
 
 Level Logger::logger_level = INFO;
-
-void test_problem_with_slacks(const std::string& model_name) {
-   auto original_model = ModelFactory::create(model_name);
-   // add slacks
-   const Model& model_to_solve = EqualityConstrainedModel(*original_model);
-
-   // create the first iterate (slacks set to 0)
-   Iterate first_iterate(model_to_solve.number_variables, model_to_solve.number_constraints);
-   model_to_solve.get_initial_primal_point(first_iterate.x);
-   model_to_solve.get_initial_dual_point(first_iterate.multipliers.constraints);
-
-   // set slack values
-   for (size_t i = original_model->number_variables; i < model_to_solve.number_variables; i++) {
-      //const Range bounds = {model_to_solve.get_variable_lower_bound(i), model_to_solve.get_variable_upper_bound(i)};
-      //first_iterate.x[i] = BarrierSubproblem::push_variable_to_interior(0., bounds);
-   }
-
-   std::cout << "x = "; print_vector(std::cout, first_iterate.x);
-   std::cout << "multipliers = "; print_vector(std::cout, first_iterate.multipliers.constraints);
-
-   for (size_t i = 0; i < model_to_solve.number_variables; i++) {
-      std::cout << "Bounds of x" << i << ": [" << model_to_solve.get_variable_lower_bound(i) << ", " <<
-                model_to_solve.get_variable_upper_bound(i) << "]\n";
-   }
-   for (size_t j = 0; j < model_to_solve.number_constraints; j++) {
-      std::cout << "Bounds of c" << j << ": [" << model_to_solve.get_constraint_lower_bound(j) << ", " <<
-                model_to_solve.get_constraint_upper_bound(j) << "]\n";
-   }
-
-   // evaluations
-   //model_to_solve.evaluate_constraint_jacobian(first_iterate);
-   for (size_t j = 0; j < model_to_solve.number_constraints; j++) {
-      std::cout << first_iterate.original_evaluations.constraint_jacobian[j];
-   }
-
-   CSCSymmetricMatrix hessian(model_to_solve.number_variables, model_to_solve.get_hessian_maximum_number_nonzeros());
-   model_to_solve.evaluate_lagrangian_hessian(first_iterate.x, 1., first_iterate.multipliers.constraints, hessian);
-   std::cout << hessian;
-}
 
 int main(int argc, char* argv[]) {
    if (1 < argc) {

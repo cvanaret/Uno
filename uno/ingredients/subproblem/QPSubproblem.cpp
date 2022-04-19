@@ -5,13 +5,13 @@ QPSubproblem::QPSubproblem(const NonlinearProblem& problem, size_t max_number_va
       ActiveSetSubproblem(max_number_variables, problem.number_constraints, NO_SOC, true, norm_from_string(options.at("residual_norm"))),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
       solver(QPSolverFactory::create(options.at("QP_solver"), max_number_variables, problem.number_constraints,
-            problem.get_hessian_maximum_number_nonzeros()
+            problem.get_maximum_number_hessian_nonzeros()
             + max_number_variables, /* regularization */
             true)),
       proximal_coefficient(stod(options.at("proximal_coefficient"))),
       // if no trust region is used, the problem should be convexified to guarantee boundedness + descent direction
       hessian_model(HessianModelFactory::create(options.at("hessian_model"), max_number_variables,
-            problem.get_hessian_maximum_number_nonzeros() + max_number_variables, options.at("mechanism") != "TR", options)),
+            problem.get_maximum_number_hessian_nonzeros() + max_number_variables, options.at("mechanism") != "TR", options)),
       objective_gradient(max_number_variables),
       constraints(problem.number_constraints),
       constraint_jacobian(problem.number_constraints) {
@@ -20,7 +20,7 @@ QPSubproblem::QPSubproblem(const NonlinearProblem& problem, size_t max_number_va
    }
 }
 
-Direction QPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem& problem, Iterate& current_iterate) {
+void QPSubproblem::evaluate_problem(const NonlinearProblem& problem, Iterate& current_iterate) {
    // Hessian
    this->hessian_model->evaluate(problem, current_iterate.x, current_iterate.multipliers.constraints);
 
@@ -32,6 +32,11 @@ Direction QPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem
 
    // constraint Jacobian
    problem.evaluate_constraint_jacobian(current_iterate, this->constraint_jacobian);
+}
+
+Direction QPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem& problem, Iterate& current_iterate) {
+   // evaluate the functions at the current iterate
+   this->evaluate_problem(problem, current_iterate);
 
    // bounds of the variable displacements
    this->set_variable_displacement_bounds(problem, current_iterate);

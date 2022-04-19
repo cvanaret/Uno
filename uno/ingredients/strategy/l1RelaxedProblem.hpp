@@ -11,6 +11,7 @@ class l1RelaxedProblem: public NonlinearProblem {
 public:
    l1RelaxedProblem(const Model& model, double objective_multiplier, double elastic_objective_coefficient, bool use_proximal_term);
 
+   [[nodiscard]] double get_objective_multiplier() const override;
    [[nodiscard]] double evaluate_objective(Iterate& iterate) const override;
    void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const override;
    void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const override;
@@ -22,7 +23,7 @@ public:
    [[nodiscard]] double get_constraint_lower_bound(size_t j) const override;
    [[nodiscard]] double get_constraint_upper_bound(size_t j) const override;
 
-   [[nodiscard]] size_t get_hessian_maximum_number_nonzeros() const override;
+   [[nodiscard]] size_t get_maximum_number_hessian_nonzeros() const override;
    [[nodiscard]] std::vector<size_t> get_violated_linearized_constraints(const std::vector<double>& x) const;
    [[nodiscard]] double compute_linearized_constraint_violation(const std::vector<double>& x) const;
    [[nodiscard]] double compute_linearized_constraint_violation(const std::vector<double>& x, const std::vector<double>& dx) const;
@@ -85,6 +86,10 @@ inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_m
    this->elastic_variables.negative.for_each_value([&](size_t elastic_index) {
       this->lower_bounded_variables.push_back(elastic_index);
    });
+}
+
+inline double l1RelaxedProblem::get_objective_multiplier() const {
+   return this->objective_multiplier;
 }
 
 // return rho*f(x) + coeff*(e^T p + e^T n) + proximal
@@ -242,9 +247,9 @@ inline double l1RelaxedProblem::get_constraint_upper_bound(size_t j) const {
    return this->model.get_constraint_upper_bound(j);
 }
 
-inline size_t l1RelaxedProblem::get_hessian_maximum_number_nonzeros() const {
+inline size_t l1RelaxedProblem::get_maximum_number_hessian_nonzeros() const {
    // add the proximal term
-   return this->model.get_hessian_maximum_number_nonzeros() + (use_proximal_term ? this->model.number_variables : 0);
+   return this->model.get_maximum_number_hessian_nonzeros() + (use_proximal_term ? this->model.number_variables : 0);
 }
 
 inline void l1RelaxedProblem::set_objective_multiplier(double new_objective_multiplier) {

@@ -342,7 +342,7 @@ ConstraintType AMPLModel::get_constraint_status(size_t j) const {
    return this->constraint_status[j];
 }
 
-size_t AMPLModel::get_hessian_maximum_number_nonzeros() const {
+size_t AMPLModel::get_maximum_number_hessian_nonzeros() const {
    return this->hessian_maximum_number_nonzeros;
 }
 

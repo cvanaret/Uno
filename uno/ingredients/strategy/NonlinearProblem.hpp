@@ -20,6 +20,8 @@ public:
    const size_t number_variables; /*!< Number of variables */
    const size_t number_constraints; /*!< Number of constraints */
 
+   [[nodiscard]] bool is_constrained() const;
+
    SparseVector<size_t> equality_constraints; /*!< inequality constraints */
    SparseVector<size_t> inequality_constraints; /*!< inequality constraints */
    SparseVector<size_t> linear_constraints;
@@ -28,6 +30,7 @@ public:
    std::vector<size_t> upper_bounded_variables{}; // indices of the upper-bounded variables
 
    // function evaluations
+   [[nodiscard]] virtual double get_objective_multiplier() const = 0;
    [[nodiscard]] virtual double evaluate_objective(Iterate& iterate) const = 0;
    virtual void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const = 0;
    virtual void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const = 0;
@@ -41,7 +44,7 @@ public:
    [[nodiscard]] virtual double get_constraint_lower_bound(size_t j) const = 0;
    [[nodiscard]] virtual double get_constraint_upper_bound(size_t j) const = 0;
 
-   [[nodiscard]] virtual size_t get_hessian_maximum_number_nonzeros() const = 0;
+   [[nodiscard]] virtual size_t get_maximum_number_hessian_nonzeros() const = 0;
 
    [[nodiscard]] double compute_constraint_lower_bound_violation(double constraint, size_t j) const;
    [[nodiscard]] double compute_constraint_upper_bound_violation(double constraint, size_t j) const;

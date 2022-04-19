@@ -11,6 +11,7 @@ class OptimalityProblem: public NonlinearProblem {
 public:
    explicit OptimalityProblem(const Model& model);
 
+   [[nodiscard]] double get_objective_multiplier() const override;
    [[nodiscard]] double evaluate_objective(Iterate& iterate) const override;
    void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const override;
    void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const override;
@@ -22,7 +23,7 @@ public:
    [[nodiscard]] double get_constraint_lower_bound(size_t j) const override;
    [[nodiscard]] double get_constraint_upper_bound(size_t j) const override;
 
-   [[nodiscard]] size_t get_hessian_maximum_number_nonzeros() const override;
+   [[nodiscard]] size_t get_maximum_number_hessian_nonzeros() const override;
 };
 
 inline OptimalityProblem::OptimalityProblem(const Model& model):
@@ -34,6 +35,10 @@ inline OptimalityProblem::OptimalityProblem(const Model& model):
    for (size_t i: this->model.upper_bounded_variables) {
       this->upper_bounded_variables.push_back(i);
    }
+}
+
+inline double OptimalityProblem::get_objective_multiplier() const {
+   return 1.;
 }
 
 // return rho*f(x) + coeff*(e^T p + e^T n) + proximal
@@ -80,8 +85,8 @@ inline double OptimalityProblem::get_constraint_upper_bound(size_t j) const {
    return this->model.get_constraint_upper_bound(j);
 }
 
-inline size_t OptimalityProblem::get_hessian_maximum_number_nonzeros() const {
-   return this->model.get_hessian_maximum_number_nonzeros();
+inline size_t OptimalityProblem::get_maximum_number_hessian_nonzeros() const {
+   return this->model.get_maximum_number_hessian_nonzeros();
 }
 
 #endif // UNO_OPTIMALITYPROBLEM_H

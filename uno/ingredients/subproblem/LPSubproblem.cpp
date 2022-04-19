@@ -12,7 +12,7 @@ LPSubproblem::LPSubproblem(const NonlinearProblem& problem, size_t max_number_va
    }
 }
 
-Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem& problem, Iterate& current_iterate) {
+void LPSubproblem::evaluate_problem(const NonlinearProblem& problem, Iterate& current_iterate) {
    // objective gradient
    problem.evaluate_objective_gradient(current_iterate, this->objective_gradient);
 
@@ -21,6 +21,11 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem
 
    // constraint Jacobian
    problem.evaluate_constraint_jacobian(current_iterate, this->constraint_jacobian);
+}
+
+Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem& problem, Iterate& current_iterate) {
+   // evaluate the functions at the current iterate
+   this->evaluate_problem(problem, current_iterate);
 
    // bounds of the variable displacements
    this->set_variable_displacement_bounds(problem, current_iterate);

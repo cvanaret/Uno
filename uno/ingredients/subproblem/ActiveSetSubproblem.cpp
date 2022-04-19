@@ -48,8 +48,7 @@ void ActiveSetSubproblem::compute_dual_displacements(const NonlinearProblem& pro
    }
 }
 
-double ActiveSetSubproblem::compute_optimality_measure(const Model& model, Iterate& iterate) {
+double ActiveSetSubproblem::compute_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) {
    // optimality measure: objective value
-   iterate.evaluate_objective(model);
-   return iterate.original_evaluations.objective;
+   return problem.evaluate_objective(iterate);
 }
