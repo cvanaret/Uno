@@ -38,8 +38,6 @@ set(SRC_FILES
     uno/ingredients/strategy/FilterStrategy.cpp
     uno/ingredients/strategy/Filter.cpp
     uno/ingredients/strategy/l1MeritFunction.cpp
-    uno/ingredients/strategy/NonlinearProblem.cpp
-    uno/ingredients/strategy/l1RelaxedProblem.hpp
     
     uno/ingredients/constraint_relaxation/ConstraintRelaxationStrategy.cpp
     uno/ingredients/constraint_relaxation/ConstraintRelaxationStrategyFactory.cpp
@@ -70,15 +68,7 @@ set(SRC_FILES
     uno/optimization/Iterate.cpp
     uno/optimization/Preprocessing.cpp
     uno/optimization/Scaling.cpp
-    uno/optimization/ScaledModel.hpp
-    uno/optimization/EqualityConstrainedModel.hpp
 
-    uno/solvers/linear/LinearSolverFactory.hpp
-	 uno/solvers/QP/QPSolverFactory.hpp
-    uno/solvers/QP/LPSolver.hpp
-    uno/solvers/QP/QPSolver.hpp
-
-    uno/tools/Logger.hpp
     uno/tools/Statistics.cpp
     uno/tools/Timer.cpp
     uno/tools/Options.cpp

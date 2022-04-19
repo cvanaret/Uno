@@ -1,12 +1,7 @@
 #include "l1MeritFunction.hpp"
 
-/*
- * Infeasibility detection and SQP methods for nonlinear optimization 
- * http://epubs.siam.org/doi/pdf/10.1137/080738222
- */
-
-l1MeritFunction::l1MeritFunction(const Options& options) :
-      GlobalizationStrategy(options), armijo_decrease_fraction(stod(options.at("armijo_decrease_fraction"))) {
+l1MeritFunction::l1MeritFunction(const Options& options):
+      GlobalizationStrategy(options) {
 }
 
 void l1MeritFunction::initialize(Statistics& statistics, const Iterate& /*first_iterate*/) {
@@ -30,7 +25,7 @@ bool l1MeritFunction::is_acceptable(Statistics& statistics, const ProgressMeasur
 
    bool accept = false;
    // Armijo sufficient decrease condition
-   if (this->armijo_condition(predicted_reduction, actual_reduction)) {
+   if (this->armijo_sufficient_decrease(predicted_reduction, actual_reduction)) {
       accept = true;
    }
 

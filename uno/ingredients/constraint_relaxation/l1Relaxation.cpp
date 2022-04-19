@@ -3,6 +3,11 @@
 #include "ingredients/strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 
+/*
+ * Infeasibility detection and SQP methods for nonlinear optimization
+ * http://epubs.siam.org/doi/pdf/10.1137/080738222
+ */
+
 l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
       ConstraintRelaxationStrategy(),
       // create the optimality problem

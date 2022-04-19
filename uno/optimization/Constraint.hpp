@@ -9,11 +9,6 @@ enum FunctionType {
    NONLINEAR /*!< Nonlinear function */
 };
 
-enum Smoothness {
-   SMOOTH = 0,
-   NONSMOOTH
-};
-
 enum ConstraintType { EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES, UNBOUNDED };
 
 /*! \struct ConstraintActivity
