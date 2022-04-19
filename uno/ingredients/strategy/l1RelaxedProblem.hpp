@@ -4,7 +4,14 @@
 #include <vector>
 #include <cmath>
 #include "NonlinearProblem.hpp"
-#include "ingredients/constraint_relaxation/ElasticVariables.hpp"
+#include "linear_algebra/SparseVector.hpp"
+
+struct ElasticVariables {
+   SparseVector<size_t> positive;
+   SparseVector<size_t> negative;
+   explicit ElasticVariables(size_t capacity): positive(capacity), negative(capacity) {}
+   [[nodiscard]] size_t size() const { return this->positive.size() + this->negative.size(); }
+};
 
 class l1RelaxedProblem: public NonlinearProblem {
 public:
