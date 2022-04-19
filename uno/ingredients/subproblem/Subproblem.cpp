@@ -8,10 +8,6 @@ Subproblem::Subproblem(size_t max_number_variables, size_t number_constraints, S
       residual_norm(residual_norm) {
 }
 
-void Subproblem::initialize(Statistics& /*statistics*/, const NonlinearProblem& /*problem*/, Iterate& /*first_iterate*/) {
-   // by default, do nothing
-}
-
 void Subproblem::set_variable_bounds(const NonlinearProblem& problem, const Iterate& current_iterate, double trust_region_radius) {
    // bounds intersected with trust region
    // very important: apply the trust region only on the original variables
@@ -74,12 +70,4 @@ void Subproblem::compute_nonlinear_residuals(const NonlinearProblem& problem, It
    iterate.nonlinear_errors.stationarity = this->compute_first_order_error(problem.model, iterate);
    iterate.nonlinear_errors.complementarity = Subproblem::compute_complementarity_error(problem.model, iterate, iterate.multipliers.constraints,
          iterate.multipliers.lower_bounds, iterate.multipliers.upper_bounds);
-}
-
-Direction Subproblem::compute_second_order_correction(const NonlinearProblem& /*problem*/, Iterate& /*trial_iterate*/) {
-   assert(false && "Subproblem::compute_second_order_correction");
-}
-
-void Subproblem::postprocess_accepted_iterate(const NonlinearProblem& /*problem*/, Iterate& /*iterate*/) {
-   // by default, do nothing
 }

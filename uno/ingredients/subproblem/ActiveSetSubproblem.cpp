@@ -7,6 +7,9 @@ ActiveSetSubproblem::ActiveSetSubproblem(size_t max_number_variables, size_t num
       linearized_constraint_bounds(number_constraints) {
 }
 
+void ActiveSetSubproblem::initialize(Statistics& /*statistics*/, const NonlinearProblem& /*problem*/, Iterate& /*first_iterate*/) {
+}
+
 void ActiveSetSubproblem::set_initial_point(const std::optional<std::vector<double>>& optional_initial_point) {
    // if provided, set the initial point
    if (optional_initial_point.has_value()) {
@@ -50,4 +53,12 @@ void ActiveSetSubproblem::compute_dual_displacements(const NonlinearProblem& pro
 double ActiveSetSubproblem::compute_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) {
    // optimality measure: objective value
    return problem.evaluate_objective(iterate);
+}
+
+Direction ActiveSetSubproblem::compute_second_order_correction(const NonlinearProblem& /*problem*/, Iterate& /*trial_iterate*/) {
+   assert(false && "ActiveSetSubproblem::compute_second_order_correction");
+}
+
+void ActiveSetSubproblem::postprocess_accepted_iterate(const NonlinearProblem& /*problem*/, Iterate& /*iterate*/) {
+   // by default, do nothing
 }

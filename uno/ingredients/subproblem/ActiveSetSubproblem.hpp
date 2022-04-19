@@ -8,9 +8,12 @@ public:
    ActiveSetSubproblem(size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy, Norm residual_norm);
    ~ActiveSetSubproblem() override = default;
 
+   void initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) override;
    void set_initial_point(const std::optional<std::vector<double>>& optional_initial_point) override;
    void set_elastic_variables(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
+   [[nodiscard]] Direction compute_second_order_correction(const NonlinearProblem& model, Iterate& trial_iterate) override;
    [[nodiscard]] double compute_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) override;
+   void postprocess_accepted_iterate(const NonlinearProblem& model, Iterate& iterate) override;
 
 protected:
    std::vector<double> initial_point;
