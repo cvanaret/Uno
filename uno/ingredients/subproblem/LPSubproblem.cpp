@@ -10,6 +10,10 @@ LPSubproblem::LPSubproblem(const NonlinearProblem& problem, size_t max_number_va
    for (auto& constraint_gradient: this->constraint_jacobian) {
       constraint_gradient.reserve(max_number_variables);
    }
+   // register the variables bounds
+   for (size_t i = 0; i < problem.number_variables; i++) {
+      this->variable_bounds[i] = {problem.get_variable_lower_bound(i), problem.get_variable_upper_bound(i)};
+   }
 }
 
 void LPSubproblem::evaluate_problem(const NonlinearProblem& problem, Iterate& current_iterate) {
