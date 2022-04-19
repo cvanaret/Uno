@@ -5,7 +5,6 @@
 #include <memory>
 #include "optimization/Model.hpp"
 #include "optimization/Iterate.hpp"
-#include "optimization/Constraint.hpp"
 #include "ingredients/strategy/l1RelaxedProblem.hpp"
 #include "Direction.hpp"
 #include "PredictedReductionModel.hpp"

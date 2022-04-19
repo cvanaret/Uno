@@ -90,3 +90,8 @@ std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
 
    return stream;
 }
+
+ConstraintPartition::ConstraintPartition(size_t number_constraints) {
+   this->feasible.reserve(number_constraints);
+   this->infeasible.reserve(number_constraints);
+}

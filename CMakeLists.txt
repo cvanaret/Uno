@@ -64,7 +64,6 @@ set(SRC_FILES
     
     uno/optimization/Model.cpp
     uno/optimization/ModelFactory.cpp
-    uno/optimization/Constraint.cpp
     uno/optimization/Iterate.cpp
     uno/optimization/Preprocessing.cpp
     uno/optimization/Scaling.cpp

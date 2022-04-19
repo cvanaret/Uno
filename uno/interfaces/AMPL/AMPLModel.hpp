@@ -3,7 +3,6 @@
 
 #include <vector>
 #include "optimization/Model.hpp"
-#include "optimization/Constraint.hpp"
 
 extern "C" {
 #include "asl_pfgh.h"

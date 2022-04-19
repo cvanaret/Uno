@@ -4,7 +4,6 @@
 #include <vector>
 #include <cmath>
 #include "NonlinearProblem.hpp"
-#include "optimization/Constraint.hpp"
 #include "ingredients/constraint_relaxation/ElasticVariables.hpp"
 
 class l1RelaxedProblem: public NonlinearProblem {

@@ -5,6 +5,10 @@
 #include "Model.hpp"
 #include "linear_algebra/Vector.hpp"
 
+bool is_finite(double value) {
+   return std::abs(value) < std::numeric_limits<double>::infinity();
+}
+
 std::map<FunctionType, std::string> Model::type_to_string = {
       {LINEAR, "linear"},
       {QUADRATIC, "quadratic"},

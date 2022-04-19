@@ -1,7 +1,6 @@
 #include <cassert>
 #include "Subproblem.hpp"
 #include "linear_algebra/SparseVector.hpp"
-#include "optimization/Constraint.hpp"
 
 Subproblem::Subproblem(size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy, Norm residual_norm):
       soc_strategy(soc_strategy), variable_bounds(max_number_variables),
