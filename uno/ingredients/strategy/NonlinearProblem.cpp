@@ -31,21 +31,22 @@ double NonlinearProblem::compute_constraint_violation(double constraint, size_t 
 }
 
 // compute ||c_S|| for a given set of constraints
-double NonlinearProblem::compute_constraint_violation(const std::vector<double>& constraints, const std::vector<size_t>& constraint_set, Norm residual_norm) const {
+double NonlinearProblem::compute_constraint_violation(const std::vector<double>& constraints, const std::vector<size_t>& constraint_set,
+      Norm norm_type) const {
    auto residual_function = [&](size_t k) {
       const size_t j = constraint_set[k];
       return this->compute_constraint_violation(constraints[j], j);
    };
-   return norm(residual_function, constraint_set.size(), residual_norm);
+   return norm(residual_function, constraint_set.size(), norm_type);
 }
 
 // compute ||c||
-double NonlinearProblem::compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const {
+double NonlinearProblem::compute_constraint_violation(const std::vector<double>& constraints, Norm norm_type) const {
    // create a lambda to avoid allocating an std::vector
    auto residual_function = [&](size_t j) {
       return this->compute_constraint_violation(constraints[j], j);
    };
-   return norm(residual_function, constraints.size(), residual_norm);
+   return norm(residual_function, constraints.size(), norm_type);
 }
 
 

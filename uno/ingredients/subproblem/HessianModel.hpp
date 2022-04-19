@@ -17,7 +17,6 @@ public:
    size_t evaluation_count{0};
 
    virtual void evaluate(const NonlinearProblem& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) = 0;
-   void adjust_number_variables(size_t number_variables) const;
 };
 
 // Exact Hessian
