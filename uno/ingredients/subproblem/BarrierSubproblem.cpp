@@ -3,7 +3,6 @@
 #include "solvers/linear/LinearSolverFactory.hpp"
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
 #include "optimization/Preprocessing.hpp"
-#include "ingredients/strategy/l1RelaxedProblem.hpp"
 
 BarrierSubproblem::BarrierSubproblem(const NonlinearProblem& problem, size_t max_number_variables, const Options& options):
       Subproblem(max_number_variables, // max_number_variables

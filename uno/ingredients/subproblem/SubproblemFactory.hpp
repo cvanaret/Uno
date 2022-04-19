@@ -3,7 +3,7 @@
 
 #include <memory>
 #include "Subproblem.hpp"
-#include "ingredients/strategy/NonlinearProblem.hpp"
+#include "ingredients/constraint_relaxation/NonlinearProblem.hpp"
 #include "tools/Options.hpp"
 
 class SubproblemFactory {
