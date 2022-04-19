@@ -77,10 +77,12 @@ void BarrierSubproblem::evaluate_problem(const NonlinearProblem& problem, Iterat
    // barrier objective gradient
    problem.evaluate_objective_gradient(current_iterate, this->objective_gradient);
    for (size_t i: problem.lower_bounded_variables) {
+      assert(this->variable_bounds[i].lb < current_iterate.x[i] && "Barrier subproblem: a variable is at its lower bound");
       const double term = -this->barrier_parameter / (current_iterate.x[i] - this->variable_bounds[i].lb);
       this->objective_gradient.insert(i, term);
    }
    for (size_t i: problem.upper_bounded_variables) {
+      assert(current_iterate.x[i] < this->variable_bounds[i].ub && "Barrier subproblem: a variable is at its upper bound");
       const double term = -this->barrier_parameter / (current_iterate.x[i] - this->variable_bounds[i].ub);
       this->objective_gradient.insert(i, term);
    }
