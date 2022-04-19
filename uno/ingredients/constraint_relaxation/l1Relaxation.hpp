@@ -3,8 +3,8 @@
 
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/strategy/GlobalizationStrategy.hpp"
-#include "ingredients/strategy/OptimalityProblem.hpp"
-#include "ingredients/strategy/l1RelaxedProblem.hpp"
+#include "ingredients/constraint_relaxation/OptimalityProblem.hpp"
+#include "ingredients/constraint_relaxation/l1RelaxedProblem.hpp"
 #include "tools/Options.hpp"
 
 struct l1RelaxationParameters {

@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <vector>
-#include "ingredients/strategy/NonlinearProblem.hpp"
+#include "ingredients/constraint_relaxation/NonlinearProblem.hpp"
 #include "solvers/linear/LinearSolver.hpp"
 #include "tools/Options.hpp"
 

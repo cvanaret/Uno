@@ -3,7 +3,6 @@
 
 #include "ActiveSetSubproblem.hpp"
 #include "HessianModel.hpp"
-#include "ingredients/strategy/NonlinearProblem.hpp"
 #include "solvers/QP/QPSolver.hpp"
 #include "tools/Options.hpp"
 
