@@ -22,6 +22,8 @@ private:
    SparseVector<double> objective_gradient;
    std::vector<double> constraints;
    std::vector<SparseVector<double>> constraint_jacobian;
+
+   void evaluate_problem(const NonlinearProblem& problem, Iterate& current_iterate);
 };
 
 #endif // UNO_LPSUBPROBLEM_H

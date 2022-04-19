@@ -42,7 +42,7 @@ public:
    // globalization metrics
    [[nodiscard]] virtual PredictedReductionModel generate_predicted_reduction_model(const NonlinearProblem& problem, const Direction& direction) const = 0;
    [[nodiscard]] double compute_first_order_error(const Model& model, Iterate& iterate) const;
-   [[nodiscard]] virtual double compute_optimality_measure(const Model& model, Iterate& iterate) = 0;
+   [[nodiscard]] virtual double compute_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) = 0;
    [[nodiscard]] static double compute_complementarity_error(const Model& model, const Iterate& iterate, const std::vector<double>& constraint_multipliers,
          const std::vector<double>& lower_bounds_multipliers, const std::vector<double>& upper_bounds_multipliers);
    void compute_nonlinear_residuals(const NonlinearProblem& problem, Iterate& iterate) const;

@@ -4,6 +4,10 @@ NonlinearProblem::NonlinearProblem(const Model& model, size_t number_variables, 
       model(model), number_variables(number_variables), number_constraints(number_constraints) {
 }
 
+bool NonlinearProblem::is_constrained() const {
+   return (0 < this->number_constraints);
+}
+
 void NonlinearProblem::evaluate_lagrangian_gradient(Iterate& iterate, std::vector<double>& lagrangian_gradient) const {
    iterate.evaluate_lagrangian_gradient(this->model, iterate.multipliers.constraints, iterate.multipliers.lower_bounds,
          iterate.multipliers.upper_bounds);

@@ -71,7 +71,7 @@ public:
    [[nodiscard]] virtual ConstraintType get_variable_status(size_t i) const = 0;
    [[nodiscard]] virtual FunctionType get_constraint_type(size_t j) const = 0;
    [[nodiscard]] virtual ConstraintType get_constraint_status(size_t j) const = 0;
-   [[nodiscard]] virtual size_t get_hessian_maximum_number_nonzeros() const = 0;
+   [[nodiscard]] virtual size_t get_maximum_number_hessian_nonzeros() const = 0;
 
    [[nodiscard]] virtual double evaluate_objective(const std::vector<double>& x) const = 0;
    virtual void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const = 0;

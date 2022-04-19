@@ -114,7 +114,7 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
    std::vector<double> solution(matrix.dimension);
    solver.factorize(matrix);
    solver.solve(matrix, rhs, solution);
-   DEBUG << "Solution: "; print_vector(DEBUG, solution, 0, matrix.dimension);
+   DEBUG << "Solution: "; print_vector(DEBUG, solution, 0, matrix.dimension); DEBUG << "\n";
 
    // if least-square multipliers too big, discard them. Otherwise, store them
    if (norm_inf(solution, number_variables, model.number_constraints) <= multipliers_max_norm) {
