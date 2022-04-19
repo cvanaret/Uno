@@ -34,7 +34,7 @@ public:
    void set_proximal_reference_point(const std::vector<double>& new_proximal_reference_point);
 
    // void set_elastic_variables(Iterate& iterate) const;
-   void reset_elastic_variables(Iterate& iterate) const;
+   void reset_elastic_variables(Iterate& iterate, double value = 0.) const;
    void add_elastics_to_constraints(const std::vector<double>& x, std::vector<double>& constraints) const;
    void add_elastics_to_constraint_jacobian(std::vector<SparseVector<double>>& constraint_jacobian) const;
 
@@ -332,13 +332,13 @@ inline void l1ElasticReformulation::set_elastic_variables(Iterate& iterate) cons
 }
  */
 
-inline void l1RelaxedProblem::reset_elastic_variables(Iterate& iterate) const {
+inline void l1RelaxedProblem::reset_elastic_variables(Iterate& iterate, double value) const {
    iterate.set_number_variables(this->number_variables);
    this->elastic_variables.positive.for_each_value([&](size_t elastic_index) {
-      iterate.x[elastic_index] = 0.;
+      iterate.x[elastic_index] = value;
    });
    this->elastic_variables.negative.for_each_value([&](size_t elastic_index) {
-      iterate.x[elastic_index] = 0.;
+      iterate.x[elastic_index] = value;
    });
 }
 
