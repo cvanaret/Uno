@@ -266,7 +266,7 @@ double l1Relaxation::compute_error(Iterate& current_iterate, const Multipliers& 
 }
 
 void l1Relaxation::set_variable_bounds(const Iterate& current_iterate, double trust_region_radius) {
-   this->subproblem->set_variable_bounds(this->relaxed_problem.model, current_iterate, trust_region_radius);
+   this->subproblem->set_variable_bounds(this->relaxed_problem, current_iterate, trust_region_radius);
 }
 
 Direction l1Relaxation::compute_second_order_correction(Iterate& trial_iterate) {
