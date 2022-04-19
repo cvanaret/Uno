@@ -396,11 +396,13 @@ double BarrierSubproblem::compute_central_complementarity_error(const NonlinearP
       }
       return result;
    };
+   const double complementarity_error = norm_1(residual_function, problem.number_variables);
 
    // scaling
    const double bound_multipliers_norm = norm_1(iterate.multipliers.lower_bounds) + norm_1(iterate.multipliers.upper_bounds);
-   const double sc = std::max(this->parameters.smax, bound_multipliers_norm / static_cast<double>(problem.number_variables)) / this->parameters.smax;
-   return norm_1(residual_function, problem.number_variables) / sc;
+   const double scaling = std::max(this->parameters.smax, bound_multipliers_norm / static_cast<double>(problem.number_variables)) / this->parameters
+         .smax;
+   return complementarity_error / scaling;
 }
 
 /*
@@ -410,6 +412,7 @@ void BarrierSubproblem::add_elastic_variables(const l1ElasticReformulation& prob
    //    n = (mu_over_rho - jacobian_term*this->barrier_constraints[j] + std::sqrt(radical))/2.
    // but Ipopt seems to use the following
    //    n = (mu_over_rho + jacobian_term*this->barrier_constraints[j] + std::sqrt(radical))/2.
+   // c(x) - p + n = 0
    for (size_t j = 0; j < problem.number_constraints; j++) {
       // precomputations
       const double constraint_j = current_iterate.problem_evaluations.constraints[j];

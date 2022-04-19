@@ -5,8 +5,12 @@
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 
 FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options& options) :
-      // create the phase-1 feasibility problem (objective multiplier = 0) with elastic variables
-      ConstraintRelaxationStrategy(model, 0., options),
+      ConstraintRelaxationStrategy(),
+      // create the optimality problem
+      optimality_problem(model),
+      // create the phase-1 feasibility problem (objective multiplier = 0)
+      relaxed_problem(model, 0., stod(options.at("elastic_objective_coefficient")), (options.at("use_proximal_term") == "yes")),
+      subproblem(SubproblemFactory::create(this->relaxed_problem, this->relaxed_problem.number_variables, options)),
       // create the globalization strategies (one for each phase)
       phase_1_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
       phase_2_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)) {
@@ -194,4 +198,16 @@ void FeasibilityRestoration::register_accepted_iterate(Iterate& iterate) {
    else {
       this->subproblem->postprocess_accepted_iterate(this->relaxed_problem, iterate);
    }
+}
+
+size_t FeasibilityRestoration::get_hessian_evaluation_count() const {
+   return this->subproblem->get_hessian_evaluation_count();
+}
+
+size_t FeasibilityRestoration::get_number_subproblems_solved() const {
+   return this->subproblem->number_subproblems_solved;
+}
+
+SecondOrderCorrection FeasibilityRestoration::soc_strategy() const {
+   return this->subproblem->soc_strategy;
 }

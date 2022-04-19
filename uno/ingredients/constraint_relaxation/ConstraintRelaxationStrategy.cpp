@@ -2,15 +2,6 @@
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 #include "optimization/Constraint.hpp"
 
-ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Model& model, double objective_multiplier, const Options& options):
-      // create the optimality problem
-      optimality_problem(model),
-      // create the relaxed problem by introducing elastic variables
-      relaxed_problem(model, objective_multiplier, stod(options.at("elastic_objective_coefficient")), (options.at("use_proximal_term") == "yes")),
-      subproblem(SubproblemFactory::create(this->relaxed_problem, this->relaxed_problem.number_variables, options)),
-      number_constraints(this->relaxed_problem.number_constraints) {
-}
-
 bool ConstraintRelaxationStrategy::is_small_step(const Direction& direction) {
    // return (direction.norm == 0.);
    const double tolerance = 1e-8;
@@ -66,16 +57,4 @@ void ConstraintRelaxationStrategy::recover_active_set(const Model& model, Direct
       }
    }
     */
-}
-
-size_t ConstraintRelaxationStrategy::get_hessian_evaluation_count() const {
-   return this->subproblem->get_hessian_evaluation_count();
-}
-
-size_t ConstraintRelaxationStrategy::get_number_subproblems_solved() const {
-   return this->subproblem->number_subproblems_solved;
-}
-
-SecondOrderCorrection ConstraintRelaxationStrategy::soc_strategy() const {
-   return this->subproblem->soc_strategy;
 }

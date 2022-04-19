@@ -4,7 +4,13 @@
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 
 l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
-      ConstraintRelaxationStrategy(model, stod(options.at("l1_relaxation_initial_parameter")), options),
+      ConstraintRelaxationStrategy(),
+      // create the optimality problem
+      optimality_problem(model),
+      // create the relaxed problem by introducing elastic variables
+      relaxed_problem(model, stod(options.at("l1_relaxation_initial_parameter")), stod(options.at("elastic_objective_coefficient")),
+            (options.at("use_proximal_term") == "yes")),
+      subproblem(SubproblemFactory::create(this->relaxed_problem, this->relaxed_problem.number_variables, options)),
       globalization_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
       penalty_parameter(stod(options.at("l1_relaxation_initial_parameter"))),
       parameters({options.at("l1_relaxation_fixed_parameter") == "yes",
@@ -285,4 +291,16 @@ double l1Relaxation::compute_infeasibility_measure(Iterate& iterate) {
 void l1Relaxation::register_accepted_iterate(Iterate& iterate) {
    // TODO check problem
    this->subproblem->postprocess_accepted_iterate(this->relaxed_problem, iterate);
+}
+
+size_t l1Relaxation::get_hessian_evaluation_count() const {
+   return this->subproblem->get_hessian_evaluation_count();
+}
+
+size_t l1Relaxation::get_number_subproblems_solved() const {
+   return this->subproblem->number_subproblems_solved;
+}
+
+SecondOrderCorrection l1Relaxation::soc_strategy() const {
+   return this->subproblem->soc_strategy;
 }
