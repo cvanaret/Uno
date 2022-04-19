@@ -4,6 +4,7 @@
 #include <vector>
 #include "ingredients/subproblem/Direction.hpp"
 #include "linear_algebra/SparseVector.hpp"
+#include "optimization/Model.hpp"
 
 /*! \class LPSolver
  * \brief LP solver

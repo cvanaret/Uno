@@ -1,6 +1,5 @@
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
-#include "optimization/Constraint.hpp"
 
 bool ConstraintRelaxationStrategy::is_small_step(const Direction& direction) {
    // return (direction.norm == 0.);

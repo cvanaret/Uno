@@ -4,10 +4,24 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "Constraint.hpp"
 #include "linear_algebra/CSCSymmetricMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
+
+struct Range {
+   double lb;
+   double ub;
+};
+
+enum FunctionType {
+   LINEAR = 0, /*!< Linear function */
+   QUADRATIC, /*!< Quadratic function */
+   NONLINEAR /*!< Nonlinear function */
+};
+
+enum ConstraintType { EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES, UNBOUNDED };
+
+enum ConstraintFeasibility { FEASIBLE, INFEASIBLE_LOWER, INFEASIBLE_UPPER };
 
 struct NumericalError : public std::exception {
    [[nodiscard]] const char* what() const throw() override = 0;
@@ -30,6 +44,8 @@ struct FunctionNumericalError : NumericalError {
       return "A numerical error was encountered while evaluating a function";
    }
 };
+
+bool is_finite(double value);
 
 /*! \class Problem
  * \brief Optimization problem

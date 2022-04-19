@@ -2,9 +2,9 @@
 #define UNO_ITERATE_H
 
 #include <vector>
-#include "Constraint.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "optimization/Model.hpp"
+#include "optimization/Multipliers.hpp"
 
 struct Errors {
    double constraints;

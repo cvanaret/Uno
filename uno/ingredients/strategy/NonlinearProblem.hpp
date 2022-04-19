@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "optimization/Constraint.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/Model.hpp"
 #include "linear_algebra/CSCSymmetricMatrix.hpp"
