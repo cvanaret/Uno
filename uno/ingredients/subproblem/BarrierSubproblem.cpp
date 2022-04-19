@@ -165,8 +165,8 @@ double BarrierSubproblem::get_proximal_coefficient() const {
    return std::sqrt(this->barrier_parameter)/2.;
 }
 
-void BarrierSubproblem::set_elastic_variables(const l1RelaxedProblem& /*problem*/, Iterate& /*current_iterate*/) {
-   assert(false && "Barrier subproblem: here the elastic variables should be set");
+void BarrierSubproblem::set_elastic_variables(const l1RelaxedProblem& problem, Iterate& current_iterate) {
+   problem.reset_elastic_variables(current_iterate, 0.1);
 }
 
 PredictedReductionModel BarrierSubproblem::generate_predicted_reduction_model(const NonlinearProblem& /*problem*/, const Direction& direction) const {
@@ -327,6 +327,7 @@ void BarrierSubproblem::compute_lower_bound_dual_direction(const NonlinearProble
       const double distance_to_bound = current_iterate.x[i] - this->variable_bounds[i].lb;
       this->lower_delta_z[i] = (this->barrier_parameter - this->augmented_system.solution[i] * current_iterate.multipliers.lower_bounds[i]) / distance_to_bound -
             current_iterate.multipliers.lower_bounds[i];
+      assert(-std::numeric_limits<double>::infinity() < this->lower_delta_z[i] && "The displacement lower_delta_z is infinite");
    }
 }
 
@@ -336,6 +337,7 @@ void BarrierSubproblem::compute_upper_bound_dual_direction(const NonlinearProble
       const double distance_to_bound = current_iterate.x[i] - this->variable_bounds[i].ub;
       this->upper_delta_z[i] = (this->barrier_parameter - this->augmented_system.solution[i] * current_iterate.multipliers.upper_bounds[i]) / distance_to_bound -
             current_iterate.multipliers.upper_bounds[i];
+      assert(this->lower_delta_z[i] < std::numeric_limits<double>::infinity() && "The displacement upper_delta_z is infinite");
    }
 }
 

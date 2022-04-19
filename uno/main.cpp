@@ -25,8 +25,8 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
    auto original_model = ModelFactory::create(model_name);
    INFO << "Heap allocations after AMPL: " << total_allocations << "\n";
 
-   //auto reformulated_model = std::make_unique<EqualityConstrainedModel>(*original_model);
-   Model* reformulated_model = original_model.get();
+   auto reformulated_model = std::make_unique<EqualityConstrainedModel>(*original_model);
+   //Model* reformulated_model = original_model.get();
 
    // initial primal and dual points
    Iterate first_iterate(reformulated_model->number_variables, reformulated_model->number_constraints);
