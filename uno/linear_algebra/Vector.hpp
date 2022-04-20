@@ -3,12 +3,14 @@
 
 #include <iostream>
 #include <limits>
-#include <map>
 #include <vector>
 #include <functional>
+#include <cmath>
 #include "tools/Logger.hpp"
 
-enum Norm {L1_NORM = 1, L2_NORM = 2, L2_SQUARED_NORM, INF_NORM};
+enum Norm {
+   L1_NORM = 1, L2_NORM = 2, L2_SQUARED_NORM, INF_NORM
+};
 
 Norm norm_from_string(const std::string& norm_string);
 
@@ -32,40 +34,78 @@ void copy_from(std::vector<T>& destination, const std::vector<T>& source, size_t
    std::copy(source_start_position, source_end_position, destination_position);
 }
 
-double dot(const std::vector<double>& x, const std::vector<double>& y);
-
 double norm_1(const std::vector<double>& x);
-double norm_1(const std::function<double(size_t i)>& f, size_t size);
-
 double norm_2_squared(const std::vector<double>& x);
-double norm_2_squared(const std::function<double(size_t i)>& f, size_t size);
 double norm_2(const std::vector<double>& x);
-double norm_2(const std::function<double(size_t i)>& f, size_t size);
+double norm_inf(const std::vector<double>& x);
+double norm(const std::vector<double>& x, Norm norm);
 
-double norm_inf(const std::vector<double>& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max());
-double norm_inf(const std::function<double(size_t i)>& f, size_t size);
-
-template<typename T>
-double norm(const T& x, Norm norm) {
-   // choose the right norm
-   if (norm == INF_NORM) {
-      return norm_inf(x);
+// these methods take:
+// - a callback as argument. This avoids forming the vector explicitly
+// - an iterable range of arbitrary type (can be Range, std::vector, etc)
+template <class RANGE>
+double norm_1(const std::function<double(size_t i)>& f, const RANGE& range) {
+   double norm = 0.;
+   for (size_t i: range) {
+      norm += std::abs(f(i));
    }
-   else if (norm == L2_NORM) {
-      return norm_2(x);
-   }
-   else if (norm == L2_SQUARED_NORM) {
-      return norm_2_squared(x);
-   }
-   else if (norm == L1_NORM) {
-      return norm_1(x);
-   }
-   throw std::out_of_range("The norm is not known");
+   return norm;
 }
 
-double norm(const std::function<double(size_t i)>& f, size_t size, Norm norm);
+template <class RANGE>
+double norm_inf(const std::vector<double>& x, const RANGE& range) {
+   double norm = 0.;
+   for (size_t i: range) {
+      norm = std::max(norm, std::abs(x[i]));
+   }
+   return norm;
+}
 
-template<typename T>
+template <class RANGE>
+double norm_inf(const std::function<double(size_t i)>& f, const RANGE& range) {
+   double norm = 0.;
+   for (size_t i: range) {
+      norm = std::max(norm, std::abs(f(i)));
+   }
+   return norm;
+}
+
+template <class RANGE>
+double norm_2_squared(const std::function<double(size_t i)>& f, const RANGE& range) {
+   double norm = 0.;
+   for (size_t i: range) {
+      double x_i = f(i);
+      norm += x_i * x_i;
+   }
+   return norm;
+}
+
+template <class RANGE>
+double norm_2(const std::function<double(size_t i)>& f, const RANGE& range) {
+   return std::sqrt(norm_2_squared(f, range));
+}
+
+template <class RANGE>
+double norm(const std::function<double(size_t i)>& f, RANGE range, Norm norm) {
+   // choose the right norm
+   if (norm == INF_NORM) {
+      return norm_inf(f, range);
+   }
+   else if (norm == L2_NORM) {
+      return norm_2(f, range);
+   }
+   else if (norm == L2_SQUARED_NORM) {
+      return norm_2_squared(f, range);
+   }
+   else if (norm == L1_NORM) {
+      return norm_1(f, range);
+   }
+   else {
+      throw std::out_of_range("The norm is not known");
+   }
+}
+
+template <typename T>
 void print_vector(std::ostream& stream, const std::vector<T>& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max(),
       const char end = '\n') {
    for (size_t i = start; i < std::min(start + length, x.size()); i++) {
@@ -74,7 +114,7 @@ void print_vector(std::ostream& stream, const std::vector<T>& x, size_t start = 
    stream << end;
 }
 
-template<typename T>
+template <typename T>
 void print_vector(const Level& level, const std::vector<T>& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max(),
       const char end = '\n') {
    for (size_t i = start; i < std::min(start + length, x.size()); i++) {
@@ -83,6 +123,17 @@ void print_vector(const Level& level, const std::vector<T>& x, size_t start = 0,
    level << end;
 }
 
-bool in_increasing_order(const int* array, size_t length);
+// check that an array of integers is in increasing order (x[i] <= x[i+1])
+template <typename ARRAY>
+bool in_increasing_order(const ARRAY& array, size_t length) {
+   size_t i = 0;
+   while (i < length-1) {
+      if (array[i] > array[i+1]) {
+         return false;
+      }
+      i++;
+   }
+   return true;
+}
 
 #endif // UNO_VECTOR_H

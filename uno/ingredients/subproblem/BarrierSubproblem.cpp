@@ -3,6 +3,7 @@
 #include "solvers/linear/LinearSolverFactory.hpp"
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
 #include "optimization/Preprocessing.hpp"
+#include "tools/Range.hpp"
 
 BarrierSubproblem::BarrierSubproblem(const NonlinearProblem& problem, size_t max_number_variables, const Options& options):
       Subproblem(max_number_variables, problem.number_constraints, SOC_UPON_REJECTION),
@@ -205,7 +206,7 @@ bool BarrierSubproblem::is_small_direction(const NonlinearProblem& problem, cons
       return direction.x[i]/(1 + current_iterate.x[i]);
    };
    const double machine_epsilon = std::numeric_limits<double>::epsilon();
-   return (norm_inf(relative_measure_function, problem.number_variables) < 10. * machine_epsilon);
+   return (norm_inf(relative_measure_function, Range(problem.number_variables)) < 10. * machine_epsilon);
 }
 
 double BarrierSubproblem::compute_barrier_directional_derivative(const std::vector<double>& solution) const {
@@ -368,7 +369,7 @@ void BarrierSubproblem::generate_direction(const NonlinearProblem& problem, cons
       this->direction.multipliers.upper_bounds[i] = current_iterate.multipliers.upper_bounds[i] + dual_step_length * this->upper_delta_z[i];
    }
 
-   this->direction.norm = norm_inf(direction.x, 0, problem.number_variables);
+   this->direction.norm = norm_inf(direction.x, Range(problem.number_variables));
    // evaluate the barrier objective
    this->direction.objective = this->compute_barrier_directional_derivative(direction.x);
    this->print_solution(problem, primal_step_length, dual_step_length);
@@ -395,7 +396,7 @@ double BarrierSubproblem::compute_central_complementarity_error(const NonlinearP
       }
       return result;
    };
-   const double complementarity_error = norm_1(residual_function, problem.number_variables);
+   const double complementarity_error = norm_1(residual_function, Range(problem.number_variables));
 
    // scaling
    const double bound_multipliers_norm = norm_1(iterate.multipliers.lower_bounds) + norm_1(iterate.multipliers.upper_bounds);

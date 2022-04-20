@@ -2,9 +2,11 @@
 #include "l1Relaxation.hpp"
 #include "ingredients/strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
+#include "tools/Range.hpp"
 
 /*
  * Infeasibility detection and SQP methods for nonlinear optimization
+ * Richard H. Byrd, Frank E. Curtis and Jorge Nocedal
  * http://epubs.siam.org/doi/pdf/10.1137/080738222
  */
 
@@ -82,7 +84,7 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, Iterate& curren
    // solve the subproblem
    Direction direction = this->subproblem->solve(statistics, this->relaxed_problem, current_iterate);
    direction.objective_multiplier = current_penalty_parameter;
-   direction.norm = norm_inf(direction.x, 0, this->optimality_problem.number_variables);
+   direction.norm = norm_inf(direction.x, Range(this->optimality_problem.number_variables));
    DEBUG << "\n" << direction << "\n";
    assert(direction.status == OPTIMAL && "The subproblem was not solved to optimality");
    // check feasibility (the subproblem is, by construction, always feasible)
@@ -100,9 +102,6 @@ Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, Iterat
    return direction;
 }
 
-// Infeasibility detection and SQP methods for nonlinear optimization
-// Richard H. Byrd, Frank E. Curtis and Jorge Nocedal
-// https://epubs.siam.org/doi/pdf/10.1137/080738222
 Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate& current_iterate) {
    // stage a: compute the step within trust region
    Direction direction = this->solve_subproblem(statistics, current_iterate, this->penalty_parameter);
@@ -254,7 +253,7 @@ double l1Relaxation::compute_predicted_reduction(const Model& model, Iterate& cu
                current_iterate.original_evaluations.constraint_jacobian[j]);
          return model.compute_constraint_violation(component_j, j);
       };
-      const double linearized_constraint_violation = norm_1(residual_function, model.number_constraints);
+      const double linearized_constraint_violation = norm_1(residual_function, Range(model.number_constraints));
       return current_iterate.constraint_violation - linearized_constraint_violation + predicted_reduction_model.evaluate(step_length);
    }
 }

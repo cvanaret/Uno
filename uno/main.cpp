@@ -8,6 +8,7 @@
 #include "tools/Logger.hpp"
 #include "tools/Options.hpp"
 #include "tools/Timer.hpp"
+#include "tools/Range.hpp"
 
 // new() overload to track heap allocations
 size_t total_allocations = 0;
