@@ -385,7 +385,7 @@ double BarrierSubproblem::compute_KKT_error_scaling(const NonlinearProblem& prob
 }
 
 double BarrierSubproblem::compute_central_complementarity_error(const NonlinearProblem& problem, const Iterate& iterate) const {
-   // variable bounds TODO use problem.lower_bounded_variables
+   // variable bounds TODO use problem.lower_bounded_variables once the TR is integrated into the problem
    const auto residual_function = [&](size_t i) {
       double result = 0.;
       if (is_finite(this->variable_bounds[i].lb)) {
