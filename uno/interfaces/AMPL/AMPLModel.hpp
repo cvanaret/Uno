@@ -51,8 +51,8 @@ private:
    AMPLModel(const std::string& file_name, ASL* asl);
 
    ASL* asl_; /*!< Instance of the AMPL Solver Library class */
-   std::vector<Range> variables_bounds;
-   std::vector<Range> constraint_bounds;
+   std::vector<Interval> variables_bounds;
+   std::vector<Interval> constraint_bounds;
    std::vector<ConstraintType> variable_status; /*!< Status of the variables (EQUALITY, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES) */
    std::vector<FunctionType> constraint_type; /*!< Types of the constraints (LINEAR, QUADRATIC, NONLINEAR) */
    std::vector<ConstraintType> constraint_status; /*!< Status of the constraints (EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES,

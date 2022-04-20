@@ -48,7 +48,7 @@ inline void BarrierSubproblem::initialize(Statistics& statistics, const Nonlinea
 
    // make the initial point strictly feasible wrt the bounds
    for (size_t i = 0; i < problem.number_variables; i++) {
-      const Range bounds = {problem.get_variable_lower_bound(i), problem.get_variable_upper_bound(i)};
+      const Interval bounds = {problem.get_variable_lower_bound(i), problem.get_variable_upper_bound(i)};
       first_iterate.x[i] = BarrierSubproblem::push_variable_to_interior(first_iterate.x[i], bounds);
    }
 
@@ -477,7 +477,7 @@ void BarrierSubproblem::set_initial_point(const std::optional<std::vector<double
    // do nothing
 }
 
-double BarrierSubproblem::push_variable_to_interior(double variable_value, const Range& variable_bounds) {
+double BarrierSubproblem::push_variable_to_interior(double variable_value, const Interval& variable_bounds) {
    const double k1 = 1e-2;
    const double k2 = 1e-2;
 

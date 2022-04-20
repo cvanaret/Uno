@@ -16,12 +16,12 @@ class BQPDSolver : public QPSolver {
 public:
    BQPDSolver(size_t max_number_variables, size_t number_constraints, size_t max_number_nonzeros, bool quadratic_programming);
 
-   Direction solve_LP(size_t number_variables, size_t number_constraints, const std::vector<Range>& variables_bounds,
-         const std::vector<Range>& constraint_bounds, const SparseVector<double>& linear_objective,
+   Direction solve_LP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
+         const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
          const std::vector<SparseVector<double>>& constraint_jacobian, const std::vector<double>& initial_point) override;
 
-   Direction solve_QP(size_t number_variables, size_t number_constraints, const std::vector<Range>& variables_bounds,
-         const std::vector<Range>& constraint_bounds, const SparseVector<double>& linear_objective,
+   Direction solve_QP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
+         const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
          const std::vector<SparseVector<double>>& constraint_jacobian, const SymmetricMatrix& hessian, const std::vector<double>& initial_point)
          override;
 
@@ -50,8 +50,8 @@ private:
    const int fortran_shift{1};
 
    static Status status_to_int(int ifail);
-   Direction solve_subproblem(size_t number_variables, size_t number_constraints, const std::vector<Range>& variables_bounds,
-         const std::vector<Range>& constraint_bounds, const SparseVector<double>& linear_objective,
+   Direction solve_subproblem(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
+         const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
          const std::vector<SparseVector<double>>& constraint_jacobian, const std::vector<double>& initial_point);
    void analyze_constraints(size_t number_variables, size_t number_constraints, Direction& direction);
    void save_hessian_to_local_format(const SymmetricMatrix& hessian);

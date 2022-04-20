@@ -28,7 +28,7 @@ public:
 
    [[nodiscard]] double get_proximal_coefficient() const override;
    void set_elastic_variables(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
-   [[nodiscard]] static double push_variable_to_interior(double variable_value, const Range& variable_bounds);
+   [[nodiscard]] static double push_variable_to_interior(double variable_value, const Interval& variable_bounds);
    [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) override;
    [[nodiscard]] Direction compute_second_order_correction(const NonlinearProblem& problem, Iterate& trial_iterate) override;
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const NonlinearProblem& problem, const Direction& direction) const override;
