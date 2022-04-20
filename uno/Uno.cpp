@@ -42,6 +42,7 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, bool enforce_lin
 
          // compute an acceptable iterate by solving a subproblem at the current point
          auto [new_iterate, direction_norm] = this->globalization_mechanism.compute_acceptable_iterate(statistics, current_iterate);
+         assert(new_iterate.is_objective_computed && "The objective function was not evaluated at the new iterate.");
 
          Uno::add_statistics(statistics, model, new_iterate, major_iterations);
          if (Logger::logger_level == INFO) statistics.print_current_line();
