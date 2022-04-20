@@ -31,6 +31,7 @@ public:
 protected:
    const Model& original_model;
    std::vector<size_t> inequality_constraint_of_slack;
+   std::vector<size_t> slack_of_inequality_constraint;
 };
 
 inline EqualityConstrainedModel::EqualityConstrainedModel(const Model& original_model):
@@ -39,7 +40,8 @@ inline EqualityConstrainedModel::EqualityConstrainedModel(const Model& original_
             original_model.number_constraints, // number of constraints
             original_model.problem_type), // problem type
       original_model(original_model),
-      inequality_constraint_of_slack(original_model.inequality_constraints.size()) {
+      inequality_constraint_of_slack(original_model.inequality_constraints.size()),
+      slack_of_inequality_constraint(original_model.number_constraints) {
    // all constraints are now equality constraints
    for (size_t j = 0; j < this->number_constraints; j++) {
       this->equality_constraints.insert(j, j);
@@ -65,6 +67,7 @@ inline EqualityConstrainedModel::EqualityConstrainedModel(const Model& original_
    // register the inequality constraint of each slack
    this->original_model.inequality_constraints.for_each([&](size_t j, size_t i) {
       this->inequality_constraint_of_slack[i] = j;
+      this->slack_of_inequality_constraint[j] = i;
    });
 }
 
@@ -123,8 +126,11 @@ inline void EqualityConstrainedModel::evaluate_constraints(const std::vector<dou
 
 inline void EqualityConstrainedModel::evaluate_constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const {
    this->original_model.evaluate_constraint_gradient(x, j, gradient);
-   // add the possible slack contribution
-   assert(false && "EqualityConstrainedModel::evaluate_constraint_gradient TODO");
+   // if the original constraint is an inequality, add the slack contribution
+   if (this->original_model.get_constraint_status(j) != EQUAL_BOUNDS) {
+      const size_t slack_index = this->slack_of_inequality_constraint[j];
+      gradient.insert(slack_index, -1.);
+   }
 }
 
 inline void EqualityConstrainedModel::evaluate_constraint_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraint_jacobian) const {
