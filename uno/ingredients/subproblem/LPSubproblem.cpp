@@ -2,7 +2,7 @@
 #include "solvers/QP/LPSolverFactory.hpp"
 
 LPSubproblem::LPSubproblem(const NonlinearProblem& problem, size_t max_number_variables, const Options& options) :
-      ActiveSetSubproblem(max_number_variables, problem.number_constraints, NO_SOC, norm_from_string(options.at("residual_norm"))),
+      ActiveSetSubproblem(max_number_variables, problem.number_constraints, NO_SOC),
       solver(LPSolverFactory::create(max_number_variables, problem.number_constraints, options.at("LP_solver"))),
       objective_gradient(max_number_variables),
       constraints(problem.number_constraints),

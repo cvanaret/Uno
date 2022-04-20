@@ -23,7 +23,7 @@ enum SecondOrderCorrection {
  */
 class Subproblem {
 public:
-   Subproblem(size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy, Norm residual_norm);
+   Subproblem(size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy);
    virtual ~Subproblem() = default;
 
    // virtual methods implemented by subclasses
@@ -37,11 +37,7 @@ public:
 
    // globalization metrics
    [[nodiscard]] virtual PredictedReductionModel generate_predicted_reduction_model(const NonlinearProblem& problem, const Direction& direction) const = 0;
-   [[nodiscard]] double compute_first_order_error(const Model& model, Iterate& iterate) const;
    [[nodiscard]] virtual double compute_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) = 0;
-   [[nodiscard]] static double compute_complementarity_error(const Model& model, const Iterate& iterate, const std::vector<double>& constraint_multipliers,
-         const std::vector<double>& lower_bounds_multipliers, const std::vector<double>& upper_bounds_multipliers);
-   void compute_nonlinear_residuals(const NonlinearProblem& problem, Iterate& iterate) const;
 
    virtual void postprocess_accepted_iterate(const NonlinearProblem& model, Iterate& iterate) = 0;
 
@@ -55,7 +51,6 @@ public:
    size_t number_subproblems_solved{0};
    // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it
    bool subproblem_definition_changed{false};
-   const Norm residual_norm;
 };
 
 #endif // UNO_SUBPROBLEM_H

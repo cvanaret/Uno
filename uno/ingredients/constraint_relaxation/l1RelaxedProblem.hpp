@@ -154,17 +154,17 @@ inline void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, Spar
 inline double l1RelaxedProblem::predicted_reduction_contribution(const Iterate& current_iterate, const Direction& direction, double step_length) const {
    // compute the predicted reduction of the l1 relaxation as a postprocessing of the predicted reduction of the subproblem
    if (step_length == 1.) {
-      return current_iterate.nonlinear_errors.constraints;
+      return current_iterate.constraint_violation;
    }
    else {
       // determine the linearized constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
       const auto residual_function = [&](size_t j) {
          const double linearized_constraint_j = current_iterate.original_evaluations.constraints[j] + step_length * dot(direction.x,
                current_iterate.original_evaluations.constraint_jacobian[j]);
-         return this->compute_constraint_violation(linearized_constraint_j, j);
+         return this->model.compute_constraint_violation(linearized_constraint_j, j);
       };
       const double linearized_constraint_violation = norm_1(residual_function, this->number_constraints);
-      return current_iterate.nonlinear_errors.constraints - linearized_constraint_violation;
+      return current_iterate.constraint_violation - linearized_constraint_violation;
    }
 }
 
@@ -338,10 +338,10 @@ inline double l1RelaxedProblem::get_proximal_weight(size_t i) const {
 inline void l1ElasticReformulation::set_elastic_variables(Iterate& iterate) const {
    iterate.set_number_variables(this->number_variables);
    this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {
-      iterate.x[elastic_index] = this->compute_constraint_upper_bound_violation(iterate.problem_evaluations.constraints[j], j);
+      iterate.x[elastic_index] = this->model.compute_constraint_upper_bound_violation(iterate.problem_evaluations.constraints[j], j);
    });
    this->elastic_variables.negative.for_each([&](size_t j, size_t elastic_index) {
-      iterate.x[elastic_index] = this->compute_constraint_lower_bound_violation(iterate.problem_evaluations.constraints[j], j);
+      iterate.x[elastic_index] = this->model.compute_constraint_lower_bound_violation(iterate.problem_evaluations.constraints[j], j);
    });
 }
  */

@@ -6,12 +6,6 @@
 #include "optimization/Model.hpp"
 #include "optimization/Multipliers.hpp"
 
-struct Errors {
-   double constraints;
-   double stationarity;
-   double complementarity;
-};
-
 struct ProgressMeasures {
    double infeasibility;
    double objective;
@@ -53,7 +47,9 @@ public:
    std::vector<double> lagrangian_gradient;
 
    // residuals of nonlinear functions
-   Errors nonlinear_errors{0., 0., 0.};
+   double constraint_violation{0.};
+   double stationarity_error{0.};
+   double complementarity_error{0.};
    ProgressMeasures nonlinear_progress{0., 0.};
 
    static size_t number_eval_objective;

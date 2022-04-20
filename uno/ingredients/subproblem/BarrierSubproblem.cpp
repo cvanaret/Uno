@@ -5,8 +5,7 @@
 #include "optimization/Preprocessing.hpp"
 
 BarrierSubproblem::BarrierSubproblem(const NonlinearProblem& problem, size_t max_number_variables, const Options& options):
-      Subproblem(max_number_variables, // max_number_variables
-            problem.number_constraints, SOC_UPON_REJECTION, norm_from_string(options.at("residual_norm"))),
+      Subproblem(max_number_variables, problem.number_constraints, SOC_UPON_REJECTION),
       augmented_system(options.at("sparse_format"), max_number_variables + problem.number_constraints,
             problem.get_maximum_number_hessian_nonzeros()
             + max_number_variables + problem.number_constraints /* regularization */
@@ -184,10 +183,10 @@ double BarrierSubproblem::compute_optimality_measure(const NonlinearProblem& pro
 
 void BarrierSubproblem::update_barrier_parameter(const NonlinearProblem& problem, const Iterate& current_iterate) {
    // scaled error terms
-   const double sd = this->compute_KKT_error_scaling(problem, current_iterate);
-   const double KKTerror = current_iterate.nonlinear_errors.stationarity / sd;
+   const double scaling = this->compute_KKT_error_scaling(problem, current_iterate);
+   const double KKTerror = current_iterate.stationarity_error / scaling;
    const double central_complementarity_error = this->compute_central_complementarity_error(problem, current_iterate);
-   const double error = std::max({KKTerror, current_iterate.nonlinear_errors.constraints, central_complementarity_error});
+   const double error = std::max({KKTerror, current_iterate.constraint_violation, central_complementarity_error});
    DEBUG << "KKT error for barrier subproblem is " << error << "\n";
 
    // update of the barrier parameter (Eq. 7 in Ipopt paper)
@@ -381,8 +380,7 @@ double BarrierSubproblem::compute_KKT_error_scaling(const NonlinearProblem& prob
    const double norm_1_bound_multipliers = norm_1(current_iterate.multipliers.lower_bounds) + norm_1(current_iterate.multipliers.upper_bounds);
    const double norm_1_multipliers = norm_1_constraint_multipliers + norm_1_bound_multipliers;
    const size_t total_size = problem.number_variables + problem.number_constraints;
-   const double sd = std::max(this->parameters.smax, norm_1_multipliers / static_cast<double>(total_size)) / this->parameters.smax;
-   return sd;
+   return std::max(this->parameters.smax, norm_1_multipliers / static_cast<double>(total_size)) / this->parameters.smax;
 }
 
 double BarrierSubproblem::compute_central_complementarity_error(const NonlinearProblem& problem, const Iterate& iterate) const {
