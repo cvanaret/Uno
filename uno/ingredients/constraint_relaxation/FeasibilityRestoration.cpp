@@ -127,7 +127,6 @@ GlobalizationStrategy& FeasibilityRestoration::switch_phase(Iterate& current_ite
       DEBUG << "Switching from optimality to restoration phase\n";
       this->phase_2_strategy->notify(current_iterate);
       this->phase_1_strategy->reset();
-      current_iterate.reset_evaluations();
       // update the measure of optimality
       const std::vector<size_t>& infeasible_constraints = direction.constraint_partition.value().infeasible;
       current_iterate.nonlinear_progress.objective = this->compute_optimality_measure(current_iterate, infeasible_constraints);
@@ -139,12 +138,12 @@ GlobalizationStrategy& FeasibilityRestoration::switch_phase(Iterate& current_ite
       this->current_phase = OPTIMALITY;
       DEBUG << "Switching from restoration to optimality phase\n";
       current_iterate.set_number_variables(this->optimality_problem.number_variables);
-      current_iterate.reset_evaluations();
       current_iterate.nonlinear_progress.objective = this->subproblem->compute_optimality_measure(this->optimality_problem, current_iterate);
       trial_iterate.set_number_variables(this->optimality_problem.number_variables);
    }
 
    // evaluate the progress measures of the trial iterate
+   trial_iterate.evaluate_objective(this->optimality_problem.model);
    trial_iterate.nonlinear_progress.infeasibility = this->compute_infeasibility_measure(trial_iterate);
    if (this->current_phase == OPTIMALITY) {
       trial_iterate.nonlinear_progress.objective = this->subproblem->compute_optimality_measure(this->optimality_problem, trial_iterate);
