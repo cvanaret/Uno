@@ -1,5 +1,6 @@
 #include "Preprocessing.hpp"
 #include "solvers/QP/BQPDSolver.hpp"
+#include "tools/Range.hpp"
 
 void Preprocessing::enforce_linear_constraints(const Model& model, Iterate& first_iterate) {
    INFO << "Preprocessing phase: the problem has " << model.linear_constraints.size() << " linear constraints\n";
@@ -117,7 +118,7 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
    DEBUG << "Solution: "; print_vector(DEBUG, solution, 0, matrix.dimension); DEBUG << "\n";
 
    // if least-square multipliers too big, discard them. Otherwise, store them
-   if (norm_inf(solution, number_variables, model.number_constraints) <= multipliers_max_norm) {
+   if (norm_inf(solution, Range(number_variables, number_variables + model.number_constraints)) <= multipliers_max_norm) {
       for (size_t j = 0; j < model.number_constraints; j++) {
          multipliers[j] = solution[number_variables + j];
       }

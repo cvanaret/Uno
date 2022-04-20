@@ -4,6 +4,7 @@
 #include <utility>
 #include "Model.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "tools/Range.hpp"
 
 bool is_finite(double value) {
    return std::abs(value) < std::numeric_limits<double>::infinity();
@@ -94,11 +95,10 @@ double Model::compute_constraint_violation(double constraint, size_t j) const {
 // compute ||c_S|| for a given set of constraints
 double Model::compute_constraint_violation(const std::vector<double>& constraints, const std::vector<size_t>& constraint_set,
       Norm residual_norm) const {
-   auto residual_function = [&](size_t k) {
-      const size_t j = constraint_set[k];
+   auto residual_function = [&](size_t j) {
       return this->compute_constraint_violation(constraints[j], j);
    };
-   return norm(residual_function, constraint_set.size(), residual_norm);
+   return norm(residual_function, constraint_set, residual_norm);
 }
 
 // compute ||c||
@@ -107,7 +107,7 @@ double Model::compute_constraint_violation(const std::vector<double>& constraint
    auto residual_function = [&](size_t j) {
       return this->compute_constraint_violation(constraints[j], j);
    };
-   return norm(residual_function, constraints.size(), residual_norm);
+   return norm(residual_function, Range(constraints.size()), residual_norm);
 }
 
 // complementary slackness error
@@ -146,42 +146,3 @@ double Model::compute_complementarity_error(const std::vector<double>& x, const 
    }
    return error;
 }
-
-// native C++ problem
-
-//CppProblem::CppProblem(std::string name, int number_variables, int number_constraints, double (*objective)(std::vector<double> x), std::vector<double> (*objective_gradient)(std::vector<double> x)):
-//Problem(name, number_variables, number_constraints),
-//objective(objective),
-//objective_gradient_(objective_gradient) {
-//}
-//
-//double CppProblem::objective(std::vector<double>& x) {
-//    return this->objective(x);
-//}
-//
-//std::vector<double> CppProblem::objective_dense_gradient(std::vector<double>& x) {
-//    return this->objective_gradient_(x);
-//}
-//
-//SparseVector<double> CppProblem::objective_sparse_gradient(std::vector<double>& x) {
-//    std::vector<double> dense_gradient = this->objective_gradient_(x);
-//    SparseVector<double> sparse_gradient;
-//    for (size_t i = 0; i < dense_gradient.size(); i++) {
-//        if (dense_gradient[i] != 0.) {
-//            sparse_gradient.insert(i, dense_gradient[i]);
-//        }
-//    }
-//    return sparse_gradient;
-//}
-//
-//double CppProblem::evaluate_constraint(int j, std::vector<double>& x) {
-//    return this->constraints_[j](x);
-//}
-//
-//std::vector<double> CppProblem::evaluate_constraints(std::vector<double>& x) {
-//    std::vector<double> constraints(this->number_constraints);
-//    for (int j = 0; j < this->number_constraints; j++) {
-//        constraints[j] = this->evaluate_constraint(j, x);
-//    }
-//    return constraints;
-//}

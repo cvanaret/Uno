@@ -5,6 +5,7 @@
 #include <cmath>
 #include "NonlinearProblem.hpp"
 #include "linear_algebra/SparseVector.hpp"
+#include "tools/Range.hpp"
 
 struct ElasticVariables {
    SparseVector<size_t> positive;
@@ -163,7 +164,7 @@ inline double l1RelaxedProblem::predicted_reduction_contribution(const Iterate& 
                current_iterate.original_evaluations.constraint_jacobian[j]);
          return this->model.compute_constraint_violation(linearized_constraint_j, j);
       };
-      const double linearized_constraint_violation = norm_1(residual_function, this->number_constraints);
+      const double linearized_constraint_violation = norm_1(residual_function, Range(this->number_constraints));
       return current_iterate.constraint_violation - linearized_constraint_violation;
    }
 }
