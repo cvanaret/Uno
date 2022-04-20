@@ -167,7 +167,8 @@ double BarrierSubproblem::get_proximal_coefficient() const {
 }
 
 void BarrierSubproblem::set_elastic_variables(const l1RelaxedProblem& problem, Iterate& current_iterate) {
-   problem.reset_elastic_variables(current_iterate, 0.1);
+   // TODO change
+   problem.set_elastic_variables(current_iterate, 0.1);
 }
 
 PredictedReductionModel BarrierSubproblem::generate_predicted_reduction_model(const NonlinearProblem& /*problem*/, const Direction& direction) const {

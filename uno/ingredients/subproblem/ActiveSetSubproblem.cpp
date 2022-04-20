@@ -24,7 +24,7 @@ void ActiveSetSubproblem::set_initial_point(const std::optional<std::vector<doub
 
 void ActiveSetSubproblem::set_elastic_variables(const l1RelaxedProblem& problem, Iterate& current_iterate) {
    // reset (set to 0) the values of the elastic variables
-   problem.reset_elastic_variables(current_iterate);
+   problem.set_elastic_variables(current_iterate);
 }
 
 void ActiveSetSubproblem::set_variable_displacement_bounds(const NonlinearProblem& problem, const Iterate& current_iterate) {
