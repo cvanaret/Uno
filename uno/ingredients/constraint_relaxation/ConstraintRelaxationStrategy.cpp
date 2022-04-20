@@ -1,11 +1,21 @@
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 
+ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(Norm residual_norm): residual_norm(residual_norm) {
+}
+
 bool ConstraintRelaxationStrategy::is_small_step(const Direction& direction) {
    // return (direction.norm == 0.);
    const double tolerance = 1e-8;
    const double small_step_factor = 100.;
    return (direction.norm <= tolerance / small_step_factor);
+}
+
+void ConstraintRelaxationStrategy::compute_nonlinear_residuals(const Model& model, Iterate& iterate) const {
+   iterate.evaluate_constraints(model);
+   iterate.evaluate_lagrangian_gradient(model, iterate.multipliers.constraints, iterate.multipliers.lower_bounds, iterate.multipliers.upper_bounds);
+   iterate.constraint_violation = model.compute_constraint_violation(iterate.original_evaluations.constraints, L1_NORM);
+   iterate.stationarity_error = norm(iterate.lagrangian_gradient, this->residual_norm);
 }
 
 void ConstraintRelaxationStrategy::recover_active_set(const Model& model, Direction& direction) {

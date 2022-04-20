@@ -104,6 +104,16 @@ public:
    static void determine_bounds_types(std::vector<Range>& variables_bounds, std::vector<ConstraintType>& status);
    void project_point_in_bounds(std::vector<double>& x) const;
    [[nodiscard]] bool is_constrained() const;
+   // constraint violation
+   [[nodiscard]] double compute_constraint_lower_bound_violation(double constraint, size_t j) const;
+   [[nodiscard]] double compute_constraint_upper_bound_violation(double constraint, size_t j) const;
+   [[nodiscard]] virtual double compute_constraint_violation(double constraint, size_t j) const;
+   [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const;
+   [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, const std::vector<size_t>& constraint_set,
+         Norm residual_norm) const;
+   [[nodiscard]] double compute_complementarity_error(const std::vector<double>& x, const std::vector<double>& constraints,
+         const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bounds_multipliers,
+         const std::vector<double>& upper_bounds_multipliers) const;
 
 protected:
    size_t hessian_maximum_number_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */

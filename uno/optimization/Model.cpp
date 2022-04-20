@@ -75,6 +75,78 @@ bool Model::is_constrained() const {
    return (0 < this->number_constraints);
 }
 
+double Model::compute_constraint_lower_bound_violation(double constraint, size_t j) const {
+   const double lower_bound = this->get_constraint_lower_bound(j);
+   return std::max(0., lower_bound - constraint);
+}
+
+double Model::compute_constraint_upper_bound_violation(double constraint, size_t j) const {
+   const double upper_bound = this->get_constraint_upper_bound(j);
+   return std::max(0., constraint - upper_bound);
+}
+
+double Model::compute_constraint_violation(double constraint, size_t j) const {
+   const double lower_bound_violation = this->compute_constraint_lower_bound_violation(constraint, j);
+   const double upper_bound_violation = this->compute_constraint_upper_bound_violation(constraint, j);
+   return std::max(lower_bound_violation, upper_bound_violation);
+}
+
+// compute ||c_S|| for a given set of constraints
+double Model::compute_constraint_violation(const std::vector<double>& constraints, const std::vector<size_t>& constraint_set,
+      Norm residual_norm) const {
+   auto residual_function = [&](size_t k) {
+      const size_t j = constraint_set[k];
+      return this->compute_constraint_violation(constraints[j], j);
+   };
+   return norm(residual_function, constraint_set.size(), residual_norm);
+}
+
+// compute ||c||
+double Model::compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const {
+   // create a lambda to avoid allocating an std::vector
+   auto residual_function = [&](size_t j) {
+      return this->compute_constraint_violation(constraints[j], j);
+   };
+   return norm(residual_function, constraints.size(), residual_norm);
+}
+
+// complementary slackness error
+double Model::compute_complementarity_error(const std::vector<double>& x, const std::vector<double>& constraints,
+      const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bounds_multipliers,
+      const std::vector<double>& upper_bounds_multipliers) const {
+   double error = 0.;
+   // bound constraints
+   for (size_t i = 0; i < this->number_variables; i++) {
+      if (is_finite(this->get_variable_lower_bound(i))) {
+         error += std::abs(lower_bounds_multipliers[i] * (x[i] - this->get_variable_lower_bound(i)));
+      }
+      if (is_finite(this->get_variable_upper_bound(i))) {
+         error += std::abs(upper_bounds_multipliers[i] * (x[i] - this->get_variable_upper_bound(i)));
+      }
+   }
+   // constraints
+   for (size_t j = 0; j < this->number_constraints; j++) {
+      const double multiplier_j = constraint_multipliers[j];
+      const double lower_bound = this->get_constraint_lower_bound(j);
+      const double upper_bound = this->get_constraint_upper_bound(j);
+      if (constraints[j] < lower_bound) { // violated lower
+         // the optimal multiplier is 1
+         error += std::abs((1. - multiplier_j) * (lower_bound - constraints[j]));
+      }
+      else if (upper_bound < constraints[j]) { // violated upper
+         // the optimal multiplier is -1
+         error += std::abs((1. + multiplier_j) * (constraints[j] - upper_bound));
+      }
+      else if (is_finite(lower_bound) && 0. < multiplier_j) { // lower bound
+         error += std::abs(multiplier_j * (constraints[j] - lower_bound));
+      }
+      else if (is_finite(upper_bound) && multiplier_j < 0.) { // upper bound
+         error += std::abs(multiplier_j * (constraints[j] - upper_bound));
+      }
+   }
+   return error;
+}
+
 // native C++ problem
 
 //CppProblem::CppProblem(std::string name, int number_variables, int number_constraints, double (*objective)(std::vector<double> x), std::vector<double> (*objective_gradient)(std::vector<double> x)):

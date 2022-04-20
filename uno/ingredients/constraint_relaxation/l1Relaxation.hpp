@@ -48,7 +48,7 @@ protected:
    // preallocated temporary multipliers
    std::vector<double> constraint_multipliers;
 
-   static double compute_predicted_reduction(const NonlinearProblem& problem, Iterate& current_iterate, const Direction& direction,
+   static double compute_predicted_reduction(const Model& model, Iterate& current_iterate, const Direction& direction,
          PredictedReductionModel& predicted_reduction_model, double step_length);
    Direction solve_subproblem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter);
    Direction solve_with_steering_rule(Statistics& statistics, Iterate& current_iterate);

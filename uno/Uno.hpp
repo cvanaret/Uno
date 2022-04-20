@@ -57,7 +57,7 @@ private:
    static Statistics create_statistics(const Model& model);
    static void add_statistics(Statistics& statistics, const Model& model, const Iterate& new_iterate, size_t major_iterations);
    [[nodiscard]] bool termination_criterion(TerminationStatus current_status, size_t iteration) const;
-   [[nodiscard]] TerminationStatus check_termination(const Model& model, const Iterate& current_iterate, double step_norm) const;
+   [[nodiscard]] TerminationStatus check_termination(const Model& model, Iterate& current_iterate, double step_norm) const;
 };
 
 #endif // UNO_H

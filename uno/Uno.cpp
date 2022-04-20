@@ -44,11 +44,13 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, bool enforce_lin
          auto [new_iterate, direction_norm] = this->globalization_mechanism.compute_acceptable_iterate(statistics, current_iterate);
          assert(new_iterate.is_objective_computed && "The objective function was not evaluated at the new iterate.");
 
+         // compute the status of the new iterate
+         termination_status = this->check_termination(model, new_iterate, direction_norm);
+
+         // TODO compute complementarity
          Uno::add_statistics(statistics, model, new_iterate, major_iterations);
          if (Logger::logger_level == INFO) statistics.print_current_line();
 
-         // compute the status of the new iterate
-         termination_status = this->check_termination(model, new_iterate, direction_norm);
          current_iterate = std::move(new_iterate);
       }
    }
@@ -84,33 +86,37 @@ void Uno::add_statistics(Statistics& statistics, const Model& model, const Itera
    statistics.add_statistic(std::string("major"), major_iterations);
    statistics.add_statistic("f", new_iterate.original_evaluations.objective);
    if (model.is_constrained()) {
-      statistics.add_statistic("||c||", new_iterate.nonlinear_errors.constraints);
+      statistics.add_statistic("||c||", new_iterate.constraint_violation);
    }
-   statistics.add_statistic("complementarity", new_iterate.nonlinear_errors.complementarity);
-   statistics.add_statistic("stationarity", new_iterate.nonlinear_errors.stationarity);
+   statistics.add_statistic("complementarity", new_iterate.complementarity_error);
+   statistics.add_statistic("stationarity", new_iterate.stationarity_error);
 }
 
 bool Uno::termination_criterion(TerminationStatus current_status, size_t iteration) const {
    return current_status != NOT_OPTIMAL || this->max_iterations <= iteration;
 }
 
-TerminationStatus Uno::check_termination(const Model& model, const Iterate& current_iterate, double step_norm) const {
+TerminationStatus Uno::check_termination(const Model& model, Iterate& current_iterate, double step_norm) const {
    const size_t number_variables = current_iterate.x.size();
 
-   if (current_iterate.nonlinear_errors.complementarity <= this->tolerance * static_cast<double>(number_variables + model.number_constraints)) {
+   // TODO: criterion for CQ failure
+   current_iterate.evaluate_constraints(model);
+   current_iterate.complementarity_error = model.compute_complementarity_error(current_iterate.x, current_iterate.original_evaluations.constraints,
+         current_iterate.multipliers.constraints, current_iterate.multipliers.lower_bounds, current_iterate.multipliers.upper_bounds);
+   if (current_iterate.complementarity_error <= this->tolerance * static_cast<double>(number_variables + model.number_constraints)) {
       // feasible and KKT point
-      if (current_iterate.nonlinear_errors.stationarity <= this->tolerance * std::sqrt(number_variables) &&
-          current_iterate.nonlinear_errors.constraints <= this->tolerance * static_cast<double>(number_variables)) {
+      if (current_iterate.stationarity_error <= this->tolerance * std::sqrt(number_variables) &&
+          current_iterate.constraint_violation <= this->tolerance * static_cast<double>(number_variables)) {
          return KKT_POINT;
       }
       // infeasible and FJ point
       else if (model.is_constrained() && current_iterate.multipliers.objective == 0. &&
-         current_iterate.nonlinear_errors.stationarity <= this->tolerance * std::sqrt(number_variables)) {
+         current_iterate.stationarity_error <= this->tolerance * std::sqrt(number_variables)) {
          return FJ_POINT;
       }
    }
    if (step_norm <= this->tolerance / this->small_step_factor) {
-      if (current_iterate.nonlinear_errors.constraints <= this->tolerance * static_cast<double>(number_variables)) {
+      if (current_iterate.constraint_violation <= this->tolerance * static_cast<double>(number_variables)) {
          return FEASIBLE_SMALL_STEP;
       }
       else {
@@ -160,9 +166,9 @@ void Result::print(bool print_solution) const {
    }
 
    std::cout << "Objective value:\t\t" << this->solution.original_evaluations.objective << "\n";
-   std::cout << "Constraint residual:\t\t" << this->solution.nonlinear_errors.constraints << "\n";
-   std::cout << "Stationarity residual:\t\t" << this->solution.nonlinear_errors.stationarity << "\n";
-   std::cout << "Complementarity residual:\t" << this->solution.nonlinear_errors.complementarity << "\n";
+   std::cout << "Constraint violation:\t\t" << this->solution.constraint_violation << "\n";
+   std::cout << "Stationarity error:\t\t" << this->solution.stationarity_error << "\n";
+   std::cout << "Complementarity error:\t\t" << this->solution.complementarity_error << "\n";
 
    std::cout << "Feasibility measure:\t\t" << this->solution.nonlinear_progress.infeasibility << "\n";
    std::cout << "Optimality measure:\t\t" << this->solution.nonlinear_progress.objective << "\n";
