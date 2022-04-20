@@ -61,7 +61,7 @@ protected:
 
 inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier,
       double elastic_objective_coefficient, bool use_proximal_term):
-      NonlinearProblem(model, model.number_variables + this->count_elastic_variables(model), model.number_constraints),
+      NonlinearProblem(model, model.number_variables + l1RelaxedProblem::count_elastic_variables(model), model.number_constraints),
       objective_multiplier(objective_multiplier),
       // elastic variables
       elastic_variables(this->number_constraints),
