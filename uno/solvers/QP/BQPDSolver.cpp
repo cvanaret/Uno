@@ -42,23 +42,23 @@ BQPDSolver::BQPDSolver(size_t max_number_variables, size_t number_constraints, s
    }
 }
 
-Direction BQPDSolver::solve_QP(size_t number_variables, size_t number_constraints, const std::vector<Range>& variables_bounds,
-      const std::vector<Range>& constraint_bounds, const SparseVector<double>& linear_objective,
+Direction BQPDSolver::solve_QP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
+      const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
       const std::vector<SparseVector<double>>& constraint_jacobian, const SymmetricMatrix& hessian, const std::vector<double>& initial_point) {
    this->save_hessian_to_local_format(hessian);
    return this->solve_subproblem(number_variables, number_constraints, variables_bounds, constraint_bounds, linear_objective, constraint_jacobian,
          initial_point);
 }
 
-Direction BQPDSolver::solve_LP(size_t number_variables, size_t number_constraints, const std::vector<Range>& variables_bounds,
-      const std::vector<Range>& constraint_bounds, const SparseVector<double>& linear_objective,
+Direction BQPDSolver::solve_LP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
+      const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
       const std::vector<SparseVector<double>>& constraint_jacobian, const std::vector<double>& initial_point) {
    return this->solve_subproblem(number_variables, number_constraints, variables_bounds, constraint_bounds, linear_objective, constraint_jacobian,
          initial_point);
 }
 
-Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_constraints, const std::vector<Range>& variables_bounds,
-      const std::vector<Range>& constraint_bounds, const SparseVector<double>& linear_objective,
+Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
+      const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
       const std::vector<SparseVector<double>>& constraint_jacobian, const std::vector<double>& initial_point) {
    // initialize wsc_ common block (Hessian & workspace for bqpd)
    // setting the common block here ensures that several instances of BQPD can run simultaneously

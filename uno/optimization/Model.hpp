@@ -8,7 +8,7 @@
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 
-struct Range {
+struct Interval {
    double lb;
    double ub;
 };
@@ -101,7 +101,7 @@ public:
    virtual void get_initial_dual_point(std::vector<double>& multipliers) const = 0;
 
    // auxiliary functions
-   static void determine_bounds_types(std::vector<Range>& variables_bounds, std::vector<ConstraintType>& status);
+   static void determine_bounds_types(std::vector<Interval>& variables_bounds, std::vector<ConstraintType>& status);
    void project_point_in_bounds(std::vector<double>& x) const;
    [[nodiscard]] bool is_constrained() const;
    // constraint violation

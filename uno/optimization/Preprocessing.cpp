@@ -35,14 +35,14 @@ void Preprocessing::enforce_linear_constraints(const Model& model, Iterate& firs
          assert(false && "Preprocessing::enforce_linear_constraints must be fixed");
 
          // variables bounds
-         std::vector<Range> variables_bounds(model.number_variables);
+         std::vector<Interval> variables_bounds(model.number_variables);
          for (size_t i = 0; i < model.number_variables; i++) {
             variables_bounds[i] = {model.get_variable_lower_bound(i) - first_iterate.x[i],
                   model.get_variable_upper_bound(i) - first_iterate.x[i]};
          }
 
          // constraints bounds
-         std::vector<Range> constraint_bounds(number_linear_constraints);
+         std::vector<Interval> constraint_bounds(number_linear_constraints);
          model.linear_constraints.for_each([&](size_t j, size_t linear_constraint_index) {
             constraint_bounds[linear_constraint_index] = {model.get_constraint_lower_bound(j) - first_iterate.original_evaluations.constraints[j],
                   model.get_constraint_upper_bound(j) - first_iterate.original_evaluations.constraints[j]};

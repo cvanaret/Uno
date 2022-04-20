@@ -45,7 +45,7 @@ public:
    virtual void set_initial_point(const std::optional<std::vector<double>>& optional_initial_point) = 0;
 
    const SecondOrderCorrection soc_strategy;
-   std::vector<Range> variable_bounds;
+   std::vector<Interval> variable_bounds;
    Direction direction;
 
    size_t number_subproblems_solved{0};

@@ -23,10 +23,10 @@ Model::Model(std::string name, size_t number_variables, size_t number_constraint
       linear_constraints(this->number_constraints) {
 }
 
-void Model::determine_bounds_types(std::vector<Range>& bounds, std::vector<ConstraintType>& status) {
+void Model::determine_bounds_types(std::vector<Interval>& bounds, std::vector<ConstraintType>& status) {
    assert(bounds.size() == status.size());
    // build the "status" vector as a mapping (map/transform operation) of the "bounds" vector
-   std::transform(begin(bounds), end(bounds), begin(status), [](const Range& bounds_i) {
+   std::transform(begin(bounds), end(bounds), begin(status), [](const Interval& bounds_i) {
       if (bounds_i.lb == bounds_i.ub) {
          return EQUAL_BOUNDS;
       }
