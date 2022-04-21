@@ -43,7 +43,7 @@ double norm(const std::vector<double>& x, Norm norm);
 // these methods take:
 // - a callback as argument. This avoids forming the vector explicitly
 // - an iterable range of arbitrary type (can be Range, std::vector, etc)
-template <class RANGE>
+template <typename RANGE>
 double norm_1(const std::function<double(size_t i)>& f, const RANGE& range) {
    double norm = 0.;
    for (size_t i: range) {
@@ -52,7 +52,7 @@ double norm_1(const std::function<double(size_t i)>& f, const RANGE& range) {
    return norm;
 }
 
-template <class RANGE>
+template <typename RANGE>
 double norm_inf(const std::vector<double>& x, const RANGE& range) {
    double norm = 0.;
    for (size_t i: range) {
@@ -61,7 +61,7 @@ double norm_inf(const std::vector<double>& x, const RANGE& range) {
    return norm;
 }
 
-template <class RANGE>
+template <typename RANGE>
 double norm_inf(const std::function<double(size_t i)>& f, const RANGE& range) {
    double norm = 0.;
    for (size_t i: range) {
@@ -70,7 +70,7 @@ double norm_inf(const std::function<double(size_t i)>& f, const RANGE& range) {
    return norm;
 }
 
-template <class RANGE>
+template <typename RANGE>
 double norm_2_squared(const std::function<double(size_t i)>& f, const RANGE& range) {
    double norm = 0.;
    for (size_t i: range) {
@@ -80,12 +80,12 @@ double norm_2_squared(const std::function<double(size_t i)>& f, const RANGE& ran
    return norm;
 }
 
-template <class RANGE>
+template <typename RANGE>
 double norm_2(const std::function<double(size_t i)>& f, const RANGE& range) {
    return std::sqrt(norm_2_squared(f, range));
 }
 
-template <class RANGE>
+template <typename RANGE>
 double norm(const std::function<double(size_t i)>& f, RANGE range, Norm norm) {
    // choose the right norm
    if (norm == INF_NORM) {

@@ -35,10 +35,7 @@ private:
 };
 
 inline ScaledModel::ScaledModel(const Model& original_model, const Scaling& scaling):
-      Model(original_model.name + "_scaled", // name
-            original_model.number_variables, // number of variables
-            original_model.number_constraints, // number of constraints
-            original_model.problem_type), // problem type
+      Model(original_model.name + "_scaled", original_model.number_variables, original_model.number_constraints, original_model.problem_type),
       original_model(original_model),
       scaling(scaling) {
    // check the scaling factors
@@ -58,7 +55,7 @@ inline ScaledModel::ScaledModel(const Model& original_model, const Scaling& scal
       this->linear_constraints.insert(j, i);
    });
 
-   // figure out bounded variables
+   // the bounded variables are the same as in the original model
    for (size_t i: this->original_model.lower_bounded_variables) {
       this->lower_bounded_variables.push_back(i);
    }
@@ -108,14 +105,12 @@ inline void ScaledModel::evaluate_constraints(const std::vector<double>& x, std:
 }
 
 inline void ScaledModel::evaluate_constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const {
-   // evaluate
    this->original_model.evaluate_constraint_gradient(x, j, gradient);
    // scale
    scale(gradient, this->scaling.get_constraint_scaling(j));
 }
 
 inline void ScaledModel::evaluate_constraint_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraint_jacobian) const {
-   // evaluate
    this->original_model.evaluate_constraint_jacobian(x, constraint_jacobian);
    // scale
    for (size_t j = 0; j < this->number_constraints; j++) {
@@ -128,6 +123,7 @@ inline void ScaledModel::evaluate_lagrangian_hessian(const std::vector<double>& 
    // scale the objective and constraint multipliers
    const double scaled_objective_multiplier = objective_multiplier*this->scaling.get_objective_scaling();
    // TODO preallocate this vector
+   // TODO check if the multipliers should be scaled
    static std::vector<double> scaled_multipliers(this->number_constraints);
    for (size_t j = 0; j < this->number_constraints; j++) {
       scaled_multipliers[j] = scaling.get_constraint_scaling(j)*multipliers[j];
