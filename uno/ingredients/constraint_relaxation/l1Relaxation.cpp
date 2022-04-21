@@ -17,7 +17,7 @@ l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
       // create the relaxed problem by introducing elastic variables
       relaxed_problem(model, stod(options.at("l1_relaxation_initial_parameter")), stod(options.at("elastic_objective_coefficient")),
             (options.at("use_proximal_term") == "yes")),
-      subproblem(SubproblemFactory::create(this->relaxed_problem, this->relaxed_problem.number_variables, options)),
+      subproblem(SubproblemFactory::create(this->relaxed_problem, options)),
       globalization_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
       penalty_parameter(stod(options.at("l1_relaxation_initial_parameter"))),
       parameters({options.at("l1_relaxation_fixed_parameter") == "yes",

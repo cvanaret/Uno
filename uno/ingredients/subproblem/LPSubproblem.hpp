@@ -7,7 +7,7 @@
 
 class LPSubproblem : public ActiveSetSubproblem {
 public:
-   LPSubproblem(const NonlinearProblem& problem, size_t max_number_variables, const Options& options);
+   LPSubproblem(const NonlinearProblem& problem, const Options& options);
 
    [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) override;
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const NonlinearProblem& problem, const Direction& direction) const override;
@@ -17,11 +17,6 @@ public:
 private:
    // use pointers to allow polymorphism
    const std::unique_ptr<LPSolver> solver; /*!< Solver that solves the subproblem */
-
-   // evaluations
-   SparseVector<double> objective_gradient;
-   std::vector<double> constraints;
-   std::vector<SparseVector<double>> constraint_jacobian;
 
    void evaluate_problem(const NonlinearProblem& problem, Iterate& current_iterate);
 };

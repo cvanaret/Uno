@@ -5,28 +5,25 @@
 #include "optimization/Preprocessing.hpp"
 #include "tools/Range.hpp"
 
-BarrierSubproblem::BarrierSubproblem(const NonlinearProblem& problem, size_t max_number_variables, const Options& options):
-      Subproblem(max_number_variables, problem.number_constraints, SOC_UPON_REJECTION),
-      augmented_system(options.at("sparse_format"), max_number_variables + problem.number_constraints,
+BarrierSubproblem::BarrierSubproblem(const NonlinearProblem& problem, const Options& options):
+      Subproblem(problem, SOC_UPON_REJECTION),
+      augmented_system(options.at("sparse_format"), problem.number_variables + problem.number_constraints,
             problem.get_maximum_number_hessian_nonzeros()
-            + max_number_variables + problem.number_constraints /* regularization */
-            + 2 * max_number_variables /* diagonal barrier terms */
-            + max_number_variables * problem.number_constraints /* Jacobian */,
+            + problem.number_variables + problem.number_constraints /* regularization */
+            + 2 * problem.number_variables /* diagonal barrier terms */
+            + problem.number_variables * problem.number_constraints /* Jacobian */,
             stod(options.at("LS_regularization_failure_threshold"))),
       barrier_parameter(std::stod(options.at("initial_barrier_parameter"))),
       previous_barrier_parameter(std::stod(options.at("initial_barrier_parameter"))),
       tolerance(std::stod(options.at("tolerance"))),
       // the Hessian is not convexified. Instead, the augmented system will be.
-      hessian_model(HessianModelFactory::create(options.at("hessian_model"), max_number_variables, problem.get_maximum_number_hessian_nonzeros(),
+      hessian_model(HessianModelFactory::create(options.at("hessian_model"), problem.number_variables, problem.get_maximum_number_hessian_nonzeros(),
             false, options)),
-      objective_gradient(max_number_variables),
-      constraints(problem.number_constraints),
-      constraint_jacobian(problem.number_constraints),
-      linear_solver(LinearSolverFactory::create(options.at("linear_solver"), max_number_variables + problem.number_constraints,
+      linear_solver(LinearSolverFactory::create(options.at("linear_solver"), problem.number_variables + problem.number_constraints,
             problem.get_maximum_number_hessian_nonzeros()
-            + max_number_variables + problem.number_constraints /* regularization */
-            + 2 * max_number_variables /* diagonal barrier terms */
-            + max_number_variables * problem.number_constraints /* Jacobian */)),
+            + problem.number_variables + problem.number_constraints /* regularization */
+            + 2 * problem.number_variables /* diagonal barrier terms */
+            + problem.number_variables * problem.number_constraints /* Jacobian */)),
       parameters({stod(options.at("tau_min")),
             stod(options.at("k_sigma")),
             stod(options.at("smax")),
@@ -36,12 +33,8 @@ BarrierSubproblem::BarrierSubproblem(const NonlinearProblem& problem, size_t max
             stod(options.at("barrier_update_fraction")),
             stod(options.at("regularization_barrier_exponent"))}),
       default_multiplier(std::stod(options.at("default_multiplier"))),
-      lower_delta_z(max_number_variables), upper_delta_z(max_number_variables) {
+      lower_delta_z(problem.number_variables), upper_delta_z(problem.number_variables) {
    assert(problem.inequality_constraints.empty() && "The problem has inequality constraints. Create an instance of EqualityConstrainedModel");
-   // register the variables bounds
-   for (size_t i = 0; i < problem.number_variables; i++) {
-      this->variable_bounds[i] = {problem.get_variable_lower_bound(i), problem.get_variable_upper_bound(i)};
-   }
 }
 
 inline void BarrierSubproblem::initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) {
@@ -72,6 +65,7 @@ inline void BarrierSubproblem::initialize(Statistics& statistics, const Nonlinea
 void BarrierSubproblem::evaluate_problem(const NonlinearProblem& problem, Iterate& current_iterate) {
    // Hessian
    this->hessian_model->evaluate(problem, current_iterate.x, current_iterate.multipliers.constraints);
+   // TODO add barrier terms
 
    // barrier objective gradient
    problem.evaluate_objective_gradient(current_iterate, this->objective_gradient);

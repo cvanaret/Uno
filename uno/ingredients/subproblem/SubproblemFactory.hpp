@@ -8,7 +8,7 @@
 
 class SubproblemFactory {
 	public:
-		static std::unique_ptr<Subproblem> create(const NonlinearProblem& problem, size_t max_number_variables, const Options& options);
+		static std::unique_ptr<Subproblem> create(const NonlinearProblem& problem, const Options& options);
 };
 
 #endif // UNO_SUBPROBLEMFACTORY_H

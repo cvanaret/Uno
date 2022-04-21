@@ -2,9 +2,17 @@
 #include "Subproblem.hpp"
 #include "linear_algebra/SparseVector.hpp"
 
-Subproblem::Subproblem(size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy):
-      soc_strategy(soc_strategy), variable_bounds(max_number_variables),
-      direction(max_number_variables, number_constraints) {
+Subproblem::Subproblem(const NonlinearProblem& problem, SecondOrderCorrection soc_strategy):
+      objective_gradient(problem.number_variables), constraints(problem.number_constraints), constraint_jacobian(problem.number_constraints),
+      soc_strategy(soc_strategy), variable_bounds(problem.number_variables),
+      direction(problem.number_variables, problem.number_constraints) {
+   for (auto& constraint_gradient: this->constraint_jacobian) {
+      constraint_gradient.reserve(problem.number_variables);
+   }
+   // register the variables bounds
+   for (size_t i = 0; i < problem.number_variables; i++) {
+      this->variable_bounds[i] = {problem.get_variable_lower_bound(i), problem.get_variable_upper_bound(i)};
+   }
 }
 
 void Subproblem::set_variable_bounds(const NonlinearProblem& problem, const Iterate& current_iterate, double trust_region_radius) {

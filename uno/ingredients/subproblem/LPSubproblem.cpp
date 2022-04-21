@@ -1,19 +1,9 @@
 #include "LPSubproblem.hpp"
 #include "solvers/QP/LPSolverFactory.hpp"
 
-LPSubproblem::LPSubproblem(const NonlinearProblem& problem, size_t max_number_variables, const Options& options) :
-      ActiveSetSubproblem(max_number_variables, problem.number_constraints, NO_SOC),
-      solver(LPSolverFactory::create(max_number_variables, problem.number_constraints, options.at("LP_solver"))),
-      objective_gradient(max_number_variables),
-      constraints(problem.number_constraints),
-      constraint_jacobian(problem.number_constraints) {
-   for (auto& constraint_gradient: this->constraint_jacobian) {
-      constraint_gradient.reserve(max_number_variables);
-   }
-   // register the variables bounds
-   for (size_t i = 0; i < problem.number_variables; i++) {
-      this->variable_bounds[i] = {problem.get_variable_lower_bound(i), problem.get_variable_upper_bound(i)};
-   }
+LPSubproblem::LPSubproblem(const NonlinearProblem& problem, const Options& options) :
+      ActiveSetSubproblem(problem, NO_SOC),
+      solver(LPSolverFactory::create(problem.number_variables, problem.number_constraints, options.at("LP_solver"))) {
 }
 
 void LPSubproblem::evaluate_problem(const NonlinearProblem& problem, Iterate& current_iterate) {

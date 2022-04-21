@@ -23,7 +23,7 @@ enum SecondOrderCorrection {
  */
 class Subproblem {
 public:
-   Subproblem(size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy);
+   Subproblem(const NonlinearProblem& problem, SecondOrderCorrection soc_strategy);
    virtual ~Subproblem() = default;
 
    // virtual methods implemented by subclasses
@@ -44,6 +44,9 @@ public:
    [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
    virtual void set_initial_point(const std::optional<std::vector<double>>& optional_initial_point) = 0;
 
+   SparseVector<double> objective_gradient;
+   std::vector<double> constraints;
+   std::vector<SparseVector<double>> constraint_jacobian;
    const SecondOrderCorrection soc_strategy;
    std::vector<Interval> variable_bounds;
    Direction direction;
