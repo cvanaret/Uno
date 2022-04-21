@@ -86,7 +86,7 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, Iterate& curren
    Direction direction = this->subproblem->solve(statistics, this->relaxed_problem, current_iterate);
    direction.objective_multiplier = current_penalty_parameter;
    direction.norm = norm_inf(direction.primals, Range(this->optimality_problem.number_variables));
-   DEBUG << "\n" << direction << "\n";
+   DEBUG << direction << "\n";
    assert(direction.status == OPTIMAL && "The subproblem was not solved to optimality");
    // check feasibility (the subproblem is, by construction, always feasible)
    if (direction.constraint_partition.has_value()) {
@@ -138,7 +138,6 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
             }
 
             // further decrease penalty parameter to satisfy 2 conditions
-            DEBUG << "Further decrease the penalty parameter\n";
             bool condition1 = false, condition2 = false;
             while (!condition2) {
                if (!condition1) {
@@ -155,7 +154,10 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
                }
                if (!condition2) {
                   this->penalty_parameter /= this->parameters.decrease_factor;
-                  this->penalty_parameter = std::max(0., this->penalty_parameter - this->parameters.small_threshold);
+                  if (this->penalty_parameter < this->parameters.small_threshold) {
+                     this->penalty_parameter = 0.;
+                  }
+                  DEBUG << "Further decrease the penalty parameter to " << this->penalty_parameter << "\n";
                   if (this->penalty_parameter == 0.) {
                      direction = direction_lowest_violation;
                      linearized_residual = residual_lowest_violation;
@@ -172,8 +174,9 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
          }
 
          if (this->penalty_parameter < current_penalty_parameter) {
-            DEBUG << "\nPenalty parameter updated to " << this->penalty_parameter << "\n\n";
+            DEBUG << "\nPenalty parameter updated to " << this->penalty_parameter << "\n";
          }
+         DEBUG << '\n';
       }
    }
    return direction;
@@ -196,7 +199,9 @@ void l1Relaxation::decrease_parameter_aggressively(Iterate& current_iterate, con
    const double scaled_error = error_lowest_violation / std::max(1., current_iterate.constraint_violation);
    const double scaled_error_square = scaled_error*scaled_error;
    this->penalty_parameter = std::min(this->penalty_parameter, scaled_error_square);
-   this->penalty_parameter = std::max(0., this->penalty_parameter - this->parameters.small_threshold);
+   if (this->penalty_parameter < this->parameters.small_threshold) {
+      this->penalty_parameter = 0.;
+   }
 }
 
 bool l1Relaxation::objective_sufficient_decrease(const Iterate& current_iterate, const Direction& direction,
@@ -295,6 +300,7 @@ PredictedReductionModel l1Relaxation::generate_predicted_reduction_model(const D
 }
 
 double l1Relaxation::compute_infeasibility_measure(Iterate& iterate) {
+   iterate.evaluate_constraints(this->optimality_problem.model);
    return this->optimality_problem.model.compute_constraint_violation(iterate.original_evaluations.constraints, L1_NORM);
 }
 
