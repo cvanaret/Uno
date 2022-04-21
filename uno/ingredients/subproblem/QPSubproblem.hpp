@@ -8,7 +8,7 @@
 
 class QPSubproblem : public ActiveSetSubproblem {
 public:
-   QPSubproblem(const NonlinearProblem& problem, size_t max_number_variables, const Options& options);
+   QPSubproblem(const NonlinearProblem& problem, const Options& options);
 
    [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) override;
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const NonlinearProblem& problem, const Direction& direction) const override;
@@ -22,9 +22,6 @@ protected:
 
    // evaluations
    const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
-   SparseVector<double> objective_gradient;
-   std::vector<double> constraints;
-   std::vector<SparseVector<double>> constraint_jacobian;
 
    void evaluate_problem(const NonlinearProblem& problem, Iterate& current_iterate);
 };

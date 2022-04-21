@@ -1,10 +1,10 @@
 #include "ActiveSetSubproblem.hpp"
 
-ActiveSetSubproblem::ActiveSetSubproblem(size_t max_number_variables, size_t number_constraints, SecondOrderCorrection soc_strategy):
-      Subproblem(max_number_variables, number_constraints, soc_strategy),
-      initial_point(max_number_variables),
-      variable_displacement_bounds(max_number_variables),
-      linearized_constraint_bounds(number_constraints) {
+ActiveSetSubproblem::ActiveSetSubproblem(const NonlinearProblem& problem, SecondOrderCorrection soc_strategy):
+      Subproblem(problem, soc_strategy),
+      initial_point(problem.number_variables),
+      variable_displacement_bounds(problem.number_variables),
+      linearized_constraint_bounds(problem.number_constraints) {
 }
 
 void ActiveSetSubproblem::initialize(Statistics& /*statistics*/, const NonlinearProblem& /*problem*/, Iterate& /*first_iterate*/) {
@@ -60,5 +60,4 @@ Direction ActiveSetSubproblem::compute_second_order_correction(const NonlinearPr
 }
 
 void ActiveSetSubproblem::postprocess_accepted_iterate(const NonlinearProblem& /*problem*/, Iterate& /*iterate*/) {
-   // by default, do nothing
 }

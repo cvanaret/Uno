@@ -20,7 +20,7 @@ struct InteriorPointParameters {
 
 class BarrierSubproblem : public Subproblem {
 public:
-   BarrierSubproblem(const NonlinearProblem& problem, size_t max_number_variables, const Options& options);
+   BarrierSubproblem(const NonlinearProblem& problem, const Options& options);
    ~BarrierSubproblem() override = default;
 
    void set_initial_point(const std::optional<std::vector<double>>& optional_initial_point) override;
@@ -42,11 +42,7 @@ private:
    double previous_barrier_parameter;
    const double tolerance;
 
-   // evaluations
    const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
-   SparseVector<double> objective_gradient;
-   std::vector<double> constraints;
-   std::vector<SparseVector<double>> constraint_jacobian;
 
    const std::unique_ptr<LinearSolver> linear_solver;
    const InteriorPointParameters parameters;

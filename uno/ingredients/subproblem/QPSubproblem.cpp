@@ -1,27 +1,17 @@
 #include "QPSubproblem.hpp"
 #include "solvers/QP/QPSolverFactory.hpp"
 
-QPSubproblem::QPSubproblem(const NonlinearProblem& problem, size_t max_number_variables, const Options& options) :
-      ActiveSetSubproblem(max_number_variables, problem.number_constraints, NO_SOC),
+QPSubproblem::QPSubproblem(const NonlinearProblem& problem, const Options& options) :
+      ActiveSetSubproblem(problem, NO_SOC),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
-      solver(QPSolverFactory::create(options.at("QP_solver"), max_number_variables, problem.number_constraints,
+      solver(QPSolverFactory::create(options.at("QP_solver"), problem.number_variables, problem.number_constraints,
             problem.get_maximum_number_hessian_nonzeros()
-            + max_number_variables, /* regularization */
+            + problem.number_variables, /* regularization */
             true)),
       proximal_coefficient(stod(options.at("proximal_coefficient"))),
       // if no trust region is used, the problem should be convexified to guarantee boundedness + descent direction
-      hessian_model(HessianModelFactory::create(options.at("hessian_model"), max_number_variables,
-            problem.get_maximum_number_hessian_nonzeros() + max_number_variables, options.at("mechanism") != "TR", options)),
-      objective_gradient(max_number_variables),
-      constraints(problem.number_constraints),
-      constraint_jacobian(problem.number_constraints) {
-   for (auto& constraint_gradient: this->constraint_jacobian) {
-      constraint_gradient.reserve(max_number_variables);
-   }
-   // register the variables bounds
-   for (size_t i = 0; i < problem.number_variables; i++) {
-      this->variable_bounds[i] = {problem.get_variable_lower_bound(i), problem.get_variable_upper_bound(i)};
-   }
+      hessian_model(HessianModelFactory::create(options.at("hessian_model"), problem.number_variables,
+            problem.get_maximum_number_hessian_nonzeros() + problem.number_variables, options.at("mechanism") != "TR", options)) {
 }
 
 void QPSubproblem::evaluate_problem(const NonlinearProblem& problem, Iterate& current_iterate) {
