@@ -99,16 +99,20 @@ inline double l1RelaxedProblem::get_objective_multiplier() const {
    return this->objective_multiplier;
 }
 
-// return rho*f(x) + coeff*(e^T p + e^T n) + proximal
+// return rho*f(x) + coeff*||c(x)||_1 + proximal term
 inline double l1RelaxedProblem::evaluate_objective(Iterate& iterate) const {
-   // elastic contribution
-   double objective = this->elastic_objective_coefficient*this->compute_linearized_constraint_violation(iterate.primals);
+   double objective = 0.;
 
-   // original objective
+   // scaled objective: rho*f(x)
    if (this->objective_multiplier != 0.) {
       iterate.evaluate_objective(this->model);
       objective += this->objective_multiplier*iterate.original_evaluations.objective;
    }
+
+   // scaled constraint violation: coeff*||c(x)||_1
+   iterate.evaluate_constraints(this->model);
+   iterate.constraint_violation = this->model.compute_constraint_violation(iterate.original_evaluations.constraints, L1_NORM);
+   objective += this->elastic_objective_coefficient*iterate.constraint_violation;
 
    // proximal term
    if (this->use_proximal_term && 0. < this->proximal_coefficient) {
