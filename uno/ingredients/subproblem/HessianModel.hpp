@@ -36,7 +36,8 @@ public:
 
 protected:
    std::unique_ptr<LinearSolver> linear_solver; /*!< Solver that computes the inertia */
-   const double regularization_initial_value;
+   const double regularization_initial_value{};
+   const double regularization_increase_factor{};
 
    void regularize(SymmetricMatrix& matrix, size_t number_original_variables);
 };

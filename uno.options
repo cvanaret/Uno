@@ -98,6 +98,8 @@ LS_regularization_failure_threshold 1e40
 # Hessian regularization: initial value
 regularization_initial_value 1e-4
 
+regularization_increase_factor 2
+
 ##### trust region options #####
 # initial trust region radius
 TR_radius 10.
