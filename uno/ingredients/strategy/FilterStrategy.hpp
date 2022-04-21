@@ -4,6 +4,7 @@
 #include "GlobalizationStrategy.hpp"
 #include "Filter.hpp"
 #include "tools/Options.hpp"
+#include "tools/Infinity.hpp"
 
 /*! \class TwoPhaseConstants
  * \brief Constants for filter strategy
@@ -35,7 +36,7 @@ public:
 private:
    // use pointers to allow polymorphism
    const std::unique_ptr<Filter> filter;
-   double initial_filter_upper_bound{std::numeric_limits<double>::infinity()};
+   double initial_filter_upper_bound{INF};
    const FilterStrategyParameters parameters; /*!< Set of constants */
 
    [[nodiscard]] bool switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const;

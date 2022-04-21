@@ -3,6 +3,7 @@
 #include <numeric>
 #include "CSCSymmetricMatrix.hpp"
 #include "Vector.hpp"
+#include "tools/Infinity.hpp"
 
 /*
  * Compressed Sparse Column
@@ -124,7 +125,7 @@ void CSCSymmetricMatrix::add_identity_multiple(double multiple, size_t number_va
 }
 
 double CSCSymmetricMatrix::smallest_diagonal_entry() const {
-   double smallest_entry = std::numeric_limits<double>::infinity();
+   double smallest_entry = INF;
    size_t overall_padding_size = 0;
    // go through each column
    for (size_t j = 0; j < this->dimension; j++) {
@@ -141,7 +142,7 @@ double CSCSymmetricMatrix::smallest_diagonal_entry() const {
       }
       overall_padding_size += this->remaining_column_padding[j];
    }
-   if (smallest_entry == std::numeric_limits<double>::infinity()) {
+   if (smallest_entry == INF) {
       smallest_entry = 0.;
    }
    return smallest_entry;

@@ -4,6 +4,7 @@
 #include <vector>
 #include <optional>
 #include "optimization/Multipliers.hpp"
+#include "tools/Infinity.hpp"
 
 // see bqpd.f
 enum Status {
@@ -53,8 +54,8 @@ public:
 
    Status status{OPTIMAL}; /*!< Status of the solution */
 
-   double norm{0.}; /*!< Norm of \f$x\f$ */
-   double objective{std::numeric_limits<double>::infinity()}; /*!< Objective value */
+   double norm{INF}; /*!< Norm of \f$x\f$ */
+   double objective{INF}; /*!< Objective value */
    ActiveSet active_set{}; /*!< Active set */
    std::optional<ConstraintPartition> constraint_partition{std::nullopt}; /*!< Optional partition of feasible and infeasible constraints */
 

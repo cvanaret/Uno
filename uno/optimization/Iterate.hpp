@@ -2,9 +2,11 @@
 #define UNO_ITERATE_H
 
 #include <vector>
+#include <limits>
 #include "linear_algebra/SparseVector.hpp"
 #include "optimization/Model.hpp"
 #include "optimization/Multipliers.hpp"
+#include "tools/Infinity.hpp"
 
 struct ProgressMeasures {
    double infeasibility;
@@ -12,7 +14,7 @@ struct ProgressMeasures {
 };
 
 struct Evaluations {
-   double objective{std::numeric_limits<double>::infinity()}; /*!< Objective value */
+   double objective{INF}; /*!< Objective value */
    std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
    SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
    std::vector<SparseVector<double>> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
@@ -50,12 +52,12 @@ public:
    std::vector<double> lagrangian_gradient;
 
    // residuals
-   double constraint_violation{0.};
-   double stationarity_error{0.};
-   double complementarity_error{0.};
+   double constraint_violation{INF};
+   double stationarity_error{INF};
+   double complementarity_error{INF};
 
    // measures of progress (infeasibility, optimality)
-   ProgressMeasures nonlinear_progress{0., 0.};
+   ProgressMeasures nonlinear_progress{INF, INF};
 
    void evaluate_objective(const Model& model);
    void evaluate_constraints(const Model& model);

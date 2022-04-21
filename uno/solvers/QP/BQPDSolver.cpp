@@ -1,8 +1,9 @@
 #include <cassert>
 #include <algorithm>
 #include "BQPDSolver.hpp"
-#include "tools/Logger.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "tools/Logger.hpp"
+#include "tools/Infinity.hpp"
 
 #define BIG 1e30
 
@@ -85,12 +86,12 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
 
    // bounds
    for (size_t i = 0; i < number_variables; i++) {
-      this->lb[i] = (variables_bounds[i].lb == -std::numeric_limits<double>::infinity()) ? -BIG : variables_bounds[i].lb;
-      this->ub[i] = (variables_bounds[i].ub == std::numeric_limits<double>::infinity()) ? BIG : variables_bounds[i].ub;
+      this->lb[i] = (variables_bounds[i].lb == -INF) ? -BIG : variables_bounds[i].lb;
+      this->ub[i] = (variables_bounds[i].ub == INF) ? BIG : variables_bounds[i].ub;
    }
    for (size_t j = 0; j < number_constraints; j++) {
-      this->lb[number_variables + j] = (constraint_bounds[j].lb == -std::numeric_limits<double>::infinity()) ? -BIG : constraint_bounds[j].lb;
-      this->ub[number_variables + j] = (constraint_bounds[j].ub == std::numeric_limits<double>::infinity()) ? BIG : constraint_bounds[j].ub;
+      this->lb[number_variables + j] = (constraint_bounds[j].lb == -INF) ? -BIG : constraint_bounds[j].lb;
+      this->ub[number_variables + j] = (constraint_bounds[j].ub == INF) ? BIG : constraint_bounds[j].ub;
    }
 
    Direction direction(number_variables, number_constraints);

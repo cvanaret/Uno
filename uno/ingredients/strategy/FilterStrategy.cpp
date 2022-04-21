@@ -34,6 +34,9 @@ void FilterStrategy::notify(Iterate& current_iterate) {
  * */
 bool FilterStrategy::is_acceptable(Statistics& /*statistics*/, const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
       double /*objective_multiplier*/, double predicted_reduction) {
+   GlobalizationStrategy::check_finiteness(current_progress);
+   GlobalizationStrategy::check_finiteness(trial_progress);
+
    DEBUG << "Current: η = " << current_progress.infeasibility << ", ω = " << current_progress.objective << '\n';
    DEBUG << "Trial:   η = " << trial_progress.infeasibility << ", ω = " << trial_progress.objective << '\n';
    DEBUG << "Predicted reduction: " << predicted_reduction << '\n';
