@@ -34,7 +34,7 @@ public:
 
 private:
    const OptimalityProblem optimality_problem;
-   l1RelaxedProblem relaxed_problem;
+   l1RelaxedProblem feasibility_problem;
    std::unique_ptr<Subproblem> subproblem;
    const std::unique_ptr<GlobalizationStrategy> phase_1_strategy;
    const std::unique_ptr<GlobalizationStrategy> phase_2_strategy;

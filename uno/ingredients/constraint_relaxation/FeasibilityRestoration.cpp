@@ -9,8 +9,8 @@ FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options
       // create the optimality problem
       optimality_problem(model),
       // create the phase-1 feasibility problem (objective multiplier = 0)
-      relaxed_problem(model, 0., stod(options.at("elastic_objective_coefficient")), (options.at("use_proximal_term") == "yes")),
-      subproblem(SubproblemFactory::create(this->relaxed_problem, options)),
+      feasibility_problem(model, 0., stod(options.at("elastic_objective_coefficient")), (options.at("use_proximal_term") == "yes")),
+      subproblem(SubproblemFactory::create(this->feasibility_problem, options)),
       // create the globalization strategies (one for each phase)
       phase_1_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
       phase_2_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)) {
@@ -24,8 +24,8 @@ void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& first_i
 
    // compute the progress measures and the residuals of the initial point
    first_iterate.nonlinear_progress.infeasibility = this->compute_infeasibility_measure(first_iterate);
-   first_iterate.nonlinear_progress.objective = this->subproblem->compute_optimality_measure(this->optimality_problem, first_iterate);
-   this->compute_nonlinear_residuals(this->optimality_problem.model, first_iterate);
+   first_iterate.nonlinear_progress.optimality = this->subproblem->compute_optimality_measure(this->optimality_problem, first_iterate);
+   this->compute_nonlinear_residuals(this->optimality_problem, first_iterate);
 
    // initialize the globalization strategies
    this->phase_1_strategy->initialize(statistics, first_iterate);
@@ -61,22 +61,22 @@ Direction FeasibilityRestoration::solve_optimality_problem(Statistics& statistic
 Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
       const std::optional<std::vector<double>>& optional_phase_2_solution) {
    // register the proximal coefficient and reference point
-   this->relaxed_problem.set_proximal_coefficient(this->subproblem->get_proximal_coefficient());
-   this->relaxed_problem.set_proximal_reference_point(current_iterate.primals);
+   this->feasibility_problem.set_proximal_coefficient(this->subproblem->get_proximal_coefficient());
+   this->feasibility_problem.set_proximal_reference_point(current_iterate.primals);
 
    // build the objective model of the feasibility problem (TODO: move to subproblem)
-   this->subproblem->set_elastic_variables(this->relaxed_problem, current_iterate);
+   this->subproblem->set_elastic_variables(this->feasibility_problem, current_iterate);
 
    // start from the phase-2 solution
    this->subproblem->set_initial_point(optional_phase_2_solution);
 
    DEBUG << "Solving the feasibility subproblem\n";
-   Direction feasibility_direction = this->subproblem->solve(statistics, this->relaxed_problem, current_iterate);
+   Direction feasibility_direction = this->subproblem->solve(statistics, this->feasibility_problem, current_iterate);
    feasibility_direction.objective_multiplier = 0.;
    feasibility_direction.norm = norm_inf(feasibility_direction.primals, Range(this->optimality_problem.number_variables));
    // create constraint partition
    ConstraintPartition constraint_partition(this->optimality_problem.number_constraints);
-   constraint_partition.infeasible = this->relaxed_problem.get_violated_linearized_constraints(feasibility_direction.primals);
+   constraint_partition.infeasible = this->feasibility_problem.get_violated_linearized_constraints(feasibility_direction.primals);
    feasibility_direction.constraint_partition = constraint_partition;
    DEBUG << feasibility_direction << '\n';
    assert(feasibility_direction.status == OPTIMAL && "The subproblem was not solved to optimality");
@@ -88,7 +88,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& curr
    // check if subproblem definition changed
    if (this->subproblem->subproblem_definition_changed) {
       DEBUG << "The subproblem definition changed, the optimality measure is recomputed\n";
-      current_iterate.nonlinear_progress.objective = this->subproblem->compute_optimality_measure(this->optimality_problem, current_iterate);
+      current_iterate.nonlinear_progress.optimality = this->subproblem->compute_optimality_measure(this->optimality_problem, current_iterate);
       this->phase_2_strategy->reset();
       this->subproblem->subproblem_definition_changed = false;
    }
@@ -111,7 +111,12 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& curr
 
    if (accept) {
       statistics.add_statistic("phase", static_cast<int>(this->current_phase));
-      this->compute_nonlinear_residuals(this->optimality_problem.model, trial_iterate);
+      if (this->current_phase == OPTIMALITY) {
+         this->compute_nonlinear_residuals(this->optimality_problem, trial_iterate);
+      }
+      else {
+         this->compute_nonlinear_residuals(this->feasibility_problem, trial_iterate);
+      }
    }
    return accept;
 }
@@ -124,7 +129,7 @@ GlobalizationStrategy& FeasibilityRestoration::switch_phase(Iterate& current_ite
       this->phase_1_strategy->reset();
       // update the measure of optimality
       const std::vector<size_t>& infeasible_constraints = direction.constraint_partition.value().infeasible;
-      current_iterate.nonlinear_progress.objective = this->compute_optimality_measure(current_iterate, infeasible_constraints);
+      current_iterate.nonlinear_progress.optimality = this->compute_optimality_measure(current_iterate, infeasible_constraints);
       this->phase_1_strategy->notify(current_iterate);
    }
    // possibly go from 1 (restoration) to phase 2 (optimality)
@@ -133,7 +138,7 @@ GlobalizationStrategy& FeasibilityRestoration::switch_phase(Iterate& current_ite
       this->current_phase = OPTIMALITY;
       DEBUG << "Switching from restoration to optimality phase\n";
       current_iterate.set_number_variables(this->optimality_problem.number_variables);
-      current_iterate.nonlinear_progress.objective = this->subproblem->compute_optimality_measure(this->optimality_problem, current_iterate);
+      current_iterate.nonlinear_progress.optimality = this->subproblem->compute_optimality_measure(this->optimality_problem, current_iterate);
       trial_iterate.set_number_variables(this->optimality_problem.number_variables);
    }
 
@@ -141,10 +146,10 @@ GlobalizationStrategy& FeasibilityRestoration::switch_phase(Iterate& current_ite
    trial_iterate.evaluate_objective(this->optimality_problem.model);
    trial_iterate.nonlinear_progress.infeasibility = this->compute_infeasibility_measure(trial_iterate);
    if (this->current_phase == OPTIMALITY) {
-      trial_iterate.nonlinear_progress.objective = this->subproblem->compute_optimality_measure(this->optimality_problem, trial_iterate);
+      trial_iterate.nonlinear_progress.optimality = this->subproblem->compute_optimality_measure(this->optimality_problem, trial_iterate);
    }
    else {
-      trial_iterate.nonlinear_progress.objective = this->compute_optimality_measure(trial_iterate, direction.constraint_partition.value().infeasible);
+      trial_iterate.nonlinear_progress.optimality = this->compute_optimality_measure(trial_iterate, direction.constraint_partition.value().infeasible);
    }
 
    // return the globalization strategy of the current phase
@@ -153,7 +158,7 @@ GlobalizationStrategy& FeasibilityRestoration::switch_phase(Iterate& current_ite
 
 void FeasibilityRestoration::set_variable_bounds(const Iterate& current_iterate, double trust_region_radius) {
    // set the bounds of all the variables (primal + elastics)
-   this->subproblem->set_variable_bounds(this->relaxed_problem, current_iterate, trust_region_radius);
+   this->subproblem->set_variable_bounds(this->feasibility_problem, current_iterate, trust_region_radius);
 }
 
 Direction FeasibilityRestoration::compute_second_order_correction(Iterate& trial_iterate) {
@@ -161,7 +166,7 @@ Direction FeasibilityRestoration::compute_second_order_correction(Iterate& trial
       return this->subproblem->compute_second_order_correction(this->optimality_problem, trial_iterate);
    }
    else {
-      return this->subproblem->compute_second_order_correction(this->relaxed_problem, trial_iterate);
+      return this->subproblem->compute_second_order_correction(this->feasibility_problem, trial_iterate);
    }
 }
 
@@ -170,7 +175,7 @@ PredictedReductionModel FeasibilityRestoration::generate_predicted_reduction_mod
       return this->subproblem->generate_predicted_reduction_model(this->optimality_problem, direction);
    }
    else {
-      return this->subproblem->generate_predicted_reduction_model(this->relaxed_problem, direction);
+      return this->subproblem->generate_predicted_reduction_model(this->feasibility_problem, direction);
    }
 }
 
@@ -189,7 +194,7 @@ void FeasibilityRestoration::register_accepted_iterate(Iterate& iterate) {
       this->subproblem->postprocess_accepted_iterate(this->optimality_problem, iterate);
    }
    else {
-      this->subproblem->postprocess_accepted_iterate(this->relaxed_problem, iterate);
+      this->subproblem->postprocess_accepted_iterate(this->feasibility_problem, iterate);
    }
 }
 
