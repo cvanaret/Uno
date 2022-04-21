@@ -333,9 +333,22 @@ void BarrierSubproblem::compute_upper_bound_dual_direction(const NonlinearProble
       const double distance_to_bound = current_iterate.x[i] - this->variable_bounds[i].ub;
       this->upper_delta_z[i] = (this->barrier_parameter - this->augmented_system.solution[i] * current_iterate.multipliers.upper_bounds[i]) / distance_to_bound -
             current_iterate.multipliers.upper_bounds[i];
-      assert(this->lower_delta_z[i] < std::numeric_limits<double>::infinity() && "The displacement upper_delta_z is infinite");
+      assert(this->upper_delta_z[i] < std::numeric_limits<double>::infinity() && "The displacement upper_delta_z is infinite");
    }
 }
+
+/*
+void BarrierSubproblem::compute_bound_dual_direction(const std::vector<size_t>& bounded_variables, const std::vector<double>& x,
+      const std::vector<double>& bound_multipliers, std::vector<double>& displacements) {
+   initialize_vector(displacements, 0.);
+   for (size_t i: bounded_variables) {
+      const double distance_to_bound = x[i] - this->variable_bounds[i].ub;
+      displacements[i] = (this->barrier_parameter - this->augmented_system.solution[i] * bound_multipliers[i]) / distance_to_bound -
+                               bound_multipliers[i];
+      assert(std::abs(displacements[i]) < std::numeric_limits<double>::infinity() && "The displacement delta_z is infinite");
+   }
+}
+*/
 
 void BarrierSubproblem::generate_direction(const NonlinearProblem& problem, const Iterate& current_iterate) {
    // retrieve +Δλ (Nocedal p590)
