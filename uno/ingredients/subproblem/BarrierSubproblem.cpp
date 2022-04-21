@@ -183,7 +183,7 @@ void BarrierSubproblem::update_barrier_parameter(const NonlinearProblem& problem
    const double KKTerror = current_iterate.stationarity_error / scaling;
    const double central_complementarity_error = this->compute_central_complementarity_error(problem, current_iterate);
    const double error = std::max({KKTerror, current_iterate.constraint_violation, central_complementarity_error});
-   DEBUG << "KKT error for barrier subproblem is " << error << "\n";
+   DEBUG << "Scaled KKT error for barrier subproblem is " << error << "\n";
 
    // update of the barrier parameter (Eq. 7 in Ipopt paper)
    const double tolerance_fraction = this->tolerance / this->parameters.barrier_update_fraction;
@@ -221,6 +221,7 @@ double BarrierSubproblem::evaluate_barrier_function(const NonlinearProblem& prob
    if (!this->solving_feasibility_problem) {
       objective += problem.evaluate_objective(iterate);
    }
+   assert(objective < std::numeric_limits<double>::infinity() && "The barrier value is infinite");
    return objective;
 }
 
