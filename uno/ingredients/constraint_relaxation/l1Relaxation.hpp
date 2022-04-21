@@ -47,6 +47,8 @@ protected:
    const l1RelaxationParameters parameters;
    // preallocated temporary multipliers
    std::vector<double> constraint_multipliers;
+   std::vector<double> lower_bound_multipliers;
+   std::vector<double> upper_bound_multipliers;
 
    static double compute_predicted_reduction(const Model& model, Iterate& current_iterate, const Direction& direction,
          PredictedReductionModel& predicted_reduction_model, double step_length);

@@ -25,7 +25,9 @@ l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
                   stod(options.at("l1_relaxation_epsilon1")),
                   stod(options.at("l1_relaxation_epsilon2")),
                   stod(options.at("l1_relaxation_small_threshold"))}),
-      constraint_multipliers(model.number_constraints) {
+      constraint_multipliers(model.number_constraints),
+      lower_bound_multipliers(model.number_variables),
+      upper_bound_multipliers(model.number_variables) {
 }
 
 void l1Relaxation::initialize(Statistics& statistics, Iterate& first_iterate) {
@@ -259,19 +261,22 @@ double l1Relaxation::compute_predicted_reduction(const Model& model, Iterate& cu
 
 // measure that combines KKT error and complementarity error
 double l1Relaxation::compute_error(Iterate& current_iterate, const Multipliers& multiplier_displacements) {
-   // assemble the trial constraints multipliers
+   // assemble the trial multipliers
    for (size_t j = 0; j < this->optimality_problem.number_constraints; j++) {
       this->constraint_multipliers[j] = current_iterate.multipliers.constraints[j] + multiplier_displacements.constraints[j];
    }
+   for (size_t i = 0; i < this->optimality_problem.number_variables; i++) {
+      this->lower_bound_multipliers[i] = current_iterate.multipliers.lower_bounds[i] + multiplier_displacements.lower_bounds[i];
+      this->upper_bound_multipliers[i] = current_iterate.multipliers.upper_bounds[i] + multiplier_displacements.upper_bounds[i];
+   }
 
-   assert(false && "Need to compute the bound multipliers");
    // complementarity error
    current_iterate.evaluate_constraints(this->optimality_problem.model);
    double error = this->optimality_problem.model.compute_complementarity_error(current_iterate.x, current_iterate.original_evaluations.constraints,
-         this->constraint_multipliers, multiplier_displacements.lower_bounds, multiplier_displacements.upper_bounds);
+         this->constraint_multipliers, this->lower_bound_multipliers, this->upper_bound_multipliers);
    // KKT error
-   current_iterate.evaluate_lagrangian_gradient(this->optimality_problem.model, this->constraint_multipliers, multiplier_displacements.lower_bounds,
-         multiplier_displacements.upper_bounds);
+   current_iterate.evaluate_lagrangian_gradient(this->optimality_problem.model, this->constraint_multipliers, this->lower_bound_multipliers,
+         this->upper_bound_multipliers);
    error += norm_1(current_iterate.lagrangian_gradient);
    return error;
 }
