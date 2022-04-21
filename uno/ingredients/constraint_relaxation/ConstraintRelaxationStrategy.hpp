@@ -37,7 +37,7 @@ protected:
 
    [[nodiscard]] virtual double compute_infeasibility_measure(Iterate& iterate) = 0;
    static bool is_small_step(const Direction& direction);
-   void compute_nonlinear_residuals(const Model& model, Iterate& iterate) const;
+   void compute_nonlinear_residuals(const NonlinearReformulation& problem, Iterate& iterate) const;
    void recover_active_set(const Model& model, Direction& direction);
 };
 

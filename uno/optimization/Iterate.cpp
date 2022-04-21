@@ -53,22 +53,23 @@ void Iterate::evaluate_constraint_jacobian(const Model& model) {
    }
 }
 
-void Iterate::evaluate_lagrangian_gradient(const Model& model, const std::vector<double>& constraint_multipliers,
+void Iterate::evaluate_lagrangian_gradient(const Model& model, double objective_multiplier, const std::vector<double>& constraint_multipliers,
       const std::vector<double>& lower_bounds_multipliers, const std::vector<double>& upper_bounds_multipliers) {
-   const size_t number_original_variables = model.number_variables;
    initialize_vector(this->lagrangian_gradient, 0.);
+   const size_t number_original_variables = model.number_variables;
 
    // objective gradient
    this->evaluate_objective_gradient(model);
 
    // scale the objective gradient with the objective multiplier
-   this->original_evaluations.objective_gradient.for_each([&](size_t i, double derivative) {
-      // in case there are additional variables, ignore them
-      if (i < number_original_variables) {
-         //this->lagrangian_gradient[i] += objective_multiplier * derivative;
-         this->lagrangian_gradient[i] += derivative;
-      }
-   });
+   if (objective_multiplier != 0.) {
+      this->original_evaluations.objective_gradient.for_each([&](size_t i, double derivative) {
+         // in case there are additional variables, ignore them
+         if (i < number_original_variables) {
+            this->lagrangian_gradient[i] += objective_multiplier * derivative;
+         }
+      });
+   }
 
    // bound constraints
    for (size_t i = 0; i < number_original_variables; i++) {
@@ -120,7 +121,7 @@ std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
    stream << "Stationarity (KKT/FJ) error: " << iterate.stationarity_error << '\n';
    stream << "Complementarity error: " << iterate.complementarity_error << '\n';
 
-   stream << "Optimality measure: " << iterate.nonlinear_progress.objective << '\n';
+   stream << "Optimality measure: " << iterate.nonlinear_progress.optimality << '\n';
    stream << "Feasibility measure: " << iterate.nonlinear_progress.infeasibility << '\n';
    return stream;
 }

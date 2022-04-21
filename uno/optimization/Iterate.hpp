@@ -10,7 +10,7 @@
 
 struct ProgressMeasures {
    double infeasibility;
-   double objective;
+   double optimality;
 };
 
 struct Evaluations {
@@ -63,7 +63,7 @@ public:
    void evaluate_constraints(const Model& model);
    void evaluate_objective_gradient(const Model& model);
    void evaluate_constraint_jacobian(const Model& model);
-   void evaluate_lagrangian_gradient(const Model& model, const std::vector<double>& constraint_multipliers,
+   void evaluate_lagrangian_gradient(const Model& model, double objective_multiplier, const std::vector<double>& constraint_multipliers,
          const std::vector<double>& lower_bounds_multipliers, const std::vector<double>& upper_bounds_multipliers);
 
    void set_number_variables(size_t number_variables);
