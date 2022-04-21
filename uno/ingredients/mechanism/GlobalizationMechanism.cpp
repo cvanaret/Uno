@@ -13,9 +13,9 @@ Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate,
       iterate.multipliers.objective = direction.objective_multiplier;
    };
    if (0. < direction.norm) {
-      Iterate trial_iterate(current_iterate.x.size(), direction.multipliers.constraints.size());
+      Iterate trial_iterate(current_iterate.primals.size(), direction.multipliers.constraints.size());
       // take primal step
-      add_vectors(current_iterate.x, direction.x, step_length, trial_iterate.x);
+      add_vectors(current_iterate.primals, direction.primals, step_length, trial_iterate.primals);
       // take dual step
       take_dual_step(trial_iterate);
       return trial_iterate;

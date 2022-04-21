@@ -94,14 +94,14 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
    }
 
    Direction direction(number_variables, number_constraints);
-   copy_from(direction.x, initial_point);
+   copy_from(direction.primals, initial_point);
    const int n = static_cast<int>(number_variables);
    const int m = static_cast<int>(number_constraints);
    const int current_mode = static_cast<int>(this->mode);
 
    // solve the LP/QP
    bqpd_(&n, &m, &this->k, &this->kmax, this->jacobian.data(), this->jacobian_sparsity.data(),
-         direction.x.data(), this->lb.data(), this->ub.data(), &direction.objective, &this->fmin, this->gradient_solution.data(),
+         direction.primals.data(), this->lb.data(), this->ub.data(), &direction.objective, &this->fmin, this->gradient_solution.data(),
          this->residuals.data(), this->w.data(), this->e.data(), this->ls.data(), this->alp.data(), this->lp.data(),
          &this->mlp, &this->peq_solution, this->hessian_values.data(), this->hessian_sparsity.data(), &current_mode, &this->ifail,
          this->info.data(), &this->iprint, &this->nout);
@@ -109,7 +109,7 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
 
    // project solution into bounds
    for (size_t i = 0; i < number_variables; i++) {
-      direction.x[i] = std::min(std::max(direction.x[i], variables_bounds[i].lb), variables_bounds[i].ub);
+      direction.primals[i] = std::min(std::max(direction.primals[i], variables_bounds[i].lb), variables_bounds[i].ub);
    }
    this->analyze_constraints(number_variables, number_constraints, direction);
    return direction;

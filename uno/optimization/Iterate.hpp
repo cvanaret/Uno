@@ -33,7 +33,7 @@ public:
 
    size_t number_variables;
    size_t number_constraints;
-   std::vector<double> x; /*!< \f$\mathbb{R}^n\f$ primal variables */
+   std::vector<double> primals; /*!< \f$\mathbb{R}^n\f$ primal variables */
    Multipliers multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
 
    // evaluations

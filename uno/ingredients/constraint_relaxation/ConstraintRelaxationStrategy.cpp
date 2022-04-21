@@ -20,7 +20,7 @@ void ConstraintRelaxationStrategy::compute_nonlinear_residuals(const Model& mode
 
 void ConstraintRelaxationStrategy::recover_active_set(const Model& model, Direction& direction) {
    // TODO remove elastic variables
-   for (size_t i = model.number_variables; i < direction.x.size(); i++) {
+   for (size_t i = model.number_variables; i < direction.primals.size(); i++) {
       //direction.active_set.bounds.at_lower_bound.erase(i);
       //direction.active_set.bounds.at_upper_bound.erase(i);
    }

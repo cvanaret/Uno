@@ -102,7 +102,7 @@ inline double l1RelaxedProblem::get_objective_multiplier() const {
 // return rho*f(x) + coeff*(e^T p + e^T n) + proximal
 inline double l1RelaxedProblem::evaluate_objective(Iterate& iterate) const {
    // elastic contribution
-   double objective = this->elastic_objective_coefficient*this->compute_linearized_constraint_violation(iterate.x);
+   double objective = this->elastic_objective_coefficient*this->compute_linearized_constraint_violation(iterate.primals);
 
    // original objective
    if (this->objective_multiplier != 0.) {
@@ -116,7 +116,7 @@ inline double l1RelaxedProblem::evaluate_objective(Iterate& iterate) const {
       for (size_t i = 0; i < this->model.number_variables; i++) {
          const double weight = this->get_proximal_weight(i);
          // weighted distance between trial iterate and current iterate
-         proximal_term += std::pow(weight * (iterate.x[i] - this->proximal_reference_point[i]), 2);
+         proximal_term += std::pow(weight * (iterate.primals[i] - this->proximal_reference_point[i]), 2);
       }
       objective += this->proximal_coefficient*proximal_term;
    }
@@ -146,7 +146,7 @@ inline void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, Spar
       for (size_t i = 0; i < this->model.number_variables; i++) {
          const double weight = this->get_proximal_weight(i);
          // measure weighted distance between trial iterate and current iterate
-         const double derivative = this->proximal_coefficient * weight * (iterate.x[i] - this->proximal_reference_point[i]);
+         const double derivative = this->proximal_coefficient * weight * (iterate.primals[i] - this->proximal_reference_point[i]);
          objective_gradient.insert(i, derivative);
       }
    }
@@ -160,7 +160,7 @@ inline double l1RelaxedProblem::predicted_reduction_contribution(const Iterate& 
    else {
       // determine the linearized constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
       const auto residual_function = [&](size_t j) {
-         const double linearized_constraint_j = current_iterate.original_evaluations.constraints[j] + step_length * dot(direction.x,
+         const double linearized_constraint_j = current_iterate.original_evaluations.constraints[j] + step_length * dot(direction.primals,
                current_iterate.original_evaluations.constraint_jacobian[j]);
          return this->model.compute_constraint_violation(linearized_constraint_j, j);
       };
@@ -174,10 +174,10 @@ inline void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, std::vector
    copy_from(constraints, iterate.original_evaluations.constraints);
    // add the contribution of the elastics
    this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {
-      constraints[j] -= iterate.x[elastic_index];
+      constraints[j] -= iterate.primals[elastic_index];
    });
    this->elastic_variables.negative.for_each([&](size_t j, size_t elastic_index) {
-      constraints[j] += iterate.x[elastic_index];
+      constraints[j] += iterate.primals[elastic_index];
    });
 }
 
@@ -350,10 +350,10 @@ inline void l1ElasticReformulation::set_elastic_variables(Iterate& iterate) cons
 inline void l1RelaxedProblem::set_elastic_variables(Iterate& iterate, double value) const {
    iterate.set_number_variables(this->number_variables);
    this->elastic_variables.positive.for_each_value([&](size_t elastic_index) {
-      iterate.x[elastic_index] = value;
+      iterate.primals[elastic_index] = value;
    });
    this->elastic_variables.negative.for_each_value([&](size_t elastic_index) {
-      iterate.x[elastic_index] = value;
+      iterate.primals[elastic_index] = value;
    });
 }
 

@@ -16,7 +16,7 @@ QPSubproblem::QPSubproblem(const NonlinearProblem& problem, const Options& optio
 
 void QPSubproblem::evaluate_problem(const NonlinearProblem& problem, Iterate& current_iterate) {
    // Hessian
-   this->hessian_model->evaluate(problem, current_iterate.x, current_iterate.multipliers.constraints);
+   this->hessian_model->evaluate(problem, current_iterate.primals, current_iterate.multipliers.constraints);
 
    // objective gradient
    problem.evaluate_objective_gradient(current_iterate, this->objective_gradient);
@@ -49,8 +49,8 @@ Direction QPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem
 PredictedReductionModel QPSubproblem::generate_predicted_reduction_model(const NonlinearProblem& problem, const Direction& direction) const {
    return PredictedReductionModel(-direction.objective, [&]() { // capture "this" and "direction" by reference
       // precompute expensive quantities
-      const double linear_term = dot(direction.x, this->objective_gradient);
-      const double quadratic_term = this->hessian_model->hessian->quadratic_product(direction.x, direction.x, problem.number_variables) / 2.;
+      const double linear_term = dot(direction.primals, this->objective_gradient);
+      const double quadratic_term = this->hessian_model->hessian->quadratic_product(direction.primals, direction.primals, problem.number_variables) / 2.;
       // return a function of the step length that cheaply assembles the predicted reduction
       return [=](double step_length) { // capture the expensive quantities by value
          return -step_length * (linear_term + step_length * quadratic_term);

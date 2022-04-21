@@ -17,7 +17,7 @@ void Preprocessing::enforce_linear_constraints(const Model& model, Iterate& firs
       INFO << "There are " << infeasible_linear_constraints << " infeasible linear constraints at the initial point\n";
 
       if (0 < infeasible_linear_constraints) {
-         INFO << "Current point: "; print_vector(INFO, first_iterate.x);
+         INFO << "Current point: "; print_vector(INFO, first_iterate.primals);
          const size_t number_linear_constraints = model.linear_constraints.size();
          BQPDSolver solver(model.number_variables, number_linear_constraints, model.number_variables, true);
 
@@ -31,14 +31,14 @@ void Preprocessing::enforce_linear_constraints(const Model& model, Iterate& firs
             constraint_jacobian[j].reserve(model.number_variables);
          }
          model.linear_constraints.for_each([&](size_t j, size_t linear_constraint_index) {
-            model.evaluate_constraint_gradient(first_iterate.x, j, constraint_jacobian[linear_constraint_index]);
+            model.evaluate_constraint_gradient(first_iterate.primals, j, constraint_jacobian[linear_constraint_index]);
          });
 
          // variables bounds
          std::vector<Interval> variables_bounds(model.number_variables);
          for (size_t i = 0; i < model.number_variables; i++) {
-            variables_bounds[i] = {model.get_variable_lower_bound(i) - first_iterate.x[i],
-                  model.get_variable_upper_bound(i) - first_iterate.x[i]};
+            variables_bounds[i] = {model.get_variable_lower_bound(i) - first_iterate.primals[i],
+                  model.get_variable_upper_bound(i) - first_iterate.primals[i]};
          }
 
          // constraints bounds
@@ -56,7 +56,7 @@ void Preprocessing::enforce_linear_constraints(const Model& model, Iterate& firs
             throw std::runtime_error("Linear constraints cannot be satisfied");
          }
 
-         add_vectors(first_iterate.x, direction.x, 1., first_iterate.x);
+         add_vectors(first_iterate.primals, direction.primals, 1., first_iterate.primals);
          // copy bound multipliers
          first_iterate.multipliers.lower_bounds = direction.multipliers.lower_bounds;
          first_iterate.multipliers.upper_bounds = direction.multipliers.upper_bounds;
@@ -64,7 +64,7 @@ void Preprocessing::enforce_linear_constraints(const Model& model, Iterate& firs
          model.linear_constraints.for_each([&](size_t j, size_t linear_constraint_index) {
             first_iterate.multipliers.constraints[j] = direction.multipliers.constraints[linear_constraint_index];
          });
-         INFO << "Linear feasible initial point: "; print_vector(INFO, first_iterate.x); INFO << "\n";
+         INFO << "Linear feasible initial point: "; print_vector(INFO, first_iterate.primals); INFO << "\n";
       }
    }
 }
@@ -72,7 +72,7 @@ void Preprocessing::enforce_linear_constraints(const Model& model, Iterate& firs
 // compute a least-square approximation of the multipliers by solving a linear system (uses existing linear system)
 void Preprocessing::compute_least_square_multipliers(const Model& model, SymmetricMatrix& matrix, std::vector<double>& rhs, LinearSolver& solver,
       Iterate& current_iterate, std::vector<double>& multipliers, double multipliers_max_norm) {
-   const size_t number_variables = current_iterate.x.size();
+   const size_t number_variables = current_iterate.primals.size();
    current_iterate.evaluate_objective_gradient(model);
    current_iterate.evaluate_constraint_jacobian(model);
 
