@@ -19,7 +19,7 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, bool enforce_lin
    timer.start();
    size_t major_iterations = 0;
 
-   std::cout << "\nProblem " << model.name << "\n";
+   std::cout << "\nProblem " << model.name << '\n';
    std::cout << model.number_variables << " variables, " << model.number_constraints << " constraints\n";
    std::cout << "Problem type: " << Model::type_to_string[model.problem_type] << "\n\n";
 
@@ -38,7 +38,7 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, bool enforce_lin
       while (!this->termination_criterion(termination_status, major_iterations)) {
          statistics.new_line();
          major_iterations++;
-         DEBUG << "### Outer iteration " << major_iterations << "\n";
+         DEBUG << "### Outer iteration " << major_iterations << '\n';
 
          // compute an acceptable iterate by solving a subproblem at the current point
          auto [new_iterate, direction_norm] = this->globalization_mechanism.compute_acceptable_iterate(statistics, current_iterate);
@@ -166,13 +166,13 @@ void Result::print(bool print_solution) const {
       std::cout << "Irregular termination\n";
    }
 
-   std::cout << "Objective value:\t\t" << this->solution.original_evaluations.objective << "\n";
-   std::cout << "Constraint violation:\t\t" << this->solution.constraint_violation << "\n";
-   std::cout << "Stationarity error:\t\t" << this->solution.stationarity_error << "\n";
-   std::cout << "Complementarity error:\t\t" << this->solution.complementarity_error << "\n";
+   std::cout << "Objective value:\t\t" << this->solution.original_evaluations.objective << '\n';
+   std::cout << "Constraint violation:\t\t" << this->solution.constraint_violation << '\n';
+   std::cout << "Stationarity error:\t\t" << this->solution.stationarity_error << '\n';
+   std::cout << "Complementarity error:\t\t" << this->solution.complementarity_error << '\n';
 
-   std::cout << "Feasibility measure:\t\t" << this->solution.nonlinear_progress.infeasibility << "\n";
-   std::cout << "Optimality measure:\t\t" << this->solution.nonlinear_progress.objective << "\n";
+   std::cout << "Feasibility measure:\t\t" << this->solution.nonlinear_progress.infeasibility << '\n';
+   std::cout << "Optimality measure:\t\t" << this->solution.nonlinear_progress.objective << '\n';
 
    if (print_solution) {
       std::cout << "Primal solution:\t\t";
@@ -185,14 +185,14 @@ void Result::print(bool print_solution) const {
          std::cout << "Constraint multipliers:\t\t";
          print_vector(std::cout, this->solution.multipliers.constraints);
       }
-      std::cout << "Objective multiplier:\t\t" << this->solution.multipliers.objective << "\n";
+      std::cout << "Objective multiplier:\t\t" << this->solution.multipliers.objective << '\n';
    }
 
    std::cout << "CPU time:\t\t\t" << this->cpu_time << "s\n";
-   std::cout << "Iterations:\t\t\t" << this->iteration << "\n";
-   std::cout << "Objective evaluations:\t\t" << this->objective_evaluations << "\n";
-   std::cout << "Constraints evaluations:\t" << this->constraint_evaluations << "\n";
-   std::cout << "Jacobian evaluations:\t\t" << this->jacobian_evaluations << "\n";
-   std::cout << "Hessian evaluations:\t\t" << this->hessian_evaluations << "\n";
-   std::cout << "Number of subproblems solved:\t" << this->number_subproblems_solved << "\n";
+   std::cout << "Iterations:\t\t\t" << this->iteration << '\n';
+   std::cout << "Objective evaluations:\t\t" << this->objective_evaluations << '\n';
+   std::cout << "Constraints evaluations:\t" << this->constraint_evaluations << '\n';
+   std::cout << "Jacobian evaluations:\t\t" << this->jacobian_evaluations << '\n';
+   std::cout << "Hessian evaluations:\t\t" << this->hessian_evaluations << '\n';
+   std::cout << "Number of subproblems solved:\t" << this->number_subproblems_solved << '\n';
 }

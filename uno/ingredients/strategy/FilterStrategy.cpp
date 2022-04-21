@@ -34,9 +34,9 @@ void FilterStrategy::notify(Iterate& current_iterate) {
  * */
 bool FilterStrategy::is_acceptable(Statistics& /*statistics*/, const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
       double /*objective_multiplier*/, double predicted_reduction) {
-   DEBUG << "Current: η = " << current_progress.infeasibility << ", ω = " << current_progress.objective << "\n";
-   DEBUG << "Trial:   η = " << trial_progress.infeasibility << ", ω = " << trial_progress.objective << "\n";
-   DEBUG << "Predicted reduction: " << predicted_reduction << "\n";
+   DEBUG << "Current: η = " << current_progress.infeasibility << ", ω = " << current_progress.objective << '\n';
+   DEBUG << "Trial:   η = " << trial_progress.infeasibility << ", ω = " << trial_progress.objective << '\n';
+   DEBUG << "Predicted reduction: " << predicted_reduction << '\n';
 
    bool accept = false;
    // check acceptance
@@ -49,8 +49,8 @@ bool FilterStrategy::is_acceptable(Statistics& /*statistics*/, const ProgressMea
          DEBUG << "Filter acceptable wrt current point\n";
          const double actual_reduction = filter->compute_actual_reduction(current_progress.objective, current_progress.infeasibility, trial_progress
          .objective);
-         DEBUG << "Actual reduction: " << actual_reduction << "\n";
-         DEBUG << *this->filter << "\n";
+         DEBUG << "Actual reduction: " << actual_reduction << '\n';
+         DEBUG << *this->filter << '\n';
 
          // switching condition violated: predicted reduction is not promising
          if (!this->switching_condition(predicted_reduction, current_progress.infeasibility, this->parameters.delta)) {
@@ -77,7 +77,7 @@ bool FilterStrategy::is_acceptable(Statistics& /*statistics*/, const ProgressMea
    else {
       DEBUG << "Not filter acceptable\n";
    }
-   DEBUG << "\n";
+   DEBUG << '\n';
    return accept;
 }
 

@@ -116,7 +116,7 @@ std::ostream& operator<<(std::ostream& stream, Filter& filter) {
    stream << "************\n";
    stream << "  Current filter (infeasibility, optimality):\n";
    for (size_t position = 0; position < filter.number_entries; position++) {
-      stream << "\t" << filter.infeasibility[position] << "\t" << filter.optimality[position] << "\n";
+      stream << "\t" << filter.infeasibility[position] << "\t" << filter.optimality[position] << '\n';
    }
    stream << "************\n";
    return stream;

@@ -132,5 +132,5 @@ void BacktrackingLineSearch::add_statistics(Statistics& statistics, const Direct
 }
 
 void BacktrackingLineSearch::print_iteration() {
-   DEBUG << "\tLINE SEARCH iteration " << this->number_iterations << ", step_length " << this->step_length << "\n";
+   DEBUG << "\tLINE SEARCH iteration " << this->number_iterations << ", step_length " << this->step_length << '\n';
 }

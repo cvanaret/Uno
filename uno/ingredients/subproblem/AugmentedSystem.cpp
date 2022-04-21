@@ -26,10 +26,10 @@ void AugmentedSystem::factorize_matrix(const NonlinearReformulation& /*problem*/
 
 void AugmentedSystem::regularize_matrix(const NonlinearReformulation& problem, LinearSolver& linear_solver, size_t size_first_block, size_t size_second_block,
       double constraint_regularization_parameter) {
-   DEBUG << "Original matrix\n" << *this->matrix << "\n";
+   DEBUG << "Original matrix\n" << *this->matrix << '\n';
    double regularization_first_block = 0.;
    double regularization_second_block = 0.;
-   DEBUG << "Testing factorization with regularization factor " << regularization_first_block << "\n";
+   DEBUG << "Testing factorization with regularization factor " << regularization_first_block << '\n';
 
    if (!linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_second_block) {
       DEBUG << "Inertia is good\n";
@@ -63,8 +63,8 @@ void AugmentedSystem::regularize_matrix(const NonlinearReformulation& problem, L
 
    bool good_inertia = false;
    while (!good_inertia) {
-      DEBUG << "Testing factorization with regularization factor " << regularization_first_block << "\n";
-      DEBUG << *this->matrix << "\n";
+      DEBUG << "Testing factorization with regularization factor " << regularization_first_block << '\n';
+      DEBUG << *this->matrix << '\n';
       this->factorize_matrix(problem, linear_solver);
 
       if (!linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_second_block) {

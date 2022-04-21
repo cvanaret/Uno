@@ -86,6 +86,6 @@ double COOSymmetricMatrix::smallest_diagonal_entry() const {
 
 void COOSymmetricMatrix::print(std::ostream& stream) const {
    this->for_each([&](size_t i, size_t j, double entry) {
-      stream << "m(" << i << ", " << j << ") = " << entry << "\n";
+      stream << "m(" << i << ", " << j << ") = " << entry << '\n';
    });
 }

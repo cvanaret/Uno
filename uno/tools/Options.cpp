@@ -20,7 +20,7 @@ const std::string& Options::at(const std::string& key) const {
 void Options::print() const {
    std::cout << "Options:\n";
    for (const auto& [key, value]: this->options) {
-      std::cout << "- " << key << " = " << value << "\n";
+      std::cout << "- " << key << " = " << value << '\n';
    }
 }
 

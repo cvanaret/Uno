@@ -61,7 +61,7 @@ void Statistics::print_header(bool first_occurrence) {
       }
       k++;
    }
-   std::cout << (first_occurrence ? Statistics::symbols["top-right"] : Statistics::symbols["right-mid"]) << "\n";
+   std::cout << (first_occurrence ? Statistics::symbols["top-right"] : Statistics::symbols["right-mid"]) << '\n';
    /* headers */
    std::cout << Statistics::symbols["left"];
    k = 0;
@@ -76,7 +76,7 @@ void Statistics::print_header(bool first_occurrence) {
       }
       k++;
    }
-   std::cout << Statistics::symbols["right"] << "\n";
+   std::cout << Statistics::symbols["right"] << '\n';
 }
 
 void Statistics::print_current_line() {
@@ -95,7 +95,7 @@ void Statistics::print_current_line() {
       }
       k++;
    }
-   std::cout << Statistics::symbols["right-mid"] << "\n";
+   std::cout << Statistics::symbols["right-mid"] << '\n';
    /* headers */
    std::cout << Statistics::symbols["left"];
    k = 0;
@@ -120,7 +120,7 @@ void Statistics::print_current_line() {
       }
       k++;
    }
-   std::cout << Statistics::symbols["right"] << "\n";
+   std::cout << Statistics::symbols["right"] << '\n';
    this->iteration++;
 }
 
@@ -137,7 +137,7 @@ void Statistics::print_footer() {
       }
       k++;
    }
-   std::cout << Statistics::symbols["bottom-right"] << "\n";
+   std::cout << Statistics::symbols["bottom-right"] << '\n';
 }
 
 void Statistics::new_line() {

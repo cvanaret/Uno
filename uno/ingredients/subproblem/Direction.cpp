@@ -34,34 +34,34 @@ std::string status_to_string(Status status) {
 }
 
 std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
-   stream << "\nDirection:\nStatus: " << status_to_string(direction.status) << "\n";
+   stream << "\nDirection:\nStatus: " << status_to_string(direction.status) << '\n';
    stream << "d^* = ";
    print_vector(stream, direction.primals);
 
-   stream << "objective = " << direction.objective << "\n";
-   stream << "norm = " << direction.norm << "\n";
+   stream << "objective = " << direction.objective << '\n';
+   stream << "norm = " << direction.norm << '\n';
 
    stream << "bound constraints active at lower bound =";
    for (size_t i: direction.active_set.bounds.at_lower_bound) {
       stream << " x" << i;
    }
-   stream << "\n";
+   stream << '\n';
    stream << "bound constraints active at upper bound =";
    for (size_t i: direction.active_set.bounds.at_upper_bound) {
       stream << " x" << i;
    }
-   stream << "\n";
+   stream << '\n';
 
    stream << "constraints at lower bound =";
    for (size_t j: direction.active_set.constraints.at_lower_bound) {
       stream << " c" << j;
    }
-   stream << "\n";
+   stream << '\n';
    stream << "constraints at upper bound =";
    for (size_t j: direction.active_set.constraints.at_upper_bound) {
       stream << " c" << j;
    }
-   stream << "\n";
+   stream << '\n';
 
    if (direction.constraint_partition.has_value()) {
       const ConstraintPartition& constraint_partition = direction.constraint_partition.value();
@@ -77,10 +77,10 @@ std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
       for (size_t j: constraint_partition.upper_bound_infeasible) {
          stream << " c" << j;
       }
-      stream << "\n";
+      stream << '\n';
    }
 
-   stream << "objective multiplier = " << direction.objective_multiplier << "\n";
+   stream << "objective multiplier = " << direction.objective_multiplier << '\n';
    stream << "lower bound multipliers = ";
    print_vector(stream, direction.multipliers.lower_bounds);
    stream << "upper bound multipliers = ";
