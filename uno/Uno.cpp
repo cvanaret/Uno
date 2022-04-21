@@ -103,6 +103,7 @@ TerminationStatus Uno::check_termination(const Model& model, Iterate& current_it
    current_iterate.evaluate_constraints(model);
    current_iterate.complementarity_error = model.compute_complementarity_error(current_iterate.x, current_iterate.original_evaluations.constraints,
          current_iterate.multipliers.constraints, current_iterate.multipliers.lower_bounds, current_iterate.multipliers.upper_bounds);
+   
    if (current_iterate.complementarity_error <= this->tolerance * static_cast<double>(number_variables + model.number_constraints)) {
       // feasible and KKT point
       if (current_iterate.stationarity_error <= this->tolerance * std::sqrt(number_variables) &&
