@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include "tools/Options.hpp"
+#include "tools/Infinity.hpp"
 
 struct FilterConstants {
    double beta; /*!< Margin around filter */
@@ -20,7 +21,7 @@ public:
    explicit Filter(const Options& options);
    virtual ~Filter() = default;
 
-   double upper_bound{std::numeric_limits<double>::infinity()}; /*!< Upper bound on constraint violation */
+   double upper_bound{INF}; /*!< Upper bound on constraint violation */
    const size_t max_size; /*!< Max filter size */
    const FilterConstants constants; /*!< Set of constants */
 

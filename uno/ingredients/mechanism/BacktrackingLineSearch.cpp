@@ -3,6 +3,7 @@
 #include "ingredients/subproblem/AugmentedSystem.hpp"
 #include "BacktrackingLineSearch.hpp"
 #include "tools/Logger.hpp"
+#include "tools/Infinity.hpp"
 
 BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options):
       GlobalizationMechanism(constraint_relaxation_strategy),
@@ -34,7 +35,7 @@ Direction BacktrackingLineSearch::compute_direction(Statistics& statistics, Iter
 
 std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(Statistics& statistics, Iterate& current_iterate) {
    // compute the direction
-   this->constraint_relaxation_strategy.set_variable_bounds(current_iterate, std::numeric_limits<double>::infinity());
+   this->constraint_relaxation_strategy.set_variable_bounds(current_iterate, INF);
    Direction direction = this->compute_direction(statistics, current_iterate);
    GlobalizationMechanism::check_unboundedness(direction);
    PredictedReductionModel predicted_reduction_model = this->constraint_relaxation_strategy.generate_predicted_reduction_model(direction);

@@ -4,6 +4,7 @@
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
 #include "optimization/Preprocessing.hpp"
 #include "tools/Range.hpp"
+#include "tools/Infinity.hpp"
 
 BarrierSubproblem::BarrierSubproblem(const NonlinearReformulation& problem, const Options& options):
       Subproblem(problem, SOC_UPON_REJECTION),
@@ -221,7 +222,7 @@ double BarrierSubproblem::evaluate_barrier_function(const NonlinearReformulation
    if (!this->solving_feasibility_problem) {
       objective += problem.evaluate_objective(iterate);
    }
-   assert(objective < std::numeric_limits<double>::infinity() && "The barrier value is infinite");
+   assert(is_finite(objective) && "The barrier value is infinite");
    return objective;
 }
 
@@ -324,7 +325,7 @@ void BarrierSubproblem::compute_lower_bound_dual_direction(const NonlinearReform
       const double distance_to_bound = current_iterate.primals[i] - this->variable_bounds[i].lb;
       this->lower_delta_z[i] = (this->barrier_parameter - this->augmented_system.solution[i] * current_iterate.multipliers.lower_bounds[i]) / distance_to_bound -
             current_iterate.multipliers.lower_bounds[i];
-      assert(-std::numeric_limits<double>::infinity() < this->lower_delta_z[i] && "The displacement lower_delta_z is infinite");
+      assert(is_finite(this->lower_delta_z[i]) && "The displacement lower_delta_z is infinite");
    }
 }
 
@@ -334,7 +335,7 @@ void BarrierSubproblem::compute_upper_bound_dual_direction(const NonlinearReform
       const double distance_to_bound = current_iterate.primals[i] - this->variable_bounds[i].ub;
       this->upper_delta_z[i] = (this->barrier_parameter - this->augmented_system.solution[i] * current_iterate.multipliers.upper_bounds[i]) / distance_to_bound -
             current_iterate.multipliers.upper_bounds[i];
-      assert(this->upper_delta_z[i] < std::numeric_limits<double>::infinity() && "The displacement upper_delta_z is infinite");
+      assert(is_finite(this->upper_delta_z[i]) && "The displacement upper_delta_z is infinite");
    }
 }
 
@@ -346,7 +347,7 @@ void BarrierSubproblem::compute_bound_dual_direction(const std::vector<size_t>& 
       const double distance_to_bound = x[i] - this->variable_bounds[i].ub;
       displacements[i] = (this->barrier_parameter - this->augmented_system.solution[i] * bound_multipliers[i]) / distance_to_bound -
                                bound_multipliers[i];
-      assert(std::abs(displacements[i]) < std::numeric_limits<double>::infinity() && "The displacement delta_z is infinite");
+      assert(is_finite(displacements[i]) && "The displacement delta_z is infinite");
    }
 }
 */

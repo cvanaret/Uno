@@ -1,5 +1,6 @@
 #include <iostream>
 #include "COOSymmetricMatrix.hpp"
+#include "tools/Infinity.hpp"
 
 /*
  * Coordinate list
@@ -72,13 +73,13 @@ void COOSymmetricMatrix::add_identity_multiple(double multiple, size_t number_va
 }
 
 double COOSymmetricMatrix::smallest_diagonal_entry() const {
-   double smallest_entry = std::numeric_limits<double>::infinity();
+   double smallest_entry = INF;
    this->for_each([&](size_t i, size_t j, double entry) {
       if (i == j) {
          smallest_entry = std::min(smallest_entry, entry);
       }
    });
-   if (smallest_entry == std::numeric_limits<double>::infinity()) {
+   if (smallest_entry == INF) {
       smallest_entry = 0.;
    }
    return smallest_entry;

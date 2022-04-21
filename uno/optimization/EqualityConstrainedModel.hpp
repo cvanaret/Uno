@@ -2,6 +2,7 @@
 #define UNO_EQUALITYCONSTRAINEDMODEL_H
 
 #include "Model.hpp"
+#include "tools/Infinity.hpp"
 
 class EqualityConstrainedModel: public Model {
 public:

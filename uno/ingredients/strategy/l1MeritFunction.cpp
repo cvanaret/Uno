@@ -16,6 +16,9 @@ void l1MeritFunction::notify(Iterate& /*current_iterate*/) {
 
 bool l1MeritFunction::is_acceptable(Statistics& statistics, const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
       double objective_multiplier, double predicted_reduction) {
+   GlobalizationStrategy::check_finiteness(current_progress);
+   GlobalizationStrategy::check_finiteness(trial_progress);
+
    DEBUG << "Predicted reduction: " << predicted_reduction << '\n';
    // compute current exact l1 penalty: rho f + ||c||
    const double current_exact_l1_merit = objective_multiplier * current_progress.objective + current_progress.infeasibility;

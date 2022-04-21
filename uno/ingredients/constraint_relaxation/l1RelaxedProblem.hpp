@@ -6,6 +6,7 @@
 #include "NonlinearReformulation.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "tools/Range.hpp"
+#include "tools/Infinity.hpp"
 
 struct ElasticVariables {
    SparseVector<size_t> positive;
@@ -254,7 +255,7 @@ inline double l1RelaxedProblem::get_variable_upper_bound(size_t i) const {
       return this->model.get_variable_upper_bound(i);
    }
    else { // elastic variable in [0, +inf[
-      return std::numeric_limits<double>::infinity();
+      return INF;
    }
 }
 

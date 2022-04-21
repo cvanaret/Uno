@@ -45,8 +45,6 @@ struct FunctionNumericalError : NumericalError {
    }
 };
 
-bool is_finite(double value);
-
 /*! \class Problem
  * \brief Optimization problem
  *

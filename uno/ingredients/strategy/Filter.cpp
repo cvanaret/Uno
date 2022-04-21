@@ -14,7 +14,7 @@ Filter::Filter(const Options& options) :
 
 void Filter::reset() {
    // initialize the maximum filter size (not critical)
-   this->upper_bound = std::numeric_limits<double>::infinity();
+   this->upper_bound = INF;
    this->number_entries = 0;
 }
 

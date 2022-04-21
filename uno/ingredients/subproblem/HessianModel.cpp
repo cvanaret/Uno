@@ -69,7 +69,7 @@ void ConvexifiedHessian::regularize(SymmetricMatrix& matrix, size_t number_origi
       else {
          DEBUG << "rank: " << this->linear_solver->rank() << ", negative eigenvalues: " << this->linear_solver->number_negative_eigenvalues() << '\n';
          regularization = (regularization == 0.) ? this->regularization_initial_value : this->regularization_increase_factor * regularization;
-         assert(regularization < std::numeric_limits<double>::infinity() && "The regularization coefficient diverged");
+         assert(is_finite(regularization) && "The regularization coefficient diverged");
       }
    }
 }
