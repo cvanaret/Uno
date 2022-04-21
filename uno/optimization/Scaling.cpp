@@ -21,7 +21,7 @@ void Scaling::compute(SparseVector<double>& objective_gradient, std::vector<Spar
    for (size_t j = 0; j < this->constraint_scaling.size(); j++) {
       scale(constraint_jacobian[j], this->get_constraint_scaling(j));
    }
-   DEBUG << "Objective scaling: " << this->objective_scaling << "\n";
+   DEBUG << "Objective scaling: " << this->objective_scaling << '\n';
    DEBUG << "Constraint scaling: "; print_vector(DEBUG, this->constraint_scaling);
 }
 

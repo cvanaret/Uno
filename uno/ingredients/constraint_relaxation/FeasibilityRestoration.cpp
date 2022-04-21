@@ -33,7 +33,7 @@ void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& first_i
 }
 
 Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate) {
-   DEBUG << "Current iterate\n" << current_iterate << "\n";
+   DEBUG << "Current iterate\n" << current_iterate << '\n';
    if (this->current_phase == OPTIMALITY) {
       return this->solve_optimality_problem(statistics, current_iterate);
    }
@@ -48,7 +48,7 @@ Direction FeasibilityRestoration::solve_optimality_problem(Statistics& statistic
    Direction direction = this->subproblem->solve(statistics, this->optimality_problem, current_iterate);
    direction.objective_multiplier = 1.;
    direction.norm = norm_inf(direction.primals, Range(this->optimality_problem.number_variables));
-   DEBUG << direction << "\n";
+   DEBUG << direction << '\n';
 
    // infeasible subproblem: try to minimize the constraint violation by solving the feasibility subproblem
    if (direction.status == INFEASIBLE) {
@@ -78,7 +78,7 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
    ConstraintPartition constraint_partition(this->optimality_problem.number_constraints);
    constraint_partition.infeasible = this->relaxed_problem.get_violated_linearized_constraints(feasibility_direction.primals);
    feasibility_direction.constraint_partition = constraint_partition;
-   DEBUG << feasibility_direction << "\n";
+   DEBUG << feasibility_direction << '\n';
    assert(feasibility_direction.status == OPTIMAL && "The subproblem was not solved to optimality");
    return feasibility_direction;
 }

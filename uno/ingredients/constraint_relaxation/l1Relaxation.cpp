@@ -70,7 +70,7 @@ Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Itera
 
    // set the multipliers of the violated constraints
    // this->set_multipliers(current_iterate, current_iterate.multipliers.constraints);
-   DEBUG << "Current iterate\n" << current_iterate << "\n";
+   DEBUG << "Current iterate\n" << current_iterate << '\n';
 
    // use Byrd's steering rules to update the penalty parameter and compute descent directions
    Direction direction = this->solve_with_steering_rule(statistics, current_iterate);
@@ -86,7 +86,7 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, Iterate& curren
    Direction direction = this->subproblem->solve(statistics, this->relaxed_problem, current_iterate);
    direction.objective_multiplier = current_penalty_parameter;
    direction.norm = norm_inf(direction.primals, Range(this->optimality_problem.number_variables));
-   DEBUG << direction << "\n";
+   DEBUG << direction << '\n';
    assert(direction.status == OPTIMAL && "The subproblem was not solved to optimality");
    // check feasibility (the subproblem is, by construction, always feasible)
    if (direction.constraint_partition.has_value()) {
@@ -122,7 +122,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
          Direction direction_lowest_violation = this->solve_subproblem(statistics, current_iterate, 0.);
          const double residual_lowest_violation = this->relaxed_problem
                .compute_linearized_constraint_violation(current_iterate.primals, direction_lowest_violation.primals);
-         DEBUG << "Lowest linearized residual mk(dk): " << residual_lowest_violation << "\n";
+         DEBUG << "Lowest linearized residual mk(dk): " << residual_lowest_violation << '\n';
 
          // stage f: update the penalty parameter
          this->decrease_parameter_aggressively(current_iterate, direction_lowest_violation);
@@ -157,7 +157,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
                   if (this->penalty_parameter < this->parameters.small_threshold) {
                      this->penalty_parameter = 0.;
                   }
-                  DEBUG << "Further decrease the penalty parameter to " << this->penalty_parameter << "\n";
+                  DEBUG << "Further decrease the penalty parameter to " << this->penalty_parameter << '\n';
                   if (this->penalty_parameter == 0.) {
                      direction = direction_lowest_violation;
                      linearized_residual = residual_lowest_violation;
@@ -174,7 +174,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
          }
 
          if (this->penalty_parameter < current_penalty_parameter) {
-            DEBUG << "\nPenalty parameter updated to " << this->penalty_parameter << "\n";
+            DEBUG << "\nPenalty parameter updated to " << this->penalty_parameter << '\n';
          }
          DEBUG << '\n';
       }
@@ -194,7 +194,7 @@ bool l1Relaxation::linearized_residual_sufficient_decrease(const Iterate& curren
 void l1Relaxation::decrease_parameter_aggressively(Iterate& current_iterate, const Direction& direction_lowest_violation) {
    // compute the ideal error (with a zero penalty parameter)
    const double error_lowest_violation = l1Relaxation::compute_error(current_iterate, direction_lowest_violation.multipliers);
-   DEBUG << "Ideal error: " << error_lowest_violation << "\n";
+   DEBUG << "Ideal error: " << error_lowest_violation << '\n';
 
    const double scaled_error = error_lowest_violation / std::max(1., current_iterate.constraint_violation);
    const double scaled_error_square = scaled_error*scaled_error;

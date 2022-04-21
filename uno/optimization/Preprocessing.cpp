@@ -64,7 +64,7 @@ void Preprocessing::enforce_linear_constraints(const Model& model, Iterate& firs
          model.linear_constraints.for_each([&](size_t j, size_t linear_constraint_index) {
             first_iterate.multipliers.constraints[j] = direction.multipliers.constraints[linear_constraint_index];
          });
-         INFO << "Linear feasible initial point: "; print_vector(INFO, first_iterate.primals); INFO << "\n";
+         INFO << "Linear feasible initial point: "; print_vector(INFO, first_iterate.primals); INFO << '\n';
       }
    }
 }
@@ -92,7 +92,7 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
       });
       matrix.finalize(number_variables + j);
    }
-   DEBUG << "KKT matrix for least-square multipliers:\n" << matrix << "\n";
+   DEBUG << "KKT matrix for least-square multipliers:\n" << matrix << '\n';
 
    /********************************/
    /* generate the right-hand side */
@@ -114,7 +114,7 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
    std::vector<double> solution(matrix.dimension);
    solver.factorize(matrix);
    solver.solve(matrix, rhs, solution);
-   DEBUG << "Solution: "; print_vector(DEBUG, solution, 0, matrix.dimension); DEBUG << "\n";
+   DEBUG << "Solution: "; print_vector(DEBUG, solution, 0, matrix.dimension); DEBUG << '\n';
 
    // if least-square multipliers too big, discard them. Otherwise, store them
    if (norm_inf(solution, Range(number_variables, number_variables + model.number_constraints)) <= multipliers_max_norm) {

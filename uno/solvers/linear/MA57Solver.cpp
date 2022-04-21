@@ -71,7 +71,7 @@ void MA57Solver::do_symbolic_factorization(const SymmetricMatrix& matrix) {
 
    assert(0 <= info[0] && "MA57: the symbolic factorization failed");
    if (0 < info[0]) {
-      WARNING << "MA57 has issued a warning: info(1) = " << info[0] << "\n";
+      WARNING << "MA57 has issued a warning: info(1) = " << info[0] << '\n';
    }
    int lfact = 2 * this->info[8];
    std::vector<double> fact(static_cast<size_t>(lfact));

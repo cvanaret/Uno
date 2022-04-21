@@ -39,7 +39,7 @@ void ConvexifiedHessian::regularize(SymmetricMatrix& matrix, size_t number_origi
    //assert(size_block_to_regularize <= matrix.dimension && "The block to regularize is larger than the matrix");
 
    const double smallest_diagonal_entry = matrix.smallest_diagonal_entry();
-   DEBUG << "The minimal diagonal entry of the matrix is " << matrix.smallest_diagonal_entry() << "\n";
+   DEBUG << "The minimal diagonal entry of the matrix is " << matrix.smallest_diagonal_entry() << '\n';
 
    double regularization = (smallest_diagonal_entry <= 0.) ? this->regularization_initial_value - smallest_diagonal_entry : 0.;
    /*
@@ -48,7 +48,7 @@ void ConvexifiedHessian::regularize(SymmetricMatrix& matrix, size_t number_origi
    bool good_inertia = false;
    bool regularized = false;
    while (!good_inertia) {
-      DEBUG << "Testing factorization with regularization factor " << regularization << "\n";
+      DEBUG << "Testing factorization with regularization factor " << regularization << '\n';
       if (0. < regularization) {
          // if regularization was already perform, delete the previous entries
          if (regularized) {
@@ -67,7 +67,7 @@ void ConvexifiedHessian::regularize(SymmetricMatrix& matrix, size_t number_origi
          DEBUG << "Factorization was a success\n";
       }
       else {
-         DEBUG << "rank: " << this->linear_solver->rank() << ", negative eigenvalues: " << this->linear_solver->number_negative_eigenvalues() << "\n";
+         DEBUG << "rank: " << this->linear_solver->rank() << ", negative eigenvalues: " << this->linear_solver->number_negative_eigenvalues() << '\n';
          regularization = (regularization == 0.) ? this->regularization_initial_value : this->regularization_increase_factor * regularization;
          assert(regularization < std::numeric_limits<double>::infinity() && "The regularization coefficient diverged");
       }

@@ -23,7 +23,7 @@ void* operator new(size_t size) {
 void run_uno_ampl(const std::string& model_name, const Options& options) {
    // AMPL model
    auto original_model = ModelFactory::create(model_name);
-   INFO << "Heap allocations after AMPL: " << total_allocations << "\n";
+   INFO << "Heap allocations after AMPL: " << total_allocations << '\n';
 
    //auto reformulated_model = std::make_unique<EqualityConstrainedModel>(*original_model);
    Model* reformulated_model = original_model.get();
@@ -51,15 +51,15 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
 
    // create the constraint relaxation strategy
    auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(model_to_solve, options);
-   INFO << "Heap allocations after ConstraintRelaxation, Subproblem and Solver: " << total_allocations << "\n";
+   INFO << "Heap allocations after ConstraintRelaxation, Subproblem and Solver: " << total_allocations << '\n';
 
    // create the globalization mechanism
    auto mechanism = GlobalizationMechanismFactory::create(*constraint_relaxation_strategy, options);
-   INFO << "Heap allocations after Mechanism: " << total_allocations << "\n";
+   INFO << "Heap allocations after Mechanism: " << total_allocations << '\n';
 
    Uno uno = Uno(*mechanism, options);
 
-   INFO << "Heap allocations before solving: " << total_allocations << "\n";
+   INFO << "Heap allocations before solving: " << total_allocations << '\n';
    const bool enforce_linear_constraints = (options.at("enforce_linear_constraints") == "yes");
    Result result = uno.solve(model_to_solve, first_iterate, enforce_linear_constraints);
    Uno::postsolve_solution(*reformulated_model, scaling, result.solution, result.status);
@@ -71,7 +71,7 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
 
    const bool print_solution = (options.at("print_solution") == "yes");
    result.print(print_solution);
-   INFO << "Heap allocations: " << total_allocations << "\n";
+   INFO << "Heap allocations: " << total_allocations << '\n';
 }
 
 Level Logger::logger_level = INFO;

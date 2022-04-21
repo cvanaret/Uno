@@ -96,7 +96,7 @@ Direction BarrierSubproblem::solve(Statistics& statistics, const NonlinearReform
       this->solving_feasibility_problem = true;
       this->previous_barrier_parameter = this->barrier_parameter;
       this->barrier_parameter = std::max(this->barrier_parameter, norm_inf(current_iterate.original_evaluations.constraints));
-      DEBUG << "Barrier parameter mu temporarily updated to " << this->barrier_parameter << "\n";
+      DEBUG << "Barrier parameter mu temporarily updated to " << this->barrier_parameter << '\n';
       this->subproblem_definition_changed = true;
    }
    else {
@@ -183,14 +183,14 @@ void BarrierSubproblem::update_barrier_parameter(const NonlinearReformulation& p
    const double KKTerror = current_iterate.stationarity_error / scaling;
    const double central_complementarity_error = this->compute_central_complementarity_error(problem, current_iterate);
    const double error = std::max({KKTerror, current_iterate.constraint_violation, central_complementarity_error});
-   DEBUG << "Scaled KKT error for barrier subproblem is " << error << "\n";
+   DEBUG << "Scaled KKT error for barrier subproblem is " << error << '\n';
 
    // update of the barrier parameter (Eq. 7 in Ipopt paper)
    const double tolerance_fraction = this->tolerance / this->parameters.barrier_update_fraction;
    while (error <= this->parameters.k_epsilon * this->barrier_parameter && tolerance_fraction < this->barrier_parameter) {
       this->barrier_parameter = std::max(tolerance_fraction, std::min(this->parameters.k_mu * this->barrier_parameter,
             std::pow(this->barrier_parameter, this->parameters.theta_mu)));
-      DEBUG << "Barrier parameter mu updated to " << this->barrier_parameter << "\n";
+      DEBUG << "Barrier parameter mu updated to " << this->barrier_parameter << '\n';
       // signal the redefinition of the problem to the globalization strategy
       this->subproblem_definition_changed = true;
    }
@@ -315,7 +315,7 @@ void BarrierSubproblem::generate_augmented_rhs(const NonlinearReformulation& pro
       // constraints
       this->augmented_system.rhs[problem.number_variables + j] = -this->constraints[j];
    }
-   DEBUG << "RHS: "; print_vector(DEBUG, this->augmented_system.rhs, 0, problem.number_variables + problem.number_constraints); DEBUG << "\n";
+   DEBUG << "RHS: "; print_vector(DEBUG, this->augmented_system.rhs, 0, problem.number_variables + problem.number_constraints); DEBUG << '\n';
 }
 
 void BarrierSubproblem::compute_lower_bound_dual_direction(const NonlinearReformulation& problem, const Iterate& current_iterate) {
@@ -479,8 +479,8 @@ void BarrierSubproblem::print_solution(const NonlinearReformulation& problem, do
    DEBUG << "Δλ: "; print_vector(DEBUG, this->augmented_system.solution, problem.number_variables, problem.number_constraints);
    DEBUG << "Δz_L: "; print_vector(DEBUG, this->lower_delta_z, 0, problem.number_variables);
    DEBUG << "Δz_U: "; print_vector(DEBUG, this->upper_delta_z, 0, problem.number_variables);
-   DEBUG << "primal length = " << primal_step_length << "\n";
-   DEBUG << "dual length = " << dual_step_length << "\n";
+   DEBUG << "primal length = " << primal_step_length << '\n';
+   DEBUG << "dual length = " << dual_step_length << '\n';
 }
 
 void BarrierSubproblem::set_initial_point(const std::optional<std::vector<double>>& /*optional_initial_point*/) {
