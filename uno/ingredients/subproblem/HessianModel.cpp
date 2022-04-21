@@ -2,13 +2,13 @@
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
 #include "solvers/linear/LinearSolverFactory.hpp"
 
-HessianModel::HessianModel(size_t dimension, size_t hessian_maximum_number_nonzeros, const std::string& sparse_format) :
-      hessian(SymmetricMatrixFactory::create(sparse_format, dimension, hessian_maximum_number_nonzeros)) {
+HessianModel::HessianModel(size_t dimension, size_t maximum_number_nonzeros, const std::string& sparse_format) :
+      hessian(SymmetricMatrixFactory::create(sparse_format, dimension, maximum_number_nonzeros)) {
 }
 
 // Exact Hessian
-ExactHessian::ExactHessian(size_t dimension, size_t hessian_maximum_number_nonzeros, const Options& options) :
-   HessianModel(dimension, hessian_maximum_number_nonzeros, options.at("sparse_format")) {
+ExactHessian::ExactHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options) :
+   HessianModel(dimension, maximum_number_nonzeros, options.at("sparse_format")) {
 }
 
 void ExactHessian::evaluate(const NonlinearProblem& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) {
@@ -18,9 +18,9 @@ void ExactHessian::evaluate(const NonlinearProblem& problem, const std::vector<d
 }
 
 // Convexified Hessian
-ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t hessian_maximum_number_nonzeros, const Options& options):
-      HessianModel(dimension, hessian_maximum_number_nonzeros, options.at("sparse_format")),
-      linear_solver(LinearSolverFactory::create(options.at("linear_solver"), dimension, hessian_maximum_number_nonzeros)),
+ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options):
+      HessianModel(dimension, maximum_number_nonzeros, options.at("sparse_format")),
+      linear_solver(LinearSolverFactory::create(options.at("linear_solver"), dimension, maximum_number_nonzeros)),
       regularization_initial_value(stod(options.at("regularization_initial_value"))) {
 }
 
@@ -74,14 +74,14 @@ void ConvexifiedHessian::regularize(SymmetricMatrix& matrix, size_t number_origi
 }
 
 // Factory
-std::unique_ptr<HessianModel> HessianModelFactory::create(const std::string& hessian_model, size_t dimension, size_t hessian_maximum_number_nonzeros,
+std::unique_ptr<HessianModel> HessianModelFactory::create(const std::string& hessian_model, size_t dimension, size_t maximum_number_nonzeros,
       bool convexify, const Options& options) {
    if (hessian_model == "exact") {
       if (convexify) {
-         return std::make_unique<ConvexifiedHessian>(dimension, hessian_maximum_number_nonzeros, options);
+         return std::make_unique<ConvexifiedHessian>(dimension, maximum_number_nonzeros, options);
       }
       else {
-         return std::make_unique<ExactHessian>(dimension, hessian_maximum_number_nonzeros, options);
+         return std::make_unique<ExactHessian>(dimension, maximum_number_nonzeros, options);
       }
    }
    throw std::invalid_argument("Hessian model " + hessian_model + " does not exist");

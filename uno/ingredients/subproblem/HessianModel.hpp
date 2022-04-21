@@ -10,7 +10,7 @@
 class HessianModel {
 public:
    // TODO handle padding
-   HessianModel(size_t dimension, size_t hessian_maximum_number_nonzeros, const std::string& sparse_format);
+   HessianModel(size_t dimension, size_t maximum_number_nonzeros, const std::string& sparse_format);
    virtual ~HessianModel() = default;
 
    std::unique_ptr<SymmetricMatrix> hessian;
@@ -22,7 +22,7 @@ public:
 // Exact Hessian
 class ExactHessian : public HessianModel {
 public:
-   explicit ExactHessian(size_t dimension, size_t hessian_maximum_number_nonzeros, const Options& options);
+   explicit ExactHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options);
 
    void evaluate(const NonlinearProblem& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) override;
 };
@@ -30,7 +30,7 @@ public:
 // Hessian with convexification (inertia correction)
 class ConvexifiedHessian : public HessianModel {
 public:
-   ConvexifiedHessian(size_t dimension, size_t hessian_maximum_number_nonzeros, const Options& options);
+   ConvexifiedHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options);
 
    void evaluate(const NonlinearProblem& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) override;
 
@@ -44,7 +44,7 @@ protected:
 // HessianModel factory
 class HessianModelFactory {
 public:
-   static std::unique_ptr<HessianModel> create(const std::string& hessian_model, size_t dimension, size_t hessian_maximum_number_nonzeros,
+   static std::unique_ptr<HessianModel> create(const std::string& hessian_model, size_t dimension, size_t maximum_number_nonzeros,
          bool convexify, const Options& options);
 };
 

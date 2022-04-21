@@ -79,7 +79,6 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, Iterate& curren
    // update the objective model using the current penalty parameter
    DEBUG << "penalty parameter: " << current_penalty_parameter << "\n\n";
    this->relaxed_problem.set_objective_multiplier(current_penalty_parameter);
-   current_iterate.is_objective_gradient_computed = false;
 
    // solve the subproblem
    Direction direction = this->subproblem->solve(statistics, this->relaxed_problem, current_iterate);
