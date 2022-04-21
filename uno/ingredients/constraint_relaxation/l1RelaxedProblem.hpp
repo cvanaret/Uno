@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <cmath>
-#include "NonlinearProblem.hpp"
+#include "NonlinearReformulation.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "tools/Range.hpp"
 
@@ -14,7 +14,7 @@ struct ElasticVariables {
    [[nodiscard]] size_t size() const { return this->positive.size() + this->negative.size(); }
 };
 
-class l1RelaxedProblem: public NonlinearProblem {
+class l1RelaxedProblem: public NonlinearReformulation {
 public:
    l1RelaxedProblem(const Model& model, double objective_multiplier, double elastic_objective_coefficient, bool use_proximal_term);
 
@@ -62,7 +62,7 @@ protected:
 
 inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier,
       double elastic_objective_coefficient, bool use_proximal_term):
-      NonlinearProblem(model, model.number_variables + l1RelaxedProblem::count_elastic_variables(model), model.number_constraints),
+      NonlinearReformulation(model, model.number_variables + l1RelaxedProblem::count_elastic_variables(model), model.number_constraints),
       objective_multiplier(objective_multiplier),
       // elastic variables
       elastic_variables(this->number_constraints),

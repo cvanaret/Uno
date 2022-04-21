@@ -3,7 +3,7 @@
 #include "LPSubproblem.hpp"
 #include "BarrierSubproblem.hpp"
 
-std::unique_ptr<Subproblem> SubproblemFactory::create(const NonlinearProblem& problem, const Options& options) {
+std::unique_ptr<Subproblem> SubproblemFactory::create(const NonlinearReformulation& problem, const Options& options) {
    const std::vector<std::string> possible_methods = {"QP", "LP", "barrier"};
    const std::string subproblem_type = options.at("subproblem");
    // active-set methods

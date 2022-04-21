@@ -8,10 +8,10 @@
 
 class QPSubproblem : public ActiveSetSubproblem {
 public:
-   QPSubproblem(const NonlinearProblem& problem, const Options& options);
+   QPSubproblem(const NonlinearReformulation& problem, const Options& options);
 
-   [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) override;
-   [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const NonlinearProblem& problem, const Direction& direction) const override;
+   [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearReformulation& problem, Iterate& current_iterate) override;
+   [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const NonlinearReformulation& problem, const Direction& direction) const override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
    [[nodiscard]] double get_proximal_coefficient() const override;
 
@@ -23,7 +23,7 @@ protected:
    // evaluations
    const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
 
-   void evaluate_problem(const NonlinearProblem& problem, Iterate& current_iterate);
+   void evaluate_problem(const NonlinearReformulation& problem, Iterate& current_iterate);
 };
 
 #endif // UNO_QPSUBPROBLEM_H

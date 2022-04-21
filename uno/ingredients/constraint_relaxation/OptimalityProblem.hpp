@@ -3,9 +3,9 @@
 
 #include <vector>
 #include <cmath>
-#include "NonlinearProblem.hpp"
+#include "NonlinearReformulation.hpp"
 
-class OptimalityProblem: public NonlinearProblem {
+class OptimalityProblem: public NonlinearReformulation {
 public:
    explicit OptimalityProblem(const Model& model);
 
@@ -27,7 +27,7 @@ public:
 };
 
 inline OptimalityProblem::OptimalityProblem(const Model& model):
-      NonlinearProblem(model, model.number_variables, model.number_constraints) {
+      NonlinearReformulation(model, model.number_variables, model.number_constraints) {
    // figure out bounded variables
    for (size_t i: this->model.lower_bounded_variables) {
       this->lower_bounded_variables.push_back(i);

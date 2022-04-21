@@ -16,10 +16,10 @@ enum Smoothness {
    NONSMOOTH
 };
 
-class NonlinearProblem {
+class NonlinearReformulation {
 public:
-   NonlinearProblem(const Model& model, size_t number_variables, size_t number_constraints);
-   virtual ~NonlinearProblem() = default;
+   NonlinearReformulation(const Model& model, size_t number_variables, size_t number_constraints);
+   virtual ~NonlinearReformulation() = default;
 
    const Model& model;
    const size_t number_variables; /*!< Number of variables */
@@ -53,21 +53,21 @@ public:
    [[nodiscard]] virtual size_t get_maximum_number_hessian_nonzeros() const = 0;
 };
 
-inline NonlinearProblem::NonlinearProblem(const Model& model, size_t number_variables, size_t number_constraints):
+inline NonlinearReformulation::NonlinearReformulation(const Model& model, size_t number_variables, size_t number_constraints):
       model(model), number_variables(number_variables), number_constraints(number_constraints) {
 }
 
-inline bool NonlinearProblem::is_constrained() const {
+inline bool NonlinearReformulation::is_constrained() const {
    return (0 < this->number_constraints);
 }
 
-inline void NonlinearProblem::evaluate_lagrangian_gradient(Iterate& iterate, std::vector<double>& lagrangian_gradient) const {
+inline void NonlinearReformulation::evaluate_lagrangian_gradient(Iterate& iterate, std::vector<double>& lagrangian_gradient) const {
    iterate.evaluate_lagrangian_gradient(this->model, iterate.multipliers.constraints, iterate.multipliers.lower_bounds,
          iterate.multipliers.upper_bounds);
    lagrangian_gradient = iterate.lagrangian_gradient;
 }
 
-inline size_t NonlinearProblem::get_number_original_variables() const {
+inline size_t NonlinearReformulation::get_number_original_variables() const {
    return this->model.number_variables;
 }
 

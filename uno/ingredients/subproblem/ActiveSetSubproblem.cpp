@@ -1,13 +1,13 @@
 #include "ActiveSetSubproblem.hpp"
 
-ActiveSetSubproblem::ActiveSetSubproblem(const NonlinearProblem& problem, SecondOrderCorrection soc_strategy):
+ActiveSetSubproblem::ActiveSetSubproblem(const NonlinearReformulation& problem, SecondOrderCorrection soc_strategy):
       Subproblem(problem, soc_strategy),
       initial_point(problem.number_variables),
       variable_displacement_bounds(problem.number_variables),
       linearized_constraint_bounds(problem.number_constraints) {
 }
 
-void ActiveSetSubproblem::initialize(Statistics& /*statistics*/, const NonlinearProblem& /*problem*/, Iterate& /*first_iterate*/) {
+void ActiveSetSubproblem::initialize(Statistics& /*statistics*/, const NonlinearReformulation& /*problem*/, Iterate& /*first_iterate*/) {
 }
 
 void ActiveSetSubproblem::set_initial_point(const std::optional<std::vector<double>>& optional_initial_point) {
@@ -27,7 +27,7 @@ void ActiveSetSubproblem::set_elastic_variables(const l1RelaxedProblem& problem,
    problem.set_elastic_variables(current_iterate);
 }
 
-void ActiveSetSubproblem::set_variable_displacement_bounds(const NonlinearProblem& problem, const Iterate& current_iterate) {
+void ActiveSetSubproblem::set_variable_displacement_bounds(const NonlinearReformulation& problem, const Iterate& current_iterate) {
    for (size_t i = 0; i < problem.number_variables; i++) {
       const double lb = this->variable_bounds[i].lb - current_iterate.primals[i];
       const double ub = this->variable_bounds[i].ub - current_iterate.primals[i];
@@ -35,7 +35,7 @@ void ActiveSetSubproblem::set_variable_displacement_bounds(const NonlinearProble
    }
 }
 
-void ActiveSetSubproblem::set_linearized_constraint_bounds(const NonlinearProblem& problem, const std::vector<double>& current_constraints) {
+void ActiveSetSubproblem::set_linearized_constraint_bounds(const NonlinearReformulation& problem, const std::vector<double>& current_constraints) {
    for (size_t j = 0; j < problem.number_constraints; j++) {
       const double lb = problem.get_constraint_lower_bound(j) - current_constraints[j];
       const double ub = problem.get_constraint_upper_bound(j) - current_constraints[j];
@@ -43,21 +43,21 @@ void ActiveSetSubproblem::set_linearized_constraint_bounds(const NonlinearProble
    }
 }
 
-void ActiveSetSubproblem::compute_dual_displacements(const NonlinearProblem& problem, const Iterate& current_iterate, Direction& direction) {
+void ActiveSetSubproblem::compute_dual_displacements(const NonlinearReformulation& problem, const Iterate& current_iterate, Direction& direction) {
    // compute dual *displacements* (note: active-set methods usually compute the new duals, not the displacements)
    for (size_t j = 0; j < problem.number_constraints; j++) {
       direction.multipliers.constraints[j] -= current_iterate.multipliers.constraints[j];
    }
 }
 
-double ActiveSetSubproblem::compute_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) {
+double ActiveSetSubproblem::compute_optimality_measure(const NonlinearReformulation& problem, Iterate& iterate) {
    // optimality measure: objective value
    return problem.evaluate_objective(iterate);
 }
 
-Direction ActiveSetSubproblem::compute_second_order_correction(const NonlinearProblem& /*problem*/, Iterate& /*trial_iterate*/) {
+Direction ActiveSetSubproblem::compute_second_order_correction(const NonlinearReformulation& /*problem*/, Iterate& /*trial_iterate*/) {
    assert(false && "ActiveSetSubproblem::compute_second_order_correction");
 }
 
-void ActiveSetSubproblem::postprocess_accepted_iterate(const NonlinearProblem& /*problem*/, Iterate& /*iterate*/) {
+void ActiveSetSubproblem::postprocess_accepted_iterate(const NonlinearReformulation& /*problem*/, Iterate& /*iterate*/) {
 }
