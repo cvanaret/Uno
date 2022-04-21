@@ -30,10 +30,10 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
 
    // initial primal and dual points
    Iterate first_iterate(reformulated_model->number_variables, reformulated_model->number_constraints);
-   reformulated_model->get_initial_primal_point(first_iterate.x);
+   reformulated_model->get_initial_primal_point(first_iterate.primals);
    reformulated_model->get_initial_dual_point(first_iterate.multipliers.constraints);
    // project x into the bounds
-   reformulated_model->project_point_in_bounds(first_iterate.x);
+   reformulated_model->project_point_in_bounds(first_iterate.primals);
 
    // initialize the function scaling
    Scaling scaling(reformulated_model->number_constraints, stod(options.at("function_scaling_threshold")));

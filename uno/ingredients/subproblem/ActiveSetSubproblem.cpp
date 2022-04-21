@@ -29,8 +29,8 @@ void ActiveSetSubproblem::set_elastic_variables(const l1RelaxedProblem& problem,
 
 void ActiveSetSubproblem::set_variable_displacement_bounds(const NonlinearProblem& problem, const Iterate& current_iterate) {
    for (size_t i = 0; i < problem.number_variables; i++) {
-      const double lb = this->variable_bounds[i].lb - current_iterate.x[i];
-      const double ub = this->variable_bounds[i].ub - current_iterate.x[i];
+      const double lb = this->variable_bounds[i].lb - current_iterate.primals[i];
+      const double ub = this->variable_bounds[i].ub - current_iterate.primals[i];
       this->variable_displacement_bounds[i] = {lb, ub};
    }
 }

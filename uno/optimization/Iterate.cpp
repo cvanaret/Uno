@@ -9,7 +9,7 @@ size_t Iterate::number_eval_jacobian = 0;
 
 Iterate::Iterate(size_t max_number_variables, size_t max_number_constraints) :
       number_variables(max_number_variables), number_constraints(max_number_constraints),
-      x(max_number_variables), multipliers(max_number_variables, max_number_constraints),
+      primals(max_number_variables), multipliers(max_number_variables, max_number_constraints),
       original_evaluations(max_number_variables, max_number_constraints),
       lagrangian_gradient(max_number_variables) {
 }
@@ -17,7 +17,7 @@ Iterate::Iterate(size_t max_number_variables, size_t max_number_constraints) :
 void Iterate::evaluate_objective(const Model& model) {
    if (!this->is_objective_computed) {
       // evaluate the objective
-      this->original_evaluations.objective = model.evaluate_objective(this->x);
+      this->original_evaluations.objective = model.evaluate_objective(this->primals);
       this->is_objective_computed = true;
       Iterate::number_eval_objective++;
    }
@@ -26,7 +26,7 @@ void Iterate::evaluate_objective(const Model& model) {
 void Iterate::evaluate_constraints(const Model& model) {
    if (!this->are_constraints_computed) {
       // evaluate the constraints
-      model.evaluate_constraints(this->x, this->original_evaluations.constraints);
+      model.evaluate_constraints(this->primals, this->original_evaluations.constraints);
       this->are_constraints_computed = true;
       Iterate::number_eval_constraints++;
    }
@@ -36,7 +36,7 @@ void Iterate::evaluate_objective_gradient(const Model& model) {
    if (!this->is_objective_gradient_computed) {
       this->original_evaluations.objective_gradient.clear();
       // evaluate the objective gradient
-      model.evaluate_objective_gradient(this->x, this->original_evaluations.objective_gradient);
+      model.evaluate_objective_gradient(this->primals, this->original_evaluations.objective_gradient);
       this->is_objective_gradient_computed = true;
    }
 }
@@ -47,7 +47,7 @@ void Iterate::evaluate_constraint_jacobian(const Model& model) {
          row.clear();
       }
       // evaluate the constraint Jacobian
-      model.evaluate_constraint_jacobian(this->x, this->original_evaluations.constraint_jacobian);
+      model.evaluate_constraint_jacobian(this->primals, this->original_evaluations.constraint_jacobian);
       this->is_constraint_jacobian_computed = true;
       Iterate::number_eval_jacobian++;
    }
@@ -91,7 +91,7 @@ void Iterate::evaluate_lagrangian_gradient(const Model& model, const std::vector
 }
 
 void Iterate::set_number_variables(size_t new_number_variables) {
-   this->x.resize(new_number_variables);
+   this->primals.resize(new_number_variables);
    this->multipliers.lower_bounds.resize(new_number_variables);
    this->multipliers.upper_bounds.resize(new_number_variables);
    this->original_evaluations.objective_gradient.reserve(new_number_variables);
@@ -107,7 +107,7 @@ void Iterate::reset_evaluations() {
 
 std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
    stream << "x: ";
-   print_vector(stream, iterate.x);
+   print_vector(stream, iterate.primals);
    stream << "Lower bound multipliers: ";
    print_vector(stream, iterate.multipliers.lower_bounds);
    stream << "Upper bound multipliers: ";

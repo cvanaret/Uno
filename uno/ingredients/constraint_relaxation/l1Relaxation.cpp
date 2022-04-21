@@ -66,7 +66,7 @@ Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Itera
 
    // set the proximal coefficient
    this->relaxed_problem.set_proximal_coefficient(std::sqrt(this->penalty_parameter));
-   this->relaxed_problem.set_proximal_reference_point(current_iterate.x);
+   this->relaxed_problem.set_proximal_reference_point(current_iterate.primals);
 
    // set the multipliers of the violated constraints
    // this->set_multipliers(current_iterate, current_iterate.multipliers.constraints);
@@ -85,7 +85,7 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, Iterate& curren
    // solve the subproblem
    Direction direction = this->subproblem->solve(statistics, this->relaxed_problem, current_iterate);
    direction.objective_multiplier = current_penalty_parameter;
-   direction.norm = norm_inf(direction.x, Range(this->optimality_problem.number_variables));
+   direction.norm = norm_inf(direction.primals, Range(this->optimality_problem.number_variables));
    DEBUG << "\n" << direction << "\n";
    assert(direction.status == OPTIMAL && "The subproblem was not solved to optimality");
    // check feasibility (the subproblem is, by construction, always feasible)
@@ -110,7 +110,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
    // penalty update: if penalty parameter is already 0 or fixed by the user, no need to decrease it
    if (0. < this->penalty_parameter && !this->parameters.fixed_parameter) {
       // check infeasibility
-      double linearized_residual = this->relaxed_problem.compute_linearized_constraint_violation(current_iterate.x, direction.x);
+      double linearized_residual = this->relaxed_problem.compute_linearized_constraint_violation(current_iterate.primals, direction.primals);
       DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
 
       // if the current direction is already feasible, terminate
@@ -121,7 +121,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
          DEBUG << "Compute ideal solution by solving the feasibility problem:\n";
          Direction direction_lowest_violation = this->solve_subproblem(statistics, current_iterate, 0.);
          const double residual_lowest_violation = this->relaxed_problem
-               .compute_linearized_constraint_violation(current_iterate.x, direction_lowest_violation.x);
+               .compute_linearized_constraint_violation(current_iterate.primals, direction_lowest_violation.primals);
          DEBUG << "Lowest linearized residual mk(dk): " << residual_lowest_violation << "\n";
 
          // stage f: update the penalty parameter
@@ -134,7 +134,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
             if (this->penalty_parameter < current_penalty_parameter) {
                DEBUG << "Resolving the subproblem (penalty parameter aggressively reduced to " << this->penalty_parameter << ")\n";
                direction = this->solve_subproblem(statistics, current_iterate, this->penalty_parameter);
-               linearized_residual = this->relaxed_problem.compute_linearized_constraint_violation(current_iterate.x, direction.x);
+               linearized_residual = this->relaxed_problem.compute_linearized_constraint_violation(current_iterate.primals, direction.primals);
             }
 
             // further decrease penalty parameter to satisfy 2 conditions
@@ -164,7 +164,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
                   else {
                      DEBUG << "Resolving the subproblem (penalty parameter reduced to " << this->penalty_parameter << ")\n";
                      direction = this->solve_subproblem(statistics, current_iterate, this->penalty_parameter);
-                     linearized_residual = this->relaxed_problem.compute_linearized_constraint_violation(current_iterate.x, direction.x);
+                     linearized_residual = this->relaxed_problem.compute_linearized_constraint_violation(current_iterate.primals, direction.primals);
                      DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
                   }
                }
@@ -250,7 +250,7 @@ double l1Relaxation::compute_predicted_reduction(const Model& model, Iterate& cu
    else {
       // determine the linearized constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
       const auto residual_function = [&](size_t j) {
-         const double component_j = current_iterate.original_evaluations.constraints[j] + step_length * dot(direction.x,
+         const double component_j = current_iterate.original_evaluations.constraints[j] + step_length * dot(direction.primals,
                current_iterate.original_evaluations.constraint_jacobian[j]);
          return model.compute_constraint_violation(component_j, j);
       };
@@ -272,7 +272,7 @@ double l1Relaxation::compute_error(Iterate& current_iterate, const Multipliers& 
 
    // complementarity error
    current_iterate.evaluate_constraints(this->optimality_problem.model);
-   double error = this->optimality_problem.model.compute_complementarity_error(current_iterate.x, current_iterate.original_evaluations.constraints,
+   double error = this->optimality_problem.model.compute_complementarity_error(current_iterate.primals, current_iterate.original_evaluations.constraints,
          this->constraint_multipliers, this->lower_bound_multipliers, this->upper_bound_multipliers);
    // KKT error
    current_iterate.evaluate_lagrangian_gradient(this->optimality_problem.model, this->constraint_multipliers, this->lower_bound_multipliers,

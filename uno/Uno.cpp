@@ -97,13 +97,13 @@ bool Uno::termination_criterion(TerminationStatus current_status, size_t iterati
 }
 
 TerminationStatus Uno::check_termination(const Model& model, Iterate& current_iterate, double step_norm) const {
-   const size_t number_variables = current_iterate.x.size();
+   const size_t number_variables = current_iterate.primals.size();
 
    // TODO: criterion for CQ failure
    current_iterate.evaluate_constraints(model);
-   current_iterate.complementarity_error = model.compute_complementarity_error(current_iterate.x, current_iterate.original_evaluations.constraints,
+   current_iterate.complementarity_error = model.compute_complementarity_error(current_iterate.primals, current_iterate.original_evaluations.constraints,
          current_iterate.multipliers.constraints, current_iterate.multipliers.lower_bounds, current_iterate.multipliers.upper_bounds);
-   
+
    if (current_iterate.complementarity_error <= this->tolerance * static_cast<double>(number_variables + model.number_constraints)) {
       // feasible and KKT point
       if (current_iterate.stationarity_error <= this->tolerance * std::sqrt(number_variables) &&
@@ -176,7 +176,7 @@ void Result::print(bool print_solution) const {
 
    if (print_solution) {
       std::cout << "Primal solution:\t\t";
-      print_vector(std::cout, this->solution.x);
+      print_vector(std::cout, this->solution.primals);
       std::cout << "Lower bound multipliers:\t";
       print_vector(std::cout, this->solution.multipliers.lower_bounds);
       std::cout << "Upper bound multipliers:\t";

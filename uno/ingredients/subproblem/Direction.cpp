@@ -3,7 +3,7 @@
 #include "linear_algebra/Vector.hpp"
 
 Direction::Direction(size_t number_variables, size_t number_constraints):
-   x(number_variables), multipliers(number_variables, number_constraints) {
+   primals(number_variables), multipliers(number_variables, number_constraints) {
 }
 
 std::string status_to_string(Status status) {
@@ -36,7 +36,7 @@ std::string status_to_string(Status status) {
 std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
    stream << "\nDirection:\nStatus: " << status_to_string(direction.status) << "\n";
    stream << "d^* = ";
-   print_vector(stream, direction.x);
+   print_vector(stream, direction.primals);
 
    stream << "objective = " << direction.objective << "\n";
    stream << "norm = " << direction.norm << "\n";

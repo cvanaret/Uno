@@ -81,7 +81,7 @@ void TrustRegionStrategy::rectify_active_set(Direction& direction, double radius
    // update active set and set multipliers for bound constraints active at trust region to 0
    for (auto it = direction.active_set.bounds.at_lower_bound.begin(); it != direction.active_set.bounds.at_lower_bound.end();) {
       size_t i = *it;
-      if (direction.x[i] == -radius) {
+      if (direction.primals[i] == -radius) {
          it = direction.active_set.bounds.at_lower_bound.erase(it);
          direction.multipliers.lower_bounds[i] = 0.;
       }
@@ -91,7 +91,7 @@ void TrustRegionStrategy::rectify_active_set(Direction& direction, double radius
    }
    for (auto it = direction.active_set.bounds.at_upper_bound.begin(); it != direction.active_set.bounds.at_upper_bound.end();) {
       size_t i = *it;
-      if (direction.x[i] == radius) {
+      if (direction.primals[i] == radius) {
          it = direction.active_set.bounds.at_upper_bound.erase(it);
          direction.multipliers.upper_bounds[i] = 0.;
       }
