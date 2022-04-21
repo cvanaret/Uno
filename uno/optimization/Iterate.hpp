@@ -38,6 +38,9 @@ public:
 
    // evaluations
    Evaluations original_evaluations;
+   static size_t number_eval_objective;
+   static size_t number_eval_constraints;
+   static size_t number_eval_jacobian;
    // lazy evaluation flags
    bool is_objective_computed{false};
    bool are_constraints_computed{false};
@@ -46,15 +49,13 @@ public:
 
    std::vector<double> lagrangian_gradient;
 
-   // residuals of nonlinear functions
+   // residuals
    double constraint_violation{0.};
    double stationarity_error{0.};
    double complementarity_error{0.};
-   ProgressMeasures nonlinear_progress{0., 0.};
 
-   static size_t number_eval_objective;
-   static size_t number_eval_constraints;
-   static size_t number_eval_jacobian;
+   // measures of progress (infeasibility, optimality)
+   ProgressMeasures nonlinear_progress{0., 0.};
 
    void evaluate_objective(const Model& model);
    void evaluate_constraints(const Model& model);

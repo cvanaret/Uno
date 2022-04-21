@@ -1,7 +1,7 @@
 #include "QPSubproblem.hpp"
 #include "solvers/QP/QPSolverFactory.hpp"
 
-QPSubproblem::QPSubproblem(const NonlinearProblem& problem, const Options& options) :
+QPSubproblem::QPSubproblem(const NonlinearReformulation& problem, const Options& options) :
       ActiveSetSubproblem(problem, NO_SOC),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
       solver(QPSolverFactory::create(options.at("QP_solver"), problem.number_variables, problem.number_constraints,
@@ -14,7 +14,7 @@ QPSubproblem::QPSubproblem(const NonlinearProblem& problem, const Options& optio
             problem.get_maximum_number_hessian_nonzeros() + problem.number_variables, options.at("mechanism") != "TR", options)) {
 }
 
-void QPSubproblem::evaluate_problem(const NonlinearProblem& problem, Iterate& current_iterate) {
+void QPSubproblem::evaluate_problem(const NonlinearReformulation& problem, Iterate& current_iterate) {
    // Hessian
    this->hessian_model->evaluate(problem, current_iterate.primals, current_iterate.multipliers.constraints);
 
@@ -28,7 +28,7 @@ void QPSubproblem::evaluate_problem(const NonlinearProblem& problem, Iterate& cu
    problem.evaluate_constraint_jacobian(current_iterate, this->constraint_jacobian);
 }
 
-Direction QPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem& problem, Iterate& current_iterate) {
+Direction QPSubproblem::solve(Statistics& /*statistics*/, const NonlinearReformulation& problem, Iterate& current_iterate) {
    // evaluate the functions at the current iterate
    this->evaluate_problem(problem, current_iterate);
 
@@ -46,7 +46,7 @@ Direction QPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem
    return direction;
 }
 
-PredictedReductionModel QPSubproblem::generate_predicted_reduction_model(const NonlinearProblem& problem, const Direction& direction) const {
+PredictedReductionModel QPSubproblem::generate_predicted_reduction_model(const NonlinearReformulation& problem, const Direction& direction) const {
    return PredictedReductionModel(-direction.objective, [&]() { // capture "this" and "direction" by reference
       // precompute expensive quantities
       const double linear_term = dot(direction.primals, this->objective_gradient);

@@ -4,7 +4,7 @@
 #include <memory>
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "solvers/linear/LinearSolver.hpp"
-#include "ingredients/constraint_relaxation/NonlinearProblem.hpp"
+#include "ingredients/constraint_relaxation/NonlinearReformulation.hpp"
 
 struct UnstableRegularization : public std::exception {
 
@@ -21,8 +21,8 @@ public:
 
    AugmentedSystem(const std::string& sparse_format, size_t max_dimension, size_t max_number_non_zeros, double regularization_failure_threshold);
    void solve(LinearSolver& linear_solver);
-   void factorize_matrix(const NonlinearProblem& problem, LinearSolver& linear_solver);
-   void regularize_matrix(const NonlinearProblem& problem, LinearSolver& linear_solver, size_t size_first_block, size_t size_second_block,
+   void factorize_matrix(const NonlinearReformulation& problem, LinearSolver& linear_solver);
+   void regularize_matrix(const NonlinearReformulation& problem, LinearSolver& linear_solver, size_t size_first_block, size_t size_second_block,
          double constraint_regularization_parameter);
 
 protected:
