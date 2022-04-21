@@ -21,7 +21,8 @@ void ExactHessian::evaluate(const NonlinearReformulation& problem, const std::ve
 ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options):
       HessianModel(dimension, maximum_number_nonzeros, options.at("sparse_format")),
       linear_solver(LinearSolverFactory::create(options.at("linear_solver"), dimension, maximum_number_nonzeros)),
-      regularization_initial_value(stod(options.at("regularization_initial_value"))) {
+      regularization_initial_value(stod(options.at("regularization_initial_value"))),
+      regularization_increase_factor(stod(options.at("regularization_increase_factor"))) {
 }
 
 void ConvexifiedHessian::evaluate(const NonlinearReformulation& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) {
@@ -63,11 +64,11 @@ void ConvexifiedHessian::regularize(SymmetricMatrix& matrix, size_t number_origi
 
       if (this->linear_solver->rank() == number_original_variables && this->linear_solver->number_negative_eigenvalues() == 0) {
          good_inertia = true;
-         DEBUG << "Factorization was a success with regularization factor " << regularization << "\n";
+         DEBUG << "Factorization was a success\n";
       }
       else {
          DEBUG << "rank: " << this->linear_solver->rank() << ", negative eigenvalues: " << this->linear_solver->number_negative_eigenvalues() << "\n";
-         regularization = (regularization == 0.) ? this->regularization_initial_value : 2 * regularization;
+         regularization = (regularization == 0.) ? this->regularization_initial_value : this->regularization_increase_factor * regularization;
          assert(regularization < std::numeric_limits<double>::infinity() && "The regularization coefficient diverged");
       }
    }
