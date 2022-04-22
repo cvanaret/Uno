@@ -77,7 +77,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["residual_norm"] = "L1";
       options["use_proximal_term"] = "no";
    }
-   else if (preset_name == "squid") {
+   else if (preset_name == "byrd") {
       options["mechanism"] = "LS";
       options["constraint-relaxation"] = "l1-relaxation";
       options["strategy"] = "l1-merit";

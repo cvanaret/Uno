@@ -9,7 +9,7 @@ max_iterations 2000
 small_step_factor 100
 
 # print optimal solution (yes|no)
-print_solution yes
+print_solution no
 
 ##### ingredients #####
 # default subproblem (QP|LP|barrier)

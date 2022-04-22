@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
 //    matrix.insert(8., 1, 3);
 //    matrix.insert(9., 2, 3);
 //    matrix.insert(10., 3, 3);
-//    std::cout << "Original matrix: " << matrix << "\n";
+//    std::cout << "Original matrix: " << matrix << '\n';
 //
 //    std::unordered_map<int, int> mask;
 //    mask[0] = 0;
@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
 //    CppProblem problem("my_problem", 1, 0, f, f_gradient);
 //    std::vector<double> x = {123.};
 //    double f_x = f(x);
-//    std::cout << "f(x) = " << f_x << "\n";
+//    std::cout << "f(x) = " << f_x << '\n';
 //}
 
 // sparse vector
@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
    //}
    //// print
    //for (auto& [i, xi]: output) {
-      //std::cout << "Index " << i << ", value " << xi << "\n";
+      //std::cout << "Index " << i << ", value " << xi << '\n';
    //}
 //}
 
@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
     //CppProblem<1, 0, 0> problem("my_problem", f, f_gradient);
     //std::vector<double> x = {123.};
     //double f_x = f(x);
-    //std::cout << "f(x) = " << f_x << "\n";
+    //std::cout << "f(x) = " << f_x << '\n';
 //}
 
 //void test_product() {

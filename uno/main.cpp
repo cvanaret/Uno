@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
          std::cout << "To choose a globalization strategy, use the argument -strategy [penalty|filter|nonmonotone-filter]\n";
          std::cout << "To choose a constraint relaxation strategy, use the argument -constraint-relaxation [feasibility-restoration|l1-relaxation]\n";
          std::cout << "To choose a subproblem method, use the argument -subproblem [QP|LP|barrier]\n";
-         std::cout << "To choose a preset, use the argument -preset [filtersqp|ipopt|squid]\n";
+         std::cout << "To choose a preset, use the argument -preset [filtersqp|ipopt|byrd]\n";
          std::cout << "The options can be combined in the same command line. Autocompletion is active.\n";
       }
       else {
