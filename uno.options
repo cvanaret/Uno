@@ -150,3 +150,6 @@ theta_mu 1.5
 k_epsilon 10
 barrier_update_fraction 10
 regularization_barrier_exponent 0.25
+
+##### BQPD options #####
+bqpd_kmax 500

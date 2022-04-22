@@ -25,7 +25,8 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, bool enforce_lin
 
    // linear constraints feasible at initial point
    if (enforce_linear_constraints) {
-      Preprocessing::enforce_linear_constraints(model, current_iterate);
+      WARNING << "Enforcing linear constraints is not implemented yet\n";
+      //Preprocessing::enforce_linear_constraints(model, current_iterate);
    }
    Statistics statistics = Uno::create_statistics(model);
 

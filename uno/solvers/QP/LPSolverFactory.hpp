@@ -10,10 +10,11 @@
 
 class LPSolverFactory {
 public:
-   static std::unique_ptr<BQPDSolver> create(size_t number_variables, size_t number_constraints, const std::string& LP_solver_name) {
+   static std::unique_ptr<BQPDSolver> create(size_t number_variables, size_t number_constraints, const std::string& LP_solver_name,
+         const Options& options) {
 #ifdef HAS_BQPD
       if (LP_solver_name == "BQPD") {
-         return std::make_unique<BQPDSolver>(number_variables, number_constraints, 0, false);
+         return std::make_unique<BQPDSolver>(number_variables, number_constraints, 0, false, options);
       }
       throw std::invalid_argument("LP solver not found");
 #endif

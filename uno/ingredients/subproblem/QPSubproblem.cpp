@@ -7,7 +7,7 @@ QPSubproblem::QPSubproblem(const NonlinearReformulation& problem, const Options&
       solver(QPSolverFactory::create(options.at("QP_solver"), problem.number_variables, problem.number_constraints,
             problem.get_maximum_number_hessian_nonzeros()
             + problem.number_variables, /* regularization */
-            true)),
+            true, options)),
       proximal_coefficient(stod(options.at("proximal_coefficient"))),
       // if no trust region is used, the problem should be convexified to guarantee boundedness + descent direction
       hessian_model(HessianModelFactory::create(options.at("hessian_model"), problem.number_variables,

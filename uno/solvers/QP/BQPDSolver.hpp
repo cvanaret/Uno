@@ -6,6 +6,7 @@
 #include "LPSolver.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
+#include "tools/Options.hpp"
 
 enum BQPDMode {
    COLD_START = 0, ACTIVE_SET_EQUALITIES = 1, USER_DEFINED = 2, UNCHANGED_ACTIVE_SET = 3, UNCHANGED_ACTIVE_SET_AND_JACOBIAN = 4,
@@ -14,7 +15,7 @@ enum BQPDMode {
 
 class BQPDSolver : public QPSolver {
 public:
-   BQPDSolver(size_t max_number_variables, size_t number_constraints, size_t max_number_nonzeros, bool quadratic_programming);
+   BQPDSolver(size_t max_number_variables, size_t number_constraints, size_t max_number_nonzeros, bool quadratic_programming, const Options& options);
 
    Direction solve_LP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
          const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
