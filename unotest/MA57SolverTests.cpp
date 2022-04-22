@@ -29,7 +29,7 @@ A[4][4] = 1;
 //for (unsigned int k = 0; k < solution.size(); k++) {
 //    std::cout << " " << solution[k];
 //}
-//std::cout << "\n";
+//std::cout << '\n';
 //return;
 //}
 
@@ -45,8 +45,8 @@ A[4][4] = 1;
 //
 //    MA57Solver solver;
 //    MA57Factorization factorization = solver.factorize(coo_matrix);
-//    std::cout << "Dimension: " << coo_matrix.dimension << "\n";
-//    std::cout << "Singular ? " << factorization.matrix_is_singular() << "\n";
-//    std::cout << "Rank ? " << factorization.rank() << "\n";
-//    std::cout << "Negative eigenvalues ? " << factorization.number_negative_eigenvalues() << "\n";
+//    std::cout << "Dimension: " << coo_matrix.dimension << '\n';
+//    std::cout << "Singular ? " << factorization.matrix_is_singular() << '\n';
+//    std::cout << "Rank ? " << factorization.rank() << '\n';
+//    std::cout << "Negative eigenvalues ? " << factorization.number_negative_eigenvalues() << '\n';
 //}
