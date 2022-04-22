@@ -2,6 +2,7 @@
 #include "solvers/QP/BQPDSolver.hpp"
 #include "tools/Range.hpp"
 
+/*
 void Preprocessing::enforce_linear_constraints(const Model& model, Iterate& first_iterate) {
    INFO << "Preprocessing phase: the problem has " << model.linear_constraints.size() << " linear constraints\n";
    if (!model.linear_constraints.empty()) {
@@ -68,6 +69,7 @@ void Preprocessing::enforce_linear_constraints(const Model& model, Iterate& firs
       }
    }
 }
+ */
 
 // compute a least-square approximation of the multipliers by solving a linear system (uses existing linear system)
 void Preprocessing::compute_least_square_multipliers(const Model& model, SymmetricMatrix& matrix, std::vector<double>& rhs, LinearSolver& solver,

@@ -25,12 +25,13 @@ bqpd_(const int* n, const int* m, int* k, int* kmax, double* a, int* la, double*
 }
 
 // preallocate a bunch of stuff
-BQPDSolver::BQPDSolver(size_t max_number_variables, size_t number_constraints, size_t maximum_number_nonzeros, bool quadratic_programming):
+BQPDSolver::BQPDSolver(size_t max_number_variables, size_t number_constraints, size_t maximum_number_nonzeros, bool quadratic_programming,
+         const Options& options):
       QPSolver(), maximum_number_nonzeros(maximum_number_nonzeros),
       lb(max_number_variables + number_constraints),
       ub(max_number_variables + number_constraints), jacobian(max_number_variables * (number_constraints + 1)),
       jacobian_sparsity(max_number_variables * (number_constraints + 1) + number_constraints + 3),
-      kmax(quadratic_programming ? 500 : 0), alp(mlp), lp(mlp), ls(max_number_variables + number_constraints),
+      kmax(quadratic_programming ? stoi(options.at("bqpd_kmax")) : 0), alp(mlp), lp(mlp), ls(max_number_variables + number_constraints),
       w(max_number_variables + number_constraints), gradient_solution(max_number_variables), residuals(max_number_variables + number_constraints),
       e(max_number_variables + number_constraints),
       size_hessian_sparsity(quadratic_programming ? maximum_number_nonzeros + max_number_variables + 3 : 0),
@@ -107,6 +108,7 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
          &this->mlp, &this->peq_solution, this->hessian_values.data(), this->hessian_sparsity.data(), &current_mode, &this->ifail,
          this->info.data(), &this->iprint, &this->nout);
    direction.status = BQPDSolver::status_to_int(this->ifail);
+   assert(direction.status != HESSIAN_INSUFFICIENT_SPACE && "BQPD: the Hessian space is insufficient. Please increase bqpd_kmax");
 
    // project solution into bounds
    for (size_t i = 0; i < number_variables; i++) {

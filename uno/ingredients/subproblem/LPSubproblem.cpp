@@ -3,7 +3,7 @@
 
 LPSubproblem::LPSubproblem(const NonlinearReformulation& problem, const Options& options) :
       ActiveSetSubproblem(problem, NO_SOC),
-      solver(LPSolverFactory::create(problem.number_variables, problem.number_constraints, options.at("LP_solver"))) {
+      solver(LPSolverFactory::create(problem.number_variables, problem.number_constraints, options.at("LP_solver"), options)) {
 }
 
 void LPSubproblem::evaluate_problem(const NonlinearReformulation& problem, Iterate& current_iterate) {
