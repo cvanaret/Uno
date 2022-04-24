@@ -2,7 +2,7 @@
 #define UNO_H
 
 #include "optimization/Model.hpp"
-#include "ingredients/mechanism/GlobalizationMechanism.hpp"
+#include "ingredients/globalization_mechanism/GlobalizationMechanism.hpp"
 
 enum TerminationStatus {
    NOT_OPTIMAL = 0,

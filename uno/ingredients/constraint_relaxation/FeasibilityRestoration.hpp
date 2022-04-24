@@ -3,7 +3,7 @@
 
 #include <optional>
 #include "ConstraintRelaxationStrategy.hpp"
-#include "ingredients/strategy/GlobalizationStrategy.hpp"
+#include "ingredients/globalization_strategy/GlobalizationStrategy.hpp"
 #include "ingredients/constraint_relaxation/OptimalityProblem.hpp"
 #include "ingredients/constraint_relaxation/l1RelaxedProblem.hpp"
 #include "tools/Options.hpp"

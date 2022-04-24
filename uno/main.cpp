@@ -1,5 +1,5 @@
-#include "ingredients/strategy/GlobalizationStrategyFactory.hpp"
-#include "ingredients/mechanism/GlobalizationMechanismFactory.hpp"
+#include "ingredients/globalization_strategy/GlobalizationStrategyFactory.hpp"
+#include "ingredients/globalization_mechanism/GlobalizationMechanismFactory.hpp"
 #include "ingredients/constraint_relaxation/ConstraintRelaxationStrategyFactory.hpp"
 #include "Uno.hpp"
 #include "optimization/ModelFactory.hpp"

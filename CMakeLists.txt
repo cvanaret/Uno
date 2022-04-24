@@ -28,16 +28,16 @@ set(DIRECTORIES uno)
 set(SRC_FILES
     uno/Uno.cpp
 
-    uno/ingredients/mechanism/GlobalizationMechanism.cpp
-    uno/ingredients/mechanism/GlobalizationMechanismFactory.cpp
-    uno/ingredients/mechanism/BacktrackingLineSearch.cpp
-    uno/ingredients/mechanism/TrustRegionStrategy.cpp
+    uno/ingredients/globalization_mechanism/GlobalizationMechanism.cpp
+    uno/ingredients/globalization_mechanism/GlobalizationMechanismFactory.cpp
+    uno/ingredients/globalization_mechanism/BacktrackingLineSearch.cpp
+    uno/ingredients/globalization_mechanism/TrustRegionStrategy.cpp
 
-    uno/ingredients/strategy/GlobalizationStrategy.cpp
-    uno/ingredients/strategy/GlobalizationStrategyFactory.cpp
-    uno/ingredients/strategy/FilterStrategy.cpp
-    uno/ingredients/strategy/Filter.cpp
-    uno/ingredients/strategy/l1MeritFunction.cpp
+    uno/ingredients/globalization_strategy/GlobalizationStrategy.cpp
+    uno/ingredients/globalization_strategy/GlobalizationStrategyFactory.cpp
+    uno/ingredients/globalization_strategy/FilterStrategy.cpp
+    uno/ingredients/globalization_strategy/Filter.cpp
+    uno/ingredients/globalization_strategy/l1MeritFunction.cpp
     
     uno/ingredients/constraint_relaxation/ConstraintRelaxationStrategy.cpp
     uno/ingredients/constraint_relaxation/ConstraintRelaxationStrategyFactory.cpp

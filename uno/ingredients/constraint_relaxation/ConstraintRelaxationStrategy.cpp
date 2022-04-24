@@ -1,5 +1,4 @@
 #include "ConstraintRelaxationStrategy.hpp"
-#include "ingredients/subproblem/SubproblemFactory.hpp"
 
 ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(Norm residual_norm): residual_norm(residual_norm) {
 }
