@@ -1,7 +1,7 @@
 #include <cassert>
 #include <functional>
 #include "FeasibilityRestoration.hpp"
-#include "ingredients/strategy/GlobalizationStrategyFactory.hpp"
+#include "ingredients/globalization_strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 
 FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options& options) :

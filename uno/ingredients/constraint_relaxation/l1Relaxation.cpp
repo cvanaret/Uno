@@ -1,6 +1,6 @@
 #include <cassert>
 #include "l1Relaxation.hpp"
-#include "ingredients/strategy/GlobalizationStrategyFactory.hpp"
+#include "ingredients/globalization_strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 #include "tools/Range.hpp"
 
