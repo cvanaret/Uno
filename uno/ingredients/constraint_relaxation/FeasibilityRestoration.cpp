@@ -9,7 +9,7 @@ FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options
       // create the optimality problem
       optimality_problem(model),
       // create the phase-1 feasibility problem (objective multiplier = 0)
-      feasibility_problem(model, 0., stod(options.at("elastic_objective_coefficient")), (options.at("use_proximal_term") == "yes")),
+      feasibility_problem(model, 0., stod(options.at("l1_constraint_violation_coefficient")), (options.at("l1_use_proximal_term") == "yes")),
       subproblem(SubproblemFactory::create(this->feasibility_problem, options)),
       // create the globalization strategies (one for each phase)
       phase_1_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),

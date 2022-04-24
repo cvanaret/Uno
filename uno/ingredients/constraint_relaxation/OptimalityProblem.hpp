@@ -41,7 +41,6 @@ inline double OptimalityProblem::get_objective_multiplier() const {
    return 1.;
 }
 
-// return rho*f(x) + coeff*(e^T p + e^T n) + proximal
 inline double OptimalityProblem::evaluate_objective(Iterate& iterate) const {
    iterate.evaluate_objective(this->model);
    return iterate.original_evaluations.objective;
@@ -64,14 +63,13 @@ inline void OptimalityProblem::evaluate_constraint_jacobian(Iterate& iterate, st
 
 inline void OptimalityProblem::evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers,
       SymmetricMatrix& hessian) const {
-   const double objective_multiplier = 1.;
-   this->model.evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian);
+   this->model.evaluate_lagrangian_hessian(x, this->get_objective_multiplier(), multipliers, hessian);
    hessian.dimension = this->number_variables;
 }
 
 inline double OptimalityProblem::predicted_reduction_contribution(const Iterate& /*current_iterate*/, const Direction& /*direction*/,
       double /*step_length*/) const {
-   return 0.;
+   assert(false && "OptimalityProblem::predicted_reduction_contribution not written");
 }
 
 inline double OptimalityProblem::get_variable_lower_bound(size_t i) const {

@@ -64,10 +64,10 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["armijo_decrease_fraction"] = "1e-4";
       options["LS_backtracking_ratio"] = "0.5";
       options["use_second_order_correction"] = "yes";
-      options["elastic_objective_coefficient"] = "1000";
+      options["l1_constraint_violation_coefficient"] = "1000";
       options["residual_norm"] = "INF";
       options["scale_functions"] = "yes";
-      options["use_proximal_term"] = "yes";
+      options["l1_use_proximal_term"] = "yes";
    }
    else if (preset_name == "filtersqp") {
       options["mechanism"] = "TR";
@@ -75,7 +75,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["strategy"] = "filter";
       options["subproblem"] = "QP";
       options["residual_norm"] = "L1";
-      options["use_proximal_term"] = "no";
+      options["l1_use_proximal_term"] = "no";
    }
    else if (preset_name == "byrd") {
       options["mechanism"] = "LS";
