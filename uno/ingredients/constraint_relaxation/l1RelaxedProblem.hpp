@@ -17,7 +17,7 @@ struct ElasticVariables {
 
 class l1RelaxedProblem: public ReformulatedProblem {
 public:
-   l1RelaxedProblem(const Model& model, double objective_multiplier, double elastic_objective_coefficient, bool use_proximal_term);
+   l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient, bool use_proximal_term);
 
    [[nodiscard]] double get_objective_multiplier() const override;
    [[nodiscard]] double evaluate_objective(Iterate& iterate) const override;
@@ -50,7 +50,7 @@ protected:
    double objective_multiplier;
    // elastic variables
    ElasticVariables elastic_variables;
-   double elastic_objective_coefficient;
+   double constraint_violation_coefficient;
    // proximal term
    const bool use_proximal_term;
    double proximal_coefficient{0.};
@@ -61,13 +61,13 @@ protected:
    [[nodiscard]] double get_proximal_weight(size_t i) const;
 };
 
-inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier,
-      double elastic_objective_coefficient, bool use_proximal_term):
+inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient,
+         bool use_proximal_term):
       ReformulatedProblem(model, model.number_variables + l1RelaxedProblem::count_elastic_variables(model), model.number_constraints),
       objective_multiplier(objective_multiplier),
       // elastic variables
       elastic_variables(this->number_constraints),
-      elastic_objective_coefficient(elastic_objective_coefficient),
+      constraint_violation_coefficient(constraint_violation_coefficient),
       use_proximal_term(use_proximal_term),
       proximal_reference_point(model.number_variables) {
    // register equality and inequality constraints
@@ -113,7 +113,7 @@ inline double l1RelaxedProblem::evaluate_objective(Iterate& iterate) const {
    // scaled constraint violation: coeff*||c(x)||_1
    iterate.evaluate_constraints(this->model);
    iterate.constraint_violation = this->model.compute_constraint_violation(iterate.original_evaluations.constraints, L1_NORM);
-   objective += this->elastic_objective_coefficient*iterate.constraint_violation;
+   objective += this->constraint_violation_coefficient * iterate.constraint_violation;
 
    // proximal term
    if (this->use_proximal_term && 0. < this->proximal_coefficient) {
@@ -141,7 +141,7 @@ inline void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, Spar
 
    // elastic contribution
    const auto insert_elastic_derivative = [&](size_t elastic_index) {
-      objective_gradient.insert(elastic_index, this->elastic_objective_coefficient);
+      objective_gradient.insert(elastic_index, this->constraint_violation_coefficient);
    };
    this->elastic_variables.positive.for_each_value(insert_elastic_derivative);
    this->elastic_variables.negative.for_each_value(insert_elastic_derivative);
