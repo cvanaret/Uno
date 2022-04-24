@@ -13,7 +13,7 @@ void AugmentedSystem::solve(LinearSolver& linear_solver) {
    linear_solver.solve(*this->matrix, this->rhs, this->solution);
 }
 
-void AugmentedSystem::factorize_matrix(const NonlinearReformulation& /*problem*/, LinearSolver& linear_solver) {
+void AugmentedSystem::factorize_matrix(const ReformulatedProblem& /*problem*/, LinearSolver& linear_solver) {
    // compute the symbolic factorization only when:
    // the problem has a non-constant augmented system (ie is not an LP or a QP) or it is the first factorization
    if (this->number_factorizations == 0 || true) { // || !model.fixed_hessian_sparsity || model.problem_type == NONLINEAR) {
@@ -24,7 +24,7 @@ void AugmentedSystem::factorize_matrix(const NonlinearReformulation& /*problem*/
    this->number_factorizations++;
 }
 
-void AugmentedSystem::regularize_matrix(const NonlinearReformulation& problem, LinearSolver& linear_solver, size_t size_first_block, size_t size_second_block,
+void AugmentedSystem::regularize_matrix(const ReformulatedProblem& problem, LinearSolver& linear_solver, size_t size_first_block, size_t size_second_block,
       double constraint_regularization_parameter) {
    DEBUG << "Original matrix\n" << *this->matrix << '\n';
    double regularization_first_block = 0.;

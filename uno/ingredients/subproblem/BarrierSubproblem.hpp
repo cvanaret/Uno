@@ -20,20 +20,20 @@ struct InteriorPointParameters {
 
 class BarrierSubproblem : public Subproblem {
 public:
-   BarrierSubproblem(const NonlinearReformulation& problem, const Options& options);
+   BarrierSubproblem(const ReformulatedProblem& problem, const Options& options);
    ~BarrierSubproblem() override = default;
 
    void set_initial_point(const std::optional<std::vector<double>>& optional_initial_point) override;
-   void initialize(Statistics& statistics, const NonlinearReformulation& problem, Iterate& first_iterate) override;
+   void initialize(Statistics& statistics, const ReformulatedProblem& problem, Iterate& first_iterate) override;
 
    [[nodiscard]] double get_proximal_coefficient() const override;
    void set_elastic_variables(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
    [[nodiscard]] static double push_variable_to_interior(double variable_value, const Interval& variable_bounds);
-   [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearReformulation& problem, Iterate& current_iterate) override;
-   [[nodiscard]] Direction compute_second_order_correction(const NonlinearReformulation& problem, Iterate& trial_iterate) override;
-   [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const NonlinearReformulation& problem, const Direction& direction) const override;
-   [[nodiscard]] double compute_optimality_measure(const NonlinearReformulation& problem, Iterate& iterate) override;
-   void postprocess_accepted_iterate(const NonlinearReformulation& problem, Iterate& iterate) override;
+   [[nodiscard]] Direction solve(Statistics& statistics, const ReformulatedProblem& problem, Iterate& current_iterate) override;
+   [[nodiscard]] Direction compute_second_order_correction(const ReformulatedProblem& problem, Iterate& trial_iterate) override;
+   [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const ReformulatedProblem& problem, const Direction& direction) const override;
+   [[nodiscard]] double compute_optimality_measure(const ReformulatedProblem& problem, Iterate& iterate) override;
+   void postprocess_accepted_iterate(const ReformulatedProblem& problem, Iterate& iterate) override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
 private:
@@ -54,22 +54,22 @@ private:
 
    bool solving_feasibility_problem{false};
 
-   void evaluate_problem(const NonlinearReformulation& problem, Iterate& current_iterate);
-   void update_barrier_parameter(const NonlinearReformulation& problem, const Iterate& current_iterate);
-   [[nodiscard]] static bool is_small_direction(const NonlinearReformulation& problem, const Iterate& current_iterate, const Direction& direction);
+   void evaluate_problem(const ReformulatedProblem& problem, Iterate& current_iterate);
+   void update_barrier_parameter(const ReformulatedProblem& problem, const Iterate& current_iterate);
+   [[nodiscard]] static bool is_small_direction(const ReformulatedProblem& problem, const Iterate& current_iterate, const Direction& direction);
    [[nodiscard]] double compute_barrier_directional_derivative(const std::vector<double>& solution) const;
-   [[nodiscard]] double evaluate_barrier_function(const NonlinearReformulation& problem, Iterate& iterate);
-   [[nodiscard]] double primal_fraction_to_boundary(const NonlinearReformulation& problem, const Iterate& current_iterate, double tau);
-   [[nodiscard]] double dual_fraction_to_boundary(const NonlinearReformulation& problem, const Iterate& current_iterate, double tau);
-   void assemble_augmented_system(const NonlinearReformulation& problem, const Iterate& current_iterate);
-   void assemble_augmented_matrix(const NonlinearReformulation& problem, const Iterate& current_iterate);
-   void generate_augmented_rhs(const NonlinearReformulation& problem, const Iterate& current_iterate);
-   void compute_lower_bound_dual_direction(const NonlinearReformulation& problem, const Iterate& current_iterate);
-   void compute_upper_bound_dual_direction(const NonlinearReformulation& problem, const Iterate& current_iterate);
-   void generate_direction(const NonlinearReformulation& problem, const Iterate& current_iterate);
-   [[nodiscard]] double compute_KKT_error_scaling(const NonlinearReformulation& problem, const Iterate& current_iterate) const;
-   [[nodiscard]] double compute_central_complementarity_error(const NonlinearReformulation& problem, const Iterate& iterate) const;
-   void print_solution(const NonlinearReformulation& problem, double primal_step_length, double dual_step_length) const;
+   [[nodiscard]] double evaluate_barrier_function(const ReformulatedProblem& problem, Iterate& iterate);
+   [[nodiscard]] double primal_fraction_to_boundary(const ReformulatedProblem& problem, const Iterate& current_iterate, double tau);
+   [[nodiscard]] double dual_fraction_to_boundary(const ReformulatedProblem& problem, const Iterate& current_iterate, double tau);
+   void assemble_augmented_system(const ReformulatedProblem& problem, const Iterate& current_iterate);
+   void assemble_augmented_matrix(const ReformulatedProblem& problem, const Iterate& current_iterate);
+   void generate_augmented_rhs(const ReformulatedProblem& problem, const Iterate& current_iterate);
+   void compute_lower_bound_dual_direction(const ReformulatedProblem& problem, const Iterate& current_iterate);
+   void compute_upper_bound_dual_direction(const ReformulatedProblem& problem, const Iterate& current_iterate);
+   void generate_direction(const ReformulatedProblem& problem, const Iterate& current_iterate);
+   [[nodiscard]] double compute_KKT_error_scaling(const ReformulatedProblem& problem, const Iterate& current_iterate) const;
+   [[nodiscard]] double compute_central_complementarity_error(const ReformulatedProblem& problem, const Iterate& iterate) const;
+   void print_solution(const ReformulatedProblem& problem, double primal_step_length, double dual_step_length) const;
 };
 
 #endif // UNO_BARRIERSUBPROBLEM_H

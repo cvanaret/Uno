@@ -7,10 +7,10 @@
 
 class LPSubproblem : public ActiveSetSubproblem {
 public:
-   LPSubproblem(const NonlinearReformulation& problem, const Options& options);
+   LPSubproblem(const ReformulatedProblem& problem, const Options& options);
 
-   [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearReformulation& problem, Iterate& current_iterate) override;
-   [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const NonlinearReformulation& problem, const Direction& direction) const override;
+   [[nodiscard]] Direction solve(Statistics& statistics, const ReformulatedProblem& problem, Iterate& current_iterate) override;
+   [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const ReformulatedProblem& problem, const Direction& direction) const override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
    [[nodiscard]] double get_proximal_coefficient() const override;
 
@@ -18,7 +18,7 @@ private:
    // use pointers to allow polymorphism
    const std::unique_ptr<LPSolver> solver; /*!< Solver that solves the subproblem */
 
-   void evaluate_problem(const NonlinearReformulation& problem, Iterate& current_iterate);
+   void evaluate_problem(const ReformulatedProblem& problem, Iterate& current_iterate);
 };
 
 #endif // UNO_LPSUBPROBLEM_H

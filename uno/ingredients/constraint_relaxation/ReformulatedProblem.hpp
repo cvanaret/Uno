@@ -16,10 +16,10 @@ enum Smoothness {
    NONSMOOTH
 };
 
-class NonlinearReformulation {
+class ReformulatedProblem {
 public:
-   NonlinearReformulation(const Model& model, size_t number_variables, size_t number_constraints);
-   virtual ~NonlinearReformulation() = default;
+   ReformulatedProblem(const Model& model, size_t number_variables, size_t number_constraints);
+   virtual ~ReformulatedProblem() = default;
 
    const Model& model;
    const size_t number_variables; /*!< Number of variables */
@@ -53,11 +53,11 @@ public:
    [[nodiscard]] virtual size_t get_maximum_number_hessian_nonzeros() const = 0;
 };
 
-inline NonlinearReformulation::NonlinearReformulation(const Model& model, size_t number_variables, size_t number_constraints):
+inline ReformulatedProblem::ReformulatedProblem(const Model& model, size_t number_variables, size_t number_constraints):
       model(model), number_variables(number_variables), number_constraints(number_constraints) {
 }
 
-inline bool NonlinearReformulation::is_constrained() const {
+inline bool ReformulatedProblem::is_constrained() const {
    return (0 < this->number_constraints);
 }
 
@@ -69,7 +69,7 @@ inline void NonlinearReformulation::evaluate_lagrangian_gradient(Iterate& iterat
 }
 */
 
-inline size_t NonlinearReformulation::get_number_original_variables() const {
+inline size_t ReformulatedProblem::get_number_original_variables() const {
    return this->model.number_variables;
 }
 
