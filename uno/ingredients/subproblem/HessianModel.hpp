@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <vector>
-#include "ingredients/constraint_relaxation/NonlinearReformulation.hpp"
+#include "ingredients/constraint_relaxation/ReformulatedProblem.hpp"
 #include "solvers/linear/LinearSolver.hpp"
 #include "tools/Options.hpp"
 
@@ -16,7 +16,7 @@ public:
    std::unique_ptr<SymmetricMatrix> hessian;
    size_t evaluation_count{0};
 
-   virtual void evaluate(const NonlinearReformulation& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) = 0;
+   virtual void evaluate(const ReformulatedProblem& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) = 0;
 };
 
 // Exact Hessian
@@ -24,7 +24,7 @@ class ExactHessian : public HessianModel {
 public:
    explicit ExactHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options);
 
-   void evaluate(const NonlinearReformulation& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) override;
+   void evaluate(const ReformulatedProblem& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) override;
 };
 
 // Hessian with convexification (inertia correction)
@@ -32,7 +32,7 @@ class ConvexifiedHessian : public HessianModel {
 public:
    ConvexifiedHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options);
 
-   void evaluate(const NonlinearReformulation& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) override;
+   void evaluate(const ReformulatedProblem& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) override;
 
 protected:
    std::unique_ptr<LinearSolver> linear_solver; /*!< Solver that computes the inertia */

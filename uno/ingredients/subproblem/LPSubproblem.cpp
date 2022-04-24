@@ -1,12 +1,12 @@
 #include "LPSubproblem.hpp"
 #include "solvers/QP/LPSolverFactory.hpp"
 
-LPSubproblem::LPSubproblem(const NonlinearReformulation& problem, const Options& options) :
+LPSubproblem::LPSubproblem(const ReformulatedProblem& problem, const Options& options) :
       ActiveSetSubproblem(problem, NO_SOC),
       solver(LPSolverFactory::create(problem.number_variables, problem.number_constraints, options.at("LP_solver"), options)) {
 }
 
-void LPSubproblem::evaluate_problem(const NonlinearReformulation& problem, Iterate& current_iterate) {
+void LPSubproblem::evaluate_problem(const ReformulatedProblem& problem, Iterate& current_iterate) {
    // objective gradient
    problem.evaluate_objective_gradient(current_iterate, this->objective_gradient);
 
@@ -17,7 +17,7 @@ void LPSubproblem::evaluate_problem(const NonlinearReformulation& problem, Itera
    problem.evaluate_constraint_jacobian(current_iterate, this->constraint_jacobian);
 }
 
-Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearReformulation& problem, Iterate& current_iterate) {
+Direction LPSubproblem::solve(Statistics& /*statistics*/, const ReformulatedProblem& problem, Iterate& current_iterate) {
    // evaluate the functions at the current iterate
    this->evaluate_problem(problem, current_iterate);
 
@@ -35,7 +35,7 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearReformu
    return direction;
 }
 
-PredictedReductionModel LPSubproblem::generate_predicted_reduction_model(const NonlinearReformulation& /*problem*/, const Direction& direction) const {
+PredictedReductionModel LPSubproblem::generate_predicted_reduction_model(const ReformulatedProblem& /*problem*/, const Direction& direction) const {
    return PredictedReductionModel(-direction.objective, [&]() { // capture "direction" by reference
       // return a function of the step length that cheaply assembles the predicted reduction
       return [=](double step_length) { // capture the expensive quantities by value

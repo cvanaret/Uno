@@ -2,7 +2,7 @@
 #include "Subproblem.hpp"
 #include "linear_algebra/SparseVector.hpp"
 
-Subproblem::Subproblem(const NonlinearReformulation& problem, SecondOrderCorrection soc_strategy):
+Subproblem::Subproblem(const ReformulatedProblem& problem, SecondOrderCorrection soc_strategy):
       objective_gradient(problem.number_variables), constraints(problem.number_constraints), constraint_jacobian(problem.number_constraints),
       soc_strategy(soc_strategy), variable_bounds(problem.number_variables),
       direction(problem.number_variables, problem.number_constraints) {
@@ -15,7 +15,7 @@ Subproblem::Subproblem(const NonlinearReformulation& problem, SecondOrderCorrect
    }
 }
 
-void Subproblem::set_variable_bounds(const NonlinearReformulation& problem, const Iterate& current_iterate, double trust_region_radius) {
+void Subproblem::set_variable_bounds(const ReformulatedProblem& problem, const Iterate& current_iterate, double trust_region_radius) {
    // bounds intersected with trust region
    // very important: apply the trust region only on the original variables
    for (size_t i = 0; i < problem.get_number_original_variables(); i++) {

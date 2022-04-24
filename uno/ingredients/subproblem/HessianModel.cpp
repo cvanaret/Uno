@@ -11,7 +11,7 @@ ExactHessian::ExactHessian(size_t dimension, size_t maximum_number_nonzeros, con
    HessianModel(dimension, maximum_number_nonzeros, options.at("sparse_format")) {
 }
 
-void ExactHessian::evaluate(const NonlinearReformulation& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) {
+void ExactHessian::evaluate(const ReformulatedProblem& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) {
    // evaluate Lagrangian Hessian
    problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, *this->hessian);
    this->evaluation_count++;
@@ -25,7 +25,7 @@ ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t maximum_number_n
       regularization_increase_factor(stod(options.at("regularization_increase_factor"))) {
 }
 
-void ConvexifiedHessian::evaluate(const NonlinearReformulation& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) {
+void ConvexifiedHessian::evaluate(const ReformulatedProblem& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) {
    // evaluate Lagrangian Hessian
    problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, *this->hessian);
    this->evaluation_count++;
