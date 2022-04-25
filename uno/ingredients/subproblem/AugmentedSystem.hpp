@@ -4,7 +4,7 @@
 #include <memory>
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "solvers/linear/LinearSolver.hpp"
-#include "ingredients/constraint_relaxation/ReformulatedProblem.hpp"
+#include "ingredients/constraint_relaxation_strategy/ReformulatedProblem.hpp"
 
 struct UnstableRegularization : public std::exception {
 
