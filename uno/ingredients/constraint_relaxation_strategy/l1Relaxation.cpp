@@ -307,6 +307,10 @@ double l1Relaxation::compute_infeasibility_measure(Iterate& iterate) {
 void l1Relaxation::register_accepted_iterate(Iterate& iterate) {
    // TODO check problem
    this->subproblem->postprocess_accepted_iterate(this->relaxed_problem, iterate);
+   // check the optimality relation between the l1 penalty parameter and the inf norm of the multipliers
+   if (this->penalty_parameter <= 1./norm_inf(iterate.multipliers.constraints)) {
+      DEBUG << "The value of the penalty parameter is consistent with an exact relaxation\n";
+   }
 }
 
 size_t l1Relaxation::get_hessian_evaluation_count() const {
