@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <vector>
-#include "ingredients/constraint_relaxation/ReformulatedProblem.hpp"
+#include "ingredients/constraint_relaxation_strategy/ReformulatedProblem.hpp"
 #include "solvers/linear/LinearSolver.hpp"
 #include "tools/Options.hpp"
 

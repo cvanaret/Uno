@@ -3,7 +3,7 @@
 
 #include <memory>
 #include "Subproblem.hpp"
-#include "ingredients/constraint_relaxation/ReformulatedProblem.hpp"
+#include "ingredients/constraint_relaxation_strategy/ReformulatedProblem.hpp"
 #include "tools/Options.hpp"
 
 class SubproblemFactory {

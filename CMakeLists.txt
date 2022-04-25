@@ -39,10 +39,10 @@ set(SRC_FILES
     uno/ingredients/globalization_strategy/Filter.cpp
     uno/ingredients/globalization_strategy/l1MeritFunction.cpp
     
-    uno/ingredients/constraint_relaxation/ConstraintRelaxationStrategy.cpp
-    uno/ingredients/constraint_relaxation/ConstraintRelaxationStrategyFactory.cpp
-    uno/ingredients/constraint_relaxation/l1Relaxation.cpp
-    uno/ingredients/constraint_relaxation/FeasibilityRestoration.cpp
+    uno/ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategy.cpp
+    uno/ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategyFactory.cpp
+    uno/ingredients/constraint_relaxation_strategy/l1Relaxation.cpp
+    uno/ingredients/constraint_relaxation_strategy/FeasibilityRestoration.cpp
     
     uno/ingredients/subproblem/Subproblem.cpp
     uno/ingredients/subproblem/SubproblemFactory.cpp
