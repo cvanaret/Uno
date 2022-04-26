@@ -10,7 +10,7 @@
 
 struct ProgressMeasures {
    double infeasibility;
-   double optimality;
+   double reformulation_objective;
 };
 
 struct Evaluations {

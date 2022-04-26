@@ -24,7 +24,7 @@ void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& first_i
 
    // compute the progress measures and the residuals of the initial point
    first_iterate.nonlinear_progress.infeasibility = this->compute_infeasibility_measure(first_iterate);
-   first_iterate.nonlinear_progress.optimality = this->subproblem->compute_optimality_measure(this->optimality_problem, first_iterate);
+   first_iterate.nonlinear_progress.reformulation_objective = this->subproblem->compute_optimality_measure(this->optimality_problem, first_iterate);
    this->compute_nonlinear_residuals(this->optimality_problem, first_iterate);
 
    // initialize the globalization strategies
@@ -88,7 +88,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& curr
    // check if subproblem definition changed
    if (this->subproblem->subproblem_definition_changed) {
       DEBUG << "The subproblem definition changed, the optimality measure is recomputed\n";
-      current_iterate.nonlinear_progress.optimality = this->subproblem->compute_optimality_measure(this->optimality_problem, current_iterate);
+      current_iterate.nonlinear_progress.reformulation_objective = this->subproblem->compute_optimality_measure(this->optimality_problem, current_iterate);
       this->phase_2_strategy->reset();
       this->subproblem->subproblem_definition_changed = false;
    }
@@ -139,10 +139,10 @@ GlobalizationStrategy& FeasibilityRestoration::switch_phase(Iterate& current_ite
    trial_iterate.evaluate_objective(this->optimality_problem.model);
    trial_iterate.nonlinear_progress.infeasibility = this->compute_infeasibility_measure(trial_iterate);
    if (this->current_phase == OPTIMALITY) {
-      trial_iterate.nonlinear_progress.optimality = this->subproblem->compute_optimality_measure(this->optimality_problem, trial_iterate);
+      trial_iterate.nonlinear_progress.reformulation_objective = this->subproblem->compute_optimality_measure(this->optimality_problem, trial_iterate);
    }
    else {
-      trial_iterate.nonlinear_progress.optimality = this->compute_optimality_measure(trial_iterate, direction.constraint_partition.value().infeasible);
+      trial_iterate.nonlinear_progress.reformulation_objective = this->compute_optimality_measure(trial_iterate, direction.constraint_partition.value().infeasible);
    }
 
    // return the globalization strategy of the current phase
@@ -156,7 +156,7 @@ void FeasibilityRestoration::switch_to_feasibility_restoration(Iterate& current_
    this->phase_1_strategy->reset();
    // update the measure of optimality
    const std::vector<size_t>& infeasible_constraints = direction.constraint_partition.value().infeasible;
-   current_iterate.nonlinear_progress.optimality = this->compute_optimality_measure(current_iterate, infeasible_constraints);
+   current_iterate.nonlinear_progress.reformulation_objective = this->compute_optimality_measure(current_iterate, infeasible_constraints);
    this->phase_1_strategy->notify(current_iterate);
 }
 
@@ -164,7 +164,7 @@ void FeasibilityRestoration::switch_to_optimality(Iterate& current_iterate, Iter
    this->current_phase = OPTIMALITY;
    DEBUG << "Switching from restoration to optimality phase\n";
    current_iterate.set_number_variables(this->optimality_problem.number_variables);
-   current_iterate.nonlinear_progress.optimality = this->subproblem->compute_optimality_measure(this->optimality_problem, current_iterate);
+   current_iterate.nonlinear_progress.reformulation_objective = this->subproblem->compute_optimality_measure(this->optimality_problem, current_iterate);
    trial_iterate.set_number_variables(this->optimality_problem.number_variables);
 }
 

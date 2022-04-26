@@ -9,6 +9,6 @@ bool GlobalizationStrategy::armijo_sufficient_decrease(double predicted_reductio
 }
 
 void GlobalizationStrategy::check_finiteness(const ProgressMeasures& progress) {
-   assert(is_finite(progress.optimality) && "The objective measure is infinite.");
+   assert(is_finite(progress.reformulation_objective) && "The objective measure is infinite.");
    assert(is_finite(progress.infeasibility) && "The infeasibility measure is infinite.");
 }

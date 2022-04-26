@@ -173,7 +173,7 @@ void Result::print(bool print_solution) const {
    std::cout << "Complementarity error:\t\t" << this->solution.complementarity_error << '\n';
 
    std::cout << "Feasibility measure:\t\t" << this->solution.nonlinear_progress.infeasibility << '\n';
-   std::cout << "Optimality measure:\t\t" << this->solution.nonlinear_progress.optimality << '\n';
+   std::cout << "Optimality measure:\t\t" << this->solution.nonlinear_progress.reformulation_objective << '\n';
 
    if (print_solution) {
       std::cout << "Primal solution:\t\t";
