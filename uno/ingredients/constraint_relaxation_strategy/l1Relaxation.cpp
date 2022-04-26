@@ -39,7 +39,7 @@ void l1Relaxation::initialize(Statistics& statistics, Iterate& first_iterate) {
 
    // compute the progress measures and the residuals of the initial point
    first_iterate.nonlinear_progress.infeasibility = this->compute_infeasibility_measure(first_iterate);
-   first_iterate.nonlinear_progress.optimality = this->subproblem->compute_optimality_measure(this->optimality_problem, first_iterate);
+   first_iterate.nonlinear_progress.reformulation_objective = this->subproblem->compute_optimality_measure(this->optimality_problem, first_iterate);
 
    this->compute_nonlinear_residuals(this->relaxed_problem, first_iterate);
 
@@ -216,14 +216,14 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, Iterate& current_iterat
    // check if subproblem definition changed
    if (this->subproblem->subproblem_definition_changed) {
       DEBUG << "The subproblem definition changed, the optimality measure is recomputed\n";
-      current_iterate.nonlinear_progress.optimality = this->subproblem->compute_optimality_measure(this->optimality_problem, current_iterate);
+      current_iterate.nonlinear_progress.reformulation_objective = this->subproblem->compute_optimality_measure(this->optimality_problem, current_iterate);
       this->globalization_strategy->reset();
       this->subproblem->subproblem_definition_changed = false;
    }
 
    // compute the measures of progress for the trial iterate
    trial_iterate.nonlinear_progress.infeasibility = this->compute_infeasibility_measure(trial_iterate);
-   trial_iterate.nonlinear_progress.optimality = this->subproblem->compute_optimality_measure(this->optimality_problem, trial_iterate);
+   trial_iterate.nonlinear_progress.reformulation_objective = this->subproblem->compute_optimality_measure(this->optimality_problem, trial_iterate);
 
    bool accept = false;
    if (ConstraintRelaxationStrategy::is_small_step(direction)) {

@@ -4,6 +4,7 @@
 #include "Model.hpp"
 #include "tools/Infinity.hpp"
 
+// all constraints are of the form "c(x) = 0"
 class EqualityConstrainedModel: public Model {
 public:
    explicit EqualityConstrainedModel(const Model& original_model);
@@ -36,10 +37,8 @@ protected:
 };
 
 inline EqualityConstrainedModel::EqualityConstrainedModel(const Model& original_model):
-      Model(original_model.name + "_slacks", // name
-            original_model.number_variables + original_model.inequality_constraints.size(), // number of variables
-            original_model.number_constraints, // number of constraints
-            original_model.problem_type), // problem type
+      Model(original_model.name + "_slacks", original_model.number_variables + original_model.inequality_constraints.size(),
+            original_model.number_constraints, original_model.problem_type),
       original_model(original_model),
       inequality_constraint_of_slack(original_model.inequality_constraints.size()),
       slack_of_inequality_constraint(original_model.number_constraints) {
@@ -179,7 +178,7 @@ inline size_t EqualityConstrainedModel::get_maximum_number_hessian_nonzeros() co
 
 inline void EqualityConstrainedModel::get_initial_primal_point(std::vector<double>& x) const {
    this->original_model.get_initial_primal_point(x);
-   // add the slacks
+   // set the slacks
    this->original_model.inequality_constraints.for_each_value([&](size_t i) {
       const size_t slack_index = this->original_model.number_variables + i;
       x[slack_index] = 0.;

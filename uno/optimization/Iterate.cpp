@@ -107,7 +107,7 @@ void Iterate::reset_evaluations() {
 }
 
 std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
-   stream << "x: ";
+   stream << "Primal variables: ";
    print_vector(stream, iterate.primals);
    stream << "Lower bound multipliers: ";
    print_vector(stream, iterate.multipliers.lower_bounds);
@@ -121,7 +121,7 @@ std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
    stream << "Stationarity (KKT/FJ) error: " << iterate.stationarity_error << '\n';
    stream << "Complementarity error: " << iterate.complementarity_error << '\n';
 
-   stream << "Optimality measure: " << iterate.nonlinear_progress.optimality << '\n';
-   stream << "Feasibility measure: " << iterate.nonlinear_progress.infeasibility << '\n';
+   stream << "Reformulation objective: " << iterate.nonlinear_progress.reformulation_objective << '\n';
+   stream << "Infeasibility measure: " << iterate.nonlinear_progress.infeasibility << '\n';
    return stream;
 }
