@@ -21,11 +21,11 @@ bool l1MeritFunction::is_acceptable(Statistics& statistics, const ProgressMeasur
 
    DEBUG << "Predicted reduction: " << predicted_reduction << '\n';
    // compute current exact l1 penalty: rho f + ||c||
-   const double current_exact_l1_merit = objective_multiplier * current_progress.reformulation_objective + current_progress.infeasibility;
-   const double trial_exact_l1_merit = objective_multiplier * trial_progress.reformulation_objective + trial_progress.infeasibility;
+   const double current_exact_l1_merit = objective_multiplier * current_progress.optimality + current_progress.infeasibility;
+   const double trial_exact_l1_merit = objective_multiplier * trial_progress.optimality + trial_progress.infeasibility;
    const double actual_reduction = current_exact_l1_merit - trial_exact_l1_merit;
-   DEBUG << "Current l1 merit: " << objective_multiplier << "*" << current_progress.reformulation_objective << " + " << current_progress.infeasibility << '\n';
-   DEBUG << "Trial l1 merit:   " << objective_multiplier << "*" << trial_progress.reformulation_objective << " + " << trial_progress.infeasibility << '\n';
+   DEBUG << "Current l1 merit: " << objective_multiplier << "*" << current_progress.optimality << " + " << current_progress.infeasibility << '\n';
+   DEBUG << "Trial l1 merit:   " << objective_multiplier << "*" << trial_progress.optimality << " + " << trial_progress.infeasibility << '\n';
    DEBUG << "Actual reduction: " << current_exact_l1_merit << " - " << trial_exact_l1_merit << " = " << actual_reduction << '\n';
 
    bool accept = false;

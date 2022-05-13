@@ -115,13 +115,12 @@ std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
    print_vector(stream, iterate.multipliers.upper_bounds);
    stream << "Constraint multipliers: ";
    print_vector(stream, iterate.multipliers.constraints);
-   stream << "Objective value: " << iterate.original_evaluations.objective << '\n';
 
+   stream << "Objective value: " << iterate.original_evaluations.objective << '\n';
    stream << "Constraint violation: " << iterate.constraint_violation << '\n';
    stream << "Stationarity (KKT/FJ) error: " << iterate.stationarity_error << '\n';
    stream << "Complementarity error: " << iterate.complementarity_error << '\n';
-
-   stream << "Reformulation objective: " << iterate.nonlinear_progress.reformulation_objective << '\n';
    stream << "Infeasibility measure: " << iterate.nonlinear_progress.infeasibility << '\n';
+   stream << "Optimality measure: " << iterate.nonlinear_progress.optimality << '\n';
    return stream;
 }
