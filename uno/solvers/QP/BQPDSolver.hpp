@@ -8,6 +8,20 @@
 #include "linear_algebra/SparseVector.hpp"
 #include "tools/Options.hpp"
 
+// see bqpd.f
+enum class BQPDStatus {
+   OPTIMAL = 0,
+   UNBOUNDED_PROBLEM,
+   BOUND_INCONSISTENCY,
+   INFEASIBLE,
+   INCORRECT_PARAMETER,
+   LP_INSUFFICIENT_SPACE,
+   HESSIAN_INSUFFICIENT_SPACE,
+   SPARSE_INSUFFICIENT_SPACE,
+   MAX_RESTARTS_REACHED,
+   UNDEFINED
+};
+
 enum BQPDMode {
    COLD_START = 0, ACTIVE_SET_EQUALITIES = 1, USER_DEFINED = 2, UNCHANGED_ACTIVE_SET = 3, UNCHANGED_ACTIVE_SET_AND_JACOBIAN = 4,
    UNCHANGED_ACTIVE_SET_AND_REDUCED_HESSIAN = 5, UNCHANGED_ACTIVE_SET_AND_JACOBIAN_AND_REDUCED_HESSIAN = 6,
@@ -50,7 +64,6 @@ private:
    int peq_solution{}, ifail{};
    const int fortran_shift{1};
 
-   static Status status_to_int(int ifail);
    Direction solve_subproblem(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
          const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
          const std::vector<SparseVector<double>>& constraint_jacobian, const std::vector<double>& initial_point);
@@ -58,6 +71,10 @@ private:
    void save_hessian_to_local_format(const SymmetricMatrix& hessian);
    void save_gradients_to_local_format(size_t number_constraints, const SparseVector<double>& linear_objective,
          const std::vector<SparseVector<double>>& constraint_jacobian);
+
+   static void check_termination(BQPDStatus bqpd_status);
+   static BQPDStatus bqpd_status_from_int(int ifail);
+   static Status status_from_int(int ifail);
 };
 
 #endif // UNO_BQPDSOLVER_H

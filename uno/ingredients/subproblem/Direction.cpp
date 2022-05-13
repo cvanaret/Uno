@@ -1,3 +1,4 @@
+#include <cassert>
 #include "Direction.hpp"
 #include "tools/Logger.hpp"
 #include "linear_algebra/Vector.hpp"
@@ -8,26 +9,12 @@ Direction::Direction(size_t number_variables, size_t number_constraints):
 
 std::string status_to_string(Status status) {
    switch (status) {
-      case OPTIMAL:
+      case Status::OPTIMAL:
          return "optimal";
-      case UNBOUNDED_PROBLEM:
+      case Status::UNBOUNDED_PROBLEM:
          return "unbounded problem";
-      case BOUND_INCONSISTENCY:
-         return "inconsistent bounds";
-      case INFEASIBLE:
+      case Status::INFEASIBLE:
          return "infeasible";
-      case INCORRECT_PARAMETER:
-         return "incorrect parameter";
-      case LP_INSUFFICIENT_SPACE:
-         return "insufficient LP space";
-      case HESSIAN_INSUFFICIENT_SPACE:
-         return "insufficient Hessian space";
-      case SPARSE_INSUFFICIENT_SPACE:
-         return "insufficient sparse space";
-      case MAX_RESTARTS_REACHED:
-         return "max restarts reached";
-      case UNDEFINED:
-         return "undefined";
       default:
          return "unknown status, something went wrong";
    }

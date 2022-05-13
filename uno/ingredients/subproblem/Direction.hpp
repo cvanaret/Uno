@@ -6,18 +6,10 @@
 #include "optimization/Multipliers.hpp"
 #include "tools/Infinity.hpp"
 
-// see bqpd.f
-enum Status {
+enum class Status {
    OPTIMAL = 0,
    UNBOUNDED_PROBLEM,
-   BOUND_INCONSISTENCY,
-   INFEASIBLE,
-   INCORRECT_PARAMETER,
-   LP_INSUFFICIENT_SPACE,
-   HESSIAN_INSUFFICIENT_SPACE,
-   SPARSE_INSUFFICIENT_SPACE,
-   MAX_RESTARTS_REACHED,
-   UNDEFINED
+   INFEASIBLE
 };
 
 /*! \struct ConstraintActivity
@@ -52,7 +44,7 @@ public:
    Multipliers multipliers; /*!< Multipliers */
    double objective_multiplier{1.}; /*!< Objective multiplier */
 
-   Status status{OPTIMAL}; /*!< Status of the solution */
+   Status status{Status::OPTIMAL}; /*!< Status of the solution */
 
    double norm{INF}; /*!< Norm of \f$x\f$ */
    double objective{INF}; /*!< Objective value */

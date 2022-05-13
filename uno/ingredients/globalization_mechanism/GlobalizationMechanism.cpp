@@ -29,7 +29,7 @@ Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate,
 }
 
 void GlobalizationMechanism::check_unboundedness(const Direction& direction) {
-   assert(direction.status != UNBOUNDED_PROBLEM && "The subproblem is unbounded, this should not happen");
+   assert(direction.status != Status::UNBOUNDED_PROBLEM && "The subproblem is unbounded, this should not happen");
 }
 
 size_t GlobalizationMechanism::get_hessian_evaluation_count() const {
