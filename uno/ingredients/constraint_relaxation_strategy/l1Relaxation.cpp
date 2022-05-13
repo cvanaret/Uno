@@ -87,7 +87,7 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, Iterate& curren
    direction.objective_multiplier = current_penalty_parameter;
    direction.norm = norm_inf(direction.primals, Range(this->relaxed_problem.model.number_variables));
    DEBUG << direction << '\n';
-   assert(direction.status == OPTIMAL && "The subproblem was not solved to optimality");
+   assert(direction.status == Status::OPTIMAL && "The subproblem was not solved to optimality");
    // check feasibility (the subproblem is, by construction, always feasible)
    if (direction.constraint_partition.has_value()) {
       const ConstraintPartition& constraint_partition = direction.constraint_partition.value();

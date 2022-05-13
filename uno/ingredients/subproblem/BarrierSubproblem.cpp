@@ -112,7 +112,7 @@ Direction BarrierSubproblem::solve(Statistics& statistics, const ReformulatedPro
 
    // compute the solution (Δx, -Δλ)
    this->augmented_system.solve(*this->linear_solver);
-   assert(this->direction.status == OPTIMAL && "The barrier subproblem was not solved to optimality");
+   assert(this->direction.status == Status::OPTIMAL && "The barrier subproblem was not solved to optimality");
    this->number_subproblems_solved++;
 
    // generate direction

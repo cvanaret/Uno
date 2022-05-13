@@ -107,8 +107,9 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
          this->residuals.data(), this->w.data(), this->e.data(), this->ls.data(), this->alp.data(), this->lp.data(),
          &this->mlp, &this->peq_solution, this->hessian_values.data(), this->hessian_sparsity.data(), &current_mode, &this->ifail,
          this->info.data(), &this->iprint, &this->nout);
-   direction.status = BQPDSolver::status_to_int(this->ifail);
-   assert(direction.status != HESSIAN_INSUFFICIENT_SPACE && "BQPD: the Hessian space is insufficient. Please increase bqpd_kmax");
+   BQPDStatus bqpd_status = BQPDSolver::bqpd_status_from_int(this->ifail);
+   BQPDSolver::check_termination(bqpd_status);
+   direction.status = BQPDSolver::status_from_int(this->ifail);
 
    // project solution into bounds
    for (size_t i = 0; i < number_variables; i++) {
@@ -116,6 +117,16 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
    }
    this->analyze_constraints(number_variables, number_constraints, direction);
    return direction;
+}
+
+void BQPDSolver::check_termination(BQPDStatus bqpd_status) {
+   assert(bqpd_status != BQPDStatus::BOUND_INCONSISTENCY && "BQPD failed with 'bound inconsistency' status");
+   assert(bqpd_status != BQPDStatus::INCORRECT_PARAMETER && "BQPD failed with 'incorrect parameter' status");
+   assert(bqpd_status != BQPDStatus::LP_INSUFFICIENT_SPACE && "BQPD failed with 'LP insufficient space' status");
+   assert(bqpd_status != BQPDStatus::HESSIAN_INSUFFICIENT_SPACE && "BQPD failed with 'Hessian insufficient space' status. Please increase bqpd_kmax");
+   assert(bqpd_status != BQPDStatus::SPARSE_INSUFFICIENT_SPACE && "BQPD failed with 'sparse insufficient space' status");
+   assert(bqpd_status != BQPDStatus::MAX_RESTARTS_REACHED && "BQPD failed with 'max restarts reached' status");
+   assert(bqpd_status != BQPDStatus::UNDEFINED && "BQPD failed with undefined status");
 }
 
 // save Hessian (in arbitrary format) to a "weak" CSC format: compressed columns but row indices are not sorted, nor unique
@@ -143,7 +154,7 @@ void BQPDSolver::save_hessian_to_local_format(const SymmetricMatrix& hessian) {
    std::vector<int> current_indices(hessian.dimension);
    hessian.for_each([&](size_t i, size_t j, double entry) {
       const size_t index = static_cast<size_t>(column_starts[j] + current_indices[j] - this->fortran_shift);
-      assert(index <= column_starts[j+1] && "BQPD: error in converting the Hessian matrix to the local format");
+      assert(index <= static_cast<size_t>(column_starts[j+1]) && "BQPD: error in converting the Hessian matrix to the local format");
       this->hessian_values[index] = entry;
       row_indices[index] = static_cast<int>(i) + this->fortran_shift;
       current_indices[j]++;
@@ -186,7 +197,7 @@ void BQPDSolver::analyze_constraints(size_t number_variables, size_t number_cons
    ConstraintPartition constraint_partition(number_constraints);
 
    // active constraints
-   for (size_t j = 0; j < number_variables - this->k; j++) {
+   for (size_t j = 0; j < number_variables - static_cast<size_t>(this->k); j++) {
       const size_t index = static_cast<size_t>(std::abs(this->ls[j]) - this->fortran_shift);
 
       if (index < number_variables) {
@@ -216,8 +227,8 @@ void BQPDSolver::analyze_constraints(size_t number_variables, size_t number_cons
    }
 
    // inactive constraints
-   for (size_t j = number_variables - this->k; j < number_variables + number_constraints; j++) {
-      size_t index = std::abs(this->ls[j]) - this->fortran_shift;
+   for (size_t j = number_variables - static_cast<size_t>(this->k); j < number_variables + number_constraints; j++) {
+      size_t index = static_cast<size_t>(std::abs(this->ls[j]) - this->fortran_shift);
 
       if (number_variables <= index) { // general constraints
          size_t constraint_index = index - number_variables;
@@ -238,7 +249,20 @@ void BQPDSolver::analyze_constraints(size_t number_variables, size_t number_cons
    direction.constraint_partition = constraint_partition;
 }
 
-Status BQPDSolver::status_to_int(int ifail) {
-   assert(0 <= ifail && ifail <= 9 && "BQPDSolver.status_to_int: ifail does not belong to [0, 9]");
-   return static_cast<Status> (ifail);
+BQPDStatus BQPDSolver::bqpd_status_from_int(int ifail) {
+   assert(0 <= ifail && ifail <= 9 && "BQPDSolver.bqpd_status_from_int: ifail does not belong to [0, 9]");
+   return static_cast<BQPDStatus>(ifail);
+}
+
+Status BQPDSolver::status_from_int(int ifail) {
+   switch (ifail) {
+      case 0:
+         return Status::OPTIMAL;
+      case 1:
+         return Status::UNBOUNDED_PROBLEM;
+      case 3:
+         return Status::INFEASIBLE;
+      default:
+         assert(false && "The BQPD ifail is not consistent with the Uno status values");
+   }
 }
