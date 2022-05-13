@@ -6,25 +6,25 @@
 #include "tools/Range.hpp"
 #include "tools/Infinity.hpp"
 
-BarrierSubproblem::BarrierSubproblem(const ReformulatedProblem& problem, const Options& options):
-      Subproblem(problem, SOC_UPON_REJECTION),
-      augmented_system(options.at("sparse_format"), problem.number_variables + problem.number_constraints,
-            problem.get_maximum_number_hessian_nonzeros()
-            + problem.number_variables + problem.number_constraints /* regularization */
-            + 2 * problem.number_variables /* diagonal barrier terms */
-            + problem.number_variables * problem.number_constraints /* Jacobian */,
+BarrierSubproblem::BarrierSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros, const Options& options):
+      Subproblem(max_number_variables, max_number_constraints, SOC_UPON_REJECTION),
+      augmented_system(options.at("sparse_format"), max_number_variables + max_number_constraints,
+            max_number_hessian_nonzeros
+            + max_number_variables + max_number_constraints /* regularization */
+            + 2 * max_number_variables /* diagonal barrier terms */
+            + max_number_variables * max_number_constraints /* Jacobian */,
             stod(options.at("LS_regularization_failure_threshold"))),
       barrier_parameter(std::stod(options.at("initial_barrier_parameter"))),
       previous_barrier_parameter(std::stod(options.at("initial_barrier_parameter"))),
       tolerance(std::stod(options.at("tolerance"))),
       // the Hessian is not convexified. Instead, the augmented system will be.
-      hessian_model(HessianModelFactory::create(options.at("hessian_model"), problem.number_variables, problem.get_maximum_number_hessian_nonzeros(),
+      hessian_model(HessianModelFactory::create(options.at("hessian_model"), max_number_variables, max_number_hessian_nonzeros,
             false, options)),
-      linear_solver(LinearSolverFactory::create(options.at("linear_solver"), problem.number_variables + problem.number_constraints,
-            problem.get_maximum_number_hessian_nonzeros()
-            + problem.number_variables + problem.number_constraints /* regularization */
-            + 2 * problem.number_variables /* diagonal barrier terms */
-            + problem.number_variables * problem.number_constraints /* Jacobian */)),
+      linear_solver(LinearSolverFactory::create(options.at("linear_solver"), max_number_variables + max_number_constraints,
+            max_number_hessian_nonzeros
+            + max_number_variables + max_number_constraints /* regularization */
+            + 2 * max_number_variables /* diagonal barrier terms */
+            + max_number_variables * max_number_constraints /* Jacobian */)),
       parameters({stod(options.at("tau_min")),
             stod(options.at("k_sigma")),
             stod(options.at("smax")),
@@ -34,8 +34,7 @@ BarrierSubproblem::BarrierSubproblem(const ReformulatedProblem& problem, const O
             stod(options.at("barrier_update_fraction")),
             stod(options.at("regularization_barrier_exponent"))}),
       default_multiplier(std::stod(options.at("default_multiplier"))),
-      lower_delta_z(problem.number_variables), upper_delta_z(problem.number_variables) {
-   assert(problem.inequality_constraints.empty() && "The problem has inequality constraints. Create an instance of EqualityConstrainedModel");
+      lower_delta_z(max_number_variables), upper_delta_z(max_number_variables) {
 }
 
 inline void BarrierSubproblem::initialize(Statistics& statistics, const ReformulatedProblem& problem, Iterate& first_iterate) {
@@ -89,6 +88,8 @@ void BarrierSubproblem::evaluate_problem(const ReformulatedProblem& problem, Ite
 }
 
 Direction BarrierSubproblem::solve(Statistics& statistics, const ReformulatedProblem& problem, Iterate& current_iterate) {
+   assert(problem.inequality_constraints.empty() && "The problem has inequality constraints. Create an instance of EqualityConstrainedModel");
+
    // update the barrier parameter if the current iterate solves the subproblem
    this->update_barrier_parameter(problem, current_iterate);
 

@@ -5,7 +5,7 @@
 
 class ActiveSetSubproblem : public Subproblem {
 public:
-   ActiveSetSubproblem(const ReformulatedProblem& problem, SecondOrderCorrection soc_strategy);
+   ActiveSetSubproblem(size_t max_number_variables, size_t max_number_constraints, SecondOrderCorrection soc_strategy);
    ~ActiveSetSubproblem() override = default;
 
    void initialize(Statistics& statistics, const ReformulatedProblem& problem, Iterate& first_iterate) override;

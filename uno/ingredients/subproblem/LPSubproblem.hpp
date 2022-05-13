@@ -7,7 +7,7 @@
 
 class LPSubproblem : public ActiveSetSubproblem {
 public:
-   LPSubproblem(const ReformulatedProblem& problem, const Options& options);
+   LPSubproblem(size_t max_number_variables, size_t max_number_constraints, const Options& options);
 
    [[nodiscard]] Direction solve(Statistics& statistics, const ReformulatedProblem& problem, Iterate& current_iterate) override;
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const ReformulatedProblem& problem, const Direction& direction) const override;

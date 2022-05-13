@@ -1,10 +1,10 @@
 #include "ActiveSetSubproblem.hpp"
 
-ActiveSetSubproblem::ActiveSetSubproblem(const ReformulatedProblem& problem, SecondOrderCorrection soc_strategy):
-      Subproblem(problem, soc_strategy),
-      initial_point(problem.number_variables),
-      variable_displacement_bounds(problem.number_variables),
-      linearized_constraint_bounds(problem.number_constraints) {
+ActiveSetSubproblem::ActiveSetSubproblem(size_t max_number_variables, size_t max_number_constraints, SecondOrderCorrection soc_strategy):
+      Subproblem(max_number_variables, max_number_constraints, soc_strategy),
+      initial_point(max_number_variables),
+      variable_displacement_bounds(max_number_variables),
+      linearized_constraint_bounds(max_number_constraints) {
 }
 
 void ActiveSetSubproblem::initialize(Statistics& /*statistics*/, const ReformulatedProblem& /*problem*/, Iterate& /*first_iterate*/) {
