@@ -1,9 +1,9 @@
 #include "LPSubproblem.hpp"
 #include "solvers/QP/LPSolverFactory.hpp"
 
-LPSubproblem::LPSubproblem(const ReformulatedProblem& problem, const Options& options) :
-      ActiveSetSubproblem(problem, NO_SOC),
-      solver(LPSolverFactory::create(problem.number_variables, problem.number_constraints, options.at("LP_solver"), options)) {
+LPSubproblem::LPSubproblem(size_t max_number_variables, size_t max_number_constraints, const Options& options) :
+      ActiveSetSubproblem(max_number_variables, max_number_constraints, NO_SOC),
+      solver(LPSolverFactory::create(max_number_variables, max_number_constraints, options.at("LP_solver"), options)) {
 }
 
 void LPSubproblem::evaluate_problem(const ReformulatedProblem& problem, Iterate& current_iterate) {

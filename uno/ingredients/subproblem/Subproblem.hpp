@@ -23,7 +23,7 @@ enum SecondOrderCorrection {
  */
 class Subproblem {
 public:
-   Subproblem(const ReformulatedProblem& problem, SecondOrderCorrection soc_strategy);
+   Subproblem(size_t max_number_variables, size_t max_number_constraints, SecondOrderCorrection soc_strategy);
    virtual ~Subproblem() = default;
 
    // virtual methods implemented by subclasses

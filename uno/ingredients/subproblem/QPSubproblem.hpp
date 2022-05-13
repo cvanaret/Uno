@@ -8,7 +8,7 @@
 
 class QPSubproblem : public ActiveSetSubproblem {
 public:
-   QPSubproblem(const ReformulatedProblem& problem, const Options& options);
+   QPSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros, const Options& options);
 
    [[nodiscard]] Direction solve(Statistics& statistics, const ReformulatedProblem& problem, Iterate& current_iterate) override;
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const ReformulatedProblem& problem, const Direction& direction) const override;
