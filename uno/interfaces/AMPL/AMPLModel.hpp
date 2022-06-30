@@ -50,7 +50,7 @@ private:
    // private constructor to pass the dimensions to the Problem base constructor
    AMPLModel(const std::string& file_name, ASL* asl);
 
-   ASL* asl_; /*!< Instance of the AMPL Solver Library class */
+   mutable ASL* asl_; /*!< Instance of the AMPL Solver Library class */
    std::vector<Interval> variables_bounds;
    std::vector<Interval> constraint_bounds;
    std::vector<ConstraintType> variable_status; /*!< Status of the variables (EQUALITY, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES) */
