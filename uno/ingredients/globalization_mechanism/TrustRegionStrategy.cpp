@@ -19,6 +19,7 @@ void TrustRegionStrategy::initialize(Statistics& statistics, Iterate& first_iter
    statistics.add_column("TR radius", Statistics::double_width, 30);
 
    // generate the initial point
+   this->constraint_relaxation_strategy.set_variable_bounds(first_iterate, this->radius);
    this->constraint_relaxation_strategy.initialize(statistics, first_iterate);
 }
 

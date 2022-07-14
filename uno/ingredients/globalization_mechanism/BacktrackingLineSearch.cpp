@@ -19,6 +19,7 @@ void BacktrackingLineSearch::initialize(Statistics& statistics, Iterate& first_i
    statistics.add_column("LS step length", Statistics::double_width, 30);
 
    // generate the initial point
+   this->constraint_relaxation_strategy.set_variable_bounds(first_iterate, INF);
    this->constraint_relaxation_strategy.initialize(statistics, first_iterate);
 }
 
