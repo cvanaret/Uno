@@ -290,6 +290,9 @@ void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double
    // register the vector of variables
    (*(this->asl_)->p.Xknown)(this->asl_, const_cast<double*>(x.data()), nullptr);
 
+   // scale by the objective sign
+   objective_multiplier *= this->objective_sign;
+
    // compute the number of nonzeros
    const size_t number_non_zeros = this->fixed_hessian_sparsity ? this->hessian_maximum_number_nonzeros :
          this->compute_hessian_number_nonzeros(objective_multiplier, multipliers);
