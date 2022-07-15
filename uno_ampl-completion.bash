@@ -16,7 +16,7 @@ _uno_ampl_completions()
             return 0
             ;;
         -strategy)
-			local strategies="l1-merit filter nonmonotone-filter"
+			local strategies="merit filter nonmonotone-filter"
             COMPREPLY=( $(compgen -W "${strategies}" -- ${cur}) )
             return 0
             ;;

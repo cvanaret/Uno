@@ -1,12 +1,12 @@
-#ifndef UNO_L1MERITFUNCTION_H
-#define UNO_L1MERITFUNCTION_H
+#ifndef UNO_MERITFUNCTION_H
+#define UNO_MERITFUNCTION_H
 
 #include "GlobalizationStrategy.hpp"
 #include "tools/Options.hpp"
 
-class l1MeritFunction : public GlobalizationStrategy {
+class MeritFunction : public GlobalizationStrategy {
 public:
-   explicit l1MeritFunction(const Options& options);
+   explicit MeritFunction(const Options& options);
 
    void initialize(Statistics& statistics, const Iterate& first_iterate) override;
    bool is_acceptable(Statistics& statistics, const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress, double
@@ -15,4 +15,4 @@ public:
    void notify(Iterate& current_iterate) override;
 };
 
-#endif // UNO_L1MERITFUNCTION_H
+#endif // UNO_MERITFUNCTION_H
