@@ -28,12 +28,8 @@ bool MeritFunction::is_acceptable(Statistics& statistics, const ProgressMeasures
    DEBUG << "Trial merit:   " << objective_multiplier << "*" << trial_progress.optimality << " + " << trial_progress.infeasibility << '\n';
    DEBUG << "Actual reduction: " << current_exact_merit << " - " << trial_exact_merit << " = " << actual_reduction << '\n';
 
-   bool accept = false;
    // Armijo sufficient decrease condition
-   if (this->armijo_sufficient_decrease(predicted_reduction, actual_reduction)) {
-      accept = true;
-   }
-
+   const bool accept = this->armijo_sufficient_decrease(predicted_reduction, actual_reduction);
    if (accept) {
       statistics.add_statistic("penalty param.", objective_multiplier);
       DEBUG << "Trial iterate was accepted by satisfying Armijo condition\n";
