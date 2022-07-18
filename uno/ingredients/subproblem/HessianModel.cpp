@@ -1,3 +1,6 @@
+// Copyright (c) 2022 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+
 #include "HessianModel.hpp"
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
 #include "solvers/linear/LinearSolverFactory.hpp"

@@ -1,3 +1,6 @@
+# Copyright (c) 2022 Charlie Vanaret
+# Licensed under the MIT license. See LICENSE file in the project root for details.
+
 cmake_minimum_required(VERSION 3.7)
 if(${CMAKE_VERSION} VERSION_LESS 3.12)
 	cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
@@ -37,7 +40,7 @@ set(SRC_FILES
     uno/ingredients/globalization_strategy/GlobalizationStrategyFactory.cpp
     uno/ingredients/globalization_strategy/FilterStrategy.cpp
     uno/ingredients/globalization_strategy/Filter.cpp
-    uno/ingredients/globalization_strategy/l1MeritFunction.cpp
+        uno/ingredients/globalization_strategy/MeritFunction.cpp
     
     uno/ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategy.cpp
     uno/ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategyFactory.cpp

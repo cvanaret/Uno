@@ -1,3 +1,6 @@
+C Copyright (c) 2022 Sven Leyffer
+C Licensed under the MIT license. See LICENSE file in the project root for details.
+
 C     hristen this file wdotd.f
 
       subroutine wdotd (n, x, ws, lws, result)

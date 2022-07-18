@@ -1,3 +1,6 @@
+// Copyright (c) 2022 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+
 #include "ActiveSetSubproblem.hpp"
 
 ActiveSetSubproblem::ActiveSetSubproblem(size_t max_number_variables, size_t max_number_constraints, SecondOrderCorrection soc_strategy):
