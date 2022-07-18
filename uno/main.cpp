@@ -1,3 +1,6 @@
+// Copyright (c) 2022 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+
 #include "ingredients/globalization_strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/globalization_mechanism/GlobalizationMechanismFactory.hpp"
 #include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategyFactory.hpp"

@@ -1,3 +1,6 @@
+// Copyright (c) 2022 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+
 #include "SubproblemFactory.hpp"
 #include "QPSubproblem.hpp"
 #include "LPSubproblem.hpp"
