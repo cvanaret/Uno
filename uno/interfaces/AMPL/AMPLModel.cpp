@@ -114,6 +114,7 @@ void AMPLModel::evaluate_objective_gradient(const std::vector<double>& x, Sparse
    ograd* ampl_variables_tmp = this->asl_->i.Ograd_[0];
    while (ampl_variables_tmp != nullptr) {
       const size_t index = static_cast<size_t>(ampl_variables_tmp->varno);
+      // scale by the objective sign
       const double partial_derivative = this->objective_sign*this->ampl_tmp_gradient[index];
       gradient.insert(index, partial_derivative);
       ampl_variables_tmp = ampl_variables_tmp->next;

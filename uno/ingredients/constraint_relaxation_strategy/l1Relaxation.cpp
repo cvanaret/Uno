@@ -11,7 +11,7 @@
  */
 
 l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
-      ConstraintRelaxationStrategy(norm_from_string(options.at("residual_norm"))),
+      ConstraintRelaxationStrategy(true, norm_from_string(options.at("residual_norm"))),
       // create the optimality problem
       optimality_problem(model),
       // create the relaxed problem by introducing elastic variables
