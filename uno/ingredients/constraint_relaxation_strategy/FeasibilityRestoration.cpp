@@ -5,7 +5,7 @@
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 
 FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options& options) :
-      ConstraintRelaxationStrategy(norm_from_string(options.at("residual_norm"))),
+      ConstraintRelaxationStrategy(false, norm_from_string(options.at("residual_norm"))),
       // create the optimality problem
       optimality_problem(model),
       // create the phase-1 feasibility problem (objective multiplier = 0)

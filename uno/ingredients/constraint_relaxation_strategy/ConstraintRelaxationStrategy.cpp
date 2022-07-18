@@ -1,6 +1,7 @@
 #include "ConstraintRelaxationStrategy.hpp"
 
-ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(Norm residual_norm): residual_norm(residual_norm) {
+ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(bool penalty_parameter_control, Norm residual_norm):
+      penalty_parameter_control(penalty_parameter_control), residual_norm(residual_norm) {
 }
 
 bool ConstraintRelaxationStrategy::is_small_step(const Direction& direction) {

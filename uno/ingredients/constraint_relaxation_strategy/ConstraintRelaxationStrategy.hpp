@@ -10,7 +10,7 @@
 
 class ConstraintRelaxationStrategy {
 public:
-   explicit ConstraintRelaxationStrategy(Norm residual_norm);
+   ConstraintRelaxationStrategy(bool penalty_parameter_control, Norm residual_norm);
    virtual ~ConstraintRelaxationStrategy() = default;
 
    virtual void initialize(Statistics& statistics, Iterate& first_iterate) = 0;
@@ -31,6 +31,8 @@ public:
    [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
    [[nodiscard]] virtual size_t get_number_subproblems_solved() const = 0;
    [[nodiscard]] virtual SecondOrderCorrection soc_strategy() const = 0;
+
+   const bool penalty_parameter_control;
 
 protected:
    const Norm residual_norm;
