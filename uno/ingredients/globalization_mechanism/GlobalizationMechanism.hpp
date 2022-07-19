@@ -21,7 +21,7 @@ public:
    [[nodiscard]] size_t get_number_subproblems_solved() const;
 
 protected:
-   // references to allow polymorphism
+   // reference to allow polymorphism
    ConstraintRelaxationStrategy& constraint_relaxation_strategy; /*!< Constraint relaxation strategy */
    size_t number_iterations{0}; /*!< Current number of iterations */
 

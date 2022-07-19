@@ -37,7 +37,7 @@ public:
    void notify(Iterate& current_iterate) override;
 
 private:
-   // use pointers to allow polymorphism
+   // pointer to allow polymorphism
    const std::unique_ptr<Filter> filter;
    double initial_filter_upper_bound{INF};
    const FilterStrategyParameters parameters; /*!< Set of constants */
