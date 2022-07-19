@@ -65,10 +65,10 @@ inline void BarrierSubproblem::initialize(Statistics& statistics, const Reformul
    }
 }
 
-void BarrierSubproblem::evaluate_problem(const ReformulatedProblem& problem, Iterate& current_iterate) {
+void BarrierSubproblem::evaluate_functions(const ReformulatedProblem& problem, Iterate& current_iterate) {
    // Hessian
    this->hessian_model->evaluate(problem, current_iterate.primals, current_iterate.multipliers.constraints);
-   // TODO add barrier terms
+   // TODO add barrier terms here instead of in the augmented system
 
    // barrier objective gradient
    problem.evaluate_objective_gradient(current_iterate, this->objective_gradient);
@@ -109,7 +109,7 @@ Direction BarrierSubproblem::solve(Statistics& statistics, const ReformulatedPro
    }
 
    // evaluate the functions at the current iterate
-   this->evaluate_problem(problem, current_iterate);
+   this->evaluate_functions(problem, current_iterate);
 
    // set up the augmented system (with the correct inertia)
    this->assemble_augmented_system(problem, current_iterate);
@@ -343,19 +343,6 @@ void BarrierSubproblem::compute_upper_bound_dual_direction(const ReformulatedPro
    }
 }
 
-/*
-void BarrierSubproblem::compute_bound_dual_direction(const std::vector<size_t>& bounded_variables, const std::vector<double>& x,
-      const std::vector<double>& bound_multipliers, std::vector<double>& displacements) {
-   initialize_vector(displacements, 0.);
-   for (size_t i: bounded_variables) {
-      const double distance_to_bound = x[i] - this->variable_bounds[i].ub;
-      displacements[i] = (this->barrier_parameter - this->augmented_system.solution[i] * bound_multipliers[i]) / distance_to_bound -
-                               bound_multipliers[i];
-      assert(is_finite(displacements[i]) && "The displacement delta_z is infinite");
-   }
-}
-*/
-
 void BarrierSubproblem::generate_direction(const ReformulatedProblem& problem, const Iterate& current_iterate) {
    // retrieve +Δλ (Nocedal p590)
    for (size_t j = problem.number_variables; j < this->augmented_system.solution.size(); j++) {
@@ -451,7 +438,7 @@ void BarrierSubproblem::postprocess_accepted_iterate(const ReformulatedProblem& 
        this->solving_feasibility_problem = false;
    }
    if (this->solving_feasibility_problem) {
-      // compute least-square multipliers TODO
+      // TODO compute least-square multipliers
    }
 
    // rescale the bound multipliers (Eq. 16 in Ipopt paper)
@@ -493,6 +480,7 @@ void BarrierSubproblem::set_initial_point(const std::optional<std::vector<double
 }
 
 double BarrierSubproblem::push_variable_to_interior(double variable_value, const Interval& variable_bounds) {
+   // TODO move to options
    const double k1 = 1e-2;
    const double k2 = 1e-2;
 

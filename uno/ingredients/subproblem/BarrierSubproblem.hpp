@@ -57,7 +57,7 @@ private:
 
    bool solving_feasibility_problem{false};
 
-   void evaluate_problem(const ReformulatedProblem& problem, Iterate& current_iterate);
+   void evaluate_functions(const ReformulatedProblem& problem, Iterate& current_iterate);
    void update_barrier_parameter(const ReformulatedProblem& problem, const Iterate& current_iterate);
    [[nodiscard]] static bool is_small_direction(const ReformulatedProblem& problem, const Iterate& current_iterate, const Direction& direction);
    [[nodiscard]] double compute_barrier_directional_derivative(const std::vector<double>& solution) const;

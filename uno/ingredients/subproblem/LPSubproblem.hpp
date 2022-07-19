@@ -22,7 +22,7 @@ private:
    // use pointers to allow polymorphism
    const std::unique_ptr<LPSolver> solver; /*!< Solver that solves the subproblem */
 
-   void evaluate_problem(const ReformulatedProblem& problem, Iterate& current_iterate);
+   void evaluate_functions(const ReformulatedProblem& problem, Iterate& current_iterate);
 };
 
 #endif // UNO_LPSUBPROBLEM_H
