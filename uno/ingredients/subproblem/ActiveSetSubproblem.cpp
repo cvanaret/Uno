@@ -58,9 +58,5 @@ double ActiveSetSubproblem::compute_optimality_measure(const ReformulatedProblem
    return problem.evaluate_objective(iterate);
 }
 
-Direction ActiveSetSubproblem::compute_second_order_correction(const ReformulatedProblem& /*problem*/, Iterate& /*trial_iterate*/) {
-   assert(false && "ActiveSetSubproblem::compute_second_order_correction");
-}
-
 void ActiveSetSubproblem::postprocess_accepted_iterate(const ReformulatedProblem& /*problem*/, Iterate& /*iterate*/) {
 }
