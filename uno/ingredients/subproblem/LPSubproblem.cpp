@@ -33,6 +33,7 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const ReformulatedProb
    // solve the LP
    Direction direction = this->solver->solve_LP(problem.number_variables, problem.number_constraints, this->variable_displacement_bounds,
          this->linearized_constraint_bounds, this->objective_gradient, this->constraint_jacobian, this->initial_point);
+   Subproblem::check_unboundedness(direction);
    ActiveSetSubproblem::compute_dual_displacements(problem, current_iterate, direction);
    this->number_subproblems_solved++;
    return direction;
@@ -49,6 +50,7 @@ Direction LPSubproblem::compute_second_order_correction(const ReformulatedProble
    // solve the LP
    Direction direction = this->solver->solve_LP(problem.number_variables, problem.number_constraints, this->variable_displacement_bounds,
          this->linearized_constraint_bounds, this->objective_gradient, this->constraint_jacobian, this->initial_point);
+   Subproblem::check_unboundedness(direction);
    ActiveSetSubproblem::compute_dual_displacements(problem, trial_iterate, direction);
    this->number_subproblems_solved++;
    return direction;

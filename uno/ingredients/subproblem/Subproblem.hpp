@@ -50,6 +50,9 @@ public:
    size_t number_subproblems_solved{0};
    // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it
    bool subproblem_definition_changed{false};
+
+protected:
+   static void check_unboundedness(const Direction& direction);
 };
 
 #endif // UNO_SUBPROBLEM_H

@@ -41,7 +41,6 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
    // compute the direction
    this->constraint_relaxation_strategy.set_variable_bounds(current_iterate, INF);
    Direction direction = this->compute_direction(statistics, current_iterate);
-   GlobalizationMechanism::check_unboundedness(direction);
    PredictedReductionModel predicted_reduction_model = this->constraint_relaxation_strategy.generate_predicted_reduction_model(direction);
    this->solving_feasibility_problem = false;
 
@@ -108,7 +107,6 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
          DEBUG << "The line search failed, switching to feasibility problem\n";
          // reset the line search with the restoration solution
          direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, direction.primals);
-         BacktrackingLineSearch::check_unboundedness(direction);
          this->step_length = 1.;
          this->number_iterations = 0;
          this->solving_feasibility_problem = true;
