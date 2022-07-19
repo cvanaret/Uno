@@ -5,8 +5,8 @@
 #define UNO_PREPROCESSING_H
 
 #include <vector>
-#include "Model.hpp"
-#include "Iterate.hpp"
+#include "optimization/Model.hpp"
+#include "optimization/Iterate.hpp"
 #include "solvers/linear/LinearSolver.hpp"
 
 class Preprocessing {

@@ -6,7 +6,7 @@
 
 #include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategy.hpp"
 #include "optimization/Model.hpp"
-#include "optimization/Scaling.hpp"
+#include "preprocessing/Scaling.hpp"
 #include "tools/Statistics.hpp"
 
 class GlobalizationMechanism {
