@@ -5,10 +5,9 @@
 #include "Subproblem.hpp"
 #include "linear_algebra/SparseVector.hpp"
 
-Subproblem::Subproblem(size_t max_number_variables, size_t max_number_constraints, SecondOrderCorrection soc_strategy):
+Subproblem::Subproblem(size_t max_number_variables, size_t max_number_constraints):
       objective_gradient(max_number_variables), constraints(max_number_constraints), constraint_jacobian(max_number_constraints),
-      soc_strategy(soc_strategy), variable_bounds(max_number_variables),
-      direction(max_number_variables, max_number_constraints) {
+      variable_bounds(max_number_variables), direction(max_number_variables, max_number_constraints) {
    for (auto& constraint_gradient: this->constraint_jacobian) {
       constraint_gradient.reserve(max_number_variables);
    }

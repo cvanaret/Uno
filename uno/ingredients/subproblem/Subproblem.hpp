@@ -15,18 +15,12 @@
 #include "solvers/linear/LinearSolver.hpp"
 #include "tools/Statistics.hpp"
 
-enum SecondOrderCorrection {
-   NO_SOC = 0,
-   SOC_UPON_ACCEPTANCE,
-   SOC_UPON_REJECTION
-};
-
 /*! \class Subproblem
  * \brief Subproblem
  */
 class Subproblem {
 public:
-   Subproblem(size_t max_number_variables, size_t max_number_constraints, SecondOrderCorrection soc_strategy);
+   Subproblem(size_t max_number_variables, size_t max_number_constraints);
    virtual ~Subproblem() = default;
 
    // virtual methods implemented by subclasses
@@ -50,7 +44,6 @@ public:
    SparseVector<double> objective_gradient;
    std::vector<double> constraints;
    std::vector<SparseVector<double>> constraint_jacobian;
-   const SecondOrderCorrection soc_strategy;
    std::vector<Interval> variable_bounds;
    Direction direction;
 

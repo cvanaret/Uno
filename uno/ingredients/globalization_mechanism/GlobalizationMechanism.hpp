@@ -22,7 +22,7 @@ public:
 
 protected:
    // references to allow polymorphism
-   ConstraintRelaxationStrategy& constraint_relaxation_strategy;
+   ConstraintRelaxationStrategy& constraint_relaxation_strategy; /*!< Constraint relaxation strategy */
    size_t number_iterations{0}; /*!< Current number of iterations */
 
    static Iterate assemble_trial_iterate(Iterate& current_iterate, Direction& direction, double step_length = 1.);

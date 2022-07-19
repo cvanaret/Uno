@@ -33,7 +33,6 @@ public:
 
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
    [[nodiscard]] size_t get_number_subproblems_solved() const override;
-   [[nodiscard]] SecondOrderCorrection soc_strategy() const override;
 
 private:
    const OptimalityProblem optimality_problem;

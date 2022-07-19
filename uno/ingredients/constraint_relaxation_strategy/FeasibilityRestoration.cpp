@@ -206,7 +206,3 @@ size_t FeasibilityRestoration::get_hessian_evaluation_count() const {
 size_t FeasibilityRestoration::get_number_subproblems_solved() const {
    return this->subproblem->number_subproblems_solved;
 }
-
-SecondOrderCorrection FeasibilityRestoration::soc_strategy() const {
-   return this->subproblem->soc_strategy;
-}

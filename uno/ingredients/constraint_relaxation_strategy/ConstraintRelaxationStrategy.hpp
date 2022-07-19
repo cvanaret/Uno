@@ -33,7 +33,6 @@ public:
 
    [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
    [[nodiscard]] virtual size_t get_number_subproblems_solved() const = 0;
-   [[nodiscard]] virtual SecondOrderCorrection soc_strategy() const = 0;
 
    const bool penalty_parameter_control;
 
