@@ -23,7 +23,7 @@ private:
    const std::unique_ptr<LPSolver> solver; /*!< Solver that solves the subproblem */
 
    void evaluate_functions(const ReformulatedProblem& problem, Iterate& current_iterate);
-   Direction solve_LP(const ReformulatedProblem& problem, Iterate& iterate);
+   [[nodiscard]] Direction solve_LP(const ReformulatedProblem& problem, Iterate& iterate);
 };
 
 #endif // UNO_LPSUBPROBLEM_H

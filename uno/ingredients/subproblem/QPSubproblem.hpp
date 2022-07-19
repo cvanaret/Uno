@@ -28,7 +28,7 @@ protected:
    const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
 
    void evaluate_functions(const ReformulatedProblem& problem, Iterate& current_iterate);
-   Direction solve_QP(const ReformulatedProblem& problem, Iterate& iterate);
+   [[nodiscard]] Direction solve_QP(const ReformulatedProblem& problem, Iterate& iterate);
 };
 
 #endif // UNO_QPSUBPROBLEM_H
