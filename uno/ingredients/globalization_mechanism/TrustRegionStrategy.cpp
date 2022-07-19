@@ -38,7 +38,6 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
          // compute the direction within the trust region
          this->constraint_relaxation_strategy.set_variable_bounds(current_iterate, this->radius);
          Direction direction = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate);
-         GlobalizationMechanism::check_unboundedness(direction);
          // set bound multipliers of active trust region to 0
          TrustRegionStrategy::rectify_active_set(direction, this->radius);
 

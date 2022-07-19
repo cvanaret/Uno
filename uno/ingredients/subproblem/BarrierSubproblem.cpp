@@ -116,6 +116,7 @@ Direction BarrierSubproblem::solve(Statistics& statistics, const ReformulatedPro
 
    // compute the solution (Δx, -Δλ)
    this->augmented_system.solve(*this->linear_solver);
+   Subproblem::check_unboundedness(this->direction);
    assert(this->direction.status == Status::OPTIMAL && "The barrier subproblem was not solved to optimality");
    this->number_subproblems_solved++;
 
@@ -154,6 +155,7 @@ Direction BarrierSubproblem::compute_second_order_correction(const ReformulatedP
 
    // compute the solution (Δx, -Δλ)
    this->augmented_system.solve(*this->linear_solver);
+   Subproblem::check_unboundedness(this->direction);
    this->number_subproblems_solved++;
 
    // generate direction

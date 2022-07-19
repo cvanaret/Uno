@@ -44,6 +44,7 @@ Direction QPSubproblem::solve(Statistics& /*statistics*/, const ReformulatedProb
    // solve the QP
    Direction direction = this->solver->solve_QP(problem.number_variables, problem.number_constraints, this->variable_displacement_bounds,
          this->linearized_constraint_bounds, this->objective_gradient, this->constraint_jacobian, *this->hessian_model->hessian, this->initial_point);
+   Subproblem::check_unboundedness(direction);
    ActiveSetSubproblem::compute_dual_displacements(problem, current_iterate, direction);
    this->number_subproblems_solved++;
    return direction;
@@ -60,6 +61,7 @@ Direction QPSubproblem::compute_second_order_correction(const ReformulatedProble
    // solve the QP
    Direction direction = this->solver->solve_QP(problem.number_variables, problem.number_constraints, this->variable_displacement_bounds,
          this->linearized_constraint_bounds, this->objective_gradient, this->constraint_jacobian, *this->hessian_model->hessian, this->initial_point);
+   Subproblem::check_unboundedness(direction);
    ActiveSetSubproblem::compute_dual_displacements(problem, trial_iterate, direction);
    this->number_subproblems_solved++;
    return direction;

@@ -27,3 +27,7 @@ void Subproblem::set_variable_bounds(const ReformulatedProblem& problem, const I
       this->variable_bounds[i] = {lb, ub};
    }
 }
+
+void Subproblem::check_unboundedness(const Direction& direction) {
+   assert(direction.status != Status::UNBOUNDED_PROBLEM && "The subproblem is unbounded, this should not happen");
+}
