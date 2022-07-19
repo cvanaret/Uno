@@ -50,19 +50,20 @@ public:
    void get_initial_dual_point(std::vector<double>& multipliers) const override;
 
 private:
-   // private constructor to pass the dimensions to the Problem base constructor
+   // private constructor to pass the dimensions to the Model base constructor
    AMPLModel(const std::string& file_name, ASL* asl);
 
+   // mutable: can be modified by const methods (internal state not seen by user)
    mutable ASL* asl_; /*!< Instance of the AMPL Solver Library class */
+   mutable std::vector<double> ampl_tmp_gradient{};
+   mutable std::vector<double> ampl_tmp_hessian{};
+
    std::vector<Interval> variables_bounds;
    std::vector<Interval> constraint_bounds;
    std::vector<ConstraintType> variable_status; /*!< Status of the variables (EQUALITY, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES) */
    std::vector<FunctionType> constraint_type; /*!< Types of the constraints (LINEAR, QUADRATIC, NONLINEAR) */
    std::vector<ConstraintType> constraint_status; /*!< Status of the constraints (EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES,
  * UNBOUNDED) */
-
-   std::vector<double> ampl_tmp_gradient{};
-   std::vector<double> ampl_tmp_hessian{};
 
    void generate_variables();
    void generate_constraints();

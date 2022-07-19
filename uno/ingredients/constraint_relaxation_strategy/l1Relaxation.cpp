@@ -76,9 +76,8 @@ Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Itera
    // this->set_multipliers(current_iterate, current_iterate.multipliers.constraints);
    DEBUG << "Current iterate\n" << current_iterate << '\n';
 
-   // use Byrd's steering rules to update the penalty parameter and compute descent directions
-   Direction direction = this->solve_with_steering_rule(statistics, current_iterate);
-   return direction;
+   // use Byrd's steering rules to update the penalty parameter and compute a descent direction
+   return this->solve_with_steering_rule(statistics, current_iterate);
 }
 
 Direction l1Relaxation::solve_subproblem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter) {
@@ -307,6 +306,20 @@ double l1Relaxation::compute_infeasibility_measure(Iterate& iterate) {
    iterate.evaluate_constraints(this->relaxed_problem.model);
    return this->relaxed_problem.model.compute_constraint_violation(iterate.original_evaluations.constraints, L1_NORM);
 }
+
+/*
+PredictedReductionModel l1Relaxation::generate_predicted_reduction_model(const Direction& direction) const {
+   return PredictedReductionModel(-direction.objective, [&]() { // capture "this" and "direction" by reference
+      // precompute expensive quantities
+      const double linear_term = dot(direction.primals, this->objective_gradient);
+      const double quadratic_term = this->hessian_model->hessian->quadratic_product(direction.primals, direction.primals, problem.number_variables) / 2.;
+      // return a function of the step length that cheaply assembles the predicted reduction
+      return [=](double step_length) { // capture the expensive quantities by value
+         return -step_length * (linear_term + step_length * quadratic_term);
+      };
+   });
+}
+*/
 
 void l1Relaxation::register_accepted_iterate(Iterate& iterate) {
    // TODO check problem

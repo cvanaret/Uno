@@ -39,12 +39,12 @@ AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
       Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_), NONLINEAR),
       asl_(asl),
       // allocate vectors
+      ampl_tmp_gradient(this->number_variables),
       variables_bounds(this->number_variables),
       constraint_bounds(this->number_constraints),
       variable_status(this->number_variables),
       constraint_type(this->number_constraints),
-      constraint_status(this->number_constraints),
-      ampl_tmp_gradient(this->number_variables) {
+      constraint_status(this->number_constraints) {
    this->asl_->i.congrd_mode = 0;
 
    // dimensions
