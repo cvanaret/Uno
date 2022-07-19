@@ -41,13 +41,7 @@ Direction QPSubproblem::solve(Statistics& /*statistics*/, const ReformulatedProb
    // bounds of the linearized constraints
    this->set_linearized_constraint_bounds(problem, this->constraints);
 
-   // solve the QP
-   Direction direction = this->solver->solve_QP(problem.number_variables, problem.number_constraints, this->variable_displacement_bounds,
-         this->linearized_constraint_bounds, this->objective_gradient, this->constraint_jacobian, *this->hessian_model->hessian, this->initial_point);
-   Subproblem::check_unboundedness(direction);
-   ActiveSetSubproblem::compute_dual_displacements(problem, current_iterate, direction);
-   this->number_subproblems_solved++;
-   return direction;
+   return this->solve_QP(problem, current_iterate);
 }
 
 Direction QPSubproblem::compute_second_order_correction(const ReformulatedProblem& problem, Iterate& trial_iterate) {
@@ -57,12 +51,14 @@ Direction QPSubproblem::compute_second_order_correction(const ReformulatedProble
       this->linearized_constraint_bounds[j].lb -= trial_iterate.original_evaluations.constraints[j];
       this->linearized_constraint_bounds[j].ub -= trial_iterate.original_evaluations.constraints[j];
    }
+   return this->solve_QP(problem, trial_iterate);
+}
 
-   // solve the QP
+Direction QPSubproblem::solve_QP(const ReformulatedProblem& problem, Iterate& iterate) {
    Direction direction = this->solver->solve_QP(problem.number_variables, problem.number_constraints, this->variable_displacement_bounds,
          this->linearized_constraint_bounds, this->objective_gradient, this->constraint_jacobian, *this->hessian_model->hessian, this->initial_point);
    Subproblem::check_unboundedness(direction);
-   ActiveSetSubproblem::compute_dual_displacements(problem, trial_iterate, direction);
+   ActiveSetSubproblem::compute_dual_displacements(problem, iterate, direction);
    this->number_subproblems_solved++;
    return direction;
 }

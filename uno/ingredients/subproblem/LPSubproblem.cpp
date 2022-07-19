@@ -30,13 +30,7 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const ReformulatedProb
    // bounds of the linearized constraints
    this->set_linearized_constraint_bounds(problem, current_iterate.original_evaluations.constraints);
 
-   // solve the LP
-   Direction direction = this->solver->solve_LP(problem.number_variables, problem.number_constraints, this->variable_displacement_bounds,
-         this->linearized_constraint_bounds, this->objective_gradient, this->constraint_jacobian, this->initial_point);
-   Subproblem::check_unboundedness(direction);
-   ActiveSetSubproblem::compute_dual_displacements(problem, current_iterate, direction);
-   this->number_subproblems_solved++;
-   return direction;
+   return this->solve_LP(problem, current_iterate);
 }
 
 Direction LPSubproblem::compute_second_order_correction(const ReformulatedProblem& problem, Iterate& trial_iterate) {
@@ -47,11 +41,14 @@ Direction LPSubproblem::compute_second_order_correction(const ReformulatedProble
       this->linearized_constraint_bounds[j].ub -= trial_iterate.original_evaluations.constraints[j];
    }
 
-   // solve the LP
+   return this->solve_LP(problem, trial_iterate);
+}
+
+Direction LPSubproblem::solve_LP(const ReformulatedProblem& problem, Iterate& iterate) {
    Direction direction = this->solver->solve_LP(problem.number_variables, problem.number_constraints, this->variable_displacement_bounds,
          this->linearized_constraint_bounds, this->objective_gradient, this->constraint_jacobian, this->initial_point);
    Subproblem::check_unboundedness(direction);
-   ActiveSetSubproblem::compute_dual_displacements(problem, trial_iterate, direction);
+   ActiveSetSubproblem::compute_dual_displacements(problem, iterate, direction);
    this->number_subproblems_solved++;
    return direction;
 }
