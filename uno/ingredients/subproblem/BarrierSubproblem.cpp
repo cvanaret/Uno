@@ -5,7 +5,7 @@
 #include "BarrierSubproblem.hpp"
 #include "solvers/linear/LinearSolverFactory.hpp"
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
-#include "optimization/Preprocessing.hpp"
+#include "preprocessing/Preprocessing.hpp"
 #include "tools/Range.hpp"
 #include "tools/Infinity.hpp"
 

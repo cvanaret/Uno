@@ -4,8 +4,8 @@
 #include <cmath>
 #include "Uno.hpp"
 #include "optimization/Iterate.hpp"
-#include "optimization/Preprocessing.hpp"
-#include "optimization/Scaling.hpp"
+#include "preprocessing/Preprocessing.hpp"
+#include "preprocessing/Scaling.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/Timer.hpp"
