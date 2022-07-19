@@ -9,7 +9,7 @@ LPSubproblem::LPSubproblem(size_t max_number_variables, size_t max_number_constr
       solver(LPSolverFactory::create(max_number_variables, max_number_constraints, options.at("LP_solver"), options)) {
 }
 
-void LPSubproblem::evaluate_problem(const ReformulatedProblem& problem, Iterate& current_iterate) {
+void LPSubproblem::evaluate_functions(const ReformulatedProblem& problem, Iterate& current_iterate) {
    // objective gradient
    problem.evaluate_objective_gradient(current_iterate, this->objective_gradient);
 
@@ -22,7 +22,7 @@ void LPSubproblem::evaluate_problem(const ReformulatedProblem& problem, Iterate&
 
 Direction LPSubproblem::solve(Statistics& /*statistics*/, const ReformulatedProblem& problem, Iterate& current_iterate) {
    // evaluate the functions at the current iterate
-   this->evaluate_problem(problem, current_iterate);
+   this->evaluate_functions(problem, current_iterate);
 
    // bounds of the variable displacements
    this->set_variable_displacement_bounds(problem, current_iterate);
@@ -38,8 +38,20 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const ReformulatedProb
    return direction;
 }
 
-Direction LPSubproblem::compute_second_order_correction(const ReformulatedProblem& /*problem*/, Iterate& /*trial_iterate*/) {
-   assert(false && "LPSubproblem::compute_second_order_correction");
+Direction LPSubproblem::compute_second_order_correction(const ReformulatedProblem& problem, Iterate& trial_iterate) {
+   DEBUG << "\nEntered SOC computation\n";
+   // shift the RHS with the values of the constraints at the trial iterate
+   for (size_t j = 0; j < problem.number_constraints; j++) {
+      this->linearized_constraint_bounds[j].lb -= trial_iterate.original_evaluations.constraints[j];
+      this->linearized_constraint_bounds[j].ub -= trial_iterate.original_evaluations.constraints[j];
+   }
+
+   // solve the LP
+   Direction direction = this->solver->solve_LP(problem.number_variables, problem.number_constraints, this->variable_displacement_bounds,
+         this->linearized_constraint_bounds, this->objective_gradient, this->constraint_jacobian, this->initial_point);
+   ActiveSetSubproblem::compute_dual_displacements(problem, trial_iterate, direction);
+   this->number_subproblems_solved++;
+   return direction;
 }
 
 PredictedReductionModel LPSubproblem::generate_predicted_reduction_model(const ReformulatedProblem& /*problem*/, const Direction& direction) const {
