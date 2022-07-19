@@ -47,10 +47,7 @@ Direction QPSubproblem::solve(Statistics& /*statistics*/, const ReformulatedProb
 Direction QPSubproblem::compute_second_order_correction(const ReformulatedProblem& problem, Iterate& trial_iterate) {
    DEBUG << "\nEntered SOC computation\n";
    // shift the RHS with the values of the constraints at the trial iterate
-   for (size_t j = 0; j < problem.number_constraints; j++) {
-      this->linearized_constraint_bounds[j].lb -= trial_iterate.original_evaluations.constraints[j];
-      this->linearized_constraint_bounds[j].ub -= trial_iterate.original_evaluations.constraints[j];
-   }
+   ActiveSetSubproblem::shift_linearized_constraint_bounds(problem, trial_iterate.original_evaluations.constraints);
    return this->solve_QP(problem, trial_iterate);
 }
 
