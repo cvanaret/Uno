@@ -46,6 +46,14 @@ void ActiveSetSubproblem::set_linearized_constraint_bounds(const ReformulatedPro
    }
 }
 
+void ActiveSetSubproblem::shift_linearized_constraint_bounds(const ReformulatedProblem& problem, const std::vector<double>& trial_constraints) {
+   // shift the RHS with the values of the constraints at the trial iterate
+   for (size_t j = 0; j < problem.number_constraints; j++) {
+      this->linearized_constraint_bounds[j].lb -= trial_constraints[j];
+      this->linearized_constraint_bounds[j].ub -= trial_constraints[j];
+   }
+}
+
 void ActiveSetSubproblem::compute_dual_displacements(const ReformulatedProblem& problem, const Iterate& current_iterate, Direction& direction) {
    // compute dual *displacements* (note: active-set methods usually compute the new duals, not the displacements)
    for (size_t j = 0; j < problem.number_constraints; j++) {
