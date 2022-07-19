@@ -38,6 +38,10 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const ReformulatedProb
    return direction;
 }
 
+Direction LPSubproblem::compute_second_order_correction(const ReformulatedProblem& /*problem*/, Iterate& /*trial_iterate*/) {
+   assert(false && "LPSubproblem::compute_second_order_correction");
+}
+
 PredictedReductionModel LPSubproblem::generate_predicted_reduction_model(const ReformulatedProblem& /*problem*/, const Direction& direction) const {
    return PredictedReductionModel(-direction.objective, [&]() { // capture "direction" by reference
       // return a function of the step length that cheaply assembles the predicted reduction

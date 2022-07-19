@@ -14,7 +14,6 @@ public:
    void initialize(Statistics& statistics, const ReformulatedProblem& problem, Iterate& first_iterate) override;
    void set_initial_point(const std::optional<std::vector<double>>& optional_initial_point) override;
    void set_elastic_variables(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
-   [[nodiscard]] Direction compute_second_order_correction(const ReformulatedProblem& model, Iterate& trial_iterate) override;
    [[nodiscard]] double compute_optimality_measure(const ReformulatedProblem& problem, Iterate& iterate) override;
    void postprocess_accepted_iterate(const ReformulatedProblem& model, Iterate& iterate) override;
 

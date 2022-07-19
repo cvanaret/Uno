@@ -146,7 +146,7 @@ void BarrierSubproblem::assemble_augmented_system(const ReformulatedProblem& pro
 
 Direction BarrierSubproblem::compute_second_order_correction(const ReformulatedProblem& problem, Iterate& trial_iterate) {
    DEBUG << "\nEntered SOC computation\n";
-   // modify the RHS by adding the values of the constraints
+   // shift the RHS with the values of the constraints at the trial iterate
    for (size_t j = 0; j < problem.number_constraints; j++) {
       this->augmented_system.rhs[problem.number_variables + j] -= trial_iterate.original_evaluations.constraints[j];
    }

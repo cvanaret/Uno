@@ -49,6 +49,10 @@ Direction QPSubproblem::solve(Statistics& /*statistics*/, const ReformulatedProb
    return direction;
 }
 
+Direction QPSubproblem::compute_second_order_correction(const ReformulatedProblem& /*problem*/, Iterate& /*trial_iterate*/) {
+   assert(false && "QPSubproblem::compute_second_order_correction");
+}
+
 PredictedReductionModel QPSubproblem::generate_predicted_reduction_model(const ReformulatedProblem& problem, const Direction& direction) const {
    return PredictedReductionModel(-direction.objective, [&]() { // capture "this" and "direction" by reference
       // precompute expensive quantities
