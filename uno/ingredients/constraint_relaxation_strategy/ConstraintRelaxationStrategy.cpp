@@ -9,6 +9,7 @@ ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(bool penalty_paramete
 
 bool ConstraintRelaxationStrategy::is_small_step(const Direction& direction) {
    // return (direction.norm == 0.);
+   // TODO change
    const double tolerance = 1e-8;
    const double small_step_factor = 100.;
    return (direction.norm <= tolerance / small_step_factor);

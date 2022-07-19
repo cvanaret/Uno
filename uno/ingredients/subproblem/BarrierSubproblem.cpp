@@ -10,7 +10,7 @@
 #include "tools/Infinity.hpp"
 
 BarrierSubproblem::BarrierSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros, const Options& options):
-      Subproblem(max_number_variables, max_number_constraints, SOC_UPON_REJECTION),
+      Subproblem(max_number_variables, max_number_constraints),
       augmented_system(options.at("sparse_format"), max_number_variables + max_number_constraints,
             max_number_hessian_nonzeros
             + max_number_variables + max_number_constraints /* regularization */

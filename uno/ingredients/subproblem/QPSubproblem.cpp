@@ -5,7 +5,7 @@
 #include "solvers/QP/QPSolverFactory.hpp"
 
 QPSubproblem::QPSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros, const Options& options) :
-      ActiveSetSubproblem(max_number_variables, max_number_constraints, NO_SOC),
+      ActiveSetSubproblem(max_number_variables, max_number_constraints),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
       solver(QPSolverFactory::create(options.at("QP_solver"), max_number_variables, max_number_constraints,
             max_number_hessian_nonzeros

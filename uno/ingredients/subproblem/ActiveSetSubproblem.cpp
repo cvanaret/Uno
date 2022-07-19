@@ -3,8 +3,8 @@
 
 #include "ActiveSetSubproblem.hpp"
 
-ActiveSetSubproblem::ActiveSetSubproblem(size_t max_number_variables, size_t max_number_constraints, SecondOrderCorrection soc_strategy):
-      Subproblem(max_number_variables, max_number_constraints, soc_strategy),
+ActiveSetSubproblem::ActiveSetSubproblem(size_t max_number_variables, size_t max_number_constraints):
+      Subproblem(max_number_variables, max_number_constraints),
       initial_point(max_number_variables),
       variable_displacement_bounds(max_number_variables),
       linearized_constraint_bounds(max_number_constraints) {

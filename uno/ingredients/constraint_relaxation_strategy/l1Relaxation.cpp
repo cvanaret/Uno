@@ -324,7 +324,3 @@ size_t l1Relaxation::get_hessian_evaluation_count() const {
 size_t l1Relaxation::get_number_subproblems_solved() const {
    return this->subproblem->number_subproblems_solved;
 }
-
-SecondOrderCorrection l1Relaxation::soc_strategy() const {
-   return this->subproblem->soc_strategy;
-}
