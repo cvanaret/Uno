@@ -27,7 +27,7 @@ public:
    [[nodiscard]] Direction compute_second_order_correction(Iterate& trial_iterate) override;
 
    [[nodiscard]] bool is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         PredictedReductionModel& predicted_reduction_model, double step_length = 1.) override;
+         PredictedReductionModel& predicted_reduction_model, double step_length) override;
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Direction& direction) const override;
    void register_accepted_iterate(Iterate& iterate) override;
 
