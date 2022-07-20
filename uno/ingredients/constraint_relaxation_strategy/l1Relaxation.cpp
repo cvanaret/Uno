@@ -14,7 +14,7 @@
  */
 
 l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
-      ConstraintRelaxationStrategy(true, norm_from_string(options.at("residual_norm"))),
+      ConstraintRelaxationStrategy(true, options),
       // create the optimality problem
       optimality_problem(model),
       // create the relaxed problem by introducing elastic variables
@@ -229,7 +229,7 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, Iterate& current_iterat
    trial_iterate.nonlinear_progress.optimality = this->subproblem->compute_optimality_measure(this->optimality_problem, trial_iterate);
 
    bool accept = false;
-   if (ConstraintRelaxationStrategy::is_small_step(direction)) {
+   if (this->is_small_step(direction)) {
       accept = true;
    }
    else {
@@ -266,6 +266,20 @@ double l1Relaxation::compute_predicted_reduction(const Model& model, Iterate& cu
       return current_iterate.constraint_violation - linearized_constraint_violation + predicted_reduction_model.evaluate(step_length);
    }
 }
+
+/*
+PredictedReductionModel l1Relaxation::generate_predicted_reduction_model(const Direction& direction) const {
+   return PredictedReductionModel(-direction.objective, [&]() { // capture "this" and "direction" by reference
+      // precompute expensive quantities
+      const double linear_term = dot(direction.primals, this->objective_gradient);
+      const double quadratic_term = this->hessian_model->hessian->quadratic_product(direction.primals, direction.primals, problem.number_variables) / 2.;
+      // return a function of the step length that cheaply assembles the predicted reduction
+      return [=](double step_length) { // capture the expensive quantities by value
+         return -step_length * (linear_term + step_length * quadratic_term);
+      };
+   });
+}
+*/
 
 // measure that combines KKT error and complementarity error
 double l1Relaxation::compute_error(Iterate& current_iterate, const Multipliers& multiplier_displacements) {
@@ -306,20 +320,6 @@ double l1Relaxation::compute_infeasibility_measure(Iterate& iterate) {
    iterate.evaluate_constraints(this->relaxed_problem.model);
    return this->relaxed_problem.model.compute_constraint_violation(iterate.original_evaluations.constraints, L1_NORM);
 }
-
-/*
-PredictedReductionModel l1Relaxation::generate_predicted_reduction_model(const Direction& direction) const {
-   return PredictedReductionModel(-direction.objective, [&]() { // capture "this" and "direction" by reference
-      // precompute expensive quantities
-      const double linear_term = dot(direction.primals, this->objective_gradient);
-      const double quadratic_term = this->hessian_model->hessian->quadratic_product(direction.primals, direction.primals, problem.number_variables) / 2.;
-      // return a function of the step length that cheaply assembles the predicted reduction
-      return [=](double step_length) { // capture the expensive quantities by value
-         return -step_length * (linear_term + step_length * quadratic_term);
-      };
-   });
-}
-*/
 
 void l1Relaxation::register_accepted_iterate(Iterate& iterate) {
    // TODO check problem

@@ -103,7 +103,7 @@ public:
 
    // auxiliary functions
    static void determine_bounds_types(std::vector<Interval>& variables_bounds, std::vector<ConstraintType>& status);
-   void project_point_in_bounds(std::vector<double>& x) const;
+   void project_point_onto_bounds(std::vector<double>& x) const;
    [[nodiscard]] bool is_constrained() const;
    // constraint violation
    [[nodiscard]] double compute_constraint_lower_bound_violation(double constraint, size_t j) const;

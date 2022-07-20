@@ -4,12 +4,17 @@
 #include "AugmentedSystem.hpp"
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
 
-AugmentedSystem::AugmentedSystem(const std::string& sparse_format, size_t max_dimension, size_t max_number_non_zeros,
-      double regularization_failure_threshold):
+AugmentedSystem::AugmentedSystem(const std::string& sparse_format, size_t max_dimension, size_t max_number_non_zeros, const Options& options):
    matrix(SymmetricMatrixFactory::create(sparse_format, max_dimension, max_number_non_zeros)),
    rhs(max_dimension),
    solution(max_dimension),
-   regularization_failure_threshold(regularization_failure_threshold) {
+   regularization_failure_threshold(stod(options.at("regularization_failure_threshold"))),
+   regularization_first_block_initial_factor(stod(options.at("regularization_first_block_initial_factor"))),
+   regularization_second_block_fraction(stod(options.at("regularization_second_block_fraction"))),
+   regularization_first_block_lb(stod(options.at("regularization_first_block_lb"))),
+   regularization_first_block_decrease_factor(stod(options.at("regularization_first_block_decrease_factor"))),
+   regularization_first_block_fast_increase_factor(stod(options.at("regularization_first_block_fast_increase_factor"))),
+   regularization_first_block_slow_increase_factor(stod(options.at("regularization_first_block_slow_increase_factor"))) {
 }
 
 void AugmentedSystem::solve(LinearSolver& linear_solver) {
@@ -42,17 +47,18 @@ void AugmentedSystem::regularize_matrix(const ReformulatedProblem& problem, Line
    // set the constraint regularization coefficient
    if (linear_solver.matrix_is_singular()) {
       DEBUG << "Matrix is singular\n";
-      regularization_second_block = 1e-8 * constraint_regularization_parameter;
+      regularization_second_block = this->regularization_second_block_fraction * constraint_regularization_parameter;
    }
    else {
       regularization_second_block = 0.;
    }
    // set the Hessian regularization coefficient
    if (this->previous_regularization_first_block == 0.) {
-      regularization_first_block = 1e-4;
+      regularization_first_block = this->regularization_first_block_initial_factor;
    }
    else {
-      regularization_first_block = std::max(1e-20, this->previous_regularization_first_block / 3.);
+      regularization_first_block = std::max(this->regularization_first_block_lb,
+            this->previous_regularization_first_block / this->regularization_first_block_decrease_factor);
    }
    size_t current_matrix_size = this->matrix->number_nonzeros;
 
@@ -77,10 +83,10 @@ void AugmentedSystem::regularize_matrix(const ReformulatedProblem& problem, Line
       }
       else {
          if (this->previous_regularization_first_block == 0.) {
-            regularization_first_block *= 100.;
+            regularization_first_block *= this->regularization_first_block_fast_increase_factor;
          }
          else {
-            regularization_first_block *= 8.;
+            regularization_first_block *= this->regularization_first_block_slow_increase_factor;
          }
 
          if (regularization_first_block <= this->regularization_failure_threshold) {

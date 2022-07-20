@@ -87,7 +87,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
                   return std::make_tuple(std::move(trial_iterate_soc), direction_soc.norm);
                }
                else {
-                  DEBUG << "SOC step discarded\n\n";
+                  DEBUG << "Trial SOC step discarded\n\n";
                   statistics.add_statistic("SOC", "-");
                   this->decrease_step_length();
                }

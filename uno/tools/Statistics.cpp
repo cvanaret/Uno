@@ -27,6 +27,9 @@ int Statistics::int_width = 7;
 int Statistics::double_width = 18;
 int Statistics::char_width = 7;
 
+Statistics::Statistics(const Options& options): print_header_every_iterations(stoul(options.at("statistics_print_header_every_iterations"))) {
+}
+
 void Statistics::add_column(std::string name, int width, int order) {
    this->columns[order] = name;
    this->widths[std::move(name)] = width;
@@ -83,7 +86,7 @@ void Statistics::print_header(bool first_occurrence) {
 }
 
 void Statistics::print_current_line() {
-   if (this->iteration % 15 == 0) {
+   if (this->iteration % this->print_header_every_iterations == 0) {
       this->print_header(this->iteration == 0);
    }
    std::cout << Statistics::symbols["left-mid"];

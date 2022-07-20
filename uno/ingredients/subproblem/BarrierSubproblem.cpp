@@ -16,9 +16,9 @@ BarrierSubproblem::BarrierSubproblem(size_t max_number_variables, size_t max_num
             + max_number_variables + max_number_constraints /* regularization */
             + 2 * max_number_variables /* diagonal barrier terms */
             + max_number_variables * max_number_constraints /* Jacobian */,
-            stod(options.at("LS_regularization_failure_threshold"))),
-      barrier_parameter(std::stod(options.at("initial_barrier_parameter"))),
-      previous_barrier_parameter(std::stod(options.at("initial_barrier_parameter"))),
+            options),
+      barrier_parameter(std::stod(options.at("barrier_initial_parameter"))),
+      previous_barrier_parameter(std::stod(options.at("barrier_initial_parameter"))),
       tolerance(std::stod(options.at("tolerance"))),
       // the Hessian is not convexified. Instead, the augmented system will be.
       hessian_model(HessianModelFactory::create(options.at("hessian_model"), max_number_variables, max_number_hessian_nonzeros,
@@ -28,15 +28,19 @@ BarrierSubproblem::BarrierSubproblem(size_t max_number_variables, size_t max_num
             + max_number_variables + max_number_constraints /* regularization */
             + 2 * max_number_variables /* diagonal barrier terms */
             + max_number_variables * max_number_constraints /* Jacobian */)),
-      parameters({stod(options.at("tau_min")),
-            stod(options.at("k_sigma")),
-            stod(options.at("smax")),
-            stod(options.at("k_mu")),
-            stod(options.at("theta_mu")),
-            stod(options.at("k_epsilon")),
+      parameters({stod(options.at("barrier_tau_min")),
+            stod(options.at("barrier_k_sigma")),
+            stod(options.at("barrier_smax")),
+            stod(options.at("barrier_k_mu")),
+            stod(options.at("barrier_theta_mu")),
+            stod(options.at("barrier_k_epsilon")),
             stod(options.at("barrier_update_fraction")),
-            stod(options.at("regularization_barrier_exponent"))}),
-      default_multiplier(std::stod(options.at("default_multiplier"))),
+            stod(options.at("barrier_regularization_exponent")),
+            stod(options.at("barrier_small_direction_factor")),
+            stod(options.at("barrier_push_variable_to_interior_k1")),
+            stod(options.at("barrier_push_variable_to_interior_k2"))
+      }),
+      default_multiplier(std::stod(options.at("barrier_default_multiplier"))),
       lower_delta_z(max_number_variables), upper_delta_z(max_number_variables) {
 }
 
@@ -137,7 +141,7 @@ void BarrierSubproblem::assemble_augmented_system(const ReformulatedProblem& pro
    this->assemble_augmented_matrix(problem, current_iterate);
    this->augmented_system.factorize_matrix(problem, *this->linear_solver);
    this->augmented_system.regularize_matrix(problem, *this->linear_solver, problem.number_variables, problem.number_constraints,
-         std::pow(this->barrier_parameter, this->parameters.regularization_barrier_exponent));
+         std::pow(this->barrier_parameter, this->parameters.regularization_exponent));
    auto[number_pos, number_neg, number_zero] = this->linear_solver->get_inertia();
    assert(number_pos == problem.number_variables && number_neg == problem.number_constraints && number_zero == 0);
 
@@ -193,7 +197,7 @@ void BarrierSubproblem::update_barrier_parameter(const ReformulatedProblem& prob
    DEBUG << "Scaled KKT error for barrier subproblem is " << error << '\n';
 
    // update of the barrier parameter (Eq. 7 in Ipopt paper)
-   const double tolerance_fraction = this->tolerance / this->parameters.barrier_update_fraction;
+   const double tolerance_fraction = this->tolerance / this->parameters.update_fraction;
    while (error <= this->parameters.k_epsilon * this->barrier_parameter && tolerance_fraction < this->barrier_parameter) {
       this->barrier_parameter = std::max(tolerance_fraction, std::min(this->parameters.k_mu * this->barrier_parameter,
             std::pow(this->barrier_parameter, this->parameters.theta_mu)));
@@ -203,12 +207,12 @@ void BarrierSubproblem::update_barrier_parameter(const ReformulatedProblem& prob
    }
 }
 
-bool BarrierSubproblem::is_small_direction(const ReformulatedProblem& problem, const Iterate& current_iterate, const Direction& direction) {
+bool BarrierSubproblem::is_small_direction(const ReformulatedProblem& problem, const Iterate& current_iterate, const Direction& direction) const {
    const auto relative_measure_function = [&](size_t i) {
       return direction.primals[i] / (1 + current_iterate.primals[i]);
    };
    const double machine_epsilon = std::numeric_limits<double>::epsilon();
-   return (norm_inf(relative_measure_function, Range(problem.number_variables)) < 10. * machine_epsilon);
+   return (norm_inf(relative_measure_function, Range(problem.number_variables)) < this->parameters.small_direction_factor * machine_epsilon);
 }
 
 double BarrierSubproblem::compute_barrier_directional_derivative(const std::vector<double>& solution) const {
@@ -481,14 +485,12 @@ void BarrierSubproblem::set_initial_point(const std::optional<std::vector<double
    // do nothing
 }
 
-double BarrierSubproblem::push_variable_to_interior(double variable_value, const Interval& variable_bounds) {
-   // TODO move to options
-   const double k1 = 1e-2;
-   const double k2 = 1e-2;
-
+double BarrierSubproblem::push_variable_to_interior(double variable_value, const Interval& variable_bounds) const {
    const double range = variable_bounds.ub - variable_bounds.lb;
-   const double perturbation_lb = std::min(k1 * std::max(1., std::abs(variable_bounds.lb)), k2 * range);
-   const double perturbation_ub = std::min(k1 * std::max(1., std::abs(variable_bounds.ub)), k2 * range);
+   const double perturbation_lb = std::min(this->parameters.push_variable_to_interior_k1 * std::max(1., std::abs(variable_bounds.lb)),
+         this->parameters.push_variable_to_interior_k2 * range);
+   const double perturbation_ub = std::min(this->parameters.push_variable_to_interior_k1 * std::max(1., std::abs(variable_bounds.ub)),
+         this->parameters.push_variable_to_interior_k2 * range);
    variable_value = std::max(variable_value, variable_bounds.lb + perturbation_lb);
    variable_value = std::min(variable_value, variable_bounds.ub - perturbation_ub);
    return variable_value;

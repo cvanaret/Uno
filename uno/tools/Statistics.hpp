@@ -6,10 +6,11 @@
 
 #include <string>
 #include <map>
+#include "tools/Options.hpp"
 
 class Statistics {
 public:
-   Statistics() = default;
+   explicit Statistics(const Options& options);
 
    static std::map<std::string, std::string> symbols;
    static int int_width;
@@ -31,6 +32,8 @@ private:
    std::map<int, std::string> columns{};
    std::map<std::string, size_t> widths{};
    std::map<std::string, std::string> current_line{};
+
+   std::size_t print_header_every_iterations{};
 };
 
 #endif // UNO_STATISTICS_H

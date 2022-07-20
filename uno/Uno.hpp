@@ -48,7 +48,7 @@ public:
    /*!
     *  Solve a given problem with initial primal and dual variables
     */
-   Result solve(const Model& model, Iterate& first_iterate, bool enforce_linear_constraints);
+   Result solve(const Model& model, Iterate& first_iterate, const Options& options);
    static void postsolve_solution(const Model& model, const Scaling& scaling, Iterate& current_iterate, TerminationStatus termination_status);
 
 private:
@@ -57,7 +57,7 @@ private:
    const size_t max_iterations; /*!< Maximum number of iterations */
    const double small_step_factor{100.};
 
-   static Statistics create_statistics(const Model& model);
+   static Statistics create_statistics(const Model& model, const Options& options);
    static void add_statistics(Statistics& statistics, const Model& model, const Iterate& new_iterate, size_t major_iterations);
    [[nodiscard]] bool termination_criterion(TerminationStatus current_status, size_t iteration) const;
    [[nodiscard]] TerminationStatus check_termination(const Model& model, Iterate& current_iterate, double step_norm) const;

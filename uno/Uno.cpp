@@ -17,7 +17,7 @@ Uno::Uno(GlobalizationMechanism& globalization_mechanism, const Options& options
       small_step_factor(std::stod(options.at("small_step_factor"))) {
 }
 
-Result Uno::solve(const Model& model, Iterate& current_iterate, bool enforce_linear_constraints) {
+Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& options) {
    Timer timer{};
    timer.start();
    size_t major_iterations = 0;
@@ -26,12 +26,7 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, bool enforce_lin
    std::cout << model.number_variables << " variables, " << model.number_constraints << " constraints\n";
    std::cout << "Problem type: " << Model::type_to_string[model.problem_type] << "\n\n";
 
-   // linear constraints feasible at initial point
-   if (enforce_linear_constraints) {
-      WARNING << "Enforcing linear constraints is not implemented yet\n";
-      //Preprocessing::enforce_linear_constraints(model, current_iterate);
-   }
-   Statistics statistics = Uno::create_statistics(model);
+   Statistics statistics = Uno::create_statistics(model, options);
 
    // use the current point to initialize the strategies and generate the initial iterate
    this->globalization_mechanism.initialize(statistics, current_iterate);
@@ -72,8 +67,8 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, bool enforce_lin
    return result;
 }
 
-Statistics Uno::create_statistics(const Model& model) {
-   Statistics statistics;
+Statistics Uno::create_statistics(const Model& model, const Options& options) {
+   Statistics statistics(options);
    statistics.add_column("major", Statistics::int_width, 1);
    statistics.add_column("minor", Statistics::int_width, 2);
    statistics.add_column("step norm", Statistics::double_width, 31);
