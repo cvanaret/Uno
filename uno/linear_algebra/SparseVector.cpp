@@ -31,8 +31,12 @@ double dot(const std::vector<double>& x, const SparseVector<double>& y) {
 }
 
 void scale(SparseVector<double>& x, double factor) {
-   // TODO check if factor == 0
-   x.transform([=](double entry) {
-      return factor*entry;
-   });
+   if (factor == 0.) {
+      x.clear();
+   }
+   else {
+      x.transform([=](double entry) {
+         return factor*entry;
+      });
+   }
 }
