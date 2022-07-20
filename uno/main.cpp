@@ -14,31 +14,28 @@
 
 void run_uno_ampl(const std::string& model_name, const Options& options) {
    // AMPL model
-   auto original_model = ModelFactory::create(model_name);
-
-   //auto reformulated_model = std::make_unique<EqualityConstrainedModel>(*original_model);
-   Model* reformulated_model = original_model.get();
+   auto original_model = ModelFactory::create(model_name, options);
 
    // initial primal and dual points
-   Iterate first_iterate(reformulated_model->number_variables, reformulated_model->number_constraints);
-   reformulated_model->get_initial_primal_point(first_iterate.primals);
-   reformulated_model->get_initial_dual_point(first_iterate.multipliers.constraints);
+   Iterate first_iterate(original_model->number_variables, original_model->number_constraints);
+   original_model->get_initial_primal_point(first_iterate.primals);
+   original_model->get_initial_dual_point(first_iterate.multipliers.constraints);
    // project x into the bounds
-   reformulated_model->project_point_onto_bounds(first_iterate.primals);
+   original_model->project_point_onto_bounds(first_iterate.primals);
 
    // initialize the function scaling
-   Scaling scaling(reformulated_model->number_constraints, stod(options.at("function_scaling_threshold")));
+   Scaling scaling(original_model->number_constraints, stod(options.at("function_scaling_threshold")));
    // function scaling
    const bool scale_functions = (options.at("scale_functions") == "yes");
    if (scale_functions) {
       // evaluate the gradients at the current point
-      first_iterate.evaluate_objective_gradient(*reformulated_model);
-      first_iterate.evaluate_constraint_jacobian(*reformulated_model);
+      first_iterate.evaluate_objective_gradient(*original_model);
+      first_iterate.evaluate_constraint_jacobian(*original_model);
       scaling.compute(first_iterate.original_evaluations.objective_gradient, first_iterate.original_evaluations.constraint_jacobian);
       // forget about these evaluations
       first_iterate.reset_evaluations();
    }
-   const Model& model_to_solve = ScaledModel(*reformulated_model, scaling);
+   const Model& model_to_solve = ScaledModel(*original_model, scaling);
 
    // create the constraint relaxation strategy
    auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(model_to_solve, options);
@@ -49,7 +46,7 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
    // instantiate the combination of ingredients and solve the problem
    Uno uno = Uno(*mechanism, options);
    Result result = uno.solve(model_to_solve, first_iterate, options);
-   Uno::postsolve_solution(*reformulated_model, scaling, result.solution, result.status);
+   Uno::postsolve_solution(*original_model, scaling, result.solution, result.status);
 
    std::string combination = options.at("mechanism") + " " + options.at("constraint-relaxation") + " " + options.at("strategy") + " " + options.at("subproblem");
    std::cout << "\nUno (" << combination << "): optimization summary\n";

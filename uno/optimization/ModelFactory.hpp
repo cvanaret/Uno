@@ -10,7 +10,7 @@
 
 class ModelFactory {
 public:
-   static std::unique_ptr<Model> create(const std::string& problem_name);
+   static std::unique_ptr<Model> create(const std::string& problem_name, const Options& options);
 };
 
 #endif // UNO_MODELFACTORY_H
