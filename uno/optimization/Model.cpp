@@ -61,7 +61,7 @@ void Model::determine_constraints() {
    }
 }
 
-void Model::project_point_in_bounds(std::vector<double>& x) const {
+void Model::project_point_onto_bounds(std::vector<double>& x) const {
    for (size_t i = 0; i < x.size(); i++) {
       if (x[i] < this->get_variable_lower_bound(i)) {
          x[i] = this->get_variable_lower_bound(i);

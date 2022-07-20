@@ -17,8 +17,11 @@ struct InteriorPointParameters {
    double k_mu;
    double theta_mu;
    double k_epsilon;
-   double barrier_update_fraction;
-   double regularization_barrier_exponent;
+   double update_fraction;
+   double regularization_exponent;
+   double small_direction_factor;
+   double push_variable_to_interior_k1;
+   double push_variable_to_interior_k2;
 };
 
 class BarrierSubproblem : public Subproblem {
@@ -31,7 +34,7 @@ public:
 
    [[nodiscard]] double get_proximal_coefficient() const override;
    void set_elastic_variables(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
-   [[nodiscard]] static double push_variable_to_interior(double variable_value, const Interval& variable_bounds);
+   [[nodiscard]] double push_variable_to_interior(double variable_value, const Interval& variable_bounds) const;
    [[nodiscard]] Direction solve(Statistics& statistics, const ReformulatedProblem& problem, Iterate& current_iterate) override;
    [[nodiscard]] Direction compute_second_order_correction(const ReformulatedProblem& problem, Iterate& trial_iterate) override;
    [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const ReformulatedProblem& problem, const Direction& direction) const override;
@@ -59,7 +62,7 @@ private:
 
    void evaluate_functions(const ReformulatedProblem& problem, Iterate& current_iterate);
    void update_barrier_parameter(const ReformulatedProblem& problem, const Iterate& current_iterate);
-   [[nodiscard]] static bool is_small_direction(const ReformulatedProblem& problem, const Iterate& current_iterate, const Direction& direction);
+   [[nodiscard]] bool is_small_direction(const ReformulatedProblem& problem, const Iterate& current_iterate, const Direction& direction) const;
    [[nodiscard]] double compute_barrier_directional_derivative(const std::vector<double>& solution) const;
    [[nodiscard]] double evaluate_barrier_function(const ReformulatedProblem& problem, Iterate& iterate);
    [[nodiscard]] double primal_fraction_to_boundary(const ReformulatedProblem& problem, const Iterate& current_iterate, double tau);

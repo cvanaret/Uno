@@ -11,6 +11,11 @@ small_step_factor 100
 # print optimal solution (yes|no)
 print_solution no
 
+# small step threshold for termination
+small_step_threshold 1e-10
+
+statistics_print_header_every_iterations 15
+
 ##### ingredients #####
 # default subproblem (QP|LP|barrier)
 subproblem QP
@@ -93,12 +98,20 @@ LS_backtracking_ratio 0.5
 LS_min_step_length 1e-12
 
 # regularization failure threshold
-LS_regularization_failure_threshold 1e40
+regularization_failure_threshold 1e40
 
 # Hessian regularization: initial value
 regularization_initial_value 1e-4
 
 regularization_increase_factor 2
+
+regularization_first_block_initial_factor 1e-4
+regularization_second_block_fraction 1e-8
+
+regularization_first_block_lb 1e-20
+regularization_first_block_decrease_factor 3.
+regularization_first_block_fast_increase_factor 100.
+regularization_first_block_slow_increase_factor 8.
 
 ##### trust region options #####
 # initial trust region radius
@@ -139,17 +152,20 @@ l1_relaxation_small_threshold 1e-10
 l1_constraint_violation_coefficient 1.
 
 ##### barrier subproblem options #####
-initial_barrier_parameter 0.1
-default_multiplier 1
+barrier_initial_parameter 0.1
+barrier_default_multiplier 1
 # Ipopt parameters
-tau_min 0.99
-k_sigma 1e10
-smax 100
-k_mu 0.2
-theta_mu 1.5
-k_epsilon 10
+barrier_tau_min 0.99
+barrier_k_sigma 1e10
+barrier_smax 100
+barrier_k_mu 0.2
+barrier_theta_mu 1.5
+barrier_k_epsilon 10
 barrier_update_fraction 10
-regularization_barrier_exponent 0.25
+barrier_regularization_exponent 0.25
+barrier_small_direction_factor 10.
+barrier_push_variable_to_interior_k1 1e-2
+barrier_push_variable_to_interior_k2 1e-2
 
 ##### BQPD options #####
 bqpd_kmax 500

@@ -15,6 +15,7 @@ ASL* generate_asl(std::string file_name) {
    // indices start at 0
    asl->i.Fortran_ = 0;
 
+   // TODO remove macros
    int n_discrete = nlogv + niv + nlvbi + nlvci + nlvoi;
    if (0 < n_discrete) {
       WARNING << "Ignoring integrality of " << n_discrete << " variables.\n";
@@ -85,14 +86,6 @@ void AMPLModel::generate_variables() {
          this->upper_bounded_variables.push_back(i);
       }
    }
-}
-
-double AMPLModel::get_variable_lower_bound(size_t i) const {
-   return this->variables_bounds[i].lb;
-}
-
-double AMPLModel::get_variable_upper_bound(size_t i) const {
-   return this->variables_bounds[i].ub;
 }
 
 double AMPLModel::evaluate_objective(const std::vector<double>& x) const {
@@ -178,87 +171,6 @@ void AMPLModel::evaluate_constraint_jacobian(const std::vector<double>& x, std::
    }
 }
 
-void AMPLModel::generate_constraints() {
-   for (size_t j = 0; j < this->number_constraints; j++) {
-      double lb = (this->asl_->i.LUrhs_ != nullptr) ? this->asl_->i.LUrhs_[2 * j] : -INF;
-      double ub = (this->asl_->i.LUrhs_ != nullptr) ? this->asl_->i.LUrhs_[2 * j + 1] : INF;
-      this->constraint_bounds[j] = {lb, ub};
-   }
-   Model::determine_bounds_types(this->constraint_bounds, this->constraint_status);
-   this->determine_constraints();
-}
-
-double AMPLModel::get_constraint_lower_bound(size_t j) const {
-   return this->constraint_bounds[j].lb;
-}
-
-double AMPLModel::get_constraint_upper_bound(size_t j) const {
-   return this->constraint_bounds[j].ub;
-}
-
-void AMPLModel::set_function_types(std::string file_name) {
-   // allocate a temporary ASL to read Hessian sparsity pattern
-   ASL* asl = ASL_alloc(ASL_read_fg);
-   // char* stub = getstops(file_name, option_info);
-   //if (file_name == nullptr) {
-   //	usage_ASL(option_info, 1);
-   //}
-
-   FILE* nl = jac0dim_ASL(asl, file_name.data(), static_cast<int>(file_name.size()));
-   // specific read function
-   qp_read_ASL(asl, nl, ASL_findgroups);
-
-   // constraints
-   if (asl->i.n_con_ != static_cast<int>(this->number_constraints)) {
-      throw std::length_error("AMPLModel.set_function_types: inconsistent number of constraints");
-   }
-   this->constraint_type.reserve(this->number_constraints);
-
-   // determine the type of each constraint and objective function
-   // determine if the problem is nonlinear (non-quadratic objective or nonlinear constraints)
-   this->problem_type = LINEAR;
-   size_t current_linear_constraint = 0;
-   int* rowq;
-   int* colqp;
-   double* delsqp;
-   for (size_t j = 0; j < this->number_constraints; j++) {
-      int qp = nqpcheck_ASL(asl, static_cast<int>(-(j + 1)), &rowq, &colqp, &delsqp);
-
-      if (0 < qp) {
-         this->constraint_type[j] = QUADRATIC;
-         this->problem_type = NONLINEAR;
-      }
-      else if (qp == 0) {
-         this->constraint_type[j] = LINEAR;
-         this->linear_constraints.insert(j, current_linear_constraint);
-         current_linear_constraint++;
-      }
-      else {
-         this->constraint_type[j] = NONLINEAR;
-         this->problem_type = NONLINEAR;
-      }
-   }
-   // objective function
-   int qp = nqpcheck_ASL(asl, 0, &rowq, &colqp, &delsqp);
-   if (0 < qp) {
-      this->objective_type = QUADRATIC;
-      if (this->problem_type == LINEAR) {
-         this->problem_type = QUADRATIC;
-      }
-   }
-   else if (qp == 0) {
-      this->objective_type = LINEAR;
-   }
-   else {
-      this->objective_type = NONLINEAR;
-      this->problem_type = NONLINEAR;
-   }
-   qp_opify_ASL(asl);
-
-   // deallocate memory
-   ASL_free(&asl);
-}
-
 void AMPLModel::initialize_lagrangian_hessian() {
    // compute the maximum number of nonzero elements, provided that all multipliers are non-zero
    // int (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri);
@@ -337,8 +249,24 @@ void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double
    this->asl_->i.x_known = 0;
 }
 
+double AMPLModel::get_variable_lower_bound(size_t i) const {
+   return this->variables_bounds[i].lb;
+}
+
+double AMPLModel::get_variable_upper_bound(size_t i) const {
+   return this->variables_bounds[i].ub;
+}
+
 ConstraintType AMPLModel::get_variable_status(size_t i) const {
    return this->variable_status[i];
+}
+
+double AMPLModel::get_constraint_lower_bound(size_t j) const {
+   return this->constraint_bounds[j].lb;
+}
+
+double AMPLModel::get_constraint_upper_bound(size_t j) const {
+   return this->constraint_bounds[j].ub;
 }
 
 FunctionType AMPLModel::get_constraint_type(size_t j) const {
@@ -363,4 +291,78 @@ void AMPLModel::get_initial_primal_point(std::vector<double>& x) const {
 void AMPLModel::get_initial_dual_point(std::vector<double>& multipliers) const {
    assert(multipliers.size() >= this->number_constraints);
    std::copy(this->asl_->i.pi0_, this->asl_->i.pi0_ + this->number_constraints, begin(multipliers));
+}
+
+
+void AMPLModel::generate_constraints() {
+   for (size_t j = 0; j < this->number_constraints; j++) {
+      double lb = (this->asl_->i.LUrhs_ != nullptr) ? this->asl_->i.LUrhs_[2 * j] : -INF;
+      double ub = (this->asl_->i.LUrhs_ != nullptr) ? this->asl_->i.LUrhs_[2 * j + 1] : INF;
+      this->constraint_bounds[j] = {lb, ub};
+   }
+   Model::determine_bounds_types(this->constraint_bounds, this->constraint_status);
+   this->determine_constraints();
+}
+
+void AMPLModel::set_function_types(std::string file_name) {
+   // allocate a temporary ASL to read Hessian sparsity pattern
+   ASL* asl = ASL_alloc(ASL_read_fg);
+   // char* stub = getstops(file_name, option_info);
+   //if (file_name == nullptr) {
+   //	usage_ASL(option_info, 1);
+   //}
+
+   FILE* nl = jac0dim_ASL(asl, file_name.data(), static_cast<int>(file_name.size()));
+   // specific read function
+   qp_read_ASL(asl, nl, ASL_findgroups);
+
+   // constraints
+   if (asl->i.n_con_ != static_cast<int>(this->number_constraints)) {
+      throw std::length_error("AMPLModel.set_function_types: inconsistent number of constraints");
+   }
+   this->constraint_type.reserve(this->number_constraints);
+
+   // determine the type of each constraint and objective function
+   // determine if the problem is nonlinear (non-quadratic objective or nonlinear constraints)
+   this->problem_type = LINEAR;
+   size_t current_linear_constraint = 0;
+   int* rowq;
+   int* colqp;
+   double* delsqp;
+   for (size_t j = 0; j < this->number_constraints; j++) {
+      int qp = nqpcheck_ASL(asl, static_cast<int>(-(j + 1)), &rowq, &colqp, &delsqp);
+
+      if (0 < qp) {
+         this->constraint_type[j] = QUADRATIC;
+         this->problem_type = NONLINEAR;
+      }
+      else if (qp == 0) {
+         this->constraint_type[j] = LINEAR;
+         this->linear_constraints.insert(j, current_linear_constraint);
+         current_linear_constraint++;
+      }
+      else {
+         this->constraint_type[j] = NONLINEAR;
+         this->problem_type = NONLINEAR;
+      }
+   }
+   // objective function
+   int qp = nqpcheck_ASL(asl, 0, &rowq, &colqp, &delsqp);
+   if (0 < qp) {
+      this->objective_type = QUADRATIC;
+      if (this->problem_type == LINEAR) {
+         this->problem_type = QUADRATIC;
+      }
+   }
+   else if (qp == 0) {
+      this->objective_type = LINEAR;
+   }
+   else {
+      this->objective_type = NONLINEAR;
+      this->problem_type = NONLINEAR;
+   }
+   qp_opify_ASL(asl);
+
+   // deallocate memory
+   ASL_free(&asl);
 }

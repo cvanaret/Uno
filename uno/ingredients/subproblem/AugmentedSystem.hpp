@@ -8,6 +8,7 @@
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "solvers/linear/LinearSolver.hpp"
 #include "ingredients/constraint_relaxation_strategy/ReformulatedProblem.hpp"
+#include "tools/Options.hpp"
 
 struct UnstableRegularization : public std::exception {
 
@@ -22,7 +23,7 @@ public:
    std::vector<double> rhs;
    std::vector<double> solution;
 
-   AugmentedSystem(const std::string& sparse_format, size_t max_dimension, size_t max_number_non_zeros, double regularization_failure_threshold);
+   AugmentedSystem(const std::string& sparse_format, size_t max_dimension, size_t max_number_non_zeros, const Options& options);
    void solve(LinearSolver& linear_solver);
    void factorize_matrix(const ReformulatedProblem& problem, LinearSolver& linear_solver);
    void regularize_matrix(const ReformulatedProblem& problem, LinearSolver& linear_solver, size_t size_first_block, size_t size_second_block,
@@ -32,6 +33,12 @@ protected:
    size_t number_factorizations{0};
    double previous_regularization_first_block{0.};
    const double regularization_failure_threshold;
+   const double regularization_first_block_initial_factor;
+   const double regularization_second_block_fraction;
+   const double regularization_first_block_lb;
+   const double regularization_first_block_decrease_factor;
+   const double regularization_first_block_fast_increase_factor;
+   const double regularization_first_block_slow_increase_factor;
 };
 
 #endif // UNO_AUGMENTEDSYSTEM_H

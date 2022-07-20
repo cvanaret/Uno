@@ -8,7 +8,7 @@
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 
 FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options& options) :
-      ConstraintRelaxationStrategy(false, norm_from_string(options.at("residual_norm"))),
+      ConstraintRelaxationStrategy(false, options),
       // create the optimality problem
       optimality_problem(model),
       // create the phase-1 feasibility problem (objective multiplier = 0)
@@ -68,7 +68,7 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
    this->feasibility_problem.set_proximal_coefficient(this->subproblem->get_proximal_coefficient());
    this->feasibility_problem.set_proximal_reference_point(current_iterate.primals);
 
-   // build the objective model of the feasibility problem (TODO: move to subproblem)
+   // build the objective model of the feasibility problem
    this->subproblem->set_elastic_variables(this->feasibility_problem, current_iterate);
 
    // start from the phase-2 solution
@@ -101,7 +101,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& curr
    GlobalizationStrategy& current_phase_strategy = this->switch_phase(current_iterate, trial_iterate, direction);
 
    bool accept = false;
-   if (ConstraintRelaxationStrategy::is_small_step(direction)) {
+   if (this->is_small_step(direction)) {
       accept = true;
    }
    else {

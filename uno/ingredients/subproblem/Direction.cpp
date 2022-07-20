@@ -1,7 +1,6 @@
 // Copyright (c) 2022 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 
-#include <cassert>
 #include "Direction.hpp"
 #include "tools/Logger.hpp"
 #include "linear_algebra/Vector.hpp"

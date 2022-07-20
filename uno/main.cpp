@@ -12,21 +12,9 @@
 #include "tools/Options.hpp"
 #include "tools/Timer.hpp"
 
-// new() overload to track heap allocations
-size_t total_allocations = 0;
-
-/*
-void* operator new(size_t size) {
-   std::cout << "Allocating " << size << " bytes\n";
-   total_allocations += size;
-   return malloc(size);
-}
- */
-
 void run_uno_ampl(const std::string& model_name, const Options& options) {
    // AMPL model
    auto original_model = ModelFactory::create(model_name);
-   INFO << "Heap allocations after AMPL: " << total_allocations << '\n';
 
    //auto reformulated_model = std::make_unique<EqualityConstrainedModel>(*original_model);
    Model* reformulated_model = original_model.get();
@@ -36,7 +24,7 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
    reformulated_model->get_initial_primal_point(first_iterate.primals);
    reformulated_model->get_initial_dual_point(first_iterate.multipliers.constraints);
    // project x into the bounds
-   reformulated_model->project_point_in_bounds(first_iterate.primals);
+   reformulated_model->project_point_onto_bounds(first_iterate.primals);
 
    // initialize the function scaling
    Scaling scaling(reformulated_model->number_constraints, stod(options.at("function_scaling_threshold")));
@@ -54,17 +42,13 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
 
    // create the constraint relaxation strategy
    auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(model_to_solve, options);
-   INFO << "Heap allocations after ConstraintRelaxation, Subproblem and Solver: " << total_allocations << '\n';
 
    // create the globalization mechanism
    auto mechanism = GlobalizationMechanismFactory::create(*constraint_relaxation_strategy, options);
-   INFO << "Heap allocations after Mechanism: " << total_allocations << '\n';
 
+   // instantiate the combination of ingredients and solve the problem
    Uno uno = Uno(*mechanism, options);
-
-   INFO << "Heap allocations before solving: " << total_allocations << '\n';
-   const bool enforce_linear_constraints = (options.at("enforce_linear_constraints") == "yes");
-   Result result = uno.solve(model_to_solve, first_iterate, enforce_linear_constraints);
+   Result result = uno.solve(model_to_solve, first_iterate, options);
    Uno::postsolve_solution(*reformulated_model, scaling, result.solution, result.status);
 
    std::string combination = options.at("mechanism") + " " + options.at("constraint-relaxation") + " " + options.at("strategy") + " " + options.at("subproblem");
@@ -74,7 +58,6 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
 
    const bool print_solution = (options.at("print_solution") == "yes");
    result.print(print_solution);
-   INFO << "Heap allocations: " << total_allocations << '\n';
 }
 
 Level Logger::logger_level = INFO;

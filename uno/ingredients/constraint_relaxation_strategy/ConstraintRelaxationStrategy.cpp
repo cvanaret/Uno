@@ -3,16 +3,13 @@
 
 #include "ConstraintRelaxationStrategy.hpp"
 
-ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(bool penalty_parameter_control, Norm residual_norm):
-      penalty_parameter_control(penalty_parameter_control), residual_norm(residual_norm) {
+ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(bool penalty_parameter_control, const Options& options):
+      penalty_parameter_control(penalty_parameter_control), residual_norm(norm_from_string(options.at("residual_norm"))),
+      small_step_threshold(stod(options.at("small_step_threshold"))) {
 }
 
-bool ConstraintRelaxationStrategy::is_small_step(const Direction& direction) {
-   // return (direction.norm == 0.);
-   // TODO change
-   const double tolerance = 1e-8;
-   const double small_step_factor = 100.;
-   return (direction.norm <= tolerance / small_step_factor);
+bool ConstraintRelaxationStrategy::is_small_step(const Direction& direction) const {
+   return (direction.norm <= this->small_step_threshold);
 }
 
 void ConstraintRelaxationStrategy::compute_nonlinear_residuals(const ReformulatedProblem& problem, Iterate& iterate) const {

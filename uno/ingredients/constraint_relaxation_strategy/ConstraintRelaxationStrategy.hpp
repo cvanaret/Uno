@@ -13,7 +13,7 @@
 
 class ConstraintRelaxationStrategy {
 public:
-   ConstraintRelaxationStrategy(bool penalty_parameter_control, Norm residual_norm);
+   ConstraintRelaxationStrategy(bool penalty_parameter_control, const Options& options);
    virtual ~ConstraintRelaxationStrategy() = default;
 
    virtual void initialize(Statistics& statistics, Iterate& first_iterate) = 0;
@@ -38,9 +38,10 @@ public:
 
 protected:
    const Norm residual_norm;
+   const double small_step_threshold;
 
    [[nodiscard]] virtual double compute_infeasibility_measure(Iterate& iterate) = 0;
-   static bool is_small_step(const Direction& direction);
+   [[nodiscard]] bool is_small_step(const Direction& direction) const;
    void compute_nonlinear_residuals(const ReformulatedProblem& problem, Iterate& iterate) const;
    void recover_active_set(const Model& model, Direction& direction);
 };
