@@ -40,17 +40,17 @@ void Statistics::add_statistic(std::string name, std::string value) {
 }
 
 void Statistics::add_statistic(std::string name, int value) {
-   add_statistic(std::move(name), std::move(std::to_string(value)));
+   add_statistic(std::move(name), std::to_string(value));
 }
 
 void Statistics::add_statistic(std::string name, size_t value) {
-   add_statistic(std::move(name), std::move(std::to_string(value)));
+   add_statistic(std::move(name), std::to_string(value));
 }
 
 void Statistics::add_statistic(std::string name, double value) {
    std::ostringstream stream;
    stream << std::scientific << std::setprecision(6) << value;
-   add_statistic(std::move(name), std::move(stream.str()));
+   add_statistic(std::move(name), stream.str());
 }
 
 void Statistics::print_header(bool first_occurrence) {
@@ -62,7 +62,7 @@ void Statistics::print_header(bool first_occurrence) {
          std::cout << (first_occurrence ? Statistics::symbols["top-mid"] : Statistics::symbols["mid-mid"]);
       }
       std::string header = element.second;
-      for (size_t j = 0; j < this->widths[header]; j++) {
+      for (int j = 0; j < this->widths[header]; j++) {
          std::cout << Statistics::symbols["top"];
       }
       k++;
@@ -77,7 +77,7 @@ void Statistics::print_header(bool first_occurrence) {
       }
       std::string header = element.second;
       std::cout << " " << header;
-      for (size_t j = 0; j < this->widths[header] - header.size() - 1; j++) {
+      for (int j = 0; j < this->widths[header] - static_cast<int>(header.size()) - 1; j++) {
          std::cout << " ";
       }
       k++;
@@ -96,7 +96,7 @@ void Statistics::print_current_line() {
          std::cout << Statistics::symbols["mid-mid"];
       }
       std::string header = element.second;
-      for (size_t j = 0; j < this->widths[header]; j++) {
+      for (int j = 0; j < this->widths[header]; j++) {
          std::cout << Statistics::symbols["bottom"];
       }
       k++;
@@ -110,18 +110,18 @@ void Statistics::print_current_line() {
          std::cout << Statistics::symbols["middle"];
       }
       const std::string& header = element.second;
-      size_t size;
+      int size;
       try {
          std::string value = this->current_line.at(header);
          std::cout << " " << value;
-         size = 1 + value.size();
+         size = 1 + static_cast<int>(value.size());
       }
       catch (const std::out_of_range&) {
          std::cout << " -";
          size = 2;
       }
-      size_t number_spaces = (size <= this->widths[header]) ? this->widths[header] - size : 0;
-      for (size_t j = 0; j < number_spaces; j++) {
+      int number_spaces = (size <= this->widths[header]) ? this->widths[header] - size : 0;
+      for (int j = 0; j < number_spaces; j++) {
          std::cout << " ";
       }
       k++;
@@ -138,7 +138,7 @@ void Statistics::print_footer() {
          std::cout << Statistics::symbols["bottom-mid"];
       }
       std::string header = element.second;
-      for (size_t j = 0; j < this->widths[header]; j++) {
+      for (int j = 0; j < this->widths[header]; j++) {
          std::cout << Statistics::symbols["bottom"];
       }
       k++;
