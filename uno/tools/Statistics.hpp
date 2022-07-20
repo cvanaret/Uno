@@ -30,7 +30,7 @@ public:
 private:
    size_t iteration{0};
    std::map<int, std::string> columns{};
-   std::map<std::string, size_t> widths{};
+   std::map<std::string, int> widths{};
    std::map<std::string, std::string> current_line{};
 
    size_t print_header_every_iterations{};
