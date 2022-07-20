@@ -51,6 +51,8 @@ protected:
    std::vector<double> constraint_multipliers;
    std::vector<double> lower_bound_multipliers;
    std::vector<double> upper_bound_multipliers;
+   // statistics table
+   int statistics_penalty_parameter_column_order;
 
    static double compute_predicted_reduction(const Model& model, Iterate& current_iterate, const Direction& direction,
          PredictedReductionModel& predicted_reduction_model, double step_length);

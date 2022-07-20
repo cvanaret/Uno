@@ -41,6 +41,8 @@ private:
    const std::unique_ptr<GlobalizationStrategy> phase_1_strategy;
    const std::unique_ptr<GlobalizationStrategy> phase_2_strategy;
    Phase current_phase{OPTIMALITY};
+   // statistics table
+   int statistics_restoration_phase_column_order;
 
    [[nodiscard]] const ReformulatedProblem& get_current_reformulated_problem() const;
    [[nodiscard]] Direction solve_optimality_problem(Statistics& statistics, Iterate& current_iterate);

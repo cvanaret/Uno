@@ -25,6 +25,9 @@ private:
    const double backtracking_ratio;
    const double min_step_length;
    const bool use_second_order_correction;
+   // statistics table
+   const int statistics_SOC_column_order;
+   const int statistics_LS_step_length_column_order;
 
    [[nodiscard]] Direction compute_direction(Statistics& statistics, Iterate& current_iterate);
    [[nodiscard]] bool termination() const;

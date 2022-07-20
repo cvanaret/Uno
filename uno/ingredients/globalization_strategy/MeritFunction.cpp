@@ -7,8 +7,7 @@ MeritFunction::MeritFunction(const Options& options):
       GlobalizationStrategy(options) {
 }
 
-void MeritFunction::initialize(Statistics& statistics, const Iterate& /*first_iterate*/) {
-   statistics.add_column("penalty param.", Statistics::double_width, 4);
+void MeritFunction::initialize(Statistics& /*statistics*/, const Iterate& /*first_iterate*/) {
 }
 
 void MeritFunction::reset() {
@@ -17,8 +16,8 @@ void MeritFunction::reset() {
 void MeritFunction::notify(Iterate& /*current_iterate*/) {
 }
 
-bool MeritFunction::is_acceptable(Statistics& statistics, const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
-      double objective_multiplier, double predicted_reduction) {
+bool MeritFunction::is_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress, double objective_multiplier,
+      double predicted_reduction) {
    GlobalizationStrategy::check_finiteness(current_progress);
    GlobalizationStrategy::check_finiteness(trial_progress);
 
@@ -34,7 +33,6 @@ bool MeritFunction::is_acceptable(Statistics& statistics, const ProgressMeasures
    // Armijo sufficient decrease condition
    const bool accept = this->armijo_sufficient_decrease(predicted_reduction, actual_reduction);
    if (accept) {
-      statistics.add_statistic("penalty param.", objective_multiplier);
       DEBUG << "Trial iterate was accepted by satisfying Armijo condition\n";
    }
    return accept;

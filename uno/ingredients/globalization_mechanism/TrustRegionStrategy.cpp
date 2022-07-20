@@ -13,13 +13,14 @@ TrustRegionStrategy::TrustRegionStrategy(ConstraintRelaxationStrategy& constrain
       increase_factor(stod(options.at("TR_increase_factor"))),
       decrease_factor(stod(options.at("TR_decrease_factor"))),
       activity_tolerance(stod(options.at("TR_activity_tolerance"))),
-      min_radius(stod(options.at("TR_min_radius"))) {
+      min_radius(stod(options.at("TR_min_radius"))),
+      statistics_TR_radius_column_order(stoi(options.at("statistics_TR_radius_column_order"))) {
    assert(1. < this->increase_factor && "The TR increase factor should be > 1");
    assert(1. < this->decrease_factor && "The TR decrease factor should be > 1");
 }
 
 void TrustRegionStrategy::initialize(Statistics& statistics, Iterate& first_iterate) {
-   statistics.add_column("TR radius", Statistics::double_width, 30);
+   statistics.add_column("TR radius", Statistics::double_width, this->statistics_TR_radius_column_order);
 
    // generate the initial point
    this->constraint_relaxation_strategy.set_variable_bounds(first_iterate, this->radius);

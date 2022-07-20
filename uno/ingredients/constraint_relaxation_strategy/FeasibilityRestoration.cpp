@@ -17,11 +17,12 @@ FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options
             this->feasibility_problem.get_maximum_number_hessian_nonzeros(), options)),
       // create the globalization strategies (one for each phase)
       phase_1_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
-      phase_2_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)) {
+      phase_2_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
+      statistics_restoration_phase_column_order(stoi(options.at("statistics_restoration_phase_column_order"))) {
 }
 
 void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& first_iterate) {
-   statistics.add_column("phase", Statistics::int_width, 4);
+   statistics.add_column("phase", Statistics::int_width, this->statistics_restoration_phase_column_order);
 
    // initialize the subproblem
    this->subproblem->initialize(statistics, this->optimality_problem, first_iterate);
@@ -109,7 +110,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& curr
       const double predicted_reduction = predicted_reduction_model.evaluate(step_length);
 
       // invoke the globalization strategy for acceptance
-      accept = current_phase_strategy.is_acceptable(statistics, current_iterate.nonlinear_progress, trial_iterate.nonlinear_progress,
+      accept = current_phase_strategy.is_acceptable(current_iterate.nonlinear_progress, trial_iterate.nonlinear_progress,
             direction.objective_multiplier, predicted_reduction);
    }
 

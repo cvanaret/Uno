@@ -14,7 +14,22 @@ print_solution no
 # small step threshold for termination
 small_step_threshold 1e-10
 
+# statistics table
 statistics_print_header_every_iterations 15
+
+statistics_major_column_order 1
+statistics_minor_column_order 2
+statistics_restoration_phase_column_order 4
+statistics_penalty_parameter_column_order 4
+statistics_barrier_parameter_column_order 8
+statistics_SOC_column_order 9
+statistics_LS_step_length_column_order 30
+statistics_TR_radius_column_order 30
+statistics_step_norm_column_order 31
+statistics_objective_column_order 100
+statistics_infeasibility_column_order 101
+statistics_complementarity_column_order 104
+statistics_stationarity_column_order 105
 
 ##### ingredients #####
 # default subproblem (QP|LP|barrier)

@@ -20,7 +20,7 @@ public:
    virtual ~GlobalizationStrategy() = default;
 
    virtual void initialize(Statistics& statistics, const Iterate& first_iterate) = 0;
-   [[nodiscard]] virtual bool is_acceptable(Statistics& statistics, const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
+   [[nodiscard]] virtual bool is_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
          double objective_multiplier, double predicted_reduction) = 0;
    virtual void reset() = 0;
    virtual void notify(Iterate& current_iterate) = 0;
