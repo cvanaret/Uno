@@ -60,6 +60,9 @@ private:
 
    bool solving_feasibility_problem{false};
 
+   // statistics table
+   int statistics_barrier_parameter_column_order;
+
    void evaluate_functions(const ReformulatedProblem& problem, Iterate& current_iterate);
    void update_barrier_parameter(const ReformulatedProblem& problem, const Iterate& current_iterate);
    [[nodiscard]] bool is_small_direction(const ReformulatedProblem& problem, const Iterate& current_iterate, const Direction& direction) const;

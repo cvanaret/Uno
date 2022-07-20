@@ -12,14 +12,16 @@ BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& con
       GlobalizationMechanism(constraint_relaxation_strategy),
       backtracking_ratio(std::stod(options.at("LS_backtracking_ratio"))),
       min_step_length(std::stod(options.at("LS_min_step_length"))),
-      use_second_order_correction(options.at("use_second_order_correction") == "yes") {
+      use_second_order_correction(options.at("use_second_order_correction") == "yes"),
+      statistics_SOC_column_order(stoi(options.at("statistics_SOC_column_order"))),
+      statistics_LS_step_length_column_order(stoi(options.at("statistics_LS_step_length_column_order"))) {
    assert(0 < this->backtracking_ratio && this->backtracking_ratio < 1. && "The LS backtracking ratio should be in (0, 1)");
    assert(0 < this->min_step_length && this->min_step_length < 1. && "The LS minimum step length should be in (0, 1)");
 }
 
 void BacktrackingLineSearch::initialize(Statistics& statistics, Iterate& first_iterate) {
-   statistics.add_column("SOC", Statistics::char_width, 9);
-   statistics.add_column("LS step length", Statistics::double_width, 30);
+   statistics.add_column("SOC", Statistics::char_width, this->statistics_SOC_column_order);
+   statistics.add_column("LS step length", Statistics::double_width, this->statistics_LS_step_length_column_order);
 
    // generate the initial point
    this->constraint_relaxation_strategy.set_variable_bounds(first_iterate, INF);

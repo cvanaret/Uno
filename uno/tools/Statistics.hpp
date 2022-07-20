@@ -33,7 +33,7 @@ private:
    std::map<std::string, size_t> widths{};
    std::map<std::string, std::string> current_line{};
 
-   std::size_t print_header_every_iterations{};
+   size_t print_header_every_iterations{};
 };
 
 #endif // UNO_STATISTICS_H

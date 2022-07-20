@@ -24,6 +24,8 @@ private:
    const double decrease_factor;
    const double activity_tolerance;
    const double min_radius;
+   // statistics table
+   int statistics_TR_radius_column_order;
 
    static void rectify_active_set(Direction& direction, double radius);
    void add_statistics(Statistics& statistics, const Direction& direction);

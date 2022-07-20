@@ -41,11 +41,12 @@ BarrierSubproblem::BarrierSubproblem(size_t max_number_variables, size_t max_num
             stod(options.at("barrier_push_variable_to_interior_k2"))
       }),
       default_multiplier(std::stod(options.at("barrier_default_multiplier"))),
-      lower_delta_z(max_number_variables), upper_delta_z(max_number_variables) {
+      lower_delta_z(max_number_variables), upper_delta_z(max_number_variables),
+      statistics_barrier_parameter_column_order(stoi(options.at("statistics_barrier_parameter_column_order"))) {
 }
 
 inline void BarrierSubproblem::initialize(Statistics& statistics, const ReformulatedProblem& problem, Iterate& first_iterate) {
-   statistics.add_column("barrier param.", Statistics::double_width, 8);
+   statistics.add_column("barrier param.", Statistics::double_width, this->statistics_barrier_parameter_column_order);
 
    // make the initial point strictly feasible wrt the bounds
    for (size_t i = 0; i < problem.number_variables; i++) {

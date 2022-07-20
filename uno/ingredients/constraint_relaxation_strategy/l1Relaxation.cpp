@@ -31,11 +31,12 @@ l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
                   stod(options.at("l1_relaxation_small_threshold"))}),
       constraint_multipliers(model.number_constraints),
       lower_bound_multipliers(model.number_variables),
-      upper_bound_multipliers(model.number_variables) {
+      upper_bound_multipliers(model.number_variables),
+      statistics_penalty_parameter_column_order(stoi(options.at("statistics_penalty_parameter_column_order"))) {
 }
 
 void l1Relaxation::initialize(Statistics& statistics, Iterate& first_iterate) {
-   statistics.add_column("penalty param.", Statistics::double_width, 4);
+   statistics.add_column("penalty param.", Statistics::double_width, this->statistics_penalty_parameter_column_order);
 
    this->subproblem->set_elastic_variables(this->relaxed_problem, first_iterate);
    // initialize the subproblem
@@ -238,7 +239,7 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, Iterate& current_iterat
             predicted_reduction_model, step_length);
 
       // invoke the globalization strategy for acceptance
-      accept = this->globalization_strategy->is_acceptable(statistics, current_iterate.nonlinear_progress, trial_iterate.nonlinear_progress,
+      accept = this->globalization_strategy->is_acceptable(current_iterate.nonlinear_progress, trial_iterate.nonlinear_progress,
             this->penalty_parameter, predicted_reduction);
    }
    if (accept) {

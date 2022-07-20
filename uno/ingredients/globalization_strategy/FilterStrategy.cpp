@@ -35,8 +35,8 @@ void FilterStrategy::notify(Iterate& current_iterate) {
 /* check acceptability of step(s) (filter & sufficient reduction)
  * precondition: feasible step
  * */
-bool FilterStrategy::is_acceptable(Statistics& /*statistics*/, const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
-      double /*objective_multiplier*/, double predicted_reduction) {
+bool FilterStrategy::is_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress, double /*objective_multiplier*/,
+      double predicted_reduction) {
    GlobalizationStrategy::check_finiteness(current_progress);
    GlobalizationStrategy::check_finiteness(trial_progress);
 
