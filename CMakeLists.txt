@@ -60,7 +60,6 @@ set(SRC_FILES
 
     uno/linear_algebra/SymmetricMatrix.cpp
     uno/linear_algebra/COOSymmetricMatrix.cpp
-    uno/linear_algebra/CSCSymmetricMatrix.cpp
     uno/linear_algebra/SymmetricMatrixFactory.cpp
     uno/linear_algebra/SparseVector.cpp
     uno/linear_algebra/Vector.cpp

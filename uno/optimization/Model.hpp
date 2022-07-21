@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "linear_algebra/CSCSymmetricMatrix.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 
