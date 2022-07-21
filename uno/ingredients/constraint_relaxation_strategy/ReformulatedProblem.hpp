@@ -9,7 +9,6 @@
 #include <map>
 #include "optimization/Iterate.hpp"
 #include "optimization/Model.hpp"
-#include "linear_algebra/CSCSymmetricMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "ingredients/subproblem/Direction.hpp"

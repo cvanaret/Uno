@@ -20,7 +20,7 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
    Iterate first_iterate(original_model->number_variables, original_model->number_constraints);
    original_model->get_initial_primal_point(first_iterate.primals);
    original_model->get_initial_dual_point(first_iterate.multipliers.constraints);
-   // project x into the bounds
+   // project primal duals into the bounds
    original_model->project_point_onto_bounds(first_iterate.primals);
 
    // initialize the function scaling
