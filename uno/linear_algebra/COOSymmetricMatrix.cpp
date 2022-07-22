@@ -67,6 +67,10 @@ void COOSymmetricMatrix::pop() {
    this->number_nonzeros--;
 }
 
+void COOSymmetricMatrix::finalize(size_t /*column_index*/) {
+   // do nothing
+}
+
 void COOSymmetricMatrix::add_identity_multiple(double multiple, size_t number_variables) {
    assert(number_variables <= this->dimension && "The number of variables is larger than the matrix dimension");
 
