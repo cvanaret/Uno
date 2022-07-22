@@ -21,7 +21,7 @@ public:
    void for_each_value(const std::function<void (T)>& f) const;
    [[nodiscard]] size_t size() const;
    void reserve(size_t capacity);
-   
+
    void insert(size_t index, T value);
    void transform(const std::function<T (T)>& f);
    void clear();

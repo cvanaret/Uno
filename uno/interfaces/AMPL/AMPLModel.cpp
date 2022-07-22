@@ -242,7 +242,7 @@ void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double
          const double entry = this->ampl_tmp_hessian[k];
          hessian.insert(entry, i, j);
       }
-      hessian.finalize(j);
+      hessian.finalize_column(j);
    }
    hessian.dimension = this->number_variables;
    // unregister the vector of variables

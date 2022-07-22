@@ -23,7 +23,8 @@ public:
    virtual void for_each(const std::function<void (size_t, size_t, double)>& f) const = 0;
    // build the matrix incrementally
    virtual void insert(double term, size_t row_index, size_t column_index) = 0;
-   virtual void finalize(size_t column_index) = 0;
+   // this method will be used by the CSCSymmetricMatrix subclass
+   virtual void finalize_column(size_t column_index) = 0;
    [[nodiscard]] virtual double smallest_diagonal_entry() const = 0;
    virtual void set_regularization(const std::function<double(size_t index)>& f) = 0;
    [[nodiscard]] const double* raw_pointer() const;
