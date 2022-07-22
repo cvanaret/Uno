@@ -44,32 +44,12 @@ void COOSymmetricMatrix::for_each(const std::function<void(size_t, size_t, doubl
    }
 }
 
-size_t COOSymmetricMatrix::find(size_t row_index, size_t column_index) const {
-   size_t position = 0;
-   while (position < this->number_nonzeros) {
-      if (this->row_indices[position] == row_index && this->column_indices[position] == column_index) {
-         break;
-      }
-      position++;
-   }
-   return position;
-}
-
 void COOSymmetricMatrix::insert(double term, size_t row_index, size_t column_index) {
-   // look for an existing entry
-   size_t position = this->find(row_index, column_index);
-   // if the entry already exists, modify it
-   if (false && position < this->number_nonzeros) {
-      this->entries[position] += term;
-   }
-   // otherwise, add an entry
-   else {
-      assert(this->number_nonzeros <= row_indices.size() && "The COO matrix doesn't have a sufficient capacity");
-      this->entries.push_back(term);
-      this->row_indices.push_back(row_index);
-      this->column_indices.push_back(column_index);
-      this->number_nonzeros++;
-   }
+   assert(this->number_nonzeros <= row_indices.size() && "The COO matrix doesn't have a sufficient capacity");
+   this->entries.push_back(term);
+   this->row_indices.push_back(row_index);
+   this->column_indices.push_back(column_index);
+   this->number_nonzeros++;
 }
 
 void COOSymmetricMatrix::finalize(size_t /*column_index*/) {

@@ -25,7 +25,6 @@ protected:
    std::vector<size_t> row_indices;
    std::vector<size_t> column_indices;
 
-   [[nodiscard]] size_t find(size_t row_index, size_t column_index) const;
    void initialize_regularization();
 };
 
