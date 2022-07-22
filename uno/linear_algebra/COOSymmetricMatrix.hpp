@@ -17,7 +17,7 @@ public:
    void insert(double term, size_t row_index, size_t column_index) override;
    void finalize_column(size_t column_index) override;
    [[nodiscard]] double smallest_diagonal_entry() const override;
-   void set_regularization(const std::function<double(size_t index)>& f) override;
+   void set_regularization(const std::function<double(size_t index)>& regularization_function) override;
 
    void print(std::ostream& stream) const override;
 
