@@ -21,8 +21,7 @@ public:
    void for_each_value(const std::function<void (T)>& f) const;
    [[nodiscard]] size_t size() const;
    void reserve(size_t capacity);
-
-   template <bool lookup_element = false>
+   
    void insert(size_t index, T value);
    void transform(const std::function<T (T)>& f);
    void clear();
@@ -76,29 +75,10 @@ void SparseVector<T>::reserve(size_t capacity) {
 }
 
 template <typename T>
-template <bool lookup_element>
 void SparseVector<T>::insert(size_t index, T value) {
-   if constexpr (lookup_element) {
-      const auto start_position = begin(this->indices);
-      const auto end_position = begin(this->indices) + this->number_nonzeros;
-      const auto position = std::find(start_position, end_position, index);
-      // if index is not found, add the new term, otherwise update it
-      if (position == end_position) {
-         this->indices.push_back(index);
-         this->values.push_back(value);
-         this->number_nonzeros++;
-      }
-      else {
-         const auto element_index = std::distance(start_position, position);
-         // element_index is the index at which the index was found
-         this->values[element_index] += value;
-      }
-   }
-   else {
-      this->indices.push_back(index);
-      this->values.push_back(value);
-      this->number_nonzeros++;
-   }
+   this->indices.push_back(index);
+   this->values.push_back(value);
+   this->number_nonzeros++;
 }
 
 template <typename T>
