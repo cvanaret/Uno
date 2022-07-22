@@ -73,7 +73,6 @@ inline void BarrierSubproblem::initialize(Statistics& statistics, const Reformul
 void BarrierSubproblem::evaluate_functions(const ReformulatedProblem& problem, Iterate& current_iterate) {
    // Hessian
    this->hessian_model->evaluate(problem, current_iterate.primals, current_iterate.multipliers.constraints);
-   // TODO add barrier terms here instead of in the augmented system
 
    // barrier objective gradient
    problem.evaluate_objective_gradient(current_iterate, this->objective_gradient);
