@@ -1,5 +1,5 @@
 C Copyright (c) 2022 Sven Leyffer
-C Licensed under the MIT license. See LICENSE file in the project root for details.
+C Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 C     hristen this file wdotd.f
 
