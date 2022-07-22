@@ -1,5 +1,5 @@
 // Copyright (c) 2022 Charlie Vanaret
-// Licensed under the MIT license. See LICENSE file in the project root for details.
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "Preprocessing.hpp"
 #include "tools/Range.hpp"
