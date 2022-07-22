@@ -8,7 +8,7 @@
 
 class SymmetricMatrixFactory {
 public:
-   static std::unique_ptr<SymmetricMatrix> create(const std::string& symmetric_matrix_type, size_t dimension, size_t capacity);
+   static std::unique_ptr<SymmetricMatrix> create(const std::string& symmetric_matrix_type, size_t dimension, size_t capacity, bool use_regularization);
 };
 
 #endif // UNO_SYMMETRICMATRIXFACTORY_H

@@ -4,22 +4,45 @@
 #include <iostream>
 #include "COOSymmetricMatrix.hpp"
 #include "tools/Infinity.hpp"
+#include "Vector.hpp"
 
 /*
  * Coordinate list
  * https://en.wikipedia.org/wiki/Sparse_matrix#Coordinate_list_(COO)
  */
 
-COOSymmetricMatrix::COOSymmetricMatrix(size_t dimension, size_t capacity) : SymmetricMatrix(dimension, capacity) {
-   row_indices.reserve(capacity);
-   column_indices.reserve(capacity);
+COOSymmetricMatrix::COOSymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization):
+      SymmetricMatrix(dimension, original_capacity, use_regularization) {
+   row_indices.reserve(original_capacity);
+   column_indices.reserve(original_capacity);
+
+   if (this->use_regularization) {
+      this->initialize_regularization();
+   }
+   /*
+   print_vector(std::cout, this->entries, 0, this->capacity);
+
+   std::cout << "Original capacity: " << original_capacity << '\n';
+   std::cout << "New capacity:      " << this->capacity << '\n';
+   std::cout << "Pointer to start of entries:        " << this->entries.data() << '\n';
+   std::cout << "Pointer to start of regularization: " << &this->entries[0] << '\n';
+   std::cout << "Pointer to start of regularization: " << this->regularization << '\n';
+   this->regularization[0] = 1.;
+   print_vector(std::cout, this->entries, 0, this->capacity);
+    */
 }
 
 void COOSymmetricMatrix::reset() {
+   // empty the matrix
    SymmetricMatrix::reset();
    this->entries.clear();
    this->row_indices.clear();
    this->column_indices.clear();
+
+   // initialize regularization terms
+   if (this->use_regularization) {
+      this->initialize_regularization();
+   }
 }
 
 // generic iterator
@@ -60,23 +83,8 @@ void COOSymmetricMatrix::insert(double term, size_t row_index, size_t column_ind
    }
 }
 
-void COOSymmetricMatrix::pop() {
-   this->entries.pop_back();
-   this->row_indices.pop_back();
-   this->column_indices.pop_back();
-   this->number_nonzeros--;
-}
-
 void COOSymmetricMatrix::finalize(size_t /*column_index*/) {
    // do nothing
-}
-
-void COOSymmetricMatrix::add_identity_multiple(double multiple, size_t number_variables) {
-   assert(number_variables <= this->dimension && "The number of variables is larger than the matrix dimension");
-
-   for (size_t i = 0; i < number_variables; i++) {
-      this->insert(multiple, i, i);
-   }
 }
 
 double COOSymmetricMatrix::smallest_diagonal_entry() const {
@@ -90,6 +98,20 @@ double COOSymmetricMatrix::smallest_diagonal_entry() const {
       smallest_entry = 0.;
    }
    return smallest_entry;
+}
+
+void COOSymmetricMatrix::initialize_regularization() {
+   for (size_t i = 0; i < this->dimension; i++) {
+      this->insert(0., i, i);
+   }
+}
+
+void COOSymmetricMatrix::set_regularization(const std::function<double(size_t index)>& f) {
+   assert(this->use_regularization && "Trying to regularize a matrix where regularization was not preallocated.");
+   // the regularization terms lie at the start of the entries vector
+   for (size_t i = 0; i < this->dimension; i++) {
+      this->entries[i] = f(i);
+   }
 }
 
 void COOSymmetricMatrix::print(std::ostream& stream) const {

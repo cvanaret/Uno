@@ -6,8 +6,12 @@
 #include <iomanip>
 #include "SymmetricMatrix.hpp"
 
-SymmetricMatrix::SymmetricMatrix(size_t dimension, size_t capacity) : dimension(dimension), capacity(capacity) {
-   entries.reserve(capacity);
+SymmetricMatrix::SymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization) :
+      dimension(dimension),
+      // if regularization is used, allocate the necessary space
+      capacity(original_capacity + (use_regularization ? dimension : 0)),
+      use_regularization(use_regularization) {
+   this->entries.reserve(this->capacity);
 }
 
 void SymmetricMatrix::reset() {
@@ -25,6 +29,10 @@ double SymmetricMatrix::quadratic_product(const std::vector<double>& x, const st
       }
    });
    return result;
+}
+
+const double* SymmetricMatrix::raw_pointer() const {
+   return this->entries.data();
 }
 
 std::ostream& operator<<(std::ostream& stream, const SymmetricMatrix& matrix) {
