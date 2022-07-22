@@ -24,7 +24,6 @@ public:
 
    template <bool lookup_element = false>
    void insert(size_t index, T value);
-   void erase(size_t index);
    void transform(const std::function<T (T)>& f);
    void clear();
    [[nodiscard]] bool empty() const;
@@ -99,24 +98,6 @@ void SparseVector<T>::insert(size_t index, T value) {
       this->indices.push_back(index);
       this->values.push_back(value);
       this->number_nonzeros++;
-   }
-}
-
-template <typename T>
-void SparseVector<T>::erase(size_t index) {
-   const auto start_position = std::cbegin(this->indices);
-   const auto end_position = std::cbegin(this->indices) + this->number_nonzeros;
-   const auto position = std::find(start_position, end_position, index);
-   // if the index is found
-   if (position != end_position) {
-      // get the index of the found element
-      const auto element_index = std::distance(start_position, position);
-      // move the last element to this spot
-      this->indices[element_index] = this->indices[this->number_nonzeros - 1];
-      this->values[element_index] = this->values[this->number_nonzeros - 1];
-      this->indices.pop_back();
-      this->values.pop_back();
-      this->number_nonzeros--;
    }
 }
 
