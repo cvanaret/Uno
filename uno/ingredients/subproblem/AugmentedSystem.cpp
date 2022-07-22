@@ -18,10 +18,6 @@ AugmentedSystem::AugmentedSystem(const std::string& sparse_format, size_t max_di
    regularization_first_block_slow_increase_factor(stod(options.at("regularization_first_block_slow_increase_factor"))) {
 }
 
-void AugmentedSystem::set_matrix_regularization(const std::function<double(size_t index)>& f) {
-   this->matrix->set_regularization(f);
-}
-
 void AugmentedSystem::factorize_matrix(const ReformulatedProblem& /*problem*/, LinearSolver& linear_solver) {
    // compute the symbolic factorization only when:
    // the problem has a non-constant augmented system (ie is not an LP or a QP) or it is the first factorization
@@ -63,13 +59,8 @@ void AugmentedSystem::regularize_matrix(const ReformulatedProblem& problem, Line
    }
 
    // regularize the augmented matrix
-   this->matrix->set_regularization([&](size_t i) {
-      if (i < size_first_block) {
-         return regularization_first_block;
-      }
-      else {
-         return -regularization_second_block;
-      }
+   this->matrix->set_regularization([=](size_t i) {
+      return (i < size_first_block) ? regularization_first_block : -regularization_second_block;
    });
 
    bool good_inertia = false;
@@ -93,13 +84,8 @@ void AugmentedSystem::regularize_matrix(const ReformulatedProblem& problem, Line
 
          if (regularization_first_block <= this->regularization_failure_threshold) {
             // regularize the augmented matrix
-            this->matrix->set_regularization([&](size_t i) {
-               if (i < size_first_block) {
-                  return regularization_first_block;
-               }
-               else {
-                  return -regularization_second_block;
-               }
+            this->matrix->set_regularization([=](size_t i) {
+               return (i < size_first_block) ? regularization_first_block : -regularization_second_block;
             });
          }
          else {

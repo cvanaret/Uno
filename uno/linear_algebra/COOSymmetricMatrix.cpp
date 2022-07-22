@@ -19,17 +19,6 @@ COOSymmetricMatrix::COOSymmetricMatrix(size_t dimension, size_t original_capacit
    if (this->use_regularization) {
       this->initialize_regularization();
    }
-   /*
-   print_vector(std::cout, this->entries, 0, this->capacity);
-
-   std::cout << "Original capacity: " << original_capacity << '\n';
-   std::cout << "New capacity:      " << this->capacity << '\n';
-   std::cout << "Pointer to start of entries:        " << this->entries.data() << '\n';
-   std::cout << "Pointer to start of regularization: " << &this->entries[0] << '\n';
-   std::cout << "Pointer to start of regularization: " << this->regularization << '\n';
-   this->regularization[0] = 1.;
-   print_vector(std::cout, this->entries, 0, this->capacity);
-    */
 }
 
 void COOSymmetricMatrix::reset() {
@@ -101,6 +90,7 @@ double COOSymmetricMatrix::smallest_diagonal_entry() const {
 }
 
 void COOSymmetricMatrix::initialize_regularization() {
+   // introduce elements at the start of the entries
    for (size_t i = 0; i < this->dimension; i++) {
       this->insert(0., i, i);
    }
@@ -108,7 +98,7 @@ void COOSymmetricMatrix::initialize_regularization() {
 
 void COOSymmetricMatrix::set_regularization(const std::function<double(size_t index)>& f) {
    assert(this->use_regularization && "Trying to regularize a matrix where regularization was not preallocated.");
-   // the regularization terms lie at the start of the entries vector
+   // the regularization terms (that lie at the start of the entries vector) can be directly modified
    for (size_t i = 0; i < this->dimension; i++) {
       this->entries[i] = f(i);
    }

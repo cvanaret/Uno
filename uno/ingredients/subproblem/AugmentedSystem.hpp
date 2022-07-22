@@ -25,7 +25,6 @@ public:
 
    AugmentedSystem(const std::string& sparse_format, size_t max_dimension, size_t max_number_non_zeros, bool use_regularization,
          const Options& options);
-   void set_matrix_regularization(const std::function<double(size_t index)>& f);
    void factorize_matrix(const ReformulatedProblem& problem, LinearSolver& linear_solver);
    void regularize_matrix(const ReformulatedProblem& problem, LinearSolver& linear_solver, size_t size_first_block, size_t size_second_block,
          double constraint_regularization_parameter);
