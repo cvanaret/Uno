@@ -77,6 +77,7 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
 
    DEBUG << "Solving the feasibility subproblem\n";
    Direction feasibility_direction = this->subproblem->solve(statistics, this->feasibility_problem, current_iterate);
+   assert(feasibility_direction.status == Status::OPTIMAL && "The feasibility subproblem was not solved to optimality");
    feasibility_direction.objective_multiplier = 0.;
    feasibility_direction.norm = norm_inf(feasibility_direction.primals, Range(this->optimality_problem.number_variables));
    // create constraint partition
@@ -84,7 +85,6 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
    constraint_partition.infeasible = this->feasibility_problem.get_violated_linearized_constraints(feasibility_direction.primals);
    feasibility_direction.constraint_partition = constraint_partition;
    DEBUG << feasibility_direction << '\n';
-   assert(feasibility_direction.status == Status::OPTIMAL && "The subproblem was not solved to optimality");
    return feasibility_direction;
 }
 

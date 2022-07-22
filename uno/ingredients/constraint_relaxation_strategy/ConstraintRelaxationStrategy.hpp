@@ -43,7 +43,6 @@ protected:
    [[nodiscard]] virtual double compute_infeasibility_measure(Iterate& iterate) = 0;
    [[nodiscard]] bool is_small_step(const Direction& direction) const;
    void compute_nonlinear_residuals(const ReformulatedProblem& problem, Iterate& iterate) const;
-   void recover_active_set(const Model& model, Direction& direction);
 };
 
 #endif //UNO_CONSTRAINTRELAXATIONSTRATEGY_H

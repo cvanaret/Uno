@@ -26,7 +26,7 @@ public:
    // this method will be used by the CSCSymmetricMatrix subclass
    virtual void finalize_column(size_t column_index) = 0;
    [[nodiscard]] virtual double smallest_diagonal_entry() const = 0;
-   virtual void set_regularization(const std::function<double(size_t index)>& f) = 0;
+   virtual void set_regularization(const std::function<double(size_t index)>& regularization_function) = 0;
    [[nodiscard]] const double* raw_pointer() const;
 
    virtual void print(std::ostream& stream) const = 0;
