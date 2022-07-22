@@ -1,13 +1,6 @@
 # What is Uno?
 Uno (Unifying Framework for Optimization) is a C++ framework aiming at unifying most of the methods for solving nonlinearly constrained optimization problems.
 
-# How to cite Uno?
-
-Please cite the article:  
-**Uno: an open-source framework for unifying nonlinear optimization methods**. Charlie Vanaret and Sven Leyffer
-
-Its bibtex entry is:  
-
 # Contributions
 
 Developed by Charlie Vanaret (Technische Universität Berlin)
@@ -18,13 +11,11 @@ TBD
 
 # Installation instructions
 
-* download optional interfaces:
-    * AMPL: http://www.netlib.org/ampl/solvers/
+* download the AMPL solver library (ASL): http://www.netlib.org/ampl/solvers/
 
 * download optional solvers:
     * BQPD: https://www.mcs.anl.gov/~leyffer/solvers.html
     * MA57: http://www.hsl.rl.ac.uk/catalogue/ma57.html
-    * PARDISO: https://www.pardiso-project.org/
 
 * install BLAS, LAPACK and f2c:
 ```
