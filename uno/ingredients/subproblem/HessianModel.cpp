@@ -52,7 +52,7 @@ void ConvexifiedHessian::regularize(SymmetricMatrix& matrix, size_t number_origi
    while (!good_inertia) {
       DEBUG << "Testing factorization with regularization factor " << regularization_factor << '\n';
       if (0. < regularization_factor) {
-         matrix.set_regularization([&](size_t i) { return (i < number_original_variables ? regularization_factor : 0.); });
+         matrix.set_regularization([&](size_t i) { return (i < number_original_variables) ? regularization_factor : 0.; });
       }
       this->linear_solver->do_symbolic_factorization(matrix);
       this->linear_solver->do_numerical_factorization(matrix);
