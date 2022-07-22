@@ -13,9 +13,9 @@ BarrierSubproblem::BarrierSubproblem(size_t max_number_variables, size_t max_num
       Subproblem(max_number_variables, max_number_constraints),
       augmented_system(options.at("sparse_format"), max_number_variables + max_number_constraints,
             max_number_hessian_nonzeros
-            + max_number_variables + max_number_constraints /* regularization */
             + 2 * max_number_variables /* diagonal barrier terms */
             + max_number_variables * max_number_constraints /* Jacobian */,
+            true, /* use regularization */
             options),
       barrier_parameter(std::stod(options.at("barrier_initial_parameter"))),
       previous_barrier_parameter(std::stod(options.at("barrier_initial_parameter"))),

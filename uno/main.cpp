@@ -7,7 +7,6 @@
 #include "Uno.hpp"
 #include "optimization/ModelFactory.hpp"
 #include "optimization/ScaledModel.hpp"
-#include "optimization/EqualityConstrainedModel.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Options.hpp"
 #include "tools/Timer.hpp"

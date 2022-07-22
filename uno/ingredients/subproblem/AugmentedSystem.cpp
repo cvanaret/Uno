@@ -4,8 +4,9 @@
 #include "AugmentedSystem.hpp"
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
 
-AugmentedSystem::AugmentedSystem(const std::string& sparse_format, size_t max_dimension, size_t max_number_non_zeros, const Options& options):
-   matrix(SymmetricMatrixFactory::create(sparse_format, max_dimension, max_number_non_zeros)),
+AugmentedSystem::AugmentedSystem(const std::string& sparse_format, size_t max_dimension, size_t max_number_non_zeros, bool use_regularization,
+      const Options& options):
+   matrix(SymmetricMatrixFactory::create(sparse_format, max_dimension, max_number_non_zeros, use_regularization)),
    rhs(max_dimension),
    solution(max_dimension),
    regularization_failure_threshold(stod(options.at("regularization_failure_threshold"))),
@@ -17,8 +18,8 @@ AugmentedSystem::AugmentedSystem(const std::string& sparse_format, size_t max_di
    regularization_first_block_slow_increase_factor(stod(options.at("regularization_first_block_slow_increase_factor"))) {
 }
 
-void AugmentedSystem::solve(LinearSolver& linear_solver) {
-   linear_solver.solve(*this->matrix, this->rhs, this->solution);
+void AugmentedSystem::set_matrix_regularization(const std::function<double(size_t index)>& f) {
+   this->matrix->set_regularization(f);
 }
 
 void AugmentedSystem::factorize_matrix(const ReformulatedProblem& /*problem*/, LinearSolver& linear_solver) {
@@ -60,15 +61,16 @@ void AugmentedSystem::regularize_matrix(const ReformulatedProblem& problem, Line
       regularization_first_block = std::max(this->regularization_first_block_lb,
             this->previous_regularization_first_block / this->regularization_first_block_decrease_factor);
    }
-   size_t current_matrix_size = this->matrix->number_nonzeros;
 
-   // regularize
-   for (size_t i = 0; i < size_first_block; i++) {
-      this->matrix->insert(regularization_first_block, i, i);
-   }
-   for (size_t j = size_first_block; j < size_first_block + size_second_block; j++) {
-      this->matrix->insert(-regularization_second_block, j, j);
-   }
+   // regularize the augmented matrix
+   this->matrix->set_regularization([&](size_t i) {
+      if (i < size_first_block) {
+         return regularization_first_block;
+      }
+      else {
+         return -regularization_second_block;
+      }
+   });
 
    bool good_inertia = false;
    while (!good_inertia) {
@@ -90,16 +92,23 @@ void AugmentedSystem::regularize_matrix(const ReformulatedProblem& problem, Line
          }
 
          if (regularization_first_block <= this->regularization_failure_threshold) {
-            for (size_t i = 0; i < size_first_block; i++) {
-               this->matrix->entries[current_matrix_size + i] = regularization_first_block;
-            }
-            for (size_t j = size_first_block; j < size_first_block + size_second_block; j++) {
-               this->matrix->entries[current_matrix_size + j] = -regularization_second_block;
-            }
+            // regularize the augmented matrix
+            this->matrix->set_regularization([&](size_t i) {
+               if (i < size_first_block) {
+                  return regularization_first_block;
+               }
+               else {
+                  return -regularization_second_block;
+               }
+            });
          }
          else {
             throw UnstableRegularization();
          }
       }
    }
+}
+
+void AugmentedSystem::solve(LinearSolver& linear_solver) {
+   linear_solver.solve(*this->matrix, this->rhs, this->solution);
 }

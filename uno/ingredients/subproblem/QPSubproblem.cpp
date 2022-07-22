@@ -6,15 +6,13 @@
 
 QPSubproblem::QPSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros, const Options& options) :
       ActiveSetSubproblem(max_number_variables, max_number_constraints),
-      // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
-      solver(QPSolverFactory::create(options.at("QP_solver"), max_number_variables, max_number_constraints,
-            max_number_hessian_nonzeros
-            + max_number_variables, /* regularization */
-            true, options)),
-      proximal_coefficient(stod(options.at("proximal_coefficient"))),
       // if no trust region is used, the problem should be convexified to guarantee boundedness + descent direction
       hessian_model(HessianModelFactory::create(options.at("hessian_model"), max_number_variables,
-            max_number_hessian_nonzeros + max_number_variables, options.at("mechanism") != "TR", options)) {
+            max_number_hessian_nonzeros + max_number_variables, options.at("mechanism") != "TR", options)),
+      // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
+      solver(QPSolverFactory::create(options.at("QP_solver"), max_number_variables, max_number_constraints,
+            hessian_model->hessian->capacity, true, options)),
+      proximal_coefficient(stod(options.at("proximal_coefficient"))) {
 }
 
 void QPSubproblem::evaluate_functions(const ReformulatedProblem& problem, Iterate& current_iterate) {

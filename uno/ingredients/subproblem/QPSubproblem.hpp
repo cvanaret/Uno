@@ -20,12 +20,10 @@ public:
    [[nodiscard]] double get_proximal_coefficient() const override;
 
 protected:
-   // pointer to allow polymorphism
+   // pointers to allow polymorphism
+   const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
    const std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
    const double proximal_coefficient;
-
-   // evaluations
-   const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
 
    void evaluate_functions(const ReformulatedProblem& problem, Iterate& current_iterate);
    [[nodiscard]] Direction solve_QP(const ReformulatedProblem& problem, Iterate& iterate);

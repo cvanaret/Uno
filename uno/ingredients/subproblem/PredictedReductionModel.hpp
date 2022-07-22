@@ -8,7 +8,7 @@
 
 class PredictedReductionModel {
 public:
-   PredictedReductionModel(double full_step_value, std::function<std::function<double(double step_length)>()>  partial_step_precomputation);
+   PredictedReductionModel(double full_step_value, std::function<std::function<double(double step_length)>()> partial_step_precomputation);
    double evaluate(double step_length);
 
 private:
