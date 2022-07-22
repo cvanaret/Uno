@@ -12,7 +12,6 @@
 
 class HessianModel {
 public:
-   // TODO handle padding
    HessianModel(size_t dimension, size_t maximum_number_nonzeros, const std::string& sparse_format, bool use_regularization);
    virtual ~HessianModel() = default;
 
