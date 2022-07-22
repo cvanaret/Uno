@@ -15,7 +15,7 @@ public:
    void reset() override;
    void for_each(const std::function<void (size_t, size_t, double)>& f) const override;
    void insert(double term, size_t row_index, size_t column_index) override;
-   void finalize(size_t column_index) override;
+   void finalize_column(size_t column_index) override;
    [[nodiscard]] double smallest_diagonal_entry() const override;
    void set_regularization(const std::function<double(size_t index)>& f) override;
 

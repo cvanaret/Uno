@@ -216,7 +216,7 @@ inline void l1RelaxedProblem::evaluate_lagrangian_hessian(const std::vector<doub
    }
    // extend the dimension of the Hessian by finalizing the remaining columns (note: the elastics do not enter the Hessian)
    for (size_t j = this->model.number_variables; j < this->number_variables; j++) {
-      hessian.finalize(j);
+      hessian.finalize_column(j);
    }
 }
 

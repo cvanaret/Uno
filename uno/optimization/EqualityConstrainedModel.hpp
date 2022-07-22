@@ -153,7 +153,7 @@ inline void EqualityConstrainedModel::evaluate_lagrangian_hessian(const std::vec
    // extend the dimension of the Hessian by finalizing the remaining columns (note: the slacks do not enter the Hessian)
    hessian.dimension = this->number_variables;
    for (size_t j = this->original_model->number_variables; j < this->number_variables; j++) {
-      hessian.finalize(j);
+      hessian.finalize_column(j);
    }
 }
 

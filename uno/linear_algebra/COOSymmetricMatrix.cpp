@@ -52,7 +52,7 @@ void COOSymmetricMatrix::insert(double term, size_t row_index, size_t column_ind
    this->number_nonzeros++;
 }
 
-void COOSymmetricMatrix::finalize(size_t /*column_index*/) {
+void COOSymmetricMatrix::finalize_column(size_t /*column_index*/) {
    // do nothing
 }
 

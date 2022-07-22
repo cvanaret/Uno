@@ -18,14 +18,14 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
    // identity block
    for (size_t i = 0; i < number_variables; i++) {
       matrix.insert(1., i, i);
-      matrix.finalize(i);
+      matrix.finalize_column(i);
    }
    // Jacobian of general constraints
    for (size_t j = 0; j < model.number_constraints; j++) {
       current_iterate.original_evaluations.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
          matrix.insert(derivative, i, number_variables + j);
       });
-      matrix.finalize(number_variables + j);
+      matrix.finalize_column(number_variables + j);
    }
    DEBUG << "KKT matrix for least-square multipliers:\n" << matrix << '\n';
 

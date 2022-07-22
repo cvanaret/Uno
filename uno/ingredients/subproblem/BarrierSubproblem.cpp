@@ -277,7 +277,7 @@ void BarrierSubproblem::assemble_augmented_matrix(const ReformulatedProblem& pro
    size_t current_column = 0;
    this->hessian_model->hessian->for_each([&](size_t i, size_t j, double entry) {
       for (size_t column = current_column; column < j; column++) {
-         this->augmented_system.matrix->finalize(column);
+         this->augmented_system.matrix->finalize_column(column);
          current_column++;
       }
       this->augmented_system.matrix->insert(entry, i, j);
@@ -302,7 +302,7 @@ void BarrierSubproblem::assemble_augmented_matrix(const ReformulatedProblem& pro
       current_iterate.original_evaluations.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
          this->augmented_system.matrix->insert(derivative, i, problem.number_variables + j);
       });
-      this->augmented_system.matrix->finalize(j);
+      this->augmented_system.matrix->finalize_column(j);
    }
 }
 
