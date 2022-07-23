@@ -44,7 +44,7 @@ double norm_inf(const std::vector<double>& x);
 double norm(const std::vector<double>& x, Norm norm);
 
 // these methods take:
-// - a callback as argument. This avoids forming the vector explicitly
+// - a callback as argument whose parameter is the current index. This avoids forming the vector explicitly
 // - an iterable range of arbitrary type (can be Range, std::vector, etc)
 template <typename RANGE>
 double norm_1(const std::function<double(size_t i)>& f, const RANGE& range) {
@@ -77,7 +77,7 @@ template <typename RANGE>
 double norm_2_squared(const std::function<double(size_t i)>& f, const RANGE& range) {
    double norm = 0.;
    for (size_t i: range) {
-      double x_i = f(i);
+      const double x_i = f(i);
       norm += x_i * x_i;
    }
    return norm;

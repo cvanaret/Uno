@@ -49,8 +49,8 @@ private:
    [[nodiscard]] GlobalizationStrategy& switch_phase(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction);
    void switch_to_feasibility_restoration(Iterate& current_iterate, const Direction& direction);
    void switch_to_optimality(Iterate& current_iterate, Iterate& trial_iterate);
-   double compute_infeasibility_measure(Iterate& iterate) override;
-   double compute_optimality_measure(Iterate& iterate, const std::vector<size_t>& infeasible_constraints);
+   [[nodiscard]] double compute_infeasibility_measure(Iterate& iterate) override;
+   [[nodiscard]] double compute_optimality_measure(Iterate& iterate, const std::vector<size_t>& infeasible_constraints);
 };
 
 #endif //UNO_FEASIBILITYRESTORATION_H

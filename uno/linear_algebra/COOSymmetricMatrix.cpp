@@ -13,8 +13,8 @@
 
 COOSymmetricMatrix::COOSymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization):
       SymmetricMatrix(dimension, original_capacity, use_regularization) {
-   row_indices.reserve(original_capacity);
-   column_indices.reserve(original_capacity);
+   row_indices.reserve(this->capacity);
+   column_indices.reserve(this->capacity);
 
    if (this->use_regularization) {
       this->initialize_regularization();
