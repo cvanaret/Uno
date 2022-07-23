@@ -81,7 +81,7 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
 }
 
 void TrustRegionStrategy::rectify_active_set(Direction& direction, double radius) {
-   assert(0 < radius);
+   assert(0 < radius && "The trust-region radius is zero");
    // update active set and set multipliers for bound constraints active at trust region to 0
    for (auto it = direction.active_set.bounds.at_lower_bound.begin(); it != direction.active_set.bounds.at_lower_bound.end();) {
       size_t i = *it;

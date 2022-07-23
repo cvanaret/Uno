@@ -13,11 +13,6 @@
 #include "linear_algebra/Vector.hpp"
 #include "ingredients/subproblem/Direction.hpp"
 
-enum Smoothness {
-   SMOOTH = 0,
-   NONSMOOTH
-};
-
 class ReformulatedProblem {
 public:
    ReformulatedProblem(const Model& model, size_t number_variables, size_t number_constraints);

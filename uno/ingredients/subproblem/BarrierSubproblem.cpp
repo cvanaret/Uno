@@ -13,8 +13,8 @@ BarrierSubproblem::BarrierSubproblem(size_t max_number_variables, size_t max_num
       Subproblem(max_number_variables, max_number_constraints),
       augmented_system(options.at("sparse_format"), max_number_variables + max_number_constraints,
             max_number_hessian_nonzeros
-            + 2 * max_number_variables /* diagonal barrier terms */
-            + max_number_variables * max_number_constraints /* Jacobian */,
+            + 2 * max_number_variables /* diagonal barrier terms for bound constraints */
+            + max_number_variables * max_number_constraints /* Jacobian (TODO: find out the number of nonzeros) */,
             true, /* use regularization */
             options),
       barrier_parameter(std::stod(options.at("barrier_initial_parameter"))),
@@ -142,8 +142,8 @@ void BarrierSubproblem::assemble_augmented_system(const ReformulatedProblem& pro
    this->augmented_system.factorize_matrix(problem, *this->linear_solver);
    this->augmented_system.regularize_matrix(problem, *this->linear_solver, problem.number_variables, problem.number_constraints,
          std::pow(this->barrier_parameter, this->parameters.regularization_exponent));
-   auto[number_pos, number_neg, number_zero] = this->linear_solver->get_inertia();
-   assert(number_pos == problem.number_variables && number_neg == problem.number_constraints && number_zero == 0);
+   auto[number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = this->linear_solver->get_inertia();
+   assert(number_pos_eigenvalues == problem.number_variables && number_neg_eigenvalues == problem.number_constraints && number_zero_eigenvalues == 0);
 
    // assemble the right-hand side
    this->generate_augmented_rhs(problem, current_iterate);
