@@ -45,11 +45,10 @@ void l1Relaxation::initialize(Statistics& statistics, Iterate& first_iterate) {
    // compute the progress measures and the residuals of the initial point
    first_iterate.nonlinear_progress.infeasibility = this->compute_infeasibility_measure(first_iterate);
    first_iterate.nonlinear_progress.optimality = this->subproblem->compute_optimality_measure(this->optimality_problem, first_iterate);
-
    this->compute_nonlinear_residuals(this->relaxed_problem, first_iterate);
 
    // initialize the globalization strategy
-   this->globalization_strategy->initialize(statistics, first_iterate);
+   this->globalization_strategy->initialize(first_iterate);
 }
 
 void l1Relaxation::set_multipliers(const Iterate& current_iterate, std::vector<double>& current_constraint_multipliers) {
@@ -318,14 +317,14 @@ PredictedReductionModel l1Relaxation::generate_predicted_reduction_model(const D
 }
 
 double l1Relaxation::compute_infeasibility_measure(Iterate& iterate) {
-   iterate.evaluate_constraints(this->relaxed_problem.model);
-   return this->relaxed_problem.model.compute_constraint_violation(iterate.original_evaluations.constraints, L1_NORM);
+   iterate.evaluate_constraints(this->optimality_problem.model);
+   return this->optimality_problem.model.compute_constraint_violation(iterate.original_evaluations.constraints, L1_NORM);
 }
 
 void l1Relaxation::register_accepted_iterate(Iterate& iterate) {
    // TODO check problem
    this->subproblem->postprocess_accepted_iterate(this->relaxed_problem, iterate);
-   // check the optimality relation between the l1 penalty parameter and the inf norm of the multipliers
+   // check that l1 is an exact relaxation
    if (this->penalty_parameter <= 1./norm_inf(iterate.multipliers.constraints)) {
       DEBUG << "The value of the penalty parameter is consistent with an exact relaxation\n";
    }

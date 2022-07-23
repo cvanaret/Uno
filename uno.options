@@ -97,7 +97,7 @@ filter_ubd 1e2
 filter_fact 1.25
 filter_switching_infeasibility_exponent 2
 
-filter_max_size 50
+filter_capacity 50
 
 # default filter type (standard|nonmonotone)
 filter_type standard

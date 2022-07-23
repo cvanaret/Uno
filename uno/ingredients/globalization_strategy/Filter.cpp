@@ -7,11 +7,11 @@
 #include "tools/Logger.hpp"
 
 Filter::Filter(const Options& options) :
-      max_size(stoul(options.at("filter_max_size"))),
+      capacity(stoul(options.at("filter_capacity"))),
+      infeasibility(this->capacity),
+      optimality(this->capacity),
       constants({stod(options.at("filter_beta")),
-                 stod(options.at("filter_gamma"))}),
-      infeasibility(this->max_size),
-      optimality(this->max_size) {
+                 stod(options.at("filter_gamma"))}) {
    this->reset();
 }
 
@@ -58,7 +58,7 @@ void Filter::add(double infeasibility_measure, double optimality_measure) {
    }
 
    // check sufficient space available for new entry (remove last entry, if not)
-   if (this->number_entries > this->max_size - 1) {
+   if (this->number_entries > this->capacity - 1) {
       this->upper_bound = this->constants.beta * std::max(this->upper_bound, this->infeasibility[this->number_entries - 1]);
       // create space in filter: remove last entry
       this->number_entries--;
@@ -153,7 +153,7 @@ void NonmonotoneFilter::add(double infeasibility_measure, double optimality_meas
    }
 
    // check sufficient space available
-   if (this->number_entries > this->max_size - 1) {
+   if (this->number_entries > this->capacity - 1) {
       // create space in filter: remove entry 1 (oldest entry)
       this->left_shift(1, 1);
       this->number_entries--;
@@ -221,7 +221,6 @@ double NonmonotoneFilter::compute_actual_reduction(double current_objective, dou
 }
 
 // FilterFactory class
-
 std::unique_ptr<Filter> FilterFactory::create(const Options& options) {
    std::string filter_type = options.at("strategy");
    if (filter_type == "filter") {

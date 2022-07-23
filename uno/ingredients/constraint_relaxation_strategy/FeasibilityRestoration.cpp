@@ -33,8 +33,8 @@ void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& first_i
    this->compute_nonlinear_residuals(this->optimality_problem, first_iterate);
 
    // initialize the globalization strategies
-   this->phase_1_strategy->initialize(statistics, first_iterate);
-   this->phase_2_strategy->initialize(statistics, first_iterate);
+   this->phase_1_strategy->initialize(first_iterate);
+   this->phase_2_strategy->initialize(first_iterate);
 }
 
 Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate) {

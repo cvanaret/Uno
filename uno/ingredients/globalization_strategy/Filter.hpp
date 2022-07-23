@@ -21,12 +21,10 @@ struct FilterConstants {
  */
 class Filter {
 public:
+   double upper_bound{INF}; /*!< Upper bound on constraint violation */
+
    explicit Filter(const Options& options);
    virtual ~Filter() = default;
-
-   double upper_bound{INF}; /*!< Upper bound on constraint violation */
-   const size_t max_size; /*!< Max filter size */
-   const FilterConstants constants; /*!< Set of constants */
 
    void reset();
    virtual void add(double infeasibility_measure, double optimality_measure);
@@ -38,9 +36,11 @@ public:
    friend std::ostream& operator<<(std::ostream& stream, Filter& filter);
 
 protected:
-   std::vector<double> infeasibility; // infeasibility increases
-   std::vector<double> optimality; // optimality decreases
+   const size_t capacity; /*!< Max filter size */
+   std::vector<double> infeasibility{}; // infeasibility increases
+   std::vector<double> optimality{}; // optimality decreases
    size_t number_entries{0};
+   const FilterConstants constants; /*!< Set of constants */
 
    void left_shift(size_t start, size_t shift_size);
    void right_shift(size_t start, size_t shift_size);

@@ -7,7 +7,7 @@ MeritFunction::MeritFunction(const Options& options):
       GlobalizationStrategy(options) {
 }
 
-void MeritFunction::initialize(Statistics& /*statistics*/, const Iterate& /*first_iterate*/) {
+void MeritFunction::initialize(const Iterate& /*first_iterate*/) {
 }
 
 void MeritFunction::reset() {
