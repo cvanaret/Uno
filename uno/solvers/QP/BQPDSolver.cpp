@@ -157,7 +157,8 @@ void BQPDSolver::save_hessian_to_local_format(const SymmetricMatrix& hessian) {
    std::vector<int> current_indices(hessian.dimension);
    hessian.for_each([&](size_t i, size_t j, double entry) {
       const size_t index = static_cast<size_t>(column_starts[j] + current_indices[j] - this->fortran_shift);
-      assert(index <= static_cast<size_t>(column_starts[j+1]) && "BQPD: error in converting the Hessian matrix to the local format");
+      assert(index <= static_cast<size_t>(column_starts[j+1]) &&
+         "BQPD: error in converting the Hessian matrix to the local format. Try setting the sparse format to CSC");
       this->hessian_values[index] = entry;
       row_indices[index] = static_cast<int>(i) + this->fortran_shift;
       current_indices[j]++;
