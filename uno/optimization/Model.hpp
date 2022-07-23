@@ -28,12 +28,6 @@ struct NumericalError : public std::exception {
    [[nodiscard]] const char* what() const throw() override = 0;
 };
 
-struct HessianNumericalError : NumericalError {
-   [[nodiscard]] const char* what() const throw() override {
-      return "A numerical error was encountered while evaluating the Hessian";
-   }
-};
-
 struct GradientNumericalError : NumericalError {
    [[nodiscard]] const char* what() const throw() override {
       return "A numerical error was encountered while evaluating a gradient";
