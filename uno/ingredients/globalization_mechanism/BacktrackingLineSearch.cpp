@@ -15,6 +15,7 @@ BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& con
       use_second_order_correction(options.at("use_second_order_correction") == "yes"),
       statistics_SOC_column_order(stoi(options.at("statistics_SOC_column_order"))),
       statistics_LS_step_length_column_order(stoi(options.at("statistics_LS_step_length_column_order"))) {
+   // check the initial and minimal step lengths
    assert(0 < this->backtracking_ratio && this->backtracking_ratio < 1. && "The LS backtracking ratio should be in (0, 1)");
    assert(0 < this->min_step_length && this->min_step_length < 1. && "The LS minimum step length should be in (0, 1)");
 }
@@ -105,7 +106,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
       }
       // if step length is too small, revert to solving the feasibility problem (if we aren't already solving it)
       if (!this->solving_feasibility_problem && 0. < direction.multipliers.objective) {
-         // TODO: test if 0. < current_iterate.progress.feasibility ?
+         // TODO: test if 0. < current_iterate.progress.infeasibility ?
          DEBUG << "The line search failed, switching to feasibility problem\n";
          // reset the line search with the restoration solution
          direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, direction.primals);

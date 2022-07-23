@@ -7,6 +7,7 @@
 #include <vector>
 #include "optimization/Model.hpp"
 
+// include AMPL Solver Library (ASL)
 extern "C" {
 #include "asl_pfgh.h"
 #include "getstub.h"
@@ -22,7 +23,6 @@ public:
    explicit AMPLModel(const std::string& file_name);
    ~AMPLModel() override;
 
-   // functions
    // objective
    [[nodiscard]] double evaluate_objective(const std::vector<double>& x) const override;
    void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const override;
