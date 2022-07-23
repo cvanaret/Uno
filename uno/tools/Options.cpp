@@ -105,6 +105,7 @@ void get_command_line_options(int argc, char* argv[], Options& options) {
       std::string argument_i = std::string(argv[i]);
       if (argument_i[0] == '-') {
          if (i < argc - 1) {
+            // remove the '-'
             const std::string name = argument_i.substr(1);
             const std::string value_i = std::string(argv[i + 1]);
             if (name == "preset") {

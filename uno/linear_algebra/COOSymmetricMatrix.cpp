@@ -4,7 +4,6 @@
 #include <iostream>
 #include "COOSymmetricMatrix.hpp"
 #include "tools/Infinity.hpp"
-#include "Vector.hpp"
 
 /*
  * Coordinate list
