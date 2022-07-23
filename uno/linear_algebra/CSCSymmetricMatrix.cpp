@@ -98,9 +98,11 @@ double CSCSymmetricMatrix::smallest_diagonal_entry() const {
 }
 
 void CSCSymmetricMatrix::set_regularization(const std::function<double(size_t index)>& regularization_function) {
-   for (size_t j = 0; j < this->dimension; j++) {
-      const size_t k = this->column_starts[j+1] - 1;
-      this->entries[k] = regularization_function(j);
+   assert(this->use_regularization && "You are trying to regularize a matrix where regularization was not preallocated.");
+   for (size_t i = 0; i < this->dimension; i++) {
+      // the regularization term is located at the end of the column, that is right before the start of the next column
+      const size_t k = this->column_starts[i + 1] - 1;
+      this->entries[k] = regularization_function(i);
    }
 }
 
