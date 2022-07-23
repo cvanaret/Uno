@@ -256,11 +256,13 @@ double BarrierSubproblem::primal_fraction_to_boundary(const ReformulatedProblem&
 
 double BarrierSubproblem::dual_fraction_to_boundary(const ReformulatedProblem& problem, const Iterate& current_iterate, double tau) {
    double dual_length = 1.;
-   for (size_t i = 0; i < problem.number_variables; i++) {
+   for (size_t i: problem.lower_bounded_variables) {
       if (this->lower_delta_z[i] < 0.) {
          double trial_alpha_zj = -tau * current_iterate.multipliers.lower_bounds[i] / this->lower_delta_z[i];
          dual_length = std::min(dual_length, trial_alpha_zj);
       }
+   }
+   for (size_t i: problem.upper_bounded_variables) {
       if (0. < this->upper_delta_z[i]) {
          double trial_alpha_zj = -tau * current_iterate.multipliers.upper_bounds[i] / this->upper_delta_z[i];
          dual_length = std::min(dual_length, trial_alpha_zj);
