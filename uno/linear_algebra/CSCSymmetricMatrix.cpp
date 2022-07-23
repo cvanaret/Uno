@@ -3,7 +3,6 @@
 
 #include <ostream>
 #include <cassert>
-#include <numeric>
 #include "CSCSymmetricMatrix.hpp"
 #include "Vector.hpp"
 #include "tools/Infinity.hpp"
