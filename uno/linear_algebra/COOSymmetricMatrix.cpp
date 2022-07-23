@@ -69,13 +69,6 @@ double COOSymmetricMatrix::smallest_diagonal_entry() const {
    return smallest_entry;
 }
 
-void COOSymmetricMatrix::initialize_regularization() {
-   // introduce elements at the start of the entries
-   for (size_t i = 0; i < this->dimension; i++) {
-      this->insert(0., i, i);
-   }
-}
-
 void COOSymmetricMatrix::set_regularization(const std::function<double(size_t index)>& regularization_function) {
    assert(this->use_regularization && "Trying to regularize a matrix where regularization was not preallocated.");
    // the regularization terms (that lie at the start of the entries vector) can be directly modified
@@ -88,4 +81,11 @@ void COOSymmetricMatrix::print(std::ostream& stream) const {
    this->for_each([&](size_t i, size_t j, double entry) {
       stream << "m(" << i << ", " << j << ") = " << entry << '\n';
    });
+}
+
+void COOSymmetricMatrix::initialize_regularization() {
+   // introduce elements at the start of the entries
+   for (size_t i = 0; i < this->dimension; i++) {
+      this->insert(0., i, i);
+   }
 }
