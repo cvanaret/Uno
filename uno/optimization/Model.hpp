@@ -59,7 +59,6 @@ public:
 
    // objective
    double objective_sign{1.}; /*!< Sign of the objective function (1: minimization, -1: maximization) */
-   FunctionType objective_type{NONLINEAR}; /*!< Type of the objective (LINEAR, QUADRATIC, NONLINEAR) */
 
    SparseVector<size_t> equality_constraints; /*!< inequality constraints */
    SparseVector<size_t> inequality_constraints; /*!< inequality constraints */
