@@ -73,8 +73,8 @@ inline void OptimalityProblem::evaluate_constraint_jacobian(Iterate& iterate, st
 
 inline void OptimalityProblem::evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers,
       SymmetricMatrix& hessian) const {
-   this->model.evaluate_lagrangian_hessian(x, this->get_objective_multiplier(), multipliers, hessian);
    hessian.dimension = this->number_variables;
+   this->model.evaluate_lagrangian_hessian(x, this->get_objective_multiplier(), multipliers, hessian);
 }
 
 inline double OptimalityProblem::predicted_reduction_contribution(const Iterate& /*current_iterate*/, const Direction& /*direction*/,

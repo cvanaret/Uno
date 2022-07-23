@@ -71,6 +71,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["residual_norm"] = "INF";
       options["scale_functions"] = "yes";
       options["l1_use_proximal_term"] = "yes";
+      options["sparse_format"] = "COO";
    }
    else if (preset_name == "filtersqp") {
       options["mechanism"] = "TR";
@@ -79,6 +80,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["subproblem"] = "QP";
       options["residual_norm"] = "L1";
       options["l1_use_proximal_term"] = "no";
+      options["sparse_format"] = "CSC";
    }
    else if (preset_name == "byrd") {
       options["mechanism"] = "LS";
@@ -92,6 +94,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["l1_relaxation_epsilon2"] = "0.1";
       options["tolerance"] = "1e-6";
       options["residual_norm"] = "L1";
+      options["sparse_format"] = "CSC";
    }
 }
 

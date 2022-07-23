@@ -149,9 +149,9 @@ inline void EqualityConstrainedModel::evaluate_constraint_jacobian(const std::ve
 
 inline void EqualityConstrainedModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
       SymmetricMatrix& hessian) const {
+   hessian.dimension = this->number_variables;
    this->original_model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian);
    // extend the dimension of the Hessian by finalizing the remaining columns (note: the slacks do not enter the Hessian)
-   hessian.dimension = this->number_variables;
    for (size_t j = this->original_model->number_variables; j < this->number_variables; j++) {
       hessian.finalize_column(j);
    }

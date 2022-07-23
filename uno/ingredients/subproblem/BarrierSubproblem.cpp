@@ -276,6 +276,7 @@ void BarrierSubproblem::assemble_augmented_matrix(const ReformulatedProblem& pro
    // copy the Lagrangian Hessian in the top left block
    size_t current_column = 0;
    this->hessian_model->hessian->for_each([&](size_t i, size_t j, double entry) {
+      // finalize all empty columns
       for (size_t column = current_column; column < j; column++) {
          this->augmented_system.matrix->finalize_column(column);
          current_column++;
