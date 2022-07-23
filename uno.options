@@ -51,7 +51,7 @@ logger INFO
 # Hessian model (exact|BFGS)
 hessian_model exact
 
-# sparse matrix format (COO)
+# sparse matrix format (COO|CSC)
 sparse_format COO
 
 # scale the functions (yes|no)

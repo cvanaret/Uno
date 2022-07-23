@@ -70,7 +70,7 @@ double COOSymmetricMatrix::smallest_diagonal_entry() const {
 }
 
 void COOSymmetricMatrix::set_regularization(const std::function<double(size_t index)>& regularization_function) {
-   assert(this->use_regularization && "Trying to regularize a matrix where regularization was not preallocated.");
+   assert(this->use_regularization && "You are trying to regularize a matrix where regularization was not preallocated.");
    // the regularization terms (that lie at the start of the entries vector) can be directly modified
    for (size_t i = 0; i < this->dimension; i++) {
       this->entries[i] = regularization_function(i);
