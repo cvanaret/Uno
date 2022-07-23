@@ -7,16 +7,13 @@
 #include "tools/Logger.hpp"
 #include "tools/Infinity.hpp"
 
-// TODO: avoid using implicit AMPL macros
-
 ASL* generate_asl(std::string file_name) {
    ASL* asl = ASL_alloc(ASL_read_pfgh);
    FILE* nl = jac0dim_ASL(asl, file_name.data(), static_cast<int>(file_name.size()));
    // indices start at 0
    asl->i.Fortran_ = 0;
 
-   // TODO remove macros
-   int n_discrete = nlogv + niv + nlvbi + nlvci + nlvoi;
+   int n_discrete = asl->i.nbv_ + asl->i.niv_ + asl->i.nlvbi_ + asl->i.nlvci_ + asl->i.nlvoi_;
    if (0 < n_discrete) {
       WARNING << "Ignoring integrality of " << n_discrete << " variables.\n";
       asl->i.need_nl_ = 0;
