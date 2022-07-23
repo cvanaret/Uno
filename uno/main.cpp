@@ -72,8 +72,8 @@ int main(int argc, char* argv[]) {
          std::cout << "Welcome in Uno\n";
          std::cout << "To solve an AMPL model, type ./uno_ampl path_to_file/file.nl\n";
          std::cout << "To choose a globalization mechanism, use the argument -mechanism [LS|TR]\n";
-         std::cout << "To choose a globalization strategy, use the argument -strategy [penalty|filter|nonmonotone-filter]\n";
          std::cout << "To choose a constraint relaxation strategy, use the argument -constraint-relaxation [feasibility-restoration|l1-relaxation]\n";
+         std::cout << "To choose a globalization strategy, use the argument -strategy [penalty|filter|nonmonotone-filter]\n";
          std::cout << "To choose a subproblem method, use the argument -subproblem [QP|LP|barrier]\n";
          std::cout << "To choose a preset, use the argument -preset [filtersqp|ipopt|byrd]\n";
          std::cout << "The options can be combined in the same command line. Autocompletion is active.\n";

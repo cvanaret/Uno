@@ -30,7 +30,7 @@ class FilterStrategy : public GlobalizationStrategy {
 public:
    explicit FilterStrategy(const Options& options);
 
-   void initialize(Statistics& statistics, const Iterate& first_iterate) override;
+   void initialize(const Iterate& first_iterate) override;
    bool is_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress, double objective_multiplier,
          double predicted_reduction) override;
    void reset() override;

@@ -14,7 +14,7 @@ FilterStrategy::FilterStrategy(const Options& options) :
                   stod(options.at("filter_switching_infeasibility_exponent"))}) {
 }
 
-void FilterStrategy::initialize(Statistics& /*statistics*/, const Iterate& first_iterate) {
+void FilterStrategy::initialize(const Iterate& first_iterate) {
    // set the filter upper bound
    double upper_bound = std::max(this->parameters.upper_bound, this->parameters.infeasibility_fraction * first_iterate.nonlinear_progress.infeasibility);
    this->filter->upper_bound = upper_bound;
