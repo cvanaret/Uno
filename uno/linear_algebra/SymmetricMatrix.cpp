@@ -25,7 +25,7 @@ double SymmetricMatrix::quadratic_product(const std::vector<double>& x, const st
    double result = 0.;
    this->for_each([&](size_t i, size_t j, double entry) {
       if (i < block_size && j < block_size) {
-         result += (i == j ? 1 : 2) * entry * x[i] * y[j];
+         result += (i == j ? 1. : 2.) * entry * x[i] * y[j];
       }
    });
    return result;

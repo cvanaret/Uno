@@ -272,7 +272,7 @@ inline double l1RelaxedProblem::get_constraint_upper_bound(size_t j) const {
 
 inline size_t l1RelaxedProblem::get_maximum_number_hessian_nonzeros() const {
    // add the proximal term
-   return this->model.get_maximum_number_hessian_nonzeros() + (use_proximal_term ? this->model.number_variables : 0);
+   return this->model.get_maximum_number_hessian_nonzeros() + (this->use_proximal_term ? this->model.number_variables : 0);
 }
 
 inline void l1RelaxedProblem::set_objective_multiplier(double new_objective_multiplier) {
