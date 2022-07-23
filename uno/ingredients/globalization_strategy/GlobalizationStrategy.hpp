@@ -25,13 +25,12 @@ public:
    virtual void reset() = 0;
    virtual void notify(Iterate& current_iterate) = 0;
 
-   static void check_finiteness(const ProgressMeasures& progress);
-
 protected:
    const double armijo_decrease_fraction; /*!< Sufficient reduction constant */
    const double armijo_tolerance;
 
    [[nodiscard]] bool armijo_sufficient_decrease(double predicted_reduction, double actual_reduction) const;
+   static void check_finiteness(const ProgressMeasures& progress);
 };
 
 #endif // UNO_GLOBALIZATIONSTRATEGY_H

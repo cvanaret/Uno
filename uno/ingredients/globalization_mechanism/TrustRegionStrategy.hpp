@@ -28,7 +28,7 @@ private:
    int statistics_TR_radius_column_order;
 
    static void rectify_active_set(Direction& direction, double radius);
-   void add_statistics(Statistics& statistics, const Direction& direction);
+   void set_statistics(Statistics& statistics, const Direction& direction);
    [[nodiscard]] bool termination() const;
    void print_iteration();
 };

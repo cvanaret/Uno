@@ -18,9 +18,9 @@ public:
    void postprocess_accepted_iterate(const ReformulatedProblem& model, Iterate& iterate) override;
 
 protected:
-   std::vector<double> initial_point;
-   std::vector<Interval> variable_displacement_bounds;
-   std::vector<Interval> linearized_constraint_bounds;
+   std::vector<double> initial_point{};
+   std::vector<Interval> variable_displacement_bounds{};
+   std::vector<Interval> linearized_constraint_bounds{};
 
    void set_variable_displacement_bounds(const ReformulatedProblem& problem, const Iterate& current_iterate);
    void set_linearized_constraint_bounds(const ReformulatedProblem& problem, const std::vector<double>& current_constraints);

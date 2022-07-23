@@ -49,7 +49,7 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
          PredictedReductionModel predicted_reduction_model = this->constraint_relaxation_strategy.generate_predicted_reduction_model(direction);
          if (this->constraint_relaxation_strategy.is_acceptable(statistics, current_iterate, trial_iterate, direction, predicted_reduction_model, 1.)) {
             DEBUG << "Trial step accepted\n\n";
-            this->add_statistics(statistics, direction);
+            this->set_statistics(statistics, direction);
 
             // increase the radius if trust region is active
             if (direction.norm >= this->radius - this->activity_tolerance) {
@@ -105,7 +105,7 @@ void TrustRegionStrategy::rectify_active_set(Direction& direction, double radius
    }
 }
 
-void TrustRegionStrategy::add_statistics(Statistics& statistics, const Direction& direction) {
+void TrustRegionStrategy::set_statistics(Statistics& statistics, const Direction& direction) {
    statistics.add_statistic("minor", this->number_iterations);
    statistics.add_statistic("TR radius", this->radius);
    statistics.add_statistic("step norm", direction.norm);
