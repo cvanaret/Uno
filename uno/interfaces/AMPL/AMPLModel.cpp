@@ -345,16 +345,11 @@ void AMPLModel::set_function_types(std::string file_name) {
    // objective function
    int qp = nqpcheck_ASL(asl, 0, &rowq, &colqp, &delsqp);
    if (0 < qp) {
-      this->objective_type = QUADRATIC;
       if (this->problem_type == LINEAR) {
          this->problem_type = QUADRATIC;
       }
    }
-   else if (qp == 0) {
-      this->objective_type = LINEAR;
-   }
-   else {
-      this->objective_type = NONLINEAR;
+   else if (qp != 0) {
       this->problem_type = NONLINEAR;
    }
    qp_opify_ASL(asl);
