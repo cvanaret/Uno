@@ -384,7 +384,6 @@ void BarrierSubproblem::generate_direction(const ReformulatedProblem& problem, c
 }
 
 double BarrierSubproblem::compute_KKT_error_scaling(const ReformulatedProblem& problem, const Iterate& current_iterate) const {
-   // KKT error
    const double norm_1_constraint_multipliers = norm_1(current_iterate.multipliers.constraints);
    const double norm_1_bound_multipliers = norm_1(current_iterate.multipliers.lower_bounds) + norm_1(current_iterate.multipliers.upper_bounds);
    const double norm_1_multipliers = norm_1_constraint_multipliers + norm_1_bound_multipliers;
@@ -412,32 +411,6 @@ double BarrierSubproblem::compute_central_complementarity_error(const Reformulat
          .smax;
    return complementarity_error / scaling;
 }
-
-/*
-void BarrierSubproblem::add_elastic_variables(const l1ElasticReformulation& problem, Iterate& current_iterate, double objective_coefficient) {
-   // set the elastic variables of the current iterate
-   // analytically, I find
-   //    n = (mu_over_rho - jacobian_term*this->barrier_constraints[j] + std::sqrt(radical))/2.
-   // but Ipopt seems to use the following
-   //    n = (mu_over_rho + jacobian_term*this->barrier_constraints[j] + std::sqrt(radical))/2.
-   // c(x) - p + n = 0
-   for (size_t j = 0; j < problem.number_constraints; j++) {
-      // precomputations
-      const double constraint_j = current_iterate.problem_evaluations.constraints[j];
-      const double mu_over_rho = this->barrier_parameter / objective_coefficient;
-      const double radical = std::pow(constraint_j, 2) + std::pow(mu_over_rho, 2);
-      const double sqrt_radical = std::sqrt(radical);
-
-      // negative part
-      current_iterate.x[this->number_variables] = current_iterate.x[this->number_variables] = (mu_over_rho - constraint_j + sqrt_radical) / 2.;
-      current_iterate.multipliers.lower_bounds[this->number_variables] = this->barrier_parameter/current_iterate.x[this->number_variables];
-
-      // positive part
-      current_iterate.x[this->number_variables] = current_iterate.x[this->number_variables] = (mu_over_rho + constraint_j + sqrt_radical) / 2.;
-      current_iterate.multipliers.lower_bounds[this->number_variables] = this->barrier_parameter/current_iterate.x[this->number_variables];
-   }
-}
-*/
 
 void BarrierSubproblem::postprocess_accepted_iterate(const ReformulatedProblem& problem, Iterate& iterate) {
    if (this->solving_feasibility_problem) {
