@@ -1,8 +1,8 @@
 // Copyright (c) 2022 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_NONLINEARPROBLEM_H
-#define UNO_NONLINEARPROBLEM_H
+#ifndef UNO_REFORMULATEDPROBLEM_H
+#define UNO_REFORMULATEDPROBLEM_H
 
 #include <string>
 #include <vector>
@@ -24,8 +24,8 @@ public:
 
    [[nodiscard]] bool is_constrained() const;
 
-   SparseVector<size_t> equality_constraints; /*!< inequality constraints */
-   SparseVector<size_t> inequality_constraints; /*!< inequality constraints */
+   SparseVector<size_t> equality_constraints{}; /*!< inequality constraints */
+   SparseVector<size_t> inequality_constraints{}; /*!< inequality constraints */
    // lists of bounded variables
    std::vector<size_t> lower_bounded_variables{}; // indices of the lower-bounded variables
    std::vector<size_t> upper_bounded_variables{}; // indices of the upper-bounded variables
@@ -70,4 +70,4 @@ inline size_t ReformulatedProblem::get_number_original_variables() const {
    return this->model.number_variables;
 }
 
-#endif // UNO_NONLINEARPROBLEM_H
+#endif // UNO_REFORMULATEDPROBLEM_H

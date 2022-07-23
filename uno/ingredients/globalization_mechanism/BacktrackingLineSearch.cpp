@@ -66,7 +66,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
                DEBUG << "Trial step accepted\n\n";
                // let the subproblem know the accepted iterate
                this->constraint_relaxation_strategy.register_accepted_iterate(trial_iterate);
-               this->add_statistics(statistics, direction);
+               this->set_statistics(statistics, direction);
                return std::make_tuple(std::move(trial_iterate), direction.norm);
             }
             else if (this->use_second_order_correction && this->number_iterations == 1 && !this->solving_feasibility_problem &&
@@ -80,7 +80,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
                if (this->constraint_relaxation_strategy.is_acceptable(statistics, current_iterate, trial_iterate_soc, direction_soc,
                      predicted_reduction_model, this->step_length)) {
                   DEBUG << "Trial SOC step accepted\n";
-                  this->add_statistics(statistics, direction_soc);
+                  this->set_statistics(statistics, direction_soc);
                   statistics.add_statistic("SOC", "x");
 
                   // let the subproblem know the accepted iterate
@@ -130,7 +130,7 @@ bool BacktrackingLineSearch::termination() const {
    return (this->step_length < this->min_step_length);
 }
 
-void BacktrackingLineSearch::add_statistics(Statistics& statistics, const Direction& direction) {
+void BacktrackingLineSearch::set_statistics(Statistics& statistics, const Direction& direction) {
    statistics.add_statistic("minor", this->number_iterations);
    statistics.add_statistic("LS step length", this->step_length);
    statistics.add_statistic("step norm", this->step_length * direction.norm);

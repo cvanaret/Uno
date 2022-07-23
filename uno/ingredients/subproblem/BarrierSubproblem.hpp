@@ -55,8 +55,8 @@ private:
    const double default_multiplier;
 
    // preallocated vectors for bound multiplier displacements
-   std::vector<double> lower_delta_z;
-   std::vector<double> upper_delta_z;
+   std::vector<double> lower_delta_z{};
+   std::vector<double> upper_delta_z{};
 
    bool solving_feasibility_problem{false};
 
