@@ -58,8 +58,8 @@ double norm_2(const std::vector<double>& x) {
 // compute ||x||_infty
 double norm_inf(const std::vector<double>& x) {
    double norm = 0.;
-   for (size_t i = 0; i < x.size(); i++) {
-      norm = std::max(norm, std::abs(x[i]));
+   for (double xi: x) {
+      norm = std::max(norm, std::abs(xi));
    }
    return norm;
 }

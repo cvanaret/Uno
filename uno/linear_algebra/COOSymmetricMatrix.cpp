@@ -56,6 +56,7 @@ void COOSymmetricMatrix::finalize_column(size_t /*column_index*/) {
 }
 
 double COOSymmetricMatrix::smallest_diagonal_entry() const {
+   // TODO: there may be several entries for given indices
    double smallest_entry = INF;
    this->for_each([&](size_t i, size_t j, double entry) {
       if (i == j) {

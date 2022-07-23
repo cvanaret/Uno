@@ -22,9 +22,7 @@ enum FunctionType {
    NONLINEAR /*!< Nonlinear function */
 };
 
-enum ConstraintType { EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES, UNBOUNDED };
-
-enum ConstraintFeasibility { FEASIBLE, INFEASIBLE_LOWER, INFEASIBLE_UPPER };
+enum BoundType { EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES, UNBOUNDED };
 
 struct NumericalError : public std::exception {
    [[nodiscard]] const char* what() const throw() override = 0;
@@ -85,9 +83,9 @@ public:
    [[nodiscard]] virtual double get_constraint_lower_bound(size_t j) const = 0;
    [[nodiscard]] virtual double get_constraint_upper_bound(size_t j) const = 0;
 
-   [[nodiscard]] virtual ConstraintType get_variable_status(size_t i) const = 0;
+   [[nodiscard]] virtual BoundType get_variable_bound_type(size_t i) const = 0;
    [[nodiscard]] virtual FunctionType get_constraint_type(size_t j) const = 0;
-   [[nodiscard]] virtual ConstraintType get_constraint_status(size_t j) const = 0;
+   [[nodiscard]] virtual BoundType get_constraint_bound_type(size_t j) const = 0;
    [[nodiscard]] virtual size_t get_maximum_number_hessian_nonzeros() const = 0;
 
    [[nodiscard]] virtual double evaluate_objective(const std::vector<double>& x) const = 0;
@@ -102,7 +100,7 @@ public:
    virtual void get_initial_dual_point(std::vector<double>& multipliers) const = 0;
 
    // auxiliary functions
-   static void determine_bounds_types(std::vector<Interval>& variables_bounds, std::vector<ConstraintType>& status);
+   static void determine_bounds_types(std::vector<Interval>& variables_bounds, std::vector<BoundType>& status);
    void project_point_onto_bounds(std::vector<double>& x) const;
    [[nodiscard]] bool is_constrained() const;
    // constraint violation

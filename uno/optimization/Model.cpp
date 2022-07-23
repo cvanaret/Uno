@@ -24,7 +24,7 @@ Model::Model(std::string name, size_t number_variables, size_t number_constraint
       linear_constraints(this->number_constraints) {
 }
 
-void Model::determine_bounds_types(std::vector<Interval>& bounds, std::vector<ConstraintType>& status) {
+void Model::determine_bounds_types(std::vector<Interval>& bounds, std::vector<BoundType>& status) {
    assert(bounds.size() == status.size());
    // build the "status" vector as a mapping (map/transform operation) of the "bounds" vector
    std::transform(begin(bounds), end(bounds), begin(status), [](const Interval& bounds_i) {
@@ -50,7 +50,7 @@ void Model::determine_constraints() {
    size_t current_equality_constraint = 0;
    size_t current_inequality_constraint = 0;
    for (size_t j = 0; j < this->number_constraints; j++) {
-      if (this->get_constraint_status(j) == EQUAL_BOUNDS) {
+      if (this->get_constraint_bound_type(j) == EQUAL_BOUNDS) {
          this->equality_constraints.insert(j, current_equality_constraint);
          current_equality_constraint++;
       }
