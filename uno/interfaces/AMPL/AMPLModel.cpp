@@ -154,10 +154,7 @@ void AMPLModel::evaluate_constraint_gradient(const std::vector<double>& x, size_
    cgrad* ampl_variables_tmp = this->asl_->i.Cgrad_[j];
    size_t cpt = 0;
    while (ampl_variables_tmp != nullptr) {
-      // keep the gradient sparse
-      if (this->ampl_tmp_gradient[cpt] != 0.) {
-         gradient.insert(static_cast<size_t>(ampl_variables_tmp->varno), this->ampl_tmp_gradient[cpt]);
-      }
+      gradient.insert(static_cast<size_t>(ampl_variables_tmp->varno), this->ampl_tmp_gradient[cpt]);
       ampl_variables_tmp = ampl_variables_tmp->next;
       cpt++;
    }
