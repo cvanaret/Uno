@@ -75,6 +75,7 @@ void CSCSymmetricMatrix::finalize_column(size_t column_index) {
 }
 
 double CSCSymmetricMatrix::smallest_diagonal_entry() const {
+   // TODO: there may be several entries for given indices
    double smallest_entry = INF;
    // go through each column
    for (size_t j = 0; j < this->dimension; j++) {

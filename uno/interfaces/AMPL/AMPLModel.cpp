@@ -78,7 +78,7 @@ void AMPLModel::generate_variables() {
    Model::determine_bounds_types(this->variables_bounds, this->variable_status);
    // figure out the bounded variables
    for (size_t i = 0; i < this->number_variables; i++) {
-      const ConstraintType status = this->get_variable_status(i);
+      const BoundType status = this->get_variable_bound_type(i);
       if (status == BOUNDED_LOWER || status == BOUNDED_BOTH_SIDES) {
          this->lower_bounded_variables.push_back(i);
       }
@@ -253,7 +253,7 @@ double AMPLModel::get_variable_upper_bound(size_t i) const {
    return this->variables_bounds[i].ub;
 }
 
-ConstraintType AMPLModel::get_variable_status(size_t i) const {
+BoundType AMPLModel::get_variable_bound_type(size_t i) const {
    return this->variable_status[i];
 }
 
@@ -269,7 +269,7 @@ FunctionType AMPLModel::get_constraint_type(size_t j) const {
    return this->constraint_type[j];
 }
 
-ConstraintType AMPLModel::get_constraint_status(size_t j) const {
+BoundType AMPLModel::get_constraint_bound_type(size_t j) const {
    return this->constraint_status[j];
 }
 

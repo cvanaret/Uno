@@ -24,9 +24,9 @@ public:
    void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
          SymmetricMatrix& hessian) const override;
 
-   [[nodiscard]] ConstraintType get_variable_status(size_t i) const override;
+   [[nodiscard]] BoundType get_variable_bound_type(size_t i) const override;
    [[nodiscard]] FunctionType get_constraint_type(size_t j) const override;
-   [[nodiscard]] ConstraintType get_constraint_status(size_t j) const override;
+   [[nodiscard]] BoundType get_constraint_bound_type(size_t j) const override;
    [[nodiscard]] size_t get_maximum_number_hessian_nonzeros() const override;
 
    void get_initial_primal_point(std::vector<double>& x) const override;
@@ -134,16 +134,16 @@ inline void ScaledModel::evaluate_lagrangian_hessian(const std::vector<double>& 
    this->original_model.evaluate_lagrangian_hessian(x, scaled_objective_multiplier, scaled_multipliers, hessian);
 }
 
-inline ConstraintType ScaledModel::get_variable_status(size_t i) const {
-   return this->original_model.get_variable_status(i);
+inline BoundType ScaledModel::get_variable_bound_type(size_t i) const {
+   return this->original_model.get_variable_bound_type(i);
 }
 
 inline FunctionType ScaledModel::get_constraint_type(size_t j) const {
    return this->original_model.get_constraint_type(j);
 }
 
-inline ConstraintType ScaledModel::get_constraint_status(size_t j) const {
-   return this->original_model.get_constraint_status(j);
+inline BoundType ScaledModel::get_constraint_bound_type(size_t j) const {
+   return this->original_model.get_constraint_bound_type(j);
 }
 
 inline size_t ScaledModel::get_maximum_number_hessian_nonzeros() const {

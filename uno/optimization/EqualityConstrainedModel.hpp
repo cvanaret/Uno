@@ -26,9 +26,9 @@ public:
    void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
          SymmetricMatrix& hessian) const override;
 
-   [[nodiscard]] ConstraintType get_variable_status(size_t i) const override;
+   [[nodiscard]] BoundType get_variable_bound_type(size_t i) const override;
    [[nodiscard]] FunctionType get_constraint_type(size_t j) const override;
-   [[nodiscard]] ConstraintType get_constraint_status(size_t j) const override;
+   [[nodiscard]] BoundType get_constraint_bound_type(size_t j) const override;
    [[nodiscard]] size_t get_maximum_number_hessian_nonzeros() const override;
 
    void get_initial_primal_point(std::vector<double>& x) const override;
@@ -132,7 +132,7 @@ inline void EqualityConstrainedModel::evaluate_constraints(const std::vector<dou
 inline void EqualityConstrainedModel::evaluate_constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const {
    this->original_model->evaluate_constraint_gradient(x, j, gradient);
    // if the original constraint is an inequality, add the slack contribution
-   if (this->original_model->get_constraint_status(j) != EQUAL_BOUNDS) {
+   if (this->original_model->get_constraint_bound_type(j) != EQUAL_BOUNDS) {
       const size_t slack_index = this->slack_of_inequality_constraint[j];
       gradient.insert(slack_index, -1.);
    }
@@ -157,14 +157,14 @@ inline void EqualityConstrainedModel::evaluate_lagrangian_hessian(const std::vec
    }
 }
 
-inline ConstraintType EqualityConstrainedModel::get_variable_status(size_t i) const {
+inline BoundType EqualityConstrainedModel::get_variable_bound_type(size_t i) const {
    if (i < this->original_model->number_variables) { // original variable
-      return this->original_model->get_variable_status(i);
+      return this->original_model->get_variable_bound_type(i);
    }
    else { // slack variable
       const size_t slack_index = i - this->original_model->number_variables;
       const size_t j = this->inequality_constraint_of_slack[slack_index];
-      return this->original_model->get_constraint_status(j);
+      return this->original_model->get_constraint_bound_type(j);
    }
 }
 
@@ -172,7 +172,7 @@ inline FunctionType EqualityConstrainedModel::get_constraint_type(size_t j) cons
    return this->original_model->get_constraint_type(j);
 }
 
-inline ConstraintType EqualityConstrainedModel::get_constraint_status(size_t /*j*/) const {
+inline BoundType EqualityConstrainedModel::get_constraint_bound_type(size_t /*j*/) const {
    // all constraints are of the form "c(x) = 0"
    return EQUAL_BOUNDS;
 }
