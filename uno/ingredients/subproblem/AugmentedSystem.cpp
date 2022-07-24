@@ -75,6 +75,9 @@ void AugmentedSystem::regularize_matrix(const ReformulatedProblem& problem, Line
          this->previous_regularization_first_block = regularization_first_block;
       }
       else {
+         auto[number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = linear_solver.get_inertia();
+         DEBUG << "Expected inertia (" << size_first_block << ", " << size_second_block << ", 0), ";
+         DEBUG << "got (" << number_pos_eigenvalues << ", " << number_neg_eigenvalues << ", " << number_zero_eigenvalues << ")\n";
          if (this->previous_regularization_first_block == 0.) {
             regularization_first_block *= this->regularization_first_block_fast_increase_factor;
          }
