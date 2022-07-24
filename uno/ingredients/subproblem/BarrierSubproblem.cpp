@@ -273,8 +273,8 @@ double BarrierSubproblem::dual_fraction_to_boundary(const ReformulatedProblem& p
 }
 
 void BarrierSubproblem::assemble_augmented_matrix(const ReformulatedProblem& problem, const Iterate& current_iterate) {
-   this->augmented_system.matrix->reset();
    this->augmented_system.matrix->dimension = problem.number_variables + problem.number_constraints;
+   this->augmented_system.matrix->reset();
    // copy the Lagrangian Hessian in the top left block
    size_t current_column = 0;
    this->hessian_model->hessian->for_each([&](size_t i, size_t j, double entry) {
