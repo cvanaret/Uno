@@ -49,14 +49,25 @@ Direction LPSubproblem::solve_LP(const ReformulatedProblem& problem, Iterate& it
    return direction;
 }
 
-PredictedReductionModel LPSubproblem::generate_predicted_reduction_model(const ReformulatedProblem& /*problem*/, const Direction& direction) const {
-   return PredictedReductionModel(-direction.objective, [&]() { // capture "direction" by reference
+PredictedOptimalityReductionModel LPSubproblem::generate_predicted_optimality_reduction_model(const ReformulatedProblem& /*problem*/, const Direction& direction) const {
+   return PredictedOptimalityReductionModel(-direction.objective, [&]() { // capture "direction" by reference
       // return a function of the step length that cheaply assembles the predicted reduction
       return [=](double step_length) { // capture the expensive quantities by value
          return -step_length * direction.objective;
       };
    });
 }
+
+/*
+OptimalityMeasureModel LPSubproblem::generate_optimality_measure_model(const ReformulatedProblem& problem, const Direction& direction) const {
+   return OptimalityMeasureModel(-direction.objective, [&]() { // capture "direction" by reference
+      // return a function of the step length that cheaply assembles the predicted reduction
+      return [=](double step_length) { // capture the expensive quantities by value
+         return -step_length * direction.objective;
+      };
+   });
+}
+*/
 
 size_t LPSubproblem::get_hessian_evaluation_count() const {
    // no second order evaluation is used

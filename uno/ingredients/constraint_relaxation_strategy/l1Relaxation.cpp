@@ -215,7 +215,7 @@ bool l1Relaxation::objective_sufficient_decrease(const Iterate& current_iterate,
 }
 
 bool l1Relaxation::is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-      PredictedReductionModel& predicted_reduction_model, double step_length) {
+      PredictedOptimalityReductionModel& predicted_optimality_reduction_model, double step_length) {
    // check if subproblem definition changed
    if (this->subproblem->subproblem_definition_changed) {
       DEBUG << "The subproblem definition changed, the optimality measure is recomputed\n";
@@ -234,8 +234,11 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, Iterate& current_iterat
    }
    else {
       // evaluate the predicted reduction
-      const double predicted_reduction = l1Relaxation::compute_predicted_reduction(this->relaxed_problem.model, current_iterate, direction,
-            predicted_reduction_model, step_length);
+      const ProgressMeasures predicted_reduction = {
+            ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction(this->optimality_problem.model, current_iterate, direction,
+                  step_length),
+            predicted_optimality_reduction_model.evaluate(step_length)
+      };
 
       // invoke the globalization strategy for acceptance
       accept = this->globalization_strategy->is_acceptable(current_iterate.nonlinear_progress, trial_iterate.nonlinear_progress,
@@ -249,37 +252,9 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, Iterate& current_iterat
    return accept;
 }
 
-double l1Relaxation::compute_predicted_reduction(const Model& model, Iterate& current_iterate,
-      const Direction& direction, PredictedReductionModel& predicted_reduction_model, double step_length) {
-   // compute the predicted reduction of the l1 relaxation as a postprocessing of the predicted reduction of the subproblem
-   if (step_length == 1.) {
-      return current_iterate.constraint_violation + predicted_reduction_model.evaluate(step_length);
-   }
-   else {
-      // determine the linearized constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
-      const auto residual_function = [&](size_t j) {
-         const double component_j = current_iterate.original_evaluations.constraints[j] + step_length * dot(direction.primals,
-               current_iterate.original_evaluations.constraint_jacobian[j]);
-         return model.compute_constraint_violation(component_j, j);
-      };
-      const double linearized_constraint_violation = norm_1(residual_function, Range(model.number_constraints));
-      return current_iterate.constraint_violation - linearized_constraint_violation + predicted_reduction_model.evaluate(step_length);
-   }
+PredictedOptimalityReductionModel l1Relaxation::generate_predicted_optimality_reduction_model(const Direction& direction) const {
+   return this->subproblem->generate_predicted_optimality_reduction_model(this->relaxed_problem, direction);
 }
-
-/*
-PredictedReductionModel l1Relaxation::generate_predicted_reduction_model(const Direction& direction) const {
-   return PredictedReductionModel(-direction.objective, [&]() { // capture "this" and "direction" by reference
-      // precompute expensive quantities
-      const double linear_term = dot(direction.primals, this->objective_gradient);
-      const double quadratic_term = this->hessian_model->hessian->quadratic_product(direction.primals, direction.primals, problem.number_variables) / 2.;
-      // return a function of the step length that cheaply assembles the predicted reduction
-      return [=](double step_length) { // capture the expensive quantities by value
-         return -step_length * (linear_term + step_length * quadratic_term);
-      };
-   });
-}
-*/
 
 // measure that combines KKT error and complementarity error
 double l1Relaxation::compute_error(Iterate& current_iterate, const Multipliers& multiplier_displacements) {
@@ -309,11 +284,6 @@ void l1Relaxation::set_variable_bounds(const Iterate& current_iterate, double tr
 
 Direction l1Relaxation::compute_second_order_correction(Iterate& trial_iterate) {
    return this->subproblem->compute_second_order_correction(this->relaxed_problem, trial_iterate);
-}
-
-PredictedReductionModel l1Relaxation::generate_predicted_reduction_model(const Direction& direction) const {
-   // the predicted reduction should be that of the original problem. It will then be post-processed in compute_predicted_reduction
-   return this->subproblem->generate_predicted_reduction_model(this->optimality_problem, direction);
 }
 
 double l1Relaxation::compute_infeasibility_measure(Iterate& iterate) {

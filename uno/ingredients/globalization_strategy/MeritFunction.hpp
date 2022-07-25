@@ -13,7 +13,7 @@ public:
 
    void initialize(const Iterate& first_iterate) override;
    bool is_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress, double objective_multiplier,
-         double predicted_reduction) override;
+         const ProgressMeasures& predicted_reduction) override;
    void reset() override;
    void notify(Iterate& current_iterate) override;
 };

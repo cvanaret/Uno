@@ -58,10 +58,28 @@ Direction QPSubproblem::solve_QP(const ReformulatedProblem& problem, Iterate& it
    return direction;
 }
 
-PredictedReductionModel QPSubproblem::generate_predicted_reduction_model(const ReformulatedProblem& problem, const Direction& direction) const {
-   return PredictedReductionModel(-direction.objective, [&]() { // capture "this" and "direction" by reference
+/*
+OptimalityMeasureModel QPSubproblem::generate_optimality_measure_model(const ReformulatedProblem& problem, const Direction& direction) const {
+   return OptimalityMeasureModel(-direction.objective, [&]() { // capture "this" and "direction" by reference
       // precompute expensive quantities
-      const double linear_term = dot(direction.primals, this->objective_gradient);
+      const double directional_derivative = problem.compute_directional_derivative()
+      // return a function of the step length that cheaply assembles the predicted reduction
+      return [=](double step_length) { // capture the expensive quantities by value
+         return -step_length * (linear_term + step_length * quadratic_term);
+      };
+   });
+}
+*/
+
+PredictedOptimalityReductionModel QPSubproblem::generate_predicted_optimality_reduction_model(const ReformulatedProblem& problem, const Direction& direction) const {
+   return PredictedOptimalityReductionModel(-direction.objective, [&]() { // capture "this" and "direction" by reference
+      // precompute expensive quantities
+      // we need the directional derivative wrt the original variables
+      const size_t number_original_variables = problem.get_number_original_variables();
+      const auto predicate = [=](size_t i) {
+         return (i < number_original_variables);
+      };
+      const double linear_term = dot(direction.primals, this->objective_gradient, predicate);
       const double quadratic_term = this->hessian_model->hessian->quadratic_product(direction.primals, direction.primals, problem.number_variables) / 2.;
       // return a function of the step length that cheaply assembles the predicted reduction
       return [=](double step_length) { // capture the expensive quantities by value

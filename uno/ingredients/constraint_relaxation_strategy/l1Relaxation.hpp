@@ -32,9 +32,9 @@ public:
    [[nodiscard]] Direction compute_second_order_correction(Iterate& trial_iterate) override;
 
    // trial iterate acceptance
-   [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Direction& direction) const override;
    [[nodiscard]] bool is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         PredictedReductionModel& predicted_reduction_model, double step_length) override;
+         PredictedOptimalityReductionModel& predicted_optimality_reduction_model, double step_length) override;
+   [[nodiscard]] PredictedOptimalityReductionModel generate_predicted_optimality_reduction_model(const Direction& direction) const override;
    void register_accepted_iterate(Iterate& iterate) override;
 
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
@@ -54,8 +54,6 @@ protected:
    // statistics table
    int statistics_penalty_parameter_column_order;
 
-   static double compute_predicted_reduction(const Model& model, Iterate& current_iterate, const Direction& direction,
-         PredictedReductionModel& predicted_reduction_model, double step_length);
    Direction solve_subproblem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter);
    Direction solve_with_steering_rule(Statistics& statistics, Iterate& current_iterate);
    void decrease_parameter_aggressively(Iterate& current_iterate, const Direction& direction_lowest_violation);

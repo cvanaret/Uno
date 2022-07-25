@@ -30,6 +30,17 @@ double dot(const std::vector<double>& x, const SparseVector<double>& y) {
    return dot_product;
 }
 
+double dot(const std::vector<double>& x, const SparseVector<double>& y, const std::function<bool (size_t i)>& predicate) {
+   double dot_product = 0.;
+   y.for_each([&](size_t i, double yi) {
+      assert(i < x.size() && "Vector.dot: the sparse vector y is larger than the dense vector x");
+      if (predicate(i)) {
+         dot_product += x[i] * yi;
+      }
+   });
+   return dot_product;
+}
+
 void scale(SparseVector<double>& x, double factor) {
    if (factor == 0.) {
       x.clear();

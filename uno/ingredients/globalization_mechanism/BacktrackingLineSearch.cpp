@@ -44,7 +44,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
    // compute the direction
    this->constraint_relaxation_strategy.set_variable_bounds(current_iterate, INF);
    Direction direction = this->compute_direction(statistics, current_iterate);
-   PredictedReductionModel predicted_reduction_model = this->constraint_relaxation_strategy.generate_predicted_reduction_model(direction);
+   PredictedOptimalityReductionModel predicted_optimality_reduction_model = this->constraint_relaxation_strategy.generate_predicted_optimality_reduction_model(direction);
    this->solving_feasibility_problem = false;
 
    // step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ...
@@ -60,7 +60,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
          Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, this->step_length);
          try {
             const bool is_acceptable = this->constraint_relaxation_strategy.is_acceptable(statistics, current_iterate, trial_iterate,
-                  direction, predicted_reduction_model, this->step_length);
+                  direction, predicted_optimality_reduction_model, this->step_length);
             // check whether the trial step is accepted
             if (is_acceptable) {
                DEBUG << "Trial step accepted\n\n";
@@ -78,7 +78,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
                Iterate trial_iterate_soc = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction_soc, this->step_length);
 
                if (this->constraint_relaxation_strategy.is_acceptable(statistics, current_iterate, trial_iterate_soc, direction_soc,
-                     predicted_reduction_model, this->step_length)) {
+                     predicted_optimality_reduction_model, this->step_length)) {
                   DEBUG << "Trial SOC step accepted\n";
                   this->set_statistics(statistics, direction_soc);
                   statistics.add_statistic("SOC", "x");

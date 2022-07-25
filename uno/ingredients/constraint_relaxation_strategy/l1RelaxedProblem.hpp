@@ -28,9 +28,7 @@ public:
    void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const override;
    void evaluate_constraint_jacobian(Iterate& iterate, std::vector<SparseVector<double>>& constraint_jacobian) const override;
    void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix& hessian) const override;
-
-   [[nodiscard]] double predicted_reduction_contribution(const Iterate& current_iterate, const Direction& direction, double step_length) const override;
-
+   
    [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
    [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
    [[nodiscard]] double get_constraint_lower_bound(size_t j) const override;
@@ -157,23 +155,6 @@ inline void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, Spar
          const double derivative = this->proximal_coefficient * weight * (iterate.primals[i] - this->proximal_reference_point[i]);
          objective_gradient.insert(i, derivative);
       }
-   }
-}
-
-inline double l1RelaxedProblem::predicted_reduction_contribution(const Iterate& current_iterate, const Direction& direction, double step_length) const {
-   // compute the predicted reduction of the l1 relaxation as a postprocessing of the predicted reduction of the subproblem
-   if (step_length == 1.) {
-      return current_iterate.constraint_violation;
-   }
-   else {
-      // determine the linearized constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
-      const auto residual_function = [&](size_t j) {
-         const double linearized_constraint_j = current_iterate.original_evaluations.constraints[j] + step_length * dot(direction.primals,
-               current_iterate.original_evaluations.constraint_jacobian[j]);
-         return this->model.compute_constraint_violation(linearized_constraint_j, j);
-      };
-      const double linearized_constraint_violation = norm_1(residual_function, Range(this->number_constraints));
-      return current_iterate.constraint_violation - linearized_constraint_violation;
    }
 }
 

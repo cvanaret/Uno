@@ -21,7 +21,7 @@ public:
 
    virtual void initialize(const Iterate& first_iterate) = 0;
    [[nodiscard]] virtual bool is_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
-         double objective_multiplier, double predicted_reduction) = 0;
+         double objective_multiplier, const ProgressMeasures& predicted_reduction) = 0;
    virtual void reset() = 0;
    virtual void notify(Iterate& current_iterate) = 0;
 
