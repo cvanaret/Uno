@@ -79,6 +79,7 @@ PredictedOptimalityReductionModel QPSubproblem::generate_predicted_optimality_re
       const auto predicate = [=](size_t i) {
          return (i < number_original_variables);
       };
+      // the objective gradient is scaled with the current objective multiplier
       const double linear_term = dot(direction.primals, this->objective_gradient, predicate);
       const double quadratic_term = this->hessian_model->hessian->quadratic_product(direction.primals, direction.primals, problem.number_variables) / 2.;
       // return a function of the step length that cheaply assembles the predicted reduction

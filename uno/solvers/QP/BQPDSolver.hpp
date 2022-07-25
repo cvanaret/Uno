@@ -58,14 +58,15 @@ private:
    size_t size_hessian_sparsity;
    size_t size_hessian_workspace;
    size_t size_hessian_sparsity_workspace;
-   std::vector<double> hessian_values;
-   std::vector<int> hessian_sparsity;
+   std::vector<double> hessian_values{};
+   std::vector<int> hessian_sparsity{};
    int k{0};
    BQPDMode mode{COLD_START};
    int iprint{0}, nout{6};
    double fmin{-1e20};
    int peq_solution{}, ifail{};
    const int fortran_shift{1};
+   const bool print_QP;
 
    Direction solve_subproblem(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
          const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
