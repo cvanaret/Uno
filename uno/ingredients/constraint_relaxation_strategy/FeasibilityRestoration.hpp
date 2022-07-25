@@ -47,7 +47,7 @@ private:
    [[nodiscard]] const ReformulatedProblem& get_current_reformulated_problem() const;
    [[nodiscard]] Direction solve_optimality_problem(Statistics& statistics, Iterate& current_iterate);
    [[nodiscard]] GlobalizationStrategy& switch_phase(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction);
-   void switch_to_feasibility_restoration(Iterate& current_iterate, const Direction& direction);
+   void switch_to_feasibility_restoration(Iterate& current_iterate, const std::vector<size_t>& infeasible_constraints);
    void switch_to_optimality(Iterate& current_iterate, Iterate& trial_iterate);
    [[nodiscard]] double compute_infeasibility_measure(Iterate& iterate) override;
    [[nodiscard]] double compute_optimality_measure(Iterate& iterate, const std::vector<size_t>& infeasible_constraints);

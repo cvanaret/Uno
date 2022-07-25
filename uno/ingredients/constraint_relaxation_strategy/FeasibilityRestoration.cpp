@@ -139,11 +139,13 @@ const ReformulatedProblem& FeasibilityRestoration::get_current_reformulated_prob
 }
 
 GlobalizationStrategy& FeasibilityRestoration::switch_phase(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) {
+   const auto& constraint_partition = direction.constraint_partition;
+
    if (this->current_phase == OPTIMALITY && direction.objective_multiplier == 0.) {
-      this->switch_to_feasibility_restoration(current_iterate, direction);
+      this->switch_to_feasibility_restoration(current_iterate, constraint_partition.value().infeasible);
    }
    // possibly go from 1 (restoration) to phase 2 (optimality)
-   else if (this->current_phase == FEASIBILITY_RESTORATION && direction.constraint_partition.value().infeasible.empty()) {
+   else if (this->current_phase == FEASIBILITY_RESTORATION && constraint_partition.value().infeasible.empty()) {
       // TODO && this->filter_optimality->accept(trial_iterate.progress.feasibility, trial_iterate.progress.objective))
       this->switch_to_optimality(current_iterate, trial_iterate);
    }
@@ -155,20 +157,21 @@ GlobalizationStrategy& FeasibilityRestoration::switch_phase(Iterate& current_ite
       trial_iterate.nonlinear_progress.optimality = this->subproblem->compute_optimality_measure(this->optimality_problem, trial_iterate);
    }
    else {
-      trial_iterate.nonlinear_progress.optimality = this->compute_optimality_measure(trial_iterate, direction.constraint_partition.value().infeasible);
+      // TODO check that
+      current_iterate.nonlinear_progress.optimality = this->compute_optimality_measure(current_iterate, constraint_partition.value().infeasible);
+      trial_iterate.nonlinear_progress.optimality = this->compute_optimality_measure(trial_iterate, constraint_partition.value().infeasible);
    }
 
    // return the globalization strategy of the current phase
    return (this->current_phase == OPTIMALITY) ? *this->phase_2_strategy : *this->phase_1_strategy;
 }
 
-void FeasibilityRestoration::switch_to_feasibility_restoration(Iterate& current_iterate, const Direction& direction) {
+void FeasibilityRestoration::switch_to_feasibility_restoration(Iterate& current_iterate, const std::vector<size_t>& infeasible_constraints) {
    this->current_phase = FEASIBILITY_RESTORATION;
    DEBUG << "Switching from optimality to restoration phase\n";
    this->phase_2_strategy->notify(current_iterate);
    this->phase_1_strategy->reset();
    // update the measure of optimality
-   const std::vector<size_t>& infeasible_constraints = direction.constraint_partition.value().infeasible;
    current_iterate.nonlinear_progress.optimality = this->compute_optimality_measure(current_iterate, infeasible_constraints);
    this->phase_1_strategy->notify(current_iterate);
 }
