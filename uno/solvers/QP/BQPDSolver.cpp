@@ -34,13 +34,14 @@ BQPDSolver::BQPDSolver(size_t max_number_variables, size_t number_constraints, s
       lb(max_number_variables + number_constraints),
       ub(max_number_variables + number_constraints), jacobian(max_number_variables * (number_constraints + 1)),
       jacobian_sparsity(max_number_variables * (number_constraints + 1) + number_constraints + 3),
-      kmax(quadratic_programming ? stoi(options.at("bqpd_kmax")) : 0), alp(this->mlp), lp(this->mlp), ls(max_number_variables + number_constraints),
+      kmax(quadratic_programming ? stoi(options.at("BQPD_kmax")) : 0), alp(this->mlp), lp(this->mlp), ls(max_number_variables + number_constraints),
       w(max_number_variables + number_constraints), gradient_solution(max_number_variables), residuals(max_number_variables + number_constraints),
       e(max_number_variables + number_constraints),
       size_hessian_sparsity(quadratic_programming ? maximum_number_nonzeros + max_number_variables + 3 : 0),
       size_hessian_workspace(maximum_number_nonzeros + this->kmax * (this->kmax + 9) / 2 + 2 * max_number_variables + number_constraints + this->mxwk0),
       size_hessian_sparsity_workspace(this->size_hessian_sparsity + this->kmax + this->mxiwk0),
-      hessian_values(this->size_hessian_workspace), hessian_sparsity(this->size_hessian_sparsity_workspace) {
+      hessian_values(this->size_hessian_workspace), hessian_sparsity(this->size_hessian_sparsity_workspace),
+      print_QP(options.at("BQPD_print_QP") == "yes") {
    // active set
    for (size_t i = 0; i < max_number_variables + number_constraints; i++) {
       this->ls[i] = static_cast<int>(i) + this->fortran_shift;
@@ -51,6 +52,10 @@ Direction BQPDSolver::solve_QP(size_t number_variables, size_t number_constraint
       const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
       const std::vector<SparseVector<double>>& constraint_jacobian, const SymmetricMatrix& hessian, const std::vector<double>& initial_point) {
    this->save_hessian_to_local_format(hessian);
+   if (this->print_QP) {
+      DEBUG << "QP:\n";
+      DEBUG << "Hessian: " << hessian;
+   }
    return this->solve_subproblem(number_variables, number_constraints, variables_bounds, constraint_bounds, linear_objective, constraint_jacobian,
          initial_point);
 }
@@ -58,6 +63,9 @@ Direction BQPDSolver::solve_QP(size_t number_variables, size_t number_constraint
 Direction BQPDSolver::solve_LP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
       const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
       const std::vector<SparseVector<double>>& constraint_jacobian, const std::vector<double>& initial_point) {
+   if (this->print_QP) {
+      DEBUG << "LP:\n";
+   }
    return this->solve_subproblem(number_variables, number_constraints, variables_bounds, constraint_bounds, linear_objective, constraint_jacobian,
          initial_point);
 }
@@ -73,16 +81,18 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
    wsc_.mxlws = static_cast<int>(this->size_hessian_sparsity_workspace);
    kktalphac_.alpha = 0; // inertia control
 
-   DEBUG << "objective gradient: ";
-   DEBUG << linear_objective;
-   for (size_t j = 0; j < number_constraints; j++) {
-      DEBUG << "gradient c" << j << ": " << constraint_jacobian[j];
-   }
-   for (size_t i = 0; i < number_variables; i++) {
-      DEBUG << "Δx" << i << " in [" << variables_bounds[i].lb << ", " << variables_bounds[i].ub << "]\n";
-   }
-   for (size_t j = 0; j < number_constraints; j++) {
-      DEBUG << "linearized c" << j << " in [" << constraint_bounds[j].lb << ", " << constraint_bounds[j].ub << "]\n";
+   if (this->print_QP) {
+      DEBUG << "objective gradient: ";
+      DEBUG << linear_objective;
+      for (size_t j = 0; j < number_constraints; j++) {
+         DEBUG << "gradient c" << j << ": " << constraint_jacobian[j];
+      }
+      for (size_t i = 0; i < number_variables; i++) {
+         DEBUG << "Δx" << i << " in [" << variables_bounds[i].lb << ", " << variables_bounds[i].ub << "]\n";
+      }
+      for (size_t j = 0; j < number_constraints; j++) {
+         DEBUG << "linearized c" << j << " in [" << constraint_bounds[j].lb << ", " << constraint_bounds[j].ub << "]\n";
+      }
    }
 
    // Jacobian
@@ -163,7 +173,6 @@ void BQPDSolver::save_hessian_to_local_format(const SymmetricMatrix& hessian) {
       row_indices[index] = static_cast<int>(i) + this->fortran_shift;
       current_indices[j]++;
    });
-   DEBUG << "Hessian: " << hessian;
 }
 
 void BQPDSolver::save_gradients_to_local_format(size_t number_constraints, const SparseVector<double>& linear_objective,

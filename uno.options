@@ -183,4 +183,5 @@ barrier_push_variable_to_interior_k1 1e-2
 barrier_push_variable_to_interior_k2 1e-2
 
 ##### BQPD options #####
-bqpd_kmax 500
+BQPD_print_QP yes
+BQPD_kmax 500
