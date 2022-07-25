@@ -60,7 +60,7 @@ sudo apt-get install cmake cmake-curses-gui
   ./uno_ampl your_problem.nl
 ```
 
-To compile the code with different configurations, simply create a build directory for each configuration and perform instructions 1 to 6.
+To compile the code with different configurations, simply create a build directory for each configuration and perform instructions 1 to 5.
 
 # Unit tests
 7. Install the GoogleTest suite:
