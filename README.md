@@ -1,5 +1,6 @@
 # What is Uno?
 Uno (Unifying Nonlinear Optimization) is a C++ framework aiming at unifying most of the methods for solving nonlinearly constrained optimization problems.
+This is joint work with Sven Leyffer (Argonne National Laboratory).
 
 # How to cite Uno
 
