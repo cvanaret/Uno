@@ -1,6 +1,10 @@
 # What is Uno?
 Uno (Unifying Nonlinear Optimization) is a C++ framework aiming at unifying most of the methods for solving nonlinearly constrained optimization problems.
 
+# How to cite Uno
+
+Please be patient, we are actively working on our article.
+
 # Contributions
 
 Developed by Charlie Vanaret (Technische Universität Berlin)
@@ -47,9 +51,13 @@ sudo apt-get install cmake cmake-curses-gui
 ```
   make -jn
 ```
-6. Run UNO:
+6. To print the version, type:
 ```
-  ./uno your_problem.nl
+  ./uno_ampl -v
+```
+7. Run Uno:
+```
+  ./uno_ampl your_problem.nl
 ```
 
 To compile the code with different configurations, simply create a build directory for each configuration and perform instructions 1 to 6.
@@ -62,7 +70,7 @@ To compile the code with different configurations, simply create a build directo
 8. Perform steps 2 and 3
 9. Run the test suite:
 ```
-  ./run_unit_tests
+  ./run_unotest
 ```
 
 ## Autocompletion
