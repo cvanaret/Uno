@@ -66,10 +66,8 @@ int main(int argc, char* argv[]) {
       get_command_line_options(argc, argv, options);
       set_logger(options.at("logger"));
 
-      options.print();
-
       if (std::string(argv[1]) == "-v") {
-         std::cout << "Welcome in Uno\n";
+         std::cout << "Welcome in Uno 1.0\n";
          std::cout << "To solve an AMPL model, type ./uno_ampl path_to_file/file.nl\n";
          std::cout << "To choose a globalization mechanism, use the argument -mechanism [LS|TR]\n";
          std::cout << "To choose a constraint relaxation strategy, use the argument -constraint-relaxation [feasibility-restoration|l1-relaxation]\n";
@@ -79,6 +77,7 @@ int main(int argc, char* argv[]) {
          std::cout << "The options can be combined in the same command line. Autocompletion is active.\n";
       }
       else {
+         options.print();
          // run Uno on the .nl file (last command line argument)
          std::string model_name = std::string(argv[argc - 1]);
          run_uno_ampl(model_name, options);
