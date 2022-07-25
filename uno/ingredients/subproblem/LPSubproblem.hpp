@@ -14,7 +14,7 @@ public:
 
    [[nodiscard]] Direction solve(Statistics& statistics, const ReformulatedProblem& problem, Iterate& current_iterate) override;
    [[nodiscard]] Direction compute_second_order_correction(const ReformulatedProblem& model, Iterate& trial_iterate) override;
-   [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const ReformulatedProblem& problem, const Direction& direction) const override;
+   [[nodiscard]] PredictedOptimalityReductionModel generate_predicted_optimality_reduction_model(const ReformulatedProblem& problem, const Direction& direction) const override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
    [[nodiscard]] double get_proximal_coefficient() const override;
 

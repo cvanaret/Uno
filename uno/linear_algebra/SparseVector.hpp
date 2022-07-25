@@ -17,7 +17,7 @@ class SparseVector {
 public:
    explicit SparseVector(size_t capacity = 0);
    void for_each(const std::function<void (size_t, T)>& f) const;
-   void for_each_index(const std::function<void(size_t)>& f) const;
+   void for_each_index(const std::function<void (size_t)>& f) const;
    void for_each_value(const std::function<void (T)>& f) const;
    [[nodiscard]] size_t size() const;
    void reserve(size_t capacity);
@@ -114,6 +114,7 @@ std::ostream& operator<<(std::ostream& stream, const SparseVector<T>& x) {
 double norm_1(const SparseVector<double>& x);
 double norm_inf(const SparseVector<double>& x);
 double dot(const std::vector<double>& x, const SparseVector<double>& y);
+double dot(const std::vector<double>& x, const SparseVector<double>& y, const std::function<bool (size_t i)>& predicate);
 void scale(SparseVector<double>& x, double factor);
 
 #endif // UNO_SPARSEVECTOR_H

@@ -62,8 +62,9 @@ void ActiveSetSubproblem::compute_dual_displacements(const ReformulatedProblem& 
 }
 
 double ActiveSetSubproblem::compute_optimality_measure(const ReformulatedProblem& problem, Iterate& iterate) {
-   // optimality measure: objective value
-   return problem.evaluate_objective(iterate);
+   // optimality measure: original objective value
+   iterate.evaluate_objective(problem.model);
+   return iterate.original_evaluations.objective;
 }
 
 void ActiveSetSubproblem::postprocess_accepted_iterate(const ReformulatedProblem& /*problem*/, Iterate& /*iterate*/) {

@@ -89,7 +89,7 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
 }
 
 bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-      PredictedReductionModel& predicted_reduction_model, double step_length) {
+      PredictedOptimalityReductionModel& predicted_optimality_reduction_model, double step_length) {
    // check if subproblem definition changed
    if (this->subproblem->subproblem_definition_changed) {
       DEBUG << "The subproblem definition changed, the optimality measure is recomputed\n";
@@ -107,7 +107,11 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& curr
    }
    else {
       // evaluate the predicted reduction
-      const double predicted_reduction = predicted_reduction_model.evaluate(step_length);
+      const ProgressMeasures predicted_reduction = {
+            ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction(this->optimality_problem.model, current_iterate, direction,
+                  step_length),
+            predicted_optimality_reduction_model.evaluate(step_length)
+      };
 
       // invoke the globalization strategy for acceptance
       accept = current_phase_strategy.is_acceptable(current_iterate.nonlinear_progress, trial_iterate.nonlinear_progress,
@@ -119,6 +123,10 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& curr
       this->compute_nonlinear_residuals(this->get_current_reformulated_problem(), trial_iterate);
    }
    return accept;
+}
+
+PredictedOptimalityReductionModel FeasibilityRestoration::generate_predicted_optimality_reduction_model(const Direction& direction) const {
+   return this->subproblem->generate_predicted_optimality_reduction_model(this->get_current_reformulated_problem(), direction);
 }
 
 const ReformulatedProblem& FeasibilityRestoration::get_current_reformulated_problem() const {
@@ -180,10 +188,6 @@ void FeasibilityRestoration::set_variable_bounds(const Iterate& current_iterate,
 
 Direction FeasibilityRestoration::compute_second_order_correction(Iterate& trial_iterate) {
    return this->subproblem->compute_second_order_correction(this->get_current_reformulated_problem(), trial_iterate);
-}
-
-PredictedReductionModel FeasibilityRestoration::generate_predicted_reduction_model(const Direction& direction) const {
-   return this->subproblem->generate_predicted_reduction_model(this->get_current_reformulated_problem(), direction);
 }
 
 double FeasibilityRestoration::compute_infeasibility_measure(Iterate& iterate) {

@@ -37,7 +37,7 @@ public:
    [[nodiscard]] double push_variable_to_interior(double variable_value, const Interval& variable_bounds) const;
    [[nodiscard]] Direction solve(Statistics& statistics, const ReformulatedProblem& problem, Iterate& current_iterate) override;
    [[nodiscard]] Direction compute_second_order_correction(const ReformulatedProblem& problem, Iterate& trial_iterate) override;
-   [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const ReformulatedProblem& problem, const Direction& direction) const override;
+   [[nodiscard]] PredictedOptimalityReductionModel generate_predicted_optimality_reduction_model(const ReformulatedProblem& problem, const Direction& direction) const override;
    [[nodiscard]] double compute_optimality_measure(const ReformulatedProblem& problem, Iterate& iterate) override;
    void postprocess_accepted_iterate(const ReformulatedProblem& problem, Iterate& iterate) override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
@@ -67,7 +67,6 @@ private:
    void update_barrier_parameter(const ReformulatedProblem& problem, const Iterate& current_iterate);
    [[nodiscard]] bool is_small_direction(const ReformulatedProblem& problem, const Iterate& current_iterate, const Direction& direction) const;
    [[nodiscard]] double compute_barrier_directional_derivative(const std::vector<double>& solution) const;
-   [[nodiscard]] double evaluate_barrier_function(const ReformulatedProblem& problem, Iterate& iterate);
    [[nodiscard]] double primal_fraction_to_boundary(const ReformulatedProblem& problem, const Iterate& current_iterate, double tau);
    [[nodiscard]] double dual_fraction_to_boundary(const ReformulatedProblem& problem, const Iterate& current_iterate, double tau);
    void assemble_augmented_system(const ReformulatedProblem& problem, const Iterate& current_iterate);

@@ -40,7 +40,7 @@ set(SRC_FILES
     uno/ingredients/globalization_strategy/GlobalizationStrategyFactory.cpp
     uno/ingredients/globalization_strategy/FilterStrategy.cpp
     uno/ingredients/globalization_strategy/Filter.cpp
-        uno/ingredients/globalization_strategy/MeritFunction.cpp
+    uno/ingredients/globalization_strategy/MeritFunction.cpp
     
     uno/ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategy.cpp
     uno/ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategyFactory.cpp
@@ -56,7 +56,7 @@ set(SRC_FILES
     uno/ingredients/subproblem/LPSubproblem.cpp
     uno/ingredients/subproblem/QPSubproblem.cpp
     uno/ingredients/subproblem/HessianModel.cpp
-    uno/ingredients/subproblem/PredictedReductionModel.cpp
+    uno/ingredients/subproblem/PredictedOptimalityReductionModel.cpp
 
     uno/linear_algebra/SymmetricMatrix.cpp
     uno/linear_algebra/COOSymmetricMatrix.cpp

@@ -172,12 +172,12 @@ double BarrierSubproblem::get_proximal_coefficient() const {
 }
 
 void BarrierSubproblem::set_elastic_variables(const l1RelaxedProblem& problem, Iterate& current_iterate) {
-   // TODO change
+   // TODO use the IPOPT strategy
    problem.set_elastic_variables(current_iterate, 0.1);
 }
 
-PredictedReductionModel BarrierSubproblem::generate_predicted_reduction_model(const ReformulatedProblem& /*problem*/, const Direction& direction) const {
-   return PredictedReductionModel(-direction.objective, [&]() {
+PredictedOptimalityReductionModel BarrierSubproblem::generate_predicted_optimality_reduction_model(const ReformulatedProblem& /*problem*/, const Direction& direction) const {
+   return PredictedOptimalityReductionModel(-direction.objective, [&]() {
       return [=](double step_length) {
          return -step_length * direction.objective;
       };
@@ -185,7 +185,22 @@ PredictedReductionModel BarrierSubproblem::generate_predicted_reduction_model(co
 }
 
 double BarrierSubproblem::compute_optimality_measure(const ReformulatedProblem& problem, Iterate& iterate) {
-   return this->evaluate_barrier_function(problem, iterate);
+   // optimality measure: barrier function
+   double objective = 0.;
+   // bound constraints
+   for (size_t i: problem.lower_bounded_variables) {
+      objective -= std::log(iterate.primals[i] - this->variable_bounds[i].lb);
+   }
+   for (size_t i: problem.upper_bounded_variables) {
+      objective -= std::log(this->variable_bounds[i].ub - iterate.primals[i]);
+   }
+   objective *= this->barrier_parameter;
+   // original objective value
+   iterate.evaluate_objective(problem.model);
+   // TODO: parameterize \omega with \rho instead of multiplying (\rho should not multiply the barrier terms)
+   objective += iterate.original_evaluations.objective;
+   assert(is_finite(objective) && "The barrier value is infinite");
+   return objective;
 }
 
 void BarrierSubproblem::update_barrier_parameter(const ReformulatedProblem& problem, const Iterate& current_iterate) {
@@ -217,23 +232,6 @@ bool BarrierSubproblem::is_small_direction(const ReformulatedProblem& problem, c
 
 double BarrierSubproblem::compute_barrier_directional_derivative(const std::vector<double>& solution) const {
    return dot(solution, this->objective_gradient);
-}
-
-double BarrierSubproblem::evaluate_barrier_function(const ReformulatedProblem& problem, Iterate& iterate) {
-   double objective = 0.;
-   // bound constraints
-   for (size_t i: problem.lower_bounded_variables) {
-      objective -= std::log(iterate.primals[i] - this->variable_bounds[i].lb);
-   }
-   for (size_t i: problem.upper_bounded_variables) {
-      objective -= std::log(this->variable_bounds[i].ub - iterate.primals[i]);
-   }
-   objective *= this->barrier_parameter;
-   if (!this->solving_feasibility_problem) {
-      objective += problem.evaluate_objective(iterate);
-   }
-   assert(is_finite(objective) && "The barrier value is infinite");
-   return objective;
 }
 
 double BarrierSubproblem::primal_fraction_to_boundary(const ReformulatedProblem& problem, const Iterate& current_iterate, double tau) {

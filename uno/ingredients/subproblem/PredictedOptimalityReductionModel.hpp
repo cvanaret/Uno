@@ -1,14 +1,14 @@
 // Copyright (c) 2022 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_PREDICTEDREDUCTIONMODEL_H
-#define UNO_PREDICTEDREDUCTIONMODEL_H
+#ifndef UNO_PREDICTEDOPTIMALITYREDUCTIONMODEL_H
+#define UNO_PREDICTEDOPTIMALITYREDUCTIONMODEL_H
 
 #include <functional>
 
-class PredictedReductionModel {
+class PredictedOptimalityReductionModel {
 public:
-   PredictedReductionModel(double full_step_value, std::function<std::function<double(double step_length)>()> partial_step_precomputation);
+   PredictedOptimalityReductionModel(double full_step_value, std::function<std::function<double(double step_length)>()> partial_step_precomputation);
    double evaluate(double step_length);
 
 private:
@@ -22,4 +22,4 @@ private:
    const std::function<std::function<double (double step_length)> ()> partial_step_precomputation;
 };
 
-#endif // UNO_PREDICTEDREDUCTIONMODEL_H
+#endif // UNO_PREDICTEDOPTIMALITYREDUCTIONMODEL_H

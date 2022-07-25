@@ -16,12 +16,14 @@ void MeritFunction::reset() {
 void MeritFunction::notify(Iterate& /*current_iterate*/) {
 }
 
-bool MeritFunction::is_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress, double objective_multiplier,
-      double predicted_reduction) {
+bool MeritFunction::is_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
+      double objective_multiplier, const ProgressMeasures& predicted_reduction) {
    GlobalizationStrategy::check_finiteness(current_progress);
    GlobalizationStrategy::check_finiteness(trial_progress);
 
-   DEBUG << "Predicted reduction: " << predicted_reduction << '\n';
+   // include the predicted optimality and infeasibility reductions
+   const double constrained_predicted_reduction = predicted_reduction.infeasibility + predicted_reduction.optimality;
+   DEBUG << "Constrained predicted reduction: " << constrained_predicted_reduction << '\n';
    // compute current exact penalty: rho f + ||c||
    const double current_exact_merit = objective_multiplier * current_progress.optimality + current_progress.infeasibility;
    const double trial_exact_merit = objective_multiplier * trial_progress.optimality + trial_progress.infeasibility;
@@ -31,7 +33,7 @@ bool MeritFunction::is_acceptable(const ProgressMeasures& current_progress, cons
    DEBUG << "Actual reduction: " << current_exact_merit << " - " << trial_exact_merit << " = " << actual_reduction << '\n';
 
    // Armijo sufficient decrease condition
-   const bool accept = this->armijo_sufficient_decrease(predicted_reduction, actual_reduction);
+   const bool accept = this->armijo_sufficient_decrease(constrained_predicted_reduction, actual_reduction);
    if (accept) {
       DEBUG << "Trial iterate was accepted by satisfying Armijo condition\n";
    }
