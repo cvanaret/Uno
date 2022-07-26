@@ -68,7 +68,7 @@ public:
    std::vector<size_t> upper_bounded_variables{}; // indices of the upper-bounded variables
 
    // Hessian
-   const bool fixed_hessian_sparsity{false};
+   const bool fixed_hessian_sparsity{true};
 
    // purely virtual functions
    [[nodiscard]] virtual double get_variable_lower_bound(size_t i) const = 0;
