@@ -53,9 +53,9 @@ sudo apt-get install cmake cmake-curses-gui
 
 Compilation instructions
 ------------------------
-1. Create a build directory in src/:
+1. Create a `build` directory in the main directory:
 ```
-  cd src/ && mkdir build
+  mkdir build
 ```
 2. Move to the build directory:
 ```
@@ -82,11 +82,11 @@ To compile the code with different configurations, simply create a build directo
 
 Solving a problem with Uno
 --------------------------
-To solve an AMPL model, type:
+To solve an AMPL model, type in the `build` directory:
 ```
 ./uno_ampl path_to_file/file.nl
 ```
-To choose a globalization mechanism, use the argument:
+To choose a globalization mechanism, use the argument (choose of the possible options in brackets):
 ```
 -mechanism [LS|TR]
 ```
