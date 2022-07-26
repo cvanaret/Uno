@@ -145,18 +145,16 @@ target_link_libraries(uno_ampl PUBLIC uno)
 #########################
 # GoogleTest unit tests #
 #########################
-#if(WITH_GTEST)
-    #find_package(GTest CONFIG REQUIRED)
-    #if(NOT ${GTest}_DIR STREQUAL "${GTest}-NOTFOUND")
-        #set(TESTS_SRC_FILES
-            #unotest/unotest.cpp
-            #unotest/MA57SolverTests.cpp
-            #unotest/PredictedReductionModelTests.cpp
-            #unotest/SparseVectorTests.cpp
-        #)
-        #add_executable(run_unotest ${TESTS_SRC_FILES})
-        #target_link_libraries(run_unotest PUBLIC GTest::gtest uno)
-    #endif()
-#endif()
-
-# unotest/CSCSymmetricMatrixTests.cpp
+if(WITH_GTEST)
+    find_package(GTest CONFIG REQUIRED)
+    if(NOT ${GTest}_DIR STREQUAL "${GTest}-NOTFOUND")
+        set(TESTS_SRC_FILES
+            unotest/unotest.cpp
+            unotest/MA57SolverTests.cpp
+            unotest/PredictedReductionModelTests.cpp
+            unotest/SparseVectorTests.cpp
+        )
+        add_executable(run_unotest ${TESTS_SRC_FILES})
+        target_link_libraries(run_unotest PUBLIC GTest::gtest uno)
+    endif()
+endif()
