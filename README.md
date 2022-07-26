@@ -1,23 +1,41 @@
-# What is Uno?
-Uno (Unifying Nonlinear Optimization) is a C++ framework aiming at unifying most of the methods for solving nonlinearly constrained optimization problems.
+Uno (Unifying Nonlinear Optimization)
+=====================================
+
+What is Uno?
+------------
+Uno (Unifying Nonlinear Optimization) is a C++ library aiming at unifying most of the methods for solving nonlinearly constrained optimization problems of the form:
+
+```
+   min     f(x)
+  x ∈ Rⁿ
+
+   s.t.    c_L ≤ c(x) ≤ c_U
+           x_L ≤  x   ≤ x_U
+```
+
+Uno implements an abstract framework based on four ingredients:
+* **constraint relaxation strategy**: a systematic way to relax the nonlinear constraints;
+* **subproblem**: a local model of the (possibly relaxed) problem at the current primal-dual iterate;
+* **globalization strategy**: an acceptance test of the trial iterate;
+* **globalization mechanism**: a recourse action upon rejection of the trial iterate.
 
 Check out my [presentation at the ICCOPT 2022 conference](https://www.researchgate.net/publication/362254109).
 This is joint work with Sven Leyffer (Argonne National Laboratory).
 
-# How to cite Uno
-
+How to cite Uno
+---------------
 Please be patient, we are actively working on our article.
 
-# Contributions
-
+Contributions
+-------------
 Developed by Charlie Vanaret (Technische Universität Berlin)
 
-# License
-
+License
+-------
 Uno is released under the MIT license (see the [license file](LICENSE)).
 
-# Installation instructions
-
+Installation instructions
+-------------------------
 * download the AMPL solver library (ASL): http://www.netlib.org/ampl/solvers/
 
 * download optional solvers:
@@ -33,7 +51,8 @@ sudo apt-get install libblas-dev liblapack-dev libf2c2-dev
 sudo apt-get install cmake cmake-curses-gui
 ```
 
-# Compilation instructions
+Compilation instructions
+------------------------
 1. Create a build directory in src/:
 ```
   cd src/ && mkdir build
@@ -61,7 +80,8 @@ sudo apt-get install cmake cmake-curses-gui
 
 To compile the code with different configurations, simply create a build directory for each configuration and perform instructions 1 to 5.
 
-# Solving a problem with Uno
+Solving a problem with Uno
+--------------------------
 To solve an AMPL model, type:
 ```
 ./uno_ampl path_to_file/file.nl
@@ -88,7 +108,8 @@ To choose a preset, use the argument:
 ```
 The options can be combined in the same command line. Autocompletion is active.
 
-# Unit tests
+Unit tests
+----------
 7. Install the GoogleTest suite:
 ```
   sudo apt-get install googletest
@@ -99,7 +120,8 @@ The options can be combined in the same command line. Autocompletion is active.
   ./run_unotest
 ```
 
-## Autocompletion
+Autocompletion
+--------------
 To benefit from autocompletion, install the file uno_ampl-completion.bash:
 ```
   sudo cp uno_ampl-completion.bash /etc/bash_completion.d/
