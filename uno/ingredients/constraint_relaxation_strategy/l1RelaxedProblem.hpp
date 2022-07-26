@@ -204,11 +204,11 @@ inline void l1RelaxedProblem::evaluate_lagrangian_hessian(const std::vector<doub
 inline double l1RelaxedProblem::compute_linearized_constraint_violation(const std::vector<double>& x) const {
    double constraint_violation = 0.;
    // l1 residual of the linearized constraints: sum of elastic variables
-   auto elastic_contribution = [&](size_t i) {
+   auto add_elastic_contribution = [&](size_t i) {
       constraint_violation += x[i];
    };
-   this->elastic_variables.positive.for_each_value(elastic_contribution);
-   this->elastic_variables.negative.for_each_value(elastic_contribution);
+   this->elastic_variables.positive.for_each_value(add_elastic_contribution);
+   this->elastic_variables.negative.for_each_value(add_elastic_contribution);
    assert(0 <= constraint_violation && "The linearized constraint violation should not be negative");
    return constraint_violation;
 }
@@ -216,11 +216,11 @@ inline double l1RelaxedProblem::compute_linearized_constraint_violation(const st
 inline double l1RelaxedProblem::compute_linearized_constraint_violation(const std::vector<double>& x, const std::vector<double>& dx) const {
    double constraint_violation = 0.;
    // l1 residual of the linearized constraints: sum of elastic variables
-   auto elastic_contribution = [&](size_t i) {
+   auto add_elastic_contribution = [&](size_t i) {
       constraint_violation += (x[i] + dx[i]);
    };
-   this->elastic_variables.positive.for_each_value(elastic_contribution);
-   this->elastic_variables.negative.for_each_value(elastic_contribution);
+   this->elastic_variables.positive.for_each_value(add_elastic_contribution);
+   this->elastic_variables.negative.for_each_value(add_elastic_contribution);
    assert(0 <= constraint_violation && "The linearized constraint violation should not be negative");
    return constraint_violation;
 }

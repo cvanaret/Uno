@@ -8,7 +8,7 @@
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 
 FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options& options) :
-      ConstraintRelaxationStrategy(false, options),
+      ConstraintRelaxationStrategy(model, false, options),
       // create the optimality problem
       optimality_problem(model),
       // create the phase-1 feasibility problem (objective multiplier = 0)
@@ -108,8 +108,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& curr
    else {
       // evaluate the predicted reduction
       const ProgressMeasures predicted_reduction = {
-            ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction(this->optimality_problem.model, current_iterate, direction,
-                  step_length),
+            ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction(this->model, current_iterate, direction, step_length),
             predicted_optimality_reduction_model.evaluate(step_length)
       };
 
@@ -151,7 +150,7 @@ GlobalizationStrategy& FeasibilityRestoration::switch_phase(Iterate& current_ite
    }
 
    // evaluate the progress measures of the trial iterate
-   trial_iterate.evaluate_objective(this->optimality_problem.model);
+   trial_iterate.evaluate_objective(this->model);
    trial_iterate.nonlinear_progress.infeasibility = this->compute_infeasibility_measure(trial_iterate);
    if (this->current_phase == OPTIMALITY) {
       trial_iterate.nonlinear_progress.optimality = this->subproblem->compute_optimality_measure(this->optimality_problem, trial_iterate);
@@ -194,13 +193,13 @@ Direction FeasibilityRestoration::compute_second_order_correction(Iterate& trial
 }
 
 double FeasibilityRestoration::compute_infeasibility_measure(Iterate& iterate) {
-   iterate.evaluate_constraints(this->optimality_problem.model);
-   return this->optimality_problem.model.compute_constraint_violation(iterate.original_evaluations.constraints, L1_NORM);
+   iterate.evaluate_constraints(this->model);
+   return this->model.compute_constraint_violation(iterate.original_evaluations.constraints, L1_NORM);
 }
 
 double FeasibilityRestoration::compute_optimality_measure(Iterate& iterate, const std::vector<size_t>& infeasible_constraints) {
-   iterate.evaluate_constraints(this->optimality_problem.model);
-   return this->optimality_problem.model.compute_constraint_violation(iterate.original_evaluations.constraints, infeasible_constraints, L1_NORM);
+   iterate.evaluate_constraints(this->model);
+   return this->model.compute_constraint_violation(iterate.original_evaluations.constraints, infeasible_constraints, L1_NORM);
 }
 
 void FeasibilityRestoration::register_accepted_iterate(Iterate& iterate) {
