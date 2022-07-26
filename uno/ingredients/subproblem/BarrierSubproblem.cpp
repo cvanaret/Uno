@@ -139,8 +139,8 @@ Direction BarrierSubproblem::solve(Statistics& statistics, const NonlinearProble
 void BarrierSubproblem::assemble_augmented_system(const NonlinearProblem& problem, const Iterate& current_iterate) {
    // assemble, factorize and regularize the KKT matrix
    this->assemble_augmented_matrix(problem, current_iterate);
-   this->augmented_system.factorize_matrix(problem, *this->linear_solver);
-   this->augmented_system.regularize_matrix(problem, *this->linear_solver, problem.number_variables, problem.number_constraints,
+   this->augmented_system.factorize_matrix(problem.model, *this->linear_solver);
+   this->augmented_system.regularize_matrix(problem.model, *this->linear_solver, problem.number_variables, problem.number_constraints,
          std::pow(this->barrier_parameter, this->parameters.regularization_exponent));
    auto[number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = this->linear_solver->get_inertia();
    assert(number_pos_eigenvalues == problem.number_variables && number_neg_eigenvalues == problem.number_constraints && number_zero_eigenvalues == 0);
