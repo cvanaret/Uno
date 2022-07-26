@@ -2,11 +2,11 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <gtest/gtest.h>
-#include "ingredients/subproblem/PredictedReductionModel.hpp"
+#include "ingredients/subproblem/PredictedOptimalityReductionModel.hpp"
 
-TEST(PredictedReductionModel, Correctness) {
+TEST(PredictedOptimalityReductionModel, Correctness) {
    const double full_step_predicted_reduction = 1.;
-   PredictedReductionModel predicted_reduction_model(full_step_predicted_reduction, [&]() {
+   PredictedOptimalityReductionModel predicted_reduction_model(full_step_predicted_reduction, [&]() {
       // expensive computations here
       const double quadratic_term = 2.;
       const double linear_term = -3.;
@@ -18,10 +18,10 @@ TEST(PredictedReductionModel, Correctness) {
    ASSERT_EQ(predicted_reduction_model.evaluate(0.25), 0.625);
 }
 
-TEST(PredictedReductionModel, Laziness) {
+TEST(PredictedOptimalityReductionModel, Laziness) {
    const double full_step_predicted_reduction = 1.;
    size_t counter_expensive_computations = 0;
-   PredictedReductionModel predicted_reduction_model(full_step_predicted_reduction, [&]() {
+   PredictedOptimalityReductionModel predicted_reduction_model(full_step_predicted_reduction, [&]() {
       // expensive computations here
       const double quadratic_term = 2.;
       const double linear_term = -3.;
@@ -34,10 +34,10 @@ TEST(PredictedReductionModel, Laziness) {
    ASSERT_EQ(counter_expensive_computations, 0);
 }
 
-TEST(PredictedReductionModel, Precomputation) {
+TEST(PredictedOptimalityReductionModel, Precomputation) {
    const double full_step_predicted_reduction = 1.;
    size_t counter_expensive_computations = 0;
-   PredictedReductionModel predicted_reduction_model(full_step_predicted_reduction, [&]() {
+   PredictedOptimalityReductionModel predicted_reduction_model(full_step_predicted_reduction, [&]() {
       // expensive computations here
       const double quadratic_term = 2.;
       const double linear_term = -3.;
