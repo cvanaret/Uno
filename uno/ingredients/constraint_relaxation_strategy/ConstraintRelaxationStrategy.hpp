@@ -13,7 +13,7 @@
 
 class ConstraintRelaxationStrategy {
 public:
-   ConstraintRelaxationStrategy(const Model& model, bool penalty_parameter_control, const Options& options);
+   ConstraintRelaxationStrategy(const Model& model, const Options& options);
    virtual ~ConstraintRelaxationStrategy() = default;
 
    virtual void initialize(Statistics& statistics, Iterate& first_iterate) = 0;
@@ -33,8 +33,6 @@ public:
 
    [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
    [[nodiscard]] virtual size_t get_number_subproblems_solved() const = 0;
-
-   const bool penalty_parameter_control;
 
 protected:
    const Model& model;

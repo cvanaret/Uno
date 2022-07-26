@@ -3,8 +3,7 @@
 
 #include "ConstraintRelaxationStrategy.hpp"
 
-ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Model& model, bool penalty_parameter_control, const Options& options):
-      penalty_parameter_control(penalty_parameter_control),
+ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Model& model, const Options& options):
       model(model),
       residual_norm(norm_from_string(options.at("residual_norm"))),
       small_step_threshold(stod(options.at("small_step_threshold"))) {
