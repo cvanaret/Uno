@@ -28,7 +28,7 @@ Uno is released under the MIT license (see the [license file](LICENSE)).
 ```
 sudo apt-get install libblas-dev liblapack-dev libf2c2-dev
 ```
-* install cmake and ccmake:
+* install cmake and ccmake (CMake curses interface):
 ```
 sudo apt-get install cmake cmake-curses-gui
 ```
