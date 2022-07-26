@@ -13,7 +13,7 @@
 
 class ConstraintRelaxationStrategy {
 public:
-   ConstraintRelaxationStrategy(bool penalty_parameter_control, const Options& options);
+   ConstraintRelaxationStrategy(const Model& model, bool penalty_parameter_control, const Options& options);
    virtual ~ConstraintRelaxationStrategy() = default;
 
    virtual void initialize(Statistics& statistics, Iterate& first_iterate) = 0;
@@ -37,6 +37,7 @@ public:
    const bool penalty_parameter_control;
 
 protected:
+   const Model& model;
    const Norm residual_norm;
    const double small_step_threshold;
 
