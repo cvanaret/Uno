@@ -12,7 +12,7 @@ Developed by Charlie Vanaret (Technische Universität Berlin)
 
 # License
 
-TBD
+Uno is released under the MIT license (see the [license file](LICENSE)).
 
 # Installation instructions
 
