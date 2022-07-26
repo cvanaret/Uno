@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <optional>
+#include <ostream>
 #include "optimization/Multipliers.hpp"
 #include "tools/Infinity.hpp"
 

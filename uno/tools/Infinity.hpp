@@ -4,6 +4,9 @@
 #ifndef UNO_INFINITY_H
 #define UNO_INFINITY_H
 
+#include <cmath>
+#include <limits>
+
 const double INF = std::numeric_limits<double>::infinity();
 
 inline bool is_finite(double value) {
