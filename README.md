@@ -86,7 +86,7 @@ To solve an AMPL model, type in the `build` directory:
 ```
 ./uno_ampl path_to_file/file.nl
 ```
-To choose a globalization mechanism, use the argument (choose of the possible options in brackets):
+To choose a globalization mechanism, use the argument (choose one of the possible options in brackets):
 ```
 -mechanism [LS|TR]
 ```
