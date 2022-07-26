@@ -50,7 +50,7 @@ sudo apt-get install cmake cmake-curses-gui
 ```
   ccmake ..
 ```
-5. Compile in parallel (n being the number of threads, e.g. 6):
+5. Compile in parallel (`n` being the number of threads, e.g. 6):
 ```
   make -jn
 ```
@@ -58,12 +58,35 @@ sudo apt-get install cmake cmake-curses-gui
 ```
   ./uno_ampl -v
 ```
-7. Run Uno:
-```
-  ./uno_ampl your_problem.nl
-```
 
 To compile the code with different configurations, simply create a build directory for each configuration and perform instructions 1 to 5.
+
+# Solving a problem with Uno
+To solve an AMPL model, type:
+```
+./uno_ampl path_to_file/file.nl
+```
+To choose a globalization mechanism, use the argument:
+```
+-mechanism [LS|TR]
+```
+To choose a constraint relaxation strategy, use the argument:
+```
+-constraint-relaxation [feasibility-restoration|l1-relaxation]
+```
+To choose a globalization strategy, use the argument:
+```
+-strategy [penalty|filter|nonmonotone-filter]
+```
+To choose a subproblem method, use the argument:
+```
+-subproblem [QP|LP|barrier]
+```
+To choose a preset, use the argument:
+```
+-preset [filtersqp|ipopt|byrd]
+```
+The options can be combined in the same command line. Autocompletion is active.
 
 # Unit tests
 7. Install the GoogleTest suite:
