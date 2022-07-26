@@ -18,7 +18,7 @@ AugmentedSystem::AugmentedSystem(const std::string& sparse_format, size_t max_di
    regularization_first_block_slow_increase_factor(stod(options.at("regularization_first_block_slow_increase_factor"))) {
 }
 
-void AugmentedSystem::factorize_matrix(const ReformulatedProblem& /*problem*/, LinearSolver& linear_solver) {
+void AugmentedSystem::factorize_matrix(const NonlinearProblem& /*problem*/, LinearSolver& linear_solver) {
    // compute the symbolic factorization only when:
    // the problem has a non-constant augmented system (ie is not an LP or a QP) or it is the first factorization
    if (this->number_factorizations == 0 || true) { // || !model.fixed_hessian_sparsity || model.problem_type == NONLINEAR) {
@@ -29,7 +29,7 @@ void AugmentedSystem::factorize_matrix(const ReformulatedProblem& /*problem*/, L
    this->number_factorizations++;
 }
 
-void AugmentedSystem::regularize_matrix(const ReformulatedProblem& problem, LinearSolver& linear_solver, size_t size_first_block, size_t size_second_block,
+void AugmentedSystem::regularize_matrix(const NonlinearProblem& problem, LinearSolver& linear_solver, size_t size_first_block, size_t size_second_block,
       double constraint_regularization_parameter) {
    DEBUG << "Original matrix\n" << *this->matrix << '\n';
    double regularization_first_block = 0.;

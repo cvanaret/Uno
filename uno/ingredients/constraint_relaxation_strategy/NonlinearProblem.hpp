@@ -1,8 +1,8 @@
 // Copyright (c) 2022 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_REFORMULATEDPROBLEM_H
-#define UNO_REFORMULATEDPROBLEM_H
+#ifndef UNO_NONLINEARPROBLEM_H
+#define UNO_NONLINEARPROBLEM_H
 
 #include <string>
 #include <vector>
@@ -13,10 +13,10 @@
 #include "linear_algebra/Vector.hpp"
 #include "ingredients/subproblem/Direction.hpp"
 
-class ReformulatedProblem {
+class NonlinearProblem {
 public:
-   ReformulatedProblem(const Model& model, size_t number_variables, size_t number_constraints);
-   virtual ~ReformulatedProblem() = default;
+   NonlinearProblem(const Model& model, size_t number_variables, size_t number_constraints);
+   virtual ~NonlinearProblem() = default;
 
    const Model& model;
    const size_t number_variables; /*!< Number of variables */
@@ -47,11 +47,11 @@ public:
    [[nodiscard]] virtual size_t get_maximum_number_hessian_nonzeros() const = 0;
 };
 
-inline ReformulatedProblem::ReformulatedProblem(const Model& model, size_t number_variables, size_t number_constraints):
+inline NonlinearProblem::NonlinearProblem(const Model& model, size_t number_variables, size_t number_constraints):
       model(model), number_variables(number_variables), number_constraints(number_constraints) {
 }
 
-inline bool ReformulatedProblem::is_constrained() const {
+inline bool NonlinearProblem::is_constrained() const {
    return (0 < this->number_constraints);
 }
 
@@ -63,8 +63,8 @@ inline void NonlinearReformulation::evaluate_lagrangian_gradient(Iterate& iterat
 }
 */
 
-inline size_t ReformulatedProblem::get_number_original_variables() const {
+inline size_t NonlinearProblem::get_number_original_variables() const {
    return this->model.number_variables;
 }
 
-#endif // UNO_REFORMULATEDPROBLEM_H
+#endif // UNO_NONLINEARPROBLEM_H

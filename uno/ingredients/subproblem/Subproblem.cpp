@@ -13,7 +13,7 @@ Subproblem::Subproblem(size_t max_number_variables, size_t max_number_constraint
    }
 }
 
-void Subproblem::set_variable_bounds(const ReformulatedProblem& problem, const Iterate& current_iterate, double trust_region_radius) {
+void Subproblem::set_variable_bounds(const NonlinearProblem& problem, const Iterate& current_iterate, double trust_region_radius) {
    // bounds intersected with trust region
    // very important: apply the trust region only on the original variables
    for (size_t i = 0; i < problem.get_number_original_variables(); i++) {

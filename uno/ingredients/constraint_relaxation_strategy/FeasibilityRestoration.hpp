@@ -44,7 +44,7 @@ private:
    // statistics table
    int statistics_restoration_phase_column_order;
 
-   [[nodiscard]] const ReformulatedProblem& get_current_reformulated_problem() const;
+   [[nodiscard]] const NonlinearProblem& get_current_reformulated_problem() const;
    [[nodiscard]] Direction solve_optimality_problem(Statistics& statistics, Iterate& current_iterate);
    [[nodiscard]] GlobalizationStrategy& switch_phase(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction);
    void switch_to_feasibility_restoration(Iterate& current_iterate, const std::vector<size_t>& infeasible_constraints);

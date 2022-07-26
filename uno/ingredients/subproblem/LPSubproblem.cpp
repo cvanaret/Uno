@@ -9,7 +9,7 @@ LPSubproblem::LPSubproblem(size_t max_number_variables, size_t max_number_constr
       solver(LPSolverFactory::create(max_number_variables, max_number_constraints, options.at("LP_solver"), options)) {
 }
 
-void LPSubproblem::evaluate_functions(const ReformulatedProblem& problem, Iterate& current_iterate) {
+void LPSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate) {
    // objective gradient
    problem.evaluate_objective_gradient(current_iterate, this->objective_gradient);
 
@@ -20,7 +20,7 @@ void LPSubproblem::evaluate_functions(const ReformulatedProblem& problem, Iterat
    problem.evaluate_constraint_jacobian(current_iterate, this->constraint_jacobian);
 }
 
-Direction LPSubproblem::solve(Statistics& /*statistics*/, const ReformulatedProblem& problem, Iterate& current_iterate) {
+Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem& problem, Iterate& current_iterate) {
    // evaluate the functions at the current iterate
    this->evaluate_functions(problem, current_iterate);
 
@@ -33,14 +33,14 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const ReformulatedProb
    return this->solve_LP(problem, current_iterate);
 }
 
-Direction LPSubproblem::compute_second_order_correction(const ReformulatedProblem& problem, Iterate& trial_iterate) {
+Direction LPSubproblem::compute_second_order_correction(const NonlinearProblem& problem, Iterate& trial_iterate) {
    DEBUG << "\nEntered SOC computation\n";
    // shift the RHS with the values of the constraints at the trial iterate
    ActiveSetSubproblem::shift_linearized_constraint_bounds(problem, trial_iterate.original_evaluations.constraints);
    return this->solve_LP(problem, trial_iterate);
 }
 
-Direction LPSubproblem::solve_LP(const ReformulatedProblem& problem, Iterate& iterate) {
+Direction LPSubproblem::solve_LP(const NonlinearProblem& problem, Iterate& iterate) {
    Direction direction = this->solver->solve_LP(problem.number_variables, problem.number_constraints, this->variable_displacement_bounds,
          this->linearized_constraint_bounds, this->objective_gradient, this->constraint_jacobian, this->initial_point);
    Subproblem::check_unboundedness(direction);
@@ -49,7 +49,7 @@ Direction LPSubproblem::solve_LP(const ReformulatedProblem& problem, Iterate& it
    return direction;
 }
 
-PredictedOptimalityReductionModel LPSubproblem::generate_predicted_optimality_reduction_model(const ReformulatedProblem& /*problem*/, const Direction& direction) const {
+PredictedOptimalityReductionModel LPSubproblem::generate_predicted_optimality_reduction_model(const NonlinearProblem& /*problem*/, const Direction& direction) const {
    return PredictedOptimalityReductionModel(-direction.objective, [&]() { // capture "direction" by reference
       // return a function of the step length that cheaply assembles the predicted reduction
       return [=](double step_length) { // capture the expensive quantities by value
