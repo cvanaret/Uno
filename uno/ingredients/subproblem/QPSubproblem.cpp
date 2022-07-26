@@ -15,7 +15,7 @@ QPSubproblem::QPSubproblem(size_t max_number_variables, size_t max_number_constr
       proximal_coefficient(stod(options.at("proximal_coefficient"))) {
 }
 
-void QPSubproblem::evaluate_functions(const ReformulatedProblem& problem, Iterate& current_iterate) {
+void QPSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate) {
    // Hessian
    this->hessian_model->evaluate(problem, current_iterate.primals, current_iterate.multipliers.constraints);
 
@@ -29,7 +29,7 @@ void QPSubproblem::evaluate_functions(const ReformulatedProblem& problem, Iterat
    problem.evaluate_constraint_jacobian(current_iterate, this->constraint_jacobian);
 }
 
-Direction QPSubproblem::solve(Statistics& /*statistics*/, const ReformulatedProblem& problem, Iterate& current_iterate) {
+Direction QPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem& problem, Iterate& current_iterate) {
    // evaluate the functions at the current iterate
    this->evaluate_functions(problem, current_iterate);
 
@@ -42,14 +42,14 @@ Direction QPSubproblem::solve(Statistics& /*statistics*/, const ReformulatedProb
    return this->solve_QP(problem, current_iterate);
 }
 
-Direction QPSubproblem::compute_second_order_correction(const ReformulatedProblem& problem, Iterate& trial_iterate) {
+Direction QPSubproblem::compute_second_order_correction(const NonlinearProblem& problem, Iterate& trial_iterate) {
    DEBUG << "\nEntered SOC computation\n";
    // shift the RHS with the values of the constraints at the trial iterate
    ActiveSetSubproblem::shift_linearized_constraint_bounds(problem, trial_iterate.original_evaluations.constraints);
    return this->solve_QP(problem, trial_iterate);
 }
 
-Direction QPSubproblem::solve_QP(const ReformulatedProblem& problem, Iterate& iterate) {
+Direction QPSubproblem::solve_QP(const NonlinearProblem& problem, Iterate& iterate) {
    Direction direction = this->solver->solve_QP(problem.number_variables, problem.number_constraints, this->variable_displacement_bounds,
          this->linearized_constraint_bounds, this->objective_gradient, this->constraint_jacobian, *this->hessian_model->hessian, this->initial_point);
    Subproblem::check_unboundedness(direction);
@@ -71,7 +71,7 @@ OptimalityMeasureModel QPSubproblem::generate_optimality_measure_model(const Ref
 }
 */
 
-PredictedOptimalityReductionModel QPSubproblem::generate_predicted_optimality_reduction_model(const ReformulatedProblem& problem, const Direction& direction) const {
+PredictedOptimalityReductionModel QPSubproblem::generate_predicted_optimality_reduction_model(const NonlinearProblem& problem, const Direction& direction) const {
    return PredictedOptimalityReductionModel(-direction.objective, [&]() { // capture "this" and "direction" by reference
       // precompute expensive quantities
       // we need the directional derivative wrt the original variables

@@ -129,7 +129,7 @@ PredictedOptimalityReductionModel FeasibilityRestoration::generate_predicted_opt
    return this->subproblem->generate_predicted_optimality_reduction_model(this->get_current_reformulated_problem(), direction);
 }
 
-const ReformulatedProblem& FeasibilityRestoration::get_current_reformulated_problem() const {
+const NonlinearProblem& FeasibilityRestoration::get_current_reformulated_problem() const {
    if (this->current_phase == OPTIMALITY) {
       return this->optimality_problem;
    }

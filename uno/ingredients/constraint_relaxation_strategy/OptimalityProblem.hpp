@@ -6,9 +6,9 @@
 
 #include <vector>
 #include <cmath>
-#include "ReformulatedProblem.hpp"
+#include "NonlinearProblem.hpp"
 
-class OptimalityProblem: public ReformulatedProblem {
+class OptimalityProblem: public NonlinearProblem {
 public:
    explicit OptimalityProblem(const Model& model);
 
@@ -28,7 +28,7 @@ public:
 };
 
 inline OptimalityProblem::OptimalityProblem(const Model& model):
-      ReformulatedProblem(model, model.number_variables, model.number_constraints) {
+      NonlinearProblem(model, model.number_variables, model.number_constraints) {
    // register equality and inequality constraints
    this->model.equality_constraints.for_each([&](size_t j, size_t i) {
       this->equality_constraints.insert(j, i);

@@ -45,7 +45,7 @@ BarrierSubproblem::BarrierSubproblem(size_t max_number_variables, size_t max_num
       statistics_barrier_parameter_column_order(stoi(options.at("statistics_barrier_parameter_column_order"))) {
 }
 
-inline void BarrierSubproblem::initialize(Statistics& statistics, const ReformulatedProblem& problem, Iterate& first_iterate) {
+inline void BarrierSubproblem::initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) {
    statistics.add_column("barrier param.", Statistics::double_width, this->statistics_barrier_parameter_column_order);
 
    // make the initial point strictly feasible wrt the bounds
@@ -70,7 +70,7 @@ inline void BarrierSubproblem::initialize(Statistics& statistics, const Reformul
    }
 }
 
-void BarrierSubproblem::evaluate_functions(const ReformulatedProblem& problem, Iterate& current_iterate) {
+void BarrierSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate) {
    // Hessian
    this->hessian_model->evaluate(problem, current_iterate.primals, current_iterate.multipliers.constraints);
 
@@ -94,7 +94,7 @@ void BarrierSubproblem::evaluate_functions(const ReformulatedProblem& problem, I
    problem.evaluate_constraint_jacobian(current_iterate, this->constraint_jacobian);
 }
 
-Direction BarrierSubproblem::solve(Statistics& statistics, const ReformulatedProblem& problem, Iterate& current_iterate) {
+Direction BarrierSubproblem::solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) {
    assert(problem.inequality_constraints.empty() && "The problem has inequality constraints. Create an instance of EqualityConstrainedModel");
 
    // update the barrier parameter if the current iterate solves the subproblem
@@ -136,7 +136,7 @@ Direction BarrierSubproblem::solve(Statistics& statistics, const ReformulatedPro
    return this->direction;
 }
 
-void BarrierSubproblem::assemble_augmented_system(const ReformulatedProblem& problem, const Iterate& current_iterate) {
+void BarrierSubproblem::assemble_augmented_system(const NonlinearProblem& problem, const Iterate& current_iterate) {
    // assemble, factorize and regularize the KKT matrix
    this->assemble_augmented_matrix(problem, current_iterate);
    this->augmented_system.factorize_matrix(problem, *this->linear_solver);
@@ -149,7 +149,7 @@ void BarrierSubproblem::assemble_augmented_system(const ReformulatedProblem& pro
    this->generate_augmented_rhs(problem, current_iterate);
 }
 
-Direction BarrierSubproblem::compute_second_order_correction(const ReformulatedProblem& problem, Iterate& trial_iterate) {
+Direction BarrierSubproblem::compute_second_order_correction(const NonlinearProblem& problem, Iterate& trial_iterate) {
    DEBUG << "\nEntered SOC computation\n";
    // shift the RHS with the values of the constraints at the trial iterate
    for (size_t j = 0; j < problem.number_constraints; j++) {
@@ -176,7 +176,7 @@ void BarrierSubproblem::set_elastic_variables(const l1RelaxedProblem& problem, I
    problem.set_elastic_variables(current_iterate, 0.1);
 }
 
-PredictedOptimalityReductionModel BarrierSubproblem::generate_predicted_optimality_reduction_model(const ReformulatedProblem& /*problem*/, const Direction& direction) const {
+PredictedOptimalityReductionModel BarrierSubproblem::generate_predicted_optimality_reduction_model(const NonlinearProblem& /*problem*/, const Direction& direction) const {
    return PredictedOptimalityReductionModel(-direction.objective, [&]() {
       return [=](double step_length) {
          return -step_length * direction.objective;
@@ -184,7 +184,7 @@ PredictedOptimalityReductionModel BarrierSubproblem::generate_predicted_optimali
    });
 }
 
-double BarrierSubproblem::compute_optimality_measure(const ReformulatedProblem& problem, Iterate& iterate) {
+double BarrierSubproblem::compute_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) {
    // optimality measure: barrier function
    double objective = 0.;
    // bound constraints
@@ -203,7 +203,7 @@ double BarrierSubproblem::compute_optimality_measure(const ReformulatedProblem& 
    return objective;
 }
 
-void BarrierSubproblem::update_barrier_parameter(const ReformulatedProblem& problem, const Iterate& current_iterate) {
+void BarrierSubproblem::update_barrier_parameter(const NonlinearProblem& problem, const Iterate& current_iterate) {
    // scaled error terms
    const double scaling = this->compute_KKT_error_scaling(problem, current_iterate);
    const double KKTerror = current_iterate.stationarity_error / scaling;
@@ -222,7 +222,7 @@ void BarrierSubproblem::update_barrier_parameter(const ReformulatedProblem& prob
    }
 }
 
-bool BarrierSubproblem::is_small_direction(const ReformulatedProblem& problem, const Iterate& current_iterate, const Direction& direction) const {
+bool BarrierSubproblem::is_small_direction(const NonlinearProblem& problem, const Iterate& current_iterate, const Direction& direction) const {
    const auto relative_measure_function = [&](size_t i) {
       return direction.primals[i] / (1 + current_iterate.primals[i]);
    };
@@ -234,7 +234,7 @@ double BarrierSubproblem::compute_barrier_directional_derivative(const std::vect
    return dot(solution, this->objective_gradient);
 }
 
-double BarrierSubproblem::primal_fraction_to_boundary(const ReformulatedProblem& problem, const Iterate& current_iterate, double tau) {
+double BarrierSubproblem::primal_fraction_to_boundary(const NonlinearProblem& problem, const Iterate& current_iterate, double tau) {
    double primal_length = 1.;
    for (size_t i: problem.lower_bounded_variables) {
       if (this->augmented_system.solution[i] < 0.) {
@@ -252,7 +252,7 @@ double BarrierSubproblem::primal_fraction_to_boundary(const ReformulatedProblem&
    return primal_length;
 }
 
-double BarrierSubproblem::dual_fraction_to_boundary(const ReformulatedProblem& problem, const Iterate& current_iterate, double tau) {
+double BarrierSubproblem::dual_fraction_to_boundary(const NonlinearProblem& problem, const Iterate& current_iterate, double tau) {
    double dual_length = 1.;
    for (size_t i: problem.lower_bounded_variables) {
       if (this->lower_delta_z[i] < 0.) {
@@ -270,7 +270,7 @@ double BarrierSubproblem::dual_fraction_to_boundary(const ReformulatedProblem& p
    return dual_length;
 }
 
-void BarrierSubproblem::assemble_augmented_matrix(const ReformulatedProblem& problem, const Iterate& current_iterate) {
+void BarrierSubproblem::assemble_augmented_matrix(const NonlinearProblem& problem, const Iterate& current_iterate) {
    this->augmented_system.matrix->dimension = problem.number_variables + problem.number_constraints;
    this->augmented_system.matrix->reset();
    // copy the Lagrangian Hessian in the top left block
@@ -307,7 +307,7 @@ void BarrierSubproblem::assemble_augmented_matrix(const ReformulatedProblem& pro
    }
 }
 
-void BarrierSubproblem::generate_augmented_rhs(const ReformulatedProblem& problem, const Iterate& current_iterate) {
+void BarrierSubproblem::generate_augmented_rhs(const NonlinearProblem& problem, const Iterate& current_iterate) {
    // generate the right-hand side
    initialize_vector(this->augmented_system.rhs, 0.);
 
@@ -330,7 +330,7 @@ void BarrierSubproblem::generate_augmented_rhs(const ReformulatedProblem& proble
    DEBUG << "RHS: "; print_vector(DEBUG, this->augmented_system.rhs, 0, problem.number_variables + problem.number_constraints); DEBUG << '\n';
 }
 
-void BarrierSubproblem::compute_lower_bound_dual_direction(const ReformulatedProblem& problem, const Iterate& current_iterate) {
+void BarrierSubproblem::compute_lower_bound_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate) {
    initialize_vector(this->lower_delta_z, 0.);
    for (size_t i: problem.lower_bounded_variables) {
       const double distance_to_bound = current_iterate.primals[i] - this->variable_bounds[i].lb;
@@ -340,7 +340,7 @@ void BarrierSubproblem::compute_lower_bound_dual_direction(const ReformulatedPro
    }
 }
 
-void BarrierSubproblem::compute_upper_bound_dual_direction(const ReformulatedProblem& problem, const Iterate& current_iterate) {
+void BarrierSubproblem::compute_upper_bound_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate) {
    initialize_vector(this->upper_delta_z, 0.);
    for (size_t i: problem.upper_bounded_variables) {
       const double distance_to_bound = current_iterate.primals[i] - this->variable_bounds[i].ub;
@@ -350,7 +350,7 @@ void BarrierSubproblem::compute_upper_bound_dual_direction(const ReformulatedPro
    }
 }
 
-void BarrierSubproblem::generate_direction(const ReformulatedProblem& problem, const Iterate& current_iterate) {
+void BarrierSubproblem::generate_direction(const NonlinearProblem& problem, const Iterate& current_iterate) {
    // retrieve +Δλ (Nocedal p590)
    for (size_t j = problem.number_variables; j < this->augmented_system.solution.size(); j++) {
       this->augmented_system.solution[j] = -this->augmented_system.solution[j];
@@ -383,7 +383,7 @@ void BarrierSubproblem::generate_direction(const ReformulatedProblem& problem, c
    this->print_solution(problem, primal_step_length, dual_step_length);
 }
 
-double BarrierSubproblem::compute_KKT_error_scaling(const ReformulatedProblem& problem, const Iterate& current_iterate) const {
+double BarrierSubproblem::compute_KKT_error_scaling(const NonlinearProblem& problem, const Iterate& current_iterate) const {
    const double norm_1_constraint_multipliers = norm_1(current_iterate.multipliers.constraints);
    const double norm_1_bound_multipliers = norm_1(current_iterate.multipliers.lower_bounds) + norm_1(current_iterate.multipliers.upper_bounds);
    const double norm_1_multipliers = norm_1_constraint_multipliers + norm_1_bound_multipliers;
@@ -391,7 +391,7 @@ double BarrierSubproblem::compute_KKT_error_scaling(const ReformulatedProblem& p
    return std::max(this->parameters.smax, norm_1_multipliers / static_cast<double>(total_size)) / this->parameters.smax;
 }
 
-double BarrierSubproblem::compute_central_complementarity_error(const ReformulatedProblem& problem, const Iterate& iterate) const {
+double BarrierSubproblem::compute_central_complementarity_error(const NonlinearProblem& problem, const Iterate& iterate) const {
    // variable bounds TODO use problem.lower_bounded_variables once the TR is integrated into the problem
    const auto residual_function = [&](size_t i) {
       double result = 0.;
@@ -412,7 +412,7 @@ double BarrierSubproblem::compute_central_complementarity_error(const Reformulat
    return complementarity_error / scaling;
 }
 
-void BarrierSubproblem::postprocess_accepted_iterate(const ReformulatedProblem& problem, Iterate& iterate) {
+void BarrierSubproblem::postprocess_accepted_iterate(const NonlinearProblem& problem, Iterate& iterate) {
    if (this->solving_feasibility_problem) {
        this->barrier_parameter = this->previous_barrier_parameter;
        this->solving_feasibility_problem = false;
@@ -442,7 +442,7 @@ size_t BarrierSubproblem::get_hessian_evaluation_count() const {
    return this->hessian_model->evaluation_count;
 }
 
-void BarrierSubproblem::print_solution(const ReformulatedProblem& problem, double primal_step_length, double dual_step_length) const {
+void BarrierSubproblem::print_solution(const NonlinearProblem& problem, double primal_step_length, double dual_step_length) const {
    DEBUG << "Barrier subproblem solution:\n";
    DEBUG << "Δx: "; print_vector(DEBUG, this->augmented_system.solution, 0, problem.number_variables);
    if (problem.get_number_original_variables() < problem.number_variables) {

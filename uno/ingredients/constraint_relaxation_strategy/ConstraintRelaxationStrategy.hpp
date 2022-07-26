@@ -44,7 +44,7 @@ protected:
    [[nodiscard]] static double compute_predicted_infeasibility_reduction(const Model& model, const Iterate& current_iterate, const Direction& direction,
          double step_length);
    [[nodiscard]] bool is_small_step(const Direction& direction) const;
-   void compute_nonlinear_residuals(const ReformulatedProblem& problem, Iterate& iterate) const;
+   void compute_nonlinear_residuals(const NonlinearProblem& problem, Iterate& iterate) const;
 };
 
 #endif //UNO_CONSTRAINTRELAXATIONSTRATEGY_H

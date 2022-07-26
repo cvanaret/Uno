@@ -13,9 +13,9 @@ class QPSubproblem : public ActiveSetSubproblem {
 public:
    QPSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros, const Options& options);
 
-   [[nodiscard]] Direction solve(Statistics& statistics, const ReformulatedProblem& problem, Iterate& current_iterate) override;
-   [[nodiscard]] Direction compute_second_order_correction(const ReformulatedProblem& model, Iterate& trial_iterate) override;
-   [[nodiscard]] PredictedOptimalityReductionModel generate_predicted_optimality_reduction_model(const ReformulatedProblem& problem, const Direction& direction) const override;
+   [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) override;
+   [[nodiscard]] Direction compute_second_order_correction(const NonlinearProblem& model, Iterate& trial_iterate) override;
+   [[nodiscard]] PredictedOptimalityReductionModel generate_predicted_optimality_reduction_model(const NonlinearProblem& problem, const Direction& direction) const override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
    [[nodiscard]] double get_proximal_coefficient() const override;
 
@@ -25,8 +25,8 @@ protected:
    const std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
    const double proximal_coefficient;
 
-   void evaluate_functions(const ReformulatedProblem& problem, Iterate& current_iterate);
-   [[nodiscard]] Direction solve_QP(const ReformulatedProblem& problem, Iterate& iterate);
+   void evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate);
+   [[nodiscard]] Direction solve_QP(const NonlinearProblem& problem, Iterate& iterate);
 };
 
 #endif // UNO_QPSUBPROBLEM_H
