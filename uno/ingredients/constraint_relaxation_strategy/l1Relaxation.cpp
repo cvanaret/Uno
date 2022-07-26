@@ -14,7 +14,7 @@
  */
 
 l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
-      ConstraintRelaxationStrategy(model, true, options),
+      ConstraintRelaxationStrategy(model, options),
       // create the optimality problem
       optimality_problem(model),
       // create the relaxed problem by introducing elastic variables

@@ -8,7 +8,7 @@
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 
 FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options& options) :
-      ConstraintRelaxationStrategy(model, false, options),
+      ConstraintRelaxationStrategy(model, options),
       // create the optimality problem
       optimality_problem(model),
       // create the phase-1 feasibility problem (objective multiplier = 0)
