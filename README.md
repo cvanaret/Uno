@@ -39,7 +39,7 @@ Uno is released under the MIT license (see the [license file](LICENSE)).
 
 * download the AMPL solver library (ASL): http://www.netlib.org/ampl/solvers/
 
-* download optional solvers:
+* download **optional** solvers:
     * BQPD: https://www.mcs.anl.gov/~leyffer/solvers.html
     * MA57: http://www.hsl.rl.ac.uk/catalogue/ma57.html
 
@@ -79,7 +79,7 @@ sudo apt-get install cmake cmake-curses-gui
   ./uno_ampl -v
 ```
 
-To compile the code with different configurations, simply create a build directory for each configuration and perform instructions 1 to 5.
+To compile the code with different configurations, simply create a `build` directory for each configuration and perform instructions 1 to 5.
 
 ### Unit tests
 
@@ -95,7 +95,7 @@ To compile the code with different configurations, simply create a build directo
 
 ### Autocompletion
 
-To benefit from autocompletion, install the file uno_ampl-completion.bash:
+To benefit from autocompletion, install the file `uno_ampl-completion.bash`:
 ```
   sudo cp uno_ampl-completion.bash /etc/bash_completion.d/
 ```
