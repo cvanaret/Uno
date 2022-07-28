@@ -79,7 +79,7 @@ void Filter::add(double infeasibility_measure, double optimality_measure) {
    this->number_entries++;
 }
 
-// query: return true if (infeasibility_measure, optimality_measure) acceptable, false otherwise
+// return true if (infeasibility_measure, optimality_measure) acceptable, false otherwise
 bool Filter::accept(double infeasibility_measure, double optimality_measure) {
    // check upper bound first
    if (this->constants.beta * this->upper_bound <= infeasibility_measure) {
@@ -99,7 +99,7 @@ bool Filter::accept(double infeasibility_measure, double optimality_measure) {
    else if (optimality_measure <= this->optimality[position - 1] - this->constants.gamma * infeasibility_measure) {
       return true; // point acceptable
    }
-   DEBUG << "Rejected because the optimality measure is not low enough\n";
+   DEBUG << "Filter rejection because the optimality measure is not low enough\n";
    return false;
 }
 
