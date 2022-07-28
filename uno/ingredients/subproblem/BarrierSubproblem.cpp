@@ -71,18 +71,35 @@ inline void BarrierSubproblem::initialize(Statistics& statistics, const Nonlinea
 }
 
 void BarrierSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate) {
-   // Hessian
+   // check that the current iterate is interior
+   for (size_t i: problem.lower_bounded_variables) {
+      assert(this->variable_bounds[i].lb < current_iterate.primals[i] && "Barrier subproblem: a variable is at its lower bound");
+   }
+   for (size_t i: problem.upper_bounded_variables) {
+      assert(current_iterate.primals[i] < this->variable_bounds[i].ub && "Barrier subproblem: a variable is at its upper bound");
+   }
+
+   // original Hessian
    this->hessian_model->evaluate(problem, current_iterate.primals, current_iterate.multipliers.constraints);
+   // Hessian: diagonal barrier terms
+   for (size_t i: problem.lower_bounded_variables) {
+      const double diagonal_term = current_iterate.multipliers.lower_bounds[i] / (current_iterate.primals[i] - this->variable_bounds[i].lb);
+      assert(!std::isnan(diagonal_term) && "Barrier subproblem: the diagonal term for the lower bound is NaN");
+      this->hessian_model->hessian->insert(diagonal_term, i, i);
+   }
+   for (size_t i: problem.upper_bounded_variables) {
+      const double diagonal_term = current_iterate.multipliers.upper_bounds[i] / (current_iterate.primals[i] - this->variable_bounds[i].ub);
+      assert(!std::isnan(diagonal_term) && "Barrier subproblem: the diagonal term for the upper bound is NaN");
+      this->hessian_model->hessian->insert(diagonal_term, i, i);
+   }
 
    // barrier objective gradient
    problem.evaluate_objective_gradient(current_iterate, this->objective_gradient);
    for (size_t i: problem.lower_bounded_variables) {
-      assert(this->variable_bounds[i].lb < current_iterate.primals[i] && "Barrier subproblem: a variable is at its lower bound");
       const double term = -this->barrier_parameter / (current_iterate.primals[i] - this->variable_bounds[i].lb);
       this->objective_gradient.insert(i, term);
    }
    for (size_t i: problem.upper_bounded_variables) {
-      assert(current_iterate.primals[i] < this->variable_bounds[i].ub && "Barrier subproblem: a variable is at its upper bound");
       const double term = -this->barrier_parameter / (current_iterate.primals[i] - this->variable_bounds[i].ub);
       this->objective_gradient.insert(i, term);
    }
@@ -283,20 +300,6 @@ void BarrierSubproblem::assemble_augmented_matrix(const NonlinearProblem& proble
       }
       this->augmented_system.matrix->insert(entry, i, j);
    });
-
-   // diagonal barrier terms
-   for (size_t i: problem.lower_bounded_variables) {
-      assert(this->variable_bounds[i].lb < current_iterate.primals[i] && "Barrier subproblem: a variable is at its lower bound");
-      const double diagonal_term = current_iterate.multipliers.lower_bounds[i] / (current_iterate.primals[i] - this->variable_bounds[i].lb);
-      assert(!std::isnan(diagonal_term) && "Barrier subproblem: the diagonal term for the lower bound is NaN");
-      this->augmented_system.matrix->insert(diagonal_term, i, i);
-   }
-   for (size_t i: problem.upper_bounded_variables) {
-      assert(current_iterate.primals[i] < this->variable_bounds[i].ub && "Barrier subproblem: a variable is at its upper bound");
-      const double diagonal_term = current_iterate.multipliers.upper_bounds[i] / (current_iterate.primals[i] - this->variable_bounds[i].ub);
-      assert(!std::isnan(diagonal_term) && "Barrier subproblem: the diagonal term for the upper bound is NaN");
-      this->augmented_system.matrix->insert(diagonal_term, i, i);
-   }
 
    // Jacobian of general constraints
    for (size_t j = 0; j < problem.number_constraints; j++) {
