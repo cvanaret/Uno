@@ -5,8 +5,14 @@
 #include "tools/Logger.hpp"
 #include "linear_algebra/Vector.hpp"
 
-Direction::Direction(size_t number_variables, size_t number_constraints):
-   primals(number_variables), multipliers(number_variables, number_constraints) {
+Direction::Direction(size_t max_number_variables, size_t max_number_constraints):
+   number_variables(max_number_variables), number_constraints(max_number_constraints),
+   primals(max_number_variables), multipliers(max_number_variables, max_number_constraints) {
+}
+
+void Direction::set_dimensions(size_t number_variables, size_t number_constraints) {
+   this->number_variables = number_variables;
+   this->number_constraints = number_constraints;
 }
 
 std::string status_to_string(Status status) {
@@ -23,9 +29,11 @@ std::string status_to_string(Status status) {
 }
 
 std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
-   stream << "\nDirection:\nStatus: " << status_to_string(direction.status) << '\n';
+   stream << "\nDirection:\n";
    stream << "d^* = ";
-   print_vector(stream, direction.primals);
+   print_vector(stream, direction.primals, 0, direction.number_variables);
+
+   stream << "Status: " << status_to_string(direction.status) << '\n';
 
    stream << "objective = " << direction.objective << '\n';
    stream << "norm = " << direction.norm << '\n';

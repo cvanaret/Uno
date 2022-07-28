@@ -216,11 +216,11 @@ double BarrierSubproblem::compute_optimality_measure(const NonlinearProblem& pro
       objective -= std::log(this->variable_bounds[i].ub - iterate.primals[i]);
    }
    objective *= this->barrier_parameter;
+   assert(is_finite(objective) && "The barrier value is infinite");
    // original objective value
    iterate.evaluate_objective(problem.model);
    // TODO: parameterize \omega with \rho instead of multiplying (\rho should not multiply the barrier terms)
    objective += iterate.original_evaluations.objective;
-   assert(is_finite(objective) && "The barrier value is infinite");
    return objective;
 }
 
@@ -358,10 +358,13 @@ void BarrierSubproblem::compute_upper_bound_dual_direction(const NonlinearProble
 }
 
 void BarrierSubproblem::generate_direction(const NonlinearProblem& problem, const Iterate& current_iterate) {
+   this->direction.set_dimensions(problem.number_variables, problem.number_constraints);
+
    // retrieve +Δλ (Nocedal p590)
    for (size_t j = problem.number_variables; j < this->augmented_system.solution.size(); j++) {
       this->augmented_system.solution[j] = -this->augmented_system.solution[j];
    }
+   this->print_subproblem_solution(problem);
 
    // "fraction to boundary" rule for primal variables and constraints multipliers
    const double tau = std::max(this->parameters.tau_min, 1. - this->barrier_parameter);
@@ -383,11 +386,12 @@ void BarrierSubproblem::generate_direction(const NonlinearProblem& problem, cons
       this->direction.multipliers.lower_bounds[i] = current_iterate.multipliers.lower_bounds[i] + dual_step_length * this->lower_delta_z[i];
       this->direction.multipliers.upper_bounds[i] = current_iterate.multipliers.upper_bounds[i] + dual_step_length * this->upper_delta_z[i];
    }
+   DEBUG << "primal length = " << primal_step_length << '\n';
+   DEBUG << "dual length = " << dual_step_length << '\n';
 
    this->direction.norm = norm_inf(direction.primals, Range(problem.number_variables));
    // evaluate the barrier objective
    this->direction.objective = this->compute_barrier_directional_derivative(direction.primals);
-   this->print_solution(problem, primal_step_length, dual_step_length);
 }
 
 double BarrierSubproblem::compute_KKT_error_scaling(const NonlinearProblem& problem, const Iterate& current_iterate) const {
@@ -449,7 +453,7 @@ size_t BarrierSubproblem::get_hessian_evaluation_count() const {
    return this->hessian_model->evaluation_count;
 }
 
-void BarrierSubproblem::print_solution(const NonlinearProblem& problem, double primal_step_length, double dual_step_length) const {
+void BarrierSubproblem::print_subproblem_solution(const NonlinearProblem& problem) const {
    DEBUG << "Barrier subproblem solution:\n";
    DEBUG << "Δx: "; print_vector(DEBUG, this->augmented_system.solution, 0, problem.number_variables);
    if (problem.get_number_original_variables() < problem.number_variables) {
@@ -458,8 +462,6 @@ void BarrierSubproblem::print_solution(const NonlinearProblem& problem, double p
    DEBUG << "Δλ: "; print_vector(DEBUG, this->augmented_system.solution, problem.number_variables, problem.number_constraints);
    DEBUG << "Δz_L: "; print_vector(DEBUG, this->lower_delta_z, 0, problem.number_variables);
    DEBUG << "Δz_U: "; print_vector(DEBUG, this->upper_delta_z, 0, problem.number_variables);
-   DEBUG << "primal length = " << primal_step_length << '\n';
-   DEBUG << "dual length = " << dual_step_length << '\n';
 }
 
 void BarrierSubproblem::set_initial_point(const std::optional<std::vector<double>>& /*optional_initial_point*/) {

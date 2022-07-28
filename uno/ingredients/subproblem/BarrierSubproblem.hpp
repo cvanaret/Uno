@@ -78,7 +78,7 @@ private:
    void generate_direction(const NonlinearProblem& problem, const Iterate& current_iterate);
    [[nodiscard]] double compute_KKT_error_scaling(const NonlinearProblem& problem, const Iterate& current_iterate) const;
    [[nodiscard]] double compute_central_complementarity_error(const NonlinearProblem& problem, const Iterate& iterate) const;
-   void print_solution(const NonlinearProblem& problem, double primal_step_length, double dual_step_length) const;
+   void print_subproblem_solution(const NonlinearProblem& problem) const;
 };
 
 #endif // UNO_BARRIERSUBPROBLEM_H

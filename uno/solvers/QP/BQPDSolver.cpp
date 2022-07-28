@@ -109,6 +109,7 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
    }
 
    Direction direction(number_variables, number_constraints);
+   direction.set_dimensions(number_variables, number_constraints);
    copy_from(direction.primals, initial_point);
    const int n = static_cast<int>(number_variables);
    const int m = static_cast<int>(number_constraints);
