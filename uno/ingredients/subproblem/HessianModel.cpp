@@ -16,6 +16,7 @@ ExactHessian::ExactHessian(size_t dimension, size_t maximum_number_nonzeros, con
 
 void ExactHessian::evaluate(const NonlinearProblem& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) {
    // evaluate Lagrangian Hessian
+   this->hessian->dimension = problem.number_variables;
    problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, *this->hessian);
    this->evaluation_count++;
 }
@@ -30,6 +31,7 @@ ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t maximum_number_n
 
 void ConvexifiedHessian::evaluate(const NonlinearProblem& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) {
    // evaluate Lagrangian Hessian
+   this->hessian->dimension = problem.number_variables;
    problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, *this->hessian);
    this->evaluation_count++;
    // regularize (only on the original variables) to make the problem strictly convex
@@ -38,11 +40,11 @@ void ConvexifiedHessian::evaluate(const NonlinearProblem& problem, const std::ve
 }
 
 // Nocedal and Wright, p51
-void ConvexifiedHessian::regularize(SymmetricMatrix& matrix, size_t number_original_variables) {
+void ConvexifiedHessian::regularize(SymmetricMatrix& hessian, size_t number_original_variables) {
    //assert(size_block_to_regularize <= matrix.dimension && "The block to regularize is larger than the matrix");
 
-   const double smallest_diagonal_entry = matrix.smallest_diagonal_entry();
-   DEBUG << "The minimal diagonal entry of the matrix is " << matrix.smallest_diagonal_entry() << '\n';
+   const double smallest_diagonal_entry = hessian.smallest_diagonal_entry();
+   DEBUG << "The minimal diagonal entry of the matrix is " << hessian.smallest_diagonal_entry() << '\n';
 
    double regularization_factor = (smallest_diagonal_entry <= 0.) ? this->regularization_initial_value - smallest_diagonal_entry : 0.;
    /*
@@ -52,10 +54,10 @@ void ConvexifiedHessian::regularize(SymmetricMatrix& matrix, size_t number_origi
    while (!good_inertia) {
       DEBUG << "Testing factorization with regularization factor " << regularization_factor << '\n';
       if (0. < regularization_factor) {
-         matrix.set_regularization([&](size_t i) { return (i < number_original_variables) ? regularization_factor : 0.; });
+         hessian.set_regularization([&](size_t i) { return (i < number_original_variables) ? regularization_factor : 0.; });
       }
-      this->linear_solver->do_symbolic_factorization(matrix);
-      this->linear_solver->do_numerical_factorization(matrix);
+      this->linear_solver->do_symbolic_factorization(hessian);
+      this->linear_solver->do_numerical_factorization(hessian);
 
       if (this->linear_solver->rank() == number_original_variables && this->linear_solver->number_negative_eigenvalues() == 0) {
          good_inertia = true;

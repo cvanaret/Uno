@@ -184,7 +184,6 @@ inline void l1RelaxedProblem::evaluate_constraint_jacobian(Iterate& iterate, std
 
 inline void l1RelaxedProblem::evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers,
       SymmetricMatrix& hessian) const {
-   hessian.dimension = this->number_variables;
    this->model.evaluate_lagrangian_hessian(x, this->objective_multiplier, multipliers, hessian);
 
    // add proximal term for the original variables

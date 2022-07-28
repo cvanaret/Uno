@@ -41,7 +41,7 @@ protected:
    const double regularization_initial_value{};
    const double regularization_increase_factor{};
 
-   void regularize(SymmetricMatrix& matrix, size_t number_original_variables);
+   void regularize(SymmetricMatrix& hessian, size_t number_original_variables);
 };
 
 // HessianModel factory
