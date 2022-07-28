@@ -65,6 +65,7 @@ inline void BarrierSubproblem::initialize(Statistics& statistics, const Nonlinea
    // compute least-square multipliers
    if (problem.is_constrained()) {
       this->augmented_system.matrix->dimension = problem.number_variables + problem.number_constraints;
+      this->augmented_system.matrix->reset();
       Preprocessing::compute_least_square_multipliers(problem.model, *this->augmented_system.matrix, this->augmented_system.rhs, *this->linear_solver,
             first_iterate, first_iterate.multipliers.constraints);
    }
