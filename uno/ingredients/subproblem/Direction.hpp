@@ -42,7 +42,10 @@ struct ConstraintPartition {
 
 class Direction {
 public:
-   Direction(size_t number_variables, size_t number_constraints);
+   Direction(size_t max_number_variables, size_t max_number_constraints);
+
+   size_t number_variables;
+   size_t number_constraints;
 
    std::vector<double> primals; /*!< Primal variables */
    Multipliers multipliers; /*!< Multipliers */
@@ -55,6 +58,7 @@ public:
    ActiveSet active_set{}; /*!< Active set */
    std::optional<ConstraintPartition> constraint_partition{std::nullopt}; /*!< Optional partition of feasible and infeasible constraints */
 
+   void set_dimensions(size_t number_variables, size_t number_constraints);
    friend std::ostream& operator<<(std::ostream& stream, const Direction& step);
 };
 
