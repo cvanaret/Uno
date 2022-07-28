@@ -70,15 +70,17 @@ inline void BarrierSubproblem::initialize(Statistics& statistics, const Nonlinea
    }
 }
 
-void BarrierSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate) {
+void BarrierSubproblem::check_interior_primals(const NonlinearProblem& problem, const Iterate& iterate) {
    // check that the current iterate is interior
    for (size_t i: problem.lower_bounded_variables) {
-      assert(this->variable_bounds[i].lb < current_iterate.primals[i] && "Barrier subproblem: a variable is at its lower bound");
+      assert(this->variable_bounds[i].lb < iterate.primals[i] && "Barrier subproblem: a variable is at its lower bound");
    }
    for (size_t i: problem.upper_bounded_variables) {
-      assert(current_iterate.primals[i] < this->variable_bounds[i].ub && "Barrier subproblem: a variable is at its upper bound");
+      assert(iterate.primals[i] < this->variable_bounds[i].ub && "Barrier subproblem: a variable is at its upper bound");
    }
+}
 
+void BarrierSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate) {
    // original Hessian
    this->hessian_model->evaluate(problem, current_iterate.primals, current_iterate.multipliers.constraints);
    // Hessian: diagonal barrier terms
@@ -128,6 +130,8 @@ Direction BarrierSubproblem::solve(Statistics& statistics, const NonlinearProble
    else {
       this->solving_feasibility_problem = false;
    }
+
+   this->check_interior_primals(problem, current_iterate);
 
    // evaluate the functions at the current iterate
    this->evaluate_functions(problem, current_iterate);

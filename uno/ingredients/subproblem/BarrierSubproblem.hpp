@@ -63,6 +63,7 @@ private:
    // statistics table
    int statistics_barrier_parameter_column_order;
 
+   void check_interior_primals(const NonlinearProblem& problem, const Iterate& iterate);
    void evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate);
    void update_barrier_parameter(const NonlinearProblem& problem, const Iterate& current_iterate);
    [[nodiscard]] bool is_small_direction(const NonlinearProblem& problem, const Iterate& current_iterate, const Direction& direction) const;
