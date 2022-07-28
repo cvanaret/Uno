@@ -9,12 +9,20 @@
 class Options {
 public:
    Options() = default;
+
    std::string& operator[](const std::string& key);
-   [[nodiscard]] const std::string& at(const std::string& key) const;
+
+   [[nodiscard]] const std::string& get_string(const std::string& key) const;
+   [[nodiscard]] double get_double(const std::string& key) const;
+   [[nodiscard]] int get_int(const std::string& key) const;
+   [[nodiscard]] size_t get_unsigned_int(const std::string& key) const;
+   [[nodiscard]] bool get_bool(const std::string& key) const;
    void print() const;
 
 private:
    std::map<std::string, std::string> options{};
+
+   [[nodiscard]] const std::string& at(const std::string& key) const;
 };
 
 Options get_default_options(const std::string& file_name);

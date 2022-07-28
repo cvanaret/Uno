@@ -12,13 +12,13 @@ FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options
       // create the optimality problem
       optimality_problem(model),
       // create the phase-1 feasibility problem (objective multiplier = 0)
-      feasibility_problem(model, 0., stod(options.at("l1_constraint_violation_coefficient")), (options.at("l1_use_proximal_term") == "yes")),
+      feasibility_problem(model, 0., options.get_double("l1_constraint_violation_coefficient"), options.get_bool("l1_use_proximal_term")),
       subproblem(SubproblemFactory::create(this->feasibility_problem.number_variables, this->feasibility_problem.number_constraints,
             this->feasibility_problem.get_maximum_number_hessian_nonzeros(), options)),
       // create the globalization strategies (one for each phase)
-      phase_1_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
-      phase_2_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
-      statistics_restoration_phase_column_order(stoi(options.at("statistics_restoration_phase_column_order"))) {
+      phase_1_strategy(GlobalizationStrategyFactory::create(options.get_string("strategy"), options)),
+      phase_2_strategy(GlobalizationStrategyFactory::create(options.get_string("strategy"), options)),
+      statistics_restoration_phase_column_order(options.get_int("statistics_restoration_phase_column_order")) {
 }
 
 void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& first_iterate) {

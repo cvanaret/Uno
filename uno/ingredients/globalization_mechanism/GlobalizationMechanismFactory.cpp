@@ -7,7 +7,7 @@
 
 std::unique_ptr<GlobalizationMechanism> GlobalizationMechanismFactory::create(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const
 Options& options) {
-   const std::string mechanism_type = options.at("mechanism");
+   const std::string& mechanism_type = options.get_string("mechanism");
     if (mechanism_type == "TR") {
         return std::make_unique<TrustRegionStrategy>(constraint_relaxation_strategy, options);
     }

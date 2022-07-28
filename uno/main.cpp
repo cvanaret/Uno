@@ -23,9 +23,9 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
    original_model->project_point_onto_bounds(first_iterate.primals);
 
    // initialize the function scaling
-   Scaling scaling(original_model->number_constraints, stod(options.at("function_scaling_threshold")));
+   Scaling scaling(original_model->number_constraints, options.get_double("function_scaling_threshold"));
    // function scaling
-   const bool scale_functions = (options.at("scale_functions") == "yes");
+   const bool scale_functions = options.get_bool("scale_functions");
    if (scale_functions) {
       // evaluate the gradients at the current point
       first_iterate.evaluate_objective_gradient(*original_model);
@@ -47,12 +47,13 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
    Result result = uno.solve(model_to_solve, first_iterate, options);
    Uno::postsolve_solution(*original_model, scaling, result.solution, result.status);
 
-   std::string combination = options.at("mechanism") + " " + options.at("constraint-relaxation") + " " + options.at("strategy") + " " + options.at("subproblem");
+   std::string combination = options.get_string("mechanism") + " " + options.get_string("constraint-relaxation") + " " + options.get_string("strategy")
+         + " " + options.get_string("subproblem");
    std::cout << "\nUno (" << combination << "): optimization summary\n";
    std::cout << Timer::get_current_date();
    std::cout << "==============================\n";
 
-   const bool print_solution = (options.at("print_solution") == "yes");
+   const bool print_solution = options.get_bool("print_solution");
    result.print(print_solution);
 }
 
@@ -64,7 +65,7 @@ int main(int argc, char* argv[]) {
       Options options = get_default_options("uno.options");
       // get the command line options
       get_command_line_options(argc, argv, options);
-      set_logger(options.at("logger"));
+      set_logger(options.get_string("logger"));
 
       if (std::string(argv[1]) == "-v") {
          std::cout << "Welcome in Uno 1.0\n";

@@ -34,14 +34,14 @@ BQPDSolver::BQPDSolver(size_t max_number_variables, size_t number_constraints, s
       lb(max_number_variables + number_constraints),
       ub(max_number_variables + number_constraints), jacobian(max_number_variables * (number_constraints + 1)),
       jacobian_sparsity(max_number_variables * (number_constraints + 1) + number_constraints + 3),
-      kmax(quadratic_programming ? stoi(options.at("BQPD_kmax")) : 0), alp(this->mlp), lp(this->mlp), ls(max_number_variables + number_constraints),
+      kmax(quadratic_programming ? options.get_int("BQPD_kmax") : 0), alp(this->mlp), lp(this->mlp), ls(max_number_variables + number_constraints),
       w(max_number_variables + number_constraints), gradient_solution(max_number_variables), residuals(max_number_variables + number_constraints),
       e(max_number_variables + number_constraints),
       size_hessian_sparsity(quadratic_programming ? maximum_number_nonzeros + max_number_variables + 3 : 0),
       size_hessian_workspace(maximum_number_nonzeros + this->kmax * (this->kmax + 9) / 2 + 2 * max_number_variables + number_constraints + this->mxwk0),
       size_hessian_sparsity_workspace(this->size_hessian_sparsity + this->kmax + this->mxiwk0),
       hessian_values(this->size_hessian_workspace), hessian_sparsity(this->size_hessian_sparsity_workspace),
-      print_QP(options.at("BQPD_print_QP") == "yes") {
+      print_QP(options.get_bool("BQPD_print_QP")) {
    // active set
    for (size_t i = 0; i < max_number_variables + number_constraints; i++) {
       this->ls[i] = static_cast<int>(i) + this->fortran_shift;

@@ -18,21 +18,23 @@ l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
       // create the optimality problem
       optimality_problem(model),
       // create the relaxed problem by introducing elastic variables
-      relaxed_problem(model, stod(options.at("l1_relaxation_initial_parameter")), stod(options.at("l1_constraint_violation_coefficient")),
-            (options.at("l1_use_proximal_term") == "yes")),
+      relaxed_problem(model, options.get_double("l1_relaxation_initial_parameter"), options.get_double("l1_constraint_violation_coefficient"),
+            options.get_bool("l1_use_proximal_term")),
       subproblem(SubproblemFactory::create(this->relaxed_problem.number_variables, this->relaxed_problem.number_constraints,
             this->relaxed_problem.get_maximum_number_hessian_nonzeros(), options)),
-      globalization_strategy(GlobalizationStrategyFactory::create(options.at("strategy"), options)),
-      penalty_parameter(stod(options.at("l1_relaxation_initial_parameter"))),
-      parameters({options.at("l1_relaxation_fixed_parameter") == "yes",
-                  stod(options.at("l1_relaxation_decrease_factor")),
-                  stod(options.at("l1_relaxation_epsilon1")),
-                  stod(options.at("l1_relaxation_epsilon2")),
-                  stod(options.at("l1_relaxation_small_threshold"))}),
+      globalization_strategy(GlobalizationStrategyFactory::create(options.get_string("strategy"), options)),
+      penalty_parameter(options.get_double("l1_relaxation_initial_parameter")),
+      parameters({
+         options.get_bool("l1_relaxation_fixed_parameter"),
+         options.get_double("l1_relaxation_decrease_factor"),
+         options.get_double("l1_relaxation_epsilon1"),
+         options.get_double("l1_relaxation_epsilon2"),
+         options.get_double("l1_relaxation_small_threshold")
+      }),
       constraint_multipliers(model.number_constraints),
       lower_bound_multipliers(model.number_variables),
       upper_bound_multipliers(model.number_variables),
-      statistics_penalty_parameter_column_order(stoi(options.at("statistics_penalty_parameter_column_order"))) {
+      statistics_penalty_parameter_column_order(options.get_int("statistics_penalty_parameter_column_order")) {
 }
 
 void l1Relaxation::initialize(Statistics& statistics, Iterate& first_iterate) {

@@ -20,6 +20,30 @@ const std::string& Options::at(const std::string& key) const {
    }
 }
 
+const std::string& Options::get_string(const std::string& key) const {
+   return this->at(key);
+}
+
+double Options::get_double(const std::string& key) const {
+   const std::string& entry = this->at(key);
+   return std::stod(entry);
+}
+
+int Options::get_int(const std::string& key) const {
+   const std::string& entry = this->at(key);
+   return std::stoi(entry);
+}
+
+size_t Options::get_unsigned_int(const std::string& key) const {
+   const std::string& entry = this->at(key);
+   return std::stoul(entry);
+}
+
+bool Options::get_bool(const std::string& key) const {
+   const std::string& entry = this->at(key);
+   return entry == "yes";
+}
+
 void Options::print() const {
    std::cout << "Options:\n";
    for (const auto& [key, value]: this->options) {

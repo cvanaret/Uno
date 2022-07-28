@@ -9,13 +9,13 @@ AugmentedSystem::AugmentedSystem(const std::string& sparse_format, size_t max_di
    matrix(SymmetricMatrixFactory::create(sparse_format, max_dimension, max_number_non_zeros, use_regularization)),
    rhs(max_dimension),
    solution(max_dimension),
-   regularization_failure_threshold(stod(options.at("regularization_failure_threshold"))),
-   regularization_first_block_initial_factor(stod(options.at("regularization_first_block_initial_factor"))),
-   regularization_second_block_fraction(stod(options.at("regularization_second_block_fraction"))),
-   regularization_first_block_lb(stod(options.at("regularization_first_block_lb"))),
-   regularization_first_block_decrease_factor(stod(options.at("regularization_first_block_decrease_factor"))),
-   regularization_first_block_fast_increase_factor(stod(options.at("regularization_first_block_fast_increase_factor"))),
-   regularization_first_block_slow_increase_factor(stod(options.at("regularization_first_block_slow_increase_factor"))) {
+   regularization_failure_threshold(options.get_double("regularization_failure_threshold")),
+   regularization_first_block_initial_factor(options.get_double("regularization_first_block_initial_factor")),
+   regularization_second_block_fraction(options.get_double("regularization_second_block_fraction")),
+   regularization_first_block_lb(options.get_double("regularization_first_block_lb")),
+   regularization_first_block_decrease_factor(options.get_double("regularization_first_block_decrease_factor")),
+   regularization_first_block_fast_increase_factor(options.get_double("regularization_first_block_fast_increase_factor")),
+   regularization_first_block_slow_increase_factor(options.get_double("regularization_first_block_slow_increase_factor")) {
 }
 
 void AugmentedSystem::factorize_matrix(const Model& model, LinearSolver& linear_solver) {

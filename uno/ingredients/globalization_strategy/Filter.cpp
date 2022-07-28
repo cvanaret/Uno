@@ -7,11 +7,13 @@
 #include "tools/Logger.hpp"
 
 Filter::Filter(const Options& options) :
-      capacity(stoul(options.at("filter_capacity"))),
+      capacity(options.get_unsigned_int("filter_capacity")),
       infeasibility(this->capacity),
       optimality(this->capacity),
-      constants({stod(options.at("filter_beta")),
-                 stod(options.at("filter_gamma"))}) {
+      constants({
+         options.get_double("filter_beta"),
+         options.get_double("filter_gamma")
+      }) {
    this->reset();
 }
 
@@ -127,7 +129,7 @@ std::ostream& operator<<(std::ostream& stream, Filter& filter) {
 
 // NonmonotoneFilter class
 NonmonotoneFilter::NonmonotoneFilter(const Options& options) :
-      Filter(options), max_number_dominated_entries(stoul(options.at("nonmonotone_filter_number_dominated_entries"))) {
+      Filter(options), max_number_dominated_entries(options.get_unsigned_int("nonmonotone_filter_number_dominated_entries")) {
 }
 
 //! add (infeasibility_measure, optimality_measure) to the filter
@@ -222,7 +224,7 @@ double NonmonotoneFilter::compute_actual_reduction(double current_objective, dou
 
 // FilterFactory class
 std::unique_ptr<Filter> FilterFactory::create(const Options& options) {
-   std::string filter_type = options.at("strategy");
+   const std::string& filter_type = options.get_string("strategy");
    if (filter_type == "filter") {
       return std::make_unique<Filter>(options);
    }
