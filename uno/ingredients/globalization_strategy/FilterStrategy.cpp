@@ -8,10 +8,12 @@
 FilterStrategy::FilterStrategy(const Options& options) :
       GlobalizationStrategy(options),
       filter(FilterFactory::create(options)),
-      parameters({stod(options.at("filter_delta")),
-                  stod(options.at("filter_ubd")),
-                  stod(options.at("filter_fact")),
-                  stod(options.at("filter_switching_infeasibility_exponent"))}) {
+      parameters({
+         stod(options.at("filter_delta")),
+         stod(options.at("filter_ubd")),
+         stod(options.at("filter_fact")),
+         stod(options.at("filter_switching_infeasibility_exponent"))
+      }) {
 }
 
 void FilterStrategy::initialize(const Iterate& first_iterate) {
@@ -33,6 +35,7 @@ void FilterStrategy::notify(Iterate& current_iterate) {
 }
 
 /* check acceptability of step(s) (filter & sufficient reduction)
+ * filter methods enforce an *unconstrained* sufficient decrease condition
  * precondition: feasible step
  * */
 bool FilterStrategy::is_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
@@ -40,7 +43,6 @@ bool FilterStrategy::is_acceptable(const ProgressMeasures& current_progress, con
    GlobalizationStrategy::check_finiteness(current_progress);
    GlobalizationStrategy::check_finiteness(trial_progress);
 
-   // filter methods enforce an *unconstrained* sufficient decrease condition
    // include the predicted optimality reduction, but ignore the predicted infeasibility reduction
    const double unconstrained_predicted_reduction = predicted_reduction.optimality;
    DEBUG << "Current: η = " << current_progress.infeasibility << ", ω = " << current_progress.optimality << '\n';
@@ -56,9 +58,9 @@ bool FilterStrategy::is_acceptable(const ProgressMeasures& current_progress, con
       acceptable = filter->improves_current_iterate(current_progress.infeasibility, current_progress.optimality, trial_progress.infeasibility,
             trial_progress.optimality);
       if (acceptable) {
-         DEBUG << "Filter acceptable wrt current point\n";
          const double actual_reduction = filter->compute_actual_reduction(current_progress.optimality, current_progress.infeasibility,
                trial_progress.optimality);
+         DEBUG << "Filter acceptable wrt current point\n";
          DEBUG << "Actual reduction: " << actual_reduction << '\n';
          DEBUG << *this->filter << '\n';
 
