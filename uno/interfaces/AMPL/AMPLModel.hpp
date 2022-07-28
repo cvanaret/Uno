@@ -51,7 +51,7 @@ private:
    AMPLModel(const std::string& file_name, ASL* asl);
 
    // mutable: can be modified by const methods (internal state not seen by user)
-   mutable ASL* asl_; /*!< Instance of the AMPL Solver Library class */
+   mutable ASL* asl; /*!< Instance of the AMPL Solver Library class */
    mutable std::vector<double> ampl_tmp_gradient{};
    mutable std::vector<double> ampl_tmp_hessian{};
 
