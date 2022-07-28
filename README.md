@@ -23,7 +23,7 @@ The following hypergraph illustrates how state-of-the-art solvers can be decompo
    <img src="docs/figures/combination_hypergraph.png" alt="Combination hypergraph" width="75%" />
 </p>
 
-Uno 1.0 implements the following strategies. Any combination can be generated without any programming effort from the user.
+Uno 1.0 implements the following strategies. Any strategy combination can be generated without any programming effort from the user. Note that all combinations do not necessarily result in sensible algorithms, or even convergent approaches.
 <p align="center">
    <img src="docs/figures/hypergraph_uno.png" alt="Uno 1.0 hypergraph" width="65%" />
 </p>
@@ -117,24 +117,35 @@ To solve an AMPL model, type in the `build` directory:
 ```
 ./uno_ampl path_to_file/file.nl
 ```
-To choose a globalization mechanism, use the argument (choose one of the possible options in brackets):
+
+### Combination of ingredients
+
+To pick a globalization mechanism, use the argument (choose one of the possible options in brackets):
 ```
 -mechanism [LS|TR]
 ```
-To choose a constraint relaxation strategy, use the argument:
+To pick a constraint relaxation strategy, use the argument:
 ```
 -constraint-relaxation [feasibility-restoration|l1-relaxation]
 ```
-To choose a globalization strategy, use the argument:
+To pick a globalization strategy, use the argument:
 ```
 -strategy [penalty|filter|nonmonotone-filter]
 ```
-To choose a subproblem method, use the argument:
+To pick a subproblem method, use the argument:
 ```
 -subproblem [QP|LP|barrier]
 ```
-To choose a preset, use the argument:
+The options can be combined in the same command line.
+
+### Presets
+
+Uno presets are strategy combinations that correspond to existing solvers (as well as known values for their hyperparameters). Uno 1.0 implements three presets:
+* `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method);
+* `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method);
+* `byrd` mimics Byrd's S$\ell_1$QP (line-search $\ell_1$ merit S$\ell_1$QP method).
+
+To pick a preset, use the argument:
 ```
 -preset [filtersqp|ipopt|byrd]
 ```
-The options can be combined in the same command line. Autocompletion is active.
