@@ -114,6 +114,7 @@ double Model::compute_constraint_violation(const std::vector<double>& constraint
 double Model::compute_complementarity_error(const std::vector<double>& x, const std::vector<double>& constraints,
       const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bounds_multipliers,
       const std::vector<double>& upper_bounds_multipliers) const {
+   // TODO use the objective multiplier
    double error = 0.;
    // bound constraints
    for (size_t i = 0; i < this->number_variables; i++) {

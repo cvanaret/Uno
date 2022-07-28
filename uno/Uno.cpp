@@ -44,8 +44,6 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
 
          // compute the status of the new iterate
          termination_status = this->check_termination(model, new_iterate, direction_norm);
-
-         // TODO compute complementarity
          Uno::add_statistics(statistics, model, new_iterate, major_iterations);
          if (Logger::logger_level == INFO) statistics.print_current_line();
 

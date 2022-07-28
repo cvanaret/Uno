@@ -150,7 +150,7 @@ Direction BarrierSubproblem::solve(Statistics& statistics, const NonlinearProble
    statistics.add_statistic("barrier param.", this->barrier_parameter);
 
    // determine if the direction is a "small direction" (Section 3.9 of the Ipopt paper) TODO
-   bool is_small_direction = BarrierSubproblem::is_small_direction(problem, current_iterate, this->direction);
+   const bool is_small_direction = BarrierSubproblem::is_small_direction(problem, current_iterate, this->direction);
    if (is_small_direction) {
       DEBUG << "This is a small direction\n";
    }
@@ -219,20 +219,19 @@ double BarrierSubproblem::compute_optimality_measure(const NonlinearProblem& pro
    assert(is_finite(objective) && "The barrier value is infinite");
    // original objective value
    iterate.evaluate_objective(problem.model);
-   // TODO: parameterize \omega with \rho instead of multiplying (\rho should not multiply the barrier terms)
+   // TODO: parameterize optimality measure with \rho instead of multiplying (here, \rho should not multiply the barrier terms)
    objective += iterate.original_evaluations.objective;
    return objective;
 }
 
 void BarrierSubproblem::update_barrier_parameter(const NonlinearProblem& problem, const Iterate& current_iterate) {
    // scaled error terms
-   const double scaling = this->compute_KKT_error_scaling(problem, current_iterate);
-   const double KKTerror = current_iterate.stationarity_error / scaling;
+   const double stationarity_error = current_iterate.stationarity_error / this->compute_KKT_error_scaling(problem, current_iterate);
    const double central_complementarity_error = this->compute_central_complementarity_error(problem, current_iterate);
-   const double error = std::max({KKTerror, current_iterate.constraint_violation, central_complementarity_error});
-   DEBUG << "Scaled KKT error for barrier subproblem is " << error << '\n';
+   const double error = std::max({stationarity_error, current_iterate.constraint_violation, central_complementarity_error});
+   DEBUG << "Max scaled primal-dual error for barrier subproblem is " << error << '\n';
 
-   // update of the barrier parameter (Eq. 7 in Ipopt paper)
+   // update the barrier parameter (Eq. 7 in Ipopt paper)
    const double tolerance_fraction = this->tolerance / this->parameters.update_fraction;
    while (error <= this->parameters.k_epsilon * this->barrier_parameter && tolerance_fraction < this->barrier_parameter) {
       this->barrier_parameter = std::max(tolerance_fraction, std::min(this->parameters.k_mu * this->barrier_parameter,
