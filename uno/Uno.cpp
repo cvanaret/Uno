@@ -95,27 +95,25 @@ bool Uno::termination_criterion(TerminationStatus current_status, size_t iterati
 }
 
 TerminationStatus Uno::check_termination(const Model& model, Iterate& current_iterate, double step_norm) const {
-   const size_t number_variables = current_iterate.primals.size();
-
    // TODO: criterion for CQ failure
    current_iterate.evaluate_constraints(model);
    current_iterate.complementarity_error = model.compute_complementarity_error(current_iterate.primals, current_iterate.original_evaluations.constraints,
          current_iterate.multipliers.constraints, current_iterate.multipliers.lower_bounds, current_iterate.multipliers.upper_bounds);
 
-   if (current_iterate.complementarity_error <= this->tolerance * static_cast<double>(number_variables + model.number_constraints)) {
+   if (current_iterate.complementarity_error <= this->tolerance * static_cast<double>(model.number_variables + model.number_constraints)) {
       // feasible and KKT point
-      if (current_iterate.stationarity_error <= this->tolerance * std::sqrt(number_variables) &&
-          current_iterate.constraint_violation <= this->tolerance * static_cast<double>(number_variables)) {
+      if (current_iterate.stationarity_error <= this->tolerance * std::sqrt(model.number_variables) &&
+          current_iterate.constraint_violation <= this->tolerance * static_cast<double>(model.number_variables)) {
          return KKT_POINT;
       }
       // infeasible and FJ point
       else if (model.is_constrained() && current_iterate.multipliers.objective == 0. &&
-         current_iterate.stationarity_error <= this->tolerance * std::sqrt(number_variables)) {
+         current_iterate.stationarity_error <= this->tolerance * std::sqrt(model.number_variables)) {
          return FJ_POINT;
       }
    }
    if (step_norm <= this->tolerance / this->small_step_factor) {
-      if (current_iterate.constraint_violation <= this->tolerance * static_cast<double>(number_variables)) {
+      if (current_iterate.constraint_violation <= this->tolerance * static_cast<double>(model.number_variables)) {
          return FEASIBLE_SMALL_STEP;
       }
       else {
