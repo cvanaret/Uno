@@ -11,38 +11,38 @@
 
 BarrierSubproblem::BarrierSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros, const Options& options):
       Subproblem(max_number_variables, max_number_constraints),
-      augmented_system(options.at("sparse_format"), max_number_variables + max_number_constraints,
+      augmented_system(options.get_string("sparse_format"), max_number_variables + max_number_constraints,
             max_number_hessian_nonzeros
             + 2 * max_number_variables /* diagonal barrier terms for bound constraints */
             + max_number_variables * max_number_constraints /* Jacobian (TODO: find out the number of nonzeros) */,
             true, /* use regularization */
             options),
-      barrier_parameter(std::stod(options.at("barrier_initial_parameter"))),
-      previous_barrier_parameter(std::stod(options.at("barrier_initial_parameter"))),
-      tolerance(std::stod(options.at("tolerance"))),
+      barrier_parameter(options.get_double("barrier_initial_parameter")),
+      previous_barrier_parameter(options.get_double("barrier_initial_parameter")),
+      tolerance(options.get_double("tolerance")),
       // the Hessian is not convexified. Instead, the augmented system will be.
-      hessian_model(HessianModelFactory::create(options.at("hessian_model"), max_number_variables, max_number_hessian_nonzeros,
+      hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), max_number_variables, max_number_hessian_nonzeros,
             false, options)),
-      linear_solver(LinearSolverFactory::create(options.at("linear_solver"), max_number_variables + max_number_constraints,
+      linear_solver(LinearSolverFactory::create(options.get_string("linear_solver"), max_number_variables + max_number_constraints,
             max_number_hessian_nonzeros
             + max_number_variables + max_number_constraints /* regularization */
             + 2 * max_number_variables /* diagonal barrier terms */
             + max_number_variables * max_number_constraints /* Jacobian */)),
-      parameters({stod(options.at("barrier_tau_min")),
-            stod(options.at("barrier_k_sigma")),
-            stod(options.at("barrier_smax")),
-            stod(options.at("barrier_k_mu")),
-            stod(options.at("barrier_theta_mu")),
-            stod(options.at("barrier_k_epsilon")),
-            stod(options.at("barrier_update_fraction")),
-            stod(options.at("barrier_regularization_exponent")),
-            stod(options.at("barrier_small_direction_factor")),
-            stod(options.at("barrier_push_variable_to_interior_k1")),
-            stod(options.at("barrier_push_variable_to_interior_k2"))
+      parameters({options.get_double("barrier_tau_min"),
+            options.get_double("barrier_k_sigma"),
+            options.get_double("barrier_smax"),
+            options.get_double("barrier_k_mu"),
+            options.get_double("barrier_theta_mu"),
+            options.get_double("barrier_k_epsilon"),
+            options.get_double("barrier_update_fraction"),
+            options.get_double("barrier_regularization_exponent"),
+            options.get_double("barrier_small_direction_factor"),
+            options.get_double("barrier_push_variable_to_interior_k1"),
+            options.get_double("barrier_push_variable_to_interior_k2")
       }),
-      default_multiplier(std::stod(options.at("barrier_default_multiplier"))),
+      default_multiplier(options.get_double("barrier_default_multiplier")),
       lower_delta_z(max_number_variables), upper_delta_z(max_number_variables),
-      statistics_barrier_parameter_column_order(stoi(options.at("statistics_barrier_parameter_column_order"))) {
+      statistics_barrier_parameter_column_order(options.get_int("statistics_barrier_parameter_column_order")) {
 }
 
 inline void BarrierSubproblem::initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) {

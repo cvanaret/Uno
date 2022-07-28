@@ -9,12 +9,12 @@
 
 TrustRegionStrategy::TrustRegionStrategy(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options) :
       GlobalizationMechanism(constraint_relaxation_strategy),
-      radius(stod(options.at("TR_radius"))),
-      increase_factor(stod(options.at("TR_increase_factor"))),
-      decrease_factor(stod(options.at("TR_decrease_factor"))),
-      activity_tolerance(stod(options.at("TR_activity_tolerance"))),
-      min_radius(stod(options.at("TR_min_radius"))),
-      statistics_TR_radius_column_order(stoi(options.at("statistics_TR_radius_column_order"))) {
+      radius(options.get_double("TR_radius")),
+      increase_factor(options.get_double("TR_increase_factor")),
+      decrease_factor(options.get_double("TR_decrease_factor")),
+      activity_tolerance(options.get_double("TR_activity_tolerance")),
+      min_radius(options.get_double("TR_min_radius")),
+      statistics_TR_radius_column_order(options.get_int("statistics_TR_radius_column_order")) {
    assert(1. < this->increase_factor && "The TR increase factor should be > 1");
    assert(1. < this->decrease_factor && "The TR decrease factor should be > 1");
 }

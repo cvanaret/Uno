@@ -11,9 +11,9 @@
 
 Uno::Uno(GlobalizationMechanism& globalization_mechanism, const Options& options) :
       globalization_mechanism(globalization_mechanism),
-      tolerance(std::stod(options.at("tolerance"))),
-      max_iterations(std::stoul(options.at("max_iterations"))),
-      small_step_factor(std::stod(options.at("small_step_factor"))) {
+      tolerance(options.get_double("tolerance")),
+      max_iterations(options.get_unsigned_int("max_iterations")),
+      small_step_factor(options.get_double("small_step_factor")) {
 }
 
 Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& options) {
@@ -66,15 +66,15 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
 
 Statistics Uno::create_statistics(const Model& model, const Options& options) {
    Statistics statistics(options);
-   statistics.add_column("major", Statistics::int_width, stoi(options.at("statistics_major_column_order")));
-   statistics.add_column("minor", Statistics::int_width, stoi(options.at("statistics_minor_column_order")));
-   statistics.add_column("step norm", Statistics::double_width, stoi(options.at("statistics_step_norm_column_order")));
-   statistics.add_column("f", Statistics::double_width, stoi(options.at("statistics_objective_column_order")));
+   statistics.add_column("major", Statistics::int_width, options.get_int("statistics_major_column_order"));
+   statistics.add_column("minor", Statistics::int_width, options.get_int("statistics_minor_column_order"));
+   statistics.add_column("step norm", Statistics::double_width, options.get_int("statistics_step_norm_column_order"));
+   statistics.add_column("f", Statistics::double_width, options.get_int("statistics_objective_column_order"));
    if (model.is_constrained()) {
-      statistics.add_column("||c||", Statistics::double_width, stoi(options.at("statistics_infeasibility_column_order")));
+      statistics.add_column("||c||", Statistics::double_width, options.get_int("statistics_infeasibility_column_order"));
    }
-   statistics.add_column("complementarity", Statistics::double_width, stoi(options.at("statistics_complementarity_column_order")));
-   statistics.add_column("stationarity", Statistics::double_width, stoi(options.at("statistics_stationarity_column_order")));
+   statistics.add_column("complementarity", Statistics::double_width, options.get_int("statistics_complementarity_column_order"));
+   statistics.add_column("stationarity", Statistics::double_width, options.get_int("statistics_stationarity_column_order"));
    return statistics;
 }
 

@@ -6,7 +6,7 @@
 
 LPSubproblem::LPSubproblem(size_t max_number_variables, size_t max_number_constraints, const Options& options) :
       ActiveSetSubproblem(max_number_variables, max_number_constraints),
-      solver(LPSolverFactory::create(max_number_variables, max_number_constraints, options.at("LP_solver"), options)) {
+      solver(LPSolverFactory::create(max_number_variables, max_number_constraints, options.get_string("LP_solver"), options)) {
 }
 
 void LPSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate) {

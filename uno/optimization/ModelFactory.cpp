@@ -10,7 +10,7 @@ std::unique_ptr<Model> ModelFactory::create(const std::string& problem_name, con
    std::unique_ptr<Model> model = std::make_unique<AMPLModel>(problem_name);
 
    // if an equality-constrained problem is required (e.g. barrier or AL), reformulate the model
-   if (options.at("subproblem") == "barrier") {
+   if (options.get_string("subproblem") == "barrier") {
       // transfer ownership of the pointer
       model = std::make_unique<EqualityConstrainedModel>(std::move(model));
    }

@@ -11,7 +11,7 @@ HessianModel::HessianModel(size_t dimension, size_t maximum_number_nonzeros, con
 
 // Exact Hessian
 ExactHessian::ExactHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options) :
-   HessianModel(dimension, maximum_number_nonzeros, options.at("sparse_format"), false) /* not regularized */ {
+   HessianModel(dimension, maximum_number_nonzeros, options.get_string("sparse_format"), false) /* not regularized */ {
 }
 
 void ExactHessian::evaluate(const NonlinearProblem& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) {
@@ -23,10 +23,10 @@ void ExactHessian::evaluate(const NonlinearProblem& problem, const std::vector<d
 
 // Convexified Hessian
 ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options):
-      HessianModel(dimension, maximum_number_nonzeros, options.at("sparse_format"), true), // regularized
-      linear_solver(LinearSolverFactory::create(options.at("linear_solver"), dimension, maximum_number_nonzeros)),
-      regularization_initial_value(stod(options.at("regularization_initial_value"))),
-      regularization_increase_factor(stod(options.at("regularization_increase_factor"))) {
+      HessianModel(dimension, maximum_number_nonzeros, options.get_string("sparse_format"), true), // regularized
+      linear_solver(LinearSolverFactory::create(options.get_string("linear_solver"), dimension, maximum_number_nonzeros)),
+      regularization_initial_value(options.get_double("regularization_initial_value")),
+      regularization_increase_factor(options.get_double("regularization_increase_factor")) {
 }
 
 void ConvexifiedHessian::evaluate(const NonlinearProblem& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) {

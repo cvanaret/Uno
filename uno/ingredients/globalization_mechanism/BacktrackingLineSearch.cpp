@@ -10,11 +10,11 @@
 
 BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options):
       GlobalizationMechanism(constraint_relaxation_strategy),
-      backtracking_ratio(std::stod(options.at("LS_backtracking_ratio"))),
-      min_step_length(std::stod(options.at("LS_min_step_length"))),
-      use_second_order_correction(options.at("use_second_order_correction") == "yes"),
-      statistics_SOC_column_order(stoi(options.at("statistics_SOC_column_order"))),
-      statistics_LS_step_length_column_order(stoi(options.at("statistics_LS_step_length_column_order"))) {
+      backtracking_ratio(options.get_double("LS_backtracking_ratio")),
+      min_step_length(options.get_double("LS_min_step_length")),
+      use_second_order_correction(options.get_bool("use_second_order_correction")),
+      statistics_SOC_column_order(options.get_int("statistics_SOC_column_order")),
+      statistics_LS_step_length_column_order(options.get_int("statistics_LS_step_length_column_order")) {
    // check the initial and minimal step lengths
    assert(0 < this->backtracking_ratio && this->backtracking_ratio < 1. && "The LS backtracking ratio should be in (0, 1)");
    assert(0 < this->min_step_length && this->min_step_length < 1. && "The LS minimum step length should be in (0, 1)");

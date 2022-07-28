@@ -6,7 +6,7 @@
 #include "l1Relaxation.hpp"
 
 std::unique_ptr<ConstraintRelaxationStrategy> ConstraintRelaxationStrategyFactory::create(const Model& model, const Options& options) {
-   const std::string constraint_relaxation_type = options.at("constraint-relaxation");
+   const std::string constraint_relaxation_type = options.get_string("constraint-relaxation");
    if (constraint_relaxation_type == "feasibility-restoration") {
       return std::make_unique<FeasibilityRestoration>(model, options);
    }

@@ -9,10 +9,10 @@ FilterStrategy::FilterStrategy(const Options& options) :
       GlobalizationStrategy(options),
       filter(FilterFactory::create(options)),
       parameters({
-         stod(options.at("filter_delta")),
-         stod(options.at("filter_ubd")),
-         stod(options.at("filter_fact")),
-         stod(options.at("filter_switching_infeasibility_exponent"))
+         options.get_double("filter_delta"),
+         options.get_double("filter_ubd"),
+         options.get_double("filter_fact"),
+         options.get_double("filter_switching_infeasibility_exponent")
       }) {
 }
 

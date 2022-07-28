@@ -27,7 +27,7 @@ int Statistics::int_width = 7;
 int Statistics::double_width = 18;
 int Statistics::char_width = 7;
 
-Statistics::Statistics(const Options& options): print_header_every_iterations(stoul(options.at("statistics_print_header_every_iterations"))) {
+Statistics::Statistics(const Options& options): print_header_every_iterations(options.get_unsigned_int("statistics_print_header_every_iterations")) {
 }
 
 void Statistics::add_column(std::string name, int width, int order) {
