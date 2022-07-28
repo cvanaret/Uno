@@ -403,13 +403,13 @@ double BarrierSubproblem::compute_central_complementarity_error(const NonlinearP
       }
       return result;
    };
-   const double complementarity_error = norm_1(residual_function, Range(problem.number_variables));
+   const double central_complementarity_error = norm_1(residual_function, Range(problem.number_variables));
 
    // scaling
    const double bound_multipliers_norm = norm_1(iterate.multipliers.lower_bounds) + norm_1(iterate.multipliers.upper_bounds);
-   const double scaling = std::max(this->parameters.smax, bound_multipliers_norm / static_cast<double>(problem.number_variables)) / this->parameters
-         .smax;
-   return complementarity_error / scaling;
+   const double scaling = std::max(this->parameters.smax, bound_multipliers_norm / static_cast<double>(problem.number_variables)) /
+         this->parameters.smax;
+   return central_complementarity_error / scaling;
 }
 
 void BarrierSubproblem::postprocess_accepted_iterate(const NonlinearProblem& problem, Iterate& iterate) {

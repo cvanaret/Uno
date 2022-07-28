@@ -110,6 +110,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
          DEBUG << "The line search failed, switching to feasibility problem\n";
          // reset the line search with the restoration solution
          direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, direction.primals);
+         predicted_optimality_reduction_model = this->constraint_relaxation_strategy.generate_predicted_optimality_reduction_model(direction);
          this->step_length = 1.;
          this->number_iterations = 0;
          this->solving_feasibility_problem = true;
