@@ -18,6 +18,16 @@ Uno implements an abstract framework based on four ingredients:
 * **globalization strategy**: an acceptance test of the trial iterate;
 * **globalization mechanism**: a recourse action upon rejection of the trial iterate.
 
+The following hypergraph illustrates how state-of-the-art solvers can be decomposed in terms of the four ingredients.
+<p align="center">
+   <img src="docs/figures/combination_hypergraph.png" alt="Combination hypergraph" width="75%" />
+</p>
+
+Uno 1.0 implements the following strategies. Any combination can be generated without any programming effort from the user.
+<p align="center">
+   <img src="docs/figures/hypergraph_uno.png" alt="Uno 1.0 hypergraph" width="65%" />
+</p>
+
 Check out my [presentation at the ICCOPT 2022 conference](https://www.researchgate.net/publication/362254109).
 This is joint work with Sven Leyffer (Argonne National Laboratory).
 
