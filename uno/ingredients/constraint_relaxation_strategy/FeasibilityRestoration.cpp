@@ -97,8 +97,8 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& curr
       this->subproblem->subproblem_definition_changed = false;
    }
 
-   // possibly switch between phase 1 (restoration) and phase 2 (optimality)
-   GlobalizationStrategy& current_phase_strategy = this->switch_phase(current_iterate, trial_iterate, direction);
+   // possibly switch between optimality phase and restoration phase
+   this->switch_phase(current_iterate, trial_iterate, direction);
 
    bool accept = false;
    if (this->is_small_step(direction)) {
@@ -112,6 +112,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& curr
       };
 
       // invoke the globalization strategy for acceptance
+      GlobalizationStrategy& current_phase_strategy = this->get_current_globalization_strategy();
       accept = current_phase_strategy.is_acceptable(current_iterate.nonlinear_progress, trial_iterate.nonlinear_progress,
             direction.objective_multiplier, predicted_reduction);
    }
@@ -136,14 +137,19 @@ const NonlinearProblem& FeasibilityRestoration::get_current_reformulated_problem
    }
 }
 
-GlobalizationStrategy& FeasibilityRestoration::switch_phase(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) {
-   std::vector<size_t> infeasible_constraints = this->feasibility_problem.get_violated_linearized_constraints(direction.primals);
+GlobalizationStrategy& FeasibilityRestoration::get_current_globalization_strategy() const {
+   return (this->current_phase == OPTIMALITY) ? *this->phase_2_strategy : *this->phase_1_strategy;
+}
 
+void FeasibilityRestoration::switch_phase(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) {
+   const std::vector<size_t> infeasible_linearized_constraints = this->feasibility_problem.get_violated_linearized_constraints(direction.primals);
+
+   // possibly go from optimality phase to restoration phase
    if (this->current_phase == OPTIMALITY && direction.objective_multiplier == 0.) {
-      this->switch_to_feasibility_restoration(current_iterate, infeasible_constraints);
+      this->switch_to_feasibility_restoration(current_iterate, infeasible_linearized_constraints);
    }
-   // possibly go from 1 (restoration) to phase 2 (optimality)
-   else if (this->current_phase == FEASIBILITY_RESTORATION && infeasible_constraints.empty()) {
+   // possibly go from restoration phase to optimality phase
+   else if (this->current_phase == FEASIBILITY_RESTORATION && infeasible_linearized_constraints.empty()) {
       // TODO && this->filter_optimality->accept(trial_iterate.progress.feasibility, trial_iterate.progress.objective))
       this->switch_to_optimality(current_iterate, trial_iterate);
    }
@@ -155,35 +161,30 @@ GlobalizationStrategy& FeasibilityRestoration::switch_phase(Iterate& current_ite
       trial_iterate.nonlinear_progress.optimality = this->subproblem->compute_optimality_measure(this->optimality_problem, trial_iterate);
    }
    else {
-      // TODO check that
-      current_iterate.nonlinear_progress.optimality = this->compute_optimality_measure(current_iterate, infeasible_constraints);
-      trial_iterate.nonlinear_progress.optimality = this->compute_optimality_measure(trial_iterate, infeasible_constraints);
+      current_iterate.nonlinear_progress.optimality = this->compute_optimality_measure(current_iterate, infeasible_linearized_constraints);
+      trial_iterate.nonlinear_progress.optimality = this->compute_optimality_measure(trial_iterate, infeasible_linearized_constraints);
    }
-
-   // return the globalization strategy of the current phase
-   return (this->current_phase == OPTIMALITY) ? *this->phase_2_strategy : *this->phase_1_strategy;
 }
 
-void FeasibilityRestoration::switch_to_feasibility_restoration(Iterate& current_iterate, const std::vector<size_t>& infeasible_constraints) {
-   this->current_phase = FEASIBILITY_RESTORATION;
+void FeasibilityRestoration::switch_to_feasibility_restoration(Iterate& current_iterate, const std::vector<size_t>& infeasible_linearized_constraints) {
    DEBUG << "Switching from optimality to restoration phase\n";
+   this->current_phase = FEASIBILITY_RESTORATION;
    this->phase_2_strategy->notify(current_iterate);
    this->phase_1_strategy->reset();
    // update the measure of optimality
-   current_iterate.nonlinear_progress.optimality = this->compute_optimality_measure(current_iterate, infeasible_constraints);
+   current_iterate.nonlinear_progress.optimality = this->compute_optimality_measure(current_iterate, infeasible_linearized_constraints);
    this->phase_1_strategy->notify(current_iterate);
 }
 
 void FeasibilityRestoration::switch_to_optimality(Iterate& current_iterate, Iterate& trial_iterate) {
-   this->current_phase = OPTIMALITY;
    DEBUG << "Switching from restoration to optimality phase\n";
+   this->current_phase = OPTIMALITY;
    current_iterate.set_number_variables(this->optimality_problem.number_variables);
    current_iterate.nonlinear_progress.optimality = this->subproblem->compute_optimality_measure(this->optimality_problem, current_iterate);
    trial_iterate.set_number_variables(this->optimality_problem.number_variables);
 }
 
 void FeasibilityRestoration::set_variable_bounds(const Iterate& current_iterate, double trust_region_radius) {
-   // set the bounds of all the variables (primal + elastics)
    this->subproblem->set_variable_bounds(this->feasibility_problem, current_iterate, trust_region_radius);
 }
 
@@ -196,9 +197,9 @@ double FeasibilityRestoration::compute_infeasibility_measure(Iterate& iterate) {
    return this->model.compute_constraint_violation(iterate.original_evaluations.constraints, L1_NORM);
 }
 
-double FeasibilityRestoration::compute_optimality_measure(Iterate& iterate, const std::vector<size_t>& infeasible_constraints) {
+double FeasibilityRestoration::compute_optimality_measure(Iterate& iterate, const std::vector<size_t>& infeasible_linearized_constraints) {
    iterate.evaluate_constraints(this->model);
-   return this->model.compute_constraint_violation(iterate.original_evaluations.constraints, infeasible_constraints, L1_NORM);
+   return this->model.compute_constraint_violation(iterate.original_evaluations.constraints, infeasible_linearized_constraints, L1_NORM);
 }
 
 void FeasibilityRestoration::register_accepted_iterate(Iterate& iterate) {
