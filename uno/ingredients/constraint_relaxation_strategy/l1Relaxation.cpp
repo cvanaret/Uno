@@ -101,11 +101,14 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, Iterate& curren
    return direction;
 }
 
-Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
-      const std::optional<std::vector<double>>& /*optional_phase_2_solution*/) {
+Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) {
    assert(0. < this->penalty_parameter && "l1Relaxation: the penalty parameter is already 0");
    Direction direction = this->solve_subproblem(statistics, current_iterate, 0.);
    return direction;
+}
+
+Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& /*initial_point*/) {
+   return this->solve_feasibility_problem(statistics, current_iterate);
 }
 
 Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate& current_iterate) {

@@ -36,7 +36,7 @@ Direction BacktrackingLineSearch::compute_direction(Statistics& statistics, Iter
    }
    catch (const UnstableRegularization&) {
       this->solving_feasibility_problem = true;
-      return this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, std::nullopt);
+      return this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate);
    }
 }
 

@@ -43,7 +43,7 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
       return this->solve_optimality_problem(statistics, current_iterate);
    }
    else {
-      return this->solve_feasibility_problem(statistics, current_iterate, std::nullopt);
+      return this->solve_feasibility_problem(statistics, current_iterate);
    }
 }
 
@@ -63,17 +63,13 @@ Direction FeasibilityRestoration::solve_optimality_problem(Statistics& statistic
 }
 
 // form and solve the feasibility problem (with or without constraint partition)
-Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
-      const std::optional<std::vector<double>>& optional_phase_2_solution) {
+Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) {
    // register the proximal coefficient and reference point
    this->feasibility_problem.set_proximal_coefficient(this->subproblem->get_proximal_coefficient());
    this->feasibility_problem.set_proximal_reference_point(current_iterate.primals);
 
    // build the objective model of the feasibility problem
    this->subproblem->set_elastic_variables(this->feasibility_problem, current_iterate);
-
-   // start from the phase-2 solution
-   this->subproblem->set_initial_point(optional_phase_2_solution);
 
    DEBUG << "Solving the feasibility subproblem\n";
    Direction feasibility_direction = this->subproblem->solve(statistics, this->feasibility_problem, current_iterate);
@@ -86,6 +82,13 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
    feasibility_direction.constraint_partition = constraint_partition;
    DEBUG << feasibility_direction << '\n';
    return feasibility_direction;
+}
+
+// form and solve the feasibility problem (with or without constraint partition)
+Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
+      const std::vector<double>& initial_point) {
+   this->subproblem->set_initial_point(initial_point);
+   return this->solve_feasibility_problem(statistics, current_iterate);
 }
 
 bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,

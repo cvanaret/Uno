@@ -464,7 +464,7 @@ void BarrierSubproblem::print_subproblem_solution(const NonlinearProblem& proble
    DEBUG << "Δz_U: "; print_vector(DEBUG, this->upper_delta_z, 0, problem.number_variables);
 }
 
-void BarrierSubproblem::set_initial_point(const std::optional<std::vector<double>>& /*optional_initial_point*/) {
+void BarrierSubproblem::set_initial_point(const std::vector<double>& /*initial_point*/) {
    // do nothing
 }
 
