@@ -45,7 +45,7 @@ public:
    void set_proximal_reference_point(const std::vector<double>& new_proximal_reference_point);
 
    // void set_elastic_variables(Iterate& iterate) const;
-   void set_elastic_variables(Iterate& iterate, double value = 0.) const;
+   void set_elastic_variables(Iterate& iterate, double value) const;
 
 protected:
    double objective_multiplier;
@@ -306,15 +306,16 @@ inline void l1RelaxedProblem::generate_elastic_variables() {
 
 inline std::vector<size_t> l1RelaxedProblem::get_violated_linearized_constraints(const std::vector<double>& x) const {
    // construct the list of linearized constraints that are violated
+   // TODO: actually evaluate the linearized constraints
    std::vector<size_t> violated_constraints;
    violated_constraints.reserve(this->number_constraints);
-   const auto check_violated_constraints = [&](size_t j, size_t elastic_index) {
+   const auto find_violated_constraints = [&](size_t j, size_t elastic_index) {
       if (0. < x[elastic_index]) {
          violated_constraints.push_back(j);
       }
    };
-   this->elastic_variables.positive.for_each(check_violated_constraints);
-   this->elastic_variables.negative.for_each(check_violated_constraints);
+   this->elastic_variables.positive.for_each(find_violated_constraints);
+   this->elastic_variables.negative.for_each(find_violated_constraints);
    return violated_constraints;
 }
 
