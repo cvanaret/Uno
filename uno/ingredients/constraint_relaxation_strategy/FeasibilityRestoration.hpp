@@ -4,7 +4,6 @@
 #ifndef UNO_FEASIBILITYRESTORATION_H
 #define UNO_FEASIBILITYRESTORATION_H
 
-#include <optional>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategy/GlobalizationStrategy.hpp"
 #include "ingredients/constraint_relaxation_strategy/OptimalityProblem.hpp"
