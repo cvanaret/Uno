@@ -13,16 +13,8 @@ ActiveSetSubproblem::ActiveSetSubproblem(size_t max_number_variables, size_t max
 void ActiveSetSubproblem::initialize(Statistics& /*statistics*/, const NonlinearProblem& /*problem*/, Iterate& /*first_iterate*/) {
 }
 
-void ActiveSetSubproblem::set_initial_point(const std::optional<std::vector<double>>& optional_initial_point) {
-   // if provided, set the initial point
-   if (optional_initial_point.has_value()) {
-      const std::vector<double>& point = optional_initial_point.value();
-      copy_from(this->initial_point, point);
-   }
-   else {
-      // otherwise, reset the initial point
-      initialize_vector(this->initial_point, 0.);
-   }
+void ActiveSetSubproblem::set_initial_point(const std::vector<double>& initial_point) {
+   copy_from(this->initial_point, initial_point);
 }
 
 void ActiveSetSubproblem::set_elastic_variables(const l1RelaxedProblem& problem, Iterate& current_iterate) {

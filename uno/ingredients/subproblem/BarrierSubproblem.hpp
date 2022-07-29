@@ -29,7 +29,7 @@ public:
    BarrierSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros, const Options& options);
    ~BarrierSubproblem() override = default;
 
-   void set_initial_point(const std::optional<std::vector<double>>& optional_initial_point) override;
+   void set_initial_point(const std::vector<double>& optional_initial_point) override;
    void initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) override;
 
    [[nodiscard]] double get_proximal_coefficient() const override;

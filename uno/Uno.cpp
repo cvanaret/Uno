@@ -32,7 +32,7 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
 
    TerminationStatus termination_status = NOT_OPTIMAL;
    try {
-      // check for convergence
+      // check for termination
       while (!this->termination_criterion(termination_status, major_iterations)) {
          statistics.new_line();
          major_iterations++;
@@ -40,7 +40,6 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
 
          // compute an acceptable iterate by solving a subproblem at the current point
          auto [new_iterate, direction_norm] = this->globalization_mechanism.compute_acceptable_iterate(statistics, current_iterate);
-         assert(new_iterate.is_objective_computed && "The objective function was not evaluated at the new iterate.");
 
          // compute the status of the new iterate
          termination_status = this->check_termination(model, new_iterate, direction_norm);

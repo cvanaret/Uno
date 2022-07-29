@@ -22,8 +22,9 @@ public:
 
    // direction computation
    [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate) override;
-   [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
-         const std::optional<std::vector<double>>& optional_phase_2_solution) override;
+   [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) override;
+   [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point)
+      override;
    [[nodiscard]] Direction compute_second_order_correction(Iterate& trial_iterate) override;
 
    [[nodiscard]] bool is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
