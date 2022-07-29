@@ -22,7 +22,7 @@ public:
    // direction computation
    virtual Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate) = 0;
    virtual Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) = 0;
-   virtual Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& phase_2_solution) = 0;
+   virtual Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point) = 0;
    virtual Direction compute_second_order_correction(Iterate& trial_iterate) = 0;
 
    // trial iterate acceptance

@@ -107,7 +107,8 @@ Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, Iterat
    return direction;
 }
 
-Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& /*initial_point*/) {
+Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point) {
+   this->subproblem->set_initial_point(initial_point);
    return this->solve_feasibility_problem(statistics, current_iterate);
 }
 
