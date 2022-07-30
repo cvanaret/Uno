@@ -58,6 +58,11 @@ inline ScaledModel::ScaledModel(const Model& original_model, const Scaling& scal
       this->linear_constraints.insert(j, i);
    });
 
+   // the slacks are the same as in the original model
+   this->original_model.slacks.for_each([&](size_t j, size_t i) {
+      this->slacks.insert(j, i);
+   });
+
    // the bounded variables are the same as in the original model
    for (size_t i: this->original_model.lower_bounded_variables) {
       this->lower_bounded_variables.push_back(i);

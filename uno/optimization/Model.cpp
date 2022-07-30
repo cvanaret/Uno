@@ -21,7 +21,8 @@ Model::Model(std::string name, size_t number_variables, size_t number_constraint
       name(std::move(name)), number_variables(number_variables), number_constraints(number_constraints), problem_type(type),
       equality_constraints(this->number_constraints),
       inequality_constraints(this->number_constraints),
-      linear_constraints(this->number_constraints) {
+      linear_constraints(this->number_constraints),
+      slacks(this->number_constraints) {
 }
 
 void Model::determine_bounds_types(std::vector<Interval>& bounds, std::vector<BoundType>& status) {

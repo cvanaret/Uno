@@ -13,7 +13,7 @@ BarrierSubproblem::BarrierSubproblem(size_t max_number_variables, size_t max_num
       Subproblem(max_number_variables, max_number_constraints),
       augmented_system(options.get_string("sparse_format"), max_number_variables + max_number_constraints,
             max_number_hessian_nonzeros
-            + 2 * max_number_variables /* diagonal barrier terms for bound constraints */
+            + max_number_variables /* diagonal barrier terms for bound constraints */
             + max_number_variables * max_number_constraints /* Jacobian (TODO: find out the number of nonzeros) */,
             true, /* use regularization */
             options),
@@ -28,17 +28,18 @@ BarrierSubproblem::BarrierSubproblem(size_t max_number_variables, size_t max_num
             + max_number_variables + max_number_constraints /* regularization */
             + 2 * max_number_variables /* diagonal barrier terms */
             + max_number_variables * max_number_constraints /* Jacobian */)),
-      parameters({options.get_double("barrier_tau_min"),
-            options.get_double("barrier_k_sigma"),
-            options.get_double("barrier_smax"),
-            options.get_double("barrier_k_mu"),
-            options.get_double("barrier_theta_mu"),
-            options.get_double("barrier_k_epsilon"),
-            options.get_double("barrier_update_fraction"),
-            options.get_double("barrier_regularization_exponent"),
-            options.get_double("barrier_small_direction_factor"),
-            options.get_double("barrier_push_variable_to_interior_k1"),
-            options.get_double("barrier_push_variable_to_interior_k2")
+      parameters({
+         options.get_double("barrier_tau_min"),
+         options.get_double("barrier_k_sigma"),
+         options.get_double("barrier_smax"),
+         options.get_double("barrier_k_mu"),
+         options.get_double("barrier_theta_mu"),
+         options.get_double("barrier_k_epsilon"),
+         options.get_double("barrier_update_fraction"),
+         options.get_double("barrier_regularization_exponent"),
+         options.get_double("barrier_small_direction_factor"),
+         options.get_double("barrier_push_variable_to_interior_k1"),
+         options.get_double("barrier_push_variable_to_interior_k2")
       }),
       default_multiplier(options.get_double("barrier_default_multiplier")),
       lower_delta_z(max_number_variables), upper_delta_z(max_number_variables),
@@ -47,6 +48,16 @@ BarrierSubproblem::BarrierSubproblem(size_t max_number_variables, size_t max_num
 
 inline void BarrierSubproblem::initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) {
    statistics.add_column("barrier param.", Statistics::double_width, this->statistics_barrier_parameter_column_order);
+
+   // set the slack variables (if any)
+   if (!problem.model.slacks.empty()) {
+      first_iterate.evaluate_constraints(problem.model);
+      // set the slacks to the constraint values
+      problem.model.slacks.for_each([&](size_t j, size_t slack_index) {
+         first_iterate.primals[slack_index] = first_iterate.original_evaluations.constraints[j];
+      });
+      first_iterate.are_constraints_computed = false;
+   }
 
    // make the initial point strictly feasible wrt the bounds
    for (size_t i = 0; i < problem.number_variables; i++) {
@@ -72,40 +83,47 @@ inline void BarrierSubproblem::initialize(Statistics& statistics, const Nonlinea
 }
 
 void BarrierSubproblem::check_interior_primals(const NonlinearProblem& problem, const Iterate& iterate) {
+   const double machine_epsilon = std::numeric_limits<double>::epsilon();
+   const double machine_epsilon_to_34 = std::pow(machine_epsilon, 0.75);
    // check that the current iterate is interior
    for (size_t i: problem.lower_bounded_variables) {
-      assert(this->variable_bounds[i].lb < iterate.primals[i] && "Barrier subproblem: a variable is at its lower bound");
+      if (iterate.primals[i] - this->variable_bounds[i].lb < machine_epsilon*this->barrier_parameter) {
+         this->variable_bounds[i].lb -= machine_epsilon_to_34*std::max(1., this->variable_bounds[i].lb);
+      }
+      //assert(this->variable_bounds[i].lb < iterate.primals[i] && "Barrier subproblem: a variable is at its lower bound");
    }
    for (size_t i: problem.upper_bounded_variables) {
-      assert(iterate.primals[i] < this->variable_bounds[i].ub && "Barrier subproblem: a variable is at its upper bound");
+      if (this->variable_bounds[i].ub - iterate.primals[i] < machine_epsilon*this->barrier_parameter) {
+         this->variable_bounds[i].ub += machine_epsilon_to_34*std::max(1., this->variable_bounds[i].ub);
+      }
+      //assert(iterate.primals[i] < this->variable_bounds[i].ub && "Barrier subproblem: a variable is at its upper bound");
    }
 }
 
 void BarrierSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate) {
-   // original Hessian
+   // original Hessian and barrier objective gradient
    this->hessian_model->evaluate(problem, current_iterate.primals, current_iterate.multipliers.constraints);
-   // Hessian: diagonal barrier terms
-   for (size_t i: problem.lower_bounded_variables) {
-      const double diagonal_term = current_iterate.multipliers.lower_bounds[i] / (current_iterate.primals[i] - this->variable_bounds[i].lb);
-      assert(!std::isnan(diagonal_term) && "Barrier subproblem: the diagonal term for the lower bound is NaN");
-      this->hessian_model->hessian->insert(diagonal_term, i, i);
-   }
-   for (size_t i: problem.upper_bounded_variables) {
-      const double diagonal_term = current_iterate.multipliers.upper_bounds[i] / (current_iterate.primals[i] - this->variable_bounds[i].ub);
-      assert(!std::isnan(diagonal_term) && "Barrier subproblem: the diagonal term for the upper bound is NaN");
-      this->hessian_model->hessian->insert(diagonal_term, i, i);
-   }
-
-   // barrier objective gradient
    problem.evaluate_objective_gradient(current_iterate, this->objective_gradient);
-   for (size_t i: problem.lower_bounded_variables) {
-      const double term = -this->barrier_parameter / (current_iterate.primals[i] - this->variable_bounds[i].lb);
-      this->objective_gradient.insert(i, term);
+
+   for (size_t i = 0; i < problem.number_variables; i++) {
+      // Hessian: diagonal barrier terms (grouped by variable)
+      double hessian_diagonal_barrier_term = 0.;
+      // objective gradient
+      double objective_barrier_term = 0.;
+      if (is_finite(problem.get_variable_lower_bound(i))) { // lower bounded
+         const double gap = current_iterate.primals[i] - this->variable_bounds[i].lb;
+         hessian_diagonal_barrier_term += current_iterate.multipliers.lower_bounds[i] / gap;
+         objective_barrier_term += -this->barrier_parameter / gap;
+      }
+      if (is_finite(problem.get_variable_upper_bound(i))) { // upper bounded
+         const double gap = current_iterate.primals[i] - this->variable_bounds[i].ub;
+         hessian_diagonal_barrier_term += current_iterate.multipliers.upper_bounds[i] / gap;
+         objective_barrier_term += -this->barrier_parameter / gap;
+      }
+      this->hessian_model->hessian->insert(hessian_diagonal_barrier_term, i, i);
+      this->objective_gradient.insert(i, objective_barrier_term);
    }
-   for (size_t i: problem.upper_bounded_variables) {
-      const double term = -this->barrier_parameter / (current_iterate.primals[i] - this->variable_bounds[i].ub);
-      this->objective_gradient.insert(i, term);
-   }
+   // TODO: the allocated size for objective_gradient is probably too small
 
    // constraints
    problem.evaluate_constraints(current_iterate, this->constraints);
@@ -207,6 +225,8 @@ PredictedOptimalityReductionModel BarrierSubproblem::generate_predicted_optimali
 }
 
 double BarrierSubproblem::compute_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) {
+   this->check_interior_primals(problem, iterate);
+
    // optimality measure: barrier function
    double objective = 0.;
    // bound constraints
