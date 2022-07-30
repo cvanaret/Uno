@@ -10,7 +10,6 @@
 // all constraints are of the form "c(x) = 0"
 class EqualityConstrainedModel: public Model {
 public:
-   //explicit EqualityConstrainedModel(const Model& original_model);
    explicit EqualityConstrainedModel(std::unique_ptr<Model> original_model);
 
    [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
@@ -73,6 +72,8 @@ inline EqualityConstrainedModel::EqualityConstrainedModel(std::unique_ptr<Model>
    this->original_model->inequality_constraints.for_each([&](size_t j, size_t i) {
       this->inequality_constraint_of_slack[i] = j;
       this->slack_of_inequality_constraint[j] = i;
+      const size_t slack_index = this->original_model->number_variables + this->slack_of_inequality_constraint[j];
+      this->slacks.insert(j, slack_index);
    });
 }
 
