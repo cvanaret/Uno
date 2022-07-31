@@ -45,7 +45,7 @@ public:
    void set_proximal_reference_point(const std::vector<double>& new_proximal_reference_point);
 
    // void set_elastic_variables(Iterate& iterate) const;
-   void set_elastic_variables(Iterate& iterate, double value) const;
+   void set_elastic_variables(Iterate& iterate, const std::function<void (Iterate&, size_t, size_t, double, double)>& elastic_setting_function) const;
 
 protected:
    double objective_multiplier;
@@ -124,7 +124,7 @@ inline double l1RelaxedProblem::evaluate_objective(Iterate& iterate) const {
          // weighted distance between trial iterate and current iterate
          proximal_term += std::pow(weight * (iterate.primals[i] - this->proximal_reference_point[i]), 2);
       }
-      objective += this->proximal_coefficient*proximal_term;
+      objective += this->proximal_coefficient/2.*proximal_term;
    }
    return objective;
 }
@@ -152,7 +152,7 @@ inline void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, Spar
       for (size_t i = 0; i < this->model.number_variables; i++) {
          const double weight = this->get_proximal_weight(i);
          // measure weighted distance between trial iterate and current iterate
-         const double derivative = this->proximal_coefficient * weight * (iterate.primals[i] - this->proximal_reference_point[i]);
+         const double derivative = this->proximal_coefficient * std::pow(weight, 2) * (iterate.primals[i] - this->proximal_reference_point[i]);
          objective_gradient.insert(i, derivative);
       }
    }
@@ -189,8 +189,8 @@ inline void l1RelaxedProblem::evaluate_lagrangian_hessian(const std::vector<doub
    // add proximal term for the original variables
    if (this->use_proximal_term && 0. < this->proximal_coefficient) {
       for (size_t i = 0; i < this->model.number_variables; i++) {
-         const double distance = std::pow(this->get_proximal_weight(i), 2);
-         const double diagonal_term = this->proximal_coefficient * distance;
+         const double weight = this->get_proximal_weight(i);
+         const double diagonal_term = this->proximal_coefficient * std::pow(weight, 2);
          hessian.insert(diagonal_term, i, i);
       }
    }
@@ -324,25 +324,14 @@ inline double l1RelaxedProblem::get_proximal_weight(size_t i) const {
    return std::min(1., 1. / std::abs(this->proximal_reference_point[i]));
 }
 
-/*
-inline void l1ElasticReformulation::set_elastic_variables(Iterate& iterate) const {
+inline void l1RelaxedProblem::set_elastic_variables(Iterate& iterate, const std::function<void (Iterate&, size_t, size_t, double, double)>&
+      elastic_setting_function) const {
    iterate.set_number_variables(this->number_variables);
    this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {
-      iterate.x[elastic_index] = this->model.compute_constraint_upper_bound_violation(iterate.problem_evaluations.constraints[j], j);
+      elastic_setting_function(iterate, j, elastic_index, -1., this->constraint_violation_coefficient);
    });
    this->elastic_variables.negative.for_each([&](size_t j, size_t elastic_index) {
-      iterate.x[elastic_index] = this->model.compute_constraint_lower_bound_violation(iterate.problem_evaluations.constraints[j], j);
-   });
-}
- */
-
-inline void l1RelaxedProblem::set_elastic_variables(Iterate& iterate, double value) const {
-   iterate.set_number_variables(this->number_variables);
-   this->elastic_variables.positive.for_each_value([&](size_t elastic_index) {
-      iterate.primals[elastic_index] = value;
-   });
-   this->elastic_variables.negative.for_each_value([&](size_t elastic_index) {
-      iterate.primals[elastic_index] = value;
+      elastic_setting_function(iterate, j, elastic_index, 1., this->constraint_violation_coefficient);
    });
 }
 

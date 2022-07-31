@@ -33,6 +33,8 @@ public:
    void initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) override;
 
    [[nodiscard]] double get_proximal_coefficient() const override;
+   void prepare_for_feasibility_problem(const Iterate& current_iterate) override;
+   void exit_feasibility_problem() override;
    void set_elastic_variables(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
    [[nodiscard]] double push_variable_to_interior(double variable_value, const Interval& variable_bounds) const;
    [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) override;
@@ -71,7 +73,7 @@ private:
    [[nodiscard]] double primal_fraction_to_boundary(const NonlinearProblem& problem, const Iterate& current_iterate, double tau);
    [[nodiscard]] double dual_fraction_to_boundary(const NonlinearProblem& problem, const Iterate& current_iterate, double tau);
    void assemble_augmented_system(const NonlinearProblem& problem, const Iterate& current_iterate);
-   void assemble_augmented_matrix(const NonlinearProblem& problem, const Iterate& current_iterate);
+   void assemble_augmented_matrix(const NonlinearProblem& problem);
    void generate_augmented_rhs(const NonlinearProblem& problem, const Iterate& current_iterate);
    void compute_lower_bound_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate);
    void compute_upper_bound_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate);
