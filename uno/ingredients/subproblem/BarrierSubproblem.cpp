@@ -49,20 +49,21 @@ BarrierSubproblem::BarrierSubproblem(size_t max_number_variables, size_t max_num
 inline void BarrierSubproblem::initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) {
    statistics.add_column("barrier param.", Statistics::double_width, this->statistics_barrier_parameter_column_order);
 
+   // make the initial point strictly feasible wrt the bounds
+   for (size_t i = 0; i < problem.number_variables; i++) {
+      const Interval bounds = {problem.get_variable_lower_bound(i), problem.get_variable_upper_bound(i)};
+      first_iterate.primals[i] = BarrierSubproblem::push_variable_to_interior(first_iterate.primals[i], bounds);
+   }
+
    // set the slack variables (if any)
    if (!problem.model.slacks.empty()) {
       first_iterate.evaluate_constraints(problem.model);
       // set the slacks to the constraint values
       problem.model.slacks.for_each([&](size_t j, size_t slack_index) {
-         first_iterate.primals[slack_index] = first_iterate.original_evaluations.constraints[j];
+         const Interval bounds = {problem.get_variable_lower_bound(slack_index), problem.get_variable_upper_bound(slack_index)};
+         first_iterate.primals[slack_index] = BarrierSubproblem::push_variable_to_interior(first_iterate.original_evaluations.constraints[j], bounds);
       });
       first_iterate.are_constraints_computed = false;
-   }
-
-   // make the initial point strictly feasible wrt the bounds
-   for (size_t i = 0; i < problem.number_variables; i++) {
-      const Interval bounds = {problem.get_variable_lower_bound(i), problem.get_variable_upper_bound(i)};
-      first_iterate.primals[i] = BarrierSubproblem::push_variable_to_interior(first_iterate.primals[i], bounds);
    }
 
    // set the bound multipliers
@@ -84,17 +85,17 @@ inline void BarrierSubproblem::initialize(Statistics& statistics, const Nonlinea
 
 void BarrierSubproblem::check_interior_primals(const NonlinearProblem& problem, const Iterate& iterate) {
    const double machine_epsilon = std::numeric_limits<double>::epsilon();
-   const double machine_epsilon_to_34 = std::pow(machine_epsilon, 0.75);
+   const double factor = std::pow(machine_epsilon, 0.75);
    // check that the current iterate is interior
    for (size_t i: problem.lower_bounded_variables) {
       if (iterate.primals[i] - this->variable_bounds[i].lb < machine_epsilon*this->barrier_parameter) {
-         this->variable_bounds[i].lb -= machine_epsilon_to_34*std::max(1., this->variable_bounds[i].lb);
+         this->variable_bounds[i].lb -= factor * std::max(1., this->variable_bounds[i].lb);
       }
       //assert(this->variable_bounds[i].lb < iterate.primals[i] && "Barrier subproblem: a variable is at its lower bound");
    }
    for (size_t i: problem.upper_bounded_variables) {
       if (this->variable_bounds[i].ub - iterate.primals[i] < machine_epsilon*this->barrier_parameter) {
-         this->variable_bounds[i].ub += machine_epsilon_to_34*std::max(1., this->variable_bounds[i].ub);
+         this->variable_bounds[i].ub += factor * std::max(1., this->variable_bounds[i].ub);
       }
       //assert(iterate.primals[i] < this->variable_bounds[i].ub && "Barrier subproblem: a variable is at its upper bound");
    }
@@ -409,7 +410,6 @@ void BarrierSubproblem::generate_direction(const NonlinearProblem& problem, cons
    DEBUG << "primal length = " << primal_step_length << '\n';
    DEBUG << "dual length = " << dual_step_length << '\n';
 
-   this->direction.norm = norm_inf(direction.primals, Range(problem.number_variables));
    // evaluate the barrier objective
    this->direction.objective = this->compute_barrier_directional_derivative(direction.primals);
 }
