@@ -19,6 +19,8 @@ void ConstraintRelaxationStrategy::compute_nonlinear_residuals(const NonlinearPr
    iterate.evaluate_lagrangian_gradient(problem.model, problem.get_objective_multiplier(), iterate.multipliers.constraints,
          iterate.multipliers.lower_bounds, iterate.multipliers.upper_bounds);
    iterate.stationarity_error = norm(iterate.lagrangian_gradient, this->residual_norm);
+   iterate.complementarity_error = this->model.compute_complementarity_error(iterate.primals, iterate.original_evaluations.constraints,
+         iterate.multipliers.constraints, iterate.multipliers.lower_bounds, iterate.multipliers.upper_bounds);
 }
 
 double ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction(const Model& model, const Iterate& current_iterate,
