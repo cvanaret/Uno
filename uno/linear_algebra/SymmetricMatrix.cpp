@@ -36,7 +36,7 @@ const double* SymmetricMatrix::raw_pointer() const {
 }
 
 std::ostream& operator<<(std::ostream& stream, const SymmetricMatrix& matrix) {
-   stream << matrix.dimension << " variables, " << matrix.number_nonzeros << " non zeros:\n";
+   stream << "Dimension: " << matrix.dimension << ", number of nonzeros: " << matrix.number_nonzeros << '\n';
    matrix.print(stream);
    return stream;
 }

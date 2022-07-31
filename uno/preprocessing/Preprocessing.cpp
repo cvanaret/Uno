@@ -27,7 +27,7 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
       });
       matrix.finalize_column(number_variables + j);
    }
-   DEBUG << "KKT matrix for least-square multipliers:\n" << matrix << '\n';
+   DEBUG << "Matrix for least-square multipliers:\n" << matrix << '\n';
 
    /********************************/
    /* generate the right-hand side */

@@ -54,6 +54,9 @@ inline void BarrierSubproblem::initialize(Statistics& statistics, const Nonlinea
       const Interval bounds = {problem.get_variable_lower_bound(i), problem.get_variable_upper_bound(i)};
       first_iterate.primals[i] = BarrierSubproblem::push_variable_to_interior(first_iterate.primals[i], bounds);
    }
+   problem.model.slacks.for_each_value([&](size_t slack_index) {
+      first_iterate.primals[slack_index] = 0.;
+   });
 
    // set the slack variables (if any)
    if (!problem.model.slacks.empty()) {
@@ -227,7 +230,6 @@ PredictedOptimalityReductionModel BarrierSubproblem::generate_predicted_optimali
 
 double BarrierSubproblem::compute_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) {
    this->check_interior_primals(problem, iterate);
-
    // optimality measure: barrier function
    double objective = 0.;
    // bound constraints
