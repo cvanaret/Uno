@@ -15,7 +15,7 @@ bool ConstraintRelaxationStrategy::is_small_step(const Direction& direction) con
 
 void ConstraintRelaxationStrategy::compute_nonlinear_residuals(const NonlinearProblem& problem, Iterate& iterate) const {
    iterate.evaluate_constraints(problem.model);
-   iterate.constraint_violation = problem.model.compute_constraint_violation(iterate.original_evaluations.constraints, L1_NORM);
+   iterate.constraint_violation = problem.model.compute_constraint_violation(iterate.original_evaluations.constraints, this->residual_norm);
    iterate.evaluate_lagrangian_gradient(problem.model, problem.get_objective_multiplier(), iterate.multipliers.constraints,
          iterate.multipliers.lower_bounds, iterate.multipliers.upper_bounds);
    iterate.stationarity_error = norm(iterate.lagrangian_gradient, this->residual_norm);
