@@ -65,6 +65,7 @@ Direction FeasibilityRestoration::solve_optimality_problem(Statistics& statistic
 // form and solve the feasibility problem (with or without constraint partition)
 Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) {
    // register the proximal coefficient and reference point
+   this->subproblem->prepare_for_feasibility_problem(current_iterate);
    this->feasibility_problem.set_proximal_coefficient(this->subproblem->get_proximal_coefficient());
    this->feasibility_problem.set_proximal_reference_point(current_iterate.primals);
 
@@ -77,6 +78,7 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
    feasibility_direction.objective_multiplier = 0.;
    feasibility_direction.norm = norm_inf(feasibility_direction.primals, Range(this->optimality_problem.number_variables));
    DEBUG << feasibility_direction << '\n';
+   this->subproblem->exit_feasibility_problem();
    return feasibility_direction;
 }
 

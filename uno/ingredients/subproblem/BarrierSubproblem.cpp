@@ -140,18 +140,8 @@ Direction BarrierSubproblem::solve(Statistics& statistics, const NonlinearProble
    assert(problem.inequality_constraints.empty() && "The problem has inequality constraints. Create an instance of EqualityConstrainedModel");
 
    // update the barrier parameter if the current iterate solves the subproblem
-   this->update_barrier_parameter(problem, current_iterate);
-
-   // if we're building the feasibility subproblem, temporarily update the objective multiplier
-   if (problem.get_objective_multiplier() == 0.) {
-      this->solving_feasibility_problem = true;
-      this->previous_barrier_parameter = this->barrier_parameter;
-      this->barrier_parameter = std::max(this->barrier_parameter, norm_inf(current_iterate.original_evaluations.constraints));
-      DEBUG << "Barrier parameter mu temporarily updated to " << this->barrier_parameter << '\n';
-      this->subproblem_definition_changed = true;
-   }
-   else {
-      this->solving_feasibility_problem = false;
+   if (!this->solving_feasibility_problem) {
+      this->update_barrier_parameter(problem, current_iterate);
    }
 
    this->check_interior_primals(problem, current_iterate);
@@ -182,7 +172,7 @@ Direction BarrierSubproblem::solve(Statistics& statistics, const NonlinearProble
 
 void BarrierSubproblem::assemble_augmented_system(const NonlinearProblem& problem, const Iterate& current_iterate) {
    // assemble, factorize and regularize the KKT matrix
-   this->assemble_augmented_matrix(problem, current_iterate);
+   this->assemble_augmented_matrix(problem);
    this->augmented_system.factorize_matrix(problem.model, *this->linear_solver);
    this->augmented_system.regularize_matrix(problem.model, *this->linear_solver, problem.number_variables, problem.number_constraints,
          std::pow(this->barrier_parameter, this->parameters.regularization_exponent));
@@ -212,12 +202,43 @@ Direction BarrierSubproblem::compute_second_order_correction(const NonlinearProb
 }
 
 double BarrierSubproblem::get_proximal_coefficient() const {
-   return std::sqrt(this->barrier_parameter)/2.;
+   return std::sqrt(this->barrier_parameter);
 }
 
+void BarrierSubproblem::prepare_for_feasibility_problem(const Iterate& current_iterate) {
+   // if we're building the feasibility subproblem, temporarily update the objective multiplier
+   this->solving_feasibility_problem = true;
+   this->previous_barrier_parameter = this->barrier_parameter;
+   this->barrier_parameter = std::max(this->barrier_parameter, norm_inf(current_iterate.original_evaluations.constraints));
+   DEBUG << "Barrier parameter mu temporarily updated to " << this->barrier_parameter << '\n';
+   this->subproblem_definition_changed = true;
+}
+
+void BarrierSubproblem::exit_feasibility_problem() {
+   this->barrier_parameter = this->previous_barrier_parameter;
+   this->solving_feasibility_problem = false;
+   // TODO compute least-square multipliers
+}
+
+// set the elastic variables of the current iterate
 void BarrierSubproblem::set_elastic_variables(const l1RelaxedProblem& problem, Iterate& current_iterate) {
-   // TODO use the IPOPT strategy
-   problem.set_elastic_variables(current_iterate, 0.1);
+   // analytically:
+   // n = (mu_over_rho - jacobian_coefficient*this->barrier_constraints[j] + std::sqrt(radical))/2.
+   // p = c(x) + n
+   // Note: IPOPT uses a '+' sign because they define the Lagrangian as f(x) + \lambda^T c(x)
+   const double current_barrier_parameter = this->barrier_parameter;
+   const auto elastic_setting_function = [&](Iterate& iterate, size_t j, size_t elastic_index, double jacobian_coefficient,
+         double constraint_violation_coefficient) {
+      // precomputations
+      const double constraint_j = this->constraints[j];
+      const double mu_over_rho = current_barrier_parameter / constraint_violation_coefficient;
+      const double radical = std::pow(constraint_j, 2) + std::pow(mu_over_rho, 2);
+      const double sqrt_radical = std::sqrt(radical);
+
+      iterate.primals[elastic_index] = (mu_over_rho - jacobian_coefficient * constraint_j + sqrt_radical) / 2.;
+      iterate.multipliers.lower_bounds[elastic_index] = current_barrier_parameter/iterate.primals[elastic_index];
+   };
+   problem.set_elastic_variables(current_iterate, elastic_setting_function);
 }
 
 PredictedOptimalityReductionModel BarrierSubproblem::generate_predicted_optimality_reduction_model(const NonlinearProblem& /*problem*/, const Direction& direction) const {
@@ -314,7 +335,7 @@ double BarrierSubproblem::dual_fraction_to_boundary(const NonlinearProblem& prob
    return dual_length;
 }
 
-void BarrierSubproblem::assemble_augmented_matrix(const NonlinearProblem& problem, const Iterate& current_iterate) {
+void BarrierSubproblem::assemble_augmented_matrix(const NonlinearProblem& problem) {
    this->augmented_system.matrix->dimension = problem.number_variables + problem.number_constraints;
    this->augmented_system.matrix->reset();
    // copy the Lagrangian Hessian in the top left block
@@ -330,7 +351,7 @@ void BarrierSubproblem::assemble_augmented_matrix(const NonlinearProblem& proble
 
    // Jacobian of general constraints
    for (size_t j = 0; j < problem.number_constraints; j++) {
-      current_iterate.original_evaluations.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
+      this->constraint_jacobian[j].for_each([&](size_t i, double derivative) {
          this->augmented_system.matrix->insert(derivative, i, problem.number_variables + j);
       });
       this->augmented_system.matrix->finalize_column(j);
@@ -446,14 +467,6 @@ double BarrierSubproblem::compute_central_complementarity_error(const NonlinearP
 }
 
 void BarrierSubproblem::postprocess_accepted_iterate(const NonlinearProblem& problem, Iterate& iterate) {
-   if (this->solving_feasibility_problem) {
-       this->barrier_parameter = this->previous_barrier_parameter;
-       this->solving_feasibility_problem = false;
-   }
-   if (this->solving_feasibility_problem) {
-      // TODO compute least-square multipliers
-   }
-
    // rescale the bound multipliers (Eq. 16 in Ipopt paper)
    for (size_t i: problem.lower_bounded_variables) {
       const double coefficient = this->barrier_parameter / (iterate.primals[i] - this->variable_bounds[i].lb);
