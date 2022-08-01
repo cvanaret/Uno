@@ -76,7 +76,7 @@ private:
    void generate_augmented_rhs(const NonlinearProblem& problem, const Iterate& current_iterate);
    void compute_lower_bound_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate);
    void compute_upper_bound_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate);
-   void generate_direction(const NonlinearProblem& problem, const Iterate& current_iterate);
+   void generate_primal_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate);
    [[nodiscard]] double compute_KKT_error_scaling(const NonlinearProblem& problem, const Iterate& current_iterate) const;
    [[nodiscard]] double compute_central_complementarity_error(const NonlinearProblem& problem, const Iterate& iterate) const;
    void print_subproblem_solution(const NonlinearProblem& problem) const;
