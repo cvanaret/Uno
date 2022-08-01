@@ -157,9 +157,7 @@ Direction BarrierSubproblem::solve(Statistics& statistics, const NonlinearProble
    Subproblem::check_unboundedness(this->direction);
    assert(this->direction.status == Status::OPTIMAL && "The barrier subproblem was not solved to optimality");
    this->number_subproblems_solved++;
-
-   // generate direction
-   this->generate_direction(problem, current_iterate);
+   this->generate_primal_dual_direction(problem, current_iterate);
    statistics.add_statistic("barrier param.", this->barrier_parameter);
 
    // determine if the direction is a "small direction" (Section 3.9 of the Ipopt paper) TODO
@@ -195,9 +193,7 @@ Direction BarrierSubproblem::compute_second_order_correction(const NonlinearProb
    this->augmented_system.solve(*this->linear_solver);
    Subproblem::check_unboundedness(this->direction);
    this->number_subproblems_solved++;
-
-   // generate direction
-   this->generate_direction(problem, trial_iterate);
+   this->generate_primal_dual_direction(problem, trial_iterate);
    return this->direction;
 }
 
@@ -395,7 +391,7 @@ void BarrierSubproblem::compute_upper_bound_dual_direction(const NonlinearProble
    }
 }
 
-void BarrierSubproblem::generate_direction(const NonlinearProblem& problem, const Iterate& current_iterate) {
+void BarrierSubproblem::generate_primal_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate) {
    this->direction.set_dimensions(problem.number_variables, problem.number_constraints);
 
    // retrieve +Δλ (Nocedal p590)

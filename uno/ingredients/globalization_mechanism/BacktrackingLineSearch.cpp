@@ -21,7 +21,9 @@ BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& con
 }
 
 void BacktrackingLineSearch::initialize(Statistics& statistics, Iterate& first_iterate) {
-   statistics.add_column("SOC", Statistics::char_width, this->statistics_SOC_column_order);
+   if (this->use_second_order_correction) {
+      statistics.add_column("SOC", Statistics::char_width, this->statistics_SOC_column_order);
+   }
    statistics.add_column("LS step length", Statistics::double_width, this->statistics_LS_step_length_column_order);
 
    // generate the initial point
