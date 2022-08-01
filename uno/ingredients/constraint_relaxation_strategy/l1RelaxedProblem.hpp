@@ -38,7 +38,7 @@ public:
    [[nodiscard]] size_t get_maximum_number_jacobian_nonzeros() const override;
    [[nodiscard]] size_t get_maximum_number_hessian_nonzeros() const override;
 
-   [[nodiscard]] std::vector<size_t> get_violated_linearized_constraints(const std::vector<double>& x) const;
+   [[nodiscard]] const std::vector<size_t>& get_violated_linearized_constraints(const std::vector<double>& x);
    [[nodiscard]] double compute_linearized_constraint_violation(const std::vector<double>& x) const;
    [[nodiscard]] double compute_linearized_constraint_violation(const std::vector<double>& x, const std::vector<double>& dx) const;
 
@@ -59,6 +59,7 @@ protected:
    const bool use_proximal_term;
    double proximal_coefficient{0.};
    std::vector<double> proximal_reference_point;
+   std::vector<size_t> violated_constraints{};
 
    [[nodiscard]] static size_t count_elastic_variables(const Model& model);
    void generate_elastic_variables();
@@ -98,6 +99,7 @@ inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_m
    this->elastic_variables.negative.for_each_value([&](size_t elastic_index) {
       this->lower_bounded_variables.push_back(elastic_index);
    });
+   this->violated_constraints.reserve(this->number_constraints);
 }
 
 inline double l1RelaxedProblem::get_objective_multiplier() const {
@@ -329,19 +331,18 @@ inline void l1RelaxedProblem::generate_elastic_variables() {
    }
 }
 
-inline std::vector<size_t> l1RelaxedProblem::get_violated_linearized_constraints(const std::vector<double>& x) const {
-   // construct the list of linearized constraints that are violated
+// construct the list of linearized constraints that are violated
+inline const std::vector<size_t>& l1RelaxedProblem::get_violated_linearized_constraints(const std::vector<double>& x) {
    // TODO: actually evaluate the linearized constraints
-   std::vector<size_t> violated_constraints;
-   violated_constraints.reserve(this->number_constraints);
+   this->violated_constraints.clear();
    const auto find_violated_constraints = [&](size_t j, size_t elastic_index) {
       if (0. < x[elastic_index]) {
-         violated_constraints.push_back(j);
+         this->violated_constraints.push_back(j);
       }
    };
    this->elastic_variables.positive.for_each(find_violated_constraints);
    this->elastic_variables.negative.for_each(find_violated_constraints);
-   return violated_constraints;
+   return this->violated_constraints;
 }
 
 inline double l1RelaxedProblem::get_proximal_weight(size_t i) const {

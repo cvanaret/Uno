@@ -143,7 +143,7 @@ GlobalizationStrategy& FeasibilityRestoration::get_current_globalization_strateg
 }
 
 void FeasibilityRestoration::switch_phase(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) {
-   const std::vector<size_t> infeasible_linearized_constraints = this->feasibility_problem.get_violated_linearized_constraints(direction.primals);
+   const auto& infeasible_linearized_constraints = this->feasibility_problem.get_violated_linearized_constraints(direction.primals);
 
    // possibly go from optimality phase to restoration phase
    if (this->current_phase == OPTIMALITY && direction.objective_multiplier == 0.) {
