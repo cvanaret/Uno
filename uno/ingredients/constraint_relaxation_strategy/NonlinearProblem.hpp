@@ -44,6 +44,8 @@ public:
    [[nodiscard]] virtual double get_constraint_lower_bound(size_t j) const = 0;
    [[nodiscard]] virtual double get_constraint_upper_bound(size_t j) const = 0;
 
+   [[nodiscard]] virtual size_t get_maximum_number_objective_gradient_nonzeros() const = 0;
+   [[nodiscard]] virtual size_t get_maximum_number_jacobian_nonzeros() const = 0;
    [[nodiscard]] virtual size_t get_maximum_number_hessian_nonzeros() const = 0;
 };
 

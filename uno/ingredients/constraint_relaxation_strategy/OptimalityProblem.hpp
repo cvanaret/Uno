@@ -24,6 +24,8 @@ public:
    [[nodiscard]] double get_constraint_lower_bound(size_t j) const override;
    [[nodiscard]] double get_constraint_upper_bound(size_t j) const override;
 
+   [[nodiscard]] size_t get_maximum_number_objective_gradient_nonzeros() const override;
+   [[nodiscard]] size_t get_maximum_number_jacobian_nonzeros() const override;
    [[nodiscard]] size_t get_maximum_number_hessian_nonzeros() const override;
 };
 
@@ -88,6 +90,14 @@ inline double OptimalityProblem::get_constraint_lower_bound(size_t j) const {
 
 inline double OptimalityProblem::get_constraint_upper_bound(size_t j) const {
    return this->model.get_constraint_upper_bound(j);
+}
+
+inline size_t OptimalityProblem::get_maximum_number_objective_gradient_nonzeros() const {
+   return this->model.get_maximum_number_objective_gradient_nonzeros();
+}
+
+inline size_t OptimalityProblem::get_maximum_number_jacobian_nonzeros() const {
+   return this->model.get_maximum_number_jacobian_nonzeros();
 }
 
 inline size_t OptimalityProblem::get_maximum_number_hessian_nonzeros() const {
