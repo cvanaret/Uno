@@ -6,8 +6,8 @@
 
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategy/GlobalizationStrategy.hpp"
-#include "ingredients/constraint_relaxation_strategy/OptimalityProblem.hpp"
-#include "ingredients/constraint_relaxation_strategy/l1RelaxedProblem.hpp"
+#include "reformulation/OptimalityProblem.hpp"
+#include "reformulation/l1RelaxedProblem.hpp"
 #include "tools/Options.hpp"
 
 enum Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};

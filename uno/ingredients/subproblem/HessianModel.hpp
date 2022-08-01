@@ -6,7 +6,7 @@
 
 #include <memory>
 #include <vector>
-#include "ingredients/constraint_relaxation_strategy/NonlinearProblem.hpp"
+#include "reformulation/NonlinearProblem.hpp"
 #include "solvers/linear/LinearSolver.hpp"
 #include "tools/Options.hpp"
 

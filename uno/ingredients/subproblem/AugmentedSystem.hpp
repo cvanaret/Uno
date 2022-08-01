@@ -6,8 +6,8 @@
 
 #include <memory>
 #include "linear_algebra/SymmetricMatrix.hpp"
+#include "optimization/Model.hpp"
 #include "solvers/linear/LinearSolver.hpp"
-#include "ingredients/constraint_relaxation_strategy/NonlinearProblem.hpp"
 #include "tools/Options.hpp"
 
 struct UnstableRegularization : public std::exception {
