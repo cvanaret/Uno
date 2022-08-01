@@ -49,7 +49,6 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
          PredictedOptimalityReductionModel predicted_optimality_reduction_model = this->constraint_relaxation_strategy.generate_predicted_optimality_reduction_model(direction);
          if (this->constraint_relaxation_strategy.is_acceptable(statistics, current_iterate, trial_iterate, direction,
                predicted_optimality_reduction_model, 1.)) {
-            DEBUG << "Trial step accepted\n\n";
             this->set_statistics(statistics, direction);
 
             // increase the radius if trust region is active
