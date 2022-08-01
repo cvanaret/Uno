@@ -34,7 +34,6 @@ public:
 
    [[nodiscard]] double get_proximal_coefficient() const override;
    void prepare_for_feasibility_problem(const Iterate& current_iterate) override;
-   void exit_feasibility_problem() override;
    void set_elastic_variables(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
    [[nodiscard]] double push_variable_to_interior(double variable_value, const Interval& variable_bounds) const;
    [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) override;

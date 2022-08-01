@@ -78,7 +78,6 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
    feasibility_direction.objective_multiplier = 0.;
    feasibility_direction.norm = norm_inf(feasibility_direction.primals, Range(this->optimality_problem.number_variables));
    DEBUG << feasibility_direction << '\n';
-   this->subproblem->exit_feasibility_problem();
    return feasibility_direction;
 }
 

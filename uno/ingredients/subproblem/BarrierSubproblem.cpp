@@ -214,12 +214,6 @@ void BarrierSubproblem::prepare_for_feasibility_problem(const Iterate& current_i
    this->subproblem_definition_changed = true;
 }
 
-void BarrierSubproblem::exit_feasibility_problem() {
-   this->barrier_parameter = this->previous_barrier_parameter;
-   this->solving_feasibility_problem = false;
-   // TODO compute least-square multipliers
-}
-
 // set the elastic variables of the current iterate
 void BarrierSubproblem::set_elastic_variables(const l1RelaxedProblem& problem, Iterate& current_iterate) {
    // analytically:
@@ -467,6 +461,12 @@ double BarrierSubproblem::compute_central_complementarity_error(const NonlinearP
 }
 
 void BarrierSubproblem::postprocess_accepted_iterate(const NonlinearProblem& problem, Iterate& iterate) {
+   if (this->solving_feasibility_problem) {
+      this->barrier_parameter = this->previous_barrier_parameter;
+      this->solving_feasibility_problem = false;
+      // TODO compute least-square multipliers
+   }
+
    // rescale the bound multipliers (Eq. 16 in Ipopt paper)
    for (size_t i: problem.lower_bounded_variables) {
       const double coefficient = this->barrier_parameter / (iterate.primals[i] - this->variable_bounds[i].lb);
