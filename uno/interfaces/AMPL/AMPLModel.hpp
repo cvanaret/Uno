@@ -41,6 +41,9 @@ public:
    [[nodiscard]] double get_constraint_upper_bound(size_t j) const override;
    [[nodiscard]] FunctionType get_constraint_type(size_t j) const override;
    [[nodiscard]] BoundType get_constraint_bound_type(size_t j) const override;
+
+   [[nodiscard]] size_t get_maximum_number_objective_gradient_nonzeros() const override;
+   [[nodiscard]] size_t get_maximum_number_jacobian_nonzeros() const override;
    [[nodiscard]] size_t get_maximum_number_hessian_nonzeros() const override;
 
    void get_initial_primal_point(std::vector<double>& x) const override;
@@ -66,7 +69,7 @@ private:
    void generate_constraints();
    void set_function_types(std::string file_name);
 
-   void initialize_lagrangian_hessian();
+   void set_number_hessian_nonzeros();
    [[nodiscard]] size_t compute_hessian_number_nonzeros(double objective_multiplier, const std::vector<double>& multipliers) const;
 };
 

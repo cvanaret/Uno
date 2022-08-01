@@ -34,7 +34,10 @@ public:
    [[nodiscard]] double get_constraint_lower_bound(size_t j) const override;
    [[nodiscard]] double get_constraint_upper_bound(size_t j) const override;
 
+   [[nodiscard]] size_t get_maximum_number_objective_gradient_nonzeros() const override;
+   [[nodiscard]] size_t get_maximum_number_jacobian_nonzeros() const override;
    [[nodiscard]] size_t get_maximum_number_hessian_nonzeros() const override;
+
    [[nodiscard]] std::vector<size_t> get_violated_linearized_constraints(const std::vector<double>& x) const;
    [[nodiscard]] double compute_linearized_constraint_violation(const std::vector<double>& x) const;
    [[nodiscard]] double compute_linearized_constraint_violation(const std::vector<double>& x, const std::vector<double>& dx) const;
@@ -248,6 +251,28 @@ inline double l1RelaxedProblem::get_constraint_lower_bound(size_t j) const {
 
 inline double l1RelaxedProblem::get_constraint_upper_bound(size_t j) const {
    return this->model.get_constraint_upper_bound(j);
+}
+
+inline size_t l1RelaxedProblem::get_maximum_number_objective_gradient_nonzeros() const {
+   size_t number_nonzeros = 0;
+
+   // objective contribution
+   if (this->objective_multiplier != 0.) {
+      number_nonzeros += this->model.get_maximum_number_objective_gradient_nonzeros();
+   }
+
+   // elastic contribution
+   number_nonzeros += this->elastic_variables.size();
+
+   // proximal contribution
+   if (this->use_proximal_term) {
+      number_nonzeros += this->model.number_variables;
+   }
+   return number_nonzeros;
+}
+
+inline size_t l1RelaxedProblem::get_maximum_number_jacobian_nonzeros() const {
+   return this->model.get_maximum_number_jacobian_nonzeros() + this->elastic_variables.size();
 }
 
 inline size_t l1RelaxedProblem::get_maximum_number_hessian_nonzeros() const {

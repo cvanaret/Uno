@@ -55,8 +55,10 @@ AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
    this->generate_constraints();
    this->set_function_types(file_name);
 
-   // Lagrangian Hessian
-   this->initialize_lagrangian_hessian();
+   // compute number of nonzeros
+   this->objective_gradient_maximum_number_nonzeros = static_cast<size_t>(this->asl->i.nzo_);
+   this->jacobian_maximum_number_nonzeros = static_cast<size_t>(this->asl->i.nzc_);
+   this->set_number_hessian_nonzeros();
 }
 
 AMPLModel::~AMPLModel() {
@@ -165,7 +167,7 @@ void AMPLModel::evaluate_constraint_jacobian(const std::vector<double>& x, std::
    }
 }
 
-void AMPLModel::initialize_lagrangian_hessian() {
+void AMPLModel::set_number_hessian_nonzeros() {
    // compute the maximum number of nonzero elements, provided that all multipliers are non-zero
    // int (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri);
    const int objective_number = -1;
@@ -177,6 +179,18 @@ void AMPLModel::initialize_lagrangian_hessian() {
    // use Lagrangian scale: in AMPL, the Lagrangian is f + lambda.g, while Uno uses f - lambda.g
    int nerror{};
    lagscale_ASL(this->asl, -1., &nerror);
+}
+
+size_t AMPLModel::get_maximum_number_objective_gradient_nonzeros() const {
+   return this->objective_gradient_maximum_number_nonzeros;
+}
+
+size_t AMPLModel::get_maximum_number_jacobian_nonzeros() const {
+   return this->jacobian_maximum_number_nonzeros;
+}
+
+size_t AMPLModel::get_maximum_number_hessian_nonzeros() const {
+   return this->hessian_maximum_number_nonzeros;
 }
 
 bool are_all_zeros(const std::vector<double>& multipliers) {
@@ -270,10 +284,6 @@ BoundType AMPLModel::get_constraint_bound_type(size_t j) const {
    return this->constraint_status[j];
 }
 
-size_t AMPLModel::get_maximum_number_hessian_nonzeros() const {
-   return this->hessian_maximum_number_nonzeros;
-}
-
 // initial primal point
 void AMPLModel::get_initial_primal_point(std::vector<double>& x) const {
    assert(x.size() >= this->number_variables);
@@ -285,7 +295,6 @@ void AMPLModel::get_initial_dual_point(std::vector<double>& multipliers) const {
    assert(multipliers.size() >= this->number_constraints);
    std::copy(this->asl->i.pi0_, this->asl->i.pi0_ + this->number_constraints, begin(multipliers));
 }
-
 
 void AMPLModel::generate_constraints() {
    for (size_t j = 0; j < this->number_constraints; j++) {
