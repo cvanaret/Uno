@@ -245,9 +245,11 @@ double BarrierSubproblem::compute_optimality_measure(const NonlinearProblem& pro
    double objective = 0.;
    // bound constraints
    for (size_t i: problem.lower_bounded_variables) {
+      //std::cout << "OPTIMALITY MEASURE: x" << i << " is lower bounded\n";
       objective -= std::log(iterate.primals[i] - this->variable_bounds[i].lb);
    }
    for (size_t i: problem.upper_bounded_variables) {
+      //std::cout << "OPTIMALITY MEASURE: x" << i << " is upper bounded\n";
       objective -= std::log(this->variable_bounds[i].ub - iterate.primals[i]);
    }
    objective *= this->barrier_parameter;
@@ -371,26 +373,6 @@ void BarrierSubproblem::generate_augmented_rhs(const NonlinearProblem& problem, 
    DEBUG << "RHS: "; print_vector(DEBUG, this->augmented_system.rhs, 0, problem.number_variables + problem.number_constraints); DEBUG << '\n';
 }
 
-void BarrierSubproblem::compute_lower_bound_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate) {
-   initialize_vector(this->lower_delta_z, 0.);
-   for (size_t i: problem.lower_bounded_variables) {
-      const double distance_to_bound = current_iterate.primals[i] - this->variable_bounds[i].lb;
-      this->lower_delta_z[i] = (this->barrier_parameter - this->augmented_system.solution[i] * current_iterate.multipliers.lower_bounds[i]) / distance_to_bound -
-            current_iterate.multipliers.lower_bounds[i];
-      assert(is_finite(this->lower_delta_z[i]) && "The displacement lower_delta_z is infinite");
-   }
-}
-
-void BarrierSubproblem::compute_upper_bound_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate) {
-   initialize_vector(this->upper_delta_z, 0.);
-   for (size_t i: problem.upper_bounded_variables) {
-      const double distance_to_bound = current_iterate.primals[i] - this->variable_bounds[i].ub;
-      this->upper_delta_z[i] = (this->barrier_parameter - this->augmented_system.solution[i] * current_iterate.multipliers.upper_bounds[i]) / distance_to_bound -
-            current_iterate.multipliers.upper_bounds[i];
-      assert(is_finite(this->upper_delta_z[i]) && "The displacement upper_delta_z is infinite");
-   }
-}
-
 void BarrierSubproblem::generate_primal_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate) {
    this->direction.set_dimensions(problem.number_variables, problem.number_constraints);
 
@@ -411,8 +393,7 @@ void BarrierSubproblem::generate_primal_dual_direction(const NonlinearProblem& p
    }
 
    // compute bound multiplier direction Δz
-   this->compute_lower_bound_dual_direction(problem, current_iterate);
-   this->compute_upper_bound_dual_direction(problem, current_iterate);
+   this->compute_bound_dual_direction(problem, current_iterate);
 
    // "fraction to boundary" rule for bound multipliers
    const double dual_step_length = this->dual_fraction_to_boundary(problem, current_iterate, tau);
@@ -427,12 +408,29 @@ void BarrierSubproblem::generate_primal_dual_direction(const NonlinearProblem& p
    this->direction.objective = this->compute_barrier_directional_derivative(direction.primals);
 }
 
+void BarrierSubproblem::compute_bound_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate) {
+   initialize_vector(this->lower_delta_z, 0.);
+   initialize_vector(this->upper_delta_z, 0.);
+   for (size_t i: problem.lower_bounded_variables) {
+      const double distance_to_bound = current_iterate.primals[i] - this->variable_bounds[i].lb;
+      this->lower_delta_z[i] = (this->barrier_parameter - this->augmented_system.solution[i] * current_iterate.multipliers.lower_bounds[i]) / distance_to_bound -
+                               current_iterate.multipliers.lower_bounds[i];
+      assert(is_finite(this->lower_delta_z[i]) && "The displacement lower_delta_z is infinite");
+   }
+   for (size_t i: problem.upper_bounded_variables) {
+      const double distance_to_bound = current_iterate.primals[i] - this->variable_bounds[i].ub;
+      this->upper_delta_z[i] = (this->barrier_parameter - this->augmented_system.solution[i] * current_iterate.multipliers.upper_bounds[i]) / distance_to_bound -
+                               current_iterate.multipliers.upper_bounds[i];
+      assert(is_finite(this->upper_delta_z[i]) && "The displacement upper_delta_z is infinite");
+   }
+}
+
 double BarrierSubproblem::compute_KKT_error_scaling(const NonlinearProblem& problem, const Iterate& current_iterate) const {
-   const double norm_1_constraint_multipliers = norm_1(current_iterate.multipliers.constraints);
-   const double norm_1_bound_multipliers = norm_1(current_iterate.multipliers.lower_bounds) + norm_1(current_iterate.multipliers.upper_bounds);
-   const double norm_1_multipliers = norm_1_constraint_multipliers + norm_1_bound_multipliers;
+   const double constraint_multipliers_norm = norm_1(current_iterate.multipliers.constraints);
+   const double bound_multipliers_norm = norm_1(current_iterate.multipliers.lower_bounds) + norm_1(current_iterate.multipliers.upper_bounds);
+   const double multipliers_norm = constraint_multipliers_norm + bound_multipliers_norm;
    const size_t total_size = problem.number_variables + problem.number_constraints;
-   return std::max(this->parameters.smax, norm_1_multipliers / static_cast<double>(total_size)) / this->parameters.smax;
+   return std::max(this->parameters.smax, multipliers_norm / static_cast<double>(total_size)) / this->parameters.smax;
 }
 
 double BarrierSubproblem::compute_central_complementarity_error(const NonlinearProblem& problem, const Iterate& iterate) const {

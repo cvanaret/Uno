@@ -49,7 +49,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
    PredictedOptimalityReductionModel predicted_optimality_reduction_model = this->constraint_relaxation_strategy.generate_predicted_optimality_reduction_model(direction);
    this->solving_feasibility_problem = false;
 
-   // step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ...
+   // backtrack along the direction
    this->step_length = 1.;
    this->number_iterations = 0;
    bool failure = false;
@@ -63,9 +63,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
          try {
             const bool is_acceptable = this->constraint_relaxation_strategy.is_acceptable(statistics, current_iterate, trial_iterate,
                   direction, predicted_optimality_reduction_model, this->step_length);
-            // check whether the trial step is accepted
             if (is_acceptable) {
-               DEBUG << "Trial step accepted\n\n";
                // let the subproblem know the accepted iterate
                this->constraint_relaxation_strategy.register_accepted_iterate(trial_iterate);
                this->set_statistics(statistics, direction);
@@ -127,6 +125,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
 }
 
 void BacktrackingLineSearch::decrease_step_length() {
+   // step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ...
    this->step_length *= this->backtracking_ratio;
 }
 
