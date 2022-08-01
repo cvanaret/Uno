@@ -21,10 +21,14 @@ void ActiveSetSubproblem::prepare_for_feasibility_problem(const Iterate& /*curre
    // do nothing
 }
 
-void ActiveSetSubproblem::set_elastic_variables(const l1RelaxedProblem& /*problem*/, Iterate& /*current_iterate*/) {
+void ActiveSetSubproblem::set_elastic_variables(const l1RelaxedProblem& problem, Iterate& current_iterate) {
    // reset the values of the elastic variables
-   //problem.set_elastic_variables(current_iterate, 0.);
-   assert(false && "ActiveSetSubproblem::set_elastic_variables must be implemented");
+   const auto elastic_setting_function = [&](Iterate& iterate, size_t /*j*/, size_t elastic_index, double /*jacobian_coefficient*/,
+         double /*constraint_violation_coefficient*/) {
+      iterate.primals[elastic_index] = 0.;
+      iterate.multipliers.lower_bounds[elastic_index] = 1.;
+   };
+   problem.set_elastic_variables(current_iterate, elastic_setting_function);
 }
 
 void ActiveSetSubproblem::set_variable_displacement_bounds(const NonlinearProblem& problem, const Iterate& current_iterate) {
