@@ -21,10 +21,6 @@ void ActiveSetSubproblem::prepare_for_feasibility_problem(const Iterate& /*curre
    // do nothing
 }
 
-void ActiveSetSubproblem::exit_feasibility_problem() {
-   // do nothing
-}
-
 void ActiveSetSubproblem::set_elastic_variables(const l1RelaxedProblem& /*problem*/, Iterate& /*current_iterate*/) {
    // reset the values of the elastic variables
    //problem.set_elastic_variables(current_iterate, 0.);

@@ -30,7 +30,6 @@ public:
 
    void set_variable_bounds(const NonlinearProblem& problem, const Iterate& current_iterate, double trust_region_radius);
    virtual void prepare_for_feasibility_problem(const Iterate& current_iterate) = 0;
-   virtual void exit_feasibility_problem() = 0;
    [[nodiscard]] virtual double get_proximal_coefficient() const = 0;
    virtual void set_elastic_variables(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
 
