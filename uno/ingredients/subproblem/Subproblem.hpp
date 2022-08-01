@@ -8,7 +8,7 @@
 #include <memory>
 #include "optimization/Model.hpp"
 #include "optimization/Iterate.hpp"
-#include "ingredients/constraint_relaxation_strategy/l1RelaxedProblem.hpp"
+#include "reformulation/l1RelaxedProblem.hpp"
 #include "Direction.hpp"
 #include "PredictedOptimalityReductionModel.hpp"
 #include "linear_algebra/Vector.hpp"
