@@ -12,7 +12,7 @@
 
 struct UnstableRegularization : public std::exception {
 
-   [[nodiscard]] const char* what() const throw() override {
+   [[nodiscard]] const char* what() const noexcept override {
       return "The inertia correction got unstable (delta_w > threshold)";
    }
 };
@@ -20,8 +20,8 @@ struct UnstableRegularization : public std::exception {
 class AugmentedSystem {
 public:
    std::unique_ptr<SymmetricMatrix> matrix;
-   std::vector<double> rhs;
-   std::vector<double> solution;
+   std::vector<double> rhs{};
+   std::vector<double> solution{};
 
    AugmentedSystem(const std::string& sparse_format, size_t max_dimension, size_t max_number_non_zeros, bool use_regularization,
          const Options& options);

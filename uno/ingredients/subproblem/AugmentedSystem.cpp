@@ -21,7 +21,7 @@ AugmentedSystem::AugmentedSystem(const std::string& sparse_format, size_t max_di
 void AugmentedSystem::factorize_matrix(const Model& model, LinearSolver& linear_solver) {
    // compute the symbolic factorization only when:
    // the problem has a non-constant augmented system (ie is not an LP or a QP) or it is the first factorization
-   if (this->number_factorizations == 0 || model.problem_type == NONLINEAR || !model.fixed_hessian_sparsity) {
+   if (true || this->number_factorizations == 0 || model.problem_type == NONLINEAR || !model.fixed_hessian_sparsity) {
       linear_solver.do_symbolic_factorization(*this->matrix);
    }
    linear_solver.do_numerical_factorization(*this->matrix);
