@@ -58,7 +58,7 @@ protected:
    // proximal term
    const bool use_proximal_term;
    double proximal_coefficient{0.};
-   std::vector<double> proximal_reference_point;
+   std::vector<double> proximal_reference_point{};
    std::vector<size_t> violated_constraints{};
 
    [[nodiscard]] static size_t count_elastic_variables(const Model& model);

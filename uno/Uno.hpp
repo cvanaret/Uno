@@ -40,15 +40,9 @@ struct Result {
  */
 class Uno {
 public:
-   /*!
-    *  Constructor
-    */
    Uno(GlobalizationMechanism& globalization_mechanism, const Options& options);
 
-   /*!
-    *  Solve a given problem with initial primal and dual variables
-    */
-   Result solve(const Model& model, Iterate& first_iterate, const Options& options);
+   [[nodiscard]] Result solve(const Model& model, Iterate& first_iterate, const Options& options);
    static void postsolve_solution(const Model& model, const Scaling& scaling, Iterate& current_iterate, TerminationStatus termination_status);
 
 private:
