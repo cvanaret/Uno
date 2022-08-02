@@ -80,7 +80,7 @@ set(SRC_FILES
 # find libraries
 set(LIBS "")
 set(OPTIONAL_LIBS amplsolver ma57 metis bqpd CACHE STRING "Optional libraries")
-set(REQUIRED_LIBS dl blas lapack gomp)
+set(REQUIRED_LIBS dl blas lapack)
 
 # automatic detection of optional libraries
 foreach(library_name IN LISTS OPTIONAL_LIBS)
@@ -123,6 +123,8 @@ foreach(library_name IN LISTS REQUIRED_LIBS)
 		list(APPEND LIBS ${${library_name}})
 	endif()
 endforeach(library_name)
+find_package(OpenMP REQUIRED)
+list(APPEND LIBS OpenMP::OpenMP_CXX)
 
 #######
 # Uno #
