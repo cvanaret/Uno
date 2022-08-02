@@ -37,7 +37,10 @@ Please be patient, we are actively working on our article.
 
 ## Contributions
 
-Developed by Charlie Vanaret (Technische Universität Berlin)
+Uno was designed and implemented by Charlie Vanaret (Technische Universität Berlin) @cvanaret  
+The abstract framework for unifying nonlinear optimization was developed by Charlie Vanaret and Sven Leyffer
+
+Silvio Traversaro contributed to the CMakeLists @traversaro
 
 ## License
 
