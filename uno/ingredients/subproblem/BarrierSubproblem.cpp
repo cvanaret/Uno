@@ -169,7 +169,7 @@ Direction BarrierSubproblem::solve(Statistics& statistics, const NonlinearProble
 }
 
 void BarrierSubproblem::assemble_augmented_system(const NonlinearProblem& problem, const Iterate& current_iterate) {
-   // assemble, factorize and regularize the KKT matrix
+   // assemble, factorize and regularize the augmented matrix
    this->assemble_augmented_matrix(problem);
    this->augmented_system.factorize_matrix(problem.model, *this->linear_solver);
    this->augmented_system.regularize_matrix(problem.model, *this->linear_solver, problem.number_variables, problem.number_constraints,
@@ -245,11 +245,9 @@ double BarrierSubproblem::compute_optimality_measure(const NonlinearProblem& pro
    double objective = 0.;
    // bound constraints
    for (size_t i: problem.lower_bounded_variables) {
-      //std::cout << "OPTIMALITY MEASURE: x" << i << " is lower bounded\n";
       objective -= std::log(iterate.primals[i] - this->variable_bounds[i].lb);
    }
    for (size_t i: problem.upper_bounded_variables) {
-      //std::cout << "OPTIMALITY MEASURE: x" << i << " is upper bounded\n";
       objective -= std::log(this->variable_bounds[i].ub - iterate.primals[i]);
    }
    objective *= this->barrier_parameter;
