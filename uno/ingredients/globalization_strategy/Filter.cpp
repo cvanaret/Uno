@@ -109,7 +109,7 @@ bool Filter::accept(double infeasibility_measure, double optimality_measure) {
 bool Filter::improves_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure,
       double trial_optimality_measure) {
    return (trial_optimality_measure <= current_optimality_measure - this->constants.gamma * trial_infeasibility_measure) ||
-          (trial_infeasibility_measure < this->constants.beta * current_infeasibility_measure);
+          (trial_infeasibility_measure <= this->constants.beta * current_infeasibility_measure);
 }
 
 double Filter::compute_actual_reduction(double current_objective, double /*current_residual*/, double trial_objective) {
