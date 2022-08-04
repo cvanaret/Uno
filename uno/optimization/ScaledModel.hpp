@@ -9,7 +9,7 @@
 
 class ScaledModel: public Model {
 public:
-   ScaledModel(const Model& original_model, const Scaling& scaling);
+   ScaledModel(const Model& original_model, Iterate& first_iterate, const Options& options);
 
    [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
    [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
@@ -34,16 +34,25 @@ public:
 
    void get_initial_primal_point(std::vector<double>& x) const override;
    void get_initial_dual_point(std::vector<double>& multipliers) const override;
+   void postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const override;
 
 private:
    const Model& original_model;
-   const Scaling& scaling;
+   Scaling scaling;
 };
 
-inline ScaledModel::ScaledModel(const Model& original_model, const Scaling& scaling):
+inline ScaledModel::ScaledModel(const Model& original_model, Iterate& first_iterate, const Options& options):
       Model(original_model.name + "_scaled", original_model.number_variables, original_model.number_constraints, original_model.problem_type),
       original_model(original_model),
-      scaling(scaling) {
+      scaling(original_model.number_constraints, options.get_double("function_scaling_threshold")) {
+   if (options.get_bool("scale_functions")) {
+      // evaluate the gradients at the current point
+      first_iterate.evaluate_objective_gradient(original_model);
+      first_iterate.evaluate_constraint_jacobian(original_model);
+      this->scaling.compute(first_iterate.original_evaluations.objective_gradient, first_iterate.original_evaluations.constraint_jacobian);
+      // forget about these evaluations
+      first_iterate.reset_evaluations();
+   }
    // check the scaling factors
    assert(0 <= this->scaling.get_objective_scaling() && "Objective scaling failed.");
    for (size_t j = 0; j < this->number_constraints; j++) {
@@ -172,6 +181,29 @@ inline void ScaledModel::get_initial_primal_point(std::vector<double>& x) const 
 
 inline void ScaledModel::get_initial_dual_point(std::vector<double>& multipliers) const {
    this->original_model.get_initial_dual_point(multipliers);
+}
+
+inline void ScaledModel::postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const {
+   this->original_model.postprocess_solution(iterate, termination_status);
+
+   // remove auxiliary variables
+   iterate.set_number_variables(this->number_variables);
+
+   // objective value
+   iterate.original_evaluations.objective /= scaling.get_objective_scaling();
+
+   // unscale the multipliers and the function values
+   const bool is_feasible = (termination_status == KKT_POINT || termination_status == FEASIBLE_SMALL_STEP);
+   const double scaled_objective_multiplier = scaling.get_objective_scaling()*(is_feasible ? iterate.multipliers.objective : 1.);
+   if (scaled_objective_multiplier != 0.) {
+      for (size_t j = 0; j < this->number_constraints; j++) {
+         iterate.multipliers.constraints[j] *= scaling.get_constraint_scaling(j)/scaled_objective_multiplier;
+      }
+      for (size_t i = 0; i < this->number_variables; i++) {
+         iterate.multipliers.lower_bounds[i] /= scaled_objective_multiplier;
+         iterate.multipliers.upper_bounds[i] /= scaled_objective_multiplier;
+      }
+   }
 }
 
 #endif // UNO_SCALEDMODEL_H

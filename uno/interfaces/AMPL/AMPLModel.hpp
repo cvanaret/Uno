@@ -48,6 +48,7 @@ public:
 
    void get_initial_primal_point(std::vector<double>& x) const override;
    void get_initial_dual_point(std::vector<double>& multipliers) const override;
+   void postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const override;
 
 private:
    // private constructor to pass the dimensions to the Model base constructor

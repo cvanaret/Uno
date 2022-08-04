@@ -35,6 +35,7 @@ public:
 
    void get_initial_primal_point(std::vector<double>& x) const override;
    void get_initial_dual_point(std::vector<double>& multipliers) const override;
+   void postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const override;
 
 protected:
    std::unique_ptr<Model> original_model;
@@ -42,6 +43,9 @@ protected:
    std::vector<size_t> slack_of_inequality_constraint;
 };
 
+// Transform the problem into an equality-constrained problem with constraints c(x) = 0. This implies:
+// - inequality constraints get a slack
+// - equality constraints are shifted by their RHS
 inline EqualityConstrainedModel::EqualityConstrainedModel(std::unique_ptr<Model> original_model):
       Model(original_model->name + "_slacks", original_model->number_variables + original_model->inequality_constraints.size(),
             original_model->number_constraints, original_model->problem_type),
@@ -203,6 +207,10 @@ inline void EqualityConstrainedModel::get_initial_primal_point(std::vector<doubl
 
 inline void EqualityConstrainedModel::get_initial_dual_point(std::vector<double>& multipliers) const {
    this->original_model->get_initial_dual_point(multipliers);
+}
+
+inline void EqualityConstrainedModel::postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const {
+   this->original_model->postprocess_solution(iterate, termination_status);
 }
 
 #endif // UNO_EQUALITYCONSTRAINEDMODEL_H
