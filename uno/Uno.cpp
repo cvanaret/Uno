@@ -120,27 +120,6 @@ TerminationStatus Uno::check_termination(const Model& model, Iterate& current_it
    return NOT_OPTIMAL;
 }
 
-void Uno::postsolve_solution(const Model& model, const Scaling& scaling, Iterate& current_iterate, TerminationStatus termination_status) {
-   // remove auxiliary variables
-   current_iterate.set_number_variables(model.number_variables);
-
-   // objective value
-   current_iterate.original_evaluations.objective /= scaling.get_objective_scaling();
-
-   // unscale the multipliers and the function values
-   const bool is_feasible = (termination_status == KKT_POINT || termination_status == FEASIBLE_SMALL_STEP);
-   const double scaled_objective_multiplier = scaling.get_objective_scaling()*(is_feasible ? current_iterate.multipliers.objective : 1.);
-   if (scaled_objective_multiplier != 0.) {
-      for (size_t j = 0; j < model.number_constraints; j++) {
-         current_iterate.multipliers.constraints[j] *= scaling.get_constraint_scaling(j)/scaled_objective_multiplier;
-      }
-      for (size_t i = 0; i < model.number_variables; i++) {
-         current_iterate.multipliers.lower_bounds[i] /= scaled_objective_multiplier;
-         current_iterate.multipliers.upper_bounds[i] /= scaled_objective_multiplier;
-      }
-   }
-}
-
 void Result::print(bool print_solution) const {
    std::cout << "Status:\t\t\t\t";
    if (this->status == KKT_POINT) {

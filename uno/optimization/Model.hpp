@@ -10,6 +10,7 @@
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/TerminationStatus.hpp"
 
 struct Interval {
    double lb;
@@ -39,6 +40,9 @@ struct FunctionNumericalError : NumericalError {
       return "A numerical error was encountered while evaluating a function";
    }
 };
+
+// forward declaration
+class Iterate;
 
 /*! \class Problem
  * \brief Optimization problem
@@ -95,10 +99,11 @@ public:
 
    virtual void get_initial_primal_point(std::vector<double>& x) const = 0;
    virtual void get_initial_dual_point(std::vector<double>& multipliers) const = 0;
+   virtual void postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const = 0;
 
    // auxiliary functions
    static void determine_bounds_types(std::vector<Interval>& variables_bounds, std::vector<BoundType>& status);
-   void project_point_onto_bounds(std::vector<double>& x) const;
+   void project_primals_onto_bounds(std::vector<double>& x) const;
    [[nodiscard]] bool is_constrained() const;
    // constraint violation
    [[nodiscard]] double compute_constraint_lower_bound_violation(double constraint, size_t j) const;

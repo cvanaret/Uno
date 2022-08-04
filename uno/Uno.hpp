@@ -5,15 +5,8 @@
 #define UNO_H
 
 #include "optimization/Model.hpp"
+#include "optimization/TerminationStatus.hpp"
 #include "ingredients/globalization_mechanism/GlobalizationMechanism.hpp"
-
-enum TerminationStatus {
-   NOT_OPTIMAL = 0,
-   KKT_POINT, /* feasible stationary point */
-   FJ_POINT, /* infeasible stationary point */
-   FEASIBLE_SMALL_STEP,
-   INFEASIBLE_SMALL_STEP
-};
 
 struct Result {
    Result() = delete;
@@ -43,7 +36,6 @@ public:
    Uno(GlobalizationMechanism& globalization_mechanism, const Options& options);
 
    [[nodiscard]] Result solve(const Model& model, Iterate& first_iterate, const Options& options);
-   static void postsolve_solution(const Model& model, const Scaling& scaling, Iterate& current_iterate, TerminationStatus termination_status);
 
 private:
    GlobalizationMechanism& globalization_mechanism; /*!< Step control strategy (trust region or line-search) */

@@ -4,6 +4,7 @@
 #include "ingredients/globalization_strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/globalization_mechanism/GlobalizationMechanismFactory.hpp"
 #include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategyFactory.hpp"
+#include "interfaces/AMPL/AMPLModel.hpp"
 #include "Uno.hpp"
 #include "optimization/ModelFactory.hpp"
 #include "optimization/ScaledModel.hpp"
@@ -13,39 +14,27 @@
 
 void run_uno_ampl(const std::string& model_name, const Options& options) {
    // AMPL model
-   auto original_model = ModelFactory::create(model_name, options);
+   AMPLModel ampl_model = AMPLModel(model_name);
 
-   // initial primal and dual points
-   Iterate first_iterate(original_model->number_variables, original_model->number_constraints);
-   original_model->get_initial_primal_point(first_iterate.primals);
-   original_model->get_initial_dual_point(first_iterate.multipliers.constraints);
-   // project primal duals into the bounds
-   original_model->project_point_onto_bounds(first_iterate.primals);
+   // initialize initial primal and dual points
+   Iterate first_iterate(ampl_model.number_variables, ampl_model.number_constraints);
+   ampl_model.get_initial_primal_point(first_iterate.primals);
+   ampl_model.get_initial_dual_point(first_iterate.multipliers.constraints);
+   ampl_model.project_primals_onto_bounds(first_iterate.primals);
 
-   // initialize the function scaling
-   Scaling scaling(original_model->number_constraints, options.get_double("function_scaling_threshold"));
-   // function scaling
-   const bool scale_functions = options.get_bool("scale_functions");
-   if (scale_functions) {
-      // evaluate the gradients at the current point
-      first_iterate.evaluate_objective_gradient(*original_model);
-      first_iterate.evaluate_constraint_jacobian(*original_model);
-      scaling.compute(first_iterate.original_evaluations.objective_gradient, first_iterate.original_evaluations.constraint_jacobian);
-      // forget about these evaluations
-      first_iterate.reset_evaluations();
-   }
-   const Model& model_to_solve = ScaledModel(*original_model, scaling);
+   // reformulate (scale, add slacks) if necessary
+   std::unique_ptr<Model> model = ModelFactory::reformulate(ampl_model, first_iterate, options);
 
    // create the constraint relaxation strategy
-   auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(model_to_solve, options);
+   auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(*model, options);
 
    // create the globalization mechanism
    auto mechanism = GlobalizationMechanismFactory::create(*constraint_relaxation_strategy, options);
 
    // instantiate the combination of ingredients and solve the problem
    Uno uno = Uno(*mechanism, options);
-   Result result = uno.solve(model_to_solve, first_iterate, options);
-   Uno::postsolve_solution(*original_model, scaling, result.solution, result.status);
+   Result result = uno.solve(*model, first_iterate, options);
+   model->postprocess_solution(result.solution, result.status);
 
    std::string combination = options.get_string("mechanism") + " " + options.get_string("constraint-relaxation") + " " + options.get_string("strategy")
          + " " + options.get_string("subproblem");

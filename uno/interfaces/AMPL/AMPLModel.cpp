@@ -119,7 +119,7 @@ void AMPLModel::evaluate_objective_gradient(const std::vector<double>& x, Sparse
 /*
 double AMPLModel::evaluate_constraint(int j, const std::vector<double>& x) const {
    int nerror = 0;
-   double result = (*(this->asl_)->p.Conival)(this->asl_, j, const_cast<double*>(x.data()), &nerror);
+   double result = (*(this->asl)->p.Conival)(this->asl_, j, const_cast<double*>(x.data()), &nerror);
    if (0 < nerror) {
       throw FunctionNumericalError();
    }
@@ -294,6 +294,10 @@ void AMPLModel::get_initial_primal_point(std::vector<double>& x) const {
 void AMPLModel::get_initial_dual_point(std::vector<double>& multipliers) const {
    assert(multipliers.size() >= this->number_constraints);
    std::copy(this->asl->i.pi0_, this->asl->i.pi0_ + this->number_constraints, begin(multipliers));
+}
+
+void AMPLModel::postprocess_solution(Iterate& /*iterate*/, TerminationStatus /*termination_status*/) const {
+   // do nothing
 }
 
 void AMPLModel::generate_constraints() {
