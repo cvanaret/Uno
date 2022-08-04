@@ -90,6 +90,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["filter_switching_infeasibility_exponent"] = "1.1";
       options["armijo_decrease_fraction"] = "1e-8";
       options["LS_backtracking_ratio"] = "0.5";
+      options["barrier_tau_min"] = "0.99";
       options["use_second_order_correction"] = "yes";
       options["l1_constraint_violation_coefficient"] = "1000";
       options["residual_norm"] = "INF";
