@@ -115,14 +115,14 @@ void BarrierSubproblem::evaluate_functions(const NonlinearProblem& problem, Iter
       // objective gradient
       double objective_barrier_term = 0.;
       if (is_finite(problem.get_variable_lower_bound(i))) { // lower bounded
-         const double gap = current_iterate.primals[i] - this->variable_bounds[i].lb;
-         hessian_diagonal_barrier_term += current_iterate.multipliers.lower_bounds[i] / gap;
-         objective_barrier_term += -this->barrier_parameter / gap;
+         const double inverse_gap = 1./(current_iterate.primals[i] - this->variable_bounds[i].lb);
+         hessian_diagonal_barrier_term += current_iterate.multipliers.lower_bounds[i] * inverse_gap;
+         objective_barrier_term += -this->barrier_parameter * inverse_gap;
       }
       if (is_finite(problem.get_variable_upper_bound(i))) { // upper bounded
-         const double gap = current_iterate.primals[i] - this->variable_bounds[i].ub;
-         hessian_diagonal_barrier_term += current_iterate.multipliers.upper_bounds[i] / gap;
-         objective_barrier_term += -this->barrier_parameter / gap;
+         const double inverse_gap = 1./(current_iterate.primals[i] - this->variable_bounds[i].ub);
+         hessian_diagonal_barrier_term += current_iterate.multipliers.upper_bounds[i] * inverse_gap;
+         objective_barrier_term += -this->barrier_parameter * inverse_gap;
       }
       this->hessian_model->hessian->insert(hessian_diagonal_barrier_term, i, i);
       this->objective_gradient.insert(i, objective_barrier_term);
@@ -201,12 +201,14 @@ double BarrierSubproblem::get_proximal_coefficient() const {
    return std::sqrt(this->barrier_parameter);
 }
 
-void BarrierSubproblem::prepare_for_feasibility_problem(const Iterate& current_iterate) {
+void BarrierSubproblem::prepare_for_feasibility_problem(const NonlinearProblem& problem, Iterate& current_iterate) {
    // if we're building the feasibility subproblem, temporarily update the objective multiplier
    this->solving_feasibility_problem = true;
    this->previous_barrier_parameter = this->barrier_parameter;
    this->barrier_parameter = std::max(this->barrier_parameter, norm_inf(current_iterate.original_evaluations.constraints));
    DEBUG << "Barrier parameter mu temporarily updated to " << this->barrier_parameter << '\n';
+   // since the barrier parameter changed, update the optimality measure (contains barrier terms)
+   current_iterate.nonlinear_progress.optimality = this->compute_optimality_measure(problem, current_iterate);
    this->subproblem_definition_changed = true;
 }
 
