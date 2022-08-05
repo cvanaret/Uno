@@ -37,7 +37,7 @@ Please be patient, we are actively working on our article.
 
 ## Contributions
 
-Uno was designed and implemented by [Charlie Vanaret](https://github.com/cvanaret/) (Technische Universität Berlin)
+Uno was designed and implemented by [Charlie Vanaret](https://github.com/cvanaret/) (Technische Universität Berlin).  
 The abstract framework for unifying nonlinear optimization was developed by Charlie Vanaret and Sven Leyffer.
 
 [Silvio Traversaro](https://github.com/traversaro) contributed to the CMakeLists.
@@ -146,7 +146,7 @@ The options can be combined in the same command line.
 Uno presets are strategy combinations that correspond to existing solvers (as well as known values for their hyperparameters). Uno 1.0 implements three presets:
 * `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method);
 * `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method);
-* `byrd` mimics Byrd's S$\ell_1$QP (line-search $\ell_1$ merit S$\ell_1$QP method).
+* `byrd` mimics Byrd's S $\ell_1$ QP (line-search $\ell_1$ merit S $\ell_1$ QP method).
 
 To pick a preset, use the argument:
 ```
