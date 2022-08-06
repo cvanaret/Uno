@@ -6,15 +6,11 @@
 
 #include <vector>
 #include <limits>
+#include "ingredients/globalization_strategy/ProgressMeasures.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "optimization/Model.hpp"
 #include "optimization/Multipliers.hpp"
 #include "tools/Infinity.hpp"
-
-struct ProgressMeasures {
-   double infeasibility;
-   double optimality;
-};
 
 struct Evaluations {
    double objective{INF}; /*!< Objective value */
