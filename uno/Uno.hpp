@@ -5,32 +5,10 @@
 #define UNO_H
 
 #include "optimization/Model.hpp"
+#include "optimization/Result.hpp"
 #include "optimization/TerminationStatus.hpp"
 #include "ingredients/globalization_mechanism/GlobalizationMechanism.hpp"
 
-struct Result {
-   Result() = delete;
-
-   TerminationStatus status;
-   Iterate solution;
-   size_t number_variables;
-   size_t number_constraints;
-   size_t iteration;
-   double cpu_time;
-   size_t objective_evaluations;
-   size_t constraint_evaluations;
-   size_t jacobian_evaluations;
-   size_t hessian_evaluations;
-   size_t number_subproblems_solved;
-
-   void print(bool print_solution) const;
-};
-
-/*! \class Uno
- * \brief Uno
- *
- *  UNO solver
- */
 class Uno {
 public:
    Uno(GlobalizationMechanism& globalization_mechanism, const Options& options);

@@ -68,6 +68,7 @@ set(SRC_FILES
     uno/optimization/Model.cpp
     uno/optimization/ModelFactory.cpp
     uno/optimization/Iterate.cpp
+    uno/optimization/Result.cpp
     
     uno/preprocessing/Preprocessing.cpp
     uno/preprocessing/Scaling.cpp
