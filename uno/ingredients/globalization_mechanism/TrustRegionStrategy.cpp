@@ -72,13 +72,7 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
          this->radius /= this->decrease_factor;
       }
    }
-   // radius gets too small
-   if (this->radius < this->min_radius) {
-      throw std::runtime_error("Trust-region radius became too small");
-   }
-   else {
-      throw std::runtime_error("Trust-region failed with an unexpected error");
-   }
+   throw std::runtime_error("Trust-region radius became too small");
 }
 
 void TrustRegionStrategy::rectify_multipliers(Direction& direction, double radius) {
