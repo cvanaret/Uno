@@ -58,6 +58,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
          this->number_iterations++;
          this->print_iteration();
 
+         // assemble the trial iterate by going a fraction along the direction
          Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, this->step_length);
          try {
             const bool is_acceptable = this->constraint_relaxation_strategy.is_acceptable(statistics, current_iterate, trial_iterate,
@@ -66,6 +67,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
                // let the subproblem know the accepted iterate
                this->constraint_relaxation_strategy.register_accepted_iterate(trial_iterate);
                this->set_statistics(statistics, direction);
+
                return std::make_tuple(std::move(trial_iterate), direction.norm);
             }
             else if (false && this->use_second_order_correction && this->number_iterations == 1 && !this->solving_feasibility_problem &&

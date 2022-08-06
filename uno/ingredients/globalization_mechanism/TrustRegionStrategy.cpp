@@ -50,13 +50,13 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
          const bool is_acceptable = this->constraint_relaxation_strategy.is_acceptable(statistics, current_iterate, trial_iterate, direction,
                predicted_optimality_reduction_model, 1.);
          if (is_acceptable) {
+            // let the subproblem know the accepted iterate
+            this->constraint_relaxation_strategy.register_accepted_iterate(trial_iterate);
             this->set_statistics(statistics, direction);
 
             // increase the radius if trust region is active
             this->increase_radius(direction.norm);
 
-            // let the subproblem know the accepted iterate
-            this->constraint_relaxation_strategy.register_accepted_iterate(trial_iterate);
             return std::make_tuple(std::move(trial_iterate), direction.norm);
          }
          else { // step rejected
