@@ -53,17 +53,14 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
             this->set_statistics(statistics, direction);
 
             // increase the radius if trust region is active
-            if (direction.norm >= this->radius - this->activity_tolerance) {
-               this->radius *= this->increase_factor;
-            }
+            this->increase_radius(direction.norm);
 
             // let the subproblem know the accepted iterate
             this->constraint_relaxation_strategy.register_accepted_iterate(trial_iterate);
             return std::make_tuple(std::move(trial_iterate), direction.norm);
          }
-         else {
-            // if the step is rejected, decrease the radius
-            this->radius = std::min(this->radius, direction.norm) / this->decrease_factor;
+         else { // step rejected
+            this->decrease_radius(direction.norm);
          }
       }
       catch (const std::exception& e) {
@@ -73,6 +70,16 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
       }
    }
    throw std::runtime_error("Trust-region radius became too small");
+}
+
+void TrustRegionStrategy::increase_radius(double direction_norm) {
+   if (direction_norm >= this->radius - this->activity_tolerance) {
+      this->radius *= this->increase_factor;
+   }
+}
+
+void TrustRegionStrategy::decrease_radius(double direction_norm) {
+   this->radius = std::min(this->radius, direction_norm) / this->decrease_factor;
 }
 
 void TrustRegionStrategy::rectify_multipliers(Direction& direction, double radius) {
