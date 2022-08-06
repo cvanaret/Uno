@@ -255,9 +255,11 @@ double BarrierSubproblem::compute_optimality_measure(const NonlinearProblem& pro
    objective *= this->barrier_parameter;
    assert(is_finite(objective) && "The barrier value is infinite");
    // original objective value
-   iterate.evaluate_objective(problem.model);
+   const double test = problem.evaluate_objective(iterate);
+   objective += test;
+   //iterate.evaluate_objective(problem.model);
    // TODO: parameterize optimality measure with \rho instead of multiplying (here, \rho should not multiply the barrier terms)
-   objective += iterate.original_evaluations.objective;
+   //objective += iterate.original_evaluations.objective;
    return objective;
 }
 

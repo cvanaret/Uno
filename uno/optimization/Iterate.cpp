@@ -59,23 +59,20 @@ void Iterate::evaluate_constraint_jacobian(const Model& model) {
 void Iterate::evaluate_lagrangian_gradient(const Model& model, double objective_multiplier, const std::vector<double>& constraint_multipliers,
       const std::vector<double>& lower_bounds_multipliers, const std::vector<double>& upper_bounds_multipliers) {
    initialize_vector(this->lagrangian_gradient, 0.);
-   const size_t number_original_variables = model.number_variables;
 
-   // objective gradient
-   this->evaluate_objective_gradient(model);
-
-   // scale the objective gradient with the objective multiplier
+   // objective gradient: scale it with the objective multiplier
    if (objective_multiplier != 0.) {
+      this->evaluate_objective_gradient(model);
       this->original_evaluations.objective_gradient.for_each([&](size_t i, double derivative) {
          // in case there are additional variables, ignore them
-         if (i < number_original_variables) {
+         if (i < model.number_variables) {
             this->lagrangian_gradient[i] += objective_multiplier * derivative;
          }
       });
    }
 
    // bound constraints
-   for (size_t i = 0; i < number_original_variables; i++) {
+   for (size_t i = 0; i < model.number_variables; i++) {
       this->lagrangian_gradient[i] -= lower_bounds_multipliers[i] + upper_bounds_multipliers[i];
    }
 
@@ -86,7 +83,7 @@ void Iterate::evaluate_lagrangian_gradient(const Model& model, double objective_
       if (multiplier_j != 0.) {
          this->original_evaluations.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
             // in case there are additional variables, ignore them
-            if (i < number_original_variables) {
+            if (i < model.number_variables) {
                this->lagrangian_gradient[i] -= multiplier_j * derivative;
             }
          });

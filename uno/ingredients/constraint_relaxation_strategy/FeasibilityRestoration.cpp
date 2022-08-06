@@ -92,7 +92,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& curr
    // check if subproblem definition changed
    if (this->subproblem->subproblem_definition_changed) {
       DEBUG << "The subproblem definition changed, the optimality measure is recomputed\n";
-      current_iterate.nonlinear_progress.optimality = this->subproblem->compute_optimality_measure(this->optimality_problem, current_iterate);
+      current_iterate.nonlinear_progress.optimality = this->subproblem->compute_optimality_measure(this->get_current_reformulated_problem(), current_iterate);
       this->phase_2_strategy->reset();
       this->subproblem->subproblem_definition_changed = false;
    }
@@ -169,11 +169,11 @@ void FeasibilityRestoration::switch_phase(Iterate& current_iterate, Iterate& tri
 void FeasibilityRestoration::switch_to_feasibility_restoration(Iterate& current_iterate, const std::vector<size_t>& infeasible_linearized_constraints) {
    DEBUG << "Switching from optimality to restoration phase\n";
    this->current_phase = FEASIBILITY_RESTORATION;
-   this->phase_2_strategy->notify(current_iterate);
+   this->phase_2_strategy->notify_current_progress(current_iterate.nonlinear_progress);
    this->phase_1_strategy->reset();
    // update the measure of optimality
    current_iterate.nonlinear_progress.optimality = this->compute_optimality_measure(current_iterate, infeasible_linearized_constraints);
-   this->phase_1_strategy->notify(current_iterate);
+   this->phase_1_strategy->notify_current_progress(current_iterate.nonlinear_progress);
 }
 
 void FeasibilityRestoration::switch_to_optimality(Iterate& current_iterate, Iterate& trial_iterate) {

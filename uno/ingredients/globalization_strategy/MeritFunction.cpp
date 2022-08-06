@@ -13,7 +13,7 @@ void MeritFunction::initialize(const Iterate& /*first_iterate*/) {
 void MeritFunction::reset() {
 }
 
-void MeritFunction::notify(Iterate& /*current_iterate*/) {
+void MeritFunction::notify_current_progress(const ProgressMeasures& /*current_progress*/) {
 }
 
 bool MeritFunction::is_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,

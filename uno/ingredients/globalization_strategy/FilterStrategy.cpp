@@ -30,8 +30,8 @@ void FilterStrategy::reset() {
    this->filter->upper_bound = this->initial_filter_upper_bound;
 }
 
-void FilterStrategy::notify(Iterate& current_iterate) {
-   this->filter->add(current_iterate.nonlinear_progress.infeasibility, current_iterate.nonlinear_progress.optimality);
+void FilterStrategy::notify_current_progress(const ProgressMeasures& current_progress) {
+   this->filter->add(current_progress.infeasibility, current_progress.optimality);
 }
 
 /* check acceptability of step(s) (filter & sufficient reduction)
@@ -47,22 +47,23 @@ bool FilterStrategy::is_acceptable(const ProgressMeasures& current_progress, con
    const double unconstrained_predicted_reduction = predicted_reduction.optimality;
    DEBUG << "Current: η = " << current_progress.infeasibility << ", ω = " << current_progress.optimality << '\n';
    DEBUG << "Trial:   η = " << trial_progress.infeasibility << ", ω = " << trial_progress.optimality << '\n';
-   DEBUG << "Unconstrained predicted reduction: " << unconstrained_predicted_reduction << '\n';
 
    bool accept = false;
    // check acceptance
-   bool acceptable = filter->accept(trial_progress.infeasibility, trial_progress.optimality);
-   if (acceptable) {
+   const bool filter_acceptable = filter->accept(trial_progress.infeasibility, trial_progress.optimality);
+   if (filter_acceptable) {
       DEBUG << "Filter acceptable\n";
+      DEBUG << *this->filter << '\n';
+
       // check acceptance wrt current x (h,f)
-      acceptable = filter->improves_current_iterate(current_progress.infeasibility, current_progress.optimality, trial_progress.infeasibility,
-            trial_progress.optimality);
-      if (acceptable) {
+      const bool iterate_acceptable = filter->improves_current_iterate(current_progress.infeasibility, current_progress.optimality,
+            trial_progress.infeasibility, trial_progress.optimality);
+      if (iterate_acceptable) {
+         DEBUG << "Acceptable wrt current point\n";
+         DEBUG << "Unconstrained predicted reduction: " << unconstrained_predicted_reduction << '\n';
          const double actual_reduction = filter->compute_actual_reduction(current_progress.optimality, current_progress.infeasibility,
                trial_progress.optimality);
-         DEBUG << "Filter acceptable wrt current point\n";
          DEBUG << "Actual reduction: " << actual_reduction << '\n';
-         DEBUG << *this->filter << '\n';
 
          // switching condition violated: predicted reduction is not promising
          if (!this->switching_condition(unconstrained_predicted_reduction, current_progress.infeasibility, this->parameters.delta)) {
@@ -83,7 +84,7 @@ bool FilterStrategy::is_acceptable(const ProgressMeasures& current_progress, con
          }
       }
       else {
-         DEBUG << "Not filter acceptable wrt current point\n";
+         DEBUG << "Not acceptable wrt current point\n";
       }
    }
    else {
