@@ -15,8 +15,9 @@ TrustRegionStrategy::TrustRegionStrategy(ConstraintRelaxationStrategy& constrain
       activity_tolerance(options.get_double("TR_activity_tolerance")),
       min_radius(options.get_double("TR_min_radius")),
       statistics_TR_radius_column_order(options.get_int("statistics_TR_radius_column_order")) {
-   assert(1. < this->increase_factor && "The TR increase factor should be > 1");
-   assert(1. < this->decrease_factor && "The TR decrease factor should be > 1");
+   assert(0 < this->radius && "The trust-region radius should be positive");
+   assert(1. < this->increase_factor && "The trust-region increase factor should be > 1");
+   assert(1. < this->decrease_factor && "The trust-region decrease factor should be > 1");
 }
 
 void TrustRegionStrategy::initialize(Statistics& statistics, Iterate& first_iterate) {
@@ -32,7 +33,6 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
 
    while (!this->termination()) {
       try {
-         assert (0 < this->radius);
          this->number_iterations++;
          this->print_iteration();
 
@@ -40,15 +40,16 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
          this->constraint_relaxation_strategy.set_variable_bounds(current_iterate, this->radius);
          Direction direction = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate);
          // set bound multipliers of active trust region to 0
-         TrustRegionStrategy::rectify_active_set(direction, this->radius);
+         TrustRegionStrategy::rectify_multipliers(direction, this->radius);
 
          // assemble the trial iterate by taking a full step
          Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction);
 
          // check whether the trial step is accepted
          PredictedOptimalityReductionModel predicted_optimality_reduction_model = this->constraint_relaxation_strategy.generate_predicted_optimality_reduction_model(direction);
-         if (this->constraint_relaxation_strategy.is_acceptable(statistics, current_iterate, trial_iterate, direction,
-               predicted_optimality_reduction_model, 1.)) {
+         const bool is_acceptable = this->constraint_relaxation_strategy.is_acceptable(statistics, current_iterate, trial_iterate, direction,
+               predicted_optimality_reduction_model, 1.);
+         if (is_acceptable) {
             this->set_statistics(statistics, direction);
 
             // increase the radius if trust region is active
@@ -80,8 +81,8 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
    }
 }
 
-void TrustRegionStrategy::rectify_active_set(Direction& direction, double radius) {
-   assert(0 < radius && "The trust-region radius is zero");
+void TrustRegionStrategy::rectify_multipliers(Direction& direction, double radius) {
+   assert(0 < radius && "The trust-region radius should be positive");
    // update active set and set multipliers for bound constraints active at trust region to 0
    for (auto it = direction.active_set.bounds.at_lower_bound.begin(); it != direction.active_set.bounds.at_lower_bound.end();) {
       size_t i = *it;

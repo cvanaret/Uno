@@ -55,7 +55,6 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
    bool failure = false;
    while (!failure) {
       while (!this->termination()) {
-         assert(0 < this->step_length && this->step_length <= 1 && "The line-search step length is not in (0, 1]");
          this->number_iterations++;
          this->print_iteration();
 
@@ -127,6 +126,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
 void BacktrackingLineSearch::decrease_step_length() {
    // step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ...
    this->step_length *= this->backtracking_ratio;
+   assert(0 < this->step_length && this->step_length <= 1 && "The line-search step length is not in (0, 1]");
 }
 
 bool BacktrackingLineSearch::termination() const {
