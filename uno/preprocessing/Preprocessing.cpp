@@ -50,7 +50,7 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
    solver.solve(matrix, rhs, solution);
    DEBUG << "Solution: "; print_vector(DEBUG, solution, 0, matrix.dimension); DEBUG << '\n';
 
-   // if least-square multipliers too big, discard them. Otherwise, store them
+   // if least-square multipliers too big, discard them. Otherwise, keep them
    if (norm_inf(solution, Range(model.number_variables, model.number_variables + model.number_constraints)) <= multipliers_max_norm) {
       for (size_t j = 0; j < model.number_constraints; j++) {
          multipliers[j] = solution[model.number_variables + j];
