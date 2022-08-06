@@ -8,7 +8,7 @@ endif()
 
 # define the project name
 project(Uno VERSION 1.0
-			DESCRIPTION "Uno: Unifying Framework for Optimization" 
+			DESCRIPTION "Uno (Unifying Nonlinear Optimization)"
             LANGUAGES CXX C Fortran)
 
 # set C++17 and enable other languages
