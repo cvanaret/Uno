@@ -2,6 +2,8 @@
 
 ## What is Uno?
 
+### Goal
+
 Uno (Unifying Nonlinear Optimization) is a C++ library aiming at unifying most of the methods for solving nonlinearly constrained optimization problems of the form:
 
 ```
@@ -30,6 +32,14 @@ Uno 1.0 implements the following strategies. Any strategy combination can be gen
 
 Check out my [presentation at the ICCOPT 2022 conference](https://www.researchgate.net/publication/362254109).
 This is joint work with Sven Leyffer (Argonne National Laboratory).
+
+### Latest results (Aug 2022)
+
+Performance profile (function evaluations)
+
+<p align="center">
+   <img src="docs/figures/uno_performance_profile_Aug2022.png" alt="Performance profile of Uno 1.0" width="65%" />
+</p>
 
 ## How to cite Uno
 
