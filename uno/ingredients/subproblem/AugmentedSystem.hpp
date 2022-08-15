@@ -26,20 +26,20 @@ public:
    AugmentedSystem(const std::string& sparse_format, size_t max_dimension, size_t max_number_non_zeros, bool use_regularization,
          const Options& options);
    void factorize_matrix(const Model& model, LinearSolver& linear_solver);
-   void regularize_matrix(const Model& model, LinearSolver& linear_solver, size_t size_first_block, size_t size_second_block,
-         double constraint_regularization_parameter);
+   void regularize_matrix(const Model& model, LinearSolver& linear_solver, size_t size_primal_block, size_t size_dual_block,
+         double dual_regularization_parameter);
    void solve(LinearSolver& linear_solver);
 
 protected:
    size_t number_factorizations{0};
-   double previous_regularization_first_block{0.};
+   double previous_primal_regularization{0.};
    const double regularization_failure_threshold;
-   const double regularization_first_block_initial_factor;
-   const double regularization_second_block_fraction;
-   const double regularization_first_block_lb;
-   const double regularization_first_block_decrease_factor;
-   const double regularization_first_block_fast_increase_factor;
-   const double regularization_first_block_slow_increase_factor;
+   const double primal_regularization_initial_factor;
+   const double dual_regularization_fraction;
+   const double primal_regularization_lb;
+   const double primal_regularization_decrease_factor;
+   const double primal_regularization_fast_increase_factor;
+   const double primal_regularization_slow_increase_factor;
 };
 
 #endif // UNO_AUGMENTEDSYSTEM_H

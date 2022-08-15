@@ -120,13 +120,13 @@ regularization_initial_value 1e-4
 
 regularization_increase_factor 2
 
-regularization_first_block_initial_factor 1e-4
-regularization_second_block_fraction 1e-8
+primal_regularization_initial_factor 1e-4
+dual_regularization_fraction 1e-8
 
-regularization_first_block_lb 1e-20
-regularization_first_block_decrease_factor 3.
-regularization_first_block_fast_increase_factor 100.
-regularization_first_block_slow_increase_factor 8.
+primal_regularization_lb 1e-20
+primal_regularization_decrease_factor 3.
+primal_regularization_fast_increase_factor 100.
+primal_regularization_slow_increase_factor 8.
 
 ##### trust region options #####
 # initial trust region radius

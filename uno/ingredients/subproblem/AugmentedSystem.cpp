@@ -10,12 +10,12 @@ AugmentedSystem::AugmentedSystem(const std::string& sparse_format, size_t max_di
    rhs(max_dimension),
    solution(max_dimension),
    regularization_failure_threshold(options.get_double("regularization_failure_threshold")),
-   regularization_first_block_initial_factor(options.get_double("regularization_first_block_initial_factor")),
-   regularization_second_block_fraction(options.get_double("regularization_second_block_fraction")),
-   regularization_first_block_lb(options.get_double("regularization_first_block_lb")),
-   regularization_first_block_decrease_factor(options.get_double("regularization_first_block_decrease_factor")),
-   regularization_first_block_fast_increase_factor(options.get_double("regularization_first_block_fast_increase_factor")),
-   regularization_first_block_slow_increase_factor(options.get_double("regularization_first_block_slow_increase_factor")) {
+   primal_regularization_initial_factor(options.get_double("primal_regularization_initial_factor")),
+   dual_regularization_fraction(options.get_double("dual_regularization_fraction")),
+   primal_regularization_lb(options.get_double("primal_regularization_lb")),
+   primal_regularization_decrease_factor(options.get_double("primal_regularization_decrease_factor")),
+   primal_regularization_fast_increase_factor(options.get_double("primal_regularization_fast_increase_factor")),
+   primal_regularization_slow_increase_factor(options.get_double("primal_regularization_slow_increase_factor")) {
 }
 
 void AugmentedSystem::factorize_matrix(const Model& model, LinearSolver& linear_solver) {
@@ -28,14 +28,14 @@ void AugmentedSystem::factorize_matrix(const Model& model, LinearSolver& linear_
    this->number_factorizations++;
 }
 
-void AugmentedSystem::regularize_matrix(const Model& model, LinearSolver& linear_solver, size_t size_first_block, size_t size_second_block,
-      double constraint_regularization_parameter) {
+void AugmentedSystem::regularize_matrix(const Model& model, LinearSolver& linear_solver, size_t size_primal_block, size_t size_dual_block,
+      double dual_regularization_parameter) {
    DEBUG << "Original matrix\n" << *this->matrix << '\n';
-   double regularization_first_block = 0.;
-   double regularization_second_block = 0.;
-   DEBUG << "Testing factorization with regularization factors (" << regularization_first_block << ", " << regularization_second_block << ")\n";
+   double regularization_primal_block = 0.;
+   double regularization_dual_block = 0.;
+   DEBUG << "Testing factorization with regularization factors (" << regularization_primal_block << ", " << regularization_dual_block << ")\n";
 
-   if (!linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_second_block) {
+   if (!linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_dual_block) {
       DEBUG << "Inertia is good\n";
       return;
    }
@@ -43,51 +43,51 @@ void AugmentedSystem::regularize_matrix(const Model& model, LinearSolver& linear
    // set the constraint regularization coefficient
    if (linear_solver.matrix_is_singular()) {
       DEBUG << "Matrix is singular\n";
-      regularization_second_block = this->regularization_second_block_fraction * constraint_regularization_parameter;
+      regularization_dual_block = this->dual_regularization_fraction * dual_regularization_parameter;
    }
    else {
-      regularization_second_block = 0.;
+      regularization_dual_block = 0.;
    }
    // set the Hessian regularization coefficient
-   if (this->previous_regularization_first_block == 0.) {
-      regularization_first_block = this->regularization_first_block_initial_factor;
+   if (this->previous_primal_regularization == 0.) {
+      regularization_primal_block = this->primal_regularization_initial_factor;
    }
    else {
-      regularization_first_block = std::max(this->regularization_first_block_lb,
-            this->previous_regularization_first_block / this->regularization_first_block_decrease_factor);
+      regularization_primal_block = std::max(this->primal_regularization_lb,
+            this->previous_primal_regularization / this->primal_regularization_decrease_factor);
    }
 
    // regularize the augmented matrix
    this->matrix->set_regularization([=](size_t i) {
-      return (i < size_first_block) ? regularization_first_block : -regularization_second_block;
+      return (i < size_primal_block) ? regularization_primal_block : -regularization_dual_block;
    });
 
    bool good_inertia = false;
    while (!good_inertia) {
-      DEBUG << "Testing factorization with regularization factors (" << regularization_first_block << ", " << regularization_second_block << ")\n";
+      DEBUG << "Testing factorization with regularization factors (" << regularization_primal_block << ", " << regularization_dual_block << ")\n";
       DEBUG << *this->matrix << '\n';
       this->factorize_matrix(model, linear_solver);
 
-      if (!linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_second_block) {
+      if (!linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_dual_block) {
          good_inertia = true;
          DEBUG << "Factorization was a success\n\n";
-         this->previous_regularization_first_block = regularization_first_block;
+         this->previous_primal_regularization = regularization_primal_block;
       }
       else {
          auto[number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = linear_solver.get_inertia();
-         DEBUG << "Expected inertia (" << size_first_block << ", " << size_second_block << ", 0), ";
+         DEBUG << "Expected inertia (" << size_primal_block << ", " << size_dual_block << ", 0), ";
          DEBUG << "got (" << number_pos_eigenvalues << ", " << number_neg_eigenvalues << ", " << number_zero_eigenvalues << ")\n";
-         if (this->previous_regularization_first_block == 0.) {
-            regularization_first_block *= this->regularization_first_block_fast_increase_factor;
+         if (this->previous_primal_regularization == 0.) {
+            regularization_primal_block *= this->primal_regularization_fast_increase_factor;
          }
          else {
-            regularization_first_block *= this->regularization_first_block_slow_increase_factor;
+            regularization_primal_block *= this->primal_regularization_slow_increase_factor;
          }
 
-         if (regularization_first_block <= this->regularization_failure_threshold) {
+         if (regularization_primal_block <= this->regularization_failure_threshold) {
             // regularize the augmented matrix
             this->matrix->set_regularization([=](size_t i) {
-               return (i < size_first_block) ? regularization_first_block : -regularization_second_block;
+               return (i < size_primal_block) ? regularization_primal_block : -regularization_dual_block;
             });
          }
          else {
