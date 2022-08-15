@@ -130,6 +130,7 @@ To solve an AMPL model, type in the `build` directory:
 ```
 ./uno_ampl path_to_file/file.nl
 ```
+A couple of CUTEst instances are available in the `/examples` directory.
 
 ### Combination of ingredients
 
