@@ -27,8 +27,8 @@ private:
    // statistics table
    int statistics_TR_radius_column_order;
 
-   void increase_radius(double direction_norm);
-   void decrease_radius(double direction_norm);
+   void increase_radius(double step_norm);
+   void decrease_radius(double step_norm);
    static void rectify_multipliers(Direction& direction, double radius);
    void set_statistics(Statistics& statistics, const Direction& direction);
    [[nodiscard]] bool termination() const;

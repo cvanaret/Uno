@@ -4,12 +4,13 @@
 #include "ConstraintRelaxationStrategy.hpp"
 
 ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Model& model, const Options& options):
-      model(model),
+      original_model(model),
       residual_norm(norm_from_string(options.get_string("residual_norm"))),
       small_step_threshold(options.get_double("small_step_threshold")) {
 }
 
 bool ConstraintRelaxationStrategy::is_small_step(const Direction& direction) const {
+   // TODO for consistency with Uno.cpp, use tolerance/small_step_factor
    return (direction.norm <= this->small_step_threshold);
 }
 
@@ -19,7 +20,7 @@ void ConstraintRelaxationStrategy::compute_nonlinear_residuals(const NonlinearPr
    iterate.evaluate_lagrangian_gradient(problem.model, problem.get_objective_multiplier(), iterate.multipliers.constraints,
          iterate.multipliers.lower_bounds, iterate.multipliers.upper_bounds);
    iterate.stationarity_error = norm(iterate.lagrangian_gradient, this->residual_norm);
-   iterate.complementarity_error = this->model.compute_complementarity_error(iterate.primals, iterate.original_evaluations.constraints,
+   iterate.complementarity_error = this->original_model.compute_complementarity_error(iterate.primals, iterate.original_evaluations.constraints,
          iterate.multipliers.constraints, iterate.multipliers.lower_bounds, iterate.multipliers.upper_bounds);
 }
 

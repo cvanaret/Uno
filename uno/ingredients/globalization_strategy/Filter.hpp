@@ -14,11 +14,6 @@ struct FilterConstants {
    double gamma; /*!< Margin around filter (sloping margin) */
 };
 
-/*! \class Filter
- * \brief Filter
- *
- *  Filter
- */
 class Filter {
 public:
    double upper_bound{INF}; /*!< Upper bound on constraint violation */
@@ -31,7 +26,7 @@ public:
    virtual bool accept(double infeasibility_measure, double optimality_measure);
    virtual bool improves_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure,
          double trial_optimality_measure);
-   virtual double compute_actual_reduction(double current_objective, double current_residual, double trial_objective);
+   virtual double compute_actual_reduction(double current_optimality_measure, double current_infeasibility_measure, double trial_optimality_measure);
 
    friend std::ostream& operator<<(std::ostream& stream, Filter& filter);
 
@@ -46,11 +41,6 @@ protected:
    void right_shift(size_t start, size_t shift_size);
 };
 
-/*! \class NonmonotoneFilter
- * \brief Non-monotonic filter
- *
- *  Non-monotonic filter
- */
 class NonmonotoneFilter : public Filter {
 public:
    explicit NonmonotoneFilter(const Options& options);
@@ -59,7 +49,7 @@ public:
    bool accept(double infeasibility_measure, double optimality_measure) override;
    bool improves_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure,
          double trial_optimality_measure) override;
-   double compute_actual_reduction(double current_objective, double current_residual, double trial_objective) override;
+   double compute_actual_reduction(double current_optimality_measure, double current_infeasibility_measure, double trial_optimality_measure) override;
 
 protected:
    const size_t max_number_dominated_entries; /*!< Memory of filter */

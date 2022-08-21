@@ -36,7 +36,7 @@ public:
    // globalization metrics
    [[nodiscard]] virtual PredictedOptimalityReductionModel generate_predicted_optimality_reduction_model(const NonlinearProblem& problem,
          const Direction& direction) const = 0;
-   [[nodiscard]] virtual double compute_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) = 0;
+   virtual void set_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) = 0;
 
    virtual void postprocess_accepted_iterate(const NonlinearProblem& model, Iterate& iterate) = 0;
 

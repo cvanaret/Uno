@@ -27,7 +27,7 @@ void Result::print(bool print_primal_dual_solution) const {
    std::cout << "Complementarity error:\t\t" << this->solution.complementarity_error << '\n';
 
    std::cout << "Infeasibility measure:\t\t" << this->solution.nonlinear_progress.infeasibility << '\n';
-   std::cout << "Optimality measure:\t\t" << this->solution.nonlinear_progress.objective << '\n';
+   std::cout << "Optimality measure:\t\t" << this->solution.nonlinear_progress.optimality << '\n';
 
    if (print_primal_dual_solution) {
       std::cout << "Primal solution:\t\t";
