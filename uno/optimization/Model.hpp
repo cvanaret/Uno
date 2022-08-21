@@ -10,7 +10,8 @@
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "optimization/TerminationStatus.hpp"
+#include "TerminationStatus.hpp"
+#include "EvaluationErrors.hpp"
 
 struct Interval {
    double lb;
@@ -24,22 +25,6 @@ enum FunctionType {
 };
 
 enum BoundType { EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES, UNBOUNDED };
-
-struct NumericalError : public std::exception {
-   [[nodiscard]] const char* what() const throw() override = 0;
-};
-
-struct GradientNumericalError : NumericalError {
-   [[nodiscard]] const char* what() const throw() override {
-      return "A numerical error was encountered while evaluating a gradient";
-   }
-};
-
-struct FunctionNumericalError : NumericalError {
-   [[nodiscard]] const char* what() const throw() override {
-      return "A numerical error was encountered while evaluating a function";
-   }
-};
 
 // forward declaration
 class Iterate;

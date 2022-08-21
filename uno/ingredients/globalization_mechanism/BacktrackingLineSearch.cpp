@@ -101,7 +101,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
                this->decrease_step_length();
             }
          }
-         catch (const NumericalError& e) {
+         catch (const EvaluationError& e) {
             GlobalizationMechanism::print_warning(e.what());
             this->decrease_step_length();
          }
