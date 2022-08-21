@@ -40,7 +40,7 @@ void ConvexifiedHessian::evaluate(const NonlinearProblem& problem, const std::ve
 }
 
 // Nocedal and Wright, p51
-void ConvexifiedHessian::regularize(SymmetricMatrix& hessian, size_t number_original_variables) {
+void ConvexifiedHessian::regularize(SymmetricMatrix<double>& hessian, size_t number_original_variables) {
    //assert(size_block_to_regularize <= matrix.dimension && "The block to regularize is larger than the matrix");
 
    const double smallest_diagonal_entry = hessian.smallest_diagonal_entry();

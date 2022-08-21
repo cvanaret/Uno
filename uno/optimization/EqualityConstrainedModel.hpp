@@ -23,7 +23,7 @@ public:
    void evaluate_constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const override;
    void evaluate_constraint_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraint_jacobian) const override;
    void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
-         SymmetricMatrix& hessian) const override;
+         SymmetricMatrix<double>& hessian) const override;
 
    [[nodiscard]] BoundType get_variable_bound_type(size_t i) const override;
    [[nodiscard]] FunctionType get_constraint_type(size_t j) const override;
@@ -156,7 +156,7 @@ inline void EqualityConstrainedModel::evaluate_constraint_jacobian(const std::ve
 }
 
 inline void EqualityConstrainedModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
-      SymmetricMatrix& hessian) const {
+      SymmetricMatrix<double>& hessian) const {
    this->original_model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian);
    // extend the dimension of the Hessian by finalizing the remaining columns (note: the slacks do not enter the Hessian)
    for (size_t j = this->original_model->number_variables; j < this->number_variables; j++) {

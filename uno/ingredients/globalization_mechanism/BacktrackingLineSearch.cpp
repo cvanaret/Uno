@@ -27,7 +27,7 @@ void BacktrackingLineSearch::initialize(Statistics& statistics, Iterate& first_i
    statistics.add_column("LS step length", Statistics::double_width, this->statistics_LS_step_length_column_order);
 
    // generate the initial point
-   this->constraint_relaxation_strategy.set_variable_bounds(first_iterate, INF);
+   this->constraint_relaxation_strategy.set_variable_bounds(first_iterate, INF<double>);
    this->constraint_relaxation_strategy.initialize(statistics, first_iterate);
 }
 
@@ -44,7 +44,7 @@ Direction BacktrackingLineSearch::compute_direction(Statistics& statistics, Iter
 
 std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(Statistics& statistics, Iterate& current_iterate) {
    // compute the direction
-   this->constraint_relaxation_strategy.set_variable_bounds(current_iterate, INF);
+   this->constraint_relaxation_strategy.set_variable_bounds(current_iterate, INF<double>);
    Direction direction = this->compute_direction(statistics, current_iterate);
    PredictedOptimalityReductionModel predicted_optimality_reduction_model = this->constraint_relaxation_strategy.generate_predicted_optimality_reduction_model(direction);
    this->solving_feasibility_problem = false;

@@ -67,8 +67,8 @@ AMPLModel::~AMPLModel() {
 
 void AMPLModel::generate_variables() {
    for (size_t i = 0; i < this->number_variables; i++) {
-      double lb = (this->asl->i.LUv_ != nullptr) ? this->asl->i.LUv_[2 * i] : -INF;
-      double ub = (this->asl->i.LUv_ != nullptr) ? this->asl->i.LUv_[2 * i + 1] : INF;
+      double lb = (this->asl->i.LUv_ != nullptr) ? this->asl->i.LUv_[2 * i] : -INF<double>;
+      double ub = (this->asl->i.LUv_ != nullptr) ? this->asl->i.LUv_[2 * i + 1] : INF<double>;
       if (lb == ub) {
          WARNING << "Variable x" << i << " has identical bounds\n";
       }
@@ -210,7 +210,7 @@ size_t AMPLModel::compute_hessian_number_nonzeros(double objective_multiplier, c
 }
 
 void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
-      SymmetricMatrix& hessian) const {
+      SymmetricMatrix<double>& hessian) const {
    // register the vector of variables
    (*(this->asl)->p.Xknown)(this->asl, const_cast<double*>(x.data()), nullptr);
 
@@ -302,8 +302,8 @@ void AMPLModel::postprocess_solution(Iterate& /*iterate*/, TerminationStatus /*t
 
 void AMPLModel::generate_constraints() {
    for (size_t j = 0; j < this->number_constraints; j++) {
-      double lb = (this->asl->i.LUrhs_ != nullptr) ? this->asl->i.LUrhs_[2 * j] : -INF;
-      double ub = (this->asl->i.LUrhs_ != nullptr) ? this->asl->i.LUrhs_[2 * j + 1] : INF;
+      double lb = (this->asl->i.LUrhs_ != nullptr) ? this->asl->i.LUrhs_[2 * j] : -INF<double>;
+      double ub = (this->asl->i.LUrhs_ != nullptr) ? this->asl->i.LUrhs_[2 * j + 1] : INF<double>;
       this->constraint_bounds[j] = {lb, ub};
    }
    Model::determine_bounds_types(this->constraint_bounds, this->constraint_status);

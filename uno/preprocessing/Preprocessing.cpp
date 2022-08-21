@@ -5,7 +5,7 @@
 #include "tools/Range.hpp"
 
 // compute a least-square approximation of the multipliers by solving a linear system (uses existing linear system)
-void Preprocessing::compute_least_square_multipliers(const Model& model, SymmetricMatrix& matrix, std::vector<double>& rhs,
+void Preprocessing::compute_least_square_multipliers(const Model& model, SymmetricMatrix<double>& matrix, std::vector<double>& rhs,
       SymmetricIndefiniteLinearSolver<double>& solver, Iterate& current_iterate, std::vector<double>& multipliers, double multipliers_max_norm) {
    current_iterate.evaluate_objective_gradient(model);
    current_iterate.evaluate_constraint_jacobian(model);

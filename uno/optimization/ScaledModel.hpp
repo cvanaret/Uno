@@ -22,7 +22,7 @@ public:
    void evaluate_constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const override;
    void evaluate_constraint_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraint_jacobian) const override;
    void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
-         SymmetricMatrix& hessian) const override;
+         SymmetricMatrix<double>& hessian) const override;
 
    [[nodiscard]] BoundType get_variable_bound_type(size_t i) const override;
    [[nodiscard]] FunctionType get_constraint_type(size_t j) const override;
@@ -139,7 +139,7 @@ inline void ScaledModel::evaluate_constraint_jacobian(const std::vector<double>&
 }
 
 inline void ScaledModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier,
-      const std::vector<double>& multipliers, SymmetricMatrix& hessian) const {
+      const std::vector<double>& multipliers, SymmetricMatrix<double>& hessian) const {
    // scale the objective and constraint multipliers
    const double scaled_objective_multiplier = objective_multiplier*this->scaling.get_objective_scaling();
    // TODO preallocate this vector

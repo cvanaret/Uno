@@ -7,10 +7,12 @@
 #include <cmath>
 #include <limits>
 
-const double INF = std::numeric_limits<double>::infinity();
+template <typename T>
+const double INF = std::numeric_limits<T>::infinity();
 
-inline bool is_finite(double value) {
-   return std::abs(value) < INF;
+template <typename T>
+inline bool is_finite(T value) {
+   return std::abs(value) < INF<T>;
 }
 
 #endif // UNO_INFINITY_H

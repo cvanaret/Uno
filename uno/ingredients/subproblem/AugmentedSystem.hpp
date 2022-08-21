@@ -19,7 +19,7 @@ struct UnstableRegularization : public std::exception {
 
 class AugmentedSystem {
 public:
-   std::unique_ptr<SymmetricMatrix> matrix;
+   std::unique_ptr<SymmetricMatrix<double>> matrix;
    std::vector<double> rhs{};
    std::vector<double> solution{};
 

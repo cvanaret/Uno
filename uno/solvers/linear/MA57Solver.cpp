@@ -39,13 +39,13 @@ MA57Solver::MA57Solver(size_t max_dimension, size_t max_number_nonzeros) : Symme
    this->icntl[8] = 1;
 }
 
-void MA57Solver::factorize(const SymmetricMatrix& matrix) {
+void MA57Solver::factorize(const SymmetricMatrix<double>& matrix) {
    // general factorization method: symbolic factorization and numerical factorization
    this->do_symbolic_factorization(matrix);
    this->do_numerical_factorization(matrix);
 }
 
-void MA57Solver::do_symbolic_factorization(const SymmetricMatrix& matrix) {
+void MA57Solver::do_symbolic_factorization(const SymmetricMatrix<double>& matrix) {
    assert(matrix.dimension <= this->max_dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
    assert(matrix.number_nonzeros <= this->row_indices.capacity() &&
       "MA57Solver: the number of nonzeros of the matrix is larger than the preallocated size");
@@ -85,7 +85,7 @@ void MA57Solver::do_symbolic_factorization(const SymmetricMatrix& matrix) {
    this->factorization = {n, nnz, std::move(fact), lfact, std::move(ifact), lifact, lkeep, std::move(keep)};
 }
 
-void MA57Solver::do_numerical_factorization(const SymmetricMatrix& matrix) {
+void MA57Solver::do_numerical_factorization(const SymmetricMatrix<double>& matrix) {
    assert(matrix.dimension <= this->max_dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
    assert(this->factorization.nnz == static_cast<int>(matrix.number_nonzeros) && "MA57Solver: the numbers of nonzeros do not match");
 
@@ -104,7 +104,7 @@ void MA57Solver::do_numerical_factorization(const SymmetricMatrix& matrix) {
          /* out */ this->rinfo.data());
 }
 
-void MA57Solver::solve(const SymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) {
+void MA57Solver::solve(const SymmetricMatrix<double>& matrix, const std::vector<double>& rhs, std::vector<double>& result) {
    // solve
    const int n = static_cast<int>(matrix.dimension);
    const int lrhs = n; // integer, length of rhs
@@ -153,7 +153,7 @@ size_t MA57Solver::rank() const {
    return static_cast<size_t>(this->info[24]);
 }
 
-void MA57Solver::save_matrix_to_local_format(const SymmetricMatrix& matrix) {
+void MA57Solver::save_matrix_to_local_format(const SymmetricMatrix<double>& matrix) {
    // build the internal matrix representation
    this->row_indices.clear();
    this->column_indices.clear();

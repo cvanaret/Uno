@@ -32,10 +32,10 @@ public:
    explicit MA57Solver(size_t max_dimension, size_t max_number_nonzeros);
    ~MA57Solver() override = default;
 
-   void factorize(const SymmetricMatrix& matrix) override;
-   void do_symbolic_factorization(const SymmetricMatrix& matrix) override;
-   void do_numerical_factorization(const SymmetricMatrix& matrix) override;
-   void solve(const SymmetricMatrix& matrix, const std::vector<double>& rhs, std::vector<double>& result) override;
+   void factorize(const SymmetricMatrix<double>& matrix) override;
+   void do_symbolic_factorization(const SymmetricMatrix<double>& matrix) override;
+   void do_numerical_factorization(const SymmetricMatrix<double>& matrix) override;
+   void solve(const SymmetricMatrix<double>& matrix, const std::vector<double>& rhs, std::vector<double>& result) override;
 
    [[nodiscard]] std::tuple<size_t, size_t, size_t> get_inertia() const override;
    [[nodiscard]] size_t number_negative_eigenvalues() const override;
@@ -63,7 +63,7 @@ private:
 
    MA57Factorization factorization{};
    bool use_iterative_refinement{false};
-   void save_matrix_to_local_format(const SymmetricMatrix& matrix);
+   void save_matrix_to_local_format(const SymmetricMatrix<double>& matrix);
 };
 
 #endif // UNO_MA57SOLVER_H

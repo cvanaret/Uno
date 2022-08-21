@@ -19,7 +19,7 @@ Filter::Filter(const Options& options) :
 
 void Filter::reset() {
    // initialize the maximum filter size (not critical)
-   this->upper_bound = INF;
+   this->upper_bound = INF<double>;
    this->number_entries = 0;
 }
 

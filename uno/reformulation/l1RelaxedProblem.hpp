@@ -27,7 +27,7 @@ public:
    void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const override;
    void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const override;
    void evaluate_constraint_jacobian(Iterate& iterate, std::vector<SparseVector<double>>& constraint_jacobian) const override;
-   void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix& hessian) const override;
+   void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix<double>& hessian) const override;
 
    [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
    [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
@@ -189,7 +189,7 @@ inline void l1RelaxedProblem::evaluate_constraint_jacobian(Iterate& iterate, std
 }
 
 inline void l1RelaxedProblem::evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers,
-      SymmetricMatrix& hessian) const {
+      SymmetricMatrix<double>& hessian) const {
    this->model.evaluate_lagrangian_hessian(x, this->objective_multiplier, multipliers, hessian);
 
    // add proximal term for the original variables
@@ -244,7 +244,7 @@ inline double l1RelaxedProblem::get_variable_upper_bound(size_t i) const {
       return this->model.get_variable_upper_bound(i);
    }
    else { // elastic variable in [0, +inf[
-      return INF;
+      return INF<double>;
    }
 }
 

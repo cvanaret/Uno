@@ -18,7 +18,7 @@ public:
    ~QPSolver() override = default;
    virtual Direction solve_QP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
          const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
-         const std::vector<SparseVector<double>>& constraint_jacobian, const SymmetricMatrix& hessian, const std::vector<double>& initial_point) = 0;
+         const std::vector<SparseVector<double>>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const std::vector<double>& initial_point) = 0;
    Direction solve_LP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
          const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
          const std::vector<SparseVector<double>>& constraint_jacobian, const std::vector<double>& initial_point) override = 0;
