@@ -91,7 +91,7 @@ double AMPLModel::evaluate_objective(const std::vector<double>& x) const {
    int nerror = 0;
    double result = this->objective_sign * (*(this->asl)->p.Objval)(this->asl, 0, const_cast<double*>(x.data()), &nerror);
    if (0 < nerror) {
-      throw FunctionNumericalError();
+      throw FunctionEvaluationError();
    }
    return result;
 }
@@ -102,7 +102,7 @@ void AMPLModel::evaluate_objective_gradient(const std::vector<double>& x, Sparse
    int nerror = 0;
    (*(this->asl)->p.Objgrd)(this->asl, 0, const_cast<double*>(x.data()), const_cast<double*>(this->ampl_tmp_gradient.data()), &nerror);
    if (0 < nerror) {
-      throw GradientNumericalError();
+      throw GradientEvaluationError();
    }
 
    // partial derivatives in same order as variables in this->asl_->i.Ograd_[0]
@@ -131,7 +131,7 @@ void AMPLModel::evaluate_constraints(const std::vector<double>& x, std::vector<d
    int nerror = 0;
    (*(this->asl)->p.Conval)(this->asl, const_cast<double*>(x.data()), constraints.data(), &nerror);
    if (0 < nerror) {
-      throw FunctionNumericalError();
+      throw FunctionEvaluationError();
    }
 }
 
@@ -145,7 +145,7 @@ void AMPLModel::evaluate_constraint_gradient(const std::vector<double>& x, size_
    (*(this->asl)->p.Congrd)(this->asl, static_cast<int>(j), const_cast<double*>(x.data()), const_cast<double*>(this->ampl_tmp_gradient.data()),
          &nerror);
    if (0 < nerror) {
-      throw GradientNumericalError();
+      throw GradientEvaluationError();
    }
 
    // partial derivatives in ampl_gradient in same order as variables in this->asl_->i.Cgrad_[j]
