@@ -4,8 +4,6 @@
 #ifndef UNO_EVALUATIONERRORS_H
 #define UNO_EVALUATIONERRORS_H
 
-
-
 struct EvaluationError : public std::exception {
    [[nodiscard]] const char* what() const noexcept override = 0;
 };
