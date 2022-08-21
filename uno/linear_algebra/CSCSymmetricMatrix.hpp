@@ -48,8 +48,8 @@ CSCSymmetricMatrix<T>::CSCSymmetricMatrix(size_t dimension, size_t original_capa
 
 template <typename T>
 void CSCSymmetricMatrix<T>::reset() {
+   // empty the matrix
    SymmetricMatrix<T>::reset();
-   this->entries.clear();
    this->row_indices.clear();
    initialize_vector<size_t>(this->column_starts, 0);
    this->current_column = 0;
@@ -128,8 +128,9 @@ T CSCSymmetricMatrix<T>::smallest_diagonal_entry() const {
 }
 
 template <typename T>
-void CSCSymmetricMatrix<T>::set_regularization(const std::function<T(size_t index)>& regularization_function) {
+void CSCSymmetricMatrix<T>::set_regularization(const std::function<T(size_t /*index*/)>& regularization_function) {
    assert(this->use_regularization && "You are trying to regularize a matrix where regularization was not preallocated.");
+
    for (size_t i = 0; i < this->dimension; i++) {
       // the regularization term is located at the end of the column, that is right before the start of the next column
       const size_t k = this->column_starts[i + 1] - 1;
