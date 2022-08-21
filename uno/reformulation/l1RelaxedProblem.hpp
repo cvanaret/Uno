@@ -75,6 +75,8 @@ inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_m
       constraint_violation_coefficient(constraint_violation_coefficient),
       use_proximal_term(use_proximal_term),
       proximal_reference_point(model.number_variables) {
+   assert(0. < constraint_violation_coefficient && "Constraint violation term should have a positive coefficient");
+
    // register equality and inequality constraints
    this->model.equality_constraints.for_each([&](size_t j, size_t i) {
       this->equality_constraints.insert(j, i);
@@ -152,11 +154,10 @@ inline void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, Spar
    this->elastic_variables.positive.for_each_value(insert_elastic_derivative);
    this->elastic_variables.negative.for_each_value(insert_elastic_derivative);
 
-   // proximal term
+   // proximal term: weighted distance between trial iterate and current iterate
    if (this->use_proximal_term && 0. < this->proximal_coefficient) {
       for (size_t i = 0; i < this->model.number_variables; i++) {
          const double weight = this->get_proximal_weight(i);
-         // measure weighted distance between trial iterate and current iterate
          const double derivative = this->proximal_coefficient * std::pow(weight, 2) * (iterate.primals[i] - this->proximal_reference_point[i]);
          objective_gradient.insert(i, derivative);
       }
@@ -333,7 +334,7 @@ inline void l1RelaxedProblem::generate_elastic_variables() {
 
 // construct the list of linearized constraints that are violated
 inline const std::vector<size_t>& l1RelaxedProblem::get_violated_linearized_constraints(const std::vector<double>& x) {
-   // TODO: actually evaluate the linearized constraints
+   // TODO urgent: actually evaluate the linearized constraints
    this->violated_constraints.clear();
    const auto find_violated_constraints = [&](size_t j, size_t elastic_index) {
       if (0. < x[elastic_index]) {
