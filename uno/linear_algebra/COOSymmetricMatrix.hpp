@@ -42,6 +42,7 @@ COOSymmetricMatrix<T>::COOSymmetricMatrix(size_t dimension, size_t original_capa
    row_indices.reserve(this->capacity);
    column_indices.reserve(this->capacity);
 
+   // initialize regularization terms
    if (this->use_regularization) {
       this->initialize_regularization();
    }
@@ -51,7 +52,6 @@ template <typename T>
 void COOSymmetricMatrix<T>::reset() {
    // empty the matrix
    SymmetricMatrix<T>::reset();
-   this->entries.clear();
    this->row_indices.clear();
    this->column_indices.clear();
 
@@ -102,8 +102,9 @@ T COOSymmetricMatrix<T>::smallest_diagonal_entry() const {
 }
 
 template <typename T>
-void COOSymmetricMatrix<T>::set_regularization(const std::function<T(size_t index)>& regularization_function) {
+void COOSymmetricMatrix<T>::set_regularization(const std::function<T(size_t /*index*/)>& regularization_function) {
    assert(this->use_regularization && "You are trying to regularize a matrix where regularization was not preallocated.");
+
    // the regularization terms (that lie at the start of the entries vector) can be directly modified
    for (size_t i = 0; i < this->dimension; i++) {
       this->entries[i] = regularization_function(i);

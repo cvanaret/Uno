@@ -57,6 +57,7 @@ SymmetricMatrix<T>::SymmetricMatrix(size_t dimension, size_t original_capacity, 
 template <typename T>
 void SymmetricMatrix<T>::reset() {
    this->number_nonzeros = 0;
+   this->entries.clear();
 }
 
 template <typename T>
