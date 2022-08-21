@@ -34,7 +34,7 @@ public:
    bool is_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress, double objective_multiplier,
          const ProgressMeasures& predicted_reduction) override;
    void reset() override;
-   void notify_current_progress(const ProgressMeasures& current_progress) override;
+   void register_current_progress(const ProgressMeasures& current_progress) override;
 
 private:
    // pointer to allow polymorphism

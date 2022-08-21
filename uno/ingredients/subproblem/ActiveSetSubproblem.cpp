@@ -62,10 +62,10 @@ void ActiveSetSubproblem::compute_dual_displacements(const NonlinearProblem& pro
    }
 }
 
-double ActiveSetSubproblem::compute_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) {
+void ActiveSetSubproblem::set_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) {
    // optimality measure: original objective value
    iterate.evaluate_objective(problem.model);
-   return iterate.original_evaluations.objective;
+   iterate.nonlinear_progress.optimality = iterate.original_evaluations.objective;
 }
 
 void ActiveSetSubproblem::postprocess_accepted_iterate(const NonlinearProblem& /*problem*/, Iterate& /*iterate*/) {

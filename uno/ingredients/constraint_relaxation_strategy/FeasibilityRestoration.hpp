@@ -50,8 +50,8 @@ private:
    void switch_phase(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction);
    void switch_to_feasibility_restoration(Iterate& current_iterate, const std::vector<size_t>& infeasible_linearized_constraints);
    void switch_to_optimality(Iterate& current_iterate, Iterate& trial_iterate);
-   [[nodiscard]] double compute_infeasibility_measure(Iterate& iterate) override;
-   [[nodiscard]] double compute_optimality_measure(Iterate& iterate, const std::vector<size_t>& infeasible_linearized_constraints);
+   void set_infeasibility_measure(Iterate& iterate) override;
+   void set_restoration_optimality_measure(Iterate& iterate, const std::vector<size_t>& infeasible_linearized_constraints);
 };
 
 #endif //UNO_FEASIBILITYRESTORATION_H

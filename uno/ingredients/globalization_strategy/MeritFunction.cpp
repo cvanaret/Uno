@@ -13,23 +13,23 @@ void MeritFunction::initialize(const Iterate& /*first_iterate*/) {
 void MeritFunction::reset() {
 }
 
-void MeritFunction::notify_current_progress(const ProgressMeasures& /*current_progress*/) {
+void MeritFunction::register_current_progress(const ProgressMeasures& /*current_progress*/) {
 }
 
-bool MeritFunction::is_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
-      double objective_multiplier, const ProgressMeasures& predicted_reduction) {
+bool MeritFunction::is_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress, double objective_multiplier,
+      const ProgressMeasures& predicted_reduction) {
    GlobalizationStrategy::check_finiteness(current_progress);
    GlobalizationStrategy::check_finiteness(trial_progress);
 
    // include the predicted optimality and infeasibility reductions
-   const double constrained_predicted_reduction = predicted_reduction.infeasibility + predicted_reduction.optimality;
+   const double constrained_predicted_reduction = predicted_reduction.optimality + predicted_reduction.infeasibility;
    DEBUG << "Constrained predicted reduction: " << constrained_predicted_reduction << '\n';
-   // compute current exact penalty: rho f + ||c||
+   // compute current exact penalty: rho*f + ||c||
    const double current_exact_merit = objective_multiplier * current_progress.optimality + current_progress.infeasibility;
    const double trial_exact_merit = objective_multiplier * trial_progress.optimality + trial_progress.infeasibility;
    const double actual_reduction = current_exact_merit - trial_exact_merit;
-   DEBUG << "Current merit: " << objective_multiplier << "*" << current_progress.optimality << " + " << current_progress.infeasibility << '\n';
-   DEBUG << "Trial merit:   " << objective_multiplier << "*" << trial_progress.optimality << " + " << trial_progress.infeasibility << '\n';
+   DEBUG << "Current merit: " << current_exact_merit << '\n';
+   DEBUG << "Trial merit:   " << trial_exact_merit << '\n';
    DEBUG << "Actual reduction: " << current_exact_merit << " - " << trial_exact_merit << " = " << actual_reduction << '\n';
 
    // Armijo sufficient decrease condition

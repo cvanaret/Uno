@@ -35,11 +35,11 @@ public:
    [[nodiscard]] virtual size_t get_number_subproblems_solved() const = 0;
 
 protected:
-   const Model& model;
+   const Model& original_model;
    const Norm residual_norm;
    const double small_step_threshold;
 
-   [[nodiscard]] virtual double compute_infeasibility_measure(Iterate& iterate) = 0;
+   virtual void set_infeasibility_measure(Iterate& iterate) = 0;
    [[nodiscard]] static double compute_predicted_infeasibility_reduction(const Model& model, const Iterate& current_iterate, const Direction& direction,
          double step_length);
    [[nodiscard]] bool is_small_step(const Direction& direction) const;

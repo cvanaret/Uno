@@ -62,7 +62,7 @@ protected:
    [[nodiscard]] bool objective_sufficient_decrease(const Iterate& current_iterate, const Direction& direction, const Direction& direction_lowest_violation) const;
    double compute_error(Iterate& current_iterate, const Multipliers& multiplier_displacements);
    void set_multipliers(const Iterate& current_iterate, std::vector<double>& constraint_multipliers);
-   double compute_infeasibility_measure(Iterate& iterate) override;
+   void set_infeasibility_measure(Iterate& iterate) override;
 };
 
 #endif //UNO_L1RELAXATION_H

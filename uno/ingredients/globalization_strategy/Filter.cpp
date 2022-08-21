@@ -112,8 +112,8 @@ bool Filter::improves_current_iterate(double current_infeasibility_measure, doub
           (trial_infeasibility_measure <= this->constants.beta * current_infeasibility_measure);
 }
 
-double Filter::compute_actual_reduction(double current_objective, double /*current_residual*/, double trial_objective) {
-   return current_objective - trial_objective;
+double Filter::compute_actual_reduction(double current_optimality_measure, double /*current_infeasibility_measure*/, double trial_optimality_measure) {
+   return current_optimality_measure - trial_optimality_measure;
 }
 
 //! print: print the content of the filter
@@ -208,18 +208,18 @@ bool NonmonotoneFilter::improves_current_iterate(double current_infeasibility_me
 }
 
 // compute_actual_reduction: check nonmonotone sufficient reduction condition
-double NonmonotoneFilter::compute_actual_reduction(double current_objective, double current_residual, double trial_objective) {
+double NonmonotoneFilter::compute_actual_reduction(double current_optimality_measure, double current_infeasibility_measure, double trial_optimality_measure) {
    // check NON-MONOTONE sufficient reduction condition
    // max penalty among most recent entries
-   double max_objective = current_objective;
+   double max_objective = current_optimality_measure;
    for (size_t i = 0; i < this->max_number_dominated_entries; i++) {
-      const double gamma = (current_residual < this->infeasibility[this->number_entries - i]) ? 1 / this->constants.gamma : this->constants.gamma;
+      const double gamma = (current_infeasibility_measure < this->infeasibility[this->number_entries - i]) ? 1 / this->constants.gamma : this->constants.gamma;
       const double dash_objective = this->optimality[this->number_entries - i] + gamma * (this->infeasibility[this->number_entries - i] -
-         current_residual);
+                                                                                          current_infeasibility_measure);
       max_objective = std::max(max_objective, dash_objective);
    }
    // non-monotone actual reduction
-   return max_objective - trial_objective;
+   return max_objective - trial_optimality_measure;
 }
 
 // FilterFactory class

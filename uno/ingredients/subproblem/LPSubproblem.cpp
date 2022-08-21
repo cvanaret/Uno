@@ -34,6 +34,7 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem
 }
 
 Direction LPSubproblem::compute_second_order_correction(const NonlinearProblem& problem, Iterate& trial_iterate) {
+   // TODO warm start
    DEBUG << "\nEntered SOC computation\n";
    // shift the RHS with the values of the constraints at the trial iterate
    ActiveSetSubproblem::shift_linearized_constraint_bounds(problem, trial_iterate.original_evaluations.constraints);

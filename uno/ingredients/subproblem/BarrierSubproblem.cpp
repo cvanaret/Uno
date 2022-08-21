@@ -114,6 +114,7 @@ void BarrierSubproblem::evaluate_functions(const NonlinearProblem& problem, Iter
       double hessian_diagonal_barrier_term = 0.;
       // objective gradient
       double objective_barrier_term = 0.;
+      // TODO urgent: use the correct bounds (if TR, all the original variables are bounded)
       if (is_finite(problem.get_variable_lower_bound(i))) { // lower bounded
          const double inverse_gap = 1./(current_iterate.primals[i] - this->variable_bounds[i].lb);
          hessian_diagonal_barrier_term += current_iterate.multipliers.lower_bounds[i] * inverse_gap;
@@ -172,8 +173,9 @@ void BarrierSubproblem::assemble_augmented_system(const NonlinearProblem& proble
    // assemble, factorize and regularize the augmented matrix
    this->assemble_augmented_matrix(problem);
    this->augmented_system.factorize_matrix(problem.model, *this->linear_solver);
+   const double dual_regularization_parameter = std::pow(this->barrier_parameter, this->parameters.regularization_exponent);
    this->augmented_system.regularize_matrix(problem.model, *this->linear_solver, problem.number_variables, problem.number_constraints,
-         std::pow(this->barrier_parameter, this->parameters.regularization_exponent));
+         dual_regularization_parameter);
    auto[number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = this->linear_solver->get_inertia();
    assert(number_pos_eigenvalues == problem.number_variables && number_neg_eigenvalues == problem.number_constraints && number_zero_eigenvalues == 0);
 
@@ -208,15 +210,16 @@ void BarrierSubproblem::prepare_for_feasibility_problem(const NonlinearProblem& 
    this->barrier_parameter = std::max(this->barrier_parameter, norm_inf(current_iterate.original_evaluations.constraints));
    DEBUG << "Barrier parameter mu temporarily updated to " << this->barrier_parameter << '\n';
    // since the barrier parameter changed, update the optimality measure (contains barrier terms)
-   current_iterate.nonlinear_progress.optimality = this->compute_optimality_measure(problem, current_iterate);
+   this->set_optimality_measure(problem, current_iterate);
    this->subproblem_definition_changed = true;
 }
 
 // set the elastic variables of the current iterate
 void BarrierSubproblem::set_elastic_variables(const l1RelaxedProblem& problem, Iterate& current_iterate) {
-   // analytically:
-   // n = (mu_over_rho - jacobian_coefficient*this->barrier_constraints[j] + std::sqrt(radical))/2.
-   // p = c(x) + n
+   // c(x) - p + n = 0
+   // analytical expression for p and n:
+   // (mu_over_rho - jacobian_coefficient*this->barrier_constraints[j] + std::sqrt(radical))/2.
+   // where jacobian_coefficient = -1 for p, +1 for n
    // Note: IPOPT uses a '+' sign because they define the Lagrangian as f(x) + \lambda^T c(x)
    const double current_barrier_parameter = this->barrier_parameter;
    const auto elastic_setting_function = [&](Iterate& iterate, size_t j, size_t elastic_index, double jacobian_coefficient,
@@ -241,7 +244,7 @@ PredictedOptimalityReductionModel BarrierSubproblem::generate_predicted_optimali
    });
 }
 
-double BarrierSubproblem::compute_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) {
+void BarrierSubproblem::set_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) {
    this->check_interior_primals(problem, iterate);
    // optimality measure: barrier function
    double objective = 0.;
@@ -260,7 +263,7 @@ double BarrierSubproblem::compute_optimality_measure(const NonlinearProblem& pro
    //iterate.evaluate_objective(problem.model);
    // TODO: parameterize optimality measure with \rho instead of multiplying (here, \rho should not multiply the barrier terms)
    //objective += iterate.original_evaluations.objective;
-   return objective;
+   iterate.nonlinear_progress.optimality = objective;
 }
 
 void BarrierSubproblem::update_barrier_parameter(const NonlinearProblem& problem, const Iterate& current_iterate) {
