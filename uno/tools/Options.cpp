@@ -106,6 +106,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["residual_norm"] = "L1";
       options["l1_use_proximal_term"] = "no";
       options["sparse_format"] = "CSC";
+      options["TR_radius"] = "1";
    }
    else if (preset_name == "byrd") {
       options["mechanism"] = "LS";
