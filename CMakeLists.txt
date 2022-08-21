@@ -58,11 +58,7 @@ set(SRC_FILES
     uno/ingredients/subproblem/HessianModel.cpp
     uno/ingredients/subproblem/PredictedOptimalityReductionModel.cpp
 
-    uno/linear_algebra/SymmetricMatrix.cpp
-    uno/linear_algebra/COOSymmetricMatrix.cpp
-    uno/linear_algebra/CSCSymmetricMatrix.cpp
     uno/linear_algebra/SymmetricMatrixFactory.cpp
-    uno/linear_algebra/SparseVector.cpp
     
     uno/optimization/Model.cpp
     uno/optimization/ModelFactory.cpp

@@ -111,10 +111,56 @@ std::ostream& operator<<(std::ostream& stream, const SparseVector<T>& x) {
 
 // free functions
 
-double norm_1(const SparseVector<double>& x);
-double norm_inf(const SparseVector<double>& x);
-double dot(const std::vector<double>& x, const SparseVector<double>& y);
-double dot(const std::vector<double>& x, const SparseVector<double>& y, const std::function<bool (size_t i)>& predicate);
-void scale(SparseVector<double>& x, double factor);
+template <typename T>
+T norm_1(const SparseVector<T>& x) {
+   T norm = T(0);
+   x.for_each_value([&](T value) {
+      norm += std::abs(value);
+   });
+   return norm;
+}
+
+template <typename T>
+T norm_inf(const SparseVector<T>& x) {
+   T norm = T(0);
+   x.for_each_value([&](T value) {
+      norm = std::max(norm, std::abs(value));
+   });
+   return norm;
+}
+
+template <typename T>
+T dot(const std::vector<T>& x, const SparseVector<T>& y) {
+   T dot_product = T(0);
+   y.for_each([&](size_t i, T yi) {
+      assert(i < x.size() && "Vector.dot: the sparse vector y is larger than the dense vector x");
+      dot_product += x[i] * yi;
+   });
+   return dot_product;
+}
+
+template <typename T>
+T dot(const std::vector<T>& x, const SparseVector<T>& y, const std::function<bool (size_t i)>& predicate) {
+   T dot_product = 0.;
+   y.for_each([&](size_t i, T yi) {
+      assert(i < x.size() && "Vector.dot: the sparse vector y is larger than the dense vector x");
+      if (predicate(i)) {
+         dot_product += x[i] * yi;
+      }
+   });
+   return dot_product;
+}
+
+template <typename T>
+void scale(SparseVector<T>& x, T factor) {
+   if (factor == T(0)) {
+      x.clear();
+   }
+   else {
+      x.transform([=](T entry) {
+         return factor*entry;
+      });
+   }
+}
 
 #endif // UNO_SPARSEVECTOR_H
