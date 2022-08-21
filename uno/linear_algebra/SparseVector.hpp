@@ -141,7 +141,7 @@ T dot(const std::vector<T>& x, const SparseVector<T>& y) {
 
 template <typename T>
 T dot(const std::vector<T>& x, const SparseVector<T>& y, const std::function<bool (size_t i)>& predicate) {
-   T dot_product = 0.;
+   T dot_product = T(0);
    y.for_each([&](size_t i, T yi) {
       assert(i < x.size() && "Vector.dot: the sparse vector y is larger than the dense vector x");
       if (predicate(i)) {
