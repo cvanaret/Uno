@@ -15,7 +15,7 @@ public:
    HessianModel(size_t dimension, size_t maximum_number_nonzeros, const std::string& sparse_format, bool use_regularization);
    virtual ~HessianModel() = default;
 
-   std::unique_ptr<SymmetricMatrix> hessian;
+   std::unique_ptr<SymmetricMatrix<double>> hessian;
    size_t evaluation_count{0};
 
    virtual void evaluate(const NonlinearProblem& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) = 0;
@@ -41,7 +41,7 @@ protected:
    const double regularization_initial_value{};
    const double regularization_increase_factor{};
 
-   void regularize(SymmetricMatrix& hessian, size_t number_original_variables);
+   void regularize(SymmetricMatrix<double>& hessian, size_t number_original_variables);
 };
 
 // HessianModel factory

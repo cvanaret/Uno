@@ -53,8 +53,8 @@ public:
 
    Status status{Status::OPTIMAL}; /*!< Status of the solution */
 
-   double norm{INF}; /*!< Norm of \f$x\f$ */
-   double objective{INF}; /*!< Objective value */
+   double norm{INF<double>}; /*!< Norm of \f$x\f$ */
+   double objective{INF<double>}; /*!< Objective value */
    ActiveSet active_set{}; /*!< Active set */
    std::optional<ConstraintPartition> constraint_partition{std::nullopt}; /*!< Optional partition of feasible and infeasible constraints */
 

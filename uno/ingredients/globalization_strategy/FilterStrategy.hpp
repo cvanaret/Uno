@@ -39,7 +39,7 @@ public:
 private:
    // pointer to allow polymorphism
    const std::unique_ptr<Filter> filter;
-   double initial_filter_upper_bound{INF};
+   double initial_filter_upper_bound{INF<double>};
    const FilterStrategyParameters parameters; /*!< Set of constants */
 
    [[nodiscard]] bool switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const;

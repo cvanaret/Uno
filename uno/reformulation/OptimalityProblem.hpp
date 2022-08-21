@@ -17,7 +17,7 @@ public:
    void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const override;
    void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const override;
    void evaluate_constraint_jacobian(Iterate& iterate, std::vector<SparseVector<double>>& constraint_jacobian) const override;
-   void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix& hessian) const override;
+   void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix<double>& hessian) const override;
 
    [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
    [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
@@ -72,7 +72,7 @@ inline void OptimalityProblem::evaluate_constraint_jacobian(Iterate& iterate, st
 }
 
 inline void OptimalityProblem::evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers,
-      SymmetricMatrix& hessian) const {
+      SymmetricMatrix<double>& hessian) const {
    this->model.evaluate_lagrangian_hessian(x, this->get_objective_multiplier(), multipliers, hessian);
 }
 

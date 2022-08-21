@@ -13,7 +13,7 @@
 #include "tools/Infinity.hpp"
 
 struct Evaluations {
-   double objective{INF}; /*!< Objective value */
+   double objective{INF<double>}; /*!< Objective value */
    std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
    SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
    std::vector<SparseVector<double>> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
@@ -51,12 +51,12 @@ public:
    std::vector<double> lagrangian_gradient;
 
    // residuals
-   double constraint_violation{INF};
-   double stationarity_error{INF};
-   double complementarity_error{INF};
+   double constraint_violation{INF<double>};
+   double stationarity_error{INF<double>};
+   double complementarity_error{INF<double>};
 
    // measures of progress (infeasibility, optimality)
-   ProgressMeasures nonlinear_progress{INF, INF};
+   ProgressMeasures nonlinear_progress{INF<double>, INF<double>};
 
    void evaluate_objective(const Model& model);
    void evaluate_constraints(const Model& model);

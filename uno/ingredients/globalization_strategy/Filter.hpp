@@ -16,7 +16,7 @@ struct FilterConstants {
 
 class Filter {
 public:
-   double upper_bound{INF}; /*!< Upper bound on constraint violation */
+   double upper_bound{INF<double>}; /*!< Upper bound on constraint violation */
 
    explicit Filter(const Options& options);
    virtual ~Filter() = default;

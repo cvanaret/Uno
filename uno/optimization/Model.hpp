@@ -95,7 +95,7 @@ public:
    virtual void evaluate_constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const = 0;
    virtual void evaluate_constraint_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraint_jacobian) const = 0;
    virtual void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
-         SymmetricMatrix& hessian) const = 0;
+         SymmetricMatrix<double>& hessian) const = 0;
 
    virtual void get_initial_primal_point(std::vector<double>& x) const = 0;
    virtual void get_initial_dual_point(std::vector<double>& multipliers) const = 0;

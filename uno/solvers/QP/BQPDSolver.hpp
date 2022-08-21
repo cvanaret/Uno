@@ -40,7 +40,7 @@ public:
 
    Direction solve_QP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
          const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
-         const std::vector<SparseVector<double>>& constraint_jacobian, const SymmetricMatrix& hessian, const std::vector<double>& initial_point)
+         const std::vector<SparseVector<double>>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const std::vector<double>& initial_point)
          override;
 
 private:
@@ -72,7 +72,7 @@ private:
          const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
          const std::vector<SparseVector<double>>& constraint_jacobian, const std::vector<double>& initial_point);
    void analyze_constraints(size_t number_variables, size_t number_constraints, Direction& direction);
-   void save_hessian_to_local_format(const SymmetricMatrix& hessian);
+   void save_hessian_to_local_format(const SymmetricMatrix<double>& hessian);
    void save_gradients_to_local_format(size_t number_constraints, const SparseVector<double>& linear_objective,
          const std::vector<SparseVector<double>>& constraint_jacobian);
 

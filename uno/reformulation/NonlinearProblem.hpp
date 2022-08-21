@@ -36,7 +36,7 @@ public:
    virtual void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const = 0;
    virtual void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const = 0;
    virtual void evaluate_constraint_jacobian(Iterate& iterate, std::vector<SparseVector<double>>& constraint_jacobian) const = 0;
-   virtual void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix& hessian) const = 0;
+   virtual void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix<double>& hessian) const = 0;
 
    [[nodiscard]] size_t get_number_original_variables() const;
    [[nodiscard]] virtual double get_variable_lower_bound(size_t i) const = 0;
