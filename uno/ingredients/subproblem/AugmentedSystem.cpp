@@ -18,7 +18,7 @@ AugmentedSystem::AugmentedSystem(const std::string& sparse_format, size_t max_di
    primal_regularization_slow_increase_factor(options.get_double("primal_regularization_slow_increase_factor")) {
 }
 
-void AugmentedSystem::factorize_matrix(const Model& model, SymmetricIndefiniteLinearSolver& linear_solver) {
+void AugmentedSystem::factorize_matrix(const Model& model, SymmetricIndefiniteLinearSolver<double>& linear_solver) {
    // compute the symbolic factorization only when:
    // the problem has a non-constant augmented system (ie is not an LP or a QP) or it is the first factorization
    if (true || this->number_factorizations == 0 || model.problem_type == NONLINEAR || !model.fixed_hessian_sparsity) {
@@ -28,8 +28,8 @@ void AugmentedSystem::factorize_matrix(const Model& model, SymmetricIndefiniteLi
    this->number_factorizations++;
 }
 
-void AugmentedSystem::regularize_matrix(const Model& model, SymmetricIndefiniteLinearSolver& linear_solver, size_t size_primal_block, size_t size_dual_block,
-      double dual_regularization_parameter) {
+void AugmentedSystem::regularize_matrix(const Model& model, SymmetricIndefiniteLinearSolver<double>& linear_solver, size_t size_primal_block,
+      size_t size_dual_block, double dual_regularization_parameter) {
    DEBUG << "Original matrix\n" << *this->matrix << '\n';
    double primal_regularization = 0.;
    double dual_regularization = 0.;
@@ -96,6 +96,6 @@ void AugmentedSystem::regularize_matrix(const Model& model, SymmetricIndefiniteL
    }
 }
 
-void AugmentedSystem::solve(SymmetricIndefiniteLinearSolver& linear_solver) {
+void AugmentedSystem::solve(SymmetricIndefiniteLinearSolver<double>& linear_solver) {
    linear_solver.solve(*this->matrix, this->rhs, this->solution);
 }

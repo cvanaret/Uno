@@ -27,7 +27,7 @@ struct MA57Factorization {
  *
  *  Interface to the symmetric indefinite linear solver MA57
  */
-class MA57Solver : public SymmetricIndefiniteLinearSolver {
+class MA57Solver : public SymmetricIndefiniteLinearSolver<double> {
 public:
    explicit MA57Solver(size_t max_dimension, size_t max_number_nonzeros);
    ~MA57Solver() override = default;
