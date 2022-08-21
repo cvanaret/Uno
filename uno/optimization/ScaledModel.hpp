@@ -186,9 +186,6 @@ inline void ScaledModel::get_initial_dual_point(std::vector<double>& multipliers
 inline void ScaledModel::postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const {
    this->original_model.postprocess_solution(iterate, termination_status);
 
-   // remove auxiliary variables
-   iterate.set_number_variables(this->number_variables);
-
    // objective value
    iterate.original_evaluations.objective /= scaling.get_objective_scaling();
 
