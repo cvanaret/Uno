@@ -63,7 +63,6 @@ set(SRC_FILES
     uno/linear_algebra/CSCSymmetricMatrix.cpp
     uno/linear_algebra/SymmetricMatrixFactory.cpp
     uno/linear_algebra/SparseVector.cpp
-    uno/linear_algebra/Vector.cpp
     
     uno/optimization/Model.cpp
     uno/optimization/ModelFactory.cpp
@@ -72,7 +71,7 @@ set(SRC_FILES
     
     uno/preprocessing/Preprocessing.cpp
     uno/preprocessing/Scaling.cpp
-
+    
     uno/tools/Statistics.cpp
     uno/tools/Timer.cpp
     uno/tools/Options.cpp

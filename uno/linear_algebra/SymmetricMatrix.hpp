@@ -6,6 +6,8 @@
 
 #include <vector>
 #include <functional>
+#include <cassert>
+#include "Vector.hpp"
 #include "SparseVector.hpp"
 
 class SymmetricMatrix {
@@ -18,6 +20,8 @@ public:
    virtual ~SymmetricMatrix() = default;
 
    virtual void reset();
+   template <typename T>
+   void product(const std::vector<T>& vector, std::vector<T>& result) const;
    [[nodiscard]] double quadratic_product(const std::vector<double>& x, const std::vector<double>& y, size_t block_size) const;
 
    virtual void for_each(const std::function<void (size_t, size_t, double)>& f) const = 0;
@@ -37,5 +41,19 @@ protected:
    // regularization
    const bool use_regularization;
 };
+
+template <typename T>
+void SymmetricMatrix::product(const std::vector<T>& vector, std::vector<T>& result) const {
+   assert(this->dimension == vector.size() && "The matrix and the vector do not have the same size");
+
+   initialize_vector(result, T(0.));
+   this->for_each([&](size_t i, size_t j, double entry) {
+      result[i] += T(entry * vector[j]);
+      // off-diagonal term
+      if (i != j) {
+         result[j] += T(entry * vector[i]);
+      }
+   });
+}
 
 #endif // UNO_SYMMETRICMATRIX_H
