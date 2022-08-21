@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "LPSubproblem.hpp"
-#include "solvers/QP/LPSolverFactory.hpp"
+#include "solvers/LP/LPSolverFactory.hpp"
 
 LPSubproblem::LPSubproblem(size_t max_number_variables, size_t max_number_constraints, const Options& options) :
       ActiveSetSubproblem(max_number_variables, max_number_constraints),

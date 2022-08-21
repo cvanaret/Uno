@@ -25,7 +25,7 @@ lifact, const double rhs[], double x[], double resid[], double work[], int iwork
       double cntl[], int info[], double rinfo[]);
 }
 
-MA57Solver::MA57Solver(size_t max_dimension, size_t max_number_nonzeros) : LinearSolver(max_dimension),
+MA57Solver::MA57Solver(size_t max_dimension, size_t max_number_nonzeros) : SymmetricIndefiniteLinearSolver(max_dimension),
    iwork(5 * max_dimension),
    lwork(static_cast<int>(1.2 * static_cast<double>(max_dimension))),
    work(static_cast<size_t>(this->lwork)), residuals(max_dimension) {

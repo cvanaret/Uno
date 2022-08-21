@@ -7,7 +7,7 @@
 #include <memory>
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/Model.hpp"
-#include "solvers/linear/LinearSolver.hpp"
+#include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 #include "tools/Options.hpp"
 
 struct UnstableRegularization : public std::exception {
@@ -25,10 +25,10 @@ public:
 
    AugmentedSystem(const std::string& sparse_format, size_t max_dimension, size_t max_number_non_zeros, bool use_regularization,
          const Options& options);
-   void factorize_matrix(const Model& model, LinearSolver& linear_solver);
-   void regularize_matrix(const Model& model, LinearSolver& linear_solver, size_t size_primal_block, size_t size_dual_block,
+   void factorize_matrix(const Model& model, SymmetricIndefiniteLinearSolver& linear_solver);
+   void regularize_matrix(const Model& model, SymmetricIndefiniteLinearSolver& linear_solver, size_t size_primal_block, size_t size_dual_block,
          double dual_regularization_parameter);
-   void solve(LinearSolver& linear_solver);
+   void solve(SymmetricIndefiniteLinearSolver& linear_solver);
 
 protected:
    size_t number_factorizations{0};

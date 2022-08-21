@@ -8,7 +8,7 @@
 #include "LPSolver.hpp"
 
 #ifdef HAS_BQPD
-#include "BQPDSolver.hpp"
+#include "solvers/QP/BQPDSolver.hpp"
 #endif
 
 class LPSolverFactory {

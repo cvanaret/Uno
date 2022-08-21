@@ -5,7 +5,7 @@
 #define UNO_QPSOLVER_H
 
 #include <vector>
-#include "LPSolver.hpp"
+#include "solvers/LP/LPSolver.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 
 /*! \class QPSolver

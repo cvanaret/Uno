@@ -5,7 +5,7 @@
 #define UNO_LPSUBPROBLEM_H
 
 #include "ActiveSetSubproblem.hpp"
-#include "solvers/QP/LPSolver.hpp"
+#include "solvers/LP/LPSolver.hpp"
 #include "tools/Options.hpp"
 
 class LPSubproblem : public ActiveSetSubproblem {
