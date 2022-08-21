@@ -12,7 +12,7 @@
 #include "Direction.hpp"
 #include "PredictedOptimalityReductionModel.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "solvers/linear/LinearSolver.hpp"
+#include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 #include "tools/Statistics.hpp"
 
 /*! \class Subproblem

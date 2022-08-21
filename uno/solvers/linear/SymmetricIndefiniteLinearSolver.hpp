@@ -7,10 +7,10 @@
 #include <vector>
 #include <linear_algebra/SymmetricMatrix.hpp>
 
-class LinearSolver {
+class SymmetricIndefiniteLinearSolver {
 public:
-   explicit LinearSolver(size_t max_dimension): max_dimension(max_dimension) {};
-   virtual ~LinearSolver() = default;
+   explicit SymmetricIndefiniteLinearSolver(size_t max_dimension): max_dimension(max_dimension) {};
+   virtual ~SymmetricIndefiniteLinearSolver() = default;
 
    // matrix is not declared const, since Fortran-based solvers may need to temporarily reindex the coordinates
    virtual void factorize(const SymmetricMatrix& matrix) = 0;

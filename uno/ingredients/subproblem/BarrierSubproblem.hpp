@@ -5,7 +5,7 @@
 #define UNO_BARRIERSUBPROBLEM_H
 
 #include "Subproblem.hpp"
-#include "solvers/linear/LinearSolver.hpp"
+#include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 #include "HessianModel.hpp"
 #include "AugmentedSystem.hpp"
 #include "tools/Options.hpp"
@@ -51,7 +51,7 @@ private:
 
    const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
 
-   const std::unique_ptr<LinearSolver> linear_solver;
+   const std::unique_ptr<SymmetricIndefiniteLinearSolver> linear_solver;
    const InteriorPointParameters parameters;
    const double default_multiplier;
 

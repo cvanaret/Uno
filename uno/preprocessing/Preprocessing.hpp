@@ -7,11 +7,11 @@
 #include <vector>
 #include "optimization/Model.hpp"
 #include "optimization/Iterate.hpp"
-#include "solvers/linear/LinearSolver.hpp"
+#include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 
 class Preprocessing {
 public:
-   static void compute_least_square_multipliers(const Model& model, SymmetricMatrix& matrix, std::vector<double>& rhs, LinearSolver& solver,
+   static void compute_least_square_multipliers(const Model& model, SymmetricMatrix& matrix, std::vector<double>& rhs, SymmetricIndefiniteLinearSolver& solver,
          Iterate& current_iterate, std::vector<double>& multipliers, double multipliers_max_norm = 1e3);
 };
 

@@ -6,7 +6,7 @@
 
 #include <vector>
 #include "QPSolver.hpp"
-#include "LPSolver.hpp"
+#include "solvers/LP/LPSolver.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "tools/Options.hpp"

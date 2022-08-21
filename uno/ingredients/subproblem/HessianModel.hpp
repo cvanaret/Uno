@@ -7,7 +7,7 @@
 #include <memory>
 #include <vector>
 #include "reformulation/NonlinearProblem.hpp"
-#include "solvers/linear/LinearSolver.hpp"
+#include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 #include "tools/Options.hpp"
 
 class HessianModel {
@@ -37,7 +37,7 @@ public:
    void evaluate(const NonlinearProblem& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) override;
 
 protected:
-   std::unique_ptr<LinearSolver> linear_solver; /*!< Solver that computes the inertia */
+   std::unique_ptr<SymmetricIndefiniteLinearSolver> linear_solver; /*!< Solver that computes the inertia */
    const double regularization_initial_value{};
    const double regularization_increase_factor{};
 

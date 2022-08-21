@@ -5,7 +5,7 @@
 #define UNO_MA57SOLVER_H
 
 #include <vector>
-#include "LinearSolver.hpp"
+#include "SymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/COOSymmetricMatrix.hpp"
 
 struct MA57Factorization {
@@ -25,9 +25,9 @@ struct MA57Factorization {
  * \brief Interface for MA57
  * see https://github.com/YimingYAN/linSolve
  *
- *  Interface to the sparse symmetric linear solver MA57
+ *  Interface to the symmetric indefinite linear solver MA57
  */
-class MA57Solver : public LinearSolver {
+class MA57Solver : public SymmetricIndefiniteLinearSolver {
 public:
    explicit MA57Solver(size_t max_dimension, size_t max_number_nonzeros);
    ~MA57Solver() override = default;
