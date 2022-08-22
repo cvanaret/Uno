@@ -6,7 +6,7 @@
 
 AugmentedSystem::AugmentedSystem(const std::string& sparse_format, size_t max_dimension, size_t max_number_non_zeros, bool use_regularization,
       const Options& options):
-   matrix(SymmetricMatrixFactory::create(sparse_format, max_dimension, max_number_non_zeros, use_regularization)),
+   matrix(SymmetricMatrixFactory<double>::create(sparse_format, max_dimension, max_number_non_zeros, use_regularization)),
    rhs(max_dimension),
    solution(max_dimension),
    regularization_failure_threshold(options.get_double("regularization_failure_threshold")),
