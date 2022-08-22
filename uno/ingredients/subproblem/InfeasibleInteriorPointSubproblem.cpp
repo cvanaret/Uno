@@ -43,7 +43,8 @@ InfeasibleInteriorPointSubproblem::InfeasibleInteriorPointSubproblem(size_t max_
       }),
       default_multiplier(options.get_double("barrier_default_multiplier")),
       lower_delta_z(max_number_variables), upper_delta_z(max_number_variables),
-      statistics_barrier_parameter_column_order(options.get_int("statistics_barrier_parameter_column_order")) {
+      statistics_barrier_parameter_column_order(options.get_int("statistics_barrier_parameter_column_order")),
+      least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")) {
 }
 
 inline void InfeasibleInteriorPointSubproblem::initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) {
@@ -82,7 +83,7 @@ inline void InfeasibleInteriorPointSubproblem::initialize(Statistics& statistics
       this->augmented_system.matrix->dimension = problem.number_variables + problem.number_constraints;
       this->augmented_system.matrix->reset();
       Preprocessing::compute_least_square_multipliers(problem.model, *this->augmented_system.matrix, this->augmented_system.rhs, *this->linear_solver,
-            first_iterate, first_iterate.multipliers.constraints);
+            first_iterate, first_iterate.multipliers.constraints, this->least_square_multiplier_max_norm);
    }
 }
 

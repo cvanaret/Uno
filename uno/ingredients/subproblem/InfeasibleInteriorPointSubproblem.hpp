@@ -65,6 +65,8 @@ private:
    // statistics table
    int statistics_barrier_parameter_column_order;
 
+   const double least_square_multiplier_max_norm;
+
    void check_interior_primals(const NonlinearProblem& problem, const Iterate& iterate);
    [[nodiscard]] double push_variable_to_interior(double variable_value, const Interval& variable_bounds) const;
    void evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate);
