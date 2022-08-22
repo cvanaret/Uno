@@ -3,7 +3,7 @@
 
 #include <cmath>
 #include <cassert>
-#include "ingredients/subproblem/AugmentedSystem.hpp"
+#include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "BacktrackingLineSearch.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Infinity.hpp"
