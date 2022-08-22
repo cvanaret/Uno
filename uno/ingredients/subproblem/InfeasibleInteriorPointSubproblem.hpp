@@ -26,7 +26,8 @@ struct InteriorPointParameters {
 
 class InfeasibleInteriorPointSubproblem : public Subproblem {
 public:
-   InfeasibleInteriorPointSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros, const Options& options);
+   InfeasibleInteriorPointSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros,
+         const Options& options);
    ~InfeasibleInteriorPointSubproblem() override = default;
 
    void set_initial_point(const std::vector<double>& initial_point) override;
@@ -35,7 +36,6 @@ public:
    [[nodiscard]] double get_proximal_coefficient() const override;
    void prepare_for_feasibility_problem(const NonlinearProblem& problem, Iterate& current_iterate) override;
    void set_elastic_variables(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
-   [[nodiscard]] double push_variable_to_interior(double variable_value, const Interval& variable_bounds) const;
    [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) override;
    [[nodiscard]] Direction compute_second_order_correction(const NonlinearProblem& problem, Iterate& trial_iterate) override;
    [[nodiscard]] PredictedOptimalityReductionModel generate_predicted_optimality_reduction_model(const NonlinearProblem& problem,
@@ -66,6 +66,7 @@ private:
    int statistics_barrier_parameter_column_order;
 
    void check_interior_primals(const NonlinearProblem& problem, const Iterate& iterate);
+   [[nodiscard]] double push_variable_to_interior(double variable_value, const Interval& variable_bounds) const;
    void evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate);
    void update_barrier_parameter(const NonlinearProblem& problem, const Iterate& current_iterate);
    [[nodiscard]] bool is_small_direction(const NonlinearProblem& problem, const Iterate& current_iterate, const Direction& direction) const;
@@ -73,7 +74,6 @@ private:
    [[nodiscard]] double primal_fraction_to_boundary(const NonlinearProblem& problem, const Iterate& current_iterate, double tau);
    [[nodiscard]] double dual_fraction_to_boundary(const NonlinearProblem& problem, const Iterate& current_iterate, double tau);
    void assemble_augmented_system(const NonlinearProblem& problem, const Iterate& current_iterate);
-   void assemble_augmented_matrix(const NonlinearProblem& problem);
    void generate_augmented_rhs(const NonlinearProblem& problem, const Iterate& current_iterate);
    void generate_primal_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate);
    void compute_bound_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate);
