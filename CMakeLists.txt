@@ -50,7 +50,7 @@ set(SRC_FILES
     uno/ingredients/subproblem/Subproblem.cpp
     uno/ingredients/subproblem/SubproblemFactory.cpp
     uno/ingredients/subproblem/Direction.cpp
-    uno/ingredients/subproblem/BarrierSubproblem.cpp
+    uno/ingredients/subproblem/InfeasibleInteriorPointSubproblem.cpp
     uno/ingredients/subproblem/ActiveSetSubproblem.cpp
     uno/ingredients/subproblem/LPSubproblem.cpp
     uno/ingredients/subproblem/QPSubproblem.cpp
