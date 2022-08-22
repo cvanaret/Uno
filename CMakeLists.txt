@@ -57,8 +57,6 @@ set(SRC_FILES
     uno/ingredients/subproblem/QPSubproblem.cpp
     uno/ingredients/subproblem/HessianModel.cpp
     uno/ingredients/subproblem/PredictedOptimalityReductionModel.cpp
-
-    uno/linear_algebra/SymmetricMatrixFactory.cpp
     
     uno/optimization/Model.cpp
     uno/optimization/ModelFactory.cpp

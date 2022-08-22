@@ -6,7 +6,7 @@
 #include "solvers/linear/LinearSolverFactory.hpp"
 
 HessianModel::HessianModel(size_t dimension, size_t maximum_number_nonzeros, const std::string& sparse_format, bool use_regularization) :
-      hessian(SymmetricMatrixFactory::create(sparse_format, dimension, maximum_number_nonzeros, use_regularization)) {
+      hessian(SymmetricMatrixFactory<double>::create(sparse_format, dimension, maximum_number_nonzeros, use_regularization)) {
 }
 
 // Exact Hessian
