@@ -24,7 +24,7 @@ std::unique_ptr<SymmetricMatrix<T>> SymmetricMatrixFactory<T>::create(const std:
    else if (symmetric_matrix_type == "CSC") {
       return std::make_unique<CSCSymmetricMatrix<T>>(dimension, capacity, use_regularization);
    }
-   throw std::invalid_argument("Symmetric matrix type unknown");
+   throw std::invalid_argument("Symmetric matrix type " + symmetric_matrix_type + " unknown");
 }
 
 #endif // UNO_SYMMETRICMATRIXFACTORY_H

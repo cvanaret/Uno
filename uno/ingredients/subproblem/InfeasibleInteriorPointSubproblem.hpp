@@ -24,10 +24,10 @@ struct InteriorPointParameters {
    double push_variable_to_interior_k2;
 };
 
-class BarrierSubproblem : public Subproblem {
+class InfeasibleInteriorPointSubproblem : public Subproblem {
 public:
-   BarrierSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros, const Options& options);
-   ~BarrierSubproblem() override = default;
+   InfeasibleInteriorPointSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros, const Options& options);
+   ~InfeasibleInteriorPointSubproblem() override = default;
 
    void set_initial_point(const std::vector<double>& initial_point) override;
    void initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) override;

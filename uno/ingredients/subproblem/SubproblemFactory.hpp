@@ -6,7 +6,6 @@
 
 #include <memory>
 #include "Subproblem.hpp"
-#include "reformulation/NonlinearProblem.hpp"
 #include "tools/Options.hpp"
 
 class SubproblemFactory {

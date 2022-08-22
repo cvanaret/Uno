@@ -4,7 +4,7 @@
 #include "SubproblemFactory.hpp"
 #include "QPSubproblem.hpp"
 #include "LPSubproblem.hpp"
-#include "BarrierSubproblem.hpp"
+#include "InfeasibleInteriorPointSubproblem.hpp"
 
 std::unique_ptr<Subproblem> SubproblemFactory::create(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros,
       const Options& options) {
@@ -19,7 +19,7 @@ std::unique_ptr<Subproblem> SubproblemFactory::create(size_t max_number_variable
    }
    // interior point method
    else if (subproblem_type == "barrier") {
-      return std::make_unique<BarrierSubproblem>(max_number_variables, max_number_constraints, max_number_hessian_nonzeros, options);
+      return std::make_unique<InfeasibleInteriorPointSubproblem>(max_number_variables, max_number_constraints, max_number_hessian_nonzeros, options);
    }
    throw std::invalid_argument("Subproblem method " + subproblem_type + " is not supported");
 }
