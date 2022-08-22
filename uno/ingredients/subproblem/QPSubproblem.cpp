@@ -71,7 +71,8 @@ OptimalityMeasureModel QPSubproblem::generate_optimality_measure_model(const Ref
 }
 */
 
-PredictedOptimalityReductionModel QPSubproblem::generate_predicted_optimality_reduction_model(const NonlinearProblem& problem, const Direction& direction) const {
+PredictedOptimalityReductionModel QPSubproblem::generate_predicted_optimality_reduction_model(const NonlinearProblem& problem,
+      const Direction& direction) const {
    return PredictedOptimalityReductionModel(-direction.objective, [&]() { // capture "this" and "direction" by reference
       // precompute expensive quantities
       // we need the directional derivative wrt the original variables
