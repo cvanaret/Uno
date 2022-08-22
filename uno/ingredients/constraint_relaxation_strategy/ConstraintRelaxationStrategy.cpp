@@ -33,6 +33,6 @@ double ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction(c
       return model.compute_constraint_violation(component_j, j);
    };
 
-   const double linearized_constraint_violation = norm_1(residual_function, Range(model.number_constraints));
+   const double linearized_constraint_violation = norm_1<double>(residual_function, Range(model.number_constraints));
    return current_iterate.constraint_violation - linearized_constraint_violation;
 }

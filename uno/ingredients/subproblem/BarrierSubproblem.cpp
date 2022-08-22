@@ -289,7 +289,7 @@ bool BarrierSubproblem::is_small_direction(const NonlinearProblem& problem, cons
       return direction.primals[i] / (1 + current_iterate.primals[i]);
    };
    const double machine_epsilon = std::numeric_limits<double>::epsilon();
-   return (norm_inf(relative_measure_function, Range(problem.number_variables)) < this->parameters.small_direction_factor * machine_epsilon);
+   return (norm_inf<double>(relative_measure_function, Range(problem.number_variables)) < this->parameters.small_direction_factor * machine_epsilon);
 }
 
 double BarrierSubproblem::compute_barrier_directional_derivative(const std::vector<double>& solution) const {
@@ -450,7 +450,7 @@ double BarrierSubproblem::compute_central_complementarity_error(const NonlinearP
       }
       return result;
    };
-   const double central_complementarity_error = norm_1(residual_function, Range(problem.number_variables));
+   const double central_complementarity_error = norm_1<double>(residual_function, Range(problem.number_variables));
 
    // scaling
    const double bound_multipliers_norm = norm_1(iterate.multipliers.lower_bounds) + norm_1(iterate.multipliers.upper_bounds);

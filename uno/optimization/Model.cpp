@@ -99,7 +99,7 @@ double Model::compute_constraint_violation(const std::vector<double>& constraint
    auto residual_function = [&](size_t j) {
       return this->compute_constraint_violation(constraints[j], j);
    };
-   return norm(residual_function, constraint_set, residual_norm);
+   return norm<double>(residual_function, constraint_set, residual_norm);
 }
 
 // compute ||c||
@@ -108,7 +108,7 @@ double Model::compute_constraint_violation(const std::vector<double>& constraint
    auto residual_function = [&](size_t j) {
       return this->compute_constraint_violation(constraints[j], j);
    };
-   return norm(residual_function, Range(constraints.size()), residual_norm);
+   return norm<double>(residual_function, Range(constraints.size()), residual_norm);
 }
 
 // complementary slackness error
