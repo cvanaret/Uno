@@ -56,6 +56,7 @@ void ConvexifiedHessian::regularize(SymmetricMatrix<double>& hessian, size_t num
       if (0. < regularization_factor) {
          hessian.set_regularization([&](size_t i) { return (i < number_original_variables) ? regularization_factor : 0.; });
       }
+      // TODO check if sparsity pattern changes. If not, perform symbolic factorization once
       this->linear_solver->do_symbolic_factorization(hessian);
       this->linear_solver->do_numerical_factorization(hessian);
 
