@@ -104,6 +104,17 @@ void InfeasibleInteriorPointSubproblem::check_interior_primals(const NonlinearPr
    }
 }
 
+double InfeasibleInteriorPointSubproblem::push_variable_to_interior(double variable_value, const Interval& variable_bounds) const {
+   const double range = variable_bounds.ub - variable_bounds.lb;
+   const double perturbation_lb = std::min(this->parameters.push_variable_to_interior_k1 * std::max(1., std::abs(variable_bounds.lb)),
+         this->parameters.push_variable_to_interior_k2 * range);
+   const double perturbation_ub = std::min(this->parameters.push_variable_to_interior_k1 * std::max(1., std::abs(variable_bounds.ub)),
+         this->parameters.push_variable_to_interior_k2 * range);
+   variable_value = std::max(variable_value, variable_bounds.lb + perturbation_lb);
+   variable_value = std::min(variable_value, variable_bounds.ub - perturbation_ub);
+   return variable_value;
+}
+
 void InfeasibleInteriorPointSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate) {
    // original Hessian and barrier objective gradient
    this->hessian_model->evaluate(problem, current_iterate.primals, current_iterate.multipliers.constraints);
@@ -116,14 +127,14 @@ void InfeasibleInteriorPointSubproblem::evaluate_functions(const NonlinearProble
       double objective_barrier_term = 0.;
       // TODO urgent: use the correct bounds (if TR, all the original variables are bounded)
       if (is_finite(problem.get_variable_lower_bound(i))) { // lower bounded
-         const double inverse_gap = 1./(current_iterate.primals[i] - this->variable_bounds[i].lb);
-         hessian_diagonal_barrier_term += current_iterate.multipliers.lower_bounds[i] * inverse_gap;
-         objective_barrier_term += -this->barrier_parameter * inverse_gap;
+         const double inverse_distance = 1. / (current_iterate.primals[i] - this->variable_bounds[i].lb);
+         hessian_diagonal_barrier_term += current_iterate.multipliers.lower_bounds[i] * inverse_distance;
+         objective_barrier_term += -this->barrier_parameter * inverse_distance;
       }
       if (is_finite(problem.get_variable_upper_bound(i))) { // upper bounded
-         const double inverse_gap = 1./(current_iterate.primals[i] - this->variable_bounds[i].ub);
-         hessian_diagonal_barrier_term += current_iterate.multipliers.upper_bounds[i] * inverse_gap;
-         objective_barrier_term += -this->barrier_parameter * inverse_gap;
+         const double inverse_distance = 1. / (current_iterate.primals[i] - this->variable_bounds[i].ub);
+         hessian_diagonal_barrier_term += current_iterate.multipliers.upper_bounds[i] * inverse_distance;
+         objective_barrier_term += -this->barrier_parameter * inverse_distance;
       }
       this->hessian_model->hessian->insert(hessian_diagonal_barrier_term, i, i);
       this->objective_gradient.insert(i, objective_barrier_term);
@@ -171,7 +182,7 @@ Direction InfeasibleInteriorPointSubproblem::solve(Statistics& statistics, const
 
 void InfeasibleInteriorPointSubproblem::assemble_augmented_system(const NonlinearProblem& problem, const Iterate& current_iterate) {
    // assemble, factorize and regularize the augmented matrix
-   this->assemble_augmented_matrix(problem);
+   this->augmented_system.assemble_matrix(*this->hessian_model->hessian, this->constraint_jacobian, problem.number_variables, problem.number_constraints);
    this->augmented_system.factorize_matrix(problem.model, *this->linear_solver);
    const double dual_regularization_parameter = std::pow(this->barrier_parameter, this->parameters.regularization_exponent);
    this->augmented_system.regularize_matrix(problem.model, *this->linear_solver, problem.number_variables, problem.number_constraints,
@@ -332,29 +343,6 @@ double InfeasibleInteriorPointSubproblem::dual_fraction_to_boundary(const Nonlin
    return dual_length;
 }
 
-void InfeasibleInteriorPointSubproblem::assemble_augmented_matrix(const NonlinearProblem& problem) {
-   this->augmented_system.matrix->dimension = problem.number_variables + problem.number_constraints;
-   this->augmented_system.matrix->reset();
-   // copy the Lagrangian Hessian in the top left block
-   size_t current_column = 0;
-   this->hessian_model->hessian->for_each([&](size_t i, size_t j, double entry) {
-      // finalize all empty columns
-      for (size_t column = current_column; column < j; column++) {
-         this->augmented_system.matrix->finalize_column(column);
-         current_column++;
-      }
-      this->augmented_system.matrix->insert(entry, i, j);
-   });
-
-   // Jacobian of general constraints
-   for (size_t j = 0; j < problem.number_constraints; j++) {
-      this->constraint_jacobian[j].for_each([&](size_t i, double derivative) {
-         this->augmented_system.matrix->insert(derivative, i, problem.number_variables + j);
-      });
-      this->augmented_system.matrix->finalize_column(j);
-   }
-}
-
 void InfeasibleInteriorPointSubproblem::generate_augmented_rhs(const NonlinearProblem& problem, const Iterate& current_iterate) {
    // generate the right-hand side
    initialize_vector(this->augmented_system.rhs, 0.);
@@ -500,15 +488,4 @@ void InfeasibleInteriorPointSubproblem::print_subproblem_solution(const Nonlinea
 
 void InfeasibleInteriorPointSubproblem::set_initial_point(const std::vector<double>& /*initial_point*/) {
    // do nothing
-}
-
-double InfeasibleInteriorPointSubproblem::push_variable_to_interior(double variable_value, const Interval& variable_bounds) const {
-   const double range = variable_bounds.ub - variable_bounds.lb;
-   const double perturbation_lb = std::min(this->parameters.push_variable_to_interior_k1 * std::max(1., std::abs(variable_bounds.lb)),
-         this->parameters.push_variable_to_interior_k2 * range);
-   const double perturbation_ub = std::min(this->parameters.push_variable_to_interior_k1 * std::max(1., std::abs(variable_bounds.ub)),
-         this->parameters.push_variable_to_interior_k2 * range);
-   variable_value = std::max(variable_value, variable_bounds.lb + perturbation_lb);
-   variable_value = std::min(variable_value, variable_bounds.ub - perturbation_ub);
-   return variable_value;
 }

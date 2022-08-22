@@ -27,6 +27,8 @@ public:
 
    SymmetricIndefiniteLinearSystem(const std::string& sparse_format, size_t max_dimension, size_t max_number_non_zeros, bool use_regularization,
          const Options& options);
+   void assemble_matrix(const SymmetricMatrix<double>& hessian, const std::vector<SparseVector<double>>& constraint_jacobian,
+         size_t number_variables, size_t number_constraints);
    void factorize_matrix(const Model& model, SymmetricIndefiniteLinearSolver<T>& linear_solver);
    void regularize_matrix(const Model& model, SymmetricIndefiniteLinearSolver<T>& linear_solver, size_t size_primal_block, size_t size_dual_block,
          T dual_regularization_parameter);
@@ -57,6 +59,31 @@ SymmetricIndefiniteLinearSystem<T>::SymmetricIndefiniteLinearSystem(const std::s
       primal_regularization_decrease_factor(T(options.get_double("primal_regularization_decrease_factor"))),
       primal_regularization_fast_increase_factor(T(options.get_double("primal_regularization_fast_increase_factor"))),
       primal_regularization_slow_increase_factor(T(options.get_double("primal_regularization_slow_increase_factor"))) {
+}
+
+template <typename T>
+void SymmetricIndefiniteLinearSystem<T>::assemble_matrix(const SymmetricMatrix<double>& hessian, const std::vector<SparseVector<double>>& constraint_jacobian,
+      size_t number_variables, size_t number_constraints) {
+   this->matrix->dimension = number_variables + number_constraints;
+   this->matrix->reset();
+   // copy the Lagrangian Hessian in the top left block
+   size_t current_column = 0;
+   hessian.for_each([&](size_t i, size_t j, double entry) {
+      // finalize all empty columns
+      for (size_t column = current_column; column < j; column++) {
+         this->matrix->finalize_column(column);
+         current_column++;
+      }
+      this->matrix->insert(entry, i, j);
+   });
+
+   // Jacobian of general constraints
+   for (size_t j = 0; j < number_constraints; j++) {
+      constraint_jacobian[j].for_each([&](size_t i, double derivative) {
+         this->matrix->insert(derivative, i, number_variables + j);
+      });
+      this->matrix->finalize_column(j);
+   }
 }
 
 template <typename T>
