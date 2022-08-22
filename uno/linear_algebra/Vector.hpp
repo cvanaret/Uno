@@ -101,7 +101,7 @@ T norm_2(const std::vector<T>& x) {
 
 // compute ||x||_inf
 template <typename T>
-double norm_inf(const std::vector<T>& x) {
+T norm_inf(const std::vector<T>& x) {
    T norm = T(0);
    for (T xi: x) {
       norm = std::max(norm, std::abs(xi));
@@ -130,50 +130,50 @@ T norm(const std::vector<T>& x, Norm norm) {
 // these methods take:
 // - a callback as argument whose parameter is the current index. This avoids forming the vector explicitly
 // - an iterable range of arbitrary type (can be Range, std::vector, etc)
-template <typename RANGE>
-double norm_1(const std::function<double(size_t i)>& f, const RANGE& range) {
-   double norm = 0.;
+template <typename T, typename RANGE>
+T norm_1(const std::function<T(size_t i)>& f, const RANGE& range) {
+   T norm = T(0);
    for (size_t i: range) {
       norm += std::abs(f(i));
    }
    return norm;
 }
 
-template <typename RANGE>
-double norm_inf(const std::vector<double>& x, const RANGE& range) {
-   double norm = 0.;
+template <typename T, typename RANGE>
+T norm_inf(const std::vector<T>& x, const RANGE& range) {
+   T norm = T(0);
    for (size_t i: range) {
       norm = std::max(norm, std::abs(x[i]));
    }
    return norm;
 }
 
-template <typename RANGE>
-double norm_inf(const std::function<double(size_t i)>& f, const RANGE& range) {
-   double norm = 0.;
+template <typename T, typename RANGE>
+T norm_inf(const std::function<T(size_t i)>& f, const RANGE& range) {
+   T norm = T(0);
    for (size_t i: range) {
       norm = std::max(norm, std::abs(f(i)));
    }
    return norm;
 }
 
-template <typename RANGE>
-double norm_2_squared(const std::function<double(size_t i)>& f, const RANGE& range) {
-   double norm = 0.;
+template <typename T, typename RANGE>
+T norm_2_squared(const std::function<T(size_t i)>& f, const RANGE& range) {
+   T norm = T(0);
    for (size_t i: range) {
-      const double x_i = f(i);
+      const T x_i = f(i);
       norm += x_i * x_i;
    }
    return norm;
 }
 
-template <typename RANGE>
-double norm_2(const std::function<double(size_t i)>& f, const RANGE& range) {
+template <typename T, typename RANGE>
+T norm_2(const std::function<T(size_t /*i*/)>& f, const RANGE& range) {
    return std::sqrt(norm_2_squared(f, range));
 }
 
-template <typename RANGE>
-double norm(const std::function<double(size_t i)>& f, RANGE range, Norm norm) {
+template <typename T, typename RANGE>
+T norm(const std::function<T(size_t /*i*/)>& f, RANGE range, Norm norm) {
    // choose the right norm
    if (norm == INF_NORM) {
       return norm_inf(f, range);
