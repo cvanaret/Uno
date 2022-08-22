@@ -10,9 +10,9 @@ Direction::Direction(size_t max_number_variables, size_t max_number_constraints)
    primals(max_number_variables), multipliers(max_number_variables, max_number_constraints) {
 }
 
-void Direction::set_dimensions(size_t number_variables, size_t number_constraints) {
-   this->number_variables = number_variables;
-   this->number_constraints = number_constraints;
+void Direction::set_dimensions(size_t new_number_variables, size_t new_number_constraints) {
+   this->number_variables = new_number_variables;
+   this->number_constraints = new_number_constraints;
 }
 
 std::string status_to_string(Status status) {

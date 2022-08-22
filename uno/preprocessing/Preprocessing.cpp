@@ -10,9 +10,7 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
    current_iterate.evaluate_objective_gradient(model);
    current_iterate.evaluate_constraint_jacobian(model);
 
-   /******************************/
    /* build the symmetric matrix */
-   /******************************/
    matrix.reset();
    // identity block
    for (size_t i = 0; i < model.number_variables; i++) {
@@ -28,9 +26,7 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
    }
    DEBUG << "Matrix for least-square multipliers:\n" << matrix << '\n';
 
-   /********************************/
    /* generate the right-hand side */
-   /********************************/
    initialize_vector(rhs, 0.);
    // objective gradient
    current_iterate.original_evaluations.objective_gradient.for_each([&](size_t i, double derivative) {
@@ -41,10 +37,8 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
       rhs[i] -= current_iterate.multipliers.lower_bounds[i] + current_iterate.multipliers.upper_bounds[i];
    }
    DEBUG << "RHS for least-square multipliers: "; print_vector(DEBUG, rhs, 0, matrix.dimension);
-
-   /********************/
+   
    /* solve the system */
-   /********************/
    std::vector<double> solution(matrix.dimension);
    solver.factorize(matrix);
    solver.solve(matrix, rhs, solution);

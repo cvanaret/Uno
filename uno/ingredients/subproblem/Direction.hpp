@@ -58,7 +58,7 @@ public:
    ActiveSet active_set{}; /*!< Active set */
    std::optional<ConstraintPartition> constraint_partition{std::nullopt}; /*!< Optional partition of feasible and infeasible constraints */
 
-   void set_dimensions(size_t number_variables, size_t number_constraints);
+   void set_dimensions(size_t new_number_variables, size_t new_number_constraints);
    friend std::ostream& operator<<(std::ostream& stream, const Direction& step);
 };
 
