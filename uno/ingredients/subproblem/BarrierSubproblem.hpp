@@ -5,9 +5,9 @@
 #define UNO_BARRIERSUBPROBLEM_H
 
 #include "Subproblem.hpp"
+#include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 #include "HessianModel.hpp"
-#include "AugmentedSystem.hpp"
 #include "tools/Options.hpp"
 
 struct InteriorPointParameters {
@@ -45,7 +45,7 @@ public:
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
 private:
-   AugmentedSystem augmented_system;
+   SymmetricIndefiniteLinearSystem<double> augmented_system;
    double barrier_parameter;
    double previous_barrier_parameter;
    const double tolerance;
