@@ -9,15 +9,12 @@
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem/HessianModel.hpp"
 #include "tools/Options.hpp"
+#include "BarrierParameterUpdateStrategy.hpp"
 
 struct InteriorPointParameters {
    double tau_min;
    double k_sigma;
    double smax;
-   double k_mu;
-   double theta_mu;
-   double k_epsilon;
-   double update_fraction;
    double regularization_exponent;
    double small_direction_factor;
    double push_variable_to_interior_k1;
@@ -46,15 +43,13 @@ public:
 
 private:
    SymmetricIndefiniteLinearSystem<double> augmented_system;
-   double barrier_parameter;
-   double previous_barrier_parameter;
-   const double tolerance;
-
    const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
-
    const std::unique_ptr<SymmetricIndefiniteLinearSolver<double>> linear_solver;
-   const InteriorPointParameters parameters;
+
+   BarrierParameterUpdateStrategy barrier_parameter_update_strategy;
+   double previous_barrier_parameter;
    const double default_multiplier;
+   const InteriorPointParameters parameters;
 
    // preallocated vectors for bound multiplier displacements
    std::vector<double> lower_delta_z{};
@@ -67,6 +62,7 @@ private:
 
    const double least_square_multiplier_max_norm;
 
+   [[nodiscard]] double barrier_parameter() const;
    void check_interior_primals(const NonlinearProblem& problem, const Iterate& iterate);
    [[nodiscard]] double push_variable_to_interior(double variable_value, const Interval& variable_bounds) const;
    void evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate);

@@ -17,9 +17,6 @@ InfeasibleInteriorPointSubproblem::InfeasibleInteriorPointSubproblem(size_t max_
             + max_number_variables * max_number_constraints /* Jacobian (TODO: find out the number of nonzeros) */,
             true, /* use regularization */
             options),
-      barrier_parameter(options.get_double("barrier_initial_parameter")),
-      previous_barrier_parameter(options.get_double("barrier_initial_parameter")),
-      tolerance(options.get_double("tolerance")),
       // the Hessian is not convexified. Instead, the augmented system will be.
       hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), max_number_variables, max_number_hessian_nonzeros,
             false, options)),
@@ -28,20 +25,18 @@ InfeasibleInteriorPointSubproblem::InfeasibleInteriorPointSubproblem(size_t max_
             + max_number_variables + max_number_constraints /* regularization */
             + 2 * max_number_variables /* diagonal barrier terms */
             + max_number_variables * max_number_constraints /* Jacobian */)),
+      barrier_parameter_update_strategy(options),
+      previous_barrier_parameter(options.get_double("barrier_initial_parameter")),
+      default_multiplier(options.get_double("barrier_default_multiplier")),
       parameters({
             options.get_double("barrier_tau_min"),
             options.get_double("barrier_k_sigma"),
             options.get_double("barrier_smax"),
-            options.get_double("barrier_k_mu"),
-            options.get_double("barrier_theta_mu"),
-            options.get_double("barrier_k_epsilon"),
-            options.get_double("barrier_update_fraction"),
             options.get_double("barrier_regularization_exponent"),
             options.get_double("barrier_small_direction_factor"),
             options.get_double("barrier_push_variable_to_interior_k1"),
             options.get_double("barrier_push_variable_to_interior_k2")
       }),
-      default_multiplier(options.get_double("barrier_default_multiplier")),
       lower_delta_z(max_number_variables), upper_delta_z(max_number_variables),
       statistics_barrier_parameter_column_order(options.get_int("statistics_barrier_parameter_column_order")),
       least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")) {
@@ -87,18 +82,22 @@ inline void InfeasibleInteriorPointSubproblem::initialize(Statistics& statistics
    }
 }
 
+double InfeasibleInteriorPointSubproblem::barrier_parameter() const {
+   return this->barrier_parameter_update_strategy.get_barrier_parameter();
+}
+
 void InfeasibleInteriorPointSubproblem::check_interior_primals(const NonlinearProblem& problem, const Iterate& iterate) {
    const double machine_epsilon = std::numeric_limits<double>::epsilon();
    const double factor = std::pow(machine_epsilon, 0.75);
    // check that the current iterate is interior
    for (size_t i: problem.lower_bounded_variables) {
-      if (iterate.primals[i] - this->variable_bounds[i].lb < machine_epsilon*this->barrier_parameter) {
+      if (iterate.primals[i] - this->variable_bounds[i].lb < machine_epsilon*this->barrier_parameter()) {
          this->variable_bounds[i].lb -= factor * std::max(1., this->variable_bounds[i].lb);
       }
       //assert(this->variable_bounds[i].lb < iterate.primals[i] && "Barrier subproblem: a variable is at its lower bound");
    }
    for (size_t i: problem.upper_bounded_variables) {
-      if (this->variable_bounds[i].ub - iterate.primals[i] < machine_epsilon*this->barrier_parameter) {
+      if (this->variable_bounds[i].ub - iterate.primals[i] < machine_epsilon*this->barrier_parameter()) {
          this->variable_bounds[i].ub += factor * std::max(1., this->variable_bounds[i].ub);
       }
       //assert(iterate.primals[i] < this->variable_bounds[i].ub && "Barrier subproblem: a variable is at its upper bound");
@@ -130,12 +129,12 @@ void InfeasibleInteriorPointSubproblem::evaluate_functions(const NonlinearProble
       if (is_finite(problem.get_variable_lower_bound(i))) { // lower bounded
          const double inverse_distance = 1. / (current_iterate.primals[i] - this->variable_bounds[i].lb);
          hessian_diagonal_barrier_term += current_iterate.multipliers.lower_bounds[i] * inverse_distance;
-         objective_barrier_term += -this->barrier_parameter * inverse_distance;
+         objective_barrier_term += -this->barrier_parameter() * inverse_distance;
       }
       if (is_finite(problem.get_variable_upper_bound(i))) { // upper bounded
          const double inverse_distance = 1. / (current_iterate.primals[i] - this->variable_bounds[i].ub);
          hessian_diagonal_barrier_term += current_iterate.multipliers.upper_bounds[i] * inverse_distance;
-         objective_barrier_term += -this->barrier_parameter * inverse_distance;
+         objective_barrier_term += -this->barrier_parameter() * inverse_distance;
       }
       this->hessian_model->hessian->insert(hessian_diagonal_barrier_term, i, i);
       this->objective_gradient.insert(i, objective_barrier_term);
@@ -171,7 +170,7 @@ Direction InfeasibleInteriorPointSubproblem::solve(Statistics& statistics, const
    assert(this->direction.status == Status::OPTIMAL && "The barrier subproblem was not solved to optimality");
    this->number_subproblems_solved++;
    this->generate_primal_dual_direction(problem, current_iterate);
-   statistics.add_statistic("barrier param.", this->barrier_parameter);
+   statistics.add_statistic("barrier param.", this->barrier_parameter());
 
    // determine if the direction is a "small direction" (Section 3.9 of the Ipopt paper) TODO
    const bool is_small_direction = InfeasibleInteriorPointSubproblem::is_small_direction(problem, current_iterate, this->direction);
@@ -185,7 +184,7 @@ void InfeasibleInteriorPointSubproblem::assemble_augmented_system(const Nonlinea
    // assemble, factorize and regularize the augmented matrix
    this->augmented_system.assemble_matrix(*this->hessian_model->hessian, this->constraint_jacobian, problem.number_variables, problem.number_constraints);
    this->augmented_system.factorize_matrix(problem.model, *this->linear_solver);
-   const double dual_regularization_parameter = std::pow(this->barrier_parameter, this->parameters.regularization_exponent);
+   const double dual_regularization_parameter = std::pow(this->barrier_parameter(), this->parameters.regularization_exponent);
    this->augmented_system.regularize_matrix(problem.model, *this->linear_solver, problem.number_variables, problem.number_constraints,
          dual_regularization_parameter);
    auto[number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = this->linear_solver->get_inertia();
@@ -212,15 +211,16 @@ Direction InfeasibleInteriorPointSubproblem::compute_second_order_correction(con
 }
 
 double InfeasibleInteriorPointSubproblem::get_proximal_coefficient() const {
-   return std::sqrt(this->barrier_parameter);
+   return std::sqrt(this->barrier_parameter());
 }
 
 void InfeasibleInteriorPointSubproblem::prepare_for_feasibility_problem(const NonlinearProblem& problem, Iterate& current_iterate) {
    // if we're building the feasibility subproblem, temporarily update the objective multiplier
    this->solving_feasibility_problem = true;
-   this->previous_barrier_parameter = this->barrier_parameter;
-   this->barrier_parameter = std::max(this->barrier_parameter, norm_inf(current_iterate.original_evaluations.constraints));
-   DEBUG << "Barrier parameter mu temporarily updated to " << this->barrier_parameter << '\n';
+   this->previous_barrier_parameter = this->barrier_parameter();
+   const double new_barrier_parameter = std::max(this->barrier_parameter(), norm_inf(current_iterate.original_evaluations.constraints));
+   this->barrier_parameter_update_strategy.set_barrier_parameter(new_barrier_parameter);
+   DEBUG << "Barrier parameter mu temporarily updated to " << this->barrier_parameter() << '\n';
    // since the barrier parameter changed, update the optimality measure (contains barrier terms)
    this->set_optimality_measure(problem, current_iterate);
    this->subproblem_definition_changed = true;
@@ -233,7 +233,7 @@ void InfeasibleInteriorPointSubproblem::set_elastic_variables(const l1RelaxedPro
    // (mu_over_rho - jacobian_coefficient*this->barrier_constraints[j] + std::sqrt(radical))/2.
    // where jacobian_coefficient = -1 for p, +1 for n
    // Note: IPOPT uses a '+' sign because they define the Lagrangian as f(x) + \lambda^T c(x)
-   const double current_barrier_parameter = this->barrier_parameter;
+   const double current_barrier_parameter = this->barrier_parameter();
    const auto elastic_setting_function = [&](Iterate& iterate, size_t j, size_t elastic_index, double jacobian_coefficient,
          double constraint_violation_coefficient) {
       // precomputations
@@ -267,7 +267,7 @@ void InfeasibleInteriorPointSubproblem::set_optimality_measure(const NonlinearPr
    for (size_t i: problem.upper_bounded_variables) {
       objective -= std::log(this->variable_bounds[i].ub - iterate.primals[i]);
    }
-   objective *= this->barrier_parameter;
+   objective *= this->barrier_parameter();
    assert(is_finite(objective) && "The barrier value is infinite");
    // original objective value
    const double test = problem.evaluate_objective(iterate);
@@ -282,18 +282,9 @@ void InfeasibleInteriorPointSubproblem::update_barrier_parameter(const Nonlinear
    // scaled error terms
    const double stationarity_error = current_iterate.stationarity_error / this->compute_KKT_error_scaling(problem, current_iterate);
    const double central_complementarity_error = this->compute_central_complementarity_error(problem, current_iterate);
-   const double error = std::max({stationarity_error, current_iterate.constraint_violation, central_complementarity_error});
-   DEBUG << "Max scaled primal-dual error for barrier subproblem is " << error << '\n';
-
-   // update the barrier parameter (Eq. 7 in Ipopt paper)
-   const double tolerance_fraction = this->tolerance / this->parameters.update_fraction;
-   while (error <= this->parameters.k_epsilon * this->barrier_parameter && tolerance_fraction < this->barrier_parameter) {
-      this->barrier_parameter = std::max(tolerance_fraction, std::min(this->parameters.k_mu * this->barrier_parameter,
-            std::pow(this->barrier_parameter, this->parameters.theta_mu)));
-      DEBUG << "Barrier parameter mu updated to " << this->barrier_parameter << '\n';
-      // signal the redefinition of the problem to the globalization strategy
-      this->subproblem_definition_changed = true;
-   }
+   const double primal_dual_error = std::max({stationarity_error, current_iterate.constraint_violation, central_complementarity_error});
+   DEBUG << "Max scaled primal-dual error for barrier subproblem is " << primal_dual_error << '\n';
+   this->subproblem_definition_changed = this->barrier_parameter_update_strategy.update_barrier_parameter(primal_dual_error);
 }
 
 bool InfeasibleInteriorPointSubproblem::is_small_direction(const NonlinearProblem& problem, const Iterate& current_iterate, const Direction& direction) const {
@@ -377,7 +368,7 @@ void InfeasibleInteriorPointSubproblem::generate_primal_dual_direction(const Non
    this->print_subproblem_solution(problem);
 
    // "fraction to boundary" rule for primal variables and constraints multipliers
-   const double tau = std::max(this->parameters.tau_min, 1. - this->barrier_parameter);
+   const double tau = std::max(this->parameters.tau_min, 1. - this->barrier_parameter());
    const double primal_step_length = this->primal_fraction_to_boundary(problem, current_iterate, tau);
    for (size_t i = 0; i < problem.number_variables; i++) {
       this->direction.primals[i] = primal_step_length * this->augmented_system.solution[i];
@@ -407,14 +398,14 @@ void InfeasibleInteriorPointSubproblem::compute_bound_dual_direction(const Nonli
    initialize_vector(this->upper_delta_z, 0.);
    for (size_t i: problem.lower_bounded_variables) {
       const double distance_to_bound = current_iterate.primals[i] - this->variable_bounds[i].lb;
-      this->lower_delta_z[i] = (this->barrier_parameter - this->augmented_system.solution[i] * current_iterate.multipliers.lower_bounds[i]) / distance_to_bound -
-                               current_iterate.multipliers.lower_bounds[i];
+      this->lower_delta_z[i] = (this->barrier_parameter() - this->augmented_system.solution[i] * current_iterate.multipliers.lower_bounds[i]) /
+                               distance_to_bound - current_iterate.multipliers.lower_bounds[i];
       assert(is_finite(this->lower_delta_z[i]) && "The displacement lower_delta_z is infinite");
    }
    for (size_t i: problem.upper_bounded_variables) {
       const double distance_to_bound = current_iterate.primals[i] - this->variable_bounds[i].ub;
-      this->upper_delta_z[i] = (this->barrier_parameter - this->augmented_system.solution[i] * current_iterate.multipliers.upper_bounds[i]) / distance_to_bound -
-                               current_iterate.multipliers.upper_bounds[i];
+      this->upper_delta_z[i] = (this->barrier_parameter() - this->augmented_system.solution[i] * current_iterate.multipliers.upper_bounds[i]) /
+                               distance_to_bound - current_iterate.multipliers.upper_bounds[i];
       assert(is_finite(this->upper_delta_z[i]) && "The displacement upper_delta_z is infinite");
    }
 }
@@ -432,10 +423,10 @@ double InfeasibleInteriorPointSubproblem::compute_central_complementarity_error(
    const auto residual_function = [&](size_t i) {
       double result = 0.;
       if (is_finite(this->variable_bounds[i].lb)) {
-         result += iterate.multipliers.lower_bounds[i] * (iterate.primals[i] - this->variable_bounds[i].lb) - this->barrier_parameter;
+         result += iterate.multipliers.lower_bounds[i] * (iterate.primals[i] - this->variable_bounds[i].lb) - this->barrier_parameter();
       }
       if (is_finite(this->variable_bounds[i].ub)) {
-         result += iterate.multipliers.upper_bounds[i] * (iterate.primals[i] - this->variable_bounds[i].ub) - this->barrier_parameter;
+         result += iterate.multipliers.upper_bounds[i] * (iterate.primals[i] - this->variable_bounds[i].ub) - this->barrier_parameter();
       }
       return result;
    };
@@ -450,21 +441,21 @@ double InfeasibleInteriorPointSubproblem::compute_central_complementarity_error(
 
 void InfeasibleInteriorPointSubproblem::postprocess_accepted_iterate(const NonlinearProblem& problem, Iterate& iterate) {
    if (this->solving_feasibility_problem) {
-      this->barrier_parameter = this->previous_barrier_parameter;
+      this->barrier_parameter_update_strategy.set_barrier_parameter(this->previous_barrier_parameter);
       this->solving_feasibility_problem = false;
       // TODO compute least-square multipliers
    }
 
    // rescale the bound multipliers (Eq. 16 in Ipopt paper)
    for (size_t i: problem.lower_bounded_variables) {
-      const double coefficient = this->barrier_parameter / (iterate.primals[i] - this->variable_bounds[i].lb);
+      const double coefficient = this->barrier_parameter() / (iterate.primals[i] - this->variable_bounds[i].lb);
       const double lb = coefficient / this->parameters.k_sigma;
       const double ub = coefficient * this->parameters.k_sigma;
       assert(lb <= ub && "Barrier subproblem: the bounds are in the wrong order in the lower bound multiplier reset");
       iterate.multipliers.lower_bounds[i] = std::max(std::min(iterate.multipliers.lower_bounds[i], ub), lb);
    }
    for (size_t i: problem.upper_bounded_variables) {
-      const double coefficient = this->barrier_parameter / (iterate.primals[i] - this->variable_bounds[i].ub);
+      const double coefficient = this->barrier_parameter() / (iterate.primals[i] - this->variable_bounds[i].ub);
       const double lb = coefficient * this->parameters.k_sigma;
       const double ub = coefficient / this->parameters.k_sigma;
       assert(lb <= ub && "Barrier subproblem: the bounds are in the wrong order in the upper bound multiplier reset");
