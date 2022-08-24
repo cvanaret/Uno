@@ -53,6 +53,7 @@ set(SRC_FILES
     uno/ingredients/subproblem/HessianModel.cpp
     uno/ingredients/subproblem/PredictedOptimalityReductionModel.cpp
     uno/ingredients/subproblem/interior_point/InfeasibleInteriorPointSubproblem.cpp
+    uno/ingredients/subproblem/interior_point/BarrierParameterUpdateStrategy.cpp
     uno/ingredients/subproblem/active_set/ActiveSetSubproblem.cpp
     uno/ingredients/subproblem/active_set/LPSubproblem.cpp
     uno/ingredients/subproblem/active_set/QPSubproblem.cpp
