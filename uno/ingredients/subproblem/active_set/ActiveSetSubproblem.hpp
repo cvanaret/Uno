@@ -4,7 +4,7 @@
 #ifndef UNO_ACTIVESETSUBPROBLEM_H
 #define UNO_ACTIVESETSUBPROBLEM_H
 
-#include "Subproblem.hpp"
+#include "ingredients/subproblem/Subproblem.hpp"
 
 class ActiveSetSubproblem : public Subproblem {
 public:

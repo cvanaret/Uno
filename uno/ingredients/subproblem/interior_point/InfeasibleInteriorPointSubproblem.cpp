@@ -29,17 +29,17 @@ InfeasibleInteriorPointSubproblem::InfeasibleInteriorPointSubproblem(size_t max_
             + 2 * max_number_variables /* diagonal barrier terms */
             + max_number_variables * max_number_constraints /* Jacobian */)),
       parameters({
-         options.get_double("barrier_tau_min"),
-         options.get_double("barrier_k_sigma"),
-         options.get_double("barrier_smax"),
-         options.get_double("barrier_k_mu"),
-         options.get_double("barrier_theta_mu"),
-         options.get_double("barrier_k_epsilon"),
-         options.get_double("barrier_update_fraction"),
-         options.get_double("barrier_regularization_exponent"),
-         options.get_double("barrier_small_direction_factor"),
-         options.get_double("barrier_push_variable_to_interior_k1"),
-         options.get_double("barrier_push_variable_to_interior_k2")
+            options.get_double("barrier_tau_min"),
+            options.get_double("barrier_k_sigma"),
+            options.get_double("barrier_smax"),
+            options.get_double("barrier_k_mu"),
+            options.get_double("barrier_theta_mu"),
+            options.get_double("barrier_k_epsilon"),
+            options.get_double("barrier_update_fraction"),
+            options.get_double("barrier_regularization_exponent"),
+            options.get_double("barrier_small_direction_factor"),
+            options.get_double("barrier_push_variable_to_interior_k1"),
+            options.get_double("barrier_push_variable_to_interior_k2")
       }),
       default_multiplier(options.get_double("barrier_default_multiplier")),
       lower_delta_z(max_number_variables), upper_delta_z(max_number_variables),
@@ -444,7 +444,7 @@ double InfeasibleInteriorPointSubproblem::compute_central_complementarity_error(
    // scaling
    const double bound_multipliers_norm = norm_1(iterate.multipliers.lower_bounds) + norm_1(iterate.multipliers.upper_bounds);
    const double scaling = std::max(this->parameters.smax, bound_multipliers_norm / static_cast<double>(problem.number_variables)) /
-         this->parameters.smax;
+                          this->parameters.smax;
    return central_complementarity_error / scaling;
 }
 

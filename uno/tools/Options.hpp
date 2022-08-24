@@ -5,6 +5,7 @@
 #define UNO_OPTIONS_H
 
 #include <map>
+#include <string>
 
 class Options {
 public:

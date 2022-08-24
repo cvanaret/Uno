@@ -2,9 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "SubproblemFactory.hpp"
-#include "QPSubproblem.hpp"
-#include "LPSubproblem.hpp"
-#include "InfeasibleInteriorPointSubproblem.hpp"
+#include "ingredients/subproblem/active_set/QPSubproblem.hpp"
+#include "ingredients/subproblem/active_set/LPSubproblem.hpp"
+#include "ingredients/subproblem/interior_point/InfeasibleInteriorPointSubproblem.hpp"
 
 std::unique_ptr<Subproblem> SubproblemFactory::create(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros,
       const Options& options) {
@@ -17,7 +17,7 @@ std::unique_ptr<Subproblem> SubproblemFactory::create(size_t max_number_variable
    else if (subproblem_type == "LP") {
       return std::make_unique<LPSubproblem>(max_number_variables, max_number_constraints, options);
    }
-   // interior point method
+   // interior-point method
    else if (subproblem_type == "barrier") {
       return std::make_unique<InfeasibleInteriorPointSubproblem>(max_number_variables, max_number_constraints, max_number_hessian_nonzeros, options);
    }

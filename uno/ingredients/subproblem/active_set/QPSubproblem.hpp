@@ -5,7 +5,7 @@
 #define UNO_QPSUBPROBLEM_H
 
 #include "ActiveSetSubproblem.hpp"
-#include "HessianModel.hpp"
+#include "ingredients/subproblem/HessianModel.hpp"
 #include "solvers/QP/QPSolver.hpp"
 #include "tools/Options.hpp"
 

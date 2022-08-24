@@ -122,7 +122,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
          failure = true;
       }
    }
-   throw std::runtime_error("Line search: maximum number of iterations reached");
+   throw std::runtime_error("Line search: maximum number of iterations reached\n");
 }
 
 void BacktrackingLineSearch::decrease_step_length() {
