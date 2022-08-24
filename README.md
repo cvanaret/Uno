@@ -38,7 +38,7 @@ This is joint work with Sven Leyffer (Argonne National Laboratory).
 Performance profile (function evaluations)
 
 <p align="center">
-   <img src="docs/figures/uno_performance_profile.png" alt="Performance profile of Uno 1.0" width="65%" />
+   <img src="docs/figures/uno_performance_profile.png" alt="Performance profile of Uno 1.0" width="75%" />
 </p>
 
 ## How to cite Uno
