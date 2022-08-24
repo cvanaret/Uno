@@ -1,13 +1,13 @@
 // Copyright (c) 2022 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_BARRIERSUBPROBLEM_H
-#define UNO_BARRIERSUBPROBLEM_H
+#ifndef UNO_INFEASIBLEINTERIORPOINTSUBPROBLEM_H
+#define UNO_INFEASIBLEINTERIORPOINTSUBPROBLEM_H
 
-#include "Subproblem.hpp"
+#include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
-#include "HessianModel.hpp"
+#include "ingredients/subproblem/HessianModel.hpp"
 #include "tools/Options.hpp"
 
 struct InteriorPointParameters {
@@ -84,4 +84,4 @@ private:
    void print_subproblem_solution(const NonlinearProblem& problem) const;
 };
 
-#endif // UNO_BARRIERSUBPROBLEM_H
+#endif // UNO_INFEASIBLEINTERIORPOINTSUBPROBLEM_H

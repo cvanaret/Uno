@@ -50,12 +50,12 @@ set(SRC_FILES
     uno/ingredients/subproblem/Subproblem.cpp
     uno/ingredients/subproblem/SubproblemFactory.cpp
     uno/ingredients/subproblem/Direction.cpp
-    uno/ingredients/subproblem/InfeasibleInteriorPointSubproblem.cpp
-    uno/ingredients/subproblem/ActiveSetSubproblem.cpp
-    uno/ingredients/subproblem/LPSubproblem.cpp
-    uno/ingredients/subproblem/QPSubproblem.cpp
     uno/ingredients/subproblem/HessianModel.cpp
     uno/ingredients/subproblem/PredictedOptimalityReductionModel.cpp
+    uno/ingredients/subproblem/interior_point/InfeasibleInteriorPointSubproblem.cpp
+    uno/ingredients/subproblem/active_set/ActiveSetSubproblem.cpp
+    uno/ingredients/subproblem/active_set/LPSubproblem.cpp
+    uno/ingredients/subproblem/active_set/QPSubproblem.cpp
     
     uno/optimization/Model.cpp
     uno/optimization/ModelFactory.cpp
