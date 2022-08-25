@@ -9,7 +9,8 @@
 #include "tools/Range.hpp"
 #include "tools/Infinity.hpp"
 
-InfeasibleInteriorPointSubproblem::InfeasibleInteriorPointSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros, const Options& options):
+InfeasibleInteriorPointSubproblem::InfeasibleInteriorPointSubproblem(size_t max_number_variables, size_t max_number_constraints,
+         size_t max_number_hessian_nonzeros, const Options& options):
       Subproblem(max_number_variables, max_number_constraints),
       augmented_system(options.get_string("sparse_format"), max_number_variables + max_number_constraints,
             max_number_hessian_nonzeros
@@ -281,7 +282,7 @@ void InfeasibleInteriorPointSubproblem::set_optimality_measure(const NonlinearPr
 void InfeasibleInteriorPointSubproblem::update_barrier_parameter(const NonlinearProblem& problem, const Iterate& current_iterate) {
    // scaled error terms
    const double stationarity_error = current_iterate.stationarity_error / this->compute_KKT_error_scaling(problem, current_iterate);
-   const double central_complementarity_error = this->compute_central_complementarity_error(problem, current_iterate);
+   const double central_complementarity_error = this->compute_shifted_complementarity_error(problem, current_iterate, this->barrier_parameter());
    const double primal_dual_error = std::max({stationarity_error, current_iterate.constraint_violation, central_complementarity_error});
    DEBUG << "Max scaled primal-dual error for barrier subproblem is " << primal_dual_error << '\n';
    this->subproblem_definition_changed = this->barrier_parameter_update_strategy.update_barrier_parameter(primal_dual_error);
@@ -418,25 +419,27 @@ double InfeasibleInteriorPointSubproblem::compute_KKT_error_scaling(const Nonlin
    return std::max(this->parameters.smax, multipliers_norm / static_cast<double>(total_size)) / this->parameters.smax;
 }
 
-double InfeasibleInteriorPointSubproblem::compute_central_complementarity_error(const NonlinearProblem& problem, const Iterate& iterate) const {
-   // variable bounds TODO use problem.lower_bounded_variables once the TR is integrated into the problem
+double InfeasibleInteriorPointSubproblem::compute_shifted_complementarity_error(const NonlinearProblem& problem, const Iterate& iterate,
+      double shift_value) const {
+   // variable bounds
+   // TODO use problem.lower_bounded_variables once the TR is integrated into the problem
    const auto residual_function = [&](size_t i) {
       double result = 0.;
       if (is_finite(this->variable_bounds[i].lb)) {
-         result += iterate.multipliers.lower_bounds[i] * (iterate.primals[i] - this->variable_bounds[i].lb) - this->barrier_parameter();
+         result += iterate.multipliers.lower_bounds[i] * (iterate.primals[i] - this->variable_bounds[i].lb) - shift_value;
       }
       if (is_finite(this->variable_bounds[i].ub)) {
-         result += iterate.multipliers.upper_bounds[i] * (iterate.primals[i] - this->variable_bounds[i].ub) - this->barrier_parameter();
+         result += iterate.multipliers.upper_bounds[i] * (iterate.primals[i] - this->variable_bounds[i].ub) - shift_value;
       }
       return result;
    };
-   const double central_complementarity_error = norm_1<double>(residual_function, Range(problem.number_variables));
+   const double shifted_complementarity_error = norm_1<double>(residual_function, Range(problem.number_variables));
 
    // scaling
    const double bound_multipliers_norm = norm_1(iterate.multipliers.lower_bounds) + norm_1(iterate.multipliers.upper_bounds);
    const double scaling = std::max(this->parameters.smax, bound_multipliers_norm / static_cast<double>(problem.number_variables)) /
                           this->parameters.smax;
-   return central_complementarity_error / scaling;
+   return shifted_complementarity_error / scaling;
 }
 
 void InfeasibleInteriorPointSubproblem::postprocess_accepted_iterate(const NonlinearProblem& problem, Iterate& iterate) {
