@@ -28,47 +28,17 @@ message(STATUS "GoogleTest: WITH_GTEST=${WITH_GTEST}")
 set(DIRECTORIES uno)
 
 # source files
-set(SRC_FILES
+file(GLOB UNO_SOURCE_FILES
     uno/Uno.cpp
-
-    uno/ingredients/globalization_mechanism/GlobalizationMechanism.cpp
-    uno/ingredients/globalization_mechanism/GlobalizationMechanismFactory.cpp
-    uno/ingredients/globalization_mechanism/BacktrackingLineSearch.cpp
-    uno/ingredients/globalization_mechanism/TrustRegionStrategy.cpp
-
-    uno/ingredients/globalization_strategy/GlobalizationStrategy.cpp
-    uno/ingredients/globalization_strategy/GlobalizationStrategyFactory.cpp
-    uno/ingredients/globalization_strategy/FilterStrategy.cpp
-    uno/ingredients/globalization_strategy/Filter.cpp
-    uno/ingredients/globalization_strategy/MeritFunction.cpp
-    
-    uno/ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategy.cpp
-    uno/ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategyFactory.cpp
-    uno/ingredients/constraint_relaxation_strategy/l1Relaxation.cpp
-    uno/ingredients/constraint_relaxation_strategy/FeasibilityRestoration.cpp
-    
-    uno/ingredients/subproblem/Subproblem.cpp
-    uno/ingredients/subproblem/SubproblemFactory.cpp
-    uno/ingredients/subproblem/Direction.cpp
-    uno/ingredients/subproblem/HessianModel.cpp
-    uno/ingredients/subproblem/PredictedOptimalityReductionModel.cpp
-    uno/ingredients/subproblem/interior_point/InfeasibleInteriorPointSubproblem.cpp
-    uno/ingredients/subproblem/interior_point/BarrierParameterUpdateStrategy.cpp
-    uno/ingredients/subproblem/active_set/ActiveSetSubproblem.cpp
-    uno/ingredients/subproblem/active_set/LPSubproblem.cpp
-    uno/ingredients/subproblem/active_set/QPSubproblem.cpp
-    
-    uno/optimization/Model.cpp
-    uno/optimization/ModelFactory.cpp
-    uno/optimization/Iterate.cpp
-    uno/optimization/Result.cpp
-    
-    uno/preprocessing/Preprocessing.cpp
-    uno/preprocessing/Scaling.cpp
-    
-    uno/tools/Statistics.cpp
-    uno/tools/Timer.cpp
-    uno/tools/Options.cpp
+    uno/ingredients/globalization_mechanism/*.cpp
+    uno/ingredients/globalization_strategy/*.cpp
+    uno/ingredients/constraint_relaxation_strategy/*.cpp
+    uno/ingredients/subproblem/*.cpp
+    uno/ingredients/subproblem/active_set/*.cpp
+    uno/ingredients/subproblem/interior_point/*.cpp
+    uno/optimization/*.cpp
+    uno/preprocessing/*.cpp
+    uno/tools/*.cpp
 )
 
 # find libraries
@@ -96,11 +66,11 @@ foreach(library_name IN LISTS OPTIONAL_LIBS)
         
         # add the corresponding sources
         if(${library_name} STREQUAL amplsolver)
-            list(APPEND SRC_FILES uno/interfaces/AMPL/AMPLModel.cpp)
+            list(APPEND UNO_SOURCE_FILES uno/interfaces/AMPL/AMPLModel.cpp)
         elseif(${library_name} STREQUAL bqpd)
-            list(APPEND SRC_FILES uno/solvers/QP/BQPDSolver.cpp uno/solvers/QP/wdotd.f)
+            list(APPEND UNO_SOURCE_FILES uno/solvers/QP/BQPDSolver.cpp uno/solvers/QP/wdotd.f)
         elseif(${library_name} STREQUAL ma57)
-            list(APPEND SRC_FILES uno/solvers/linear/MA57Solver.cpp)
+            list(APPEND UNO_SOURCE_FILES uno/solvers/linear/MA57Solver.cpp)
         endif()
 	endif()
 endforeach(library_name)
@@ -123,7 +93,7 @@ list(APPEND LIBS OpenMP::OpenMP_CXX)
 #######
 # Uno #
 #######
-add_library(uno STATIC ${SRC_FILES})
+add_library(uno STATIC ${UNO_SOURCE_FILES})
 target_include_directories(uno PUBLIC ${DIRECTORIES})
 
 # link the libraries
@@ -144,13 +114,10 @@ target_link_libraries(uno_ampl PUBLIC uno)
 if(WITH_GTEST)
     find_package(GTest CONFIG REQUIRED)
     if(NOT ${GTest}_DIR STREQUAL "${GTest}-NOTFOUND")
-        set(TESTS_SRC_FILES
-            unotest/unotest.cpp
-            unotest/MA57SolverTests.cpp
-            unotest/PredictedReductionModelTests.cpp
-            unotest/SparseVectorTests.cpp
+        file(GLOB TESTS_UNO_SOURCE_FILES
+            unotest/*.cpp
         )
-        add_executable(run_unotest ${TESTS_SRC_FILES})
+        add_executable(run_unotest ${TESTS_UNO_SOURCE_FILES})
         target_link_libraries(run_unotest PUBLIC GTest::gtest uno)
     endif()
 endif()
