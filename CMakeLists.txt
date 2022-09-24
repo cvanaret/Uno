@@ -42,12 +42,12 @@ file(GLOB UNO_SOURCE_FILES
 )
 
 # find libraries
-set(LIBS "")
-set(OPTIONAL_LIBS amplsolver ma57 metis bqpd CACHE STRING "Optional libraries")
-set(REQUIRED_LIBS dl blas lapack)
+set(LIBRARIES "")
+set(OPTIONAL_LIBRARIES amplsolver ma57 metis bqpd CACHE STRING "Optional libraries")
+set(REQUIRED_LIBRARIES dl blas lapack)
 
 # automatic detection of optional libraries
-foreach(library_name IN LISTS OPTIONAL_LIBS)
+foreach(library_name IN LISTS OPTIONAL_LIBRARIES)
 	find_library(${library_name} ${library_name})
 	# ${library_name} is the name of the library(e.g. ma57)
 	# ${${library_name}} is the path of the library if found, otherwise ${library_name}-NOTFOUND
@@ -55,7 +55,7 @@ foreach(library_name IN LISTS OPTIONAL_LIBS)
 		message(WARNING "Optional library ${library_name} was not found. Use ccmake to configure its path.")
 	else()
 		# add the library
-		list(APPEND LIBS ${${library_name}})
+		list(APPEND LIBRARIES ${${library_name}})
 		# add a preprocessor definition
 		string(TOUPPER ${library_name} library_name_upper)
 		add_definitions("-D HAS_${library_name_upper}")
@@ -76,7 +76,7 @@ foreach(library_name IN LISTS OPTIONAL_LIBS)
 endforeach(library_name)
 
 # automatic detection of required libraries
-foreach(library_name IN LISTS REQUIRED_LIBS)
+foreach(library_name IN LISTS REQUIRED_LIBRARIES)
 	find_library(${library_name} ${library_name})
 	# ${library_name} is the name of the library(e.g. blas)
 	# ${${library_name}} is the path of the library if found, otherwise ${library_name}-NOTFOUND
@@ -84,11 +84,11 @@ foreach(library_name IN LISTS REQUIRED_LIBS)
 		message(FATAL_ERROR "Required library ${library_name} was not found. Use ccmake to configure its path.")
 	else()
 		# add the library
-		list(APPEND LIBS ${${library_name}})
+		list(APPEND LIBRARIES ${${library_name}})
 	endif()
 endforeach(library_name)
 find_package(OpenMP REQUIRED)
-list(APPEND LIBS OpenMP::OpenMP_CXX)
+list(APPEND LIBRARIES OpenMP::OpenMP_CXX)
 
 #######
 # Uno #
@@ -97,10 +97,19 @@ add_library(uno STATIC ${UNO_SOURCE_FILES})
 target_include_directories(uno PUBLIC ${DIRECTORIES})
 
 # link the libraries
-target_link_libraries(uno PUBLIC ${LIBS})
+target_link_libraries(uno PUBLIC ${LIBRARIES})
 
 # copy the option file
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/uno.options DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+#############
+# C wrapper #
+#############
+file(GLOB UNO_C_WRAPPER_SOURCE_FILES
+    uno/interfaces/C/*.cpp
+)
+add_library(uno_C_wrapper SHARED ${UNO_C_WRAPPER_SOURCE_FILES})
+target_link_libraries(uno_C_wrapper PUBLIC uno)
 
 #############
 # AMPL main #
