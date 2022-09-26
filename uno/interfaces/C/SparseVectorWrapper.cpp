@@ -8,6 +8,10 @@ SparseVector<double>* SparseVector_new(size_t capacity) {
    return new SparseVector<double>(capacity);
 }
 
+void SparseVector_delete(SparseVector<double>* vector) {
+   delete vector;
+}
+
 void SparseVector_insert(SparseVector<double>* vector, size_t key, double value) {
    vector->insert(key, value);
 }

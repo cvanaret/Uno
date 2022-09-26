@@ -12,6 +12,7 @@ extern "C" {
 
    // T = double
    SparseVector<double>* SparseVector_new(size_t capacity);
+   void SparseVector_delete(SparseVector<double>* vector);
    void SparseVector_insert(SparseVector<double>* vector, size_t key, double value);
    void SparseVector_clear(SparseVector<double>* vector);
    void SparseVector_display(SparseVector<double>* vector);
