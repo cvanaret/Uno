@@ -34,7 +34,12 @@ AMPLModel::AMPLModel(const std::string& file_name) : AMPLModel(file_name, genera
 }
 
 AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
-      Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_), NONLINEAR),
+      Model(file_name,
+            static_cast<size_t>(asl->i.n_var_),
+            static_cast<size_t>(asl->i.n_con_),
+            NONLINEAR,
+            (asl->i.objtype_[0] == 1) ? -1. : 1. // objective sign
+      ),
       asl(asl),
       // allocate vectors
       ampl_tmp_gradient(this->number_variables),
@@ -44,9 +49,6 @@ AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
       constraint_type(this->number_constraints),
       constraint_status(this->number_constraints) {
    this->asl->i.congrd_mode = 0;
-
-   // dimensions
-   this->objective_sign = (this->asl->i.objtype_[0] == 1) ? -1. : 1.;
 
    // variables
    this->generate_variables();
@@ -313,10 +315,6 @@ void AMPLModel::generate_constraints() {
 void AMPLModel::set_function_types(std::string file_name) {
    // allocate a temporary ASL to read Hessian sparsity pattern
    ASL* asl_fg = ASL_alloc(ASL_read_fg);
-   // char* stub = getstops(file_name, option_info);
-   //if (file_name == nullptr) {
-   //	usage_ASL(option_info, 1);
-   //}
 
    FILE* nl = jac0dim_ASL(asl_fg, file_name.data(), static_cast<int>(file_name.size()));
    // specific read function

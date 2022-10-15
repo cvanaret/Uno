@@ -48,7 +48,7 @@ protected:
 // - equality constraints are shifted by their RHS
 inline EqualityConstrainedModel::EqualityConstrainedModel(std::unique_ptr<Model> original_model):
       Model(original_model->name + "_slacks", original_model->number_variables + original_model->inequality_constraints.size(),
-            original_model->number_constraints, original_model->problem_type),
+            original_model->number_constraints, original_model->problem_type, original_model->objective_sign),
       // transfer ownership of the pointer
       original_model(std::move(original_model)),
       inequality_constraint_of_slack(this->original_model->inequality_constraints.size()),

@@ -42,7 +42,8 @@ private:
 };
 
 inline ScaledModel::ScaledModel(const Model& original_model, Iterate& first_iterate, const Options& options):
-      Model(original_model.name + "_scaled", original_model.number_variables, original_model.number_constraints, original_model.problem_type),
+      Model(original_model.name + "_scaled", original_model.number_variables, original_model.number_constraints, original_model.problem_type,
+            original_model.objective_sign),
       original_model(original_model),
       scaling(original_model.number_constraints, options.get_double("function_scaling_threshold")) {
    if (options.get_bool("scale_functions")) {

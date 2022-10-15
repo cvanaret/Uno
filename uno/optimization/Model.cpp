@@ -17,8 +17,9 @@ std::map<FunctionType, std::string> Model::type_to_string = {
 };
 
 // abstract Problem class
-Model::Model(std::string name, size_t number_variables, size_t number_constraints, FunctionType type) :
-      name(std::move(name)), number_variables(number_variables), number_constraints(number_constraints), problem_type(type),
+Model::Model(std::string name, size_t number_variables, size_t number_constraints, FunctionType problem_type, double objective_sign) :
+      name(std::move(name)), number_variables(number_variables), number_constraints(number_constraints), problem_type(problem_type),
+      objective_sign(objective_sign),
       equality_constraints(this->number_constraints),
       inequality_constraints(this->number_constraints),
       linear_constraints(this->number_constraints),
