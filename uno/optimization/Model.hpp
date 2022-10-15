@@ -36,18 +36,16 @@ class Iterate;
  */
 class Model {
 public:
-   Model(std::string name, size_t number_variables, size_t number_constraints, FunctionType problem_type);
+   Model(std::string name, size_t number_variables, size_t number_constraints, FunctionType problem_type, double objective_sign);
    virtual ~Model() = default;
 
    static std::map<FunctionType, std::string> type_to_string;
 
-   std::string name;
+   const std::string name;
    const size_t number_variables; /*!< Number of variables */
    const size_t number_constraints; /*!< Number of constraints */
    FunctionType problem_type;
-
-   // objective
-   double objective_sign{1.}; /*!< Sign of the objective function (1: minimization, -1: maximization) */
+   const double objective_sign; /*!< Sign of the objective function (1: minimization, -1: maximization) */
 
    SparseVector<size_t> equality_constraints; /*!< inequality constraints */
    SparseVector<size_t> inequality_constraints; /*!< inequality constraints */
