@@ -47,7 +47,7 @@ Please be patient, we are actively working on our article.
 
 ## Contributions
 
-Uno was designed and implemented by [Charlie Vanaret](https://github.com/cvanaret/) (Technische Universität Berlin).  
+Uno was designed and implemented by [Charlie Vanaret](https://github.com/cvanaret/) (Zuse-Institut Berlin).  
 The abstract framework for unifying nonlinear optimization was developed by Charlie Vanaret and Sven Leyffer.
 
 [Silvio Traversaro](https://github.com/traversaro) contributed to the CMakeLists.
@@ -66,90 +66,41 @@ Uno is released under the MIT license (see the [license file](LICENSE)).
     * BQPD: https://www.mcs.anl.gov/~leyffer/solvers.html
     * MA57: http://www.hsl.rl.ac.uk/catalogue/ma57.html
 
-* install BLAS, LAPACK and f2c:
-```
-sudo apt-get install libblas-dev liblapack-dev libf2c2-dev
-```
-* install cmake and ccmake (CMake curses interface):
-```
-sudo apt-get install cmake cmake-curses-gui
-```
+* install BLAS, LAPACK and f2c: ```sudo apt-get install libblas-dev liblapack-dev libf2c2-dev```
+* install cmake and ccmake (CMake curses interface): ```sudo apt-get install cmake cmake-curses-gui```
 
 ### Compilation
 
-1. Create a `build` directory in the main directory:
-```
-  mkdir build
-```
-2. Move to the build directory:
-```
-  cd build/
-```
-3. Type cmake:
-```
-  cmake ..
-```
-4. Use ccmake to provide the paths to the required and optional libraries:
-```
-  ccmake ..
-```
-5. Compile in parallel (`n` being the number of threads, e.g. 6):
-```
-  make -jn
-```
-6. To print the version, type:
-```
-  ./uno_ampl -v
-```
+1. Create a `build` directory in the main directory: ```mkdir build```
+2. Move to the build directory: ```cd build/```
+3. Type cmake: ```cmake ..```
+4. Use ccmake to provide the paths to the required and optional libraries: ```ccmake ..```
+5. Compile in parallel (`n` being the number of threads, e.g. 6): ```make -jn```
 
 To compile the code with different configurations, simply create a `build` directory for each configuration and perform instructions 1 to 5.
 
 ### Unit tests
 
-7. Install the GoogleTest suite:
-```
-  sudo apt-get install googletest
-```
-8. Perform steps 2 and 3
-9. Run the test suite:
-```
-  ./run_unotest
-```
+6. Install the GoogleTest suite: ```sudo apt-get install googletest```
+7. Perform steps 2 and 3
+8. Run the test suite: ```./run_unotest```
 
 ### Autocompletion
 
-To benefit from autocompletion, install the file `uno_ampl-completion.bash`:
-```
-  sudo cp uno_ampl-completion.bash /etc/bash_completion.d/
-```
+To benefit from autocompletion, install the file `uno_ampl-completion.bash`: ```sudo cp uno_ampl-completion.bash /etc/bash_completion.d/```
 and open a new terminal.
 
 ## Solving a problem with Uno
 
-To solve an AMPL model, type in the `build` directory:
-```
-./uno_ampl path_to_file/file.nl
-```
+To solve an AMPL model, type in the `build` directory: ```./uno_ampl path_to_file/file.nl```
 A couple of CUTEst instances are available in the `/examples` directory.
 
 ### Combination of ingredients
 
-To pick a globalization mechanism, use the argument (choose one of the possible options in brackets):
-```
--mechanism [LS|TR]
-```
-To pick a constraint relaxation strategy, use the argument:
-```
--constraint-relaxation [feasibility-restoration|l1-relaxation]
-```
-To pick a globalization strategy, use the argument:
-```
--strategy [penalty|filter|nonmonotone-filter]
-```
-To pick a subproblem method, use the argument:
-```
--subproblem [QP|LP|barrier]
-```
+To pick a globalization mechanism, use the argument (choose one of the possible options in brackets): ```-mechanism [LS|TR]```  
+To pick a constraint relaxation strategy, use the argument: ```-constraint-relaxation [feasibility-restoration|l1-relaxation]```  
+To pick a globalization strategy, use the argument: ```-strategy [penalty|filter|nonmonotone-filter]```  
+To pick a subproblem method, use the argument: ```-subproblem [QP|LP|barrier]```  
 The options can be combined in the same command line.
 
 ### Presets
@@ -159,7 +110,4 @@ Uno presets are strategy combinations that correspond to existing solvers (as we
 * `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method);
 * `byrd` mimics Byrd's S $\ell_1$ QP (line-search $\ell_1$ merit S $\ell_1$ QP method).
 
-To pick a preset, use the argument:
-```
--preset [filtersqp|ipopt|byrd]
-```
+To pick a preset, use the argument: ```-preset [filtersqp|ipopt|byrd]```
