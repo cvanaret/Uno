@@ -62,29 +62,29 @@ Direction FeasibilityRestoration::solve_optimality_problem(Statistics& statistic
    return direction;
 }
 
-// form and solve the feasibility problem (with or without constraint partition)
+// form and solve the feasibility problem (with an initial point)
+Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point) {
+   this->subproblem->set_initial_point(initial_point);
+   return this->solve_feasibility_problem(statistics, current_iterate);
+}
+
+// form and solve the feasibility problem
 Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) {
    // register the proximal coefficient and reference point
    this->subproblem->prepare_for_feasibility_problem(this->feasibility_problem, current_iterate);
    this->feasibility_problem.set_proximal_coefficient(this->subproblem->get_proximal_coefficient());
    this->feasibility_problem.set_proximal_reference_point(current_iterate.primals);
 
-   // build the objective model of the feasibility problem
-   this->subproblem->set_elastic_variables(this->feasibility_problem, current_iterate);
+   // set the initial values of the elastic variables
+   this->subproblem->set_elastic_variable_values(this->feasibility_problem, current_iterate);
 
    DEBUG << "Solving the feasibility subproblem\n";
-   Direction feasibility_direction = this->subproblem->solve(statistics, this->feasibility_problem, current_iterate);
-   assert(feasibility_direction.status == Status::OPTIMAL && "The feasibility subproblem was not solved to optimality");
-   feasibility_direction.objective_multiplier = 0.;
-   feasibility_direction.norm = norm_inf(feasibility_direction.primals, Range(this->optimality_problem.number_variables));
-   DEBUG << feasibility_direction << '\n';
-   return feasibility_direction;
-}
-
-// form and solve the feasibility problem (with or without constraint partition)
-Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point) {
-   this->subproblem->set_initial_point(initial_point);
-   return this->solve_feasibility_problem(statistics, current_iterate);
+   Direction direction = this->subproblem->solve(statistics, this->feasibility_problem, current_iterate);
+   assert(direction.status == Status::OPTIMAL && "The feasibility subproblem was not solved to optimality");
+   direction.objective_multiplier = 0.;
+   direction.norm = norm_inf(direction.primals, Range(this->optimality_problem.number_variables));
+   DEBUG << direction << '\n';
+   return direction;
 }
 
 bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
@@ -113,9 +113,11 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& curr
       };
 
       // invoke the globalization strategy for acceptance
+      // TODO: define depending on phase
+      const ProgressMeasures& current_progress = current_iterate.nonlinear_progress;
+      const ProgressMeasures& trial_progress = trial_iterate.nonlinear_progress;
       GlobalizationStrategy& current_phase_strategy = this->get_current_globalization_strategy();
-      accept = current_phase_strategy.is_acceptable(current_iterate.nonlinear_progress, trial_iterate.nonlinear_progress,
-            direction.objective_multiplier, predicted_reduction);
+      accept = current_phase_strategy.is_acceptable(current_progress, trial_progress, direction.objective_multiplier, predicted_reduction);
    }
 
    if (accept) {

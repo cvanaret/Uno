@@ -31,7 +31,7 @@ public:
    void set_variable_bounds(const NonlinearProblem& problem, const Iterate& current_iterate, double trust_region_radius);
    virtual void prepare_for_feasibility_problem(const NonlinearProblem& problem, Iterate& current_iterate) = 0;
    [[nodiscard]] virtual double get_proximal_coefficient() const = 0;
-   virtual void set_elastic_variables(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
+   virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
 
    // globalization metrics
    [[nodiscard]] virtual PredictedOptimalityReductionModel generate_predicted_optimality_reduction_model(const NonlinearProblem& problem,

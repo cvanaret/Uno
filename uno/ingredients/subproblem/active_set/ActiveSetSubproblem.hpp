@@ -14,7 +14,7 @@ public:
    void initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) override;
    void set_initial_point(const std::vector<double>& initial_point) override;
    void prepare_for_feasibility_problem(const NonlinearProblem& problem, Iterate& current_iterate) override;
-   void set_elastic_variables(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
+   void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
    void set_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) override;
    void postprocess_accepted_iterate(const NonlinearProblem& model, Iterate& iterate) override;
 

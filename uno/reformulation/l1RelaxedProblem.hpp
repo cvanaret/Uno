@@ -48,7 +48,7 @@ public:
    void set_proximal_reference_point(const std::vector<double>& new_proximal_reference_point);
 
    // void set_elastic_variables(Iterate& iterate) const;
-   void set_elastic_variables(Iterate& iterate, const std::function<void (Iterate&, size_t, size_t, double, double)>& elastic_setting_function) const;
+   void set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t, double, double)>& elastic_setting_function) const;
 
 protected:
    double objective_multiplier;
@@ -351,7 +351,7 @@ inline double l1RelaxedProblem::get_proximal_weight(size_t i) const {
    return std::min(1., 1. / std::abs(this->proximal_reference_point[i]));
 }
 
-inline void l1RelaxedProblem::set_elastic_variables(Iterate& iterate, const std::function<void (Iterate&, size_t, size_t, double, double)>&
+inline void l1RelaxedProblem::set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t, double, double)>&
       elastic_setting_function) const {
    iterate.set_number_variables(this->number_variables);
    this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {

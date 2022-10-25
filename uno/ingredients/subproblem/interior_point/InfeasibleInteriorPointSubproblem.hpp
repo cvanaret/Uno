@@ -32,7 +32,7 @@ public:
 
    [[nodiscard]] double get_proximal_coefficient() const override;
    void prepare_for_feasibility_problem(const NonlinearProblem& problem, Iterate& current_iterate) override;
-   void set_elastic_variables(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
+   void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
    [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) override;
    [[nodiscard]] Direction compute_second_order_correction(const NonlinearProblem& problem, Iterate& trial_iterate) override;
    [[nodiscard]] PredictedOptimalityReductionModel generate_predicted_optimality_reduction_model(const NonlinearProblem& problem,

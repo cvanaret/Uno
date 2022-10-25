@@ -228,7 +228,7 @@ void InfeasibleInteriorPointSubproblem::prepare_for_feasibility_problem(const No
 }
 
 // set the elastic variables of the current iterate
-void InfeasibleInteriorPointSubproblem::set_elastic_variables(const l1RelaxedProblem& problem, Iterate& current_iterate) {
+void InfeasibleInteriorPointSubproblem::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) {
    // c(x) - p + n = 0
    // analytical expression for p and n:
    // (mu_over_rho - jacobian_coefficient*this->barrier_constraints[j] + std::sqrt(radical))/2.
@@ -246,7 +246,7 @@ void InfeasibleInteriorPointSubproblem::set_elastic_variables(const l1RelaxedPro
       iterate.primals[elastic_index] = (mu_over_rho - jacobian_coefficient * constraint_j + sqrt_radical) / 2.;
       iterate.multipliers.lower_bounds[elastic_index] = current_barrier_parameter/iterate.primals[elastic_index];
    };
-   problem.set_elastic_variables(current_iterate, elastic_setting_function);
+   problem.set_elastic_variable_values(current_iterate, elastic_setting_function);
 }
 
 PredictedOptimalityReductionModel InfeasibleInteriorPointSubproblem::generate_predicted_optimality_reduction_model(const NonlinearProblem& /*problem*/, const Direction& direction) const {

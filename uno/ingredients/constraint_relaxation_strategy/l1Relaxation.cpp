@@ -40,7 +40,7 @@ l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
 void l1Relaxation::initialize(Statistics& statistics, Iterate& first_iterate) {
    statistics.add_column("penalty param.", Statistics::double_width, this->statistics_penalty_parameter_column_order);
 
-   this->subproblem->set_elastic_variables(this->relaxed_problem, first_iterate);
+   this->subproblem->set_elastic_variable_values(this->relaxed_problem, first_iterate);
    // initialize the subproblem
    this->subproblem->initialize(statistics, this->relaxed_problem, first_iterate);
 
@@ -68,7 +68,7 @@ void l1Relaxation::set_multipliers(const Iterate& current_iterate, std::vector<d
 
 Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate) {
    // set the elastic variables
-   this->subproblem->set_elastic_variables(this->relaxed_problem, current_iterate);
+   this->subproblem->set_elastic_variable_values(this->relaxed_problem, current_iterate);
 
    // set the proximal coefficient
    this->relaxed_problem.set_proximal_coefficient(std::sqrt(this->penalty_parameter));
