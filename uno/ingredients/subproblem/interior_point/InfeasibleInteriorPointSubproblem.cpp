@@ -211,10 +211,6 @@ Direction InfeasibleInteriorPointSubproblem::compute_second_order_correction(con
    return this->direction;
 }
 
-double InfeasibleInteriorPointSubproblem::get_proximal_coefficient() const {
-   return std::sqrt(this->barrier_parameter());
-}
-
 void InfeasibleInteriorPointSubproblem::prepare_for_feasibility_problem(const NonlinearProblem& problem, Iterate& current_iterate) {
    // if we're building the feasibility subproblem, temporarily update the objective multiplier
    this->solving_feasibility_problem = true;

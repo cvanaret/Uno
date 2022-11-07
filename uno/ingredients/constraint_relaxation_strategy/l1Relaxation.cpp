@@ -18,8 +18,7 @@ l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
       // create the optimality problem
       optimality_problem(model),
       // create the relaxed problem by introducing elastic variables
-      relaxed_problem(model, options.get_double("l1_relaxation_initial_parameter"), options.get_double("l1_constraint_violation_coefficient"),
-            options.get_bool("l1_use_proximal_term")),
+      relaxed_problem(model, options.get_double("l1_relaxation_initial_parameter"), options.get_double("l1_constraint_violation_coefficient")),
       subproblem(SubproblemFactory::create(this->relaxed_problem.number_variables, this->relaxed_problem.number_constraints,
             this->relaxed_problem.get_maximum_number_hessian_nonzeros(), options)),
       globalization_strategy(GlobalizationStrategyFactory::create(options.get_string("strategy"), options)),
@@ -70,10 +69,6 @@ Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Itera
    // set the elastic variables
    this->subproblem->set_elastic_variable_values(this->relaxed_problem, current_iterate);
 
-   // set the proximal coefficient
-   this->relaxed_problem.set_proximal_coefficient(std::sqrt(this->penalty_parameter));
-   this->relaxed_problem.set_proximal_reference_point(current_iterate.primals);
-
    // set the multipliers of the violated constraints
    // this->set_multipliers(current_iterate, current_iterate.multipliers.constraints);
    DEBUG << "Current iterate\n" << current_iterate << '\n';
@@ -98,6 +93,8 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, Iterate& curren
 
 Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) {
    assert(0. < this->penalty_parameter && "l1Relaxation: the penalty parameter is already 0");
+   this->subproblem->prepare_for_feasibility_problem(this->relaxed_problem, current_iterate);
+
    Direction direction = this->solve_subproblem(statistics, current_iterate, 0.);
    return direction;
 }

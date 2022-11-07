@@ -95,7 +95,6 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["l1_constraint_violation_coefficient"] = "1000";
       options["residual_norm"] = "INF";
       options["scale_functions"] = "yes";
-      options["l1_use_proximal_term"] = "yes";
       options["sparse_format"] = "COO";
    }
    else if (preset_name == "filtersqp") {
@@ -104,7 +103,6 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["strategy"] = "filter";
       options["subproblem"] = "QP";
       options["residual_norm"] = "L1";
-      options["l1_use_proximal_term"] = "no";
       options["sparse_format"] = "CSC";
       options["TR_radius"] = "1";
    }

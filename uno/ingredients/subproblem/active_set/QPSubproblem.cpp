@@ -11,8 +11,7 @@ QPSubproblem::QPSubproblem(size_t max_number_variables, size_t max_number_constr
             max_number_hessian_nonzeros + max_number_variables, options.get_string("mechanism") != "TR", options)),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
       solver(QPSolverFactory::create(options.get_string("QP_solver"), max_number_variables, max_number_constraints,
-            hessian_model->hessian->capacity, true, options)),
-      proximal_coefficient(options.get_double("proximal_coefficient")) {
+            hessian_model->hessian->capacity, true, options)) {
 }
 
 void QPSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate) {
@@ -92,8 +91,4 @@ PredictedOptimalityReductionModel QPSubproblem::generate_predicted_optimality_re
 
 size_t QPSubproblem::get_hessian_evaluation_count() const {
    return this->hessian_model->evaluation_count;
-}
-
-double QPSubproblem::get_proximal_coefficient() const {
-   return this->proximal_coefficient;
 }

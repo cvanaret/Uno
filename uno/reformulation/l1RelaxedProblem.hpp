@@ -20,7 +20,7 @@ struct ElasticVariables {
 
 class l1RelaxedProblem: public NonlinearProblem {
 public:
-   l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient, bool use_proximal_term);
+   l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient);
 
    [[nodiscard]] double get_objective_multiplier() const override;
    [[nodiscard]] double evaluate_objective(Iterate& iterate) const override;
@@ -44,8 +44,6 @@ public:
 
    // parameterization
    void set_objective_multiplier(double new_objective_multiplier);
-   void set_proximal_coefficient(double new_proximal_coefficient);
-   void set_proximal_reference_point(const std::vector<double>& new_proximal_reference_point);
 
    // void set_elastic_variables(Iterate& iterate) const;
    void set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t, double, double)>& elastic_setting_function) const;
@@ -55,26 +53,18 @@ protected:
    // elastic variables
    ElasticVariables elastic_variables;
    double constraint_violation_coefficient;
-   // proximal term
-   const bool use_proximal_term;
-   double proximal_coefficient{0.};
-   std::vector<double> proximal_reference_point{};
    std::vector<size_t> violated_constraints{};
 
    [[nodiscard]] static size_t count_elastic_variables(const Model& model);
    void generate_elastic_variables();
-   [[nodiscard]] double get_proximal_weight(size_t i) const;
 };
 
-inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient,
-         bool use_proximal_term):
+inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient):
       NonlinearProblem(model, model.number_variables + l1RelaxedProblem::count_elastic_variables(model), model.number_constraints),
       objective_multiplier(objective_multiplier),
       // elastic variables
       elastic_variables(this->number_constraints),
-      constraint_violation_coefficient(constraint_violation_coefficient),
-      use_proximal_term(use_proximal_term),
-      proximal_reference_point(model.number_variables) {
+      constraint_violation_coefficient(constraint_violation_coefficient) {
    assert(0. < constraint_violation_coefficient && "Constraint violation term should have a positive coefficient");
 
    // register equality and inequality constraints
@@ -108,7 +98,7 @@ inline double l1RelaxedProblem::get_objective_multiplier() const {
    return this->objective_multiplier;
 }
 
-// return rho*f(x) + coeff*||c(x)||_1 + proximal term
+// return rho*f(x) + coeff*||c(x)||_1
 inline double l1RelaxedProblem::evaluate_objective(Iterate& iterate) const {
    double objective = 0.;
 
@@ -122,17 +112,6 @@ inline double l1RelaxedProblem::evaluate_objective(Iterate& iterate) const {
    iterate.evaluate_constraints(this->model);
    iterate.constraint_violation = this->model.compute_constraint_violation(iterate.original_evaluations.constraints, L1_NORM);
    objective += this->constraint_violation_coefficient * iterate.constraint_violation;
-
-   // proximal term
-   if (this->use_proximal_term && 0. < this->proximal_coefficient) {
-      double proximal_term = 0.;
-      for (size_t i = 0; i < this->model.number_variables; i++) {
-         const double weight = this->get_proximal_weight(i);
-         // weighted distance between trial iterate and current iterate
-         proximal_term += std::pow(weight * (iterate.primals[i] - this->proximal_reference_point[i]), 2);
-      }
-      objective += this->proximal_coefficient/2.*proximal_term;
-   }
    return objective;
 }
 
@@ -153,15 +132,6 @@ inline void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, Spar
    };
    this->elastic_variables.positive.for_each_value(insert_elastic_derivative);
    this->elastic_variables.negative.for_each_value(insert_elastic_derivative);
-
-   // proximal term: weighted distance between trial iterate and current iterate
-   if (this->use_proximal_term && 0. < this->proximal_coefficient) {
-      for (size_t i = 0; i < this->model.number_variables; i++) {
-         const double weight = this->get_proximal_weight(i);
-         const double derivative = this->proximal_coefficient * std::pow(weight, 2) * (iterate.primals[i] - this->proximal_reference_point[i]);
-         objective_gradient.insert(i, derivative);
-      }
-   }
 }
 
 inline void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
@@ -192,14 +162,6 @@ inline void l1RelaxedProblem::evaluate_lagrangian_hessian(const std::vector<doub
       SymmetricMatrix<double>& hessian) const {
    this->model.evaluate_lagrangian_hessian(x, this->objective_multiplier, multipliers, hessian);
 
-   // add proximal term for the original variables
-   if (this->use_proximal_term && 0. < this->proximal_coefficient) {
-      for (size_t i = 0; i < this->model.number_variables; i++) {
-         const double weight = this->get_proximal_weight(i);
-         const double diagonal_term = this->proximal_coefficient * std::pow(weight, 2);
-         hessian.insert(diagonal_term, i, i);
-      }
-   }
    // extend the dimension of the Hessian by finalizing the remaining columns (note: the elastics do not enter the Hessian)
    for (size_t j = this->model.number_variables; j < this->number_variables; j++) {
       hessian.finalize_column(j);
@@ -266,11 +228,6 @@ inline size_t l1RelaxedProblem::get_maximum_number_objective_gradient_nonzeros()
 
    // elastic contribution
    number_nonzeros += this->elastic_variables.size();
-
-   // proximal contribution
-   if (this->use_proximal_term) {
-      number_nonzeros += this->model.number_variables;
-   }
    return number_nonzeros;
 }
 
@@ -279,25 +236,12 @@ inline size_t l1RelaxedProblem::get_maximum_number_jacobian_nonzeros() const {
 }
 
 inline size_t l1RelaxedProblem::get_maximum_number_hessian_nonzeros() const {
-   // add the proximal term
-   return this->model.get_maximum_number_hessian_nonzeros() + (this->use_proximal_term ? this->model.number_variables : 0);
+   return this->model.get_maximum_number_hessian_nonzeros();
 }
 
 inline void l1RelaxedProblem::set_objective_multiplier(double new_objective_multiplier) {
    // update the objective multiplier
    this->objective_multiplier = new_objective_multiplier;
-}
-
-inline void l1RelaxedProblem::set_proximal_coefficient(double new_proximal_coefficient) {
-   assert(0. <= new_proximal_coefficient && "The proximal coefficient is negative");
-   // update the proximal coefficient
-   this->proximal_coefficient = new_proximal_coefficient;
-}
-
-inline void l1RelaxedProblem::set_proximal_reference_point(const std::vector<double>& new_proximal_reference_point) {
-   assert(this->model.number_variables <= new_proximal_reference_point.size() && "The proximal reference point is not long enough");
-   // update the proximal reference point
-   copy_from(this->proximal_reference_point, new_proximal_reference_point, this->model.number_variables);
 }
 
 inline size_t l1RelaxedProblem::count_elastic_variables(const Model& model) {
@@ -344,11 +288,6 @@ inline const std::vector<size_t>& l1RelaxedProblem::get_violated_linearized_cons
    this->elastic_variables.positive.for_each(find_violated_constraints);
    this->elastic_variables.negative.for_each(find_violated_constraints);
    return this->violated_constraints;
-}
-
-inline double l1RelaxedProblem::get_proximal_weight(size_t i) const {
-   // weight of each diagonal term of the proximal term
-   return std::min(1., 1. / std::abs(this->proximal_reference_point[i]));
 }
 
 inline void l1RelaxedProblem::set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t, double, double)>&

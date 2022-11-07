@@ -18,13 +18,11 @@ public:
    [[nodiscard]] PredictedOptimalityReductionModel generate_predicted_optimality_reduction_model(const NonlinearProblem& problem,
          const Direction& direction) const override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
-   [[nodiscard]] double get_proximal_coefficient() const override;
 
 protected:
    // pointers to allow polymorphism
    const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
    const std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
-   const double proximal_coefficient;
 
    void evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate);
    [[nodiscard]] Direction solve_QP(const NonlinearProblem& problem, Iterate& iterate);

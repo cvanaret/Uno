@@ -75,7 +75,3 @@ size_t LPSubproblem::get_hessian_evaluation_count() const {
    // no second order evaluation is used
    return 0;
 }
-
-double LPSubproblem::get_proximal_coefficient() const {
-   return 0.;
-}

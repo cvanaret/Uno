@@ -30,7 +30,6 @@ public:
    void set_initial_point(const std::vector<double>& initial_point) override;
    void initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) override;
 
-   [[nodiscard]] double get_proximal_coefficient() const override;
    void prepare_for_feasibility_problem(const NonlinearProblem& problem, Iterate& current_iterate) override;
    void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
    [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) override;

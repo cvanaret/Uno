@@ -12,7 +12,7 @@ FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options
       // create the optimality problem
       optimality_problem(model),
       // create the phase-1 feasibility problem (objective multiplier = 0)
-      feasibility_problem(model, 0., options.get_double("l1_constraint_violation_coefficient"), options.get_bool("l1_use_proximal_term")),
+      feasibility_problem(model, 0., options.get_double("l1_constraint_violation_coefficient")),
       subproblem(SubproblemFactory::create(this->feasibility_problem.number_variables, this->feasibility_problem.number_constraints,
             this->feasibility_problem.get_maximum_number_hessian_nonzeros(), options)),
       // create the globalization strategies (one for each phase)
@@ -70,10 +70,7 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
 
 // form and solve the feasibility problem
 Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) {
-   // register the proximal coefficient and reference point
    this->subproblem->prepare_for_feasibility_problem(this->feasibility_problem, current_iterate);
-   this->feasibility_problem.set_proximal_coefficient(this->subproblem->get_proximal_coefficient());
-   this->feasibility_problem.set_proximal_reference_point(current_iterate.primals);
 
    // set the initial values of the elastic variables
    this->subproblem->set_elastic_variable_values(this->feasibility_problem, current_iterate);
@@ -152,6 +149,7 @@ void FeasibilityRestoration::switch_phase(Iterate& current_iterate, Iterate& tri
       this->switch_to_feasibility_restoration(current_iterate, infeasible_linearized_constraints);
    }
    // possibly go from restoration phase to optimality phase
+   // TODO test feasibility of linearized constraints
    else if (this->current_phase == FEASIBILITY_RESTORATION && infeasible_linearized_constraints.empty()) {
       // TODO && this->filter_optimality->accept(trial_iterate.progress.feasibility, trial_iterate.progress.objective))
       this->switch_to_optimality(current_iterate, trial_iterate);

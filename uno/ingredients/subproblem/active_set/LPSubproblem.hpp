@@ -17,7 +17,6 @@ public:
    [[nodiscard]] PredictedOptimalityReductionModel generate_predicted_optimality_reduction_model(const NonlinearProblem& problem,
          const Direction& direction) const override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
-   [[nodiscard]] double get_proximal_coefficient() const override;
 
 private:
    // pointer to allow polymorphism
