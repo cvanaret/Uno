@@ -68,7 +68,8 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
                this->constraint_relaxation_strategy.register_accepted_iterate(trial_iterate);
                this->set_statistics(statistics, direction);
 
-               return std::make_tuple(std::move(trial_iterate), direction.norm);
+               double step_norm = this->step_length * direction.norm;
+               return std::make_tuple(std::move(trial_iterate), step_norm);
             }
             else if (false && this->use_second_order_correction && this->number_iterations == 1 && !this->solving_feasibility_problem &&
                   trial_iterate.nonlinear_progress.infeasibility >= current_iterate.nonlinear_progress.infeasibility) {
