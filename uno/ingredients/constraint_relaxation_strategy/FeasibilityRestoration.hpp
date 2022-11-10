@@ -26,6 +26,8 @@ public:
       override;
    [[nodiscard]] Direction compute_second_order_correction(Iterate& trial_iterate) override;
 
+   // trial iterate acceptance
+   void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) override;
    [[nodiscard]] bool is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          PredictedOptimalityReductionModel& predicted_optimality_reduction_model, double step_length) override;
    [[nodiscard]] PredictedOptimalityReductionModel generate_predicted_optimality_reduction_model(const Direction& direction) const override;

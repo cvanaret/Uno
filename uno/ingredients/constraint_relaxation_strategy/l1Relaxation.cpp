@@ -94,7 +94,6 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, Iterate& curren
 Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) {
    assert(0. < this->penalty_parameter && "l1Relaxation: the penalty parameter is already 0");
    this->subproblem->prepare_for_feasibility_problem(this->relaxed_problem, current_iterate);
-
    Direction direction = this->solve_subproblem(statistics, current_iterate, 0.);
    return direction;
 }
@@ -212,8 +211,7 @@ bool l1Relaxation::objective_sufficient_decrease(const Iterate& current_iterate,
    return (decrease_objective >= this->parameters.epsilon2 * lowest_decrease_objective);
 }
 
-bool l1Relaxation::is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-      PredictedOptimalityReductionModel& predicted_optimality_reduction_model, double step_length) {
+void l1Relaxation::compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& /*direction*/) {
    // check if subproblem definition changed
    if (this->subproblem->subproblem_definition_changed) {
       DEBUG << "The subproblem definition changed, the optimality measure is recomputed\n";
@@ -225,7 +223,10 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, Iterate& current_iterat
    // compute the measures of progress for the trial iterate
    this->set_infeasibility_measure(trial_iterate);
    this->subproblem->set_optimality_measure(this->optimality_problem, trial_iterate);
+}
 
+bool l1Relaxation::is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+      PredictedOptimalityReductionModel& predicted_optimality_reduction_model, double step_length) {
    bool accept = false;
    if (this->is_small_step(direction)) {
       DEBUG << "Terminate with a small step\n";

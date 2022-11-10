@@ -61,6 +61,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
          // assemble the trial iterate by going a fraction along the direction
          Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, this->step_length);
          try {
+            this->constraint_relaxation_strategy.compute_progress_measures(current_iterate, trial_iterate, direction);
             const bool is_acceptable = this->constraint_relaxation_strategy.is_acceptable(statistics, current_iterate, trial_iterate,
                   direction, predicted_optimality_reduction_model, this->step_length);
             if (is_acceptable) {
@@ -79,7 +80,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
 
                // assemble the (temporary) SOC trial iterate
                Iterate trial_iterate_soc = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction_soc, this->step_length);
-
+               this->constraint_relaxation_strategy.compute_progress_measures(current_iterate, trial_iterate_soc, direction_soc);
                if (this->constraint_relaxation_strategy.is_acceptable(statistics, current_iterate, trial_iterate_soc, direction_soc,
                      predicted_optimality_reduction_model, this->step_length)) {
                   DEBUG << "Trial SOC step accepted\n";

@@ -84,8 +84,8 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
    return direction;
 }
 
-bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-      PredictedOptimalityReductionModel& predicted_optimality_reduction_model, double step_length) {
+void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) {
+   // TODO: define depending on phase
    // check if subproblem definition changed
    if (this->subproblem->subproblem_definition_changed) {
       DEBUG << "The subproblem definition changed, the optimality measure is recomputed\n";
@@ -96,7 +96,10 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& curr
 
    // possibly switch between optimality phase and restoration phase
    this->switch_phase(current_iterate, trial_iterate, direction);
+}
 
+bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+      PredictedOptimalityReductionModel& predicted_optimality_reduction_model, double step_length) {
    bool accept = false;
    if (this->is_small_step(direction)) {
       DEBUG << "Terminate with a small step\n";
@@ -110,11 +113,9 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& curr
       };
 
       // invoke the globalization strategy for acceptance
-      // TODO: define depending on phase
-      const ProgressMeasures& current_progress = current_iterate.nonlinear_progress;
-      const ProgressMeasures& trial_progress = trial_iterate.nonlinear_progress;
       GlobalizationStrategy& current_phase_strategy = this->get_current_globalization_strategy();
-      accept = current_phase_strategy.is_acceptable(current_progress, trial_progress, direction.objective_multiplier, predicted_reduction);
+      accept = current_phase_strategy.is_acceptable(current_iterate.nonlinear_progress, trial_iterate.nonlinear_progress,
+            direction.objective_multiplier, predicted_reduction);
    }
 
    if (accept) {
@@ -172,7 +173,7 @@ void FeasibilityRestoration::switch_to_feasibility_restoration(Iterate& current_
    this->current_phase = FEASIBILITY_RESTORATION;
    this->phase_2_strategy->register_current_progress(current_iterate.nonlinear_progress);
    this->phase_1_strategy->reset();
-   // update the measure of optimality
+   // compute the new progress measures of the current iterate
    this->set_restoration_optimality_measure(current_iterate, infeasible_linearized_constraints);
    this->phase_1_strategy->register_current_progress(current_iterate.nonlinear_progress);
 }

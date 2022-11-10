@@ -47,6 +47,7 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
 
          // check whether the trial step is accepted
          PredictedOptimalityReductionModel predicted_optimality_reduction_model = this->constraint_relaxation_strategy.generate_predicted_optimality_reduction_model(direction);
+         this->constraint_relaxation_strategy.compute_progress_measures(current_iterate, trial_iterate, direction);
          const bool is_acceptable = this->constraint_relaxation_strategy.is_acceptable(statistics, current_iterate, trial_iterate, direction,
                predicted_optimality_reduction_model, 1.);
          if (is_acceptable) {

@@ -26,6 +26,7 @@ public:
    virtual Direction compute_second_order_correction(Iterate& trial_iterate) = 0;
 
    // trial iterate acceptance
+   virtual void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) = 0;
    virtual bool is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          PredictedOptimalityReductionModel& predicted_optimality_reduction_model, double step_length) = 0;
    [[nodiscard]] virtual PredictedOptimalityReductionModel generate_predicted_optimality_reduction_model(const Direction& direction) const = 0;
