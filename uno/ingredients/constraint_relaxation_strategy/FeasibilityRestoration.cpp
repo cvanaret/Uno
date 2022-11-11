@@ -12,7 +12,7 @@ FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options
       // create the optimality problem
       optimality_problem(model),
       // create the phase-1 feasibility problem (objective multiplier = 0)
-      feasibility_problem(model, 0., options.get_double("l1_constraint_violation_coefficient")),
+      feasibility_problem(model, 0.),
       subproblem(SubproblemFactory::create(this->feasibility_problem.number_variables, this->feasibility_problem.number_constraints,
             this->feasibility_problem.get_maximum_number_hessian_nonzeros(), options)),
       // create the globalization strategies (one for each phase)
@@ -117,7 +117,6 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& curr
       accept = current_phase_strategy.is_acceptable(current_iterate.nonlinear_progress, trial_iterate.nonlinear_progress,
             direction.objective_multiplier, predicted_reduction);
    }
-
    if (accept) {
       statistics.add_statistic("phase", static_cast<int>(this->current_phase));
       this->compute_nonlinear_residuals(this->get_current_reformulated_problem(), trial_iterate);

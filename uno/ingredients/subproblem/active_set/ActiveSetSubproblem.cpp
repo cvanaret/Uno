@@ -23,8 +23,7 @@ void ActiveSetSubproblem::prepare_for_feasibility_problem(const NonlinearProblem
 
 void ActiveSetSubproblem::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) {
    // reset the values of the elastic variables
-   const auto elastic_setting_function = [&](Iterate& iterate, size_t /*j*/, size_t elastic_index, double /*jacobian_coefficient*/,
-         double /*constraint_violation_coefficient*/) {
+   const auto elastic_setting_function = [&](Iterate& iterate, size_t /*j*/, size_t elastic_index, double /*jacobian_coefficient*/) {
       iterate.primals[elastic_index] = 0.;
       iterate.multipliers.lower_bounds[elastic_index] = 1.;
    };

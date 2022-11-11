@@ -20,7 +20,7 @@ struct ElasticVariables {
 
 class l1RelaxedProblem: public NonlinearProblem {
 public:
-   l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient);
+   l1RelaxedProblem(const Model& model, double objective_multiplier);
 
    [[nodiscard]] double get_objective_multiplier() const override;
    [[nodiscard]] double evaluate_objective(Iterate& iterate) const override;
@@ -45,28 +45,23 @@ public:
    // parameterization
    void set_objective_multiplier(double new_objective_multiplier);
 
-   // void set_elastic_variables(Iterate& iterate) const;
-   void set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t, double, double)>& elastic_setting_function) const;
+   void set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t, double)>& elastic_setting_function) const;
 
 protected:
    double objective_multiplier;
    // elastic variables
    ElasticVariables elastic_variables;
-   double constraint_violation_coefficient;
    std::vector<size_t> violated_constraints{};
 
    [[nodiscard]] static size_t count_elastic_variables(const Model& model);
    void generate_elastic_variables();
 };
 
-inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient):
+inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier):
       NonlinearProblem(model, model.number_variables + l1RelaxedProblem::count_elastic_variables(model), model.number_constraints),
       objective_multiplier(objective_multiplier),
       // elastic variables
-      elastic_variables(this->number_constraints),
-      constraint_violation_coefficient(constraint_violation_coefficient) {
-   assert(0. < constraint_violation_coefficient && "Constraint violation term should have a positive coefficient");
-
+      elastic_variables(this->number_constraints) {
    // register equality and inequality constraints
    this->model.equality_constraints.for_each([&](size_t j, size_t i) {
       this->equality_constraints.insert(j, i);
@@ -111,7 +106,7 @@ inline double l1RelaxedProblem::evaluate_objective(Iterate& iterate) const {
    // scaled constraint violation: coeff*||c(x)||_1
    iterate.evaluate_constraints(this->model);
    iterate.constraint_violation = this->model.compute_constraint_violation(iterate.original_evaluations.constraints, L1_NORM);
-   objective += this->constraint_violation_coefficient * iterate.constraint_violation;
+   objective += iterate.constraint_violation;
    return objective;
 }
 
@@ -128,7 +123,7 @@ inline void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, Spar
 
    // elastic contribution
    const auto insert_elastic_derivative = [&](size_t elastic_index) {
-      objective_gradient.insert(elastic_index, this->constraint_violation_coefficient);
+      objective_gradient.insert(elastic_index, 1.);
    };
    this->elastic_variables.positive.for_each_value(insert_elastic_derivative);
    this->elastic_variables.negative.for_each_value(insert_elastic_derivative);
@@ -290,14 +285,14 @@ inline const std::vector<size_t>& l1RelaxedProblem::get_violated_linearized_cons
    return this->violated_constraints;
 }
 
-inline void l1RelaxedProblem::set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t, double, double)>&
+inline void l1RelaxedProblem::set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t, double)>&
       elastic_setting_function) const {
    iterate.set_number_variables(this->number_variables);
    this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {
-      elastic_setting_function(iterate, j, elastic_index, -1., this->constraint_violation_coefficient);
+      elastic_setting_function(iterate, j, elastic_index, -1.);
    });
    this->elastic_variables.negative.for_each([&](size_t j, size_t elastic_index) {
-      elastic_setting_function(iterate, j, elastic_index, 1., this->constraint_violation_coefficient);
+      elastic_setting_function(iterate, j, elastic_index, 1.);
    });
 }
 

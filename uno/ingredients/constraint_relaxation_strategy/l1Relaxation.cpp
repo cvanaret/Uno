@@ -18,7 +18,7 @@ l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
       // create the optimality problem
       optimality_problem(model),
       // create the relaxed problem by introducing elastic variables
-      relaxed_problem(model, options.get_double("l1_relaxation_initial_parameter"), options.get_double("l1_constraint_violation_coefficient")),
+      relaxed_problem(model, options.get_double("l1_relaxation_initial_parameter")),
       subproblem(SubproblemFactory::create(this->relaxed_problem.number_variables, this->relaxed_problem.number_constraints,
             this->relaxed_problem.get_maximum_number_hessian_nonzeros(), options)),
       globalization_strategy(GlobalizationStrategyFactory::create(options.get_string("strategy"), options)),

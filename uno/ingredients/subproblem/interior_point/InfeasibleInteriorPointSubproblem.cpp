@@ -231,11 +231,10 @@ void InfeasibleInteriorPointSubproblem::set_elastic_variable_values(const l1Rela
    // where jacobian_coefficient = -1 for p, +1 for n
    // Note: IPOPT uses a '+' sign because they define the Lagrangian as f(x) + \lambda^T c(x)
    const double current_barrier_parameter = this->barrier_parameter();
-   const auto elastic_setting_function = [&](Iterate& iterate, size_t j, size_t elastic_index, double jacobian_coefficient,
-         double constraint_violation_coefficient) {
+   const auto elastic_setting_function = [&](Iterate& iterate, size_t j, size_t elastic_index, double jacobian_coefficient) {
       // precomputations
       const double constraint_j = this->constraints[j];
-      const double mu_over_rho = current_barrier_parameter / constraint_violation_coefficient;
+      const double mu_over_rho = current_barrier_parameter; // here, rho = 1
       const double radical = std::pow(constraint_j, 2) + std::pow(mu_over_rho, 2);
       const double sqrt_radical = std::sqrt(radical);
 
