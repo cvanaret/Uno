@@ -4,7 +4,7 @@
 
 ### Goal
 
-Uno (Unifying Nonlinear Optimization) is a C++ library aiming at unifying most of the methods for solving nonlinearly constrained optimization problems of the form:
+Uno (Unifying Nonlinear Optimization) is a C++ library aiming at unifying methods for solving nonlinearly constrained optimization problems of the form:
 
 ```
    min     f(x)
@@ -14,21 +14,22 @@ Uno (Unifying Nonlinear Optimization) is a C++ library aiming at unifying most o
            x_L ≤  x   ≤ x_U
 ```
 
-Uno implements an abstract framework based on four ingredients:
-* **constraint relaxation strategy**: a systematic way to relax the nonlinear constraints;
-* **subproblem**: a local model of the (possibly relaxed) problem at the current primal-dual iterate;
-* **globalization strategy**: an acceptance test of the trial iterate;
-* **globalization mechanism**: a recourse action upon rejection of the trial iterate.
+Uno implements an abstract framework based on four common ingredients:
+* a **constraint relaxation strategy**: a systematic way to relax the nonlinear constraints;
+* a **subproblem**: a local model of the (possibly relaxed) problem at the current primal-dual iterate;
+* a **globalization strategy**: an acceptance test of the trial iterate;
+* a **globalization mechanism**: a recourse action upon rejection of the trial iterate.
 
 The following hypergraph illustrates how state-of-the-art solvers can be decomposed in terms of the four ingredients.
 <p align="center">
    <img src="docs/figures/combination_hypergraph.png" alt="Combination hypergraph" width="75%" />
 </p>
 
-Uno 1.0 implements the following strategies. Any strategy combination can be generated without any programming effort from the user. Note that all combinations do not necessarily result in sensible algorithms, or even convergent approaches.
+Uno 1.0 implements the following strategies.
 <p align="center">
    <img src="docs/figures/hypergraph_uno.png" alt="Uno 1.0 hypergraph" width="65%" />
 </p>
+Any strategy combination can be generated without any programming effort from the user. Note that all combinations do not necessarily result in sensible algorithms, or even convergent approaches.
 
 Check out my [presentation at the ICCOPT 2022 conference](https://www.researchgate.net/publication/362254109).
 This is joint work with Sven Leyffer (Argonne National Laboratory).
