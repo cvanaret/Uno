@@ -22,11 +22,11 @@ bool MeritFunction::is_acceptable(const ProgressMeasures& current_progress, cons
    GlobalizationStrategy::check_finiteness(trial_progress);
 
    // include the predicted optimality and infeasibility reductions
-   const double constrained_predicted_reduction = predicted_reduction.optimality + predicted_reduction.infeasibility;
+   const double constrained_predicted_reduction = predicted_reduction.scaled_optimality + predicted_reduction.infeasibility;
    DEBUG << "Constrained predicted reduction: " << constrained_predicted_reduction << '\n';
    // compute current exact penalty: rho*f + ||c||
-   const double current_exact_merit = objective_multiplier * current_progress.optimality + current_progress.infeasibility;
-   const double trial_exact_merit = objective_multiplier * trial_progress.optimality + trial_progress.infeasibility;
+   const double current_exact_merit = objective_multiplier * current_progress.scaled_optimality + current_progress.infeasibility;
+   const double trial_exact_merit = objective_multiplier * trial_progress.scaled_optimality + trial_progress.infeasibility;
    const double actual_reduction = current_exact_merit - trial_exact_merit;
    DEBUG << "Current merit: " << current_exact_merit << '\n';
    DEBUG << "Trial merit:   " << trial_exact_merit << '\n';

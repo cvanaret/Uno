@@ -200,7 +200,7 @@ void FeasibilityRestoration::set_infeasibility_measure(Iterate& iterate) {
 
 void FeasibilityRestoration::set_restoration_optimality_measure(Iterate& iterate, const std::vector<size_t>& infeasible_linearized_constraints) {
    iterate.evaluate_constraints(this->original_model);
-   iterate.nonlinear_progress.optimality = this->original_model.compute_constraint_violation(iterate.original_evaluations.constraints,
+   iterate.nonlinear_progress.scaled_optimality = this->original_model.compute_constraint_violation(iterate.original_evaluations.constraints,
          infeasible_linearized_constraints, L1_NORM);
    //iterate.nonlinear_progress.objective = this->original_model.compute_constraint_violation(iterate.original_evaluations.constraints, L1_NORM);
 }

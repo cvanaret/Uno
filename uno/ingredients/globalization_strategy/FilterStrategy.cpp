@@ -31,7 +31,7 @@ void FilterStrategy::reset() {
 }
 
 void FilterStrategy::register_current_progress(const ProgressMeasures& current_progress) {
-   this->filter->add(current_progress.infeasibility, current_progress.optimality);
+   this->filter->add(current_progress.infeasibility, current_progress.scaled_optimality);
 }
 
 /* check acceptability of step(s) (filter & sufficient reduction)
@@ -43,31 +43,31 @@ bool FilterStrategy::is_acceptable(const ProgressMeasures& current_progress, con
    GlobalizationStrategy::check_finiteness(current_progress);
    GlobalizationStrategy::check_finiteness(trial_progress);
 
-   DEBUG << "Current: η = " << current_progress.infeasibility << ", ω = " << current_progress.optimality << '\n';
-   DEBUG << "Trial:   η = " << trial_progress.infeasibility << ", ω = " << trial_progress.optimality << '\n';
+   DEBUG << "Current: η = " << current_progress.infeasibility << ", ω = " << current_progress.scaled_optimality << '\n';
+   DEBUG << "Trial:   η = " << trial_progress.infeasibility << ", ω = " << trial_progress.scaled_optimality << '\n';
 
    bool accept = false;
    // check acceptance
-   const bool filter_acceptable = this->filter->accept(trial_progress.infeasibility, trial_progress.optimality);
+   const bool filter_acceptable = this->filter->accept(trial_progress.infeasibility, trial_progress.scaled_optimality);
    if (filter_acceptable) {
       DEBUG << "Filter acceptable\n";
       DEBUG << *this->filter << '\n';
 
       // check acceptance wrt current x (h,f)
-      const bool improves_current_iterate = this->filter->improves_current_iterate(current_progress.infeasibility, current_progress.optimality,
-            trial_progress.infeasibility, trial_progress.optimality);
+      const bool improves_current_iterate = this->filter->improves_current_iterate(current_progress.infeasibility, current_progress.scaled_optimality,
+            trial_progress.infeasibility, trial_progress.scaled_optimality);
       if (improves_current_iterate) {
          DEBUG << "Acceptable wrt current point\n";
          // include the predicted optimality reduction, but ignore the predicted infeasibility reduction
-         const double unconstrained_predicted_reduction = predicted_reduction.optimality;
+         const double unconstrained_predicted_reduction = predicted_reduction.scaled_optimality;
          DEBUG << "Unconstrained predicted reduction: " << unconstrained_predicted_reduction << '\n';
-         const double actual_reduction = this->filter->compute_actual_reduction(current_progress.optimality, current_progress.infeasibility,
-               trial_progress.optimality);
+         const double actual_reduction = this->filter->compute_actual_reduction(current_progress.scaled_optimality, current_progress.infeasibility,
+               trial_progress.scaled_optimality);
          DEBUG << "Actual reduction: " << actual_reduction << '\n';
 
          // switching condition violated: predicted reduction is not promising
          if (!this->switching_condition(unconstrained_predicted_reduction, current_progress.infeasibility, this->parameters.delta)) {
-            this->filter->add(current_progress.infeasibility, current_progress.optimality);
+            this->filter->add(current_progress.infeasibility, current_progress.scaled_optimality);
             DEBUG << "Trial iterate was accepted by violating switching condition\n";
             DEBUG << "Current iterate was added to the filter\n";
             accept = true;
@@ -78,7 +78,7 @@ bool FilterStrategy::is_acceptable(const ProgressMeasures& current_progress, con
             accept = true;
          }
          else { // switching condition holds, but not Armijo condition
-            this->filter->add(current_progress.infeasibility, current_progress.optimality);
+            this->filter->add(current_progress.infeasibility, current_progress.scaled_optimality);
             DEBUG << "Armijo condition not satisfied, trial iterate rejected\n";
             DEBUG << "Current iterate was added to the filter\n";
          }

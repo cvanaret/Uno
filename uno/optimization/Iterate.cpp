@@ -121,6 +121,6 @@ std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
    stream << "Stationarity (KKT/FJ) error: " << iterate.stationarity_error << '\n';
    stream << "Complementarity error: " << iterate.complementarity_error << '\n';
    stream << "Infeasibility measure: " << iterate.nonlinear_progress.infeasibility << '\n';
-   stream << "Optimality measure: " << iterate.nonlinear_progress.optimality << '\n';
+   stream << "Optimality measure: " << iterate.nonlinear_progress.scaled_optimality << '\n';
    return stream;
 }

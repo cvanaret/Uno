@@ -6,7 +6,7 @@
 
 struct ProgressMeasures {
    double infeasibility{}; // constraint violation
-   double optimality{}; // optimality measure (scalable by penalty parameter): objective, Lagrangian, ...
+   double scaled_optimality{}; // optimality measure (scaled by penalty parameter): objective, Lagrangian, ...
 };
 
 #endif // UNO_PROGRESSMEASURES_H

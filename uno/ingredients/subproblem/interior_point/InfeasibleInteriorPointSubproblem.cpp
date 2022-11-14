@@ -271,7 +271,7 @@ void InfeasibleInteriorPointSubproblem::set_optimality_measure(const NonlinearPr
    //iterate.evaluate_objective(problem.model);
    // TODO: parameterize optimality measure with \rho instead of multiplying (here, \rho should not multiply the barrier terms)
    //objective += iterate.original_evaluations.objective;
-   iterate.nonlinear_progress.optimality = objective;
+   iterate.nonlinear_progress.scaled_optimality = objective;
 }
 
 void InfeasibleInteriorPointSubproblem::update_barrier_parameter(const NonlinearProblem& problem, const Iterate& current_iterate) {
