@@ -102,7 +102,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& curr
       PredictedOptimalityReductionModel& predicted_optimality_reduction_model, double step_length) {
    bool accept = false;
    if (this->is_small_step(direction)) {
-      DEBUG << "Terminate with a small step\n";
+      DEBUG << "Small step acceptable\n";
       accept = true;
    }
    else {

@@ -5,11 +5,14 @@
 
 void Result::print(bool print_primal_dual_solution) const {
    std::cout << "Status:\t\t\t\t";
-   if (this->status == KKT_POINT) {
-      std::cout << "Converged with KKT point\n";
+   if (this->status == FEASIBLE_KKT_POINT) {
+      std::cout << "Converged with feasible KKT point\n";
    }
    else if (this->status == FJ_POINT) {
       std::cout << "Converged with FJ point\n";
+   }
+   else if (this->status == INFEASIBLE_KKT_POINT) {
+      std::cout << "Converged with infeasible KKT point\n";
    }
    else if (this->status == FEASIBLE_SMALL_STEP) {
       std::cout << "Converged with feasible small step\n";

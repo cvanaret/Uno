@@ -190,7 +190,7 @@ inline void ScaledModel::postprocess_solution(Iterate& iterate, TerminationStatu
    iterate.original_evaluations.objective /= scaling.get_objective_scaling();
 
    // unscale the multipliers and the function values
-   const bool is_feasible = (termination_status == KKT_POINT || termination_status == FEASIBLE_SMALL_STEP);
+   const bool is_feasible = (termination_status == FEASIBLE_KKT_POINT || termination_status == FEASIBLE_SMALL_STEP);
    const double scaled_objective_multiplier = scaling.get_objective_scaling()*(is_feasible ? iterate.multipliers.objective : 1.);
    if (scaled_objective_multiplier != 0.) {
       for (size_t j = 0; j < this->number_constraints; j++) {

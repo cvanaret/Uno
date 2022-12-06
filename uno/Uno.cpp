@@ -91,26 +91,40 @@ bool Uno::termination_criterion(TerminationStatus current_status, size_t iterati
    return current_status != NOT_OPTIMAL || this->max_iterations <= iteration;
 }
 
+bool not_all_zeros(const Multipliers& multipliers, double tolerance) {
+   for (double multiplier_j: multipliers.constraints) {
+      if (std::abs(multiplier_j) > tolerance) {
+         return true;
+      }
+   }
+   return false;
+}
+
 TerminationStatus Uno::check_termination(const Model& model, Iterate& current_iterate, double step_norm) const {
-   // TODO: criterion for CQ failure
    current_iterate.evaluate_constraints(model);
    current_iterate.complementarity_error = model.compute_complementarity_error(current_iterate.primals, current_iterate.original_evaluations.constraints,
          current_iterate.multipliers.constraints, current_iterate.multipliers.lower_bounds, current_iterate.multipliers.upper_bounds);
+   // evaluate termination conditions based on optimality conditions
+   const bool stationarity = (current_iterate.stationarity_error <= this->tolerance * std::sqrt(model.number_variables));
+   const bool complementarity = (current_iterate.complementarity_error <= this->tolerance * static_cast<double>(model.number_variables + model.number_constraints));
+   const bool primal_feasibility = (current_iterate.constraint_violation <= this->tolerance * static_cast<double>(model.number_variables));
 
-   if (current_iterate.complementarity_error <= this->tolerance * static_cast<double>(model.number_variables + model.number_constraints)) {
-      // feasible and KKT point
-      if (current_iterate.stationarity_error <= this->tolerance * std::sqrt(model.number_variables) &&
-          current_iterate.constraint_violation <= this->tolerance * static_cast<double>(model.number_variables)) {
-         return KKT_POINT;
+   if (stationarity && complementarity) {
+      if (primal_feasibility) {
+         if (0. < current_iterate.multipliers.objective) {
+            return FEASIBLE_KKT_POINT;
+         }
+         else if (current_iterate.multipliers.objective == 0. && not_all_zeros(current_iterate.multipliers, this->tolerance)) {
+            return FJ_POINT; // CQ failure
+         }
       }
-      // infeasible and FJ point
-      else if (model.is_constrained() && current_iterate.multipliers.objective == 0. &&
-         current_iterate.stationarity_error <= this->tolerance * std::sqrt(model.number_variables)) {
-         return FJ_POINT;
+      else if (not_all_zeros(current_iterate.multipliers, this->tolerance)) { // !primal_feasibility
+        return INFEASIBLE_KKT_POINT;
       }
    }
+   // complementarity not achieved, but we can terminate with a small step
    if (step_norm <= this->tolerance / this->small_step_factor) {
-      if (current_iterate.constraint_violation <= this->tolerance * static_cast<double>(model.number_variables)) {
+      if (primal_feasibility) {
          return FEASIBLE_SMALL_STEP;
       }
       else {
