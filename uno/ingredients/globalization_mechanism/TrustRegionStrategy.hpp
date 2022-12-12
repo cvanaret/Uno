@@ -29,8 +29,8 @@ private:
 
    void increase_radius(double step_norm);
    void decrease_radius(double step_norm);
-   static void rectify_multipliers(Direction& direction, double radius);
-   void set_statistics(Statistics& statistics, const Direction& direction);
+   void rectify_multipliers(Direction& direction);
+   void add_statistics(Statistics& statistics, const Direction& direction);
    [[nodiscard]] bool termination() const;
    void print_iteration();
 };

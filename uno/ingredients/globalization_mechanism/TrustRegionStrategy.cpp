@@ -40,7 +40,7 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
          this->constraint_relaxation_strategy.set_variable_bounds(current_iterate, this->radius);
          Direction direction = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate);
          // set bound multipliers of active trust region to 0
-         TrustRegionStrategy::rectify_multipliers(direction, this->radius);
+         this->rectify_multipliers(direction);
 
          // assemble the trial iterate by taking a full step
          Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction);
@@ -53,7 +53,7 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
          if (is_acceptable) {
             // let the subproblem know the accepted iterate
             this->constraint_relaxation_strategy.register_accepted_iterate(trial_iterate);
-            this->set_statistics(statistics, direction);
+            this->add_statistics(statistics, direction);
 
             // increase the radius if trust region is active
             this->increase_radius(direction.norm);
@@ -83,12 +83,12 @@ void TrustRegionStrategy::decrease_radius(double step_norm) {
    this->radius = std::min(this->radius, step_norm) / this->decrease_factor;
 }
 
-void TrustRegionStrategy::rectify_multipliers(Direction& direction, double radius) {
-   assert(0 < radius && "The trust-region radius should be positive");
+void TrustRegionStrategy::rectify_multipliers(Direction& direction) {
+   assert(0 < this->radius && "The trust-region radius should be positive");
    // update active set and set multipliers for bound constraints active at trust region to 0
    for (auto it = direction.active_set.bounds.at_lower_bound.begin(); it != direction.active_set.bounds.at_lower_bound.end();) {
-      size_t i = *it;
-      if (direction.primals[i] == -radius) {
+      const size_t i = *it;
+      if (std::abs(direction.primals[i] + this->radius) <= this->activity_tolerance) {
          it = direction.active_set.bounds.at_lower_bound.erase(it);
          direction.multipliers.lower_bounds[i] = 0.;
       }
@@ -97,8 +97,8 @@ void TrustRegionStrategy::rectify_multipliers(Direction& direction, double radiu
       }
    }
    for (auto it = direction.active_set.bounds.at_upper_bound.begin(); it != direction.active_set.bounds.at_upper_bound.end();) {
-      size_t i = *it;
-      if (direction.primals[i] == radius) {
+      const size_t i = *it;
+      if (std::abs(direction.primals[i] - this->radius) <= this->activity_tolerance) {
          it = direction.active_set.bounds.at_upper_bound.erase(it);
          direction.multipliers.upper_bounds[i] = 0.;
       }
@@ -108,7 +108,7 @@ void TrustRegionStrategy::rectify_multipliers(Direction& direction, double radiu
    }
 }
 
-void TrustRegionStrategy::set_statistics(Statistics& statistics, const Direction& direction) {
+void TrustRegionStrategy::add_statistics(Statistics& statistics, const Direction& direction) {
    statistics.add_statistic("minor", this->number_iterations);
    statistics.add_statistic("TR radius", this->radius);
    statistics.add_statistic("step norm", direction.norm);
