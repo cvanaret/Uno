@@ -22,6 +22,10 @@ void Iterate::evaluate_objective(const Model& model) {
    if (!this->is_objective_computed) {
       // evaluate the objective
       this->model_evaluations.objective = model.evaluate_objective(this->primals);
+      // check finiteness
+      if (this->model_evaluations.objective == INF<double>) {
+         throw FunctionEvaluationError();
+      }
       this->is_objective_computed = true;
       Iterate::number_eval_objective++;
    }
