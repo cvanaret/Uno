@@ -39,11 +39,11 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
          // compute the direction within the trust region
          this->constraint_relaxation_strategy.set_variable_bounds(current_iterate, this->radius);
          Direction direction = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate);
-         // set bound multipliers of active trust region to 0
-         this->rectify_multipliers(direction);
 
          // assemble the trial iterate by taking a full step
          Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction);
+         // set bound multipliers of active trust region to 0
+         this->reset_trust_region_multipliers(direction, trial_iterate);
 
          // check whether the trial step is accepted
          PredictedOptimalityReductionModel predicted_optimality_reduction_model = this->constraint_relaxation_strategy.generate_predicted_optimality_reduction_model(direction);
@@ -83,27 +83,17 @@ void TrustRegionStrategy::decrease_radius(double step_norm) {
    this->radius = std::min(this->radius, step_norm) / this->decrease_factor;
 }
 
-void TrustRegionStrategy::rectify_multipliers(Direction& direction) {
+void TrustRegionStrategy::reset_trust_region_multipliers(const Direction& direction, Iterate& trial_iterate) const {
    assert(0 < this->radius && "The trust-region radius should be positive");
-   // update active set and set multipliers for bound constraints active at trust region to 0
-   for (auto it = direction.active_set.bounds.at_lower_bound.begin(); it != direction.active_set.bounds.at_lower_bound.end();) {
-      const size_t i = *it;
+   // set multipliers for bound constraints active at trust region to 0
+   for (size_t i: direction.active_set.bounds.at_lower_bound) {
       if (std::abs(direction.primals[i] + this->radius) <= this->activity_tolerance) {
-         it = direction.active_set.bounds.at_lower_bound.erase(it);
-         direction.multipliers.lower_bounds[i] = 0.;
-      }
-      else {
-         ++it;
+         trial_iterate.multipliers.lower_bounds[i] = 0.;
       }
    }
-   for (auto it = direction.active_set.bounds.at_upper_bound.begin(); it != direction.active_set.bounds.at_upper_bound.end();) {
-      const size_t i = *it;
+   for (size_t i: direction.active_set.bounds.at_upper_bound) {
       if (std::abs(direction.primals[i] - this->radius) <= this->activity_tolerance) {
-         it = direction.active_set.bounds.at_upper_bound.erase(it);
-         direction.multipliers.upper_bounds[i] = 0.;
-      }
-      else {
-         ++it;
+         trial_iterate.multipliers.upper_bounds[i] = 0.;
       }
    }
 }

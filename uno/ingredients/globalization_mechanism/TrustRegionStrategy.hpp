@@ -29,7 +29,7 @@ private:
 
    void increase_radius(double step_norm);
    void decrease_radius(double step_norm);
-   void rectify_multipliers(Direction& direction);
+   void reset_trust_region_multipliers(const Direction& direction, Iterate& trial_iterate) const;
    void add_statistics(Statistics& statistics, const Direction& direction);
    [[nodiscard]] bool termination() const;
    void print_iteration();
