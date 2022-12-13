@@ -131,7 +131,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& curr
 
 PredictedOptimalityReductionModel FeasibilityRestoration::generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
       const Direction& direction) const {
-   return this->subproblem->generate_predicted_optimality_reduction_model(this->get_current_reformulated_problem(), current_iterate, direction);
+   return this->subproblem->generate_predicted_optimality_reduction_model(current_iterate, direction);
 }
 
 const NonlinearProblem& FeasibilityRestoration::get_current_reformulated_problem() const {

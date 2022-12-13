@@ -58,35 +58,14 @@ Direction QPSubproblem::solve_QP(const NonlinearProblem& problem, Iterate& itera
    return direction;
 }
 
-/*
-OptimalityMeasureModel QPSubproblem::generate_optimality_measure_model(const ReformulatedProblem& problem, const Direction& direction) const {
-   return OptimalityMeasureModel(-direction.objective, [&]() { // capture "this" and "direction" by reference
-      // precompute expensive quantities
-      const double directional_derivative = problem.compute_directional_derivative()
-      // return a function of the step length that cheaply assembles the predicted reduction
-      return [=](double step_length) { // capture the expensive quantities by value
-         return -step_length * (linear_term + step_length * quadratic_term);
-      };
-   });
-}
-*/
+PredictedOptimalityReductionModel QPSubproblem::generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
+      const Direction& direction) const {
+   // precompute expensive quantities
+   const double directional_derivative = dot(direction.primals, current_iterate.reformulation_evaluations.objective_gradient);
 
-PredictedOptimalityReductionModel QPSubproblem::generate_predicted_optimality_reduction_model(const NonlinearProblem& problem,
-      const Iterate& current_iterate, const Direction& direction) const {
-   return PredictedOptimalityReductionModel(-direction.objective, [&]() { // capture "this" and "direction" by reference
-      // precompute expensive quantities
-      // we need the directional derivative wrt the original variables
-      const size_t number_original_variables = problem.get_number_original_variables();
-      const auto predicate = [=](size_t i) {
-         return (i < number_original_variables);
-      };
-      // the objective gradient is scaled with the current objective multiplier
-      const double linear_term = dot(direction.primals, current_iterate.reformulation_evaluations.objective_gradient, predicate);
-      const double quadratic_term = this->hessian_model->hessian->quadratic_product(direction.primals, direction.primals, problem.number_variables) / 2.;
+   return PredictedOptimalityReductionModel([=](double step_length) {
       // return a function of the step length that cheaply assembles the predicted reduction
-      return [=](double step_length) { // capture the expensive quantities by value
-         return -step_length * (linear_term + step_length * quadratic_term);
-      };
+      return -step_length * directional_derivative;
    });
 }
 

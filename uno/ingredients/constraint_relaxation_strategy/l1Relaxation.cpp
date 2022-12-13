@@ -260,7 +260,7 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, Iterate& current_iterat
 
 PredictedOptimalityReductionModel l1Relaxation::generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
       const Direction& direction) const {
-   return this->subproblem->generate_predicted_optimality_reduction_model(this->relaxed_problem, current_iterate, direction);
+   return this->subproblem->generate_predicted_optimality_reduction_model(current_iterate, direction);
 }
 
 // measure that combines KKT error and complementarity error

@@ -8,18 +8,12 @@
 
 class PredictedOptimalityReductionModel {
 public:
-   PredictedOptimalityReductionModel(double full_step_value, std::function<std::function<double(double step_length)>()> partial_step_precomputation);
+   PredictedOptimalityReductionModel(std::function<double(double step_length)> step_precomputation);
    double evaluate(double step_length);
 
 private:
-   // predicted reduction for a full step
-   double full_step_predicted_reduction;
-
    // predicted reduction, function of the step length
-   std::function<double (double step_length)> partial_step_predicted_reduction{nullptr};
-
-   // this function, when evaluated, precomputes expensive quantities and returns a function of the step length
-   std::function<std::function<double (double step_length)> ()> partial_step_precomputation;
+   std::function<double (double step_length)> predicted_reduction;
 };
 
 #endif // UNO_PREDICTEDOPTIMALITYREDUCTIONMODEL_H

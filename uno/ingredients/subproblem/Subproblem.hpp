@@ -33,8 +33,8 @@ public:
    virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
 
    // globalization metrics
-   [[nodiscard]] virtual PredictedOptimalityReductionModel generate_predicted_optimality_reduction_model(const NonlinearProblem& problem,
-         const Iterate& current_iterate, const Direction& direction) const = 0;
+   [[nodiscard]] virtual PredictedOptimalityReductionModel generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
+         const Direction& direction) const = 0;
    virtual void set_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) = 0;
 
    virtual void postprocess_accepted_iterate(const NonlinearProblem& model, Iterate& iterate) = 0;

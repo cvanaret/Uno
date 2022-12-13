@@ -51,13 +51,11 @@ Direction LPSubproblem::solve_LP(const NonlinearProblem& problem, Iterate& itera
    return direction;
 }
 
-PredictedOptimalityReductionModel LPSubproblem::generate_predicted_optimality_reduction_model(const NonlinearProblem& /*problem*/,
-      const Iterate& /*current_iterate*/, const Direction& direction) const {
-   return PredictedOptimalityReductionModel(-direction.objective, [&]() { // capture "direction" by reference
-      // return a function of the step length that cheaply assembles the predicted reduction
-      return [=](double step_length) { // capture the expensive quantities by value
-         return -step_length * direction.objective;
-      };
+PredictedOptimalityReductionModel LPSubproblem::generate_predicted_optimality_reduction_model(const Iterate& /*current_iterate*/,
+      const Direction& direction) const {
+   // return a function of the step length that cheaply assembles the predicted reduction
+   return PredictedOptimalityReductionModel([=](double step_length) {
+      return -step_length * direction.objective;
    });
 }
 

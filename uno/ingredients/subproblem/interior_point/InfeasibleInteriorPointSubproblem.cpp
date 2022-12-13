@@ -245,12 +245,10 @@ void InfeasibleInteriorPointSubproblem::set_elastic_variable_values(const l1Rela
    problem.set_elastic_variable_values(current_iterate, elastic_setting_function);
 }
 
-PredictedOptimalityReductionModel InfeasibleInteriorPointSubproblem::generate_predicted_optimality_reduction_model(const NonlinearProblem& /*problem*/,
-      const Iterate& /*current_iterate*/, const Direction& direction) const {
-   return PredictedOptimalityReductionModel(-direction.objective, [&]() {
-      return [=](double step_length) {
-         return -step_length * direction.objective;
-      };
+PredictedOptimalityReductionModel InfeasibleInteriorPointSubproblem::generate_predicted_optimality_reduction_model(const Iterate& /*current_iterate*/,
+      const Direction& direction) const {
+   return PredictedOptimalityReductionModel([=](double step_length) {
+      return -step_length * direction.objective;
    });
 }
 
