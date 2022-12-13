@@ -19,10 +19,8 @@ std::map<FunctionType, std::string> Model::type_to_string = {
 // abstract Problem class
 Model::Model(std::string name, size_t number_variables, size_t number_constraints, FunctionType type) :
       name(std::move(name)), number_variables(number_variables), number_constraints(number_constraints), problem_type(type),
-      equality_constraints(this->number_constraints),
-      inequality_constraints(this->number_constraints),
-      linear_constraints(this->number_constraints),
-      slacks(this->number_constraints) {
+      equality_constraints(this->number_constraints), inequality_constraints(this->number_constraints),
+      linear_constraints(this->number_constraints), slacks(this->number_constraints) {
 }
 
 void Model::determine_bounds_types(std::vector<Interval>& bounds, std::vector<BoundType>& status) {
@@ -77,45 +75,44 @@ bool Model::is_constrained() const {
    return (0 < this->number_constraints);
 }
 
-double Model::compute_constraint_lower_bound_violation(double constraint, size_t j) const {
+double Model::compute_constraint_lower_bound_violation(double constraint_value, size_t j) const {
    const double lower_bound = this->get_constraint_lower_bound(j);
-   return std::max(0., lower_bound - constraint);
+   return std::max(0., lower_bound - constraint_value);
 }
 
-double Model::compute_constraint_upper_bound_violation(double constraint, size_t j) const {
+double Model::compute_constraint_upper_bound_violation(double constraint_value, size_t j) const {
    const double upper_bound = this->get_constraint_upper_bound(j);
-   return std::max(0., constraint - upper_bound);
+   return std::max(0., constraint_value - upper_bound);
 }
 
-double Model::compute_constraint_violation(double constraint, size_t j) const {
-   const double lower_bound_violation = this->compute_constraint_lower_bound_violation(constraint, j);
-   const double upper_bound_violation = this->compute_constraint_upper_bound_violation(constraint, j);
+double Model::compute_constraint_violation(double constraint_value, size_t j) const {
+   const double lower_bound_violation = this->compute_constraint_lower_bound_violation(constraint_value, j);
+   const double upper_bound_violation = this->compute_constraint_upper_bound_violation(constraint_value, j);
    return std::max(lower_bound_violation, upper_bound_violation);
 }
 
 // compute ||c_S|| for a given set of constraints
 double Model::compute_constraint_violation(const std::vector<double>& constraints, const std::vector<size_t>& constraint_set,
       Norm residual_norm) const {
-   auto residual_function = [&](size_t j) {
+   const auto jth_component = [&](size_t j) {
       return this->compute_constraint_violation(constraints[j], j);
    };
-   return norm<double>(residual_function, constraint_set, residual_norm);
+   return norm<double>(jth_component, constraint_set, residual_norm);
 }
 
 // compute ||c||
 double Model::compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const {
    // create a lambda to avoid allocating an std::vector
-   auto residual_function = [&](size_t j) {
+   const auto jth_component = [&](size_t j) {
       return this->compute_constraint_violation(constraints[j], j);
    };
-   return norm<double>(residual_function, Range(constraints.size()), residual_norm);
+   return norm<double>(jth_component, Range(constraints.size()), residual_norm);
 }
 
 // complementary slackness error
 double Model::compute_complementarity_error(const std::vector<double>& x, const std::vector<double>& constraints,
       const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bounds_multipliers,
       const std::vector<double>& upper_bounds_multipliers) const {
-   // TODO use the objective multiplier
    double error = 0.;
    // bound constraints
    for (size_t i = 0; i < this->number_variables; i++) {

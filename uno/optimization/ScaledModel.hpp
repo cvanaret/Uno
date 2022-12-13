@@ -49,7 +49,7 @@ inline ScaledModel::ScaledModel(const Model& original_model, Iterate& first_iter
       // evaluate the gradients at the current point
       first_iterate.evaluate_objective_gradient(original_model);
       first_iterate.evaluate_constraint_jacobian(original_model);
-      this->scaling.compute(first_iterate.original_evaluations.objective_gradient, first_iterate.original_evaluations.constraint_jacobian);
+      this->scaling.compute(first_iterate.model_evaluations.objective_gradient, first_iterate.model_evaluations.constraint_jacobian);
       // forget about these evaluations
       first_iterate.reset_evaluations();
    }
@@ -187,7 +187,7 @@ inline void ScaledModel::postprocess_solution(Iterate& iterate, TerminationStatu
    this->original_model.postprocess_solution(iterate, termination_status);
 
    // objective value
-   iterate.original_evaluations.objective /= scaling.get_objective_scaling();
+   iterate.model_evaluations.objective /= scaling.get_objective_scaling();
 
    // unscale the multipliers and the function values
    const bool is_feasible = (termination_status == FEASIBLE_KKT_POINT || termination_status == FEASIBLE_SMALL_STEP);

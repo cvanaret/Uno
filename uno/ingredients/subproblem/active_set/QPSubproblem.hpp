@@ -16,7 +16,7 @@ public:
    [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) override;
    [[nodiscard]] Direction compute_second_order_correction(const NonlinearProblem& model, Iterate& trial_iterate) override;
    [[nodiscard]] PredictedOptimalityReductionModel generate_predicted_optimality_reduction_model(const NonlinearProblem& problem,
-         const Direction& direction) const override;
+         const Iterate& current_iterate, const Direction& direction) const override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
 protected:

@@ -46,7 +46,8 @@ void l1Relaxation::initialize(Statistics& statistics, Iterate& first_iterate) {
    // compute the progress measures and the residuals of the initial point
    this->set_infeasibility_measure(first_iterate);
    this->subproblem->set_optimality_measure(this->optimality_problem, first_iterate);
-   this->compute_nonlinear_residuals(this->relaxed_problem, first_iterate);
+   ConstraintRelaxationStrategy::evaluate_reformulation_functions(this->relaxed_problem, first_iterate);
+   this->compute_optimality_condition_residuals(this->relaxed_problem, first_iterate);
 
    // initialize the globalization strategy
    this->globalization_strategy->initialize(first_iterate);
@@ -55,10 +56,10 @@ void l1Relaxation::initialize(Statistics& statistics, Iterate& first_iterate) {
 void l1Relaxation::set_multipliers(const Iterate& current_iterate, std::vector<double>& current_constraint_multipliers) {
    // the values {1, -1} are derived from the KKT conditions of the l1 problem
    for (size_t j = 0; j < this->optimality_problem.number_constraints; j++) {
-      if (current_iterate.original_evaluations.constraints[j] < this->optimality_problem.get_constraint_lower_bound(j)) { // lower bound infeasible
+      if (current_iterate.model_evaluations.constraints[j] < this->optimality_problem.get_constraint_lower_bound(j)) { // lower bound infeasible
          current_constraint_multipliers[j] = 1.;
       }
-      else if (this->optimality_problem.get_constraint_upper_bound(j) < current_iterate.original_evaluations.constraints[j]) { // upper bound infeasible
+      else if (this->optimality_problem.get_constraint_upper_bound(j) < current_iterate.model_evaluations.constraints[j]) { // upper bound infeasible
          current_constraint_multipliers[j] = -1.;
       }
    }
@@ -110,7 +111,9 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
    // penalty update: if penalty parameter is already 0 or fixed by the user, no need to decrease it
    if (0. < this->penalty_parameter && !this->parameters.fixed_parameter) {
       // check infeasibility
-      double linearized_residual = this->relaxed_problem.compute_linearized_constraint_violation(current_iterate.primals, direction.primals);
+      double linearized_residual = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate,
+            direction, 1.);
+            //this->relaxed_problem.compute_linearized_constraint_violation(current_iterate.primals, direction.primals);
       DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
 
       // if the current direction is already feasible, terminate
@@ -120,8 +123,8 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
          // stage c: compute the lowest possible constraint violation (penalty parameter = 0)
          DEBUG << "Compute ideal solution by solving the feasibility problem:\n";
          Direction direction_lowest_violation = this->solve_subproblem(statistics, current_iterate, 0.);
-         const double residual_lowest_violation = this->relaxed_problem
-               .compute_linearized_constraint_violation(current_iterate.primals, direction_lowest_violation.primals);
+         const double residual_lowest_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate,
+               direction_lowest_violation, 1.);
          DEBUG << "Lowest linearized residual mk(dk): " << residual_lowest_violation << '\n';
 
          // stage f: update the penalty parameter
@@ -134,7 +137,8 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
             if (this->penalty_parameter < current_penalty_parameter) {
                DEBUG << "Resolving the subproblem (penalty parameter aggressively reduced to " << this->penalty_parameter << ")\n";
                direction = this->solve_subproblem(statistics, current_iterate, this->penalty_parameter);
-               linearized_residual = this->relaxed_problem.compute_linearized_constraint_violation(current_iterate.primals, direction.primals);
+               linearized_residual = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate,
+                     direction, 1.);
             }
 
             // further decrease penalty parameter to satisfy 2 conditions
@@ -166,7 +170,8 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
                   else {
                      DEBUG << "Resolving the subproblem (penalty parameter reduced to " << this->penalty_parameter << ")\n";
                      direction = this->solve_subproblem(statistics, current_iterate, this->penalty_parameter);
-                     linearized_residual = this->relaxed_problem.compute_linearized_constraint_violation(current_iterate.primals, direction.primals);
+                     linearized_residual = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate,
+                           direction, 1.);
                      DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
                   }
                }
@@ -186,8 +191,8 @@ bool l1Relaxation::linearized_residual_sufficient_decrease(const Iterate& curren
    if (residual_lowest_violation == 0.) {
       return (linearized_residual == 0.);
    }
-   const double linearized_residual_reduction = current_iterate.constraint_violation - linearized_residual;
-   const double lowest_linearized_residual_reduction = current_iterate.constraint_violation - residual_lowest_violation;
+   const double linearized_residual_reduction = current_iterate.primal_constraint_violation - linearized_residual;
+   const double lowest_linearized_residual_reduction = current_iterate.primal_constraint_violation - residual_lowest_violation;
    return (linearized_residual_reduction >= this->parameters.epsilon1 * lowest_linearized_residual_reduction);
 }
 
@@ -196,7 +201,7 @@ void l1Relaxation::decrease_parameter_aggressively(Iterate& current_iterate, con
    const double error_lowest_violation = l1Relaxation::compute_error(current_iterate, direction_lowest_violation.multipliers);
    DEBUG << "Ideal error: " << error_lowest_violation << '\n';
 
-   const double scaled_error = error_lowest_violation / std::max(1., current_iterate.constraint_violation);
+   const double scaled_error = error_lowest_violation / std::max(1., current_iterate.primal_constraint_violation);
    const double scaled_error_square = scaled_error*scaled_error;
    this->penalty_parameter = std::min(this->penalty_parameter, scaled_error_square);
    if (this->penalty_parameter < this->parameters.small_threshold) {
@@ -206,8 +211,8 @@ void l1Relaxation::decrease_parameter_aggressively(Iterate& current_iterate, con
 
 bool l1Relaxation::objective_sufficient_decrease(const Iterate& current_iterate, const Direction& direction,
       const Direction& direction_lowest_violation) const {
-   const double decrease_objective = current_iterate.constraint_violation - direction.objective;
-   const double lowest_decrease_objective = current_iterate.constraint_violation - direction_lowest_violation.objective;
+   const double decrease_objective = current_iterate.primal_constraint_violation - direction.objective;
+   const double lowest_decrease_objective = current_iterate.primal_constraint_violation - direction_lowest_violation.objective;
    return (decrease_objective >= this->parameters.epsilon2 * lowest_decrease_objective);
 }
 
@@ -227,6 +232,8 @@ void l1Relaxation::compute_progress_measures(Iterate& current_iterate, Iterate& 
 
 bool l1Relaxation::is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
       PredictedOptimalityReductionModel& predicted_optimality_reduction_model, double step_length) {
+   this->compute_progress_measures(current_iterate, trial_iterate, direction);
+
    bool accept = false;
    if (this->is_small_step(direction)) {
       DEBUG << "Small step acceptable\n";
@@ -245,14 +252,15 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, Iterate& current_iterat
    }
    if (accept) {
       statistics.add_statistic("penalty param.", this->penalty_parameter);
-      trial_iterate.evaluate_objective(this->original_model);
-      this->compute_nonlinear_residuals(this->relaxed_problem, trial_iterate);
+      ConstraintRelaxationStrategy::evaluate_reformulation_functions(this->relaxed_problem, trial_iterate);
+      this->compute_optimality_condition_residuals(this->relaxed_problem, trial_iterate);
    }
    return accept;
 }
 
-PredictedOptimalityReductionModel l1Relaxation::generate_predicted_optimality_reduction_model(const Direction& direction) const {
-   return this->subproblem->generate_predicted_optimality_reduction_model(this->relaxed_problem, direction);
+PredictedOptimalityReductionModel l1Relaxation::generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
+      const Direction& direction) const {
+   return this->subproblem->generate_predicted_optimality_reduction_model(this->relaxed_problem, current_iterate, direction);
 }
 
 // measure that combines KKT error and complementarity error
@@ -268,7 +276,7 @@ double l1Relaxation::compute_error(Iterate& current_iterate, const Multipliers& 
 
    // complementarity error
    current_iterate.evaluate_constraints(this->original_model);
-   double error = this->original_model.compute_complementarity_error(current_iterate.primals, current_iterate.original_evaluations.constraints,
+   double error = this->original_model.compute_complementarity_error(current_iterate.primals, current_iterate.model_evaluations.constraints,
          this->constraint_multipliers, this->lower_bound_multipliers, this->upper_bound_multipliers);
    // KKT error
    current_iterate.evaluate_lagrangian_gradient(this->original_model, this->relaxed_problem.get_objective_multiplier(),
@@ -287,7 +295,7 @@ Direction l1Relaxation::compute_second_order_correction(Iterate& trial_iterate) 
 
 void l1Relaxation::set_infeasibility_measure(Iterate& iterate) {
    iterate.evaluate_constraints(this->original_model);
-   iterate.nonlinear_progress.infeasibility = this->original_model.compute_constraint_violation(iterate.original_evaluations.constraints, L1_NORM);
+   iterate.nonlinear_progress.infeasibility = this->original_model.compute_constraint_violation(iterate.model_evaluations.constraints, L1_NORM);
 }
 
 void l1Relaxation::register_accepted_iterate(Iterate& iterate) {

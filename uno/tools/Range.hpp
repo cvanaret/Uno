@@ -19,6 +19,9 @@ public:
    void operator++();
    [[nodiscard]] size_t operator*() const;
 
+   // size
+   [[nodiscard]] size_t size() const;
+
 protected:
    size_t end_index{};
    size_t current_index{};
@@ -48,6 +51,10 @@ inline void Range::operator++() {
 
 inline size_t Range::operator*() const {
    return this->current_index;
+}
+
+inline size_t Range::size() const {
+   return this->end_index - this->current_index;
 }
 
 #endif // UNO_RANGE_H

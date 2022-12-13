@@ -68,9 +68,9 @@ Statistics Uno::create_statistics(const Model& model, const Options& options) {
    statistics.add_column("major", Statistics::int_width, options.get_int("statistics_major_column_order"));
    statistics.add_column("minor", Statistics::int_width, options.get_int("statistics_minor_column_order"));
    statistics.add_column("step norm", Statistics::double_width, options.get_int("statistics_step_norm_column_order"));
-   statistics.add_column("f", Statistics::double_width, options.get_int("statistics_objective_column_order"));
+   statistics.add_column("objective", Statistics::double_width, options.get_int("statistics_objective_column_order"));
    if (model.is_constrained()) {
-      statistics.add_column("||c||", Statistics::double_width, options.get_int("statistics_infeasibility_column_order"));
+      statistics.add_column("primal infeas.", Statistics::double_width, options.get_int("statistics_infeasibility_column_order"));
    }
    statistics.add_column("complementarity", Statistics::double_width, options.get_int("statistics_complementarity_column_order"));
    statistics.add_column("stationarity", Statistics::double_width, options.get_int("statistics_stationarity_column_order"));
@@ -79,9 +79,9 @@ Statistics Uno::create_statistics(const Model& model, const Options& options) {
 
 void Uno::add_statistics(Statistics& statistics, const Model& model, const Iterate& new_iterate, size_t major_iterations) {
    statistics.add_statistic(std::string("major"), major_iterations);
-   statistics.add_statistic("f", new_iterate.original_evaluations.objective);
+   statistics.add_statistic("objective", new_iterate.model_evaluations.objective);
    if (model.is_constrained()) {
-      statistics.add_statistic("||c||", new_iterate.constraint_violation);
+      statistics.add_statistic("primal infeas.", new_iterate.primal_constraint_violation);
    }
    statistics.add_statistic("complementarity", new_iterate.complementarity_error);
    statistics.add_statistic("stationarity", new_iterate.stationarity_error);
@@ -91,9 +91,16 @@ bool Uno::termination_criterion(TerminationStatus current_status, size_t iterati
    return current_status != NOT_OPTIMAL || this->max_iterations <= iteration;
 }
 
-bool not_all_zeros(const Multipliers& multipliers, double tolerance) {
+bool not_all_zero_multipliers(const Multipliers& multipliers, double tolerance) {
+   // constraint multipliers
    for (double multiplier_j: multipliers.constraints) {
       if (std::abs(multiplier_j) > tolerance) {
+         return true;
+      }
+   }
+   // bound multipliers
+   for (size_t i = 0; i < multipliers.lower_bounds.size(); i++) {
+      if (std::abs(multipliers.lower_bounds[i] + multipliers.upper_bounds[i]) > tolerance) {
          return true;
       }
    }
@@ -101,24 +108,24 @@ bool not_all_zeros(const Multipliers& multipliers, double tolerance) {
 }
 
 TerminationStatus Uno::check_termination(const Model& model, Iterate& current_iterate, double step_norm) const {
-   current_iterate.evaluate_constraints(model);
-   current_iterate.complementarity_error = model.compute_complementarity_error(current_iterate.primals, current_iterate.original_evaluations.constraints,
-         current_iterate.multipliers.constraints, current_iterate.multipliers.lower_bounds, current_iterate.multipliers.upper_bounds);
    // evaluate termination conditions based on optimality conditions
    const bool stationarity = (current_iterate.stationarity_error <= this->tolerance * std::sqrt(model.number_variables));
    const bool complementarity = (current_iterate.complementarity_error <= this->tolerance * static_cast<double>(model.number_variables + model.number_constraints));
-   const bool primal_feasibility = (current_iterate.constraint_violation <= this->tolerance * static_cast<double>(model.number_variables));
+   const bool primal_feasibility = (current_iterate.primal_constraint_violation <= this->tolerance * static_cast<double>(model.number_variables));
 
    if (stationarity && complementarity) {
       if (primal_feasibility) {
          if (0. < current_iterate.multipliers.objective) {
+            // feasible regular stationary point
             return FEASIBLE_KKT_POINT;
          }
-         else if (current_iterate.multipliers.objective == 0. && not_all_zeros(current_iterate.multipliers, this->tolerance)) {
-            return FJ_POINT; // CQ failure
+         else if (current_iterate.multipliers.objective == 0. && not_all_zero_multipliers(current_iterate.multipliers, this->tolerance)) {
+            // feasible but CQ failure
+            return FJ_POINT;
          }
       }
-      else if (not_all_zeros(current_iterate.multipliers, this->tolerance)) { // !primal_feasibility
+      else if (current_iterate.multipliers.objective == 0. && not_all_zero_multipliers(current_iterate.multipliers, this->tolerance)) {
+         // no primal feasibility, minimum of constraint violation
         return INFEASIBLE_KKT_POINT;
       }
    }

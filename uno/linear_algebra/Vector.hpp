@@ -131,45 +131,55 @@ T norm(const std::vector<T>& x, Norm norm) {
 // - a callback as argument whose parameter is the current index. This avoids forming the vector explicitly
 // - an iterable range of arbitrary type (can be Range, std::vector, etc)
 template <typename T, typename RANGE>
-T norm_1(const std::function<T(size_t i)>& f, const RANGE& range) {
+T norm_1(const std::function<T(size_t i)>& f, const RANGE& range, bool normalized = false) {
    T norm = T(0);
    for (size_t i: range) {
       norm += std::abs(f(i));
    }
+   // if required, normalize with the size of the range
+   if (normalized && 0 < range.size()) {
+      norm /= static_cast<double>(range.size());
+   }
    return norm;
 }
 
 template <typename T, typename RANGE>
-T norm_inf(const std::vector<T>& x, const RANGE& range) {
+T norm_inf(const std::vector<T>& x, const RANGE& range, bool /*normalized*/ = false) {
    T norm = T(0);
    for (size_t i: range) {
       norm = std::max(norm, std::abs(x[i]));
    }
+   // already normalized
    return norm;
 }
 
 template <typename T, typename RANGE>
-T norm_inf(const std::function<T(size_t i)>& f, const RANGE& range) {
+T norm_inf(const std::function<T(size_t i)>& f, const RANGE& range, bool /*normalized*/ = false) {
    T norm = T(0);
    for (size_t i: range) {
       norm = std::max(norm, std::abs(f(i)));
    }
+   // already normalized
    return norm;
 }
 
 template <typename T, typename RANGE>
-T norm_2_squared(const std::function<T(size_t i)>& f, const RANGE& range) {
+T norm_2_squared(const std::function<T(size_t i)>& f, const RANGE& range, bool normalized = false) {
    T norm = T(0);
    for (size_t i: range) {
       const T x_i = f(i);
       norm += x_i * x_i;
    }
+   // if required, normalize with the size of the range
+   if (normalized && 0 < range.size()) {
+      norm /= static_cast<double>(range.size());
+   }
    return norm;
 }
 
 template <typename T, typename RANGE>
-T norm_2(const std::function<T(size_t /*i*/)>& f, const RANGE& range) {
-   return std::sqrt(norm_2_squared(f, range));
+T norm_2(const std::function<T(size_t /*i*/)>& f, const RANGE& range, bool normalized = false) {
+   return std::sqrt(norm_2_squared(f, range, normalized));
 }
 
 template <typename T, typename RANGE>

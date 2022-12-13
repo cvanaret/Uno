@@ -30,7 +30,8 @@ public:
    void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) override;
    [[nodiscard]] bool is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          PredictedOptimalityReductionModel& predicted_optimality_reduction_model, double step_length) override;
-   [[nodiscard]] PredictedOptimalityReductionModel generate_predicted_optimality_reduction_model(const Direction& direction) const override;
+   [[nodiscard]] PredictedOptimalityReductionModel generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
+         const Direction& direction) const override;
    void register_accepted_iterate(Iterate& iterate) override;
 
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
@@ -50,10 +51,10 @@ private:
    [[nodiscard]] GlobalizationStrategy& get_current_globalization_strategy() const;
    [[nodiscard]] Direction solve_optimality_problem(Statistics& statistics, Iterate& current_iterate);
    void switch_phase(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction);
-   void switch_to_feasibility_restoration(Iterate& current_iterate, const std::vector<size_t>& infeasible_linearized_constraints);
+   void switch_to_feasibility_restoration(Iterate& current_iterate);
    void switch_to_optimality(Iterate& current_iterate, Iterate& trial_iterate);
    void set_infeasibility_measure(Iterate& iterate) override;
-   void set_restoration_optimality_measure(Iterate& iterate, const std::vector<size_t>& infeasible_linearized_constraints);
+   void set_restoration_measures(Iterate& iterate);
 };
 
 #endif //UNO_FEASIBILITYRESTORATION_H

@@ -9,7 +9,7 @@ void Result::print(bool print_primal_dual_solution) const {
       std::cout << "Converged with feasible KKT point\n";
    }
    else if (this->status == FJ_POINT) {
-      std::cout << "Converged with FJ point\n";
+      std::cout << "Converged with feasible FJ point\n";
    }
    else if (this->status == INFEASIBLE_KKT_POINT) {
       std::cout << "Converged with infeasible KKT point\n";
@@ -24,8 +24,8 @@ void Result::print(bool print_primal_dual_solution) const {
       std::cout << "Irregular termination\n";
    }
 
-   std::cout << "Objective value:\t\t" << this->solution.original_evaluations.objective << '\n';
-   std::cout << "Constraint violation:\t\t" << this->solution.constraint_violation << '\n';
+   std::cout << "Objective value:\t\t" << this->solution.model_evaluations.objective << '\n';
+   std::cout << "Constraint violation:\t\t" << this->solution.primal_constraint_violation << '\n';
    std::cout << "Stationarity error:\t\t" << this->solution.stationarity_error << '\n';
    std::cout << "Complementarity error:\t\t" << this->solution.complementarity_error << '\n';
 

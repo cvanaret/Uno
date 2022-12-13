@@ -14,25 +14,67 @@ bool ConstraintRelaxationStrategy::is_small_step(const Direction& direction) con
    return (direction.norm <= this->small_step_threshold);
 }
 
-void ConstraintRelaxationStrategy::compute_nonlinear_residuals(const NonlinearProblem& problem, Iterate& iterate) const {
-   iterate.evaluate_constraints(problem.model);
-   iterate.constraint_violation = problem.model.compute_constraint_violation(iterate.original_evaluations.constraints, this->residual_norm);
-   iterate.evaluate_lagrangian_gradient(problem.model, problem.get_objective_multiplier(), iterate.multipliers.constraints,
-         iterate.multipliers.lower_bounds, iterate.multipliers.upper_bounds);
+void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(Iterate& iterate, const std::vector<double>& constraint_multipliers,
+      const std::vector<double>& lower_bound_multipliers, const std::vector<double>& upper_bound_multipliers) {
+   initialize_vector(iterate.lagrangian_gradient, 0.);
+
+   // objective gradient
+   iterate.reformulation_evaluations.objective_gradient.for_each([&](size_t i, double derivative) {
+         iterate.lagrangian_gradient[i] += derivative;
+      });
+
+   // constraints
+   for (size_t j = 0; j < iterate.number_constraints; j++) {
+      const double multiplier_j = constraint_multipliers[j];
+      if (multiplier_j != 0.) {
+         iterate.reformulation_evaluations.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
+            iterate.lagrangian_gradient[i] -= multiplier_j * derivative;
+         });
+      }
+   }
+
+   // bound constraints
+   for (size_t i = 0; i < iterate.number_variables; i++) {
+      iterate.lagrangian_gradient[i] -= lower_bound_multipliers[i] + upper_bound_multipliers[i];
+   }
+}
+
+void ConstraintRelaxationStrategy::evaluate_reformulation_functions(const NonlinearProblem& problem, Iterate& iterate) {
+   // evaluate functions of the reformulated problem
+   problem.evaluate_objective_gradient(iterate, iterate.reformulation_evaluations.objective_gradient);
+   problem.evaluate_constraints(iterate, iterate.reformulation_evaluations.constraints);
+   problem.evaluate_constraint_jacobian(iterate, iterate.reformulation_evaluations.constraint_jacobian);
+}
+
+void ConstraintRelaxationStrategy::compute_optimality_condition_residuals(const NonlinearProblem& problem, Iterate& iterate) const {
+   // stationarity error
+   ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(iterate, iterate.multipliers.constraints, iterate.multipliers.lower_bounds,
+         iterate.multipliers.upper_bounds);
    iterate.stationarity_error = norm(iterate.lagrangian_gradient, this->residual_norm);
-   iterate.complementarity_error = this->original_model.compute_complementarity_error(iterate.primals, iterate.original_evaluations.constraints,
+   // primal constraint violation
+   iterate.primal_constraint_violation = problem.model.compute_constraint_violation(iterate.model_evaluations.constraints, this->residual_norm);
+   // complementarity error
+   iterate.complementarity_error = this->original_model.compute_complementarity_error(iterate.primals, iterate.reformulation_evaluations.constraints,
          iterate.multipliers.constraints, iterate.multipliers.lower_bounds, iterate.multipliers.upper_bounds);
+   // TODO dual constraint violation
+}
+
+double ConstraintRelaxationStrategy::compute_linearized_constraint_violation(const Model& model, const Iterate& current_iterate,
+      const Direction& direction, double step_length) {
+   // determine the linearized constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
+   const auto jth_component = [&](size_t j) {
+      const double component_j = current_iterate.model_evaluations.constraints[j] + step_length*dot(direction.primals,
+            current_iterate.model_evaluations.constraint_jacobian[j]);
+      return model.compute_constraint_violation(component_j, j);
+   };
+
+   const double linearized_constraint_violation = norm_1<double>(jth_component, Range(model.number_constraints));
+   return linearized_constraint_violation;
 }
 
 double ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction(const Model& model, const Iterate& current_iterate,
       const Direction& direction, double step_length) {
-   // determine the linearized constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
-   const auto residual_function = [&](size_t j) {
-      const double component_j = current_iterate.original_evaluations.constraints[j] + step_length * dot(direction.primals,
-            current_iterate.original_evaluations.constraint_jacobian[j]);
-      return model.compute_constraint_violation(component_j, j);
-   };
-
-   const double linearized_constraint_violation = norm_1<double>(residual_function, Range(model.number_constraints));
-   return current_iterate.constraint_violation - linearized_constraint_violation;
+   const double linearized_constraint_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(model, current_iterate,
+         direction, step_length);
+   return current_iterate.primal_constraint_violation - linearized_constraint_violation;
 }

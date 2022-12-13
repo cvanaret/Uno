@@ -38,10 +38,6 @@ public:
    [[nodiscard]] size_t get_maximum_number_jacobian_nonzeros() const override;
    [[nodiscard]] size_t get_maximum_number_hessian_nonzeros() const override;
 
-   [[nodiscard]] const std::vector<size_t>& get_violated_linearized_constraints(const std::vector<double>& x);
-   [[nodiscard]] double compute_linearized_constraint_violation(const std::vector<double>& x) const;
-   [[nodiscard]] double compute_linearized_constraint_violation(const std::vector<double>& x, const std::vector<double>& dx) const;
-
    // parameterization
    void set_objective_multiplier(double new_objective_multiplier);
 
@@ -100,13 +96,13 @@ inline double l1RelaxedProblem::evaluate_objective(Iterate& iterate) const {
    // scaled objective: rho*f(x)
    if (this->objective_multiplier != 0.) {
       iterate.evaluate_objective(this->model);
-      objective += this->objective_multiplier*iterate.original_evaluations.objective;
+      objective += this->objective_multiplier*iterate.model_evaluations.objective;
    }
 
    // scaled constraint violation: coeff*||c(x)||_1
    iterate.evaluate_constraints(this->model);
-   iterate.constraint_violation = this->model.compute_constraint_violation(iterate.original_evaluations.constraints, L1_NORM);
-   objective += iterate.constraint_violation;
+   iterate.primal_constraint_violation = this->model.compute_constraint_violation(iterate.model_evaluations.constraints, L1_NORM);
+   objective += iterate.primal_constraint_violation;
    return objective;
 }
 
@@ -114,7 +110,7 @@ inline void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, Spar
    // scale nabla f(x) by rho
    if (this->objective_multiplier != 0.) {
       iterate.evaluate_objective_gradient(this->model);
-      objective_gradient = iterate.original_evaluations.objective_gradient;
+      objective_gradient = iterate.model_evaluations.objective_gradient;
       scale(objective_gradient, this->objective_multiplier);
    }
    else {
@@ -131,7 +127,7 @@ inline void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, Spar
 
 inline void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
    iterate.evaluate_constraints(this->model);
-   copy_from(constraints, iterate.original_evaluations.constraints);
+   copy_from(constraints, iterate.model_evaluations.constraints);
    // add the contribution of the elastics
    this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {
       constraints[j] -= iterate.primals[elastic_index];
@@ -143,7 +139,7 @@ inline void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, std::vector
 
 inline void l1RelaxedProblem::evaluate_constraint_jacobian(Iterate& iterate, std::vector<SparseVector<double>>& constraint_jacobian) const {
    iterate.evaluate_constraint_jacobian(this->model);
-   constraint_jacobian = iterate.original_evaluations.constraint_jacobian;
+   constraint_jacobian = iterate.model_evaluations.constraint_jacobian;
    // add the contribution of the elastics
    this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {
       constraint_jacobian[j].insert(elastic_index, -1.);
@@ -161,30 +157,6 @@ inline void l1RelaxedProblem::evaluate_lagrangian_hessian(const std::vector<doub
    for (size_t j = this->model.number_variables; j < this->number_variables; j++) {
       hessian.finalize_column(j);
    }
-}
-
-inline double l1RelaxedProblem::compute_linearized_constraint_violation(const std::vector<double>& x) const {
-   double constraint_violation = 0.;
-   // l1 residual of the linearized constraints: sum of elastic variables
-   auto add_elastic_contribution = [&](size_t i) {
-      constraint_violation += x[i];
-   };
-   this->elastic_variables.positive.for_each_value(add_elastic_contribution);
-   this->elastic_variables.negative.for_each_value(add_elastic_contribution);
-   assert(0 <= constraint_violation && "The linearized constraint violation should not be negative");
-   return constraint_violation;
-}
-
-inline double l1RelaxedProblem::compute_linearized_constraint_violation(const std::vector<double>& x, const std::vector<double>& dx) const {
-   double constraint_violation = 0.;
-   // l1 residual of the linearized constraints: sum of elastic variables
-   auto add_elastic_contribution = [&](size_t i) {
-      constraint_violation += (x[i] + dx[i]);
-   };
-   this->elastic_variables.positive.for_each_value(add_elastic_contribution);
-   this->elastic_variables.negative.for_each_value(add_elastic_contribution);
-   assert(0 <= constraint_violation && "The linearized constraint violation should not be negative");
-   return constraint_violation;
 }
 
 inline double l1RelaxedProblem::get_variable_lower_bound(size_t i) const {
@@ -269,20 +241,6 @@ inline void l1RelaxedProblem::generate_elastic_variables() {
          elastic_index++;
       }
    }
-}
-
-// construct the list of linearized constraints that are violated
-inline const std::vector<size_t>& l1RelaxedProblem::get_violated_linearized_constraints(const std::vector<double>& x) {
-   // TODO urgent: actually evaluate the linearized constraints
-   this->violated_constraints.clear();
-   const auto find_violated_constraints = [&](size_t j, size_t elastic_index) {
-      if (0. < x[elastic_index]) {
-         this->violated_constraints.push_back(j);
-      }
-   };
-   this->elastic_variables.positive.for_each(find_violated_constraints);
-   this->elastic_variables.negative.for_each(find_violated_constraints);
-   return this->violated_constraints;
 }
 
 inline void l1RelaxedProblem::set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t, double)>&

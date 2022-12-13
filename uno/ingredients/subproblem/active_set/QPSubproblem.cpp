@@ -19,13 +19,13 @@ void QPSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& 
    this->hessian_model->evaluate(problem, current_iterate.primals, current_iterate.multipliers.constraints);
 
    // objective gradient
-   problem.evaluate_objective_gradient(current_iterate, this->objective_gradient);
+   problem.evaluate_objective_gradient(current_iterate, current_iterate.reformulation_evaluations.objective_gradient);
 
    // constraints
-   problem.evaluate_constraints(current_iterate, this->constraints);
+   problem.evaluate_constraints(current_iterate, current_iterate.reformulation_evaluations.constraints);
 
    // constraint Jacobian
-   problem.evaluate_constraint_jacobian(current_iterate, this->constraint_jacobian);
+   problem.evaluate_constraint_jacobian(current_iterate, current_iterate.reformulation_evaluations.constraint_jacobian);
 }
 
 Direction QPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem& problem, Iterate& current_iterate) {
@@ -36,7 +36,7 @@ Direction QPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem
    this->set_variable_displacement_bounds(problem, current_iterate);
 
    // bounds of the linearized constraints
-   this->set_linearized_constraint_bounds(problem, this->constraints);
+   this->set_linearized_constraint_bounds(problem, current_iterate.reformulation_evaluations.constraints);
 
    return this->solve_QP(problem, current_iterate);
 }
@@ -44,13 +44,14 @@ Direction QPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem
 Direction QPSubproblem::compute_second_order_correction(const NonlinearProblem& problem, Iterate& trial_iterate) {
    DEBUG << "\nEntered SOC computation\n";
    // shift the RHS with the values of the constraints at the trial iterate
-   ActiveSetSubproblem::shift_linearized_constraint_bounds(problem, trial_iterate.original_evaluations.constraints);
+   ActiveSetSubproblem::shift_linearized_constraint_bounds(problem, trial_iterate.model_evaluations.constraints);
    return this->solve_QP(problem, trial_iterate);
 }
 
 Direction QPSubproblem::solve_QP(const NonlinearProblem& problem, Iterate& iterate) {
    Direction direction = this->solver->solve_QP(problem.number_variables, problem.number_constraints, this->variable_displacement_bounds,
-         this->linearized_constraint_bounds, this->objective_gradient, this->constraint_jacobian, *this->hessian_model->hessian, this->initial_point);
+         this->linearized_constraint_bounds, iterate.reformulation_evaluations.objective_gradient, iterate.reformulation_evaluations.constraint_jacobian,
+         *this->hessian_model->hessian, this->initial_point);
    Subproblem::check_unboundedness(direction);
    ActiveSetSubproblem::compute_dual_displacements(problem, iterate, direction);
    this->number_subproblems_solved++;
@@ -71,7 +72,7 @@ OptimalityMeasureModel QPSubproblem::generate_optimality_measure_model(const Ref
 */
 
 PredictedOptimalityReductionModel QPSubproblem::generate_predicted_optimality_reduction_model(const NonlinearProblem& problem,
-      const Direction& direction) const {
+      const Iterate& current_iterate, const Direction& direction) const {
    return PredictedOptimalityReductionModel(-direction.objective, [&]() { // capture "this" and "direction" by reference
       // precompute expensive quantities
       // we need the directional derivative wrt the original variables
@@ -80,7 +81,7 @@ PredictedOptimalityReductionModel QPSubproblem::generate_predicted_optimality_re
          return (i < number_original_variables);
       };
       // the objective gradient is scaled with the current objective multiplier
-      const double linear_term = dot(direction.primals, this->objective_gradient, predicate);
+      const double linear_term = dot(direction.primals, current_iterate.reformulation_evaluations.objective_gradient, predicate);
       const double quadratic_term = this->hessian_model->hessian->quadratic_product(direction.primals, direction.primals, problem.number_variables) / 2.;
       // return a function of the step length that cheaply assembles the predicted reduction
       return [=](double step_length) { // capture the expensive quantities by value

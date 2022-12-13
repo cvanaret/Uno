@@ -38,7 +38,8 @@ public:
    Multipliers multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
 
    // evaluations
-   Evaluations original_evaluations;
+   Evaluations model_evaluations;
+   Evaluations reformulation_evaluations;
    static size_t number_eval_objective;
    static size_t number_eval_constraints;
    static size_t number_eval_jacobian;
@@ -51,8 +52,8 @@ public:
    std::vector<double> lagrangian_gradient;
 
    // residuals
-   double constraint_violation{INF<double>};
    double stationarity_error{INF<double>};
+   double primal_constraint_violation{INF<double>};
    double complementarity_error{INF<double>};
 
    // measures of progress (infeasibility, optimality)

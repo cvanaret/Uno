@@ -34,7 +34,7 @@ public:
 
    // globalization metrics
    [[nodiscard]] virtual PredictedOptimalityReductionModel generate_predicted_optimality_reduction_model(const NonlinearProblem& problem,
-         const Direction& direction) const = 0;
+         const Iterate& current_iterate, const Direction& direction) const = 0;
    virtual void set_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) = 0;
 
    virtual void postprocess_accepted_iterate(const NonlinearProblem& model, Iterate& iterate) = 0;
@@ -42,9 +42,6 @@ public:
    [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
    virtual void set_initial_point(const std::vector<double>& initial_point) = 0;
 
-   SparseVector<double> objective_gradient;
-   std::vector<double> constraints;
-   std::vector<SparseVector<double>> constraint_jacobian;
    std::vector<Interval> variable_bounds;
    Direction direction;
 
