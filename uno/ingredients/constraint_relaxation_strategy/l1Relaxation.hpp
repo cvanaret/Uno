@@ -35,8 +35,8 @@ public:
    // trial iterate acceptance
    void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) override;
    [[nodiscard]] bool is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         PredictedOptimalityReductionModel& predicted_optimality_reduction_model, double step_length) override;
-   [[nodiscard]] PredictedOptimalityReductionModel generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
+         PredictedReductionModel& predicted_optimality_reduction_model, double step_length) override;
+   [[nodiscard]] PredictedReductionModel generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
       const Direction& direction) const override;
    void register_accepted_iterate(Iterate& iterate) override;
 

@@ -101,7 +101,7 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
 }
 
 bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-      PredictedOptimalityReductionModel& predicted_optimality_reduction_model, double step_length) {
+      PredictedReductionModel& predicted_optimality_reduction_model, double step_length) {
    this->compute_progress_measures(current_iterate, trial_iterate, direction);
 
    bool accept = false;
@@ -129,7 +129,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& curr
    return accept;
 }
 
-PredictedOptimalityReductionModel FeasibilityRestoration::generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
+PredictedReductionModel FeasibilityRestoration::generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
       const Direction& direction) const {
    return this->subproblem->generate_predicted_optimality_reduction_model(current_iterate, direction);
 }

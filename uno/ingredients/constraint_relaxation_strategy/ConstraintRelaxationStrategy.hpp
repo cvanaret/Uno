@@ -6,7 +6,7 @@
 
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem/Direction.hpp"
-#include "ingredients/subproblem/PredictedOptimalityReductionModel.hpp"
+#include "ingredients/subproblem/PredictedReductionModel.hpp"
 #include "optimization/Iterate.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/Options.hpp"
@@ -28,8 +28,8 @@ public:
    // trial iterate acceptance
    virtual void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) = 0;
    virtual bool is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         PredictedOptimalityReductionModel& predicted_optimality_reduction_model, double step_length) = 0;
-   [[nodiscard]] virtual PredictedOptimalityReductionModel generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
+         PredictedReductionModel& predicted_optimality_reduction_model, double step_length) = 0;
+   [[nodiscard]] virtual PredictedReductionModel generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
          const Direction& direction) const = 0;
    virtual void register_accepted_iterate(Iterate& iterate) = 0;
 

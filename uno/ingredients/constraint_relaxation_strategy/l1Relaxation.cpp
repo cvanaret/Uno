@@ -68,7 +68,7 @@ void l1Relaxation::set_multipliers(const Iterate& current_iterate, std::vector<d
 
 Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate) {
    // set the elastic variables
-   this->subproblem->set_elastic_variable_values(this->relaxed_problem, current_iterate);
+   //this->subproblem->set_elastic_variable_values(this->relaxed_problem, current_iterate);
 
    // set the multipliers of the violated constraints
    // this->set_multipliers(current_iterate, current_iterate.multipliers.constraints);
@@ -231,7 +231,7 @@ void l1Relaxation::compute_progress_measures(Iterate& current_iterate, Iterate& 
 }
 
 bool l1Relaxation::is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-      PredictedOptimalityReductionModel& predicted_optimality_reduction_model, double step_length) {
+      PredictedReductionModel& predicted_optimality_reduction_model, double step_length) {
    this->compute_progress_measures(current_iterate, trial_iterate, direction);
 
    bool accept = false;
@@ -258,7 +258,7 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, Iterate& current_iterat
    return accept;
 }
 
-PredictedOptimalityReductionModel l1Relaxation::generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
+PredictedReductionModel l1Relaxation::generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
       const Direction& direction) const {
    return this->subproblem->generate_predicted_optimality_reduction_model(current_iterate, direction);
 }

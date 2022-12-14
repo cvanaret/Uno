@@ -10,7 +10,7 @@
 #include "optimization/Iterate.hpp"
 #include "reformulation/l1RelaxedProblem.hpp"
 #include "Direction.hpp"
-#include "PredictedOptimalityReductionModel.hpp"
+#include "PredictedReductionModel.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 #include "tools/Statistics.hpp"
@@ -33,7 +33,7 @@ public:
    virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
 
    // globalization metrics
-   [[nodiscard]] virtual PredictedOptimalityReductionModel generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
+   [[nodiscard]] virtual PredictedReductionModel generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
          const Direction& direction) const = 0;
    virtual void set_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) = 0;
 

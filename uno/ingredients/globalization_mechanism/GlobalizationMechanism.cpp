@@ -9,10 +9,10 @@ GlobalizationMechanism::GlobalizationMechanism(ConstraintRelaxationStrategy& con
 
 Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate, Direction& direction, double step_length) {
    const auto take_dual_step = [&](Iterate& iterate) {
-      // take dual step
+      // take dual step: line-search carried out only on constraint multipliers. Bound multipliers updated with full step length
       add_vectors(current_iterate.multipliers.constraints, direction.multipliers.constraints, step_length, iterate.multipliers.constraints);
-      copy_from(iterate.multipliers.lower_bounds, direction.multipliers.lower_bounds);
-      copy_from(iterate.multipliers.upper_bounds, direction.multipliers.upper_bounds);
+      add_vectors(current_iterate.multipliers.lower_bounds, direction.multipliers.lower_bounds, 1., iterate.multipliers.lower_bounds);
+      add_vectors(current_iterate.multipliers.upper_bounds, direction.multipliers.upper_bounds, 1., iterate.multipliers.upper_bounds);
       iterate.multipliers.objective = direction.objective_multiplier;
    };
    if (0. < direction.norm) {

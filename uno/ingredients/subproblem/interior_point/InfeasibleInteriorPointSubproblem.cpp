@@ -245,9 +245,9 @@ void InfeasibleInteriorPointSubproblem::set_elastic_variable_values(const l1Rela
    problem.set_elastic_variable_values(current_iterate, elastic_setting_function);
 }
 
-PredictedOptimalityReductionModel InfeasibleInteriorPointSubproblem::generate_predicted_optimality_reduction_model(const Iterate& /*current_iterate*/,
+PredictedReductionModel InfeasibleInteriorPointSubproblem::generate_predicted_optimality_reduction_model(const Iterate& /*current_iterate*/,
       const Direction& direction) const {
-   return PredictedOptimalityReductionModel([=](double step_length) {
+   return PredictedReductionModel([=](double step_length) {
       return -step_length * direction.objective;
    });
 }
@@ -364,7 +364,7 @@ void InfeasibleInteriorPointSubproblem::generate_primal_dual_direction(const Non
    }
    this->print_subproblem_solution(problem);
 
-   // "fraction to boundary" rule for primal variables and constraints multipliers
+   // "fraction-to-boundary" rule for primal variables and constraints multipliers
    const double tau = std::max(this->parameters.tau_min, 1. - this->barrier_parameter());
    const double primal_step_length = this->primal_fraction_to_boundary(problem, current_iterate, tau);
    for (size_t i = 0; i < problem.number_variables; i++) {
@@ -377,11 +377,11 @@ void InfeasibleInteriorPointSubproblem::generate_primal_dual_direction(const Non
    // compute bound multiplier direction Δz
    this->compute_bound_dual_direction(problem, current_iterate);
 
-   // "fraction to boundary" rule for bound multipliers
+   // "fraction-to-boundary" rule for bound multipliers
    const double dual_step_length = this->dual_fraction_to_boundary(problem, current_iterate, tau);
    for (size_t i = 0; i < problem.number_variables; i++) {
-      this->direction.multipliers.lower_bounds[i] = current_iterate.multipliers.lower_bounds[i] + dual_step_length * this->lower_delta_z[i];
-      this->direction.multipliers.upper_bounds[i] = current_iterate.multipliers.upper_bounds[i] + dual_step_length * this->upper_delta_z[i];
+      this->direction.multipliers.lower_bounds[i] = dual_step_length * this->lower_delta_z[i];
+      this->direction.multipliers.upper_bounds[i] = dual_step_length * this->upper_delta_z[i];
    }
    DEBUG << "primal length = " << primal_step_length << '\n';
    DEBUG << "dual length = " << dual_step_length << '\n';

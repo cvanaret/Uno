@@ -46,7 +46,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
    // compute the direction
    this->constraint_relaxation_strategy.set_variable_bounds(current_iterate, INF<double>);
    Direction direction = this->compute_direction(statistics, current_iterate);
-   PredictedOptimalityReductionModel predicted_optimality_reduction_model = this->constraint_relaxation_strategy
+   PredictedReductionModel predicted_optimality_reduction_model = this->constraint_relaxation_strategy
          .generate_predicted_optimality_reduction_model(current_iterate, direction);
    this->solving_feasibility_problem = false;
 

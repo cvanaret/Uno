@@ -91,7 +91,7 @@ bool Uno::termination_criterion(TerminationStatus current_status, size_t iterati
    return current_status != NOT_OPTIMAL || this->max_iterations <= iteration;
 }
 
-bool not_all_zero_multipliers(const Multipliers& multipliers, double tolerance) {
+bool not_all_zero_multipliers(const Model& model, const Multipliers& multipliers, double tolerance) {
    // constraint multipliers
    for (double multiplier_j: multipliers.constraints) {
       if (std::abs(multiplier_j) > tolerance) {
@@ -99,7 +99,7 @@ bool not_all_zero_multipliers(const Multipliers& multipliers, double tolerance) 
       }
    }
    // bound multipliers
-   for (size_t i = 0; i < multipliers.lower_bounds.size(); i++) {
+   for (size_t i = 0; i < model.number_variables; i++) {
       if (std::abs(multipliers.lower_bounds[i] + multipliers.upper_bounds[i]) > tolerance) {
          return true;
       }
@@ -119,12 +119,12 @@ TerminationStatus Uno::check_termination(const Model& model, Iterate& current_it
             // feasible regular stationary point
             return FEASIBLE_KKT_POINT;
          }
-         else if (current_iterate.multipliers.objective == 0. && not_all_zero_multipliers(current_iterate.multipliers, this->tolerance)) {
+         else if (current_iterate.multipliers.objective == 0. && not_all_zero_multipliers(model, current_iterate.multipliers, this->tolerance)) {
             // feasible but CQ failure
             return FJ_POINT;
          }
       }
-      else if (current_iterate.multipliers.objective == 0. && not_all_zero_multipliers(current_iterate.multipliers, this->tolerance)) {
+      else if (current_iterate.multipliers.objective == 0. && not_all_zero_multipliers(model, current_iterate.multipliers, this->tolerance)) {
          // no primal feasibility, minimum of constraint violation
         return INFEASIBLE_KKT_POINT;
       }

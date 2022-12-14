@@ -40,11 +40,11 @@ void FilterStrategy::register_current_progress(const ProgressMeasures& current_p
  * */
 bool FilterStrategy::is_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress, double /*objective_multiplier*/,
       const ProgressMeasures& predicted_reduction) {
-   GlobalizationStrategy::check_finiteness(current_progress);
-   GlobalizationStrategy::check_finiteness(trial_progress);
-
    DEBUG << "Current: η = " << current_progress.infeasibility << ", ω = " << current_progress.scaled_optimality << '\n';
    DEBUG << "Trial:   η = " << trial_progress.infeasibility << ", ω = " << trial_progress.scaled_optimality << '\n';
+
+   GlobalizationStrategy::check_finiteness(current_progress);
+   GlobalizationStrategy::check_finiteness(trial_progress);
 
    bool accept = false;
    // check acceptance

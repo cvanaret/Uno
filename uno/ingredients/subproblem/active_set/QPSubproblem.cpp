@@ -58,12 +58,12 @@ Direction QPSubproblem::solve_QP(const NonlinearProblem& problem, Iterate& itera
    return direction;
 }
 
-PredictedOptimalityReductionModel QPSubproblem::generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
+PredictedReductionModel QPSubproblem::generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
       const Direction& direction) const {
    // precompute expensive quantities
    const double directional_derivative = dot(direction.primals, current_iterate.reformulation_evaluations.objective_gradient);
 
-   return PredictedOptimalityReductionModel([=](double step_length) {
+   return PredictedReductionModel([=](double step_length) {
       // return a function of the step length that cheaply assembles the predicted reduction
       return -step_length * directional_derivative;
    });

@@ -59,6 +59,10 @@ void ActiveSetSubproblem::compute_dual_displacements(const NonlinearProblem& pro
    for (size_t j = 0; j < problem.number_constraints; j++) {
       direction.multipliers.constraints[j] -= current_iterate.multipliers.constraints[j];
    }
+   for (size_t i = 0; i < problem.number_variables; i++) {
+      direction.multipliers.lower_bounds[i] -= current_iterate.multipliers.lower_bounds[i];
+      direction.multipliers.upper_bounds[i] -= current_iterate.multipliers.upper_bounds[i];
+   }
 }
 
 void ActiveSetSubproblem::set_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) {

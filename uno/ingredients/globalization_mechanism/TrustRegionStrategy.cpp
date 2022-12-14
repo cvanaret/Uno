@@ -46,7 +46,7 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
          this->reset_trust_region_multipliers(direction, trial_iterate);
 
          // check whether the trial step is accepted
-         PredictedOptimalityReductionModel predicted_optimality_reduction_model = this->constraint_relaxation_strategy
+         PredictedReductionModel predicted_optimality_reduction_model = this->constraint_relaxation_strategy
                .generate_predicted_optimality_reduction_model(current_iterate, direction);
          const bool is_acceptable = this->constraint_relaxation_strategy.is_acceptable(statistics, current_iterate, trial_iterate, direction,
                predicted_optimality_reduction_model, 1.);
@@ -64,10 +64,10 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
             this->decrease_radius(direction.norm);
          }
       }
+      // if an error occurs (evaluation error or unstable inertia), decrease the radius
       catch (const std::exception& e) {
          GlobalizationMechanism::print_warning(e.what());
-         // if an error occurs (evaluation or unstable inertia), decrease the radius
-         this->radius /= this->decrease_factor;
+         this->decrease_radius();
       }
    }
    throw std::runtime_error("Trust-region radius became too small");
@@ -81,6 +81,10 @@ void TrustRegionStrategy::increase_radius(double step_norm) {
 
 void TrustRegionStrategy::decrease_radius(double step_norm) {
    this->radius = std::min(this->radius, step_norm) / this->decrease_factor;
+}
+
+void TrustRegionStrategy::decrease_radius() {
+   this->radius /= this->decrease_factor;
 }
 
 void TrustRegionStrategy::reset_trust_region_multipliers(const Direction& direction, Iterate& trial_iterate) const {
