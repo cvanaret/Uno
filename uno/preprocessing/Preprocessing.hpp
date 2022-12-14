@@ -8,12 +8,14 @@
 #include "optimization/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
+#include "tools/Options.hpp"
 
 class Preprocessing {
 public:
    static void compute_least_square_multipliers(const Model& model, SymmetricMatrix<double>& matrix, std::vector<double>& rhs,
          SymmetricIndefiniteLinearSolver<double>& solver, Iterate& current_iterate, std::vector<double>& multipliers,
          double multiplier_max_norm);
+   static void enforce_linear_constraints(const Options& options, const Model& model, std::vector<double>& x, Multipliers& multipliers);
 };
 
 #endif //UNO_PREPROCESSING_H

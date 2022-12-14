@@ -1,6 +1,7 @@
 // Copyright (c) 2022 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include "preprocessing/Preprocessing.hpp"
 #include "ingredients/globalization_strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/globalization_mechanism/GlobalizationMechanismFactory.hpp"
 #include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategyFactory.hpp"
@@ -24,6 +25,8 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
 
    // reformulate (scale, add slacks) if necessary
    std::unique_ptr<Model> model = ModelFactory::reformulate(ampl_model, first_iterate, options);
+
+   Preprocessing::enforce_linear_constraints(options, *model, first_iterate.primals, first_iterate.multipliers);
 
    // create the constraint relaxation strategy
    auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(*model, options);

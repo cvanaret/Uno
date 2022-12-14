@@ -30,6 +30,8 @@ public:
 
    void print(std::ostream& stream) const override;
 
+   static CSCSymmetricMatrix<T> identity(size_t dimension);
+
 protected:
    // entries and row_indices have nnz elements
    // column_starts has dimension+1 elements
@@ -146,6 +148,16 @@ void CSCSymmetricMatrix<T>::print(std::ostream& stream) const {
    print_vector(stream, this->column_starts, 0, this->dimension + 1);
    stream << "and row index: ";
    print_vector(stream, this->row_indices, 0, this->number_nonzeros);
+}
+
+template <typename T>
+CSCSymmetricMatrix<T> CSCSymmetricMatrix<T>::identity(size_t dimension) {
+   CSCSymmetricMatrix<double> matrix(dimension, dimension, false);
+   for (size_t i = 0; i < dimension; i++) {
+      matrix.insert(1., i, i);
+      matrix.finalize_column(i);
+   }
+   return matrix;
 }
 
 #endif // UNO_CSCSYMMETRICMATRIX_H
