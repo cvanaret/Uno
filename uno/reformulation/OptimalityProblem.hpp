@@ -4,7 +4,6 @@
 #ifndef UNO_OPTIMALITYPROBLEM_H
 #define UNO_OPTIMALITYPROBLEM_H
 
-#include <vector>
 #include <cmath>
 #include "NonlinearProblem.hpp"
 
@@ -16,7 +15,7 @@ public:
    [[nodiscard]] double evaluate_objective(Iterate& iterate) const override;
    void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const override;
    void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const override;
-   void evaluate_constraint_jacobian(Iterate& iterate, std::vector<SparseVector<double>>& constraint_jacobian) const override;
+   void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const override;
    void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix<double>& hessian) const override;
 
    [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
@@ -66,7 +65,7 @@ inline void OptimalityProblem::evaluate_constraints(Iterate& iterate, std::vecto
    copy_from(constraints, iterate.model_evaluations.constraints);
 }
 
-inline void OptimalityProblem::evaluate_constraint_jacobian(Iterate& iterate, std::vector<SparseVector<double>>& constraint_jacobian) const {
+inline void OptimalityProblem::evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const {
    iterate.evaluate_constraint_jacobian(this->model);
    constraint_jacobian = iterate.model_evaluations.constraint_jacobian;
 }

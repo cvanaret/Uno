@@ -50,7 +50,7 @@ BQPDSolver::BQPDSolver(size_t max_number_variables, size_t number_constraints, s
 
 Direction BQPDSolver::solve_QP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
       const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
-      const std::vector<SparseVector<double>>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const std::vector<double>& initial_point) {
+      const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const std::vector<double>& initial_point) {
    this->save_hessian_to_local_format(hessian);
    if (this->print_QP) {
       DEBUG << "QP:\n";
@@ -62,7 +62,7 @@ Direction BQPDSolver::solve_QP(size_t number_variables, size_t number_constraint
 
 Direction BQPDSolver::solve_LP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
       const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
-      const std::vector<SparseVector<double>>& constraint_jacobian, const std::vector<double>& initial_point) {
+      const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point) {
    if (this->print_QP) {
       DEBUG << "LP:\n";
    }
@@ -72,7 +72,7 @@ Direction BQPDSolver::solve_LP(size_t number_variables, size_t number_constraint
 
 Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
       const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
-      const std::vector<SparseVector<double>>& constraint_jacobian, const std::vector<double>& initial_point) {
+      const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point) {
    // initialize wsc_ common block (Hessian & workspace for bqpd)
    // setting the common block here ensures that several instances of BQPD can run simultaneously
    wsc_.kk = static_cast<int>(this->maximum_number_nonzeros);
@@ -177,7 +177,7 @@ void BQPDSolver::save_hessian_to_local_format(const SymmetricMatrix<double>& hes
 }
 
 void BQPDSolver::save_gradients_to_local_format(size_t number_constraints, const SparseVector<double>& linear_objective,
-      const std::vector<SparseVector<double>>& constraint_jacobian) {
+      const RectangularMatrix<double>& constraint_jacobian) {
    size_t current_index = 0;
    linear_objective.for_each([&](size_t i, double derivative) {
       this->jacobian[current_index] = derivative;

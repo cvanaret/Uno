@@ -160,7 +160,7 @@ void AMPLModel::evaluate_constraint_gradient(const std::vector<double>& x, size_
    this->asl->i.congrd_mode = congrd_mode_backup;
 }
 
-void AMPLModel::evaluate_constraint_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraint_jacobian) const {
+void AMPLModel::evaluate_constraint_jacobian(const std::vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const {
    for (size_t j = 0; j < this->number_constraints; j++) {
       constraint_jacobian[j].clear();
       this->evaluate_constraint_gradient(x, j, constraint_jacobian[j]);

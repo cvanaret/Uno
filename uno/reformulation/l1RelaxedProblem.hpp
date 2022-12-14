@@ -4,10 +4,8 @@
 #ifndef UNO_L1RELAXEDPROBLEM_H
 #define UNO_L1RELAXEDPROBLEM_H
 
-#include <vector>
 #include <cmath>
 #include "NonlinearProblem.hpp"
-#include "linear_algebra/SparseVector.hpp"
 #include "tools/Range.hpp"
 #include "tools/Infinity.hpp"
 
@@ -26,7 +24,7 @@ public:
    [[nodiscard]] double evaluate_objective(Iterate& iterate) const override;
    void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const override;
    void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const override;
-   void evaluate_constraint_jacobian(Iterate& iterate, std::vector<SparseVector<double>>& constraint_jacobian) const override;
+   void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const override;
    void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix<double>& hessian) const override;
 
    [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
@@ -137,7 +135,7 @@ inline void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, std::vector
    });
 }
 
-inline void l1RelaxedProblem::evaluate_constraint_jacobian(Iterate& iterate, std::vector<SparseVector<double>>& constraint_jacobian) const {
+inline void l1RelaxedProblem::evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const {
    iterate.evaluate_constraint_jacobian(this->model);
    constraint_jacobian = iterate.model_evaluations.constraint_jacobian;
    // add the contribution of the elastics

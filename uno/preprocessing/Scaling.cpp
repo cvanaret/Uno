@@ -3,6 +3,7 @@
 
 #include "Scaling.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "linear_algebra/RectangularMatrix.hpp"
 
 Scaling::Scaling(size_t number_constraints, double gradient_threshold):
       gradient_threshold(gradient_threshold),
@@ -10,7 +11,7 @@ Scaling::Scaling(size_t number_constraints, double gradient_threshold):
       constraint_scaling(number_constraints, 1.) {
 }
 
-void Scaling::compute(SparseVector<double>& objective_gradient, std::vector<SparseVector<double>>& constraint_jacobian) {
+void Scaling::compute(SparseVector<double>& objective_gradient, RectangularMatrix<double>& constraint_jacobian) {
    // set the objective scaling
    this->objective_scaling = std::min(1., this->gradient_threshold / norm_inf(objective_gradient));
 

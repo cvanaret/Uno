@@ -6,11 +6,12 @@
 
 #include <vector>
 #include "linear_algebra/SparseVector.hpp"
+#include "linear_algebra/RectangularMatrix.hpp"
 
 class Scaling {
 public:
    Scaling(size_t number_constraints, double gradient_threshold);
-   void compute(SparseVector<double>& objective_gradient, std::vector<SparseVector<double>>& constraint_jacobian);
+   void compute(SparseVector<double>& objective_gradient, RectangularMatrix<double>& constraint_jacobian);
    [[nodiscard]] double get_objective_scaling() const;
    [[nodiscard]] double get_constraint_scaling(size_t j) const;
 

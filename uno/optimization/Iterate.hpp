@@ -8,6 +8,7 @@
 #include <limits>
 #include "ingredients/globalization_strategy/ProgressMeasures.hpp"
 #include "linear_algebra/SparseVector.hpp"
+#include "linear_algebra/RectangularMatrix.hpp"
 #include "optimization/Model.hpp"
 #include "optimization/Multipliers.hpp"
 #include "tools/Infinity.hpp"
@@ -16,7 +17,7 @@ struct Evaluations {
    double objective{INF<double>}; /*!< Objective value */
    std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
    SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
-   std::vector<SparseVector<double>> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
+   RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
 
    Evaluations(size_t max_number_variables, size_t max_number_constraints):
          constraints(max_number_constraints),

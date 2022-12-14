@@ -5,8 +5,9 @@
 #define UNO_SYMMETRICINDEFINITELINEARSYSTEM_H
 
 #include <memory>
-#include "linear_algebra/SymmetricMatrix.hpp"
-#include "linear_algebra/SymmetricMatrixFactory.hpp"
+#include "SymmetricMatrix.hpp"
+#include "SymmetricMatrixFactory.hpp"
+#include "RectangularMatrix.hpp"
 #include "optimization/Model.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 #include "tools/Options.hpp"
@@ -27,7 +28,7 @@ public:
 
    SymmetricIndefiniteLinearSystem(const std::string& sparse_format, size_t max_dimension, size_t max_number_non_zeros, bool use_regularization,
          const Options& options);
-   void assemble_matrix(const SymmetricMatrix<double>& hessian, const std::vector<SparseVector<double>>& constraint_jacobian,
+   void assemble_matrix(const SymmetricMatrix<double>& hessian, const RectangularMatrix<double>& constraint_jacobian,
          size_t number_variables, size_t number_constraints);
    void factorize_matrix(const Model& model, SymmetricIndefiniteLinearSolver<T>& linear_solver);
    void regularize_matrix(const Model& model, SymmetricIndefiniteLinearSolver<T>& linear_solver, size_t size_primal_block, size_t size_dual_block,
@@ -62,7 +63,7 @@ SymmetricIndefiniteLinearSystem<T>::SymmetricIndefiniteLinearSystem(const std::s
 }
 
 template <typename T>
-void SymmetricIndefiniteLinearSystem<T>::assemble_matrix(const SymmetricMatrix<double>& hessian, const std::vector<SparseVector<double>>& constraint_jacobian,
+void SymmetricIndefiniteLinearSystem<T>::assemble_matrix(const SymmetricMatrix<double>& hessian, const RectangularMatrix<double>& constraint_jacobian,
       size_t number_variables, size_t number_constraints) {
    this->matrix->dimension = number_variables + number_constraints;
    this->matrix->reset();

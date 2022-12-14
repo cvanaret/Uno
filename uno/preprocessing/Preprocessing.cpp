@@ -1,9 +1,10 @@
 // Copyright (c) 2022 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include <solvers/QP/BQPDSolver.hpp>
-#include <linear_algebra/CSCSymmetricMatrix.hpp>
 #include "Preprocessing.hpp"
+#include "solvers/QP/BQPDSolver.hpp"
+#include "linear_algebra/CSCSymmetricMatrix.hpp"
+#include "linear_algebra/RectangularMatrix.hpp"
 #include "tools/Range.hpp"
 
 // compute a least-square approximation of the multipliers by solving a linear system (uses existing linear system)
@@ -76,7 +77,7 @@ void Preprocessing::enforce_linear_constraints(const Options& options, const Mod
          // Hessian
          const CSCSymmetricMatrix<double> hessian = CSCSymmetricMatrix<double>::identity(model.number_variables);
          // constraint Jacobian
-         std::vector<SparseVector<double>> constraint_jacobian(model.linear_constraints.size());
+         RectangularMatrix<double> constraint_jacobian(model.linear_constraints.size());
          for (auto& constraint_gradient: constraint_jacobian) {
             constraint_gradient.reserve(model.number_variables);
          }

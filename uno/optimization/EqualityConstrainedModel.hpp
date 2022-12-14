@@ -21,7 +21,7 @@ public:
    void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const override;
    void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const override;
    void evaluate_constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const override;
-   void evaluate_constraint_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraint_jacobian) const override;
+   void evaluate_constraint_jacobian(const std::vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const override;
    void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
          SymmetricMatrix<double>& hessian) const override;
 
@@ -146,7 +146,7 @@ inline void EqualityConstrainedModel::evaluate_constraint_gradient(const std::ve
    }
 }
 
-inline void EqualityConstrainedModel::evaluate_constraint_jacobian(const std::vector<double>& x, std::vector<SparseVector<double>>& constraint_jacobian) const {
+inline void EqualityConstrainedModel::evaluate_constraint_jacobian(const std::vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const {
    this->original_model->evaluate_constraint_jacobian(x, constraint_jacobian);
    // add the slack contributions
    this->original_model->inequality_constraints.for_each([&](size_t j, size_t i) {
