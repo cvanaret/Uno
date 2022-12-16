@@ -24,7 +24,7 @@ std::map <std::string, std::string>Statistics::symbols = {
 };
 
 int Statistics::int_width = 7;
-int Statistics::double_width = 18;
+int Statistics::double_width = 17;
 int Statistics::char_width = 7;
 
 Statistics::Statistics(const Options& options): print_header_every_iterations(options.get_unsigned_int("statistics_print_header_every_iterations")) {

@@ -10,7 +10,7 @@
 #include "reformulation/l1RelaxedProblem.hpp"
 #include "tools/Options.hpp"
 
-enum Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
+enum class Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 
 class FeasibilityRestoration : public ConstraintRelaxationStrategy {
 public:
@@ -43,7 +43,7 @@ private:
    std::unique_ptr<Subproblem> subproblem;
    const std::unique_ptr<GlobalizationStrategy> phase_1_strategy;
    const std::unique_ptr<GlobalizationStrategy> phase_2_strategy;
-   Phase current_phase{OPTIMALITY};
+   Phase current_phase{Phase::OPTIMALITY};
    // statistics table
    int statistics_restoration_phase_column_order;
 

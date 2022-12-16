@@ -26,7 +26,10 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
    // reformulate (scale, add slacks) if necessary
    std::unique_ptr<Model> model = ModelFactory::reformulate(ampl_model, first_iterate, options);
 
-   Preprocessing::enforce_linear_constraints(options, *model, first_iterate.primals, first_iterate.multipliers);
+   // enforce linear constraints at initial point
+   if (options.get_bool("enforce_linear_constraints")) {
+      Preprocessing::enforce_linear_constraints(options, *model, first_iterate.primals, first_iterate.multipliers);
+   }
 
    // create the constraint relaxation strategy
    auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(*model, options);

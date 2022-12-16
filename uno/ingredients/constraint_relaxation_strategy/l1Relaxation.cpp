@@ -31,8 +31,8 @@ l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
          options.get_double("l1_relaxation_small_threshold")
       }),
       constraint_multipliers(model.number_constraints),
-      lower_bound_multipliers(model.number_variables),
-      upper_bound_multipliers(model.number_variables),
+      lower_bound_multipliers(this->relaxed_problem.number_variables),
+      upper_bound_multipliers(this->relaxed_problem.number_variables),
       statistics_penalty_parameter_column_order(options.get_int("statistics_penalty_parameter_column_order")) {
 }
 
@@ -71,7 +71,7 @@ Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Itera
    //this->subproblem->set_elastic_variable_values(this->relaxed_problem, current_iterate);
 
    // set the multipliers of the violated constraints
-   // this->set_multipliers(current_iterate, current_iterate.multipliers.constraints);
+   this->set_multipliers(current_iterate, current_iterate.multipliers.constraints);
    DEBUG << "Current iterate\n" << current_iterate << '\n';
 
    // use Byrd's steering rules to update the penalty parameter and compute a descent direction
@@ -95,8 +95,7 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, Iterate& curren
 Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) {
    assert(0. < this->penalty_parameter && "l1Relaxation: the penalty parameter is already 0");
    this->subproblem->prepare_for_feasibility_problem(this->relaxed_problem, current_iterate);
-   Direction direction = this->solve_subproblem(statistics, current_iterate, 0.);
-   return direction;
+   return this->solve_subproblem(statistics, current_iterate, 0.);
 }
 
 Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point) {
@@ -123,8 +122,8 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
          // stage c: compute the lowest possible constraint violation (penalty parameter = 0)
          DEBUG << "Compute ideal solution by solving the feasibility problem:\n";
          Direction direction_lowest_violation = this->solve_subproblem(statistics, current_iterate, 0.);
-         const double residual_lowest_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate,
-               direction_lowest_violation, 1.);
+         const double residual_lowest_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model,
+               current_iterate, direction_lowest_violation, 1.);
          DEBUG << "Lowest linearized residual mk(dk): " << residual_lowest_violation << '\n';
 
          // stage f: update the penalty parameter
@@ -258,30 +257,25 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, Iterate& current_iterat
    return accept;
 }
 
-PredictedReductionModel l1Relaxation::generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
-      const Direction& direction) const {
+PredictedReductionModel l1Relaxation::generate_predicted_optimality_reduction_model(const Iterate& current_iterate, const Direction& direction) const {
    return this->subproblem->generate_predicted_optimality_reduction_model(current_iterate, direction);
 }
 
 // measure that combines KKT error and complementarity error
 double l1Relaxation::compute_error(Iterate& current_iterate, const Multipliers& multiplier_displacements) {
    // assemble the trial multipliers
-   for (size_t j = 0; j < this->optimality_problem.number_constraints; j++) {
-      this->constraint_multipliers[j] = current_iterate.multipliers.constraints[j] + multiplier_displacements.constraints[j];
-   }
-   for (size_t i = 0; i < this->optimality_problem.number_variables; i++) {
-      this->lower_bound_multipliers[i] = current_iterate.multipliers.lower_bounds[i] + multiplier_displacements.lower_bounds[i];
-      this->upper_bound_multipliers[i] = current_iterate.multipliers.upper_bounds[i] + multiplier_displacements.upper_bounds[i];
-   }
+   add_vectors(current_iterate.multipliers.constraints, multiplier_displacements.constraints, 1., this->constraint_multipliers);
+   add_vectors(current_iterate.multipliers.lower_bounds, multiplier_displacements.lower_bounds, 1., this->lower_bound_multipliers);
+   add_vectors(current_iterate.multipliers.upper_bounds, multiplier_displacements.upper_bounds, 1., this->upper_bound_multipliers);
 
-   // complementarity error
-   current_iterate.evaluate_constraints(this->original_model);
-   double error = this->original_model.compute_complementarity_error(current_iterate.primals, current_iterate.model_evaluations.constraints,
-         this->constraint_multipliers, this->lower_bound_multipliers, this->upper_bound_multipliers);
    // KKT error
-   current_iterate.evaluate_lagrangian_gradient(this->original_model, this->relaxed_problem.get_objective_multiplier(),
+   ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(current_iterate, this->constraint_multipliers, this->lower_bound_multipliers,
+         this->upper_bound_multipliers);
+   double error = norm_1(current_iterate.lagrangian_gradient);
+   // complementarity error
+   this->relaxed_problem.evaluate_constraints(current_iterate, current_iterate.reformulation_evaluations.constraints);
+   error += this->relaxed_problem.compute_complementarity_error(current_iterate.primals, current_iterate.reformulation_evaluations.constraints,
          this->constraint_multipliers, this->lower_bound_multipliers, this->upper_bound_multipliers);
-   error += norm_1(current_iterate.lagrangian_gradient);
    return error;
 }
 
@@ -299,7 +293,6 @@ void l1Relaxation::set_infeasibility_measure(Iterate& iterate) {
 }
 
 void l1Relaxation::register_accepted_iterate(Iterate& iterate) {
-   // TODO check problem
    this->subproblem->postprocess_accepted_iterate(this->relaxed_problem, iterate);
    // check that l1 is an exact relaxation
    if (this->penalty_parameter <= 1./norm_inf(iterate.multipliers.constraints)) {

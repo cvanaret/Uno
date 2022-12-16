@@ -98,9 +98,6 @@ public:
    [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const;
    [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, const std::vector<size_t>& constraint_set,
          Norm residual_norm) const;
-   [[nodiscard]] double compute_complementarity_error(const std::vector<double>& x, const std::vector<double>& constraints,
-         const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bounds_multipliers,
-         const std::vector<double>& upper_bounds_multipliers) const;
 
 protected:
    size_t objective_gradient_maximum_number_nonzeros{0}; /*!< Number of nonzero elements in the objective gradient */

@@ -103,7 +103,8 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["subproblem"] = "QP";
       options["residual_norm"] = "L1";
       options["sparse_format"] = "CSC";
-      options["TR_radius"] = "1";
+      options["TR_radius"] = "10";
+      options["enforce_linear_constraints"] = "yes";
    }
    else if (preset_name == "byrd") {
       options["mechanism"] = "LS";

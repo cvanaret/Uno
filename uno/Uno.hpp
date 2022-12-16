@@ -22,7 +22,7 @@ private:
    const double small_step_factor{100.};
 
    static Statistics create_statistics(const Model& model, const Options& options);
-   static void add_statistics(Statistics& statistics, const Model& model, const Iterate& new_iterate, size_t major_iterations);
+   static void add_statistics(Statistics& statistics, const Model& model, const Iterate& iterate, size_t major_iterations);
    [[nodiscard]] bool termination_criterion(TerminationStatus current_status, size_t iteration) const;
    [[nodiscard]] TerminationStatus check_termination(const Model& model, Iterate& current_iterate, double step_norm) const;
 };

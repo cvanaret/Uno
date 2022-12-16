@@ -39,6 +39,12 @@ public:
    virtual void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const = 0;
    virtual void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix<double>& hessian) const = 0;
 
+   [[nodiscard]] double compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
+         const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bounds_multipliers,
+         const std::vector<double>& upper_bounds_multipliers) const;
+   [[nodiscard]] double compute_dual_constraint_violation(const std::vector<double>& primals, const std::vector<double>& constraint_multipliers,
+         const std::vector<double>& lower_bounds_multipliers, const std::vector<double>& upper_bounds_multipliers);
+
    [[nodiscard]] size_t get_number_original_variables() const;
    [[nodiscard]] virtual double get_variable_lower_bound(size_t i) const = 0;
    [[nodiscard]] virtual double get_variable_upper_bound(size_t i) const = 0;
@@ -58,16 +64,40 @@ inline bool NonlinearProblem::is_constrained() const {
    return (0 < this->number_constraints);
 }
 
-/*
-inline void NonlinearReformulation::evaluate_lagrangian_gradient(Iterate& iterate, std::vector<double>& lagrangian_gradient) const {
-   iterate.evaluate_lagrangian_gradient(this->model, iterate.multipliers.constraints, iterate.multipliers.lower_bounds,
-         iterate.multipliers.upper_bounds);
-   lagrangian_gradient = iterate.lagrangian_gradient;
-}
-*/
-
 inline size_t NonlinearProblem::get_number_original_variables() const {
    return this->model.number_variables;
+}
+
+// complementary slackness error
+inline double NonlinearProblem::compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
+      const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bounds_multipliers,
+      const std::vector<double>& upper_bounds_multipliers) const {
+   double error = 0.;
+   // bound constraints
+   for (size_t i = 0; i < this->number_variables; i++) {
+      if (0. < lower_bounds_multipliers[i]) {
+         error += std::abs(lower_bounds_multipliers[i] * (primals[i] - this->get_variable_lower_bound(i)));
+      }
+      if (upper_bounds_multipliers[i] < 0.) {
+         error += std::abs(upper_bounds_multipliers[i] * (primals[i] - this->get_variable_upper_bound(i)));
+      }
+   }
+   // constraints
+   for (size_t j = 0; j < this->number_constraints; j++) {
+      if (0. < constraint_multipliers[j]) { // lower bound
+         error += std::abs(constraint_multipliers[j] * (constraints[j] - this->get_constraint_lower_bound(j)));
+      }
+      else if (constraint_multipliers[j] < 0.) { // upper bound
+         error += std::abs(constraint_multipliers[j] * (constraints[j] - this->get_constraint_upper_bound(j)));
+      }
+   }
+   return error;
+}
+
+inline double NonlinearProblem::compute_dual_constraint_violation(const std::vector<double>& /*primals*/,
+      const std::vector<double>& /*constraint_multipliers*/, const std::vector<double>& /*lower_bounds_multipliers*/,
+            const std::vector<double>& /*upper_bounds_multipliers*/) {
+   return 0.;
 }
 
 #endif // UNO_NONLINEARPROBLEM_H

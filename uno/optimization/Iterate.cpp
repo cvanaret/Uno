@@ -61,43 +61,6 @@ void Iterate::evaluate_constraint_jacobian(const Model& model) {
    }
 }
 
-void Iterate::evaluate_lagrangian_gradient(const Model& model, double objective_multiplier, const std::vector<double>& constraint_multipliers,
-      const std::vector<double>& lower_bounds_multipliers, const std::vector<double>& upper_bounds_multipliers) {
-   /*
-   std::cout << "Primals: "; print_vector(std::cout, this->primals);
-   std::cout << "Duals: "; print_vector(std::cout, this->multipliers.constraints);
-   std::cout << "Duals lb: "; print_vector(std::cout, this->multipliers.lower_bounds);
-   std::cout << "Duals ub: "; print_vector(std::cout, this->multipliers.upper_bounds);
-    */
-   initialize_vector(this->lagrangian_gradient, 0.);
-
-   // objective gradient: scale it with the objective multiplier
-   if (objective_multiplier != 0.) {
-      this->evaluate_objective_gradient(model);
-      this->model_evaluations.objective_gradient.for_each([&](size_t i, double derivative) {
-         this->lagrangian_gradient[i] += objective_multiplier * derivative;
-      });
-   }
-
-   // constraints
-   this->evaluate_constraint_jacobian(model);
-   for (size_t j = 0; j < model.number_constraints; j++) {
-      // std::cout << "Grad c" << j << ": " << this->original_evaluations.constraint_jacobian[j] << "\n";
-      const double multiplier_j = constraint_multipliers[j];
-      if (multiplier_j != 0.) {
-         this->model_evaluations.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
-            this->lagrangian_gradient[i] -= multiplier_j * derivative;
-         });
-      }
-   }
-
-   // std::cout << "Iterate has " << this->number_variables << " variables\n";
-   // bound constraints
-   for (size_t i = 0; i < this->number_variables; i++) {
-      this->lagrangian_gradient[i] -= lower_bounds_multipliers[i] + upper_bounds_multipliers[i];
-   }
-}
-
 void Iterate::set_number_variables(size_t new_number_variables) {
    this->number_variables = new_number_variables;
    this->primals.resize(new_number_variables);

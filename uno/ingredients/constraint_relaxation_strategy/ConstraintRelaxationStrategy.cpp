@@ -25,10 +25,9 @@ void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(Iterate& iterate
 
    // constraints
    for (size_t j = 0; j < iterate.number_constraints; j++) {
-      const double multiplier_j = constraint_multipliers[j];
-      if (multiplier_j != 0.) {
+      if (constraint_multipliers[j] != 0.) {
          iterate.reformulation_evaluations.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
-            iterate.lagrangian_gradient[i] -= multiplier_j * derivative;
+            iterate.lagrangian_gradient[i] -= constraint_multipliers[j] * derivative;
          });
       }
    }
@@ -47,16 +46,16 @@ void ConstraintRelaxationStrategy::evaluate_reformulation_functions(const Nonlin
 }
 
 void ConstraintRelaxationStrategy::compute_optimality_condition_residuals(const NonlinearProblem& problem, Iterate& iterate) const {
-   // stationarity error
+   // stationarity error of the reformulated problem
    ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(iterate, iterate.multipliers.constraints, iterate.multipliers.lower_bounds,
          iterate.multipliers.upper_bounds);
    iterate.stationarity_error = norm(iterate.lagrangian_gradient, this->residual_norm);
-   // primal constraint violation
+   // primal constraint violation of the original problem
    iterate.primal_constraint_violation = problem.model.compute_constraint_violation(iterate.model_evaluations.constraints, this->residual_norm);
-   // complementarity error
-   iterate.complementarity_error = this->original_model.compute_complementarity_error(iterate.primals, iterate.reformulation_evaluations.constraints,
+   // complementarity error of the reformulated problem
+   iterate.complementarity_error = problem.compute_complementarity_error(iterate.primals, iterate.reformulation_evaluations.constraints,
          iterate.multipliers.constraints, iterate.multipliers.lower_bounds, iterate.multipliers.upper_bounds);
-   // TODO dual constraint violation
+   // TODO dual constraint violation of the reformulated problem
 }
 
 double ConstraintRelaxationStrategy::compute_linearized_constraint_violation(const Model& model, const Iterate& current_iterate,

@@ -42,7 +42,7 @@ void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& first_i
 
 Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate) {
    DEBUG << "Current iterate\n" << current_iterate << '\n';
-   if (this->current_phase == OPTIMALITY) {
+   if (this->current_phase == Phase::OPTIMALITY) {
       return this->solve_optimality_problem(statistics, current_iterate);
    }
    else {
@@ -135,7 +135,7 @@ PredictedReductionModel FeasibilityRestoration::generate_predicted_optimality_re
 }
 
 const NonlinearProblem& FeasibilityRestoration::get_current_reformulated_problem() const {
-   if (this->current_phase == OPTIMALITY) {
+   if (this->current_phase == Phase::OPTIMALITY) {
       return this->optimality_problem;
    }
    else {
@@ -144,16 +144,16 @@ const NonlinearProblem& FeasibilityRestoration::get_current_reformulated_problem
 }
 
 GlobalizationStrategy& FeasibilityRestoration::get_current_globalization_strategy() const {
-   return (this->current_phase == OPTIMALITY) ? *this->phase_2_strategy : *this->phase_1_strategy;
+   return (this->current_phase == Phase::OPTIMALITY) ? *this->phase_2_strategy : *this->phase_1_strategy;
 }
 
 void FeasibilityRestoration::switch_phase(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) {
    // possibly go from optimality phase to restoration phase
-   if (this->current_phase == OPTIMALITY && direction.objective_multiplier == 0.) {
+   if (this->current_phase == Phase::OPTIMALITY && direction.objective_multiplier == 0.) {
       this->switch_to_feasibility_restoration(current_iterate);
    }
    // possibly go from restoration phase to optimality phase
-   else if (this->current_phase == FEASIBILITY_RESTORATION &&
+   else if (this->current_phase == Phase::FEASIBILITY_RESTORATION &&
          ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate, direction, 1.) == 0.) {
       // TODO && this->filter_optimality->accept(trial_iterate.progress.feasibility, trial_iterate.progress.objective))
       this->switch_to_optimality(current_iterate, trial_iterate);
@@ -162,7 +162,7 @@ void FeasibilityRestoration::switch_phase(Iterate& current_iterate, Iterate& tri
    // evaluate the progress measures of the trial iterate
    trial_iterate.evaluate_objective(this->original_model);
    this->set_infeasibility_measure(trial_iterate);
-   if (this->current_phase == OPTIMALITY) {
+   if (this->current_phase == Phase::OPTIMALITY) {
       this->subproblem->set_optimality_measure(this->optimality_problem, trial_iterate);
    }
    else {
@@ -173,7 +173,7 @@ void FeasibilityRestoration::switch_phase(Iterate& current_iterate, Iterate& tri
 
 void FeasibilityRestoration::switch_to_feasibility_restoration(Iterate& current_iterate) {
    DEBUG << "Switching from optimality to restoration phase\n";
-   this->current_phase = FEASIBILITY_RESTORATION;
+   this->current_phase = Phase::FEASIBILITY_RESTORATION;
    this->phase_2_strategy->register_current_progress(current_iterate.nonlinear_progress);
    this->phase_1_strategy->reset();
    // compute the new progress measures of the current iterate
@@ -184,7 +184,7 @@ void FeasibilityRestoration::switch_to_feasibility_restoration(Iterate& current_
 
 void FeasibilityRestoration::switch_to_optimality(Iterate& current_iterate, Iterate& trial_iterate) {
    DEBUG << "Switching from restoration to optimality phase\n";
-   this->current_phase = OPTIMALITY;
+   this->current_phase = Phase::OPTIMALITY;
    current_iterate.set_number_variables(this->optimality_problem.number_variables);
    ConstraintRelaxationStrategy::evaluate_reformulation_functions(this->optimality_problem, trial_iterate);
    this->subproblem->set_optimality_measure(this->optimality_problem, current_iterate);
