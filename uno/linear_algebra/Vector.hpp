@@ -131,10 +131,10 @@ T norm(const std::vector<T>& x, Norm norm) {
 // - a callback as argument whose parameter is the current index. This avoids forming the vector explicitly
 // - an iterable range of arbitrary type (can be Range, std::vector, etc)
 template <typename T, typename RANGE>
-T norm_1(const std::function<T(size_t i)>& f, const RANGE& range, bool normalized = false) {
+T norm_1(const std::function<T(size_t i)>& ith_component, const RANGE& range, bool normalized = false) {
    T norm = T(0);
    for (size_t i: range) {
-      norm += std::abs(f(i));
+      norm += std::abs(ith_component(i));
    }
    // if required, normalize with the size of the range
    if (normalized && 0 < range.size()) {
@@ -154,20 +154,20 @@ T norm_inf(const std::vector<T>& x, const RANGE& range, bool /*normalized*/ = fa
 }
 
 template <typename T, typename RANGE>
-T norm_inf(const std::function<T(size_t i)>& f, const RANGE& range, bool /*normalized*/ = false) {
+T norm_inf(const std::function<T(size_t i)>& ith_component, const RANGE& range, bool /*normalized*/ = false) {
    T norm = T(0);
    for (size_t i: range) {
-      norm = std::max(norm, std::abs(f(i)));
+      norm = std::max(norm, std::abs(ith_component(i)));
    }
    // already normalized
    return norm;
 }
 
 template <typename T, typename RANGE>
-T norm_2_squared(const std::function<T(size_t i)>& f, const RANGE& range, bool normalized = false) {
+T norm_2_squared(const std::function<T(size_t i)>& ith_component, const RANGE& range, bool normalized = false) {
    T norm = T(0);
    for (size_t i: range) {
-      const T x_i = f(i);
+      const T x_i = ith_component(i);
       norm += x_i * x_i;
    }
    // if required, normalize with the size of the range
@@ -178,24 +178,24 @@ T norm_2_squared(const std::function<T(size_t i)>& f, const RANGE& range, bool n
 }
 
 template <typename T, typename RANGE>
-T norm_2(const std::function<T(size_t /*i*/)>& f, const RANGE& range, bool normalized = false) {
-   return std::sqrt(norm_2_squared(f, range, normalized));
+T norm_2(const std::function<T(size_t /*i*/)>& ith_component, const RANGE& range, bool normalized = false) {
+   return std::sqrt(norm_2_squared(ith_component, range, normalized));
 }
 
 template <typename T, typename RANGE>
-T norm(const std::function<T(size_t /*i*/)>& f, RANGE range, Norm norm) {
+T norm(const std::function<T(size_t /*i*/)>& ith_component, RANGE range, Norm norm) {
    // choose the right norm
    if (norm == INF_NORM) {
-      return norm_inf(f, range);
+      return norm_inf(ith_component, range);
    }
    else if (norm == L2_NORM) {
-      return norm_2(f, range);
+      return norm_2(ith_component, range);
    }
    else if (norm == L2_SQUARED_NORM) {
-      return norm_2_squared(f, range);
+      return norm_2_squared(ith_component, range);
    }
    else if (norm == L1_NORM) {
-      return norm_1(f, range);
+      return norm_1(ith_component, range);
    }
    else {
       throw std::out_of_range("The norm is not known");
