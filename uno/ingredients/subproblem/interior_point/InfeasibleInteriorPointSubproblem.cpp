@@ -19,8 +19,7 @@ InfeasibleInteriorPointSubproblem::InfeasibleInteriorPointSubproblem(size_t max_
             true, /* use regularization */
             options),
       // the Hessian is not convexified. Instead, the augmented system will be.
-      hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), max_number_variables, max_number_hessian_nonzeros,
-            false, options)),
+      hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), max_number_variables, max_number_hessian_nonzeros, false, options)),
       linear_solver(LinearSolverFactory::create(options.get_string("linear_solver"), max_number_variables + max_number_constraints,
             max_number_hessian_nonzeros
             + max_number_variables + max_number_constraints /* regularization */
@@ -51,9 +50,6 @@ inline void InfeasibleInteriorPointSubproblem::initialize(Statistics& statistics
       const Interval bounds = {problem.get_variable_lower_bound(i), problem.get_variable_upper_bound(i)};
       first_iterate.primals[i] = InfeasibleInteriorPointSubproblem::push_variable_to_interior(first_iterate.primals[i], bounds);
    }
-   problem.model.slacks.for_each_value([&](size_t slack_index) {
-      first_iterate.primals[slack_index] = 0.;
-   });
 
    // set the slack variables (if any)
    if (!problem.model.slacks.empty()) {
