@@ -24,7 +24,6 @@ protected:
    double barrier_parameter;
    const double tolerance;
    const UpdateParameters parameters;
-   const double test{1.};
 };
 
 #endif // UNO_BARRIERPARAMETERUPDATESTRATEGY_H

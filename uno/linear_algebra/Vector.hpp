@@ -53,6 +53,7 @@ void scale(std::vector<T>& x, T scaling_factor) {
    }
 }
 
+/*
 template <typename T>
 T dot(const std::vector<T>& x, const std::vector<T>& y) {
    assert(x.size() == y.size() && "The vectors do not have the same size.");
@@ -63,6 +64,7 @@ T dot(const std::vector<T>& x, const std::vector<T>& y) {
    }
    return dot_product;
 }
+*/
 
 template <typename T>
 void copy_from(std::vector<T>& destination, const std::vector<T>& source, size_t length = std::numeric_limits<size_t>::max()) {

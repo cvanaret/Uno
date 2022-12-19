@@ -111,6 +111,7 @@ std::ostream& operator<<(std::ostream& stream, const SparseVector<T>& x) {
 
 // free functions
 
+/*
 template <typename T>
 T norm_1(const SparseVector<T>& x) {
    T norm = T(0);
@@ -119,6 +120,7 @@ T norm_1(const SparseVector<T>& x) {
    });
    return norm;
 }
+*/
 
 template <typename T>
 T norm_inf(const SparseVector<T>& x) {

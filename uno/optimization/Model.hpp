@@ -96,8 +96,6 @@ public:
    [[nodiscard]] double compute_constraint_upper_bound_violation(double constraint_value, size_t j) const;
    [[nodiscard]] virtual double compute_constraint_violation(double constraint_value, size_t j) const;
    [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const;
-   [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, const std::vector<size_t>& constraint_set,
-         Norm residual_norm) const;
 
 protected:
    size_t objective_gradient_maximum_number_nonzeros{0}; /*!< Number of nonzero elements in the objective gradient */

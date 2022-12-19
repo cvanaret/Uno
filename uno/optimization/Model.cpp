@@ -91,15 +91,6 @@ double Model::compute_constraint_violation(double constraint_value, size_t j) co
    return std::max(lower_bound_violation, upper_bound_violation);
 }
 
-// compute ||c_S|| for a given set of constraints
-double Model::compute_constraint_violation(const std::vector<double>& constraints, const std::vector<size_t>& constraint_set,
-      Norm residual_norm) const {
-   const auto jth_component = [&](size_t j) {
-      return this->compute_constraint_violation(constraints[j], j);
-   };
-   return norm<double>(jth_component, constraint_set, residual_norm);
-}
-
 // compute ||c||
 double Model::compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const {
    // create a lambda to avoid allocating an std::vector

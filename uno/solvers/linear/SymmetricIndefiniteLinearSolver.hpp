@@ -20,7 +20,7 @@ public:
 
    [[nodiscard]] virtual std::tuple<size_t, size_t, size_t> get_inertia() const = 0;
    [[nodiscard]] virtual size_t number_negative_eigenvalues() const = 0;
-   [[nodiscard]] virtual bool matrix_is_positive_definite() const = 0;
+   // [[nodiscard]] virtual bool matrix_is_positive_definite() const = 0;
    [[nodiscard]] virtual bool matrix_is_singular() const = 0;
    [[nodiscard]] virtual size_t rank() const = 0;
 

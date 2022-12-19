@@ -93,7 +93,7 @@ void MA57Solver::do_numerical_factorization(const SymmetricMatrix<double>& matri
    // numerical factorization
    ma57bd_(&n,
          &this->factorization.nnz,
-         /* const */ matrix.raw_pointer(),
+         /* const */ matrix.data_raw_pointer(),
          /* out */ this->factorization.fact.data(),
          /* const */ &this->factorization.lfact,
          /* out*/ this->factorization.ifact.data(),
@@ -111,7 +111,7 @@ void MA57Solver::solve(const SymmetricMatrix<double>& matrix, const std::vector<
 
    // solve the linear system
    if (this->use_iterative_refinement) {
-      ma57dd_(&this->job, &n, &this->factorization.nnz, matrix.raw_pointer(), this->row_indices.data(), this->column_indices.data(),
+      ma57dd_(&this->job, &n, &this->factorization.nnz, matrix.data_raw_pointer(), this->row_indices.data(), this->column_indices.data(),
             this->factorization.fact.data(), &this->factorization.lfact, this->factorization.ifact.data(), &this->factorization.lifact,
             rhs.data(), result.data(), this->residuals.data(), this->work.data(), this->iwork.data(), this->icntl.data(),
             this->cntl.data(), this->info.data(), this->rinfo.data());
@@ -140,10 +140,12 @@ size_t MA57Solver::number_negative_eigenvalues() const {
    return static_cast<size_t>(this->info[23]);
 }
 
+/*
 bool MA57Solver::matrix_is_positive_definite() const {
    // positive definite = non-singular and no negative eigenvalues
    return !this->matrix_is_singular() && this->number_negative_eigenvalues() == 0;
 }
+*/
 
 bool MA57Solver::matrix_is_singular() const {
    return (this->info[0] == 4);
