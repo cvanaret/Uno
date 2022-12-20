@@ -62,7 +62,7 @@ bool FilterStrategy::is_acceptable(const ProgressMeasures& current_progress_meas
       if (improves_current_iterate) {
          DEBUG << "Acceptable wrt current point\n";
          // include the predicted optimality reduction, but ignore the predicted infeasibility reduction
-         const double unconstrained_predicted_reduction = predicted_reduction.scaled_optimality;
+         const double unconstrained_predicted_reduction = predicted_reduction.scaled_optimality + predicted_reduction.unscaled_optimality;
          DEBUG << "Unconstrained predicted reduction: " << unconstrained_predicted_reduction << '\n';
          const double actual_reduction = this->filter->compute_actual_reduction(current_optimality_measure, current_progress_measures.infeasibility,
                trial_optimality_measure);

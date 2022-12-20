@@ -18,7 +18,8 @@ void MeritFunction::register_current_progress(const ProgressMeasures& /*current_
 
 bool MeritFunction::is_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction) {
    // include the predicted optimality and infeasibility reductions
-   const double constrained_predicted_reduction = predicted_reduction.scaled_optimality + predicted_reduction.infeasibility;
+   const double constrained_predicted_reduction = predicted_reduction.scaled_optimality + predicted_reduction.unscaled_optimality +
+         predicted_reduction.infeasibility;
    DEBUG << "Constrained predicted reduction: " << constrained_predicted_reduction << '\n';
    // compute current exact penalty
    const double current_exact_merit = current_progress.scaled_optimality + current_progress.unscaled_optimality + current_progress.infeasibility;
