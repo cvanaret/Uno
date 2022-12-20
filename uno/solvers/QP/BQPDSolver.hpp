@@ -79,7 +79,7 @@ private:
 
    static void check_termination(BQPDStatus bqpd_status);
    static BQPDStatus bqpd_status_from_int(int ifail);
-   static Status status_from_int(int ifail);
+   static SubproblemStatus status_from_int(int ifail);
 };
 
 #endif // UNO_BQPDSOLVER_H

@@ -117,7 +117,7 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
 
    // solve the LP/QP
    bqpd_(&n, &m, &this->k, &this->kmax, this->jacobian.data(), this->jacobian_sparsity.data(),
-         direction.primals.data(), this->lb.data(), this->ub.data(), &direction.objective, &this->fmin, this->gradient_solution.data(),
+         direction.primals.data(), this->lb.data(), this->ub.data(), &direction.subproblem_objective, &this->fmin, this->gradient_solution.data(),
          this->residuals.data(), this->w.data(), this->e.data(), this->ls.data(), this->alp.data(), this->lp.data(),
          &this->mlp, &this->peq_solution, this->hessian_values.data(), this->hessian_sparsity.data(), &current_mode, &this->ifail,
          this->info.data(), &this->iprint, &this->nout);
@@ -268,14 +268,14 @@ BQPDStatus BQPDSolver::bqpd_status_from_int(int ifail) {
    return static_cast<BQPDStatus>(ifail);
 }
 
-Status BQPDSolver::status_from_int(int ifail) {
+SubproblemStatus BQPDSolver::status_from_int(int ifail) {
    switch (ifail) {
       case 0:
-         return Status::OPTIMAL;
+         return SubproblemStatus::OPTIMAL;
       case 1:
-         return Status::UNBOUNDED_PROBLEM;
+         return SubproblemStatus::UNBOUNDED_PROBLEM;
       case 3:
-         return Status::INFEASIBLE;
+         return SubproblemStatus::INFEASIBLE;
       default:
          assert(false && "The BQPD ifail is not consistent with the Uno status values");
    }

@@ -15,14 +15,14 @@ void Direction::set_dimensions(size_t new_number_variables, size_t new_number_co
    this->number_constraints = new_number_constraints;
 }
 
-std::string status_to_string(Status status) {
+std::string status_to_string(SubproblemStatus status) {
    switch (status) {
-      case Status::OPTIMAL:
-         return "optimal";
-      case Status::UNBOUNDED_PROBLEM:
-         return "unbounded problem";
-      case Status::INFEASIBLE:
-         return "infeasible";
+      case SubproblemStatus::OPTIMAL:
+         return "optimal subproblem";
+      case SubproblemStatus::UNBOUNDED_PROBLEM:
+         return "unbounded subproblem";
+      case SubproblemStatus::INFEASIBLE:
+         return "infeasible subproblem";
       default:
          return "unknown status, something went wrong";
    }
@@ -35,7 +35,7 @@ std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
 
    stream << "Status: " << status_to_string(direction.status) << '\n';
 
-   stream << "objective = " << direction.objective << '\n';
+   stream << "objective = " << direction.subproblem_objective << '\n';
    stream << "norm = " << direction.norm << '\n';
 
    stream << "bound constraints active at lower bound =";

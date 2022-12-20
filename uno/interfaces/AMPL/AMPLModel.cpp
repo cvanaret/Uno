@@ -25,7 +25,6 @@ ASL* generate_asl(std::string file_name) {
 
    // read the file_name.nl file
    pfgh_read_ASL(asl, nl, ASL_findgroups);
-
    return asl;
 }
 
@@ -231,8 +230,7 @@ void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double
    else {
       double* objective_multiplier_pointer = (objective_multiplier != 0.) ? &objective_multiplier : nullptr;
       bool all_zeros_multipliers = are_all_zeros(multipliers);
-      (*(this->asl)->p.Sphes)(this->asl, nullptr, const_cast<double*>(this->ampl_tmp_hessian.data()), objective_number,
-            objective_multiplier_pointer,
+      (*(this->asl)->p.Sphes)(this->asl, nullptr, const_cast<double*>(this->ampl_tmp_hessian.data()), objective_number, objective_multiplier_pointer,
             all_zeros_multipliers ? nullptr : const_cast<double*>(multipliers.data()));
    }
 

@@ -51,6 +51,9 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
    catch (std::exception& exception) {
       ERROR << exception.what();
    }
+   // in case the objective was not computed, evaluate it
+   current_iterate.evaluate_objective(model);
+
    if (Logger::logger_level == INFO) statistics.print_footer();
    timer.stop();
 

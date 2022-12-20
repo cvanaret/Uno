@@ -29,8 +29,8 @@ public:
    // trial iterate acceptance
    void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) override;
    [[nodiscard]] bool is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         PredictedReductionModel& predicted_optimality_reduction_model, double step_length) override;
-   [[nodiscard]] PredictedReductionModel generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
+         PredictedReductionModel& predicted_reduction_model, double step_length) override;
+   [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Iterate& current_iterate,
          const Direction& direction) const override;
    void register_accepted_iterate(Iterate& iterate) override;
 
@@ -50,11 +50,16 @@ private:
    [[nodiscard]] const NonlinearProblem& get_current_reformulated_problem() const;
    [[nodiscard]] GlobalizationStrategy& get_current_globalization_strategy() const;
    [[nodiscard]] Direction solve_optimality_problem(Statistics& statistics, Iterate& current_iterate);
-   void switch_phase(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction);
    void switch_to_feasibility_restoration(Iterate& current_iterate);
    void switch_to_optimality(Iterate& current_iterate, Iterate& trial_iterate);
-   void set_infeasibility_measure(Iterate& iterate) override;
-   void set_restoration_measures(Iterate& iterate);
+
+   // progress measures and their local models
+   void set_infeasibility_measure(Iterate& iterate);
+   [[nodiscard]] std::function<double(double)> generate_predicted_infeasibility_reduction_model(const Iterate& current_iterate,
+         const Direction& direction) const;
+   void set_scaled_optimality_measure(Iterate& iterate);
+   [[nodiscard]] std::function<double(double)> generate_predicted_scaled_optimality_reduction_model(const Iterate& current_iterate,
+         const Direction& direction) const;
 };
 
 #endif //UNO_FEASIBILITYRESTORATION_H

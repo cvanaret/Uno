@@ -71,9 +71,11 @@ double ConstraintRelaxationStrategy::compute_linearized_constraint_violation(con
    return linearized_constraint_violation;
 }
 
+/*
 double ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction(const Model& model, const Iterate& current_iterate,
       const Direction& direction, double step_length) {
    const double linearized_constraint_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(model, current_iterate,
          direction, step_length);
    return current_iterate.primal_constraint_violation - linearized_constraint_violation;
 }
+ */

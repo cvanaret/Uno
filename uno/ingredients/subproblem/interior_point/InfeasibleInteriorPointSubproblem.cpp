@@ -164,7 +164,7 @@ Direction InfeasibleInteriorPointSubproblem::solve(Statistics& statistics, const
    // compute the solution (Δx, -Δλ)
    this->augmented_system.solve(*this->linear_solver);
    Subproblem::check_unboundedness(this->direction);
-   assert(this->direction.status == Status::OPTIMAL && "The barrier subproblem was not solved to optimality");
+   assert(this->direction.status == SubproblemStatus::OPTIMAL && "The barrier subproblem was not solved to optimality");
    this->number_subproblems_solved++;
    this->generate_primal_dual_direction(problem, current_iterate);
    statistics.add_statistic("barrier param.", this->barrier_parameter());
@@ -216,7 +216,7 @@ void InfeasibleInteriorPointSubproblem::prepare_for_feasibility_problem(const No
    this->barrier_parameter_update_strategy.set_barrier_parameter(new_barrier_parameter);
    DEBUG << "Barrier parameter mu temporarily updated to " << this->barrier_parameter() << '\n';
    // since the barrier parameter changed, update the optimality measure (contains barrier terms)
-   this->set_optimality_measure(problem, current_iterate);
+   this->set_unscaled_optimality_measure(problem, current_iterate);
    this->subproblem_definition_changed = true;
 }
 
@@ -241,33 +241,42 @@ void InfeasibleInteriorPointSubproblem::set_elastic_variable_values(const l1Rela
    problem.set_elastic_variable_values(current_iterate, elastic_setting_function);
 }
 
-PredictedReductionModel InfeasibleInteriorPointSubproblem::generate_predicted_optimality_reduction_model(const Iterate& /*current_iterate*/,
-      const Direction& direction) const {
-   return PredictedReductionModel([=](double step_length) {
-      return -step_length * direction.objective;
-   });
-}
-
-void InfeasibleInteriorPointSubproblem::set_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) {
+void InfeasibleInteriorPointSubproblem::set_unscaled_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) {
    this->check_interior_primals(problem, iterate);
-   // optimality measure: barrier function
-   double objective = 0.;
-   // bound constraints
+   // unscaled optimality measure: barrier terms
+   double barrier_terms = 0.;
    for (size_t i: problem.lower_bounded_variables) {
-      objective -= std::log(iterate.primals[i] - this->variable_bounds[i].lb);
+      barrier_terms -= std::log(iterate.primals[i] - this->variable_bounds[i].lb);
    }
    for (size_t i: problem.upper_bounded_variables) {
-      objective -= std::log(this->variable_bounds[i].ub - iterate.primals[i]);
+      barrier_terms -= std::log(this->variable_bounds[i].ub - iterate.primals[i]);
    }
-   objective *= this->barrier_parameter();
-   assert(is_finite(objective) && "The barrier value is infinite");
-   // original objective value
-   const double test = problem.evaluate_objective(iterate);
-   objective += test;
-   //iterate.evaluate_objective(problem.model);
-   // TODO: parameterize optimality measure with \rho instead of multiplying (here, \rho should not multiply the barrier terms)
-   //objective += iterate.original_evaluations.objective;
-   iterate.nonlinear_progress.scaled_optimality = objective;
+   barrier_terms *= this->barrier_parameter();
+   iterate.nonlinear_progress.unscaled_optimality = barrier_terms;
+}
+
+std::function<double(double)> InfeasibleInteriorPointSubproblem::generate_predicted_unscaled_optimality_reduction_model(const NonlinearProblem& problem,
+      const Iterate& current_iterate, const Direction& direction) const {
+   const double directional_derivative = this->compute_barrier_term_directional_derivative(problem, current_iterate, direction);
+   return [=](double step_length) {
+      return step_length * (-directional_derivative);
+   };
+}
+
+double InfeasibleInteriorPointSubproblem::compute_barrier_term_directional_derivative(const NonlinearProblem& problem, const Iterate& current_iterate,
+      const Direction& direction) const {
+   double directional_derivative = 0.;
+   for (size_t i = 0; i < problem.number_variables; i++) {
+      double barrier_term = 0.;
+      if (is_finite(problem.get_variable_lower_bound(i))) { // lower bounded
+         barrier_term += -this->barrier_parameter() / (current_iterate.primals[i] - this->variable_bounds[i].lb);
+      }
+      if (is_finite(problem.get_variable_upper_bound(i))) { // upper bounded
+         barrier_term += -this->barrier_parameter() / (current_iterate.primals[i] - this->variable_bounds[i].ub);
+      }
+      directional_derivative += barrier_term*direction.primals[i];
+   }
+   return directional_derivative;
 }
 
 void InfeasibleInteriorPointSubproblem::update_barrier_parameter(const NonlinearProblem& problem, const Iterate& current_iterate) {
@@ -287,9 +296,10 @@ bool InfeasibleInteriorPointSubproblem::is_small_direction(const NonlinearProble
    return (norm_inf<double>(relative_measure_function, Range(problem.number_variables)) < this->parameters.small_direction_factor * machine_epsilon);
 }
 
-double InfeasibleInteriorPointSubproblem::compute_barrier_directional_derivative(const Iterate& current_iterate,
-      const std::vector<double>& solution) const {
-   return dot(solution, current_iterate.reformulation_evaluations.objective_gradient);
+double InfeasibleInteriorPointSubproblem::evaluate_subproblem_objective(const Iterate& current_iterate, const std::vector<double>& solution) const {
+   const double linear_term = dot(solution, current_iterate.reformulation_evaluations.objective_gradient);
+   const double quadratic_term = this->hessian_model->hessian->quadratic_product(direction.primals, direction.primals) / 2.;
+   return linear_term + quadratic_term;
 }
 
 double InfeasibleInteriorPointSubproblem::primal_fraction_to_boundary(const NonlinearProblem& problem, const Iterate& current_iterate, double tau) {
@@ -382,8 +392,7 @@ void InfeasibleInteriorPointSubproblem::generate_primal_dual_direction(const Non
    DEBUG << "primal length = " << primal_step_length << '\n';
    DEBUG << "dual length = " << dual_step_length << '\n';
 
-   // evaluate the barrier objective
-   this->direction.objective = this->compute_barrier_directional_derivative(current_iterate, direction.primals);
+   this->direction.subproblem_objective = this->evaluate_subproblem_objective(current_iterate, direction.primals);
 }
 
 void InfeasibleInteriorPointSubproblem::compute_bound_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate) {

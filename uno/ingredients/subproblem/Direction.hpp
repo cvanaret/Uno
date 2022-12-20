@@ -10,7 +10,7 @@
 #include "optimization/Multipliers.hpp"
 #include "tools/Infinity.hpp"
 
-enum class Status {
+enum class SubproblemStatus {
    OPTIMAL = 0,
    UNBOUNDED_PROBLEM,
    INFEASIBLE
@@ -51,10 +51,10 @@ public:
    Multipliers multipliers; /*!< Multipliers */
    double objective_multiplier{1.}; /*!< Objective multiplier */
 
-   Status status{Status::OPTIMAL}; /*!< Status of the solution */
+   SubproblemStatus status{SubproblemStatus::OPTIMAL}; /*!< Status of the solution */
 
    double norm{INF<double>}; /*!< Norm of \f$x\f$ */
-   double objective{INF<double>}; /*!< Objective value */
+   double subproblem_objective{INF<double>}; /*!< Objective value */
    ActiveSet active_set{}; /*!< Active set */
    std::optional<ConstraintPartition> constraint_partition{std::nullopt}; /*!< Optional partition of feasible and infeasible constraints */
 

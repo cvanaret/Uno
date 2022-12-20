@@ -12,8 +12,7 @@ public:
    explicit MeritFunction(const Options& options);
 
    void initialize(const Iterate& first_iterate) override;
-   bool is_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress, double objective_multiplier,
-         const ProgressMeasures& predicted_reduction) override;
+   bool is_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction) override;
    void reset() override;
    void register_current_progress(const ProgressMeasures& current_progress) override;
 };

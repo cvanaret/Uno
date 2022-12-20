@@ -17,14 +17,9 @@ QPSubproblem::QPSubproblem(size_t max_number_variables, size_t max_number_constr
 void QPSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate) {
    // Hessian
    this->hessian_model->evaluate(problem, current_iterate.primals, current_iterate.multipliers.constraints);
-
-   // objective gradient
+   // objective gradient, constraints and constraint Jacobian
    problem.evaluate_objective_gradient(current_iterate, current_iterate.reformulation_evaluations.objective_gradient);
-
-   // constraints
    problem.evaluate_constraints(current_iterate, current_iterate.reformulation_evaluations.constraints);
-
-   // constraint Jacobian
    problem.evaluate_constraint_jacobian(current_iterate, current_iterate.reformulation_evaluations.constraint_jacobian);
 }
 
@@ -56,17 +51,6 @@ Direction QPSubproblem::solve_QP(const NonlinearProblem& problem, Iterate& itera
    ActiveSetSubproblem::compute_dual_displacements(problem, iterate, direction);
    this->number_subproblems_solved++;
    return direction;
-}
-
-PredictedReductionModel QPSubproblem::generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
-      const Direction& direction) const {
-   // precompute expensive quantities
-   const double directional_derivative = dot(direction.primals, current_iterate.reformulation_evaluations.objective_gradient);
-
-   return PredictedReductionModel([=](double step_length) {
-      // return a function of the step length that cheaply assembles the predicted reduction
-      return -step_length * directional_derivative;
-   });
 }
 
 size_t QPSubproblem::get_hessian_evaluation_count() const {

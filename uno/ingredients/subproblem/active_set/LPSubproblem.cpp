@@ -10,13 +10,9 @@ LPSubproblem::LPSubproblem(size_t max_number_variables, size_t max_number_constr
 }
 
 void LPSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate) {
-   // objective gradient
+   // objective gradient, constraints and constraint Jacobian
    problem.evaluate_objective_gradient(current_iterate, current_iterate.reformulation_evaluations.objective_gradient);
-
-   // constraints
    problem.evaluate_constraints(current_iterate, current_iterate.reformulation_evaluations.constraints);
-
-   // constraint Jacobian
    problem.evaluate_constraint_jacobian(current_iterate, current_iterate.reformulation_evaluations.constraint_jacobian);
 }
 
@@ -50,25 +46,6 @@ Direction LPSubproblem::solve_LP(const NonlinearProblem& problem, Iterate& itera
    this->number_subproblems_solved++;
    return direction;
 }
-
-PredictedReductionModel LPSubproblem::generate_predicted_optimality_reduction_model(const Iterate& /*current_iterate*/,
-      const Direction& direction) const {
-   // return a function of the step length that cheaply assembles the predicted reduction
-   return PredictedReductionModel([=](double step_length) {
-      return -step_length * direction.objective;
-   });
-}
-
-/*
-OptimalityMeasureModel LPSubproblem::generate_optimality_measure_model(const ReformulatedProblem& problem, const Direction& direction) const {
-   return OptimalityMeasureModel(-direction.objective, [&]() { // capture "direction" by reference
-      // return a function of the step length that cheaply assembles the predicted reduction
-      return [=](double step_length) { // capture the expensive quantities by value
-         return -step_length * direction.objective;
-      };
-   });
-}
-*/
 
 size_t LPSubproblem::get_hessian_evaluation_count() const {
    // no second order evaluation is used

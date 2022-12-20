@@ -15,7 +15,11 @@ public:
    void set_initial_point(const std::vector<double>& initial_point) override;
    void prepare_for_feasibility_problem(const NonlinearProblem& problem, Iterate& current_iterate) override;
    void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
-   void set_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) override;
+
+   void set_unscaled_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) override;
+   [[nodiscard]] std::function<double(double)> generate_predicted_unscaled_optimality_reduction_model(const NonlinearProblem& problem,
+         const Iterate& current_iterate, const Direction& direction) const override;
+
    void postprocess_accepted_iterate(const NonlinearProblem& model, Iterate& iterate) override;
 
 protected:

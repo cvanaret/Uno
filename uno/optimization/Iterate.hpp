@@ -5,7 +5,6 @@
 #define UNO_ITERATE_H
 
 #include <vector>
-#include <limits>
 #include "ingredients/globalization_strategy/ProgressMeasures.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
@@ -50,15 +49,14 @@ public:
    bool is_objective_gradient_computed{false}; /*!< Flag that indicates if the objective gradient has already been computed */
    bool is_constraint_jacobian_computed{false}; /*!< Flag that indicates if the constraint Jacobian has already been computed */
 
-   std::vector<double> lagrangian_gradient;
-
    // residuals
    double stationarity_error{INF<double>};
    double primal_constraint_violation{INF<double>};
    double complementarity_error{INF<double>};
+   std::vector<double> lagrangian_gradient;
 
-   // measures of progress (infeasibility, optimality)
-   ProgressMeasures nonlinear_progress{INF<double>, INF<double>};
+   // measures of progress (infeasibility, scaled optimality, unscaled optimality)
+   ProgressMeasures nonlinear_progress{INF<double>, INF<double>, INF<double>};
 
    void evaluate_objective(const Model& model);
    void evaluate_constraints(const Model& model);

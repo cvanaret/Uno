@@ -88,10 +88,13 @@ std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
    print_vector(stream, iterate.multipliers.constraints);
 
    stream << "Objective value: " << iterate.model_evaluations.objective << '\n';
+
    stream << "Constraint violation: " << iterate.primal_constraint_violation << '\n';
-   stream << "Stationarity (KKT/FJ) error: " << iterate.stationarity_error << '\n';
+   stream << "Stationarity error: " << iterate.stationarity_error << '\n';
    stream << "Complementarity error: " << iterate.complementarity_error << '\n';
+
    stream << "Infeasibility measure: " << iterate.nonlinear_progress.infeasibility << '\n';
-   stream << "Optimality measure: " << iterate.nonlinear_progress.scaled_optimality << '\n';
+   stream << "Scaled optimality measure: " << iterate.nonlinear_progress.scaled_optimality << '\n';
+   stream << "Unscaled optimality measure: " << iterate.nonlinear_progress.unscaled_optimality << '\n';
    return stream;
 }

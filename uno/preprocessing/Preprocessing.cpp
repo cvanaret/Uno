@@ -102,7 +102,7 @@ void Preprocessing::enforce_linear_constraints(const Options& options, const Mod
          SparseVector<double> linear_objective; // empty
          Direction direction = solver.solve_QP(model.number_variables, model.linear_constraints.size(), variables_bounds, constraints_bounds,
                linear_objective, constraint_jacobian, hessian, d0);
-         if (direction.status == Status::INFEASIBLE) {
+         if (direction.status == SubproblemStatus::INFEASIBLE) {
             throw std::runtime_error("Linear constraints cannot be satisfied");
          }
 

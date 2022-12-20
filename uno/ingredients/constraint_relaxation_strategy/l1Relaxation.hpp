@@ -35,8 +35,8 @@ public:
    // trial iterate acceptance
    void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) override;
    [[nodiscard]] bool is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         PredictedReductionModel& predicted_optimality_reduction_model, double step_length) override;
-   [[nodiscard]] PredictedReductionModel generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
+         PredictedReductionModel& predicted_reduction_model, double step_length) override;
+   [[nodiscard]] PredictedReductionModel generate_predicted_reduction_model(const Iterate& current_iterate,
       const Direction& direction) const override;
    void register_accepted_iterate(Iterate& iterate) override;
 
@@ -64,7 +64,14 @@ protected:
    [[nodiscard]] bool objective_sufficient_decrease(const Iterate& current_iterate, const Direction& direction, const Direction& direction_lowest_violation) const;
    double compute_error(Iterate& current_iterate, const Multipliers& multiplier_displacements);
    void set_multipliers(const Iterate& current_iterate, std::vector<double>& constraint_multipliers);
-   void set_infeasibility_measure(Iterate& iterate) override;
+
+   // progress measures and their local models
+   void set_infeasibility_measure(Iterate& iterate);
+   [[nodiscard]] std::function<double(double)> generate_predicted_infeasibility_reduction_model(const Iterate& current_iterate,
+         const Direction& direction) const;
+   void set_scaled_optimality_measure(Iterate& iterate);
+   [[nodiscard]] std::function<double(double)> generate_predicted_scaled_optimality_reduction_model(const Iterate& current_iterate,
+         const Direction& direction) const;
 };
 
 #endif //UNO_L1RELAXATION_H

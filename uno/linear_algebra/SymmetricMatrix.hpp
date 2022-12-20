@@ -22,6 +22,8 @@ public:
 
    virtual void reset();
 
+   T quadratic_product(const std::vector<T>& x, const std::vector<T>& y) const;
+
    virtual void for_each(const std::function<void (size_t, size_t, T)>& f) const = 0;
    // build the matrix incrementally
    virtual void insert(T term, size_t row_index, size_t column_index) = 0;
@@ -56,6 +58,17 @@ template <typename T>
 void SymmetricMatrix<T>::reset() {
    this->number_nonzeros = 0;
    this->entries.clear();
+}
+
+template <typename T>
+T SymmetricMatrix<T>::quadratic_product(const std::vector<T>& x, const std::vector<T>& y) const {
+   assert(x.size() == y.size() && "SymmetricMatrix::quadratic_product: the two vectors x and y do not have the same size");
+
+   T result = T(0);
+   this->for_each([&](size_t i, size_t j, T entry) {
+      result += (i == j ? T(1) : T(2)) * entry * x[i] * y[j];
+   });
+   return result;
 }
 
 template <typename T>
