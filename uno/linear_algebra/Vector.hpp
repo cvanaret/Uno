@@ -166,39 +166,39 @@ T norm_inf(const std::function<T(size_t i)>& ith_component, const ITERABLE& iter
    return norm;
 }
 
-template <typename T, typename RANGE>
-T norm_2_squared(const std::function<T(size_t i)>& ith_component, const RANGE& range, bool normalized = false) {
+template <typename T, typename ITERABLE>
+T norm_2_squared(const std::function<T(size_t i)>& ith_component, const ITERABLE& iterable, bool normalized = false) {
    T norm = T(0);
-   for (size_t i: range) {
+   for (size_t i: iterable) {
       const T x_i = ith_component(i);
       norm += x_i * x_i;
    }
-   // if required, normalize with the size of the range
-   if (normalized && 0 < range.size()) {
-      norm /= static_cast<double>(range.size());
+   // if required, normalize with the size of the iterable
+   if (normalized && 0 < iterable.size()) {
+      norm /= static_cast<double>(iterable.size());
    }
    return norm;
 }
 
-template <typename T, typename RANGE>
-T norm_2(const std::function<T(size_t /*i*/)>& ith_component, const RANGE& range, bool normalized = false) {
-   return std::sqrt(norm_2_squared(ith_component, range, normalized));
+template <typename T, typename ITERABLE>
+T norm_2(const std::function<T(size_t /*i*/)>& ith_component, const ITERABLE& iterable, bool normalized = false) {
+   return std::sqrt(norm_2_squared(ith_component, iterable, normalized));
 }
 
-template <typename T, typename RANGE>
-T norm(const std::function<T(size_t /*i*/)>& ith_component, RANGE range, Norm norm) {
+template <typename T, typename ITERABLE>
+T norm(const std::function<T(size_t /*i*/)>& ith_component, ITERABLE iterable, Norm norm) {
    // choose the right norm
    if (norm == INF_NORM) {
-      return norm_inf(ith_component, range);
+      return norm_inf(ith_component, iterable);
    }
    else if (norm == L2_NORM) {
-      return norm_2(ith_component, range);
+      return norm_2(ith_component, iterable);
    }
    else if (norm == L2_SQUARED_NORM) {
-      return norm_2_squared(ith_component, range);
+      return norm_2_squared(ith_component, iterable);
    }
    else if (norm == L1_NORM) {
-      return norm_1(ith_component, range);
+      return norm_1(ith_component, iterable);
    }
    else {
       throw std::out_of_range("The norm is not known");
@@ -222,11 +222,11 @@ void print_vector(const Level& level, const std::vector<T>& x, size_t start = 0,
 }
 
 // check that an array of integers is in increasing order (x[i] <= x[i+1])
-template <typename ARRAY>
-bool in_increasing_order(const ARRAY& array, size_t length) {
+template <typename ITERABLE>
+bool in_increasing_order(const ITERABLE& iterable, size_t length) {
    size_t i = 0;
    while (i < length-1) {
-      if (array[i] > array[i+1]) {
+      if (iterable[i] > iterable[i + 1]) {
          return false;
       }
       i++;
