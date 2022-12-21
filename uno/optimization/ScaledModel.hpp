@@ -55,7 +55,7 @@ inline ScaledModel::ScaledModel(const Model& original_model, Iterate& first_iter
    }
    // check the scaling factors
    assert(0 <= this->scaling.get_objective_scaling() && "Objective scaling failed.");
-   for (size_t j = 0; j < this->number_constraints; j++) {
+   for (size_t j: Range(this->number_constraints)) {
       assert(0 <= this->scaling.get_constraint_scaling(j) && "Constraint scaling failed.");
    }
 
@@ -119,7 +119,7 @@ inline void ScaledModel::evaluate_objective_gradient(const std::vector<double>& 
 inline void ScaledModel::evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const {
    this->original_model.evaluate_constraints(x, constraints);
    // scale
-   for (size_t j = 0; j < this->number_constraints; j++) {
+   for (size_t j: Range(this->number_constraints)) {
       constraints[j] *= this->scaling.get_constraint_scaling(j);
    }
 }
@@ -133,7 +133,7 @@ inline void ScaledModel::evaluate_constraint_gradient(const std::vector<double>&
 inline void ScaledModel::evaluate_constraint_jacobian(const std::vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const {
    this->original_model.evaluate_constraint_jacobian(x, constraint_jacobian);
    // scale
-   for (size_t j = 0; j < this->number_constraints; j++) {
+   for (size_t j: Range(this->number_constraints)) {
       scale(constraint_jacobian[j], this->scaling.get_constraint_scaling(j));
    }
 }
@@ -145,7 +145,7 @@ inline void ScaledModel::evaluate_lagrangian_hessian(const std::vector<double>& 
    // TODO preallocate this vector
    // TODO check if the multipliers should be scaled
    static std::vector<double> scaled_multipliers(this->number_constraints);
-   for (size_t j = 0; j < this->number_constraints; j++) {
+   for (size_t j: Range(this->number_constraints)) {
       scaled_multipliers[j] = scaling.get_constraint_scaling(j)*multipliers[j];
    }
    this->original_model.evaluate_lagrangian_hessian(x, scaled_objective_multiplier, scaled_multipliers, hessian);
@@ -193,10 +193,10 @@ inline void ScaledModel::postprocess_solution(Iterate& iterate, TerminationStatu
    const bool is_feasible = (termination_status == FEASIBLE_KKT_POINT || termination_status == FEASIBLE_SMALL_STEP);
    const double scaled_objective_multiplier = scaling.get_objective_scaling()*(is_feasible ? iterate.multipliers.objective : 1.);
    if (scaled_objective_multiplier != 0.) {
-      for (size_t j = 0; j < this->number_constraints; j++) {
+      for (size_t j: Range(this->number_constraints)) {
          iterate.multipliers.constraints[j] *= scaling.get_constraint_scaling(j)/scaled_objective_multiplier;
       }
-      for (size_t i = 0; i < this->number_variables; i++) {
+      for (size_t i: Range(this->number_variables)) {
          iterate.multipliers.lower_bounds[i] /= scaled_objective_multiplier;
          iterate.multipliers.upper_bounds[i] /= scaled_objective_multiplier;
       }

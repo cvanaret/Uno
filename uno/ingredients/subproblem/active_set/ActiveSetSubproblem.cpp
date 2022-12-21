@@ -31,7 +31,7 @@ void ActiveSetSubproblem::set_elastic_variable_values(const l1RelaxedProblem& pr
 }
 
 void ActiveSetSubproblem::set_variable_displacement_bounds(const NonlinearProblem& problem, const Iterate& current_iterate) {
-   for (size_t i = 0; i < problem.number_variables; i++) {
+   for (size_t i: Range(problem.number_variables)) {
       const double lb = this->variable_bounds[i].lb - current_iterate.primals[i];
       const double ub = this->variable_bounds[i].ub - current_iterate.primals[i];
       this->variable_displacement_bounds[i] = {lb, ub};
@@ -39,7 +39,7 @@ void ActiveSetSubproblem::set_variable_displacement_bounds(const NonlinearProble
 }
 
 void ActiveSetSubproblem::set_linearized_constraint_bounds(const NonlinearProblem& problem, const std::vector<double>& current_constraints) {
-   for (size_t j = 0; j < problem.number_constraints; j++) {
+   for (size_t j: Range(problem.number_constraints)) {
       const double lb = problem.get_constraint_lower_bound(j) - current_constraints[j];
       const double ub = problem.get_constraint_upper_bound(j) - current_constraints[j];
       this->linearized_constraint_bounds[j] = {lb, ub};
@@ -48,7 +48,7 @@ void ActiveSetSubproblem::set_linearized_constraint_bounds(const NonlinearProble
 
 void ActiveSetSubproblem::shift_linearized_constraint_bounds(const NonlinearProblem& problem, const std::vector<double>& trial_constraints) {
    // shift the RHS with the values of the constraints at the trial iterate
-   for (size_t j = 0; j < problem.number_constraints; j++) {
+   for (size_t j: Range(problem.number_constraints)) {
       this->linearized_constraint_bounds[j].lb -= trial_constraints[j];
       this->linearized_constraint_bounds[j].ub -= trial_constraints[j];
    }
@@ -56,10 +56,10 @@ void ActiveSetSubproblem::shift_linearized_constraint_bounds(const NonlinearProb
 
 void ActiveSetSubproblem::compute_dual_displacements(const NonlinearProblem& problem, const Iterate& current_iterate, Direction& direction) {
    // compute dual *displacements* (note: active-set methods usually compute the new duals, not the displacements)
-   for (size_t j = 0; j < problem.number_constraints; j++) {
+   for (size_t j: Range(problem.number_constraints)) {
       direction.multipliers.constraints[j] -= current_iterate.multipliers.constraints[j];
    }
-   for (size_t i = 0; i < problem.number_variables; i++) {
+   for (size_t i: Range(problem.number_variables)) {
       direction.multipliers.lower_bounds[i] -= current_iterate.multipliers.lower_bounds[i];
       direction.multipliers.upper_bounds[i] -= current_iterate.multipliers.upper_bounds[i];
    }

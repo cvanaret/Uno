@@ -103,7 +103,7 @@ bool not_all_zero_multipliers(const Model& model, const Multipliers& multipliers
       }
    }
    // bound multipliers
-   for (size_t i = 0; i < model.number_variables; i++) {
+   for (size_t i: Range(model.number_variables)) {
       if (tolerance < std::abs(multipliers.lower_bounds[i] + multipliers.upper_bounds[i])) {
          return true;
       }

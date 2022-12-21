@@ -4,7 +4,8 @@
 #ifndef UNO_COOSYMMETRICMATRIX_H
 #define UNO_COOSYMMETRICMATRIX_H
 
-#include <functional>
+#include <ostream>
+#include <cassert>
 #include "SymmetricMatrix.hpp"
 #include "tools/Infinity.hpp"
 
@@ -64,7 +65,7 @@ void COOSymmetricMatrix<T>::reset() {
 // generic iterator
 template <typename T>
 void COOSymmetricMatrix<T>::for_each(const std::function<void(size_t, size_t, T)>& f) const {
-   for (size_t k = 0; k < this->number_nonzeros; k++) {
+   for (size_t k: Range(this->number_nonzeros)) {
       const size_t i = this->row_indices[k];
       const size_t j = this->column_indices[k];
       const T entry = this->entries[k];
@@ -106,7 +107,7 @@ void COOSymmetricMatrix<T>::set_regularization(const std::function<T(size_t /*in
    assert(this->use_regularization && "You are trying to regularize a matrix where regularization was not preallocated.");
 
    // the regularization terms (that lie at the start of the entries vector) can be directly modified
-   for (size_t i = 0; i < this->dimension; i++) {
+   for (size_t i: Range(this->dimension)) {
       this->entries[i] = regularization_function(i);
    }
 }
@@ -121,7 +122,7 @@ void COOSymmetricMatrix<T>::print(std::ostream& stream) const {
 template <typename T>
 void COOSymmetricMatrix<T>::initialize_regularization() {
    // introduce elements at the start of the entries
-   for (size_t i = 0; i < this->dimension; i++) {
+   for (size_t i: Range(this->dimension)) {
       this->insert(T(0), i, i);
    }
 }

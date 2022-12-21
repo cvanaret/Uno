@@ -71,7 +71,7 @@ void SymmetricIndefiniteLinearSystem<T>::assemble_matrix(const SymmetricMatrix<d
    size_t current_column = 0;
    hessian.for_each([&](size_t i, size_t j, double entry) {
       // finalize all empty columns
-      for (size_t column = current_column; column < j; column++) {
+      for (size_t column: Range(current_column, j)) {
          this->matrix->finalize_column(column);
          current_column++;
       }
@@ -79,7 +79,7 @@ void SymmetricIndefiniteLinearSystem<T>::assemble_matrix(const SymmetricMatrix<d
    });
 
    // Jacobian of general constraints
-   for (size_t j = 0; j < number_constraints; j++) {
+   for (size_t j: Range(number_constraints)) {
       constraint_jacobian[j].for_each([&](size_t i, double derivative) {
          this->matrix->insert(derivative, i, number_variables + j);
       });

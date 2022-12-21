@@ -5,6 +5,7 @@
 #include <algorithm>
 #include "Filter.hpp"
 #include "tools/Logger.hpp"
+#include "tools/Range.hpp"
 
 Filter::Filter(const Options& options) :
       capacity(options.get_unsigned_int("filter_capacity")),
@@ -24,7 +25,7 @@ void Filter::reset() {
 }
 
 void Filter::left_shift(size_t start, size_t shift_size) {
-   for (size_t position = start; position < this->number_entries - shift_size; position++) {
+   for (size_t position: Range(start, this->number_entries - shift_size)) {
       this->infeasibility[position] = this->infeasibility[position + shift_size];
       this->optimality[position] = this->optimality[position + shift_size];
    }
@@ -120,7 +121,7 @@ double Filter::compute_actual_reduction(double current_optimality_measure, doubl
 std::ostream& operator<<(std::ostream& stream, Filter& filter) {
    stream << "************\n";
    stream << "  Current filter (infeasibility, optimality):\n";
-   for (size_t position = 0; position < filter.number_entries; position++) {
+   for (size_t position: Range(filter.number_entries)) {
       stream << "\t" << filter.infeasibility[position] << "\t" << filter.optimality[position] << '\n';
    }
    stream << "************\n";
@@ -135,14 +136,14 @@ NonmonotoneFilter::NonmonotoneFilter(const Options& options) :
 //! add (infeasibility_measure, optimality_measure) to the filter
 void NonmonotoneFilter::add(double infeasibility_measure, double optimality_measure) {
    // find entries in filter that are dominated by M other entries
-   for (size_t i = 0; i < this->number_entries; i++) {
+   for (size_t i: Range(this->number_entries)) {
       size_t number_dominated = 0;
       // check whether ith entry dominated by (infeasibility_measure,optimality_measure)
       if ((this->optimality[i] > optimality_measure) && (this->infeasibility[i] > infeasibility_measure)) {
          number_dominated = 1;
       }
       // find other filter entries that dominate ith entry
-      for (size_t j = 0; j < this->number_entries; j++) {
+      for (size_t j: Range(this->number_entries)) {
          if ((this->optimality[i] > this->optimality[j]) && (this->infeasibility[i] > this->infeasibility[j])) {
             number_dominated++;
          }
@@ -169,7 +170,7 @@ void NonmonotoneFilter::add(double infeasibility_measure, double optimality_meas
 
 size_t NonmonotoneFilter::compute_number_dominated_entries(double infeasibility_measure, double optimality_measure) {
    size_t number_dominated_entries = 0;
-   for (size_t i = 0; i < this->number_entries; i++) {
+   for (size_t i: Range(this->number_entries)) {
       if ((optimality_measure > this->optimality[i] - this->constants.gamma * infeasibility_measure) &&
           (infeasibility_measure >= this->constants.beta * this->infeasibility[i])) {
          number_dominated_entries++;
@@ -212,7 +213,7 @@ double NonmonotoneFilter::compute_actual_reduction(double current_optimality_mea
    // check NON-MONOTONE sufficient reduction condition
    // max penalty among most recent entries
    double max_objective = current_optimality_measure;
-   for (size_t i = 0; i < this->max_number_dominated_entries; i++) {
+   for (size_t i: Range(this->max_number_dominated_entries)) {
       const double gamma = (current_infeasibility_measure < this->infeasibility[this->number_entries - i]) ? 1 / this->constants.gamma : this->constants.gamma;
       const double dash_objective = this->optimality[this->number_entries - i] + gamma * (this->infeasibility[this->number_entries - i] -
                                                                                           current_infeasibility_measure);

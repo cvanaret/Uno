@@ -6,6 +6,7 @@
 #include "linear_algebra/Vector.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Infinity.hpp"
+#include "tools/Range.hpp"
 
 ASL* generate_asl(std::string file_name) {
    ASL* asl = ASL_alloc(ASL_read_pfgh);
@@ -65,7 +66,7 @@ AMPLModel::~AMPLModel() {
 }
 
 void AMPLModel::generate_variables() {
-   for (size_t i = 0; i < this->number_variables; i++) {
+   for (size_t i: Range(this->number_variables)) {
       double lb = (this->asl->i.LUv_ != nullptr) ? this->asl->i.LUv_[2 * i] : -INF<double>;
       double ub = (this->asl->i.LUv_ != nullptr) ? this->asl->i.LUv_[2 * i + 1] : INF<double>;
       if (lb == ub) {
@@ -75,7 +76,7 @@ void AMPLModel::generate_variables() {
    }
    Model::determine_bounds_types(this->variables_bounds, this->variable_status);
    // figure out the bounded variables
-   for (size_t i = 0; i < this->number_variables; i++) {
+   for (size_t i: Range(this->number_variables)) {
       const BoundType status = this->get_variable_bound_type(i);
       if (status == BOUNDED_LOWER || status == BOUNDED_BOTH_SIDES) {
          this->lower_bounded_variables.push_back(i);
@@ -160,7 +161,7 @@ void AMPLModel::evaluate_constraint_gradient(const std::vector<double>& x, size_
 }
 
 void AMPLModel::evaluate_constraint_jacobian(const std::vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const {
-   for (size_t j = 0; j < this->number_constraints; j++) {
+   for (size_t j: Range(this->number_constraints)) {
       constraint_jacobian[j].clear();
       this->evaluate_constraint_gradient(x, j, constraint_jacobian[j]);
    }
@@ -242,8 +243,8 @@ void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double
 
    // copy the nonzeros in the Hessian
    hessian.reset();
-   for (size_t j = 0; j < this->number_variables; j++) {
-      for (size_t k = static_cast<size_t>(ampl_column_start[j]); k < static_cast<size_t>(ampl_column_start[j + 1]); k++) {
+   for (size_t j: Range(this->number_variables)) {
+      for (size_t k: Range(static_cast<size_t>(ampl_column_start[j]), static_cast<size_t>(ampl_column_start[j + 1]))) {
          size_t i = static_cast<size_t>(ampl_row_index[k]);
          const double entry = this->ampl_tmp_hessian[k];
          hessian.insert(entry, i, j);
@@ -299,7 +300,7 @@ void AMPLModel::postprocess_solution(Iterate& /*iterate*/, TerminationStatus /*t
 }
 
 void AMPLModel::generate_constraints() {
-   for (size_t j = 0; j < this->number_constraints; j++) {
+   for (size_t j: Range(this->number_constraints)) {
       double lb = (this->asl->i.LUrhs_ != nullptr) ? this->asl->i.LUrhs_[2 * j] : -INF<double>;
       double ub = (this->asl->i.LUrhs_ != nullptr) ? this->asl->i.LUrhs_[2 * j + 1] : INF<double>;
       this->constraint_bounds[j] = {lb, ub};
@@ -333,7 +334,7 @@ void AMPLModel::set_function_types(std::string file_name) {
    int* rowq;
    int* colqp;
    double* delsqp;
-   for (size_t j = 0; j < this->number_constraints; j++) {
+   for (size_t j: Range(this->number_constraints)) {
       int qp = nqpcheck_ASL(asl_fg, static_cast<int>(-(j + 1)), &rowq, &colqp, &delsqp);
 
       if (0 < qp) {

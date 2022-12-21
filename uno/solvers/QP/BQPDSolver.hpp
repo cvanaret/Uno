@@ -54,7 +54,7 @@ private:
    size_t mxwk0{2000000}, mxiwk0{500000};
    std::array<int, 100> info{};
    std::vector<double> alp;
-   std::vector<int> lp, ls;
+   std::vector<int> lp, active_set;
    std::vector<double> w, gradient_solution, residuals, e;
    size_t size_hessian_sparsity;
    size_t size_hessian_workspace;

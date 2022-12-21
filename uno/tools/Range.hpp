@@ -46,7 +46,7 @@ inline bool Range::operator!=(const Range&) const {
 }
 
 inline void Range::operator++() {
-   ++this->current_index;
+   this->current_index++;
 }
 
 inline size_t Range::operator*() const {

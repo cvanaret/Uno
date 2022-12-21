@@ -10,6 +10,7 @@
 #include <functional>
 #include <cmath>
 #include "tools/Logger.hpp"
+#include "tools/Range.hpp"
 
 enum Norm {
    L1_NORM = 1, L2_NORM = 2, L2_SQUARED_NORM, INF_NORM
@@ -34,7 +35,7 @@ void add_vectors(const std::vector<T>& x, const std::vector<T>& y, T scaling_fac
    assert(x.size() <= y.size() && "Vector.add_vectors: x is longer than y");
    assert(x.size() <= result.size() && "Vector.add_vectors: result is not long enough");
 
-   for (size_t i = 0; i < x.size(); i++) {
+   for (size_t i: Range(x.size())) {
       result[i] = x[i] + scaling_factor * y[i];
    }
 }
@@ -59,7 +60,7 @@ T dot(const std::vector<T>& x, const std::vector<T>& y) {
    assert(x.size() == y.size() && "The vectors do not have the same size.");
 
    T dot_product = 0.;
-   for (size_t i = 0; i < x.size(); i++) {
+   for (size_t i: Range(x.size())) {
       dot_product += x[i]*y[i];
    }
    return dot_product;
@@ -132,33 +133,33 @@ T norm(const std::vector<T>& x, Norm norm) {
 // these methods take:
 // - a callback as argument whose parameter is the current index. This avoids forming the vector explicitly
 // - an iterable range of arbitrary type (can be Range, std::vector, etc)
-template <typename T, typename RANGE>
-T norm_1(const std::function<T(size_t i)>& ith_component, const RANGE& range, bool normalized = false) {
+template <typename T, typename ITERABLE>
+T norm_1(const std::function<T(size_t i)>& ith_component, const ITERABLE& iterable, bool normalized = false) {
    T norm = T(0);
-   for (size_t i: range) {
+   for (size_t i: iterable) {
       norm += std::abs(ith_component(i));
    }
-   // if required, normalize with the size of the range
-   if (normalized && 0 < range.size()) {
-      norm /= static_cast<double>(range.size());
+   // if required, normalize with the size of the iterable
+   if (normalized && 0 < iterable.size()) {
+      norm /= static_cast<double>(iterable.size());
    }
    return norm;
 }
 
-template <typename T, typename RANGE>
-T norm_inf(const std::vector<T>& x, const RANGE& range, bool /*normalized*/ = false) {
+template <typename T, typename ITERABLE>
+T norm_inf(const std::vector<T>& x, const ITERABLE& iterable, bool /*normalized*/ = false) {
    T norm = T(0);
-   for (size_t i: range) {
+   for (size_t i: iterable) {
       norm = std::max(norm, std::abs(x[i]));
    }
    // already normalized
    return norm;
 }
 
-template <typename T, typename RANGE>
-T norm_inf(const std::function<T(size_t i)>& ith_component, const RANGE& range, bool /*normalized*/ = false) {
+template <typename T, typename ITERABLE>
+T norm_inf(const std::function<T(size_t i)>& ith_component, const ITERABLE& iterable, bool /*normalized*/ = false) {
    T norm = T(0);
-   for (size_t i: range) {
+   for (size_t i: iterable) {
       norm = std::max(norm, std::abs(ith_component(i)));
    }
    // already normalized
@@ -206,7 +207,7 @@ T norm(const std::function<T(size_t /*i*/)>& ith_component, RANGE range, Norm no
 
 template <typename T>
 void print_vector(std::ostream& stream, const std::vector<T>& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max()) {
-   for (size_t i = start; i < std::min(start + length, x.size()); i++) {
+   for (size_t i: Range(start, std::min(start + length, x.size()))) {
       stream << x[i] << " ";
    }
    stream << '\n';
@@ -214,7 +215,7 @@ void print_vector(std::ostream& stream, const std::vector<T>& x, size_t start = 
 
 template <typename T>
 void print_vector(const Level& level, const std::vector<T>& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max()) {
-   for (size_t i = start; i < std::min(start + length, x.size()); i++) {
+   for (size_t i: Range(start, std::min(start + length, x.size()))) {
       level << x[i] << " ";
    }
    level << '\n';

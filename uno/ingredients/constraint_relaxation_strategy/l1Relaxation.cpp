@@ -57,7 +57,7 @@ void l1Relaxation::initialize(Statistics& statistics, Iterate& first_iterate) {
 
 void l1Relaxation::set_multipliers(const Iterate& current_iterate, std::vector<double>& current_constraint_multipliers) {
    // the values {1, -1} are derived from the KKT conditions of the l1 problem
-   for (size_t j = 0; j < this->optimality_problem.number_constraints; j++) {
+   for (size_t j: Range(this->original_model.number_constraints)) {
       if (current_iterate.model_evaluations.constraints[j] < this->optimality_problem.get_constraint_lower_bound(j)) { // lower bound infeasible
          current_constraint_multipliers[j] = 1.;
       }

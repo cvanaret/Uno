@@ -24,7 +24,7 @@ void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(Iterate& iterate
       });
 
    // constraints
-   for (size_t j = 0; j < iterate.number_constraints; j++) {
+   for (size_t j: Range(iterate.number_constraints)) {
       if (constraint_multipliers[j] != 0.) {
          iterate.reformulation_evaluations.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
             iterate.lagrangian_gradient[i] -= constraint_multipliers[j] * derivative;
@@ -33,7 +33,7 @@ void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(Iterate& iterate
    }
 
    // bound constraints
-   for (size_t i = 0; i < iterate.number_variables; i++) {
+   for (size_t i: Range(iterate.number_variables)) {
       iterate.lagrangian_gradient[i] -= lower_bound_multipliers[i] + upper_bound_multipliers[i];
    }
 }

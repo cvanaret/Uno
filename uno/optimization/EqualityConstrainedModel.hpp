@@ -6,6 +6,7 @@
 
 #include "Model.hpp"
 #include "tools/Infinity.hpp"
+#include "tools/Range.hpp"
 
 // all constraints are of the form "c(x) = 0"
 class EqualityConstrainedModel: public Model {
@@ -54,7 +55,7 @@ inline EqualityConstrainedModel::EqualityConstrainedModel(std::unique_ptr<Model>
       inequality_constraint_of_slack(this->original_model->inequality_constraints.size()),
       slack_of_inequality_constraint(this->original_model->number_constraints) {
    // all constraints are now equality constraints
-   for (size_t j = 0; j < this->number_constraints; j++) {
+   for (size_t j: Range(this->number_constraints)) {
       this->equality_constraints.insert(j, j);
    }
 
@@ -159,7 +160,7 @@ inline void EqualityConstrainedModel::evaluate_lagrangian_hessian(const std::vec
       SymmetricMatrix<double>& hessian) const {
    this->original_model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian);
    // extend the dimension of the Hessian by finalizing the remaining columns (note: the slacks do not enter the Hessian)
-   for (size_t j = this->original_model->number_variables; j < this->number_variables; j++) {
+   for (size_t j: Range(this->original_model->number_variables, this->number_variables)) {
       hessian.finalize_column(j);
    }
 }

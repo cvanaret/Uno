@@ -46,7 +46,7 @@ inline void InfeasibleInteriorPointSubproblem::initialize(Statistics& statistics
    statistics.add_column("barrier param.", Statistics::double_width, this->statistics_barrier_parameter_column_order);
 
    // make the initial point strictly feasible wrt the bounds
-   for (size_t i = 0; i < problem.number_variables; i++) {
+   for (size_t i: Range(problem.number_variables)) {
       const Interval bounds = {problem.get_variable_lower_bound(i), problem.get_variable_upper_bound(i)};
       first_iterate.primals[i] = InfeasibleInteriorPointSubproblem::push_variable_to_interior(first_iterate.primals[i], bounds);
    }
@@ -117,7 +117,7 @@ void InfeasibleInteriorPointSubproblem::evaluate_functions(const NonlinearProble
    this->hessian_model->evaluate(problem, current_iterate.primals, current_iterate.multipliers.constraints);
    problem.evaluate_objective_gradient(current_iterate, current_iterate.reformulation_evaluations.objective_gradient);
 
-   for (size_t i = 0; i < problem.number_variables; i++) {
+   for (size_t i: Range(problem.number_variables)) {
       // Hessian: diagonal barrier terms (grouped by variable)
       double hessian_diagonal_barrier_term = 0.;
       // objective gradient
@@ -195,7 +195,7 @@ void InfeasibleInteriorPointSubproblem::assemble_augmented_system(const Nonlinea
 Direction InfeasibleInteriorPointSubproblem::compute_second_order_correction(const NonlinearProblem& problem, Iterate& trial_iterate) {
    DEBUG << "\nEntered SOC computation\n";
    // shift the RHS with the values of the constraints at the trial iterate
-   for (size_t j = 0; j < problem.number_constraints; j++) {
+   for (size_t j: Range(problem.number_constraints)) {
       this->augmented_system.rhs[problem.number_variables + j] -= trial_iterate.model_evaluations.constraints[j];
    }
    DEBUG << "SOC RHS: "; print_vector(DEBUG, this->augmented_system.rhs, 0, problem.number_variables + problem.number_constraints);
@@ -266,7 +266,7 @@ std::function<double(double)> InfeasibleInteriorPointSubproblem::generate_predic
 double InfeasibleInteriorPointSubproblem::compute_barrier_term_directional_derivative(const NonlinearProblem& problem, const Iterate& current_iterate,
       const Direction& direction) const {
    double directional_derivative = 0.;
-   for (size_t i = 0; i < problem.number_variables; i++) {
+   for (size_t i: Range(problem.number_variables)) {
       double barrier_term = 0.;
       if (is_finite(problem.get_variable_lower_bound(i))) { // lower bounded
          barrier_term += -this->barrier_parameter() / (current_iterate.primals[i] - this->variable_bounds[i].lb);
@@ -348,7 +348,7 @@ void InfeasibleInteriorPointSubproblem::generate_augmented_rhs(const NonlinearPr
    });
 
    // constraint: evaluations and gradients
-   for (size_t j = 0; j < problem.number_constraints; j++) {
+   for (size_t j: Range(problem.number_constraints)) {
       // Lagrangian
       if (current_iterate.multipliers.constraints[j] != 0.) {
          current_iterate.reformulation_evaluations.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
@@ -365,7 +365,7 @@ void InfeasibleInteriorPointSubproblem::generate_primal_dual_direction(const Non
    this->direction.set_dimensions(problem.number_variables, problem.number_constraints);
 
    // retrieve +Δλ (Nocedal p590)
-   for (size_t j = problem.number_variables; j < this->augmented_system.solution.size(); j++) {
+   for (size_t j: Range(problem.number_variables, this->augmented_system.solution.size())) {
       this->augmented_system.solution[j] = -this->augmented_system.solution[j];
    }
    this->print_subproblem_solution(problem);
@@ -373,10 +373,10 @@ void InfeasibleInteriorPointSubproblem::generate_primal_dual_direction(const Non
    // "fraction-to-boundary" rule for primal variables and constraints multipliers
    const double tau = std::max(this->parameters.tau_min, 1. - this->barrier_parameter());
    const double primal_step_length = this->primal_fraction_to_boundary(problem, current_iterate, tau);
-   for (size_t i = 0; i < problem.number_variables; i++) {
+   for (size_t i: Range(problem.number_variables)) {
       this->direction.primals[i] = primal_step_length * this->augmented_system.solution[i];
    }
-   for (size_t j = 0; j < problem.number_constraints; j++) {
+   for (size_t j: Range(problem.number_constraints)) {
       this->direction.multipliers.constraints[j] = primal_step_length * this->augmented_system.solution[problem.number_variables + j];
    }
 
@@ -385,7 +385,7 @@ void InfeasibleInteriorPointSubproblem::generate_primal_dual_direction(const Non
 
    // "fraction-to-boundary" rule for bound multipliers
    const double dual_step_length = this->dual_fraction_to_boundary(problem, current_iterate, tau);
-   for (size_t i = 0; i < problem.number_variables; i++) {
+   for (size_t i: Range(problem.number_variables)) {
       this->direction.multipliers.lower_bounds[i] = dual_step_length * this->lower_delta_z[i];
       this->direction.multipliers.upper_bounds[i] = dual_step_length * this->upper_delta_z[i];
    }

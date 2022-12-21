@@ -43,8 +43,12 @@ bool FilterStrategy::is_acceptable(const ProgressMeasures& current_progress_meas
       const ProgressMeasures& predicted_reduction) {
    const double current_optimality_measure = current_progress_measures.scaled_optimality + current_progress_measures.unscaled_optimality;
    const double trial_optimality_measure = trial_progress_measures.scaled_optimality + trial_progress_measures.unscaled_optimality;
+   // unconstrained predicted reduction: ignore the predicted infeasibility reduction
+   const double unconstrained_predicted_reduction = predicted_reduction.scaled_optimality + predicted_reduction.unscaled_optimality;
    DEBUG << "Current: η = " << current_progress_measures.infeasibility << ", ω = " << current_optimality_measure << '\n';
    DEBUG << "Trial:   η = " << trial_progress_measures.infeasibility << ", ω = " << trial_optimality_measure << '\n';
+   DEBUG << "Unconstrained predicted reduction: " << predicted_reduction.scaled_optimality << " + " << predicted_reduction.unscaled_optimality <<
+      " = " <<  unconstrained_predicted_reduction << '\n';
 
    GlobalizationStrategy::check_finiteness(current_progress_measures);
    GlobalizationStrategy::check_finiteness(trial_progress_measures);
@@ -61,9 +65,6 @@ bool FilterStrategy::is_acceptable(const ProgressMeasures& current_progress_meas
             trial_progress_measures.infeasibility, trial_optimality_measure);
       if (improves_current_iterate) {
          DEBUG << "Acceptable wrt current point\n";
-         // include the predicted optimality reduction, but ignore the predicted infeasibility reduction
-         const double unconstrained_predicted_reduction = predicted_reduction.scaled_optimality + predicted_reduction.unscaled_optimality;
-         DEBUG << "Unconstrained predicted reduction: " << unconstrained_predicted_reduction << '\n';
          const double actual_reduction = this->filter->compute_actual_reduction(current_optimality_measure, current_progress_measures.infeasibility,
                trial_optimality_measure);
          DEBUG << "Actual reduction: " << actual_reduction << '\n';

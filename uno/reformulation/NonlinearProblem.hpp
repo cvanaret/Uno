@@ -13,6 +13,7 @@
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "ingredients/subproblem/Direction.hpp"
+#include "tools/Range.hpp"
 
 class NonlinearProblem {
 public:
@@ -74,7 +75,7 @@ inline double NonlinearProblem::compute_complementarity_error(const std::vector<
       const std::vector<double>& upper_bounds_multipliers) const {
    double error = 0.;
    // bound constraints
-   for (size_t i = 0; i < this->number_variables; i++) {
+   for (size_t i: Range(this->number_variables)) {
       if (0. < lower_bounds_multipliers[i]) {
          error += std::abs(lower_bounds_multipliers[i] * (primals[i] - this->get_variable_lower_bound(i)));
       }
@@ -83,7 +84,7 @@ inline double NonlinearProblem::compute_complementarity_error(const std::vector<
       }
    }
    // constraints
-   for (size_t j = 0; j < this->number_constraints; j++) {
+   for (size_t j: Range(this->number_constraints)) {
       if (0. < constraint_multipliers[j]) { // lower bound
          error += std::abs(constraint_multipliers[j] * (constraints[j] - this->get_constraint_lower_bound(j)));
       }

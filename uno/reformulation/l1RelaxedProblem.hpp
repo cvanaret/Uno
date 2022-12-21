@@ -152,7 +152,7 @@ inline void l1RelaxedProblem::evaluate_lagrangian_hessian(const std::vector<doub
    this->model.evaluate_lagrangian_hessian(x, this->objective_multiplier, multipliers, hessian);
 
    // extend the dimension of the Hessian by finalizing the remaining columns (note: the elastics do not enter the Hessian)
-   for (size_t j = this->model.number_variables; j < this->number_variables; j++) {
+   for (size_t j: Range(this->model.number_variables, this->number_variables)) {
       hessian.finalize_column(j);
    }
 }
@@ -212,7 +212,7 @@ inline void l1RelaxedProblem::set_objective_multiplier(double new_objective_mult
 inline size_t l1RelaxedProblem::count_elastic_variables(const Model& model) {
    size_t number_elastic_variables = 0;
    // if the subproblem uses slack variables, the bounds of the constraints are [0, 0]
-   for (size_t j = 0; j < model.number_constraints; j++) {
+   for (size_t j: Range(model.number_constraints)) {
       if (is_finite(model.get_constraint_lower_bound(j))) {
          number_elastic_variables++;
       }
@@ -227,7 +227,7 @@ inline void l1RelaxedProblem::generate_elastic_variables() {
    // generate elastic variables p and n on the fly to relax the constraints
    // if the subproblem uses slack variables, the bounds of the constraints are [0, 0]
    size_t elastic_index = this->model.number_variables;
-   for (size_t j = 0; j < this->model.number_constraints; j++) {
+   for (size_t j: Range(this->model.number_constraints)) {
       if (is_finite(this->model.get_constraint_upper_bound(j))) {
          // nonnegative variable p that captures the positive part of the constraint violation
          this->elastic_variables.positive.insert(j, elastic_index);

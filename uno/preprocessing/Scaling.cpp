@@ -16,13 +16,13 @@ void Scaling::compute(SparseVector<double>& objective_gradient, RectangularMatri
    this->objective_scaling = std::min(1., this->gradient_threshold / norm_inf(objective_gradient));
 
    // set the constraints scaling
-   for (size_t j = 0; j < this->constraint_scaling.size(); j++) {
+   for (size_t j: Range(this->constraint_scaling.size())) {
       this->constraint_scaling[j] = std::min(1., this->gradient_threshold / norm_inf(constraint_jacobian[j]));
    }
 
    // scale the gradients passed as parameters
    scale(objective_gradient, this->get_objective_scaling());
-   for (size_t j = 0; j < this->constraint_scaling.size(); j++) {
+   for (size_t j: Range(this->constraint_scaling.size())) {
       scale(constraint_jacobian[j], this->get_constraint_scaling(j));
    }
    DEBUG << "Objective scaling: " << this->objective_scaling << '\n';
