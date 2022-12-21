@@ -46,7 +46,6 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
    // compute the direction
    this->constraint_relaxation_strategy.set_variable_bounds(current_iterate, INF<double>);
    Direction direction = this->compute_direction(statistics, current_iterate);
-   PredictedReductionModel predicted_reduction_model = this->constraint_relaxation_strategy.generate_predicted_reduction_model(current_iterate, direction);
    this->solving_feasibility_problem = false;
 
    // backtrack along the direction
@@ -62,7 +61,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
          Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, this->step_length);
          try {
             const bool is_acceptable = this->constraint_relaxation_strategy.is_acceptable(statistics, current_iterate, trial_iterate,
-                  direction, predicted_reduction_model, this->step_length);
+                  direction, this->step_length);
             if (is_acceptable) {
                // let the subproblem know the accepted iterate
                this->constraint_relaxation_strategy.register_accepted_iterate(trial_iterate);
@@ -80,8 +79,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
                // assemble the (temporary) SOC trial iterate
                Iterate trial_iterate_soc = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction_soc, this->step_length);
                this->constraint_relaxation_strategy.compute_progress_measures(current_iterate, trial_iterate_soc, direction_soc);
-               if (this->constraint_relaxation_strategy.is_acceptable(statistics, current_iterate, trial_iterate_soc, direction_soc,
-                     predicted_reduction_model, this->step_length)) {
+               if (this->constraint_relaxation_strategy.is_acceptable(statistics, current_iterate, trial_iterate_soc, direction_soc, this->step_length)) {
                   DEBUG << "Trial SOC step accepted\n";
                   this->set_statistics(statistics, direction_soc);
                   statistics.add_statistic("SOC", "x");
@@ -113,7 +111,6 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
          DEBUG << "The line search failed, switching to feasibility problem\n";
          // reset the line search with the restoration solution
          direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, direction.primals);
-         predicted_reduction_model = this->constraint_relaxation_strategy.generate_predicted_reduction_model(current_iterate, direction);
          this->step_length = 1.;
          this->number_iterations = 0;
          this->solving_feasibility_problem = true;

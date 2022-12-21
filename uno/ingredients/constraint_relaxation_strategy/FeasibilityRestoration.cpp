@@ -135,7 +135,7 @@ void FeasibilityRestoration::switch_to_optimality(Iterate& current_iterate, Iter
 }
 
 bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-      PredictedReductionModel& predicted_reduction_model, double step_length) {
+      double step_length) {
    this->compute_progress_measures(current_iterate, trial_iterate, direction);
 
    bool accept = false;
@@ -145,6 +145,10 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& curr
    }
    else {
       // evaluate the predicted reduction
+      PredictedReductionModels predicted_reduction_model = this->generate_predicted_reduction_model(current_iterate, direction);
+      DEBUG << "Infeasibility model:       " << predicted_reduction_model.infeasibility.text << '\n';
+      DEBUG << "Scaled optimality model:   " << predicted_reduction_model.scaled_optimality.text << '\n';
+      DEBUG << "Unscaled optimality model: " << predicted_reduction_model.unscaled_optimality.text << '\n';
       ProgressMeasures predicted_reduction = {
             predicted_reduction_model.infeasibility(step_length),
             predicted_reduction_model.scaled_optimality(step_length),
@@ -162,7 +166,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& curr
    return accept;
 }
 
-PredictedReductionModel FeasibilityRestoration::generate_predicted_reduction_model(const Iterate& current_iterate, const Direction& direction) const {
+PredictedReductionModels FeasibilityRestoration::generate_predicted_reduction_model(const Iterate& current_iterate, const Direction& direction) const {
    return {
       this->generate_predicted_infeasibility_reduction_model(current_iterate, direction),
       this->generate_predicted_scaled_optimality_reduction_model(current_iterate, direction),
@@ -203,19 +207,19 @@ void FeasibilityRestoration::set_infeasibility_measure(Iterate& iterate) {
    }
 }
 
-std::function<double(double)> FeasibilityRestoration::generate_predicted_infeasibility_reduction_model(const Iterate& current_iterate,
+PredictedReductionModel FeasibilityRestoration::generate_predicted_infeasibility_reduction_model(const Iterate& current_iterate,
       const Direction& direction) const {
    if (this->current_phase == Phase::OPTIMALITY) {
-      return [&](double step_length) {
+      return {[&](double step_length) {
          const double linearized_constraint_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model,
                current_iterate, direction, step_length);
          return current_iterate.primal_constraint_violation - linearized_constraint_violation;
-      };
+      }, "‖c(x)‖₁ - ‖c(x) + α*∇c(x)^T d‖₁"};
    }
    else {
-      return [](double /*step_length*/) {
+      return {[](double /*step_length*/) {
          return 0.;
-      };
+      }, "0"};
    }
 }
 
@@ -232,22 +236,22 @@ void FeasibilityRestoration::set_scaled_optimality_measure(Iterate& iterate) {
    }
 }
 
-std::function<double(double)> FeasibilityRestoration::generate_predicted_scaled_optimality_reduction_model(const Iterate& current_iterate,
+PredictedReductionModel FeasibilityRestoration::generate_predicted_scaled_optimality_reduction_model(const Iterate& current_iterate,
       const Direction& direction) const {
    if (this->current_phase == Phase::OPTIMALITY) {
       // precompute expensive quantities
       const double scaled_directional_derivative = dot(direction.primals, current_iterate.model_evaluations.objective_gradient);
-      return [=](double step_length) {
+      return {[=](double step_length) {
          // return a function of the step length that cheaply assembles the predicted reduction
          return step_length * (-scaled_directional_derivative);
-      };
+      }, "α*(-∇f(x)^T d)"};
    }
    else {
-      return [&](double step_length) {
+      return {[&](double step_length) {
          const double linearized_constraint_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model,
                current_iterate, direction, step_length);
          return current_iterate.primal_constraint_violation - linearized_constraint_violation;
-      };
+      }, "‖c(x)‖₁ - ‖c(x) + α*∇c(x)^T d‖₁"};
    }
 }
 

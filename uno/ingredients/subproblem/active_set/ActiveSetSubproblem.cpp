@@ -69,11 +69,11 @@ void ActiveSetSubproblem::set_unscaled_optimality_measure(const NonlinearProblem
    iterate.nonlinear_progress.unscaled_optimality = 0.;
 }
 
-std::function<double(double)> ActiveSetSubproblem::generate_predicted_unscaled_optimality_reduction_model(const NonlinearProblem& /*problem*/,
+PredictedReductionModel ActiveSetSubproblem::generate_predicted_unscaled_optimality_reduction_model(const NonlinearProblem& /*problem*/,
       const Iterate& /*current_iterate*/, const Direction& /*direction*/) const {
-   return [=](double /*step_length*/) {
+   return {[=](double /*step_length*/) {
       return 0.;
-   };
+   }, "0"};
 }
 
 void ActiveSetSubproblem::postprocess_accepted_iterate(const NonlinearProblem& /*problem*/, Iterate& /*iterate*/) {

@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <memory>
+#include "ingredients/globalization_strategy/PredictedReductionModel.hpp"
 #include "optimization/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "reformulation/l1RelaxedProblem.hpp"
@@ -33,7 +34,7 @@ public:
 
    // globalization metrics
    virtual void set_unscaled_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) = 0;
-   [[nodiscard]] virtual std::function<double(double)> generate_predicted_unscaled_optimality_reduction_model(const NonlinearProblem& problem,
+   [[nodiscard]] virtual PredictedReductionModel generate_predicted_unscaled_optimality_reduction_model(const NonlinearProblem& problem,
          const Iterate& current_iterate, const Direction& direction) const = 0;
 
    virtual void postprocess_accepted_iterate(const NonlinearProblem& model, Iterate& iterate) = 0;

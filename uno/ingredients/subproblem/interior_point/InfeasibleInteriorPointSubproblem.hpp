@@ -36,7 +36,7 @@ public:
    [[nodiscard]] Direction compute_second_order_correction(const NonlinearProblem& problem, Iterate& trial_iterate) override;
 
    void set_unscaled_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) override;
-   [[nodiscard]] std::function<double(double)> generate_predicted_unscaled_optimality_reduction_model(const NonlinearProblem& problem,
+   [[nodiscard]] PredictedReductionModel generate_predicted_unscaled_optimality_reduction_model(const NonlinearProblem& problem,
          const Iterate& current_iterate, const Direction& direction) const override;
 
    void postprocess_accepted_iterate(const NonlinearProblem& problem, Iterate& iterate) override;

@@ -235,7 +235,7 @@ void l1Relaxation::compute_progress_measures(Iterate& current_iterate, Iterate& 
 }
 
 bool l1Relaxation::is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-      PredictedReductionModel& predicted_reduction_model, double step_length) {
+      double step_length) {
    this->compute_progress_measures(current_iterate, trial_iterate, direction);
 
    bool accept = false;
@@ -245,6 +245,10 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, Iterate& current_iterat
    }
    else {
       // evaluate the predicted reduction
+      PredictedReductionModels predicted_reduction_model = this->generate_predicted_reduction_model(current_iterate, direction);
+      DEBUG << "Infeasibility model:      " << predicted_reduction_model.infeasibility.text << '\n';
+      DEBUG << "Scaled optimality model:  " << predicted_reduction_model.scaled_optimality.text << '\n';
+      DEBUG << "Unscaled optimality model:" << predicted_reduction_model.unscaled_optimality.text << '\n';
       ProgressMeasures predicted_reduction = {
             predicted_reduction_model.infeasibility(step_length),
             predicted_reduction_model.scaled_optimality(step_length),
@@ -261,7 +265,7 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, Iterate& current_iterat
    return accept;
 }
 
-PredictedReductionModel l1Relaxation::generate_predicted_reduction_model(const Iterate& current_iterate, const Direction& direction) const {
+PredictedReductionModels l1Relaxation::generate_predicted_reduction_model(const Iterate& current_iterate, const Direction& direction) const {
    return {
       this->generate_predicted_infeasibility_reduction_model(current_iterate, direction),
       this->generate_predicted_scaled_optimality_reduction_model(current_iterate, direction),
@@ -281,18 +285,18 @@ void l1Relaxation::set_infeasibility_measure(Iterate& iterate) {
    }
 }
 
-std::function<double(double)> l1Relaxation::generate_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction) const {
+PredictedReductionModel l1Relaxation::generate_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction) const {
    if (0. < this->penalty_parameter) {
-      return [&](double step_length) {
+      return {[&](double step_length) {
          const double linearized_constraint_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model,
                current_iterate, direction, step_length);
          return current_iterate.primal_constraint_violation - linearized_constraint_violation;
-      };
+      }, "‖c(x)‖₁ - ‖c(x) + α*∇c(x)^T d‖₁"};
    }
    else {
-      return [](double /*step_length*/) {
+      return {[](double /*step_length*/) {
          return 0.;
-      };
+      }, "0"};
    }
 }
 
@@ -309,22 +313,22 @@ void l1Relaxation::set_scaled_optimality_measure(Iterate& iterate) {
    }
 }
 
-std::function<double(double)> l1Relaxation::generate_predicted_scaled_optimality_reduction_model(const Iterate& current_iterate,
+PredictedReductionModel l1Relaxation::generate_predicted_scaled_optimality_reduction_model(const Iterate& current_iterate,
       const Direction& direction) const {
    if (0. < this->penalty_parameter) {
       // precompute expensive quantities
       const double scaled_directional_derivative = this->penalty_parameter*dot(direction.primals, current_iterate.model_evaluations.objective_gradient);
-      return [=](double step_length) {
+      return {[=](double step_length) {
          // return a function of the step length that cheaply assembles the predicted reduction
          return step_length * (-scaled_directional_derivative);
-      };
+      }, "α*(-ρ*∇f(x)^T d)"};
    }
    else {
-      return [&](double step_length) {
+      return {[&](double step_length) {
          const double linearized_constraint_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model,
                current_iterate, direction, step_length);
          return current_iterate.primal_constraint_violation - linearized_constraint_violation;
-      };
+      }, "‖c(x)‖_1 - ‖c(x) + α*∇c(x)^T d‖_1"};
    }
 }
 

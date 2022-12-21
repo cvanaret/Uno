@@ -255,12 +255,12 @@ void InfeasibleInteriorPointSubproblem::set_unscaled_optimality_measure(const No
    iterate.nonlinear_progress.unscaled_optimality = barrier_terms;
 }
 
-std::function<double(double)> InfeasibleInteriorPointSubproblem::generate_predicted_unscaled_optimality_reduction_model(const NonlinearProblem& problem,
+PredictedReductionModel InfeasibleInteriorPointSubproblem::generate_predicted_unscaled_optimality_reduction_model(const NonlinearProblem& problem,
       const Iterate& current_iterate, const Direction& direction) const {
    const double directional_derivative = this->compute_barrier_term_directional_derivative(problem, current_iterate, direction);
-   return [=](double step_length) {
+   return {[=](double step_length) {
       return step_length * (-directional_derivative);
-   };
+   }, "α*(μ*X^{-1} e^T d)"};
 }
 
 double InfeasibleInteriorPointSubproblem::compute_barrier_term_directional_derivative(const NonlinearProblem& problem, const Iterate& current_iterate,
