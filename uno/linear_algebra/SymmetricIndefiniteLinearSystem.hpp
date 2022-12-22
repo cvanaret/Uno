@@ -34,9 +34,12 @@ public:
    void regularize_matrix(const Model& model, SymmetricIndefiniteLinearSolver<T>& linear_solver, size_t size_primal_block, size_t size_dual_block,
          T dual_regularization_parameter);
    void solve(SymmetricIndefiniteLinearSolver<T>& linear_solver);
+   [[nodiscard]] T get_primal_regularization() const;
 
 protected:
    size_t number_factorizations{0};
+   T primal_regularization{0.};
+   T dual_regularization{0.};
    T previous_primal_regularization{0.};
    const T regularization_failure_threshold;
    const T primal_regularization_initial_factor;
@@ -102,9 +105,9 @@ template <typename T>
 void SymmetricIndefiniteLinearSystem<T>::regularize_matrix(const Model& model, SymmetricIndefiniteLinearSolver<T>& linear_solver,
       size_t size_primal_block, size_t size_dual_block, T dual_regularization_parameter) {
    DEBUG << "Original matrix\n" << *this->matrix << '\n';
-   T primal_regularization = 0.;
-   T dual_regularization = 0.;
-   DEBUG << "Testing factorization with regularization factors (" << primal_regularization << ", " << dual_regularization << ")\n";
+   this->primal_regularization = T(0.);
+   this->dual_regularization = T(0.);
+   DEBUG << "Testing factorization with regularization factors (" << this->primal_regularization << ", " << this->dual_regularization << ")\n";
 
    if (!linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_dual_block) {
       DEBUG << "Inertia is good\n";
@@ -114,50 +117,50 @@ void SymmetricIndefiniteLinearSystem<T>::regularize_matrix(const Model& model, S
    // set the constraint regularization coefficient
    if (linear_solver.matrix_is_singular()) {
       DEBUG << "Matrix is singular\n";
-      dual_regularization = this->dual_regularization_fraction * dual_regularization_parameter;
+      this->dual_regularization = this->dual_regularization_fraction * dual_regularization_parameter;
    }
    else {
-      dual_regularization = 0.;
+      this->dual_regularization = 0.;
    }
    // set the Hessian regularization coefficient
    if (this->previous_primal_regularization == 0.) {
-      primal_regularization = this->primal_regularization_initial_factor;
+      this->primal_regularization = this->primal_regularization_initial_factor;
    }
    else {
-      primal_regularization = std::max(this->primal_regularization_lb, this->previous_primal_regularization / this->primal_regularization_decrease_factor);
+      this->primal_regularization = std::max(this->primal_regularization_lb, this->previous_primal_regularization / this->primal_regularization_decrease_factor);
    }
 
    // regularize the augmented matrix
    this->matrix->set_regularization([=](size_t i) {
-      return (i < size_primal_block) ? primal_regularization : -dual_regularization;
+      return (i < size_primal_block) ? this->primal_regularization : -this->dual_regularization;
    });
 
    bool good_inertia = false;
    while (!good_inertia) {
-      DEBUG << "Testing factorization with regularization factors (" << primal_regularization << ", " << dual_regularization << ")\n";
+      DEBUG << "Testing factorization with regularization factors (" << this->primal_regularization << ", " << this->dual_regularization << ")\n";
       DEBUG << *this->matrix << '\n';
       this->factorize_matrix(model, linear_solver);
 
       if (!linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_dual_block) {
          good_inertia = true;
          DEBUG << "Factorization was a success\n\n";
-         this->previous_primal_regularization = primal_regularization;
+         this->previous_primal_regularization = this->primal_regularization;
       }
       else {
          auto[number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = linear_solver.get_inertia();
          DEBUG << "Expected inertia (" << size_primal_block << ", " << size_dual_block << ", 0), ";
          DEBUG << "got (" << number_pos_eigenvalues << ", " << number_neg_eigenvalues << ", " << number_zero_eigenvalues << ")\n";
          if (this->previous_primal_regularization == 0.) {
-            primal_regularization *= this->primal_regularization_fast_increase_factor;
+            this->primal_regularization *= this->primal_regularization_fast_increase_factor;
          }
          else {
-            primal_regularization *= this->primal_regularization_slow_increase_factor;
+            this->primal_regularization *= this->primal_regularization_slow_increase_factor;
          }
 
-         if (primal_regularization <= this->regularization_failure_threshold) {
+         if (this->primal_regularization <= this->regularization_failure_threshold) {
             // regularize the augmented matrix
             this->matrix->set_regularization([=](size_t i) {
-               return (i < size_primal_block) ? primal_regularization : -dual_regularization;
+               return (i < size_primal_block) ? this->primal_regularization : -this->dual_regularization;
             });
          }
          else {
@@ -170,6 +173,11 @@ void SymmetricIndefiniteLinearSystem<T>::regularize_matrix(const Model& model, S
 template <typename T>
 void SymmetricIndefiniteLinearSystem<T>::solve(SymmetricIndefiniteLinearSolver<T>& linear_solver) {
    linear_solver.solve(*this->matrix, this->rhs, this->solution);
+}
+
+template <typename T>
+T SymmetricIndefiniteLinearSystem<T>::get_primal_regularization() const {
+   return this->primal_regularization;
 }
 
 #endif // UNO_SYMMETRICINDEFINITELINEARSYSTEM_H

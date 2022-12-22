@@ -78,7 +78,6 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
 
                // assemble the (temporary) SOC trial iterate
                Iterate trial_iterate_soc = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction_soc, this->step_length);
-               this->constraint_relaxation_strategy.compute_progress_measures(current_iterate, trial_iterate_soc, direction_soc);
                if (this->constraint_relaxation_strategy.is_acceptable(statistics, current_iterate, trial_iterate_soc, direction_soc, this->step_length)) {
                   DEBUG << "Trial SOC step accepted\n";
                   this->set_statistics(statistics, direction_soc);

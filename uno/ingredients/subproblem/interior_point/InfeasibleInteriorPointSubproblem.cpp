@@ -299,7 +299,8 @@ bool InfeasibleInteriorPointSubproblem::is_small_direction(const NonlinearProble
 double InfeasibleInteriorPointSubproblem::evaluate_subproblem_objective(const Iterate& current_iterate, const std::vector<double>& solution) const {
    const double linear_term = dot(solution, current_iterate.reformulation_evaluations.objective_gradient);
    const double quadratic_term = this->hessian_model->hessian->quadratic_product(direction.primals, direction.primals) / 2.;
-   return linear_term + quadratic_term;
+   const double regularized_term = this->augmented_system.get_primal_regularization()* norm_2_squared(direction.primals) / 2.;
+   return linear_term + quadratic_term + regularized_term;
 }
 
 double InfeasibleInteriorPointSubproblem::primal_fraction_to_boundary(const NonlinearProblem& problem, const Iterate& current_iterate, double tau) {
