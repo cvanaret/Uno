@@ -99,6 +99,14 @@ Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, Iterat
    return this->solve_subproblem(statistics, current_iterate, 0.);
 }
 
+Direction l1Relaxation::compute_second_order_correction(Iterate& trial_iterate) {
+   Direction soc_direction = this->subproblem->compute_second_order_correction(this->relaxed_problem, trial_iterate);
+   soc_direction.objective_multiplier = this->penalty_parameter;
+   soc_direction.norm = norm_inf(soc_direction.primals, Range(this->optimality_problem.number_variables));
+   DEBUG << soc_direction << '\n';
+   return soc_direction;
+}
+
 Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point) {
    this->subproblem->set_initial_point(initial_point);
    return this->solve_feasibility_problem(statistics, current_iterate);
@@ -352,13 +360,6 @@ double l1Relaxation::compute_error(Iterate& current_iterate, const Multipliers& 
 
 void l1Relaxation::set_variable_bounds(const Iterate& current_iterate, double trust_region_radius) {
    this->subproblem->set_variable_bounds(this->relaxed_problem, current_iterate, trust_region_radius);
-}
-
-Direction l1Relaxation::compute_second_order_correction(Iterate& trial_iterate) {
-   Direction soc_direction = this->subproblem->compute_second_order_correction(this->relaxed_problem, trial_iterate);
-   soc_direction.objective_multiplier = 1.;
-   soc_direction.norm = norm_inf(soc_direction.primals, Range(this->optimality_problem.number_variables));
-   return soc_direction;
 }
 
 void l1Relaxation::register_accepted_iterate(Iterate& iterate) {

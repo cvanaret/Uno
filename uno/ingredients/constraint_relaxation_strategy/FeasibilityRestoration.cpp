@@ -88,6 +88,14 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
    return direction;
 }
 
+Direction FeasibilityRestoration::compute_second_order_correction(Iterate& trial_iterate) {
+   Direction soc_direction = this->subproblem->compute_second_order_correction(this->get_current_reformulated_problem(), trial_iterate);
+   soc_direction.objective_multiplier = 1.;
+   soc_direction.norm = norm_inf(soc_direction.primals, Range(this->optimality_problem.number_variables));
+   DEBUG << soc_direction << '\n';
+   return soc_direction;
+}
+
 void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) {
    // refresh the unscaled optimality measures for the current iterate
    if (this->subproblem->subproblem_definition_changed) {
@@ -193,13 +201,6 @@ GlobalizationStrategy& FeasibilityRestoration::get_current_globalization_strateg
 
 void FeasibilityRestoration::set_variable_bounds(const Iterate& current_iterate, double trust_region_radius) {
    this->subproblem->set_variable_bounds(this->feasibility_problem, current_iterate, trust_region_radius);
-}
-
-Direction FeasibilityRestoration::compute_second_order_correction(Iterate& trial_iterate) {
-   Direction soc_direction = this->subproblem->compute_second_order_correction(this->get_current_reformulated_problem(), trial_iterate);
-   soc_direction.objective_multiplier = 1.;
-   soc_direction.norm = norm_inf(soc_direction.primals, Range(this->optimality_problem.number_variables));
-   return soc_direction;
 }
 
 void FeasibilityRestoration::set_infeasibility_measure(Iterate& iterate) {

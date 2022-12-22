@@ -37,9 +37,10 @@ Direction QPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem
 }
 
 Direction QPSubproblem::compute_second_order_correction(const NonlinearProblem& problem, Iterate& trial_iterate) {
+   // TODO warm start
    DEBUG << "\nEntered SOC computation\n";
    // shift the RHS with the values of the constraints at the trial iterate
-   ActiveSetSubproblem::shift_linearized_constraint_bounds(problem, trial_iterate.model_evaluations.constraints);
+   ActiveSetSubproblem::shift_linearized_constraint_bounds(problem, trial_iterate.reformulation_evaluations.constraints);
    return this->solve_QP(problem, trial_iterate);
 }
 

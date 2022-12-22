@@ -24,7 +24,7 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem
    this->set_variable_displacement_bounds(problem, current_iterate);
 
    // bounds of the linearized constraints
-   this->set_linearized_constraint_bounds(problem, current_iterate.model_evaluations.constraints);
+   this->set_linearized_constraint_bounds(problem, current_iterate.reformulation_evaluations.constraints);
 
    return this->solve_LP(problem, current_iterate);
 }
@@ -33,7 +33,7 @@ Direction LPSubproblem::compute_second_order_correction(const NonlinearProblem& 
    // TODO warm start
    DEBUG << "\nEntered SOC computation\n";
    // shift the RHS with the values of the constraints at the trial iterate
-   ActiveSetSubproblem::shift_linearized_constraint_bounds(problem, trial_iterate.model_evaluations.constraints);
+   ActiveSetSubproblem::shift_linearized_constraint_bounds(problem, trial_iterate.reformulation_evaluations.constraints);
    return this->solve_LP(problem, trial_iterate);
 }
 
