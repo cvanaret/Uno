@@ -231,7 +231,7 @@ void l1Relaxation::compute_progress_measures(Iterate& current_iterate, Iterate& 
    this->subproblem->set_unscaled_optimality_measure(this->relaxed_problem, trial_iterate);
 }
 
-bool l1Relaxation::is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
       double step_length) {
    this->compute_progress_measures(current_iterate, trial_iterate, direction);
 
@@ -252,7 +252,8 @@ bool l1Relaxation::is_acceptable(Statistics& statistics, Iterate& current_iterat
             predicted_reduction_model.unscaled_optimality(step_length)
       };
       // invoke the globalization strategy for acceptance
-      accept = this->globalization_strategy->is_acceptable(current_iterate.nonlinear_progress, trial_iterate.nonlinear_progress, predicted_reduction);
+      accept = this->globalization_strategy
+            ->is_iterate_acceptable(current_iterate.nonlinear_progress, trial_iterate.nonlinear_progress, predicted_reduction);
    }
    if (accept) {
       statistics.add_statistic("penalty param.", this->penalty_parameter);

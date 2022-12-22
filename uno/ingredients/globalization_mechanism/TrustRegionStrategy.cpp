@@ -46,7 +46,8 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
          this->reset_active_trust_region_multipliers(model, direction, trial_iterate);
 
          // check whether the trial step is accepted
-         const bool is_acceptable = this->constraint_relaxation_strategy.is_acceptable(statistics, current_iterate, trial_iterate, direction, 1.);
+         const bool is_acceptable = this->constraint_relaxation_strategy
+               .is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, 1.);
          if (is_acceptable) {
             // let the subproblem know the accepted iterate
             this->constraint_relaxation_strategy.register_accepted_iterate(trial_iterate);

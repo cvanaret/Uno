@@ -39,7 +39,7 @@ void FilterStrategy::register_current_progress(const ProgressMeasures& current_p
  * filter methods enforce an *unconstrained* sufficient decrease condition
  * precondition: feasible step
  * */
-bool FilterStrategy::is_acceptable(const ProgressMeasures& current_progress_measures, const ProgressMeasures& trial_progress_measures,
+bool FilterStrategy::is_iterate_acceptable(const ProgressMeasures& current_progress_measures, const ProgressMeasures& trial_progress_measures,
       const ProgressMeasures& predicted_reduction) {
    const double current_optimality_measure = current_progress_measures.scaled_optimality + current_progress_measures.unscaled_optimality;
    const double trial_optimality_measure = trial_progress_measures.scaled_optimality + trial_progress_measures.unscaled_optimality;

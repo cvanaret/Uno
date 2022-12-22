@@ -134,7 +134,7 @@ void FeasibilityRestoration::switch_to_optimality(Iterate& current_iterate, Iter
    this->set_infeasibility_measure(current_iterate);
 }
 
-bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
       double step_length) {
    this->compute_progress_measures(current_iterate, trial_iterate, direction);
 
@@ -156,7 +156,7 @@ bool FeasibilityRestoration::is_acceptable(Statistics& statistics, Iterate& curr
       };
       // invoke the globalization strategy for acceptance
       GlobalizationStrategy& current_phase_strategy = this->get_current_globalization_strategy();
-      accept = current_phase_strategy.is_acceptable(current_iterate.nonlinear_progress, trial_iterate.nonlinear_progress, predicted_reduction);
+      accept = current_phase_strategy.is_iterate_acceptable(current_iterate.nonlinear_progress, trial_iterate.nonlinear_progress, predicted_reduction);
    }
    if (accept) {
       statistics.add_statistic("phase", static_cast<int>(this->current_phase));

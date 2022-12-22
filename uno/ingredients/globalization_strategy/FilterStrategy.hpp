@@ -31,7 +31,7 @@ public:
    explicit FilterStrategy(const Options& options);
 
    void initialize(const Iterate& first_iterate) override;
-   bool is_acceptable(const ProgressMeasures& current_progress_measures, const ProgressMeasures& trial_progress_measures, const ProgressMeasures& predicted_reduction) override;
+   bool is_iterate_acceptable(const ProgressMeasures& current_progress_measures, const ProgressMeasures& trial_progress_measures, const ProgressMeasures& predicted_reduction) override;
    void reset() override;
    void register_current_progress(const ProgressMeasures& current_progress_measures) override;
 
