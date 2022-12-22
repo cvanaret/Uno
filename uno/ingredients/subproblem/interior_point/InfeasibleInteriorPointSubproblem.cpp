@@ -195,7 +195,7 @@ Direction InfeasibleInteriorPointSubproblem::compute_second_order_correction(con
    DEBUG << "\nEntered SOC computation\n";
    // shift the RHS with the values of the constraints at the trial iterate
    for (size_t j: Range(problem.number_constraints)) {
-      this->augmented_system.rhs[problem.number_variables + j] -= trial_iterate.model_evaluations.constraints[j];
+      this->augmented_system.rhs[problem.number_variables + j] -= trial_iterate.reformulation_evaluations.constraints[j];
    }
    DEBUG << "SOC RHS: "; print_vector(DEBUG, this->augmented_system.rhs, 0, problem.number_variables + problem.number_constraints);
 
@@ -243,12 +243,12 @@ void InfeasibleInteriorPointSubproblem::set_unscaled_optimality_measure(const No
    // unscaled optimality measure: barrier terms
    double barrier_terms = 0.;
    for (size_t i: problem.lower_bounded_variables) {
-      barrier_terms -= std::log(iterate.primals[i] - this->variable_bounds[i].lb);
+      barrier_terms += std::log(iterate.primals[i] - this->variable_bounds[i].lb);
    }
    for (size_t i: problem.upper_bounded_variables) {
-      barrier_terms -= std::log(this->variable_bounds[i].ub - iterate.primals[i]);
+      barrier_terms += std::log(this->variable_bounds[i].ub - iterate.primals[i]);
    }
-   barrier_terms *= this->barrier_parameter();
+   barrier_terms *= -this->barrier_parameter();
    iterate.nonlinear_progress.unscaled_optimality = barrier_terms;
 }
 
