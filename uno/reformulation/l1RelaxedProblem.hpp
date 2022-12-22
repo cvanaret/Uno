@@ -205,6 +205,7 @@ inline size_t l1RelaxedProblem::get_maximum_number_hessian_nonzeros() const {
 }
 
 inline void l1RelaxedProblem::set_objective_multiplier(double new_objective_multiplier) {
+   assert(0. <= new_objective_multiplier && "The objective multiplier should be non-negative");
    // update the objective multiplier
    this->objective_multiplier = new_objective_multiplier;
 }

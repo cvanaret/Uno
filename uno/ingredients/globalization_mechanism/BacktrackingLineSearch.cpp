@@ -64,23 +64,23 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
             const bool is_acceptable = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate,
                   direction, this->step_length);
             if (is_acceptable) {
+               this->set_statistics(statistics, direction);
                // let the subproblem know the accepted iterate
                this->constraint_relaxation_strategy.register_accepted_iterate(trial_iterate);
-               this->set_statistics(statistics, direction);
 
                double step_norm = this->step_length * direction.norm;
                return std::make_tuple(std::move(trial_iterate), step_norm);
             }
-            else if (false && this->use_second_order_correction && this->number_iterations == 1 && !this->solving_feasibility_problem &&
+            else if (this->use_second_order_correction && this->number_iterations == 1 && !this->solving_feasibility_problem &&
                   trial_iterate.nonlinear_progress.infeasibility >= current_iterate.nonlinear_progress.infeasibility) {
-               // TODO to fix
-               // reject the full step: compute a (temporary) SOC direction
+               // if full step is rejected, compute a (temporary) SOC direction
                Direction direction_soc = this->constraint_relaxation_strategy.compute_second_order_correction(trial_iterate);
 
                // assemble the (temporary) SOC trial iterate
                Iterate trial_iterate_soc = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction_soc, this->step_length);
-               if (this->constraint_relaxation_strategy
-                     .is_iterate_acceptable(statistics, current_iterate, trial_iterate_soc, direction_soc, this->step_length)) {
+               const bool is_SOC_acceptable = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate,
+                     trial_iterate_soc, direction_soc, this->step_length);
+               if (is_SOC_acceptable) {
                   DEBUG << "Trial SOC step accepted\n";
                   this->set_statistics(statistics, direction_soc);
                   statistics.add_statistic("SOC", "x");

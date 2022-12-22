@@ -196,7 +196,10 @@ void FeasibilityRestoration::set_variable_bounds(const Iterate& current_iterate,
 }
 
 Direction FeasibilityRestoration::compute_second_order_correction(Iterate& trial_iterate) {
-   return this->subproblem->compute_second_order_correction(this->get_current_reformulated_problem(), trial_iterate);
+   Direction soc_direction = this->subproblem->compute_second_order_correction(this->get_current_reformulated_problem(), trial_iterate);
+   soc_direction.objective_multiplier = 1.;
+   soc_direction.norm = norm_inf(soc_direction.primals, Range(this->optimality_problem.number_variables));
+   return soc_direction;
 }
 
 void FeasibilityRestoration::set_infeasibility_measure(Iterate& iterate) {

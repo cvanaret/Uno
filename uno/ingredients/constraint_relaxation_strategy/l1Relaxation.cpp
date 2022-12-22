@@ -78,9 +78,11 @@ Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Itera
 }
 
 Direction l1Relaxation::solve_subproblem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter) {
-   // update the objective model using the current penalty parameter
    DEBUG << "penalty parameter: " << current_penalty_parameter << "\n\n";
    this->relaxed_problem.set_objective_multiplier(current_penalty_parameter);
+
+   // set the initial values of the elastic variables
+   this->subproblem->set_elastic_variable_values(this->relaxed_problem, current_iterate);
 
    // solve the subproblem
    Direction direction = this->subproblem->solve(statistics, this->relaxed_problem, current_iterate);
@@ -353,7 +355,10 @@ void l1Relaxation::set_variable_bounds(const Iterate& current_iterate, double tr
 }
 
 Direction l1Relaxation::compute_second_order_correction(Iterate& trial_iterate) {
-   return this->subproblem->compute_second_order_correction(this->relaxed_problem, trial_iterate);
+   Direction soc_direction = this->subproblem->compute_second_order_correction(this->relaxed_problem, trial_iterate);
+   soc_direction.objective_multiplier = 1.;
+   soc_direction.norm = norm_inf(soc_direction.primals, Range(this->optimality_problem.number_variables));
+   return soc_direction;
 }
 
 void l1Relaxation::register_accepted_iterate(Iterate& iterate) {

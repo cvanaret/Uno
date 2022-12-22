@@ -59,7 +59,6 @@ inline void InfeasibleInteriorPointSubproblem::initialize(Statistics& statistics
          const Interval bounds = {problem.get_variable_lower_bound(slack_index), problem.get_variable_upper_bound(slack_index)};
          first_iterate.primals[slack_index] = InfeasibleInteriorPointSubproblem::push_variable_to_interior(first_iterate.model_evaluations.constraints[j], bounds);
       });
-      first_iterate.are_constraints_computed = false;
    }
 
    // set the bound multipliers
