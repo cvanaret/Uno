@@ -20,14 +20,16 @@ public:
    virtual void set_variable_bounds(const Iterate& current_iterate, double trust_region_radius) = 0;
 
    // direction computation
-   virtual Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate) = 0;
-   virtual Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) = 0;
-   virtual Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point) = 0;
-   virtual Direction compute_second_order_correction(Iterate& trial_iterate) = 0;
+   [[nodiscard]] virtual Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate) = 0;
+   [[nodiscard]] virtual Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) = 0;
+   [[nodiscard]] virtual Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
+         const std::vector<double>& initial_point) = 0;
+   [[nodiscard]] virtual Direction compute_second_order_correction(Iterate& trial_iterate) = 0;
 
    // trial iterate acceptance
    virtual void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) = 0;
-   virtual bool is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length) = 0;
+   [[nodiscard]] virtual bool is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+         double step_length) = 0;
    [[nodiscard]] virtual PredictedReductionModels generate_predicted_reduction_models(const Iterate& current_iterate, const Direction& direction) const = 0;
    virtual void register_accepted_iterate(Iterate& iterate) = 0;
 
@@ -39,7 +41,7 @@ protected:
    const Norm residual_norm;
    const double small_step_threshold;
 
-   static double compute_linearized_constraint_violation(const Model& model, const Iterate& current_iterate, const Direction& direction,
+   [[nodiscard]] static double compute_linearized_constraint_violation(const Model& model, const Iterate& current_iterate, const Direction& direction,
          double step_length);
    [[nodiscard]] bool is_small_step(const Direction& direction) const;
    static void evaluate_lagrangian_gradient(Iterate& iterate, const std::vector<double>& constraint_multipliers,

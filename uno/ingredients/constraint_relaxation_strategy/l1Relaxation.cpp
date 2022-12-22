@@ -69,9 +69,6 @@ void l1Relaxation::set_multipliers(const Iterate& current_iterate, std::vector<d
 }
 
 Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate) {
-   // set the elastic variables
-   //this->subproblem->set_elastic_variable_values(this->relaxed_problem, current_iterate);
-
    // set the multipliers of the violated constraints
    this->set_multipliers(current_iterate, current_iterate.multipliers.constraints);
    DEBUG << "Current iterate\n" << current_iterate << '\n';
@@ -361,7 +358,8 @@ Direction l1Relaxation::compute_second_order_correction(Iterate& trial_iterate) 
 void l1Relaxation::register_accepted_iterate(Iterate& iterate) {
    this->subproblem->postprocess_accepted_iterate(this->relaxed_problem, iterate);
    // check that l1 is an exact relaxation
-   if (this->penalty_parameter <= 1./norm_inf(iterate.multipliers.constraints)) {
+   const double norm_inf_multipliers = norm_inf(iterate.multipliers.constraints);
+   if (0. < norm_inf_multipliers && this->penalty_parameter <= 1./norm_inf_multipliers) {
       DEBUG << "The value of the penalty parameter is consistent with an exact relaxation\n";
    }
 }
