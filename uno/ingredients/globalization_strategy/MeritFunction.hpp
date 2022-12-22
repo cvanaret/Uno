@@ -12,9 +12,14 @@ public:
    explicit MeritFunction(const Options& options);
 
    void initialize(const Iterate& first_iterate) override;
-   bool is_iterate_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction) override;
+   [[nodiscard]] bool is_iterate_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
+         const ProgressMeasures& predicted_reduction) override;
+   [[nodiscard]] bool is_feasibility_iterate_acceptable(double trial_infeasibility_measure) const override;
    void reset() override;
    void register_current_progress(const ProgressMeasures& current_progress) override;
+
+protected:
+   double smallest_known_infeasibility{INF<double>};
 };
 
 #endif // UNO_MERITFUNCTION_H

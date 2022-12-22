@@ -98,6 +98,16 @@ bool FilterStrategy::is_iterate_acceptable(const ProgressMeasures& current_progr
    return accept;
 }
 
+bool FilterStrategy::is_feasibility_iterate_acceptable(double trial_infeasibility_measure) const {
+   if (this->filter->is_empty()) {
+      return true;
+   }
+   else { // filter not empty
+      // accept if the infeasibility measure improves upon the smallest filter infeasibility
+      return (trial_infeasibility_measure < this->filter->get_smallest_infeasibility());
+   }
+}
+
 bool FilterStrategy::switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const {
    return predicted_reduction > switching_fraction * std::pow(current_infeasibility, this->parameters.switching_infeasibility_exponent);
 }

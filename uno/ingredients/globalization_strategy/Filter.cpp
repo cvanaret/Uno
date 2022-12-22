@@ -24,6 +24,16 @@ void Filter::reset() {
    this->number_entries = 0;
 }
 
+bool Filter::is_empty() const {
+   return (this->number_entries == 0);
+}
+
+// precondition: filter not empty
+double Filter::get_smallest_infeasibility() const {
+   // left-most entry has the lowest infeasibility
+   return this->infeasibility[0];
+}
+
 void Filter::left_shift(size_t start, size_t shift_size) {
    for (size_t position: Range(start, this->number_entries - shift_size)) {
       this->infeasibility[position] = this->infeasibility[position + shift_size];

@@ -38,6 +38,12 @@ bool MeritFunction::is_iterate_acceptable(const ProgressMeasures& current_progre
    const bool accept = this->armijo_sufficient_decrease(constrained_predicted_reduction, actual_reduction);
    if (accept) {
       DEBUG << "Trial iterate was accepted by satisfying Armijo condition\n";
+      this->smallest_known_infeasibility = std::min(this->smallest_known_infeasibility, trial_progress.infeasibility);
    }
    return accept;
+}
+
+bool MeritFunction::is_feasibility_iterate_acceptable(double trial_infeasibility_measure) const {
+   // accept if the infeasibility measure improves upon the smallest known infeasibility
+   return (trial_infeasibility_measure < this->smallest_known_infeasibility);
 }

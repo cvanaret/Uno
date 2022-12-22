@@ -96,15 +96,19 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
       this->phase_2_strategy->reset();
       this->subproblem->subproblem_definition_changed = false;
    }
+
    // possibly go from optimality phase to restoration phase
    if (this->current_phase == Phase::OPTIMALITY && direction.objective_multiplier == 0.) {
       this->switch_to_feasibility_restoration(current_iterate);
    }
    // possibly go from restoration phase to optimality phase
-   else if (this->current_phase == Phase::FEASIBILITY_RESTORATION &&
-            ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate, direction, 1.) == 0.) {
-      // TODO && this->filter_optimality->accept(trial_iterate.progress.feasibility, trial_iterate.progress.objective))
-      this->switch_to_optimality(current_iterate, trial_iterate);
+   else if (this->current_phase == Phase::FEASIBILITY_RESTORATION) {
+      // evaluate measure of infeasibility ("scaled optimality" quantity in phase-1 definition)
+      this->set_scaled_optimality_measure(trial_iterate);
+      if (ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate, direction, 1.) == 0. &&
+            this->phase_2_strategy->is_feasibility_iterate_acceptable(trial_iterate.nonlinear_progress.scaled_optimality)) {
+         this->switch_to_optimality(current_iterate, trial_iterate);
+      }
    }
 
    // evaluate the progress measures of the trial iterate

@@ -22,6 +22,8 @@ public:
    virtual ~Filter() = default;
 
    void reset();
+   [[nodiscard]] bool is_empty() const;
+   [[nodiscard]] double get_smallest_infeasibility() const;
    virtual void add(double infeasibility_measure, double optimality_measure);
    virtual bool accept(double infeasibility_measure, double optimality_measure);
    virtual bool improves_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure,
