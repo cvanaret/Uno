@@ -74,7 +74,7 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
 
 // form and solve the feasibility problem
 Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) {
-   this->subproblem->prepare_for_feasibility_problem(this->feasibility_problem, current_iterate);
+   this->subproblem->prepare_for_feasibility_problem(current_iterate);
 
    // set the initial values of the elastic variables
    this->subproblem->set_elastic_variable_values(this->feasibility_problem, current_iterate);

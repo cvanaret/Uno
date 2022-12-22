@@ -93,7 +93,7 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, Iterate& curren
 
 Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) {
    assert(0. < this->penalty_parameter && "l1Relaxation: the penalty parameter is already 0");
-   this->subproblem->prepare_for_feasibility_problem(this->relaxed_problem, current_iterate);
+   this->subproblem->prepare_for_feasibility_problem(current_iterate);
    return this->solve_subproblem(statistics, current_iterate, 0.);
 }
 

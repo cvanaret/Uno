@@ -208,15 +208,13 @@ Direction InfeasibleInteriorPointSubproblem::compute_second_order_correction(con
    return this->direction;
 }
 
-void InfeasibleInteriorPointSubproblem::prepare_for_feasibility_problem(const NonlinearProblem& problem, Iterate& current_iterate) {
+void InfeasibleInteriorPointSubproblem::prepare_for_feasibility_problem(Iterate& current_iterate) {
    // if we're building the feasibility subproblem, temporarily update the objective multiplier
    this->solving_feasibility_problem = true;
    this->previous_barrier_parameter = this->barrier_parameter();
    const double new_barrier_parameter = std::max(this->barrier_parameter(), norm_inf(current_iterate.model_evaluations.constraints));
    this->barrier_parameter_update_strategy.set_barrier_parameter(new_barrier_parameter);
    DEBUG << "Barrier parameter mu temporarily updated to " << this->barrier_parameter() << '\n';
-   // since the barrier parameter changed, update the optimality measure (contains barrier terms)
-   this->set_unscaled_optimality_measure(problem, current_iterate);
    this->subproblem_definition_changed = true;
 }
 
