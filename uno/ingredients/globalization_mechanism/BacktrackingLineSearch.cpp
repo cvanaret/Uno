@@ -42,7 +42,8 @@ Direction BacktrackingLineSearch::compute_direction(Statistics& statistics, Iter
    }
 }
 
-std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(Statistics& statistics, Iterate& current_iterate) {
+std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(Statistics& statistics, const Model& /*model*/,
+      Iterate& current_iterate) {
    // compute the direction
    this->constraint_relaxation_strategy.set_variable_bounds(current_iterate, INF<double>);
    Direction direction = this->compute_direction(statistics, current_iterate);

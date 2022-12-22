@@ -28,7 +28,7 @@ void TrustRegionStrategy::initialize(Statistics& statistics, Iterate& first_iter
    this->constraint_relaxation_strategy.initialize(statistics, first_iterate);
 }
 
-std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Statistics& statistics, Iterate& current_iterate) {
+std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) {
    this->number_iterations = 0;
 
    while (!this->termination()) {
@@ -43,7 +43,7 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
          // assemble the trial iterate by taking a full step
          Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction);
          // reset bound multipliers of active trust region
-         this->reset_trust_region_multipliers(direction, trial_iterate);
+         this->reset_active_trust_region_multipliers(model, direction, trial_iterate);
 
          // check whether the trial step is accepted
          const bool is_acceptable = this->constraint_relaxation_strategy.is_acceptable(statistics, current_iterate, trial_iterate, direction, 1.);
@@ -84,16 +84,18 @@ void TrustRegionStrategy::decrease_radius() {
    this->radius /= this->decrease_factor;
 }
 
-void TrustRegionStrategy::reset_trust_region_multipliers(const Direction& direction, Iterate& trial_iterate) const {
+void TrustRegionStrategy::reset_active_trust_region_multipliers(const Model& model, const Direction& direction, Iterate& trial_iterate) const {
    assert(0 < this->radius && "The trust-region radius should be positive");
-   // set multipliers for bound constraints active at trust region to 0
+   // set multipliers for bound constraints active at trust region to 0 (except if one of the original bounds is active)
    for (size_t i: direction.active_set.bounds.at_lower_bound) {
-      if (std::abs(direction.primals[i] + this->radius) <= this->activity_tolerance) {
+      if (i <= model.number_variables && std::abs(direction.primals[i] + this->radius) <= this->activity_tolerance &&
+            this->activity_tolerance < std::abs(trial_iterate.primals[i] - model.get_variable_lower_bound(i))) {
          trial_iterate.multipliers.lower_bounds[i] = 0.;
       }
    }
    for (size_t i: direction.active_set.bounds.at_upper_bound) {
-      if (std::abs(direction.primals[i] - this->radius) <= this->activity_tolerance) {
+      if (i <= model.number_variables && std::abs(direction.primals[i] - this->radius) <= this->activity_tolerance &&
+            this->activity_tolerance < std::abs(model.get_variable_upper_bound(i) - trial_iterate.primals[i])) {
          trial_iterate.multipliers.upper_bounds[i] = 0.;
       }
    }

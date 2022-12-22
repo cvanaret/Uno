@@ -38,7 +38,7 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
          DEBUG << "### Outer iteration " << major_iterations << '\n';
 
          // compute an acceptable iterate by solving a subproblem at the current point
-         auto [new_iterate, step_norm] = this->globalization_mechanism.compute_acceptable_iterate(statistics, current_iterate);
+         auto [new_iterate, step_norm] = this->globalization_mechanism.compute_acceptable_iterate(statistics, model, current_iterate);
 
          // compute the status of the new iterate
          termination_status = this->check_termination(model, new_iterate, step_norm);

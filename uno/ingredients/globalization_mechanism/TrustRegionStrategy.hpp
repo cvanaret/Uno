@@ -16,7 +16,7 @@ public:
    TrustRegionStrategy(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);
 
    void initialize(Statistics& statistics, Iterate& first_iterate) override;
-   std::tuple<Iterate, double> compute_acceptable_iterate(Statistics& statistics, Iterate& current_iterate) override;
+   std::tuple<Iterate, double> compute_acceptable_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) override;
 
 private:
    double radius; /*!< Current trust region radius */
@@ -30,7 +30,7 @@ private:
    void increase_radius(double step_norm);
    void decrease_radius(double step_norm);
    void decrease_radius();
-   void reset_trust_region_multipliers(const Direction& direction, Iterate& trial_iterate) const;
+   void reset_active_trust_region_multipliers(const Model& model, const Direction& direction, Iterate& trial_iterate) const;
    void add_statistics(Statistics& statistics, const Direction& direction);
    [[nodiscard]] bool termination() const;
    void print_iteration();
