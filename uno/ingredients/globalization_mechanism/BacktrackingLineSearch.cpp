@@ -75,26 +75,32 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
                   trial_iterate.nonlinear_progress.infeasibility >= current_iterate.nonlinear_progress.infeasibility) {
                // if full step is rejected, compute a (temporary) SOC direction
                Direction direction_soc = this->constraint_relaxation_strategy.compute_second_order_correction(trial_iterate);
-
-               // assemble the (temporary) SOC trial iterate
-               Iterate trial_iterate_soc = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction_soc, this->step_length);
-               const bool is_SOC_acceptable = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate,
-                     trial_iterate_soc, direction_soc, this->step_length);
-               if (is_SOC_acceptable) {
-                  DEBUG << "Trial SOC step accepted\n";
-                  this->set_statistics(statistics, direction_soc);
-                  statistics.add_statistic("SOC", "x");
-
-                  // let the subproblem know the accepted iterate
-                  this->constraint_relaxation_strategy.register_accepted_iterate(trial_iterate_soc);
-                  trial_iterate_soc.multipliers.lower_bounds = trial_iterate.multipliers.lower_bounds;
-                  trial_iterate_soc.multipliers.upper_bounds = trial_iterate.multipliers.upper_bounds;
-                  return std::make_tuple(std::move(trial_iterate_soc), direction_soc.norm);
-               }
-               else {
-                  DEBUG << "Trial SOC step discarded\n\n";
+               if (direction_soc.status == SubproblemStatus::INFEASIBLE) {
+                  DEBUG << "Trial SOC subproblem infeasible\n\n";
                   statistics.add_statistic("SOC", "-");
                   this->decrease_step_length();
+               }
+               else {
+                  // assemble the (temporary) SOC trial iterate
+                  Iterate trial_iterate_soc = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction_soc, this->step_length);
+                  const bool is_SOC_acceptable = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate,
+                        trial_iterate_soc, direction_soc, this->step_length);
+                  if (is_SOC_acceptable) {
+                     DEBUG << "Trial SOC step accepted\n";
+                     this->set_statistics(statistics, direction_soc);
+                     statistics.add_statistic("SOC", "x");
+
+                     // let the subproblem know the accepted iterate
+                     this->constraint_relaxation_strategy.register_accepted_iterate(trial_iterate_soc);
+                     trial_iterate_soc.multipliers.lower_bounds = trial_iterate.multipliers.lower_bounds;
+                     trial_iterate_soc.multipliers.upper_bounds = trial_iterate.multipliers.upper_bounds;
+                     return std::make_tuple(std::move(trial_iterate_soc), direction_soc.norm);
+                  }
+                  else {
+                     DEBUG << "Trial SOC step discarded\n\n";
+                     statistics.add_statistic("SOC", "-");
+                     this->decrease_step_length();
+                  }
                }
             }
             else { // trial iterate not acceptable
