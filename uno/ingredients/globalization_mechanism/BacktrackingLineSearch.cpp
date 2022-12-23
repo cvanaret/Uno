@@ -27,7 +27,6 @@ void BacktrackingLineSearch::initialize(Statistics& statistics, Iterate& first_i
    statistics.add_column("LS step length", Statistics::double_width, this->statistics_LS_step_length_column_order);
 
    // generate the initial point
-   this->constraint_relaxation_strategy.set_variable_bounds(first_iterate, INF<double>);
    this->constraint_relaxation_strategy.initialize(statistics, first_iterate);
 }
 
@@ -45,13 +44,13 @@ Direction BacktrackingLineSearch::compute_direction(Statistics& statistics, Iter
 std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(Statistics& statistics, const Model& /*model*/,
       Iterate& current_iterate) {
    // compute the direction
-   this->constraint_relaxation_strategy.set_variable_bounds(current_iterate, INF<double>);
    Direction direction = this->compute_direction(statistics, current_iterate);
    this->solving_feasibility_problem = false;
 
    // backtrack along the direction
    this->step_length = 1.;
    this->number_iterations = 0;
+   this->total_number_iterations = 0;
    bool failure = false;
    while (!failure) {
       while (!this->termination()) {
@@ -64,6 +63,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
             const bool is_acceptable = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate,
                   direction, this->step_length);
             if (is_acceptable) {
+               this->total_number_iterations += this->number_iterations;
                this->set_statistics(statistics, direction);
                // let the subproblem know the accepted iterate
                this->constraint_relaxation_strategy.register_accepted_iterate(trial_iterate);
@@ -119,6 +119,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
          // reset the line search with the restoration solution
          direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, direction.primals);
          this->step_length = 1.;
+         this->total_number_iterations += this->number_iterations;
          this->number_iterations = 0;
          this->solving_feasibility_problem = true;
       }
@@ -141,7 +142,7 @@ bool BacktrackingLineSearch::termination() const {
 }
 
 void BacktrackingLineSearch::set_statistics(Statistics& statistics, const Direction& direction) {
-   statistics.add_statistic("minor", this->number_iterations);
+   statistics.add_statistic("minor", this->total_number_iterations);
    statistics.add_statistic("LS step length", this->step_length);
    statistics.add_statistic("step norm", this->step_length * direction.norm);
 }

@@ -155,6 +155,8 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
    bool accept = false;
    if (this->is_small_step(direction)) {
       DEBUG << "Small step acceptable\n";
+      // in case the objective was not computed, evaluate it
+      trial_iterate.evaluate_objective(this->original_model);
       accept = true;
    }
    else {
@@ -201,8 +203,8 @@ GlobalizationStrategy& FeasibilityRestoration::get_current_globalization_strateg
    return (this->current_phase == Phase::OPTIMALITY) ? *this->phase_2_strategy : *this->phase_1_strategy;
 }
 
-void FeasibilityRestoration::set_variable_bounds(const Iterate& current_iterate, double trust_region_radius) {
-   this->subproblem->set_variable_bounds(this->feasibility_problem, current_iterate, trust_region_radius);
+void FeasibilityRestoration::set_trust_region_radius(double trust_region_radius) {
+   this->subproblem->set_trust_region_radius(trust_region_radius);
 }
 
 void FeasibilityRestoration::set_infeasibility_measure(Iterate& iterate) {

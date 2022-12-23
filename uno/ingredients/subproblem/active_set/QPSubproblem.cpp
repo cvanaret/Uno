@@ -28,6 +28,7 @@ Direction QPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem
    this->evaluate_functions(problem, current_iterate);
 
    // bounds of the variable displacements
+   this->set_variable_bounds(problem, current_iterate);
    this->set_variable_displacement_bounds(problem, current_iterate);
 
    // bounds of the linearized constraints

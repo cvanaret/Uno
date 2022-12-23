@@ -246,6 +246,7 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
    bool accept = false;
    if (this->is_small_step(direction)) {
       DEBUG << "Small step acceptable\n";
+      trial_iterate.evaluate_objective(this->original_model);
       accept = true;
    }
    else {
@@ -356,8 +357,8 @@ double l1Relaxation::compute_error(Iterate& current_iterate, const Multipliers& 
    return error;
 }
 
-void l1Relaxation::set_variable_bounds(const Iterate& current_iterate, double trust_region_radius) {
-   this->subproblem->set_variable_bounds(this->relaxed_problem, current_iterate, trust_region_radius);
+void l1Relaxation::set_trust_region_radius(double trust_region_radius) {
+   this->subproblem->set_trust_region_radius(trust_region_radius);
 }
 
 void l1Relaxation::register_accepted_iterate(Iterate& iterate) {

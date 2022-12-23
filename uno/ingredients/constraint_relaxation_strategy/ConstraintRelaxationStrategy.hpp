@@ -17,7 +17,7 @@ public:
    virtual ~ConstraintRelaxationStrategy() = default;
 
    virtual void initialize(Statistics& statistics, Iterate& first_iterate) = 0;
-   virtual void set_variable_bounds(const Iterate& current_iterate, double trust_region_radius) = 0;
+   virtual void set_trust_region_radius(double trust_region_radius) = 0;
 
    // direction computation
    [[nodiscard]] virtual Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate) = 0;

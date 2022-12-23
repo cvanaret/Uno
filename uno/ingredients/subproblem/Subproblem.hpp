@@ -28,7 +28,7 @@ public:
    virtual Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) = 0;
    virtual Direction compute_second_order_correction(const NonlinearProblem& model, Iterate& trial_iterate) = 0;
 
-   void set_variable_bounds(const NonlinearProblem& problem, const Iterate& current_iterate, double trust_region_radius);
+   void set_trust_region_radius(double new_trust_region_radius);
    virtual void prepare_for_feasibility_problem(Iterate& current_iterate) = 0;
    virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
 
@@ -42,7 +42,7 @@ public:
    [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
    virtual void set_initial_point(const std::vector<double>& initial_point) = 0;
 
-   std::vector<Interval> variable_bounds;
+
    Direction direction;
 
    size_t number_subproblems_solved{0};
@@ -50,6 +50,10 @@ public:
    bool subproblem_definition_changed{false};
 
 protected:
+   std::vector<Interval> variable_bounds;
+   double trust_region_radius{INF<double>};
+
+   void set_variable_bounds(const NonlinearProblem& problem, const Iterate& current_iterate);
    static void check_unboundedness(const Direction& direction);
 };
 

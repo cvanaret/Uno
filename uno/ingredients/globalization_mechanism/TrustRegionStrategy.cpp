@@ -24,7 +24,7 @@ void TrustRegionStrategy::initialize(Statistics& statistics, Iterate& first_iter
    statistics.add_column("TR radius", Statistics::double_width, this->statistics_TR_radius_column_order);
 
    // generate the initial point
-   this->constraint_relaxation_strategy.set_variable_bounds(first_iterate, this->radius);
+   this->constraint_relaxation_strategy.set_trust_region_radius(this->radius);
    this->constraint_relaxation_strategy.initialize(statistics, first_iterate);
 }
 
@@ -37,7 +37,7 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
          this->print_iteration();
 
          // compute the direction within the trust region
-         this->constraint_relaxation_strategy.set_variable_bounds(current_iterate, this->radius);
+         this->constraint_relaxation_strategy.set_trust_region_radius(this->radius);
          Direction direction = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate);
 
          // assemble the trial iterate by taking a full step

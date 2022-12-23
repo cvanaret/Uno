@@ -23,7 +23,7 @@ public:
    l1Relaxation(const Model& model, const Options& options);
    void initialize(Statistics& statistics, Iterate& first_iterate) override;
 
-   void set_variable_bounds(const Iterate& current_iterate, double trust_region_radius) override;
+   void set_trust_region_radius(double trust_region_radius) override;
 
    // direction computation
    [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate) override;

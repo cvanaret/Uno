@@ -147,12 +147,15 @@ void InfeasibleInteriorPointSubproblem::evaluate_functions(const NonlinearProble
 Direction InfeasibleInteriorPointSubproblem::solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) {
    assert(problem.inequality_constraints.empty() && "The problem has inequality constraints. Create an instance of EqualityConstrainedModel");
 
+   // set the variable bounds
+   this->set_variable_bounds(problem, current_iterate);
+
    // update the barrier parameter if the current iterate solves the subproblem
    if (!this->solving_feasibility_problem) {
       this->update_barrier_parameter(problem, current_iterate);
    }
 
-   this->check_interior_primals(problem, current_iterate);
+   //this->check_interior_primals(problem, current_iterate);
 
    // evaluate the functions at the current iterate
    this->evaluate_functions(problem, current_iterate);
@@ -211,10 +214,10 @@ void InfeasibleInteriorPointSubproblem::prepare_for_feasibility_problem(Iterate&
    // if we're building the feasibility subproblem, temporarily update the objective multiplier
    this->solving_feasibility_problem = true;
    this->previous_barrier_parameter = this->barrier_parameter();
-   //const double new_barrier_parameter = std::max(this->barrier_parameter(), norm_inf(current_iterate.model_evaluations.constraints));
-   //this->barrier_parameter_update_strategy.set_barrier_parameter(new_barrier_parameter);
+   const double new_barrier_parameter = std::max(this->barrier_parameter(), norm_inf(current_iterate.model_evaluations.constraints));
+   this->barrier_parameter_update_strategy.set_barrier_parameter(new_barrier_parameter);
    DEBUG << "Barrier parameter mu temporarily updated to " << this->barrier_parameter() << '\n';
-   //this->subproblem_definition_changed = true;
+   this->subproblem_definition_changed = true;
 }
 
 // set the elastic variables of the current iterate
@@ -304,17 +307,18 @@ double InfeasibleInteriorPointSubproblem::primal_fraction_to_boundary(const Nonl
    for (size_t i: problem.lower_bounded_variables) {
       if (this->augmented_system.solution[i] < 0.) {
          double trial_alpha_xi = -tau * (current_iterate.primals[i] - this->variable_bounds[i].lb) / this->augmented_system.solution[i];
-         primal_length = std::min(primal_length, trial_alpha_xi);
+         if (0. < trial_alpha_xi) {
+            primal_length = std::min(primal_length, trial_alpha_xi);
+         }
       }
    }
    for (size_t i: problem.upper_bounded_variables) {
       if (0. < this->augmented_system.solution[i]) {
          double trial_alpha_xi = -tau * (current_iterate.primals[i] - this->variable_bounds[i].ub) / this->augmented_system.solution[i];
-         primal_length = std::min(primal_length, trial_alpha_xi);
+         if (0. < trial_alpha_xi) {
+            primal_length = std::min(primal_length, trial_alpha_xi);
+         }
       }
-   }
-   if (!(0. < primal_length && primal_length <= 1)) {
-      WARNING << RED << "Primal length = " << primal_length << RESET << "\n";
    }
    assert(0. < primal_length && primal_length <= 1. && "The primal fraction-to-boundary factor is not in (0, 1]");
    return primal_length;
@@ -325,13 +329,17 @@ double InfeasibleInteriorPointSubproblem::dual_fraction_to_boundary(const Nonlin
    for (size_t i: problem.lower_bounded_variables) {
       if (this->lower_delta_z[i] < 0.) {
          double trial_alpha_zj = -tau * current_iterate.multipliers.lower_bounds[i] / this->lower_delta_z[i];
-         dual_length = std::min(dual_length, trial_alpha_zj);
+         if (0. < trial_alpha_zj) {
+            dual_length = std::min(dual_length, trial_alpha_zj);
+         }
       }
    }
    for (size_t i: problem.upper_bounded_variables) {
       if (0. < this->upper_delta_z[i]) {
          double trial_alpha_zj = -tau * current_iterate.multipliers.upper_bounds[i] / this->upper_delta_z[i];
-         dual_length = std::min(dual_length, trial_alpha_zj);
+         if (0. < trial_alpha_zj) {
+            dual_length = std::min(dual_length, trial_alpha_zj);
+         }
       }
    }
    assert(0. < dual_length && dual_length <= 1. && "The dual fraction-to-boundary factor is not in (0, 1]");
