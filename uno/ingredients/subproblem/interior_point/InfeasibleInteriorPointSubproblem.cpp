@@ -313,6 +313,9 @@ double InfeasibleInteriorPointSubproblem::primal_fraction_to_boundary(const Nonl
          primal_length = std::min(primal_length, trial_alpha_xi);
       }
    }
+   if (!(0. < primal_length && primal_length <= 1)) {
+      WARNING << RED << "Primal length = " << primal_length << RESET << "\n";
+   }
    assert(0. < primal_length && primal_length <= 1. && "The primal fraction-to-boundary factor is not in (0, 1]");
    return primal_length;
 }
@@ -449,15 +452,23 @@ void InfeasibleInteriorPointSubproblem::postprocess_accepted_iterate(const Nonli
       const double coefficient = this->barrier_parameter() / (iterate.primals[i] - this->variable_bounds[i].lb);
       const double lb = coefficient / this->parameters.k_sigma;
       const double ub = coefficient * this->parameters.k_sigma;
-      assert(lb <= ub && "Barrier subproblem: the bounds are in the wrong order in the lower bound multiplier reset");
-      iterate.multipliers.lower_bounds[i] = std::max(std::min(iterate.multipliers.lower_bounds[i], ub), lb);
+      if (lb <= ub) {
+         iterate.multipliers.lower_bounds[i] = std::max(std::min(iterate.multipliers.lower_bounds[i], ub), lb);
+      }
+      else {
+         WARNING << YELLOW << "Barrier subproblem: the bounds are in the wrong order in the lower bound multiplier reset" << RESET << '\n';
+      }
    }
    for (size_t i: problem.upper_bounded_variables) {
       const double coefficient = this->barrier_parameter() / (iterate.primals[i] - this->variable_bounds[i].ub);
       const double lb = coefficient * this->parameters.k_sigma;
       const double ub = coefficient / this->parameters.k_sigma;
-      assert(lb <= ub && "Barrier subproblem: the bounds are in the wrong order in the upper bound multiplier reset");
-      iterate.multipliers.upper_bounds[i] = std::max(std::min(iterate.multipliers.upper_bounds[i], ub), lb);
+      if (lb <= ub) {
+         iterate.multipliers.upper_bounds[i] = std::max(std::min(iterate.multipliers.upper_bounds[i], ub), lb);
+      }
+      else {
+         WARNING << YELLOW << "Barrier subproblem: the bounds are in the wrong order in the upper bound multiplier reset" << RESET << '\n';
+      }
    }
 }
 

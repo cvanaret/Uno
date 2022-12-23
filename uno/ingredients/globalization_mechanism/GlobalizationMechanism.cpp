@@ -40,5 +40,5 @@ size_t GlobalizationMechanism::get_number_subproblems_solved() const {
 }
 
 void GlobalizationMechanism::print_warning(const char* message) {
-   WARNING << RED << message << RESET << '\n';
+   WARNING << YELLOW << message << RESET << '\n';
 }
