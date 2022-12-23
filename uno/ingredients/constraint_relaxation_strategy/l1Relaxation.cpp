@@ -80,7 +80,7 @@ Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Itera
 Direction l1Relaxation::solve_subproblem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter) {
    DEBUG << "penalty parameter: " << current_penalty_parameter << "\n\n";
    this->relaxed_problem.set_objective_multiplier(current_penalty_parameter);
-   
+
    // solve the subproblem
    Direction direction = this->subproblem->solve(statistics, this->relaxed_problem, current_iterate);
    direction.objective_multiplier = current_penalty_parameter;

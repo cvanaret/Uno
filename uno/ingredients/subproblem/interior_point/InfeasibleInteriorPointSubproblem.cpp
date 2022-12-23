@@ -211,10 +211,10 @@ void InfeasibleInteriorPointSubproblem::prepare_for_feasibility_problem(Iterate&
    // if we're building the feasibility subproblem, temporarily update the objective multiplier
    this->solving_feasibility_problem = true;
    this->previous_barrier_parameter = this->barrier_parameter();
-   const double new_barrier_parameter = std::max(this->barrier_parameter(), norm_inf(current_iterate.model_evaluations.constraints));
-   this->barrier_parameter_update_strategy.set_barrier_parameter(new_barrier_parameter);
+   //const double new_barrier_parameter = std::max(this->barrier_parameter(), norm_inf(current_iterate.model_evaluations.constraints));
+   //this->barrier_parameter_update_strategy.set_barrier_parameter(new_barrier_parameter);
    DEBUG << "Barrier parameter mu temporarily updated to " << this->barrier_parameter() << '\n';
-   this->subproblem_definition_changed = true;
+   //this->subproblem_definition_changed = true;
 }
 
 // set the elastic variables of the current iterate
