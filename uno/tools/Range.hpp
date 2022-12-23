@@ -4,7 +4,12 @@
 #ifndef UNO_RANGE_H
 #define UNO_RANGE_H
 
+enum RangeDirection {
+   FORWARD, BACKWARD
+};
+
 // https://en.wikipedia.org/wiki/Generator_(computer_programming)#C++
+template <RangeDirection direction = FORWARD>
 class Range {
 public:
    explicit Range(size_t end_index);
@@ -27,34 +32,58 @@ protected:
    size_t current_index{};
 };
 
-inline Range::Range(size_t end_index): end_index(end_index), current_index(0) {
+template <RangeDirection direction>
+inline Range<direction>::Range(size_t end_index): end_index(end_index), current_index(0) {
+   static_assert(direction == FORWARD);
 }
 
-inline Range::Range(size_t start_index, size_t end_index): end_index(end_index), current_index(start_index) {
+template <RangeDirection direction>
+inline Range<direction>::Range(size_t start_index, size_t end_index): end_index(end_index), current_index(start_index) {
 }
 
-inline const Range& Range::begin() const {
+template <RangeDirection direction>
+inline const Range<direction>& Range<direction>::begin() const {
    return *this;
 }
 
-inline const Range& Range::end() const {
+template <RangeDirection direction>
+inline const Range<direction>& Range<direction>::end() const {
    return *this;
 }
 
-inline bool Range::operator!=(const Range&) const {
-   return (this->current_index < this->end_index);
+template <RangeDirection direction>
+inline bool Range<direction>::operator!=(const Range<direction>&) const {
+   if constexpr (direction == FORWARD) {
+      return (this->current_index < this->end_index);
+   }
+   else {
+      return (this->current_index > this->end_index);
+   }
 }
 
-inline void Range::operator++() {
-   this->current_index++;
+template <RangeDirection direction>
+inline void Range<direction>::operator++() {
+   if constexpr (direction == FORWARD) {
+      this->current_index++;
+   }
+   else {
+      this->current_index--;
+   }
 }
 
-inline size_t Range::operator*() const {
+template <RangeDirection direction>
+inline size_t Range<direction>::operator*() const {
    return this->current_index;
 }
 
-inline size_t Range::size() const {
-   return this->end_index - this->current_index;
+template <RangeDirection direction>
+inline size_t Range<direction>::size() const {
+   if constexpr (direction == FORWARD) {
+      return this->end_index - this->current_index;
+   }
+   else {
+      return this->current_index - this->end_index;
+   }
 }
 
 #endif // UNO_RANGE_H

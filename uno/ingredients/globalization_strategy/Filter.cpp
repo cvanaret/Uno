@@ -42,7 +42,7 @@ void Filter::left_shift(size_t start, size_t shift_size) {
 }
 
 void Filter::right_shift(size_t start, size_t shift_size) {
-   for (size_t position = this->number_entries; position > start; position--) {
+   for (size_t position: Range<BACKWARD>(this->number_entries, start)) {
       this->infeasibility[position] = this->infeasibility[position - shift_size];
       this->optimality[position] = this->optimality[position - shift_size];
    }
