@@ -4,11 +4,13 @@
 #ifndef UNO_RANGE_H
 #define UNO_RANGE_H
 
+// direction of the range (FORWARD = increasing or BACKWARD = decreasing)
 enum RangeDirection {
    FORWARD, BACKWARD
 };
 
 // https://en.wikipedia.org/wiki/Generator_(computer_programming)#C++
+// Default direction is FORWARD (increasing)
 template <RangeDirection direction = FORWARD>
 class Range {
 public:

@@ -281,7 +281,6 @@ void InfeasibleInteriorPointSubproblem::update_barrier_parameter(const Nonlinear
    const double stationarity_error = current_iterate.stationarity_error / this->compute_KKT_error_scaling(problem, current_iterate);
    const double central_complementarity_error = this->compute_shifted_complementarity_error(problem, current_iterate, this->barrier_parameter());
    const double primal_dual_error = std::max({stationarity_error, current_iterate.primal_constraint_violation, central_complementarity_error});
-   DEBUG << "Max scaled primal-dual error for barrier subproblem is " << primal_dual_error << '\n';
    this->subproblem_definition_changed = this->barrier_parameter_update_strategy.update_barrier_parameter(primal_dual_error);
 }
 
@@ -411,11 +410,8 @@ void InfeasibleInteriorPointSubproblem::compute_bound_dual_direction(const Nonli
 }
 
 double InfeasibleInteriorPointSubproblem::compute_KKT_error_scaling(const NonlinearProblem& problem, const Iterate& current_iterate) const {
-   const double constraint_multipliers_norm = norm_1(current_iterate.multipliers.constraints);
-   const double bound_multipliers_norm = norm_1(current_iterate.multipliers.lower_bounds) + norm_1(current_iterate.multipliers.upper_bounds);
-   const double multipliers_norm = constraint_multipliers_norm + bound_multipliers_norm;
    const size_t total_size = problem.number_variables + problem.number_constraints;
-   return std::max(this->parameters.smax, multipliers_norm / static_cast<double>(total_size)) / this->parameters.smax;
+   return std::max(this->parameters.smax, current_iterate.multipliers.compute_norm_1() / static_cast<double>(total_size)) / this->parameters.smax;
 }
 
 double InfeasibleInteriorPointSubproblem::compute_shifted_complementarity_error(const NonlinearProblem& problem, const Iterate& iterate,
@@ -424,15 +420,15 @@ double InfeasibleInteriorPointSubproblem::compute_shifted_complementarity_error(
    // TODO use problem.lower_bounded_variables once the TR is integrated into the problem
    const auto ith_component = [&](size_t i) {
       double result = 0.;
-      if (is_finite(this->variable_bounds[i].lb)) {
+      if (0. < iterate.multipliers.lower_bounds[i]) { // lower bound
          result += iterate.multipliers.lower_bounds[i] * (iterate.primals[i] - this->variable_bounds[i].lb) - shift_value;
       }
-      if (is_finite(this->variable_bounds[i].ub)) {
+      if (iterate.multipliers.upper_bounds[i] < 0.) { // upper bound
          result += iterate.multipliers.upper_bounds[i] * (iterate.primals[i] - this->variable_bounds[i].ub) - shift_value;
       }
       return result;
    };
-   const double shifted_complementarity_error = norm_1<double>(ith_component, Range(problem.number_variables));
+   const double shifted_complementarity_error = norm_inf<double>(ith_component, Range(problem.number_variables));
 
    // scaling
    const double bound_multipliers_norm = norm_1(iterate.multipliers.lower_bounds) + norm_1(iterate.multipliers.upper_bounds);
