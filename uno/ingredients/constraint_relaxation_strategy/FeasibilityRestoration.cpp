@@ -89,6 +89,8 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
 }
 
 Direction FeasibilityRestoration::compute_second_order_correction(Iterate& trial_iterate) {
+   // evaluate the constraints for the second-order correction
+   this->get_current_reformulated_problem().evaluate_constraints(trial_iterate, trial_iterate.reformulation_evaluations.constraints);
    Direction soc_direction = this->subproblem->compute_second_order_correction(this->get_current_reformulated_problem(), trial_iterate);
    soc_direction.objective_multiplier = 1.;
    soc_direction.norm = norm_inf(soc_direction.primals, Range(this->optimality_problem.number_variables));

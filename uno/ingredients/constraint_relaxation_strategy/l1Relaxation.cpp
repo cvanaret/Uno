@@ -100,6 +100,8 @@ Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, Iterat
 }
 
 Direction l1Relaxation::compute_second_order_correction(Iterate& trial_iterate) {
+   // evaluate the constraints for the second-order correction
+   this->relaxed_problem.evaluate_constraints(trial_iterate, trial_iterate.reformulation_evaluations.constraints);
    Direction soc_direction = this->subproblem->compute_second_order_correction(this->relaxed_problem, trial_iterate);
    soc_direction.objective_multiplier = this->penalty_parameter;
    soc_direction.norm = norm_inf(soc_direction.primals, Range(this->optimality_problem.number_variables));
@@ -262,8 +264,8 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
             predicted_reduction_model.unscaled_optimality(step_length)
       };
       // invoke the globalization strategy for acceptance
-      accept = this->globalization_strategy
-            ->is_iterate_acceptable(current_iterate.nonlinear_progress, trial_iterate.nonlinear_progress, predicted_reduction);
+      accept = this->globalization_strategy->is_iterate_acceptable(current_iterate.nonlinear_progress, trial_iterate.nonlinear_progress,
+            predicted_reduction);
    }
    if (accept) {
       statistics.add_statistic("penalty param.", this->penalty_parameter);
