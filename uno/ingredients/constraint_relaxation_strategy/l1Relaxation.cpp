@@ -80,14 +80,11 @@ Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Itera
 Direction l1Relaxation::solve_subproblem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter) {
    DEBUG << "penalty parameter: " << current_penalty_parameter << "\n\n";
    this->relaxed_problem.set_objective_multiplier(current_penalty_parameter);
-
-   // set the initial values of the elastic variables
-   this->subproblem->set_elastic_variable_values(this->relaxed_problem, current_iterate);
-
+   
    // solve the subproblem
    Direction direction = this->subproblem->solve(statistics, this->relaxed_problem, current_iterate);
    direction.objective_multiplier = current_penalty_parameter;
-   direction.norm = norm_inf(direction.primals, Range(this->original_model.number_variables));
+   direction.norm = norm_inf(direction.primals, Range(this->optimality_problem.number_variables));
    DEBUG << direction << '\n';
    assert(direction.status == SubproblemStatus::OPTIMAL && "The subproblem was not solved to optimality");
    return direction;
@@ -123,8 +120,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
       // check infeasibility
       double linearized_residual = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate,
             direction, 1.);
-            //this->relaxed_problem.compute_linearized_constraint_violation(current_iterate.primals, direction.primals);
-      DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
+      DEBUG << "Linearized infeasibility mk(dk): " << linearized_residual << "\n\n";
 
       // if the current direction is already feasible, terminate
       if (0. < linearized_residual) {
@@ -135,7 +131,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
          Direction direction_lowest_violation = this->solve_subproblem(statistics, current_iterate, 0.);
          const double residual_lowest_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model,
                current_iterate, direction_lowest_violation, 1.);
-         DEBUG << "Lowest linearized residual mk(dk): " << residual_lowest_violation << '\n';
+         DEBUG << "Lowest linearized infeasibility mk(dk): " << residual_lowest_violation << '\n';
 
          // stage f: update the penalty parameter
          this->decrease_parameter_aggressively(current_iterate, direction_lowest_violation);
@@ -182,7 +178,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
                      direction = this->solve_subproblem(statistics, current_iterate, this->penalty_parameter);
                      linearized_residual = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate,
                            direction, 1.);
-                     DEBUG << "Linearized residual mk(dk): " << linearized_residual << "\n\n";
+                     DEBUG << "Linearized infeasibility mk(dk): " << linearized_residual << "\n\n";
                   }
                }
             }
@@ -369,7 +365,7 @@ void l1Relaxation::register_accepted_iterate(Iterate& iterate) {
    // check that l1 is an exact relaxation
    const double norm_inf_multipliers = norm_inf(iterate.multipliers.constraints);
    if (0. < norm_inf_multipliers && this->penalty_parameter <= 1./norm_inf_multipliers) {
-      DEBUG << "The value of the penalty parameter is consistent with an exact relaxation\n";
+      DEBUG << "The value of the penalty parameter is consistent with an exact relaxation\n\n";
    }
 }
 
