@@ -22,4 +22,10 @@ struct PredictedReductionModels {
    PredictedReductionModel unscaled_optimality;
 };
 
+struct PredictedReduction {
+   double infeasibility;
+   std::function<double(double objective_multiplier)> scaled_optimality;
+   double unscaled_optimality;
+};
+
 #endif // UNO_PREDICTEDREDUCTIONMODEL_H

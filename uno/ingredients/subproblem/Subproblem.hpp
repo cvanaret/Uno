@@ -29,13 +29,13 @@ public:
    virtual Direction compute_second_order_correction(const NonlinearProblem& model, Iterate& trial_iterate) = 0;
 
    void set_trust_region_radius(double new_trust_region_radius);
-   virtual void prepare_for_feasibility_problem(Iterate& current_iterate) = 0;
+   virtual void initialize_feasibility_problem(Iterate& current_iterate) = 0;
    virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
 
    // globalization metrics
    virtual void set_unscaled_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) = 0;
-   [[nodiscard]] virtual PredictedReductionModel generate_predicted_unscaled_optimality_reduction_model(const NonlinearProblem& problem,
-         const Iterate& current_iterate, const Direction& direction) const = 0;
+   [[nodiscard]] virtual double generate_predicted_unscaled_optimality_reduction_model(const NonlinearProblem& problem,
+         const Iterate& current_iterate, const Direction& direction, double step_length) const = 0;
 
    virtual void postprocess_accepted_iterate(const NonlinearProblem& model, Iterate& iterate) = 0;
 
@@ -47,7 +47,7 @@ public:
 
    size_t number_subproblems_solved{0};
    // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it
-   bool subproblem_definition_changed{false};
+   bool unscaled_optimality_measure_changed{false};
 
 protected:
    std::vector<Interval> variable_bounds;

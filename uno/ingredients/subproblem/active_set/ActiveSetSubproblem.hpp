@@ -13,12 +13,12 @@ public:
 
    void initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) override;
    void set_initial_point(const std::vector<double>& initial_point) override;
-   void prepare_for_feasibility_problem(Iterate& current_iterate) override;
+   void initialize_feasibility_problem(Iterate& current_iterate) override;
    void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
 
    void set_unscaled_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) override;
-   [[nodiscard]] PredictedReductionModel generate_predicted_unscaled_optimality_reduction_model(const NonlinearProblem& problem,
-         const Iterate& current_iterate, const Direction& direction) const override;
+   [[nodiscard]] double generate_predicted_unscaled_optimality_reduction_model(const NonlinearProblem& problem,
+         const Iterate& current_iterate, const Direction& direction, double step_length) const override;
 
    void postprocess_accepted_iterate(const NonlinearProblem& model, Iterate& iterate) override;
 

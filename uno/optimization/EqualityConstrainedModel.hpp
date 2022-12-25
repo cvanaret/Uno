@@ -132,7 +132,7 @@ inline void EqualityConstrainedModel::evaluate_constraints(const std::vector<dou
       const size_t slack_index = this->original_model->number_variables + i;
       constraints[j] -= x[slack_index];
    });
-   // make sure the equality constraints are "c(x) = 0"
+   // equality constraints: make sure they are "c(x) = 0"
    this->original_model->equality_constraints.for_each_index([&](size_t j) {
       constraints[j] -= this->original_model->get_constraint_lower_bound(j);
    });

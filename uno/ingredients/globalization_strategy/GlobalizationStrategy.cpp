@@ -11,8 +11,8 @@ bool GlobalizationStrategy::armijo_sufficient_decrease(double predicted_reductio
    return (actual_reduction >= this->armijo_decrease_fraction * std::max(0., predicted_reduction - this->armijo_tolerance));
 }
 
-void GlobalizationStrategy::check_finiteness(const ProgressMeasures& progress) {
+void GlobalizationStrategy::check_finiteness(const ProgressMeasures& progress, double objective_multiplier) {
    assert(is_finite(progress.infeasibility) && "The infeasibility measure is infinite.");
-   assert(is_finite(progress.scaled_optimality) && "The scaled optimality measure is infinite.");
+   assert(is_finite(progress.scaled_optimality(objective_multiplier)) && "The scaled optimality measure is infinite.");
    //assert(is_finite(progress.unscaled_optimality) && "The unscaled optimality measure is infinite.");
 }

@@ -17,7 +17,7 @@ void ActiveSetSubproblem::set_initial_point(const std::vector<double>& initial_p
    copy_from(this->initial_point, initial_point);
 }
 
-void ActiveSetSubproblem::prepare_for_feasibility_problem(Iterate& /*current_iterate*/) {
+void ActiveSetSubproblem::initialize_feasibility_problem(Iterate& /*current_iterate*/) {
    // do nothing
 }
 
@@ -69,11 +69,10 @@ void ActiveSetSubproblem::set_unscaled_optimality_measure(const NonlinearProblem
    iterate.nonlinear_progress.unscaled_optimality = 0.;
 }
 
-PredictedReductionModel ActiveSetSubproblem::generate_predicted_unscaled_optimality_reduction_model(const NonlinearProblem& /*problem*/,
-      const Iterate& /*current_iterate*/, const Direction& /*direction*/) const {
-   return {[=](double /*step_length*/) {
-      return 0.;
-   }, "0"};
+double ActiveSetSubproblem::generate_predicted_unscaled_optimality_reduction_model(const NonlinearProblem& /*problem*/,
+      const Iterate& /*current_iterate*/, const Direction& /*direction*/, double /*step_length*/) const {
+   return 0.;
+   //}, "0"};
 }
 
 void ActiveSetSubproblem::postprocess_accepted_iterate(const NonlinearProblem& /*problem*/, Iterate& /*iterate*/) {

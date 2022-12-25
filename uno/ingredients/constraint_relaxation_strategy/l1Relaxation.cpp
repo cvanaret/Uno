@@ -5,7 +5,6 @@
 #include "l1Relaxation.hpp"
 #include "ingredients/globalization_strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
-#include "tools/Range.hpp"
 
 /*
  * Infeasibility detection and SQP methods for nonlinear optimization
@@ -92,7 +91,7 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, Iterate& curren
 
 Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) {
    assert(0. < this->penalty_parameter && "l1Relaxation: the penalty parameter is already 0");
-   this->subproblem->prepare_for_feasibility_problem(current_iterate);
+   this->subproblem->initialize_feasibility_problem(current_iterate);
    return this->solve_subproblem(statistics, current_iterate, 0.);
 }
 
@@ -208,7 +207,7 @@ void l1Relaxation::decrease_parameter_aggressively(Iterate& current_iterate, con
    DEBUG << "Ideal error: " << error_lowest_violation << '\n';
 
    const double scaled_error = error_lowest_violation / std::max(1., current_iterate.primal_constraint_violation);
-   const double scaled_error_square = scaled_error*scaled_error;
+   const double scaled_error_square = scaled_error * scaled_error;
    this->penalty_parameter = std::min(this->penalty_parameter, scaled_error_square);
    if (this->penalty_parameter < this->parameters.small_threshold) {
       this->penalty_parameter = 0.;
@@ -224,11 +223,11 @@ bool l1Relaxation::objective_sufficient_decrease(const Iterate& current_iterate,
 
 void l1Relaxation::compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& /*direction*/) {
    // refresh the progress measures for the current iterate
-   if (this->subproblem->subproblem_definition_changed) {
-      DEBUG << "The subproblem definition changed, the optimality measure is recomputed\n";
+   if (this->subproblem->unscaled_optimality_measure_changed) {
+      DEBUG << "The subproblem definition changed, the unscaled optimality measure is recomputed\n";
       this->subproblem->set_unscaled_optimality_measure(this->relaxed_problem, current_iterate);
       this->globalization_strategy->reset();
-      this->subproblem->subproblem_definition_changed = false;
+      this->subproblem->unscaled_optimality_measure_changed = false;
    }
    this->set_infeasibility_measure(current_iterate);
    this->set_scaled_optimality_measure(current_iterate);
@@ -251,18 +250,14 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
    }
    else {
       // evaluate the predicted reduction
-      PredictedReductionModels predicted_reduction_model = this->generate_predicted_reduction_models(current_iterate, direction);
-      DEBUG << "Infeasibility model:      " << predicted_reduction_model.infeasibility.text << '\n';
-      DEBUG << "Scaled optimality model:  " << predicted_reduction_model.scaled_optimality.text << '\n';
-      DEBUG << "Unscaled optimality model:" << predicted_reduction_model.unscaled_optimality.text << '\n';
-      ProgressMeasures predicted_reduction = {
-            predicted_reduction_model.infeasibility(step_length),
-            predicted_reduction_model.scaled_optimality(step_length),
-            predicted_reduction_model.unscaled_optimality(step_length)
+      PredictedReduction predicted_reduction = {
+            this->generate_predicted_infeasibility_reduction_model(current_iterate, direction, step_length),
+            this->generate_predicted_scaled_optimality_reduction_model(current_iterate, direction, step_length),
+            this->subproblem->generate_predicted_unscaled_optimality_reduction_model(this->relaxed_problem, current_iterate, direction, step_length)
       };
       // invoke the globalization strategy for acceptance
       accept = this->globalization_strategy->is_iterate_acceptable(current_iterate.nonlinear_progress, trial_iterate.nonlinear_progress,
-            predicted_reduction);
+            predicted_reduction, this->penalty_parameter);
    }
    if (accept) {
       statistics.add_statistic("penalty param.", this->penalty_parameter);
@@ -270,14 +265,6 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
       this->compute_optimality_condition_residuals(this->relaxed_problem, trial_iterate);
    }
    return accept;
-}
-
-PredictedReductionModels l1Relaxation::generate_predicted_reduction_models(const Iterate& current_iterate, const Direction& direction) const {
-   return {
-      this->generate_predicted_infeasibility_reduction_model(current_iterate, direction),
-      this->generate_predicted_scaled_optimality_reduction_model(current_iterate, direction),
-      this->subproblem->generate_predicted_unscaled_optimality_reduction_model(this->relaxed_problem, current_iterate, direction)
-   };
 }
 
 void l1Relaxation::set_infeasibility_measure(Iterate& iterate) {
@@ -292,50 +279,59 @@ void l1Relaxation::set_infeasibility_measure(Iterate& iterate) {
    }
 }
 
-PredictedReductionModel l1Relaxation::generate_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction) const {
+double l1Relaxation::generate_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction, double step_length) const {
    if (0. < this->penalty_parameter) {
-      return {[&](double step_length) {
-         const double linearized_constraint_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model,
-               current_iterate, direction, step_length);
-         return current_iterate.primal_constraint_violation - linearized_constraint_violation;
-      }, "‖c(x)‖₁ - ‖c(x) + ∇c(x)^T (αd)‖₁"};
+      const double current_constraint_violation = this->original_model.compute_constraint_violation(current_iterate.model_evaluations.constraints,
+            Norm::L1_NORM);
+      const double linearized_constraint_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model,
+            current_iterate, direction, step_length);
+      return current_constraint_violation - linearized_constraint_violation;
+      // "‖c(x)‖₁ - ‖c(x) + ∇c(x)^T (αd)‖₁"};
    }
    else {
-      return {[](double /*step_length*/) {
-         return 0.;
-      }, "0"};
+      return 0.;
+      // "0"};
    }
 }
 
 void l1Relaxation::set_scaled_optimality_measure(Iterate& iterate) {
    if (0. < this->penalty_parameter) {
-      // objective scaled with the current penalty parameter
+      // scaled objective
       iterate.evaluate_objective(this->original_model);
-      iterate.nonlinear_progress.scaled_optimality = this->penalty_parameter*iterate.model_evaluations.objective;
+      const double objective = iterate.model_evaluations.objective;
+      iterate.nonlinear_progress.scaled_optimality = [=](double objective_multiplier) {
+         return objective_multiplier*objective;
+      };
    }
    else {
       // constraint violation
       iterate.evaluate_constraints(this->original_model);
-      iterate.nonlinear_progress.scaled_optimality = this->original_model.compute_constraint_violation(iterate.model_evaluations.constraints, L1_NORM);
+      const double constraint_violation = this->original_model.compute_constraint_violation(iterate.model_evaluations.constraints, L1_NORM);
+      iterate.nonlinear_progress.scaled_optimality = [=](double /*objective_multiplier*/) {
+         return constraint_violation;
+      };
    }
 }
 
-PredictedReductionModel l1Relaxation::generate_predicted_scaled_optimality_reduction_model(const Iterate& current_iterate,
-      const Direction& direction) const {
+std::function<double (double)> l1Relaxation::generate_predicted_scaled_optimality_reduction_model(const Iterate& current_iterate,
+      const Direction& direction, double step_length) const {
    if (0. < this->penalty_parameter) {
       // precompute expensive quantities
-      const double scaled_directional_derivative = this->penalty_parameter*dot(direction.primals, current_iterate.model_evaluations.objective_gradient);
-      return {[=](double step_length) {
-         // return a function of the step length that cheaply assembles the predicted reduction
-         return step_length * (-scaled_directional_derivative);
-      }, "-ρ*∇f(x)^T (αd)"};
+      const double directional_derivative = dot(direction.primals, current_iterate.model_evaluations.objective_gradient);
+      return [=](double objective_multiplier) {
+         return step_length * (-objective_multiplier*directional_derivative);
+      };
+      // "-ρ*∇f(x)^T (αd)"};
    }
    else {
-      return {[&](double step_length) {
-         const double linearized_constraint_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model,
-               current_iterate, direction, step_length);
-         return current_iterate.primal_constraint_violation - linearized_constraint_violation;
-      }, "‖c(x)‖_1 - ‖c(x) + ∇c(x)^T (αd)‖_1"};
+      const double current_constraint_violation = this->original_model.compute_constraint_violation(current_iterate.model_evaluations.constraints,
+            Norm::L1_NORM);
+      const double linearized_constraint_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model,
+            current_iterate, direction, step_length);
+      return [=](double /*objective_multiplier*/) {
+         return current_constraint_violation - linearized_constraint_violation;
+      };
+      // "‖c(x)‖_1 - ‖c(x) + ∇c(x)^T (αd)‖_1"};
    }
 }
 
@@ -363,7 +359,8 @@ void l1Relaxation::set_trust_region_radius(double trust_region_radius) {
 
 void l1Relaxation::register_accepted_iterate(Iterate& iterate) {
    this->subproblem->postprocess_accepted_iterate(this->relaxed_problem, iterate);
-   // check that l1 is an exact relaxation
+
+   // for information, check that l1 is an exact relaxation
    const double norm_inf_multipliers = norm_inf(iterate.multipliers.constraints);
    if (0. < norm_inf_multipliers && this->penalty_parameter <= 1./norm_inf_multipliers) {
       DEBUG << "The value of the penalty parameter is consistent with an exact relaxation\n\n";

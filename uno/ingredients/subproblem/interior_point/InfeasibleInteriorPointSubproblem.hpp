@@ -30,14 +30,14 @@ public:
    void set_initial_point(const std::vector<double>& initial_point) override;
    void initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) override;
 
-   void prepare_for_feasibility_problem(Iterate& current_iterate) override;
+   void initialize_feasibility_problem(Iterate& current_iterate) override;
    void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
    [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) override;
    [[nodiscard]] Direction compute_second_order_correction(const NonlinearProblem& problem, Iterate& trial_iterate) override;
 
    void set_unscaled_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) override;
-   [[nodiscard]] PredictedReductionModel generate_predicted_unscaled_optimality_reduction_model(const NonlinearProblem& problem,
-         const Iterate& current_iterate, const Direction& direction) const override;
+   [[nodiscard]] double generate_predicted_unscaled_optimality_reduction_model(const NonlinearProblem& problem,
+         const Iterate& current_iterate, const Direction& direction, double step_length) const override;
 
    void postprocess_accepted_iterate(const NonlinearProblem& problem, Iterate& iterate) override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
@@ -67,6 +67,7 @@ private:
    void check_interior_primals(const NonlinearProblem& problem, const Iterate& iterate);
    [[nodiscard]] double push_variable_to_interior(double variable_value, const Interval& variable_bounds) const;
    void evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate);
+   double compute_primal_dual_error(const NonlinearProblem& problem, const Iterate& current_iterate, double shift);
    void update_barrier_parameter(const NonlinearProblem& problem, const Iterate& current_iterate);
    [[nodiscard]] bool is_small_direction(const NonlinearProblem& problem, const Iterate& current_iterate, const Direction& direction) const;
    [[nodiscard]] double evaluate_subproblem_objective(const Iterate& current_iterate, const std::vector<double>& solution) const;

@@ -31,7 +31,7 @@ void FilterStrategy::reset() {
 }
 
 void FilterStrategy::register_current_progress(const ProgressMeasures& current_progress_measures) {
-   const double current_optimality_measure = current_progress_measures.scaled_optimality + current_progress_measures.unscaled_optimality;
+   const double current_optimality_measure = current_progress_measures.scaled_optimality(1.) + current_progress_measures.unscaled_optimality;
    this->filter->add(current_progress_measures.infeasibility, current_optimality_measure);
 }
 
@@ -40,18 +40,20 @@ void FilterStrategy::register_current_progress(const ProgressMeasures& current_p
  * precondition: feasible step
  * */
 bool FilterStrategy::is_iterate_acceptable(const ProgressMeasures& current_progress_measures, const ProgressMeasures& trial_progress_measures,
-      const ProgressMeasures& predicted_reduction) {
-   const double current_optimality_measure = current_progress_measures.scaled_optimality + current_progress_measures.unscaled_optimality;
-   const double trial_optimality_measure = trial_progress_measures.scaled_optimality + trial_progress_measures.unscaled_optimality;
-   // unconstrained predicted reduction: ignore the predicted infeasibility reduction
-   const double unconstrained_predicted_reduction = predicted_reduction.scaled_optimality + predicted_reduction.unscaled_optimality;
+      const PredictedReduction& predicted_reduction, double /*objective_multiplier*/) {
+   const double current_optimality_measure = current_progress_measures.scaled_optimality(1.) + current_progress_measures.unscaled_optimality;
+   const double trial_optimality_measure = trial_progress_measures.scaled_optimality(1.) + trial_progress_measures.unscaled_optimality;
+   // unconstrained predicted reduction:
+   // - ignore the predicted infeasibility reduction
+   // - scale the scaled optimality measure with 1
+   const double unconstrained_predicted_reduction = predicted_reduction.scaled_optimality(1.) + predicted_reduction.unscaled_optimality;
    DEBUG << "Current: η = " << current_progress_measures.infeasibility << ", ω = " << current_optimality_measure << '\n';
    DEBUG << "Trial:   η = " << trial_progress_measures.infeasibility << ", ω = " << trial_optimality_measure << '\n';
-   DEBUG << "Unconstrained predicted reduction: " << predicted_reduction.scaled_optimality << " + " << predicted_reduction.unscaled_optimality <<
+   DEBUG << "Unconstrained predicted reduction: " << predicted_reduction.scaled_optimality(1.) << " + " << predicted_reduction.unscaled_optimality <<
       " = " <<  unconstrained_predicted_reduction << '\n';
 
-   GlobalizationStrategy::check_finiteness(current_progress_measures);
-   GlobalizationStrategy::check_finiteness(trial_progress_measures);
+   GlobalizationStrategy::check_finiteness(current_progress_measures, 1.);
+   GlobalizationStrategy::check_finiteness(trial_progress_measures, 1.);
 
    bool accept = false;
    // check acceptance

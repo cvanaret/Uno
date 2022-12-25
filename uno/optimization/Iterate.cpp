@@ -94,7 +94,7 @@ std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
    stream << "Complementarity error: " << iterate.complementarity_error << '\n';
 
    stream << "Infeasibility measure: " << iterate.nonlinear_progress.infeasibility << '\n';
-   stream << "Scaled optimality measure: " << iterate.nonlinear_progress.scaled_optimality << '\n';
+   stream << "Scaled optimality measure: " << iterate.nonlinear_progress.scaled_optimality(1.) << '\n';
    stream << "Unscaled optimality measure: " << iterate.nonlinear_progress.unscaled_optimality << '\n';
 
    stream << "Lagrangian gradient: "; print_vector(stream, iterate.lagrangian_gradient);
