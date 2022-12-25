@@ -36,6 +36,7 @@ InfeasibleInteriorPointSubproblem::InfeasibleInteriorPointSubproblem(size_t max_
             options.get_double("barrier_push_variable_to_interior_k1"),
             options.get_double("barrier_push_variable_to_interior_k2")
       }),
+      tolerance(options.get_double("tolerance")),
       lower_delta_z(max_number_variables), upper_delta_z(max_number_variables),
       statistics_barrier_parameter_column_order(options.get_int("statistics_barrier_parameter_column_order")),
       least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")) {
@@ -44,21 +45,24 @@ InfeasibleInteriorPointSubproblem::InfeasibleInteriorPointSubproblem(size_t max_
 inline void InfeasibleInteriorPointSubproblem::initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) {
    statistics.add_column("barrier param.", Statistics::double_width, this->statistics_barrier_parameter_column_order);
 
+   // evaluate the constraints at the original point
+   first_iterate.evaluate_constraints(problem.model);
+
    // make the initial point strictly feasible wrt the bounds
    for (size_t i: Range(problem.number_variables)) {
-      const Interval bounds = {problem.get_variable_lower_bound(i), problem.get_variable_upper_bound(i)};
+      const Interval bounds = {problem.get_variable_lower_bound(i, this->tolerance), problem.get_variable_upper_bound(i, this->tolerance)};
       first_iterate.primals[i] = InfeasibleInteriorPointSubproblem::push_variable_to_interior(first_iterate.primals[i], bounds);
    }
 
    // set the slack variables (if any)
    if (!problem.model.slacks.empty()) {
-      first_iterate.evaluate_constraints(problem.model);
       // set the slacks to the constraint values
       problem.model.slacks.for_each([&](size_t j, size_t slack_index) {
-         const Interval bounds = {problem.get_variable_lower_bound(slack_index), problem.get_variable_upper_bound(slack_index)};
+         const Interval bounds = {problem.get_variable_lower_bound(slack_index, this->tolerance), problem.get_variable_upper_bound(slack_index, this->tolerance)};
          first_iterate.primals[slack_index] = InfeasibleInteriorPointSubproblem::push_variable_to_interior(first_iterate.model_evaluations.constraints[j], bounds);
       });
    }
+   first_iterate.are_constraints_computed = false;
 
    // set the bound multipliers
    for (size_t i: problem.lower_bounded_variables) {
@@ -124,12 +128,12 @@ void InfeasibleInteriorPointSubproblem::evaluate_functions(const NonlinearProble
       double objective_barrier_term = 0.;
       // TODO urgent: use the correct bounds (if TR, all the original variables are bounded)
       if (is_finite(problem.get_variable_lower_bound(i))) { // lower bounded
-         const double inverse_distance = 1. / (current_iterate.primals[i] - problem.get_variable_lower_bound(i));
+         const double inverse_distance = 1. / (current_iterate.primals[i] - problem.get_variable_lower_bound(i, this->tolerance));
          hessian_diagonal_barrier_term += current_iterate.multipliers.lower_bounds[i] * inverse_distance;
          objective_barrier_term += -this->barrier_parameter() * inverse_distance;
       }
       if (is_finite(problem.get_variable_upper_bound(i))) { // upper bounded
-         const double inverse_distance = 1. / (current_iterate.primals[i] - problem.get_variable_upper_bound(i));
+         const double inverse_distance = 1. / (current_iterate.primals[i] - problem.get_variable_upper_bound(i, this->tolerance));
          hessian_diagonal_barrier_term += current_iterate.multipliers.upper_bounds[i] * inverse_distance;
          objective_barrier_term += -this->barrier_parameter() * inverse_distance;
       }
@@ -247,10 +251,10 @@ void InfeasibleInteriorPointSubproblem::set_unscaled_optimality_measure(const No
    // unscaled optimality measure: barrier terms
    double barrier_terms = 0.;
    for (size_t i: problem.lower_bounded_variables) {
-      barrier_terms += std::log(iterate.primals[i] - problem.get_variable_lower_bound(i));
+      barrier_terms += std::log(iterate.primals[i] - problem.get_variable_lower_bound(i, this->tolerance));
    }
    for (size_t i: problem.upper_bounded_variables) {
-      barrier_terms += std::log(problem.get_variable_upper_bound(i) - iterate.primals[i]);
+      barrier_terms += std::log(problem.get_variable_upper_bound(i, this->tolerance) - iterate.primals[i]);
    }
    barrier_terms *= -this->barrier_parameter();
    iterate.nonlinear_progress.unscaled_optimality = barrier_terms;
@@ -269,10 +273,10 @@ double InfeasibleInteriorPointSubproblem::compute_barrier_term_directional_deriv
    for (size_t i: Range(problem.number_variables)) {
       double barrier_term = 0.;
       if (is_finite(problem.get_variable_lower_bound(i))) { // lower bounded
-         barrier_term += -this->barrier_parameter() / (current_iterate.primals[i] - problem.get_variable_lower_bound(i));
+         barrier_term += -this->barrier_parameter() / (current_iterate.primals[i] - problem.get_variable_lower_bound(i, this->tolerance));
       }
       if (is_finite(problem.get_variable_upper_bound(i))) { // upper bounded
-         barrier_term += -this->barrier_parameter() / (current_iterate.primals[i] - problem.get_variable_upper_bound(i));
+         barrier_term += -this->barrier_parameter() / (current_iterate.primals[i] - problem.get_variable_upper_bound(i, this->tolerance));
       }
       directional_derivative += barrier_term*direction.primals[i];
    }
@@ -311,7 +315,7 @@ double InfeasibleInteriorPointSubproblem::primal_fraction_to_boundary(const Nonl
    double primal_length = 1.;
    for (size_t i: problem.lower_bounded_variables) {
       if (this->augmented_system.solution[i] < 0.) {
-         double trial_alpha_xi = -tau * (current_iterate.primals[i] - problem.get_variable_lower_bound(i)) / this->augmented_system.solution[i];
+         double trial_alpha_xi = -tau * (current_iterate.primals[i] - problem.get_variable_lower_bound(i, this->tolerance)) / this->augmented_system.solution[i];
          if (0. < trial_alpha_xi) {
             primal_length = std::min(primal_length, trial_alpha_xi);
          }
@@ -319,7 +323,7 @@ double InfeasibleInteriorPointSubproblem::primal_fraction_to_boundary(const Nonl
    }
    for (size_t i: problem.upper_bounded_variables) {
       if (0. < this->augmented_system.solution[i]) {
-         double trial_alpha_xi = -tau * (current_iterate.primals[i] - problem.get_variable_upper_bound(i)) / this->augmented_system.solution[i];
+         double trial_alpha_xi = -tau * (current_iterate.primals[i] - problem.get_variable_upper_bound(i, this->tolerance)) / this->augmented_system.solution[i];
          if (0. < trial_alpha_xi) {
             primal_length = std::min(primal_length, trial_alpha_xi);
          }
@@ -412,13 +416,13 @@ void InfeasibleInteriorPointSubproblem::compute_bound_dual_direction(const Nonli
    initialize_vector(this->lower_delta_z, 0.);
    initialize_vector(this->upper_delta_z, 0.);
    for (size_t i: problem.lower_bounded_variables) {
-      const double distance_to_bound = current_iterate.primals[i] - problem.get_variable_lower_bound(i);
+      const double distance_to_bound = current_iterate.primals[i] - problem.get_variable_lower_bound(i, this->tolerance);
       this->lower_delta_z[i] = (this->barrier_parameter() - this->augmented_system.solution[i] * current_iterate.multipliers.lower_bounds[i]) /
                                distance_to_bound - current_iterate.multipliers.lower_bounds[i];
       assert(is_finite(this->lower_delta_z[i]) && "The displacement lower_delta_z is infinite");
    }
    for (size_t i: problem.upper_bounded_variables) {
-      const double distance_to_bound = current_iterate.primals[i] - problem.get_variable_upper_bound(i);
+      const double distance_to_bound = current_iterate.primals[i] - problem.get_variable_upper_bound(i, this->tolerance);
       this->upper_delta_z[i] = (this->barrier_parameter() - this->augmented_system.solution[i] * current_iterate.multipliers.upper_bounds[i]) /
                                distance_to_bound - current_iterate.multipliers.upper_bounds[i];
       assert(is_finite(this->upper_delta_z[i]) && "The displacement upper_delta_z is infinite");
@@ -436,10 +440,10 @@ double InfeasibleInteriorPointSubproblem::compute_shifted_complementarity_error(
    const auto ith_component = [&](size_t i) {
       double result = 0.;
       if (0. < iterate.multipliers.lower_bounds[i]) { // lower bound
-         result += iterate.multipliers.lower_bounds[i] * (iterate.primals[i] - problem.get_variable_lower_bound(i)) - shift_value;
+         result += iterate.multipliers.lower_bounds[i] * (iterate.primals[i] - problem.get_variable_lower_bound(i, this->tolerance)) - shift_value;
       }
       if (iterate.multipliers.upper_bounds[i] < 0.) { // upper bound
-         result += iterate.multipliers.upper_bounds[i] * (iterate.primals[i] - problem.get_variable_upper_bound(i)) - shift_value;
+         result += iterate.multipliers.upper_bounds[i] * (iterate.primals[i] - problem.get_variable_upper_bound(i, this->tolerance)) - shift_value;
       }
       return result;
    };
@@ -461,7 +465,7 @@ void InfeasibleInteriorPointSubproblem::postprocess_accepted_iterate(const Nonli
 
    // rescale the bound multipliers (Eq. 16 in Ipopt paper)
    for (size_t i: problem.lower_bounded_variables) {
-      const double coefficient = this->barrier_parameter() / (iterate.primals[i] - problem.get_variable_lower_bound(i));
+      const double coefficient = this->barrier_parameter() / (iterate.primals[i] - problem.get_variable_lower_bound(i, this->tolerance));
       const double lb = coefficient / this->parameters.k_sigma;
       const double ub = coefficient * this->parameters.k_sigma;
       if (lb <= ub) {
@@ -472,7 +476,7 @@ void InfeasibleInteriorPointSubproblem::postprocess_accepted_iterate(const Nonli
       }
    }
    for (size_t i: problem.upper_bounded_variables) {
-      const double coefficient = this->barrier_parameter() / (iterate.primals[i] - problem.get_variable_upper_bound(i));
+      const double coefficient = this->barrier_parameter() / (iterate.primals[i] - problem.get_variable_upper_bound(i, this->tolerance));
       const double lb = coefficient * this->parameters.k_sigma;
       const double ub = coefficient / this->parameters.k_sigma;
       if (lb <= ub) {

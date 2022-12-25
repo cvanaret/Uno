@@ -51,6 +51,7 @@ private:
    double previous_barrier_parameter;
    const double default_multiplier;
    const InteriorPointParameters parameters;
+   const double tolerance;
 
    // preallocated vectors for bound multiplier displacements
    std::vector<double> lower_delta_z{};

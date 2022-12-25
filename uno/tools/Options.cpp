@@ -95,6 +95,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["residual_norm"] = "INF";
       options["scale_functions"] = "yes";
       options["sparse_format"] = "COO";
+      options["tolerance"] = "1e-8";
    }
    else if (preset_name == "filtersqp") {
       options["mechanism"] = "TR";
