@@ -48,6 +48,7 @@ protected:
    const T primal_regularization_decrease_factor;
    const T primal_regularization_fast_increase_factor;
    const T primal_regularization_slow_increase_factor;
+   const size_t threshold_unsuccessful_attempts;
 };
 
 template <typename T>
@@ -62,7 +63,8 @@ SymmetricIndefiniteLinearSystem<T>::SymmetricIndefiniteLinearSystem(const std::s
       primal_regularization_lb(T(options.get_double("primal_regularization_lb"))),
       primal_regularization_decrease_factor(T(options.get_double("primal_regularization_decrease_factor"))),
       primal_regularization_fast_increase_factor(T(options.get_double("primal_regularization_fast_increase_factor"))),
-      primal_regularization_slow_increase_factor(T(options.get_double("primal_regularization_slow_increase_factor"))) {
+      primal_regularization_slow_increase_factor(T(options.get_double("primal_regularization_slow_increase_factor"))),
+      threshold_unsuccessful_attempts(options.get_unsigned_int("threshold_unsuccessful_attempts")) {
 }
 
 template <typename T>
@@ -107,6 +109,7 @@ void SymmetricIndefiniteLinearSystem<T>::regularize_matrix(const Model& model, S
    DEBUG << "Original matrix\n" << *this->matrix << '\n';
    this->primal_regularization = T(0.);
    this->dual_regularization = T(0.);
+   size_t number_attempts = 1;
    DEBUG << "Testing factorization with regularization factors (" << this->primal_regularization << ", " << this->dual_regularization << ")\n";
 
    if (!linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_dual_block) {
@@ -118,9 +121,6 @@ void SymmetricIndefiniteLinearSystem<T>::regularize_matrix(const Model& model, S
    if (linear_solver.matrix_is_singular()) {
       DEBUG << "Matrix is singular\n";
       this->dual_regularization = this->dual_regularization_fraction * dual_regularization_parameter;
-   }
-   else {
-      this->dual_regularization = 0.;
    }
    // set the Hessian regularization coefficient
    if (this->previous_primal_regularization == 0.) {
@@ -140,6 +140,7 @@ void SymmetricIndefiniteLinearSystem<T>::regularize_matrix(const Model& model, S
       DEBUG << "Testing factorization with regularization factors (" << this->primal_regularization << ", " << this->dual_regularization << ")\n";
       DEBUG << *this->matrix << '\n';
       this->factorize_matrix(model, linear_solver);
+      number_attempts++;
 
       if (!linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_dual_block) {
          good_inertia = true;
@@ -150,7 +151,8 @@ void SymmetricIndefiniteLinearSystem<T>::regularize_matrix(const Model& model, S
          auto[number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = linear_solver.get_inertia();
          DEBUG << "Expected inertia (" << size_primal_block << ", " << size_dual_block << ", 0), ";
          DEBUG << "got (" << number_pos_eigenvalues << ", " << number_neg_eigenvalues << ", " << number_zero_eigenvalues << ")\n";
-         if (this->previous_primal_regularization == 0.) {
+         DEBUG << "Number of attempts: " << number_attempts << "\n";
+         if (this->previous_primal_regularization == 0. || this->threshold_unsuccessful_attempts < number_attempts) {
             this->primal_regularization *= this->primal_regularization_fast_increase_factor;
          }
          else {
