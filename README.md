@@ -2,9 +2,7 @@
 
 ## What is Uno?
 
-### Goal
-
-Uno (Unifying Nonlinear Optimization) is a C++ library aiming at unifying methods for solving nonlinearly constrained optimization problems of the form:
+Uno (Unifying Nonlinear Optimization) is a C++ library that unifies methods for solving nonlinearly constrained optimization problems of the form:
 
 ```
    min     f(x)
@@ -14,29 +12,33 @@ Uno (Unifying Nonlinear Optimization) is a C++ library aiming at unifying method
            x_L ≤  x   ≤ x_U
 ```
 
-Uno implements an abstract framework based on four common ingredients:
+Uno breaks downs optimization methods into four generic ingredients:
 * a **constraint relaxation strategy**: a systematic way to relax the nonlinear constraints;
 * a **subproblem**: a local model of the (possibly relaxed) problem at the current primal-dual iterate;
 * a **globalization strategy**: an acceptance test of the trial iterate;
 * a **globalization mechanism**: a recourse action upon rejection of the trial iterate.
 
-The following hypergraph illustrates how state-of-the-art solvers can be decomposed in terms of the four ingredients.
+The following hypergraph illustrates how some of the state-of-the-art solvers can be decomposed in terms of the four ingredients:
 <p align="center">
    <img src="docs/figures/combination_hypergraph.png" alt="Combination hypergraph" width="75%" />
 </p>
 
-Uno 1.0 implements the following strategies.
+### Uno 1.0
+
+Uno 1.0 implements the following strategies:
 <p align="center">
    <img src="docs/figures/hypergraph_uno.png" alt="Uno 1.0 hypergraph" width="65%" />
 </p>
-Any strategy combination can be generated without any programming effort from the user. Note that all combinations do not necessarily result in sensible algorithms, or even convergent approaches.
 
-Check out my [presentation at the ICCOPT 2022 conference](https://www.researchgate.net/publication/362254109).
-This is joint work with Sven Leyffer (Argonne National Laboratory).
+**Any strategy combination** can be automatically generated without any programming effort from the user. Note that all combinations do not necessarily result in sensible algorithms, or even convergent approaches.
+
+For more details, check out my [presentation at the ICCOPT 2022 conference](https://www.researchgate.net/publication/362254109).
+This is joint work with [Sven Leyffer](https://wiki.mcs.anl.gov/leyffer/index.php/Sven_Leyffer) (Argonne National Laboratory).
 
 ### Latest results (Dec 23, 2022)
 
-Performance profile (function evaluations)
+Some of Uno combinations (called presets, see below) have been tested against state-of-the-art solvers on 429 small problems of the [CUTEst benchmark](https://arnold-neumaier.at/glopt/coconut/Benchmark/Library2_new_v1.html).
+The figure below is a performance profile; it shows how many problems are solved for a given budget of function evaluations (1 time, 2 times, 4 times, ..., $2^x$ times the number of objective evaluations of the best solver for each instance).
 
 <p align="center">
    <img src="docs/figures/uno_performance_profile.png" alt="Performance profile of Uno 1.0" width="75%" />
@@ -49,7 +51,7 @@ Please be patient, we are actively working on our article.
 ## Contributions
 
 Uno was designed and implemented by [Charlie Vanaret](https://github.com/cvanaret/) (Zuse-Institut Berlin).  
-The abstract framework for unifying nonlinear optimization was developed by Charlie Vanaret and Sven Leyffer.
+The theoretical abstract framework for unifying nonlinear optimization was developed by Charlie Vanaret and Sven Leyffer.
 
 [Silvio Traversaro](https://github.com/traversaro) contributed to the CMakeLists.
 
@@ -64,10 +66,10 @@ Uno is released under the MIT license (see the [license file](LICENSE)).
 * download the AMPL solver library (ASL): http://www.netlib.org/ampl/solvers/
 
 * download **optional** solvers:
-    * BQPD: https://www.mcs.anl.gov/~leyffer/solvers.html
-    * MA57: http://www.hsl.rl.ac.uk/catalogue/ma57.html
+    * BQPD (indefinite null-space QP solver): https://www.mcs.anl.gov/~leyffer/solvers.html
+    * MA57 (sparse indefinite symmetric linear solver): http://www.hsl.rl.ac.uk/catalogue/ma57.html
 
-* install BLAS, LAPACK and f2c: ```sudo apt-get install libblas-dev liblapack-dev libf2c2-dev```
+* install BLAS and LAPACK: ```sudo apt-get install libblas-dev liblapack-dev```
 * install cmake and ccmake (CMake curses interface): ```sudo apt-get install cmake cmake-curses-gui```
 
 ### Compilation
@@ -75,8 +77,8 @@ Uno is released under the MIT license (see the [license file](LICENSE)).
 1. Create a `build` directory in the main directory: ```mkdir build```
 2. Move to the build directory: ```cd build/```
 3. Type cmake: ```cmake ..```
-4. Use ccmake to provide the paths to the required and optional libraries: ```ccmake ..```
-5. Compile in parallel (`n` being the number of threads, e.g. 6): ```make -jn```
+4. **(optional)** Use ccmake to provide the paths to the required and optional libraries: ```ccmake ..```
+5. Compile (in parallel: `n` being the number of threads, e.g. 6): ```make -jn```
 
 To compile the code with different configurations, simply create a `build` directory for each configuration and perform instructions 1 to 5.
 
