@@ -50,8 +50,11 @@ inline ScaledModel::ScaledModel(const Model& original_model, Iterate& first_iter
       first_iterate.evaluate_objective_gradient(original_model);
       first_iterate.evaluate_constraint_jacobian(original_model);
       this->scaling.compute(first_iterate.model_evaluations.objective_gradient, first_iterate.model_evaluations.constraint_jacobian);
-      // forget about these evaluations
-      first_iterate.reset_evaluations();
+      // scale the gradients
+      scale(first_iterate.model_evaluations.objective_gradient, this->scaling.get_objective_scaling());
+      for (size_t j: Range(original_model.number_constraints)) {
+         scale(first_iterate.model_evaluations.constraint_jacobian[j], this->scaling.get_constraint_scaling(j));
+      }
    }
    // check the scaling factors
    assert(0 <= this->scaling.get_objective_scaling() && "Objective scaling failed.");
