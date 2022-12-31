@@ -205,7 +205,7 @@ size_t AMPLModel::compute_hessian_number_nonzeros(double objective_multiplier, c
    const int upper_triangular = 1;
    const bool all_zeros_multipliers = are_all_zeros(multipliers);
    int number_non_zeros = (*(this->asl)->p.Sphset)(this->asl, nullptr, objective_number, (objective_multiplier != 0.),
-         !all_zeros_multipliers, upper_triangular);
+         not all_zeros_multipliers, upper_triangular);
    return static_cast<size_t>(number_non_zeros);
 }
 

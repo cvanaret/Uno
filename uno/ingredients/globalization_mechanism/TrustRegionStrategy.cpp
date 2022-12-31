@@ -36,7 +36,7 @@ void TrustRegionStrategy::initialize(Statistics& statistics, Iterate& first_iter
 std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) {
    this->number_iterations = 0;
 
-   while (!this->termination()) {
+   while (not this->termination()) {
       try {
          this->number_iterations++;
          this->print_iteration();

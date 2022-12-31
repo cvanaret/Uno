@@ -51,8 +51,8 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
    this->number_iterations = 0;
    this->total_number_iterations = 0;
    bool failure = false;
-   while (!failure) {
-      while (!this->termination()) {
+   while (not failure) {
+      while (not this->termination()) {
          this->number_iterations++;
          this->print_iteration();
 
@@ -71,7 +71,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
                return std::make_tuple(std::move(trial_iterate), step_norm);
             }
             // (optional) second-order correction
-            else if (this->use_second_order_correction && this->number_iterations == 1 && !this->solving_feasibility_problem &&
+            else if (this->use_second_order_correction && this->number_iterations == 1 && not this->solving_feasibility_problem &&
                   trial_iterate.nonlinear_progress.infeasibility >= current_iterate.nonlinear_progress.infeasibility) {
                // if full step is rejected, compute a (temporary) SOC direction
                Direction direction_soc = this->constraint_relaxation_strategy.compute_second_order_correction(trial_iterate);
@@ -113,7 +113,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
          }
       }
       // if step length is too small, revert to solving the feasibility problem (if we aren't already solving it)
-      if (!this->solving_feasibility_problem && 0. < direction.multipliers.objective) {
+      if (not this->solving_feasibility_problem && 0. < direction.multipliers.objective) {
          // TODO: test if 0. < current_iterate.progress.infeasibility ?
          DEBUG << "The line search failed, switching to feasibility problem\n";
          // reset the line search with the restoration solution

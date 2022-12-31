@@ -115,7 +115,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
    Direction direction = this->solve_subproblem(statistics, current_iterate, this->penalty_parameter);
 
    // penalty update: if penalty parameter is already 0 or fixed by the user, no need to decrease it
-   if (0. < this->penalty_parameter && !this->parameters.fixed_parameter) {
+   if (0. < this->penalty_parameter && not this->parameters.fixed_parameter) {
       // check infeasibility
       double linearized_residual = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate,
             direction, 1.);
@@ -148,8 +148,8 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
 
             // further decrease penalty parameter to satisfy 2 conditions
             bool condition1 = false, condition2 = false;
-            while (!condition2) {
-               if (!condition1) {
+            while (not condition2) {
+               if (not condition1) {
                   // stage d: reach a fraction of the ideal decrease
                   if (this->linearized_residual_sufficient_decrease(current_iterate, linearized_residual, residual_lowest_violation)) {
                      condition1 = true;
@@ -161,7 +161,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
                   condition2 = true;
                   DEBUG << "Condition 2 is true\n";
                }
-               if (!condition2) {
+               if (not condition2) {
                   this->penalty_parameter /= this->parameters.decrease_factor;
                   if (this->penalty_parameter < this->parameters.small_threshold) {
                      this->penalty_parameter = 0.;

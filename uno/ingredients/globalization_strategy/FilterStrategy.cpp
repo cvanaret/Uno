@@ -72,7 +72,7 @@ bool FilterStrategy::is_iterate_acceptable(const ProgressMeasures& current_progr
          DEBUG << "Actual reduction: " << actual_reduction << '\n';
 
          // switching condition violated: predicted reduction is not promising
-         if (!this->switching_condition(unconstrained_predicted_reduction, current_progress_measures.infeasibility, this->parameters.delta)) {
+         if (not this->switching_condition(unconstrained_predicted_reduction, current_progress_measures.infeasibility, this->parameters.delta)) {
             this->filter->add(current_progress_measures.infeasibility, current_optimality_measure);
             DEBUG << "Trial iterate was accepted by violating switching condition\n";
             DEBUG << "Current iterate was added to the filter\n";

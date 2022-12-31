@@ -51,7 +51,7 @@ void ConvexifiedHessian::regularize(SymmetricMatrix<double>& hessian, size_t num
    double regularization = (smallest_diagonal_entry <= 0.) ? this->regularization_initial_value - smallest_diagonal_entry : this->regularization_initial_value;
    */
    bool good_inertia = false;
-   while (!good_inertia) {
+   while (not good_inertia) {
       DEBUG << "Testing factorization with regularization factor " << regularization_factor << '\n';
       if (0. < regularization_factor) {
          hessian.set_regularization([&](size_t i) { return (i < number_original_variables) ? regularization_factor : 0.; });

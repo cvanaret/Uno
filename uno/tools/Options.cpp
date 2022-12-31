@@ -63,7 +63,7 @@ Options get_default_options(const std::string& file_name) {
       std::string key, value;
       std::string line;
       while (std::getline(file, line)) {
-         if (!line.empty() && line.find('#') != 0) {
+         if (not line.empty() && line.find('#') != 0) {
             std::istringstream iss;
             iss.str(line);
             iss >> key >> value;

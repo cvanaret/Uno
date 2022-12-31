@@ -41,7 +41,7 @@ void Result::print(bool print_primal_dual_solution) const {
       print_vector(std::cout, this->solution.multipliers.lower_bounds);
       std::cout << "Upper bound multipliers:\t";
       print_vector(std::cout, this->solution.multipliers.upper_bounds);
-      if (!this->solution.multipliers.constraints.empty()) {
+      if (not this->solution.multipliers.constraints.empty()) {
          std::cout << "Constraint multipliers:\t\t";
          print_vector(std::cout, this->solution.multipliers.constraints);
       }

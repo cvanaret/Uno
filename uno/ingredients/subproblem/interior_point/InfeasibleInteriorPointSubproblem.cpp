@@ -59,7 +59,7 @@ inline void InfeasibleInteriorPointSubproblem::initialize(Statistics& statistics
    }
 
    // set the slack variables (if any)
-   if (!problem.model.slacks.empty()) {
+   if (not problem.model.slacks.empty()) {
       // set the slacks to the constraint values
       problem.model.slacks.for_each([&](size_t j, size_t slack_index) {
          const Interval bounds = {problem.get_variable_lower_bound(slack_index, this->bound_relaxation_factors[slack_index]),
@@ -162,7 +162,7 @@ Direction InfeasibleInteriorPointSubproblem::solve(Statistics& statistics, const
    //this->set_variable_bounds(problem, current_iterate);
 
    // update the barrier parameter if the current iterate solves the subproblem
-   if (true || !this->solving_feasibility_problem) {
+   if (true || not this->solving_feasibility_problem) {
       this->update_barrier_parameter(problem, current_iterate);
    }
 
@@ -199,13 +199,13 @@ void InfeasibleInteriorPointSubproblem::relax_variable_bounds(const NonlinearPro
    for (size_t i: problem.lower_bounded_variables) {
       if (current_iterate.primals[i] - problem.get_variable_lower_bound(i) < machine_epsilon*this->barrier_parameter()) {
          this->bound_relaxation_factors[i] += factor;
-         std::cout << "ADDING RELAX FACTOR FOR LB " << factor << "\n";
+         //std::cout << "ADDING RELAX FACTOR FOR LB " << factor << "\n";
       }
    }
    for (size_t i: problem.upper_bounded_variables) {
       if (problem.get_variable_upper_bound(i) - current_iterate.primals[i] < machine_epsilon*this->barrier_parameter()) {
          this->bound_relaxation_factors[i] += factor;
-         std::cout << "ADDING RELAX FACTOR FOR UB\n";
+         //std::cout << "ADDING RELAX FACTOR FOR UB\n";
       }
    }
 }

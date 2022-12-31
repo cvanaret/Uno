@@ -19,7 +19,7 @@ Iterate::Iterate(size_t max_number_variables, size_t max_number_constraints) :
 }
 
 void Iterate::evaluate_objective(const Model& model) {
-   if (!this->is_objective_computed) {
+   if (not this->is_objective_computed) {
       // evaluate the objective
       this->model_evaluations.objective = model.evaluate_objective(this->primals);
       // check finiteness
@@ -32,7 +32,7 @@ void Iterate::evaluate_objective(const Model& model) {
 }
 
 void Iterate::evaluate_constraints(const Model& model) {
-   if (!this->are_constraints_computed) {
+   if (not this->are_constraints_computed) {
       // evaluate the constraints
       model.evaluate_constraints(this->primals, this->model_evaluations.constraints);
       this->are_constraints_computed = true;
@@ -41,7 +41,7 @@ void Iterate::evaluate_constraints(const Model& model) {
 }
 
 void Iterate::evaluate_objective_gradient(const Model& model) {
-   if (!this->is_objective_gradient_computed) {
+   if (not this->is_objective_gradient_computed) {
       this->model_evaluations.objective_gradient.clear();
       // evaluate the objective gradient
       model.evaluate_objective_gradient(this->primals, this->model_evaluations.objective_gradient);
@@ -50,7 +50,7 @@ void Iterate::evaluate_objective_gradient(const Model& model) {
 }
 
 void Iterate::evaluate_constraint_jacobian(const Model& model) {
-   if (!this->is_constraint_jacobian_computed) {
+   if (not this->is_constraint_jacobian_computed) {
       for (auto& row: this->model_evaluations.constraint_jacobian) {
          row.clear();
       }

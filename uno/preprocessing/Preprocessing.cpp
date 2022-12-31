@@ -68,7 +68,7 @@ size_t count_infeasible_linear_constraints(const Model& model, const std::vector
 
 void Preprocessing::enforce_linear_constraints(const Options& options, const Model& model, std::vector<double>& x, Multipliers& multipliers) {
    INFO << "Preprocessing phase: the problem has " << model.linear_constraints.size() << " linear constraints\n";
-   if (!model.linear_constraints.empty()) {
+   if (not model.linear_constraints.empty()) {
       // evaluate the constraints
       std::vector<double> constraints(model.number_constraints);
       model.evaluate_constraints(x, constraints);

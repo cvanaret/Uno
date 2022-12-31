@@ -213,7 +213,7 @@ inline void EqualityConstrainedModel::get_initial_dual_point(std::vector<double>
 inline void EqualityConstrainedModel::postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const {
    this->original_model->postprocess_solution(iterate, termination_status);
    // remove slack variables
-   iterate.set_number_variables(this->original_model->number_variables);
+   //iterate.set_number_variables(this->original_model->number_variables);
 }
 
 #endif // UNO_EQUALITYCONSTRAINEDMODEL_H

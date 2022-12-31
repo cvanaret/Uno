@@ -32,7 +32,7 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
    TerminationStatus termination_status = NOT_OPTIMAL;
    try {
       // check for termination
-      while (!this->termination_criterion(termination_status, major_iterations)) {
+      while (not this->termination_criterion(termination_status, major_iterations)) {
          statistics.new_line();
          major_iterations++;
          DEBUG << "### Outer iteration " << major_iterations << '\n';
@@ -118,9 +118,9 @@ TerminationStatus Uno::check_termination(const Model& model, Iterate& current_it
    const bool primal_feasibility = (current_iterate.residuals.infeasibility <= this->tolerance);
    // TODO dual feasibility
 
-   std::cout << "stationarity: " << stationarity << '\n';
-   std::cout << "complementarity: " << complementarity << '\n';
-   std::cout << "primal_feasibility: " << primal_feasibility << '\n';
+   DEBUG << "stationarity: " << stationarity << '\n';
+   DEBUG << "complementarity: " << complementarity << '\n';
+   DEBUG << "primal_feasibility: " << primal_feasibility << '\n';
 
    if (stationarity && complementarity) {
       if (primal_feasibility) {

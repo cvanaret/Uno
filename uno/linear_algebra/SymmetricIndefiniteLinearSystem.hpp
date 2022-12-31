@@ -96,7 +96,7 @@ template <typename T>
 void SymmetricIndefiniteLinearSystem<T>::factorize_matrix(const Model& model, SymmetricIndefiniteLinearSolver<T>& linear_solver) {
    // compute the symbolic factorization only when:
    // the problem has a non-constant augmented system (ie is not an LP or a QP) or it is the first factorization
-   if (true || this->number_factorizations == 0 || model.problem_type == NONLINEAR || !model.fixed_hessian_sparsity) {
+   if (true || this->number_factorizations == 0 || model.problem_type == NONLINEAR || not model.fixed_hessian_sparsity) {
       linear_solver.do_symbolic_factorization(*this->matrix);
    }
    linear_solver.do_numerical_factorization(*this->matrix);
@@ -112,7 +112,7 @@ void SymmetricIndefiniteLinearSystem<T>::regularize_matrix(const Model& model, S
    size_t number_attempts = 1;
    DEBUG << "Testing factorization with regularization factors (" << this->primal_regularization << ", " << this->dual_regularization << ")\n";
 
-   if (!linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_dual_block) {
+   if (not linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_dual_block) {
       DEBUG << "Inertia is good\n";
       return;
    }
@@ -136,13 +136,13 @@ void SymmetricIndefiniteLinearSystem<T>::regularize_matrix(const Model& model, S
    });
 
    bool good_inertia = false;
-   while (!good_inertia) {
+   while (not good_inertia) {
       DEBUG << "Testing factorization with regularization factors (" << this->primal_regularization << ", " << this->dual_regularization << ")\n";
       DEBUG << *this->matrix << '\n';
       this->factorize_matrix(model, linear_solver);
       number_attempts++;
 
-      if (!linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_dual_block) {
+      if (not linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_dual_block) {
          good_inertia = true;
          DEBUG << "Factorization was a success\n\n";
          this->previous_primal_regularization = this->primal_regularization;
