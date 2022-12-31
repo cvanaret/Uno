@@ -26,9 +26,9 @@ void Result::print(bool print_primal_dual_solution) const {
 
    std::cout << "Objective value:\t\t" << this->solution.model_evaluations.objective << '\n';
 
-   std::cout << "Constraint violation:\t\t" << this->solution.primal_constraint_violation << '\n';
-   std::cout << "Stationarity error:\t\t" << this->solution.stationarity_error << '\n';
-   std::cout << "Complementarity error:\t\t" << this->solution.complementarity_error << '\n';
+   std::cout << "Constraint violation:\t\t" << this->solution.residuals.infeasibility << '\n';
+   std::cout << "Stationarity error:\t\t" << this->solution.residuals.stationarity << '\n';
+   std::cout << "Complementarity error:\t\t" << this->solution.residuals.complementarity << '\n';
 
    std::cout << "Infeasibility measure:\t\t" << this->solution.nonlinear_progress.infeasibility << '\n';
    std::cout << "Scaled optimality measure:\t" << this->solution.nonlinear_progress.scaled_optimality(1.) << '\n';

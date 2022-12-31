@@ -46,7 +46,7 @@ protected:
    static void evaluate_lagrangian_gradient(Iterate& iterate, const std::vector<double>& constraint_multipliers,
          const std::vector<double>& lower_bound_multipliers, const std::vector<double>& upper_bound_multipliers);
    static void evaluate_reformulation_functions(const NonlinearProblem& problem, Iterate& iterate);
-   void compute_optimality_condition_residuals(const NonlinearProblem& problem, Iterate& iterate) const;
+   void compute_primal_dual_errors(const NonlinearProblem& problem, Iterate& iterate) const;
 };
 
 #endif //UNO_CONSTRAINTRELAXATIONSTRATEGY_H

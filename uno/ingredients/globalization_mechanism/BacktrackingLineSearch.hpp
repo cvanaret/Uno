@@ -33,7 +33,7 @@ private:
    [[nodiscard]] Direction compute_direction(Statistics& statistics, Iterate& current_iterate);
    [[nodiscard]] bool termination() const;
    void print_iteration();
-   void set_statistics(Statistics& statistics, const Direction& direction);
+   void set_statistics(Statistics& statistics, const Direction& direction) const;
    void decrease_step_length();
 };
 

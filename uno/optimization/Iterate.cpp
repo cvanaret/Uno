@@ -78,24 +78,20 @@ void Iterate::reset_evaluations() {
 }
 
 std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
-   stream << "Primal variables: ";
-   print_vector(stream, iterate.primals);
-   stream << "Lower bound multipliers: ";
-   print_vector(stream, iterate.multipliers.lower_bounds);
-   stream << "Upper bound multipliers: ";
-   print_vector(stream, iterate.multipliers.upper_bounds);
-   stream << "Constraint multipliers: ";
-   print_vector(stream, iterate.multipliers.constraints);
+   stream << "Primal variables: "; print_vector(stream, iterate.primals);
+   stream << "            ┌ Constraint: "; print_vector(stream, iterate.multipliers.constraints);
+   stream << "Multipliers │ Lower bound: "; print_vector(stream, iterate.multipliers.lower_bounds);
+   stream << "            └ Upper bound: "; print_vector(stream, iterate.multipliers.upper_bounds);
 
    stream << "Objective value: " << iterate.model_evaluations.objective << '\n';
 
-   stream << "Constraint violation: " << iterate.primal_constraint_violation << '\n';
-   stream << "Stationarity error: " << iterate.stationarity_error << '\n';
-   stream << "Complementarity error: " << iterate.complementarity_error << '\n';
+   stream << "          ┌ Stationarity: " << iterate.residuals.stationarity << '\n';
+   stream << "Residuals │ Constraint violation: " << iterate.residuals.infeasibility << '\n';
+   stream << "          └ Complementarity: " << iterate.residuals.complementarity << '\n';
 
-   stream << "Infeasibility measure: " << iterate.nonlinear_progress.infeasibility << '\n';
-   stream << "Scaled optimality measure: " << iterate.nonlinear_progress.scaled_optimality(1.) << '\n';
-   stream << "Unscaled optimality measure: " << iterate.nonlinear_progress.unscaled_optimality << '\n';
+   stream << "                  ┌ Infeasibility: " << iterate.nonlinear_progress.infeasibility << '\n';
+   stream << "Progress measures │ Scaled optimality: " << iterate.nonlinear_progress.scaled_optimality(1.) << '\n';
+   stream << "                  └ Unscaled optimality: " << iterate.nonlinear_progress.unscaled_optimality << '\n';
 
    stream << "Lagrangian gradient: "; print_vector(stream, iterate.lagrangian_gradient);
    return stream;

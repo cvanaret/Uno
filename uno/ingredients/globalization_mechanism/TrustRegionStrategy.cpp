@@ -14,6 +14,8 @@ TrustRegionStrategy::TrustRegionStrategy(ConstraintRelaxationStrategy& constrain
       decrease_factor(options.get_double("TR_decrease_factor")),
       activity_tolerance(options.get_double("TR_activity_tolerance")),
       min_radius(options.get_double("TR_min_radius")),
+      use_second_order_correction(options.get_bool("use_second_order_correction")),
+      statistics_SOC_column_order(options.get_int("statistics_SOC_column_order")),
       statistics_TR_radius_column_order(options.get_int("statistics_TR_radius_column_order")) {
    assert(0 < this->radius && "The trust-region radius should be positive");
    assert(1. < this->increase_factor && "The trust-region increase factor should be > 1");
@@ -21,6 +23,9 @@ TrustRegionStrategy::TrustRegionStrategy(ConstraintRelaxationStrategy& constrain
 }
 
 void TrustRegionStrategy::initialize(Statistics& statistics, Iterate& first_iterate) {
+   if (this->use_second_order_correction) {
+      statistics.add_column("SOC", Statistics::char_width, this->statistics_SOC_column_order);
+   }
    statistics.add_column("TR radius", Statistics::double_width, this->statistics_TR_radius_column_order);
 
    // generate the initial point
@@ -46,12 +51,11 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
          this->reset_active_trust_region_multipliers(model, direction, trial_iterate);
 
          // check whether the trial step is accepted
-         const bool is_acceptable = this->constraint_relaxation_strategy
-               .is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, 1.);
+         const bool is_acceptable = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, 1.);
          if (is_acceptable) {
             // let the subproblem know the accepted iterate
             this->constraint_relaxation_strategy.register_accepted_iterate(trial_iterate);
-            this->add_statistics(statistics, direction);
+            this->set_statistics(statistics, direction);
 
             // increase the radius if trust region is active
             this->increase_radius(direction.norm);
@@ -59,7 +63,43 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
             return std::make_tuple(std::move(trial_iterate), direction.norm);
          }
          else { // step rejected
-            this->decrease_radius(direction.norm);
+            // (optional) second-order correction
+            if (this->use_second_order_correction && trial_iterate.nonlinear_progress.infeasibility >= current_iterate.nonlinear_progress.infeasibility) {
+               // compute a (temporary) SOC direction
+               Direction direction_soc = this->constraint_relaxation_strategy.compute_second_order_correction(trial_iterate);
+               if (direction_soc.status == SubproblemStatus::INFEASIBLE) {
+                  DEBUG << "Trial SOC subproblem infeasible\n\n";
+                  statistics.add_statistic("SOC", "-");
+                  this->decrease_radius(direction.norm);
+               }
+               else {
+                  // assemble the (temporary) SOC trial iterate
+                  Iterate trial_iterate_soc = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction_soc);
+                  // reset bound multipliers of active trust region
+                  this->reset_active_trust_region_multipliers(model, direction_soc, trial_iterate_soc);
+                  const bool is_SOC_acceptable = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate,
+                        trial_iterate_soc, direction_soc, 1.);
+                  if (is_SOC_acceptable) {
+                     DEBUG << "Trial SOC step accepted\n";
+                     this->set_statistics(statistics, direction_soc);
+                     statistics.add_statistic("SOC", "x");
+
+                     // let the subproblem know the accepted iterate
+                     this->constraint_relaxation_strategy.register_accepted_iterate(trial_iterate_soc);
+                     trial_iterate_soc.multipliers.lower_bounds = trial_iterate.multipliers.lower_bounds;
+                     trial_iterate_soc.multipliers.upper_bounds = trial_iterate.multipliers.upper_bounds;
+                     return std::make_tuple(std::move(trial_iterate_soc), direction_soc.norm);
+                  }
+                  else {
+                     DEBUG << "Trial SOC step discarded\n\n";
+                     statistics.add_statistic("SOC", "-");
+                     this->decrease_radius(direction.norm);
+                  }
+               }
+            }
+            else {
+               this->decrease_radius(direction.norm);
+            }
          }
       }
       // if an error occurs (evaluation error or unstable inertia), decrease the radius
@@ -102,7 +142,7 @@ void TrustRegionStrategy::reset_active_trust_region_multipliers(const Model& mod
    }
 }
 
-void TrustRegionStrategy::add_statistics(Statistics& statistics, const Direction& direction) {
+void TrustRegionStrategy::set_statistics(Statistics& statistics, const Direction& direction) {
    statistics.add_statistic("minor", this->number_iterations);
    statistics.add_statistic("TR radius", this->radius);
    statistics.add_statistic("step norm", direction.norm);

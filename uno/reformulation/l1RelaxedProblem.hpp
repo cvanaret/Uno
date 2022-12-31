@@ -99,8 +99,8 @@ inline double l1RelaxedProblem::evaluate_objective(Iterate& iterate) const {
 
    // scaled constraint violation: coeff*||c(x)||_1
    iterate.evaluate_constraints(this->model);
-   iterate.primal_constraint_violation = this->model.compute_constraint_violation(iterate.model_evaluations.constraints, L1_NORM);
-   objective += iterate.primal_constraint_violation;
+   iterate.residuals.infeasibility = this->model.compute_constraint_violation(iterate.model_evaluations.constraints, L1_NORM);
+   objective += iterate.residuals.infeasibility;
    return objective;
 }
 

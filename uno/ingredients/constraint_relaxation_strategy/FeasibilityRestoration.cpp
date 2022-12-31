@@ -34,7 +34,7 @@ void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& first_i
 
    // compute the residuals of the initial point
    ConstraintRelaxationStrategy::evaluate_reformulation_functions(this->optimality_problem, first_iterate);
-   this->compute_optimality_condition_residuals(this->optimality_problem, first_iterate);
+   this->compute_primal_dual_errors(this->optimality_problem, first_iterate);
 
    // initialize the globalization strategies
    this->phase_1_strategy->initialize(first_iterate);
@@ -110,11 +110,12 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
       this->switch_to_feasibility_restoration(current_iterate);
    }
    // possibly go from restoration phase to optimality phase
-   else if (this->current_phase == Phase::FEASIBILITY_RESTORATION) {
+   else if (this->current_phase == Phase::FEASIBILITY_RESTORATION &&
+         ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate, direction, 1.) == 0.) {
       // evaluate measure of infeasibility ("scaled optimality" quantity in phase-1 definition)
       this->set_scaled_optimality_measure(trial_iterate);
-      if (ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate, direction, 1.) == 0. &&
-            this->phase_2_strategy->is_feasibility_iterate_acceptable(trial_iterate.nonlinear_progress.scaled_optimality(1.))) {
+      // if the infeasibility improves upon the best known infeasibility of the globalization strategy
+      if (this->phase_2_strategy->is_feasibility_iterate_acceptable(trial_iterate.nonlinear_progress.scaled_optimality(1.))) {
          this->switch_to_optimality(current_iterate, trial_iterate);
       }
    }
@@ -173,7 +174,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
    if (accept) {
       statistics.add_statistic("phase", static_cast<int>(this->current_phase));
       ConstraintRelaxationStrategy::evaluate_reformulation_functions(this->current_reformulated_problem(), trial_iterate);
-      this->compute_optimality_condition_residuals(this->current_reformulated_problem(), trial_iterate);
+      this->compute_primal_dual_errors(this->current_reformulated_problem(), trial_iterate);
    }
    return accept;
 }

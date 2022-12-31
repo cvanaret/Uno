@@ -4,6 +4,8 @@
 #ifndef UNO_NONLINEARPROBLEM_H
 #define UNO_NONLINEARPROBLEM_H
 
+// #include <iomanip>
+// std::setprecision(20) <<
 #include <string>
 #include <vector>
 #include <map>
@@ -91,21 +93,30 @@ inline double NonlinearProblem::compute_complementarity_error(const std::vector<
    // bound constraints
    for (size_t i: Range(this->number_variables)) {
       if (0. < lower_bounds_multipliers[i]) {
-         error += std::abs(lower_bounds_multipliers[i] * (primals[i] - this->get_variable_lower_bound(i)));
+         //error += std::abs(lower_bounds_multipliers[i] * (primals[i] - this->get_variable_lower_bound(i)));
+         //std::cout << lower_bounds_multipliers[i] << "*(" << primals[i] << " - " << this->get_variable_lower_bound(i) << ")\n";
+         error = std::max(error, std::abs(lower_bounds_multipliers[i] * (primals[i] - this->get_variable_lower_bound(i))));
+         //std::cout << "Error is " << error << '\n';
       }
-      if (upper_bounds_multipliers[i] < 0.) {
-         error += std::abs(upper_bounds_multipliers[i] * (primals[i] - this->get_variable_upper_bound(i)));
+      if (0. < upper_bounds_multipliers[i]) {
+         //error += std::abs(upper_bounds_multipliers[i] * (primals[i] - this->get_variable_upper_bound(i)));
+         //std::cout << upper_bounds_multipliers[i] << "*(" << primals[i] << " - " << this->get_variable_upper_bound(i) << ")\n";
+         error = std::max(error, std::abs(upper_bounds_multipliers[i] * (primals[i] - this->get_variable_upper_bound(i))));
+         //std::cout << "Error is " << error << '\n';
       }
    }
+   //std::cout << "Error is " << error << '\n';
    // constraints
-   for (size_t j: Range(this->number_constraints)) {
+   this->inequality_constraints.for_each_index([&](size_t j) {
       if (0. < constraint_multipliers[j]) { // lower bound
-         error += std::abs(constraint_multipliers[j] * (constraints[j] - this->get_constraint_lower_bound(j)));
+         //error += std::abs(constraint_multipliers[j] * (constraints[j] - this->get_constraint_lower_bound(j)));
+         error = std::max(error, std::abs(constraint_multipliers[j] * (constraints[j] - this->get_constraint_lower_bound(j))));
       }
       else if (constraint_multipliers[j] < 0.) { // upper bound
-         error += std::abs(constraint_multipliers[j] * (constraints[j] - this->get_constraint_upper_bound(j)));
+         //error += std::abs(constraint_multipliers[j] * (constraints[j] - this->get_constraint_upper_bound(j)));
+         error = std::max(error, std::abs(constraint_multipliers[j] * (constraints[j] - this->get_constraint_upper_bound(j))));
       }
-   }
+   });
    return error;
 }
 

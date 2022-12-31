@@ -10,6 +10,7 @@
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "optimization/Model.hpp"
 #include "optimization/Multipliers.hpp"
+#include "optimization/PrimalDualResiduals.hpp"
 #include "tools/Infinity.hpp"
 
 struct Evaluations {
@@ -49,10 +50,8 @@ public:
    bool is_objective_gradient_computed{false}; /*!< Flag that indicates if the objective gradient has already been computed */
    bool is_constraint_jacobian_computed{false}; /*!< Flag that indicates if the constraint Jacobian has already been computed */
 
-   // residuals
-   double stationarity_error{INF<double>};
-   double primal_constraint_violation{INF<double>};
-   double complementarity_error{INF<double>};
+   // primal-dual residuals
+   PrimalDualResiduals residuals{};
    std::vector<double> lagrangian_gradient;
 
    // measures of progress (infeasibility, scaled optimality, unscaled optimality)

@@ -84,11 +84,11 @@ void Uno::add_statistics(Statistics& statistics, const Model& model, const Itera
    statistics.add_statistic(std::string("major"), major_iterations);
    statistics.add_statistic("objective", iterate.model_evaluations.objective);
    if (model.is_constrained()) {
-      statistics.add_statistic("primal infeas.", iterate.primal_constraint_violation);
+      statistics.add_statistic("primal infeas.", iterate.residuals.infeasibility);
    }
    statistics.add_statistic("dual infeas.", 0.); // TODO
-   statistics.add_statistic("complementarity", iterate.complementarity_error);
-   statistics.add_statistic("stationarity", iterate.stationarity_error);
+   statistics.add_statistic("complementarity", iterate.residuals.complementarity);
+   statistics.add_statistic("stationarity", iterate.residuals.stationarity);
 }
 
 bool Uno::termination_criterion(TerminationStatus current_status, size_t iteration) const {
@@ -113,10 +113,14 @@ bool not_all_zero_multipliers(const Model& model, const Multipliers& multipliers
 
 TerminationStatus Uno::check_termination(const Model& model, Iterate& current_iterate, double step_norm) const {
    // evaluate termination conditions based on optimality conditions
-   const bool stationarity = (current_iterate.stationarity_error <= this->tolerance * std::sqrt(model.number_variables));
-   const bool complementarity = (current_iterate.complementarity_error <= this->tolerance * static_cast<double>(model.number_variables + model.number_constraints));
-   const bool primal_feasibility = (current_iterate.primal_constraint_violation <= this->tolerance * static_cast<double>(model.number_variables));
+   const bool stationarity = (current_iterate.residuals.stationarity/current_iterate.residuals.stationarity_scaling <= this->tolerance);
+   const bool complementarity = (current_iterate.residuals.complementarity/current_iterate.residuals.complementarity_scaling <= this->tolerance);
+   const bool primal_feasibility = (current_iterate.residuals.infeasibility <= this->tolerance);
    // TODO dual feasibility
+
+   std::cout << "stationarity: " << stationarity << '\n';
+   std::cout << "complementarity: " << complementarity << '\n';
+   std::cout << "primal_feasibility: " << primal_feasibility << '\n';
 
    if (stationarity && complementarity) {
       if (primal_feasibility) {

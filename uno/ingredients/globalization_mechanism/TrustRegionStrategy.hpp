@@ -24,14 +24,16 @@ private:
    const double decrease_factor;
    const double activity_tolerance;
    const double min_radius;
+   const bool use_second_order_correction;
    // statistics table
+   int statistics_SOC_column_order;
    int statistics_TR_radius_column_order;
 
    void increase_radius(double step_norm);
    void decrease_radius(double step_norm);
    void decrease_radius();
    void reset_active_trust_region_multipliers(const Model& model, const Direction& direction, Iterate& trial_iterate) const;
-   void add_statistics(Statistics& statistics, const Direction& direction);
+   void set_statistics(Statistics& statistics, const Direction& direction);
    [[nodiscard]] bool termination() const;
    void print_iteration();
 };

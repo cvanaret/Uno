@@ -41,8 +41,7 @@ Direction BacktrackingLineSearch::compute_direction(Statistics& statistics, Iter
    }
 }
 
-std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(Statistics& statistics, const Model& /*model*/,
-      Iterate& current_iterate) {
+std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(Statistics& statistics, const Model& /*model*/, Iterate& current_iterate) {
    // compute the direction
    Direction direction = this->compute_direction(statistics, current_iterate);
    this->solving_feasibility_problem = false;
@@ -71,6 +70,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
                double step_norm = this->step_length * direction.norm;
                return std::make_tuple(std::move(trial_iterate), step_norm);
             }
+            // (optional) second-order correction
             else if (this->use_second_order_correction && this->number_iterations == 1 && !this->solving_feasibility_problem &&
                   trial_iterate.nonlinear_progress.infeasibility >= current_iterate.nonlinear_progress.infeasibility) {
                // if full step is rejected, compute a (temporary) SOC direction
@@ -141,7 +141,7 @@ bool BacktrackingLineSearch::termination() const {
    return (this->step_length < this->min_step_length);
 }
 
-void BacktrackingLineSearch::set_statistics(Statistics& statistics, const Direction& direction) {
+void BacktrackingLineSearch::set_statistics(Statistics& statistics, const Direction& direction) const {
    statistics.add_statistic("minor", this->total_number_iterations);
    statistics.add_statistic("LS step length", this->step_length);
    statistics.add_statistic("step norm", this->step_length * direction.norm);

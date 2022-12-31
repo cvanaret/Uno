@@ -14,7 +14,6 @@
 struct InteriorPointParameters {
    double tau_min;
    double k_sigma;
-   double smax;
    double regularization_exponent;
    double small_direction_factor;
    double push_variable_to_interior_k1;
@@ -51,7 +50,7 @@ private:
    double previous_barrier_parameter;
    const double default_multiplier;
    const InteriorPointParameters parameters;
-   const double tolerance;
+   std::vector<double> bound_relaxation_factors;
 
    // preallocated vectors for bound multiplier displacements
    std::vector<double> lower_delta_z{};
@@ -65,10 +64,10 @@ private:
    const double least_square_multiplier_max_norm;
 
    [[nodiscard]] double barrier_parameter() const;
+   void relax_variable_bounds(const NonlinearProblem& problem, const Iterate& current_iterate);
    void check_interior_primals(const NonlinearProblem& problem, const Iterate& iterate);
    [[nodiscard]] double push_variable_to_interior(double variable_value, const Interval& variable_bounds) const;
    void evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate);
-   double compute_primal_dual_error(const NonlinearProblem& problem, const Iterate& current_iterate, double shift);
    void update_barrier_parameter(const NonlinearProblem& problem, const Iterate& current_iterate);
    [[nodiscard]] bool is_small_direction(const NonlinearProblem& problem, const Iterate& current_iterate, const Direction& direction) const;
    [[nodiscard]] double evaluate_subproblem_objective(const Iterate& current_iterate, const std::vector<double>& solution) const;
@@ -80,8 +79,6 @@ private:
    void generate_augmented_rhs(const NonlinearProblem& problem, const Iterate& current_iterate);
    void generate_primal_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate);
    void compute_bound_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate);
-   [[nodiscard]] double compute_KKT_error_scaling(const NonlinearProblem& problem, const Iterate& current_iterate) const;
-   [[nodiscard]] double compute_shifted_complementarity_error(const NonlinearProblem& problem, const Iterate& iterate, double shift_value) const;
    void print_subproblem_solution(const NonlinearProblem& problem) const;
 };
 

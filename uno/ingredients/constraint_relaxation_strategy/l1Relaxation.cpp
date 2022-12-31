@@ -48,7 +48,7 @@ void l1Relaxation::initialize(Statistics& statistics, Iterate& first_iterate) {
    this->subproblem->set_unscaled_optimality_measure(this->relaxed_problem, first_iterate);
 
    ConstraintRelaxationStrategy::evaluate_reformulation_functions(this->relaxed_problem, first_iterate);
-   this->compute_optimality_condition_residuals(this->relaxed_problem, first_iterate);
+   this->compute_primal_dual_errors(this->relaxed_problem, first_iterate);
 
    // initialize the globalization strategy
    this->globalization_strategy->initialize(first_iterate);
@@ -196,8 +196,8 @@ bool l1Relaxation::linearized_residual_sufficient_decrease(const Iterate& curren
    if (residual_lowest_violation == 0.) {
       return (linearized_residual == 0.);
    }
-   const double linearized_residual_reduction = current_iterate.primal_constraint_violation - linearized_residual;
-   const double lowest_linearized_residual_reduction = current_iterate.primal_constraint_violation - residual_lowest_violation;
+   const double linearized_residual_reduction = current_iterate.residuals.infeasibility - linearized_residual;
+   const double lowest_linearized_residual_reduction = current_iterate.residuals.infeasibility - residual_lowest_violation;
    return (linearized_residual_reduction >= this->parameters.epsilon1 * lowest_linearized_residual_reduction);
 }
 
@@ -206,7 +206,10 @@ void l1Relaxation::decrease_parameter_aggressively(Iterate& current_iterate, con
    const double error_lowest_violation = l1Relaxation::compute_error(current_iterate, direction_lowest_violation.multipliers);
    DEBUG << "Ideal error: " << error_lowest_violation << '\n';
 
-   const double scaled_error = error_lowest_violation / std::max(1., current_iterate.primal_constraint_violation);
+   if (direction_lowest_violation.multipliers.compute_norm_1() <= 1e-8) {
+      WARNING << RED << "All multipliers are 0. The dual error shouldn't be used in l1Relaxation" << RESET << '\n';
+   }
+   const double scaled_error = error_lowest_violation / std::max(1., current_iterate.residuals.infeasibility);
    const double scaled_error_square = scaled_error * scaled_error;
    this->penalty_parameter = std::min(this->penalty_parameter, scaled_error_square);
    if (this->penalty_parameter < this->parameters.small_threshold) {
@@ -216,8 +219,8 @@ void l1Relaxation::decrease_parameter_aggressively(Iterate& current_iterate, con
 
 bool l1Relaxation::objective_sufficient_decrease(const Iterate& current_iterate, const Direction& direction,
       const Direction& direction_lowest_violation) const {
-   const double decrease_objective = current_iterate.primal_constraint_violation - direction.subproblem_objective;
-   const double lowest_decrease_objective = current_iterate.primal_constraint_violation - direction_lowest_violation.subproblem_objective;
+   const double decrease_objective = current_iterate.residuals.infeasibility - direction.subproblem_objective;
+   const double lowest_decrease_objective = current_iterate.residuals.infeasibility - direction_lowest_violation.subproblem_objective;
    return (decrease_objective >= this->parameters.epsilon2 * lowest_decrease_objective);
 }
 
@@ -262,7 +265,7 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
    if (accept) {
       statistics.add_statistic("penalty param.", this->penalty_parameter);
       ConstraintRelaxationStrategy::evaluate_reformulation_functions(this->relaxed_problem, trial_iterate);
-      this->compute_optimality_condition_residuals(this->relaxed_problem, trial_iterate);
+      this->compute_primal_dual_errors(this->relaxed_problem, trial_iterate);
    }
    return accept;
 }

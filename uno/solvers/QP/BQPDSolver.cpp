@@ -7,7 +7,6 @@
 #include "linear_algebra/Vector.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Infinity.hpp"
-#include "tools/Range.hpp"
 
 #define BIG 1e30
 

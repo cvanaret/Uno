@@ -45,16 +45,41 @@ void ConstraintRelaxationStrategy::evaluate_reformulation_functions(const Nonlin
    problem.evaluate_constraint_jacobian(iterate, iterate.reformulation_evaluations.constraint_jacobian);
 }
 
-void ConstraintRelaxationStrategy::compute_optimality_condition_residuals(const NonlinearProblem& problem, Iterate& iterate) const {
+double compute_stationarity_scaling(const NonlinearProblem& problem, const Iterate& iterate, double threshold) {
+   const size_t total_size = problem.lower_bounded_variables.size() + problem.upper_bounded_variables.size() + problem.number_constraints;
+   if (total_size == 0) {
+      return 1.;
+   }
+   else {
+      const double scaling_factor = threshold * static_cast<double>(total_size);
+      return std::max(1., iterate.multipliers.compute_norm_1() / scaling_factor);
+   }
+}
+
+double compute_complementarity_scaling(const NonlinearProblem& problem, const Iterate& iterate, double threshold) {
+   const size_t total_size = problem.lower_bounded_variables.size() + problem.upper_bounded_variables.size();
+   if (total_size == 0) {
+      return 1.;
+   }
+   else {
+      const double bound_multipliers_norm = norm_1(iterate.multipliers.lower_bounds) + norm_1(iterate.multipliers.upper_bounds);
+      return std::max(1., bound_multipliers_norm / (threshold * static_cast<double>(total_size)));
+   }
+}
+
+void ConstraintRelaxationStrategy::compute_primal_dual_errors(const NonlinearProblem& problem, Iterate& iterate) const {
    // stationarity error of the reformulated problem
    ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(iterate, iterate.multipliers.constraints, iterate.multipliers.lower_bounds,
          iterate.multipliers.upper_bounds);
-   iterate.stationarity_error = norm(iterate.lagrangian_gradient, this->residual_norm);
-   // primal constraint violation of the original problem
-   iterate.primal_constraint_violation = problem.model.compute_constraint_violation(iterate.model_evaluations.constraints, this->residual_norm);
+   iterate.residuals.stationarity = norm(iterate.lagrangian_gradient, this->residual_norm);
+   // constraint violation of the original problem
+   iterate.residuals.infeasibility = problem.model.compute_constraint_violation(iterate.model_evaluations.constraints, this->residual_norm);
    // complementarity error of the reformulated problem
-   iterate.complementarity_error = problem.compute_complementarity_error(iterate.primals, iterate.reformulation_evaluations.constraints,
+   iterate.residuals.complementarity = problem.compute_complementarity_error(iterate.primals, iterate.reformulation_evaluations.constraints,
          iterate.multipliers.constraints, iterate.multipliers.lower_bounds, iterate.multipliers.upper_bounds);
+   // scaling factors
+   iterate.residuals.stationarity_scaling = compute_stationarity_scaling(problem, iterate, 100.);
+   iterate.residuals.complementarity_scaling = compute_complementarity_scaling(problem, iterate, 100.);
    // TODO dual constraint violation of the reformulated problem
 }
 
