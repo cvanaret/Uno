@@ -47,8 +47,8 @@ void l1Relaxation::initialize(Statistics& statistics, Iterate& first_iterate) {
    this->set_scaled_optimality_measure(first_iterate);
    this->subproblem->set_unscaled_optimality_measure(this->relaxed_problem, first_iterate);
 
-   ConstraintRelaxationStrategy::evaluate_reformulation_functions(this->relaxed_problem, first_iterate);
-   this->compute_primal_dual_errors(this->relaxed_problem, first_iterate);
+   ConstraintRelaxationStrategy::evaluate_functions(this->relaxed_problem, first_iterate);
+   this->compute_primal_dual_residuals(this->relaxed_problem, first_iterate);
 
    // initialize the globalization strategy
    this->globalization_strategy->initialize(first_iterate);
@@ -264,8 +264,8 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
    }
    if (accept) {
       statistics.add_statistic("penalty param.", this->penalty_parameter);
-      ConstraintRelaxationStrategy::evaluate_reformulation_functions(this->relaxed_problem, trial_iterate);
-      this->compute_primal_dual_errors(this->relaxed_problem, trial_iterate);
+      ConstraintRelaxationStrategy::evaluate_functions(this->relaxed_problem, trial_iterate);
+      this->compute_primal_dual_residuals(this->relaxed_problem, trial_iterate);
    }
    return accept;
 }
@@ -360,7 +360,7 @@ void l1Relaxation::set_trust_region_radius(double trust_region_radius) {
    this->subproblem->set_trust_region_radius(trust_region_radius);
 }
 
-void l1Relaxation::register_accepted_iterate(Iterate& iterate) {
+void l1Relaxation::postprocess_accepted_iterate(Iterate& iterate) {
    this->subproblem->postprocess_accepted_iterate(this->relaxed_problem, iterate);
 
    // for information, check that l1 is an exact relaxation

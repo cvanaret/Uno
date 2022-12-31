@@ -63,9 +63,8 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
                   direction, this->step_length);
             if (is_acceptable) {
                this->total_number_iterations += this->number_iterations;
+               this->constraint_relaxation_strategy.postprocess_accepted_iterate(trial_iterate);
                this->set_statistics(statistics, direction);
-               // let the subproblem know the accepted iterate
-               this->constraint_relaxation_strategy.register_accepted_iterate(trial_iterate);
 
                double step_norm = this->step_length * direction.norm;
                return std::make_tuple(std::move(trial_iterate), step_norm);
@@ -91,7 +90,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
                      statistics.add_statistic("SOC", "x");
 
                      // let the subproblem know the accepted iterate
-                     this->constraint_relaxation_strategy.register_accepted_iterate(trial_iterate_soc);
+                     this->constraint_relaxation_strategy.postprocess_accepted_iterate(trial_iterate_soc);
                      trial_iterate_soc.multipliers.lower_bounds = trial_iterate.multipliers.lower_bounds;
                      trial_iterate_soc.multipliers.upper_bounds = trial_iterate.multipliers.upper_bounds;
                      return std::make_tuple(std::move(trial_iterate_soc), direction_soc.norm);

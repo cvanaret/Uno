@@ -30,7 +30,7 @@ public:
    void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) override;
    [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length) override;
-   void register_accepted_iterate(Iterate& iterate) override;
+   void postprocess_accepted_iterate(Iterate& iterate) override;
 
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
    [[nodiscard]] size_t get_number_subproblems_solved() const override;

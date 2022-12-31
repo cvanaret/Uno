@@ -38,7 +38,7 @@ void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(Iterate& iterate
    }
 }
 
-void ConstraintRelaxationStrategy::evaluate_reformulation_functions(const NonlinearProblem& problem, Iterate& iterate) {
+void ConstraintRelaxationStrategy::evaluate_functions(const NonlinearProblem& problem, Iterate& iterate) {
    // evaluate functions of the reformulated problem
    problem.evaluate_objective_gradient(iterate, iterate.reformulation_evaluations.objective_gradient);
    problem.evaluate_constraints(iterate, iterate.reformulation_evaluations.constraints);
@@ -67,7 +67,7 @@ double compute_complementarity_scaling(const NonlinearProblem& problem, const It
    }
 }
 
-void ConstraintRelaxationStrategy::compute_primal_dual_errors(const NonlinearProblem& problem, Iterate& iterate) const {
+void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const NonlinearProblem& problem, Iterate& iterate) const {
    // stationarity error of the reformulated problem
    ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(iterate, iterate.multipliers.constraints, iterate.multipliers.lower_bounds,
          iterate.multipliers.upper_bounds);
