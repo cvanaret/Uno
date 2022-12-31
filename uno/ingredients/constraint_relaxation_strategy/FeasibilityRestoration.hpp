@@ -39,8 +39,8 @@ private:
    const OptimalityProblem optimality_problem;
    l1RelaxedProblem feasibility_problem;
    std::unique_ptr<Subproblem> subproblem;
-   const std::unique_ptr<GlobalizationStrategy> phase_1_strategy;
-   const std::unique_ptr<GlobalizationStrategy> phase_2_strategy;
+   const std::unique_ptr<GlobalizationStrategy> restoration_phase_strategy;
+   const std::unique_ptr<GlobalizationStrategy> optimality_phase_strategy;
    Phase current_phase{Phase::OPTIMALITY};
    // statistics table
    int statistics_restoration_phase_column_order;
