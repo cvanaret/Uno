@@ -24,6 +24,7 @@ private:
    const double decrease_factor;
    const double activity_tolerance;
    const double min_radius;
+   const double radius_reset_threshold;
    const bool use_second_order_correction;
    // statistics table
    int statistics_SOC_column_order;

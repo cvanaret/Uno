@@ -66,12 +66,6 @@ Direction FeasibilityRestoration::solve_optimality_problem(Statistics& statistic
    return direction;
 }
 
-// form and solve the feasibility problem (with an initial point)
-Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point) {
-   this->subproblem->set_initial_point(initial_point);
-   return this->solve_feasibility_problem(statistics, current_iterate);
-}
-
 // form and solve the feasibility problem
 Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) {
    this->subproblem->initialize_feasibility_problem(current_iterate);
@@ -84,6 +78,12 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
    DEBUG << direction << '\n';
    assert(direction.status == SubproblemStatus::OPTIMAL && "The feasibility subproblem was not solved to optimality");
    return direction;
+}
+
+// form and solve the feasibility problem (with an initial point)
+Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point) {
+   this->subproblem->set_initial_point(initial_point);
+   return this->solve_feasibility_problem(statistics, current_iterate);
 }
 
 Direction FeasibilityRestoration::compute_second_order_correction(Iterate& trial_iterate) {
@@ -113,7 +113,7 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
    // possibly go from restoration phase to optimality phase
    else if (this->current_phase == Phase::FEASIBILITY_RESTORATION &&
          ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate, direction, 1.) == 0.) {
-      // evaluate measure of infeasibility ("scaled optimality" quantity in restoration phase definition)
+      // evaluate measure of infeasibility (in restoration phase definition, it corresponds to the "scaled optimality" quantity)
       this->set_scaled_optimality_measure(trial_iterate);
       // if the infeasibility improves upon the best known infeasibility of the globalization strategy
       if (this->optimality_phase_strategy->is_feasibility_iterate_acceptable(trial_iterate.nonlinear_progress.scaled_optimality(1.))) {
@@ -131,10 +131,10 @@ void FeasibilityRestoration::switch_to_feasibility_restoration(Iterate& current_
    DEBUG << "Switching from optimality to restoration phase\n";
    this->current_phase = Phase::FEASIBILITY_RESTORATION;
    this->optimality_phase_strategy->register_current_progress(current_iterate.nonlinear_progress);
-   this->restoration_phase_strategy->reset();
    // refresh the progress measures of the current iterate
    this->set_scaled_optimality_measure(current_iterate);
    this->set_infeasibility_measure(current_iterate);
+   this->restoration_phase_strategy->reset();
    this->restoration_phase_strategy->register_current_progress(current_iterate.nonlinear_progress);
 }
 

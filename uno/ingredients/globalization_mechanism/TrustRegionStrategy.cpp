@@ -14,6 +14,7 @@ TrustRegionStrategy::TrustRegionStrategy(ConstraintRelaxationStrategy& constrain
       decrease_factor(options.get_double("TR_decrease_factor")),
       activity_tolerance(options.get_double("TR_activity_tolerance")),
       min_radius(options.get_double("TR_min_radius")),
+      radius_reset_threshold(options.get_double("TR_radius_reset_threshold")),
       use_second_order_correction(options.get_bool("use_second_order_correction")),
       statistics_SOC_column_order(options.get_int("statistics_SOC_column_order")),
       statistics_TR_radius_column_order(options.get_int("statistics_TR_radius_column_order")) {
@@ -114,6 +115,7 @@ void TrustRegionStrategy::increase_radius(double step_norm) {
    if (step_norm >= this->radius - this->activity_tolerance) {
       this->radius *= this->increase_factor;
    }
+   this->radius = std::max(this->radius, this->radius_reset_threshold);
 }
 
 void TrustRegionStrategy::decrease_radius(double step_norm) {
