@@ -54,13 +54,13 @@ bool FilterStrategy::is_iterate_acceptable(const ProgressMeasures& current_progr
 
    GlobalizationStrategy::check_finiteness(current_progress_measures, 1.);
    GlobalizationStrategy::check_finiteness(trial_progress_measures, 1.);
+   DEBUG << *this->filter << '\n';
 
    bool accept = false;
    // check acceptance
    const bool filter_acceptable = this->filter->accept(trial_progress_measures.infeasibility, trial_optimality_measure);
    if (filter_acceptable) {
       DEBUG << "Filter acceptable\n";
-      DEBUG << *this->filter << '\n';
 
       // check acceptance wrt current x (h,f)
       const bool improves_current_iterate = this->filter->improves_current_iterate(current_progress_measures.infeasibility, current_optimality_measure,

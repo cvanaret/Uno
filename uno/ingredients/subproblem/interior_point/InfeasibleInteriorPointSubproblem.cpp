@@ -41,7 +41,7 @@ InfeasibleInteriorPointSubproblem::InfeasibleInteriorPointSubproblem(size_t max_
       least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")) {
    const double tolerance = options.get_double("tolerance");
    for (size_t i: Range(max_number_variables)) {
-      this->bound_relaxation_factors[i] = tolerance;
+      this->bound_relaxation_factors[i] = 0.;//tolerance;
    }
 }
 
@@ -198,13 +198,13 @@ void InfeasibleInteriorPointSubproblem::relax_variable_bounds(const NonlinearPro
    const double factor = std::pow(machine_epsilon, 0.75);
    for (size_t i: problem.lower_bounded_variables) {
       if (current_iterate.primals[i] - problem.get_variable_lower_bound(i) < machine_epsilon*this->barrier_parameter()) {
-         this->bound_relaxation_factors[i] += factor;
+         //this->bound_relaxation_factors[i] += factor;
          //std::cout << "ADDING RELAX FACTOR FOR LB " << factor << "\n";
       }
    }
    for (size_t i: problem.upper_bounded_variables) {
       if (problem.get_variable_upper_bound(i) - current_iterate.primals[i] < machine_epsilon*this->barrier_parameter()) {
-         this->bound_relaxation_factors[i] += factor;
+         //this->bound_relaxation_factors[i] += factor;
          //std::cout << "ADDING RELAX FACTOR FOR UB\n";
       }
    }
@@ -252,7 +252,7 @@ void InfeasibleInteriorPointSubproblem::initialize_feasibility_problem(Iterate& 
 }
 
 // set the elastic variables of the current iterate
-void InfeasibleInteriorPointSubproblem::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) {
+void InfeasibleInteriorPointSubproblem::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& iterate) {
    // c(x) - p + n = 0
    // analytical expression for p and n:
    // (mu_over_rho - jacobian_coefficient*this->barrier_constraints[j] + std::sqrt(radical))/2.
@@ -261,7 +261,7 @@ void InfeasibleInteriorPointSubproblem::set_elastic_variable_values(const l1Rela
    const double current_barrier_parameter = this->barrier_parameter();
    const auto elastic_setting_function = [&](Iterate& iterate, size_t j, size_t elastic_index, double jacobian_coefficient) {
       // precomputations
-      const double constraint_j = current_iterate.reformulation_evaluations.constraints[j];
+      const double constraint_j = iterate.reformulation_evaluations.constraints[j];
       const double mu_over_rho = current_barrier_parameter; // here, rho = 1
       const double radical = std::pow(constraint_j, 2) + std::pow(mu_over_rho, 2);
       const double sqrt_radical = std::sqrt(radical);
@@ -269,7 +269,7 @@ void InfeasibleInteriorPointSubproblem::set_elastic_variable_values(const l1Rela
       iterate.primals[elastic_index] = (mu_over_rho - jacobian_coefficient * constraint_j + sqrt_radical) / 2.;
       iterate.multipliers.lower_bounds[elastic_index] = current_barrier_parameter/iterate.primals[elastic_index];
    };
-   problem.set_elastic_variable_values(current_iterate, elastic_setting_function);
+   problem.set_elastic_variable_values(iterate, elastic_setting_function);
 }
 
 void InfeasibleInteriorPointSubproblem::set_unscaled_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) {
@@ -277,12 +277,16 @@ void InfeasibleInteriorPointSubproblem::set_unscaled_optimality_measure(const No
    // unscaled optimality measure: barrier terms
    double barrier_terms = 0.;
    for (size_t i: problem.lower_bounded_variables) {
+      //std::cout << "LB: log(" << iterate.primals[i] << " - " << problem.get_variable_lower_bound(i, this->bound_relaxation_factors[i]) << ")\n";
       barrier_terms += std::log(iterate.primals[i] - problem.get_variable_lower_bound(i, this->bound_relaxation_factors[i]));
    }
    for (size_t i: problem.upper_bounded_variables) {
+      //std::cout << "UB: log(" << problem.get_variable_upper_bound(i, this->bound_relaxation_factors[i]) << " - " << iterate.primals[i] << ")\n";
       barrier_terms += std::log(problem.get_variable_upper_bound(i, this->bound_relaxation_factors[i]) - iterate.primals[i]);
    }
    barrier_terms *= -this->barrier_parameter();
+   assert(not std::isnan(barrier_terms) && "The optimality measure is not an number.");
+   //std::cout << "result *= " << -this->barrier_parameter() << '\n';
    iterate.nonlinear_progress.unscaled_optimality = barrier_terms;
 }
 
@@ -312,7 +316,9 @@ double InfeasibleInteriorPointSubproblem::compute_barrier_term_directional_deriv
 }
 
 void InfeasibleInteriorPointSubproblem::update_barrier_parameter(const NonlinearProblem& problem, const Iterate& current_iterate) {
-   this->unscaled_optimality_measure_changed = this->barrier_parameter_update_strategy.update_barrier_parameter(problem, current_iterate);
+    const double barrier_parameter_updated = this->barrier_parameter_update_strategy.update_barrier_parameter(problem, current_iterate);
+    // the barrier parameter may have been changed earlier when entering restoration
+    this->unscaled_optimality_measure_changed = this->unscaled_optimality_measure_changed || barrier_parameter_updated;
 }
 
 bool InfeasibleInteriorPointSubproblem::is_small_direction(const NonlinearProblem& problem, const Iterate& current_iterate, const Direction& direction) const {

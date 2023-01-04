@@ -30,7 +30,7 @@ void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& first_i
    // compute the progress measures of the initial point
    this->set_infeasibility_measure(first_iterate);
    this->set_scaled_optimality_measure(first_iterate);
-   this->subproblem->set_unscaled_optimality_measure(this->current_reformulated_problem(), first_iterate);
+   this->subproblem->set_unscaled_optimality_measure(this->optimality_problem, first_iterate);
 
    // compute the residuals of the initial point
    ConstraintRelaxationStrategy::evaluate_functions(this->optimality_problem, first_iterate);
@@ -100,7 +100,7 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
    // refresh the unscaled optimality measures for the current iterate
    if (this->subproblem->unscaled_optimality_measure_changed) {
       DEBUG << "The subproblem definition changed, the unscaled optimality measure is recomputed\n";
-      this->subproblem->set_unscaled_optimality_measure(this->current_reformulated_problem(), current_iterate);
+      //this->subproblem->set_unscaled_optimality_measure(this->optimality_problem, current_iterate);
       this->restoration_phase_strategy->reset();
       this->optimality_phase_strategy->reset();
       this->subproblem->unscaled_optimality_measure_changed = false;
@@ -124,6 +124,7 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
    // evaluate the progress measures of the trial iterate
    this->set_infeasibility_measure(trial_iterate);
    this->set_scaled_optimality_measure(trial_iterate);
+   this->subproblem->set_unscaled_optimality_measure(this->current_reformulated_problem(), current_iterate);
    this->subproblem->set_unscaled_optimality_measure(this->current_reformulated_problem(), trial_iterate);
 }
 
@@ -132,8 +133,9 @@ void FeasibilityRestoration::switch_to_feasibility_restoration(Iterate& current_
    this->current_phase = Phase::FEASIBILITY_RESTORATION;
    this->optimality_phase_strategy->register_current_progress(current_iterate.nonlinear_progress);
    // refresh the progress measures of the current iterate
-   this->set_scaled_optimality_measure(current_iterate);
    this->set_infeasibility_measure(current_iterate);
+   this->set_scaled_optimality_measure(current_iterate);
+   this->subproblem->set_unscaled_optimality_measure(this->feasibility_problem, current_iterate);
    this->restoration_phase_strategy->reset();
    this->restoration_phase_strategy->register_current_progress(current_iterate.nonlinear_progress);
 }
@@ -146,6 +148,7 @@ void FeasibilityRestoration::switch_to_optimality(Iterate& current_iterate, Iter
    // refresh the progress measures of current iterate
    this->set_scaled_optimality_measure(current_iterate);
    this->set_infeasibility_measure(current_iterate);
+   this->subproblem->set_unscaled_optimality_measure(this->optimality_problem, current_iterate);
 }
 
 bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
