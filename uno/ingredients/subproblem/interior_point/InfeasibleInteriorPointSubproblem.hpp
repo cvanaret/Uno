@@ -30,7 +30,7 @@ public:
    void initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) override;
 
    void initialize_feasibility_problem(Iterate& current_iterate) override;
-   void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& iterate) override;
+   void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
    [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) override;
    [[nodiscard]] Direction compute_second_order_correction(const NonlinearProblem& problem, Iterate& trial_iterate) override;
 

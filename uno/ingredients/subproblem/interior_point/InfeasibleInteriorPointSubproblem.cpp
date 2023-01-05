@@ -65,10 +65,9 @@ inline void InfeasibleInteriorPointSubproblem::initialize(Statistics& statistics
          const Interval bounds = {problem.get_variable_lower_bound(slack_index, this->bound_relaxation_factors[slack_index]),
                problem.get_variable_upper_bound(slack_index, this->bound_relaxation_factors[slack_index])};
          first_iterate.primals[slack_index] = InfeasibleInteriorPointSubproblem::push_variable_to_interior(first_iterate.model_evaluations.constraints[j], bounds);
-         // update the constraint value
-         first_iterate.model_evaluations.constraints[j] -= first_iterate.primals[slack_index];
       });
    }
+   first_iterate.are_constraints_computed = false;
 
    // set the bound multipliers
    for (size_t i: problem.lower_bounded_variables) {
@@ -252,7 +251,7 @@ void InfeasibleInteriorPointSubproblem::initialize_feasibility_problem(Iterate& 
 }
 
 // set the elastic variables of the current iterate
-void InfeasibleInteriorPointSubproblem::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& iterate) {
+void InfeasibleInteriorPointSubproblem::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) {
    // c(x) - p + n = 0
    // analytical expression for p and n:
    // (mu_over_rho - jacobian_coefficient*this->barrier_constraints[j] + std::sqrt(radical))/2.
@@ -269,7 +268,7 @@ void InfeasibleInteriorPointSubproblem::set_elastic_variable_values(const l1Rela
       iterate.primals[elastic_index] = (mu_over_rho - jacobian_coefficient * constraint_j + sqrt_radical) / 2.;
       iterate.multipliers.lower_bounds[elastic_index] = current_barrier_parameter/iterate.primals[elastic_index];
    };
-   problem.set_elastic_variable_values(iterate, elastic_setting_function);
+   problem.set_elastic_variable_values(current_iterate, elastic_setting_function);
 }
 
 void InfeasibleInteriorPointSubproblem::set_unscaled_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) {
@@ -277,16 +276,13 @@ void InfeasibleInteriorPointSubproblem::set_unscaled_optimality_measure(const No
    // unscaled optimality measure: barrier terms
    double barrier_terms = 0.;
    for (size_t i: problem.lower_bounded_variables) {
-      //std::cout << "LB: log(" << iterate.primals[i] << " - " << problem.get_variable_lower_bound(i, this->bound_relaxation_factors[i]) << ")\n";
       barrier_terms += std::log(iterate.primals[i] - problem.get_variable_lower_bound(i, this->bound_relaxation_factors[i]));
    }
    for (size_t i: problem.upper_bounded_variables) {
-      //std::cout << "UB: log(" << problem.get_variable_upper_bound(i, this->bound_relaxation_factors[i]) << " - " << iterate.primals[i] << ")\n";
       barrier_terms += std::log(problem.get_variable_upper_bound(i, this->bound_relaxation_factors[i]) - iterate.primals[i]);
    }
    barrier_terms *= -this->barrier_parameter();
    assert(not std::isnan(barrier_terms) && "The optimality measure is not an number.");
-   //std::cout << "result *= " << -this->barrier_parameter() << '\n';
    iterate.nonlinear_progress.unscaled_optimality = barrier_terms;
 }
 
