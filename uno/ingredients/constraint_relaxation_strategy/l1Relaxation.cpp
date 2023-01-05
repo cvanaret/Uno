@@ -77,7 +77,7 @@ Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Itera
 }
 
 Direction l1Relaxation::solve_subproblem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter) {
-   DEBUG << "penalty parameter: " << current_penalty_parameter << "\n\n";
+   DEBUG << "Solving the subproblem with penalty parameter " << current_penalty_parameter << "\n\n";
    this->relaxed_problem.set_objective_multiplier(current_penalty_parameter);
 
    // solve the subproblem
@@ -134,13 +134,13 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
 
          // stage f: update the penalty parameter
          this->decrease_parameter_aggressively(current_iterate, direction_lowest_violation);
+         DEBUG << "Further aggressively decrease the penalty parameter to " << this->penalty_parameter << '\n';
          if (this->penalty_parameter == 0.) {
             direction = direction_lowest_violation;
             linearized_residual = residual_lowest_violation;
          }
          else {
             if (this->penalty_parameter < current_penalty_parameter) {
-               DEBUG << "Resolving the subproblem (penalty parameter aggressively reduced to " << this->penalty_parameter << ")\n";
                direction = this->solve_subproblem(statistics, current_iterate, this->penalty_parameter);
                linearized_residual = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate,
                      direction, 1.);
@@ -173,7 +173,6 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
                      condition2 = true;
                   }
                   else {
-                     DEBUG << "Resolving the subproblem (penalty parameter reduced to " << this->penalty_parameter << ")\n";
                      direction = this->solve_subproblem(statistics, current_iterate, this->penalty_parameter);
                      linearized_residual = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate,
                            direction, 1.);
