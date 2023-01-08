@@ -6,7 +6,6 @@
 #include "linear_algebra/Vector.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Infinity.hpp"
-#include "tools/Range.hpp"
 
 ASL* generate_asl(std::string file_name) {
    ASL* asl = ASL_alloc(ASL_read_pfgh);

@@ -12,7 +12,6 @@ class Statistics {
 public:
    explicit Statistics(const Options& options);
 
-   static std::map<std::string, std::string> symbols;
    static int int_width;
    static int double_width;
    static int char_width;
@@ -34,6 +33,7 @@ private:
    std::map<std::string, std::string> current_line{};
 
    size_t print_header_every_iterations{};
+   static const std::string& symbol(const std::string& value);
 };
 
 #endif // UNO_STATISTICS_H

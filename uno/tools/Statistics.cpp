@@ -5,24 +5,6 @@
 #include <iomanip>
 #include "Statistics.hpp"
 
-std::map <std::string, std::string>Statistics::symbols = {
-      {"top", "─"},
-      {"top-mid", "┬"},
-      {"top-left", "┌"},
-      {"top-right", "┐"},
-      {"bottom", "─"},
-      {"bottom-mid", "┴"},
-      {"bottom-left", "└"},
-      {"bottom-right", "┘"},
-      {"left", "│"},
-      {"left-mid", "├"},
-      {"mid", "─"},
-      {"mid-mid", "┼"},
-      {"right", "│"},
-      {"right-mid", "┤"},
-      {"middle", "│"}
-};
-
 int Statistics::int_width = 7;
 int Statistics::double_width = 17;
 int Statistics::char_width = 7;
@@ -55,25 +37,25 @@ void Statistics::add_statistic(std::string name, double value) {
 
 void Statistics::print_header(bool first_occurrence) {
    /* line above */
-   std::cout << (first_occurrence ? Statistics::symbols["top-left"] : Statistics::symbols["left-mid"]);
+   std::cout << (first_occurrence ? Statistics::symbol("top-left") : Statistics::symbol("left-mid"));
    int k = 0;
    for (const std::pair<const int, std::string>& element: this->columns) {
       if (0 < k) {
-         std::cout << (first_occurrence ? Statistics::symbols["top-mid"] : Statistics::symbols["mid-mid"]);
+         std::cout << (first_occurrence ? Statistics::symbol("top-mid") : Statistics::symbol("mid-mid"));
       }
       std::string header = element.second;
       for (int j = 0; j < this->widths[header]; j++) {
-         std::cout << Statistics::symbols["top"];
+         std::cout << Statistics::symbol("top");
       }
       k++;
    }
-   std::cout << (first_occurrence ? Statistics::symbols["top-right"] : Statistics::symbols["right-mid"]) << '\n';
+   std::cout << (first_occurrence ? Statistics::symbol("top-right") : Statistics::symbol("right-mid")) << '\n';
    /* headers */
-   std::cout << Statistics::symbols["left"];
+   std::cout << Statistics::symbol("left");
    k = 0;
    for (const std::pair<const int, std::string>& element: this->columns) {
       if (0 < k) {
-         std::cout << Statistics::symbols["middle"];
+         std::cout << Statistics::symbol("middle");
       }
       std::string header = element.second;
       std::cout << " " << header;
@@ -82,32 +64,32 @@ void Statistics::print_header(bool first_occurrence) {
       }
       k++;
    }
-   std::cout << Statistics::symbols["right"] << '\n';
+   std::cout << Statistics::symbol("right") << '\n';
 }
 
 void Statistics::print_current_line() {
    if (this->iteration % this->print_header_every_iterations == 0) {
       this->print_header(this->iteration == 0);
    }
-   std::cout << Statistics::symbols["left-mid"];
+   std::cout << Statistics::symbol("left-mid");
    int k = 0;
    for (const std::pair<const int, std::string>& element: this->columns) {
       if (0 < k) {
-         std::cout << Statistics::symbols["mid-mid"];
+         std::cout << Statistics::symbol("mid-mid");
       }
       std::string header = element.second;
       for (int j = 0; j < this->widths[header]; j++) {
-         std::cout << Statistics::symbols["bottom"];
+         std::cout << Statistics::symbol("bottom");
       }
       k++;
    }
-   std::cout << Statistics::symbols["right-mid"] << '\n';
+   std::cout << Statistics::symbol("right-mid") << '\n';
    /* headers */
-   std::cout << Statistics::symbols["left"];
+   std::cout << Statistics::symbol("left");
    k = 0;
    for (const std::pair<const int, std::string>& element: this->columns) {
       if (0 < k) {
-         std::cout << Statistics::symbols["middle"];
+         std::cout << Statistics::symbol("middle");
       }
       const std::string& header = element.second;
       int size;
@@ -126,26 +108,47 @@ void Statistics::print_current_line() {
       }
       k++;
    }
-   std::cout << Statistics::symbols["right"] << '\n';
+   std::cout << Statistics::symbol("right") << '\n';
    this->iteration++;
 }
 
 void Statistics::print_footer() {
-   std::cout << Statistics::symbols["bottom-left"];
+   std::cout << Statistics::symbol("bottom-left");
    int k = 0;
    for (const std::pair<const int, std::string>& element: this->columns) {
       if (0 < k) {
-         std::cout << Statistics::symbols["bottom-mid"];
+         std::cout << Statistics::symbol("bottom-mid");
       }
       std::string header = element.second;
       for (int j = 0; j < this->widths[header]; j++) {
-         std::cout << Statistics::symbols["bottom"];
+         std::cout << Statistics::symbol("bottom");
       }
       k++;
    }
-   std::cout << Statistics::symbols["bottom-right"] << '\n';
+   std::cout << Statistics::symbol("bottom-right") << '\n';
 }
 
 void Statistics::new_line() {
    this->current_line.clear();
+}
+
+const std::string& Statistics::symbol(const std::string& value) {
+   static std::map<std::string, std::string> symbols = {
+         {"top", "─"},
+         {"top-mid", "┬"},
+         {"top-left", "┌"},
+         {"top-right", "┐"},
+         {"bottom", "─"},
+         {"bottom-mid", "┴"},
+         {"bottom-left", "└"},
+         {"bottom-right", "┘"},
+         {"left", "│"},
+         {"left-mid", "├"},
+         {"mid", "─"},
+         {"mid-mid", "┼"},
+         {"right", "│"},
+         {"right-mid", "┤"},
+         {"middle", "│"}
+   };
+   return symbols[value];
 }
