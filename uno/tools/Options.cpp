@@ -106,6 +106,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["sparse_format"] = "CSC";
       options["TR_radius"] = "10";
       options["enforce_linear_constraints"] = "yes";
+      options["tolerance"] = "1e-6";
    }
    else if (preset_name == "byrd") {
       options["mechanism"] = "LS";
