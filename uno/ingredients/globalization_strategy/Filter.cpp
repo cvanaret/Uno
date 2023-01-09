@@ -71,7 +71,7 @@ void Filter::add(double infeasibility_measure, double optimality_measure) {
    }
 
    // check sufficient space available for new entry (remove last entry, if not)
-   if (this->number_entries > this->capacity - 1) {
+   if (this->number_entries >= this->capacity) {
       this->upper_bound = this->constants.beta * std::max(this->upper_bound, this->infeasibility[this->number_entries - 1]);
       // create space in filter: remove last entry
       this->number_entries--;
@@ -166,7 +166,7 @@ void NonmonotoneFilter::add(double infeasibility_measure, double optimality_meas
    }
 
    // check sufficient space available
-   if (this->number_entries > this->capacity - 1) {
+   if (this->number_entries >= this->capacity) {
       // create space in filter: remove entry 1 (oldest entry)
       this->left_shift(1, 1);
       this->number_entries--;
@@ -197,6 +197,7 @@ size_t NonmonotoneFilter::compute_number_dominated_entries(double infeasibility_
 bool NonmonotoneFilter::accept(double infeasibility_measure, double optimality_measure) {
    // check upper bound first
    if (infeasibility_measure >= this->constants.beta * this->upper_bound) {
+      DEBUG << "Rejected because of filter upper bound\n";
       return false;
    }
 
