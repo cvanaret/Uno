@@ -63,7 +63,6 @@ public:
    void evaluate_constraint_jacobian(const Model& model);
 
    void set_number_variables(size_t number_variables);
-   void reset_evaluations();
 
    friend std::ostream& operator<<(std::ostream& stream, const Iterate& iterate);
 };

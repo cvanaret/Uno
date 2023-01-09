@@ -35,6 +35,12 @@ void Iterate::evaluate_constraints(const Model& model) {
    if (not this->are_constraints_computed) {
       // evaluate the constraints
       model.evaluate_constraints(this->primals, this->model_evaluations.constraints);
+      // check finiteness
+      if (std::any_of(this->model_evaluations.constraints.cbegin(), this->model_evaluations.constraints.cend(), [](double constraint_j) {
+         return constraint_j == INF<double>;
+      })) {
+         throw FunctionEvaluationError();
+      }
       this->are_constraints_computed = true;
       Iterate::number_eval_constraints++;
    }
@@ -68,13 +74,6 @@ void Iterate::set_number_variables(size_t new_number_variables) {
    this->multipliers.upper_bounds.resize(new_number_variables);
    this->model_evaluations.objective_gradient.reserve(new_number_variables);
    this->lagrangian_gradient.resize(new_number_variables);
-}
-
-void Iterate::reset_evaluations() {
-   this->is_objective_computed = false;
-   this->is_objective_gradient_computed = false;
-   this->are_constraints_computed = false;
-   this->is_constraint_jacobian_computed = false;
 }
 
 std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
