@@ -11,7 +11,7 @@ Filter::Filter(const Options& options) :
       capacity(options.get_unsigned_int("filter_capacity")),
       infeasibility(this->capacity),
       optimality(this->capacity),
-      constants({
+      parameters({
          options.get_double("filter_beta"),
          options.get_double("filter_gamma")
       }) {
@@ -72,14 +72,14 @@ void Filter::add(double infeasibility_measure, double optimality_measure) {
 
    // check sufficient space available for new entry (remove last entry, if not)
    if (this->number_entries >= this->capacity) {
-      this->upper_bound = this->constants.beta * std::max(this->upper_bound, this->infeasibility[this->number_entries - 1]);
+      this->upper_bound = this->parameters.beta * std::max(this->upper_bound, this->infeasibility[this->number_entries - 1]);
       // create space in filter: remove last entry
       this->number_entries--;
    }
 
    // add new entry to the filter at position
    start_position = 0;
-   while (start_position < this->number_entries && infeasibility_measure >= this->constants.beta * this->infeasibility[start_position]) {
+   while (start_position < this->number_entries && infeasibility_measure >= this->parameters.beta * this->infeasibility[start_position]) {
       start_position++;
    }
    // shift entries by one to right to make room for new entry
@@ -95,13 +95,13 @@ void Filter::add(double infeasibility_measure, double optimality_measure) {
 // return true if (infeasibility_measure, optimality_measure) acceptable, false otherwise
 bool Filter::accept(double infeasibility_measure, double optimality_measure) {
    // check upper bound first
-   if (this->constants.beta * this->upper_bound <= infeasibility_measure) {
+   if (this->parameters.beta * this->upper_bound <= infeasibility_measure) {
       DEBUG << "Rejected because of filter upper bound\n";
       return false;
    }
 
    size_t position = 0;
-   while (position < this->number_entries && infeasibility_measure >= this->constants.beta * this->infeasibility[position]) {
+   while (position < this->number_entries && infeasibility_measure >= this->parameters.beta * this->infeasibility[position]) {
       position++;
    }
 
@@ -109,7 +109,7 @@ bool Filter::accept(double infeasibility_measure, double optimality_measure) {
    if (position == 0) {
       return true; // acceptable as left-most entry
    }
-   else if (optimality_measure <= this->optimality[position - 1] - this->constants.gamma * infeasibility_measure) {
+   else if (optimality_measure <= this->optimality[position - 1] - this->parameters.gamma * infeasibility_measure) {
       return true; // point acceptable
    }
    DEBUG << "Filter rejection because the optimality measure is not low enough\n";
@@ -119,8 +119,8 @@ bool Filter::accept(double infeasibility_measure, double optimality_measure) {
 //! improves_current_iterate: check acceptable wrt current point
 bool Filter::improves_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure,
       double trial_optimality_measure) {
-   return (trial_optimality_measure <= current_optimality_measure - this->constants.gamma * trial_infeasibility_measure) ||
-          (trial_infeasibility_measure <= this->constants.beta * current_infeasibility_measure);
+   return (trial_optimality_measure <= current_optimality_measure - this->parameters.gamma * trial_infeasibility_measure) ||
+          (trial_infeasibility_measure <= this->parameters.beta * current_infeasibility_measure);
 }
 
 double Filter::compute_actual_reduction(double current_optimality_measure, double /*current_infeasibility_measure*/, double trial_optimality_measure) {
@@ -181,12 +181,12 @@ void NonmonotoneFilter::add(double infeasibility_measure, double optimality_meas
 size_t NonmonotoneFilter::compute_number_dominated_entries(double infeasibility_measure, double optimality_measure) {
    size_t number_dominated_entries = 0;
    for (size_t i: Range(this->number_entries)) {
-      if ((optimality_measure > this->optimality[i] - this->constants.gamma * infeasibility_measure) &&
-          (infeasibility_measure >= this->constants.beta * this->infeasibility[i])) {
+      if ((optimality_measure > this->optimality[i] - this->parameters.gamma * infeasibility_measure) &&
+          (infeasibility_measure >= this->parameters.beta * this->infeasibility[i])) {
          number_dominated_entries++;
       }
-      else if ((optimality_measure >= this->optimality[i] - this->constants.gamma * infeasibility_measure) &&
-               (infeasibility_measure > this->constants.beta * this->infeasibility[i])) {
+      else if ((optimality_measure >= this->optimality[i] - this->parameters.gamma * infeasibility_measure) &&
+               (infeasibility_measure > this->parameters.beta * this->infeasibility[i])) {
          number_dominated_entries++;
       }
    }
@@ -196,7 +196,7 @@ size_t NonmonotoneFilter::compute_number_dominated_entries(double infeasibility_
 //! accept: check if (infeasibility_measure, optimality_measure) acceptable
 bool NonmonotoneFilter::accept(double infeasibility_measure, double optimality_measure) {
    // check upper bound first
-   if (infeasibility_measure >= this->constants.beta * this->upper_bound) {
+   if (infeasibility_measure >= this->parameters.beta * this->upper_bound) {
       DEBUG << "Rejected because of filter upper bound\n";
       return false;
    }
@@ -212,8 +212,8 @@ bool NonmonotoneFilter::improves_current_iterate(double current_infeasibility_me
    // check acceptability wrt current point (non-monotone)
    size_t number_dominated_entries = this->compute_number_dominated_entries(trial_infeasibility_measure, trial_optimality_measure);
 
-   if ((trial_optimality_measure > current_optimality_measure - this->constants.gamma * trial_infeasibility_measure) &&
-       (trial_infeasibility_measure > this->constants.beta * current_infeasibility_measure)) {
+   if ((trial_optimality_measure > current_optimality_measure - this->parameters.gamma * trial_infeasibility_measure) &&
+       (trial_infeasibility_measure > this->parameters.beta * current_infeasibility_measure)) {
       number_dominated_entries++;
    }
    return (number_dominated_entries <= this->max_number_dominated_entries);
@@ -225,7 +225,7 @@ double NonmonotoneFilter::compute_actual_reduction(double current_optimality_mea
    // max penalty among most recent entries
    double max_objective = current_optimality_measure;
    for (size_t i: Range(this->max_number_dominated_entries)) {
-      const double gamma = (current_infeasibility_measure < this->infeasibility[this->number_entries - i]) ? 1 / this->constants.gamma : this->constants.gamma;
+      const double gamma = (current_infeasibility_measure < this->infeasibility[this->number_entries - i]) ? 1 / this->parameters.gamma : this->parameters.gamma;
       const double dash_objective = this->optimality[this->number_entries - i] + gamma * (this->infeasibility[this->number_entries - i] -
                                                                                           current_infeasibility_measure);
       max_objective = std::max(max_objective, dash_objective);

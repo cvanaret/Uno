@@ -9,7 +9,7 @@
 #include "tools/Options.hpp"
 #include "tools/Infinity.hpp"
 
-struct FilterConstants {
+struct FilterParameters {
    double beta; /*!< Margin around filter */
    double gamma; /*!< Margin around filter (sloping margin) */
 };
@@ -37,7 +37,7 @@ protected:
    std::vector<double> infeasibility{}; // infeasibility increases
    std::vector<double> optimality{}; // optimality decreases
    size_t number_entries{0};
-   const FilterConstants constants; /*!< Set of constants */
+   const FilterParameters parameters; /*!< Set of parameters */
 
    void left_shift(size_t start, size_t shift_size);
    void right_shift(size_t start, size_t shift_size);
