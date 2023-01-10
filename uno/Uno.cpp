@@ -118,9 +118,9 @@ TerminationStatus Uno::check_termination(const Model& model, Iterate& current_it
    const bool primal_feasibility = (current_iterate.residuals.infeasibility <= this->tolerance);
    // TODO dual feasibility
 
-   DEBUG << "stationarity: " << stationarity << '\n';
-   DEBUG << "complementarity: " << complementarity << '\n';
-   DEBUG << "primal_feasibility: " << primal_feasibility << '\n';
+   DEBUG << "stationarity: " << std::boolalpha << stationarity << '\n';
+   DEBUG << "complementarity: " << std::boolalpha << complementarity << '\n';
+   DEBUG << "primal_feasibility: " << std::boolalpha << primal_feasibility << "\n\n";
 
    if (stationarity && complementarity) {
       if (primal_feasibility) {
