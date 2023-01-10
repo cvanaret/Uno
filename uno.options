@@ -39,8 +39,8 @@ statistics_stationarity_column_order 105
 # default subproblem (QP|LP|barrier)
 subproblem QP
 
-# default globalization strategy (l1-penalty|filter|nonmonotone-filter)
-strategy filter
+# default globalization strategy (l1-penalty|leyffer-filter-strategy|waechter-filter-strategy)
+strategy leyffer-filter-strategy
 
 # default constraint relaxation strategy (feasibility-restoration|l1-relaxation)
 constraint-relaxation feasibility-restoration
@@ -94,6 +94,10 @@ armijo_tolerance 1e-9
 
 ##### filter options #####
 # filter strategy options
+
+# filter type (standard|nonmonotone)
+filter_type standard
+
 filter_beta 0.999
 filter_gamma 0.001
 filter_delta 0.999
@@ -102,9 +106,6 @@ filter_fact 1.25
 filter_switching_infeasibility_exponent 2
 
 filter_capacity 50
-
-# default filter type (standard|nonmonotone)
-filter_type standard
 
 # nonmonotone filter strategy
 nonmonotone_filter_number_dominated_entries 3

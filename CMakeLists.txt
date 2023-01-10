@@ -32,6 +32,7 @@ file(GLOB UNO_SOURCE_FILES
     uno/Uno.cpp
     uno/ingredients/globalization_mechanism/*.cpp
     uno/ingredients/globalization_strategy/*.cpp
+    uno/ingredients/globalization_strategy/filter/*.cpp
     uno/ingredients/constraint_relaxation_strategy/*.cpp
     uno/ingredients/subproblem/*.cpp
     uno/ingredients/subproblem/active_set/*.cpp

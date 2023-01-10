@@ -4,7 +4,7 @@
 #ifndef UNO_FILTERSTRATEGY_H
 #define UNO_FILTERSTRATEGY_H
 
-#include "GlobalizationStrategy.hpp"
+#include "../GlobalizationStrategy.hpp"
 #include "Filter.hpp"
 #include "tools/Options.hpp"
 #include "tools/Infinity.hpp"
@@ -31,13 +31,11 @@ public:
    explicit FilterStrategy(const Options& options);
 
    void initialize(const Iterate& first_iterate) override;
-   [[nodiscard]] bool is_iterate_acceptable(const ProgressMeasures& current_progress_measures, const ProgressMeasures& trial_progress_measures,
-         const PredictedReduction& predicted_reduction, double objective_multiplier) override;
    [[nodiscard]] bool is_feasibility_iterate_acceptable(double trial_infeasibility_measure) const override;
    void reset() override;
    void register_current_progress(const ProgressMeasures& current_progress_measures) override;
 
-private:
+protected:
    // pointer to allow polymorphism
    const std::unique_ptr<Filter> filter;
    double initial_filter_upper_bound{INF<double>};

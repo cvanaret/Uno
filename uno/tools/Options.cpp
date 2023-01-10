@@ -80,7 +80,8 @@ void find_preset(const std::string& preset_name, Options& options) {
    if (preset_name == "ipopt") {
       options["mechanism"] = "LS";
       options["constraint-relaxation"] = "feasibility-restoration";
-      options["strategy"] = "filter";
+      options["strategy"] = "waechter-filter-strategy";
+      options["filter_type"] = "standard";
       options["subproblem"] = "barrier";
       options["filter_beta"] = "0.99999";
       options["filter_gamma"] = "1e-8";
@@ -100,7 +101,8 @@ void find_preset(const std::string& preset_name, Options& options) {
    else if (preset_name == "filtersqp") {
       options["mechanism"] = "TR";
       options["constraint-relaxation"] = "feasibility-restoration";
-      options["strategy"] = "filter";
+      options["strategy"] = "leyffer-filter-strategy";
+      options["filter_type"] = "standard";
       options["subproblem"] = "QP";
       options["residual_norm"] = "L1";
       options["sparse_format"] = "CSC";
