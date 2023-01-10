@@ -6,7 +6,6 @@
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "BacktrackingLineSearch.hpp"
 #include "tools/Logger.hpp"
-#include "tools/Infinity.hpp"
 
 BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options):
       GlobalizationMechanism(constraint_relaxation_strategy),
