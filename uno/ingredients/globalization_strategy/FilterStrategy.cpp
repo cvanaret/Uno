@@ -71,22 +71,23 @@ bool FilterStrategy::is_iterate_acceptable(const ProgressMeasures& current_progr
                trial_optimality_measure);
          DEBUG << "Actual reduction: " << actual_reduction << '\n';
 
-         // switching condition violated: predicted reduction is not promising
-         if (not this->switching_condition(unconstrained_predicted_reduction, current_progress_measures.infeasibility, this->parameters.delta)) {
+         if (this->switching_condition(unconstrained_predicted_reduction, current_progress_measures.infeasibility, this->parameters.delta)) {
+            // unconstrained Armijo sufficient decrease condition (predicted reduction should be positive)
+            if (this->armijo_sufficient_decrease(unconstrained_predicted_reduction, actual_reduction)) {
+               DEBUG << "Trial iterate was accepted by satisfying Armijo condition\n";
+               accept = true;
+            }
+            else { // switching condition holds, but not Armijo condition
+               this->filter->add(current_progress_measures.infeasibility, current_optimality_measure);
+               DEBUG << "Armijo condition not satisfied, trial iterate rejected\n";
+               DEBUG << "Current iterate was added to the filter\n";
+            }
+         }
+         else { // switching condition violated: predicted reduction is not promising
             this->filter->add(current_progress_measures.infeasibility, current_optimality_measure);
             DEBUG << "Trial iterate was accepted by violating switching condition\n";
             DEBUG << "Current iterate was added to the filter\n";
             accept = true;
-         }
-         // unconstrained Armijo sufficient decrease condition (predicted reduction should be positive)
-         else if (this->armijo_sufficient_decrease(unconstrained_predicted_reduction, actual_reduction)) {
-            DEBUG << "Trial iterate was accepted by satisfying Armijo condition\n";
-            accept = true;
-         }
-         else { // switching condition holds, but not Armijo condition
-            this->filter->add(current_progress_measures.infeasibility, current_optimality_measure);
-            DEBUG << "Armijo condition not satisfied, trial iterate rejected\n";
-            DEBUG << "Current iterate was added to the filter\n";
          }
       }
       else {
