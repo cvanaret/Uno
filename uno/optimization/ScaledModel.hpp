@@ -85,6 +85,12 @@ inline ScaledModel::ScaledModel(const Model& original_model, Iterate& first_iter
    for (size_t i: this->original_model.upper_bounded_variables) {
       this->upper_bounded_variables.push_back(i);
    }
+   for (size_t i: this->original_model.single_lower_bounded_variables) {
+      this->single_lower_bounded_variables.push_back(i);
+   }
+   for (size_t i: this->original_model.single_upper_bounded_variables) {
+      this->single_upper_bounded_variables.push_back(i);
+   }
 }
 
 inline double ScaledModel::get_variable_lower_bound(size_t i) const {

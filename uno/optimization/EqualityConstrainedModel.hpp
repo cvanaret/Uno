@@ -66,22 +66,30 @@ inline EqualityConstrainedModel::EqualityConstrainedModel(std::unique_ptr<Model>
    for (size_t i: this->original_model->upper_bounded_variables) {
       this->upper_bounded_variables.push_back(i);
    }
+   for (size_t i: this->original_model->single_lower_bounded_variables) {
+      this->single_lower_bounded_variables.push_back(i);
+   }
+   for (size_t i: this->original_model->single_upper_bounded_variables) {
+      this->single_upper_bounded_variables.push_back(i);
+   }
+   // register the inequality constraint of each slack
    this->original_model->inequality_constraints.for_each([&](size_t j, size_t i) {
       const size_t slack_index = i + this->original_model->number_variables;
+      this->inequality_constraint_of_slack[i] = j;
+      this->slack_of_inequality_constraint[j] = i;
+      this->slacks.insert(j, slack_index);
       if (is_finite(this->original_model->get_constraint_lower_bound(j))) {
          this->lower_bounded_variables.push_back(slack_index);
+         if (not is_finite(this->original_model->get_constraint_upper_bound(j))) {
+            this->single_lower_bounded_variables.push_back(slack_index);
+         }
       }
       if (is_finite(this->original_model->get_constraint_upper_bound(j))) {
          this->upper_bounded_variables.push_back(slack_index);
+         if (not is_finite(this->original_model->get_constraint_lower_bound(j))) {
+            this->single_upper_bounded_variables.push_back(slack_index);
+         }
       }
-   });
-
-   // register the inequality constraint of each slack
-   this->original_model->inequality_constraints.for_each([&](size_t j, size_t i) {
-      this->inequality_constraint_of_slack[i] = j;
-      this->slack_of_inequality_constraint[j] = i;
-      const size_t slack_index = this->original_model->number_variables + this->slack_of_inequality_constraint[j];
-      this->slacks.insert(j, slack_index);
    });
 }
 

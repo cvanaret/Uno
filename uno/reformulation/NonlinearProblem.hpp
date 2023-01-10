@@ -33,6 +33,8 @@ public:
    // lists of bounded variables
    std::vector<size_t> lower_bounded_variables{}; // indices of the lower-bounded variables
    std::vector<size_t> upper_bounded_variables{}; // indices of the upper-bounded variables
+   std::vector<size_t> single_lower_bounded_variables{}; // indices of the single lower-bounded variables
+   std::vector<size_t> single_upper_bounded_variables{}; // indices of the single upper-bounded variables
 
    // function evaluations
    [[nodiscard]] virtual double get_objective_multiplier() const = 0;

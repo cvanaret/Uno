@@ -100,7 +100,6 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
    // refresh the unscaled optimality measures for the current iterate
    if (this->subproblem->unscaled_optimality_measure_changed) {
       DEBUG << "The subproblem definition changed, the unscaled optimality measure is recomputed\n";
-      //this->subproblem->set_unscaled_optimality_measure(this->optimality_problem, current_iterate);
       this->restoration_phase_strategy->reset();
       this->optimality_phase_strategy->reset();
       this->subproblem->unscaled_optimality_measure_changed = false;

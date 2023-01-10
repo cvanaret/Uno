@@ -79,9 +79,15 @@ void AMPLModel::generate_variables() {
       const BoundType status = this->get_variable_bound_type(i);
       if (status == BOUNDED_LOWER || status == BOUNDED_BOTH_SIDES) {
          this->lower_bounded_variables.push_back(i);
+         if (status == BOUNDED_LOWER) {
+            this->single_lower_bounded_variables.push_back(i);
+         }
       }
       if (status == BOUNDED_UPPER || status == BOUNDED_BOTH_SIDES) {
          this->upper_bounded_variables.push_back(i);
+         if (status == BOUNDED_UPPER) {
+            this->single_upper_bounded_variables.push_back(i);
+         }
       }
    }
 }

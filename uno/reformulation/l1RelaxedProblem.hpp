@@ -74,12 +74,18 @@ inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_m
    for (size_t i: this->model.upper_bounded_variables) {
       this->upper_bounded_variables.push_back(i);
    }
-   this->elastic_variables.positive.for_each_value([&](size_t elastic_index) {
+   for (size_t i: this->model.single_lower_bounded_variables) {
+      this->single_lower_bounded_variables.push_back(i);
+   }
+   for (size_t i: this->model.single_upper_bounded_variables) {
+      this->single_upper_bounded_variables.push_back(i);
+   }
+   const auto add_nonnegative_elastic = [&](size_t elastic_index) {
       this->lower_bounded_variables.push_back(elastic_index);
-   });
-   this->elastic_variables.negative.for_each_value([&](size_t elastic_index) {
-      this->lower_bounded_variables.push_back(elastic_index);
-   });
+      this->single_lower_bounded_variables.push_back(elastic_index);
+   };
+   this->elastic_variables.positive.for_each_value(add_nonnegative_elastic);
+   this->elastic_variables.negative.for_each_value(add_nonnegative_elastic);
    this->violated_constraints.reserve(this->number_constraints);
 }
 

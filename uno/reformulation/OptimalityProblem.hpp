@@ -44,6 +44,12 @@ inline OptimalityProblem::OptimalityProblem(const Model& model):
    for (size_t i: this->model.upper_bounded_variables) {
       this->upper_bounded_variables.push_back(i);
    }
+   for (size_t i: this->model.single_lower_bounded_variables) {
+      this->single_lower_bounded_variables.push_back(i);
+   }
+   for (size_t i: this->model.single_upper_bounded_variables) {
+      this->single_upper_bounded_variables.push_back(i);
+   }
 }
 
 inline double OptimalityProblem::get_objective_multiplier() const {
