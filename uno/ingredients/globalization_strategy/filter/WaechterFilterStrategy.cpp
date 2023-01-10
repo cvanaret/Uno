@@ -65,7 +65,9 @@ bool WaechterFilterStrategy::is_iterate_acceptable(const ProgressMeasures& curre
          else {
             DEBUG << "Not acceptable wrt current point\n";
          }
-         this->filter->add(current_progress_measures.infeasibility, current_optimality_measure);
+         if (not switching) {
+            this->filter->add(current_progress_measures.infeasibility, current_optimality_measure);
+         }
       }
    }
    else {
