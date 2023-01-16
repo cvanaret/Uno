@@ -45,7 +45,7 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
    std::vector<double> solution(matrix.dimension);
    solver.factorize(matrix);
    solver.solve(matrix, rhs, solution);
-   DEBUG << "Solution: "; print_vector(DEBUG, solution, 0, matrix.dimension); DEBUG << '\n';
+   DEBUG << "Solution: "; print_vector(DEBUG, solution, 0, matrix.dimension);
 
    // if least-square multipliers too big, discard them. Otherwise, keep them
    if (norm_inf(solution, Range(model.number_variables, model.number_variables + model.number_constraints)) <= multiplier_max_norm) {
@@ -53,6 +53,10 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
          multipliers[j] = solution[model.number_variables + j];
       }
    }
+   else {
+      DEBUG << "Ignoring the least-square multipliers\n";
+   }
+   DEBUG << '\n';
 }
 
 size_t count_infeasible_linear_constraints(const Model& model, const std::vector<double>& constraint_values) {

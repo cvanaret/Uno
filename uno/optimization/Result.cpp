@@ -15,13 +15,13 @@ void Result::print(bool print_primal_dual_solution) const {
       std::cout << "Converged with infeasible KKT point\n";
    }
    else if (this->status == FEASIBLE_SMALL_STEP) {
-      std::cout << "Converged with feasible small step\n";
+      std::cout << "Terminated with feasible small step\n";
    }
    else if (this->status == INFEASIBLE_SMALL_STEP) {
-      std::cout << "Converged with infeasible small step\n";
+      std::cout << "Terminated with infeasible small step\n";
    }
-   else { // NOT_OPTIMAL
-      std::cout << "Irregular termination\n";
+   else {
+      std::cout << "Failed with error\n";
    }
 
    std::cout << "Objective value:\t\t" << this->solution.model_evaluations.objective << '\n';
@@ -35,16 +35,12 @@ void Result::print(bool print_primal_dual_solution) const {
    std::cout << "Unscaled optimality measure:\t" << this->solution.nonlinear_progress.unscaled_optimality << '\n';
 
    if (print_primal_dual_solution) {
-      std::cout << "Primal solution:\t\t";
-      print_vector(std::cout, this->solution.primals);
-      std::cout << "Lower bound multipliers:\t";
-      print_vector(std::cout, this->solution.multipliers.lower_bounds);
-      std::cout << "Upper bound multipliers:\t";
-      print_vector(std::cout, this->solution.multipliers.upper_bounds);
+      std::cout << "Primal solution:\t\t"; print_vector(std::cout, this->solution.primals);
       if (not this->solution.multipliers.constraints.empty()) {
-         std::cout << "Constraint multipliers:\t\t";
-         print_vector(std::cout, this->solution.multipliers.constraints);
+         std::cout << "Constraint multipliers:\t\t"; print_vector(std::cout, this->solution.multipliers.constraints);
       }
+      std::cout << "Lower bound multipliers:\t"; print_vector(std::cout, this->solution.multipliers.lower_bounds);
+      std::cout << "Upper bound multipliers:\t"; print_vector(std::cout, this->solution.multipliers.upper_bounds);
       std::cout << "Objective multiplier:\t\t" << this->solution.multipliers.objective << '\n';
    }
 
