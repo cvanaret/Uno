@@ -92,6 +92,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["armijo_decrease_fraction"] = "1e-8";
       options["LS_backtracking_ratio"] = "0.5";
       options["barrier_tau_min"] = "0.99";
+      options["barrier_damping_factor"] = "1e-5";
       options["use_second_order_correction"] = "yes";
       options["residual_norm"] = "INF";
       options["scale_functions"] = "yes";

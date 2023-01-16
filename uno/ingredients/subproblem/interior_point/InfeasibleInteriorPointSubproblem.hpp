@@ -51,6 +51,8 @@ private:
    const double default_multiplier;
    const InteriorPointParameters parameters;
    std::vector<double> bound_relaxation_factors;
+   const double least_square_multiplier_max_norm;
+   const double damping_factor; // (Section 3.7 in IPOPT paper)
 
    // preallocated vectors for bound multiplier displacements
    std::vector<double> lower_delta_z{};
@@ -60,8 +62,6 @@ private:
 
    // statistics table
    int statistics_barrier_parameter_column_order;
-
-   const double least_square_multiplier_max_norm;
 
    [[nodiscard]] double barrier_parameter() const;
    void relax_variable_bounds(const NonlinearProblem& problem, const Iterate& current_iterate);
@@ -79,6 +79,7 @@ private:
    void generate_augmented_rhs(const NonlinearProblem& problem, const Iterate& current_iterate);
    void generate_primal_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate);
    void compute_bound_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate);
+   void compute_least_square_multipliers(const NonlinearProblem& problem, Iterate& iterate);
    void print_subproblem_solution(const NonlinearProblem& problem) const;
 };
 
