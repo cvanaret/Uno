@@ -26,6 +26,7 @@ public:
    [[nodiscard]] double get_smallest_infeasibility() const;
    virtual void add(double infeasibility_measure, double optimality_measure);
    virtual bool accept(double infeasibility_measure, double optimality_measure);
+   [[nodiscard]] bool smaller_than_upper_bound(double infeasibility_measure) const;
    virtual bool improves_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure,
          double trial_optimality_measure);
    virtual double compute_actual_reduction(double current_optimality_measure, double current_infeasibility_measure, double trial_optimality_measure);
@@ -41,27 +42,6 @@ protected:
 
    void left_shift(size_t start, size_t shift_size);
    void right_shift(size_t start, size_t shift_size);
-};
-
-class NonmonotoneFilter : public Filter {
-public:
-   explicit NonmonotoneFilter(const Options& options);
-
-   void add(double infeasibility_measure, double optimality_measure) override;
-   bool accept(double infeasibility_measure, double optimality_measure) override;
-   bool improves_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure,
-         double trial_optimality_measure) override;
-   double compute_actual_reduction(double current_optimality_measure, double current_infeasibility_measure, double trial_optimality_measure) override;
-
-protected:
-   const size_t max_number_dominated_entries; /*!< Memory of filter */
-
-   size_t compute_number_dominated_entries(double infeasibility_measure, double optimality_measure);
-};
-
-class FilterFactory {
-public:
-   static std::unique_ptr<Filter> create(const Options& options);
 };
 
 #endif // UNO_FILTER_H

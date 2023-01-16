@@ -46,7 +46,7 @@ private:
    int statistics_restoration_phase_column_order;
 
    [[nodiscard]] const NonlinearProblem& current_reformulated_problem() const;
-   [[nodiscard]] GlobalizationStrategy& get_current_globalization_strategy() const;
+   [[nodiscard]] GlobalizationStrategy& current_globalization_strategy() const;
    [[nodiscard]] Direction solve_optimality_problem(Statistics& statistics, Iterate& current_iterate);
    void switch_to_feasibility_restoration(Iterate& current_iterate);
    void switch_to_optimality(Iterate& current_iterate, Iterate& trial_iterate);

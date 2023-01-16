@@ -23,7 +23,7 @@ public:
    virtual void initialize(const Iterate& first_iterate) = 0;
    [[nodiscard]] virtual bool is_iterate_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
          const PredictedReduction& predicted_reduction, double objective_multiplier) = 0;
-   [[nodiscard]] virtual bool is_feasibility_iterate_acceptable(double trial_infeasibility_measure) const = 0;
+   [[nodiscard]] virtual bool is_infeasibility_acceptable(double infeasibility_measure) const = 0;
 
    virtual void reset() = 0;
    virtual void register_current_progress(const ProgressMeasures& current_progress) = 0;

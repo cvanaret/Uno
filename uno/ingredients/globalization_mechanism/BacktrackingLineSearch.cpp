@@ -36,6 +36,7 @@ Direction BacktrackingLineSearch::compute_direction(Statistics& statistics, Iter
    }
    catch (const UnstableRegularization&) {
       this->solving_feasibility_problem = true;
+      DEBUG << "Unstable regularization: switching to solving the feasibility problem\n";
       return this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate);
    }
 }

@@ -3,8 +3,8 @@
 
 #include "GlobalizationStrategyFactory.hpp"
 #include "MeritFunction.hpp"
-#include "filter/LeyfferFilterStrategy.hpp"
-#include "filter/WaechterFilterStrategy.hpp"
+#include "filter_strategy/LeyfferFilterStrategy.hpp"
+#include "filter_strategy/WaechterFilterStrategy.hpp"
 
 std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& strategy_type, const Options& options) {
    if (strategy_type == "merit") {

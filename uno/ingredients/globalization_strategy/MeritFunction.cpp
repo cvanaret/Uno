@@ -46,7 +46,7 @@ bool MeritFunction::is_iterate_acceptable(const ProgressMeasures& current_progre
    return accept;
 }
 
-bool MeritFunction::is_feasibility_iterate_acceptable(double trial_infeasibility_measure) const {
+bool MeritFunction::is_infeasibility_acceptable(double infeasibility_measure) const {
    // accept if the infeasibility measure improves upon the smallest known infeasibility
-   return (trial_infeasibility_measure < this->smallest_known_infeasibility);
+   return (infeasibility_measure < this->smallest_known_infeasibility);
 }

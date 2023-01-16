@@ -5,7 +5,7 @@
 #define UNO_FILTERSTRATEGY_H
 
 #include "../GlobalizationStrategy.hpp"
-#include "Filter.hpp"
+#include "filter/Filter.hpp"
 #include "tools/Options.hpp"
 #include "tools/Infinity.hpp"
 
@@ -31,7 +31,7 @@ public:
    explicit FilterStrategy(const Options& options);
 
    void initialize(const Iterate& first_iterate) override;
-   [[nodiscard]] bool is_feasibility_iterate_acceptable(double trial_infeasibility_measure) const override;
+   [[nodiscard]] bool is_infeasibility_acceptable(double infeasibility_measure) const override;
    void reset() override;
    void register_current_progress(const ProgressMeasures& current_progress_measures) override;
 

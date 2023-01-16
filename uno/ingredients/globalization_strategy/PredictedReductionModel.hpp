@@ -16,12 +16,6 @@ struct PredictedReductionModel {
    }
 };
 
-struct PredictedReductionModels {
-   PredictedReductionModel infeasibility;
-   PredictedReductionModel scaled_optimality;
-   PredictedReductionModel unscaled_optimality;
-};
-
 struct PredictedReduction {
    double infeasibility;
    std::function<double(double objective_multiplier)> scaled_optimality;

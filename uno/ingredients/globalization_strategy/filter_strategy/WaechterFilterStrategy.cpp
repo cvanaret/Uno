@@ -36,7 +36,7 @@ bool WaechterFilterStrategy::is_iterate_acceptable(const ProgressMeasures& curre
       DEBUG << "Filter acceptable\n";
       // compute actual reduction (and protect against roundoff errors)
       static double machine_epsilon = std::numeric_limits<double>::epsilon();
-      double actual_reduction = this->filter->compute_actual_reduction(current_optimality_measure, current_progress_measures.infeasibility,
+      const double actual_reduction = this->filter->compute_actual_reduction(current_optimality_measure, current_progress_measures.infeasibility,
             trial_optimality_measure) + 10. * machine_epsilon * std::abs(current_optimality_measure);
       DEBUG << "Actual reduction: " << actual_reduction << '\n';
 
@@ -55,7 +55,7 @@ bool WaechterFilterStrategy::is_iterate_acceptable(const ProgressMeasures& curre
             this->filter->add(current_progress_measures.infeasibility, current_optimality_measure);
          }
       }
-      if (not small_infeasibility or not switching) {
+      else {
          DEBUG << "Switching condition violated\n";
          if (this->filter->improves_current_iterate(current_progress_measures.infeasibility, current_optimality_measure,
                trial_progress_measures.infeasibility, trial_optimality_measure)) {
@@ -65,9 +65,9 @@ bool WaechterFilterStrategy::is_iterate_acceptable(const ProgressMeasures& curre
          else {
             DEBUG << "Not acceptable wrt current point\n";
          }
-         if (not switching) {
-            this->filter->add(current_progress_measures.infeasibility, current_optimality_measure);
-         }
+      }
+      if (not switching) {
+         this->filter->add(current_progress_measures.infeasibility, current_optimality_measure);
       }
    }
    else {

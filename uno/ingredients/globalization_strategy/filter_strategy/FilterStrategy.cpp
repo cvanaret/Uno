@@ -3,7 +3,7 @@
 
 #include <cmath>
 #include "FilterStrategy.hpp"
-#include "tools/Logger.hpp"
+#include "filter/FilterFactory.hpp"
 
 FilterStrategy::FilterStrategy(const Options& options) :
       GlobalizationStrategy(options),
@@ -35,13 +35,13 @@ void FilterStrategy::register_current_progress(const ProgressMeasures& current_p
    this->filter->add(current_progress_measures.infeasibility, current_optimality_measure);
 }
 
-bool FilterStrategy::is_feasibility_iterate_acceptable(double trial_infeasibility_measure) const {
-   if (this->filter->is_empty()) {
-      return true;
-   }
-   else { // filter not empty
+bool FilterStrategy::is_infeasibility_acceptable(double infeasibility_measure) const {
+   if (not this->filter->is_empty()) {
       // accept if the infeasibility measure improves upon the smallest filter infeasibility
-      return (trial_infeasibility_measure < this->filter->get_smallest_infeasibility());
+      return (infeasibility_measure < this->filter->get_smallest_infeasibility());
+   }
+   else { // filter empty
+      return this->filter->smaller_than_upper_bound(infeasibility_measure);
    }
 }
 

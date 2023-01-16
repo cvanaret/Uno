@@ -70,6 +70,9 @@ Direction FeasibilityRestoration::solve_optimality_problem(Statistics& statistic
 Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) {
    this->subproblem->initialize_feasibility_problem(current_iterate);
    this->subproblem->set_elastic_variable_values(this->feasibility_problem, current_iterate);
+   if (this->current_phase == Phase::OPTIMALITY) {
+      this->switch_to_feasibility_restoration(current_iterate);
+   }
 
    DEBUG << "Solving the feasibility subproblem\n";
    Direction direction = this->subproblem->solve(statistics, this->feasibility_problem, current_iterate);
@@ -105,17 +108,13 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
       this->subproblem->unscaled_optimality_measure_changed = false;
    }
 
-   // possibly go from optimality phase to restoration phase
-   if (this->current_phase == Phase::OPTIMALITY && direction.objective_multiplier == 0.) {
-      this->switch_to_feasibility_restoration(current_iterate);
-   }
    // possibly go from restoration phase to optimality phase
-   else if (this->current_phase == Phase::FEASIBILITY_RESTORATION &&
+   if (this->current_phase == Phase::FEASIBILITY_RESTORATION &&
          ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate, direction, 1.) == 0.) {
       // evaluate measure of infeasibility (in restoration phase definition, it corresponds to the "scaled optimality" quantity)
       this->set_scaled_optimality_measure(trial_iterate);
       // if the infeasibility improves upon the best known infeasibility of the globalization strategy
-      if (this->optimality_phase_strategy->is_feasibility_iterate_acceptable(trial_iterate.nonlinear_progress.scaled_optimality(1.))) {
+      if (this->optimality_phase_strategy->is_infeasibility_acceptable(trial_iterate.nonlinear_progress.scaled_optimality(1.))) {
          this->switch_to_optimality(current_iterate, trial_iterate);
       }
    }
@@ -170,7 +169,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
                   step_length)
       };
       // invoke the globalization strategy for acceptance
-      GlobalizationStrategy& current_phase_strategy = this->get_current_globalization_strategy();
+      GlobalizationStrategy& current_phase_strategy = this->current_globalization_strategy();
       accept = current_phase_strategy.is_iterate_acceptable(current_iterate.nonlinear_progress, trial_iterate.nonlinear_progress,
             predicted_reduction, this->current_reformulated_problem().get_objective_multiplier());
    }
@@ -191,7 +190,7 @@ const NonlinearProblem& FeasibilityRestoration::current_reformulated_problem() c
    }
 }
 
-GlobalizationStrategy& FeasibilityRestoration::get_current_globalization_strategy() const {
+GlobalizationStrategy& FeasibilityRestoration::current_globalization_strategy() const {
    return (this->current_phase == Phase::OPTIMALITY) ? *this->optimality_phase_strategy : *this->restoration_phase_strategy;
 }
 
