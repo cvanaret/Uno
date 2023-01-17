@@ -18,7 +18,7 @@ FilterStrategy::FilterStrategy(const Options& options) :
 
 void FilterStrategy::initialize(const Iterate& first_iterate) {
    // set the filter upper bound
-   double upper_bound = std::max(this->parameters.upper_bound, this->parameters.infeasibility_fraction * first_iterate.nonlinear_progress.infeasibility);
+   double upper_bound = std::max(this->parameters.upper_bound, this->parameters.infeasibility_fraction * first_iterate.progress.infeasibility);
    this->filter->upper_bound = upper_bound;
    this->initial_filter_upper_bound = upper_bound;
 }

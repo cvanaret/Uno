@@ -114,7 +114,7 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
       // evaluate measure of infeasibility (in restoration phase definition, it corresponds to the "scaled optimality" quantity)
       this->set_scaled_optimality_measure(trial_iterate);
       // if the infeasibility improves upon the best known infeasibility of the globalization strategy
-      if (this->optimality_phase_strategy->is_infeasibility_acceptable(trial_iterate.nonlinear_progress.scaled_optimality(1.))) {
+      if (this->optimality_phase_strategy->is_infeasibility_acceptable(trial_iterate.progress.scaled_optimality(1.))) {
          this->switch_to_optimality(current_iterate, trial_iterate);
       }
    }
@@ -129,13 +129,13 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
 void FeasibilityRestoration::switch_to_feasibility_restoration(Iterate& current_iterate) {
    DEBUG << "Switching from optimality to restoration phase\n";
    this->current_phase = Phase::FEASIBILITY_RESTORATION;
-   this->optimality_phase_strategy->register_current_progress(current_iterate.nonlinear_progress);
+   this->optimality_phase_strategy->register_current_progress(current_iterate.progress);
    // refresh the progress measures of the current iterate
    this->set_infeasibility_measure(current_iterate);
    this->set_scaled_optimality_measure(current_iterate);
    this->subproblem->set_unscaled_optimality_measure(this->feasibility_problem, current_iterate);
    this->restoration_phase_strategy->reset();
-   this->restoration_phase_strategy->register_current_progress(current_iterate.nonlinear_progress);
+   this->restoration_phase_strategy->register_current_progress(current_iterate.progress);
 }
 
 void FeasibilityRestoration::switch_to_optimality(Iterate& current_iterate, Iterate& trial_iterate) {
@@ -170,7 +170,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
       };
       // invoke the globalization strategy for acceptance
       GlobalizationStrategy& current_phase_strategy = this->current_globalization_strategy();
-      accept = current_phase_strategy.is_iterate_acceptable(current_iterate.nonlinear_progress, trial_iterate.nonlinear_progress,
+      accept = current_phase_strategy.is_iterate_acceptable(current_iterate.progress, trial_iterate.progress,
             predicted_reduction, this->current_reformulated_problem().get_objective_multiplier());
    }
    if (accept) {
@@ -202,11 +202,11 @@ void FeasibilityRestoration::set_infeasibility_measure(Iterate& iterate) {
    if (this->current_phase == Phase::OPTIMALITY) {
       // constraint violation
       iterate.evaluate_constraints(this->original_model);
-      iterate.nonlinear_progress.infeasibility = this->original_model.compute_constraint_violation(iterate.model_evaluations.constraints, L1_NORM);
+      iterate.progress.infeasibility = this->original_model.compute_constraint_violation(iterate.model_evaluations.constraints, L1_NORM);
    }
    else {
       // 0
-      iterate.nonlinear_progress.infeasibility = 0.;
+      iterate.progress.infeasibility = 0.;
    }
 }
 
@@ -231,7 +231,7 @@ void FeasibilityRestoration::set_scaled_optimality_measure(Iterate& iterate) {
       // scaled objective
       iterate.evaluate_objective(this->original_model);
       const double objective = iterate.model_evaluations.objective;
-      iterate.nonlinear_progress.scaled_optimality = [=](double objective_multiplier) {
+      iterate.progress.scaled_optimality = [=](double objective_multiplier) {
          return objective_multiplier*objective;
       };
    }
@@ -239,7 +239,7 @@ void FeasibilityRestoration::set_scaled_optimality_measure(Iterate& iterate) {
       // constraint violation
       iterate.evaluate_constraints(this->original_model);
       const double constraint_violation = this->original_model.compute_constraint_violation(iterate.model_evaluations.constraints, L1_NORM);
-      iterate.nonlinear_progress.scaled_optimality = [=](double /*objective_multiplier*/) {
+      iterate.progress.scaled_optimality = [=](double /*objective_multiplier*/) {
          return constraint_violation;
       };
    }

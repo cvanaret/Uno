@@ -59,9 +59,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
          // assemble the trial iterate by going a fraction along the direction
          Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, this->step_length);
          try {
-            const bool is_acceptable = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate,
-                  direction, this->step_length);
-            if (is_acceptable) {
+            if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, this->step_length)) {
                this->total_number_iterations += this->number_iterations;
                this->constraint_relaxation_strategy.postprocess_accepted_iterate(trial_iterate);
                this->set_statistics(statistics, direction);
@@ -71,7 +69,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
             }
             // (optional) second-order correction
             else if (this->use_second_order_correction && this->number_iterations == 1 && not this->solving_feasibility_problem &&
-                  trial_iterate.nonlinear_progress.infeasibility >= current_iterate.nonlinear_progress.infeasibility) {
+                     trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility) {
                // if full step is rejected, compute a (temporary) SOC direction
                Direction direction_soc = this->constraint_relaxation_strategy.compute_second_order_correction(trial_iterate);
                if (direction_soc.status == SubproblemStatus::INFEASIBLE) {
@@ -82,9 +80,8 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
                else {
                   // assemble the (temporary) SOC trial iterate
                   Iterate trial_iterate_soc = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction_soc, this->step_length);
-                  const bool is_SOC_acceptable = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate,
-                        trial_iterate_soc, direction_soc, this->step_length);
-                  if (is_SOC_acceptable) {
+                  if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate_soc, direction_soc,
+                        this->step_length)) {
                      DEBUG << "Trial SOC step accepted\n";
                      this->set_statistics(statistics, direction_soc);
                      statistics.add_statistic("SOC", "x");

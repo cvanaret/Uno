@@ -55,7 +55,7 @@ public:
    std::vector<double> lagrangian_gradient;
 
    // measures of progress (infeasibility, scaled optimality, unscaled optimality)
-   ProgressMeasures nonlinear_progress{INF<double>, {}, INF<double>};
+   ProgressMeasures progress{INF<double>, {}, INF<double>};
 
    void evaluate_objective(const Model& model);
    void evaluate_constraints(const Model& model);

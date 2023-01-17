@@ -293,7 +293,7 @@ void InfeasibleInteriorPointSubproblem::set_unscaled_optimality_measure(const No
    }
    barrier_terms *= this->barrier_parameter();
    assert(not std::isnan(barrier_terms) && "The optimality measure is not an number.");
-   iterate.nonlinear_progress.unscaled_optimality = barrier_terms;
+   iterate.progress.unscaled_optimality = barrier_terms;
 }
 
 double InfeasibleInteriorPointSubproblem::generate_predicted_unscaled_optimality_reduction_model(const NonlinearProblem& problem,

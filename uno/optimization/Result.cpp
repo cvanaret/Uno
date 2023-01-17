@@ -30,9 +30,9 @@ void Result::print(bool print_primal_dual_solution) const {
    std::cout << "Stationarity error:\t\t" << this->solution.residuals.stationarity << '\n';
    std::cout << "Complementarity error:\t\t" << this->solution.residuals.complementarity << '\n';
 
-   std::cout << "Infeasibility measure:\t\t" << this->solution.nonlinear_progress.infeasibility << '\n';
-   std::cout << "Scaled optimality measure:\t" << this->solution.nonlinear_progress.scaled_optimality(1.) << '\n';
-   std::cout << "Unscaled optimality measure:\t" << this->solution.nonlinear_progress.unscaled_optimality << '\n';
+   std::cout << "Infeasibility measure:\t\t" << this->solution.progress.infeasibility << '\n';
+   std::cout << "Scaled optimality measure:\t" << this->solution.progress.scaled_optimality(1.) << '\n';
+   std::cout << "Unscaled optimality measure:\t" << this->solution.progress.unscaled_optimality << '\n';
 
    if (print_primal_dual_solution) {
       std::cout << "Primal solution:\t\t"; print_vector(std::cout, this->solution.primals);

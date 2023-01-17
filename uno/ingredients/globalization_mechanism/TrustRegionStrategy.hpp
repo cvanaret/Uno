@@ -23,13 +23,14 @@ private:
    const double increase_factor;
    const double decrease_factor;
    const double activity_tolerance;
-   const double min_radius;
+   const double minimum_radius;
    const double radius_reset_threshold;
    const bool use_second_order_correction;
    // statistics table
    int statistics_SOC_column_order;
    int statistics_TR_radius_column_order;
 
+   Iterate assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction);
    void increase_radius(double step_norm);
    void decrease_radius(double step_norm);
    void decrease_radius();

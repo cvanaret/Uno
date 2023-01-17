@@ -258,7 +258,7 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
             this->subproblem->generate_predicted_unscaled_optimality_reduction_model(this->relaxed_problem, current_iterate, direction, step_length)
       };
       // invoke the globalization strategy for acceptance
-      accept = this->globalization_strategy->is_iterate_acceptable(current_iterate.nonlinear_progress, trial_iterate.nonlinear_progress,
+      accept = this->globalization_strategy->is_iterate_acceptable(current_iterate.progress, trial_iterate.progress,
             predicted_reduction, this->penalty_parameter);
    }
    if (accept) {
@@ -273,11 +273,11 @@ void l1Relaxation::set_infeasibility_measure(Iterate& iterate) {
    if (0. < this->penalty_parameter) {
       // constraint violation
       iterate.evaluate_constraints(this->original_model);
-      iterate.nonlinear_progress.infeasibility = this->original_model.compute_constraint_violation(iterate.model_evaluations.constraints, L1_NORM);
+      iterate.progress.infeasibility = this->original_model.compute_constraint_violation(iterate.model_evaluations.constraints, L1_NORM);
    }
    else {
       // 0
-      iterate.nonlinear_progress.infeasibility = 0.;
+      iterate.progress.infeasibility = 0.;
    }
 }
 
@@ -301,7 +301,7 @@ void l1Relaxation::set_scaled_optimality_measure(Iterate& iterate) {
       // scaled objective
       iterate.evaluate_objective(this->original_model);
       const double objective = iterate.model_evaluations.objective;
-      iterate.nonlinear_progress.scaled_optimality = [=](double objective_multiplier) {
+      iterate.progress.scaled_optimality = [=](double objective_multiplier) {
          return objective_multiplier*objective;
       };
    }
@@ -309,7 +309,7 @@ void l1Relaxation::set_scaled_optimality_measure(Iterate& iterate) {
       // constraint violation
       iterate.evaluate_constraints(this->original_model);
       const double constraint_violation = this->original_model.compute_constraint_violation(iterate.model_evaluations.constraints, L1_NORM);
-      iterate.nonlinear_progress.scaled_optimality = [=](double /*objective_multiplier*/) {
+      iterate.progress.scaled_optimality = [=](double /*objective_multiplier*/) {
          return constraint_violation;
       };
    }

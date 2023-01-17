@@ -88,9 +88,9 @@ std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
    stream << "Residuals │ Constraint violation: " << iterate.residuals.infeasibility << '\n';
    stream << "          └ Complementarity: " << iterate.residuals.complementarity << '\n';
 
-   stream << "                  ┌ Infeasibility: " << iterate.nonlinear_progress.infeasibility << '\n';
-   stream << "Progress measures │ Scaled optimality: " << iterate.nonlinear_progress.scaled_optimality(1.) << '\n';
-   stream << "                  └ Unscaled optimality: " << iterate.nonlinear_progress.unscaled_optimality << '\n';
+   stream << "                  ┌ Infeasibility: " << iterate.progress.infeasibility << '\n';
+   stream << "Progress measures │ Scaled optimality: " << iterate.progress.scaled_optimality(1.) << '\n';
+   stream << "                  └ Unscaled optimality: " << iterate.progress.unscaled_optimality << '\n';
 
    stream << "Lagrangian gradient: "; print_vector(stream, iterate.lagrangian_gradient);
    return stream;

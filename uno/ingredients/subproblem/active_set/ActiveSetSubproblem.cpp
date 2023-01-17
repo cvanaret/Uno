@@ -66,7 +66,7 @@ void ActiveSetSubproblem::compute_dual_displacements(const NonlinearProblem& pro
 }
 
 void ActiveSetSubproblem::set_unscaled_optimality_measure(const NonlinearProblem& /*problem*/, Iterate& iterate) {
-   iterate.nonlinear_progress.unscaled_optimality = 0.;
+   iterate.progress.unscaled_optimality = 0.;
 }
 
 double ActiveSetSubproblem::generate_predicted_unscaled_optimality_reduction_model(const NonlinearProblem& /*problem*/,

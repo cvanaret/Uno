@@ -7,7 +7,7 @@ GlobalizationMechanism::GlobalizationMechanism(ConstraintRelaxationStrategy& con
       constraint_relaxation_strategy(constraint_relaxation_strategy) {
 }
 
-Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate, Direction& direction, double step_length) {
+Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate, const Direction& direction, double step_length) {
    const auto take_dual_step = [&](Iterate& iterate) {
       // take dual step: line-search carried out only on constraint multipliers. Bound multipliers updated with full step length
       add_vectors(current_iterate.multipliers.constraints, direction.multipliers.constraints, step_length, iterate.multipliers.constraints);
@@ -26,7 +26,7 @@ Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate,
    else {
       // d = 0, no primal step to take. Take only dual step
       take_dual_step(current_iterate);
-      current_iterate.nonlinear_progress = {INF<double>, {}, INF<double>};
+      current_iterate.progress = {INF<double>, {}, INF<double>};
       return current_iterate;
    }
 }
