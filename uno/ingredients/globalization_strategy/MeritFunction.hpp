@@ -5,7 +5,6 @@
 #define UNO_MERITFUNCTION_H
 
 #include "GlobalizationStrategy.hpp"
-#include "tools/Options.hpp"
 
 class MeritFunction : public GlobalizationStrategy {
 public:

@@ -5,16 +5,6 @@
 #define UNO_PREDICTEDREDUCTIONMODEL_H
 
 #include <functional>
-#include <string>
-
-struct PredictedReductionModel {
-   std::function<double(double step_length)> function;
-   std::string text;
-
-   double operator()(double step_length) const {
-      return this->function(step_length);
-   }
-};
 
 struct PredictedReduction {
    double infeasibility;
