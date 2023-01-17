@@ -40,8 +40,8 @@ protected:
 template <typename T>
 COOSymmetricMatrix<T>::COOSymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization):
       SymmetricMatrix<T>(dimension, original_capacity, use_regularization) {
-   row_indices.reserve(this->capacity);
-   column_indices.reserve(this->capacity);
+   this->row_indices.reserve(this->capacity);
+   this->column_indices.reserve(this->capacity);
 
    // initialize regularization terms
    if (this->use_regularization) {
@@ -75,7 +75,7 @@ void COOSymmetricMatrix<T>::for_each(const std::function<void(size_t, size_t, T)
 
 template <typename T>
 void COOSymmetricMatrix<T>::insert(T term, size_t row_index, size_t column_index) {
-   assert(this->number_nonzeros <= row_indices.size() && "The COO matrix doesn't have a sufficient capacity");
+   assert(this->number_nonzeros <= this->row_indices.size() && "The COO matrix doesn't have a sufficient capacity");
    this->entries.push_back(term);
    this->row_indices.push_back(row_index);
    this->column_indices.push_back(column_index);

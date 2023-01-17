@@ -31,7 +31,7 @@ bool WaechterFilterStrategy::is_iterate_acceptable(const ProgressMeasures& curre
 
    bool accept = false;
    // check acceptance
-   const bool filter_acceptable = this->filter->accept(trial_progress_measures.infeasibility, trial_optimality_measure);
+   const bool filter_acceptable = this->filter->acceptable(trial_progress_measures.infeasibility, trial_optimality_measure);
    if (filter_acceptable) {
       DEBUG << "Filter acceptable\n";
       // compute actual reduction (and protect against roundoff errors)
@@ -57,7 +57,7 @@ bool WaechterFilterStrategy::is_iterate_acceptable(const ProgressMeasures& curre
       }
       else {
          DEBUG << "Switching condition violated\n";
-         if (this->filter->improves_current_iterate(current_progress_measures.infeasibility, current_optimality_measure,
+         if (this->filter->acceptable_wrt_current_iterate(current_progress_measures.infeasibility, current_optimality_measure,
                trial_progress_measures.infeasibility, trial_optimality_measure)) {
             DEBUG << "Acceptable wrt current point\n";
             accept = true;

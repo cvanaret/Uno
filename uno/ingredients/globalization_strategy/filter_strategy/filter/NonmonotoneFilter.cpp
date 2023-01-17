@@ -57,9 +57,9 @@ size_t NonmonotoneFilter::compute_number_dominated_entries(double infeasibility_
 }
 
 //! accept: check if (infeasibility_measure, optimality_measure) acceptable
-bool NonmonotoneFilter::accept(double infeasibility_measure, double optimality_measure) {
+bool NonmonotoneFilter::acceptable(double infeasibility_measure, double optimality_measure) {
    // check upper bound first
-   if (not this->smaller_than_upper_bound(infeasibility_measure)) {
+   if (not this->acceptable_wrt_upper_bound(infeasibility_measure)) {
       DEBUG << "Rejected because of filter upper bound\n";
       return false;
    }
@@ -69,8 +69,8 @@ bool NonmonotoneFilter::accept(double infeasibility_measure, double optimality_m
    return (number_dominated_entries <= this->max_number_dominated_entries);
 }
 
-//! improves_current_iterate: check acceptable wrt current point
-bool NonmonotoneFilter::improves_current_iterate(double current_infeasibility_measure, double current_optimality_measure,
+//! check acceptability wrt current point
+bool NonmonotoneFilter::acceptable_wrt_current_iterate(double current_infeasibility_measure, double current_optimality_measure,
       double trial_infeasibility_measure, double trial_optimality_measure) {
    // check acceptability wrt current point (non-monotone)
    size_t number_dominated_entries = this->compute_number_dominated_entries(trial_infeasibility_measure, trial_optimality_measure);

@@ -26,13 +26,13 @@ bool LeyfferFilterStrategy::is_iterate_acceptable(const ProgressMeasures& curren
 
    bool accept = false;
    // check acceptance
-   const bool filter_acceptable = this->filter->accept(trial_progress_measures.infeasibility, trial_optimality_measure);
+   const bool filter_acceptable = this->filter->acceptable(trial_progress_measures.infeasibility, trial_optimality_measure);
    if (filter_acceptable) {
       DEBUG << "Filter acceptable\n";
 
       // check acceptance wrt current point
-      const bool improves_current_iterate = this->filter->improves_current_iterate(current_progress_measures.infeasibility, current_optimality_measure,
-            trial_progress_measures.infeasibility, trial_optimality_measure);
+      const bool improves_current_iterate = this->filter->acceptable_wrt_current_iterate(current_progress_measures.infeasibility,
+            current_optimality_measure, trial_progress_measures.infeasibility, trial_optimality_measure);
       if (improves_current_iterate) {
          DEBUG << "Acceptable wrt current point\n";
          const double actual_reduction = this->filter->compute_actual_reduction(current_optimality_measure, current_progress_measures.infeasibility,

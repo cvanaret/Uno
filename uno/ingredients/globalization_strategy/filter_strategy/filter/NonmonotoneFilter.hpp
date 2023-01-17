@@ -11,8 +11,8 @@ public:
    explicit NonmonotoneFilter(const Options& options);
 
    void add(double infeasibility_measure, double optimality_measure) override;
-   bool accept(double infeasibility_measure, double optimality_measure) override;
-   bool improves_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure,
+   bool acceptable(double infeasibility_measure, double optimality_measure) override;
+   bool acceptable_wrt_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure,
          double trial_optimality_measure) override;
    double compute_actual_reduction(double current_optimality_measure, double current_infeasibility_measure, double trial_optimality_measure) override;
 

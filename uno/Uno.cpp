@@ -22,7 +22,7 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
 
    std::cout << "\nProblem " << model.name << '\n';
    std::cout << model.number_variables << " variables, " << model.number_constraints << " constraints\n";
-   std::cout << "Problem type: " << Model::type_to_string[model.problem_type] << "\n\n";
+   std::cout << "Problem type: " << type_to_string(model.problem_type) << "\n\n";
 
    Statistics statistics = Uno::create_statistics(model, options);
 

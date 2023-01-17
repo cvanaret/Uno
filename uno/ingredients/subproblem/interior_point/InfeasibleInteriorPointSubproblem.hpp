@@ -41,7 +41,7 @@ public:
    void postprocess_accepted_iterate(const NonlinearProblem& problem, Iterate& iterate) override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
-private:
+protected:
    SymmetricIndefiniteLinearSystem<double> augmented_system;
    const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
    const std::unique_ptr<SymmetricIndefiniteLinearSolver<double>> linear_solver;
@@ -65,7 +65,7 @@ private:
 
    [[nodiscard]] double barrier_parameter() const;
    void relax_variable_bounds(const NonlinearProblem& problem, const Iterate& current_iterate);
-   void check_interior_primals(const NonlinearProblem& problem, const Iterate& iterate);
+   // void check_interior_primals(const NonlinearProblem& problem, const Iterate& iterate);
    [[nodiscard]] double push_variable_to_interior(double variable_value, const Interval& variable_bounds) const;
    void evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate);
    void update_barrier_parameter(const NonlinearProblem& problem, const Iterate& current_iterate);

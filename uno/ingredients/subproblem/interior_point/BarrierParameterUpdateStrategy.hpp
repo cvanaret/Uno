@@ -13,7 +13,6 @@ struct UpdateParameters {
    double theta_mu;
    double k_epsilon;
    double update_fraction;
-   double smax;
 };
 
 class BarrierParameterUpdateStrategy {

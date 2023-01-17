@@ -12,8 +12,7 @@ BarrierParameterUpdateStrategy::BarrierParameterUpdateStrategy(const Options& op
       options.get_double("barrier_k_mu"),
       options.get_double("barrier_theta_mu"),
       options.get_double("barrier_k_epsilon"),
-      options.get_double("barrier_update_fraction"),
-      options.get_double("barrier_smax"),
+      options.get_double("barrier_update_fraction")
    }) {
 }
 

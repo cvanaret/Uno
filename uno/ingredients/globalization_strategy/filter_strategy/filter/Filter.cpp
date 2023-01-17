@@ -19,7 +19,6 @@ Filter::Filter(const Options& options) :
 }
 
 void Filter::reset() {
-   // initialize the maximum filter size (not critical)
    this->upper_bound = INF<double>;
    this->number_entries = 0;
 }
@@ -93,18 +92,19 @@ void Filter::add(double infeasibility_measure, double optimality_measure) {
    this->number_entries++;
 }
 
-bool Filter::smaller_than_upper_bound(double infeasibility_measure) const {
+bool Filter::acceptable_wrt_upper_bound(double infeasibility_measure) const {
    return (infeasibility_measure < this->parameters.beta * this->upper_bound);
 }
 
 // return true if (infeasibility_measure, optimality_measure) acceptable, false otherwise
-bool Filter::accept(double infeasibility_measure, double optimality_measure) {
+bool Filter::acceptable(double infeasibility_measure, double optimality_measure) {
    // check upper bound first
-   if (not this->smaller_than_upper_bound(infeasibility_measure)) {
+   if (not this->acceptable_wrt_upper_bound(infeasibility_measure)) {
       DEBUG << "Rejected because of filter upper bound\n";
       return false;
    }
 
+   // TODO: use binary search
    size_t position = 0;
    while (position < this->number_entries && infeasibility_measure >= this->parameters.beta * this->infeasibility[position]) {
       position++;
@@ -118,12 +118,12 @@ bool Filter::accept(double infeasibility_measure, double optimality_measure) {
    else if (optimality_measure <= this->optimality[position - 1] - this->parameters.gamma * infeasibility_measure) {
       return true; // point acceptable
    }
-   DEBUG << "Filter rejection because the optimality measure is not low enough\n";
+   DEBUG << "Rejected because the optimality measure is too large\n";
    return false;
 }
 
-//! improves_current_iterate: check acceptable wrt current point
-bool Filter::improves_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure,
+//! check acceptability wrt current point
+bool Filter::acceptable_wrt_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure,
       double trial_optimality_measure) {
    return (trial_optimality_measure <= current_optimality_measure - this->parameters.gamma * trial_infeasibility_measure) ||
           (trial_infeasibility_measure <= this->parameters.beta * current_infeasibility_measure);

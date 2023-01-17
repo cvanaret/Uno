@@ -7,14 +7,7 @@
 #include <utility>
 #include "Model.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "tools/Range.hpp"
 #include "tools/Infinity.hpp"
-
-std::map<FunctionType, std::string> Model::type_to_string = {
-      {LINEAR, "linear"},
-      {QUADRATIC, "quadratic"},
-      {NONLINEAR, "nonlinear"}
-};
 
 // abstract Problem class
 Model::Model(std::string name, size_t number_variables, size_t number_constraints, FunctionType type) :
@@ -98,4 +91,13 @@ double Model::compute_constraint_violation(const std::vector<double>& constraint
       return this->compute_constraint_violation(constraints[j], j);
    };
    return norm<double>(jth_component, Range(constraints.size()), residual_norm);
+}
+
+std::string type_to_string(FunctionType function_type) {
+   static std::map<FunctionType, std::string> type_to_string = {
+         {LINEAR, "linear"},
+         {QUADRATIC, "quadratic"},
+         {NONLINEAR, "nonlinear"}
+   };
+   return type_to_string[function_type];
 }

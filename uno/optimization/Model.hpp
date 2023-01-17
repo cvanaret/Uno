@@ -40,8 +40,6 @@ public:
    Model(std::string name, size_t number_variables, size_t number_constraints, FunctionType problem_type);
    virtual ~Model() = default;
 
-   static std::map<FunctionType, std::string> type_to_string;
-
    std::string name;
    const size_t number_variables; /*!< Number of variables */
    const size_t number_constraints; /*!< Number of constraints */
@@ -50,11 +48,11 @@ public:
    // objective
    double objective_sign{1.}; /*!< Sign of the objective function (1: minimization, -1: maximization) */
 
+   // data structures to access certain types of variables and constraints
    SparseVector<size_t> equality_constraints;
    SparseVector<size_t> inequality_constraints;
    SparseVector<size_t> linear_constraints;
    SparseVector<size_t> slacks;
-   // lists of bounded variables
    std::vector<size_t> lower_bounded_variables{}; // indices of the lower-bounded variables
    std::vector<size_t> upper_bounded_variables{}; // indices of the upper-bounded variables
    std::vector<size_t> single_lower_bounded_variables{}; // indices of the single lower-bounded variables
@@ -105,5 +103,7 @@ protected:
    size_t hessian_maximum_number_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */
    void determine_constraints();
 };
+
+std::string type_to_string(FunctionType function_type);
 
 #endif // UNO_MODEL_H

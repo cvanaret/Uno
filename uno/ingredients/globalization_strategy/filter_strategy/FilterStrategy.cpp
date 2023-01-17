@@ -41,7 +41,7 @@ bool FilterStrategy::is_infeasibility_acceptable(double infeasibility_measure) c
       return (infeasibility_measure < this->filter->get_smallest_infeasibility());
    }
    else { // filter empty
-      return this->filter->smaller_than_upper_bound(infeasibility_measure);
+      return this->filter->acceptable_wrt_upper_bound(infeasibility_measure);
    }
 }
 
