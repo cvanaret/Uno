@@ -205,7 +205,7 @@ void l1Relaxation::decrease_parameter_aggressively(Iterate& current_iterate, con
    const double error_lowest_violation = l1Relaxation::compute_error(current_iterate, direction_lowest_violation.multipliers);
    DEBUG << "Ideal error: " << error_lowest_violation << '\n';
 
-   if (direction_lowest_violation.multipliers.compute_norm_1() <= 1e-8) {
+   if (direction_lowest_violation.multipliers.norm_1() <= 1e-8) {
       WARNING << RED << "All multipliers are 0. The dual error shouldn't be used in l1Relaxation" << RESET << '\n';
    }
    const double scaled_error = error_lowest_violation / std::max(1., current_iterate.residuals.infeasibility);

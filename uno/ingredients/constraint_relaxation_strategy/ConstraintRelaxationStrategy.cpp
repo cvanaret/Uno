@@ -52,7 +52,7 @@ double compute_stationarity_scaling(const NonlinearProblem& problem, const Itera
    }
    else {
       const double scaling_factor = threshold * static_cast<double>(total_size);
-      return std::max(1., iterate.multipliers.compute_norm_1() / scaling_factor);
+      return std::max(1., iterate.multipliers.norm_1() / scaling_factor);
    }
 }
 
