@@ -51,7 +51,7 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
    catch (std::exception& exception) {
       ERROR << exception.what();
    }
-   // in case the objective was not computed, evaluate it
+   // in case the objective was not yet evaluated, evaluate it
    current_iterate.evaluate_objective(model);
 
    if (Logger::logger_level == INFO) statistics.print_footer();
@@ -82,7 +82,12 @@ Statistics Uno::create_statistics(const Model& model, const Options& options) {
 
 void Uno::add_statistics(Statistics& statistics, const Model& model, const Iterate& iterate, size_t major_iterations) {
    statistics.add_statistic(std::string("major"), major_iterations);
-   statistics.add_statistic("objective", iterate.model_evaluations.objective);
+   if (iterate.is_objective_computed) {
+      statistics.add_statistic("objective", iterate.model_evaluations.objective);
+   }
+   else {
+      statistics.add_statistic("objective", "-");
+   }
    if (model.is_constrained()) {
       statistics.add_statistic("primal infeas.", iterate.residuals.infeasibility);
    }
