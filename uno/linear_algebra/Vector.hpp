@@ -134,55 +134,45 @@ T norm(const std::vector<T>& x, Norm norm) {
 // - a callback as argument whose parameter is the current index. This avoids forming the vector explicitly
 // - an iterable range of arbitrary type (can be Range, std::vector, etc)
 template <typename T, typename ITERABLE>
-T norm_1(const std::function<T(size_t i)>& ith_component, const ITERABLE& iterable, bool normalized = false) {
+T norm_1(const std::function<T(size_t i)>& ith_component, const ITERABLE& iterable) {
    T norm = T(0);
    for (size_t i: iterable) {
       norm += std::abs(ith_component(i));
    }
-   // if required, normalize with the size of the iterable
-   if (normalized && 0 < iterable.size()) {
-      norm /= static_cast<double>(iterable.size());
-   }
    return norm;
 }
 
 template <typename T, typename ITERABLE>
-T norm_inf(const std::vector<T>& x, const ITERABLE& iterable, bool /*normalized*/ = false) {
+T norm_inf(const std::vector<T>& x, const ITERABLE& iterable) {
    T norm = T(0);
    for (size_t i: iterable) {
       norm = std::max(norm, std::abs(x[i]));
    }
-   // already normalized
    return norm;
 }
 
 template <typename T, typename ITERABLE>
-T norm_inf(const std::function<T(size_t i)>& ith_component, const ITERABLE& iterable, bool /*normalized*/ = false) {
+T norm_inf(const std::function<T(size_t i)>& ith_component, const ITERABLE& iterable) {
    T norm = T(0);
    for (size_t i: iterable) {
       norm = std::max(norm, std::abs(ith_component(i)));
    }
-   // already normalized
    return norm;
 }
 
 template <typename T, typename ITERABLE>
-T norm_2_squared(const std::function<T(size_t i)>& ith_component, const ITERABLE& iterable, bool normalized = false) {
+T norm_2_squared(const std::function<T(size_t i)>& ith_component, const ITERABLE& iterable) {
    T norm = T(0);
    for (size_t i: iterable) {
       const T x_i = ith_component(i);
       norm += x_i * x_i;
    }
-   // if required, normalize with the size of the iterable
-   if (normalized && 0 < iterable.size()) {
-      norm /= static_cast<double>(iterable.size());
-   }
    return norm;
 }
 
 template <typename T, typename ITERABLE>
-T norm_2(const std::function<T(size_t /*i*/)>& ith_component, const ITERABLE& iterable, bool normalized = false) {
-   return std::sqrt(norm_2_squared(ith_component, iterable, normalized));
+T norm_2(const std::function<T(size_t /*i*/)>& ith_component, const ITERABLE& iterable) {
+   return std::sqrt(norm_2_squared(ith_component, iterable));
 }
 
 template <typename T, typename ITERABLE>
