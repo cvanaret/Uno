@@ -1,3 +1,6 @@
+// Copyright (c) 2018-2023 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
+
 #include "NonmonotoneFilter.hpp"
 #include "tools/Range.hpp"
 #include "tools/Logger.hpp"
