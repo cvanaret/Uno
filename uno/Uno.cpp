@@ -29,7 +29,7 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
    // use the current point to initialize the strategies and generate the initial iterate
    this->globalization_mechanism.initialize(statistics, current_iterate);
 
-   TerminationStatus termination_status = NOT_OPTIMAL;
+   TerminationStatus termination_status = this->check_termination(model, current_iterate, INF<double>);
    try {
       // check for termination
       while (not this->termination_criterion(termination_status, major_iterations)) {
