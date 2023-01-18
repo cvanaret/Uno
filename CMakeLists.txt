@@ -93,7 +93,7 @@ find_package(OpenMP REQUIRED)
 list(APPEND LIBRARIES OpenMP::OpenMP_CXX)
 
 #######
-# Uno #
+# Uno #
 #######
 add_library(uno STATIC ${UNO_SOURCE_FILES})
 target_include_directories(uno PUBLIC ${DIRECTORIES})
@@ -105,10 +105,16 @@ target_link_libraries(uno PUBLIC ${LIBRARIES})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/uno.options DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 #############
-# AMPL main #
+# AMPL main #
 #############
 add_executable(uno_ampl uno/main.cpp)
 target_link_libraries(uno_ampl PUBLIC uno)
+
+###############
+# NLPQLP main #
+###############
+add_executable(run_nlpqlp uno/NLPQLP_wrapper.f90 uno/run_NLPQLP.cpp /home/charlie/Bureau/NLPQLP/QL.o /home/charlie/Bureau/NLPQLP/NLPQLP.o)
+target_link_libraries(run_nlpqlp PUBLIC uno)
 
 #########################
 # GoogleTest unit tests #
