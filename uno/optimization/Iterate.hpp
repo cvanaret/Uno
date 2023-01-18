@@ -39,8 +39,8 @@ public:
    Multipliers multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
 
    // evaluations
-   Evaluations model_evaluations;
-   Evaluations reformulation_evaluations;
+   Evaluations evaluations;
+   Evaluations subproblem_evaluations;
    static size_t number_eval_objective;
    static size_t number_eval_constraints;
    static size_t number_eval_jacobian;

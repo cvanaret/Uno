@@ -24,7 +24,7 @@ void Result::print(bool print_primal_dual_solution) const {
       std::cout << "Failed with error\n";
    }
 
-   std::cout << "Objective value:\t\t" << this->solution.model_evaluations.objective << '\n';
+   std::cout << "Objective value:\t\t" << this->solution.evaluations.objective << '\n';
 
    std::cout << "Constraint violation:\t\t" << this->solution.residuals.infeasibility << '\n';
    std::cout << "Stationarity error:\t\t" << this->solution.residuals.stationarity << '\n';

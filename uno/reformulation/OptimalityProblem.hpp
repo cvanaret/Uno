@@ -58,22 +58,22 @@ inline double OptimalityProblem::get_objective_multiplier() const {
 
 inline double OptimalityProblem::evaluate_objective(Iterate& iterate) const {
    iterate.evaluate_objective(this->model);
-   return iterate.model_evaluations.objective;
+   return iterate.evaluations.objective;
 }
 
 inline void OptimalityProblem::evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const {
    iterate.evaluate_objective_gradient(this->model);
-   objective_gradient = iterate.model_evaluations.objective_gradient;
+   objective_gradient = iterate.evaluations.objective_gradient;
 }
 
 inline void OptimalityProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
    iterate.evaluate_constraints(this->model);
-   copy_from(constraints, iterate.model_evaluations.constraints);
+   copy_from(constraints, iterate.evaluations.constraints);
 }
 
 inline void OptimalityProblem::evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const {
    iterate.evaluate_constraint_jacobian(this->model);
-   constraint_jacobian = iterate.model_evaluations.constraint_jacobian;
+   constraint_jacobian = iterate.evaluations.constraint_jacobian;
 }
 
 inline void OptimalityProblem::evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers,

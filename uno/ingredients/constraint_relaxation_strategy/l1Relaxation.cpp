@@ -57,10 +57,10 @@ void l1Relaxation::initialize(Statistics& statistics, Iterate& first_iterate) {
 void l1Relaxation::set_multipliers(const Iterate& current_iterate, std::vector<double>& current_constraint_multipliers) {
    // the values {1, -1} are derived from the KKT conditions of the l1 problem
    for (size_t j: Range(this->original_model.number_constraints)) {
-      if (current_iterate.model_evaluations.constraints[j] < this->optimality_problem.get_constraint_lower_bound(j)) { // lower bound infeasible
+      if (current_iterate.evaluations.constraints[j] < this->optimality_problem.get_constraint_lower_bound(j)) { // lower bound infeasible
          current_constraint_multipliers[j] = 1.;
       }
-      else if (this->optimality_problem.get_constraint_upper_bound(j) < current_iterate.model_evaluations.constraints[j]) { // upper bound infeasible
+      else if (this->optimality_problem.get_constraint_upper_bound(j) < current_iterate.evaluations.constraints[j]) { // upper bound infeasible
          current_constraint_multipliers[j] = -1.;
       }
    }
@@ -97,7 +97,7 @@ Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, Iterat
 
 Direction l1Relaxation::compute_second_order_correction(Iterate& trial_iterate) {
    // evaluate the constraints for the second-order correction
-   this->relaxed_problem.evaluate_constraints(trial_iterate, trial_iterate.reformulation_evaluations.constraints);
+   this->relaxed_problem.evaluate_constraints(trial_iterate, trial_iterate.subproblem_evaluations.constraints);
    Direction soc_direction = this->subproblem->compute_second_order_correction(this->relaxed_problem, trial_iterate);
    soc_direction.objective_multiplier = this->penalty_parameter;
    soc_direction.norm = norm_inf(soc_direction.primals, Range(this->optimality_problem.number_variables));
@@ -273,7 +273,7 @@ void l1Relaxation::set_infeasibility_measure(Iterate& iterate) {
    if (0. < this->penalty_parameter) {
       // constraint violation
       iterate.evaluate_constraints(this->original_model);
-      iterate.progress.infeasibility = this->original_model.compute_constraint_violation(iterate.model_evaluations.constraints, L1_NORM);
+      iterate.progress.infeasibility = this->original_model.compute_constraint_violation(iterate.evaluations.constraints, L1_NORM);
    }
    else {
       // 0
@@ -283,7 +283,7 @@ void l1Relaxation::set_infeasibility_measure(Iterate& iterate) {
 
 double l1Relaxation::generate_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction, double step_length) const {
    if (0. < this->penalty_parameter) {
-      const double current_constraint_violation = this->original_model.compute_constraint_violation(current_iterate.model_evaluations.constraints,
+      const double current_constraint_violation = this->original_model.compute_constraint_violation(current_iterate.evaluations.constraints,
             Norm::L1_NORM);
       const double linearized_constraint_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model,
             current_iterate, direction, step_length);
@@ -300,7 +300,7 @@ void l1Relaxation::set_scaled_optimality_measure(Iterate& iterate) {
    if (0. < this->penalty_parameter) {
       // scaled objective
       iterate.evaluate_objective(this->original_model);
-      const double objective = iterate.model_evaluations.objective;
+      const double objective = iterate.evaluations.objective;
       iterate.progress.scaled_optimality = [=](double objective_multiplier) {
          return objective_multiplier*objective;
       };
@@ -308,7 +308,7 @@ void l1Relaxation::set_scaled_optimality_measure(Iterate& iterate) {
    else {
       // constraint violation
       iterate.evaluate_constraints(this->original_model);
-      const double constraint_violation = this->original_model.compute_constraint_violation(iterate.model_evaluations.constraints, L1_NORM);
+      const double constraint_violation = this->original_model.compute_constraint_violation(iterate.evaluations.constraints, L1_NORM);
       iterate.progress.scaled_optimality = [=](double /*objective_multiplier*/) {
          return constraint_violation;
       };
@@ -319,14 +319,14 @@ std::function<double (double)> l1Relaxation::generate_predicted_scaled_optimalit
       const Direction& direction, double step_length) const {
    if (0. < this->penalty_parameter) {
       // precompute expensive quantities
-      const double directional_derivative = dot(direction.primals, current_iterate.model_evaluations.objective_gradient);
+      const double directional_derivative = dot(direction.primals, current_iterate.evaluations.objective_gradient);
       return [=](double objective_multiplier) {
          return step_length * (-objective_multiplier*directional_derivative);
       };
       // "-ρ*∇f(x)^T (αd)"};
    }
    else {
-      const double current_constraint_violation = this->original_model.compute_constraint_violation(current_iterate.model_evaluations.constraints,
+      const double current_constraint_violation = this->original_model.compute_constraint_violation(current_iterate.evaluations.constraints,
             Norm::L1_NORM);
       const double linearized_constraint_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model,
             current_iterate, direction, step_length);
@@ -349,8 +349,8 @@ double l1Relaxation::compute_error(Iterate& current_iterate, const Multipliers& 
          this->upper_bound_multipliers);
    double error = norm_1(current_iterate.lagrangian_gradient);
    // complementarity error
-   this->relaxed_problem.evaluate_constraints(current_iterate, current_iterate.reformulation_evaluations.constraints);
-   error += this->relaxed_problem.compute_complementarity_error(current_iterate.primals, current_iterate.reformulation_evaluations.constraints,
+   this->relaxed_problem.evaluate_constraints(current_iterate, current_iterate.subproblem_evaluations.constraints);
+   error += this->relaxed_problem.compute_complementarity_error(current_iterate.primals, current_iterate.subproblem_evaluations.constraints,
          this->constraint_multipliers, this->lower_bound_multipliers, this->upper_bound_multipliers);
    return error;
 }

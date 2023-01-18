@@ -49,11 +49,11 @@ inline ScaledModel::ScaledModel(const Model& original_model, Iterate& first_iter
       // evaluate the gradients at the current point
       first_iterate.evaluate_objective_gradient(original_model);
       first_iterate.evaluate_constraint_jacobian(original_model);
-      this->scaling.compute(first_iterate.model_evaluations.objective_gradient, first_iterate.model_evaluations.constraint_jacobian);
+      this->scaling.compute(first_iterate.evaluations.objective_gradient, first_iterate.evaluations.constraint_jacobian);
       // scale the gradients
-      scale(first_iterate.model_evaluations.objective_gradient, this->scaling.get_objective_scaling());
+      scale(first_iterate.evaluations.objective_gradient, this->scaling.get_objective_scaling());
       for (size_t j: Range(original_model.number_constraints)) {
-         scale(first_iterate.model_evaluations.constraint_jacobian[j], this->scaling.get_constraint_scaling(j));
+         scale(first_iterate.evaluations.constraint_jacobian[j], this->scaling.get_constraint_scaling(j));
       }
    }
    // check the scaling factors
@@ -196,14 +196,14 @@ inline void ScaledModel::postprocess_solution(Iterate& iterate, TerminationStatu
    this->original_model.postprocess_solution(iterate, termination_status);
 
    // objective value
-   iterate.model_evaluations.objective /= scaling.get_objective_scaling();
+   iterate.evaluations.objective /= this->scaling.get_objective_scaling();
 
    // unscale the multipliers and the function values
    const bool is_feasible = (termination_status == FEASIBLE_KKT_POINT || termination_status == FEASIBLE_SMALL_STEP);
-   const double scaled_objective_multiplier = scaling.get_objective_scaling()*(is_feasible ? iterate.multipliers.objective : 1.);
+   const double scaled_objective_multiplier = this->scaling.get_objective_scaling()*(is_feasible ? iterate.multipliers.objective : 1.);
    if (scaled_objective_multiplier != 0.) {
       for (size_t j: Range(this->number_constraints)) {
-         iterate.multipliers.constraints[j] *= scaling.get_constraint_scaling(j)/scaled_objective_multiplier;
+         iterate.multipliers.constraints[j] *= this->scaling.get_constraint_scaling(j)/scaled_objective_multiplier;
       }
       for (size_t i: Range(this->number_variables)) {
          iterate.multipliers.lower_bounds[i] /= scaled_objective_multiplier;

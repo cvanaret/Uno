@@ -100,12 +100,12 @@ inline double l1RelaxedProblem::evaluate_objective(Iterate& iterate) const {
    // scaled objective: rho*f(x)
    if (this->objective_multiplier != 0.) {
       iterate.evaluate_objective(this->model);
-      objective += this->objective_multiplier*iterate.model_evaluations.objective;
+      objective += this->objective_multiplier*iterate.evaluations.objective;
    }
 
    // scaled constraint violation: coeff*||c(x)||_1
    iterate.evaluate_constraints(this->model);
-   iterate.residuals.infeasibility = this->model.compute_constraint_violation(iterate.model_evaluations.constraints, L1_NORM);
+   iterate.residuals.infeasibility = this->model.compute_constraint_violation(iterate.evaluations.constraints, L1_NORM);
    objective += iterate.residuals.infeasibility;
    return objective;
 }
@@ -114,7 +114,7 @@ inline void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, Spar
    // scale nabla f(x) by rho
    if (this->objective_multiplier != 0.) {
       iterate.evaluate_objective_gradient(this->model);
-      objective_gradient = iterate.model_evaluations.objective_gradient;
+      objective_gradient = iterate.evaluations.objective_gradient;
       scale(objective_gradient, this->objective_multiplier);
    }
    else {
@@ -131,7 +131,7 @@ inline void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, Spar
 
 inline void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
    iterate.evaluate_constraints(this->model);
-   copy_from(constraints, iterate.model_evaluations.constraints);
+   copy_from(constraints, iterate.evaluations.constraints);
    // add the contribution of the elastics
    this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {
       constraints[j] -= iterate.primals[elastic_index];
@@ -143,7 +143,7 @@ inline void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, std::vector
 
 inline void l1RelaxedProblem::evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const {
    iterate.evaluate_constraint_jacobian(this->model);
-   constraint_jacobian = iterate.model_evaluations.constraint_jacobian;
+   constraint_jacobian = iterate.evaluations.constraint_jacobian;
    // add the contribution of the elastics
    this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {
       constraint_jacobian[j].insert(elastic_index, -1.);

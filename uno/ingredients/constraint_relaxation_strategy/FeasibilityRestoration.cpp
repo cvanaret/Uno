@@ -91,7 +91,7 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
 
 Direction FeasibilityRestoration::compute_second_order_correction(Iterate& trial_iterate) {
    // evaluate the constraints for the second-order correction
-   this->current_reformulated_problem().evaluate_constraints(trial_iterate, trial_iterate.reformulation_evaluations.constraints);
+   this->current_reformulated_problem().evaluate_constraints(trial_iterate, trial_iterate.subproblem_evaluations.constraints);
    Direction soc_direction = this->subproblem->compute_second_order_correction(this->current_reformulated_problem(), trial_iterate);
    soc_direction.objective_multiplier = 1.;
    soc_direction.norm = norm_inf(soc_direction.primals, Range(this->optimality_problem.number_variables));
@@ -202,7 +202,7 @@ void FeasibilityRestoration::set_infeasibility_measure(Iterate& iterate) {
    if (this->current_phase == Phase::OPTIMALITY) {
       // constraint violation
       iterate.evaluate_constraints(this->original_model);
-      iterate.progress.infeasibility = this->original_model.compute_constraint_violation(iterate.model_evaluations.constraints, L1_NORM);
+      iterate.progress.infeasibility = this->original_model.compute_constraint_violation(iterate.evaluations.constraints, L1_NORM);
    }
    else {
       // 0
@@ -213,7 +213,7 @@ void FeasibilityRestoration::set_infeasibility_measure(Iterate& iterate) {
 double FeasibilityRestoration::generate_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction,
       double step_length) const {
    if (this->current_phase == Phase::OPTIMALITY) {
-      const double current_constraint_violation = this->original_model.compute_constraint_violation(current_iterate.model_evaluations.constraints,
+      const double current_constraint_violation = this->original_model.compute_constraint_violation(current_iterate.evaluations.constraints,
             Norm::L1_NORM);
       const double linearized_constraint_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model,
             current_iterate, direction, step_length);
@@ -230,7 +230,7 @@ void FeasibilityRestoration::set_scaled_optimality_measure(Iterate& iterate) {
    if (this->current_phase == Phase::OPTIMALITY) {
       // scaled objective
       iterate.evaluate_objective(this->original_model);
-      const double objective = iterate.model_evaluations.objective;
+      const double objective = iterate.evaluations.objective;
       iterate.progress.scaled_optimality = [=](double objective_multiplier) {
          return objective_multiplier*objective;
       };
@@ -238,7 +238,7 @@ void FeasibilityRestoration::set_scaled_optimality_measure(Iterate& iterate) {
    else {
       // constraint violation
       iterate.evaluate_constraints(this->original_model);
-      const double constraint_violation = this->original_model.compute_constraint_violation(iterate.model_evaluations.constraints, L1_NORM);
+      const double constraint_violation = this->original_model.compute_constraint_violation(iterate.evaluations.constraints, L1_NORM);
       iterate.progress.scaled_optimality = [=](double /*objective_multiplier*/) {
          return constraint_violation;
       };
@@ -249,14 +249,14 @@ std::function<double (double)> FeasibilityRestoration::generate_predicted_scaled
       const Direction& direction, double step_length) const {
    if (this->current_phase == Phase::OPTIMALITY) {
       // precompute expensive quantities
-      const double directional_derivative = dot(direction.primals, current_iterate.model_evaluations.objective_gradient);
+      const double directional_derivative = dot(direction.primals, current_iterate.evaluations.objective_gradient);
       return [=](double objective_multiplier) {
          return step_length * (-objective_multiplier*directional_derivative);
       };
       //}, "-∇f(x)^T (αd)"};
    }
    else {
-      const double current_constraint_violation = this->original_model.compute_constraint_violation(current_iterate.model_evaluations.constraints,
+      const double current_constraint_violation = this->original_model.compute_constraint_violation(current_iterate.evaluations.constraints,
             Norm::L1_NORM);
       const double linearized_constraint_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model,
             current_iterate, direction, step_length);

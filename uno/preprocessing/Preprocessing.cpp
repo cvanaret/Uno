@@ -22,7 +22,7 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
    }
    // Jacobian of general constraints
    for (size_t j: Range(model.number_constraints)) {
-      current_iterate.model_evaluations.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
+      current_iterate.evaluations.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
          matrix.insert(derivative, i, model.number_variables + j);
       });
       matrix.finalize_column(model.number_variables + j);
@@ -32,7 +32,7 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
    /* generate the right-hand side */
    initialize_vector(rhs, 0.);
    // objective gradient
-   current_iterate.model_evaluations.objective_gradient.for_each([&](size_t i, double derivative) {
+   current_iterate.evaluations.objective_gradient.for_each([&](size_t i, double derivative) {
       rhs[i] += model.objective_sign * derivative;
    });
    // variable bound constraints

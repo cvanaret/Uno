@@ -83,7 +83,7 @@ Statistics Uno::create_statistics(const Model& model, const Options& options) {
 void Uno::add_statistics(Statistics& statistics, const Model& model, const Iterate& iterate, size_t major_iterations) {
    statistics.add_statistic(std::string("major"), major_iterations);
    if (iterate.is_objective_computed) {
-      statistics.add_statistic("objective", iterate.model_evaluations.objective);
+      statistics.add_statistic("objective", iterate.evaluations.objective);
    }
    else {
       statistics.add_statistic("objective", "-");
