@@ -98,16 +98,13 @@ inline double NonlinearProblem::compute_complementarity_error(const std::vector<
          //error += std::abs(lower_bounds_multipliers[i] * (primals[i] - this->get_variable_lower_bound(i)));
          //std::cout << lower_bounds_multipliers[i] << "*(" << primals[i] << " - " << this->get_variable_lower_bound(i) << ")\n";
          error = std::max(error, std::abs(lower_bounds_multipliers[i] * (primals[i] - this->get_variable_lower_bound(i))));
-         //std::cout << "Error is " << error << '\n';
       }
-      if (0. < upper_bounds_multipliers[i]) {
+      if (upper_bounds_multipliers[i] < 0.) {
          //error += std::abs(upper_bounds_multipliers[i] * (primals[i] - this->get_variable_upper_bound(i)));
          //std::cout << upper_bounds_multipliers[i] << "*(" << primals[i] << " - " << this->get_variable_upper_bound(i) << ")\n";
          error = std::max(error, std::abs(upper_bounds_multipliers[i] * (primals[i] - this->get_variable_upper_bound(i))));
-         //std::cout << "Error is " << error << '\n';
       }
    }
-   //std::cout << "Error is " << error << '\n';
    // constraints
    this->inequality_constraints.for_each_index([&](size_t j) {
       if (0. < constraint_multipliers[j]) { // lower bound
