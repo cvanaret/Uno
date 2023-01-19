@@ -92,6 +92,6 @@ std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
    stream << "Progress measures │ Scaled optimality: " << iterate.progress.scaled_optimality(1.) << '\n';
    stream << "                  └ Unscaled optimality: " << iterate.progress.unscaled_optimality << '\n';
 
-   stream << "Lagrangian gradient: "; print_vector(stream, iterate.lagrangian_gradient);
+   stream << "Lagrangian gradient: " << iterate.lagrangian_gradient;
    return stream;
 }

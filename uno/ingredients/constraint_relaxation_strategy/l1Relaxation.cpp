@@ -347,7 +347,10 @@ double l1Relaxation::compute_error(Iterate& current_iterate, const Multipliers& 
    // KKT error
    ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(current_iterate, this->constraint_multipliers, this->lower_bound_multipliers,
          this->upper_bound_multipliers);
-   double error = norm_1(current_iterate.lagrangian_gradient);
+   const auto assemble_lagrangian = [&](size_t i) {
+      return current_iterate.lagrangian_gradient[i];
+   };
+   double error = norm_1<double>(assemble_lagrangian, Range(this->relaxed_problem.number_variables));
    // complementarity error
    this->relaxed_problem.evaluate_constraints(current_iterate, current_iterate.subproblem_evaluations.constraints);
    error += this->relaxed_problem.compute_complementarity_error(current_iterate.primals, current_iterate.subproblem_evaluations.constraints,

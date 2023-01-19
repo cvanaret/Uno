@@ -16,25 +16,26 @@ bool ConstraintRelaxationStrategy::is_small_step(const Direction& direction) con
 
 void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(Iterate& iterate, const std::vector<double>& constraint_multipliers,
       const std::vector<double>& lower_bound_multipliers, const std::vector<double>& upper_bound_multipliers) {
-   initialize_vector(iterate.lagrangian_gradient, 0.);
+   initialize_vector(iterate.lagrangian_gradient.objective_contribution, 0.);
+   initialize_vector(iterate.lagrangian_gradient.constraints_contribution, 0.);
 
    // objective gradient
    iterate.subproblem_evaluations.objective_gradient.for_each([&](size_t i, double derivative) {
-         iterate.lagrangian_gradient[i] += derivative;
+         iterate.lagrangian_gradient.objective_contribution[i] += derivative;
       });
 
    // constraints
    for (size_t j: Range(iterate.number_constraints)) {
       if (constraint_multipliers[j] != 0.) {
          iterate.subproblem_evaluations.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
-            iterate.lagrangian_gradient[i] -= constraint_multipliers[j] * derivative;
+            iterate.lagrangian_gradient.constraints_contribution[i] -= constraint_multipliers[j] * derivative;
          });
       }
    }
 
    // bound constraints
    for (size_t i: Range(iterate.number_variables)) {
-      iterate.lagrangian_gradient[i] -= lower_bound_multipliers[i] + upper_bound_multipliers[i];
+      iterate.lagrangian_gradient.constraints_contribution[i] -= lower_bound_multipliers[i] + upper_bound_multipliers[i];
    }
 }
 
@@ -71,7 +72,10 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Nonlinear
    // stationarity error of the reformulated problem
    ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(iterate, iterate.multipliers.constraints, iterate.multipliers.lower_bounds,
          iterate.multipliers.upper_bounds);
-   iterate.residuals.stationarity = norm(iterate.lagrangian_gradient, this->residual_norm);
+   const auto assemble_lagrangian = [&](size_t i) {
+      return iterate.lagrangian_gradient[i];
+   };
+   iterate.residuals.stationarity = norm<double>(assemble_lagrangian, Range(problem.get_number_original_variables()), this->residual_norm);
    // constraint violation of the original problem
    iterate.residuals.infeasibility = problem.model.compute_constraint_violation(iterate.evaluations.constraints, this->residual_norm);
    // complementarity error of the reformulated problem

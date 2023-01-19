@@ -8,6 +8,7 @@
 #include "ingredients/globalization_strategy/ProgressMeasures.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
+#include "optimization/LagrangianGradient.hpp"
 #include "optimization/Model.hpp"
 #include "optimization/Multipliers.hpp"
 #include "optimization/PrimalDualResiduals.hpp"
@@ -52,7 +53,7 @@ public:
 
    // primal-dual residuals
    PrimalDualResiduals residuals{};
-   std::vector<double> lagrangian_gradient;
+   LagrangianGradient lagrangian_gradient;
 
    // measures of progress (infeasibility, scaled optimality, unscaled optimality)
    ProgressMeasures progress{INF<double>, {}, INF<double>};

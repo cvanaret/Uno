@@ -176,7 +176,7 @@ T norm_2(const std::function<T(size_t /*i*/)>& ith_component, const ITERABLE& it
 }
 
 template <typename T, typename ITERABLE>
-T norm(const std::function<T(size_t /*i*/)>& ith_component, ITERABLE iterable, Norm norm) {
+T norm(const std::function<T(size_t /*i*/)>& ith_component, const ITERABLE& iterable, Norm norm) {
    // choose the right norm
    if (norm == INF_NORM) {
       return norm_inf(ith_component, iterable);
@@ -195,16 +195,16 @@ T norm(const std::function<T(size_t /*i*/)>& ith_component, ITERABLE iterable, N
    }
 }
 
-template <typename T>
-void print_vector(std::ostream& stream, const std::vector<T>& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max()) {
+template <typename ITERABLE>
+void print_vector(std::ostream& stream, const ITERABLE& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max()) {
    for (size_t i: Range(start, std::min(start + length, x.size()))) {
       stream << x[i] << " ";
    }
    stream << '\n';
 }
 
-template <typename T>
-void print_vector(const Level& level, const std::vector<T>& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max()) {
+template <typename ITERABLE>
+void print_vector(const Level& level, const ITERABLE& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max()) {
    for (size_t i: Range(start, std::min(start + length, x.size()))) {
       level << x[i] << " ";
    }
