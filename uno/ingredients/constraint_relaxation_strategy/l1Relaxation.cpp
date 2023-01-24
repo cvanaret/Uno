@@ -29,7 +29,6 @@ l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
          options.get_double("l1_relaxation_epsilon2"),
          options.get_double("l1_relaxation_small_threshold")
       }),
-      constraints(model.number_constraints),
       constraint_multipliers(model.number_constraints),
       lower_bound_multipliers(this->relaxed_problem.number_variables),
       upper_bound_multipliers(this->relaxed_problem.number_variables),
@@ -148,9 +147,6 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
                }
                if (not condition2) {
                   this->penalty_parameter /= this->parameters.decrease_factor;
-                  if (this->penalty_parameter < this->parameters.small_threshold) {
-                     //this->penalty_parameter = 0.;
-                  }
                   DEBUG << "Further decrease the penalty parameter to " << this->penalty_parameter << '\n';
                   if (this->penalty_parameter == 0.) {
                      direction = direction_lowest_violation;
@@ -196,9 +192,6 @@ void l1Relaxation::decrease_parameter_aggressively(Iterate& current_iterate, con
    const double scaled_error = error_lowest_violation / std::max(1., current_iterate.residuals.infeasibility);
    const double scaled_error_square = scaled_error * scaled_error;
    this->penalty_parameter = std::min(this->penalty_parameter, scaled_error_square);
-   if (this->penalty_parameter < this->parameters.small_threshold) {
-      //this->penalty_parameter = 0.;
-   }
 }
 
 bool l1Relaxation::objective_sufficient_decrease(const Iterate& current_iterate, const Direction& direction,
@@ -332,14 +325,10 @@ double l1Relaxation::compute_error(Iterate& current_iterate, const Multipliers& 
    // KKT error
    ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(this->original_model.number_variables, current_iterate, this->constraint_multipliers,
          this->lower_bound_multipliers, this->upper_bound_multipliers, this->penalty_parameter);
-   const auto assemble_lagrangian = [&](size_t i) {
-      return current_iterate.lagrangian_gradient[i];
-   };
-   double error = norm_1<double>(assemble_lagrangian, Range(this->relaxed_problem.number_variables));
+   double error = norm_1(current_iterate.lagrangian_gradient.constraints_contribution);
    // complementarity error
-   this->relaxed_problem.evaluate_constraints(current_iterate, this->constraints);
-   error += this->relaxed_problem.compute_complementarity_error(this->original_model.number_variables, current_iterate.primals,
-         this->constraints, this->constraint_multipliers, this->lower_bound_multipliers, this->upper_bound_multipliers);
+   error += this->relaxed_problem.compute_feasibility_complementarity_error(this->original_model.number_variables, current_iterate.primals,
+         current_iterate.evaluations.constraints, this->constraint_multipliers, this->lower_bound_multipliers, this->upper_bound_multipliers);
    return error;
 }
 

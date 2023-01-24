@@ -92,8 +92,8 @@ void Uno::add_statistics(Statistics& statistics, const Model& model, const Itera
       statistics.add_statistic("primal infeas.", iterate.residuals.infeasibility);
    }
    //statistics.add_statistic("dual infeas.", 0.); // TODO
-   statistics.add_statistic("complementarity", iterate.residuals.optimality_complementarity);
-   statistics.add_statistic("stationarity", iterate.residuals.optimality_stationarity);
+   statistics.add_statistic("complementarity", std::min(iterate.residuals.optimality_complementarity, iterate.residuals.feasibility_complementarity));
+   statistics.add_statistic("stationarity", std::min(iterate.residuals.optimality_stationarity, iterate.residuals.feasibility_stationarity));
 }
 
 bool Uno::termination_criterion(TerminationStatus current_status, size_t iteration) const {

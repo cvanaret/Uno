@@ -49,7 +49,6 @@ protected:
    double penalty_parameter;
    const l1RelaxationParameters parameters;
    // preallocated temporary multipliers
-   std::vector<double> constraints;
    std::vector<double> constraint_multipliers;
    std::vector<double> lower_bound_multipliers;
    std::vector<double> upper_bound_multipliers;
