@@ -183,15 +183,16 @@ bool l1Relaxation::linearized_residual_sufficient_decrease(const Iterate& curren
 
 void l1Relaxation::decrease_parameter_aggressively(Iterate& current_iterate, const Direction& direction_lowest_violation) {
    // compute the ideal error (with a zero penalty parameter)
-   const double error_lowest_violation = l1Relaxation::compute_error(current_iterate, direction_lowest_violation.multipliers);
+   const double error_lowest_violation = l1Relaxation::compute_dual_error(current_iterate, direction_lowest_violation.multipliers);
    DEBUG << "Ideal error: " << error_lowest_violation << '\n';
-
-   if (direction_lowest_violation.multipliers.norm_1() <= 1e-8) {
-      WARNING << RED << "All multipliers are 0. The dual error shouldn't be used in l1Relaxation" << RESET << '\n';
+   if (this->small_duals_threshold < this->penalty_parameter + direction_lowest_violation.multipliers.norm_1()) {
+      const double scaled_error = error_lowest_violation / std::max(1., current_iterate.residuals.infeasibility);
+      const double scaled_error_square = scaled_error * scaled_error;
+      this->penalty_parameter = std::min(this->penalty_parameter, scaled_error_square);
    }
-   const double scaled_error = error_lowest_violation / std::max(1., current_iterate.residuals.infeasibility);
-   const double scaled_error_square = scaled_error * scaled_error;
-   this->penalty_parameter = std::min(this->penalty_parameter, scaled_error_square);
+   else {
+      WARNING << RED << "All multipliers are close to 0. The dual error shouldn't be used in l1Relaxation" << RESET << '\n';
+   }
 }
 
 bool l1Relaxation::objective_sufficient_decrease(const Iterate& current_iterate, const Direction& direction,
@@ -316,13 +317,13 @@ std::function<double (double)> l1Relaxation::generate_predicted_scaled_optimalit
 }
 
 // measure that combines KKT error and complementarity error
-double l1Relaxation::compute_error(Iterate& current_iterate, const Multipliers& multiplier_displacements) {
+double l1Relaxation::compute_dual_error(Iterate& current_iterate, const Multipliers& multiplier_displacements) {
    // assemble the trial multipliers
    add_vectors(current_iterate.multipliers.constraints, multiplier_displacements.constraints, 1., this->constraint_multipliers);
    add_vectors(current_iterate.multipliers.lower_bounds, multiplier_displacements.lower_bounds, 1., this->lower_bound_multipliers);
    add_vectors(current_iterate.multipliers.upper_bounds, multiplier_displacements.upper_bounds, 1., this->upper_bound_multipliers);
 
-   // KKT error
+   // stationarity error
    ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(this->original_model.number_variables, current_iterate, this->constraint_multipliers,
          this->lower_bound_multipliers, this->upper_bound_multipliers, this->penalty_parameter);
    double error = norm_1(current_iterate.lagrangian_gradient.constraints_contribution);
