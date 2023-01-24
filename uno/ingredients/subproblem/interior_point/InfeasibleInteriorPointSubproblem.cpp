@@ -343,11 +343,10 @@ bool InfeasibleInteriorPointSubproblem::is_small_step(const NonlinearProblem& pr
    return (norm_inf<double>(relative_measure_function, Range(problem.number_variables)) < this->parameters.small_direction_factor * machine_epsilon);
 }
 
-double InfeasibleInteriorPointSubproblem::evaluate_subproblem_objective(const Iterate& /*current_iterate*/, const std::vector<double>& solution) const {
-   const double linear_term = dot(solution, this->evaluations.objective_gradient);
-   const double quadratic_term = this->hessian_model->hessian->quadratic_product(direction.primals, direction.primals) / 2.;
-   const double regularized_term = this->augmented_system.get_primal_regularization() * norm_2_squared(direction.primals) / 2.;
-   return linear_term + quadratic_term + regularized_term;
+double InfeasibleInteriorPointSubproblem::evaluate_subproblem_objective() const {
+   const double linear_term = dot(this->direction.primals, this->evaluations.objective_gradient);
+   const double quadratic_term = this->hessian_model->hessian->quadratic_product(this->direction.primals, this->direction.primals) / 2.;
+   return linear_term + quadratic_term;
 }
 
 double InfeasibleInteriorPointSubproblem::primal_fraction_to_boundary(const NonlinearProblem& problem, const Iterate& current_iterate, double tau) {
@@ -450,7 +449,7 @@ void InfeasibleInteriorPointSubproblem::generate_primal_dual_direction(const Non
    DEBUG << "primal length = " << primal_step_length << '\n';
    DEBUG << "dual length = " << dual_step_length << '\n';
 
-   this->direction.subproblem_objective = this->evaluate_subproblem_objective(current_iterate, direction.primals);
+   this->direction.subproblem_objective = this->evaluate_subproblem_objective();
 }
 
 void InfeasibleInteriorPointSubproblem::compute_bound_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate) {

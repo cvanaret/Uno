@@ -70,7 +70,7 @@ protected:
    void evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate);
    void update_barrier_parameter(const NonlinearProblem& problem, const Iterate& current_iterate);
    [[nodiscard]] bool is_small_step(const NonlinearProblem& problem, const Iterate& current_iterate, const Direction& direction) const;
-   [[nodiscard]] double evaluate_subproblem_objective(const Iterate& current_iterate, const std::vector<double>& solution) const;
+   [[nodiscard]] double evaluate_subproblem_objective() const;
    [[nodiscard]] double compute_barrier_term_directional_derivative(const NonlinearProblem& problem, const Iterate& current_iterate,
          const Direction& direction) const;
    [[nodiscard]] double primal_fraction_to_boundary(const NonlinearProblem& problem, const Iterate& current_iterate, double tau);
