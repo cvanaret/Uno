@@ -17,7 +17,7 @@ void ActiveSetSubproblem::set_initial_point(const std::vector<double>& initial_p
    copy_from(this->initial_point, initial_point);
 }
 
-void ActiveSetSubproblem::initialize_feasibility_problem(Iterate& /*current_iterate*/) {
+void ActiveSetSubproblem::initialize_feasibility_problem() {
    // do nothing
 }
 

@@ -18,9 +18,9 @@ void QPSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& 
    // Hessian
    this->hessian_model->evaluate(problem, current_iterate.primals, current_iterate.multipliers.constraints);
    // objective gradient, constraints and constraint Jacobian
-   problem.evaluate_objective_gradient(current_iterate, current_iterate.subproblem_evaluations.objective_gradient);
-   problem.evaluate_constraints(current_iterate, current_iterate.subproblem_evaluations.constraints);
-   problem.evaluate_constraint_jacobian(current_iterate, current_iterate.subproblem_evaluations.constraint_jacobian);
+   problem.evaluate_objective_gradient(current_iterate, this->evaluations.objective_gradient);
+   problem.evaluate_constraints(current_iterate, this->evaluations.constraints);
+   problem.evaluate_constraint_jacobian(current_iterate, this->evaluations.constraint_jacobian);
 }
 
 Direction QPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem& problem, Iterate& current_iterate) {
@@ -32,22 +32,26 @@ Direction QPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem
    this->set_variable_displacement_bounds(problem, current_iterate);
 
    // bounds of the linearized constraints
-   this->set_linearized_constraint_bounds(problem, current_iterate.subproblem_evaluations.constraints);
+   this->set_linearized_constraint_bounds(problem, this->evaluations.constraints);
 
    return this->solve_QP(problem, current_iterate);
 }
 
-Direction QPSubproblem::compute_second_order_correction(const NonlinearProblem& problem, Iterate& trial_iterate) {
+Direction QPSubproblem::compute_second_order_correction(const NonlinearProblem& /*problem*/, Iterate& /*trial_iterate*/) {
    // TODO warm start
    DEBUG << "\nEntered SOC computation\n";
+   assert(false && "Not implemented yet");
+   /*
    // shift the RHS with the values of the constraints at the trial iterate
+   problem.evaluate_constraints(trial_iterate, trial_iterate.subproblem_evaluations.constraints);
    ActiveSetSubproblem::shift_linearized_constraint_bounds(problem, trial_iterate.subproblem_evaluations.constraints);
    return this->solve_QP(problem, trial_iterate);
+    */
 }
 
 Direction QPSubproblem::solve_QP(const NonlinearProblem& problem, Iterate& iterate) {
    Direction direction = this->solver->solve_QP(problem.number_variables, problem.number_constraints, this->variable_displacement_bounds,
-         this->linearized_constraint_bounds, iterate.subproblem_evaluations.objective_gradient, iterate.subproblem_evaluations.constraint_jacobian,
+         this->linearized_constraint_bounds, this->evaluations.objective_gradient, this->evaluations.constraint_jacobian,
          *this->hessian_model->hessian, this->initial_point);
    Subproblem::check_unboundedness(direction);
    ActiveSetSubproblem::compute_dual_displacements(problem, iterate, direction);

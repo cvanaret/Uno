@@ -41,7 +41,6 @@ public:
 
    // evaluations
    Evaluations evaluations;
-   Evaluations subproblem_evaluations;
    static size_t number_eval_objective;
    static size_t number_eval_constraints;
    static size_t number_eval_jacobian;
@@ -53,7 +52,7 @@ public:
 
    // primal-dual residuals
    PrimalDualResiduals residuals{};
-   LagrangianGradient lagrangian_gradient;
+   LagrangianGradient<double> lagrangian_gradient;
 
    // measures of progress (infeasibility, scaled optimality, unscaled optimality)
    ProgressMeasures progress{INF<double>, {}, INF<double>};

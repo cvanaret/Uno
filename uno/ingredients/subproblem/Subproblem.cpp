@@ -5,7 +5,9 @@
 #include "Subproblem.hpp"
 
 Subproblem::Subproblem(size_t max_number_variables, size_t max_number_constraints):
-      direction(max_number_variables, max_number_constraints), variable_bounds(max_number_variables) {
+      direction(max_number_variables, max_number_constraints),
+      evaluations(max_number_variables, max_number_constraints),
+      variable_bounds(max_number_variables) {
 }
 
 void Subproblem::set_trust_region_radius(double new_trust_region_radius) {

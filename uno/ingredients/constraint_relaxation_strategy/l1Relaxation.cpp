@@ -29,6 +29,7 @@ l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
          options.get_double("l1_relaxation_epsilon2"),
          options.get_double("l1_relaxation_small_threshold")
       }),
+      constraints(model.number_constraints),
       constraint_multipliers(model.number_constraints),
       lower_bound_multipliers(this->relaxed_problem.number_variables),
       upper_bound_multipliers(this->relaxed_problem.number_variables),
@@ -47,29 +48,14 @@ void l1Relaxation::initialize(Statistics& statistics, Iterate& first_iterate) {
    this->set_scaled_optimality_measure(first_iterate);
    this->subproblem->set_unscaled_optimality_measure(this->relaxed_problem, first_iterate);
 
-   ConstraintRelaxationStrategy::evaluate_functions(this->relaxed_problem, first_iterate);
+   //ConstraintRelaxationStrategy::evaluate_functions(this->relaxed_problem, first_iterate);
    this->compute_primal_dual_residuals(this->relaxed_problem, first_iterate);
 
    // initialize the globalization strategy
    this->globalization_strategy->initialize(first_iterate);
 }
 
-void l1Relaxation::set_multipliers(const Iterate& current_iterate, std::vector<double>& current_constraint_multipliers) {
-   // the values {1, -1} are derived from the KKT conditions of the l1 problem
-   for (size_t j: Range(this->original_model.number_constraints)) {
-      if (current_iterate.evaluations.constraints[j] < this->optimality_problem.get_constraint_lower_bound(j)) { // lower bound infeasible
-         current_constraint_multipliers[j] = 1.;
-      }
-      else if (this->optimality_problem.get_constraint_upper_bound(j) < current_iterate.evaluations.constraints[j]) { // upper bound infeasible
-         current_constraint_multipliers[j] = -1.;
-      }
-   }
-   // otherwise, leave the multiplier as it is
-}
-
 Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate) {
-   // set the multipliers of the violated constraints
-   this->set_multipliers(current_iterate, current_iterate.multipliers.constraints);
    DEBUG << "Current iterate\n" << current_iterate << '\n';
 
    // use Byrd's steering rules to update the penalty parameter and compute a descent direction
@@ -91,13 +77,12 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, Iterate& curren
 
 Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) {
    assert(0. < this->penalty_parameter && "l1Relaxation: the penalty parameter is already 0");
-   this->subproblem->initialize_feasibility_problem(current_iterate);
+   this->subproblem->initialize_feasibility_problem();
    return this->solve_subproblem(statistics, current_iterate, 0.);
 }
 
 Direction l1Relaxation::compute_second_order_correction(Iterate& trial_iterate) {
    // evaluate the constraints for the second-order correction
-   this->relaxed_problem.evaluate_constraints(trial_iterate, trial_iterate.subproblem_evaluations.constraints);
    Direction soc_direction = this->subproblem->compute_second_order_correction(this->relaxed_problem, trial_iterate);
    soc_direction.objective_multiplier = this->penalty_parameter;
    soc_direction.norm = norm_inf(soc_direction.primals, Range(this->optimality_problem.number_variables));
@@ -164,7 +149,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
                if (not condition2) {
                   this->penalty_parameter /= this->parameters.decrease_factor;
                   if (this->penalty_parameter < this->parameters.small_threshold) {
-                     this->penalty_parameter = 0.;
+                     //this->penalty_parameter = 0.;
                   }
                   DEBUG << "Further decrease the penalty parameter to " << this->penalty_parameter << '\n';
                   if (this->penalty_parameter == 0.) {
@@ -212,7 +197,7 @@ void l1Relaxation::decrease_parameter_aggressively(Iterate& current_iterate, con
    const double scaled_error_square = scaled_error * scaled_error;
    this->penalty_parameter = std::min(this->penalty_parameter, scaled_error_square);
    if (this->penalty_parameter < this->parameters.small_threshold) {
-      this->penalty_parameter = 0.;
+      //this->penalty_parameter = 0.;
    }
 }
 
@@ -263,7 +248,7 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
    }
    if (accept) {
       statistics.add_statistic("penalty param.", this->penalty_parameter);
-      ConstraintRelaxationStrategy::evaluate_functions(this->relaxed_problem, trial_iterate);
+      //ConstraintRelaxationStrategy::evaluate_functions(this->relaxed_problem, trial_iterate);
       this->compute_primal_dual_residuals(this->relaxed_problem, trial_iterate);
    }
    return accept;
@@ -345,16 +330,16 @@ double l1Relaxation::compute_error(Iterate& current_iterate, const Multipliers& 
    add_vectors(current_iterate.multipliers.upper_bounds, multiplier_displacements.upper_bounds, 1., this->upper_bound_multipliers);
 
    // KKT error
-   ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(current_iterate, this->constraint_multipliers, this->lower_bound_multipliers,
-         this->upper_bound_multipliers);
+   ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(this->original_model.number_variables, current_iterate, this->constraint_multipliers,
+         this->lower_bound_multipliers, this->upper_bound_multipliers, this->penalty_parameter);
    const auto assemble_lagrangian = [&](size_t i) {
       return current_iterate.lagrangian_gradient[i];
    };
    double error = norm_1<double>(assemble_lagrangian, Range(this->relaxed_problem.number_variables));
    // complementarity error
-   this->relaxed_problem.evaluate_constraints(current_iterate, current_iterate.subproblem_evaluations.constraints);
-   error += this->relaxed_problem.compute_complementarity_error(current_iterate.primals, current_iterate.subproblem_evaluations.constraints,
-         this->constraint_multipliers, this->lower_bound_multipliers, this->upper_bound_multipliers);
+   this->relaxed_problem.evaluate_constraints(current_iterate, this->constraints);
+   error += this->relaxed_problem.compute_complementarity_error(this->original_model.number_variables, current_iterate.primals,
+         this->constraints, this->constraint_multipliers, this->lower_bound_multipliers, this->upper_bound_multipliers);
    return error;
 }
 

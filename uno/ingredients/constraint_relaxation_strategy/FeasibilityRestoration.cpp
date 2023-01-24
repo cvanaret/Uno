@@ -33,7 +33,7 @@ void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& first_i
    this->subproblem->set_unscaled_optimality_measure(this->optimality_problem, first_iterate);
 
    // compute the residuals of the initial point
-   ConstraintRelaxationStrategy::evaluate_functions(this->optimality_problem, first_iterate);
+   //ConstraintRelaxationStrategy::evaluate_functions(this->optimality_problem, first_iterate);
    this->compute_primal_dual_residuals(this->optimality_problem, first_iterate);
 
    // initialize the globalization strategies
@@ -68,7 +68,7 @@ Direction FeasibilityRestoration::solve_optimality_problem(Statistics& statistic
 
 // form and solve the feasibility problem
 Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) {
-   this->subproblem->initialize_feasibility_problem(current_iterate);
+   this->subproblem->initialize_feasibility_problem();
    this->subproblem->set_elastic_variable_values(this->feasibility_problem, current_iterate);
    if (this->current_phase == Phase::OPTIMALITY) {
       this->switch_to_feasibility_restoration(current_iterate);
@@ -91,7 +91,6 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
 
 Direction FeasibilityRestoration::compute_second_order_correction(Iterate& trial_iterate) {
    // evaluate the constraints for the second-order correction
-   this->current_reformulated_problem().evaluate_constraints(trial_iterate, trial_iterate.subproblem_evaluations.constraints);
    Direction soc_direction = this->subproblem->compute_second_order_correction(this->current_reformulated_problem(), trial_iterate);
    soc_direction.objective_multiplier = 1.;
    soc_direction.norm = norm_inf(soc_direction.primals, Range(this->optimality_problem.number_variables));
@@ -175,7 +174,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
    }
    if (accept) {
       statistics.add_statistic("phase", static_cast<int>(this->current_phase));
-      ConstraintRelaxationStrategy::evaluate_functions(this->current_reformulated_problem(), trial_iterate);
+      //ConstraintRelaxationStrategy::evaluate_functions(this->current_reformulated_problem(), trial_iterate);
       this->compute_primal_dual_residuals(this->current_reformulated_problem(), trial_iterate);
    }
    return accept;

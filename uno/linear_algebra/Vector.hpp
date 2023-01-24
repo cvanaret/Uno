@@ -76,6 +76,7 @@ void copy_from(std::vector<T>& destination, const std::vector<T>& source, size_t
    std::copy(source_start_position, source_end_position, destination_position);
 }
 
+/*
 // compute ||x||_1
 template <typename T>
 T norm_1(const std::vector<T>& x) {
@@ -85,47 +86,59 @@ T norm_1(const std::vector<T>& x) {
    }
    return norm;
 }
+ */
+
+// l1 norm of any array with elements of any type
+template <typename T, template <typename> typename ARRAY>
+T norm_1(const ARRAY<T>& x) {
+   T norm = T(0);
+   for (size_t i = 0; i < x.size(); i++) {
+      norm += std::abs(x[i]);
+   }
+   return norm;
+}
 
 // compute ||x||^2_2
-template <typename T>
-T norm_2_squared(const std::vector<T>& x) {
+template <typename T, template <typename> typename ARRAY>
+T norm_2_squared(const ARRAY<T>& x) {
    T norm_squared = T(0);
-   for (T xi: x) {
+   for (size_t i = 0; i < x.size(); i++) {
+      const T xi = x[i];
       norm_squared += xi * xi;
    }
    return norm_squared;
 }
 
 // compute ||x||_2
-template <typename T>
-T norm_2(const std::vector<T>& x) {
+template <typename T, template <typename> typename ARRAY>
+T norm_2(const ARRAY<T>& x) {
    return std::sqrt(norm_2_squared(x));
 }
 
 // compute ||x||_inf
-template <typename T>
-T norm_inf(const std::vector<T>& x) {
+template <typename T, template <typename> typename ARRAY>
+T norm_inf(const ARRAY<T>& x) {
    T norm = T(0);
-   for (T xi: x) {
-      norm = std::max(norm, std::abs(xi));
+   for (size_t i = 0; i < x.size(); i++) {
+      norm = std::max(norm, std::abs(x[i]));
    }
    return norm;
 }
 
-template <typename T>
-T norm(const std::vector<T>& x, Norm norm) {
+template <typename T, template <typename> typename ARRAY>
+T norm(const ARRAY<T>& x, Norm norm) {
    // choose the right norm
    if (norm == INF_NORM) {
-      return norm_inf<T>(x);
+      return norm_inf(x);
    }
    else if (norm == L2_NORM) {
-      return norm_2<T>(x);
+      return norm_2(x);
    }
    else if (norm == L2_SQUARED_NORM) {
-      return norm_2_squared<T>(x);
+      return norm_2_squared(x);
    }
    else if (norm == L1_NORM) {
-      return norm_1<T>(x);
+      return norm_1(x);
    }
    throw std::out_of_range("The norm is not known");
 }

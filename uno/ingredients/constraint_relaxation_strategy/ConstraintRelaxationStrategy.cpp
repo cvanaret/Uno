@@ -14,36 +14,30 @@ bool ConstraintRelaxationStrategy::is_small_step(const Direction& direction) con
    return (direction.norm <= this->small_step_threshold);
 }
 
-void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(Iterate& iterate, const std::vector<double>& constraint_multipliers,
-      const std::vector<double>& lower_bound_multipliers, const std::vector<double>& upper_bound_multipliers) {
+void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(size_t number_variables, Iterate& iterate,
+      const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bound_multipliers,
+      const std::vector<double>& upper_bound_multipliers, double objective_multiplier) {
    initialize_vector(iterate.lagrangian_gradient.objective_contribution, 0.);
    initialize_vector(iterate.lagrangian_gradient.constraints_contribution, 0.);
 
    // objective gradient
-   iterate.subproblem_evaluations.objective_gradient.for_each([&](size_t i, double derivative) {
-         iterate.lagrangian_gradient.objective_contribution[i] += derivative;
+   iterate.evaluations.objective_gradient.for_each([&](size_t i, double derivative) {
+         iterate.lagrangian_gradient.objective_contribution[i] += objective_multiplier * derivative;
       });
 
    // constraints
    for (size_t j: Range(iterate.number_constraints)) {
       if (constraint_multipliers[j] != 0.) {
-         iterate.subproblem_evaluations.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
+         iterate.evaluations.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
             iterate.lagrangian_gradient.constraints_contribution[i] -= constraint_multipliers[j] * derivative;
          });
       }
    }
 
    // bound constraints
-   for (size_t i: Range(iterate.number_variables)) {
+   for (size_t i: Range(number_variables)) {
       iterate.lagrangian_gradient.constraints_contribution[i] -= lower_bound_multipliers[i] + upper_bound_multipliers[i];
    }
-}
-
-void ConstraintRelaxationStrategy::evaluate_functions(const NonlinearProblem& problem, Iterate& iterate) {
-   // evaluate functions of the reformulated problem
-   problem.evaluate_objective_gradient(iterate, iterate.subproblem_evaluations.objective_gradient);
-   problem.evaluate_constraints(iterate, iterate.subproblem_evaluations.constraints);
-   problem.evaluate_constraint_jacobian(iterate, iterate.subproblem_evaluations.constraint_jacobian);
 }
 
 double compute_stationarity_scaling(const NonlinearProblem& problem, const Iterate& iterate, double threshold) {
@@ -69,18 +63,25 @@ double compute_complementarity_scaling(const NonlinearProblem& problem, const It
 }
 
 void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const NonlinearProblem& problem, Iterate& iterate) const {
-   // stationarity error of the reformulated problem
-   ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(iterate, iterate.multipliers.constraints, iterate.multipliers.lower_bounds,
-         iterate.multipliers.upper_bounds);
-   const auto assemble_lagrangian = [&](size_t i) {
-      return iterate.lagrangian_gradient[i];
-   };
-   iterate.residuals.stationarity = norm<double>(assemble_lagrangian, Range(problem.get_number_original_variables()), this->residual_norm);
+   iterate.evaluate_objective_gradient(problem.model);
+   iterate.evaluate_constraints(problem.model);
+   iterate.evaluate_constraint_jacobian(problem.model);
+
+   // stationarity error
+   ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(problem.model.number_variables, iterate, iterate.multipliers.constraints,
+         iterate.multipliers.lower_bounds, iterate.multipliers.upper_bounds, problem.get_objective_multiplier());
+   iterate.residuals.optimality_stationarity = NonlinearProblem::compute_optimality_stationarity_error(iterate, this->residual_norm);
+   iterate.residuals.feasibility_stationarity = NonlinearProblem::compute_feasibility_stationarity_error(iterate, this->residual_norm);
+
    // constraint violation of the original problem
    iterate.residuals.infeasibility = problem.model.compute_constraint_violation(iterate.evaluations.constraints, this->residual_norm);
-   // complementarity error of the reformulated problem
-   iterate.residuals.complementarity = problem.compute_complementarity_error(iterate.primals, iterate.subproblem_evaluations.constraints,
-         iterate.multipliers.constraints, iterate.multipliers.lower_bounds, iterate.multipliers.upper_bounds);
+
+   // complementarity error
+   iterate.residuals.optimality_complementarity = problem.compute_complementarity_error(problem.model.number_variables, iterate.primals,
+         iterate.evaluations.constraints, iterate.multipliers.constraints, iterate.multipliers.lower_bounds, iterate.multipliers.upper_bounds);
+   iterate.residuals.feasibility_complementarity = problem.compute_feasibility_complementarity_error(problem.model.number_variables, iterate.primals,
+         iterate.evaluations.constraints, iterate.multipliers.constraints, iterate.multipliers.lower_bounds, iterate.multipliers.upper_bounds);
+
    // scaling factors
    iterate.residuals.stationarity_scaling = compute_stationarity_scaling(problem, iterate, 100.);
    iterate.residuals.complementarity_scaling = compute_complementarity_scaling(problem, iterate, 100.);

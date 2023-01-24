@@ -29,7 +29,7 @@ public:
    virtual Direction compute_second_order_correction(const NonlinearProblem& model, Iterate& trial_iterate) = 0;
 
    void set_trust_region_radius(double new_trust_region_radius);
-   virtual void initialize_feasibility_problem(Iterate& current_iterate) = 0;
+   virtual void initialize_feasibility_problem() = 0;
    virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
 
    // globalization metrics
@@ -50,6 +50,7 @@ public:
    bool unscaled_optimality_measure_changed{false};
 
 protected:
+   Evaluations evaluations;
    std::vector<Interval> variable_bounds;
    double trust_region_radius{INF<double>};
 

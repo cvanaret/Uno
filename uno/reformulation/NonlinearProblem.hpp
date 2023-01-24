@@ -4,8 +4,6 @@
 #ifndef UNO_NONLINEARPROBLEM_H
 #define UNO_NONLINEARPROBLEM_H
 
-// #include <iomanip>
-// std::setprecision(20) <<
 #include <string>
 #include <vector>
 #include <map>
@@ -44,8 +42,13 @@ public:
    virtual void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const = 0;
    virtual void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix<double>& hessian) const = 0;
 
-   [[nodiscard]] double compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
-         const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bounds_multipliers,
+   [[nodiscard]] static double compute_optimality_stationarity_error(const Iterate& iterate, Norm residual_norm);
+   [[nodiscard]] static double compute_feasibility_stationarity_error(const Iterate& iterate, Norm residual_norm);
+   [[nodiscard]] double compute_complementarity_error(size_t number_variables, const std::vector<double>& primals,
+         const std::vector<double>& constraints, const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bounds_multipliers,
+         const std::vector<double>& upper_bounds_multipliers) const;
+   [[nodiscard]] double compute_feasibility_complementarity_error(size_t number_variables, const std::vector<double>& primals,
+         const std::vector<double>& constraints, const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bounds_multipliers,
          const std::vector<double>& upper_bounds_multipliers) const;
    [[nodiscard]] double compute_dual_constraint_violation(const std::vector<double>& primals, const std::vector<double>& constraint_multipliers,
          const std::vector<double>& lower_bounds_multipliers, const std::vector<double>& upper_bounds_multipliers);
@@ -87,35 +90,73 @@ inline double NonlinearProblem::get_variable_upper_bound(size_t i, double relaxa
    return upper_bound + relaxation_factor * std::max(1., std::abs(upper_bound));
 }
 
+inline double NonlinearProblem::compute_optimality_stationarity_error(const Iterate& iterate, Norm residual_norm) {
+   // norm of the Lagrangian gradient
+   return norm(iterate.lagrangian_gradient, residual_norm);
+}
+
+inline double NonlinearProblem::compute_feasibility_stationarity_error(const Iterate& iterate, Norm residual_norm) {
+   // norm of the constraints contribution of the Lagrangian gradient
+   return norm(iterate.lagrangian_gradient.constraints_contribution, residual_norm);
+}
+
 // complementary slackness error
-inline double NonlinearProblem::compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
-      const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bounds_multipliers,
+inline double NonlinearProblem::compute_complementarity_error(size_t number_variables, const std::vector<double>& primals,
+      const std::vector<double>& constraints, const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bounds_multipliers,
       const std::vector<double>& upper_bounds_multipliers) const {
    double error = 0.;
    // bound constraints
-   for (size_t i: Range(this->number_variables)) {
+   for (size_t i: Range(number_variables)) {
       if (0. < lower_bounds_multipliers[i]) {
-         //error += std::abs(lower_bounds_multipliers[i] * (primals[i] - this->get_variable_lower_bound(i)));
-         //std::cout << lower_bounds_multipliers[i] << "*(" << primals[i] << " - " << this->get_variable_lower_bound(i) << ")\n";
          error = std::max(error, std::abs(lower_bounds_multipliers[i] * (primals[i] - this->get_variable_lower_bound(i))));
       }
       if (upper_bounds_multipliers[i] < 0.) {
-         //error += std::abs(upper_bounds_multipliers[i] * (primals[i] - this->get_variable_upper_bound(i)));
-         //std::cout << upper_bounds_multipliers[i] << "*(" << primals[i] << " - " << this->get_variable_upper_bound(i) << ")\n";
          error = std::max(error, std::abs(upper_bounds_multipliers[i] * (primals[i] - this->get_variable_upper_bound(i))));
       }
    }
    // constraints
    this->inequality_constraints.for_each_index([&](size_t j) {
       if (0. < constraint_multipliers[j]) { // lower bound
-         //error += std::abs(constraint_multipliers[j] * (constraints[j] - this->get_constraint_lower_bound(j)));
          error = std::max(error, std::abs(constraint_multipliers[j] * (constraints[j] - this->get_constraint_lower_bound(j))));
       }
       else if (constraint_multipliers[j] < 0.) { // upper bound
-         //error += std::abs(constraint_multipliers[j] * (constraints[j] - this->get_constraint_upper_bound(j)));
          error = std::max(error, std::abs(constraint_multipliers[j] * (constraints[j] - this->get_constraint_upper_bound(j))));
       }
    });
+   return error;
+}
+
+// complementary slackness error
+inline double NonlinearProblem::compute_feasibility_complementarity_error(size_t number_variables, const std::vector<double>& primals,
+      const std::vector<double>& constraints, const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bounds_multipliers,
+      const std::vector<double>& upper_bounds_multipliers) const {
+   double error = 0.;
+   // bound constraints
+   for (size_t i: Range(number_variables)) {
+      if (0. < lower_bounds_multipliers[i]) {
+         error = std::max(error, std::abs(lower_bounds_multipliers[i] * (primals[i] - this->get_variable_lower_bound(i))));
+      }
+      if (upper_bounds_multipliers[i] < 0.) {
+         error = std::max(error, std::abs(upper_bounds_multipliers[i] * (primals[i] - this->get_variable_upper_bound(i))));
+      }
+   }
+   // constraints
+   for (size_t j: Range(constraints.size())) {
+      // violated constraints
+      if (constraints[j] < this->get_constraint_lower_bound(j)) { // lower violated
+         error = std::max(error, std::abs((1. - constraint_multipliers[j]) * (constraints[j] - this->get_constraint_lower_bound(j))));
+      }
+      else if (this->get_constraint_upper_bound(j) < constraints[j]) { // upper violated
+         error = std::max(error, std::abs((1. + constraint_multipliers[j]) * (constraints[j] - this->get_constraint_upper_bound(j))));
+      }
+      // satisfied constraints
+      else if (0. < constraint_multipliers[j]) { // lower bound
+         error = std::max(error, std::abs(constraint_multipliers[j] * (constraints[j] - this->get_constraint_lower_bound(j))));
+      }
+      else if (constraint_multipliers[j] < 0.) { // upper bound
+         error = std::max(error, std::abs(constraint_multipliers[j] * (constraints[j] - this->get_constraint_upper_bound(j))));
+      }
+   }
    return error;
 }
 

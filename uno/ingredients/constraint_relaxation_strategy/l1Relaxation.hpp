@@ -49,6 +49,7 @@ protected:
    double penalty_parameter;
    const l1RelaxationParameters parameters;
    // preallocated temporary multipliers
+   std::vector<double> constraints;
    std::vector<double> constraint_multipliers;
    std::vector<double> lower_bound_multipliers;
    std::vector<double> upper_bound_multipliers;
@@ -61,7 +62,6 @@ protected:
    [[nodiscard]] bool linearized_residual_sufficient_decrease(const Iterate& current_iterate, double linearized_residual, double residual_lowest_violation) const;
    [[nodiscard]] bool objective_sufficient_decrease(const Iterate& current_iterate, const Direction& direction, const Direction& direction_lowest_violation) const;
    double compute_error(Iterate& current_iterate, const Multipliers& multiplier_displacements);
-   void set_multipliers(const Iterate& current_iterate, std::vector<double>& constraint_multipliers);
 
    // progress measures and their local models
    void set_infeasibility_measure(Iterate& iterate);

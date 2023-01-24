@@ -29,7 +29,7 @@ public:
    void set_initial_point(const std::vector<double>& initial_point) override;
    void initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) override;
 
-   void initialize_feasibility_problem(Iterate& current_iterate) override;
+   void initialize_feasibility_problem() override;
    void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
    [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) override;
    [[nodiscard]] Direction compute_second_order_correction(const NonlinearProblem& problem, Iterate& trial_iterate) override;
@@ -69,7 +69,7 @@ protected:
    [[nodiscard]] double push_variable_to_interior(double variable_value, const Interval& variable_bounds) const;
    void evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate);
    void update_barrier_parameter(const NonlinearProblem& problem, const Iterate& current_iterate);
-   [[nodiscard]] bool is_small_direction(const NonlinearProblem& problem, const Iterate& current_iterate, const Direction& direction) const;
+   [[nodiscard]] bool is_small_step(const NonlinearProblem& problem, const Iterate& current_iterate, const Direction& direction) const;
    [[nodiscard]] double evaluate_subproblem_objective(const Iterate& current_iterate, const std::vector<double>& solution) const;
    [[nodiscard]] double compute_barrier_term_directional_derivative(const NonlinearProblem& problem, const Iterate& current_iterate,
          const Direction& direction) const;

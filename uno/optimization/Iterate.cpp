@@ -14,7 +14,6 @@ Iterate::Iterate(size_t max_number_variables, size_t max_number_constraints) :
       number_variables(max_number_variables), number_constraints(max_number_constraints),
       primals(max_number_variables), multipliers(max_number_variables, max_number_constraints),
       evaluations(max_number_variables, max_number_constraints),
-      subproblem_evaluations(max_number_variables, max_number_constraints),
       lagrangian_gradient(max_number_variables) {
 }
 
@@ -84,9 +83,10 @@ std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
 
    stream << "Objective value: " << iterate.evaluations.objective << '\n';
 
-   stream << "          ┌ Stationarity: " << iterate.residuals.stationarity << '\n';
-   stream << "Residuals │ Constraint violation: " << iterate.residuals.infeasibility << '\n';
-   stream << "          └ Complementarity: " << iterate.residuals.complementarity << '\n';
+   stream << "          ┌ Optimality stationarity: " << iterate.residuals.optimality_stationarity << '\n';
+   stream << "Residuals │ Feasibility stationarity: " << iterate.residuals.feasibility_stationarity << '\n';
+   stream << "          │ Constraint violation: " << iterate.residuals.infeasibility << '\n';
+   stream << "          └ Complementarity: " << iterate.residuals.optimality_complementarity << '\n';
 
    stream << "                  ┌ Infeasibility: " << iterate.progress.infeasibility << '\n';
    stream << "Progress measures │ Scaled optimality: " << iterate.progress.scaled_optimality(1.) << '\n';

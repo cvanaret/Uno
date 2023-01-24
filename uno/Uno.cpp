@@ -74,7 +74,7 @@ Statistics Uno::create_statistics(const Model& model, const Options& options) {
    if (model.is_constrained()) {
       statistics.add_column("primal infeas.", Statistics::double_width, options.get_int("statistics_primal_infeasibility_column_order"));
    }
-   statistics.add_column("dual infeas.", Statistics::double_width, options.get_int("statistics_dual_infeasibility_column_order"));
+   //statistics.add_column("dual infeas.", Statistics::double_width, options.get_int("statistics_dual_infeasibility_column_order"));
    statistics.add_column("complementarity", Statistics::double_width, options.get_int("statistics_complementarity_column_order"));
    statistics.add_column("stationarity", Statistics::double_width, options.get_int("statistics_stationarity_column_order"));
    return statistics;
@@ -91,9 +91,9 @@ void Uno::add_statistics(Statistics& statistics, const Model& model, const Itera
    if (model.is_constrained()) {
       statistics.add_statistic("primal infeas.", iterate.residuals.infeasibility);
    }
-   statistics.add_statistic("dual infeas.", 0.); // TODO
-   statistics.add_statistic("complementarity", iterate.residuals.complementarity);
-   statistics.add_statistic("stationarity", iterate.residuals.stationarity);
+   //statistics.add_statistic("dual infeas.", 0.); // TODO
+   statistics.add_statistic("complementarity", iterate.residuals.optimality_complementarity);
+   statistics.add_statistic("stationarity", iterate.residuals.optimality_stationarity);
 }
 
 bool Uno::termination_criterion(TerminationStatus current_status, size_t iteration) const {
@@ -118,30 +118,36 @@ bool not_all_zero_multipliers(const Model& model, const Multipliers& multipliers
 
 TerminationStatus Uno::check_termination(const Model& model, Iterate& current_iterate, double step_norm) const {
    // evaluate termination conditions based on optimality conditions
-   const bool stationarity = (current_iterate.residuals.stationarity/current_iterate.residuals.stationarity_scaling <= this->tolerance);
-   const bool complementarity = (current_iterate.residuals.complementarity/current_iterate.residuals.complementarity_scaling <= this->tolerance);
+   const bool optimality_stationarity = (current_iterate.residuals.optimality_stationarity/current_iterate.residuals.stationarity_scaling <=
+         this->tolerance);
+   const bool feasibility_stationarity = (current_iterate.residuals.feasibility_stationarity/current_iterate.residuals.stationarity_scaling <=
+                                         this->tolerance);
+   const bool optimality_complementarity = (current_iterate.residuals.optimality_complementarity / current_iterate.residuals.complementarity_scaling <= this->tolerance);
+   const bool feasibility_complementarity = (current_iterate.residuals.feasibility_complementarity / current_iterate.residuals.complementarity_scaling
+         <= this->tolerance);
    const bool primal_feasibility = (current_iterate.residuals.infeasibility <= this->tolerance);
+   const bool no_trivial_duals = not_all_zero_multipliers(model, current_iterate.multipliers, this->tolerance);
    // TODO dual feasibility
 
-   DEBUG << "stationarity: " << std::boolalpha << stationarity << '\n';
-   DEBUG << "complementarity: " << std::boolalpha << complementarity << '\n';
-   DEBUG << "primal_feasibility: " << std::boolalpha << primal_feasibility << "\n\n";
+   DEBUG << "optimality stationarity: " << std::boolalpha << optimality_stationarity << '\n';
+   DEBUG << "feasibility stationarity: " << std::boolalpha << feasibility_stationarity << '\n';
+   DEBUG << "complementarity: " << std::boolalpha << optimality_complementarity << '\n';
+   DEBUG << "primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
+   DEBUG << "not all zero multipliers: " << std::boolalpha << no_trivial_duals << "\n\n";
 
-   if (stationarity && complementarity) {
-      if (primal_feasibility) {
-         if (0. < current_iterate.multipliers.objective) {
-            // feasible regular stationary point
-            return FEASIBLE_KKT_POINT;
-         }
-         else if (current_iterate.multipliers.objective == 0. && not_all_zero_multipliers(model, current_iterate.multipliers, this->tolerance)) {
-            // feasible but CQ failure
-            return FJ_POINT;
-         }
+   if (optimality_complementarity && primal_feasibility) {
+      if (feasibility_stationarity && no_trivial_duals) {
+         // feasible but CQ failure
+         return FJ_POINT;
       }
-      else if (current_iterate.multipliers.objective == 0. && not_all_zero_multipliers(model, current_iterate.multipliers, this->tolerance)) {
-         // no primal feasibility, minimum of constraint violation
-        return INFEASIBLE_KKT_POINT;
+      else if (0. < current_iterate.multipliers.objective && optimality_stationarity) {
+         // feasible regular stationary point
+         return FEASIBLE_KKT_POINT;
       }
+   }
+   else if (feasibility_complementarity && feasibility_stationarity) {
+      // no primal feasibility, minimum of constraint violation
+     return INFEASIBLE_KKT_POINT;
    }
    // stationarity & complementarity not achieved, but we can terminate with a small step
    if (step_norm <= this->tolerance / this->small_step_factor) {
