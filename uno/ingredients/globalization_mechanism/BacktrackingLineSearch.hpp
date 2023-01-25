@@ -6,6 +6,12 @@
 
 #include "GlobalizationMechanism.hpp"
 
+struct StepLengthTooSmall : public std::exception {
+   [[nodiscard]] const char* what() const noexcept override {
+      return "The step length in the line search is too small.";
+   }
+};
+
 /*! \class LineSearch
  * \brief Line-search
  *
@@ -21,7 +27,6 @@ public:
 private:
    double step_length{1.};
    bool solving_feasibility_problem{false};
-   // ratio of step length update in ]0, 1[
    const double backtracking_ratio;
    const double min_step_length;
    const bool use_second_order_correction;
@@ -31,6 +36,7 @@ private:
    const int statistics_LS_step_length_column_order;
 
    [[nodiscard]] Direction compute_direction(Statistics& statistics, Iterate& current_iterate);
+   [[nodiscard]] std::tuple<Iterate, double> backtrack_along_direction(Statistics& statistics, Iterate& current_iterate, const Direction& direction);
    [[nodiscard]] bool termination() const;
    void print_iteration();
    void set_statistics(Statistics& statistics, const Direction& direction) const;
