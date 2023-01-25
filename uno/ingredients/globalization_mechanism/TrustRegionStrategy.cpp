@@ -36,6 +36,7 @@ void TrustRegionStrategy::initialize(Statistics& statistics, Iterate& first_iter
 
 std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) {
    this->number_iterations = 0;
+   this->radius = std::max(this->radius, this->radius_reset_threshold);
 
    while (not this->termination()) {
       try {
@@ -114,7 +115,6 @@ void TrustRegionStrategy::increase_radius(double step_norm) {
    if (step_norm >= this->radius - this->activity_tolerance) {
       this->radius *= this->increase_factor;
    }
-   this->radius = std::max(this->radius, this->radius_reset_threshold);
 }
 
 void TrustRegionStrategy::decrease_radius(double step_norm) {
