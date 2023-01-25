@@ -186,8 +186,7 @@ void l1Relaxation::decrease_parameter_aggressively(Iterate& current_iterate, con
    add_vectors(current_iterate.multipliers.upper_bounds, direction_lowest_violation.multipliers.upper_bounds, 1., this->trial_multipliers.upper_bounds);
 
    // the ideal error (with penalty parameter = 0) must make sense: there must be at least a nonzero dual to avoid trivial FJ points
-   if (this->small_duals_threshold < this->penalty_parameter || this->trial_multipliers.not_all_zero(this->original_model.number_variables,
-         this->small_duals_threshold)) {
+   if (this->trial_multipliers.not_all_zero(this->original_model.number_variables, this->small_duals_threshold)) {
       // compute the ideal error (with a zero penalty parameter)
       const double error_lowest_violation = l1Relaxation::compute_dual_error(current_iterate);
       DEBUG << "Ideal error: " << error_lowest_violation << '\n';
