@@ -7,18 +7,19 @@ GlobalizationMechanism::GlobalizationMechanism(ConstraintRelaxationStrategy& con
       constraint_relaxation_strategy(constraint_relaxation_strategy) {
 }
 
-Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate, const Direction& direction, double step_length) {
+Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate, const Direction& direction, double primal_dual_step_length,
+      double bound_dual_step_length) {
    const auto take_dual_step = [&](Iterate& iterate) {
       // take dual step: line-search carried out only on constraint multipliers. Bound multipliers updated with full step length
-      add_vectors(current_iterate.multipliers.constraints, direction.multipliers.constraints, step_length, iterate.multipliers.constraints);
-      add_vectors(current_iterate.multipliers.lower_bounds, direction.multipliers.lower_bounds, 1., iterate.multipliers.lower_bounds);
-      add_vectors(current_iterate.multipliers.upper_bounds, direction.multipliers.upper_bounds, 1., iterate.multipliers.upper_bounds);
+      add_vectors(current_iterate.multipliers.constraints, direction.multipliers.constraints, primal_dual_step_length, iterate.multipliers.constraints);
+      add_vectors(current_iterate.multipliers.lower_bounds, direction.multipliers.lower_bounds, bound_dual_step_length, iterate.multipliers.lower_bounds);
+      add_vectors(current_iterate.multipliers.upper_bounds, direction.multipliers.upper_bounds, bound_dual_step_length, iterate.multipliers.upper_bounds);
       iterate.multipliers.objective = direction.objective_multiplier;
    };
    if (0. < direction.norm) {
       Iterate trial_iterate(current_iterate.primals.size(), direction.multipliers.constraints.size());
       // take primal step
-      add_vectors(current_iterate.primals, direction.primals, step_length, trial_iterate.primals);
+      add_vectors(current_iterate.primals, direction.primals, primal_dual_step_length, trial_iterate.primals);
       // take dual step
       take_dual_step(trial_iterate);
       return trial_iterate;

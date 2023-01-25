@@ -105,7 +105,8 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
 }
 
 Iterate TrustRegionStrategy::assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction) {
-   Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction);
+   Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, direction.primal_dual_step_length,
+         direction.bound_dual_step_length);
    // reset bound multipliers of active trust region
    this->reset_active_trust_region_multipliers(model, direction, trial_iterate);
    return trial_iterate;

@@ -429,26 +429,28 @@ void InfeasibleInteriorPointSubproblem::generate_primal_dual_direction(const Non
 
    // "fraction-to-boundary" rule for primal variables and constraints multipliers
    const double tau = std::max(this->parameters.tau_min, 1. - this->barrier_parameter());
-   const double primal_step_length = this->primal_fraction_to_boundary(problem, current_iterate, tau);
+   const double primal_dual_step_length = this->primal_fraction_to_boundary(problem, current_iterate, tau);
    for (size_t i: Range(problem.number_variables)) {
-      this->direction.primals[i] = primal_step_length * this->augmented_system.solution[i];
+      this->direction.primals[i] = this->augmented_system.solution[i];
    }
    for (size_t j: Range(problem.number_constraints)) {
-      this->direction.multipliers.constraints[j] = primal_step_length * this->augmented_system.solution[problem.number_variables + j];
+      this->direction.multipliers.constraints[j] = this->augmented_system.solution[problem.number_variables + j];
    }
 
    // compute bound multiplier direction Δz
    this->compute_bound_dual_direction(problem, current_iterate);
 
    // "fraction-to-boundary" rule for bound multipliers
-   const double dual_step_length = this->dual_fraction_to_boundary(problem, current_iterate, tau);
+   const double bound_dual_step_length = this->dual_fraction_to_boundary(problem, current_iterate, tau);
    for (size_t i: Range(problem.number_variables)) {
-      this->direction.multipliers.lower_bounds[i] = dual_step_length * this->lower_delta_z[i];
-      this->direction.multipliers.upper_bounds[i] = dual_step_length * this->upper_delta_z[i];
+      this->direction.multipliers.lower_bounds[i] = this->lower_delta_z[i];
+      this->direction.multipliers.upper_bounds[i] = this->upper_delta_z[i];
    }
-   DEBUG << "primal length = " << primal_step_length << '\n';
-   DEBUG << "dual length = " << dual_step_length << '\n';
+   DEBUG << "primal length = " << primal_dual_step_length << '\n';
+   DEBUG << "dual length = " << bound_dual_step_length << '\n';
 
+   this->direction.primal_dual_step_length = primal_dual_step_length;
+   this->direction.bound_dual_step_length = bound_dual_step_length;
    this->direction.subproblem_objective = this->evaluate_subproblem_objective();
 }
 

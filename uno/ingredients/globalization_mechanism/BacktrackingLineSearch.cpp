@@ -72,22 +72,26 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
 
 std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, Iterate& current_iterate,
       const Direction& direction) {
-   this->step_length = 1.;
+   // backtrack on the primal-dual step length computed by the subproblem
+   // most subproblem methods return a step length of 1. Interior-point methods however apply the fraction-to-boundary condition
+   double primal_dual_step_length = direction.primal_dual_step_length;
    this->number_iterations = 0;
 
-   while (not this->termination()) {
+   while (not this->termination(primal_dual_step_length)) {
       this->number_iterations++;
-      this->print_iteration();
+      this->print_iteration(primal_dual_step_length);
 
       // assemble the trial iterate by going a fraction along the direction
-      Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, this->step_length);
+      Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, primal_dual_step_length,
+            direction.bound_dual_step_length);
       try {
-         if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, this->step_length)) {
+         if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction,
+               primal_dual_step_length)) {
             this->total_number_iterations += this->number_iterations;
             this->constraint_relaxation_strategy.postprocess_accepted_iterate(trial_iterate);
-            this->set_statistics(statistics, direction);
+            this->set_statistics(statistics, direction, primal_dual_step_length);
 
-            double step_norm = this->step_length * direction.norm;
+            double step_norm = primal_dual_step_length * direction.norm;
             return std::make_tuple(std::move(trial_iterate), step_norm);
          }
             // (optional) second-order correction
@@ -98,15 +102,16 @@ std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(St
             if (direction_soc.status == SubproblemStatus::INFEASIBLE) {
                DEBUG << "Trial SOC subproblem infeasible\n\n";
                statistics.add_statistic("SOC", "-");
-               this->decrease_step_length();
+               this->decrease_step_length(primal_dual_step_length);
             }
             else {
                // assemble the (temporary) SOC trial iterate
-               Iterate trial_iterate_soc = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction_soc, this->step_length);
+               Iterate trial_iterate_soc = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction_soc,
+                     direction_soc.primal_dual_step_length, direction.bound_dual_step_length);
                if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate_soc, direction_soc,
-                     this->step_length)) {
+                     direction_soc.primal_dual_step_length)) {
                   DEBUG << "Trial SOC step accepted\n";
-                  this->set_statistics(statistics, direction_soc);
+                  this->set_statistics(statistics, direction_soc, direction_soc.primal_dual_step_length);
                   statistics.add_statistic("SOC", "x");
 
                   // let the subproblem know the accepted iterate
@@ -118,38 +123,38 @@ std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(St
                else {
                   DEBUG << "Trial SOC step discarded\n\n";
                   statistics.add_statistic("SOC", "-");
-                  this->decrease_step_length();
+                  this->decrease_step_length(primal_dual_step_length);
                }
             }
          }
          else { // trial iterate not acceptable
-            this->decrease_step_length();
+            this->decrease_step_length(primal_dual_step_length);
          }
       }
       catch (const EvaluationError& e) {
          GlobalizationMechanism::print_warning(e.what());
-         this->decrease_step_length();
+         this->decrease_step_length(primal_dual_step_length);
       }
    }
    throw StepLengthTooSmall();
 }
 
-void BacktrackingLineSearch::decrease_step_length() {
+void BacktrackingLineSearch::decrease_step_length(double& primal_dual_step_length) const {
    // step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ...
-   this->step_length *= this->backtracking_ratio;
-   assert(0 < this->step_length && this->step_length <= 1 && "The line-search step length is not in (0, 1]");
+   primal_dual_step_length *= this->backtracking_ratio;
+   assert(0 < primal_dual_step_length && primal_dual_step_length <= 1 && "The line-search step length is not in (0, 1]");
 }
 
-bool BacktrackingLineSearch::termination() const {
-   return (this->step_length < this->min_step_length);
+bool BacktrackingLineSearch::termination(double primal_dual_step_length) const {
+   return (primal_dual_step_length < this->min_step_length);
 }
 
-void BacktrackingLineSearch::set_statistics(Statistics& statistics, const Direction& direction) const {
+void BacktrackingLineSearch::set_statistics(Statistics& statistics, const Direction& direction, double primal_dual_step_length) const {
    statistics.add_statistic("minor", this->total_number_iterations);
-   statistics.add_statistic("LS step length", this->step_length);
-   statistics.add_statistic("step norm", this->step_length * direction.norm);
+   statistics.add_statistic("LS step length", primal_dual_step_length);
+   statistics.add_statistic("step norm", primal_dual_step_length * direction.norm);
 }
 
-void BacktrackingLineSearch::print_iteration() {
-   DEBUG << "\tLINE SEARCH iteration " << this->number_iterations << ", step_length " << this->step_length << '\n';
+void BacktrackingLineSearch::print_iteration(double primal_dual_step_length) {
+   DEBUG << "\tLINE SEARCH iteration " << this->number_iterations << ", step_length " << primal_dual_step_length << '\n';
 }

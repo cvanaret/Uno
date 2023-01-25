@@ -25,7 +25,6 @@ public:
    [[nodiscard]] std::tuple<Iterate, double> compute_acceptable_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) override;
 
 private:
-   double step_length{1.};
    bool solving_feasibility_problem{false};
    const double backtracking_ratio;
    const double min_step_length;
@@ -37,10 +36,11 @@ private:
 
    [[nodiscard]] Direction compute_direction(Statistics& statistics, Iterate& current_iterate);
    [[nodiscard]] std::tuple<Iterate, double> backtrack_along_direction(Statistics& statistics, Iterate& current_iterate, const Direction& direction);
-   [[nodiscard]] bool termination() const;
-   void print_iteration();
-   void set_statistics(Statistics& statistics, const Direction& direction) const;
-   void decrease_step_length();
+   void decrease_step_length(double& primal_dual_step_length) const;
+   [[nodiscard]] bool termination(double primal_dual_step_length) const;
+   void set_statistics(Statistics& statistics, const Direction& direction, double primal_dual_step_length) const;
+   void print_iteration(double primal_dual_step_length);
+
 };
 
 #endif // UNO_BACKTRACKINGLINESEARCH_H

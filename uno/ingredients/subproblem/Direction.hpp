@@ -53,6 +53,10 @@ public:
 
    SubproblemStatus status{SubproblemStatus::OPTIMAL}; /*!< Status of the solution */
 
+   // step lengths
+   double primal_dual_step_length{1.};
+   double bound_dual_step_length{1.};
+
    double norm{INF<double>}; /*!< Norm of \f$x\f$ */
    double subproblem_objective{INF<double>}; /*!< Objective value */
    ActiveSet active_set{}; /*!< Active set */
