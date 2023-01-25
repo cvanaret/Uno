@@ -57,9 +57,9 @@ inline ScaledModel::ScaledModel(const Model& original_model, Iterate& first_iter
       }
    }
    // check the scaling factors
-   assert(0 <= this->scaling.get_objective_scaling() && "Objective scaling failed.");
+   assert(0 < this->scaling.get_objective_scaling() && "Objective scaling failed.");
    for (size_t j: Range(this->number_constraints)) {
-      assert(0 <= this->scaling.get_constraint_scaling(j) && "Constraint scaling failed.");
+      assert(0 < this->scaling.get_constraint_scaling(j) && "Constraint scaling failed.");
    }
 
    // the constraint repartition (inequality/equality, linear) is the same as in the original model

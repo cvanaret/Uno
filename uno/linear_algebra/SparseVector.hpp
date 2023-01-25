@@ -142,16 +142,12 @@ T dot(const std::vector<T>& x, const SparseVector<T>& y) {
    return dot_product;
 }
 
+// precondition: factor != 0
 template <typename T>
 void scale(SparseVector<T>& x, T factor) {
-   if (factor == T(0)) {
-      x.clear();
-   }
-   else {
-      x.transform([=](T entry) {
-         return factor*entry;
-      });
-   }
+   x.transform([=](T entry) {
+      return factor * entry;
+   });
 }
 
 #endif // UNO_SPARSEVECTOR_H

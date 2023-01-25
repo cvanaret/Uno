@@ -34,7 +34,7 @@ public:
    void regularize_matrix(const Model& model, SymmetricIndefiniteLinearSolver<T>& linear_solver, size_t size_primal_block, size_t size_dual_block,
          T dual_regularization_parameter);
    void solve(SymmetricIndefiniteLinearSolver<T>& linear_solver);
-   [[nodiscard]] T get_primal_regularization() const;
+   // [[nodiscard]] T get_primal_regularization() const;
 
 protected:
    size_t number_factorizations{0};
@@ -177,9 +177,11 @@ void SymmetricIndefiniteLinearSystem<T>::solve(SymmetricIndefiniteLinearSolver<T
    linear_solver.solve(*this->matrix, this->rhs, this->solution);
 }
 
+/*
 template <typename T>
 T SymmetricIndefiniteLinearSystem<T>::get_primal_regularization() const {
    return this->primal_regularization;
 }
+*/
 
 #endif // UNO_SYMMETRICINDEFINITELINEARSYSTEM_H

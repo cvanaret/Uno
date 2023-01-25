@@ -13,7 +13,10 @@
 #include "tools/Range.hpp"
 
 enum Norm {
-   L1_NORM = 1, L2_NORM = 2, L2_SQUARED_NORM, INF_NORM
+   L1_NORM = 1,
+   L2_NORM = 2,
+   L2_SQUARED_NORM,
+   INF_NORM
 };
 
 inline Norm norm_from_string(const std::string& norm_string) {
@@ -26,7 +29,7 @@ inline Norm norm_from_string(const std::string& norm_string) {
    else if (norm_string == "INF") {
       return INF_NORM;
    }
-   throw std::out_of_range("The norm is not known");
+   throw std::invalid_argument("The norm " + norm_string + " is not known");
 }
 
 // result <- x + scaling_factor * y
@@ -47,12 +50,14 @@ void initialize_vector(std::vector<T>& x, T value) {
    }
 }
 
+/*
 template <typename T>
 void scale(std::vector<T>& x, T scaling_factor) {
    for (T& xi: x) {
       xi *= scaling_factor;
    }
 }
+*/
 
 /*
 template <typename T>
@@ -75,18 +80,6 @@ void copy_from(std::vector<T>& destination, const std::vector<T>& source, size_t
    const auto destination_position = std::begin(destination);
    std::copy(source_start_position, source_end_position, destination_position);
 }
-
-/*
-// compute ||x||_1
-template <typename T>
-T norm_1(const std::vector<T>& x) {
-   T norm = T(0);
-   for (T xi: x) {
-      norm += std::abs(xi);
-   }
-   return norm;
-}
- */
 
 // l1 norm of any array with elements of any type
 template <typename T, template <typename> typename ARRAY>
@@ -140,84 +133,82 @@ T norm(const ARRAY<T>& x, Norm norm) {
    else if (norm == L1_NORM) {
       return norm_1(x);
    }
-   throw std::out_of_range("The norm is not known");
+   throw std::invalid_argument("The norm is not known");
 }
 
 // these methods take:
 // - a callback as argument whose parameter is the current index. This avoids forming the vector explicitly
-// - an iterable range of arbitrary type (can be Range, std::vector, etc)
-template <typename T, typename ITERABLE>
-T norm_1(const std::function<T(size_t i)>& ith_component, const ITERABLE& iterable) {
+// - an array of arbitrary type (can be Range, std::vector, std::array, etc)
+template <typename T, typename ARRAY>
+T norm_1(const std::function<T(size_t i)>& ith_component, const ARRAY& array) {
    T norm = T(0);
-   for (size_t i: iterable) {
+   for (size_t i: array) {
       norm += std::abs(ith_component(i));
    }
    return norm;
 }
 
-template <typename T, typename ITERABLE>
-T norm_inf(const std::vector<T>& x, const ITERABLE& iterable) {
+template <typename T, typename ARRAY>
+T norm_inf(const std::vector<T>& x, const ARRAY& array) {
    T norm = T(0);
-   for (size_t i: iterable) {
+   for (size_t i: array) {
       norm = std::max(norm, std::abs(x[i]));
    }
    return norm;
 }
 
-template <typename T, typename ITERABLE>
-T norm_inf(const std::function<T(size_t i)>& ith_component, const ITERABLE& iterable) {
+template <typename T, typename ARRAY>
+T norm_inf(const std::function<T(size_t i)>& ith_component, const ARRAY& array) {
    T norm = T(0);
-   for (size_t i: iterable) {
+   for (size_t i: array) {
       norm = std::max(norm, std::abs(ith_component(i)));
    }
    return norm;
 }
 
-template <typename T, typename ITERABLE>
-T norm_2_squared(const std::function<T(size_t i)>& ith_component, const ITERABLE& iterable) {
+template <typename T, typename ARRAY>
+T norm_2_squared(const std::function<T(size_t i)>& ith_component, const ARRAY& array) {
    T norm = T(0);
-   for (size_t i: iterable) {
+   for (size_t i: array) {
       const T x_i = ith_component(i);
       norm += x_i * x_i;
    }
    return norm;
 }
 
-template <typename T, typename ITERABLE>
-T norm_2(const std::function<T(size_t /*i*/)>& ith_component, const ITERABLE& iterable) {
-   return std::sqrt(norm_2_squared(ith_component, iterable));
+template <typename T, typename ARRAY>
+T norm_2(const std::function<T(size_t /*i*/)>& ith_component, const ARRAY& array) {
+   return std::sqrt(norm_2_squared(ith_component, array));
 }
 
-template <typename T, typename ITERABLE>
-T norm(const std::function<T(size_t /*i*/)>& ith_component, const ITERABLE& iterable, Norm norm) {
+template <typename T, typename ARRAY>
+T norm(const std::function<T(size_t /*i*/)>& ith_component, const ARRAY& array, Norm norm) {
    // choose the right norm
    if (norm == INF_NORM) {
-      return norm_inf(ith_component, iterable);
+      return norm_inf(ith_component, array);
    }
    else if (norm == L2_NORM) {
-      return norm_2(ith_component, iterable);
+      return norm_2(ith_component, array);
    }
    else if (norm == L2_SQUARED_NORM) {
-      return norm_2_squared(ith_component, iterable);
+      return norm_2_squared(ith_component, array);
    }
    else if (norm == L1_NORM) {
-      return norm_1(ith_component, iterable);
+      return norm_1(ith_component, array);
    }
-   else {
-      throw std::out_of_range("The norm is not known");
-   }
+   throw std::invalid_argument("The norm is not known");
 }
 
-template <typename ITERABLE>
-void print_vector(std::ostream& stream, const ITERABLE& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max()) {
+template <typename ARRAY>
+void print_vector(std::ostream& stream, const ARRAY& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max()) {
    for (size_t i: Range(start, std::min(start + length, x.size()))) {
       stream << x[i] << " ";
    }
    stream << '\n';
 }
 
-template <typename ITERABLE>
-void print_vector(const Level& level, const ITERABLE& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max()) {
+template <typename ARRAY>
+void print_vector(const Level& level, const ARRAY& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max()) {
    for (size_t i: Range(start, std::min(start + length, x.size()))) {
       level << x[i] << " ";
    }
@@ -225,11 +216,11 @@ void print_vector(const Level& level, const ITERABLE& x, size_t start = 0, size_
 }
 
 // check that an array of integers is in increasing order (x[i] <= x[i+1])
-template <typename ITERABLE>
-bool in_increasing_order(const ITERABLE& iterable, size_t length) {
+template <typename ARRAY>
+bool in_increasing_order(const ARRAY& array, size_t length) {
    size_t i = 0;
    while (i < length-1) {
-      if (iterable[i] > iterable[i + 1]) {
+      if (array[i] > array[i + 1]) {
          return false;
       }
       i++;
