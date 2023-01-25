@@ -43,8 +43,7 @@ protected:
    [[nodiscard]] static double compute_linearized_constraint_violation(const Model& model, const Iterate& current_iterate, const Direction& direction,
          double step_length);
    [[nodiscard]] bool is_small_step(const Direction& direction) const;
-   static void evaluate_lagrangian_gradient(size_t number_variables, Iterate& iterate, const std::vector<double>& constraint_multipliers,
-         const std::vector<double>& lower_bound_multipliers, const std::vector<double>& upper_bound_multipliers, double objective_multiplier);
+   static void evaluate_lagrangian_gradient(size_t number_variables, Iterate& iterate, const Multipliers& multipliers, double objective_multiplier);
    void compute_primal_dual_residuals(const NonlinearProblem& problem, Iterate& iterate) const;
 };
 

@@ -29,9 +29,7 @@ l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
          options.get_double("l1_relaxation_epsilon2"),
          options.get_double("l1_relaxation_small_threshold")
       }),
-      constraint_multipliers(model.number_constraints),
-      lower_bound_multipliers(this->relaxed_problem.number_variables),
-      upper_bound_multipliers(this->relaxed_problem.number_variables),
+      trial_multipliers(this->relaxed_problem.number_variables, model.number_constraints),
       statistics_penalty_parameter_column_order(options.get_int("statistics_penalty_parameter_column_order")) {
 }
 
@@ -182,10 +180,17 @@ bool l1Relaxation::linearized_residual_sufficient_decrease(const Iterate& curren
 }
 
 void l1Relaxation::decrease_parameter_aggressively(Iterate& current_iterate, const Direction& direction_lowest_violation) {
-   // compute the ideal error (with a zero penalty parameter)
-   const double error_lowest_violation = l1Relaxation::compute_dual_error(current_iterate, direction_lowest_violation.multipliers);
-   DEBUG << "Ideal error: " << error_lowest_violation << '\n';
-   if (this->small_duals_threshold < this->penalty_parameter + direction_lowest_violation.multipliers.norm_1()) {
+   // assemble the trial multipliers
+   add_vectors(current_iterate.multipliers.constraints, direction_lowest_violation.multipliers.constraints, 1., this->trial_multipliers.constraints);
+   add_vectors(current_iterate.multipliers.lower_bounds, direction_lowest_violation.multipliers.lower_bounds, 1., this->trial_multipliers.lower_bounds);
+   add_vectors(current_iterate.multipliers.upper_bounds, direction_lowest_violation.multipliers.upper_bounds, 1., this->trial_multipliers.upper_bounds);
+
+   // the ideal error (with penalty parameter = 0) must make sense: there must be at least a nonzero dual to avoid trivial FJ points
+   if (this->small_duals_threshold < this->penalty_parameter || this->trial_multipliers.not_all_zero(this->original_model.number_variables,
+         this->small_duals_threshold)) {
+      // compute the ideal error (with a zero penalty parameter)
+      const double error_lowest_violation = l1Relaxation::compute_dual_error(current_iterate);
+      DEBUG << "Ideal error: " << error_lowest_violation << '\n';
       const double scaled_error = error_lowest_violation / std::max(1., current_iterate.residuals.infeasibility);
       const double scaled_error_square = scaled_error * scaled_error;
       this->penalty_parameter = std::min(this->penalty_parameter, scaled_error_square);
@@ -317,19 +322,14 @@ std::function<double (double)> l1Relaxation::generate_predicted_scaled_optimalit
 }
 
 // measure that combines KKT error and complementarity error
-double l1Relaxation::compute_dual_error(Iterate& current_iterate, const Multipliers& multiplier_displacements) {
-   // assemble the trial multipliers
-   add_vectors(current_iterate.multipliers.constraints, multiplier_displacements.constraints, 1., this->constraint_multipliers);
-   add_vectors(current_iterate.multipliers.lower_bounds, multiplier_displacements.lower_bounds, 1., this->lower_bound_multipliers);
-   add_vectors(current_iterate.multipliers.upper_bounds, multiplier_displacements.upper_bounds, 1., this->upper_bound_multipliers);
-
+double l1Relaxation::compute_dual_error(Iterate& current_iterate) {
    // stationarity error
-   ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(this->original_model.number_variables, current_iterate, this->constraint_multipliers,
-         this->lower_bound_multipliers, this->upper_bound_multipliers, this->penalty_parameter);
+   ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(this->original_model.number_variables, current_iterate, this->trial_multipliers,
+         this->penalty_parameter);
    double error = norm_1(current_iterate.lagrangian_gradient.constraints_contribution);
    // complementarity error
    error += this->relaxed_problem.compute_feasibility_complementarity_error(this->original_model.number_variables, current_iterate.primals,
-         current_iterate.evaluations.constraints, this->constraint_multipliers, this->lower_bound_multipliers, this->upper_bound_multipliers);
+         current_iterate.evaluations.constraints, this->trial_multipliers);
    return error;
 }
 

@@ -98,6 +98,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["scale_functions"] = "yes";
       options["sparse_format"] = "COO";
       options["tolerance"] = "1e-8";
+      options["terminate_with_small_step"] = "no";
    }
    else if (preset_name == "filtersqp") {
       options["mechanism"] = "TR";
@@ -110,6 +111,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["TR_radius"] = "10";
       options["enforce_linear_constraints"] = "yes";
       options["tolerance"] = "1e-6";
+      options["terminate_with_small_step"] = "yes";
    }
    else if (preset_name == "byrd") {
       options["mechanism"] = "LS";
@@ -122,6 +124,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["l1_relaxation_epsilon1"] = "0.1";
       options["l1_relaxation_epsilon2"] = "0.1";
       options["tolerance"] = "1e-6";
+      options["terminate_with_small_step"] = "yes";
       options["residual_norm"] = "L1";
       options["sparse_format"] = "CSC";
    }

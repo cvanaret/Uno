@@ -45,11 +45,9 @@ public:
    [[nodiscard]] static double compute_optimality_stationarity_error(const Iterate& iterate, Norm residual_norm);
    [[nodiscard]] static double compute_feasibility_stationarity_error(const Iterate& iterate, Norm residual_norm);
    [[nodiscard]] double compute_complementarity_error(size_t number_variables, const std::vector<double>& primals,
-         const std::vector<double>& constraints, const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bounds_multipliers,
-         const std::vector<double>& upper_bounds_multipliers) const;
+         const std::vector<double>& constraints, const Multipliers& multipliers) const;
    [[nodiscard]] double compute_feasibility_complementarity_error(size_t number_variables, const std::vector<double>& primals,
-         const std::vector<double>& constraints, const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bounds_multipliers,
-         const std::vector<double>& upper_bounds_multipliers) const;
+         const std::vector<double>& constraints, const Multipliers& multipliers) const;
    [[nodiscard]] double compute_dual_constraint_violation(const std::vector<double>& primals, const std::vector<double>& constraint_multipliers,
          const std::vector<double>& lower_bounds_multipliers, const std::vector<double>& upper_bounds_multipliers);
 
@@ -102,25 +100,24 @@ inline double NonlinearProblem::compute_feasibility_stationarity_error(const Ite
 
 // complementary slackness error
 inline double NonlinearProblem::compute_complementarity_error(size_t number_variables, const std::vector<double>& primals,
-      const std::vector<double>& constraints, const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bounds_multipliers,
-      const std::vector<double>& upper_bounds_multipliers) const {
+      const std::vector<double>& constraints, const Multipliers& multipliers) const {
    double error = 0.;
    // bound constraints
    for (size_t i: Range(number_variables)) {
-      if (0. < lower_bounds_multipliers[i]) {
-         error = std::max(error, std::abs(lower_bounds_multipliers[i] * (primals[i] - this->get_variable_lower_bound(i))));
+      if (0. < multipliers.lower_bounds[i]) {
+         error = std::max(error, std::abs(multipliers.lower_bounds[i] * (primals[i] - this->get_variable_lower_bound(i))));
       }
-      if (upper_bounds_multipliers[i] < 0.) {
-         error = std::max(error, std::abs(upper_bounds_multipliers[i] * (primals[i] - this->get_variable_upper_bound(i))));
+      if (multipliers.upper_bounds[i] < 0.) {
+         error = std::max(error, std::abs(multipliers.upper_bounds[i] * (primals[i] - this->get_variable_upper_bound(i))));
       }
    }
    // constraints
    this->inequality_constraints.for_each_index([&](size_t j) {
-      if (0. < constraint_multipliers[j]) { // lower bound
-         error = std::max(error, std::abs(constraint_multipliers[j] * (constraints[j] - this->get_constraint_lower_bound(j))));
+      if (0. < multipliers.constraints[j]) { // lower bound
+         error = std::max(error, std::abs(multipliers.constraints[j] * (constraints[j] - this->get_constraint_lower_bound(j))));
       }
-      else if (constraint_multipliers[j] < 0.) { // upper bound
-         error = std::max(error, std::abs(constraint_multipliers[j] * (constraints[j] - this->get_constraint_upper_bound(j))));
+      else if (multipliers.constraints[j] < 0.) { // upper bound
+         error = std::max(error, std::abs(multipliers.constraints[j] * (constraints[j] - this->get_constraint_upper_bound(j))));
       }
    });
    return error;
@@ -128,33 +125,32 @@ inline double NonlinearProblem::compute_complementarity_error(size_t number_vari
 
 // complementary slackness error
 inline double NonlinearProblem::compute_feasibility_complementarity_error(size_t number_variables, const std::vector<double>& primals,
-      const std::vector<double>& constraints, const std::vector<double>& constraint_multipliers, const std::vector<double>& lower_bounds_multipliers,
-      const std::vector<double>& upper_bounds_multipliers) const {
+      const std::vector<double>& constraints, const Multipliers& multipliers) const {
    double error = 0.;
    // bound constraints
    for (size_t i: Range(number_variables)) {
-      if (0. < lower_bounds_multipliers[i]) {
-         error = std::max(error, std::abs(lower_bounds_multipliers[i] * (primals[i] - this->get_variable_lower_bound(i))));
+      if (0. < multipliers.lower_bounds[i]) {
+         error = std::max(error, std::abs(multipliers.lower_bounds[i] * (primals[i] - this->get_variable_lower_bound(i))));
       }
-      if (upper_bounds_multipliers[i] < 0.) {
-         error = std::max(error, std::abs(upper_bounds_multipliers[i] * (primals[i] - this->get_variable_upper_bound(i))));
+      if (multipliers.upper_bounds[i] < 0.) {
+         error = std::max(error, std::abs(multipliers.upper_bounds[i] * (primals[i] - this->get_variable_upper_bound(i))));
       }
    }
    // constraints
    for (size_t j: Range(constraints.size())) {
       // violated constraints
       if (constraints[j] < this->get_constraint_lower_bound(j)) { // lower violated
-         error = std::max(error, std::abs((1. - constraint_multipliers[j]) * (constraints[j] - this->get_constraint_lower_bound(j))));
+         error = std::max(error, std::abs((1. - multipliers.constraints[j]) * (constraints[j] - this->get_constraint_lower_bound(j))));
       }
       else if (this->get_constraint_upper_bound(j) < constraints[j]) { // upper violated
-         error = std::max(error, std::abs((1. + constraint_multipliers[j]) * (constraints[j] - this->get_constraint_upper_bound(j))));
+         error = std::max(error, std::abs((1. + multipliers.constraints[j]) * (constraints[j] - this->get_constraint_upper_bound(j))));
       }
       // satisfied constraints
-      else if (0. < constraint_multipliers[j]) { // lower bound
-         error = std::max(error, std::abs(constraint_multipliers[j] * (constraints[j] - this->get_constraint_lower_bound(j))));
+      else if (0. < multipliers.constraints[j]) { // lower bound
+         error = std::max(error, std::abs(multipliers.constraints[j] * (constraints[j] - this->get_constraint_lower_bound(j))));
       }
-      else if (constraint_multipliers[j] < 0.) { // upper bound
-         error = std::max(error, std::abs(constraint_multipliers[j] * (constraints[j] - this->get_constraint_upper_bound(j))));
+      else if (multipliers.constraints[j] < 0.) { // upper bound
+         error = std::max(error, std::abs(multipliers.constraints[j] * (constraints[j] - this->get_constraint_upper_bound(j))));
       }
    }
    return error;

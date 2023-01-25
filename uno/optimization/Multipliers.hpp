@@ -14,6 +14,7 @@ struct Multipliers {
 
    Multipliers(size_t number_variables, size_t number_constraints);
    [[nodiscard]] double norm_1() const;
+   [[nodiscard]] bool not_all_zero(size_t number_variables, double tolerance) const;
 };
 
 inline Multipliers::Multipliers(size_t number_variables, size_t number_constraints) : lower_bounds(number_variables),
@@ -22,6 +23,22 @@ inline Multipliers::Multipliers(size_t number_variables, size_t number_constrain
 
 inline double Multipliers::norm_1() const {
    return ::norm_1(this->constraints) + ::norm_1(this->lower_bounds) + ::norm_1(this->upper_bounds);
+}
+
+inline bool Multipliers::not_all_zero(size_t number_variables, double tolerance) const {
+   // constraint multipliers
+   for (double multiplier_j: this->constraints) {
+      if (tolerance < std::abs(multiplier_j)) {
+         return true;
+      }
+   }
+   // bound multipliers
+   for (size_t i: Range(number_variables)) {
+      if (tolerance < std::abs(this->lower_bounds[i] + this->upper_bounds[i])) {
+         return true;
+      }
+   }
+   return false;
 }
 
 #endif // UNO_MULTIPLIERS_H

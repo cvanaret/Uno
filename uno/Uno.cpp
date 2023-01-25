@@ -12,7 +12,8 @@ Uno::Uno(GlobalizationMechanism& globalization_mechanism, const Options& options
       globalization_mechanism(globalization_mechanism),
       tolerance(options.get_double("tolerance")),
       max_iterations(options.get_unsigned_int("max_iterations")),
-      small_step_factor(options.get_double("small_step_factor")) {
+      terminate_with_small_step(options.get_bool("terminate_with_small_step")),
+      small_step_threshold(options.get_double("small_step_threshold")) {
 }
 
 Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& options) {
@@ -100,22 +101,6 @@ bool Uno::termination_criterion(TerminationStatus current_status, size_t iterati
    return current_status != NOT_OPTIMAL || this->max_iterations <= iteration;
 }
 
-bool not_all_zero_multipliers(const Model& model, const Multipliers& multipliers, double tolerance) {
-   // constraint multipliers
-   for (double multiplier_j: multipliers.constraints) {
-      if (tolerance < std::abs(multiplier_j)) {
-         return true;
-      }
-   }
-   // bound multipliers
-   for (size_t i: Range(model.number_variables)) {
-      if (tolerance < std::abs(multipliers.lower_bounds[i] + multipliers.upper_bounds[i])) {
-         return true;
-      }
-   }
-   return false;
-}
-
 TerminationStatus Uno::check_termination(const Model& model, Iterate& current_iterate, double step_norm) const {
    // evaluate termination conditions based on optimality conditions
    const bool optimality_stationarity = (current_iterate.residuals.optimality_stationarity/current_iterate.residuals.stationarity_scaling <=
@@ -126,12 +111,13 @@ TerminationStatus Uno::check_termination(const Model& model, Iterate& current_it
    const bool feasibility_complementarity = (current_iterate.residuals.feasibility_complementarity / current_iterate.residuals.complementarity_scaling
          <= this->tolerance);
    const bool primal_feasibility = (current_iterate.residuals.infeasibility <= this->tolerance);
-   const bool no_trivial_duals = not_all_zero_multipliers(model, current_iterate.multipliers, this->tolerance);
+   const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(model.number_variables, this->tolerance);
    // TODO dual feasibility
 
    DEBUG << "optimality stationarity: " << std::boolalpha << optimality_stationarity << '\n';
    DEBUG << "feasibility stationarity: " << std::boolalpha << feasibility_stationarity << '\n';
-   DEBUG << "complementarity: " << std::boolalpha << optimality_complementarity << '\n';
+   DEBUG << "optimality complementarity: " << std::boolalpha << optimality_complementarity << '\n';
+   DEBUG << "feasibility complementarity: " << std::boolalpha << feasibility_complementarity << '\n';
    DEBUG << "primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
    DEBUG << "not all zero multipliers: " << std::boolalpha << no_trivial_duals << "\n\n";
 
@@ -150,7 +136,7 @@ TerminationStatus Uno::check_termination(const Model& model, Iterate& current_it
      return INFEASIBLE_KKT_POINT;
    }
    // stationarity & complementarity not achieved, but we can terminate with a small step
-   if (step_norm <= this->tolerance / this->small_step_factor) {
+   if (this->terminate_with_small_step && step_norm <= this->small_step_threshold) {
       if (primal_feasibility) {
          return FEASIBLE_SMALL_STEP;
       }

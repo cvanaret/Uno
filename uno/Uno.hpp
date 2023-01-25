@@ -19,7 +19,8 @@ private:
    GlobalizationMechanism& globalization_mechanism; /*!< Step control strategy (trust region or line-search) */
    const double tolerance; /*!< Tolerance of the termination criteria */
    const size_t max_iterations; /*!< Maximum number of iterations */
-   const double small_step_factor{100.};
+   const bool terminate_with_small_step;
+   const double small_step_threshold;
 
    static Statistics create_statistics(const Model& model, const Options& options);
    static void add_statistics(Statistics& statistics, const Model& model, const Iterate& iterate, size_t major_iterations);

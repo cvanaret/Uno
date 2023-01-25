@@ -50,9 +50,7 @@ protected:
    const l1RelaxationParameters parameters;
    const double small_duals_threshold{1e-8};
    // preallocated temporary multipliers
-   std::vector<double> constraint_multipliers;
-   std::vector<double> lower_bound_multipliers;
-   std::vector<double> upper_bound_multipliers;
+   Multipliers trial_multipliers;
    // statistics table
    int statistics_penalty_parameter_column_order;
 
@@ -61,7 +59,7 @@ protected:
    void decrease_parameter_aggressively(Iterate& current_iterate, const Direction& direction_lowest_violation);
    [[nodiscard]] bool linearized_residual_sufficient_decrease(const Iterate& current_iterate, double linearized_residual, double residual_lowest_violation) const;
    [[nodiscard]] bool objective_sufficient_decrease(const Iterate& current_iterate, const Direction& direction, const Direction& direction_lowest_violation) const;
-   double compute_dual_error(Iterate& current_iterate, const Multipliers& multiplier_displacements);
+   double compute_dual_error(Iterate& current_iterate);
 
    // progress measures and their local models
    void set_infeasibility_measure(Iterate& iterate);
