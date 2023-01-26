@@ -42,7 +42,7 @@ public:
    [[nodiscard]] size_t get_number_subproblems_solved() const override;
 
 protected:
-   const OptimalityProblem optimality_problem;
+   const l1RelaxedProblem feasibility_problem;
    l1RelaxedProblem relaxed_problem;
    std::unique_ptr<Subproblem> subproblem;
    const std::unique_ptr<GlobalizationStrategy> globalization_strategy;
@@ -54,9 +54,10 @@ protected:
    // statistics table
    int statistics_penalty_parameter_column_order;
 
-   Direction solve_subproblem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter);
+   Direction solve_subproblem(Statistics& statistics, Iterate& current_iterate, const NonlinearProblem& problem);
+   Direction solve_relaxed_problem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter);
    Direction solve_with_steering_rule(Statistics& statistics, Iterate& current_iterate);
-   void decrease_parameter_aggressively(Iterate& current_iterate, const Direction& direction_lowest_violation);
+   void decrease_parameter_aggressively(Iterate& current_iterate, const Direction& direction);
    [[nodiscard]] bool linearized_residual_sufficient_decrease(const Iterate& current_iterate, double linearized_residual, double residual_lowest_violation) const;
    [[nodiscard]] bool objective_sufficient_decrease(const Iterate& current_iterate, const Direction& direction, const Direction& direction_lowest_violation) const;
    double compute_dual_error(Iterate& current_iterate);
