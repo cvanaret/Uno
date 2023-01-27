@@ -30,7 +30,7 @@ bool WaechterFilterStrategy::is_iterate_acceptable(const ProgressMeasures& curre
 
    GlobalizationStrategy::check_finiteness(current_progress_measures, 1.);
    GlobalizationStrategy::check_finiteness(trial_progress_measures, 1.);
-   DEBUG << *this->filter << '\n';
+   DEBUG << *this->filter;
 
    bool accept = false;
    // check acceptance
@@ -68,8 +68,7 @@ bool WaechterFilterStrategy::is_iterate_acceptable(const ProgressMeasures& curre
          else {
             DEBUG << "Not acceptable wrt current point\n";
          }
-      }
-      if (not switching) {
+         DEBUG << "Adding current iterate to the filter\n";
          this->filter->add(current_progress_measures.infeasibility, current_optimality_measure);
       }
    }
