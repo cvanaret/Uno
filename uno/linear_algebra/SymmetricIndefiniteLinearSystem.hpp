@@ -116,7 +116,11 @@ void SymmetricIndefiniteLinearSystem<T>::regularize_matrix(const Model& model, S
       DEBUG << "Inertia is good\n";
       return;
    }
-   DEBUG << "Inertia is not good\n";
+   auto[number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = linear_solver.get_inertia();
+   DEBUG << "Expected inertia (" << size_primal_block << ", " << size_dual_block << ", 0), ";
+   DEBUG << "got (" << number_pos_eigenvalues << ", " << number_neg_eigenvalues << ", " << number_zero_eigenvalues << ")\n";
+   DEBUG << "Number of attempts: " << number_attempts << "\n\n";
+
    // set the constraint regularization coefficient
    if (linear_solver.matrix_is_singular()) {
       DEBUG << "Matrix is singular\n";
