@@ -159,7 +159,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
    }
    else {
       // evaluate the predicted reduction
-      PredictedReduction predicted_reduction = {
+      ProgressMeasures predicted_reduction = {
             this->generate_predicted_infeasibility_reduction_model(current_iterate, direction, step_length),
             this->generate_predicted_optimality_reduction_model(current_iterate, direction, step_length),
             this->subproblem->generate_predicted_auxiliary_reduction_model(this->current_reformulated_problem(), current_iterate, direction,

@@ -16,7 +16,7 @@ void WaechterFilterStrategy::initialize(const Iterate& first_iterate) {
  * precondition: feasible step
  * */
 bool WaechterFilterStrategy::is_iterate_acceptable(const ProgressMeasures& current_progress_measures, const ProgressMeasures& trial_progress_measures,
-      const PredictedReduction& predicted_reduction, double /*objective_multiplier*/) {
+      const ProgressMeasures& predicted_reduction, double /*objective_multiplier*/) {
    const double current_optimality_measure = current_progress_measures.optimality(1.) + current_progress_measures.auxiliary_terms;
    const double trial_optimality_measure = trial_progress_measures.optimality(1.) + trial_progress_measures.auxiliary_terms;
    // unconstrained predicted reduction:

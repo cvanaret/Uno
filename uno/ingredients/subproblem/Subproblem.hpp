@@ -6,7 +6,7 @@
 
 #include <vector>
 #include <memory>
-#include "ingredients/globalization_strategy/PredictedReductionModel.hpp"
+#include "ingredients/globalization_strategy/ProgressMeasures.hpp"
 #include "optimization/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "reformulation/l1RelaxedProblem.hpp"

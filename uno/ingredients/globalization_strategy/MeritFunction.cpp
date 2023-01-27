@@ -17,7 +17,7 @@ void MeritFunction::register_current_progress(const ProgressMeasures& /*current_
 }
 
 bool MeritFunction::is_iterate_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
-      const PredictedReduction& predicted_reduction, double objective_multiplier) {
+      const ProgressMeasures& predicted_reduction, double objective_multiplier) {
    // compute current exact penalty
    const double current_exact_merit = current_progress.optimality(objective_multiplier) + current_progress.auxiliary_terms + current_progress.infeasibility;
    const double trial_exact_merit = trial_progress.optimality(objective_multiplier) + trial_progress.auxiliary_terms + trial_progress.infeasibility;

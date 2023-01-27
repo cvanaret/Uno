@@ -237,7 +237,7 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
    }
    else {
       // evaluate the predicted reduction
-      PredictedReduction predicted_reduction = {
+      ProgressMeasures predicted_reduction = {
             this->generate_predicted_infeasibility_reduction_model(current_iterate, direction, step_length),
             this->generate_predicted_optimality_reduction_model(current_iterate, direction, step_length),
             this->subproblem->generate_predicted_auxiliary_reduction_model(this->relaxed_problem, current_iterate, direction, step_length)

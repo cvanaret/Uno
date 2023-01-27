@@ -4,7 +4,7 @@
 #ifndef UNO_GLOBALIZATIONSTRATEGY_H
 #define UNO_GLOBALIZATIONSTRATEGY_H
 
-#include "PredictedReductionModel.hpp"
+#include "ProgressMeasures.hpp"
 #include "optimization/Iterate.hpp"
 #include "ingredients/subproblem/Direction.hpp"
 #include "tools/Statistics.hpp"
@@ -22,7 +22,7 @@ public:
 
    virtual void initialize(const Iterate& first_iterate) = 0;
    [[nodiscard]] virtual bool is_iterate_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
-         const PredictedReduction& predicted_reduction, double objective_multiplier) = 0;
+         const ProgressMeasures& predicted_reduction, double objective_multiplier) = 0;
    [[nodiscard]] virtual bool is_infeasibility_acceptable(double infeasibility_measure) const = 0;
 
    virtual void reset() = 0;
