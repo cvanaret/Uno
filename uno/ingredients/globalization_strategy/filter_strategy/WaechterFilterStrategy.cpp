@@ -43,6 +43,7 @@ bool WaechterFilterStrategy::is_iterate_acceptable(const ProgressMeasures& curre
             trial_optimality_measure) + 10. * machine_epsilon * std::abs(current_optimality_measure);
       DEBUG << "Actual reduction: " << actual_reduction << '\n';
 
+      // TODO put this coefficient in the option file
       const bool small_infeasibility = current_progress_measures.infeasibility <= 1e-4*std::max(1., this->initial_infeasibility);
       const bool switching = (0. < unconstrained_predicted_reduction) && this->switching_condition(unconstrained_predicted_reduction,
             current_progress_measures.infeasibility, this->parameters.delta);

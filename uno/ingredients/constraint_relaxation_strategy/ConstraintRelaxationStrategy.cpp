@@ -82,6 +82,7 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Nonlinear
          iterate.evaluations.constraints, iterate.multipliers);
 
    // scaling factors
+   // TODO put these coefficients in the option file
    iterate.residuals.stationarity_scaling = compute_stationarity_scaling(problem, iterate, 100.);
    iterate.residuals.complementarity_scaling = compute_complementarity_scaling(problem, iterate, 100.);
    // TODO dual constraint violation of the reformulated problem
