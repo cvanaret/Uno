@@ -30,7 +30,6 @@ public:
    void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) override;
    [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length) override;
-   void postprocess_accepted_iterate(Iterate& iterate) override;
 
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
    [[nodiscard]] size_t get_number_subproblems_solved() const override;
@@ -42,6 +41,7 @@ private:
    const std::unique_ptr<GlobalizationStrategy> restoration_phase_strategy;
    const std::unique_ptr<GlobalizationStrategy> optimality_phase_strategy;
    Phase current_phase{Phase::OPTIMALITY};
+   const double l1_constraint_violation_coefficient;
    // statistics table
    int statistics_restoration_phase_column_order;
 

@@ -80,7 +80,6 @@ protected:
    void generate_primal_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate);
    void compute_bound_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate);
    void compute_least_square_multipliers(const NonlinearProblem& problem, Iterate& iterate);
-   void print_subproblem_solution(const NonlinearProblem& problem) const;
 };
 
 #endif // UNO_INFEASIBLEINTERIORPOINTSUBPROBLEM_H

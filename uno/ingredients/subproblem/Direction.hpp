@@ -53,7 +53,7 @@ public:
 
    SubproblemStatus status{SubproblemStatus::OPTIMAL}; /*!< Status of the solution */
 
-   // step lengths
+   // step lengths (default value is 1. This doesn't hold for interior-point methods)
    double primal_dual_step_length{1.};
    double bound_dual_step_length{1.};
 

@@ -29,6 +29,7 @@ l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
          options.get_double("l1_relaxation_epsilon2"),
          options.get_double("l1_relaxation_small_threshold")
       }),
+      l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
       trial_multipliers(this->relaxed_problem.number_variables, model.number_constraints),
       statistics_penalty_parameter_column_order(options.get_int("statistics_penalty_parameter_column_order")) {
 }
@@ -247,7 +248,9 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
    }
    if (accept) {
       statistics.add_statistic("penalty param.", this->penalty_parameter);
+      this->subproblem->postprocess_accepted_iterate(this->relaxed_problem, trial_iterate);
       this->compute_primal_dual_residuals(this->relaxed_problem, trial_iterate);
+      this->check_exact_relaxation(trial_iterate);
    }
    return accept;
 }
@@ -291,7 +294,8 @@ void l1Relaxation::set_scaled_optimality_measure(Iterate& iterate) {
    else {
       // constraint violation
       iterate.evaluate_constraints(this->original_model);
-      const double constraint_violation = this->original_model.compute_constraint_violation(iterate.evaluations.constraints, L1_NORM);
+      const double constraint_violation = this->l1_constraint_violation_coefficient *
+            this->original_model.compute_constraint_violation(iterate.evaluations.constraints, L1_NORM);
       iterate.progress.scaled_optimality = [=](double /*objective_multiplier*/) {
          return constraint_violation;
       };
@@ -314,7 +318,7 @@ std::function<double (double)> l1Relaxation::generate_predicted_scaled_optimalit
       const double linearized_constraint_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model,
             current_iterate, direction, step_length);
       return [=](double /*objective_multiplier*/) {
-         return current_constraint_violation - linearized_constraint_violation;
+         return this->l1_constraint_violation_coefficient * (current_constraint_violation - linearized_constraint_violation);
       };
       // "‖c(x)‖_1 - ‖c(x) + ∇c(x)^T (αd)‖_1"};
    }
@@ -336,10 +340,8 @@ void l1Relaxation::set_trust_region_radius(double trust_region_radius) {
    this->subproblem->set_trust_region_radius(trust_region_radius);
 }
 
-void l1Relaxation::postprocess_accepted_iterate(Iterate& iterate) {
-   this->subproblem->postprocess_accepted_iterate(this->relaxed_problem, iterate);
-
-   // for information, check that l1 is an exact relaxation
+// for information, check that l1 is an exact relaxation
+void l1Relaxation::check_exact_relaxation(Iterate& iterate) const {
    const double norm_inf_multipliers = norm_inf(iterate.multipliers.constraints);
    if (0. < norm_inf_multipliers && this->penalty_parameter <= 1./norm_inf_multipliers) {
       DEBUG << "The value of the penalty parameter is consistent with an exact relaxation\n\n";

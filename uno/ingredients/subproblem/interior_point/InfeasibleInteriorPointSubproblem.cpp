@@ -425,7 +425,6 @@ void InfeasibleInteriorPointSubproblem::generate_primal_dual_direction(const Non
    for (size_t j: Range(problem.number_variables, this->augmented_system.solution.size())) {
       this->augmented_system.solution[j] = -this->augmented_system.solution[j];
    }
-   this->print_subproblem_solution(problem);
 
    // "fraction-to-boundary" rule for primal variables and constraints multipliers
    const double tau = std::max(this->parameters.tau_min, 1. - this->barrier_parameter());
@@ -446,8 +445,8 @@ void InfeasibleInteriorPointSubproblem::generate_primal_dual_direction(const Non
       this->direction.multipliers.lower_bounds[i] = this->lower_delta_z[i];
       this->direction.multipliers.upper_bounds[i] = this->upper_delta_z[i];
    }
-   DEBUG << "primal length = " << primal_dual_step_length << '\n';
-   DEBUG << "dual length = " << bound_dual_step_length << '\n';
+   DEBUG << "primal-dual length = " << primal_dual_step_length << '\n';
+   DEBUG << "bound dual length = " << bound_dual_step_length << '\n';
 
    this->direction.primal_dual_step_length = primal_dual_step_length;
    this->direction.bound_dual_step_length = bound_dual_step_length;
@@ -492,7 +491,11 @@ void InfeasibleInteriorPointSubproblem::postprocess_accepted_iterate(const Nonli
       const double lb = coefficient / this->parameters.k_sigma;
       const double ub = coefficient * this->parameters.k_sigma;
       if (lb <= ub) {
+         const double current_value = iterate.multipliers.lower_bounds[i];
          iterate.multipliers.lower_bounds[i] = std::max(std::min(iterate.multipliers.lower_bounds[i], ub), lb);
+         if (iterate.multipliers.lower_bounds[i] != current_value) {
+            DEBUG << "Multiplier for lower bound " << i << " rescaled from " << current_value << " to " << iterate.multipliers.lower_bounds[i] << '\n';
+         }
       }
       else {
          WARNING << YELLOW << "Barrier subproblem: the bounds are in the wrong order in the lower bound multiplier reset" << RESET << '\n';
@@ -504,7 +507,11 @@ void InfeasibleInteriorPointSubproblem::postprocess_accepted_iterate(const Nonli
       const double lb = coefficient * this->parameters.k_sigma;
       const double ub = coefficient / this->parameters.k_sigma;
       if (lb <= ub) {
+         const double current_value = iterate.multipliers.upper_bounds[i];
          iterate.multipliers.upper_bounds[i] = std::max(std::min(iterate.multipliers.upper_bounds[i], ub), lb);
+         if (iterate.multipliers.upper_bounds[i] != current_value) {
+            DEBUG << "Multiplier for upper bound " << i << " rescaled from " << current_value << " to " << iterate.multipliers.upper_bounds[i] << '\n';
+         }
       }
       else {
          WARNING << YELLOW << "Barrier subproblem: the bounds are in the wrong order in the upper bound multiplier reset" << RESET << '\n';
@@ -514,17 +521,6 @@ void InfeasibleInteriorPointSubproblem::postprocess_accepted_iterate(const Nonli
 
 size_t InfeasibleInteriorPointSubproblem::get_hessian_evaluation_count() const {
    return this->hessian_model->evaluation_count;
-}
-
-void InfeasibleInteriorPointSubproblem::print_subproblem_solution(const NonlinearProblem& problem) const {
-   DEBUG << "Barrier subproblem solution:\n";
-   DEBUG << "Δx: "; print_vector(DEBUG, this->augmented_system.solution, 0, problem.number_variables);
-   if (problem.get_number_original_variables() < problem.number_variables) {
-      DEBUG << "Δe: "; print_vector(DEBUG, this->augmented_system.solution, problem.number_variables, problem.number_variables - problem.number_variables);
-   }
-   DEBUG << "Δλ: "; print_vector(DEBUG, this->augmented_system.solution, problem.number_variables, problem.number_constraints);
-   DEBUG << "Δz_L: "; print_vector(DEBUG, this->lower_delta_z, 0, problem.number_variables);
-   DEBUG << "Δz_U: "; print_vector(DEBUG, this->upper_delta_z, 0, problem.number_variables);
 }
 
 void InfeasibleInteriorPointSubproblem::set_initial_point(const std::vector<double>& /*initial_point*/) {

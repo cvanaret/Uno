@@ -27,7 +27,7 @@ public:
 private:
    bool solving_feasibility_problem{false};
    const double backtracking_ratio;
-   const double min_step_length;
+   const double minimum_step_length;
    const bool use_second_order_correction;
    size_t total_number_iterations{0}; /*!< Total number of iterations (optimality and feasibility) */
    // statistics table

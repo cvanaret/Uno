@@ -10,13 +10,13 @@
 BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options):
       GlobalizationMechanism(constraint_relaxation_strategy),
       backtracking_ratio(options.get_double("LS_backtracking_ratio")),
-      min_step_length(options.get_double("LS_min_step_length")),
+      minimum_step_length(options.get_double("LS_min_step_length")),
       use_second_order_correction(options.get_bool("use_second_order_correction")),
       statistics_SOC_column_order(options.get_int("statistics_SOC_column_order")),
       statistics_LS_step_length_column_order(options.get_int("statistics_LS_step_length_column_order")) {
    // check the initial and minimal step lengths
    assert(0 < this->backtracking_ratio && this->backtracking_ratio < 1. && "The LS backtracking ratio should be in (0, 1)");
-   assert(0 < this->min_step_length && this->min_step_length < 1. && "The LS minimum step length should be in (0, 1)");
+   assert(0 < this->minimum_step_length && this->minimum_step_length < 1. && "The LS minimum step length should be in (0, 1)");
 }
 
 void BacktrackingLineSearch::initialize(Statistics& statistics, Iterate& first_iterate) {
@@ -53,9 +53,8 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
    }
    catch (const StepLengthTooSmall& e) {
       // if step length is too small, revert to solving the feasibility problem (if we aren't already solving it)
-      if (not this->solving_feasibility_problem && 0. < direction.multipliers.objective) {
-         // TODO: test if 0. < current_iterate.progress.infeasibility ?
-         DEBUG << "The line search failed, switching to feasibility problem\n";
+      if (not this->solving_feasibility_problem && 0. < direction.multipliers.objective && 0. < current_iterate.progress.infeasibility) {
+         DEBUG << "The line search terminated with a step length smaller than " << this->minimum_step_length << '\n';
          // reset the line search with the restoration solution
          direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, direction.primals);
          this->solving_feasibility_problem = true;
@@ -88,7 +87,6 @@ std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(St
          if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction,
                primal_dual_step_length)) {
             this->total_number_iterations += this->number_iterations;
-            this->constraint_relaxation_strategy.postprocess_accepted_iterate(trial_iterate);
             this->set_statistics(statistics, direction, primal_dual_step_length);
 
             double step_norm = primal_dual_step_length * direction.norm;
@@ -115,7 +113,6 @@ std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(St
                   statistics.add_statistic("SOC", "x");
 
                   // let the subproblem know the accepted iterate
-                  this->constraint_relaxation_strategy.postprocess_accepted_iterate(trial_iterate_soc);
                   trial_iterate_soc.multipliers.lower_bounds = trial_iterate.multipliers.lower_bounds;
                   trial_iterate_soc.multipliers.upper_bounds = trial_iterate.multipliers.upper_bounds;
                   return std::make_tuple(std::move(trial_iterate_soc), direction_soc.norm);
@@ -146,7 +143,7 @@ void BacktrackingLineSearch::decrease_step_length(double& primal_dual_step_lengt
 }
 
 bool BacktrackingLineSearch::termination(double primal_dual_step_length) const {
-   return (primal_dual_step_length < this->min_step_length);
+   return (primal_dual_step_length < this->minimum_step_length);
 }
 
 void BacktrackingLineSearch::set_statistics(Statistics& statistics, const Direction& direction, double primal_dual_step_length) const {

@@ -51,7 +51,6 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
          Iterate trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction);
          // check whether the trial step is accepted
          if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, 1.)) {
-            this->constraint_relaxation_strategy.postprocess_accepted_iterate(trial_iterate);
             this->set_statistics(statistics, direction);
 
             // increase the radius if trust region is active
@@ -78,7 +77,6 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
                      statistics.add_statistic("SOC", "x");
 
                      // let the subproblem know the accepted iterate
-                     this->constraint_relaxation_strategy.postprocess_accepted_iterate(trial_iterate_soc);
                      trial_iterate_soc.multipliers.lower_bounds = trial_iterate.multipliers.lower_bounds;
                      trial_iterate_soc.multipliers.upper_bounds = trial_iterate.multipliers.upper_bounds;
                      return std::make_tuple(std::move(trial_iterate_soc), direction_soc.norm);

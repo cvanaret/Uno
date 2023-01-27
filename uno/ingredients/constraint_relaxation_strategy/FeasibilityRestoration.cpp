@@ -18,6 +18,7 @@ FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options
       // create the globalization strategies (one for each phase)
       restoration_phase_strategy(GlobalizationStrategyFactory::create(options.get_string("strategy"), options)),
       optimality_phase_strategy(GlobalizationStrategyFactory::create(options.get_string("strategy"), options)),
+      l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
       statistics_restoration_phase_column_order(options.get_int("statistics_restoration_phase_column_order")) {
 }
 
@@ -171,6 +172,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
    }
    if (accept) {
       statistics.add_statistic("phase", static_cast<int>(this->current_phase));
+      this->subproblem->postprocess_accepted_iterate(this->current_reformulated_problem(), trial_iterate);
       this->compute_primal_dual_residuals(this->current_reformulated_problem(), trial_iterate);
    }
    return accept;
@@ -233,7 +235,8 @@ void FeasibilityRestoration::set_scaled_optimality_measure(Iterate& iterate) {
    else {
       // constraint violation
       iterate.evaluate_constraints(this->original_model);
-      const double constraint_violation = this->original_model.compute_constraint_violation(iterate.evaluations.constraints, L1_NORM);
+      const double constraint_violation = this->l1_constraint_violation_coefficient *
+            this->original_model.compute_constraint_violation(iterate.evaluations.constraints, L1_NORM);
       iterate.progress.scaled_optimality = [=](double /*objective_multiplier*/) {
          return constraint_violation;
       };
@@ -256,14 +259,10 @@ std::function<double (double)> FeasibilityRestoration::generate_predicted_scaled
       const double linearized_constraint_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model,
             current_iterate, direction, step_length);
       return [=](double /*objective_multiplier*/) {
-         return current_constraint_violation - linearized_constraint_violation;
+         return this->l1_constraint_violation_coefficient * (current_constraint_violation - linearized_constraint_violation);
       };
       //}, "‖c(x)‖₁ - ‖c(x) + ∇c(x)^T (αd)‖₁"};
    }
-}
-
-void FeasibilityRestoration::postprocess_accepted_iterate(Iterate& iterate) {
-   this->subproblem->postprocess_accepted_iterate(this->current_reformulated_problem(), iterate);
 }
 
 size_t FeasibilityRestoration::get_hessian_evaluation_count() const {
