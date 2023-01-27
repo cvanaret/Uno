@@ -197,6 +197,7 @@ inline void ScaledModel::postprocess_solution(Iterate& iterate, TerminationStatu
 
    // objective value
    iterate.evaluations.objective /= this->scaling.get_objective_scaling();
+   iterate.multipliers.objective *= this->scaling.get_objective_scaling();
 
    // unscale the multipliers
    for (size_t j: Range(this->number_constraints)) {
