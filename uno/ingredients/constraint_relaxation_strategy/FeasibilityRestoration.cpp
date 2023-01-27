@@ -12,7 +12,7 @@ FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options
       // create the (optimality phase) optimality problem (= original model)
       optimality_problem(model),
       // create the (restoration phase) feasibility problem (objective multiplier = 0)
-      feasibility_problem(model, 0.),
+      feasibility_problem(model, 0., options.get_double("l1_constraint_violation_coefficient")),
       subproblem(SubproblemFactory::create(this->feasibility_problem.number_variables, this->feasibility_problem.number_constraints,
             this->feasibility_problem.get_maximum_number_hessian_nonzeros(), options)),
       // create the globalization strategies (one for each phase)
@@ -27,13 +27,10 @@ void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& first_i
    // initialize the subproblem
    this->subproblem->initialize(statistics, this->optimality_problem, first_iterate);
 
-   // compute the progress measures of the initial point
+   // compute the progress measures and residuals of the initial point
    this->set_infeasibility_measure(first_iterate);
    this->set_scaled_optimality_measure(first_iterate);
    this->subproblem->set_unscaled_optimality_measure(this->optimality_problem, first_iterate);
-
-   // compute the residuals of the initial point
-   //ConstraintRelaxationStrategy::evaluate_functions(this->optimality_problem, first_iterate);
    this->compute_primal_dual_residuals(this->optimality_problem, first_iterate);
 
    // initialize the globalization strategies
@@ -174,7 +171,6 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
    }
    if (accept) {
       statistics.add_statistic("phase", static_cast<int>(this->current_phase));
-      //ConstraintRelaxationStrategy::evaluate_functions(this->current_reformulated_problem(), trial_iterate);
       this->compute_primal_dual_residuals(this->current_reformulated_problem(), trial_iterate);
    }
    return accept;

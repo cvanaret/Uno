@@ -91,9 +91,11 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["filter_switching_infeasibility_exponent"] = "1.1";
       options["armijo_decrease_fraction"] = "1e-8";
       options["LS_backtracking_ratio"] = "0.5";
+      options["LS_min_step_length"] = "5e-7";
       options["barrier_tau_min"] = "0.99";
       options["barrier_damping_factor"] = "1e-5";
       options["use_second_order_correction"] = "yes";
+      options["l1_constraint_violation_coefficient"] = "1000.";
       options["residual_norm"] = "INF";
       options["scale_functions"] = "yes";
       options["sparse_format"] = "COO";
@@ -109,6 +111,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["residual_norm"] = "L1";
       options["sparse_format"] = "CSC";
       options["TR_radius"] = "10";
+      options["l1_constraint_violation_coefficient"] = "1.";
       options["enforce_linear_constraints"] = "yes";
       options["tolerance"] = "1e-6";
       options["terminate_with_small_step"] = "yes";
@@ -123,6 +126,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["armijo_decrease_fraction"] = "1e-8";
       options["l1_relaxation_epsilon1"] = "0.1";
       options["l1_relaxation_epsilon2"] = "0.1";
+      options["l1_constraint_violation_coefficient"] = "1.";
       options["tolerance"] = "1e-6";
       options["terminate_with_small_step"] = "yes";
       options["residual_norm"] = "L1";

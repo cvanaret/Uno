@@ -15,9 +15,9 @@
 l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
       ConstraintRelaxationStrategy(model, options),
       // create the l1 feasibility problem (objective multiplier = 0)
-      feasibility_problem(model, 0.),
+      feasibility_problem(model, 0., options.get_double("l1_constraint_violation_coefficient")),
       // create the l1 relaxed problem
-      relaxed_problem(model, options.get_double("l1_relaxation_initial_parameter")),
+      relaxed_problem(model, options.get_double("l1_relaxation_initial_parameter"), options.get_double("l1_constraint_violation_coefficient")),
       subproblem(SubproblemFactory::create(this->relaxed_problem.number_variables, this->relaxed_problem.number_constraints,
             this->relaxed_problem.get_maximum_number_hessian_nonzeros(), options)),
       globalization_strategy(GlobalizationStrategyFactory::create(options.get_string("strategy"), options)),
@@ -63,7 +63,7 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, Iterate& curren
    // solve the subproblem
    Direction direction = this->subproblem->solve(statistics, problem, current_iterate);
    direction.objective_multiplier = problem.get_objective_multiplier();
-   direction.norm = norm_inf(direction.primals, Range(problem.get_number_original_variables()));
+   direction.norm = norm_inf(direction.primals, Range(this->original_model.number_variables));
    DEBUG << direction << '\n';
    assert(direction.status == SubproblemStatus::OPTIMAL && "The subproblem was not solved to optimality");
    return direction;
@@ -88,7 +88,7 @@ Direction l1Relaxation::compute_second_order_correction(Iterate& trial_iterate) 
    // evaluate the constraints for the second-order correction
    Direction soc_direction = this->subproblem->compute_second_order_correction(this->relaxed_problem, trial_iterate);
    soc_direction.objective_multiplier = this->penalty_parameter;
-   soc_direction.norm = norm_inf(soc_direction.primals, Range(this->relaxed_problem.get_number_original_variables()));
+   soc_direction.norm = norm_inf(soc_direction.primals, Range(this->original_model.number_variables));
    DEBUG << soc_direction << '\n';
    return soc_direction;
 }
@@ -327,7 +327,7 @@ double l1Relaxation::compute_dual_error(Iterate& current_iterate) {
          this->penalty_parameter);
    double error = norm_1(current_iterate.lagrangian_gradient.constraints_contribution);
    // complementarity error
-   error += this->relaxed_problem.compute_feasibility_complementarity_error(this->original_model.number_variables, current_iterate.primals,
+   error += this->feasibility_problem.compute_feasibility_complementarity_error(this->original_model.number_variables, current_iterate.primals,
          current_iterate.evaluations.constraints, this->trial_multipliers);
    return error;
 }

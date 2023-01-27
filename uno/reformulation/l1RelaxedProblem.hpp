@@ -18,7 +18,7 @@ struct ElasticVariables {
 
 class l1RelaxedProblem: public NonlinearProblem {
 public:
-   l1RelaxedProblem(const Model& model, double objective_multiplier);
+   l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient);
 
    [[nodiscard]] double get_objective_multiplier() const override;
    [[nodiscard]] double evaluate_objective(Iterate& iterate) const override;
@@ -43,6 +43,7 @@ public:
 
 protected:
    double objective_multiplier;
+   const double constraint_violation_coefficient;
    // elastic variables
    ElasticVariables elastic_variables;
    std::vector<size_t> violated_constraints{};
@@ -51,9 +52,10 @@ protected:
    void generate_elastic_variables();
 };
 
-inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier):
+inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient):
       NonlinearProblem(model, model.number_variables + l1RelaxedProblem::count_elastic_variables(model), model.number_constraints),
       objective_multiplier(objective_multiplier),
+      constraint_violation_coefficient(constraint_violation_coefficient),
       // elastic variables
       elastic_variables(this->number_constraints) {
    // register equality and inequality constraints
@@ -100,13 +102,12 @@ inline double l1RelaxedProblem::evaluate_objective(Iterate& iterate) const {
    // scaled objective: rho*f(x)
    if (this->objective_multiplier != 0.) {
       iterate.evaluate_objective(this->model);
-      objective += this->objective_multiplier*iterate.evaluations.objective;
+      objective += this->objective_multiplier * iterate.evaluations.objective;
    }
 
    // scaled constraint violation: coeff*||c(x)||_1
    iterate.evaluate_constraints(this->model);
-   iterate.residuals.infeasibility = this->model.compute_constraint_violation(iterate.evaluations.constraints, L1_NORM);
-   objective += iterate.residuals.infeasibility;
+   objective += this->constraint_violation_coefficient * this->model.compute_constraint_violation(iterate.evaluations.constraints, L1_NORM);
    return objective;
 }
 
@@ -123,7 +124,7 @@ inline void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, Spar
 
    // elastic contribution
    const auto insert_elastic_derivative = [&](size_t elastic_index) {
-      objective_gradient.insert(elastic_index, 1.);
+      objective_gradient.insert(elastic_index, this->constraint_violation_coefficient);
    };
    this->elastic_variables.positive.for_each_value(insert_elastic_derivative);
    this->elastic_variables.negative.for_each_value(insert_elastic_derivative);
@@ -231,8 +232,7 @@ inline size_t l1RelaxedProblem::count_elastic_variables(const Model& model) {
 }
 
 inline void l1RelaxedProblem::generate_elastic_variables() {
-   // generate elastic variables p and n on the fly to relax the constraints
-   // if the subproblem uses slack variables, the bounds of the constraints are [0, 0]
+   // generate elastic variables to relax the constraints
    size_t elastic_index = this->model.number_variables;
    for (size_t j: Range(this->model.number_constraints)) {
       if (is_finite(this->model.get_constraint_upper_bound(j))) {
