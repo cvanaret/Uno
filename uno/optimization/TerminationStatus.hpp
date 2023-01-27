@@ -7,8 +7,8 @@
 enum TerminationStatus {
    NOT_OPTIMAL = 0,
    FEASIBLE_KKT_POINT, /* feasible stationary point */
-   FJ_POINT, /* stationary point without constraint qualification */
-   INFEASIBLE_KKT_POINT, /* infeasible stationary point of constraint violation */
+   FEASIBLE_FJ_POINT, /* stationary point without constraint qualification */
+   INFEASIBLE_STATIONARY_POINT, /* infeasible stationary point of constraint violation */
    FEASIBLE_SMALL_STEP,
    INFEASIBLE_SMALL_STEP
 };

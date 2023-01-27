@@ -124,7 +124,7 @@ TerminationStatus Uno::check_termination(const Model& model, Iterate& current_it
    if (optimality_complementarity && primal_feasibility) {
       if (feasibility_stationarity && no_trivial_duals) {
          // feasible but CQ failure
-         return FJ_POINT;
+         return FEASIBLE_FJ_POINT;
       }
       else if (0. < current_iterate.multipliers.objective && optimality_stationarity) {
          // feasible regular stationary point
@@ -132,8 +132,8 @@ TerminationStatus Uno::check_termination(const Model& model, Iterate& current_it
       }
    }
    else if (feasibility_complementarity && feasibility_stationarity) {
-      // no primal feasibility, minimum of constraint violation
-     return INFEASIBLE_KKT_POINT;
+      // no primal feasibility, stationary point of constraint violation
+     return INFEASIBLE_STATIONARY_POINT;
    }
    // stationarity & complementarity not achieved, but we can terminate with a small step
    if (this->terminate_with_small_step && step_norm <= this->small_step_threshold) {

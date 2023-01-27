@@ -8,11 +8,11 @@ void Result::print(bool print_primal_dual_solution) const {
    if (this->status == FEASIBLE_KKT_POINT) {
       std::cout << "Converged with feasible KKT point\n";
    }
-   else if (this->status == FJ_POINT) {
+   else if (this->status == FEASIBLE_FJ_POINT) {
       std::cout << "Converged with feasible FJ point\n";
    }
-   else if (this->status == INFEASIBLE_KKT_POINT) {
-      std::cout << "Converged with infeasible KKT point\n";
+   else if (this->status == INFEASIBLE_STATIONARY_POINT) {
+      std::cout << "Converged with infeasible stationary point\n";
    }
    else if (this->status == FEASIBLE_SMALL_STEP) {
       std::cout << "Terminated with feasible small step\n";
@@ -33,8 +33,8 @@ void Result::print(bool print_primal_dual_solution) const {
    std::cout << "Feasibility complementarity error:\t" << this->solution.residuals.feasibility_complementarity << '\n';
 
    std::cout << "Infeasibility measure:\t\t\t" << this->solution.progress.infeasibility << '\n';
-   std::cout << "Optimality measure:\t\t" << this->solution.progress.optimality(1.) << '\n';
-   std::cout << "Auxiliary measure:\t\t" << this->solution.progress.auxiliary_terms << '\n';
+   std::cout << "Optimality measure:\t\t\t" << this->solution.progress.optimality(1.) << '\n';
+   std::cout << "Auxiliary measure:\t\t\t" << this->solution.progress.auxiliary_terms << '\n';
 
    if (print_primal_dual_solution) {
       std::cout << "Primal solution:\t\t\t"; print_vector(std::cout, this->solution.primals);
