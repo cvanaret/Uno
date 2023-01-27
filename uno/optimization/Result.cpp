@@ -33,8 +33,8 @@ void Result::print(bool print_primal_dual_solution) const {
    std::cout << "Feasibility complementarity error:\t" << this->solution.residuals.feasibility_complementarity << '\n';
 
    std::cout << "Infeasibility measure:\t\t\t" << this->solution.progress.infeasibility << '\n';
-   std::cout << "Scaled optimality measure:\t\t" << this->solution.progress.scaled_optimality(1.) << '\n';
-   std::cout << "Unscaled optimality measure:\t\t" << this->solution.progress.unscaled_optimality << '\n';
+   std::cout << "Optimality measure:\t\t" << this->solution.progress.optimality(1.) << '\n';
+   std::cout << "Auxiliary measure:\t\t" << this->solution.progress.auxiliary_terms << '\n';
 
    if (print_primal_dual_solution) {
       std::cout << "Primal solution:\t\t\t"; print_vector(std::cout, this->solution.primals);

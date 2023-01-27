@@ -8,8 +8,8 @@
 
 struct PredictedReduction {
    double infeasibility;
-   std::function<double(double objective_multiplier)> scaled_optimality;
-   double unscaled_optimality;
+   std::function<double(double objective_multiplier)> optimality;
+   double auxiliary_terms;
 };
 
 #endif // UNO_PREDICTEDREDUCTIONMODEL_H

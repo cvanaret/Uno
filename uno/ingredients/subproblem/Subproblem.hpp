@@ -33,8 +33,8 @@ public:
    virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
 
    // globalization metrics
-   virtual void set_unscaled_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) = 0;
-   [[nodiscard]] virtual double generate_predicted_unscaled_optimality_reduction_model(const NonlinearProblem& problem,
+   virtual void set_auxiliary_measure(const NonlinearProblem& problem, Iterate& iterate) = 0;
+   [[nodiscard]] virtual double generate_predicted_auxiliary_reduction_model(const NonlinearProblem& problem,
          const Iterate& current_iterate, const Direction& direction, double step_length) const = 0;
 
    virtual void postprocess_accepted_iterate(const NonlinearProblem& model, Iterate& iterate) = 0;
@@ -47,7 +47,7 @@ public:
 
    size_t number_subproblems_solved{0};
    // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it
-   bool unscaled_optimality_measure_changed{false};
+   bool subproblem_definition_changed{false};
 
 protected:
    Evaluations evaluations;

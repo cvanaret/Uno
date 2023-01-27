@@ -43,8 +43,8 @@ void l1Relaxation::initialize(Statistics& statistics, Iterate& first_iterate) {
 
    // compute the progress measures and residuals of the initial point
    this->set_infeasibility_measure(first_iterate);
-   this->set_scaled_optimality_measure(first_iterate);
-   this->subproblem->set_unscaled_optimality_measure(this->relaxed_problem, first_iterate);
+   this->set_optimality_measure(first_iterate);
+   this->subproblem->set_auxiliary_measure(this->relaxed_problem, first_iterate);
    this->compute_primal_dual_residuals(this->relaxed_problem, first_iterate);
 
    // initialize the globalization strategy
@@ -210,19 +210,19 @@ bool l1Relaxation::objective_sufficient_decrease(const Iterate& current_iterate,
 
 void l1Relaxation::compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& /*direction*/) {
    // refresh the progress measures for the current iterate
-   if (this->subproblem->unscaled_optimality_measure_changed) {
+   if (this->subproblem->subproblem_definition_changed) {
       DEBUG << "The subproblem definition changed, the unscaled optimality measure is recomputed\n";
-      this->subproblem->set_unscaled_optimality_measure(this->relaxed_problem, current_iterate);
+      this->subproblem->set_auxiliary_measure(this->relaxed_problem, current_iterate);
       this->globalization_strategy->reset();
-      this->subproblem->unscaled_optimality_measure_changed = false;
+      this->subproblem->subproblem_definition_changed = false;
    }
    this->set_infeasibility_measure(current_iterate);
-   this->set_scaled_optimality_measure(current_iterate);
+   this->set_optimality_measure(current_iterate);
 
    // compute the progress measures for the trial iterate
    this->set_infeasibility_measure(trial_iterate);
-   this->set_scaled_optimality_measure(trial_iterate);
-   this->subproblem->set_unscaled_optimality_measure(this->relaxed_problem, trial_iterate);
+   this->set_optimality_measure(trial_iterate);
+   this->subproblem->set_auxiliary_measure(this->relaxed_problem, trial_iterate);
 }
 
 bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
@@ -239,8 +239,8 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
       // evaluate the predicted reduction
       PredictedReduction predicted_reduction = {
             this->generate_predicted_infeasibility_reduction_model(current_iterate, direction, step_length),
-            this->generate_predicted_scaled_optimality_reduction_model(current_iterate, direction, step_length),
-            this->subproblem->generate_predicted_unscaled_optimality_reduction_model(this->relaxed_problem, current_iterate, direction, step_length)
+            this->generate_predicted_optimality_reduction_model(current_iterate, direction, step_length),
+            this->subproblem->generate_predicted_auxiliary_reduction_model(this->relaxed_problem, current_iterate, direction, step_length)
       };
       // invoke the globalization strategy for acceptance
       accept = this->globalization_strategy->is_iterate_acceptable(current_iterate.progress, trial_iterate.progress,
@@ -282,12 +282,12 @@ double l1Relaxation::generate_predicted_infeasibility_reduction_model(const Iter
    }
 }
 
-void l1Relaxation::set_scaled_optimality_measure(Iterate& iterate) {
+void l1Relaxation::set_optimality_measure(Iterate& iterate) {
    if (0. < this->penalty_parameter) {
       // scaled objective
       iterate.evaluate_objective(this->original_model);
       const double objective = iterate.evaluations.objective;
-      iterate.progress.scaled_optimality = [=](double objective_multiplier) {
+      iterate.progress.optimality = [=](double objective_multiplier) {
          return objective_multiplier*objective;
       };
    }
@@ -296,13 +296,13 @@ void l1Relaxation::set_scaled_optimality_measure(Iterate& iterate) {
       iterate.evaluate_constraints(this->original_model);
       const double constraint_violation = this->l1_constraint_violation_coefficient *
             this->original_model.compute_constraint_violation(iterate.evaluations.constraints, L1_NORM);
-      iterate.progress.scaled_optimality = [=](double /*objective_multiplier*/) {
+      iterate.progress.optimality = [=](double /*objective_multiplier*/) {
          return constraint_violation;
       };
    }
 }
 
-std::function<double (double)> l1Relaxation::generate_predicted_scaled_optimality_reduction_model(const Iterate& current_iterate,
+std::function<double (double)> l1Relaxation::generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
       const Direction& direction, double step_length) const {
    if (0. < this->penalty_parameter) {
       // precompute expensive quantities

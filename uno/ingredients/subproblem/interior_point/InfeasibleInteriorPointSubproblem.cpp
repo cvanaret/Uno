@@ -252,7 +252,7 @@ void InfeasibleInteriorPointSubproblem::initialize_feasibility_problem() {
    const double new_barrier_parameter = std::max(this->barrier_parameter(), norm_inf(this->evaluations.constraints));
    this->barrier_parameter_update_strategy.set_barrier_parameter(new_barrier_parameter);
    DEBUG << "Barrier parameter mu temporarily updated to " << this->barrier_parameter() << '\n';
-   this->unscaled_optimality_measure_changed = true;
+   this->subproblem_definition_changed = true;
 }
 
 // set the elastic variables of the current iterate
@@ -278,7 +278,7 @@ void InfeasibleInteriorPointSubproblem::set_elastic_variable_values(const l1Rela
    problem.set_elastic_variable_values(current_iterate, elastic_setting_function);
 }
 
-void InfeasibleInteriorPointSubproblem::set_unscaled_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) {
+void InfeasibleInteriorPointSubproblem::set_auxiliary_measure(const NonlinearProblem& problem, Iterate& iterate) {
    //this->check_interior_primals(problem, iterate);
    // unscaled optimality measure: barrier terms
    double barrier_terms = 0.;
@@ -297,10 +297,10 @@ void InfeasibleInteriorPointSubproblem::set_unscaled_optimality_measure(const No
    }
    barrier_terms *= this->barrier_parameter();
    assert(not std::isnan(barrier_terms) && "The optimality measure is not an number.");
-   iterate.progress.unscaled_optimality = barrier_terms;
+   iterate.progress.auxiliary_terms = barrier_terms;
 }
 
-double InfeasibleInteriorPointSubproblem::generate_predicted_unscaled_optimality_reduction_model(const NonlinearProblem& problem,
+double InfeasibleInteriorPointSubproblem::generate_predicted_auxiliary_reduction_model(const NonlinearProblem& problem,
       const Iterate& current_iterate, const Direction& direction, double step_length) const {
    const double directional_derivative = this->compute_barrier_term_directional_derivative(problem, current_iterate, direction);
    return step_length * (-directional_derivative);
@@ -331,7 +331,7 @@ double InfeasibleInteriorPointSubproblem::compute_barrier_term_directional_deriv
 void InfeasibleInteriorPointSubproblem::update_barrier_parameter(const NonlinearProblem& problem, const Iterate& current_iterate) {
     const bool barrier_parameter_updated = this->barrier_parameter_update_strategy.update_barrier_parameter(problem, current_iterate);
     // the barrier parameter may have been changed earlier when entering restoration
-    this->unscaled_optimality_measure_changed = this->unscaled_optimality_measure_changed || barrier_parameter_updated;
+    this->subproblem_definition_changed = this->subproblem_definition_changed || barrier_parameter_updated;
 }
 
 // Section 3.9 in IPOPT paper

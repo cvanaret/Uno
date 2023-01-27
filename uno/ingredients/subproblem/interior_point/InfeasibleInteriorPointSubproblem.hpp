@@ -34,8 +34,8 @@ public:
    [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) override;
    [[nodiscard]] Direction compute_second_order_correction(const NonlinearProblem& problem, Iterate& trial_iterate) override;
 
-   void set_unscaled_optimality_measure(const NonlinearProblem& problem, Iterate& iterate) override;
-   [[nodiscard]] double generate_predicted_unscaled_optimality_reduction_model(const NonlinearProblem& problem,
+   void set_auxiliary_measure(const NonlinearProblem& problem, Iterate& iterate) override;
+   [[nodiscard]] double generate_predicted_auxiliary_reduction_model(const NonlinearProblem& problem,
          const Iterate& current_iterate, const Direction& direction, double step_length) const override;
 
    void postprocess_accepted_iterate(const NonlinearProblem& problem, Iterate& iterate) override;

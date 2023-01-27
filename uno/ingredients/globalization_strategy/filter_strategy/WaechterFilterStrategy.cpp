@@ -17,15 +17,15 @@ void WaechterFilterStrategy::initialize(const Iterate& first_iterate) {
  * */
 bool WaechterFilterStrategy::is_iterate_acceptable(const ProgressMeasures& current_progress_measures, const ProgressMeasures& trial_progress_measures,
       const PredictedReduction& predicted_reduction, double /*objective_multiplier*/) {
-   const double current_optimality_measure = current_progress_measures.scaled_optimality(1.) + current_progress_measures.unscaled_optimality;
-   const double trial_optimality_measure = trial_progress_measures.scaled_optimality(1.) + trial_progress_measures.unscaled_optimality;
+   const double current_optimality_measure = current_progress_measures.optimality(1.) + current_progress_measures.auxiliary_terms;
+   const double trial_optimality_measure = trial_progress_measures.optimality(1.) + trial_progress_measures.auxiliary_terms;
    // unconstrained predicted reduction:
    // - ignore the predicted infeasibility reduction
    // - scale the scaled optimality measure with 1
-   const double unconstrained_predicted_reduction = predicted_reduction.scaled_optimality(1.) + predicted_reduction.unscaled_optimality;
+   const double unconstrained_predicted_reduction = predicted_reduction.optimality(1.) + predicted_reduction.auxiliary_terms;
    DEBUG << "Current: η = " << current_progress_measures.infeasibility << ", ω = " << current_optimality_measure << '\n';
    DEBUG << "Trial:   η = " << trial_progress_measures.infeasibility << ", ω = " << trial_optimality_measure << '\n';
-   DEBUG << "Unconstrained predicted reduction: " << predicted_reduction.scaled_optimality(1.) << " + " << predicted_reduction.unscaled_optimality <<
+   DEBUG << "Unconstrained predicted reduction: " << predicted_reduction.optimality(1.) << " + " << predicted_reduction.auxiliary_terms <<
          " = " <<  unconstrained_predicted_reduction << '\n';
 
    GlobalizationStrategy::check_finiteness(current_progress_measures, 1.);

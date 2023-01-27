@@ -31,7 +31,7 @@ void FilterStrategy::reset() {
 }
 
 void FilterStrategy::register_current_progress(const ProgressMeasures& current_progress_measures) {
-   const double current_optimality_measure = current_progress_measures.scaled_optimality(1.) + current_progress_measures.unscaled_optimality;
+   const double current_optimality_measure = current_progress_measures.optimality(1.) + current_progress_measures.auxiliary_terms;
    this->filter->add(current_progress_measures.infeasibility, current_optimality_measure);
 }
 

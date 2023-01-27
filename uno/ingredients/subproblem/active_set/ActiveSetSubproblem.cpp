@@ -65,11 +65,11 @@ void ActiveSetSubproblem::compute_dual_displacements(const NonlinearProblem& pro
    }
 }
 
-void ActiveSetSubproblem::set_unscaled_optimality_measure(const NonlinearProblem& /*problem*/, Iterate& iterate) {
-   iterate.progress.unscaled_optimality = 0.;
+void ActiveSetSubproblem::set_auxiliary_measure(const NonlinearProblem& /*problem*/, Iterate& iterate) {
+   iterate.progress.auxiliary_terms = 0.;
 }
 
-double ActiveSetSubproblem::generate_predicted_unscaled_optimality_reduction_model(const NonlinearProblem& /*problem*/,
+double ActiveSetSubproblem::generate_predicted_auxiliary_reduction_model(const NonlinearProblem& /*problem*/,
       const Iterate& /*current_iterate*/, const Direction& /*direction*/, double /*step_length*/) const {
    return 0.;
    //}, "0"};

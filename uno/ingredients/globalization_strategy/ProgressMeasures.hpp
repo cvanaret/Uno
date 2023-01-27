@@ -8,8 +8,8 @@
 
 struct ProgressMeasures {
    double infeasibility{}; // constraint violation
-   std::function<double(double objective_multiplier)> scaled_optimality{}; // optimality measure (scaled by penalty parameter): objective, Lagrangian
-   double unscaled_optimality{}; // optimality measure (independent of penalty parameter): barrier terms, proximal term, ...
+   std::function<double(double objective_multiplier)> optimality{}; // optimality measure (scaled by penalty parameter): objective, Lagrangian
+   double auxiliary_terms{}; // auxiliary terms (independent of penalty parameter): barrier terms, proximal term, ...
 };
 
 #endif // UNO_PROGRESSMEASURES_H

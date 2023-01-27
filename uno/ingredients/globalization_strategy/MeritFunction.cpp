@@ -19,18 +19,16 @@ void MeritFunction::register_current_progress(const ProgressMeasures& /*current_
 bool MeritFunction::is_iterate_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
       const PredictedReduction& predicted_reduction, double objective_multiplier) {
    // compute current exact penalty
-   const double current_exact_merit = current_progress.scaled_optimality(objective_multiplier) + current_progress.unscaled_optimality +
-         current_progress.infeasibility;
-   const double trial_exact_merit = trial_progress.scaled_optimality(objective_multiplier) + trial_progress.unscaled_optimality +
-         trial_progress.infeasibility;
+   const double current_exact_merit = current_progress.optimality(objective_multiplier) + current_progress.auxiliary_terms + current_progress.infeasibility;
+   const double trial_exact_merit = trial_progress.optimality(objective_multiplier) + trial_progress.auxiliary_terms + trial_progress.infeasibility;
    const double actual_reduction = current_exact_merit - trial_exact_merit;
    // predicted reduction with all contributions
-   const double constrained_predicted_reduction = predicted_reduction.scaled_optimality(objective_multiplier) + predicted_reduction.unscaled_optimality +
+   const double constrained_predicted_reduction = predicted_reduction.optimality(objective_multiplier) + predicted_reduction.auxiliary_terms +
          predicted_reduction.infeasibility;
-   DEBUG << "Current merit: " << current_progress.scaled_optimality(objective_multiplier) << " + " << current_progress.unscaled_optimality << " + " <<
-      current_progress.infeasibility << " = " << current_exact_merit << '\n';
-   DEBUG << "Trial merit:   " << trial_progress.scaled_optimality(objective_multiplier) << " + " << trial_progress.unscaled_optimality << " + " <<
-      trial_progress.infeasibility << " = " << trial_exact_merit << '\n';
+   DEBUG << "Current merit: " << current_progress.optimality(objective_multiplier) << " + " << current_progress.auxiliary_terms << " + " <<
+         current_progress.infeasibility << " = " << current_exact_merit << '\n';
+   DEBUG << "Trial merit:   " << trial_progress.optimality(objective_multiplier) << " + " << trial_progress.auxiliary_terms << " + " <<
+         trial_progress.infeasibility << " = " << trial_exact_merit << '\n';
    DEBUG << "Actual reduction: " << current_exact_merit << " - " << trial_exact_merit << " = " << actual_reduction << '\n';
    DEBUG << "Constrained predicted reduction: " << constrained_predicted_reduction << '\n';
 

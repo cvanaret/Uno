@@ -55,8 +55,8 @@ private:
    void set_infeasibility_measure(Iterate& iterate);
    [[nodiscard]] double generate_predicted_infeasibility_reduction_model(const Iterate& current_iterate,
          const Direction& direction, double step_length) const;
-   void set_scaled_optimality_measure(Iterate& iterate);
-   [[nodiscard]] std::function<double (double)> generate_predicted_scaled_optimality_reduction_model(const Iterate& current_iterate,
+   void set_optimality_measure(Iterate& iterate);
+   [[nodiscard]] std::function<double (double)> generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
          const Direction& direction, double step_length) const;
 };
 

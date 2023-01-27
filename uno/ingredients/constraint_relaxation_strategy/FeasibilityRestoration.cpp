@@ -30,8 +30,8 @@ void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& first_i
 
    // compute the progress measures and residuals of the initial point
    this->set_infeasibility_measure(first_iterate);
-   this->set_scaled_optimality_measure(first_iterate);
-   this->subproblem->set_unscaled_optimality_measure(this->optimality_problem, first_iterate);
+   this->set_optimality_measure(first_iterate);
+   this->subproblem->set_auxiliary_measure(this->optimality_problem, first_iterate);
    this->compute_primal_dual_residuals(this->optimality_problem, first_iterate);
 
    // initialize the globalization strategies
@@ -98,29 +98,29 @@ Direction FeasibilityRestoration::compute_second_order_correction(Iterate& trial
 
 void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) {
    // refresh the unscaled optimality measures for the current iterate
-   if (this->subproblem->unscaled_optimality_measure_changed) {
+   if (this->subproblem->subproblem_definition_changed) {
       DEBUG << "The subproblem definition changed, the unscaled optimality measure is recomputed\n";
       this->restoration_phase_strategy->reset();
       this->optimality_phase_strategy->reset();
-      this->subproblem->unscaled_optimality_measure_changed = false;
+      this->subproblem->subproblem_definition_changed = false;
    }
 
    // possibly go from restoration phase to optimality phase
    if (this->current_phase == Phase::FEASIBILITY_RESTORATION &&
          ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate, direction, 1.) == 0.) {
       // evaluate measure of infeasibility (in restoration phase definition, it corresponds to the "scaled optimality" quantity)
-      this->set_scaled_optimality_measure(trial_iterate);
+      this->set_optimality_measure(trial_iterate);
       // if the infeasibility improves upon the best known infeasibility of the globalization strategy
-      if (this->optimality_phase_strategy->is_infeasibility_acceptable(trial_iterate.progress.scaled_optimality(1.))) {
+      if (this->optimality_phase_strategy->is_infeasibility_acceptable(trial_iterate.progress.optimality(1.))) {
          this->switch_to_optimality(current_iterate, trial_iterate);
       }
    }
 
    // evaluate the progress measures of the trial iterate
    this->set_infeasibility_measure(trial_iterate);
-   this->set_scaled_optimality_measure(trial_iterate);
-   this->subproblem->set_unscaled_optimality_measure(this->current_reformulated_problem(), current_iterate);
-   this->subproblem->set_unscaled_optimality_measure(this->current_reformulated_problem(), trial_iterate);
+   this->set_optimality_measure(trial_iterate);
+   this->subproblem->set_auxiliary_measure(this->current_reformulated_problem(), current_iterate);
+   this->subproblem->set_auxiliary_measure(this->current_reformulated_problem(), trial_iterate);
 }
 
 void FeasibilityRestoration::switch_to_feasibility_restoration(Iterate& current_iterate) {
@@ -129,8 +129,8 @@ void FeasibilityRestoration::switch_to_feasibility_restoration(Iterate& current_
    this->optimality_phase_strategy->register_current_progress(current_iterate.progress);
    // refresh the progress measures of the current iterate
    this->set_infeasibility_measure(current_iterate);
-   this->set_scaled_optimality_measure(current_iterate);
-   this->subproblem->set_unscaled_optimality_measure(this->feasibility_problem, current_iterate);
+   this->set_optimality_measure(current_iterate);
+   this->subproblem->set_auxiliary_measure(this->feasibility_problem, current_iterate);
    this->restoration_phase_strategy->reset();
    this->restoration_phase_strategy->register_current_progress(current_iterate.progress);
 }
@@ -141,9 +141,9 @@ void FeasibilityRestoration::switch_to_optimality(Iterate& current_iterate, Iter
    current_iterate.set_number_variables(this->optimality_problem.number_variables);
    trial_iterate.set_number_variables(this->optimality_problem.number_variables);
    // refresh the progress measures of current iterate
-   this->set_scaled_optimality_measure(current_iterate);
+   this->set_optimality_measure(current_iterate);
    this->set_infeasibility_measure(current_iterate);
-   this->subproblem->set_unscaled_optimality_measure(this->optimality_problem, current_iterate);
+   this->subproblem->set_auxiliary_measure(this->optimality_problem, current_iterate);
 }
 
 bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
@@ -161,8 +161,8 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
       // evaluate the predicted reduction
       PredictedReduction predicted_reduction = {
             this->generate_predicted_infeasibility_reduction_model(current_iterate, direction, step_length),
-            this->generate_predicted_scaled_optimality_reduction_model(current_iterate, direction, step_length),
-            this->subproblem->generate_predicted_unscaled_optimality_reduction_model(this->current_reformulated_problem(), current_iterate, direction,
+            this->generate_predicted_optimality_reduction_model(current_iterate, direction, step_length),
+            this->subproblem->generate_predicted_auxiliary_reduction_model(this->current_reformulated_problem(), current_iterate, direction,
                   step_length)
       };
       // invoke the globalization strategy for acceptance
@@ -223,12 +223,12 @@ double FeasibilityRestoration::generate_predicted_infeasibility_reduction_model(
    }
 }
 
-void FeasibilityRestoration::set_scaled_optimality_measure(Iterate& iterate) {
+void FeasibilityRestoration::set_optimality_measure(Iterate& iterate) {
    if (this->current_phase == Phase::OPTIMALITY) {
       // scaled objective
       iterate.evaluate_objective(this->original_model);
       const double objective = iterate.evaluations.objective;
-      iterate.progress.scaled_optimality = [=](double objective_multiplier) {
+      iterate.progress.optimality = [=](double objective_multiplier) {
          return objective_multiplier*objective;
       };
    }
@@ -237,13 +237,13 @@ void FeasibilityRestoration::set_scaled_optimality_measure(Iterate& iterate) {
       iterate.evaluate_constraints(this->original_model);
       const double constraint_violation = this->l1_constraint_violation_coefficient *
             this->original_model.compute_constraint_violation(iterate.evaluations.constraints, L1_NORM);
-      iterate.progress.scaled_optimality = [=](double /*objective_multiplier*/) {
+      iterate.progress.optimality = [=](double /*objective_multiplier*/) {
          return constraint_violation;
       };
    }
 }
 
-std::function<double (double)> FeasibilityRestoration::generate_predicted_scaled_optimality_reduction_model(const Iterate& current_iterate,
+std::function<double (double)> FeasibilityRestoration::generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
       const Direction& direction, double step_length) const {
    if (this->current_phase == Phase::OPTIMALITY) {
       // precompute expensive quantities
