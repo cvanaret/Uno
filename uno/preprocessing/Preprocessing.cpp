@@ -5,7 +5,7 @@
 #include "solvers/QP/BQPDSolver.hpp"
 #include "linear_algebra/CSCSymmetricMatrix.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
-#include "tools/Range.hpp"
+#include "tools/range.hpp"
 
 // compute a least-square approximation of the multipliers by solving a linear system (uses existing linear system)
 void Preprocessing::compute_least_square_multipliers(const Model& model, SymmetricMatrix<double>& matrix, std::vector<double>& rhs,
@@ -16,12 +16,12 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
    /* build the symmetric matrix */
    matrix.reset();
    // identity block
-   for (size_t i: Range(model.number_variables)) {
+   for (size_t i: range(model.number_variables)) {
       matrix.insert(1., i, i);
       matrix.finalize_column(i);
    }
    // Jacobian of general constraints
-   for (size_t j: Range(model.number_constraints)) {
+   for (size_t j: range(model.number_constraints)) {
       current_iterate.evaluations.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
          matrix.insert(derivative, i, model.number_variables + j);
       });
@@ -36,7 +36,7 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
       rhs[i] += model.objective_sign * derivative;
    });
    // variable bound constraints
-   for (size_t i: Range(model.number_variables)) {
+   for (size_t i: range(model.number_variables)) {
       rhs[i] -= current_iterate.multipliers.lower_bounds[i] + current_iterate.multipliers.upper_bounds[i];
    }
    DEBUG << "RHS for least-square multipliers: "; print_vector(DEBUG, rhs, 0, matrix.dimension);
@@ -48,8 +48,8 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
    DEBUG << "Solution: "; print_vector(DEBUG, solution, 0, matrix.dimension);
 
    // if least-square multipliers too big, discard them. Otherwise, keep them
-   if (norm_inf(solution, Range(model.number_variables, model.number_variables + model.number_constraints)) <= multiplier_max_norm) {
-      for (size_t j: Range(model.number_constraints)) {
+   if (norm_inf(solution, range(model.number_variables, model.number_variables + model.number_constraints)) <= multiplier_max_norm) {
+      for (size_t j: range(model.number_constraints)) {
          multipliers[j] = solution[model.number_variables + j];
       }
    }
@@ -90,7 +90,7 @@ void Preprocessing::enforce_linear_constraints(const Options& options, const Mod
          });
          // variables bounds
          std::vector<Interval> variables_bounds(model.number_variables);
-         for (size_t i: Range(model.number_variables)) {
+         for (size_t i: range(model.number_variables)) {
             variables_bounds[i] = {model.get_variable_lower_bound(i) - x[i], model.get_variable_upper_bound(i) - x[i]};
          }
          // constraints bounds

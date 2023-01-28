@@ -41,7 +41,7 @@ InfeasibleInteriorPointSubproblem::InfeasibleInteriorPointSubproblem(size_t max_
       lower_delta_z(max_number_variables), upper_delta_z(max_number_variables),
       statistics_barrier_parameter_column_order(options.get_int("statistics_barrier_parameter_column_order")) {
    // const double tolerance = options.get_double("tolerance");
-   for (size_t i: Range(max_number_variables)) {
+   for (size_t i: range(max_number_variables)) {
       this->bound_relaxation_factors[i] = 0.;//tolerance;
    }
 }
@@ -53,7 +53,7 @@ inline void InfeasibleInteriorPointSubproblem::initialize(Statistics& statistics
    first_iterate.evaluate_constraints(problem.model);
 
    // make the initial point strictly feasible wrt the bounds
-   for (size_t i: Range(problem.number_variables)) {
+   for (size_t i: range(problem.number_variables)) {
       const Interval bounds = {problem.get_variable_lower_bound(i, this->bound_relaxation_factors[i]),
             problem.get_variable_upper_bound(i, this->bound_relaxation_factors[i])};
       first_iterate.primals[i] = InfeasibleInteriorPointSubproblem::push_variable_to_interior(first_iterate.primals[i], bounds);
@@ -126,7 +126,7 @@ void InfeasibleInteriorPointSubproblem::evaluate_functions(const NonlinearProble
    this->hessian_model->evaluate(problem, current_iterate.primals, current_iterate.multipliers.constraints);
    problem.evaluate_objective_gradient(current_iterate, this->evaluations.objective_gradient);
 
-   for (size_t i: Range(problem.number_variables)) {
+   for (size_t i: range(problem.number_variables)) {
       // Hessian: diagonal barrier terms (grouped by variable)
       double hessian_diagonal_barrier_term = 0.;
       // objective gradient
@@ -340,7 +340,7 @@ bool InfeasibleInteriorPointSubproblem::is_small_step(const NonlinearProblem& pr
       return direction.primals[i] / (1 + std::abs(current_iterate.primals[i]));
    };
    static double machine_epsilon = std::numeric_limits<double>::epsilon();
-   return (norm_inf<double>(relative_measure_function, Range(problem.number_variables)) < this->parameters.small_direction_factor * machine_epsilon);
+   return (norm_inf<double>(relative_measure_function, range(problem.number_variables)) < this->parameters.small_direction_factor * machine_epsilon);
 }
 
 double InfeasibleInteriorPointSubproblem::evaluate_subproblem_objective() const {
@@ -405,7 +405,7 @@ void InfeasibleInteriorPointSubproblem::generate_augmented_rhs(const NonlinearPr
    });
 
    // constraint: evaluations and gradients
-   for (size_t j: Range(problem.number_constraints)) {
+   for (size_t j: range(problem.number_constraints)) {
       // Lagrangian
       if (current_iterate.multipliers.constraints[j] != 0.) {
          this->evaluations.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
@@ -422,17 +422,17 @@ void InfeasibleInteriorPointSubproblem::generate_primal_dual_direction(const Non
    this->direction.set_dimensions(problem.number_variables, problem.number_constraints);
 
    // retrieve +Δλ (Nocedal p590)
-   for (size_t j: Range(problem.number_variables, this->augmented_system.solution.size())) {
+   for (size_t j: range(problem.number_variables, this->augmented_system.solution.size())) {
       this->augmented_system.solution[j] = -this->augmented_system.solution[j];
    }
 
    // "fraction-to-boundary" rule for primal variables and constraints multipliers
    const double tau = std::max(this->parameters.tau_min, 1. - this->barrier_parameter());
    const double primal_dual_step_length = this->primal_fraction_to_boundary(problem, current_iterate, tau);
-   for (size_t i: Range(problem.number_variables)) {
+   for (size_t i: range(problem.number_variables)) {
       this->direction.primals[i] = this->augmented_system.solution[i];
    }
-   for (size_t j: Range(problem.number_constraints)) {
+   for (size_t j: range(problem.number_constraints)) {
       this->direction.multipliers.constraints[j] = this->augmented_system.solution[problem.number_variables + j];
    }
 
@@ -441,7 +441,7 @@ void InfeasibleInteriorPointSubproblem::generate_primal_dual_direction(const Non
 
    // "fraction-to-boundary" rule for bound multipliers
    const double bound_dual_step_length = this->dual_fraction_to_boundary(problem, current_iterate, tau);
-   for (size_t i: Range(problem.number_variables)) {
+   for (size_t i: range(problem.number_variables)) {
       this->direction.multipliers.lower_bounds[i] = this->lower_delta_z[i];
       this->direction.multipliers.upper_bounds[i] = this->upper_delta_z[i];
    }

@@ -7,7 +7,7 @@
 #include <cassert>
 #include <functional>
 #include "tools/Logger.hpp"
-#include "tools/Range.hpp"
+#include "tools/range.hpp"
 
 // SparseVector is a sparse vector that uses contiguous memory. It contains:
 // - a vector of indices of type size_t
@@ -45,21 +45,21 @@ SparseVector<T>::SparseVector(size_t capacity) {
 
 template <typename T>
 void SparseVector<T>::for_each(const std::function<void (size_t, T)>& f) const {
-   for (size_t i: Range(this->number_nonzeros)) {
+   for (size_t i: range(this->number_nonzeros)) {
       f(this->indices[i], this->values[i]);
    }
 }
 
 template <typename T>
 void SparseVector<T>::for_each_index(const std::function<void(size_t)>& f) const {
-   for (size_t i: Range(this->number_nonzeros)) {
+   for (size_t i: range(this->number_nonzeros)) {
       f(this->indices[i]);
    }
 }
 
 template <typename T>
 void SparseVector<T>::for_each_value(const std::function<void(T)>& f) const {
-   for (size_t i: Range(this->number_nonzeros)) {
+   for (size_t i: range(this->number_nonzeros)) {
       f(this->values[i]);
    }
 }
@@ -96,7 +96,7 @@ bool SparseVector<T>::empty() const {
 
 template <typename T>
 void SparseVector<T>::transform(const std::function<T (T)>& f) {
-   for (size_t i: Range(this->number_nonzeros)) {
+   for (size_t i: range(this->number_nonzeros)) {
       this->values[i] = f(this->values[i]);
    }
 }

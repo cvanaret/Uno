@@ -10,7 +10,7 @@
 #include <functional>
 #include <cmath>
 #include "tools/Logger.hpp"
-#include "tools/Range.hpp"
+#include "tools/range.hpp"
 
 enum Norm {
    L1_NORM = 1,
@@ -38,7 +38,7 @@ void add_vectors(const std::vector<T>& x, const std::vector<T>& y, T scaling_fac
    assert(x.size() <= y.size() && "Vector.add_vectors: x is longer than y");
    assert(x.size() <= result.size() && "Vector.add_vectors: result is not long enough");
 
-   for (size_t i: Range(x.size())) {
+   for (size_t i: range(x.size())) {
       result[i] = x[i] + scaling_factor * y[i];
    }
 }
@@ -147,8 +147,8 @@ T norm_inf(const ARRAY& x, ARRAYS... other_arrays) {
 template <typename ARRAY, typename T = typename ARRAY::value_type>
 T norm(const ARRAY& x, Norm norm) {
    // choose the right norm
-   if (norm == INF_NORM) {
-      return norm_inf(x);
+   if (norm == L1_NORM) {
+      return norm_1(x);
    }
    else if (norm == L2_NORM) {
       return norm_2(x);
@@ -156,8 +156,8 @@ T norm(const ARRAY& x, Norm norm) {
    else if (norm == L2_SQUARED_NORM) {
       return norm_2_squared(x);
    }
-   else if (norm == L1_NORM) {
-      return norm_1(x);
+   else if (norm == INF_NORM) {
+      return norm_inf(x);
    }
    throw std::invalid_argument("The norm is not known");
 }
@@ -210,8 +210,8 @@ T norm_2(const std::function<T(size_t /*i*/)>& ith_component, const ARRAY& array
 template <typename T, typename ARRAY>
 T norm(const std::function<T(size_t /*i*/)>& ith_component, const ARRAY& array, Norm norm) {
    // choose the right norm
-   if (norm == INF_NORM) {
-      return norm_inf(ith_component, array);
+   if (norm == L1_NORM) {
+      return norm_1(ith_component, array);
    }
    else if (norm == L2_NORM) {
       return norm_2(ith_component, array);
@@ -219,8 +219,8 @@ T norm(const std::function<T(size_t /*i*/)>& ith_component, const ARRAY& array, 
    else if (norm == L2_SQUARED_NORM) {
       return norm_2_squared(ith_component, array);
    }
-   else if (norm == L1_NORM) {
-      return norm_1(ith_component, array);
+   else if (norm == INF_NORM) {
+      return norm_inf(ith_component, array);
    }
    throw std::invalid_argument("The norm is not known");
 }
@@ -228,7 +228,7 @@ T norm(const std::function<T(size_t /*i*/)>& ith_component, const ARRAY& array, 
 // use && to allow temporaries (such as std::cout or logger DEBUG, WARNING, etc)
 template <typename ARRAY, typename STREAM>
 void print_vector(STREAM&& stream, const ARRAY& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max()) {
-   for (size_t i: Range(start, std::min(start + length, x.size()))) {
+   for (size_t i: range(start, std::min(start + length, x.size()))) {
       stream << x[i] << " ";
    }
    stream << '\n';

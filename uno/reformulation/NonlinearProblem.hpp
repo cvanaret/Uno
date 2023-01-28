@@ -13,7 +13,7 @@
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "ingredients/subproblem/Direction.hpp"
-#include "tools/Range.hpp"
+#include "tools/range.hpp"
 
 class NonlinearProblem {
 public:
@@ -101,7 +101,7 @@ inline double NonlinearProblem::compute_complementarity_error(size_t number_vari
       const std::vector<double>& constraints, const Multipliers& multipliers) const {
    double error = 0.;
    // bound constraints
-   for (size_t i: Range(number_variables)) {
+   for (size_t i: range(number_variables)) {
       if (0. < multipliers.lower_bounds[i]) {
          error = std::max(error, std::abs(multipliers.lower_bounds[i] * (primals[i] - this->get_variable_lower_bound(i))));
       }
@@ -126,7 +126,7 @@ inline double NonlinearProblem::compute_feasibility_complementarity_error(size_t
       const std::vector<double>& constraints, const Multipliers& multipliers) const {
    double error = 0.;
    // bound constraints
-   for (size_t i: Range(number_variables)) {
+   for (size_t i: range(number_variables)) {
       if (0. < multipliers.lower_bounds[i]) {
          error = std::max(error, std::abs(multipliers.lower_bounds[i] * (primals[i] - this->get_variable_lower_bound(i))));
       }
@@ -135,7 +135,7 @@ inline double NonlinearProblem::compute_feasibility_complementarity_error(size_t
       }
    }
    // constraints
-   for (size_t j: Range(constraints.size())) {
+   for (size_t j: range(constraints.size())) {
       // violated constraints
       if (constraints[j] < this->get_constraint_lower_bound(j)) { // lower violated
          error = std::max(error, std::abs((1. - multipliers.constraints[j]) * (constraints[j] - this->get_constraint_lower_bound(j))));

@@ -59,8 +59,8 @@ void CSCSymmetricMatrix<T>::reset() {
 // generic iterator
 template <typename T>
 void CSCSymmetricMatrix<T>::for_each(const std::function<void (size_t, size_t, T)>& f) const {
-   for (size_t j: Range(this->dimension)) {
-      for (size_t k: Range(this->column_starts[j], this->column_starts[j + 1])) {
+   for (size_t j: range(this->dimension)) {
+      for (size_t k: range(this->column_starts[j], this->column_starts[j + 1])) {
          const size_t i = this->row_indices[k];
          const T entry = this->entries[k];
          f(i, j, entry);
@@ -70,7 +70,7 @@ void CSCSymmetricMatrix<T>::for_each(const std::function<void (size_t, size_t, T
 
 template <typename T>
 void CSCSymmetricMatrix<T>::for_each(size_t column_index, const std::function<void (size_t, T)>& f) const {
-   for (size_t k: Range(this->column_starts[column_index], this->column_starts[column_index + 1])) {
+   for (size_t k: range(this->column_starts[column_index], this->column_starts[column_index + 1])) {
       const size_t i = this->row_indices[k];
       const T entry = this->entries[k];
       f(i, entry);
@@ -109,7 +109,7 @@ T CSCSymmetricMatrix<T>::smallest_diagonal_entry() const {
    // TODO: there may be several entries for given indices
    T smallest_entry = INF<T>;
    // go through each column
-   for (size_t j: Range(this->dimension)) {
+   for (size_t j: range(this->dimension)) {
       // if it exists, the diagonal entry is the last element of the column
       const size_t number_elements = this->column_starts[j + 1] - this->column_starts[j];
       if (0 < number_elements) {
@@ -132,7 +132,7 @@ template <typename T>
 void CSCSymmetricMatrix<T>::set_regularization(const std::function<T(size_t /*index*/)>& regularization_function) {
    assert(this->use_regularization && "You are trying to regularize a matrix where regularization was not preallocated.");
 
-   for (size_t i: Range(this->dimension)) {
+   for (size_t i: range(this->dimension)) {
       // the regularization term is located at the end of the column, that is right before the start of the next column
       const size_t k = this->column_starts[i + 1] - 1;
       this->entries[k] = regularization_function(i);
@@ -152,7 +152,7 @@ void CSCSymmetricMatrix<T>::print(std::ostream& stream) const {
 template <typename T>
 CSCSymmetricMatrix<T> CSCSymmetricMatrix<T>::identity(size_t dimension) {
    CSCSymmetricMatrix<double> matrix(dimension, dimension, false);
-   for (size_t i: Range(dimension)) {
+   for (size_t i: range(dimension)) {
       matrix.insert(1., i, i);
       matrix.finalize_column(i);
    }

@@ -64,7 +64,7 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, Iterate& curren
    // solve the subproblem
    Direction direction = this->subproblem->solve(statistics, problem, current_iterate);
    direction.objective_multiplier = problem.get_objective_multiplier();
-   direction.norm = norm_inf(direction.primals, Range(this->original_model.number_variables));
+   direction.norm = norm_inf(direction.primals, range(this->original_model.number_variables));
    DEBUG << direction << '\n';
    assert(direction.status == SubproblemStatus::OPTIMAL && "The subproblem was not solved to optimality");
    return direction;
@@ -89,7 +89,7 @@ Direction l1Relaxation::compute_second_order_correction(Iterate& trial_iterate) 
    // evaluate the constraints for the second-order correction
    Direction soc_direction = this->subproblem->compute_second_order_correction(this->relaxed_problem, trial_iterate);
    soc_direction.objective_multiplier = this->penalty_parameter;
-   soc_direction.norm = norm_inf(soc_direction.primals, Range(this->original_model.number_variables));
+   soc_direction.norm = norm_inf(soc_direction.primals, range(this->original_model.number_variables));
    DEBUG << soc_direction << '\n';
    return soc_direction;
 }

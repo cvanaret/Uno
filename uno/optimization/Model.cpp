@@ -41,7 +41,7 @@ void Model::determine_bounds_types(std::vector<Interval>& bounds, std::vector<Bo
 void Model::determine_constraints() {
    size_t current_equality_constraint = 0;
    size_t current_inequality_constraint = 0;
-   for (size_t j: Range(this->number_constraints)) {
+   for (size_t j: range(this->number_constraints)) {
       if (this->get_constraint_bound_type(j) == EQUAL_BOUNDS) {
          this->equality_constraints.insert(j, current_equality_constraint);
          current_equality_constraint++;
@@ -54,7 +54,7 @@ void Model::determine_constraints() {
 }
 
 void Model::project_primals_onto_bounds(std::vector<double>& x) const {
-   for (size_t i: Range(this->number_variables)) {
+   for (size_t i: range(this->number_variables)) {
       if (x[i] < this->get_variable_lower_bound(i)) {
          x[i] = this->get_variable_lower_bound(i);
       }
@@ -90,7 +90,7 @@ double Model::compute_constraint_violation(const std::vector<double>& constraint
    const auto jth_component = [&](size_t j) {
       return this->compute_constraint_violation(constraints[j], j);
    };
-   return norm<double>(jth_component, Range(constraints.size()), residual_norm);
+   return norm<double>(jth_component, range(constraints.size()), residual_norm);
 }
 
 std::string type_to_string(FunctionType function_type) {

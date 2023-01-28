@@ -28,7 +28,7 @@ inline bool Multipliers::not_all_zero(size_t number_variables, double tolerance)
       }
    }
    // bound multipliers
-   for (size_t i: Range(number_variables)) {
+   for (size_t i: range(number_variables)) {
       if (tolerance < std::abs(this->lower_bounds[i] + this->upper_bounds[i])) {
          return true;
       }

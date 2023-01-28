@@ -52,7 +52,7 @@ void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(size_t number_va
       });
 
    // constraints
-   for (size_t j: Range(iterate.number_constraints)) {
+   for (size_t j: range(iterate.number_constraints)) {
       if (multipliers.constraints[j] != 0.) {
          iterate.evaluations.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
             iterate.lagrangian_gradient.constraints_contribution[i] -= multipliers.constraints[j] * derivative;
@@ -61,7 +61,7 @@ void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(size_t number_va
    }
 
    // bound constraints
-   for (size_t i: Range(number_variables)) {
+   for (size_t i: range(number_variables)) {
       iterate.lagrangian_gradient.constraints_contribution[i] -= multipliers.lower_bounds[i] + multipliers.upper_bounds[i];
    }
 }
@@ -75,7 +75,7 @@ double ConstraintRelaxationStrategy::compute_linearized_constraint_violation(con
       return model.compute_constraint_violation(component_j, j);
    };
 
-   return norm_1<double>(jth_component, Range(model.number_constraints));
+   return norm_1<double>(jth_component, range(model.number_constraints));
 }
 
 double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Model& model, const Iterate& iterate, double threshold) {

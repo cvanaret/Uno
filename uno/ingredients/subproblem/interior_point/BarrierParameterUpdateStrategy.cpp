@@ -72,5 +72,5 @@ double BarrierParameterUpdateStrategy::compute_shifted_complementarity_error(con
       }
       return result;
    };
-   return norm_inf<double>(ith_component, Range(problem.number_variables));
+   return norm_inf<double>(ith_component, range(problem.number_variables));
 }
