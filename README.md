@@ -102,7 +102,7 @@ A couple of CUTEst instances are available in the `/examples` directory.
 
 To pick a globalization mechanism, use the argument (choose one of the possible options in brackets): ```-mechanism [LS|TR]```  
 To pick a constraint relaxation strategy, use the argument: ```-constraint-relaxation [feasibility-restoration|l1-relaxation]```  
-To pick a globalization strategy, use the argument: ```-strategy [penalty|filter|nonmonotone-filter]```  
+To pick a globalization strategy, use the argument: ```-strategy [merit|leyffer-filter-strategy|waechter-filter-strategy]```  
 To pick a subproblem method, use the argument: ```-subproblem [QP|LP|barrier]```  
 The options can be combined in the same command line.
 
