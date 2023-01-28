@@ -18,6 +18,8 @@ public:
    std::vector<T> objective_contribution{};
    std::vector<T> constraints_contribution{};
 
+   using value_type = T;
+
    explicit LagrangianGradient(size_t number_variables);
    [[nodiscard]] size_t size() const;
    [[nodiscard]] T operator[](size_t i) const;

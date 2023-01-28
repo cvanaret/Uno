@@ -45,7 +45,7 @@ void l1Relaxation::initialize(Statistics& statistics, Iterate& first_iterate) {
    this->set_infeasibility_measure(first_iterate);
    this->set_optimality_measure(first_iterate);
    this->subproblem->set_auxiliary_measure(this->relaxed_problem, first_iterate);
-   this->compute_primal_dual_residuals(this->relaxed_problem, first_iterate);
+   ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->relaxed_problem, first_iterate, this->residual_norm);
 
    // initialize the globalization strategy
    this->globalization_strategy->initialize(first_iterate);
@@ -211,7 +211,7 @@ bool l1Relaxation::objective_sufficient_decrease(const Iterate& current_iterate,
 void l1Relaxation::compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& /*direction*/) {
    // refresh the progress measures for the current iterate
    if (this->subproblem->subproblem_definition_changed) {
-      DEBUG << "The subproblem definition changed, the unscaled optimality measure is recomputed\n";
+      DEBUG << "The subproblem definition changed, the auxiliary measure is recomputed\n";
       this->subproblem->set_auxiliary_measure(this->relaxed_problem, current_iterate);
       this->globalization_strategy->reset();
       this->subproblem->subproblem_definition_changed = false;
@@ -249,7 +249,7 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
    if (accept) {
       statistics.add_statistic("penalty param.", this->penalty_parameter);
       this->subproblem->postprocess_accepted_iterate(this->relaxed_problem, trial_iterate);
-      this->compute_primal_dual_residuals(this->relaxed_problem, trial_iterate);
+      ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->relaxed_problem, trial_iterate, this->residual_norm);
       this->check_exact_relaxation(trial_iterate);
    }
    return accept;

@@ -280,7 +280,7 @@ void InfeasibleInteriorPointSubproblem::set_elastic_variable_values(const l1Rela
 
 void InfeasibleInteriorPointSubproblem::set_auxiliary_measure(const NonlinearProblem& problem, Iterate& iterate) {
    //this->check_interior_primals(problem, iterate);
-   // unscaled optimality measure: barrier terms
+   // auxiliary measure: barrier terms
    double barrier_terms = 0.;
    for (size_t i: problem.lower_bounded_variables) {
       barrier_terms -= std::log(iterate.primals[i] - problem.get_variable_lower_bound(i, this->bound_relaxation_factors[i]));

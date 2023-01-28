@@ -39,11 +39,13 @@ protected:
    const Norm residual_norm;
    const double small_step_threshold;
 
+   [[nodiscard]] bool is_small_step(const Direction& direction) const;
+   static void compute_primal_dual_residuals(const NonlinearProblem& problem, Iterate& iterate, Norm residual_norm);
+   static void evaluate_lagrangian_gradient(size_t number_variables, Iterate& iterate, const Multipliers& multipliers, double objective_multiplier);
    [[nodiscard]] static double compute_linearized_constraint_violation(const Model& model, const Iterate& current_iterate, const Direction& direction,
          double step_length);
-   [[nodiscard]] bool is_small_step(const Direction& direction) const;
-   static void evaluate_lagrangian_gradient(size_t number_variables, Iterate& iterate, const Multipliers& multipliers, double objective_multiplier);
-   void compute_primal_dual_residuals(const NonlinearProblem& problem, Iterate& iterate) const;
+   static double compute_stationarity_scaling(const Model& model, const Iterate& iterate, double threshold);
+   static double compute_complementarity_scaling(const Model& model, const Iterate& iterate, double threshold);
 };
 
 #endif //UNO_CONSTRAINTRELAXATIONSTRATEGY_H

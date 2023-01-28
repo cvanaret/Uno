@@ -81,20 +81,28 @@ void copy_from(std::vector<T>& destination, const std::vector<T>& source, size_t
    std::copy(source_start_position, source_end_position, destination_position);
 }
 
-// l1 norm of any array with elements of any type
-template <typename T, template <typename> typename ARRAY>
-T norm_1(const ARRAY<T>& x) {
-   T norm = T(0);
+// norms of any array with elements of any type
+
+// compute l1 norm = sum |x|_i
+template <typename ARRAY, typename T = typename ARRAY::value_type>
+T norm_1(const ARRAY& x) {
+   T norm{0};
    for (size_t i = 0; i < x.size(); i++) {
       norm += std::abs(x[i]);
    }
    return norm;
 }
 
-// compute ||x||^2_2
-template <typename T, template <typename> typename ARRAY>
-T norm_2_squared(const ARRAY<T>& x) {
-   T norm_squared = T(0);
+// l1 norm of several arrays
+template<typename ARRAY, typename... ARRAYS, typename T = typename ARRAY::value_type>
+T norm_1(const ARRAY& x, ARRAYS... other_arrays) {
+   return norm_1(x) + norm_1(other_arrays...);
+}
+
+// compute l2 squared norm = sum x_i^2
+template <typename ARRAY, typename T = typename ARRAY::value_type>
+T norm_2_squared(const ARRAY& x) {
+   T norm_squared{0};
    for (size_t i = 0; i < x.size(); i++) {
       const T xi = x[i];
       norm_squared += xi * xi;
@@ -102,24 +110,42 @@ T norm_2_squared(const ARRAY<T>& x) {
    return norm_squared;
 }
 
+// l2 squared norm of several arrays
+template<typename ARRAY, typename... ARRAYS, typename T = typename ARRAY::value_type>
+T norm_2_squared(const ARRAY& x, ARRAYS... other_arrays) {
+   return norm_2_squared(x) + norm_2_squared(other_arrays...);
+}
+
 // compute ||x||_2
-template <typename T, template <typename> typename ARRAY>
-T norm_2(const ARRAY<T>& x) {
+template <typename ARRAY, typename T = typename ARRAY::value_type>
+T norm_2(const ARRAY& x) {
    return std::sqrt(norm_2_squared(x));
 }
 
+// l2 norm of several arrays
+template<typename ARRAY, typename... ARRAYS, typename T = typename ARRAY::value_type>
+T norm_2(const ARRAY& x, ARRAYS... other_arrays) {
+   return std::sqrt(norm_2_squared(x) + norm_2_squared(other_arrays...));
+}
+
 // compute ||x||_inf
-template <typename T, template <typename> typename ARRAY>
-T norm_inf(const ARRAY<T>& x) {
-   T norm = T(0);
+template <typename ARRAY, typename T = typename ARRAY::value_type>
+T norm_inf(const ARRAY& x) {
+   T norm{0};
    for (size_t i = 0; i < x.size(); i++) {
       norm = std::max(norm, std::abs(x[i]));
    }
    return norm;
 }
 
-template <typename T, template <typename> typename ARRAY>
-T norm(const ARRAY<T>& x, Norm norm) {
+// inf norm of several arrays
+template<typename ARRAY, typename... ARRAYS, typename T = typename ARRAY::value_type>
+T norm_inf(const ARRAY& x, ARRAYS... other_arrays) {
+   return std::max(norm_inf(x), norm_inf(other_arrays...));
+}
+
+template <typename ARRAY, typename T = typename ARRAY::value_type>
+T norm(const ARRAY& x, Norm norm) {
    // choose the right norm
    if (norm == INF_NORM) {
       return norm_inf(x);
@@ -199,20 +225,13 @@ T norm(const std::function<T(size_t /*i*/)>& ith_component, const ARRAY& array, 
    throw std::invalid_argument("The norm is not known");
 }
 
-template <typename ARRAY>
-void print_vector(std::ostream& stream, const ARRAY& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max()) {
+// use && to allow temporaries (such as std::cout or logger DEBUG, WARNING, etc)
+template <typename ARRAY, typename STREAM>
+void print_vector(STREAM&& stream, const ARRAY& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max()) {
    for (size_t i: Range(start, std::min(start + length, x.size()))) {
       stream << x[i] << " ";
    }
    stream << '\n';
-}
-
-template <typename ARRAY>
-void print_vector(const Level& level, const ARRAY& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max()) {
-   for (size_t i: Range(start, std::min(start + length, x.size()))) {
-      level << x[i] << " ";
-   }
-   level << '\n';
 }
 
 // check that an array of integers is in increasing order (x[i] <= x[i+1])

@@ -75,7 +75,6 @@ Statistics Uno::create_statistics(const Model& model, const Options& options) {
    if (model.is_constrained()) {
       statistics.add_column("primal infeas.", Statistics::double_width, options.get_int("statistics_primal_infeasibility_column_order"));
    }
-   //statistics.add_column("dual infeas.", Statistics::double_width, options.get_int("statistics_dual_infeasibility_column_order"));
    statistics.add_column("complementarity", Statistics::double_width, options.get_int("statistics_complementarity_column_order"));
    statistics.add_column("stationarity", Statistics::double_width, options.get_int("statistics_stationarity_column_order"));
    return statistics;
@@ -92,7 +91,6 @@ void Uno::add_statistics(Statistics& statistics, const Model& model, const Itera
    if (model.is_constrained()) {
       statistics.add_statistic("primal infeas.", iterate.residuals.infeasibility);
    }
-   //statistics.add_statistic("dual infeas.", 0.); // TODO
    statistics.add_statistic("complementarity", std::min(iterate.residuals.optimality_complementarity, iterate.residuals.feasibility_complementarity));
    statistics.add_statistic("stationarity", std::min(iterate.residuals.optimality_stationarity, iterate.residuals.feasibility_stationarity));
 }
@@ -112,8 +110,8 @@ TerminationStatus Uno::check_termination(const Model& model, Iterate& current_it
          <= this->tolerance);
    const bool primal_feasibility = (current_iterate.residuals.infeasibility <= this->tolerance);
    const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(model.number_variables, this->tolerance);
-   // TODO dual feasibility
 
+   DEBUG << "Termination criteria:\n";
    DEBUG << "optimality stationarity: " << std::boolalpha << optimality_stationarity << '\n';
    DEBUG << "feasibility stationarity: " << std::boolalpha << feasibility_stationarity << '\n';
    DEBUG << "optimality complementarity: " << std::boolalpha << optimality_complementarity << '\n';

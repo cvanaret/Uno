@@ -11,9 +11,7 @@
 #include "tools/Options.hpp"
 
 /*! \class GlobalizationStrategy
- * \brief Step acceptance strategy
- *
- *  Strategy that accepts or declines a trial step (virtual class)
+ *  Ingredient that accepts or rejects a trial iterate
  */
 class GlobalizationStrategy {
 public:

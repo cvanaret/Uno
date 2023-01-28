@@ -32,7 +32,7 @@ void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& first_i
    this->set_infeasibility_measure(first_iterate);
    this->set_optimality_measure(first_iterate);
    this->subproblem->set_auxiliary_measure(this->optimality_problem, first_iterate);
-   this->compute_primal_dual_residuals(this->optimality_problem, first_iterate);
+   ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, first_iterate, this->residual_norm);
 
    // initialize the globalization strategies
    this->restoration_phase_strategy->initialize(first_iterate);
@@ -90,18 +90,19 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
 Direction FeasibilityRestoration::compute_second_order_correction(Iterate& trial_iterate) {
    // evaluate the constraints for the second-order correction
    Direction soc_direction = this->subproblem->compute_second_order_correction(this->current_reformulated_problem(), trial_iterate);
-   soc_direction.objective_multiplier = 1.;
+   soc_direction.objective_multiplier = this->current_reformulated_problem().get_objective_multiplier();
    soc_direction.norm = norm_inf(soc_direction.primals, Range(this->optimality_problem.number_variables));
    DEBUG << soc_direction << '\n';
    return soc_direction;
 }
 
 void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) {
-   // refresh the unscaled optimality measures for the current iterate
+   // refresh the auxiliary measure for the current iterate
    if (this->subproblem->subproblem_definition_changed) {
-      DEBUG << "The subproblem definition changed, the unscaled optimality measure is recomputed\n";
+      DEBUG << "The subproblem definition changed, the auxiliary measure is recomputed\n";
       this->restoration_phase_strategy->reset();
       this->optimality_phase_strategy->reset();
+      this->subproblem->set_auxiliary_measure(this->current_reformulated_problem(), current_iterate);
       this->subproblem->subproblem_definition_changed = false;
    }
 
@@ -119,7 +120,6 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
    // evaluate the progress measures of the trial iterate
    this->set_infeasibility_measure(trial_iterate);
    this->set_optimality_measure(trial_iterate);
-   this->subproblem->set_auxiliary_measure(this->current_reformulated_problem(), current_iterate);
    this->subproblem->set_auxiliary_measure(this->current_reformulated_problem(), trial_iterate);
 }
 
@@ -130,7 +130,7 @@ void FeasibilityRestoration::switch_to_feasibility_restoration(Iterate& current_
    // refresh the progress measures of the current iterate
    this->set_infeasibility_measure(current_iterate);
    this->set_optimality_measure(current_iterate);
-   this->subproblem->set_auxiliary_measure(this->feasibility_problem, current_iterate);
+   current_iterate.multipliers.objective = 0.;
    this->restoration_phase_strategy->reset();
    this->restoration_phase_strategy->register_current_progress(current_iterate.progress);
 }
@@ -143,7 +143,8 @@ void FeasibilityRestoration::switch_to_optimality(Iterate& current_iterate, Iter
    // refresh the progress measures of current iterate
    this->set_optimality_measure(current_iterate);
    this->set_infeasibility_measure(current_iterate);
-   this->subproblem->set_auxiliary_measure(this->optimality_problem, current_iterate);
+   current_iterate.multipliers.objective = 1.;
+   trial_iterate.multipliers.objective = 1.;
 }
 
 bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
@@ -173,7 +174,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
    if (accept) {
       statistics.add_statistic("phase", static_cast<int>(this->current_phase));
       this->subproblem->postprocess_accepted_iterate(this->current_reformulated_problem(), trial_iterate);
-      this->compute_primal_dual_residuals(this->current_reformulated_problem(), trial_iterate);
+      ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->current_reformulated_problem(), trial_iterate, this->residual_norm);
    }
    return accept;
 }

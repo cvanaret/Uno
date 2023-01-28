@@ -48,8 +48,6 @@ public:
          const std::vector<double>& constraints, const Multipliers& multipliers) const;
    [[nodiscard]] double compute_feasibility_complementarity_error(size_t number_variables, const std::vector<double>& primals,
          const std::vector<double>& constraints, const Multipliers& multipliers) const;
-   [[nodiscard]] double compute_dual_constraint_violation(const std::vector<double>& primals, const std::vector<double>& constraint_multipliers,
-         const std::vector<double>& lower_bounds_multipliers, const std::vector<double>& upper_bounds_multipliers);
 
    [[nodiscard]] size_t get_number_original_variables() const;
    [[nodiscard]] virtual double get_variable_lower_bound(size_t i) const = 0;
@@ -154,12 +152,6 @@ inline double NonlinearProblem::compute_feasibility_complementarity_error(size_t
       }
    }
    return error;
-}
-
-inline double NonlinearProblem::compute_dual_constraint_violation(const std::vector<double>& /*primals*/,
-      const std::vector<double>& /*constraint_multipliers*/, const std::vector<double>& /*lower_bounds_multipliers*/,
-            const std::vector<double>& /*upper_bounds_multipliers*/) {
-   return 0.;
 }
 
 #endif // UNO_NONLINEARPROBLEM_H
