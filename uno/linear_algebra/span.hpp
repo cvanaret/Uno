@@ -14,8 +14,8 @@ public:
    span(const ARRAY& array, size_t length) noexcept;
    const value_type& operator[](size_t i) const noexcept;
    [[nodiscard]] size_t size() const noexcept;
-   const ARRAY& begin() noexcept;
-   const ARRAY& end() noexcept;
+   //const ARRAY& begin() noexcept;
+   //const ARRAY& end() noexcept;
 
 protected:
    const ARRAY& array;
@@ -37,6 +37,7 @@ size_t span<ARRAY>::size() const noexcept {
    return this->length;
 }
 
+/*
 template <typename ARRAY>
 const ARRAY& span<ARRAY>::begin() noexcept {
    return *this;
@@ -46,5 +47,6 @@ template <typename ARRAY>
 const ARRAY& span<ARRAY>::end() noexcept {
    return *this;
 }
+*/
 
 #endif //UNO_SPAN_H

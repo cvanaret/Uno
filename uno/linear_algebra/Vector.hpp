@@ -10,7 +10,7 @@
 #include <functional>
 #include <cmath>
 #include "tools/Logger.hpp"
-#include "tools/range.hpp"
+#include "tools/Range.hpp"
 
 enum Norm {
    L1_NORM = 1,
@@ -38,7 +38,7 @@ void add_vectors(const std::vector<T>& x, const std::vector<T>& y, T scaling_fac
    assert(x.size() <= y.size() && "Vector.add_vectors: x is longer than y");
    assert(x.size() <= result.size() && "Vector.add_vectors: result is not long enough");
 
-   for (size_t i: range(x.size())) {
+   for (size_t i: Range(x.size())) {
       result[i] = x[i] + scaling_factor * y[i];
    }
 }
@@ -65,7 +65,7 @@ T dot(const std::vector<T>& x, const std::vector<T>& y) {
    assert(x.size() == y.size() && "The vectors do not have the same size.");
 
    T dot_product = 0.;
-   for (size_t i: Range(x.size())) {
+   for (size_t i: range(x.size())) {
       dot_product += x[i]*y[i];
    }
    return dot_product;
@@ -164,7 +164,7 @@ T norm(const ARRAY& x, Norm norm) {
 
 // these methods take:
 // - a callback as argument whose parameter is the current index. This avoids forming the vector explicitly
-// - an array of arbitrary type (can be Range, std::vector, std::array, etc)
+// - an array of arbitrary type (can be range, std::vector, std::array, etc)
 template <typename T, typename ARRAY>
 T norm_1(const std::function<T(size_t i)>& ith_component, const ARRAY& array) {
    T norm = T(0);
@@ -228,7 +228,7 @@ T norm(const std::function<T(size_t /*i*/)>& ith_component, const ARRAY& array, 
 // use && to allow temporaries (such as std::cout or logger DEBUG, WARNING, etc)
 template <typename ARRAY, typename STREAM>
 void print_vector(STREAM&& stream, const ARRAY& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max()) {
-   for (size_t i: range(start, std::min(start + length, x.size()))) {
+   for (size_t i: Range(start, std::min(start + length, x.size()))) {
       stream << x[i] << " ";
    }
    stream << '\n';

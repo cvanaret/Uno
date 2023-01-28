@@ -51,7 +51,7 @@ void LagrangianGradient<T>::resize(size_t new_number_variables) {
 
 template <typename T>
 std::ostream& operator<<(std::ostream& stream, const LagrangianGradient<T>& gradient) {
-   for (size_t i: range(gradient.constraints_contribution.size())) {
+   for (size_t i: Range(gradient.constraints_contribution.size())) {
       stream << gradient[i] << ' ';
    }
    stream << '\n';

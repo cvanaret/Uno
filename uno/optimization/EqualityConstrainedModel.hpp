@@ -6,7 +6,7 @@
 
 #include "Model.hpp"
 #include "tools/Infinity.hpp"
-#include "tools/range.hpp"
+#include "tools/Range.hpp"
 
 // all constraints are of the form "c(x) = 0"
 class EqualityConstrainedModel: public Model {

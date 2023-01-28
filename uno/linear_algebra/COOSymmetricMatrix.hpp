@@ -65,7 +65,7 @@ void COOSymmetricMatrix<T>::reset() {
 // generic iterator
 template <typename T>
 void COOSymmetricMatrix<T>::for_each(const std::function<void(size_t, size_t, T)>& f) const {
-   for (size_t k: range(this->number_nonzeros)) {
+   for (size_t k: Range(this->number_nonzeros)) {
       const size_t i = this->row_indices[k];
       const size_t j = this->column_indices[k];
       const T entry = this->entries[k];
@@ -107,7 +107,7 @@ void COOSymmetricMatrix<T>::set_regularization(const std::function<T(size_t /*in
    assert(this->use_regularization && "You are trying to regularize a matrix where regularization was not preallocated.");
 
    // the regularization terms (that lie at the start of the entries vector) can be directly modified
-   for (size_t i: range(this->dimension)) {
+   for (size_t i: Range(this->dimension)) {
       this->entries[i] = regularization_function(i);
    }
 }
@@ -122,7 +122,7 @@ void COOSymmetricMatrix<T>::print(std::ostream& stream) const {
 template <typename T>
 void COOSymmetricMatrix<T>::initialize_regularization() {
    // introduce elements at the start of the entries
-   for (size_t i: range(this->dimension)) {
+   for (size_t i: Range(this->dimension)) {
       this->insert(T(0), i, i);
    }
 }

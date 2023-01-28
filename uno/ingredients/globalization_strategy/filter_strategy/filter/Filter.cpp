@@ -5,7 +5,7 @@
 #include <algorithm>
 #include "Filter.hpp"
 #include "tools/Logger.hpp"
-#include "tools/range.hpp"
+#include "tools/Range.hpp"
 
 Filter::Filter(const Options& options) :
       capacity(options.get_unsigned_int("filter_capacity")),
@@ -35,14 +35,14 @@ double Filter::get_smallest_infeasibility() const {
 }
 
 void Filter::left_shift(size_t start, size_t shift_size) {
-   for (size_t position: range(start, this->number_entries - shift_size)) {
+   for (size_t position: Range(start, this->number_entries - shift_size)) {
       this->infeasibility[position] = this->infeasibility[position + shift_size];
       this->optimality[position] = this->optimality[position + shift_size];
    }
 }
 
 void Filter::right_shift(size_t start, size_t shift_size) {
-   for (size_t position: range<BACKWARD>(this->number_entries, start)) {
+   for (size_t position: Range<BACKWARD>(this->number_entries, start)) {
       this->infeasibility[position] = this->infeasibility[position - shift_size];
       this->optimality[position] = this->optimality[position - shift_size];
    }
@@ -137,7 +137,7 @@ double Filter::compute_actual_reduction(double current_optimality_measure, doubl
 std::ostream& operator<<(std::ostream& stream, Filter& filter) {
    stream << "************\n";
    stream << "  Current filter (infeasibility, optimality):\n";
-   for (size_t position: range(filter.number_entries)) {
+   for (size_t position: Range(filter.number_entries)) {
       stream << "\t" << filter.infeasibility[position] << "\t" << filter.optimality[position] << '\n';
    }
    stream << "************\n";

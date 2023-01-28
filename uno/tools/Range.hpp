@@ -12,17 +12,17 @@ enum RangeDirection {
 // https://en.wikipedia.org/wiki/Generator_(computer_programming)#C++
 // Default direction is FORWARD (increasing)
 template <RangeDirection direction = FORWARD>
-class range {
+class Range {
 public:
-   explicit range(size_t end_index);
-   range(size_t start_index, size_t end_index);
+   explicit Range(size_t end_index);
+   Range(size_t start_index, size_t end_index);
 
    // iterable functions
-   [[nodiscard]] const range& begin() const;
-   [[nodiscard]] const range& end() const;
+   [[nodiscard]] const Range& begin() const;
+   [[nodiscard]] const Range& end() const;
 
    // iterator functions
-   [[nodiscard]] bool operator!=(const range&) const;
+   [[nodiscard]] bool operator!=(const Range&) const;
    void operator++();
    [[nodiscard]] size_t operator*() const;
 
@@ -35,26 +35,26 @@ protected:
 };
 
 template <RangeDirection direction>
-inline range<direction>::range(size_t end_index): end_index(end_index), current_index(0) {
+inline Range<direction>::Range(size_t end_index): end_index(end_index), current_index(0) {
    static_assert(direction == FORWARD);
 }
 
 template <RangeDirection direction>
-inline range<direction>::range(size_t start_index, size_t end_index): end_index(end_index), current_index(start_index) {
+inline Range<direction>::Range(size_t start_index, size_t end_index): end_index(end_index), current_index(start_index) {
 }
 
 template <RangeDirection direction>
-inline const range<direction>& range<direction>::begin() const {
+inline const Range<direction>& Range<direction>::begin() const {
    return *this;
 }
 
 template <RangeDirection direction>
-inline const range<direction>& range<direction>::end() const {
+inline const Range<direction>& Range<direction>::end() const {
    return *this;
 }
 
 template <RangeDirection direction>
-inline bool range<direction>::operator!=(const range<direction>&) const {
+inline bool Range<direction>::operator!=(const Range<direction>&) const {
    if constexpr (direction == FORWARD) {
       return (this->current_index < this->end_index);
    }
@@ -64,7 +64,7 @@ inline bool range<direction>::operator!=(const range<direction>&) const {
 }
 
 template <RangeDirection direction>
-inline void range<direction>::operator++() {
+inline void Range<direction>::operator++() {
    if constexpr (direction == FORWARD) {
       this->current_index++;
    }
@@ -74,12 +74,12 @@ inline void range<direction>::operator++() {
 }
 
 template <RangeDirection direction>
-inline size_t range<direction>::operator*() const {
+inline size_t Range<direction>::operator*() const {
    return this->current_index;
 }
 
 template <RangeDirection direction>
-inline size_t range<direction>::size() const {
+inline size_t Range<direction>::size() const {
    if constexpr (direction == FORWARD) {
       return this->end_index - this->current_index;
    }

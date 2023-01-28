@@ -54,7 +54,7 @@ Direction FeasibilityRestoration::solve_optimality_problem(Statistics& statistic
    DEBUG << "Solving the optimality subproblem\n";
    Direction direction = this->subproblem->solve(statistics, this->optimality_problem, current_iterate);
    direction.objective_multiplier = 1.;
-   direction.norm = norm_inf(direction.primals, range(this->optimality_problem.number_variables));
+   direction.norm = norm_inf(direction.primals, Range(this->optimality_problem.number_variables));
    DEBUG << direction << '\n';
 
    // infeasible subproblem: try to minimize the constraint violation by solving the feasibility subproblem
@@ -75,7 +75,7 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
    DEBUG << "Solving the feasibility subproblem\n";
    Direction direction = this->subproblem->solve(statistics, this->feasibility_problem, current_iterate);
    direction.objective_multiplier = 0.;
-   direction.norm = norm_inf(direction.primals, range(this->optimality_problem.number_variables));
+   direction.norm = norm_inf(direction.primals, Range(this->optimality_problem.number_variables));
    DEBUG << direction << '\n';
    assert(direction.status == SubproblemStatus::OPTIMAL && "The feasibility subproblem was not solved to optimality");
    return direction;
@@ -91,7 +91,7 @@ Direction FeasibilityRestoration::compute_second_order_correction(Iterate& trial
    // evaluate the constraints for the second-order correction
    Direction soc_direction = this->subproblem->compute_second_order_correction(this->current_reformulated_problem(), trial_iterate);
    soc_direction.objective_multiplier = this->current_reformulated_problem().get_objective_multiplier();
-   soc_direction.norm = norm_inf(soc_direction.primals, range(this->optimality_problem.number_variables));
+   soc_direction.norm = norm_inf(soc_direction.primals, Range(this->optimality_problem.number_variables));
    DEBUG << soc_direction << '\n';
    return soc_direction;
 }
