@@ -19,6 +19,7 @@ FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options
       restoration_phase_strategy(GlobalizationStrategyFactory::create(options.get_string("strategy"), options)),
       optimality_phase_strategy(GlobalizationStrategyFactory::create(options.get_string("strategy"), options)),
       l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
+      tolerance(options.get_double("tolerance")),
       statistics_restoration_phase_column_order(options.get_int("statistics_restoration_phase_column_order")) {
 }
 
@@ -108,7 +109,7 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
 
    // possibly go from restoration phase to optimality phase
    if (this->current_phase == Phase::FEASIBILITY_RESTORATION &&
-         ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate, direction, 1.) == 0.) {
+         ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate, direction, 1.) <= this->tolerance) {
       // evaluate measure of infeasibility (in restoration phase definition, it corresponds to the "scaled optimality" quantity)
       this->set_optimality_measure(trial_iterate);
       // if the infeasibility improves upon the best known infeasibility of the globalization strategy

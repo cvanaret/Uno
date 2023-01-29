@@ -42,6 +42,7 @@ private:
    const std::unique_ptr<GlobalizationStrategy> optimality_phase_strategy;
    Phase current_phase{Phase::OPTIMALITY};
    const double l1_constraint_violation_coefficient;
+   const double tolerance;
    // statistics table
    int statistics_restoration_phase_column_order;
 
