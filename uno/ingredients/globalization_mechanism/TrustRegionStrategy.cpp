@@ -99,7 +99,7 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
          this->decrease_radius();
       }
    }
-   throw std::runtime_error("Trust-region radius became too small");
+   throw std::runtime_error("Trust-region radius became too small\n");
 }
 
 Iterate TrustRegionStrategy::assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction) {

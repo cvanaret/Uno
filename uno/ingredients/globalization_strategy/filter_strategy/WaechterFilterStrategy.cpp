@@ -47,8 +47,8 @@ bool WaechterFilterStrategy::is_iterate_acceptable(const ProgressMeasures& curre
       const bool small_infeasibility = current_progress_measures.infeasibility <= 1e-4*std::max(1., this->initial_infeasibility);
       const bool switching = (0. < unconstrained_predicted_reduction) && this->switching_condition(unconstrained_predicted_reduction,
             current_progress_measures.infeasibility, this->parameters.delta);
-
       const bool sufficient_decrease = this->armijo_sufficient_decrease(unconstrained_predicted_reduction, actual_reduction);
+      
       if (small_infeasibility && switching) {
          DEBUG << "Switching condition satisfied\n";
          // unconstrained Armijo sufficient decrease condition (predicted reduction should be positive)

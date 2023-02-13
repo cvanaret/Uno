@@ -40,7 +40,6 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
    // instantiate the combination of ingredients and solve the problem
    Uno uno = Uno(*mechanism, options);
    Result result = uno.solve(*model, first_iterate, options);
-   model->postprocess_solution(result.solution, result.status);
 
    std::string combination = options.get_string("mechanism") + " " + options.get_string("constraint-relaxation") + " " + options.get_string("strategy")
          + " " + options.get_string("subproblem");

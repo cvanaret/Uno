@@ -37,12 +37,12 @@ void Result::print(bool print_primal_dual_solution) const {
    std::cout << "Auxiliary measure:\t\t\t" << this->solution.progress.auxiliary_terms << '\n';
 
    if (print_primal_dual_solution) {
-      std::cout << "Primal solution:\t\t\t"; print_vector(std::cout, this->solution.primals);
+      std::cout << "Primal solution:\t\t\t"; print_vector(std::cout, this->solution.primals, 0, this->solution.number_variables);
       if (not this->solution.multipliers.constraints.empty()) {
          std::cout << "Constraint multipliers:\t\t\t"; print_vector(std::cout, this->solution.multipliers.constraints);
       }
-      std::cout << "Lower bound multipliers:\t\t"; print_vector(std::cout, this->solution.multipliers.lower_bounds);
-      std::cout << "Upper bound multipliers:\t\t"; print_vector(std::cout, this->solution.multipliers.upper_bounds);
+      std::cout << "Lower bound multipliers:\t\t"; print_vector(std::cout, this->solution.multipliers.lower_bounds, 0, this->solution.number_variables);
+      std::cout << "Upper bound multipliers:\t\t"; print_vector(std::cout, this->solution.multipliers.upper_bounds, 0, this->solution.number_variables);
       std::cout << "Objective multiplier:\t\t\t" << this->solution.multipliers.objective << '\n';
    }
 
