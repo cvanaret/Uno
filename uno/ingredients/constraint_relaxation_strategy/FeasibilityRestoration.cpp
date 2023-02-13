@@ -201,7 +201,7 @@ void FeasibilityRestoration::set_infeasibility_measure(Iterate& iterate) {
    if (this->current_phase == Phase::OPTIMALITY) {
       // constraint violation
       iterate.evaluate_constraints(this->original_model);
-      iterate.progress.infeasibility = this->original_model.compute_constraint_violation(iterate.evaluations.constraints, L1_NORM);
+      iterate.progress.infeasibility = this->original_model.compute_constraint_violation(iterate.evaluations.constraints, this->progress_norm);
    }
    else {
       // 0
@@ -213,7 +213,7 @@ double FeasibilityRestoration::generate_predicted_infeasibility_reduction_model(
       double step_length) const {
    if (this->current_phase == Phase::OPTIMALITY) {
       const double current_constraint_violation = this->original_model.compute_constraint_violation(current_iterate.evaluations.constraints,
-            Norm::L1_NORM);
+            this->progress_norm);
       const double linearized_constraint_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model,
             current_iterate, direction, step_length);
       return current_constraint_violation - linearized_constraint_violation;
@@ -238,7 +238,7 @@ void FeasibilityRestoration::set_optimality_measure(Iterate& iterate) {
       // constraint violation
       iterate.evaluate_constraints(this->original_model);
       const double constraint_violation = this->l1_constraint_violation_coefficient *
-            this->original_model.compute_constraint_violation(iterate.evaluations.constraints, L1_NORM);
+            this->original_model.compute_constraint_violation(iterate.evaluations.constraints, this->progress_norm);
       iterate.progress.optimality = [=](double /*objective_multiplier*/) {
          return constraint_violation;
       };
@@ -257,7 +257,7 @@ std::function<double (double)> FeasibilityRestoration::generate_predicted_optima
    }
    else {
       const double current_constraint_violation = this->original_model.compute_constraint_violation(current_iterate.evaluations.constraints,
-            Norm::L1_NORM);
+            this->progress_norm);
       const double linearized_constraint_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model,
             current_iterate, direction, step_length);
       return [=](double /*objective_multiplier*/) {

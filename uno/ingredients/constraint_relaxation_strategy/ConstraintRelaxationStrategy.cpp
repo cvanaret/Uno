@@ -6,6 +6,7 @@
 
 ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Model& model, const Options& options):
       original_model(model),
+      progress_norm(norm_from_string(options.get_string("progress_norm"))),
       residual_norm(norm_from_string(options.get_string("residual_norm"))),
       small_step_threshold(options.get_double("small_step_threshold")) {
 }

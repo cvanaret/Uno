@@ -96,6 +96,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["barrier_damping_factor"] = "1e-5";
       options["use_second_order_correction"] = "yes";
       options["l1_constraint_violation_coefficient"] = "1000.";
+      options["progress_norm"] = "L1";
       options["residual_norm"] = "INF";
       options["scale_functions"] = "yes";
       options["sparse_format"] = "COO";
@@ -108,13 +109,15 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["strategy"] = "leyffer-filter-strategy";
       options["filter_type"] = "standard";
       options["subproblem"] = "QP";
-      options["residual_norm"] = "L1";
+      options["progress_norm"] = "L1";
+      options["residual_norm"] = "L2";
       options["sparse_format"] = "CSC";
       options["TR_radius"] = "10";
       options["l1_constraint_violation_coefficient"] = "1.";
       options["enforce_linear_constraints"] = "yes";
       options["tolerance"] = "1e-6";
       options["terminate_with_small_step"] = "yes";
+      options["small_step_threshold"] = "1e-6";
    }
    else if (preset_name == "byrd") {
       options["mechanism"] = "LS";
@@ -129,32 +132,33 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["l1_constraint_violation_coefficient"] = "1.";
       options["tolerance"] = "1e-6";
       options["terminate_with_small_step"] = "yes";
+      options["progress_norm"] = "L1";
       options["residual_norm"] = "L1";
       options["sparse_format"] = "CSC";
    }
 }
 
 void get_command_line_options(int argc, char* argv[], Options& options) {
-   // build the (argument, value) map
+   // build the (name, value) map
    int i = 1;
    while (i < argc - 1) {
-      std::string argument_i = std::string(argv[i]);
-      if (argument_i[0] == '-') {
+      std::string argument = std::string(argv[i]);
+      if (argument[0] == '-') {
          if (i < argc - 1) {
             // remove the '-'
-            const std::string name = argument_i.substr(1);
-            const std::string value_i = std::string(argv[i + 1]);
+            const std::string name = argument.substr(1);
+            const std::string value = std::string(argv[i + 1]);
             if (name == "preset") {
-               find_preset(value_i, options);
+               find_preset(value, options);
             }
             else {
-               options[name] = value_i;
+               options[name] = value;
             }
             i += 2;
          }
       }
       else {
-         WARNING << "Argument " << argument_i << " was ignored\n";
+         WARNING << "Argument " << argument << " was ignored\n";
          i++;
       }
    }

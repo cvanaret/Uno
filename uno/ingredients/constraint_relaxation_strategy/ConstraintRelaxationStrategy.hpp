@@ -36,6 +36,7 @@ public:
 
 protected:
    const Model& original_model;
+   const Norm progress_norm;
    const Norm residual_norm;
    const double small_step_threshold;
 

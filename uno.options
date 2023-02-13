@@ -75,7 +75,10 @@ enforce_linear_constraints no
 # enable the use of second-order correction (yes|no)
 use_second_order_correction no
 
-# norm of the first-order residuals (L1|L2|INF)
+# norm of the progress measures (L1|L2|INF)
+progress_norm L1
+
+# norm of the primal-dual residuals (L1|L2|INF)
 residual_norm INF
 
 ##### solvers #####
@@ -149,7 +152,7 @@ TR_decrease_factor 2
 TR_activity_tolerance 1e-6
 
 # minimum TR radius
-TR_min_radius 1e-16
+TR_min_radius 1e-10
 
 # threshold below which the TR radius is reset
 TR_radius_reset_threshold 1e-4
