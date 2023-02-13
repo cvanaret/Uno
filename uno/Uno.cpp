@@ -54,6 +54,8 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
    }
    // in case the objective was not yet evaluated, evaluate it
    current_iterate.evaluate_objective(model);
+   model.postprocess_solution(current_iterate, termination_status);
+   DEBUG << "Current iterate:\n" << current_iterate;
 
    if (Logger::logger_level == INFO) statistics.print_footer();
    timer.stop();
@@ -138,9 +140,10 @@ TerminationStatus Uno::check_termination(const Model& model, Iterate& current_it
       if (primal_feasibility) {
          return FEASIBLE_SMALL_STEP;
       }
+      /*
       else {
          return INFEASIBLE_SMALL_STEP;
-      }
+      }*/
    }
    return NOT_OPTIMAL;
 }
