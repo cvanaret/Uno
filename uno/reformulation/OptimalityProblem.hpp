@@ -31,12 +31,12 @@ public:
 inline OptimalityProblem::OptimalityProblem(const Model& model):
       NonlinearProblem(model, model.number_variables, model.number_constraints) {
    // register equality and inequality constraints
-   this->model.equality_constraints.for_each([&](size_t j, size_t i) {
-      this->equality_constraints.insert(j, i);
-   });
-   this->model.inequality_constraints.for_each([&](size_t j, size_t i) {
-      this->inequality_constraints.insert(j, i);
-   });
+   for (size_t j: this->model.equality_constraints) {
+      this->equality_constraints.push_back(j);
+   }
+   for (size_t j: this->model.inequality_constraints) {
+      this->inequality_constraints.push_back(j);
+   }
    // figure out bounded variables
    for (size_t i: this->model.lower_bounded_variables) {
       this->lower_bounded_variables.push_back(i);

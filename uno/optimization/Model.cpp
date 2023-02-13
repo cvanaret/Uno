@@ -11,9 +11,7 @@
 
 // abstract Problem class
 Model::Model(std::string name, size_t number_variables, size_t number_constraints, FunctionType type) :
-      name(std::move(name)), number_variables(number_variables), number_constraints(number_constraints), problem_type(type),
-      equality_constraints(this->number_constraints), inequality_constraints(this->number_constraints),
-      linear_constraints(this->number_constraints), slacks(this->number_constraints) {
+      name(std::move(name)), number_variables(number_variables), number_constraints(number_constraints), problem_type(type) {
 }
 
 void Model::determine_bounds_types(std::vector<Interval>& bounds, std::vector<BoundType>& status) {
@@ -39,16 +37,12 @@ void Model::determine_bounds_types(std::vector<Interval>& bounds, std::vector<Bo
 }
 
 void Model::determine_constraints() {
-   size_t current_equality_constraint = 0;
-   size_t current_inequality_constraint = 0;
    for (size_t j: Range(this->number_constraints)) {
       if (this->get_constraint_bound_type(j) == EQUAL_BOUNDS) {
-         this->equality_constraints.insert(j, current_equality_constraint);
-         current_equality_constraint++;
+         this->equality_constraints.push_back(j);
       }
       else {
-         this->inequality_constraints.insert(j, current_inequality_constraint);
-         current_inequality_constraint++;
+         this->inequality_constraints.push_back(j);
       }
    }
 }

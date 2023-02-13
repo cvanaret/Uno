@@ -63,15 +63,18 @@ inline ScaledModel::ScaledModel(const Model& original_model, Iterate& first_iter
    }
 
    // the constraint repartition (inequality/equality, linear) is the same as in the original model
-   this->original_model.equality_constraints.for_each([&](size_t j, size_t i) {
-      this->equality_constraints.insert(j, i);
-   });
-   this->original_model.inequality_constraints.for_each([&](size_t j, size_t i) {
-      this->inequality_constraints.insert(j, i);
-   });
-   this->original_model.linear_constraints.for_each([&](size_t j, size_t i) {
-      this->linear_constraints.insert(j, i);
-   });
+   this->equality_constraints.reserve(this->number_constraints);
+   this->inequality_constraints.reserve(this->number_constraints);
+   this->linear_constraints.reserve(this->number_constraints);
+   for (size_t j: this->original_model.equality_constraints) {
+      this->equality_constraints.push_back(j);
+   }
+   for (size_t j: this->original_model.inequality_constraints) {
+      this->inequality_constraints.push_back(j);
+   }
+   for (size_t j: this->original_model.linear_constraints) {
+      this->linear_constraints.push_back(j);
+   }
 
    // the slacks are the same as in the original model
    this->original_model.slacks.for_each([&](size_t j, size_t i) {

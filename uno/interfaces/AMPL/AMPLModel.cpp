@@ -51,6 +51,9 @@ AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
    this->generate_variables();
 
    // constraints
+   this->equality_constraints.reserve(this->number_constraints);
+   this->inequality_constraints.reserve(this->number_constraints);
+   this->linear_constraints.reserve(this->number_constraints);
    this->generate_constraints();
    this->set_function_types(file_name);
 
@@ -335,7 +338,6 @@ void AMPLModel::set_function_types(std::string file_name) {
    // determine the type of each constraint and objective function
    // determine if the problem is nonlinear (non-quadratic objective or nonlinear constraints)
    this->problem_type = LINEAR;
-   size_t current_linear_constraint = 0;
    int* rowq;
    int* colqp;
    double* delsqp;
@@ -348,8 +350,7 @@ void AMPLModel::set_function_types(std::string file_name) {
       }
       else if (qp == 0) {
          this->constraint_type[j] = LINEAR;
-         this->linear_constraints.insert(j, current_linear_constraint);
-         current_linear_constraint++;
+         this->linear_constraints.push_back(j);
       }
       else {
          this->constraint_type[j] = NONLINEAR;

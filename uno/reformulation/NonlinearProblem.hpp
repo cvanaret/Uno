@@ -26,8 +26,9 @@ public:
 
    [[nodiscard]] bool is_constrained() const;
 
-   SparseVector<size_t> equality_constraints{}; /*!< inequality constraints */
-   SparseVector<size_t> inequality_constraints{}; /*!< inequality constraints */
+   // SparseVector<size_t> equality_constraints{}; /*!< inequality constraints */
+   std::vector<size_t> equality_constraints{}; /*!< inequality constraints */
+   std::vector<size_t> inequality_constraints{}; /*!< inequality constraints */
    // lists of bounded variables
    std::vector<size_t> lower_bounded_variables{}; // indices of the lower-bounded variables
    std::vector<size_t> upper_bounded_variables{}; // indices of the upper-bounded variables
@@ -65,6 +66,8 @@ public:
 
 inline NonlinearProblem::NonlinearProblem(const Model& model, size_t number_variables, size_t number_constraints):
       model(model), number_variables(number_variables), number_constraints(number_constraints) {
+   this->equality_constraints.reserve(this->number_constraints);
+   this->inequality_constraints.reserve(this->number_constraints);
 }
 
 inline bool NonlinearProblem::is_constrained() const {
@@ -110,14 +113,14 @@ inline double NonlinearProblem::compute_complementarity_error(size_t number_vari
       }
    }
    // constraints
-   this->inequality_constraints.for_each_index([&](size_t j) {
+   for (size_t j: this->inequality_constraints) {
       if (0. < multipliers.constraints[j]) { // lower bound
          error = std::max(error, std::abs(multipliers.constraints[j] * (constraints[j] - this->get_constraint_lower_bound(j))));
       }
       else if (multipliers.constraints[j] < 0.) { // upper bound
          error = std::max(error, std::abs(multipliers.constraints[j] * (constraints[j] - this->get_constraint_upper_bound(j))));
       }
-   });
+   }
    return error;
 }
 

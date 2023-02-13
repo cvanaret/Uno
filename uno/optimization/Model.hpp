@@ -49,9 +49,9 @@ public:
    double objective_sign{1.}; /*!< Sign of the objective function (1: minimization, -1: maximization) */
 
    // data structures to access certain types of variables and constraints
-   SparseVector<size_t> equality_constraints;
-   SparseVector<size_t> inequality_constraints;
-   SparseVector<size_t> linear_constraints;
+   std::vector<size_t> equality_constraints{};
+   std::vector<size_t> inequality_constraints{};
+   std::vector<size_t> linear_constraints;
    SparseVector<size_t> slacks;
    std::vector<size_t> lower_bounded_variables{}; // indices of the lower-bounded variables
    std::vector<size_t> upper_bounded_variables{}; // indices of the upper-bounded variables

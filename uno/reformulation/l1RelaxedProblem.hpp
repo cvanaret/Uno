@@ -59,12 +59,12 @@ inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_m
       // elastic variables
       elastic_variables(this->number_constraints) {
    // register equality and inequality constraints
-   this->model.equality_constraints.for_each([&](size_t j, size_t i) {
-      this->equality_constraints.insert(j, i);
-   });
-   this->model.inequality_constraints.for_each([&](size_t j, size_t i) {
-      this->inequality_constraints.insert(j, i);
-   });
+   for (size_t j: this->model.equality_constraints) {
+      this->equality_constraints.push_back(j);
+   }
+   for (size_t j: this->model.inequality_constraints) {
+      this->inequality_constraints.push_back(j);
+   }
 
    // generate elastic variables
    this->generate_elastic_variables();

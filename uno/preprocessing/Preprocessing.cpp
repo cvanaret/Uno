@@ -61,11 +61,11 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
 
 size_t count_infeasible_linear_constraints(const Model& model, const std::vector<double>& constraint_values) {
    size_t infeasible_linear_constraints = 0;
-   model.linear_constraints.for_each_index([&](size_t j) {
+   for (size_t j: model.linear_constraints) {
       if (constraint_values[j] < model.get_constraint_lower_bound(j) || model.get_constraint_upper_bound(j) < constraint_values[j]) {
          infeasible_linear_constraints++;
       }
-   });
+   }
    INFO << "There are " << infeasible_linear_constraints << " infeasible linear constraints at the initial point\n";
    return infeasible_linear_constraints;
 }
@@ -85,9 +85,10 @@ void Preprocessing::enforce_linear_constraints(const Options& options, const Mod
          for (auto& constraint_gradient: constraint_jacobian) {
             constraint_gradient.reserve(model.number_variables);
          }
-         model.linear_constraints.for_each([&](size_t j, size_t linear_constraint_index) {
+         for (size_t linear_constraint_index: Range(model.linear_constraints.size())) {
+            const size_t j = model.linear_constraints[linear_constraint_index];
             model.evaluate_constraint_gradient(x, j, constraint_jacobian[linear_constraint_index]);
-         });
+         }
          // variables bounds
          std::vector<Interval> variables_bounds(model.number_variables);
          for (size_t i: Range(model.number_variables)) {
@@ -95,10 +96,11 @@ void Preprocessing::enforce_linear_constraints(const Options& options, const Mod
          }
          // constraints bounds
          std::vector<Interval> constraints_bounds(model.linear_constraints.size());
-         model.linear_constraints.for_each([&](size_t j, size_t linear_constraint_index) {
+         for (size_t linear_constraint_index: Range(model.linear_constraints.size())) {
+            const size_t j = model.linear_constraints[linear_constraint_index];
             constraints_bounds[linear_constraint_index] =
                   {model.get_constraint_lower_bound(j) - constraints[j], model.get_constraint_upper_bound(j) - constraints[j]};
-         });
+         }
 
          // solve the strictly convex QP
          BQPDSolver solver(model.number_variables, model.linear_constraints.size(), model.number_variables, true, options);
@@ -114,9 +116,10 @@ void Preprocessing::enforce_linear_constraints(const Options& options, const Mod
          add_vectors(x, direction.primals, 1., x);
          add_vectors(multipliers.lower_bounds, direction.multipliers.lower_bounds, 1., multipliers.lower_bounds);
          add_vectors(multipliers.upper_bounds, direction.multipliers.upper_bounds, 1., multipliers.upper_bounds);
-         model.linear_constraints.for_each([&](size_t j, size_t linear_constraint_index) {
+         for (size_t linear_constraint_index: Range(model.linear_constraints.size())) {
+            const size_t j = model.linear_constraints[linear_constraint_index];
             multipliers.constraints[j] += direction.multipliers.constraints[linear_constraint_index];
-         });
+         }
          INFO << "Linear feasible initial point: "; print_vector(INFO, x);
       }
    }
