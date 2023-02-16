@@ -13,12 +13,12 @@ project(Uno VERSION 1.0
 
 # set C++17 and enable other languages
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
 enable_language(CXX C Fortran)
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion -Werror -Wmaybe-uninitialized")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion -Wmaybe-uninitialized")
 set(CMAKE_CXX_FLAGS_DEBUG "-pg")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG") # disable asserts
 
 # optional Gtest
 option(WITH_GTEST "Enable GoogleTest" OFF)

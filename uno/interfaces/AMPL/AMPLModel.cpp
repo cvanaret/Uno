@@ -226,7 +226,7 @@ void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double
    objective_multiplier *= this->objective_sign;
 
    // compute the number of nonzeros
-   const size_t number_non_zeros = this->fixed_hessian_sparsity ? this->hessian_maximum_number_nonzeros :
+   [[maybe_unused]] const size_t number_non_zeros = this->fixed_hessian_sparsity ? this->hessian_maximum_number_nonzeros :
          this->compute_hessian_number_nonzeros(objective_multiplier, multipliers);
    assert(hessian.capacity >= number_non_zeros);
 

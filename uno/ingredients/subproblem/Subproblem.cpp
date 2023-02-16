@@ -30,6 +30,6 @@ void Subproblem::set_variable_bounds(const NonlinearProblem& problem, const Iter
    }
 }
 
-void Subproblem::check_unboundedness(const Direction& direction) {
+void Subproblem::check_unboundedness([[maybe_unused]] const Direction& direction) {
    assert(direction.status != SubproblemStatus::UNBOUNDED_PROBLEM && "The subproblem is unbounded, this should not happen");
 }

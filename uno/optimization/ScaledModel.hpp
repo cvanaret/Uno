@@ -58,7 +58,7 @@ inline ScaledModel::ScaledModel(const Model& original_model, Iterate& first_iter
    }
    // check the scaling factors
    assert(0 < this->scaling.get_objective_scaling() && "Objective scaling failed.");
-   for (size_t j: Range(this->number_constraints)) {
+   for ([[maybe_unused]] size_t j: Range(this->number_constraints)) {
       assert(0 < this->scaling.get_constraint_scaling(j) && "Constraint scaling failed.");
    }
 

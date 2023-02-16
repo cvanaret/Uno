@@ -133,7 +133,7 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
    return direction;
 }
 
-void BQPDSolver::check_termination(BQPDStatus bqpd_status) {
+void BQPDSolver::check_termination([[maybe_unused]] BQPDStatus bqpd_status) {
    assert(bqpd_status != BQPDStatus::BOUND_INCONSISTENCY && "BQPD failed with 'bound inconsistency' status");
    assert(bqpd_status != BQPDStatus::INCORRECT_PARAMETER && "BQPD failed with 'incorrect parameter' status");
    assert(bqpd_status != BQPDStatus::LP_INSUFFICIENT_SPACE && "BQPD failed with 'LP insufficient space' status");
@@ -275,8 +275,7 @@ SubproblemStatus BQPDSolver::status_from_int(int ifail) {
       case 1:
          return SubproblemStatus::UNBOUNDED_PROBLEM;
       case 3:
-         return SubproblemStatus::INFEASIBLE;
-      default:
-         assert(false && "The BQPD ifail is not consistent with the Uno status values");
+         return SubproblemStatus::INFEASIBLE; 
    }
+   throw std::invalid_argument("The BQPD ifail is not consistent with the Uno status values");
 }
