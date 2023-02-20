@@ -327,8 +327,7 @@ std::function<double (double)> l1Relaxation::generate_predicted_optimality_reduc
 // measure that combines KKT error and complementarity error
 double l1Relaxation::compute_dual_error(Iterate& current_iterate) {
    // stationarity error
-   ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(this->original_model.number_variables, current_iterate, this->trial_multipliers,
-         this->penalty_parameter);
+   ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(this->original_model.number_variables, current_iterate, this->trial_multipliers, 0.);
    double error = norm_1(current_iterate.lagrangian_gradient.constraints_contribution);
    // complementarity error
    error += this->feasibility_problem.compute_feasibility_complementarity_error(this->original_model.number_variables, current_iterate.primals,
