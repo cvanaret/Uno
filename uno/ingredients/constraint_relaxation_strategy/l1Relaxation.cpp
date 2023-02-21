@@ -27,7 +27,7 @@ l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
          options.get_double("l1_relaxation_decrease_factor"),
          options.get_double("l1_relaxation_epsilon1"),
          options.get_double("l1_relaxation_epsilon2"),
-         options.get_double("l1_relaxation_small_threshold")
+         options.get_double("l1_relaxation_residual_small_threshold")
       }),
       l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
       trial_multipliers(this->relaxed_problem.number_variables, model.number_constraints),
@@ -172,8 +172,8 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
 }
 
 bool l1Relaxation::linearized_residual_sufficient_decrease(const Iterate& current_iterate, double linearized_residual, double residual_lowest_violation) const {
-   if (residual_lowest_violation == 0.) {
-      return (linearized_residual == 0.);
+   if (residual_lowest_violation <= this->parameters.residual_small_threshold) {
+      return (linearized_residual <= this->parameters.residual_small_threshold);
    }
    const double linearized_residual_reduction = current_iterate.residuals.infeasibility - linearized_residual;
    const double lowest_linearized_residual_reduction = current_iterate.residuals.infeasibility - residual_lowest_violation;

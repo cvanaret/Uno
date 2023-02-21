@@ -15,7 +15,7 @@ struct l1RelaxationParameters {
    double decrease_factor;
    double epsilon1;
    double epsilon2;
-   double small_threshold;
+   double residual_small_threshold;
 };
 
 class l1Relaxation : public ConstraintRelaxationStrategy {
