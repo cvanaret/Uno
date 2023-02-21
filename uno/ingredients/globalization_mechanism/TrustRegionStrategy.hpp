@@ -34,6 +34,7 @@ private:
    void increase_radius(double step_norm);
    void decrease_radius(double step_norm);
    void decrease_radius();
+   void reset_radius();
    void reset_active_trust_region_multipliers(const Model& model, const Direction& direction, Iterate& trial_iterate) const;
    void set_statistics(Statistics& statistics, const Direction& direction);
    [[nodiscard]] bool termination() const;

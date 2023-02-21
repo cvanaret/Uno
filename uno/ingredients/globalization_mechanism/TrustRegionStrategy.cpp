@@ -36,7 +36,7 @@ void TrustRegionStrategy::initialize(Statistics& statistics, Iterate& first_iter
 
 std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) {
    this->number_iterations = 0;
-   this->radius = std::max(this->radius, this->radius_reset_threshold);
+   this->reset_radius();
 
    while (not this->termination()) {
       try {
@@ -55,7 +55,6 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
 
             // increase the radius if trust region is active
             this->increase_radius(direction.norm);
-
             return std::make_tuple(std::move(trial_iterate), direction.norm);
          }
          else { // step rejected
@@ -122,6 +121,10 @@ void TrustRegionStrategy::decrease_radius(double step_norm) {
 
 void TrustRegionStrategy::decrease_radius() {
    this->radius /= this->decrease_factor;
+}
+
+void TrustRegionStrategy::reset_radius() {
+   this->radius = std::max(this->radius, this->radius_reset_threshold);
 }
 
 void TrustRegionStrategy::reset_active_trust_region_multipliers(const Model& model, const Direction& direction, Iterate& trial_iterate) const {
