@@ -61,13 +61,14 @@ protected:
    bool solving_feasibility_problem{false};
 
    // statistics table
+   int statistics_regularization_column_order;
    int statistics_barrier_parameter_column_order;
 
    [[nodiscard]] double barrier_parameter() const;
    void relax_variable_bounds(const NonlinearProblem& problem, const Iterate& current_iterate);
    // void check_interior_primals(const NonlinearProblem& problem, const Iterate& iterate);
    [[nodiscard]] double push_variable_to_interior(double variable_value, const Interval& variable_bounds) const;
-   void evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate);
+   void evaluate_functions(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate);
    void update_barrier_parameter(const NonlinearProblem& problem, const Iterate& current_iterate);
    [[nodiscard]] bool is_small_step(const NonlinearProblem& problem, const Iterate& current_iterate, const Direction& direction) const;
    [[nodiscard]] double evaluate_subproblem_objective() const;
@@ -75,7 +76,7 @@ protected:
          const Direction& direction) const;
    [[nodiscard]] double primal_fraction_to_boundary(const NonlinearProblem& problem, const Iterate& current_iterate, double tau);
    [[nodiscard]] double dual_fraction_to_boundary(const NonlinearProblem& problem, const Iterate& current_iterate, double tau);
-   void assemble_augmented_system(const NonlinearProblem& problem, const Iterate& current_iterate);
+   void assemble_augmented_system(Statistics& statistics, const NonlinearProblem& problem, const Iterate& current_iterate);
    void generate_augmented_rhs(const NonlinearProblem& problem, const Iterate& current_iterate);
    void generate_primal_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate);
    void compute_bound_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate);

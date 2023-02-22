@@ -8,7 +8,7 @@
 
 class ActiveSetSubproblem : public Subproblem {
 public:
-   ActiveSetSubproblem(size_t max_number_variables, size_t max_number_constraints);
+   ActiveSetSubproblem(size_t max_number_variables, size_t max_number_constraints, bool use_regularization, const Options& options);
    ~ActiveSetSubproblem() override = default;
 
    void initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) override;
@@ -23,6 +23,8 @@ public:
    void postprocess_accepted_iterate(const NonlinearProblem& model, Iterate& iterate) override;
 
 protected:
+   const bool use_regularization;
+   int statistics_regularization_column_order;
    std::vector<double> initial_point{};
    std::vector<Interval> variable_displacement_bounds{};
    std::vector<Interval> linearized_constraint_bounds{};

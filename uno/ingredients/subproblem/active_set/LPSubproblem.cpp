@@ -5,7 +5,7 @@
 #include "solvers/LP/LPSolverFactory.hpp"
 
 LPSubproblem::LPSubproblem(size_t max_number_variables, size_t max_number_constraints, const Options& options) :
-      ActiveSetSubproblem(max_number_variables, max_number_constraints),
+      ActiveSetSubproblem(max_number_variables, max_number_constraints, false, options),
       solver(LPSolverFactory::create(max_number_variables, max_number_constraints, options.get_string("LP_solver"), options)) {
 }
 

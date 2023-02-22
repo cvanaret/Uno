@@ -11,6 +11,7 @@
 #include "optimization/Model.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 #include "tools/Options.hpp"
+#include "tools/Statistics.hpp"
 
 struct UnstableRegularization : public std::exception {
 
@@ -31,8 +32,8 @@ public:
    void assemble_matrix(const SymmetricMatrix<double>& hessian, const RectangularMatrix<double>& constraint_jacobian,
          size_t number_variables, size_t number_constraints);
    void factorize_matrix(const Model& model, SymmetricIndefiniteLinearSolver<T>& linear_solver);
-   void regularize_matrix(const Model& model, SymmetricIndefiniteLinearSolver<T>& linear_solver, size_t size_primal_block, size_t size_dual_block,
-         T dual_regularization_parameter);
+   void regularize_matrix(Statistics& statistics, const Model& model, SymmetricIndefiniteLinearSolver<T>& linear_solver, size_t size_primal_block,
+         size_t size_dual_block, T dual_regularization_parameter);
    void solve(SymmetricIndefiniteLinearSolver<T>& linear_solver);
    // [[nodiscard]] T get_primal_regularization() const;
 
@@ -104,7 +105,7 @@ void SymmetricIndefiniteLinearSystem<T>::factorize_matrix(const Model& model, Sy
 }
 
 template <typename T>
-void SymmetricIndefiniteLinearSystem<T>::regularize_matrix(const Model& model, SymmetricIndefiniteLinearSolver<T>& linear_solver,
+void SymmetricIndefiniteLinearSystem<T>::regularize_matrix(Statistics& statistics, const Model& model, SymmetricIndefiniteLinearSolver<T>& linear_solver,
       size_t size_primal_block, size_t size_dual_block, T dual_regularization_parameter) {
    DEBUG << "Original matrix\n" << *this->matrix << '\n';
    this->primal_regularization = T(0.);
@@ -114,6 +115,7 @@ void SymmetricIndefiniteLinearSystem<T>::regularize_matrix(const Model& model, S
 
    if (not linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_dual_block) {
       DEBUG << "Inertia is good\n";
+      statistics.add_statistic("regularization", this->primal_regularization);
       return;
    }
    auto[number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = linear_solver.get_inertia();
@@ -174,6 +176,7 @@ void SymmetricIndefiniteLinearSystem<T>::regularize_matrix(const Model& model, S
          }
       }
    }
+   statistics.add_statistic("regularization", this->primal_regularization);
 }
 
 template <typename T>

@@ -14,7 +14,8 @@ ExactHessian::ExactHessian(size_t dimension, size_t maximum_number_nonzeros, con
    HessianModel(dimension, maximum_number_nonzeros, options.get_string("sparse_format"), false) /* not regularized */ {
 }
 
-void ExactHessian::evaluate(const NonlinearProblem& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) {
+void ExactHessian::evaluate(Statistics& /*statistics*/, const NonlinearProblem& problem, const std::vector<double>& primal_variables,
+      const std::vector<double>& constraint_multipliers) {
    // evaluate Lagrangian Hessian
    this->hessian->dimension = problem.number_variables;
    problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, *this->hessian);
@@ -29,18 +30,19 @@ ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t maximum_number_n
       regularization_increase_factor(options.get_double("regularization_increase_factor")) {
 }
 
-void ConvexifiedHessian::evaluate(const NonlinearProblem& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) {
+void ConvexifiedHessian::evaluate(Statistics& statistics, const NonlinearProblem& problem, const std::vector<double>& primal_variables,
+      const std::vector<double>& constraint_multipliers) {
    // evaluate Lagrangian Hessian
    this->hessian->dimension = problem.number_variables;
    problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, *this->hessian);
    this->evaluation_count++;
    // regularize (only on the original variables) to make the problem strictly convex
    DEBUG << "hessian before convexification: " << *this->hessian;
-   this->regularize(*this->hessian, problem.get_number_original_variables());
+   this->regularize(statistics, *this->hessian, problem.get_number_original_variables());
 }
 
 // Nocedal and Wright, p51
-void ConvexifiedHessian::regularize(SymmetricMatrix<double>& hessian, size_t number_original_variables) {
+void ConvexifiedHessian::regularize(Statistics& statistics, SymmetricMatrix<double>& hessian, size_t number_original_variables) {
    //assert(size_block_to_regularize <= matrix.dimension && "The block to regularize is larger than the matrix");
 
    const double smallest_diagonal_entry = hessian.smallest_diagonal_entry();
@@ -70,6 +72,7 @@ void ConvexifiedHessian::regularize(SymmetricMatrix<double>& hessian, size_t num
          assert(is_finite(regularization_factor) && "The regularization coefficient diverged");
       }
    }
+   statistics.add_statistic("regularization", regularization_factor);
 }
 
 // Factory

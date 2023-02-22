@@ -39,6 +39,7 @@ InfeasibleInteriorPointSubproblem::InfeasibleInteriorPointSubproblem(size_t max_
       least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")),
       damping_factor(options.get_double("barrier_damping_factor")),
       lower_delta_z(max_number_variables), upper_delta_z(max_number_variables),
+      statistics_regularization_column_order(options.get_int("statistics_regularization_column_order")),
       statistics_barrier_parameter_column_order(options.get_int("statistics_barrier_parameter_column_order")) {
    // const double tolerance = options.get_double("tolerance");
    for (size_t i: Range(max_number_variables)) {
@@ -47,6 +48,7 @@ InfeasibleInteriorPointSubproblem::InfeasibleInteriorPointSubproblem(size_t max_
 }
 
 inline void InfeasibleInteriorPointSubproblem::initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) {
+   statistics.add_column("regularization", Statistics::double_width, this->statistics_regularization_column_order);
    statistics.add_column("barrier param.", Statistics::double_width, this->statistics_barrier_parameter_column_order);
 
    // evaluate the constraints at the original point
@@ -121,9 +123,9 @@ double InfeasibleInteriorPointSubproblem::push_variable_to_interior(double varia
    return variable_value;
 }
 
-void InfeasibleInteriorPointSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate) {
+void InfeasibleInteriorPointSubproblem::evaluate_functions(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) {
    // original Hessian and barrier objective gradient
-   this->hessian_model->evaluate(problem, current_iterate.primals, current_iterate.multipliers.constraints);
+   this->hessian_model->evaluate(statistics, problem, current_iterate.primals, current_iterate.multipliers.constraints);
    problem.evaluate_objective_gradient(current_iterate, this->evaluations.objective_gradient);
 
    for (size_t i: Range(problem.number_variables)) {
@@ -173,10 +175,10 @@ Direction InfeasibleInteriorPointSubproblem::solve(Statistics& statistics, const
    //this->check_interior_primals(problem, current_iterate);
 
    // evaluate the functions at the current iterate
-   this->evaluate_functions(problem, current_iterate);
+   this->evaluate_functions(statistics, problem, current_iterate);
 
    // set up the augmented system (with the correct inertia)
-   this->assemble_augmented_system(problem, current_iterate);
+   this->assemble_augmented_system(statistics, problem, current_iterate);
 
    // compute the solution (Δx, -Δλ)
    this->augmented_system.solve(*this->linear_solver);
@@ -210,13 +212,14 @@ void InfeasibleInteriorPointSubproblem::relax_variable_bounds(const NonlinearPro
    }
 }
 
-void InfeasibleInteriorPointSubproblem::assemble_augmented_system(const NonlinearProblem& problem, const Iterate& current_iterate) {
+void InfeasibleInteriorPointSubproblem::assemble_augmented_system(Statistics& statistics, const NonlinearProblem& problem,
+      const Iterate& current_iterate) {
    // assemble, factorize and regularize the augmented matrix
    this->augmented_system.assemble_matrix(*this->hessian_model->hessian, this->evaluations.constraint_jacobian,
          problem.number_variables, problem.number_constraints);
    this->augmented_system.factorize_matrix(problem.model, *this->linear_solver);
    const double dual_regularization_parameter = std::pow(this->barrier_parameter(), this->parameters.regularization_exponent);
-   this->augmented_system.regularize_matrix(problem.model, *this->linear_solver, problem.number_variables, problem.number_constraints,
+   this->augmented_system.regularize_matrix(statistics, problem.model, *this->linear_solver, problem.number_variables, problem.number_constraints,
          dual_regularization_parameter);
    [[maybe_unused]] auto[number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = this->linear_solver->get_inertia();
    assert(number_pos_eigenvalues == problem.number_variables && number_neg_eigenvalues == problem.number_constraints && number_zero_eigenvalues == 0);

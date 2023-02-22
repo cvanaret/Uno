@@ -5,27 +5,27 @@
 #include "solvers/QP/QPSolverFactory.hpp"
 
 QPSubproblem::QPSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros, const Options& options) :
-      ActiveSetSubproblem(max_number_variables, max_number_constraints),
+      ActiveSetSubproblem(max_number_variables, max_number_constraints, options.get_string("mechanism") != "TR", options),
       // if no trust region is used, the problem should be convexified to guarantee boundedness + descent direction
       hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), max_number_variables,
-            max_number_hessian_nonzeros + max_number_variables, options.get_string("mechanism") != "TR", options)),
+            max_number_hessian_nonzeros + max_number_variables, this->use_regularization, options)),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
       solver(QPSolverFactory::create(options.get_string("QP_solver"), max_number_variables, max_number_constraints,
             hessian_model->hessian->capacity, true, options)) {
 }
 
-void QPSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate) {
+void QPSubproblem::evaluate_functions(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) {
    // Hessian
-   this->hessian_model->evaluate(problem, current_iterate.primals, current_iterate.multipliers.constraints);
+   this->hessian_model->evaluate(statistics, problem, current_iterate.primals, current_iterate.multipliers.constraints);
    // objective gradient, constraints and constraint Jacobian
    problem.evaluate_objective_gradient(current_iterate, this->evaluations.objective_gradient);
    problem.evaluate_constraints(current_iterate, this->evaluations.constraints);
    problem.evaluate_constraint_jacobian(current_iterate, this->evaluations.constraint_jacobian);
 }
 
-Direction QPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem& problem, Iterate& current_iterate) {
+Direction QPSubproblem::solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) {
    // evaluate the functions at the current iterate
-   this->evaluate_functions(problem, current_iterate);
+   this->evaluate_functions(statistics, problem, current_iterate);
 
    // bounds of the variable displacements
    this->set_variable_bounds(problem, current_iterate);

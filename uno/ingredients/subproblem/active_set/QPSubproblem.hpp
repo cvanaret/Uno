@@ -22,7 +22,7 @@ protected:
    const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
    const std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
 
-   void evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate);
+   void evaluate_functions(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate);
    [[nodiscard]] Direction solve_QP(const NonlinearProblem& problem, Iterate& iterate);
 };
 
