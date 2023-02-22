@@ -8,23 +8,19 @@
 
 class ActiveSetSubproblem : public Subproblem {
 public:
-   ActiveSetSubproblem(size_t max_number_variables, size_t max_number_constraints, bool use_regularization, const Options& options);
+   ActiveSetSubproblem(size_t max_number_variables, size_t max_number_constraints);
    ~ActiveSetSubproblem() override = default;
 
-   void initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) override;
    void set_initial_point(const std::vector<double>& initial_point) override;
    void initialize_feasibility_problem() override;
    void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
 
    void set_auxiliary_measure(const NonlinearProblem& problem, Iterate& iterate) override;
-   [[nodiscard]] double generate_predicted_auxiliary_reduction_model(const NonlinearProblem&,
-         const Iterate&, const Direction&, double) const override;
+   [[nodiscard]] double generate_predicted_auxiliary_reduction_model(const NonlinearProblem&, const Iterate&, const Direction&, double) const override;
 
    void postprocess_accepted_iterate(const NonlinearProblem& model, Iterate& iterate) override;
 
 protected:
-   const bool use_regularization;
-   int statistics_regularization_column_order;
    std::vector<double> initial_point{};
    std::vector<Interval> variable_displacement_bounds{};
    std::vector<Interval> linearized_constraint_bounds{};

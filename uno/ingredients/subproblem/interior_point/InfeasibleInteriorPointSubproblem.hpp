@@ -61,8 +61,8 @@ protected:
    bool solving_feasibility_problem{false};
 
    // statistics table
-   int statistics_regularization_column_order;
-   int statistics_barrier_parameter_column_order;
+   const int statistics_regularization_column_order;
+   const int statistics_barrier_parameter_column_order;
 
    [[nodiscard]] double barrier_parameter() const;
    void relax_variable_bounds(const NonlinearProblem& problem, const Iterate& current_iterate);

@@ -5,13 +5,21 @@
 #include "solvers/QP/QPSolverFactory.hpp"
 
 QPSubproblem::QPSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros, const Options& options) :
-      ActiveSetSubproblem(max_number_variables, max_number_constraints, options.get_string("mechanism") != "TR", options),
+      ActiveSetSubproblem(max_number_variables, max_number_constraints),
+      use_regularization(options.get_string("mechanism") != "TR"),
       // if no trust region is used, the problem should be convexified to guarantee boundedness + descent direction
       hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), max_number_variables,
             max_number_hessian_nonzeros + max_number_variables, this->use_regularization, options)),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
       solver(QPSolverFactory::create(options.get_string("QP_solver"), max_number_variables, max_number_constraints,
-            hessian_model->hessian->capacity, true, options)) {
+            hessian_model->hessian->capacity, true, options)),
+      statistics_regularization_column_order(options.get_int("statistics_regularization_column_order")) {
+}
+
+void QPSubproblem::initialize(Statistics& statistics, const NonlinearProblem& /*problem*/, Iterate& /*first_iterate*/) {
+   if (this->use_regularization) {
+      statistics.add_column("regularization", Statistics::double_width, this->statistics_regularization_column_order);
+   }
 }
 
 void QPSubproblem::evaluate_functions(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) {

@@ -3,19 +3,11 @@
 
 #include "ActiveSetSubproblem.hpp"
 
-ActiveSetSubproblem::ActiveSetSubproblem(size_t max_number_variables, size_t max_number_constraints, bool use_regularization, const Options& options):
+ActiveSetSubproblem::ActiveSetSubproblem(size_t max_number_variables, size_t max_number_constraints):
       Subproblem(max_number_variables, max_number_constraints),
-      use_regularization(use_regularization),
-      statistics_regularization_column_order(options.get_int("statistics_regularization_column_order")),
       initial_point(max_number_variables),
       variable_displacement_bounds(max_number_variables),
       linearized_constraint_bounds(max_number_constraints) {
-}
-
-void ActiveSetSubproblem::initialize(Statistics& statistics, const NonlinearProblem& /*problem*/, Iterate& /*first_iterate*/) {
-   if (this->use_regularization) {
-      statistics.add_column("regularization", Statistics::double_width, this->statistics_regularization_column_order);
-   }
 }
 
 void ActiveSetSubproblem::set_initial_point(const std::vector<double>& initial_point) {

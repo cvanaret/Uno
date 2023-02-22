@@ -12,6 +12,7 @@ class LPSubproblem : public ActiveSetSubproblem {
 public:
    LPSubproblem(size_t max_number_variables, size_t max_number_constraints, const Options& options);
 
+   void initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) override;
    [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) override;
    [[nodiscard]] Direction compute_second_order_correction(const NonlinearProblem& model, Iterate& trial_iterate) override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
