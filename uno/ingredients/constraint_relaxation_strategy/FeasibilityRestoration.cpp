@@ -53,6 +53,7 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
 Direction FeasibilityRestoration::solve_optimality_problem(Statistics& statistics, Iterate& current_iterate) {
    // solve the subproblem
    DEBUG << "Solving the optimality subproblem\n";
+
    Direction direction = this->subproblem->solve(statistics, this->optimality_problem, current_iterate);
    direction.objective_multiplier = 1.;
    direction.norm = norm_inf(direction.primals, Range(this->optimality_problem.number_variables));
@@ -174,9 +175,9 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
    }
    if (accept) {
       statistics.add_statistic("phase", static_cast<int>(this->current_phase));
-      this->subproblem->postprocess_accepted_iterate(this->current_reformulated_problem(), trial_iterate);
-      ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->current_reformulated_problem(), trial_iterate, this->residual_norm);
    }
+   this->subproblem->postprocess_accepted_iterate(this->current_reformulated_problem(), trial_iterate);
+   ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, trial_iterate, this->residual_norm);
    return accept;
 }
 

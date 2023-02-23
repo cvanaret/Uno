@@ -88,7 +88,13 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
                }
             }
             else {
+               // step was rejected. It may still be accepted as solution if the termination criteria are satisfied
                this->decrease_radius(direction.norm);
+/*
+               if (this->termination()) {
+                  return std::make_tuple(std::move(trial_iterate), direction.norm);
+               }
+  */
             }
          }
       }

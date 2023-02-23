@@ -49,8 +49,8 @@ void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(size_t number_va
 
    // objective gradient
    iterate.evaluations.objective_gradient.for_each([&](size_t i, double derivative) {
-         iterate.lagrangian_gradient.objective_contribution[i] += objective_multiplier * derivative;
-      });
+      iterate.lagrangian_gradient.objective_contribution[i] += objective_multiplier * derivative;
+   });
 
    // constraints
    for (size_t j: Range(iterate.number_constraints)) {

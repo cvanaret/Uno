@@ -13,6 +13,13 @@
 #include "tools/Options.hpp"
 #include "tools/Timer.hpp"
 
+size_t memory_allocation_amount = 0;
+
+void* operator new(size_t size) {
+   memory_allocation_amount += size;
+   return malloc(size);
+}
+
 void run_uno_ampl(const std::string& model_name, const Options& options) {
    // AMPL model
    AMPLModel ampl_model = AMPLModel(model_name);
@@ -49,6 +56,7 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
 
    const bool print_solution = options.get_bool("print_solution");
    result.print(print_solution);
+   std::cout << "memory_allocation_amount = " << memory_allocation_amount << '\n';
 }
 
 Level Logger::logger_level = INFO;
