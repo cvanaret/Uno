@@ -1,11 +1,8 @@
 // Copyright (c) 2018-2023 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-// Question: Do we need to declare an LP solver too? Possible?
-// ===========================================================
 #include "LPEQPSubproblem.hpp"
 #include "solvers/QP/QPSolverFactory.hpp"
-#include "solvers/LP/LPSolverFactory.hpp"
 
 // Question: Can we switch Hessian off easily in QP solve?
 // Easy for BQPD: simply return 0 in gdotx (not super-efficient)
@@ -20,27 +17,19 @@ LPEQPSubproblem::LPEQPSubproblem(size_t max_number_variables, size_t max_number_
             hessian_model->hessian->capacity, true, options)) {
 }
 
-void LPEQPSubproblem::evaluate_functionsEQP(const NonlinearProblem& problem, Iterate& current_iterate) {
+void LPEQPSubproblem::evaluate_functions(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) {
    // Hessian
-   this->hessian_model->evaluate(problem, current_iterate.primals, current_iterate.multipliers.constraints);
+   this->hessian_model->evaluate(statistics, problem, current_iterate.primals, current_iterate.multipliers.constraints);
    // objective gradient, constraints and constraint Jacobian
    problem.evaluate_objective_gradient(current_iterate, this->evaluations.objective_gradient);
    problem.evaluate_constraints(current_iterate, this->evaluations.constraints);
    problem.evaluate_constraint_jacobian(current_iterate, this->evaluations.constraint_jacobian);
 }
 
-void LPEQPSubproblem::evaluate_functionsLP(const NonlinearProblem& problem, Iterate& current_iterate) {
-   // objective gradient, constraints and constraint Jacobian
-   // objective gradient, constraints and constraint Jacobian
-   problem.evaluate_objective_gradient(current_iterate, this->evaluations.objective_gradient);
-   problem.evaluate_constraints(current_iterate, this->evaluations.constraints);
-   problem.evaluate_constraint_jacobian(current_iterate, this->evaluations.constraint_jacobian);
-}
-
-Direction LPEQPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem& problem, Iterate& current_iterate) {
+Direction LPEQPSubproblem::solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) {
     
   // evaluate the functions at the current iterate
-   this->evaluate_functionsLP(problem, current_iterate);
+   this->evaluate_functions(statistics, problem, current_iterate);
 
    // bounds of the variable displacements
    this->set_variable_bounds(problem, current_iterate);
@@ -55,7 +44,6 @@ Direction LPEQPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProb
    // set-up EQP subproblem:
    // (1) set all bnds=+/-\infty;
    // (2) set active constraints as equations 
-
    
 
    // return EQP solution
@@ -78,7 +66,7 @@ Direction LPEQPSubproblem::solve_QP(const NonlinearProblem& problem, Iterate& it
    return direction;
 }
 
-Direction LPSubproblem::solve_LP(const NonlinearProblem& problem, Iterate& iterate) {
+Direction LPEQPSubproblem::solve_LP(const NonlinearProblem& problem, Iterate& iterate) {
    Direction direction = this->solver->solve_LP(problem.number_variables, problem.number_constraints, this->variable_displacement_bounds,
          this->linearized_constraint_bounds, this->evaluations.objective_gradient, this->evaluations.constraint_jacobian,
          this->initial_point);
