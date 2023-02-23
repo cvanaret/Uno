@@ -4,6 +4,7 @@
 #include "SubproblemFactory.hpp"
 #include "ingredients/subproblem/active_set/QPSubproblem.hpp"
 #include "ingredients/subproblem/active_set/LPSubproblem.hpp"
+#include "ingredients/subproblem/active_set/LPEQPSubproblem.hpp"
 #include "ingredients/subproblem/interior_point/InfeasibleInteriorPointSubproblem.hpp"
 
 std::unique_ptr<Subproblem> SubproblemFactory::create(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros,
@@ -15,6 +16,9 @@ std::unique_ptr<Subproblem> SubproblemFactory::create(size_t max_number_variable
    }
    else if (subproblem_type == "LP") {
       return std::make_unique<LPSubproblem>(max_number_variables, max_number_constraints, options);
+   }
+   else if (subproblem_type == "LPEQP") {
+      return std::make_unique<LPEQPSubproblem>(max_number_variables, max_number_constraints, max_number_hessian_nonzeros, options);
    }
    // interior-point method
    else if (subproblem_type == "barrier") {
