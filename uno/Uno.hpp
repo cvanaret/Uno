@@ -26,6 +26,7 @@ private:
    static void add_statistics(Statistics& statistics, const Model& model, const Iterate& iterate, size_t major_iterations);
    [[nodiscard]] bool termination_criterion(TerminationStatus current_status, size_t iteration) const;
    [[nodiscard]] TerminationStatus check_termination(const Model& model, Iterate& current_iterate, double step_norm) const;
+   static void postprocess_iterate(const Model& model, Iterate& iterate, TerminationStatus termination_status);
 };
 
 #endif // UNO_H

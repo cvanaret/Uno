@@ -52,10 +52,7 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
    catch (std::exception& exception) {
       ERROR << exception.what();
    }
-   // in case the objective was not yet evaluated, evaluate it
-   current_iterate.evaluate_objective(model);
-   model.postprocess_solution(current_iterate, termination_status);
-   DEBUG << "Current iterate:\n" << current_iterate;
+   Uno::postprocess_iterate(model, current_iterate, termination_status);
 
    if (Logger::logger_level == INFO) statistics.print_footer();
    timer.stop();
@@ -142,4 +139,9 @@ TerminationStatus Uno::check_termination(const Model& model, Iterate& current_it
    return NOT_OPTIMAL;
 }
 
-
+void Uno::postprocess_iterate(const Model& model, Iterate& iterate, TerminationStatus termination_status) {
+   // in case the objective was not yet evaluated, evaluate it
+   iterate.evaluate_objective(model);
+   model.postprocess_solution(iterate, termination_status);
+   DEBUG << "Final iterate:\n" << iterate;
+}
