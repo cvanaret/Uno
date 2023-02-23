@@ -136,14 +136,8 @@ TerminationStatus Uno::check_termination(const Model& model, Iterate& current_it
      return INFEASIBLE_STATIONARY_POINT;
    }
    // stationarity & complementarity not achieved, but we can terminate with a small step
-   if (this->terminate_with_small_step && step_norm <= this->small_step_threshold) {
-      if (primal_feasibility) {
-         return FEASIBLE_SMALL_STEP;
-      }
-      /*
-      else {
-         return INFEASIBLE_SMALL_STEP;
-      }*/
+   if (this->terminate_with_small_step && step_norm <= this->small_step_threshold && primal_feasibility) {
+      return FEASIBLE_SMALL_STEP;
    }
    return NOT_OPTIMAL;
 }
