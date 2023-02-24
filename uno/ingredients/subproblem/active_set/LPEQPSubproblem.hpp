@@ -19,11 +19,16 @@ public:
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
 protected:
+   const bool use_regularization;
    // pointers to allow polymorphism
    const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
    const std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
 
+   const int statistics_regularization_column_order;
+
    void evaluate_functions(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate);
+   void set_variable_EQP_bounds(const NonlinearProblem& problem, const Iterate& current_iterate, Direction& direction);
+   void set_linearized_EQP_bounds(const NonlinearProblem& problem, const std::vector<double>& current_constraints, Direction& direction);
    [[nodiscard]] Direction solve_QP(const NonlinearProblem& problem, Iterate& iterate);
    [[nodiscard]] Direction solve_LP(const NonlinearProblem& problem, Iterate& iterate);
 };
