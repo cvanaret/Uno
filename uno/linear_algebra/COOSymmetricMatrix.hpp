@@ -17,7 +17,7 @@ template <typename T>
 class COOSymmetricMatrix: public SymmetricMatrix<T> {
    // Coordinate list
 public:
-   COOSymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization);
+   COOSymmetricMatrix(size_t max_dimension, size_t original_capacity, bool use_regularization);
 
    void reset() override;
    void for_each(const std::function<void (size_t, size_t, T)>& f) const override;
@@ -31,6 +31,7 @@ public:
 protected:
    std::vector<size_t> row_indices;
    std::vector<size_t> column_indices;
+   std::vector<T> diagonal_entries;
 
    void initialize_regularization();
 };
@@ -38,8 +39,9 @@ protected:
 // implementation
 
 template <typename T>
-COOSymmetricMatrix<T>::COOSymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization):
-      SymmetricMatrix<T>(dimension, original_capacity, use_regularization) {
+COOSymmetricMatrix<T>::COOSymmetricMatrix(size_t max_dimension, size_t original_capacity, bool use_regularization):
+      SymmetricMatrix<T>(max_dimension, original_capacity, use_regularization),
+      diagonal_entries(max_dimension, T(0)) {
    this->row_indices.reserve(this->capacity);
    this->column_indices.reserve(this->capacity);
 
@@ -55,6 +57,7 @@ void COOSymmetricMatrix<T>::reset() {
    SymmetricMatrix<T>::reset();
    this->row_indices.clear();
    this->column_indices.clear();
+   initialize_vector(this->diagonal_entries, T(0));
 
    // initialize regularization terms
    if (this->use_regularization) {
@@ -80,6 +83,11 @@ void COOSymmetricMatrix<T>::insert(T term, size_t row_index, size_t column_index
    this->row_indices.push_back(row_index);
    this->column_indices.push_back(column_index);
    this->number_nonzeros++;
+
+   // possibly update diagonal
+   if (row_index == column_index) {
+      this->diagonal_entries[row_index] += term;
+   }
 }
 
 template <typename T>
@@ -89,15 +97,9 @@ void COOSymmetricMatrix<T>::finalize_column(size_t /*column_index*/) {
 
 template <typename T>
 T COOSymmetricMatrix<T>::smallest_diagonal_entry() const {
-   // TODO: there may be several entries for given indices
    T smallest_entry = INF<T>;
-   this->for_each([&](size_t i, size_t j, T entry) {
-      if (i == j) {
-         smallest_entry = std::min(smallest_entry, entry);
-      }
-   });
-   if (smallest_entry == INF<T>) {
-      smallest_entry = T(0);
+   for (size_t i: Range(this->dimension)) {
+      smallest_entry = std::min(smallest_entry, this->diagonal_entries[i]);
    }
    return smallest_entry;
 }
@@ -108,7 +110,10 @@ void COOSymmetricMatrix<T>::set_regularization(const std::function<T(size_t /*in
 
    // the regularization terms (that lie at the start of the entries vector) can be directly modified
    for (size_t i: Range(this->dimension)) {
-      this->entries[i] = regularization_function(i);
+      const T element = regularization_function(i);
+      this->entries[i] = element;
+      // update diagonal
+      this->diagonal_entries[i] += element;
    }
 }
 
