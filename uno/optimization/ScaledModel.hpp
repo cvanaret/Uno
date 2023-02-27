@@ -198,13 +198,18 @@ inline void ScaledModel::get_initial_dual_point(std::vector<double>& multipliers
 inline void ScaledModel::postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const {
    this->original_model.postprocess_solution(iterate, termination_status);
 
-   // objective value
+   // unscale the objective value
    iterate.evaluations.objective /= this->scaling.get_objective_scaling();
-   iterate.multipliers.objective *= this->scaling.get_objective_scaling();
 
-   // unscale the multipliers
-   for (size_t j: Range(this->number_constraints)) {
-      iterate.multipliers.constraints[j] *= this->scaling.get_constraint_scaling(j);
+   // unscale the constraint multipliers
+   for (size_t j: Range(iterate.number_constraints)) {
+      iterate.multipliers.constraints[j] *= this->scaling.get_constraint_scaling(j) / this->scaling.get_objective_scaling();
+   }
+
+   // unscale the bound multipliers
+   for (size_t i: Range(iterate.number_variables)) {
+      iterate.multipliers.lower_bounds[i] /= this->scaling.get_objective_scaling();
+      iterate.multipliers.upper_bounds[i] /= this->scaling.get_objective_scaling();
    }
 }
 

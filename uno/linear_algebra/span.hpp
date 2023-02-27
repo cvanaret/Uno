@@ -23,7 +23,7 @@ public:
 
 protected:
    const T* array;
-   size_t length;
+   const size_t length;
 };
 
 template <typename T>
@@ -41,7 +41,7 @@ span<T>::span() noexcept:
       array(nullptr), length(0) {
 }
 
-// precondition: array != nullptr
+// preconditions: array != nullptr, i < length
 template <typename T>
 const T& span<T>::operator[](size_t i) const noexcept {
    return this->array[i];

@@ -54,10 +54,9 @@ inline EqualityConstrainedModel::EqualityConstrainedModel(std::unique_ptr<Model>
       original_model(std::move(original_model)),
       inequality_constraint_of_slack(this->original_model->inequality_constraints.size()),
       slack_of_inequality_constraint(this->original_model->number_constraints) {
+   // all constraints are now equality constraints
    this->equality_constraints.reserve(this->number_constraints);
    this->inequality_constraints.reserve(0);
-
-   // all constraints are now equality constraints
    for (size_t j: Range(this->number_constraints)) {
       this->equality_constraints.push_back(j);
    }
@@ -226,6 +225,9 @@ inline void EqualityConstrainedModel::get_initial_dual_point(std::vector<double>
 
 inline void EqualityConstrainedModel::postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const {
    this->original_model->postprocess_solution(iterate, termination_status);
+
+   // discard the slacks
+   iterate.number_variables = this->original_model->number_variables;
 }
 
 #endif // UNO_EQUALITYCONSTRAINEDMODEL_H

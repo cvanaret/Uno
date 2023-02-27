@@ -137,12 +137,9 @@ void CSCSymmetricMatrix<T>::set_regularization(const std::function<T(size_t /*in
 
 template <typename T>
 void CSCSymmetricMatrix<T>::print(std::ostream& stream) const {
-   stream << "W = ";
-   print_vector(stream, this->entries, 0, this->number_nonzeros);
-   stream << "with column start: ";
-   print_vector(stream, this->column_starts, 0, this->dimension + 1);
-   stream << "and row index: ";
-   print_vector(stream, this->row_indices, 0, this->number_nonzeros);
+   stream << "W = "; print_vector(stream, this->entries, 0, this->number_nonzeros);
+   stream << "with column start: "; print_vector(stream, this->column_starts, 0, this->dimension + 1);
+   stream << "and row index: "; print_vector(stream, this->row_indices, 0, this->number_nonzeros);
 }
 
 template <typename T>
