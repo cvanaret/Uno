@@ -173,11 +173,23 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
       accept = current_phase_strategy.is_iterate_acceptable(current_iterate.progress, trial_iterate.progress,
             predicted_reduction, this->current_reformulated_problem().get_objective_multiplier());
    }
-   if (accept) {
-      statistics.add_statistic("phase", static_cast<int>(this->current_phase));
-   }
+
+   // post-process the trial iterate and compute the primal-dual residuals
    this->subproblem->postprocess_accepted_iterate(this->current_reformulated_problem(), trial_iterate);
    ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, trial_iterate, this->residual_norm);
+
+   // print statistics
+   if (accept) {
+      if (this->current_phase == Phase::OPTIMALITY) {
+         statistics.add_statistic("complementarity", trial_iterate.residuals.optimality_complementarity);
+         statistics.add_statistic("stationarity", trial_iterate.residuals.optimality_stationarity);
+      }
+      else {
+         statistics.add_statistic("complementarity", trial_iterate.residuals.feasibility_complementarity);
+         statistics.add_statistic("stationarity", trial_iterate.residuals.feasibility_stationarity);
+      }
+      statistics.add_statistic("phase", static_cast<int>(this->current_phase));
+   }
    return accept;
 }
 

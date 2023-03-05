@@ -246,11 +246,17 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
       accept = this->globalization_strategy->is_iterate_acceptable(current_iterate.progress, trial_iterate.progress,
             predicted_reduction, this->penalty_parameter);
    }
+
+   // post-process the trial iterate and compute the primal-dual residuals
+   this->subproblem->postprocess_accepted_iterate(this->relaxed_problem, trial_iterate);
+   ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->relaxed_problem, trial_iterate, this->residual_norm);
+   this->check_exact_relaxation(trial_iterate);
+
+   // print statistics
    if (accept) {
+      statistics.add_statistic("complementarity", trial_iterate.residuals.optimality_complementarity);
+      statistics.add_statistic("stationarity", trial_iterate.residuals.optimality_stationarity);
       statistics.add_statistic("penalty param.", this->penalty_parameter);
-      this->subproblem->postprocess_accepted_iterate(this->relaxed_problem, trial_iterate);
-      ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->relaxed_problem, trial_iterate, this->residual_norm);
-      this->check_exact_relaxation(trial_iterate);
    }
    return accept;
 }
