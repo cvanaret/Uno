@@ -49,9 +49,7 @@ bool LeyfferFilterStrategy::is_iterate_acceptable(const ProgressMeasures& curren
                accept = true;
             }
             else { // switching condition holds, but not Armijo condition
-               this->filter->add(current_progress_measures.infeasibility, current_optimality_measure);
                DEBUG << "Armijo condition not satisfied, trial iterate rejected\n";
-               DEBUG << "Current iterate was added to the filter\n";
             }
          }
          else { // switching condition violated: predicted reduction is not promising
