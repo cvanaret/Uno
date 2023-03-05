@@ -12,6 +12,8 @@ class SubproblemFactory {
 	public:
 		static std::unique_ptr<Subproblem> create(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros,
             const Options& options);
+
+      static std::vector<std::string> available_strategies();
 };
 
 #endif // UNO_SUBPROBLEMFACTORY_H

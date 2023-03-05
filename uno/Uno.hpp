@@ -14,6 +14,7 @@ public:
    Uno(GlobalizationMechanism& globalization_mechanism, const Options& options);
 
    [[nodiscard]] Result solve(const Model& model, Iterate& first_iterate, const Options& options);
+   static void print_available_strategies();
 
 private:
    GlobalizationMechanism& globalization_mechanism; /*!< Step control strategy (trust region or line-search) */

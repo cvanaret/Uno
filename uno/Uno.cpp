@@ -3,6 +3,10 @@
 
 #include <cmath>
 #include "Uno.hpp"
+#include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategyFactory.hpp"
+#include "ingredients/globalization_mechanism/GlobalizationMechanismFactory.hpp"
+#include "ingredients/globalization_strategy/GlobalizationStrategyFactory.hpp"
+#include "ingredients/subproblem/SubproblemFactory.hpp"
 #include "optimization/Iterate.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
@@ -144,4 +148,29 @@ void Uno::postprocess_iterate(const Model& model, Iterate& iterate, TerminationS
    iterate.evaluate_objective(model);
    model.postprocess_solution(iterate, termination_status);
    DEBUG << "Final iterate:\n" << iterate;
+}
+
+void join(const std::vector<std::string>& vector, char separator) {
+   if (not vector.empty()) {
+      std::cout << vector[0];
+      for (size_t i: Range(1, vector.size())) {
+         std::cout << separator << ' ' << vector[i];
+      }
+   }
+}
+
+void Uno::print_available_strategies() {
+   std::cout << "Available strategies:\n";
+   std::cout << "Constraint relaxation strategies: ";
+   join(ConstraintRelaxationStrategyFactory::available_strategies(), ',');
+   std::cout << '\n';
+   std::cout << "Globalization mechanisms: ";
+   join(GlobalizationMechanismFactory::available_strategies(), ',');
+   std::cout << '\n';
+   std::cout << "Globalization strategies: ";
+   join(GlobalizationStrategyFactory::available_strategies(), ',');
+   std::cout << '\n';
+   std::cout << "Subproblems: ";
+   join(SubproblemFactory::available_strategies(), ',');
+   std::cout << '\n';
 }

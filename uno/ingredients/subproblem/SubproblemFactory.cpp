@@ -5,6 +5,8 @@
 #include "ingredients/subproblem/active_set/QPSubproblem.hpp"
 #include "ingredients/subproblem/active_set/LPSubproblem.hpp"
 #include "ingredients/subproblem/interior_point/InfeasibleInteriorPointSubproblem.hpp"
+#include "solvers/QP/QPSolverFactory.hpp"
+#include "solvers/linear/LinearSolverFactory.hpp"
 
 std::unique_ptr<Subproblem> SubproblemFactory::create(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros,
       const Options& options) {
@@ -21,4 +23,16 @@ std::unique_ptr<Subproblem> SubproblemFactory::create(size_t max_number_variable
       return std::make_unique<InfeasibleInteriorPointSubproblem>(max_number_variables, max_number_constraints, max_number_hessian_nonzeros, options);
    }
    throw std::invalid_argument("Subproblem method " + subproblem_type + " is not supported");
+}
+
+std::vector<std::string> SubproblemFactory::available_strategies() {
+   std::vector<std::string> strategies{};
+   if (not QPSolverFactory::available_solvers().empty()) {
+      strategies.emplace_back("QP");
+      strategies.emplace_back("LP");
+   }
+   if (not LinearSolverFactory::available_solvers().empty()) {
+      strategies.emplace_back("barrier");
+   }
+   return strategies;
 }

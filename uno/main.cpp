@@ -79,6 +79,9 @@ int main(int argc, char* argv[]) {
          std::cout << "To choose a preset, use the argument -preset [filtersqp|ipopt|byrd]\n";
          std::cout << "The options can be combined in the same command line. Autocompletion is active.\n";
       }
+      else if (std::string(argv[1]) == "--strategies") {
+         Uno::print_available_strategies();
+      }
       else {
          options.print();
          // run Uno on the .nl file (last command line argument)

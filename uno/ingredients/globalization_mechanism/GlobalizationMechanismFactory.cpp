@@ -16,3 +16,7 @@ Options& options) {
     }
     throw std::invalid_argument("GlobalizationMechanism " + mechanism_type + " is not supported");
 }
+
+std::vector<std::string> GlobalizationMechanismFactory::available_strategies() {
+   return {"TR", "LS"};
+}

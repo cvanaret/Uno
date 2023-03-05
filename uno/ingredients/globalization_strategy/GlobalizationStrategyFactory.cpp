@@ -18,3 +18,7 @@ std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(con
    }
    throw std::invalid_argument("GlobalizationStrategy " + strategy_type + " is not supported");
 }
+
+std::vector<std::string> GlobalizationStrategyFactory::available_strategies() {
+   return {"merit", "leyffer-filter-strategy", "waechter-filter-strategy"};
+}
