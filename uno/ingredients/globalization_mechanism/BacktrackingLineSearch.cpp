@@ -11,6 +11,7 @@ BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& con
       GlobalizationMechanism(constraint_relaxation_strategy),
       backtracking_ratio(options.get_double("LS_backtracking_ratio")),
       minimum_step_length(options.get_double("LS_min_step_length")),
+      tolerance(options.get_double("tolerance")),
       use_second_order_correction(options.get_bool("use_second_order_correction")),
       statistics_SOC_column_order(options.get_int("statistics_SOC_column_order")),
       statistics_LS_step_length_column_order(options.get_int("statistics_LS_step_length_column_order")) {
@@ -53,7 +54,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
    }
    catch (const StepLengthTooSmall& e) {
       // if step length is too small, revert to solving the feasibility problem (if we aren't already solving it)
-      if (not this->solving_feasibility_problem && 0. < direction.multipliers.objective && 0. < current_iterate.progress.infeasibility) {
+      if (not this->solving_feasibility_problem && 0. < direction.multipliers.objective && this->tolerance < current_iterate.progress.infeasibility) {
          DEBUG << "The line search terminated with a step length smaller than " << this->minimum_step_length << '\n';
          // reset the line search with the restoration solution
          direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, direction.primals);
@@ -92,17 +93,12 @@ std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(St
             double step_norm = primal_dual_step_length * direction.norm;
             return std::make_tuple(std::move(trial_iterate), step_norm);
          }
-            // (optional) second-order correction
+         // (optional) second-order correction
          else if (this->use_second_order_correction && this->number_iterations == 1 && not this->solving_feasibility_problem &&
                   trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility) {
             // if full step is rejected, compute a (temporary) SOC direction
             Direction direction_soc = this->constraint_relaxation_strategy.compute_second_order_correction(trial_iterate);
-            if (direction_soc.status == SubproblemStatus::INFEASIBLE) {
-               DEBUG << "Trial SOC subproblem infeasible\n\n";
-               statistics.add_statistic("SOC", "-");
-               this->decrease_step_length(primal_dual_step_length);
-            }
-            else {
+            if (direction_soc.status != SubproblemStatus::INFEASIBLE) {
                // assemble the (temporary) SOC trial iterate
                Iterate trial_iterate_soc = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction_soc,
                      direction_soc.primal_dual_step_length, direction.bound_dual_step_length);
@@ -117,12 +113,10 @@ std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(St
                   trial_iterate_soc.multipliers.upper_bounds = trial_iterate.multipliers.upper_bounds;
                   return std::make_tuple(std::move(trial_iterate_soc), direction_soc.norm);
                }
-               else {
-                  DEBUG << "Trial SOC step discarded\n\n";
-                  statistics.add_statistic("SOC", "-");
-                  this->decrease_step_length(primal_dual_step_length);
-               }
             }
+            DEBUG << "Trial SOC step discarded\n\n";
+            statistics.add_statistic("SOC", "-");
+            this->decrease_step_length(primal_dual_step_length);
          }
          else { // trial iterate not acceptable
             this->decrease_step_length(primal_dual_step_length);

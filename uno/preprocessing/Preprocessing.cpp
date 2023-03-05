@@ -9,7 +9,7 @@
 
 // compute a least-square approximation of the multipliers by solving a linear system (uses existing linear system)
 void Preprocessing::compute_least_square_multipliers(const Model& model, SymmetricMatrix<double>& matrix, std::vector<double>& rhs,
-      SymmetricIndefiniteLinearSolver<double>& solver, Iterate& current_iterate, std::vector<double>& multipliers, double multiplier_max_norm) {
+      SymmetricIndefiniteLinearSolver<double>& linear_solver, Iterate& current_iterate, std::vector<double>& multipliers, double multiplier_max_norm) {
    current_iterate.evaluate_objective_gradient(model);
    current_iterate.evaluate_constraint_jacobian(model);
 
@@ -43,8 +43,8 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
    
    /* solve the system */
    std::vector<double> solution(matrix.dimension);
-   solver.factorize(matrix);
-   solver.solve(matrix, rhs, solution);
+   linear_solver.factorize(matrix);
+   linear_solver.solve(matrix, rhs, solution);
    DEBUG << "Solution: "; print_vector(DEBUG, solution, 0, matrix.dimension);
 
    // if least-square multipliers too big, discard them. Otherwise, keep them
