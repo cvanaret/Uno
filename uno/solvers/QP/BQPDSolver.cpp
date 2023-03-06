@@ -41,7 +41,7 @@ BQPDSolver::BQPDSolver(size_t max_number_variables, size_t number_constraints, s
       size_hessian_workspace(maximum_number_nonzeros + this->kmax * (this->kmax + 9) / 2 + 2 * max_number_variables + number_constraints + this->mxwk0),
       size_hessian_sparsity_workspace(this->size_hessian_sparsity + this->kmax + this->mxiwk0),
       hessian_values(this->size_hessian_workspace), hessian_sparsity(this->size_hessian_sparsity_workspace),
-      print_QP(options.get_bool("BQPD_print_QP")) {
+      print_subproblem(options.get_bool("BQPD_print_subproblem")) {
    // default active set
    for (size_t i: Range(max_number_variables + number_constraints)) {
       this->active_set[i] = static_cast<int>(i) + this->fortran_shift;
@@ -52,7 +52,7 @@ Direction BQPDSolver::solve_QP(size_t number_variables, size_t number_constraint
       const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
       const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const std::vector<double>& initial_point) {
    this->save_hessian_to_local_format(hessian);
-   if (this->print_QP) {
+   if (this->print_subproblem) {
       DEBUG << "QP:\n";
       DEBUG << "Hessian: " << hessian;
    }
@@ -63,7 +63,7 @@ Direction BQPDSolver::solve_QP(size_t number_variables, size_t number_constraint
 Direction BQPDSolver::solve_LP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
       const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
       const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point) {
-   if (this->print_QP) {
+   if (this->print_subproblem) {
       DEBUG << "LP:\n";
    }
    return this->solve_subproblem(number_variables, number_constraints, variables_bounds, constraint_bounds, linear_objective, constraint_jacobian,
@@ -81,7 +81,7 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
    wsc_.mxlws = static_cast<int>(this->size_hessian_sparsity_workspace);
    kktalphac_.alpha = 0; // inertia control
 
-   if (this->print_QP) {
+   if (this->print_subproblem) {
       DEBUG << "objective gradient: ";
       DEBUG << linear_objective;
       for (size_t j: Range(number_constraints)) {
