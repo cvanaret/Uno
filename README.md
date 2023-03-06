@@ -106,6 +106,8 @@ To pick a globalization strategy, use the argument: ```-strategy [l1-merit|leyff
 To pick a subproblem method, use the argument: ```-subproblem [QP|LP|barrier]```  
 The options can be combined in the same command line.
 
+For an overview of the available strategies, type: ```./uno_ampl --strategies```
+
 ### Presets
 
 Uno presets are strategy combinations that correspond to existing solvers (as well as known values for their hyperparameters). Uno 1.0 implements three presets:
