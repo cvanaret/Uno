@@ -6,9 +6,9 @@
 
 #include "GlobalizationStrategy.hpp"
 
-class MeritFunction : public GlobalizationStrategy {
+class l1MeritFunction : public GlobalizationStrategy {
 public:
-   explicit MeritFunction(const Options& options);
+   explicit l1MeritFunction(const Options& options);
 
    void initialize(const Iterate& first_iterate) override;
    [[nodiscard]] bool is_iterate_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,

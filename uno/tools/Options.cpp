@@ -122,7 +122,7 @@ void find_preset(const std::string& preset_name, Options& options) {
    else if (preset_name == "byrd") {
       options["mechanism"] = "LS";
       options["constraint-relaxation"] = "l1-relaxation";
-      options["strategy"] = "merit";
+      options["strategy"] = "l1-merit";
       options["subproblem"] = "QP";
       options["l1_relaxation_initial_parameter"] = "1";
       options["LS_backtracking_ratio"] = "0.5";

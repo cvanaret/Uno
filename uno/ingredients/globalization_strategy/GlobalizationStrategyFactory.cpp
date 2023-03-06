@@ -2,13 +2,13 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "GlobalizationStrategyFactory.hpp"
-#include "MeritFunction.hpp"
+#include "l1MeritFunction.hpp"
 #include "filter_strategy/LeyfferFilterStrategy.hpp"
 #include "filter_strategy/WaechterFilterStrategy.hpp"
 
 std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& strategy_type, const Options& options) {
-   if (strategy_type == "merit") {
-      return std::make_unique<MeritFunction>(options);
+   if (strategy_type == "l1-merit") {
+      return std::make_unique<l1MeritFunction>(options);
    }
    else if (strategy_type == "leyffer-filter-strategy") {
       return std::make_unique<LeyfferFilterStrategy>(options);
@@ -20,5 +20,5 @@ std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(con
 }
 
 std::vector<std::string> GlobalizationStrategyFactory::available_strategies() {
-   return {"merit", "leyffer-filter-strategy", "waechter-filter-strategy"};
+   return {"l1-merit", "leyffer-filter-strategy", "waechter-filter-strategy"};
 }

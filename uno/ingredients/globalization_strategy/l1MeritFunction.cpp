@@ -1,22 +1,22 @@
 // Copyright (c) 2018-2023 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include "MeritFunction.hpp"
+#include "l1MeritFunction.hpp"
 
-MeritFunction::MeritFunction(const Options& options):
+l1MeritFunction::l1MeritFunction(const Options& options):
       GlobalizationStrategy(options) {
 }
 
-void MeritFunction::initialize(const Iterate& /*first_iterate*/) {
+void l1MeritFunction::initialize(const Iterate& /*first_iterate*/) {
 }
 
-void MeritFunction::reset() {
+void l1MeritFunction::reset() {
 }
 
-void MeritFunction::register_current_progress(const ProgressMeasures& /*current_progress*/) {
+void l1MeritFunction::register_current_progress(const ProgressMeasures& /*current_progress*/) {
 }
 
-bool MeritFunction::is_iterate_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
+bool l1MeritFunction::is_iterate_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
       const ProgressMeasures& predicted_reduction, double objective_multiplier) {
    // compute current exact penalty
    const double current_exact_merit = current_progress.optimality(objective_multiplier) + current_progress.auxiliary_terms + current_progress.infeasibility;
@@ -44,7 +44,7 @@ bool MeritFunction::is_iterate_acceptable(const ProgressMeasures& current_progre
    return accept;
 }
 
-bool MeritFunction::is_infeasibility_acceptable(double infeasibility_measure) const {
+bool l1MeritFunction::is_infeasibility_acceptable(double infeasibility_measure) const {
    // accept if the infeasibility measure improves upon the smallest known infeasibility
    return (infeasibility_measure < this->smallest_known_infeasibility);
 }

@@ -16,7 +16,7 @@ _uno_ampl_completions()
             return 0
             ;;
         -strategy)
-			local strategies="merit leyffer-filter-strategy waechter-filter-strategy"
+			local strategies="l1-merit leyffer-filter-strategy waechter-filter-strategy"
             COMPREPLY=( $(compgen -W "${strategies}" -- ${cur}) )
             return 0
             ;;
