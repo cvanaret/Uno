@@ -3,7 +3,7 @@
 
 #include "HessianModel.hpp"
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
-#include "solvers/linear/LinearSolverFactory.hpp"
+#include "solvers/linear/SymmetricIndefiniteLinearSolverFactory.hpp"
 
 HessianModel::HessianModel(size_t dimension, size_t maximum_number_nonzeros, const std::string& sparse_format, bool use_regularization) :
       hessian(SymmetricMatrixFactory<double>::create(sparse_format, dimension, maximum_number_nonzeros, use_regularization)) {
@@ -25,7 +25,7 @@ void ExactHessian::evaluate(Statistics& /*statistics*/, const NonlinearProblem& 
 // Convexified Hessian
 ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options):
       HessianModel(dimension, maximum_number_nonzeros, options.get_string("sparse_format"), true), // regularized
-      linear_solver(LinearSolverFactory::create(options.get_string("linear_solver"), dimension, maximum_number_nonzeros)),
+      linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"), dimension, maximum_number_nonzeros)),
       regularization_initial_value(options.get_double("regularization_initial_value")),
       regularization_increase_factor(options.get_double("regularization_increase_factor")) {
 }

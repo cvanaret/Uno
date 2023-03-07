@@ -6,7 +6,7 @@
 #include "ingredients/subproblem/active_set/LPSubproblem.hpp"
 #include "ingredients/subproblem/interior_point/InfeasibleInteriorPointSubproblem.hpp"
 #include "solvers/QP/QPSolverFactory.hpp"
-#include "solvers/linear/LinearSolverFactory.hpp"
+#include "solvers/linear/SymmetricIndefiniteLinearSolverFactory.hpp"
 
 std::unique_ptr<Subproblem> SubproblemFactory::create(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros,
       const Options& options) {
@@ -31,7 +31,7 @@ std::vector<std::string> SubproblemFactory::available_strategies() {
       strategies.emplace_back("QP");
       strategies.emplace_back("LP");
    }
-   if (not LinearSolverFactory::available_solvers().empty()) {
+   if (not SymmetricIndefiniteLinearSolverFactory::available_solvers().empty()) {
       strategies.emplace_back("barrier");
    }
    return strategies;

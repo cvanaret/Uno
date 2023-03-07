@@ -11,7 +11,7 @@
 #include "MA57Solver.hpp"
 #endif
 
-class LinearSolverFactory {
+class SymmetricIndefiniteLinearSolverFactory {
 public:
    static std::unique_ptr<SymmetricIndefiniteLinearSolver<double>> create(const std::string& linear_solver_name, size_t max_dimension,
          size_t max_number_nonzeros) {
