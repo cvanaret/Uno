@@ -3,7 +3,7 @@
 
 #include <cmath>
 #include "InfeasibleInteriorPointSubproblem.hpp"
-#include "solvers/linear/LinearSolverFactory.hpp"
+#include "solvers/linear/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
 #include "preprocessing/Preprocessing.hpp"
 #include "tools/Infinity.hpp"
@@ -19,7 +19,7 @@ InfeasibleInteriorPointSubproblem::InfeasibleInteriorPointSubproblem(size_t max_
             options),
       // the Hessian is not convexified. Instead, the augmented system will be.
       hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), max_number_variables, max_number_hessian_nonzeros, false, options)),
-      linear_solver(LinearSolverFactory::create(options.get_string("linear_solver"), max_number_variables + max_number_constraints,
+      linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"), max_number_variables + max_number_constraints,
             max_number_hessian_nonzeros
             + max_number_variables + max_number_constraints /* regularization */
             + 2 * max_number_variables /* diagonal barrier terms */

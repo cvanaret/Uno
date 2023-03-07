@@ -48,12 +48,12 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
    Uno uno = Uno(*mechanism, options);
    Result result = uno.solve(*model, first_iterate, options);
 
+   // print the optimization summary
    std::string combination = options.get_string("mechanism") + " " + options.get_string("constraint-relaxation") + " " + options.get_string("strategy")
          + " " + options.get_string("subproblem");
-   std::cout << "\nUno (" << combination << "): optimization summary\n";
+   std::cout << "\nUno (" << combination << ")\n";
    std::cout << Timer::get_current_date();
-   std::cout << "==============================\n";
-
+   std::cout << "────────────────────────────────────────\n";
    const bool print_solution = options.get_bool("print_solution");
    result.print(print_solution);
    std::cout << "memory_allocation_amount = " << memory_allocation_amount << '\n';
@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
    if (1 < argc) {
       // get the default options
       Options options = get_default_options("uno.options");
-      // get the command line options
+      // override them with the command line options
       get_command_line_options(argc, argv, options);
       set_logger(options.get_string("logger"));
 
@@ -74,10 +74,10 @@ int main(int argc, char* argv[]) {
          std::cout << "To solve an AMPL model, type ./uno_ampl path_to_file/file.nl\n";
          std::cout << "To choose a globalization mechanism, use the argument -mechanism [LS|TR]\n";
          std::cout << "To choose a constraint relaxation strategy, use the argument -constraint-relaxation [feasibility-restoration|l1-relaxation]\n";
-         std::cout << "To choose a globalization strategy, use the argument -strategy [penalty|filter|nonmonotone-filter]\n";
+         std::cout << "To choose a globalization strategy, use the argument -strategy [l1-merit|leyffer-filter-strategy|waechter-filter-strategy]\n";
          std::cout << "To choose a subproblem method, use the argument -subproblem [QP|LP|barrier]\n";
          std::cout << "To choose a preset, use the argument -preset [filtersqp|ipopt|byrd]\n";
-         std::cout << "The options can be combined in the same command line. Autocompletion is active.\n";
+         std::cout << "The options can be combined in the same command line. Autocompletion is possible.\n";
       }
       else if (std::string(argv[1]) == "--strategies") {
          Uno::print_available_strategies();

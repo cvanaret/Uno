@@ -84,9 +84,10 @@ std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
    stream << "Objective value: " << iterate.evaluations.objective << '\n';
 
    stream << "          ┌ Optimality stationarity: " << iterate.residuals.optimality_stationarity << '\n';
-   stream << "Residuals │ Feasibility stationarity: " << iterate.residuals.feasibility_stationarity << '\n';
-   stream << "          │ Constraint violation: " << iterate.residuals.infeasibility << '\n';
-   stream << "          └ Complementarity: " << iterate.residuals.optimality_complementarity << '\n';
+   stream << "          │ Feasibility stationarity: " << iterate.residuals.feasibility_stationarity << '\n';
+   stream << "Residuals │ Constraint violation: " << iterate.residuals.infeasibility << '\n';
+   stream << "          │ Optimality complementarity: " << iterate.residuals.optimality_complementarity << '\n';
+   stream << "          └ Feasibility complementarity: " << iterate.residuals.feasibility_complementarity << '\n';
 
    stream << "                  ┌ Infeasibility: " << iterate.progress.infeasibility << '\n';
    stream << "Progress measures │ Optimality: " << iterate.progress.optimality(1.) << '\n';

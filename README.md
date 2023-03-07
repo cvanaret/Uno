@@ -4,13 +4,13 @@
 
 Uno (Unifying Nonlinear Optimization) is a C++ library that unifies methods for solving nonlinearly constrained optimization problems of the form:
 
-```
-   min     f(x)
-  x ∈ Rⁿ
-
-   s.t.    c_L ≤ c(x) ≤ c_U
-           x_L ≤  x   ≤ x_U
-```
+$$
+\begin{align}
+\min_{x \in \mathbb{R}^n}  & ~f(x) \\
+\text{s.t.}                & ~c_L \le c(x) \le c_U \\
+                           & ~x_L \le x \le x_U \\
+\end{align}
+$$
 
 Uno breaks downs optimization methods into four generic ingredients:
 * a **constraint relaxation strategy**: a systematic way to relax the nonlinear constraints;

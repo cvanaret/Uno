@@ -67,7 +67,7 @@ private:
    double fmin{-1e20};
    int peq_solution{}, ifail{};
    const int fortran_shift{1};
-   const bool print_QP;
+   const bool print_subproblem;
 
    Direction solve_subproblem(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
          const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,

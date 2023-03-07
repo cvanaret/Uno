@@ -26,15 +26,15 @@ void Result::print(bool print_primal_dual_solution) const {
 
    std::cout << "Objective value:\t\t\t" << this->solution.evaluations.objective << '\n';
 
-   std::cout << "Constraint violation:\t\t\t" << this->solution.residuals.infeasibility << '\n';
-   std::cout << "Optimality stationarity error:\t\t" << this->solution.residuals.optimality_stationarity << '\n';
-   std::cout << "Feasibility stationarity error:\t\t" << this->solution.residuals.feasibility_stationarity << '\n';
-   std::cout << "Optimality complementarity error:\t" << this->solution.residuals.optimality_complementarity << '\n';
-   std::cout << "Feasibility complementarity error:\t" << this->solution.residuals.feasibility_complementarity << '\n';
+   std::cout << "┌ Optimality stationarity residual:\t" << this->solution.residuals.optimality_stationarity << '\n';
+   std::cout << "│ Feasibility stationarity residual:\t" << this->solution.residuals.feasibility_stationarity << '\n';
+   std::cout << "│ Constraint violation:\t\t\t" << this->solution.residuals.infeasibility << '\n';
+   std::cout << "│ Optimality complementarity residual:\t" << this->solution.residuals.optimality_complementarity << '\n';
+   std::cout << "└ Feasibility complementarity residual:\t" << this->solution.residuals.feasibility_complementarity << '\n';
 
-   std::cout << "Infeasibility measure:\t\t\t" << this->solution.progress.infeasibility << '\n';
-   std::cout << "Optimality measure:\t\t\t" << this->solution.progress.optimality(1.) << '\n';
-   std::cout << "Auxiliary measure:\t\t\t" << this->solution.progress.auxiliary_terms << '\n';
+   std::cout << "┌ Infeasibility measure:\t\t" << this->solution.progress.infeasibility << '\n';
+   std::cout << "│ Optimality measure:\t\t\t" << this->solution.progress.optimality(1.) << '\n';
+   std::cout << "└ Auxiliary measure:\t\t\t" << this->solution.progress.auxiliary_terms << '\n';
 
    if (print_primal_dual_solution) {
       std::cout << "Primal solution:\t\t\t"; print_vector(std::cout, this->solution.primals, 0, this->solution.number_variables);
