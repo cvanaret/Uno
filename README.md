@@ -14,9 +14,9 @@ Uno (Unifying Nonlinear Optimization) is a C++ library that unifies methods for 
 
 $$
 \begin{align}
-\min_{x \in \mathbb{R}^n}  & f(x) \\
-\text{s.t.}                & c_L \le c(x) \le c_U \\
-                           & x_L \le x \le x_U \\
+\min_{x \in \mathbb{R}^n}  & & f(x) \\
+\text{s.t.}                & & c_L \le c(x) \le c_U \\
+                           & & x_L \le x \le x_U \\
 \end{align}
 $$
 
