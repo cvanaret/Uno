@@ -12,7 +12,7 @@ print_solution no
 terminate_with_small_step yes
 
 # small step threshold
-small_step_threshold 1e-12
+small_step_threshold 1e-11
 
 # enforce linear constraints at the initial point
 enforce_linear_constraints no
@@ -153,7 +153,7 @@ TR_decrease_factor 2
 TR_activity_tolerance 1e-6
 
 # minimum TR radius
-TR_min_radius 1e-16
+TR_min_radius 1e-12
 
 # threshold below which the TR radius is reset
 TR_radius_reset_threshold 1e-4
