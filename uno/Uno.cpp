@@ -113,12 +113,12 @@ TerminationStatus Uno::check_termination(const Model& model, Iterate& current_it
    const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(model.number_variables, this->tolerance);
 
    DEBUG << "Termination criteria:\n";
-   DEBUG << "optimality stationarity: " << std::boolalpha << optimality_stationarity << '\n';
-   DEBUG << "feasibility stationarity: " << std::boolalpha << feasibility_stationarity << '\n';
-   DEBUG << "optimality complementarity: " << std::boolalpha << optimality_complementarity << '\n';
-   DEBUG << "feasibility complementarity: " << std::boolalpha << feasibility_complementarity << '\n';
-   DEBUG << "primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
-   DEBUG << "not all zero multipliers: " << std::boolalpha << no_trivial_duals << "\n\n";
+   DEBUG << "Stationarity (optimality): " << std::boolalpha << optimality_stationarity << '\n';
+   DEBUG << "Stationarity (feasibility): " << std::boolalpha << feasibility_stationarity << '\n';
+   DEBUG << "Complementarity (optimality): " << std::boolalpha << optimality_complementarity << '\n';
+   DEBUG << "Complementarity (feasibility): " << std::boolalpha << feasibility_complementarity << '\n';
+   DEBUG << "Primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
+   DEBUG << "Not all zero multipliers: " << std::boolalpha << no_trivial_duals << "\n\n";
 
    if (optimality_complementarity && primal_feasibility) {
       if (feasibility_stationarity && no_trivial_duals) {

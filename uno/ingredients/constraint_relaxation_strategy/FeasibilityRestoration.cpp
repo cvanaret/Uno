@@ -21,6 +21,9 @@ FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options
       l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
       tolerance(options.get_double("tolerance")),
       statistics_restoration_phase_column_order(options.get_int("statistics_restoration_phase_column_order")) {
+   // for the moment, disable feasibility restoration + l1 merit
+   assert(options.get_string("strategy") != "l1-merit" &&
+      "You cannot use an l1 merit function yet, since the objective multiplier is not properly steered.");
 }
 
 void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& first_iterate) {

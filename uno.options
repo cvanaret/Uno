@@ -40,7 +40,7 @@ statistics_stationarity_column_order 105
 # default subproblem (QP|LP|barrier)
 subproblem QP
 
-# default globalization strategy (l1-penalty|leyffer-filter-strategy|waechter-filter-strategy)
+# default globalization strategy (l1-merit|leyffer-filter-strategy|waechter-filter-strategy)
 strategy leyffer-filter-strategy
 
 # default constraint relaxation strategy (feasibility-restoration|l1-relaxation)
