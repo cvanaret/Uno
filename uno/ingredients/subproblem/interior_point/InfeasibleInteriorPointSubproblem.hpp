@@ -50,7 +50,6 @@ protected:
    double previous_barrier_parameter;
    const double default_multiplier;
    const InteriorPointParameters parameters;
-   std::vector<double> bound_relaxation_factors;
    const double least_square_multiplier_max_norm;
    const double damping_factor; // (Section 3.7 in IPOPT paper)
 

@@ -55,9 +55,6 @@ public:
    [[nodiscard]] virtual double get_variable_upper_bound(size_t i) const = 0;
    [[nodiscard]] virtual double get_constraint_lower_bound(size_t j) const = 0;
    [[nodiscard]] virtual double get_constraint_upper_bound(size_t j) const = 0;
-   // relaxed bounds
-   [[nodiscard]] double get_variable_lower_bound(size_t i, double relaxation_factor) const;
-   [[nodiscard]] double get_variable_upper_bound(size_t i, double relaxation_factor) const;
 
    [[nodiscard]] virtual size_t get_maximum_number_objective_gradient_nonzeros() const = 0;
    [[nodiscard]] virtual size_t get_maximum_number_jacobian_nonzeros() const = 0;
@@ -76,17 +73,6 @@ inline bool NonlinearProblem::is_constrained() const {
 
 inline size_t NonlinearProblem::get_number_original_variables() const {
    return this->model.number_variables;
-}
-
-// relaxed bounds
-inline double NonlinearProblem::get_variable_lower_bound(size_t i, double relaxation_factor) const {
-   const double lower_bound = this->get_variable_lower_bound(i);
-   return lower_bound - relaxation_factor*std::max(1., std::abs(lower_bound));
-}
-
-inline double NonlinearProblem::get_variable_upper_bound(size_t i, double relaxation_factor) const {
-   const double upper_bound = this->get_variable_upper_bound(i);
-   return upper_bound + relaxation_factor * std::max(1., std::abs(upper_bound));
 }
 
 inline double NonlinearProblem::compute_optimality_stationarity_error(const Iterate& iterate, Norm residual_norm) {

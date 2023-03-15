@@ -4,6 +4,7 @@
 #include "ModelFactory.hpp"
 #include "EqualityConstrainedModel.hpp"
 #include "ScaledModel.hpp"
+#include "BoundRelaxedModel.hpp"
 #include "interfaces/AMPL/AMPLModel.hpp"
 #include "preprocessing/Scaling.hpp"
 
@@ -12,8 +13,11 @@ std::unique_ptr<Model> ModelFactory::reformulate(const AMPLModel& ampl_model, It
 
    // if an equality-constrained problem is required (e.g. barrier or AL), reformulate the model
    if (options.get_string("subproblem") == "barrier") {
-      // transfer ownership of the pointer
+      // transfer ownership of the pointers
+      // introduce slacks to obtain equality constraints
       model = std::make_unique<EqualityConstrainedModel>(std::move(model));
+      // slightly relax the bound constraints
+      model = std::make_unique<BoundRelaxedModel>(std::move(model), options);
       first_iterate.set_number_variables(model->number_variables);
    }
    return model;

@@ -247,7 +247,8 @@ void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double
    const int* ampl_column_start = this->asl->i.sputinfo_->hcolstarts;
    const int* ampl_row_index = this->asl->i.sputinfo_->hrownos;
    // check that the column pointers are sorted in increasing order
-   assert(in_increasing_order(ampl_column_start, this->number_variables + 1) && "evaluate_lagrangian_hessian: column starts are not ordered");
+   assert(in_increasing_order(ampl_column_start, this->number_variables + 1) &&
+      "AMPLModel::evaluate_lagrangian_hessian: column starts are not ordered");
 
    // copy the nonzeros in the Hessian
    hessian.reset();
