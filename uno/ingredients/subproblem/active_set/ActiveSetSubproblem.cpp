@@ -27,6 +27,10 @@ void ActiveSetSubproblem::set_elastic_variable_values(const l1RelaxedProblem& pr
    problem.set_elastic_variable_values(current_iterate, elastic_setting_function);
 }
 
+void ActiveSetSubproblem::exit_feasibility_problem(const NonlinearProblem& /*problem*/, Iterate& /*trial_iterate*/) {
+   // do nothing
+}
+
 void ActiveSetSubproblem::set_variable_displacement_bounds(const NonlinearProblem& problem, const Iterate& current_iterate) {
    for (size_t i: Range(problem.number_variables)) {
       const double lb = this->variable_bounds[i].lb - current_iterate.primals[i];
@@ -72,5 +76,5 @@ double ActiveSetSubproblem::generate_predicted_auxiliary_reduction_model(const N
    //}, "0"};
 }
 
-void ActiveSetSubproblem::postprocess_accepted_iterate(const NonlinearProblem& /*problem*/, Iterate& /*iterate*/) {
+void ActiveSetSubproblem::postprocess_iterate(const NonlinearProblem& /*problem*/, Iterate& /*iterate*/) {
 }

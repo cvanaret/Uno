@@ -251,6 +251,7 @@ void InfeasibleInteriorPointSubproblem::initialize_feasibility_problem() {
 
 // set the elastic variables of the current iterate
 void InfeasibleInteriorPointSubproblem::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) {
+   DEBUG << "Setting the elastic variables\n";
    // c(x) - p + n = 0
    // analytical expression for p and n:
    // (mu_over_rho - jacobian_coefficient*this->barrier_constraints[j] + std::sqrt(radical))/2.
@@ -270,6 +271,13 @@ void InfeasibleInteriorPointSubproblem::set_elastic_variable_values(const l1Rela
       assert(0. < iterate.multipliers.lower_bounds[elastic_index] && "The elastic dual is not strictly positive.");
    };
    problem.set_elastic_variable_values(current_iterate, elastic_setting_function);
+}
+
+void InfeasibleInteriorPointSubproblem::exit_feasibility_problem(const NonlinearProblem& problem, Iterate& trial_iterate) {
+   assert(this->solving_feasibility_problem && "The barrier subproblem did not know it was solving the feasibility problem.");
+   this->barrier_parameter_update_strategy.set_barrier_parameter(this->previous_barrier_parameter);
+   this->solving_feasibility_problem = false;
+   this->compute_least_square_multipliers(problem, trial_iterate);
 }
 
 void InfeasibleInteriorPointSubproblem::set_auxiliary_measure(const NonlinearProblem& problem, Iterate& iterate) {
@@ -467,13 +475,7 @@ void InfeasibleInteriorPointSubproblem::compute_least_square_multipliers(const N
          iterate, iterate.multipliers.constraints, this->least_square_multiplier_max_norm);
 }
 
-void InfeasibleInteriorPointSubproblem::postprocess_accepted_iterate(const NonlinearProblem& problem, Iterate& iterate) {
-   if (this->solving_feasibility_problem) {
-      this->barrier_parameter_update_strategy.set_barrier_parameter(this->previous_barrier_parameter);
-      this->solving_feasibility_problem = false;
-      this->compute_least_square_multipliers(problem, iterate);
-   }
-
+void InfeasibleInteriorPointSubproblem::postprocess_iterate(const NonlinearProblem& problem, Iterate& iterate) {
    // rescale the bound multipliers (Eq. 16 in Ipopt paper)
    for (size_t i: problem.lower_bounded_variables) {
       const double coefficient = this->barrier_parameter() / (iterate.primals[i] - problem.get_variable_lower_bound(i));

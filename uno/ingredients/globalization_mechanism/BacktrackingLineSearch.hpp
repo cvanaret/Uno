@@ -8,7 +8,7 @@
 
 struct StepLengthTooSmall : public std::exception {
    [[nodiscard]] const char* what() const noexcept override {
-      return "The step length in the line search is too small.";
+      return "The step length in the line search is too small.\n";
    }
 };
 

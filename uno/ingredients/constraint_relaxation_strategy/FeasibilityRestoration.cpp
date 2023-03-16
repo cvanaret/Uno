@@ -71,7 +71,6 @@ Direction FeasibilityRestoration::solve_optimality_problem(Statistics& statistic
 
 // form and solve the feasibility problem
 Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) {
-   this->subproblem->set_elastic_variable_values(this->feasibility_problem, current_iterate);
    if (this->current_phase == Phase::OPTIMALITY) {
       this->switch_to_feasibility_restoration(current_iterate);
    }
@@ -131,13 +130,17 @@ void FeasibilityRestoration::switch_to_feasibility_restoration(Iterate& current_
    DEBUG << "Switching from optimality to restoration phase\n";
    this->current_phase = Phase::FEASIBILITY_RESTORATION;
    this->optimality_phase_strategy->register_current_progress(current_iterate.progress);
+   this->subproblem->initialize_feasibility_problem();
+   this->subproblem->set_elastic_variable_values(this->feasibility_problem, current_iterate);
+
    // refresh the progress measures of the current iterate
    this->set_infeasibility_measure(current_iterate);
    this->set_optimality_measure(current_iterate);
+   this->subproblem->set_auxiliary_measure(this->current_reformulated_problem(), current_iterate);
+
    current_iterate.multipliers.objective = 0.;
    this->restoration_phase_strategy->reset();
    this->restoration_phase_strategy->register_current_progress(current_iterate.progress);
-   this->subproblem->initialize_feasibility_problem();
 }
 
 void FeasibilityRestoration::switch_to_optimality(Iterate& current_iterate, Iterate& trial_iterate) {
@@ -145,6 +148,8 @@ void FeasibilityRestoration::switch_to_optimality(Iterate& current_iterate, Iter
    this->current_phase = Phase::OPTIMALITY;
    current_iterate.set_number_variables(this->optimality_problem.number_variables);
    trial_iterate.set_number_variables(this->optimality_problem.number_variables);
+   this->subproblem->exit_feasibility_problem(this->optimality_problem, trial_iterate);
+
    // refresh the progress measures of current iterate
    this->set_optimality_measure(current_iterate);
    this->set_infeasibility_measure(current_iterate);
@@ -178,7 +183,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
    }
 
    // post-process the trial iterate and compute the primal-dual residuals
-   this->subproblem->postprocess_accepted_iterate(this->current_reformulated_problem(), trial_iterate);
+   this->subproblem->postprocess_iterate(this->current_reformulated_problem(), trial_iterate);
    ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, trial_iterate, this->residual_norm);
 
    // print statistics

@@ -31,6 +31,8 @@ public:
 
    void initialize_feasibility_problem() override;
    void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
+   void exit_feasibility_problem(const NonlinearProblem& problem, Iterate& trial_iterate) override;
+
    [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) override;
    [[nodiscard]] Direction compute_second_order_correction(const NonlinearProblem& problem, Iterate& trial_iterate) override;
 
@@ -38,7 +40,7 @@ public:
    [[nodiscard]] double generate_predicted_auxiliary_reduction_model(const NonlinearProblem& problem,
          const Iterate& current_iterate, const Direction& direction, double step_length) const override;
 
-   void postprocess_accepted_iterate(const NonlinearProblem& problem, Iterate& iterate) override;
+   void postprocess_iterate(const NonlinearProblem& problem, Iterate& iterate) override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
 protected:
