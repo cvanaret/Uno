@@ -71,7 +71,6 @@ Direction FeasibilityRestoration::solve_optimality_problem(Statistics& statistic
 
 // form and solve the feasibility problem
 Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) {
-   this->subproblem->initialize_feasibility_problem();
    this->subproblem->set_elastic_variable_values(this->feasibility_problem, current_iterate);
    if (this->current_phase == Phase::OPTIMALITY) {
       this->switch_to_feasibility_restoration(current_iterate);
@@ -138,6 +137,7 @@ void FeasibilityRestoration::switch_to_feasibility_restoration(Iterate& current_
    current_iterate.multipliers.objective = 0.;
    this->restoration_phase_strategy->reset();
    this->restoration_phase_strategy->register_current_progress(current_iterate.progress);
+   this->subproblem->initialize_feasibility_problem();
 }
 
 void FeasibilityRestoration::switch_to_optimality(Iterate& current_iterate, Iterate& trial_iterate) {
