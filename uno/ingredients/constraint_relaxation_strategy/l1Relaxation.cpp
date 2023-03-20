@@ -175,8 +175,8 @@ bool l1Relaxation::linearized_residual_sufficient_decrease(const Iterate& curren
    if (residual_lowest_violation <= this->parameters.residual_small_threshold) {
       return (linearized_residual <= this->parameters.residual_small_threshold);
    }
-   const double linearized_residual_reduction = current_iterate.residuals.infeasibility - linearized_residual;
-   const double lowest_linearized_residual_reduction = current_iterate.residuals.infeasibility - residual_lowest_violation;
+   const double linearized_residual_reduction = current_iterate.progress.infeasibility - linearized_residual;
+   const double lowest_linearized_residual_reduction = current_iterate.progress.infeasibility - residual_lowest_violation;
    return (linearized_residual_reduction >= this->parameters.epsilon1 * lowest_linearized_residual_reduction);
 }
 
