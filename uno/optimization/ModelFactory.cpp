@@ -5,15 +5,17 @@
 #include "EqualityConstrainedModel.hpp"
 #include "ScaledModel.hpp"
 #include "BoundRelaxedModel.hpp"
-#include "interfaces/AMPL/AMPLModel.hpp"
 #include "preprocessing/Scaling.hpp"
 
-std::unique_ptr<Model> ModelFactory::reformulate(const AMPLModel& ampl_model, Iterate& first_iterate, const Options& options) {
-   std::unique_ptr<Model> model = std::make_unique<ScaledModel>(ampl_model, first_iterate, options);
+// note: transfer ownership of the pointer
+std::unique_ptr<Model> ModelFactory::reformulate(std::unique_ptr<Model> model, Iterate& first_iterate, const Options& options) {
+   // optional: scale the problem using the evaluations at the first iterate
+   if (options.get_string("scale_functions") == "yes") {
+      model = std::make_unique<ScaledModel>(std::move(model), first_iterate, options);
+   }
 
-   // if an equality-constrained problem is required (e.g. barrier or AL), reformulate the model
+   // if an equality-constrained problem is required (e.g. barrier or AL), reformulate the model with slacks
    if (options.get_string("subproblem") == "barrier") {
-      // transfer ownership of the pointers
       // introduce slacks to obtain equality constraints
       model = std::make_unique<EqualityConstrainedModel>(std::move(model));
       // slightly relax the bound constraints

@@ -22,16 +22,16 @@ void* operator new(size_t size) {
 
 void run_uno_ampl(const std::string& model_name, const Options& options) {
    // AMPL model
-   AMPLModel ampl_model = AMPLModel(model_name);
+   std::unique_ptr<Model> ampl_model = std::make_unique<AMPLModel>(model_name);
 
    // initialize initial primal and dual points
-   Iterate first_iterate(ampl_model.number_variables, ampl_model.number_constraints);
-   ampl_model.get_initial_primal_point(first_iterate.primals);
-   ampl_model.get_initial_dual_point(first_iterate.multipliers.constraints);
-   ampl_model.project_primals_onto_bounds(first_iterate.primals);
+   Iterate first_iterate(ampl_model->number_variables, ampl_model->number_constraints);
+   ampl_model->get_initial_primal_point(first_iterate.primals);
+   ampl_model->get_initial_dual_point(first_iterate.multipliers.constraints);
+   ampl_model->project_primals_onto_bounds(first_iterate.primals);
 
-   // reformulate (scale, add slacks) if necessary
-   std::unique_ptr<Model> model = ModelFactory::reformulate(ampl_model, first_iterate, options);
+   // reformulate (scale, add slacks, relax the bounds, ...) if necessary
+   std::unique_ptr<Model> model = ModelFactory::reformulate(std::move(ampl_model), first_iterate, options);
 
    // enforce linear constraints at initial point
    if (options.get_bool("enforce_linear_constraints")) {
