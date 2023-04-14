@@ -62,12 +62,7 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
             if (this->use_second_order_correction && trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility) {
                // compute a (temporary) SOC direction
                Direction direction_soc = this->constraint_relaxation_strategy.compute_second_order_correction(trial_iterate);
-               if (direction_soc.status == SubproblemStatus::INFEASIBLE) {
-                  DEBUG << "Trial SOC subproblem infeasible\n\n";
-                  statistics.add_statistic("SOC", "-");
-                  this->decrease_radius(direction.norm);
-               }
-               else {
+               if (direction_soc.status != SubproblemStatus::INFEASIBLE) {
                   // assemble the (temporary) SOC trial iterate
                   Iterate trial_iterate_soc = this->assemble_trial_iterate(model, current_iterate, direction_soc);
                   if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate_soc, direction_soc, 1.)) {
@@ -80,12 +75,10 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
                      trial_iterate_soc.multipliers.upper_bounds = trial_iterate.multipliers.upper_bounds;
                      return std::make_tuple(std::move(trial_iterate_soc), direction_soc.norm);
                   }
-                  else {
-                     DEBUG << "Trial SOC step discarded\n\n";
-                     statistics.add_statistic("SOC", "-");
-                     this->decrease_radius(direction.norm);
-                  }
                }
+               DEBUG << "Trial SOC step discarded\n\n";
+               statistics.add_statistic("SOC", "-");
+               this->decrease_radius(direction.norm);
             }
             else {
                // step was rejected. It may still be accepted as solution if the termination criteria are satisfied
