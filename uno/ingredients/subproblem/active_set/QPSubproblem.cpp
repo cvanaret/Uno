@@ -45,7 +45,8 @@ Direction QPSubproblem::solve(Statistics& statistics, const NonlinearProblem& pr
    return this->solve_QP(problem, current_iterate);
 }
 
-Direction QPSubproblem::compute_second_order_correction(const NonlinearProblem& /*problem*/, Iterate& /*trial_iterate*/) {
+Direction QPSubproblem::compute_second_order_correction(const NonlinearProblem& /*problem*/, Iterate& /*trial_iterate*/,
+      double /*primal_step_length*/) {
    // TODO warm start
    DEBUG << "\nEntered SOC computation\n";
    assert(false && "Not implemented yet");

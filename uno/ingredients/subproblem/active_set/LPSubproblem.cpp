@@ -33,7 +33,8 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem
    return this->solve_LP(problem, current_iterate);
 }
 
-Direction LPSubproblem::compute_second_order_correction(const NonlinearProblem& /*problem*/, Iterate& /*trial_iterate*/) {
+Direction LPSubproblem::compute_second_order_correction(const NonlinearProblem& /*problem*/, Iterate& /*trial_iterate*/,
+      double /*primal_step_length*/) {
    // TODO warm start
    DEBUG << "\nEntered SOC computation\n";
    assert(false && "Not implemented yet");

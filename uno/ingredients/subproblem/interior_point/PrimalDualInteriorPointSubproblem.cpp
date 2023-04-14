@@ -219,14 +219,19 @@ void PrimalDualInteriorPointSubproblem::assemble_augmented_system(Statistics& st
    this->generate_augmented_rhs(problem, current_iterate);
 }
 
-Direction PrimalDualInteriorPointSubproblem::compute_second_order_correction(const NonlinearProblem& /*problem*/, Iterate& /*trial_iterate*/) {
+Direction PrimalDualInteriorPointSubproblem::compute_second_order_correction(const NonlinearProblem& problem, Iterate& trial_iterate,
+      double primal_step_length) {
    DEBUG << "\nEntered SOC computation\n";
-   assert(false && "Not implemented yet");
-   /*
-   // shift the RHS with the values of the constraints at the trial iterate
-   problem.evaluate_constraints(trial_iterate, trial_iterate.subproblem_evaluations.constraints);
+
+   // scale the current constraint values with the primal step length
    for (size_t j: Range(problem.number_constraints)) {
-      this->augmented_system.rhs[problem.number_variables + j] -= trial_iterate.subproblem_evaluations.constraints[j];
+      this->augmented_system.rhs[problem.number_variables + j] *= primal_step_length;
+   }
+
+   // shift the RHS with the values of the constraints at the trial iterate
+   problem.evaluate_constraints(trial_iterate, this->evaluations.constraints);
+   for (size_t j: Range(problem.number_constraints)) {
+      this->augmented_system.rhs[problem.number_variables + j] -= this->evaluations.constraints[j];
    }
    DEBUG << "SOC RHS: "; print_vector(DEBUG, this->augmented_system.rhs, 0, problem.number_variables + problem.number_constraints);
 
@@ -236,7 +241,6 @@ Direction PrimalDualInteriorPointSubproblem::compute_second_order_correction(con
    this->number_subproblems_solved++;
    this->generate_primal_dual_direction(problem, trial_iterate);
    return this->direction;
-    */
 }
 
 void PrimalDualInteriorPointSubproblem::initialize_feasibility_problem() {

@@ -61,7 +61,7 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
             // (optional) second-order correction
             if (this->use_second_order_correction && trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility) {
                // compute a (temporary) SOC direction
-               Direction direction_soc = this->constraint_relaxation_strategy.compute_second_order_correction(trial_iterate);
+               Direction direction_soc = this->constraint_relaxation_strategy.compute_second_order_correction(trial_iterate, direction.primal_dual_step_length);
                if (direction_soc.status != SubproblemStatus::INFEASIBLE) {
                   // assemble the (temporary) SOC trial iterate
                   Iterate trial_iterate_soc = this->assemble_trial_iterate(model, current_iterate, direction_soc);

@@ -34,7 +34,7 @@ public:
    void exit_feasibility_problem(const NonlinearProblem& problem, Iterate& trial_iterate) override;
 
    [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) override;
-   [[nodiscard]] Direction compute_second_order_correction(const NonlinearProblem& problem, Iterate& trial_iterate) override;
+   [[nodiscard]] Direction compute_second_order_correction(const NonlinearProblem& problem, Iterate& trial_iterate, double primal_step_length) override;
 
    void set_auxiliary_measure(const NonlinearProblem& problem, Iterate& iterate) override;
    [[nodiscard]] double generate_predicted_auxiliary_reduction_model(const NonlinearProblem& problem,

@@ -30,7 +30,7 @@ public:
    [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) override;
    [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
          const std::vector<double>& initial_point) override;
-   [[nodiscard]] Direction compute_second_order_correction(Iterate& trial_iterate) override;
+   [[nodiscard]] Direction compute_second_order_correction(Iterate& trial_iterate, double primal_step_length) override;
 
    // trial iterate acceptance
    void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) override;

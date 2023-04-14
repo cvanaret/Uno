@@ -97,7 +97,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(St
          else if (this->use_second_order_correction && this->number_iterations == 1 && not this->solving_feasibility_problem &&
                   trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility) {
             // if full step is rejected, compute a (temporary) SOC direction
-            Direction direction_soc = this->constraint_relaxation_strategy.compute_second_order_correction(trial_iterate);
+            Direction direction_soc = this->constraint_relaxation_strategy.compute_second_order_correction(trial_iterate, direction.primal_dual_step_length);
             if (direction_soc.status != SubproblemStatus::INFEASIBLE) {
                // assemble the (temporary) SOC trial iterate
                Iterate trial_iterate_soc = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction_soc,
