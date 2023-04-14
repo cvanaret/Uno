@@ -43,6 +43,7 @@ PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(size_t max_
 }
 
 inline void PrimalDualInteriorPointSubproblem::initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) {
+   assert(problem.inequality_constraints.empty() && "The problem has inequality constraints. Create an instance of EqualityConstrainedModel");
    statistics.add_column("regularization", Statistics::double_width, this->statistics_regularization_column_order);
    statistics.add_column("barrier param.", Statistics::double_width, this->statistics_barrier_parameter_column_order);
 

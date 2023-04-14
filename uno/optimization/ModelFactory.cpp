@@ -16,10 +16,10 @@ std::unique_ptr<Model> ModelFactory::reformulate(std::unique_ptr<Model> model, I
 
    // if an equality-constrained problem is required (e.g. interior points or AL), reformulate the model with slacks
    if (options.get_string("subproblem") == "primal_dual_interior_point") {
-      if (not model->inequality_constraints.empty()) {
-         // introduce slacks to obtain equality constraints
-         model = std::make_unique<EqualityConstrainedModel>(std::move(model));
-      }
+      // generate an equality-constrained model by:
+      // - introducing slacks in inequality constraints
+      // - subtracting the (possibly nonzero) RHS of equality constraints
+      model = std::make_unique<EqualityConstrainedModel>(std::move(model));
       // slightly relax the bound constraints
       model = std::make_unique<BoundRelaxedModel>(std::move(model), options);
       first_iterate.set_number_variables(model->number_variables);
