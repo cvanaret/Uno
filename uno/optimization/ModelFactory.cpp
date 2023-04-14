@@ -16,8 +16,10 @@ std::unique_ptr<Model> ModelFactory::reformulate(std::unique_ptr<Model> model, I
 
    // if an equality-constrained problem is required (e.g. barrier or AL), reformulate the model with slacks
    if (options.get_string("subproblem") == "barrier") {
-      // introduce slacks to obtain equality constraints
-      model = std::make_unique<EqualityConstrainedModel>(std::move(model));
+      if (not model->inequality_constraints.empty()) {
+         // introduce slacks to obtain equality constraints
+         model = std::make_unique<EqualityConstrainedModel>(std::move(model));
+      }
       // slightly relax the bound constraints
       model = std::make_unique<BoundRelaxedModel>(std::move(model), options);
       first_iterate.set_number_variables(model->number_variables);
