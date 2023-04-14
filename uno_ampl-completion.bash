@@ -26,7 +26,7 @@ _uno_ampl_completions()
             return 0
             ;;
 		-subproblem)
-			local subproblems="QP LP barrier"
+			local subproblems="QP LP primal_dual_interior_point"
             COMPREPLY=( $(compgen -W "${subproblems}" -- ${cur}) )
             return 0
             ;;

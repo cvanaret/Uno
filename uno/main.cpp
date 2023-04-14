@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
          std::cout << "To choose a globalization mechanism, use the argument -mechanism [LS|TR]\n";
          std::cout << "To choose a constraint relaxation strategy, use the argument -constraint-relaxation [feasibility-restoration|l1-relaxation]\n";
          std::cout << "To choose a globalization strategy, use the argument -strategy [l1-merit|leyffer-filter-strategy|waechter-filter-strategy]\n";
-         std::cout << "To choose a subproblem method, use the argument -subproblem [QP|LP|barrier]\n";
+         std::cout << "To choose a subproblem method, use the argument -subproblem [QP|LP|primal_dual_interior_point]\n";
          std::cout << "To choose a preset, use the argument -preset [filtersqp|ipopt|byrd]\n";
          std::cout << "The options can be combined in the same command line. Autocompletion is possible.\n";
       }

@@ -82,7 +82,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["constraint-relaxation"] = "feasibility-restoration";
       options["strategy"] = "waechter-filter-strategy";
       options["filter_type"] = "standard";
-      options["subproblem"] = "barrier";
+      options["subproblem"] = "primal_dual_interior_point";
       options["filter_beta"] = "0.99999";
       options["filter_gamma"] = "1e-8";
       options["filter_delta"] = "1";

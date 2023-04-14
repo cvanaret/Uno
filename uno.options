@@ -37,7 +37,7 @@ statistics_complementarity_column_order 104
 statistics_stationarity_column_order 105
 
 ##### ingredients #####
-# default subproblem (QP|LP|barrier)
+# default subproblem (QP|LP|primal_dual_interior_point)
 subproblem QP
 
 # default globalization strategy (l1-merit|leyffer-filter-strategy|waechter-filter-strategy)

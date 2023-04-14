@@ -4,7 +4,7 @@
 #include "SubproblemFactory.hpp"
 #include "ingredients/subproblem/active_set/QPSubproblem.hpp"
 #include "ingredients/subproblem/active_set/LPSubproblem.hpp"
-#include "ingredients/subproblem/interior_point/InfeasibleInteriorPointSubproblem.hpp"
+#include "ingredients/subproblem/interior_point/PrimalDualInteriorPointSubproblem.hpp"
 #include "solvers/QP/QPSolverFactory.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolverFactory.hpp"
 
@@ -19,8 +19,8 @@ std::unique_ptr<Subproblem> SubproblemFactory::create(size_t max_number_variable
       return std::make_unique<LPSubproblem>(max_number_variables, max_number_constraints, options);
    }
    // interior-point method
-   else if (subproblem_type == "barrier") {
-      return std::make_unique<InfeasibleInteriorPointSubproblem>(max_number_variables, max_number_constraints, max_number_hessian_nonzeros, options);
+   else if (subproblem_type == "primal_dual_interior_point") {
+      return std::make_unique<PrimalDualInteriorPointSubproblem>(max_number_variables, max_number_constraints, max_number_hessian_nonzeros, options);
    }
    throw std::invalid_argument("Subproblem method " + subproblem_type + " is not supported");
 }
@@ -32,7 +32,7 @@ std::vector<std::string> SubproblemFactory::available_strategies() {
       strategies.emplace_back("LP");
    }
    if (not SymmetricIndefiniteLinearSolverFactory::available_solvers().empty()) {
-      strategies.emplace_back("barrier");
+      strategies.emplace_back("primal-dual interior-point");
    }
    return strategies;
 }

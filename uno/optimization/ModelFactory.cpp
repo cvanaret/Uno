@@ -14,8 +14,8 @@ std::unique_ptr<Model> ModelFactory::reformulate(std::unique_ptr<Model> model, I
       model = std::make_unique<ScaledModel>(std::move(model), first_iterate, options);
    }
 
-   // if an equality-constrained problem is required (e.g. barrier or AL), reformulate the model with slacks
-   if (options.get_string("subproblem") == "barrier") {
+   // if an equality-constrained problem is required (e.g. interior points or AL), reformulate the model with slacks
+   if (options.get_string("subproblem") == "primal_dual_interior_point") {
       if (not model->inequality_constraints.empty()) {
          // introduce slacks to obtain equality constraints
          model = std::make_unique<EqualityConstrainedModel>(std::move(model));
