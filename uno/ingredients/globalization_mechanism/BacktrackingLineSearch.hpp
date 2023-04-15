@@ -32,6 +32,7 @@ private:
    const bool use_second_order_correction;
    size_t total_number_iterations{0}; /*!< Total number of iterations (optimality and feasibility) */
    // statistics table
+   const int statistics_minor_column_order;
    const int statistics_SOC_column_order;
    const int statistics_LS_step_length_column_order;
 

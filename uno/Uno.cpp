@@ -71,8 +71,7 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
 
 Statistics Uno::create_statistics(const Model& model, const Options& options) {
    Statistics statistics(options);
-   statistics.add_column("major", Statistics::int_width, options.get_int("statistics_major_column_order"));
-   statistics.add_column("minor", Statistics::int_width, options.get_int("statistics_minor_column_order"));
+   statistics.add_column("iters", Statistics::int_width, options.get_int("statistics_major_column_order"));
    statistics.add_column("step norm", Statistics::double_width, options.get_int("statistics_step_norm_column_order"));
    statistics.add_column("objective", Statistics::double_width, options.get_int("statistics_objective_column_order"));
    if (model.is_constrained()) {
@@ -84,7 +83,7 @@ Statistics Uno::create_statistics(const Model& model, const Options& options) {
 }
 
 void Uno::add_statistics(Statistics& statistics, const Model& model, const Iterate& iterate, size_t major_iterations) {
-   statistics.add_statistic(std::string("major"), major_iterations);
+   statistics.add_statistic(std::string("iters"), major_iterations);
    if (iterate.is_objective_computed) {
       statistics.add_statistic("objective", iterate.evaluations.objective);
    }

@@ -13,6 +13,7 @@ BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& con
       minimum_step_length(options.get_double("LS_min_step_length")),
       tolerance(options.get_double("tolerance")),
       use_second_order_correction(options.get_bool("use_second_order_correction")),
+      statistics_minor_column_order(options.get_int("statistics_minor_column_order")),
       statistics_SOC_column_order(options.get_int("statistics_SOC_column_order")),
       statistics_LS_step_length_column_order(options.get_int("statistics_LS_step_length_column_order")) {
    // check the initial and minimal step lengths
@@ -21,8 +22,9 @@ BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& con
 }
 
 void BacktrackingLineSearch::initialize(Statistics& statistics, Iterate& first_iterate) {
+   statistics.add_column("LS iters", Statistics::int_width + 3, this->statistics_minor_column_order);
    if (this->use_second_order_correction) {
-      statistics.add_column("SOC", Statistics::char_width, this->statistics_SOC_column_order);
+      statistics.add_column("SOC", Statistics::char_width - 2, this->statistics_SOC_column_order);
    }
    statistics.add_column("LS step length", Statistics::double_width, this->statistics_LS_step_length_column_order);
 
@@ -105,6 +107,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(St
                if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate_soc, direction_soc,
                      direction_soc.primal_dual_step_length)) {
                   DEBUG << "Trial SOC step accepted\n";
+                  this->total_number_iterations += this->number_iterations;
                   this->set_statistics(statistics, direction_soc, direction_soc.primal_dual_step_length);
                   statistics.add_statistic("SOC", "x");
 
@@ -141,7 +144,7 @@ bool BacktrackingLineSearch::termination(double primal_dual_step_length) const {
 }
 
 void BacktrackingLineSearch::set_statistics(Statistics& statistics, const Direction& direction, double primal_dual_step_length) const {
-   statistics.add_statistic("minor", this->total_number_iterations);
+   statistics.add_statistic("LS iters", this->total_number_iterations);
    statistics.add_statistic("LS step length", primal_dual_step_length);
    statistics.add_statistic("step norm", primal_dual_step_length * direction.norm);
 }

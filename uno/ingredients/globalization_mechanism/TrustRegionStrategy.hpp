@@ -27,6 +27,7 @@ private:
    const double radius_reset_threshold;
    const bool use_second_order_correction;
    // statistics table
+   int statistics_minor_column_order;
    int statistics_SOC_column_order;
    int statistics_TR_radius_column_order;
 

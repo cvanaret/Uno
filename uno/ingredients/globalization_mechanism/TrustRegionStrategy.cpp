@@ -16,6 +16,7 @@ TrustRegionStrategy::TrustRegionStrategy(ConstraintRelaxationStrategy& constrain
       minimum_radius(options.get_double("TR_min_radius")),
       radius_reset_threshold(options.get_double("TR_radius_reset_threshold")),
       use_second_order_correction(options.get_bool("use_second_order_correction")),
+      statistics_minor_column_order(options.get_int("statistics_minor_column_order")),
       statistics_SOC_column_order(options.get_int("statistics_SOC_column_order")),
       statistics_TR_radius_column_order(options.get_int("statistics_TR_radius_column_order")) {
    assert(0 < this->radius && "The trust-region radius should be positive");
@@ -24,8 +25,9 @@ TrustRegionStrategy::TrustRegionStrategy(ConstraintRelaxationStrategy& constrain
 }
 
 void TrustRegionStrategy::initialize(Statistics& statistics, Iterate& first_iterate) {
+   statistics.add_column("TR iters", Statistics::int_width + 3, this->statistics_minor_column_order);
    if (this->use_second_order_correction) {
-      statistics.add_column("SOC", Statistics::char_width, this->statistics_SOC_column_order);
+      statistics.add_column("SOC", Statistics::char_width - 2, this->statistics_SOC_column_order);
    }
    statistics.add_column("TR radius", Statistics::double_width, this->statistics_TR_radius_column_order);
 
@@ -144,7 +146,7 @@ void TrustRegionStrategy::reset_active_trust_region_multipliers(const Model& mod
 }
 
 void TrustRegionStrategy::set_statistics(Statistics& statistics, const Direction& direction) {
-   statistics.add_statistic("minor", this->number_iterations);
+   statistics.add_statistic("TR iters", this->number_iterations);
    statistics.add_statistic("TR radius", this->radius);
    statistics.add_statistic("step norm", direction.norm);
 }
