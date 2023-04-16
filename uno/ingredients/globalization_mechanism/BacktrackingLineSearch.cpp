@@ -98,6 +98,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(St
          // (optional) second-order correction
          else if (this->use_second_order_correction && this->number_iterations == 1 && not this->solving_feasibility_problem &&
                   trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility) {
+            DEBUG << "\nEntered SOC computation\n";
             // if full step is rejected, compute a (temporary) SOC direction
             Direction direction_soc = this->constraint_relaxation_strategy.compute_second_order_correction(trial_iterate, direction.primal_dual_step_length);
             if (direction_soc.status != SubproblemStatus::INFEASIBLE) {

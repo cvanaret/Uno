@@ -79,7 +79,7 @@ protected:
    [[nodiscard]] double dual_fraction_to_boundary(const NonlinearProblem& problem, const Iterate& current_iterate, double tau);
    void assemble_augmented_system(Statistics& statistics, const NonlinearProblem& problem, const Iterate& current_iterate);
    void generate_augmented_rhs(const NonlinearProblem& problem, const Iterate& current_iterate);
-   void generate_primal_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate);
+   void assemble_primal_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate);
    void compute_bound_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate);
    void compute_least_square_multipliers(const NonlinearProblem& problem, Iterate& iterate);
 };

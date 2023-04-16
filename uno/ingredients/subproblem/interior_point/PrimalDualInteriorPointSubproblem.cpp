@@ -179,7 +179,7 @@ Direction PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const
    Subproblem::check_unboundedness(this->direction);
    assert(this->direction.status == SubproblemStatus::OPTIMAL && "The barrier subproblem was not solved to optimality");
    this->number_subproblems_solved++;
-   this->generate_primal_dual_direction(problem, current_iterate);
+   this->assemble_primal_dual_direction(problem, current_iterate);
    statistics.add_statistic("barrier param.", this->barrier_parameter());
 
    // determine if the direction is a "small direction" (Section 3.9 of the Ipopt paper) TODO
@@ -222,25 +222,19 @@ void PrimalDualInteriorPointSubproblem::assemble_augmented_system(Statistics& st
 
 Direction PrimalDualInteriorPointSubproblem::compute_second_order_correction(const NonlinearProblem& problem, Iterate& trial_iterate,
       double primal_step_length) {
-   DEBUG << "\nEntered SOC computation\n";
-
-   // scale the current constraint values with the primal step length
-   for (size_t j: Range(problem.number_constraints)) {
-      this->augmented_system.rhs[problem.number_variables + j] *= primal_step_length;
-   }
-
-   // shift the RHS with the values of the constraints at the trial iterate
+   // scale the current constraint values with the primal step length, then shift by the trial constraint values
    problem.evaluate_constraints(trial_iterate, this->evaluations.constraints);
    for (size_t j: Range(problem.number_constraints)) {
+      this->augmented_system.rhs[problem.number_variables + j] *= primal_step_length;
       this->augmented_system.rhs[problem.number_variables + j] -= this->evaluations.constraints[j];
    }
    DEBUG << "SOC RHS: "; print_vector(DEBUG, this->augmented_system.rhs, 0, problem.number_variables + problem.number_constraints);
 
-   // compute the solution (Δx, -Δλ)
+   // compute the primal-dual direction
    this->augmented_system.solve(*this->linear_solver);
    Subproblem::check_unboundedness(this->direction);
    this->number_subproblems_solved++;
-   this->generate_primal_dual_direction(problem, trial_iterate);
+   this->assemble_primal_dual_direction(problem, trial_iterate);
    return this->direction;
 }
 
@@ -303,7 +297,7 @@ void PrimalDualInteriorPointSubproblem::set_auxiliary_measure(const NonlinearPro
       barrier_terms += this->damping_factor*(problem.get_variable_upper_bound(i) - iterate.primals[i]);
    }
    barrier_terms *= this->barrier_parameter();
-   assert(not std::isnan(barrier_terms) && "The optimality measure is not an number.");
+   assert(not std::isnan(barrier_terms) && "The auxiliary measure is not an number.");
    iterate.progress.auxiliary_terms = barrier_terms;
 }
 
@@ -421,7 +415,7 @@ void PrimalDualInteriorPointSubproblem::generate_augmented_rhs(const NonlinearPr
    DEBUG << "RHS: "; print_vector(DEBUG, this->augmented_system.rhs, 0, problem.number_variables + problem.number_constraints); DEBUG << '\n';
 }
 
-void PrimalDualInteriorPointSubproblem::generate_primal_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate) {
+void PrimalDualInteriorPointSubproblem::assemble_primal_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate) {
    this->direction.set_dimensions(problem.number_variables, problem.number_constraints);
 
    // retrieve +Δλ (Nocedal p590)
