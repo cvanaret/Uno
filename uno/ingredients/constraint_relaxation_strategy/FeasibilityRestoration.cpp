@@ -16,13 +16,13 @@ FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options
       subproblem(SubproblemFactory::create(this->feasibility_problem.number_variables, this->feasibility_problem.number_constraints,
             this->feasibility_problem.get_maximum_number_hessian_nonzeros(), options)),
       // create the globalization strategies (one for each phase)
-      restoration_phase_strategy(GlobalizationStrategyFactory::create(options.get_string("strategy"), options)),
-      optimality_phase_strategy(GlobalizationStrategyFactory::create(options.get_string("strategy"), options)),
+      restoration_phase_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), options)),
+      optimality_phase_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), options)),
       l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
       tolerance(options.get_double("tolerance")),
       statistics_restoration_phase_column_order(options.get_int("statistics_restoration_phase_column_order")) {
    // for the moment, disable feasibility restoration + l1 merit
-   assert(options.get_string("strategy") != "l1-merit" &&
+   assert(options.get_string("globalization_strategy") != "l1_merit" &&
       "You cannot use an l1 merit function yet, since the objective multiplier is not properly steered.");
 }
 

@@ -78,11 +78,11 @@ Options get_default_options(const std::string& file_name) {
 void find_preset(const std::string& preset_name, Options& options) {
    // shortcuts for state-of-the-art combinations
    if (preset_name == "ipopt") {
-      options["mechanism"] = "LS";
-      options["constraint-relaxation"] = "feasibility-restoration";
-      options["strategy"] = "waechter-filter-strategy";
-      options["filter_type"] = "standard";
+      options["constraint_relaxation_strategy"] = "feasibility_restoration";
       options["subproblem"] = "primal_dual_interior_point";
+      options["globalization_mechanism"] = "LS";
+      options["globalization_strategy"] = "waechter_filter_strategy";
+      options["filter_type"] = "standard";
       options["filter_beta"] = "0.99999";
       options["filter_gamma"] = "1e-8";
       options["filter_delta"] = "1";
@@ -104,11 +104,11 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["terminate_with_small_step"] = "no";
    }
    else if (preset_name == "filtersqp") {
-      options["mechanism"] = "TR";
-      options["constraint-relaxation"] = "feasibility-restoration";
-      options["strategy"] = "leyffer-filter-strategy";
-      options["filter_type"] = "standard";
+      options["constraint_relaxation_strategy"] = "feasibility_restoration";
       options["subproblem"] = "QP";
+      options["globalization_mechanism"] = "TR";
+      options["globalization_strategy"] = "leyffer_filter_strategy";
+      options["filter_type"] = "standard";
       options["progress_norm"] = "L1";
       options["residual_norm"] = "L2";
       options["sparse_format"] = "CSC";
@@ -120,10 +120,10 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["small_step_threshold"] = "1e-6";
    }
    else if (preset_name == "byrd") {
-      options["mechanism"] = "LS";
-      options["constraint-relaxation"] = "l1-relaxation";
-      options["strategy"] = "l1-merit";
+      options["constraint_relaxation_strategy"] = "l1_relaxation";
       options["subproblem"] = "QP";
+      options["globalization_mechanism"] = "LS";
+      options["globalization_strategy"] = "l1_merit";
       options["l1_relaxation_initial_parameter"] = "1";
       options["LS_backtracking_ratio"] = "0.5";
       options["armijo_decrease_fraction"] = "1e-8";

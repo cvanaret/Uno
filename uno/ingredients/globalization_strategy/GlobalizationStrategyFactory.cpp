@@ -7,18 +7,18 @@
 #include "filter_strategy/WaechterFilterStrategy.hpp"
 
 std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& strategy_type, const Options& options) {
-   if (strategy_type == "l1-merit") {
+   if (strategy_type == "l1_merit") {
       return std::make_unique<l1MeritFunction>(options);
    }
-   else if (strategy_type == "leyffer-filter-strategy") {
+   else if (strategy_type == "leyffer_filter_strategy") {
       return std::make_unique<LeyfferFilterStrategy>(options);
    }
-   else if (strategy_type == "waechter-filter-strategy") {
+   else if (strategy_type == "waechter_filter_strategy") {
       return std::make_unique<WaechterFilterStrategy>(options);
    }
    throw std::invalid_argument("GlobalizationStrategy " + strategy_type + " is not supported");
 }
 
 std::vector<std::string> GlobalizationStrategyFactory::available_strategies() {
-   return {"l1-merit", "leyffer-filter-strategy", "waechter-filter-strategy"};
+   return {"l1_merit", "leyffer_filter_strategy", "waechter_filter_strategy"};
 }

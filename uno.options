@@ -37,17 +37,17 @@ statistics_complementarity_column_order 104
 statistics_stationarity_column_order 105
 
 ##### ingredients #####
+# default constraint relaxation strategy (feasibility_restoration|l1_relaxation)
+constraint_relaxation_strategy feasibility_restoration
+
 # default subproblem (QP|LP|primal_dual_interior_point)
 subproblem QP
 
-# default globalization strategy (l1-merit|leyffer-filter-strategy|waechter-filter-strategy)
-strategy leyffer-filter-strategy
-
-# default constraint relaxation strategy (feasibility-restoration|l1-relaxation)
-constraint-relaxation feasibility-restoration
+# default globalization strategy (l1_merit|leyffer_filter_strategy|waechter_filter_strategy)
+globalization_strategy leyffer_filter_strategy
 
 # default globalization mechanism (TR|LS)
-mechanism TR
+globalization_mechanism TR
 
 ##### main options #####
 # logging level (INFO|DEBUG)

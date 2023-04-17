@@ -49,8 +49,8 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
    Result result = uno.solve(*model, first_iterate, options);
 
    // print the optimization summary
-   std::string combination = options.get_string("mechanism") + " " + options.get_string("constraint-relaxation") + " " + options.get_string("strategy")
-         + " " + options.get_string("subproblem");
+   std::string combination = options.get_string("globalization_mechanism") + " " + options.get_string("constraint_relaxation_strategy") + " " +
+         options.get_string("globalization_strategy") + " " + options.get_string("subproblem");
    std::cout << "\nUno (" << combination << ")\n";
    std::cout << Timer::get_current_date();
    std::cout << "────────────────────────────────────────\n";
@@ -72,9 +72,9 @@ int main(int argc, char* argv[]) {
       if (std::string(argv[1]) == "-v") {
          std::cout << "Welcome in Uno 1.0\n";
          std::cout << "To solve an AMPL model, type ./uno_ampl path_to_file/file.nl\n";
-         std::cout << "To choose a globalization mechanism, use the argument -mechanism [LS|TR]\n";
-         std::cout << "To choose a constraint relaxation strategy, use the argument -constraint-relaxation [feasibility-restoration|l1-relaxation]\n";
-         std::cout << "To choose a globalization strategy, use the argument -strategy [l1-merit|leyffer-filter-strategy|waechter-filter-strategy]\n";
+         std::cout << "To choose a globalization mechanism, use the argument -globalization_mechanism [LS|TR]\n";
+         std::cout << "To choose a constraint relaxation strategy, use the argument -constraint_relaxation [feasibility-restoration|l1-relaxation]\n";
+         std::cout << "To choose a globalization strategy, use the argument -globalization_strategy [l1-merit|leyffer-filter-strategy|waechter-filter-strategy]\n";
          std::cout << "To choose a subproblem method, use the argument -subproblem [QP|LP|primal_dual_interior_point]\n";
          std::cout << "To choose a preset, use the argument -preset [filtersqp|ipopt|byrd]\n";
          std::cout << "The options can be combined in the same command line. Autocompletion is possible.\n";
