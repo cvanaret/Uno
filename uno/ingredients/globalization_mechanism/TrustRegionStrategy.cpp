@@ -56,13 +56,13 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
             this->set_statistics(statistics, direction);
 
             // increase the radius if trust region is active
-            this->increase_radius(direction.norm);
+            this->possibly_increase_radius(direction.norm);
             return std::make_tuple(std::move(trial_iterate), direction.norm);
          }
          else { // step rejected
             // (optional) second-order correction
             if (this->use_second_order_correction && trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility) {
-               DEBUG << "\nEntered SOC computation\n";
+               DEBUG << "Entered SOC computation\n";
                // compute a (temporary) SOC direction
                Direction direction_soc = this->constraint_relaxation_strategy.compute_second_order_correction(trial_iterate, direction.primal_dual_step_length);
                if (direction_soc.status != SubproblemStatus::INFEASIBLE) {
@@ -79,7 +79,7 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
                      return std::make_tuple(std::move(trial_iterate_soc), direction_soc.norm);
                   }
                }
-               DEBUG << "Trial SOC step discarded\n\n";
+               DEBUG << "Trial SOC step discarded, resuming radius decrease\n\n";
                statistics.add_statistic("SOC", "-");
                this->decrease_radius(direction.norm);
             }
@@ -111,7 +111,7 @@ Iterate TrustRegionStrategy::assemble_trial_iterate(const Model& model, Iterate&
    return trial_iterate;
 }
 
-void TrustRegionStrategy::increase_radius(double step_norm) {
+void TrustRegionStrategy::possibly_increase_radius(double step_norm) {
    if (step_norm >= this->radius - this->activity_tolerance) {
       this->radius *= this->increase_factor;
    }

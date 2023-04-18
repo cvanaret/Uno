@@ -32,7 +32,7 @@ private:
    int statistics_TR_radius_column_order;
 
    Iterate assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction);
-   void increase_radius(double step_norm);
+   void possibly_increase_radius(double step_norm);
    void decrease_radius(double step_norm);
    void decrease_radius();
    void reset_radius();

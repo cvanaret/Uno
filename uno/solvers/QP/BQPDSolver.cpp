@@ -5,6 +5,7 @@
 #include <algorithm>
 #include "BQPDSolver.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/EvaluationErrors.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Infinity.hpp"
 
@@ -134,6 +135,7 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
 }
 
 void BQPDSolver::check_termination([[maybe_unused]] BQPDStatus bqpd_status) {
+   /*
    assert(bqpd_status != BQPDStatus::BOUND_INCONSISTENCY && "BQPD failed with 'bound inconsistency' status");
    assert(bqpd_status != BQPDStatus::INCORRECT_PARAMETER && "BQPD failed with 'incorrect parameter' status");
    assert(bqpd_status != BQPDStatus::LP_INSUFFICIENT_SPACE && "BQPD failed with 'LP insufficient space' status");
@@ -141,6 +143,13 @@ void BQPDSolver::check_termination([[maybe_unused]] BQPDStatus bqpd_status) {
    assert(bqpd_status != BQPDStatus::SPARSE_INSUFFICIENT_SPACE && "BQPD failed with 'sparse insufficient space' status");
    assert(bqpd_status != BQPDStatus::MAX_RESTARTS_REACHED && "BQPD failed with 'max restarts reached' status");
    assert(bqpd_status != BQPDStatus::UNDEFINED && "BQPD failed with undefined status");
+    */
+   if (bqpd_status == BQPDStatus::BOUND_INCONSISTENCY || bqpd_status == BQPDStatus::INCORRECT_PARAMETER ||
+         bqpd_status == BQPDStatus::LP_INSUFFICIENT_SPACE || bqpd_status == BQPDStatus::HESSIAN_INSUFFICIENT_SPACE ||
+         bqpd_status == BQPDStatus::SPARSE_INSUFFICIENT_SPACE || bqpd_status == BQPDStatus::MAX_RESTARTS_REACHED ||
+         bqpd_status == BQPDStatus::UNDEFINED) {
+      throw SolverEvaluationError();
+   }
 }
 
 // save Hessian (in arbitrary format) to a "weak" CSC format: compressed columns but row indices are not sorted, nor unique

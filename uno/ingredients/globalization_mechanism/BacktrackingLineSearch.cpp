@@ -55,9 +55,9 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
       return this->backtrack_along_direction(statistics, current_iterate, direction);
    }
    catch (const StepLengthTooSmall& e) {
+      DEBUG << "The line search terminated with a step length smaller than " << this->minimum_step_length << '\n';
       // if step length is too small, revert to solving the feasibility problem (if we aren't already solving it)
       if (not this->solving_feasibility_problem && 0. < direction.multipliers.objective && this->tolerance < current_iterate.progress.infeasibility) {
-         DEBUG << "The line search terminated with a step length smaller than " << this->minimum_step_length << '\n';
          // reset the line search with the restoration solution
          direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, direction.primals);
          this->solving_feasibility_problem = true;
@@ -66,8 +66,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
          return {trial_iterate, step_norm};
       }
       else {
-         WARNING << "The feasibility problem failed to make progress\n";
-         throw std::runtime_error("Line search: maximum number of iterations reached\n");
+         throw std::runtime_error("Line search: maximum number of iterations reached, failed to make progress.\n");
       }
    }
 }
@@ -98,7 +97,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(St
          // (optional) second-order correction
          else if (this->use_second_order_correction && this->number_iterations == 1 && not this->solving_feasibility_problem &&
                   trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility) {
-            DEBUG << "\nEntered SOC computation\n";
+            DEBUG << "Entered SOC computation\n";
             // if full step is rejected, compute a (temporary) SOC direction
             Direction direction_soc = this->constraint_relaxation_strategy.compute_second_order_correction(trial_iterate, direction.primal_dual_step_length);
             if (direction_soc.status != SubproblemStatus::INFEASIBLE) {
@@ -118,7 +117,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(St
                   return std::make_tuple(std::move(trial_iterate_soc), direction_soc.norm);
                }
             }
-            DEBUG << "Trial SOC step discarded\n\n";
+            DEBUG << "Trial SOC step discarded, resuming backtrack\n\n";
             statistics.add_statistic("SOC", "-");
             this->decrease_step_length(primal_dual_step_length);
          }
