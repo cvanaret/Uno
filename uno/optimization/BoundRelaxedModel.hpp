@@ -35,6 +35,8 @@ public:
    void get_initial_dual_point(std::vector<double>& multipliers) const override;
    void postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const override;
 
+   [[nodiscard]] const std::vector<size_t>& get_linear_constraints() const override;
+
 private:
    std::unique_ptr<Model> original_model;
    const double relaxation_factor;
@@ -47,15 +49,11 @@ inline BoundRelaxedModel::BoundRelaxedModel(std::unique_ptr<Model> original_mode
    // the constraint repartition (inequality/equality, linear) is the same as in the original model
    this->equality_constraints.reserve(this->number_constraints);
    this->inequality_constraints.reserve(this->number_constraints);
-   this->linear_constraints.reserve(this->number_constraints);
    for (size_t j: this->original_model->equality_constraints) {
       this->equality_constraints.push_back(j);
    }
    for (size_t j: this->original_model->inequality_constraints) {
       this->inequality_constraints.push_back(j);
-   }
-   for (size_t j: this->original_model->linear_constraints) {
-      this->linear_constraints.push_back(j);
    }
 
    // the slacks are the same as in the original model
@@ -157,6 +155,10 @@ inline void BoundRelaxedModel::get_initial_dual_point(std::vector<double>& multi
 
 inline void BoundRelaxedModel::postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const {
    this->original_model->postprocess_solution(iterate, termination_status);
+}
+
+inline const std::vector<size_t>& BoundRelaxedModel::get_linear_constraints() const {
+   return this->original_model->get_linear_constraints();
 }
 
 #endif // UNO_BOUNDRELAXEDMODEL_H

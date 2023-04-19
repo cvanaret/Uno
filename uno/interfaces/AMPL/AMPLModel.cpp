@@ -308,6 +308,10 @@ void AMPLModel::postprocess_solution(Iterate& /*iterate*/, TerminationStatus /*t
    // do nothing
 }
 
+const std::vector<size_t>& AMPLModel::get_linear_constraints() const {
+   return this->linear_constraints;
+}
+
 void AMPLModel::generate_constraints() {
    for (size_t j: Range(this->number_constraints)) {
       double lb = (this->asl->i.LUrhs_ != nullptr) ? this->asl->i.LUrhs_[2 * j] : -INF<double>;

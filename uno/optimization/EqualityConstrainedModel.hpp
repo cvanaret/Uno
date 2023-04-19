@@ -38,6 +38,8 @@ public:
    void get_initial_dual_point(std::vector<double>& multipliers) const override;
    void postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const override;
 
+   [[nodiscard]] const std::vector<size_t>& get_linear_constraints() const override;
+
 protected:
    std::unique_ptr<Model> original_model;
    std::vector<size_t> inequality_constraint_of_slack;
@@ -228,6 +230,10 @@ inline void EqualityConstrainedModel::postprocess_solution(Iterate& iterate, Ter
 
    // discard the slacks
    iterate.number_variables = this->original_model->number_variables;
+}
+
+inline const std::vector<size_t>& EqualityConstrainedModel::get_linear_constraints() const {
+   return this->original_model->get_linear_constraints();
 }
 
 #endif // UNO_EQUALITYCONSTRAINEDMODEL_H

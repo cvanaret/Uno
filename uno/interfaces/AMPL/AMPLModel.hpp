@@ -51,6 +51,8 @@ public:
    void get_initial_dual_point(std::vector<double>& multipliers) const override;
    void postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const override;
 
+   [[nodiscard]] const std::vector<size_t>& get_linear_constraints() const override;
+
 private:
    // private constructor to pass the dimensions to the Model base constructor
    AMPLModel(const std::string& file_name, ASL* asl);
@@ -66,6 +68,8 @@ private:
    std::vector<FunctionType> constraint_type; /*!< Types of the constraints (LINEAR, QUADRATIC, NONLINEAR) */
    std::vector<BoundType> constraint_status; /*!< Status of the constraints (EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES,
  * UNBOUNDED) */
+
+   std::vector<size_t> linear_constraints;
 
    void generate_variables();
    void generate_constraints();

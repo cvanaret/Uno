@@ -51,7 +51,6 @@ public:
    // data structures to access certain types of variables and constraints
    std::vector<size_t> equality_constraints{};
    std::vector<size_t> inequality_constraints{};
-   std::vector<size_t> linear_constraints;
    SparseVector<size_t> slacks;
    std::vector<size_t> lower_bounded_variables{}; // indices of the lower-bounded variables
    std::vector<size_t> upper_bounded_variables{}; // indices of the upper-bounded variables
@@ -86,6 +85,9 @@ public:
    virtual void get_initial_primal_point(std::vector<double>& x) const = 0;
    virtual void get_initial_dual_point(std::vector<double>& multipliers) const = 0;
    virtual void postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const = 0;
+
+   // constraints
+   [[nodiscard]] virtual const std::vector<size_t>& get_linear_constraints() const = 0;
 
    // auxiliary functions
    static void determine_bounds_types(std::vector<Interval>& variables_bounds, std::vector<BoundType>& status);

@@ -36,6 +36,8 @@ public:
    void get_initial_dual_point(std::vector<double>& multipliers) const override;
    void postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const override;
 
+   [[nodiscard]] const std::vector<size_t>& get_linear_constraints() const override;
+
 private:
    std::unique_ptr<Model> original_model;
    Scaling scaling;
@@ -65,15 +67,11 @@ inline ScaledModel::ScaledModel(std::unique_ptr<Model> original_model, Iterate& 
    // the constraint repartition (inequality/equality, linear) is the same as in the original model
    this->equality_constraints.reserve(this->number_constraints);
    this->inequality_constraints.reserve(this->number_constraints);
-   this->linear_constraints.reserve(this->number_constraints);
    for (size_t j: this->original_model->equality_constraints) {
       this->equality_constraints.push_back(j);
    }
    for (size_t j: this->original_model->inequality_constraints) {
       this->inequality_constraints.push_back(j);
-   }
-   for (size_t j: this->original_model->linear_constraints) {
-      this->linear_constraints.push_back(j);
    }
 
    // the slacks are the same as in the original model
@@ -211,6 +209,10 @@ inline void ScaledModel::postprocess_solution(Iterate& iterate, TerminationStatu
       iterate.multipliers.lower_bounds[i] /= this->scaling.get_objective_scaling();
       iterate.multipliers.upper_bounds[i] /= this->scaling.get_objective_scaling();
    }
+}
+
+inline const std::vector<size_t>& ScaledModel::get_linear_constraints() const {
+   return this->original_model->get_linear_constraints();
 }
 
 #endif // UNO_SCALEDMODEL_H
