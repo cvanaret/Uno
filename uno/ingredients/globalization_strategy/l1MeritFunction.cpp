@@ -23,6 +23,9 @@ bool l1MeritFunction::is_iterate_acceptable(const Iterate& /*trial_iterate*/, co
    double constrained_predicted_reduction = predicted_reduction.optimality(objective_multiplier) + predicted_reduction.auxiliary_terms +
          predicted_reduction.infeasibility;
    DEBUG << "Constrained predicted reduction: " << constrained_predicted_reduction << '\n';
+   if (constrained_predicted_reduction <= 0.) {
+      WARNING << YELLOW << "The direction is not a descent direction for the merit function. You should decrease the penalty parameter.\n" << RESET;
+   }
    // compute current exact penalty
    const double current_exact_merit = current_progress.optimality(objective_multiplier) + current_progress.auxiliary_terms + current_progress.infeasibility;
    const double trial_exact_merit = trial_progress.optimality(objective_multiplier) + trial_progress.auxiliary_terms + trial_progress.infeasibility;
