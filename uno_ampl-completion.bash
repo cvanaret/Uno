@@ -16,12 +16,12 @@ _uno_ampl_completions()
             return 0
             ;;
         -globalization_strategy)
-			local globalization_strategies="l1-merit leyffer-filter-strategy waechter-filter-strategy"
+			local globalization_strategies="l1_merit leyffer_filter_strategy waechter_filter_strategy"
             COMPREPLY=( $(compgen -W "${globalization_strategies}" -- ${cur}) )
             return 0
             ;;
         -constraint_relaxation_strategy)
-			local constraint_relaxation_strategies="feasibility-restoration l1-relaxation"
+			local constraint_relaxation_strategies="feasibility_restoration l1_relaxation"
             COMPREPLY=( $(compgen -W "${constraint_relaxation_strategies}" -- ${cur}) )
             return 0
             ;;
