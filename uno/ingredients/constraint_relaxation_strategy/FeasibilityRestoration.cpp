@@ -21,9 +21,6 @@ FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options
       l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
       tolerance(options.get_double("tolerance")),
       statistics_restoration_phase_column_order(options.get_int("statistics_restoration_phase_column_order")) {
-   // for the moment, disable feasibility restoration + l1 merit
-   assert(options.get_string("globalization_strategy") != "l1_merit" &&
-      "You cannot use an l1 merit function yet, since the objective multiplier is not properly steered.");
 }
 
 void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& first_iterate) {
@@ -178,7 +175,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
       };
       // invoke the globalization strategy for acceptance
       GlobalizationStrategy& current_phase_strategy = this->current_globalization_strategy();
-      accept = current_phase_strategy.is_iterate_acceptable(current_iterate.progress, trial_iterate.progress,
+      accept = current_phase_strategy.is_iterate_acceptable(trial_iterate, current_iterate.progress, trial_iterate.progress,
             predicted_reduction, this->current_reformulated_problem().get_objective_multiplier());
    }
 

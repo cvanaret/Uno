@@ -243,7 +243,7 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
             this->subproblem->generate_predicted_auxiliary_reduction_model(this->relaxed_problem, current_iterate, direction, step_length)
       };
       // invoke the globalization strategy for acceptance
-      accept = this->globalization_strategy->is_iterate_acceptable(current_iterate.progress, trial_iterate.progress,
+      accept = this->globalization_strategy->is_iterate_acceptable(trial_iterate, current_iterate.progress, trial_iterate.progress,
             predicted_reduction, this->penalty_parameter);
    }
 

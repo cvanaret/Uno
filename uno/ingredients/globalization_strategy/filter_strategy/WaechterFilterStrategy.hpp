@@ -11,8 +11,8 @@ public:
    explicit WaechterFilterStrategy(const Options& options);
 
    void initialize(const Iterate& first_iterate) override;
-   [[nodiscard]] bool is_iterate_acceptable(const ProgressMeasures& current_progress_measures, const ProgressMeasures& trial_progress_measures,
-         const ProgressMeasures& predicted_reduction, double objective_multiplier) override;
+   [[nodiscard]] bool is_iterate_acceptable(const Iterate& trial_iterate, const ProgressMeasures& current_progress_measures,
+         const ProgressMeasures& trial_progress_measures, const ProgressMeasures& predicted_reduction, double objective_multiplier) override;
 
 protected:
    double initial_infeasibility{INF<double>};

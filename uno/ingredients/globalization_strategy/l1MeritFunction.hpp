@@ -11,8 +11,8 @@ public:
    explicit l1MeritFunction(const Options& options);
 
    void initialize(const Iterate& first_iterate) override;
-   [[nodiscard]] bool is_iterate_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
-         const ProgressMeasures& predicted_reduction, double objective_multiplier) override;
+   [[nodiscard]] bool is_iterate_acceptable(const Iterate& trial_iterate, const ProgressMeasures& current_progress,
+         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) override;
    [[nodiscard]] bool is_infeasibility_acceptable(double infeasibility_measure) const override;
    void reset() override;
    void register_current_progress(const ProgressMeasures& current_progress) override;
