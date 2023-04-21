@@ -36,13 +36,7 @@ void FilterStrategy::register_current_progress(const ProgressMeasures& current_p
 }
 
 bool FilterStrategy::is_infeasibility_acceptable(double infeasibility_measure) const {
-   if (not this->filter->is_empty()) {
-      // accept if the infeasibility measure improves upon the smallest filter infeasibility
-      return (infeasibility_measure < this->filter->get_smallest_infeasibility());
-   }
-   else { // filter empty
-      return this->filter->acceptable_wrt_upper_bound(infeasibility_measure);
-   }
+   return (infeasibility_measure < this->filter->get_smallest_infeasibility());
 }
 
 bool FilterStrategy::switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const {

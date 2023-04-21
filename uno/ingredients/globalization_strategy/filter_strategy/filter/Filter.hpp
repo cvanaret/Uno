@@ -22,11 +22,9 @@ public:
    virtual ~Filter() = default;
 
    void reset();
-   [[nodiscard]] bool is_empty() const;
    [[nodiscard]] double get_smallest_infeasibility() const;
    virtual void add(double infeasibility_measure, double optimality_measure);
    virtual bool acceptable(double infeasibility_measure, double optimality_measure);
-   [[nodiscard]] bool acceptable_wrt_upper_bound(double infeasibility_measure) const;
    virtual bool acceptable_wrt_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure,
          double trial_optimality_measure);
    virtual double compute_actual_reduction(double current_optimality_measure, double current_infeasibility_measure, double trial_optimality_measure);
@@ -40,6 +38,8 @@ protected:
    size_t number_entries{0};
    const FilterParameters parameters; /*!< Set of parameters */
 
+   [[nodiscard]] bool is_empty() const;
+   [[nodiscard]] bool acceptable_wrt_upper_bound(double infeasibility_measure) const;
    void left_shift(size_t start, size_t shift_size);
    void right_shift(size_t start, size_t shift_size);
 };

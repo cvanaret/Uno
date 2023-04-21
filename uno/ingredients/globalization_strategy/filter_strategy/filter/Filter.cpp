@@ -27,11 +27,14 @@ bool Filter::is_empty() const {
    return (this->number_entries == 0);
 }
 
-// precondition: filter not empty
 double Filter::get_smallest_infeasibility() const {
-   // left-most entry has the lowest infeasibility
-   // relax it with the envelope coefficient
-   return this->parameters.beta * this->infeasibility[0];
+   if (not this->is_empty()) {
+      // left-most entry has the lowest infeasibility. Relax it with the envelope coefficient
+      return this->parameters.beta * this->infeasibility[0];
+   }
+   else { // filter empty
+      return this->parameters.beta * this->upper_bound;
+   }
 }
 
 void Filter::left_shift(size_t start, size_t shift_size) {
