@@ -36,8 +36,8 @@ void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& first_i
    ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, first_iterate, this->residual_norm);
 
    // initialize the globalization strategies
-   this->restoration_phase_strategy->initialize(first_iterate);
-   this->optimality_phase_strategy->initialize(first_iterate);
+   this->restoration_phase_strategy->initialize(statistics, first_iterate);
+   this->optimality_phase_strategy->initialize(statistics, first_iterate);
 }
 
 Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate) {
@@ -175,7 +175,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
       };
       // invoke the globalization strategy for acceptance
       GlobalizationStrategy& current_phase_strategy = this->current_globalization_strategy();
-      accept = current_phase_strategy.is_iterate_acceptable(trial_iterate, current_iterate.progress, trial_iterate.progress,
+      accept = current_phase_strategy.is_iterate_acceptable(statistics, trial_iterate, current_iterate.progress, trial_iterate.progress,
             predicted_reduction, this->current_reformulated_problem().get_objective_multiplier());
    }
 

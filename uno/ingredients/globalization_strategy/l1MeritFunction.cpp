@@ -3,12 +3,12 @@
 
 #include "l1MeritFunction.hpp"
 
-l1MeritFunction::l1MeritFunction(const Options& options):
-      GlobalizationStrategy(options) {
+l1MeritFunction::l1MeritFunction(const Options& options): GlobalizationStrategy(options),
+      statistics_penalty_parameter_column_order(options.get_int("statistics_penalty_parameter_column_order")) {
 }
 
-void l1MeritFunction::initialize(const Iterate& /*first_iterate*/) {
-   // TODO: add penalty parameter column
+void l1MeritFunction::initialize(Statistics& statistics, const Iterate& /*first_iterate*/) {
+   statistics.add_column("penalty param.", Statistics::double_width, this->statistics_penalty_parameter_column_order);
 }
 
 void l1MeritFunction::reset() {
@@ -17,7 +17,7 @@ void l1MeritFunction::reset() {
 void l1MeritFunction::register_current_progress(const ProgressMeasures& /*current_progress*/) {
 }
 
-bool l1MeritFunction::is_iterate_acceptable(const Iterate& /*trial_iterate*/, const ProgressMeasures& current_progress,
+bool l1MeritFunction::is_iterate_acceptable(Statistics& statistics, const Iterate& /*trial_iterate*/, const ProgressMeasures& current_progress,
       const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) {
    // predicted reduction with all contributions. This quantity should be positive (= negative directional derivative)
    double constrained_predicted_reduction = predicted_reduction.optimality(objective_multiplier) + predicted_reduction.auxiliary_terms +
@@ -38,6 +38,7 @@ bool l1MeritFunction::is_iterate_acceptable(const Iterate& /*trial_iterate*/, co
 
    GlobalizationStrategy::check_finiteness(current_progress, objective_multiplier);
    GlobalizationStrategy::check_finiteness(trial_progress, objective_multiplier);
+   statistics.add_statistic("penalty param.", objective_multiplier);
 
    // Armijo sufficient decrease condition
    const bool accept = this->armijo_sufficient_decrease(constrained_predicted_reduction, actual_reduction);

@@ -10,8 +10,8 @@ class l1MeritFunction : public GlobalizationStrategy {
 public:
    explicit l1MeritFunction(const Options& options);
 
-   void initialize(const Iterate& first_iterate) override;
-   [[nodiscard]] bool is_iterate_acceptable(const Iterate& trial_iterate, const ProgressMeasures& current_progress,
+   void initialize(Statistics& statistics, const Iterate& first_iterate) override;
+   [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Iterate& trial_iterate, const ProgressMeasures& current_progress,
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) override;
    [[nodiscard]] bool is_infeasibility_acceptable(double infeasibility_measure) const override;
    void reset() override;
@@ -19,6 +19,8 @@ public:
 
 protected:
    double smallest_known_infeasibility{INF<double>};
+   // statistics table
+   int statistics_penalty_parameter_column_order;
 };
 
 #endif // UNO_MERITFUNCTION_H

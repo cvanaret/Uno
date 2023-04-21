@@ -48,7 +48,7 @@ void l1Relaxation::initialize(Statistics& statistics, Iterate& first_iterate) {
    ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->relaxed_problem, first_iterate, this->residual_norm);
 
    // initialize the globalization strategy
-   this->globalization_strategy->initialize(first_iterate);
+   this->globalization_strategy->initialize(statistics, first_iterate);
 }
 
 Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate) {
@@ -243,7 +243,7 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
             this->subproblem->generate_predicted_auxiliary_reduction_model(this->relaxed_problem, current_iterate, direction, step_length)
       };
       // invoke the globalization strategy for acceptance
-      accept = this->globalization_strategy->is_iterate_acceptable(trial_iterate, current_iterate.progress, trial_iterate.progress,
+      accept = this->globalization_strategy->is_iterate_acceptable(statistics, trial_iterate, current_iterate.progress, trial_iterate.progress,
             predicted_reduction, this->penalty_parameter);
    }
 
