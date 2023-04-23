@@ -181,7 +181,7 @@ void SymmetricIndefiniteLinearSystem<T>::regularize_matrix(Statistics& statistic
 
 template <typename T>
 void SymmetricIndefiniteLinearSystem<T>::solve(SymmetricIndefiniteLinearSolver<T>& linear_solver) {
-   linear_solver.solve(*this->matrix, this->rhs, this->solution);
+   linear_solver.solve_indefinite_system(*this->matrix, this->rhs, this->solution);
 }
 
 /*

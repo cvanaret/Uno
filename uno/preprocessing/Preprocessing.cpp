@@ -44,7 +44,7 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
    /* solve the system */
    std::vector<double> solution(matrix.dimension);
    linear_solver.factorize(matrix);
-   linear_solver.solve(matrix, rhs, solution);
+   linear_solver.solve_indefinite_system(matrix, rhs, solution);
    DEBUG << "Solution: "; print_vector(DEBUG, solution, 0, matrix.dimension);
 
    // if least-square multipliers too big, discard them. Otherwise, keep them

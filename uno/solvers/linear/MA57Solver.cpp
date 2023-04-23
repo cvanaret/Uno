@@ -104,7 +104,7 @@ void MA57Solver::do_numerical_factorization(const SymmetricMatrix<double>& matri
          /* out */ this->rinfo.data());
 }
 
-void MA57Solver::solve(const SymmetricMatrix<double>& matrix, const std::vector<double>& rhs, std::vector<double>& result) {
+void MA57Solver::solve_indefinite_system(const SymmetricMatrix<double>& matrix, const std::vector<double>& rhs, std::vector<double>& result) {
    // solve
    const int n = static_cast<int>(matrix.dimension);
    const int lrhs = n; // integer, length of rhs

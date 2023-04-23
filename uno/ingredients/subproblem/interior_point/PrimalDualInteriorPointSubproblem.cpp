@@ -304,6 +304,7 @@ void PrimalDualInteriorPointSubproblem::set_auxiliary_measure(const NonlinearPro
 double PrimalDualInteriorPointSubproblem::generate_predicted_auxiliary_reduction_model(const NonlinearProblem& problem,
       const Iterate& current_iterate, const Direction& direction, double step_length) const {
    const double directional_derivative = this->compute_barrier_term_directional_derivative(problem, current_iterate, direction);
+   // TODO: take exponent of (-directional_derivative), see IPOPT paper
    return step_length * (-directional_derivative);
    // }, "α*(μ*X^{-1} e^T d)"};
 }
