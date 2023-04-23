@@ -12,9 +12,7 @@ BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& con
       backtracking_ratio(options.get_double("LS_backtracking_ratio")),
       minimum_step_length(options.get_double("LS_min_step_length")),
       tolerance(options.get_double("tolerance")),
-      use_second_order_correction(options.get_bool("use_second_order_correction")),
       statistics_minor_column_order(options.get_int("statistics_minor_column_order")),
-      statistics_SOC_column_order(options.get_int("statistics_SOC_column_order")),
       statistics_LS_step_length_column_order(options.get_int("statistics_LS_step_length_column_order")) {
    // check the initial and minimal step lengths
    assert(0 < this->backtracking_ratio && this->backtracking_ratio < 1. && "The LS backtracking ratio should be in (0, 1)");
@@ -23,9 +21,6 @@ BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& con
 
 void BacktrackingLineSearch::initialize(Statistics& statistics, Iterate& first_iterate) {
    statistics.add_column("LS iters", Statistics::int_width + 3, this->statistics_minor_column_order);
-   if (this->use_second_order_correction) {
-      statistics.add_column("SOC", Statistics::char_width - 2, this->statistics_SOC_column_order);
-   }
    statistics.add_column("LS step length", Statistics::double_width, this->statistics_LS_step_length_column_order);
 
    // generate the initial point
@@ -94,35 +89,9 @@ std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(St
             double step_norm = primal_dual_step_length * direction.norm;
             return std::make_tuple(std::move(trial_iterate), step_norm);
          }
-         // (optional) second-order correction
-         else if (this->use_second_order_correction && this->number_iterations == 1 && not this->solving_feasibility_problem &&
-                  trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility) {
-            DEBUG << "Entered SOC computation\n";
-            // if full step is rejected, compute a (temporary) SOC direction
-            Direction direction_soc = this->constraint_relaxation_strategy.compute_second_order_correction(trial_iterate, direction.primal_dual_step_length);
-            if (direction_soc.status != SubproblemStatus::INFEASIBLE) {
-               // assemble the (temporary) SOC trial iterate
-               Iterate trial_iterate_soc = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction_soc,
-                     direction_soc.primal_dual_step_length, direction.bound_dual_step_length);
-               if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate_soc, direction_soc,
-                     direction_soc.primal_dual_step_length)) {
-                  DEBUG << "Trial SOC step accepted\n";
-                  this->total_number_iterations += this->number_iterations;
-                  this->set_statistics(statistics, direction_soc, direction_soc.primal_dual_step_length);
-                  statistics.add_statistic("SOC", "x");
-
-                  // let the subproblem know the accepted iterate
-                  trial_iterate_soc.multipliers.lower_bounds = trial_iterate.multipliers.lower_bounds;
-                  trial_iterate_soc.multipliers.upper_bounds = trial_iterate.multipliers.upper_bounds;
-                  return std::make_tuple(std::move(trial_iterate_soc), direction_soc.norm);
-               }
-            }
-            DEBUG << "Trial SOC step discarded, resuming backtrack\n\n";
-            statistics.add_statistic("SOC", "-");
-            this->decrease_step_length(primal_dual_step_length);
-         }
          else { // trial iterate not acceptable
             this->decrease_step_length(primal_dual_step_length);
+            // TODO: may still be accepted as solution if the termination criteria are satisfied
          }
       }
       catch (const EvaluationError& e) {

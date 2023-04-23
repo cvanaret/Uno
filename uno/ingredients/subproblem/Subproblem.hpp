@@ -26,7 +26,6 @@ public:
    // virtual methods implemented by subclasses
    virtual void initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) = 0;
    virtual Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) = 0;
-   virtual Direction compute_second_order_correction(const NonlinearProblem& model, Iterate& trial_iterate, double primal_step_length) = 0;
 
    void set_trust_region_radius(double new_trust_region_radius);
    virtual void initialize_feasibility_problem() = 0;

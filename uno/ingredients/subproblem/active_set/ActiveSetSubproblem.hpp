@@ -29,7 +29,6 @@ protected:
    void set_variable_displacement_bounds(const NonlinearProblem& problem, const Iterate& current_iterate);
    void set_linearized_constraint_bounds(const NonlinearProblem& problem, const std::vector<double>& current_constraints);
    static void compute_dual_displacements(const NonlinearProblem& problem, const Iterate& current_iterate, Direction& direction);
-   void shift_linearized_constraint_bounds(const NonlinearProblem& problem, const std::vector<double>& trial_constraints);
 };
 
 #endif // UNO_ACTIVESETSUBPROBLEM_H

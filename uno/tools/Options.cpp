@@ -94,7 +94,6 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["LS_min_step_length"] = "5e-7";
       options["barrier_tau_min"] = "0.99";
       options["barrier_damping_factor"] = "1e-5";
-      options["use_second_order_correction"] = "yes";
       options["l1_constraint_violation_coefficient"] = "1000.";
       options["progress_norm"] = "L1";
       options["residual_norm"] = "INF";

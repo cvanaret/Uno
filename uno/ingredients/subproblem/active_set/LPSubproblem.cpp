@@ -33,18 +33,6 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem
    return this->solve_LP(problem, current_iterate);
 }
 
-Direction LPSubproblem::compute_second_order_correction(const NonlinearProblem& /*problem*/, Iterate& /*trial_iterate*/,
-      double /*primal_step_length*/) {
-   // TODO warm start
-   assert(false && "Not implemented yet");
-   /*
-   // shift the RHS with the values of the constraints at the trial iterate
-   problem.evaluate_constraints(trial_iterate, trial_iterate.subproblem_evaluations.constraints);
-   ActiveSetSubproblem::shift_linearized_constraint_bounds(problem, trial_iterate.subproblem_evaluations.constraints);
-   return this->solve_LP(problem, trial_iterate);
-   */
-}
-
 Direction LPSubproblem::solve_LP(const NonlinearProblem& problem, Iterate& iterate) {
    Direction direction = this->solver->solve_LP(problem.number_variables, problem.number_constraints, this->variable_displacement_bounds,
          this->linearized_constraint_bounds, this->evaluations.objective_gradient, this->evaluations.constraint_jacobian,

@@ -24,7 +24,6 @@ public:
    [[nodiscard]] virtual Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) = 0;
    [[nodiscard]] virtual Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
          const std::vector<double>& initial_point) = 0;
-   [[nodiscard]] virtual Direction compute_second_order_correction(Iterate& trial_iterate, double primal_step_length) = 0;
 
    // trial iterate acceptance
    virtual void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) = 0;

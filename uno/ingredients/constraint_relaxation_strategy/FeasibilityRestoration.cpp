@@ -87,15 +87,6 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
    return this->solve_feasibility_problem(statistics, current_iterate);
 }
 
-Direction FeasibilityRestoration::compute_second_order_correction(Iterate& trial_iterate, double primal_step_length) {
-   // evaluate the constraints for the second-order correction
-   Direction soc_direction = this->subproblem->compute_second_order_correction(this->current_reformulated_problem(), trial_iterate, primal_step_length);
-   soc_direction.objective_multiplier = this->current_reformulated_problem().get_objective_multiplier();
-   soc_direction.norm = norm_inf(soc_direction.primals, Range(this->optimality_problem.number_variables));
-   DEBUG << soc_direction << '\n';
-   return soc_direction;
-}
-
 void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) {
    // refresh the auxiliary measure for the current iterate
    if (this->subproblem->subproblem_definition_changed) {

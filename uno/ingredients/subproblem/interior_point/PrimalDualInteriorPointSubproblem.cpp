@@ -220,24 +220,6 @@ void PrimalDualInteriorPointSubproblem::assemble_augmented_system(Statistics& st
    this->generate_augmented_rhs(problem, current_iterate);
 }
 
-Direction PrimalDualInteriorPointSubproblem::compute_second_order_correction(const NonlinearProblem& problem, Iterate& trial_iterate,
-      double primal_step_length) {
-   // scale the current constraint values with the primal step length, then shift by the trial constraint values
-   problem.evaluate_constraints(trial_iterate, this->evaluations.constraints);
-   for (size_t j: Range(problem.number_constraints)) {
-      this->augmented_system.rhs[problem.number_variables + j] *= primal_step_length;
-      this->augmented_system.rhs[problem.number_variables + j] -= this->evaluations.constraints[j];
-   }
-   DEBUG << "SOC RHS: "; print_vector(DEBUG, this->augmented_system.rhs, 0, problem.number_variables + problem.number_constraints);
-
-   // compute the primal-dual direction
-   this->augmented_system.solve(*this->linear_solver);
-   Subproblem::check_unboundedness(this->direction);
-   this->number_subproblems_solved++;
-   this->assemble_primal_dual_direction(problem, trial_iterate);
-   return this->direction;
-}
-
 void PrimalDualInteriorPointSubproblem::initialize_feasibility_problem() {
    // if we're building the feasibility subproblem, temporarily update the objective multiplier
    this->solving_feasibility_problem = true;

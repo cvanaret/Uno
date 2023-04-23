@@ -85,15 +85,6 @@ Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, Iterat
    return this->solve_feasibility_problem(statistics, current_iterate);
 }
 
-Direction l1Relaxation::compute_second_order_correction(Iterate& trial_iterate, double primal_step_length) {
-   // evaluate the constraints for the second-order correction
-   Direction soc_direction = this->subproblem->compute_second_order_correction(this->relaxed_problem, trial_iterate, primal_step_length);
-   soc_direction.objective_multiplier = this->penalty_parameter;
-   soc_direction.norm = norm_inf(soc_direction.primals, Range(this->original_model.number_variables));
-   DEBUG << soc_direction << '\n';
-   return soc_direction;
-}
-
 Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate& current_iterate) {
    // stage a: compute the step within trust region
    Direction direction = this->solve_relaxed_problem(statistics, current_iterate, this->penalty_parameter);

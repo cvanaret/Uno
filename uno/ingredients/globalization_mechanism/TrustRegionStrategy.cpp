@@ -15,9 +15,7 @@ TrustRegionStrategy::TrustRegionStrategy(ConstraintRelaxationStrategy& constrain
       activity_tolerance(options.get_double("TR_activity_tolerance")),
       minimum_radius(options.get_double("TR_min_radius")),
       radius_reset_threshold(options.get_double("TR_radius_reset_threshold")),
-      use_second_order_correction(options.get_bool("use_second_order_correction")),
       statistics_minor_column_order(options.get_int("statistics_minor_column_order")),
-      statistics_SOC_column_order(options.get_int("statistics_SOC_column_order")),
       statistics_TR_radius_column_order(options.get_int("statistics_TR_radius_column_order")) {
    assert(0 < this->radius && "The trust-region radius should be positive");
    assert(1. < this->increase_factor && "The trust-region increase factor should be > 1");
@@ -26,9 +24,6 @@ TrustRegionStrategy::TrustRegionStrategy(ConstraintRelaxationStrategy& constrain
 
 void TrustRegionStrategy::initialize(Statistics& statistics, Iterate& first_iterate) {
    statistics.add_column("TR iters", Statistics::int_width + 3, this->statistics_minor_column_order);
-   if (this->use_second_order_correction) {
-      statistics.add_column("SOC", Statistics::char_width - 2, this->statistics_SOC_column_order);
-   }
    statistics.add_column("TR radius", Statistics::double_width, this->statistics_TR_radius_column_order);
 
    // generate the initial point
@@ -59,39 +54,14 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Stat
             this->possibly_increase_radius(direction.norm);
             return std::make_tuple(std::move(trial_iterate), direction.norm);
          }
-         else { // step rejected
-            // (optional) second-order correction
-            if (this->use_second_order_correction && trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility) {
-               DEBUG << "Entered SOC computation\n";
-               // compute a (temporary) SOC direction
-               Direction direction_soc = this->constraint_relaxation_strategy.compute_second_order_correction(trial_iterate, direction.primal_dual_step_length);
-               if (direction_soc.status != SubproblemStatus::INFEASIBLE) {
-                  // assemble the (temporary) SOC trial iterate
-                  Iterate trial_iterate_soc = this->assemble_trial_iterate(model, current_iterate, direction_soc);
-                  if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate_soc, direction_soc, 1.)) {
-                     DEBUG << "Trial SOC step accepted\n";
-                     this->set_statistics(statistics, direction_soc);
-                     statistics.add_statistic("SOC", "x");
-
-                     // let the subproblem know the accepted iterate
-                     trial_iterate_soc.multipliers.lower_bounds = trial_iterate.multipliers.lower_bounds;
-                     trial_iterate_soc.multipliers.upper_bounds = trial_iterate.multipliers.upper_bounds;
-                     return std::make_tuple(std::move(trial_iterate_soc), direction_soc.norm);
-                  }
-               }
-               DEBUG << "Trial SOC step discarded, resuming radius decrease\n\n";
-               statistics.add_statistic("SOC", "-");
-               this->decrease_radius(direction.norm);
-            }
-            else {
-               // step was rejected. It may still be accepted as solution if the termination criteria are satisfied
-               this->decrease_radius(direction.norm);
+         else { // trial iterate not acceptable
+            this->decrease_radius(direction.norm);
+            // TODO: may still be accepted as solution if the termination criteria are satisfied
 /*
-               if (this->termination()) {
-                  return std::make_tuple(std::move(trial_iterate), direction.norm);
-               }
-  */
+            if (this->termination()) {
+               return std::make_tuple(std::move(trial_iterate), direction.norm);
             }
+  */
          }
       }
       // if an error occurs (evaluation error or unstable inertia), decrease the radius

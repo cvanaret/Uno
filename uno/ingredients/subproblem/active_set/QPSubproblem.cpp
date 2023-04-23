@@ -45,18 +45,6 @@ Direction QPSubproblem::solve(Statistics& statistics, const NonlinearProblem& pr
    return this->solve_QP(problem, current_iterate);
 }
 
-// TODO warm start
-Direction QPSubproblem::compute_second_order_correction(const NonlinearProblem& problem, Iterate& trial_iterate, double primal_step_length) {
-   // shift the RHS with the values of the constraints at the trial iterate
-   problem.evaluate_constraints(trial_iterate, this->evaluations.constraints);
-   for (size_t j: Range(problem.number_constraints)) {
-      this->linearized_constraint_bounds[j].lb *= primal_step_length;
-      this->linearized_constraint_bounds[j].ub *= primal_step_length;
-   }
-   ActiveSetSubproblem::shift_linearized_constraint_bounds(problem, this->evaluations.constraints);
-   return this->solve_QP(problem, trial_iterate);
-}
-
 Direction QPSubproblem::solve_QP(const NonlinearProblem& problem, Iterate& iterate) {
    Direction direction = this->solver->solve_QP(problem.number_variables, problem.number_constraints, this->variable_displacement_bounds,
          this->linearized_constraint_bounds, this->evaluations.objective_gradient, this->evaluations.constraint_jacobian,
