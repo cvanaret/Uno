@@ -33,7 +33,7 @@ std::vector<std::string> SubproblemFactory::available_strategies() {
       strategies.emplace_back("LP");
    }
    if (not SymmetricIndefiniteLinearSolverFactory::available_solvers().empty()) {
-      strategies.emplace_back("primal-dual interior-point");
+      strategies.emplace_back("primal_dual_interior_point");
    }
    return strategies;
 }

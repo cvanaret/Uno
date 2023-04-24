@@ -8,7 +8,7 @@ QPSubproblem::QPSubproblem(Statistics& statistics, size_t max_number_variables, 
          const Options& options) :
       ActiveSetSubproblem(max_number_variables, max_number_constraints),
       use_regularization(options.get_string("globalization_mechanism") != "TR"),
-      // if no trust region is used, the problem should be convexified to guarantee boundedness + descent direction
+      // if no trust region is used, the problem should be convexified to guarantee boundedness
       hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), max_number_variables,
             max_number_hessian_nonzeros + max_number_variables, this->use_regularization, options)),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
