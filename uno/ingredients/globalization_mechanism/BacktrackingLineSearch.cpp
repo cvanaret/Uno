@@ -22,7 +22,6 @@ BacktrackingLineSearch::BacktrackingLineSearch(Statistics& statistics, Constrain
 }
 
 void BacktrackingLineSearch::initialize(Iterate& initial_iterate) {
-   // generate the initial point
    this->constraint_relaxation_strategy.initialize(initial_iterate);
 }
 
@@ -38,7 +37,7 @@ Direction BacktrackingLineSearch::compute_direction(Statistics& statistics, Iter
    }
 }
 
-std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(Statistics& statistics, const Model& /*model*/, Iterate& current_iterate) {
+std::tuple<Iterate, double> BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const Model& /*model*/, Iterate& current_iterate) {
    // compute the direction
    Direction direction = this->compute_direction(statistics, current_iterate);
    this->solving_feasibility_problem = false;
@@ -65,9 +64,9 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(S
    }
 }
 
+// backtrack on the primal-dual step length computed by the subproblem
 std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, Iterate& current_iterate,
       const Direction& direction) {
-   // backtrack on the primal-dual step length computed by the subproblem
    // most subproblem methods return a step length of 1. Interior-point methods however apply the fraction-to-boundary condition
    double primal_dual_step_length = direction.primal_dual_step_length;
    this->number_iterations = 0;
@@ -90,7 +89,6 @@ std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(St
          }
          else { // trial iterate not acceptable
             this->decrease_step_length(primal_dual_step_length);
-            // TODO: may still be accepted as solution if the termination criteria are satisfied
          }
       }
       catch (const EvaluationError& e) {
@@ -98,6 +96,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(St
          this->decrease_step_length(primal_dual_step_length);
       }
    }
+   // TODO: may still be accepted as solution if the termination criteria are satisfied
    throw StepLengthTooSmall();
 }
 

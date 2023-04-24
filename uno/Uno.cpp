@@ -41,14 +41,14 @@ Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_i
          DEBUG << "### Outer iteration " << major_iterations << '\n';
 
          // compute an acceptable iterate by solving a subproblem at the current point
-         auto [new_iterate, step_norm] = this->globalization_mechanism.compute_acceptable_iterate(statistics, model, current_iterate);
+         auto [next_iterate, step_norm] = this->globalization_mechanism.compute_next_iterate(statistics, model, current_iterate);
 
-         // compute the status of the new iterate
-         termination_status = this->check_termination(model, new_iterate, step_norm);
-         Uno::add_statistics(statistics, model, new_iterate, major_iterations);
+         // compute the status of the next iterate
+         termination_status = this->check_termination(model, next_iterate, step_norm);
+         Uno::add_statistics(statistics, model, next_iterate, major_iterations);
          if (Logger::logger_level == INFO) statistics.print_current_line();
 
-         current_iterate = std::move(new_iterate);
+         current_iterate = std::move(next_iterate);
       }
    }
    catch (std::exception& exception) {

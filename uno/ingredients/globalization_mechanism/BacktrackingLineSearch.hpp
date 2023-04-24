@@ -17,7 +17,7 @@ public:
    BacktrackingLineSearch(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);
 
    void initialize(Iterate& initial_iterate) override;
-   [[nodiscard]] std::tuple<Iterate, double> compute_acceptable_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) override;
+   [[nodiscard]] std::tuple<Iterate, double> compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) override;
 
 private:
    bool solving_feasibility_problem{false};

@@ -25,12 +25,11 @@ TrustRegionStrategy::TrustRegionStrategy(Statistics& statistics, ConstraintRelax
 }
 
 void TrustRegionStrategy::initialize(Iterate& initial_iterate) {
-   // generate the initial point
    this->constraint_relaxation_strategy.set_trust_region_radius(this->radius);
    this->constraint_relaxation_strategy.initialize(initial_iterate);
 }
 
-std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) {
+std::tuple<Iterate, double> TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) {
    this->number_iterations = 0;
    this->reset_radius();
 

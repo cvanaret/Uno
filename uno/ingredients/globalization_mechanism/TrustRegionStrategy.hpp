@@ -11,7 +11,7 @@ public:
    TrustRegionStrategy(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);
 
    void initialize(Iterate& initial_iterate) override;
-   std::tuple<Iterate, double> compute_acceptable_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) override;
+   std::tuple<Iterate, double> compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) override;
 
 private:
    double radius; /*!< Current trust region radius */
