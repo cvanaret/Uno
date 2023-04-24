@@ -159,11 +159,11 @@ void AMPLModel::evaluate_constraint_gradient(const std::vector<double>& x, size_
    // partial derivatives in ampl_gradient in same order as variables in this->asl_->i.Cgrad_[j]
    gradient.clear();
    cgrad* ampl_variables_tmp = this->asl->i.Cgrad_[j];
-   size_t cpt = 0;
+   size_t index = 0;
    while (ampl_variables_tmp != nullptr) {
-      gradient.insert(static_cast<size_t>(ampl_variables_tmp->varno), this->ampl_tmp_gradient[cpt]);
+      gradient.insert(static_cast<size_t>(ampl_variables_tmp->varno), this->ampl_tmp_gradient[index]);
       ampl_variables_tmp = ampl_variables_tmp->next;
-      cpt++;
+      index++;
    }
    this->asl->i.congrd_mode = congrd_mode_backup;
 }

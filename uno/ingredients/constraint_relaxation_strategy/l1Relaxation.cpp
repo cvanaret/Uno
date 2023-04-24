@@ -196,7 +196,8 @@ bool l1Relaxation::objective_sufficient_decrease(const Iterate& current_iterate,
    return (decrease_objective >= this->parameters.epsilon2 * lowest_decrease_objective);
 }
 
-void l1Relaxation::compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& /*direction*/) {
+void l1Relaxation::compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& /*direction*/,
+      double /*step_length*/) {
    // refresh the progress measures for the current iterate
    if (this->subproblem->subproblem_definition_changed) {
       DEBUG << "The subproblem definition changed, the auxiliary measure is recomputed\n";
@@ -215,7 +216,7 @@ void l1Relaxation::compute_progress_measures(Iterate& current_iterate, Iterate& 
 
 bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
       double step_length) {
-   this->compute_progress_measures(current_iterate, trial_iterate, direction);
+   this->compute_progress_measures(current_iterate, trial_iterate, direction, step_length);
 
    bool accept = false;
    if (this->is_small_step(direction)) {

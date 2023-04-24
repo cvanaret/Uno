@@ -26,7 +26,7 @@ public:
       override;
 
    // trial iterate acceptance
-   void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) override;
+   void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length) override;
    [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length) override;
 

@@ -45,7 +45,8 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_next_iterate(Statistics
          // assemble the trial iterate by taking a full step
          Iterate trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction);
          // check whether the trial step is accepted
-         if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, 1.)) {
+         if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction,
+               direction.primal_dual_step_length)) {
             this->set_statistics(statistics, direction);
 
             // increase the radius if trust region is active

@@ -84,7 +84,8 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
    return this->solve_feasibility_problem(statistics, current_iterate);
 }
 
-void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) {
+void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+      double step_length) {
    // refresh the auxiliary measure for the current iterate
    if (this->subproblem->subproblem_definition_changed) {
       DEBUG << "The subproblem definition changed, the auxiliary measure is recomputed\n";
@@ -96,7 +97,8 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
 
    // possibly go from restoration phase to optimality phase
    if (this->current_phase == Phase::FEASIBILITY_RESTORATION &&
-         ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate, direction, 1.) <= this->tolerance) {
+         ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate, direction,
+               step_length) <= this->tolerance) {
       // evaluate measure of infeasibility (in restoration phase definition, it corresponds to the "scaled optimality" quantity)
       this->set_optimality_measure(trial_iterate);
       // if the infeasibility improves upon the best known infeasibility of the globalization strategy
@@ -144,7 +146,7 @@ void FeasibilityRestoration::switch_to_optimality(Iterate& current_iterate, Iter
 
 bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
       double step_length) {
-   this->compute_progress_measures(current_iterate, trial_iterate, direction);
+   this->compute_progress_measures(current_iterate, trial_iterate, direction, step_length);
 
    bool accept = false;
    if (this->is_small_step(direction)) {

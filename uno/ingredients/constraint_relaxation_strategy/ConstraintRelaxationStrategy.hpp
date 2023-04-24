@@ -26,7 +26,7 @@ public:
          const std::vector<double>& initial_point) = 0;
 
    // trial iterate acceptance
-   virtual void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) = 0;
+   virtual void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length) = 0;
    [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length) = 0;
 
