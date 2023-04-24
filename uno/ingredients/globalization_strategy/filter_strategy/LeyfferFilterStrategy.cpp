@@ -3,7 +3,7 @@
 
 #include "LeyfferFilterStrategy.hpp"
 
-LeyfferFilterStrategy::LeyfferFilterStrategy(const Options& options): FilterStrategy(options) {
+LeyfferFilterStrategy::LeyfferFilterStrategy(Statistics& /*statistics*/, const Options& options): FilterStrategy(options) {
 }
 
 /* check acceptability of step(s) (filter & sufficient reduction)

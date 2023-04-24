@@ -13,7 +13,7 @@ class Uno {
 public:
    Uno(GlobalizationMechanism& globalization_mechanism, const Options& options);
 
-   [[nodiscard]] Result solve(const Model& model, Iterate& first_iterate, const Options& options);
+   [[nodiscard]] Result solve(Statistics& statistics, const Model& model, Iterate& initial_iterate);
    static void print_available_strategies();
 
 private:
@@ -23,7 +23,6 @@ private:
    const bool terminate_with_small_step;
    const double small_step_threshold;
 
-   static Statistics create_statistics(const Model& model, const Options& options);
    static void add_statistics(Statistics& statistics, const Model& model, const Iterate& iterate, size_t major_iterations);
    [[nodiscard]] bool termination_criterion(TerminationStatus current_status, size_t iteration) const;
    [[nodiscard]] TerminationStatus check_termination(const Model& model, Iterate& current_iterate, double step_norm) const;

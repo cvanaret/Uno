@@ -16,7 +16,7 @@ public:
    ConstraintRelaxationStrategy(const Model& model, const Options& options);
    virtual ~ConstraintRelaxationStrategy() = default;
 
-   virtual void initialize(Statistics& statistics, Iterate& first_iterate) = 0;
+   virtual void initialize(Iterate& initial_iterate) = 0;
    virtual void set_trust_region_radius(double trust_region_radius) = 0;
 
    // direction computation

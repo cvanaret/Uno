@@ -22,12 +22,12 @@ struct InteriorPointParameters {
 
 class PrimalDualInteriorPointSubproblem : public Subproblem {
 public:
-   PrimalDualInteriorPointSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros,
-         const Options& options);
+   PrimalDualInteriorPointSubproblem(Statistics& statistics, size_t max_number_variables, size_t max_number_constraints,
+         size_t max_number_hessian_nonzeros, const Options& options);
    ~PrimalDualInteriorPointSubproblem() override = default;
 
    void set_initial_point(const std::vector<double>& initial_point) override;
-   void initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) override;
+   void generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) override;
 
    void initialize_feasibility_problem() override;
    void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
@@ -59,10 +59,6 @@ protected:
    std::vector<double> upper_delta_z{};
 
    bool solving_feasibility_problem{false};
-
-   // statistics table
-   const int statistics_regularization_column_order;
-   const int statistics_barrier_parameter_column_order;
 
    [[nodiscard]] double barrier_parameter() const;
    void relax_variable_bounds(const NonlinearProblem& problem, const Iterate& current_iterate);

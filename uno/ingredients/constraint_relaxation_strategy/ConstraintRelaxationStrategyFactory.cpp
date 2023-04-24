@@ -5,13 +5,14 @@
 #include "FeasibilityRestoration.hpp"
 #include "l1Relaxation.hpp"
 
-std::unique_ptr<ConstraintRelaxationStrategy> ConstraintRelaxationStrategyFactory::create(const Model& model, const Options& options) {
+std::unique_ptr<ConstraintRelaxationStrategy> ConstraintRelaxationStrategyFactory::create(Statistics& statistics, const Model& model,
+      const Options& options) {
    const std::string constraint_relaxation_type = options.get_string("constraint_relaxation_strategy");
    if (constraint_relaxation_type == "feasibility_restoration") {
-      return std::make_unique<FeasibilityRestoration>(model, options);
+      return std::make_unique<FeasibilityRestoration>(statistics, model, options);
    }
    else if (constraint_relaxation_type == "l1_relaxation") {
-      return std::make_unique<l1Relaxation>(model, options);
+      return std::make_unique<l1Relaxation>(statistics, model, options);
    }
    throw std::invalid_argument("ConstraintRelaxationStrategy " + constraint_relaxation_type + " is not supported");
 }

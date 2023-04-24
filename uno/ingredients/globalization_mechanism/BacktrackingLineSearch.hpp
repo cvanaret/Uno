@@ -12,16 +12,11 @@ struct StepLengthTooSmall : public std::exception {
    }
 };
 
-/*! \class LineSearch
- * \brief Line-search
- *
- *  Line-search strategy
- */
 class BacktrackingLineSearch : public GlobalizationMechanism {
 public:
-   BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);
+   BacktrackingLineSearch(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);
 
-   void initialize(Statistics& statistics, Iterate& first_iterate) override;
+   void initialize(Iterate& initial_iterate) override;
    [[nodiscard]] std::tuple<Iterate, double> compute_acceptable_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) override;
 
 private:
@@ -30,9 +25,6 @@ private:
    const double minimum_step_length;
    const double tolerance;
    size_t total_number_iterations{0}; /*!< Total number of iterations (optimality and feasibility) */
-   // statistics table
-   const int statistics_minor_column_order;
-   const int statistics_LS_step_length_column_order;
 
    [[nodiscard]] Direction compute_direction(Statistics& statistics, Iterate& current_iterate);
    [[nodiscard]] std::tuple<Iterate, double> backtrack_along_direction(Statistics& statistics, Iterate& current_iterate, const Direction& direction);
@@ -40,7 +32,6 @@ private:
    [[nodiscard]] bool termination(double primal_dual_step_length) const;
    void set_statistics(Statistics& statistics, const Direction& direction, double primal_dual_step_length) const;
    void print_iteration(double primal_dual_step_length);
-
 };
 
 #endif // UNO_BACKTRACKINGLINESEARCH_H

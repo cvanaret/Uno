@@ -3,12 +3,12 @@
 
 #include "WaechterFilterStrategy.hpp"
 
-WaechterFilterStrategy::WaechterFilterStrategy(const Options& options): FilterStrategy(options) {
+WaechterFilterStrategy::WaechterFilterStrategy(Statistics& /*statistics*/, const Options& options): FilterStrategy(options) {
 }
 
-void WaechterFilterStrategy::initialize(Statistics& statistics, const Iterate& first_iterate) {
-   this->initial_infeasibility = first_iterate.residuals.infeasibility;
-   FilterStrategy::initialize(statistics, first_iterate);
+void WaechterFilterStrategy::initialize(const Iterate& initial_iterate) {
+   this->initial_infeasibility = initial_iterate.residuals.infeasibility;
+   FilterStrategy::initialize(initial_iterate);
 }
 
 /* check acceptability of step(s) (filter & sufficient reduction)

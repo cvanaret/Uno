@@ -6,16 +6,11 @@
 
 #include "GlobalizationMechanism.hpp"
 
-/*! \class TrustRegionStrategy
- * \brief Trust region strategy
- *
- *  Trust region strategy
- */
 class TrustRegionStrategy : public GlobalizationMechanism {
 public:
-   TrustRegionStrategy(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);
+   TrustRegionStrategy(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);
 
-   void initialize(Statistics& statistics, Iterate& first_iterate) override;
+   void initialize(Iterate& initial_iterate) override;
    std::tuple<Iterate, double> compute_acceptable_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) override;
 
 private:
@@ -25,9 +20,6 @@ private:
    const double activity_tolerance;
    const double minimum_radius;
    const double radius_reset_threshold;
-   // statistics table
-   int statistics_minor_column_order;
-   int statistics_TR_radius_column_order;
 
    Iterate assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction);
    void possibly_increase_radius(double step_norm);

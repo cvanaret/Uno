@@ -7,28 +7,27 @@
 #include "linear_algebra/Vector.hpp"
 #include "tools/Logger.hpp"
 
-TrustRegionStrategy::TrustRegionStrategy(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options) :
+TrustRegionStrategy::TrustRegionStrategy(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
+      const Options& options) :
       GlobalizationMechanism(constraint_relaxation_strategy),
       radius(options.get_double("TR_radius")),
       increase_factor(options.get_double("TR_increase_factor")),
       decrease_factor(options.get_double("TR_decrease_factor")),
       activity_tolerance(options.get_double("TR_activity_tolerance")),
       minimum_radius(options.get_double("TR_min_radius")),
-      radius_reset_threshold(options.get_double("TR_radius_reset_threshold")),
-      statistics_minor_column_order(options.get_int("statistics_minor_column_order")),
-      statistics_TR_radius_column_order(options.get_int("statistics_TR_radius_column_order")) {
+      radius_reset_threshold(options.get_double("TR_radius_reset_threshold")) {
    assert(0 < this->radius && "The trust-region radius should be positive");
    assert(1. < this->increase_factor && "The trust-region increase factor should be > 1");
    assert(1. < this->decrease_factor && "The trust-region decrease factor should be > 1");
+
+   statistics.add_column("TR iters", Statistics::int_width + 3, options.get_int("statistics_minor_column_order"));
+   statistics.add_column("TR radius", Statistics::double_width, options.get_int("statistics_TR_radius_column_order"));
 }
 
-void TrustRegionStrategy::initialize(Statistics& statistics, Iterate& first_iterate) {
-   statistics.add_column("TR iters", Statistics::int_width + 3, this->statistics_minor_column_order);
-   statistics.add_column("TR radius", Statistics::double_width, this->statistics_TR_radius_column_order);
-
+void TrustRegionStrategy::initialize(Iterate& initial_iterate) {
    // generate the initial point
    this->constraint_relaxation_strategy.set_trust_region_radius(this->radius);
-   this->constraint_relaxation_strategy.initialize(statistics, first_iterate);
+   this->constraint_relaxation_strategy.initialize(initial_iterate);
 }
 
 std::tuple<Iterate, double> TrustRegionStrategy::compute_acceptable_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) {

@@ -20,8 +20,8 @@ struct l1RelaxationParameters {
 
 class l1Relaxation : public ConstraintRelaxationStrategy {
 public:
-   l1Relaxation(const Model& model, const Options& options);
-   void initialize(Statistics& statistics, Iterate& first_iterate) override;
+   l1Relaxation(Statistics& statistics, const Model& model, const Options& options);
+   void initialize(Iterate& initial_iterate) override;
 
    void set_trust_region_radius(double trust_region_radius) override;
 
@@ -50,8 +50,6 @@ protected:
    const double l1_constraint_violation_coefficient;
    // preallocated temporary multipliers
    Multipliers trial_multipliers;
-   // statistics table
-   int statistics_penalty_parameter_column_order;
 
    Direction solve_subproblem(Statistics& statistics, Iterate& current_iterate, const NonlinearProblem& problem);
    Direction solve_relaxed_problem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter);

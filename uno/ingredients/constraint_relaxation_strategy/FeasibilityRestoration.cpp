@@ -7,37 +7,34 @@
 #include "ingredients/globalization_strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 
-FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options& options) :
+FeasibilityRestoration::FeasibilityRestoration(Statistics& statistics, const Model& model, const Options& options) :
       ConstraintRelaxationStrategy(model, options),
       // create the (optimality phase) optimality problem (= original model)
       optimality_problem(model),
       // create the (restoration phase) feasibility problem (objective multiplier = 0)
       feasibility_problem(model, 0., options.get_double("l1_constraint_violation_coefficient")),
-      subproblem(SubproblemFactory::create(this->feasibility_problem.number_variables, this->feasibility_problem.number_constraints,
+      subproblem(SubproblemFactory::create(statistics, this->feasibility_problem.number_variables, this->feasibility_problem.number_constraints,
             this->feasibility_problem.get_maximum_number_hessian_nonzeros(), options)),
       // create the globalization strategies (one for each phase)
-      restoration_phase_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), options)),
-      optimality_phase_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), options)),
+      restoration_phase_strategy(GlobalizationStrategyFactory::create(statistics, options.get_string("globalization_strategy"), options)),
+      optimality_phase_strategy(GlobalizationStrategyFactory::create(statistics, options.get_string("globalization_strategy"), options)),
       l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
-      tolerance(options.get_double("tolerance")),
-      statistics_restoration_phase_column_order(options.get_int("statistics_restoration_phase_column_order")) {
+      tolerance(options.get_double("tolerance")) {
+   statistics.add_column("phase", Statistics::int_width, options.get_int("statistics_restoration_phase_column_order"));
 }
 
-void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& first_iterate) {
-   statistics.add_column("phase", Statistics::int_width, this->statistics_restoration_phase_column_order);
-
-   // initialize the subproblem
-   this->subproblem->initialize(statistics, this->optimality_problem, first_iterate);
+void FeasibilityRestoration::initialize(Iterate& initial_iterate) {
+   this->subproblem->generate_initial_iterate(this->optimality_problem, initial_iterate);
 
    // compute the progress measures and residuals of the initial point
-   this->set_infeasibility_measure(first_iterate);
-   this->set_optimality_measure(first_iterate);
-   this->subproblem->set_auxiliary_measure(this->optimality_problem, first_iterate);
-   ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, first_iterate, this->residual_norm);
+   this->set_infeasibility_measure(initial_iterate);
+   this->set_optimality_measure(initial_iterate);
+   this->subproblem->set_auxiliary_measure(this->optimality_problem, initial_iterate);
+   ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, initial_iterate, this->residual_norm);
 
    // initialize the globalization strategies
-   this->restoration_phase_strategy->initialize(statistics, first_iterate);
-   this->optimality_phase_strategy->initialize(statistics, first_iterate);
+   this->restoration_phase_strategy->initialize(initial_iterate);
+   this->optimality_phase_strategy->initialize(initial_iterate);
 }
 
 Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate) {

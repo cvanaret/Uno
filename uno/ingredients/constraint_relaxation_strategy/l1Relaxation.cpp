@@ -12,15 +12,15 @@
  * http://epubs.siam.org/doi/pdf/10.1137/080738222
  */
 
-l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
+l1Relaxation::l1Relaxation(Statistics& statistics, const Model& model, const Options& options) :
       ConstraintRelaxationStrategy(model, options),
       // create the l1 feasibility problem (objective multiplier = 0)
       feasibility_problem(model, 0., options.get_double("l1_constraint_violation_coefficient")),
       // create the l1 relaxed problem
       relaxed_problem(model, options.get_double("l1_relaxation_initial_parameter"), options.get_double("l1_constraint_violation_coefficient")),
-      subproblem(SubproblemFactory::create(this->relaxed_problem.number_variables, this->relaxed_problem.number_constraints,
+      subproblem(SubproblemFactory::create(statistics, this->relaxed_problem.number_variables, this->relaxed_problem.number_constraints,
             this->relaxed_problem.get_maximum_number_hessian_nonzeros(), options)),
-      globalization_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), options)),
+      globalization_strategy(GlobalizationStrategyFactory::create(statistics, options.get_string("globalization_strategy"), options)),
       penalty_parameter(options.get_double("l1_relaxation_initial_parameter")),
       parameters({
          options.get_bool("l1_relaxation_fixed_parameter"),
@@ -30,25 +30,22 @@ l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
          options.get_double("l1_relaxation_residual_small_threshold")
       }),
       l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
-      trial_multipliers(this->relaxed_problem.number_variables, model.number_constraints),
-      statistics_penalty_parameter_column_order(options.get_int("statistics_penalty_parameter_column_order")) {
+      trial_multipliers(this->relaxed_problem.number_variables, model.number_constraints) {
+   statistics.add_column("penalty param.", Statistics::double_width, options.get_int("statistics_penalty_parameter_column_order"));
 }
 
-void l1Relaxation::initialize(Statistics& statistics, Iterate& first_iterate) {
-   statistics.add_column("penalty param.", Statistics::double_width, this->statistics_penalty_parameter_column_order);
-
-   this->subproblem->set_elastic_variable_values(this->relaxed_problem, first_iterate);
-   // initialize the subproblem
-   this->subproblem->initialize(statistics, this->relaxed_problem, first_iterate);
+void l1Relaxation::initialize(Iterate& initial_iterate) {
+   this->subproblem->set_elastic_variable_values(this->relaxed_problem, initial_iterate);
+   this->subproblem->generate_initial_iterate(this->relaxed_problem, initial_iterate);
 
    // compute the progress measures and residuals of the initial point
-   this->set_infeasibility_measure(first_iterate);
-   this->set_optimality_measure(first_iterate);
-   this->subproblem->set_auxiliary_measure(this->relaxed_problem, first_iterate);
-   ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->relaxed_problem, first_iterate, this->residual_norm);
+   this->set_infeasibility_measure(initial_iterate);
+   this->set_optimality_measure(initial_iterate);
+   this->subproblem->set_auxiliary_measure(this->relaxed_problem, initial_iterate);
+   ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->relaxed_problem, initial_iterate, this->residual_norm);
 
    // initialize the globalization strategy
-   this->globalization_strategy->initialize(statistics, first_iterate);
+   this->globalization_strategy->initialize(initial_iterate);
 }
 
 Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate) {

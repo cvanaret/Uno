@@ -7,24 +7,23 @@
 #include "BacktrackingLineSearch.hpp"
 #include "tools/Logger.hpp"
 
-BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options):
+BacktrackingLineSearch::BacktrackingLineSearch(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
+      const Options& options):
       GlobalizationMechanism(constraint_relaxation_strategy),
       backtracking_ratio(options.get_double("LS_backtracking_ratio")),
       minimum_step_length(options.get_double("LS_min_step_length")),
-      tolerance(options.get_double("tolerance")),
-      statistics_minor_column_order(options.get_int("statistics_minor_column_order")),
-      statistics_LS_step_length_column_order(options.get_int("statistics_LS_step_length_column_order")) {
+      tolerance(options.get_double("tolerance")) {
    // check the initial and minimal step lengths
    assert(0 < this->backtracking_ratio && this->backtracking_ratio < 1. && "The LS backtracking ratio should be in (0, 1)");
    assert(0 < this->minimum_step_length && this->minimum_step_length < 1. && "The LS minimum step length should be in (0, 1)");
+
+   statistics.add_column("LS iters", Statistics::int_width + 3, options.get_int("statistics_minor_column_order"));
+   statistics.add_column("LS step length", Statistics::double_width, options.get_int("statistics_LS_step_length_column_order"));
 }
 
-void BacktrackingLineSearch::initialize(Statistics& statistics, Iterate& first_iterate) {
-   statistics.add_column("LS iters", Statistics::int_width + 3, this->statistics_minor_column_order);
-   statistics.add_column("LS step length", Statistics::double_width, this->statistics_LS_step_length_column_order);
-
+void BacktrackingLineSearch::initialize(Iterate& initial_iterate) {
    // generate the initial point
-   this->constraint_relaxation_strategy.initialize(statistics, first_iterate);
+   this->constraint_relaxation_strategy.initialize(initial_iterate);
 }
 
 Direction BacktrackingLineSearch::compute_direction(Statistics& statistics, Iterate& current_iterate) {

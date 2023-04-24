@@ -14,8 +14,8 @@ enum class Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 
 class FeasibilityRestoration : public ConstraintRelaxationStrategy {
 public:
-   FeasibilityRestoration(const Model& model, const Options& options);
-   void initialize(Statistics& statistics, Iterate& first_iterate) override;
+   FeasibilityRestoration(Statistics& statistics, const Model& model, const Options& options);
+   void initialize(Iterate& initial_iterate) override;
 
    void set_trust_region_radius(double trust_region_radius) override;
 
@@ -42,8 +42,6 @@ private:
    Phase current_phase{Phase::OPTIMALITY};
    const double l1_constraint_violation_coefficient;
    const double tolerance;
-   // statistics table
-   int statistics_restoration_phase_column_order;
 
    [[nodiscard]] const NonlinearProblem& current_reformulated_problem() const;
    [[nodiscard]] GlobalizationStrategy& current_globalization_strategy() const;

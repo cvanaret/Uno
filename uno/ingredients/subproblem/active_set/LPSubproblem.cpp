@@ -9,7 +9,7 @@ LPSubproblem::LPSubproblem(size_t max_number_variables, size_t max_number_constr
       solver(LPSolverFactory::create(max_number_variables, max_number_constraints, options.get_string("LP_solver"), options)) {
 }
 
-void LPSubproblem::initialize(Statistics& /*statistics*/, const NonlinearProblem& /*problem*/, Iterate& /*first_iterate*/) {
+void LPSubproblem::generate_initial_iterate(const NonlinearProblem& /*problem*/, Iterate& /*initial_iterate*/) {
 }
 
 void LPSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate) {

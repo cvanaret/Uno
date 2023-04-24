@@ -9,7 +9,7 @@
 
 class ScaledModel: public Model {
 public:
-   ScaledModel(std::unique_ptr<Model> original_model, Iterate& first_iterate, const Options& options);
+   ScaledModel(std::unique_ptr<Model> original_model, Iterate& initial_iterate, const Options& options);
 
    [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
    [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
@@ -43,19 +43,19 @@ private:
    Scaling scaling;
 };
 
-inline ScaledModel::ScaledModel(std::unique_ptr<Model> original_model, Iterate& first_iterate, const Options& options):
+inline ScaledModel::ScaledModel(std::unique_ptr<Model> original_model, Iterate& initial_iterate, const Options& options):
       Model(original_model->name + "_scaled", original_model->number_variables, original_model->number_constraints, original_model->problem_type),
       original_model(std::move(original_model)),
       scaling(this->original_model->number_constraints, options.get_double("function_scaling_threshold")) {
    if (options.get_bool("scale_functions")) {
       // evaluate the gradients at the current point
-      first_iterate.evaluate_objective_gradient(*this->original_model);
-      first_iterate.evaluate_constraint_jacobian(*this->original_model);
-      this->scaling.compute(first_iterate.evaluations.objective_gradient, first_iterate.evaluations.constraint_jacobian);
+      initial_iterate.evaluate_objective_gradient(*this->original_model);
+      initial_iterate.evaluate_constraint_jacobian(*this->original_model);
+      this->scaling.compute(initial_iterate.evaluations.objective_gradient, initial_iterate.evaluations.constraint_jacobian);
       // scale the gradients
-      scale(first_iterate.evaluations.objective_gradient, this->scaling.get_objective_scaling());
+      scale(initial_iterate.evaluations.objective_gradient, this->scaling.get_objective_scaling());
       for (size_t j: Range(this->original_model->number_constraints)) {
-         scale(first_iterate.evaluations.constraint_jacobian[j], this->scaling.get_constraint_scaling(j));
+         scale(initial_iterate.evaluations.constraint_jacobian[j], this->scaling.get_constraint_scaling(j));
       }
    }
    // check the scaling factors

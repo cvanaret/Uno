@@ -20,7 +20,7 @@ Uno::Uno(GlobalizationMechanism& globalization_mechanism, const Options& options
       small_step_threshold(options.get_double("small_step_threshold")) {
 }
 
-Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& options) {
+Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_iterate) {
    Timer timer{};
    timer.start();
    size_t major_iterations = 0;
@@ -29,10 +29,8 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
    std::cout << model.number_variables << " variables, " << model.number_constraints << " constraints\n";
    std::cout << "Problem type: " << type_to_string(model.problem_type) << "\n\n";
 
-   Statistics statistics = Uno::create_statistics(model, options);
-
    // use the current point to initialize the strategies and generate the initial iterate
-   this->globalization_mechanism.initialize(statistics, current_iterate);
+   this->globalization_mechanism.initialize(current_iterate);
 
    TerminationStatus termination_status = TerminationStatus::NOT_OPTIMAL;
    try {
@@ -67,19 +65,6 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
          timer.get_duration(), Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_jacobian, hessian_evaluation_count,
           number_subproblems_solved};
    return result;
-}
-
-Statistics Uno::create_statistics(const Model& model, const Options& options) {
-   Statistics statistics(options);
-   statistics.add_column("iters", Statistics::int_width, options.get_int("statistics_major_column_order"));
-   statistics.add_column("step norm", Statistics::double_width, options.get_int("statistics_step_norm_column_order"));
-   statistics.add_column("objective", Statistics::double_width, options.get_int("statistics_objective_column_order"));
-   if (model.is_constrained()) {
-      statistics.add_column("primal infeas.", Statistics::double_width, options.get_int("statistics_primal_infeasibility_column_order"));
-   }
-   statistics.add_column("complementarity", Statistics::double_width, options.get_int("statistics_complementarity_column_order"));
-   statistics.add_column("stationarity", Statistics::double_width, options.get_int("statistics_stationarity_column_order"));
-   return statistics;
 }
 
 void Uno::add_statistics(Statistics& statistics, const Model& model, const Iterate& iterate, size_t major_iterations) {

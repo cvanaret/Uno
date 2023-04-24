@@ -8,7 +8,7 @@
 #include "preprocessing/Preprocessing.hpp"
 #include "tools/Infinity.hpp"
 
-PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(size_t max_number_variables, size_t max_number_constraints,
+PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(Statistics& statistics, size_t max_number_variables, size_t max_number_constraints,
          size_t max_number_hessian_nonzeros, const Options& options):
       Subproblem(max_number_variables, max_number_constraints),
       augmented_system(options.get_string("sparse_format"), max_number_variables + max_number_constraints,
@@ -37,23 +37,21 @@ PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(size_t max_
       }),
       least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")),
       damping_factor(options.get_double("barrier_damping_factor")),
-      lower_delta_z(max_number_variables), upper_delta_z(max_number_variables),
-      statistics_regularization_column_order(options.get_int("statistics_regularization_column_order")),
-      statistics_barrier_parameter_column_order(options.get_int("statistics_barrier_parameter_column_order")) {
+      lower_delta_z(max_number_variables), upper_delta_z(max_number_variables) {
+   statistics.add_column("regularization", Statistics::double_width, options.get_int("statistics_regularization_column_order"));
+   statistics.add_column("barrier param.", Statistics::double_width, options.get_int("statistics_barrier_parameter_column_order"));
 }
 
-inline void PrimalDualInteriorPointSubproblem::initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) {
+inline void PrimalDualInteriorPointSubproblem::generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) {
    assert(problem.inequality_constraints.empty() && "The problem has inequality constraints. Create an instance of EqualityConstrainedModel");
-   statistics.add_column("regularization", Statistics::double_width, this->statistics_regularization_column_order);
-   statistics.add_column("barrier param.", Statistics::double_width, this->statistics_barrier_parameter_column_order);
 
    // evaluate the constraints at the original point
-   first_iterate.evaluate_constraints(problem.model);
+   initial_iterate.evaluate_constraints(problem.model);
 
    // make the initial point strictly feasible wrt the bounds
    for (size_t i: Range(problem.number_variables)) {
       const Interval bounds = {problem.get_variable_lower_bound(i), problem.get_variable_upper_bound(i)};
-      first_iterate.primals[i] = PrimalDualInteriorPointSubproblem::push_variable_to_interior(first_iterate.primals[i], bounds);
+      initial_iterate.primals[i] = PrimalDualInteriorPointSubproblem::push_variable_to_interior(initial_iterate.primals[i], bounds);
    }
 
    // set the slack variables (if any)
@@ -61,24 +59,24 @@ inline void PrimalDualInteriorPointSubproblem::initialize(Statistics& statistics
       // set the slacks to the constraint values
       problem.model.slacks.for_each([&](size_t j, size_t slack_index) {
          const Interval bounds = {problem.get_variable_lower_bound(slack_index), problem.get_variable_upper_bound(slack_index)};
-         first_iterate.primals[slack_index] = PrimalDualInteriorPointSubproblem::push_variable_to_interior(first_iterate.evaluations.constraints[j], bounds);
+         initial_iterate.primals[slack_index] = PrimalDualInteriorPointSubproblem::push_variable_to_interior(initial_iterate.evaluations.constraints[j], bounds);
       });
    }
-   first_iterate.is_objective_gradient_computed = false;
-   first_iterate.are_constraints_computed = false;
-   first_iterate.is_constraint_jacobian_computed = false;
+   initial_iterate.is_objective_gradient_computed = false;
+   initial_iterate.are_constraints_computed = false;
+   initial_iterate.is_constraint_jacobian_computed = false;
 
    // set the bound multipliers
    for (size_t i: problem.lower_bounded_variables) {
-      first_iterate.multipliers.lower_bounds[i] = this->default_multiplier;
+      initial_iterate.multipliers.lower_bounds[i] = this->default_multiplier;
    }
    for (size_t i: problem.upper_bounded_variables) {
-      first_iterate.multipliers.upper_bounds[i] = -this->default_multiplier;
+      initial_iterate.multipliers.upper_bounds[i] = -this->default_multiplier;
    }
 
    // compute least-square multipliers
    if (problem.is_constrained()) {
-      this->compute_least_square_multipliers(problem, first_iterate);
+      this->compute_least_square_multipliers(problem, initial_iterate);
    }
 }
 
