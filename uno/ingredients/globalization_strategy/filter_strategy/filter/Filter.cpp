@@ -121,7 +121,7 @@ bool Filter::acceptable(double infeasibility_measure, double optimality_measure)
    else if (optimality_measure <= this->optimality[position - 1] - this->parameters.gamma * infeasibility_measure) {
       return true; // point acceptable
    }
-   DEBUG << "Rejected because the optimality measure is too large\n";
+   DEBUG << "Rejected because of filter domination\n";
    return false;
 }
 

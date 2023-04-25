@@ -160,7 +160,9 @@ Direction PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const
    assert(problem.inequality_constraints.empty() && "The problem has inequality constraints. Create an instance of EqualityConstrainedModel");
 
    // update the barrier parameter if the current iterate solves the subproblem
-   this->update_barrier_parameter(problem, current_iterate);
+   if (not this->solving_feasibility_problem) {
+      this->update_barrier_parameter(problem, current_iterate);
+   }
 
    this->relax_variable_bounds(problem, current_iterate);
 

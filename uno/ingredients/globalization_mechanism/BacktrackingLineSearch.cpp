@@ -51,9 +51,9 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_next_iterate(Statist
       DEBUG << "The line search terminated with a step length smaller than " << this->minimum_step_length << '\n';
       // if step length is too small, revert to solving the feasibility problem (if we aren't already solving it)
       if (not this->solving_feasibility_problem && 0. < direction.multipliers.objective && this->tolerance < current_iterate.progress.infeasibility) {
-         // reset the line search with the restoration solution
-         direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, direction.primals);
          this->solving_feasibility_problem = true;
+         // compute a direction wrt the feasibility problem and backtrack along it
+         direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, direction.primals);
          auto [trial_iterate, step_norm] = this->backtrack_along_direction(statistics, current_iterate, direction);
          this->total_number_iterations += this->number_iterations;
          return {trial_iterate, step_norm};
@@ -68,42 +68,42 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_next_iterate(Statist
 std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, Iterate& current_iterate,
       const Direction& direction) {
    // most subproblem methods return a step length of 1. Interior-point methods however apply the fraction-to-boundary condition
-   double primal_dual_step_length = direction.primal_dual_step_length;
+   double step_length = direction.primal_dual_step_length;
    this->number_iterations = 0;
 
-   while (not this->termination(primal_dual_step_length)) {
+   while (not this->termination(step_length)) {
       this->number_iterations++;
-      this->print_iteration(primal_dual_step_length);
+      this->print_iteration(step_length);
 
       // assemble the trial iterate by going a fraction along the direction
-      Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, primal_dual_step_length,
+      Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, step_length,
             direction.bound_dual_step_length);
       try {
-         if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction,
-               primal_dual_step_length)) {
+         if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, step_length)) {
             this->total_number_iterations += this->number_iterations;
-            this->set_statistics(statistics, direction, primal_dual_step_length);
+            this->set_statistics(statistics, direction, step_length);
 
-            double step_norm = primal_dual_step_length * direction.norm;
+            double step_norm = step_length * direction.norm;
             return std::make_tuple(std::move(trial_iterate), step_norm);
          }
          else { // trial iterate not acceptable
-            this->decrease_step_length(primal_dual_step_length);
+            step_length = this->decrease_step_length(step_length);
          }
       }
       catch (const EvaluationError& e) {
          GlobalizationMechanism::print_warning(e.what());
-         this->decrease_step_length(primal_dual_step_length);
+         step_length = this->decrease_step_length(step_length);
       }
    }
    // TODO: may still be accepted as solution if the termination criteria are satisfied
    throw StepLengthTooSmall();
 }
 
-void BacktrackingLineSearch::decrease_step_length(double& primal_dual_step_length) const {
+double BacktrackingLineSearch::decrease_step_length(double step_length) const {
    // step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ...
-   primal_dual_step_length *= this->backtracking_ratio;
-   assert(0 < primal_dual_step_length && primal_dual_step_length <= 1 && "The line-search step length is not in (0, 1]");
+   step_length *= this->backtracking_ratio;
+   assert(0 < step_length && step_length <= 1 && "The line-search step length is not in (0, 1]");
+   return step_length;
 }
 
 bool BacktrackingLineSearch::termination(double primal_dual_step_length) const {

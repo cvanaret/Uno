@@ -55,12 +55,6 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_next_iterate(Statistics
          }
          else { // trial iterate not acceptable
             this->decrease_radius(direction.norm);
-            // TODO: may still be accepted as solution if the termination criteria are satisfied
-/*
-            if (this->termination()) {
-               return std::make_tuple(std::move(trial_iterate), direction.norm);
-            }
-  */
          }
       }
       // if an error occurs (evaluation error or unstable inertia), decrease the radius
@@ -69,6 +63,7 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_next_iterate(Statistics
          this->decrease_radius();
       }
    }
+   // TODO: may still be accepted as solution if the termination criteria are satisfied
    throw std::runtime_error("Trust-region radius became too small\n");
 }
 

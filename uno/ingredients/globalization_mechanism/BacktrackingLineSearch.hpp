@@ -28,7 +28,7 @@ private:
 
    [[nodiscard]] Direction compute_direction(Statistics& statistics, Iterate& current_iterate);
    [[nodiscard]] std::tuple<Iterate, double> backtrack_along_direction(Statistics& statistics, Iterate& current_iterate, const Direction& direction);
-   void decrease_step_length(double& primal_dual_step_length) const;
+   double decrease_step_length(double step_length) const;
    [[nodiscard]] bool termination(double primal_dual_step_length) const;
    void set_statistics(Statistics& statistics, const Direction& direction, double primal_dual_step_length) const;
    void print_iteration(double primal_dual_step_length);
