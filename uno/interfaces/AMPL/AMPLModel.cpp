@@ -97,7 +97,8 @@ void AMPLModel::generate_variables() {
 
 double AMPLModel::evaluate_objective(const std::vector<double>& x) const {
    int nerror = 0;
-   double result = this->objective_sign * (*(this->asl)->p.Objval)(this->asl, 0, const_cast<double*>(x.data()), &nerror);
+   EvalWorkspace* ew = this->asl->p.EWalloc(this->asl);
+   double result = this->objective_sign * (*(this->asl)->p.Objval)(ew, 0, const_cast<double*>(x.data()), &nerror);
    if (0 < nerror) {
       throw FunctionEvaluationError();
    }
@@ -108,7 +109,8 @@ double AMPLModel::evaluate_objective(const std::vector<double>& x) const {
 void AMPLModel::evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const {
    // compute the AMPL gradient (always in dense format)
    int nerror = 0;
-   (*(this->asl)->p.Objgrd)(this->asl, 0, const_cast<double*>(x.data()), const_cast<double*>(this->ampl_tmp_gradient.data()), &nerror);
+   EvalWorkspace* ew = this->asl->p.EWalloc(this->asl);
+   (*(this->asl)->p.Objgrd)(ew, 0, const_cast<double*>(x.data()), const_cast<double*>(this->ampl_tmp_gradient.data()), &nerror);
    if (0 < nerror) {
       throw GradientEvaluationError();
    }
@@ -137,7 +139,8 @@ double AMPLModel::evaluate_constraint(int j, const std::vector<double>& x) const
 
 void AMPLModel::evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const {
    int nerror = 0;
-   (*(this->asl)->p.Conval)(this->asl, const_cast<double*>(x.data()), constraints.data(), &nerror);
+   EvalWorkspace* ew = this->asl->p.EWalloc(this->asl);
+   (*(this->asl)->p.Conval)(ew, const_cast<double*>(x.data()), constraints.data(), &nerror);
    if (0 < nerror) {
       throw FunctionEvaluationError();
    }
@@ -150,8 +153,8 @@ void AMPLModel::evaluate_constraint_gradient(const std::vector<double>& x, size_
 
    // compute the AMPL gradient
    int nerror = 0;
-   (*(this->asl)->p.Congrd)(this->asl, static_cast<int>(j), const_cast<double*>(x.data()), const_cast<double*>(this->ampl_tmp_gradient.data()),
-         &nerror);
+   EvalWorkspace* ew = this->asl->p.EWalloc(this->asl);
+   (*(this->asl)->p.Congrd)(ew, static_cast<int>(j), const_cast<double*>(x.data()), const_cast<double*>(this->ampl_tmp_gradient.data()), &nerror);
    if (0 < nerror) {
       throw GradientEvaluationError();
    }
@@ -180,8 +183,8 @@ void AMPLModel::set_number_hessian_nonzeros() {
    // int (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri);
    const int objective_number = -1;
    const int upper_triangular = 1;
-   this->hessian_maximum_number_nonzeros = static_cast<size_t>((*(this->asl)->p.Sphset)(this->asl, nullptr, objective_number, 1, 1,
-         upper_triangular));
+   EvalWorkspace* ew = this->asl->p.EWalloc(this->asl);
+   this->hessian_maximum_number_nonzeros = static_cast<size_t>((*(this->asl)->p.Sphset)(ew, nullptr, objective_number, 1, 1, upper_triangular));
    this->ampl_tmp_hessian.reserve(this->hessian_maximum_number_nonzeros);
 
    // use Lagrangian scale: in AMPL, the Lagrangian is f + lambda.g, while Uno uses f - lambda.g
@@ -212,15 +215,17 @@ size_t AMPLModel::compute_hessian_number_nonzeros(double objective_multiplier, c
    const int objective_number = -1;
    const int upper_triangular = 1;
    const bool all_zeros_multipliers = are_all_zeros(multipliers);
-   int number_non_zeros = (*(this->asl)->p.Sphset)(this->asl, nullptr, objective_number, (objective_multiplier != 0.),
-         not all_zeros_multipliers, upper_triangular);
+   EvalWorkspace* ew = this->asl->p.EWalloc(this->asl);
+   int number_non_zeros = (*(this->asl)->p.Sphset)(ew, nullptr, objective_number, (objective_multiplier != 0.), not all_zeros_multipliers,
+         upper_triangular);
    return static_cast<size_t>(number_non_zeros);
 }
 
 void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
       SymmetricMatrix<double>& hessian) const {
    // register the vector of variables
-   (*(this->asl)->p.Xknown)(this->asl, const_cast<double*>(x.data()), nullptr);
+   EvalWorkspace* ew = this->asl->p.EWalloc(this->asl);
+   (*(this->asl)->p.Xknown)(ew, const_cast<double*>(x.data()), nullptr);
 
    // scale by the objective sign
    objective_multiplier *= this->objective_sign;
@@ -233,19 +238,19 @@ void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double
    // evaluate the Hessian: store the matrix in a preallocated array this->ampl_tmp_hessian
    const int objective_number = -1;
    if (this->fixed_hessian_sparsity) {
-      (*(this->asl)->p.Sphes)(this->asl, nullptr, const_cast<double*>(this->ampl_tmp_hessian.data()), objective_number, &objective_multiplier,
+      (*(this->asl)->p.Sphes)(ew, nullptr, const_cast<double*>(this->ampl_tmp_hessian.data()), objective_number, &objective_multiplier,
             const_cast<double*>(multipliers.data()));
    }
    else {
       double* objective_multiplier_pointer = (objective_multiplier != 0.) ? &objective_multiplier : nullptr;
       bool all_zeros_multipliers = are_all_zeros(multipliers);
-      (*(this->asl)->p.Sphes)(this->asl, nullptr, const_cast<double*>(this->ampl_tmp_hessian.data()), objective_number, objective_multiplier_pointer,
+      (*(this->asl)->p.Sphes)(ew, nullptr, const_cast<double*>(this->ampl_tmp_hessian.data()), objective_number, objective_multiplier_pointer,
             all_zeros_multipliers ? nullptr : const_cast<double*>(multipliers.data()));
    }
 
    // generate the sparsity pattern in the right sparse format
-   const int* ampl_column_start = this->asl->i.sputinfo_->hcolstarts;
-   const int* ampl_row_index = this->asl->i.sputinfo_->hrownos;
+   const int* ampl_column_start = this->asl->i.Ew0->Sputinfo->hcolstarts;
+   const int* ampl_row_index = this->asl->i.Ew0->Sputinfo->hrownos;
    // check that the column pointers are sorted in increasing order
    assert(in_increasing_order(ampl_column_start, this->number_variables + 1) &&
       "AMPLModel::evaluate_lagrangian_hessian: column starts are not ordered");
@@ -261,7 +266,7 @@ void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double
       hessian.finalize_column(j);
    }
    // unregister the vector of variables
-   this->asl->i.x_known = 0;
+   xunknown_ASL(this->asl->i.Ew0);
 }
 
 double AMPLModel::get_variable_lower_bound(size_t i) const {
@@ -372,7 +377,6 @@ void AMPLModel::set_function_types(std::string file_name) {
    else if (qp != 0) {
       this->problem_type = NONLINEAR;
    }
-   qp_opify_ASL(asl_fg);
 
    // deallocate memory
    ASL_free(&asl_fg);

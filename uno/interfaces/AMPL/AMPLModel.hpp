@@ -10,7 +10,7 @@
 
 // include AMPL Solver Library (ASL)
 extern "C" {
-#include "asl_pfgh.h"
+#include "asl.h"
 #include "getstub.h"
 }
 
