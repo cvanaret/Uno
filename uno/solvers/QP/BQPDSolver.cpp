@@ -29,17 +29,17 @@ bqpd_(const int* n, const int* m, int* k, int* kmax, double* a, int* la, double*
 }
 
 // preallocate a bunch of stuff
-BQPDSolver::BQPDSolver(size_t max_number_variables, size_t number_constraints, size_t maximum_number_nonzeros, bool quadratic_programming,
+BQPDSolver::BQPDSolver(size_t max_number_variables, size_t number_constraints, size_t number_hessian_nonzeros, bool quadratic_programming,
          const Options& options):
-      QPSolver(), maximum_number_nonzeros(maximum_number_nonzeros),
+      QPSolver(), number_hessian_nonzeros(number_hessian_nonzeros),
       lb(max_number_variables + number_constraints),
       ub(max_number_variables + number_constraints), jacobian(max_number_variables * (number_constraints + 1)),
       jacobian_sparsity(max_number_variables * (number_constraints + 1) + number_constraints + 3),
       kmax(quadratic_programming ? options.get_int("BQPD_kmax") : 0), alp(this->mlp), lp(this->mlp), active_set(max_number_variables + number_constraints),
       w(max_number_variables + number_constraints), gradient_solution(max_number_variables), residuals(max_number_variables + number_constraints),
       e(max_number_variables + number_constraints),
-      size_hessian_sparsity(quadratic_programming ? maximum_number_nonzeros + max_number_variables + 3 : 0),
-      size_hessian_workspace(maximum_number_nonzeros + this->kmax * (this->kmax + 9) / 2 + 2 * max_number_variables + number_constraints + this->mxwk0),
+      size_hessian_sparsity(quadratic_programming ? number_hessian_nonzeros + max_number_variables + 3 : 0),
+      size_hessian_workspace(number_hessian_nonzeros + this->kmax * (this->kmax + 9) / 2 + 2 * max_number_variables + number_constraints + this->mxwk0),
       size_hessian_sparsity_workspace(this->size_hessian_sparsity + this->kmax + this->mxiwk0),
       hessian_values(this->size_hessian_workspace), hessian_sparsity(this->size_hessian_sparsity_workspace),
       print_subproblem(options.get_bool("BQPD_print_subproblem")) {
@@ -76,7 +76,7 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
       const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point) {
    // initialize wsc_ common block (Hessian & workspace for bqpd)
    // setting the common block here ensures that several instances of BQPD can run simultaneously
-   wsc_.kk = static_cast<int>(this->maximum_number_nonzeros);
+   wsc_.kk = static_cast<int>(this->number_hessian_nonzeros);
    wsc_.ll = static_cast<int>(this->size_hessian_sparsity);
    wsc_.mxws = static_cast<int>(this->size_hessian_workspace);
    wsc_.mxlws = static_cast<int>(this->size_hessian_sparsity_workspace);

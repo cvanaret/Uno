@@ -43,6 +43,7 @@ bool LeyfferFilterStrategy::is_iterate_acceptable(Statistics& /*statistics*/, co
                trial_optimality_measure);
          DEBUG << "Actual reduction: " << actual_reduction << '\n';
 
+         // switching condition: the unconstrained predicted reduction is sufficiently positive
          if (this->switching_condition(unconstrained_predicted_reduction, current_progress_measures.infeasibility, this->parameters.delta)) {
             // unconstrained Armijo sufficient decrease condition (predicted reduction should be positive)
             if (this->armijo_sufficient_decrease(unconstrained_predicted_reduction, actual_reduction)) {

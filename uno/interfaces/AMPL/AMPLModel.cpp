@@ -58,8 +58,8 @@ AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
    this->set_function_types(file_name);
 
    // compute number of nonzeros
-   this->objective_gradient_maximum_number_nonzeros = static_cast<size_t>(this->asl->i.nzo_);
-   this->jacobian_maximum_number_nonzeros = static_cast<size_t>(this->asl->i.nzc_);
+   this->number_objective_gradient_nonzeros = static_cast<size_t>(this->asl->i.nzo_);
+   this->number_jacobian_nonzeros = static_cast<size_t>(this->asl->i.nzc_);
    this->set_number_hessian_nonzeros();
 }
 
@@ -180,25 +180,24 @@ void AMPLModel::set_number_hessian_nonzeros() {
    // int (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri);
    const int objective_number = -1;
    const int upper_triangular = 1;
-   this->hessian_maximum_number_nonzeros = static_cast<size_t>((*(this->asl)->p.Sphset)(this->asl, nullptr, objective_number, 1, 1,
-         upper_triangular));
-   this->ampl_tmp_hessian.reserve(this->hessian_maximum_number_nonzeros);
+   this->number_hessian_nonzeros = static_cast<size_t>((*(this->asl)->p.Sphset)(this->asl, nullptr, objective_number, 1, 1, upper_triangular));
+   this->ampl_tmp_hessian.reserve(this->number_hessian_nonzeros);
 
    // use Lagrangian scale: in AMPL, the Lagrangian is f + lambda.g, while Uno uses f - lambda.g
    int nerror{};
    lagscale_ASL(this->asl, -1., &nerror);
 }
 
-size_t AMPLModel::get_maximum_number_objective_gradient_nonzeros() const {
-   return this->objective_gradient_maximum_number_nonzeros;
+size_t AMPLModel::get_number_objective_gradient_nonzeros() const {
+   return this->number_objective_gradient_nonzeros;
 }
 
-size_t AMPLModel::get_maximum_number_jacobian_nonzeros() const {
-   return this->jacobian_maximum_number_nonzeros;
+size_t AMPLModel::get_number_jacobian_nonzeros() const {
+   return this->number_jacobian_nonzeros;
 }
 
-size_t AMPLModel::get_maximum_number_hessian_nonzeros() const {
-   return this->hessian_maximum_number_nonzeros;
+size_t AMPLModel::get_number_hessian_nonzeros() const {
+   return this->number_hessian_nonzeros;
 }
 
 bool are_all_zeros(const std::vector<double>& multipliers) {
@@ -212,9 +211,9 @@ size_t AMPLModel::compute_hessian_number_nonzeros(double objective_multiplier, c
    const int objective_number = -1;
    const int upper_triangular = 1;
    const bool all_zeros_multipliers = are_all_zeros(multipliers);
-   int number_non_zeros = (*(this->asl)->p.Sphset)(this->asl, nullptr, objective_number, (objective_multiplier != 0.),
+   int number_nonzeros = (*(this->asl)->p.Sphset)(this->asl, nullptr, objective_number, (objective_multiplier != 0.),
          not all_zeros_multipliers, upper_triangular);
-   return static_cast<size_t>(number_non_zeros);
+   return static_cast<size_t>(number_nonzeros);
 }
 
 void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
@@ -226,9 +225,9 @@ void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double
    objective_multiplier *= this->objective_sign;
 
    // compute the number of nonzeros
-   [[maybe_unused]] const size_t number_non_zeros = this->fixed_hessian_sparsity ? this->hessian_maximum_number_nonzeros :
-         this->compute_hessian_number_nonzeros(objective_multiplier, multipliers);
-   assert(hessian.capacity >= number_non_zeros);
+   [[maybe_unused]] const size_t number_nonzeros = this->fixed_hessian_sparsity ? this->number_hessian_nonzeros :
+                                                   this->compute_hessian_number_nonzeros(objective_multiplier, multipliers);
+   assert(hessian.capacity >= number_nonzeros);
 
    // evaluate the Hessian: store the matrix in a preallocated array this->ampl_tmp_hessian
    const int objective_number = -1;
@@ -247,14 +246,13 @@ void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double
    const int* ampl_column_start = this->asl->i.sputinfo_->hcolstarts;
    const int* ampl_row_index = this->asl->i.sputinfo_->hrownos;
    // check that the column pointers are sorted in increasing order
-   assert(in_increasing_order(ampl_column_start, this->number_variables + 1) &&
-      "AMPLModel::evaluate_lagrangian_hessian: column starts are not ordered");
+   assert(in_increasing_order(ampl_column_start, this->number_variables + 1) && "AMPLModel::evaluate_lagrangian_hessian: column starts are not ordered");
 
    // copy the nonzeros in the Hessian
    hessian.reset();
    for (size_t j: Range(this->number_variables)) {
       for (size_t k: Range(static_cast<size_t>(ampl_column_start[j]), static_cast<size_t>(ampl_column_start[j + 1]))) {
-         size_t i = static_cast<size_t>(ampl_row_index[k]);
+         const size_t i = static_cast<size_t>(ampl_row_index[k]);
          const double entry = this->ampl_tmp_hessian[k];
          hessian.insert(entry, i, j);
       }

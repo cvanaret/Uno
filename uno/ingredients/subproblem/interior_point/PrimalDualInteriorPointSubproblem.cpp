@@ -9,12 +9,12 @@
 #include "tools/Infinity.hpp"
 
 PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(Statistics& statistics, size_t max_number_variables, size_t max_number_constraints,
-         size_t max_number_hessian_nonzeros, const Options& options):
+         size_t max_number_jacobian_nonzeros, size_t max_number_hessian_nonzeros, const Options& options):
       Subproblem(max_number_variables, max_number_constraints),
       augmented_system(options.get_string("sparse_format"), max_number_variables + max_number_constraints,
             max_number_hessian_nonzeros
             + max_number_variables /* diagonal barrier terms for bound constraints */
-            + max_number_variables * max_number_constraints /* Jacobian (TODO: find out the number of nonzeros) */,
+            + max_number_jacobian_nonzeros /* Jacobian */,
             true, /* use regularization */
             options),
       // the Hessian is not convexified. Instead, the augmented system will be.
@@ -23,7 +23,7 @@ PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(Statistics&
             max_number_hessian_nonzeros
             + max_number_variables + max_number_constraints /* regularization */
             + 2 * max_number_variables /* diagonal barrier terms */
-            + max_number_variables * max_number_constraints /* Jacobian */)),
+            + max_number_jacobian_nonzeros /* Jacobian */)),
       barrier_parameter_update_strategy(options),
       previous_barrier_parameter(options.get_double("barrier_initial_parameter")),
       default_multiplier(options.get_double("barrier_default_multiplier")),

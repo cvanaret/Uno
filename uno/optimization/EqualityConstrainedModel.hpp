@@ -30,9 +30,9 @@ public:
    [[nodiscard]] FunctionType get_constraint_type(size_t j) const override;
    [[nodiscard]] BoundType get_constraint_bound_type(size_t j) const override;
 
-   [[nodiscard]] size_t get_maximum_number_objective_gradient_nonzeros() const override;
-   [[nodiscard]] size_t get_maximum_number_jacobian_nonzeros() const override;
-   [[nodiscard]] size_t get_maximum_number_hessian_nonzeros() const override;
+   [[nodiscard]] size_t get_number_objective_gradient_nonzeros() const override;
+   [[nodiscard]] size_t get_number_jacobian_nonzeros() const override;
+   [[nodiscard]] size_t get_number_hessian_nonzeros() const override;
 
    void get_initial_primal_point(std::vector<double>& x) const override;
    void get_initial_dual_point(std::vector<double>& multipliers) const override;
@@ -200,16 +200,16 @@ inline BoundType EqualityConstrainedModel::get_constraint_bound_type(size_t /*j*
    return EQUAL_BOUNDS;
 }
 
-inline size_t EqualityConstrainedModel::get_maximum_number_objective_gradient_nonzeros() const {
-   return this->original_model->get_maximum_number_objective_gradient_nonzeros();
+inline size_t EqualityConstrainedModel::get_number_objective_gradient_nonzeros() const {
+   return this->original_model->get_number_objective_gradient_nonzeros();
 }
 
-inline size_t EqualityConstrainedModel::get_maximum_number_jacobian_nonzeros() const {
-   return this->original_model->get_maximum_number_jacobian_nonzeros();
+inline size_t EqualityConstrainedModel::get_number_jacobian_nonzeros() const {
+   return this->original_model->get_number_jacobian_nonzeros();
 }
 
-inline size_t EqualityConstrainedModel::get_maximum_number_hessian_nonzeros() const {
-   return this->original_model->get_maximum_number_hessian_nonzeros();
+inline size_t EqualityConstrainedModel::get_number_hessian_nonzeros() const {
+   return this->original_model->get_number_hessian_nonzeros();
 }
 
 inline void EqualityConstrainedModel::get_initial_primal_point(std::vector<double>& x) const {

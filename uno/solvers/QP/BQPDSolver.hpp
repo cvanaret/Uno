@@ -33,7 +33,7 @@ enum BQPDMode {
 
 class BQPDSolver : public QPSolver {
 public:
-   BQPDSolver(size_t max_number_variables, size_t number_constraints, size_t max_number_nonzeros, bool quadratic_programming, const Options& options);
+   BQPDSolver(size_t max_number_variables, size_t number_constraints, size_t number_hessian_nonzeros, bool quadratic_programming, const Options& options);
 
    Direction solve_LP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
          const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
@@ -45,7 +45,7 @@ public:
          override;
 
 private:
-   size_t maximum_number_nonzeros;
+   size_t number_hessian_nonzeros;
    std::vector<double> lb, ub; // lower and upper bounds of variables and constraints
 
    std::vector<double> jacobian;

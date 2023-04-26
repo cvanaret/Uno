@@ -19,7 +19,7 @@ l1Relaxation::l1Relaxation(Statistics& statistics, const Model& model, const Opt
       // create the l1 relaxed problem
       relaxed_problem(model, options.get_double("l1_relaxation_initial_parameter"), options.get_double("l1_constraint_violation_coefficient")),
       subproblem(SubproblemFactory::create(statistics, this->relaxed_problem.number_variables, this->relaxed_problem.number_constraints,
-            this->relaxed_problem.get_maximum_number_hessian_nonzeros(), options)),
+            this->relaxed_problem.get_number_jacobian_nonzeros(), this->relaxed_problem.get_number_hessian_nonzeros(), options)),
       globalization_strategy(GlobalizationStrategyFactory::create(statistics, options.get_string("globalization_strategy"), options)),
       penalty_parameter(options.get_double("l1_relaxation_initial_parameter")),
       parameters({

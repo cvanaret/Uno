@@ -11,7 +11,7 @@
 class SubproblemFactory {
 	public:
 		static std::unique_ptr<Subproblem> create(Statistics& statistics, size_t max_number_variables, size_t max_number_constraints,
-            size_t max_number_hessian_nonzeros, const Options& options);
+            size_t max_number_jacobian_nonzeros, size_t max_number_hessian_nonzeros, const Options& options);
 
       static std::vector<std::string> available_strategies();
 };

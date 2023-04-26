@@ -9,7 +9,7 @@
 #include "solvers/linear/SymmetricIndefiniteLinearSolverFactory.hpp"
 
 std::unique_ptr<Subproblem> SubproblemFactory::create(Statistics& statistics, size_t max_number_variables, size_t max_number_constraints,
-      size_t max_number_hessian_nonzeros, const Options& options) {
+      size_t max_number_jacobian_nonzeros, size_t max_number_hessian_nonzeros, const Options& options) {
    const std::string subproblem_type = options.get_string("subproblem");
    // active-set methods
    if (subproblem_type == "QP") {
@@ -21,7 +21,7 @@ std::unique_ptr<Subproblem> SubproblemFactory::create(Statistics& statistics, si
    // interior-point method
    else if (subproblem_type == "primal_dual_interior_point") {
       return std::make_unique<PrimalDualInteriorPointSubproblem>(statistics, max_number_variables, max_number_constraints,
-            max_number_hessian_nonzeros, options);
+            max_number_jacobian_nonzeros, max_number_hessian_nonzeros, options);
    }
    throw std::invalid_argument("Subproblem method " + subproblem_type + " is not supported");
 }

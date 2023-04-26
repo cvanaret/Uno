@@ -32,9 +32,9 @@ public:
    [[nodiscard]] double get_constraint_lower_bound(size_t j) const override;
    [[nodiscard]] double get_constraint_upper_bound(size_t j) const override;
 
-   [[nodiscard]] size_t get_maximum_number_objective_gradient_nonzeros() const override;
-   [[nodiscard]] size_t get_maximum_number_jacobian_nonzeros() const override;
-   [[nodiscard]] size_t get_maximum_number_hessian_nonzeros() const override;
+   [[nodiscard]] size_t get_number_objective_gradient_nonzeros() const override;
+   [[nodiscard]] size_t get_number_jacobian_nonzeros() const override;
+   [[nodiscard]] size_t get_number_hessian_nonzeros() const override;
 
    // parameterization
    void set_objective_multiplier(double new_objective_multiplier);
@@ -190,12 +190,12 @@ inline double l1RelaxedProblem::get_constraint_upper_bound(size_t j) const {
    return this->model.get_constraint_upper_bound(j);
 }
 
-inline size_t l1RelaxedProblem::get_maximum_number_objective_gradient_nonzeros() const {
+inline size_t l1RelaxedProblem::get_number_objective_gradient_nonzeros() const {
    size_t number_nonzeros = 0;
 
    // objective contribution
    if (this->objective_multiplier != 0.) {
-      number_nonzeros += this->model.get_maximum_number_objective_gradient_nonzeros();
+      number_nonzeros += this->model.get_number_objective_gradient_nonzeros();
    }
 
    // elastic contribution
@@ -203,12 +203,12 @@ inline size_t l1RelaxedProblem::get_maximum_number_objective_gradient_nonzeros()
    return number_nonzeros;
 }
 
-inline size_t l1RelaxedProblem::get_maximum_number_jacobian_nonzeros() const {
-   return this->model.get_maximum_number_jacobian_nonzeros() + this->elastic_variables.size();
+inline size_t l1RelaxedProblem::get_number_jacobian_nonzeros() const {
+   return this->model.get_number_jacobian_nonzeros() + this->elastic_variables.size();
 }
 
-inline size_t l1RelaxedProblem::get_maximum_number_hessian_nonzeros() const {
-   return this->model.get_maximum_number_hessian_nonzeros();
+inline size_t l1RelaxedProblem::get_number_hessian_nonzeros() const {
+   return this->model.get_number_hessian_nonzeros();
 }
 
 inline void l1RelaxedProblem::set_objective_multiplier(double new_objective_multiplier) {

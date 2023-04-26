@@ -70,9 +70,9 @@ public:
    [[nodiscard]] virtual FunctionType get_constraint_type(size_t j) const = 0;
    [[nodiscard]] virtual BoundType get_constraint_bound_type(size_t j) const = 0;
 
-   [[nodiscard]] virtual size_t get_maximum_number_objective_gradient_nonzeros() const = 0;
-   [[nodiscard]] virtual size_t get_maximum_number_jacobian_nonzeros() const = 0;
-   [[nodiscard]] virtual size_t get_maximum_number_hessian_nonzeros() const = 0;
+   [[nodiscard]] virtual size_t get_number_objective_gradient_nonzeros() const = 0;
+   [[nodiscard]] virtual size_t get_number_jacobian_nonzeros() const = 0;
+   [[nodiscard]] virtual size_t get_number_hessian_nonzeros() const = 0;
 
    [[nodiscard]] virtual double evaluate_objective(const std::vector<double>& x) const = 0;
    virtual void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const = 0;
@@ -100,9 +100,9 @@ public:
    [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const;
 
 protected:
-   size_t objective_gradient_maximum_number_nonzeros{0}; /*!< Number of nonzero elements in the objective gradient */
-   size_t jacobian_maximum_number_nonzeros{0}; /*!< Number of nonzero elements in the constraint Jacobian */
-   size_t hessian_maximum_number_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */
+   size_t number_objective_gradient_nonzeros{0}; /*!< Number of nonzero elements in the objective gradient */
+   size_t number_jacobian_nonzeros{0}; /*!< Number of nonzero elements in the constraint Jacobian */
+   size_t number_hessian_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */
    void determine_constraints();
 };
 
