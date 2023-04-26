@@ -129,7 +129,7 @@ bool Filter::acceptable(double infeasibility_measure, double optimality_measure)
 bool Filter::acceptable_wrt_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure,
       double trial_optimality_measure) {
    return (trial_optimality_measure <= current_optimality_measure - this->parameters.gamma * trial_infeasibility_measure) ||
-          (trial_infeasibility_measure <= this->parameters.beta * current_infeasibility_measure);
+          (trial_infeasibility_measure < this->parameters.beta * current_infeasibility_measure);
 }
 
 double Filter::compute_actual_reduction(double current_optimality_measure, double /*current_infeasibility_measure*/, double trial_optimality_measure) {
