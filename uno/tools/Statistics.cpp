@@ -32,7 +32,7 @@ void Statistics::add_statistic(std::string name, size_t value) {
 
 void Statistics::add_statistic(std::string name, double value) {
    std::ostringstream stream;
-   stream << std::scientific << std::setprecision(6) << value;
+   stream << std::defaultfloat << std::setprecision(6) << value;
    add_statistic(std::move(name), stream.str());
 }
 
