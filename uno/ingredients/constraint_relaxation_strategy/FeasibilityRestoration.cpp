@@ -51,10 +51,12 @@ Direction FeasibilityRestoration::solve_optimality_problem(Statistics& statistic
    // solve the subproblem
    DEBUG << "Solving the optimality subproblem\n";
 
+   evaluate_functions = evaluate_functions || this->force_function_evaluation;
    Direction direction = this->subproblem->solve(statistics, this->optimality_problem, current_iterate, evaluate_functions);
    direction.objective_multiplier = 1.;
    direction.norm = norm_inf(direction.primals, Range(this->optimality_problem.number_variables));
    DEBUG << direction << '\n';
+   this->force_function_evaluation = false;
 
    // infeasible subproblem: try to minimize the constraint violation by solving the feasibility subproblem
    if (direction.status == SubproblemStatus::INFEASIBLE) {
@@ -70,10 +72,12 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
    }
 
    DEBUG << "Solving the feasibility subproblem\n";
+   evaluate_functions = evaluate_functions || this->force_function_evaluation;
    Direction direction = this->subproblem->solve(statistics, this->feasibility_problem, current_iterate, evaluate_functions);
    direction.objective_multiplier = 0.;
    direction.norm = norm_inf(direction.primals, Range(this->optimality_problem.number_variables));
    DEBUG << direction << '\n';
+   this->force_function_evaluation = false;
    assert(direction.status == SubproblemStatus::OPTIMAL && "The feasibility subproblem was not solved to optimality");
    return direction;
 }
@@ -120,6 +124,7 @@ void FeasibilityRestoration::switch_to_feasibility_restoration(Iterate& current_
    this->optimality_phase_strategy->register_current_progress(current_iterate.progress);
    this->subproblem->initialize_feasibility_problem();
    this->subproblem->set_elastic_variable_values(this->feasibility_problem, current_iterate);
+   this->force_function_evaluation = true;
 
    // refresh the progress measures of the current iterate
    this->set_infeasibility_measure(current_iterate);
@@ -137,6 +142,7 @@ void FeasibilityRestoration::switch_to_optimality(Iterate& current_iterate, Iter
    current_iterate.set_number_variables(this->optimality_problem.number_variables);
    trial_iterate.set_number_variables(this->optimality_problem.number_variables);
    this->subproblem->exit_feasibility_problem(this->optimality_problem, trial_iterate);
+   this->force_function_evaluation = true;
 
    // refresh the progress measures of current iterate
    this->set_optimality_measure(current_iterate);

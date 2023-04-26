@@ -42,6 +42,7 @@ private:
    Phase current_phase{Phase::OPTIMALITY};
    const double l1_constraint_violation_coefficient;
    const double tolerance;
+   bool force_function_evaluation{false};
 
    [[nodiscard]] const NonlinearProblem& current_reformulated_problem() const;
    [[nodiscard]] GlobalizationStrategy& current_globalization_strategy() const;
