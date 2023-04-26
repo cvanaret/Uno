@@ -70,13 +70,13 @@ Uno is released under the MIT license (see the [license file](LICENSE)).
     * MA57 (sparse indefinite symmetric linear solver): http://www.hsl.rl.ac.uk/catalogue/ma57.html
 
 * install BLAS and LAPACK: ```sudo apt-get install libblas-dev liblapack-dev```
-* install cmake and ccmake (CMake curses interface): ```sudo apt-get install cmake cmake-curses-gui```
+* install cmake (and optionally ccmake, CMake curses interface): ```sudo apt-get install cmake cmake-curses-gui```
 
 ### Compilation
 
 1. Create a `build` directory in the main directory: ```mkdir build```
 2. Move to the build directory: ```cd build/```
-3. Type cmake: ```cmake ..```
+3. Type cmake (``Release`` can be replaced with ``Debug``): ```cmake -DCMAKE_BUILD_TYPE=Release ..```
 4. **(optional)** Use ccmake to provide the paths to the required and optional libraries: ```ccmake ..```
 5. Compile (in parallel: `n` being the number of threads, e.g. 6): ```make -jn```
 
