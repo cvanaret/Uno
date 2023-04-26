@@ -28,12 +28,12 @@ void BacktrackingLineSearch::initialize(Iterate& initial_iterate) {
 Direction BacktrackingLineSearch::compute_direction(Statistics& statistics, Iterate& current_iterate) {
    try {
       this->solving_feasibility_problem = false;
-      return this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate);
+      return this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, true);
    }
    catch (const UnstableRegularization&) {
       this->solving_feasibility_problem = true;
       DEBUG << "Unstable regularization: switching to solving the feasibility problem\n";
-      return this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate);
+      return this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, true);
    }
 }
 
@@ -53,7 +53,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_next_iterate(Statist
       if (not this->solving_feasibility_problem && 0. < direction.multipliers.objective && this->tolerance < current_iterate.progress.infeasibility) {
          this->solving_feasibility_problem = true;
          // compute a direction wrt the feasibility problem and backtrack along it
-         direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, direction.primals);
+         direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, direction.primals, true);
          auto [trial_iterate, step_norm] = this->backtrack_along_direction(statistics, current_iterate, direction);
          this->total_number_iterations += this->number_iterations;
          return {trial_iterate, step_norm};

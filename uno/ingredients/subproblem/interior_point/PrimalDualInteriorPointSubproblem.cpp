@@ -156,7 +156,8 @@ void PrimalDualInteriorPointSubproblem::evaluate_functions(Statistics& statistic
    problem.evaluate_constraint_jacobian(current_iterate, this->evaluations.constraint_jacobian);
 }
 
-Direction PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) {
+Direction PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+      bool evaluate_functions) {
    assert(problem.inequality_constraints.empty() && "The problem has inequality constraints. Create an instance of EqualityConstrainedModel");
 
    // update the barrier parameter if the current iterate solves the subproblem
@@ -168,8 +169,10 @@ Direction PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const
 
    //this->check_interior_primals(problem, current_iterate);
 
-   // evaluate the functions at the current iterate
-   this->evaluate_functions(statistics, problem, current_iterate);
+   if (evaluate_functions) {
+      // evaluate the functions at the current iterate
+      this->evaluate_functions(statistics, problem, current_iterate);
+   }
 
    // set up the augmented system (with the correct inertia)
    this->assemble_augmented_system(statistics, problem, current_iterate);

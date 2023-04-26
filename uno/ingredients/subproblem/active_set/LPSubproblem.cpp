@@ -19,9 +19,11 @@ void LPSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& 
    problem.evaluate_constraint_jacobian(current_iterate, this->evaluations.constraint_jacobian);
 }
 
-Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem& problem, Iterate& current_iterate) {
-   // evaluate the functions at the current iterate
-   this->evaluate_functions(problem, current_iterate);
+Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem& problem, Iterate& current_iterate, bool evaluate_functions) {
+   if (evaluate_functions) {
+      // evaluate the functions at the current iterate
+      this->evaluate_functions(problem, current_iterate);
+   }
 
    // bounds of the variable displacements
    this->set_variable_bounds(problem, current_iterate);

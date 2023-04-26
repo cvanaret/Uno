@@ -48,18 +48,18 @@ void l1Relaxation::initialize(Iterate& initial_iterate) {
    this->globalization_strategy->initialize(initial_iterate);
 }
 
-Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate) {
+Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, bool evaluate_functions) {
    DEBUG << "Current iterate\n" << current_iterate << '\n';
 
    // use Byrd's steering rules to update the penalty parameter and compute a descent direction
-   return this->solve_with_steering_rule(statistics, current_iterate);
+   return this->solve_with_steering_rule(statistics, current_iterate, evaluate_functions);
 }
 
-Direction l1Relaxation::solve_subproblem(Statistics& statistics, Iterate& current_iterate, const NonlinearProblem& problem) {
+Direction l1Relaxation::solve_subproblem(Statistics& statistics, Iterate& current_iterate, const NonlinearProblem& problem, bool evaluate_functions) {
    DEBUG << "Solving the subproblem with penalty parameter " << problem.get_objective_multiplier() << "\n\n";
 
    // solve the subproblem
-   Direction direction = this->subproblem->solve(statistics, problem, current_iterate);
+   Direction direction = this->subproblem->solve(statistics, problem, current_iterate, evaluate_functions);
    direction.objective_multiplier = problem.get_objective_multiplier();
    direction.norm = norm_inf(direction.primals, Range(this->original_model.number_variables));
    DEBUG << direction << '\n';
@@ -67,24 +67,26 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, Iterate& curren
    return direction;
 }
 
-Direction l1Relaxation::solve_relaxed_problem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter) {
+Direction l1Relaxation::solve_relaxed_problem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter,
+      bool evaluate_functions) {
    this->relaxed_problem.set_objective_multiplier(current_penalty_parameter);
-   return this->solve_subproblem(statistics, current_iterate, this->relaxed_problem);
+   return this->solve_subproblem(statistics, current_iterate, this->relaxed_problem, evaluate_functions);
 }
 
-Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) {
+Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, bool evaluate_functions) {
    this->subproblem->initialize_feasibility_problem();
-   return this->solve_subproblem(statistics, current_iterate, this->feasibility_problem);
+   return this->solve_subproblem(statistics, current_iterate, this->feasibility_problem, evaluate_functions);
 }
 
-Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point) {
+Direction l1Relaxation::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point,
+      bool evaluate_functions) {
    this->subproblem->set_initial_point(initial_point);
-   return this->solve_feasibility_problem(statistics, current_iterate);
+   return this->solve_feasibility_problem(statistics, current_iterate, evaluate_functions);
 }
 
-Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate& current_iterate) {
+Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate& current_iterate, bool evaluate_functions) {
    // stage a: compute the step within trust region
-   Direction direction = this->solve_relaxed_problem(statistics, current_iterate, this->penalty_parameter);
+   Direction direction = this->solve_relaxed_problem(statistics, current_iterate, this->penalty_parameter, evaluate_functions);
 
    // penalty update: if penalty parameter is already 0 or fixed by the user, no need to decrease it
    if (0. < this->penalty_parameter && not this->parameters.fixed_parameter) {
@@ -99,7 +101,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
 
          // stage c: compute the lowest possible constraint violation (penalty parameter = 0)
          DEBUG << "Compute ideal solution by solving the feasibility problem:\n";
-         Direction direction_lowest_violation = this->solve_feasibility_problem(statistics, current_iterate);
+         Direction direction_lowest_violation = this->solve_feasibility_problem(statistics, current_iterate, evaluate_functions);
          const double residual_lowest_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model,
                current_iterate, direction_lowest_violation, direction_lowest_violation.primal_dual_step_length);
          DEBUG << "Lowest linearized infeasibility mk(dk): " << residual_lowest_violation << '\n';
@@ -112,7 +114,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
          }
          else {
             if (this->penalty_parameter < current_penalty_parameter) {
-               direction = this->solve_relaxed_problem(statistics, current_iterate, this->penalty_parameter);
+               direction = this->solve_relaxed_problem(statistics, current_iterate, this->penalty_parameter, evaluate_functions);
                linearized_residual = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate,
                      direction, direction.primal_dual_step_length);
             }
@@ -141,7 +143,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
                      condition2 = true;
                   }
                   else {
-                     direction = this->solve_relaxed_problem(statistics, current_iterate, this->penalty_parameter);
+                     direction = this->solve_relaxed_problem(statistics, current_iterate, this->penalty_parameter, evaluate_functions);
                      linearized_residual = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate,
                            direction, direction.primal_dual_step_length);
                      DEBUG << "Linearized infeasibility mk(dk): " << linearized_residual << "\n\n";

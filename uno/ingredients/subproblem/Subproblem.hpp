@@ -25,7 +25,7 @@ public:
 
    // virtual methods implemented by subclasses
    virtual void generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) = 0;
-   virtual Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) = 0;
+   virtual Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate, bool evaluate_functions) = 0;
 
    void set_trust_region_radius(double new_trust_region_radius);
    virtual void initialize_feasibility_problem() = 0;

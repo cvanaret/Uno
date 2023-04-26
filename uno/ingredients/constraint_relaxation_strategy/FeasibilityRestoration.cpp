@@ -37,40 +37,40 @@ void FeasibilityRestoration::initialize(Iterate& initial_iterate) {
    this->optimality_phase_strategy->initialize(initial_iterate);
 }
 
-Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate) {
+Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, bool evaluate_functions) {
    DEBUG << "Current iterate\n" << current_iterate << '\n';
    if (this->current_phase == Phase::OPTIMALITY) {
-      return this->solve_optimality_problem(statistics, current_iterate);
+      return this->solve_optimality_problem(statistics, current_iterate, evaluate_functions);
    }
    else {
-      return this->solve_feasibility_problem(statistics, current_iterate);
+      return this->solve_feasibility_problem(statistics, current_iterate, evaluate_functions);
    }
 }
 
-Direction FeasibilityRestoration::solve_optimality_problem(Statistics& statistics, Iterate& current_iterate) {
+Direction FeasibilityRestoration::solve_optimality_problem(Statistics& statistics, Iterate& current_iterate, bool evaluate_functions) {
    // solve the subproblem
    DEBUG << "Solving the optimality subproblem\n";
 
-   Direction direction = this->subproblem->solve(statistics, this->optimality_problem, current_iterate);
+   Direction direction = this->subproblem->solve(statistics, this->optimality_problem, current_iterate, evaluate_functions);
    direction.objective_multiplier = 1.;
    direction.norm = norm_inf(direction.primals, Range(this->optimality_problem.number_variables));
    DEBUG << direction << '\n';
 
    // infeasible subproblem: try to minimize the constraint violation by solving the feasibility subproblem
    if (direction.status == SubproblemStatus::INFEASIBLE) {
-      direction = this->solve_feasibility_problem(statistics, current_iterate, direction.primals);
+      direction = this->solve_feasibility_problem(statistics, current_iterate, direction.primals, evaluate_functions);
    }
    return direction;
 }
 
 // form and solve the feasibility problem
-Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) {
+Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, bool evaluate_functions) {
    if (this->current_phase == Phase::OPTIMALITY) {
       this->switch_to_feasibility_restoration(current_iterate);
    }
 
    DEBUG << "Solving the feasibility subproblem\n";
-   Direction direction = this->subproblem->solve(statistics, this->feasibility_problem, current_iterate);
+   Direction direction = this->subproblem->solve(statistics, this->feasibility_problem, current_iterate, evaluate_functions);
    direction.objective_multiplier = 0.;
    direction.norm = norm_inf(direction.primals, Range(this->optimality_problem.number_variables));
    DEBUG << direction << '\n';
@@ -79,9 +79,10 @@ Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statisti
 }
 
 // form and solve the feasibility problem (with an initial point)
-Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point) {
+Direction FeasibilityRestoration::solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point,
+      bool evaluate_functions) {
    this->subproblem->set_initial_point(initial_point);
-   return this->solve_feasibility_problem(statistics, current_iterate);
+   return this->solve_feasibility_problem(statistics, current_iterate, evaluate_functions);
 }
 
 void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,

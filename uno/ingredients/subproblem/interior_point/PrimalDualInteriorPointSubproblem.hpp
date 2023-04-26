@@ -33,7 +33,7 @@ public:
    void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
    void exit_feasibility_problem(const NonlinearProblem& problem, Iterate& trial_iterate) override;
 
-   [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) override;
+   [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate, bool evaluate_functions) override;
 
    void set_auxiliary_measure(const NonlinearProblem& problem, Iterate& iterate) override;
    [[nodiscard]] double generate_predicted_auxiliary_reduction_model(const NonlinearProblem& problem,

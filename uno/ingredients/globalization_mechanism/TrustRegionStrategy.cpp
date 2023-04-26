@@ -40,7 +40,8 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_next_iterate(Statistics
 
          // compute the direction within the trust region
          this->constraint_relaxation_strategy.set_trust_region_radius(this->radius);
-         Direction direction = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate);
+         const bool evaluate_functions = (this->number_iterations == 1);
+         Direction direction = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, evaluate_functions);
 
          // assemble the trial iterate by taking a full step
          Iterate trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction);

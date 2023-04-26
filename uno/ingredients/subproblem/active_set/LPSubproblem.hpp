@@ -13,7 +13,7 @@ public:
    LPSubproblem(size_t max_number_variables, size_t max_number_constraints, const Options& options);
 
    void generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) override;
-   [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) override;
+   [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate, bool evaluate_functions) override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
 private:
