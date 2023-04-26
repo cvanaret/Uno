@@ -101,7 +101,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
 
          // stage c: compute the lowest possible constraint violation (penalty parameter = 0)
          DEBUG << "Compute ideal solution by solving the feasibility problem:\n";
-         Direction direction_lowest_violation = this->solve_feasibility_problem(statistics, current_iterate, evaluate_functions);
+         Direction direction_lowest_violation = this->solve_feasibility_problem(statistics, current_iterate, true);
          const double residual_lowest_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model,
                current_iterate, direction_lowest_violation, direction_lowest_violation.primal_dual_step_length);
          DEBUG << "Lowest linearized infeasibility mk(dk): " << residual_lowest_violation << '\n';
@@ -114,7 +114,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
          }
          else {
             if (this->penalty_parameter < current_penalty_parameter) {
-               direction = this->solve_relaxed_problem(statistics, current_iterate, this->penalty_parameter, evaluate_functions);
+               direction = this->solve_relaxed_problem(statistics, current_iterate, this->penalty_parameter, true);
                linearized_residual = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate,
                      direction, direction.primal_dual_step_length);
             }
@@ -143,7 +143,7 @@ Direction l1Relaxation::solve_with_steering_rule(Statistics& statistics, Iterate
                      condition2 = true;
                   }
                   else {
-                     direction = this->solve_relaxed_problem(statistics, current_iterate, this->penalty_parameter, evaluate_functions);
+                     direction = this->solve_relaxed_problem(statistics, current_iterate, this->penalty_parameter, true);
                      linearized_residual = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate,
                            direction, direction.primal_dual_step_length);
                      DEBUG << "Linearized infeasibility mk(dk): " << linearized_residual << "\n\n";
