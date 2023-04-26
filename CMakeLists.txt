@@ -13,7 +13,6 @@ project(Uno VERSION 1.0
 
 # set C++17 and enable other languages
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_BUILD_TYPE Debug)
 enable_language(CXX C Fortran)
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion -Wmaybe-uninitialized")
