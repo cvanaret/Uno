@@ -145,7 +145,7 @@ void BQPDSolver::check_termination([[maybe_unused]] BQPDStatus bqpd_status) {
    assert(bqpd_status != BQPDStatus::UNDEFINED && "BQPD failed with undefined status");
     */
    if (bqpd_status == BQPDStatus::BOUND_INCONSISTENCY || bqpd_status == BQPDStatus::INCORRECT_PARAMETER ||
-         bqpd_status == BQPDStatus::LP_INSUFFICIENT_SPACE || bqpd_status == BQPDStatus::HESSIAN_INSUFFICIENT_SPACE ||
+         bqpd_status == BQPDStatus::LP_INSUFFICIENT_SPACE || // bqpd_status == BQPDStatus::HESSIAN_INSUFFICIENT_SPACE ||
          bqpd_status == BQPDStatus::SPARSE_INSUFFICIENT_SPACE || bqpd_status == BQPDStatus::MAX_RESTARTS_REACHED ||
          bqpd_status == BQPDStatus::UNDEFINED) {
       throw SolverEvaluationError();
@@ -284,7 +284,9 @@ SubproblemStatus BQPDSolver::status_from_int(int ifail) {
       case 1:
          return SubproblemStatus::UNBOUNDED_PROBLEM;
       case 3:
-         return SubproblemStatus::INFEASIBLE; 
+         return SubproblemStatus::INFEASIBLE;
+      case 6: // BQPDStatus::HESSIAN_INSUFFICIENT_SPACE
+         return SubproblemStatus::OPTIMAL;
    }
    throw std::invalid_argument("The BQPD ifail is not consistent with the Uno status values");
 }

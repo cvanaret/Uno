@@ -73,9 +73,6 @@ scale_residuals yes
 # enforce the linear constraints at the initial point (yes|no)
 enforce_linear_constraints no
 
-# enable the use of second-order correction (yes|no)
-use_second_order_correction no
-
 # norm of the progress measures (L1|L2|INF)
 progress_norm L1
 

@@ -10,19 +10,19 @@ struct EvaluationError : public std::exception {
 
 struct GradientEvaluationError : EvaluationError {
    [[nodiscard]] const char* what() const noexcept override {
-      return "A numerical error was encountered while evaluating a gradient";
+      return "A numerical error was encountered while evaluating a gradient\n";
    }
 };
 
 struct FunctionEvaluationError : EvaluationError {
    [[nodiscard]] const char* what() const noexcept override {
-      return "A numerical error was encountered while evaluating a function";
+      return "A numerical error was encountered while evaluating a function\n";
    }
 };
 
 struct SolverEvaluationError : EvaluationError {
    [[nodiscard]] const char* what() const noexcept override {
-      return "A numerical error was encountered while solving a subproblem";
+      return "A numerical error was encountered while solving a subproblem\n";
    }
 };
 
