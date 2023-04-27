@@ -46,7 +46,7 @@ Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_i
          // compute the status of the next iterate
          termination_status = this->check_termination(model, next_iterate, step_norm);
          Uno::add_statistics(statistics, model, next_iterate, major_iterations);
-         if (Logger::logger_level == INFO) statistics.print_current_line();
+         if (Logger::level == INFO) statistics.print_current_line();
 
          current_iterate = std::move(next_iterate);
       }
@@ -56,7 +56,7 @@ Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_i
    }
    Uno::postprocess_iterate(model, current_iterate, termination_status);
 
-   if (Logger::logger_level == INFO) statistics.print_footer();
+   if (Logger::level == INFO) statistics.print_footer();
    timer.stop();
 
    const size_t number_subproblems_solved = this->globalization_mechanism.get_number_subproblems_solved();
@@ -129,7 +129,7 @@ void Uno::postprocess_iterate(const Model& model, Iterate& iterate, TerminationS
    // in case the objective was not yet evaluated, evaluate it
    iterate.evaluate_objective(model);
    model.postprocess_solution(iterate, termination_status);
-   DEBUG << "Final iterate:\n" << iterate;
+   DEBUG2 << "Final iterate:\n" << iterate;
 }
 
 void join(const std::vector<std::string>& vector, char separator) {

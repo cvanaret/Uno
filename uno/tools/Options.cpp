@@ -162,23 +162,3 @@ void get_command_line_options(int argc, char* argv[], Options& options) {
       }
    }
 }
-
-void set_logger(const std::string& logger_level) {
-   try {
-      if (logger_level == "ERROR") {
-         Logger::logger_level = ERROR;
-      }
-      else if (logger_level == "WARNING") {
-         Logger::logger_level = WARNING;
-      }
-      else if (logger_level == "INFO") {
-         Logger::logger_level = INFO;
-      }
-      else if (logger_level == "DEBUG") {
-         Logger::logger_level = DEBUG;
-      }
-   }
-   catch (const std::out_of_range&) {
-      throw std::out_of_range("The logger level " + logger_level + " was not found");
-   }
-}

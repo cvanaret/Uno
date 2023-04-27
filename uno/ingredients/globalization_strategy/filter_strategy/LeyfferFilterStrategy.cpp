@@ -19,8 +19,8 @@ bool LeyfferFilterStrategy::is_iterate_acceptable(Statistics& /*statistics*/, co
    // - ignore the predicted infeasibility reduction
    // - scale the scaled optimality measure with 1
    const double unconstrained_predicted_reduction = predicted_reduction.optimality(1.) + predicted_reduction.auxiliary_terms;
-   DEBUG << "Current: η = " << current_progress_measures.infeasibility << ", ω = " << current_optimality_measure << '\n';
-   DEBUG << "Trial:   η = " << trial_progress_measures.infeasibility << ", ω = " << trial_optimality_measure << '\n';
+   DEBUG << "Current: η = " << current_progress_measures.infeasibility << ",\t ω = " << current_optimality_measure << '\n';
+   DEBUG << "Trial:   η = " << trial_progress_measures.infeasibility << ",\t ω = " << trial_optimality_measure << '\n';
    DEBUG << "Unconstrained predicted reduction: " << predicted_reduction.optimality(1.) << " + " << predicted_reduction.auxiliary_terms <<
          " = " <<  unconstrained_predicted_reduction << '\n';
 
@@ -38,7 +38,7 @@ bool LeyfferFilterStrategy::is_iterate_acceptable(Statistics& /*statistics*/, co
       const bool improves_current_iterate = this->filter->acceptable_wrt_current_iterate(current_progress_measures.infeasibility,
             current_optimality_measure, trial_progress_measures.infeasibility, trial_optimality_measure);
       if (improves_current_iterate) {
-         DEBUG << "Acceptable wrt current point\n";
+         DEBUG << "Acceptable with respect to current point\n";
          const double actual_reduction = this->filter->compute_actual_reduction(current_optimality_measure, current_progress_measures.infeasibility,
                trial_optimality_measure);
          DEBUG << "Actual reduction: " << actual_reduction << '\n';
@@ -62,7 +62,7 @@ bool LeyfferFilterStrategy::is_iterate_acceptable(Statistics& /*statistics*/, co
          }
       }
       else {
-         DEBUG << "Not acceptable wrt current point\n";
+         DEBUG << "Not acceptable with respect to current point\n";
       }
    }
    else {

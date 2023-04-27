@@ -49,7 +49,7 @@ void l1Relaxation::initialize(Iterate& initial_iterate) {
 }
 
 Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, bool evaluate_functions) {
-   DEBUG << "Current iterate\n" << current_iterate << '\n';
+   DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
    // use Byrd's steering rules to update the penalty parameter and compute a descent direction
    return this->solve_with_steering_rule(statistics, current_iterate, evaluate_functions);
@@ -62,7 +62,7 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, Iterate& curren
    Direction direction = this->subproblem->solve(statistics, problem, current_iterate, evaluate_functions);
    direction.objective_multiplier = problem.get_objective_multiplier();
    direction.norm = norm_inf(direction.primals, Range(this->original_model.number_variables));
-   DEBUG << direction << '\n';
+   DEBUG2 << direction << '\n';
    assert(direction.status == SubproblemStatus::OPTIMAL && "The subproblem was not solved to optimality");
    return direction;
 }

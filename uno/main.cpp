@@ -75,7 +75,7 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
    std::cout << "memory_allocation_amount = " << memory_allocation_amount << '\n';
 }
 
-Level Logger::logger_level = INFO;
+Level Logger::level = INFO;
 
 void print_uno_version() {
    std::cout << "Welcome in Uno 1.0\n";
@@ -96,7 +96,7 @@ int main(int argc, char* argv[]) {
       Options options = get_default_options("uno.options");
       // override them with the command line options
       get_command_line_options(argc, argv, options);
-      set_logger(options.get_string("logger"));
+      Logger::set_logger(options.get_string("logger"));
 
       if (std::string(argv[1]) == "-v") {
          print_uno_version();

@@ -24,9 +24,9 @@ bool WaechterFilterStrategy::is_iterate_acceptable(Statistics& /*statistics*/, c
    // - ignore the predicted infeasibility reduction
    // - scale the scaled optimality measure with 1
    const double unconstrained_predicted_reduction = predicted_reduction.optimality(1.) + predicted_reduction.auxiliary_terms;
-   DEBUG << "Current: η = " << current_progress_measures.infeasibility << ", ω = " << current_progress_measures.optimality(1.) << " + " <<
+   DEBUG << "Current: η = " << current_progress_measures.infeasibility << ",\t ω = " << current_progress_measures.optimality(1.) << " + " <<
       current_progress_measures.auxiliary_terms << '\n';
-   DEBUG << "Trial:   η = " << trial_progress_measures.infeasibility << ", ω = " << trial_progress_measures.optimality(1.) << " + " <<
+   DEBUG << "Trial:   η = " << trial_progress_measures.infeasibility << ",\t ω = " << trial_progress_measures.optimality(1.) << " + " <<
       trial_progress_measures.auxiliary_terms << '\n';
    DEBUG << "Unconstrained predicted reduction: " << predicted_reduction.optimality(1.) << " + " << predicted_reduction.auxiliary_terms <<
          " = " <<  unconstrained_predicted_reduction << '\n';
@@ -68,11 +68,11 @@ bool WaechterFilterStrategy::is_iterate_acceptable(Statistics& /*statistics*/, c
          DEBUG << "Switching condition violated\n";
          if (this->filter->acceptable_wrt_current_iterate(current_progress_measures.infeasibility, current_optimality_measure,
                trial_progress_measures.infeasibility, trial_optimality_measure)) {
-            DEBUG << "Acceptable wrt current point\n";
+            DEBUG << "Acceptable with respect to current point\n";
             accept = true;
          }
          else {
-            DEBUG << "Not acceptable wrt current point\n";
+            DEBUG << "Not acceptable with respect to current point\n";
          }
       }
       // possibly augment the filter
