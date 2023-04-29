@@ -37,7 +37,7 @@ Direction BacktrackingLineSearch::compute_direction(Statistics& statistics, Iter
    }
 }
 
-std::tuple<Iterate, double> BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const Model& /*model*/, Iterate& current_iterate) {
+std::tuple<Iterate, double> BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) {
    // compute the direction
    Direction direction = this->compute_direction(statistics, current_iterate);
    this->solving_feasibility_problem = false;
@@ -45,7 +45,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_next_iterate(Statist
 
    // backtrack along the direction
    try {
-      return this->backtrack_along_direction(statistics, current_iterate, direction);
+      return this->backtrack_along_direction(statistics, model, current_iterate, direction);
    }
    catch (const StepLengthTooSmall& e) {
       DEBUG << "The line search terminated with a step length smaller than " << this->minimum_step_length << '\n';
@@ -54,7 +54,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_next_iterate(Statist
          this->solving_feasibility_problem = true;
          // compute a direction wrt the feasibility problem and backtrack along it
          direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, direction.primals, true);
-         auto [trial_iterate, step_norm] = this->backtrack_along_direction(statistics, current_iterate, direction);
+         auto [trial_iterate, step_norm] = this->backtrack_along_direction(statistics, model, current_iterate, direction);
          this->total_number_iterations += this->number_iterations;
          return {trial_iterate, step_norm};
       }
@@ -65,7 +65,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_next_iterate(Statist
 }
 
 // backtrack on the primal-dual step length computed by the subproblem
-std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, Iterate& current_iterate,
+std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
       const Direction& direction) {
    // most subproblem methods return a step length of 1. Interior-point methods however apply the fraction-to-boundary condition
    double step_length = direction.primal_dual_step_length;
@@ -76,8 +76,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(St
       this->print_iteration(step_length);
 
       // assemble the trial iterate by going a fraction along the direction
-      Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, step_length,
-            direction.bound_dual_step_length);
+      Iterate trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction, step_length);
       try {
          if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, step_length)) {
             this->total_number_iterations += this->number_iterations;
@@ -97,6 +96,16 @@ std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(St
    }
    // TODO: may still be accepted as solution if the termination criteria are satisfied
    throw StepLengthTooSmall();
+}
+
+Iterate BacktrackingLineSearch::assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction, double step_length) {
+   Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, step_length,
+         direction.bound_dual_step_length);
+
+   // project the steps within the bounds to avoid numerical errors
+   model.project_primals_onto_bounds(trial_iterate.primals);
+
+   return trial_iterate;
 }
 
 double BacktrackingLineSearch::decrease_step_length(double step_length) const {

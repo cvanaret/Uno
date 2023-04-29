@@ -42,6 +42,9 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_next_iterate(Statistics
          this->constraint_relaxation_strategy.set_trust_region_radius(this->radius);
          const bool evaluate_functions = (this->number_iterations == 1);
          Direction direction = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, evaluate_functions);
+         if (direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
+            throw std::exception();
+         }
 
          // assemble the trial iterate by taking a full step
          Iterate trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction);
@@ -71,6 +74,10 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_next_iterate(Statistics
 Iterate TrustRegionStrategy::assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction) {
    Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, direction.primal_dual_step_length,
          direction.bound_dual_step_length);
+
+   // project the steps within the bounds to avoid numerical errors
+   model.project_primals_onto_bounds(trial_iterate.primals);
+
    // reset bound multipliers of active trust region
    this->reset_active_trust_region_multipliers(model, direction, trial_iterate);
    return trial_iterate;
