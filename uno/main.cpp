@@ -62,17 +62,22 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
 
    // instantiate the combination of ingredients and solve the problem
    Uno uno = Uno(*mechanism, options);
-   Result result = uno.solve(statistics, *model, initial_iterate);
+   try {
+      Result result = uno.solve(statistics, *model, initial_iterate);
 
-   // print the optimization summary
-   std::string combination = options.get_string("globalization_mechanism") + " " + options.get_string("constraint_relaxation_strategy") + " " +
-         options.get_string("globalization_strategy") + " " + options.get_string("subproblem");
-   std::cout << "\nUno (" << combination << ")\n";
-   std::cout << Timer::get_current_date();
-   std::cout << "────────────────────────────────────────\n";
-   const bool print_solution = options.get_bool("print_solution");
-   result.print(print_solution);
-   std::cout << "memory_allocation_amount = " << memory_allocation_amount << '\n';
+      // print the optimization summary
+      std::string combination = options.get_string("globalization_mechanism") + " " + options.get_string("constraint_relaxation_strategy") + " " +
+                                options.get_string("globalization_strategy") + " " + options.get_string("subproblem");
+      std::cout << "\nUno (" << combination << ")\n";
+      std::cout << Timer::get_current_date();
+      std::cout << "────────────────────────────────────────\n";
+      const bool print_solution = options.get_bool("print_solution");
+      result.print(print_solution);
+      std::cout << "memory_allocation_amount = " << memory_allocation_amount << '\n';
+   }
+   catch (const std::exception& e) {
+      std::cout << "Uno terminated with an error\n";
+   }
 }
 
 Level Logger::level = INFO;

@@ -30,7 +30,13 @@ Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_i
    std::cout << "Problem type: " << type_to_string(model.problem_type) << "\n\n";
 
    // use the current point to initialize the strategies and generate the initial iterate
-   this->globalization_mechanism.initialize(current_iterate);
+   try {
+      this->globalization_mechanism.initialize(current_iterate);
+   }
+   catch (const std::exception& e) {
+      ERROR << RED << "An error occurred at the initial iterate: " << e.what() << RESET;
+      throw e;
+   }
 
    TerminationStatus termination_status = TerminationStatus::NOT_OPTIMAL;
    try {
