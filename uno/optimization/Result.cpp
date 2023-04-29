@@ -1,6 +1,7 @@
 // Copyright (c) 2018-2023 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <iomanip>
 #include "Result.hpp"
 
 void Result::print(bool print_primal_dual_solution) const {
@@ -24,7 +25,7 @@ void Result::print(bool print_primal_dual_solution) const {
       std::cout << "Failed with error\n";
    }
 
-   std::cout << "Objective value:\t\t\t" << this->solution.evaluations.objective << '\n';
+   std::cout << "Objective value:\t\t\t" << std::defaultfloat << std::setprecision(7) << this->solution.evaluations.objective << '\n';
 
    std::cout << "┌ Optimality stationarity residual:\t" << this->solution.residuals.optimality_stationarity << '\n';
    std::cout << "│ Feasibility stationarity residual:\t" << this->solution.residuals.feasibility_stationarity << '\n';

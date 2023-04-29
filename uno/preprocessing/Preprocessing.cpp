@@ -121,7 +121,7 @@ void Preprocessing::enforce_linear_constraints(const Options& options, const Mod
             const size_t j = linear_constraints[linear_constraint_index];
             multipliers.constraints[j] += direction.multipliers.constraints[linear_constraint_index];
          }
-         DEBUG2 << "Linear feasible initial point: "; print_vector(INFO, x);
+         DEBUG2 << "Linear feasible initial point: "; print_vector(DEBUG2, x);
       }
    }
 }

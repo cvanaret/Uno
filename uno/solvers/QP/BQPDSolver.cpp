@@ -124,7 +124,7 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
          this->info.data(), &this->iprint, &this->nout);
    BQPDStatus bqpd_status = BQPDSolver::bqpd_status_from_int(this->ifail);
    BQPDSolver::check_termination(bqpd_status);
-   direction.status = BQPDSolver::status_from_int(this->ifail);
+   direction.status = BQPDSolver::status_from_bqpd_status(bqpd_status);
 
    // project solution into bounds
    for (size_t i: Range(number_variables)) {
@@ -144,10 +144,24 @@ void BQPDSolver::check_termination([[maybe_unused]] BQPDStatus bqpd_status) {
    assert(bqpd_status != BQPDStatus::MAX_RESTARTS_REACHED && "BQPD failed with 'max restarts reached' status");
    assert(bqpd_status != BQPDStatus::UNDEFINED && "BQPD failed with undefined status");
     */
-   if (bqpd_status == BQPDStatus::BOUND_INCONSISTENCY || bqpd_status == BQPDStatus::INCORRECT_PARAMETER ||
-         bqpd_status == BQPDStatus::LP_INSUFFICIENT_SPACE || // bqpd_status == BQPDStatus::HESSIAN_INSUFFICIENT_SPACE ||
-         bqpd_status == BQPDStatus::SPARSE_INSUFFICIENT_SPACE || bqpd_status == BQPDStatus::MAX_RESTARTS_REACHED ||
-         bqpd_status == BQPDStatus::UNDEFINED) {
+   if (bqpd_status == BQPDStatus::BOUND_INCONSISTENCY) {
+      WARNING << YELLOW << "BQPD error: bound inconsistency\n" << RESET;
+      throw SolverEvaluationError();
+   }
+   else if (bqpd_status == BQPDStatus::INCORRECT_PARAMETER) {
+      WARNING << YELLOW << "BQPD error: incorrect parameter\n" << RESET;
+      throw SolverEvaluationError();
+   }
+   else if (bqpd_status == BQPDStatus::LP_INSUFFICIENT_SPACE) {
+      WARNING << YELLOW << "BQPD error: LP insufficient space\n" << RESET;
+      throw SolverEvaluationError();
+   }
+   else if (bqpd_status == BQPDStatus::SPARSE_INSUFFICIENT_SPACE) {
+      WARNING << YELLOW << "BQPD error: sparse insufficient space\n" << RESET;
+      throw SolverEvaluationError();
+   }
+   else if (bqpd_status == BQPDStatus::UNDEFINED) {
+      WARNING << YELLOW << "BQPD error: undefined\n" << RESET;
       throw SolverEvaluationError();
    }
 }
@@ -277,16 +291,31 @@ BQPDStatus BQPDSolver::bqpd_status_from_int(int ifail) {
    return static_cast<BQPDStatus>(ifail);
 }
 
-SubproblemStatus BQPDSolver::status_from_int(int ifail) {
-   switch (ifail) {
-      case 0:
+SubproblemStatus BQPDSolver::status_from_bqpd_status(BQPDStatus bqpd_status) {
+   switch (bqpd_status) {
+      case BQPDStatus::OPTIMAL:
          return SubproblemStatus::OPTIMAL;
-      case 1:
+      case BQPDStatus::UNBOUNDED_PROBLEM:
          return SubproblemStatus::UNBOUNDED_PROBLEM;
-      case 3:
+      case BQPDStatus::BOUND_INCONSISTENCY:
          return SubproblemStatus::INFEASIBLE;
-      case 6: // BQPDStatus::HESSIAN_INSUFFICIENT_SPACE
-         return SubproblemStatus::OPTIMAL;
+      case BQPDStatus::INFEASIBLE:
+         return SubproblemStatus::INFEASIBLE;
+      // errors
+      case BQPDStatus::INCORRECT_PARAMETER:
+         return SubproblemStatus::ERROR;
+      case BQPDStatus::LP_INSUFFICIENT_SPACE:
+         return SubproblemStatus::ERROR;
+      case BQPDStatus::HESSIAN_INSUFFICIENT_SPACE:
+         WARNING << YELLOW << "BQPD kmax too small, continue anyway\n" << RESET;
+         return SubproblemStatus::ERROR;
+      case BQPDStatus::SPARSE_INSUFFICIENT_SPACE:
+         return SubproblemStatus::ERROR;
+      case BQPDStatus::MAX_RESTARTS_REACHED:
+         WARNING << YELLOW << "BQPD max restarts reached\n" << RESET;
+         return SubproblemStatus::ERROR;
+      case BQPDStatus::UNDEFINED:
+         return SubproblemStatus::ERROR;
    }
    throw std::invalid_argument("The BQPD ifail is not consistent with the Uno status values");
 }

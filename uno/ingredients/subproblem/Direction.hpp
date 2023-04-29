@@ -13,7 +13,8 @@
 enum class SubproblemStatus {
    OPTIMAL = 0,
    UNBOUNDED_PROBLEM,
-   INFEASIBLE
+   INFEASIBLE,
+   ERROR
 };
 
 /*! \struct ConstraintActivity
