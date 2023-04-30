@@ -5,9 +5,10 @@
 #include "tools/Logger.hpp"
 #include "linear_algebra/Vector.hpp"
 
-Direction::Direction(size_t max_number_variables, size_t max_number_constraints):
-   number_variables(max_number_variables), number_constraints(max_number_constraints),
-   primals(max_number_variables), multipliers(max_number_variables, max_number_constraints) {
+Direction::Direction(size_t max_number_variables, size_t max_number_constraints) :
+      number_variables(max_number_variables), number_constraints(max_number_constraints),
+      primals(max_number_variables), multipliers(max_number_variables, max_number_constraints),
+      active_set(max_number_variables, max_number_constraints) {
 }
 
 void Direction::set_dimensions(size_t new_number_variables, size_t new_number_constraints) {
@@ -32,10 +33,14 @@ std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
    stream << "\nDirection:\n";
    stream << "Status: " << status_to_string(direction.status) << '\n';
 
-   stream << "d^* = "; print_vector(stream, direction.primals, 0, direction.number_variables);
-   stream << "constraint multipliers = "; print_vector(stream, direction.multipliers.constraints);
-   stream << "lower bound multipliers = "; print_vector(stream, direction.multipliers.lower_bounds);
-   stream << "upper bound multipliers = "; print_vector(stream, direction.multipliers.upper_bounds);
+   stream << "d^* = ";
+   print_vector(stream, direction.primals, 0, direction.number_variables);
+   stream << "constraint multipliers = ";
+   print_vector(stream, direction.multipliers.constraints);
+   stream << "lower bound multipliers = ";
+   print_vector(stream, direction.multipliers.lower_bounds);
+   stream << "upper bound multipliers = ";
+   print_vector(stream, direction.multipliers.upper_bounds);
    stream << "objective multiplier = " << direction.objective_multiplier << '\n';
 
    stream << "objective = " << direction.subproblem_objective << '\n';
@@ -82,7 +87,17 @@ std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
    return stream;
 }
 
+ActiveConstraints::ActiveConstraints(size_t capacity) {
+   this->at_lower_bound.reserve(capacity);
+   this->at_upper_bound.reserve(capacity);
+}
+
+ActiveSet::ActiveSet(size_t number_variables, size_t number_constraints): constraints(number_constraints), bounds(number_variables) {
+}
+
 ConstraintPartition::ConstraintPartition(size_t number_constraints) {
    this->feasible.reserve(number_constraints);
    this->infeasible.reserve(number_constraints);
+   this->lower_bound_infeasible.reserve(number_constraints);
+   this->upper_bound_infeasible.reserve(number_constraints);
 }

@@ -65,6 +65,10 @@ inline NonlinearProblem::NonlinearProblem(const Model& model, size_t number_vari
       model(model), number_variables(number_variables), number_constraints(number_constraints) {
    this->equality_constraints.reserve(this->number_constraints);
    this->inequality_constraints.reserve(this->number_constraints);
+   this->lower_bounded_variables.reserve(this->number_variables);
+   this->upper_bounded_variables.reserve(this->number_variables);
+   this->single_lower_bounded_variables.reserve(this->number_variables);
+   this->single_upper_bounded_variables.reserve(this->number_variables);
 }
 
 inline bool NonlinearProblem::is_constrained() const {

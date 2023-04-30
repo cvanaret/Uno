@@ -46,7 +46,6 @@ protected:
    const double constraint_violation_coefficient;
    // elastic variables
    ElasticVariables elastic_variables;
-   std::vector<size_t> violated_constraints{};
 
    [[nodiscard]] static size_t count_elastic_variables(const Model& model);
    void generate_elastic_variables();
@@ -88,7 +87,6 @@ inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_m
    };
    this->elastic_variables.positive.for_each_value(add_nonnegative_elastic);
    this->elastic_variables.negative.for_each_value(add_nonnegative_elastic);
-   this->violated_constraints.reserve(this->number_constraints);
 }
 
 inline double l1RelaxedProblem::get_objective_multiplier() const {

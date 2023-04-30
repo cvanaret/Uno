@@ -15,10 +15,12 @@
 
 size_t memory_allocation_amount = 0;
 
+/*
 void* operator new(size_t size) {
    memory_allocation_amount += size;
    return malloc(size);
 }
+*/
 
 Statistics create_statistics(const Model& model, const Options& options) {
    Statistics statistics(options);

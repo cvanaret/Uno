@@ -48,6 +48,10 @@ AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
    this->objective_sign = (this->asl->i.objtype_[0] == 1) ? -1. : 1.;
 
    // variables
+   this->lower_bounded_variables.reserve(this->number_variables);
+   this->upper_bounded_variables.reserve(this->number_variables);
+   this->single_lower_bounded_variables.reserve(this->number_variables);
+   this->single_upper_bounded_variables.reserve(this->number_variables);
    this->generate_variables();
 
    // constraints

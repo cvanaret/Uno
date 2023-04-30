@@ -11,7 +11,14 @@
 
 // abstract Problem class
 Model::Model(std::string name, size_t number_variables, size_t number_constraints, FunctionType type) :
-      name(std::move(name)), number_variables(number_variables), number_constraints(number_constraints), problem_type(type) {
+      name(std::move(name)), number_variables(number_variables), number_constraints(number_constraints), problem_type(type),
+      slacks(number_constraints) {
+   this->equality_constraints.reserve(number_constraints);
+   this->inequality_constraints.reserve(number_constraints);
+   this->lower_bounded_variables.reserve(number_variables);
+   this->upper_bounded_variables.reserve(number_variables);
+   this->single_lower_bounded_variables.reserve(number_variables);
+   this->single_upper_bounded_variables.reserve(number_variables);
 }
 
 void Model::determine_bounds_types(std::vector<Interval>& bounds, std::vector<BoundType>& status) {

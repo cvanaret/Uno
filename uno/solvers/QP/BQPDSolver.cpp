@@ -123,7 +123,7 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
          &this->mlp, &this->peq_solution, this->hessian_values.data(), this->hessian_sparsity.data(), &current_mode, &this->ifail,
          this->info.data(), &this->iprint, &this->nout);
    BQPDStatus bqpd_status = BQPDSolver::bqpd_status_from_int(this->ifail);
-   BQPDSolver::check_termination(bqpd_status);
+   //BQPDSolver::check_termination(bqpd_status);
    direction.status = BQPDSolver::status_from_bqpd_status(bqpd_status);
 
    // project solution into bounds
@@ -298,12 +298,10 @@ SubproblemStatus BQPDSolver::status_from_bqpd_status(BQPDStatus bqpd_status) {
       case BQPDStatus::UNBOUNDED_PROBLEM:
          return SubproblemStatus::UNBOUNDED_PROBLEM;
       case BQPDStatus::BOUND_INCONSISTENCY:
-         return SubproblemStatus::INFEASIBLE;
       case BQPDStatus::INFEASIBLE:
          return SubproblemStatus::INFEASIBLE;
       // errors
       case BQPDStatus::INCORRECT_PARAMETER:
-         return SubproblemStatus::ERROR;
       case BQPDStatus::LP_INSUFFICIENT_SPACE:
          return SubproblemStatus::ERROR;
       case BQPDStatus::HESSIAN_INSUFFICIENT_SPACE:
