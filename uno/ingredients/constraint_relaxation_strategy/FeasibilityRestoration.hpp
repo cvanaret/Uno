@@ -20,10 +20,12 @@ public:
    void set_trust_region_radius(double trust_region_radius) override;
 
    // direction computation
-   [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, bool evaluate_functions) override;
-   [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, bool evaluate_functions) override;
+   [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
+         WarmstartInformation& warmstart_information) override;
+   [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
+         WarmstartInformation& warmstart_information) override;
    [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point,
-         bool evaluate_functions) override;
+         WarmstartInformation& warmstart_information) override;
 
    // trial iterate acceptance
    void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length) override;
@@ -42,12 +44,12 @@ private:
    Phase current_phase{Phase::OPTIMALITY};
    const double l1_constraint_violation_coefficient;
    const double tolerance;
-   bool force_function_evaluation{false};
+   bool switched_to_optimality_phase{false};
 
    [[nodiscard]] const NonlinearProblem& current_reformulated_problem() const;
    [[nodiscard]] GlobalizationStrategy& current_globalization_strategy() const;
-   [[nodiscard]] Direction solve_optimality_problem(Statistics& statistics, Iterate& current_iterate, bool evaluate_functions);
-   void switch_to_feasibility_restoration(Iterate& current_iterate);
+   [[nodiscard]] Direction solve_optimality_problem(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information);
+   void switch_to_feasibility_restoration(Iterate& current_iterate, WarmstartInformation& warmstart_information);
    void switch_to_optimality(Iterate& current_iterate, Iterate& trial_iterate);
 
    // progress measures and their local models

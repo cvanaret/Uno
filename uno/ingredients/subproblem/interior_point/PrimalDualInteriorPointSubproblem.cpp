@@ -115,64 +115,76 @@ double PrimalDualInteriorPointSubproblem::push_variable_to_interior(double varia
    return variable_value;
 }
 
-void PrimalDualInteriorPointSubproblem::evaluate_functions(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) {
-   // original Hessian and barrier objective gradient
-   this->hessian_model->evaluate(statistics, problem, current_iterate.primals, current_iterate.multipliers.constraints);
-   problem.evaluate_objective_gradient(current_iterate, this->evaluations.objective_gradient);
+void PrimalDualInteriorPointSubproblem::evaluate_functions(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+      const WarmstartInformation& warmstart_information) {
+   // barrier Lagrangian Hessian
+   if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
+      // original Lagrangian Hessian
+      this->hessian_model->evaluate(statistics, problem, current_iterate.primals, current_iterate.multipliers.constraints);
 
-   for (size_t i: Range(problem.number_variables)) {
-      // Hessian: diagonal barrier terms (grouped by variable)
-      double hessian_diagonal_barrier_term = 0.;
-      // objective gradient
-      double objective_barrier_term = 0.;
-      // TODO urgent: use the correct bounds (if TR, all the original variables are bounded)
-      if (is_finite(problem.get_variable_lower_bound(i))) { // lower bounded
-         const double inverse_distance = 1. / (current_iterate.primals[i] - problem.get_variable_lower_bound(i));
-         hessian_diagonal_barrier_term += current_iterate.multipliers.lower_bounds[i] * inverse_distance;
-         objective_barrier_term += -this->barrier_parameter() * inverse_distance;
-         // damping
-         if (not is_finite(problem.get_variable_upper_bound(i))) {
-            objective_barrier_term += this->damping_factor*this->barrier_parameter();
+      // diagonal barrier terms (grouped by variable)
+      for (size_t i: Range(problem.number_variables)) {
+         double diagonal_barrier_term = 0.;
+         if (is_finite(problem.get_variable_lower_bound(i))) { // lower bounded
+            diagonal_barrier_term += current_iterate.multipliers.lower_bounds[i] / (current_iterate.primals[i] - problem.get_variable_lower_bound(i));
          }
-      }
-      if (is_finite(problem.get_variable_upper_bound(i))) { // upper bounded
-         const double inverse_distance = 1. / (current_iterate.primals[i] - problem.get_variable_upper_bound(i));
-         hessian_diagonal_barrier_term += current_iterate.multipliers.upper_bounds[i] * inverse_distance;
-         objective_barrier_term += -this->barrier_parameter() * inverse_distance;
-         // damping
-         if (not is_finite(problem.get_variable_lower_bound(i))) {
-            objective_barrier_term -= this->damping_factor*this->barrier_parameter();
+         if (is_finite(problem.get_variable_upper_bound(i))) { // upper bounded
+            diagonal_barrier_term += current_iterate.multipliers.upper_bounds[i] / (current_iterate.primals[i] - problem.get_variable_upper_bound(i));
          }
+         this->hessian_model->hessian->insert(diagonal_barrier_term, i, i);
       }
-      this->hessian_model->hessian->insert(hessian_diagonal_barrier_term, i, i);
-      this->evaluations.objective_gradient.insert(i, objective_barrier_term);
    }
-   // TODO: the allocated size for objective_gradient is probably too small
 
-   // constraints
-   problem.evaluate_constraints(current_iterate, this->evaluations.constraints);
+   // barrier objective gradient
+   if (warmstart_information.objective_changed) {
+      // original objective gradient
+      problem.evaluate_objective_gradient(current_iterate, this->evaluations.objective_gradient);
 
-   // constraint Jacobian
-   problem.evaluate_constraint_jacobian(current_iterate, this->evaluations.constraint_jacobian);
+      // barrier terms
+      // TODO urgent: use the correct bounds (if TR, all the original variables are bounded)
+      // TODO: the allocated size for objective_gradient is probably too small
+      for (size_t i: Range(problem.number_variables)) {
+         double barrier_term = 0.;
+         if (is_finite(problem.get_variable_lower_bound(i))) { // lower bounded
+            barrier_term += -this->barrier_parameter()/(current_iterate.primals[i] - problem.get_variable_lower_bound(i));
+            // damping
+            if (not is_finite(problem.get_variable_upper_bound(i))) {
+               barrier_term += this->damping_factor * this->barrier_parameter();
+            }
+         }
+         if (is_finite(problem.get_variable_upper_bound(i))) { // upper bounded
+            barrier_term += -this->barrier_parameter()/(current_iterate.primals[i] - problem.get_variable_upper_bound(i));
+            // damping
+            if (not is_finite(problem.get_variable_lower_bound(i))) {
+               barrier_term -= this->damping_factor * this->barrier_parameter();
+            }
+         }
+         this->evaluations.objective_gradient.insert(i, barrier_term);
+      }
+   }
+
+   // constraints and Jacobian
+   if (warmstart_information.constraints_changed) {
+      problem.evaluate_constraints(current_iterate, this->evaluations.constraints);
+      problem.evaluate_constraint_jacobian(current_iterate, this->evaluations.constraint_jacobian);
+   }
 }
 
 Direction PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
-      bool evaluate_functions) {
+      const WarmstartInformation& warmstart_information) {
    assert(problem.inequality_constraints.empty() && "The problem has inequality constraints. Create an instance of EqualityConstrainedModel");
+   //warmstart_information.display();
 
    // update the barrier parameter if the current iterate solves the subproblem
    if (not this->solving_feasibility_problem) {
       this->update_barrier_parameter(problem, current_iterate);
    }
 
-   this->relax_variable_bounds(problem, current_iterate);
-
+   //this->relax_variable_bounds(problem, current_iterate);
    //this->check_interior_primals(problem, current_iterate);
 
-   if (evaluate_functions) {
-      // evaluate the functions at the current iterate
-      this->evaluate_functions(statistics, problem, current_iterate);
-   }
+   // evaluate the functions at the current iterate
+   this->evaluate_functions(statistics, problem, current_iterate, warmstart_information);
 
    // set up the augmented system (with the correct inertia)
    this->assemble_augmented_system(statistics, problem, current_iterate);

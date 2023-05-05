@@ -5,6 +5,7 @@
 #include <cassert>
 #include "TrustRegionStrategy.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
 
 TrustRegionStrategy::TrustRegionStrategy(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
@@ -33,6 +34,12 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_next_iterate(Statistics
    this->number_iterations = 0;
    this->reset_radius();
 
+   WarmstartInformation warmstart_information{};
+   warmstart_information.objective_changed = true;
+   warmstart_information.constraints_changed = true;
+   warmstart_information.constraint_bounds_changed = true;
+   warmstart_information.variable_bounds_changed = true;
+
    while (not this->termination()) {
       try {
          this->number_iterations++;
@@ -40,9 +47,11 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_next_iterate(Statistics
 
          // compute the direction within the trust region
          this->constraint_relaxation_strategy.set_trust_region_radius(this->radius);
-         const bool evaluate_functions = (this->number_iterations == 1);
-         Direction direction = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, evaluate_functions);
+         Direction direction = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, warmstart_information);
          if (direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
+            throw std::exception();
+         }
+         if (direction.status == SubproblemStatus::ERROR) {
             throw std::exception();
          }
 
@@ -60,11 +69,20 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_next_iterate(Statistics
          else { // trial iterate not acceptable
             this->decrease_radius(direction.norm);
          }
+         // after the first iteration, only the variable bounds are updated
+         warmstart_information.objective_changed = false;
+         warmstart_information.constraints_changed = false;
+         warmstart_information.constraint_bounds_changed = false;
+         warmstart_information.variable_bounds_changed = true;
       }
       // if an error occurs (evaluation error or unstable inertia), decrease the radius
       catch (const std::exception& e) {
          GlobalizationMechanism::print_warning(e.what());
          this->decrease_radius();
+         warmstart_information.objective_changed = true;
+         warmstart_information.constraints_changed = true;
+         warmstart_information.constraint_bounds_changed = true;
+         warmstart_information.variable_bounds_changed = true;
       }
    }
    // TODO: may still be accepted as solution if the termination criteria are satisfied
@@ -74,7 +92,6 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_next_iterate(Statistics
 Iterate TrustRegionStrategy::assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction) {
    Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, direction.primal_dual_step_length,
          direction.bound_dual_step_length);
-
    // project the steps within the bounds to avoid numerical errors
    model.project_primals_onto_bounds(trial_iterate.primals);
 

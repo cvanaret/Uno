@@ -51,30 +51,35 @@ BQPDSolver::BQPDSolver(size_t max_number_variables, size_t number_constraints, s
 
 Direction BQPDSolver::solve_QP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
       const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
-      const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const std::vector<double>& initial_point) {
-   this->save_hessian_to_local_format(hessian);
+      const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const std::vector<double>& initial_point,
+      const WarmstartInformation& warmstart_information) {
+   if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
+      this->save_lagrangian_hessian_to_local_format(hessian);
+   }
    if (this->print_subproblem) {
       DEBUG << "QP:\n";
       DEBUG << "Hessian: " << hessian;
    }
    return this->solve_subproblem(number_variables, number_constraints, variables_bounds, constraint_bounds, linear_objective, constraint_jacobian,
-         initial_point);
+         initial_point, warmstart_information);
 }
 
 Direction BQPDSolver::solve_LP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
       const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
-      const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point) {
+      const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point,
+      const WarmstartInformation& warmstart_information) {
    if (this->print_subproblem) {
       DEBUG << "LP:\n";
    }
    return this->solve_subproblem(number_variables, number_constraints, variables_bounds, constraint_bounds, linear_objective, constraint_jacobian,
-         initial_point);
+         initial_point, warmstart_information);
 }
 
 Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
       const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
-      const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point) {
-   // initialize wsc_ common block (Hessian & workspace for bqpd)
+      const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point,
+      const WarmstartInformation& warmstart_information) {
+   // initialize wsc_ common block (Hessian & workspace for BQPD)
    // setting the common block here ensures that several instances of BQPD can run simultaneously
    wsc_.kk = static_cast<int>(this->number_hessian_nonzeros);
    wsc_.ll = static_cast<int>(this->size_hessian_sparsity);
@@ -83,8 +88,7 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
    kktalphac_.alpha = 0; // inertia control
 
    if (this->print_subproblem) {
-      DEBUG << "objective gradient: ";
-      DEBUG << linear_objective;
+      DEBUG << "objective gradient: " << linear_objective;
       for (size_t j: Range(number_constraints)) {
          DEBUG << "gradient c" << j << ": " << constraint_jacobian[j];
       }
@@ -96,17 +100,23 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
       }
    }
 
-   // Jacobian
-   this->save_gradients_to_local_format(number_constraints, linear_objective, constraint_jacobian);
+   // Jacobian (objective and constraints)
+   if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
+      this->save_gradients_to_local_format(number_constraints, linear_objective, constraint_jacobian);
+   }
 
    // bounds
-   for (size_t i: Range(number_variables)) {
-      this->lb[i] = (variables_bounds[i].lb == -INF<double>) ? -BIG : variables_bounds[i].lb;
-      this->ub[i] = (variables_bounds[i].ub == INF<double>) ? BIG : variables_bounds[i].ub;
+   if (warmstart_information.variable_bounds_changed) {
+      for (size_t i: Range(number_variables)) {
+         this->lb[i] = (variables_bounds[i].lb == -INF<double>) ? -BIG : variables_bounds[i].lb;
+         this->ub[i] = (variables_bounds[i].ub == INF<double>) ? BIG : variables_bounds[i].ub;
+      }
    }
-   for (size_t j: Range(number_constraints)) {
-      this->lb[number_variables + j] = (constraint_bounds[j].lb == -INF<double>) ? -BIG : constraint_bounds[j].lb;
-      this->ub[number_variables + j] = (constraint_bounds[j].ub == INF<double>) ? BIG : constraint_bounds[j].ub;
+   if (warmstart_information.constraint_bounds_changed) {
+      for (size_t j: Range(number_constraints)) {
+         this->lb[number_variables + j] = (constraint_bounds[j].lb == -INF<double>) ? -BIG : constraint_bounds[j].lb;
+         this->ub[number_variables + j] = (constraint_bounds[j].ub == INF<double>) ? BIG : constraint_bounds[j].ub;
+      }
    }
 
    Direction direction(number_variables, number_constraints);
@@ -114,16 +124,16 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
    copy_from(direction.primals, initial_point);
    const int n = static_cast<int>(number_variables);
    const int m = static_cast<int>(number_constraints);
-   const int current_mode = static_cast<int>(this->mode);
+   BQPDMode mode = BQPDSolver::determine_mode(warmstart_information);
+   const int mode_integer = static_cast<int>(mode);
 
    // solve the LP/QP
    bqpd_(&n, &m, &this->k, &this->kmax, this->jacobian.data(), this->jacobian_sparsity.data(),
          direction.primals.data(), this->lb.data(), this->ub.data(), &direction.subproblem_objective, &this->fmin, this->gradient_solution.data(),
          this->residuals.data(), this->w.data(), this->e.data(), this->active_set.data(), this->alp.data(), this->lp.data(),
-         &this->mlp, &this->peq_solution, this->hessian_values.data(), this->hessian_sparsity.data(), &current_mode, &this->ifail,
+         &this->mlp, &this->peq_solution, this->hessian_values.data(), this->hessian_sparsity.data(), &mode_integer, &this->ifail,
          this->info.data(), &this->iprint, &this->nout);
    BQPDStatus bqpd_status = BQPDSolver::bqpd_status_from_int(this->ifail);
-   //BQPDSolver::check_termination(bqpd_status);
    direction.status = BQPDSolver::status_from_bqpd_status(bqpd_status);
 
    // project solution into bounds
@@ -134,40 +144,18 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
    return direction;
 }
 
-void BQPDSolver::check_termination([[maybe_unused]] BQPDStatus bqpd_status) {
-   /*
-   assert(bqpd_status != BQPDStatus::BOUND_INCONSISTENCY && "BQPD failed with 'bound inconsistency' status");
-   assert(bqpd_status != BQPDStatus::INCORRECT_PARAMETER && "BQPD failed with 'incorrect parameter' status");
-   assert(bqpd_status != BQPDStatus::LP_INSUFFICIENT_SPACE && "BQPD failed with 'LP insufficient space' status");
-   assert(bqpd_status != BQPDStatus::HESSIAN_INSUFFICIENT_SPACE && "BQPD failed with 'Hessian insufficient space' status. Please increase bqpd_kmax");
-   assert(bqpd_status != BQPDStatus::SPARSE_INSUFFICIENT_SPACE && "BQPD failed with 'sparse insufficient space' status");
-   assert(bqpd_status != BQPDStatus::MAX_RESTARTS_REACHED && "BQPD failed with 'max restarts reached' status");
-   assert(bqpd_status != BQPDStatus::UNDEFINED && "BQPD failed with undefined status");
-    */
-   if (bqpd_status == BQPDStatus::BOUND_INCONSISTENCY) {
-      WARNING << YELLOW << "BQPD error: bound inconsistency\n" << RESET;
-      throw SolverEvaluationError();
+BQPDMode BQPDSolver::determine_mode(const WarmstartInformation& warmstart_information) {
+   BQPDMode mode = BQPDMode::COLD_START;
+   // if only the variable bounds changed, reuse the active set estimate and the Jacobian information
+   if (warmstart_information.variable_bounds_changed && not warmstart_information.objective_changed && not warmstart_information.constraints_changed &&
+       not warmstart_information.constraint_bounds_changed) {
+      mode = BQPDMode::UNCHANGED_ACTIVE_SET_AND_JACOBIAN;
    }
-   else if (bqpd_status == BQPDStatus::INCORRECT_PARAMETER) {
-      WARNING << YELLOW << "BQPD error: incorrect parameter\n" << RESET;
-      throw SolverEvaluationError();
-   }
-   else if (bqpd_status == BQPDStatus::LP_INSUFFICIENT_SPACE) {
-      WARNING << YELLOW << "BQPD error: LP insufficient space\n" << RESET;
-      throw SolverEvaluationError();
-   }
-   else if (bqpd_status == BQPDStatus::SPARSE_INSUFFICIENT_SPACE) {
-      WARNING << YELLOW << "BQPD error: sparse insufficient space\n" << RESET;
-      throw SolverEvaluationError();
-   }
-   else if (bqpd_status == BQPDStatus::UNDEFINED) {
-      WARNING << YELLOW << "BQPD error: undefined\n" << RESET;
-      throw SolverEvaluationError();
-   }
+   return mode;
 }
 
 // save Hessian (in arbitrary format) to a "weak" CSC format: compressed columns but row indices are not sorted, nor unique
-void BQPDSolver::save_hessian_to_local_format(const SymmetricMatrix<double>& hessian) {
+void BQPDSolver::save_lagrangian_hessian_to_local_format(const SymmetricMatrix<double>& hessian) {
    const size_t header_size = 1;
    // pointers withing the single array
    int* row_indices = &this->hessian_sparsity[header_size];
@@ -298,21 +286,28 @@ SubproblemStatus BQPDSolver::status_from_bqpd_status(BQPDStatus bqpd_status) {
       case BQPDStatus::UNBOUNDED_PROBLEM:
          return SubproblemStatus::UNBOUNDED_PROBLEM;
       case BQPDStatus::BOUND_INCONSISTENCY:
+         WARNING << YELLOW << "BQPD error: bound inconsistency\n" << RESET;
+         return SubproblemStatus::INFEASIBLE;
       case BQPDStatus::INFEASIBLE:
          return SubproblemStatus::INFEASIBLE;
       // errors
       case BQPDStatus::INCORRECT_PARAMETER:
+         WARNING << YELLOW << "BQPD error: incorrect parameter\n" << RESET;
+         return SubproblemStatus::ERROR;
       case BQPDStatus::LP_INSUFFICIENT_SPACE:
+         WARNING << YELLOW << "BQPD error: LP insufficient space\n" << RESET;
          return SubproblemStatus::ERROR;
       case BQPDStatus::HESSIAN_INSUFFICIENT_SPACE:
          WARNING << YELLOW << "BQPD kmax too small, continue anyway\n" << RESET;
          return SubproblemStatus::ERROR;
       case BQPDStatus::SPARSE_INSUFFICIENT_SPACE:
+         WARNING << YELLOW << "BQPD error: sparse insufficient space\n" << RESET;
          return SubproblemStatus::ERROR;
       case BQPDStatus::MAX_RESTARTS_REACHED:
          WARNING << YELLOW << "BQPD max restarts reached\n" << RESET;
          return SubproblemStatus::ERROR;
       case BQPDStatus::UNDEFINED:
+         WARNING << YELLOW << "BQPD error: undefined\n" << RESET;
          return SubproblemStatus::ERROR;
    }
    throw std::invalid_argument("The BQPD ifail is not consistent with the Uno status values");

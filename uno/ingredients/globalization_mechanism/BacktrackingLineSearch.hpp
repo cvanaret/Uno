@@ -26,7 +26,7 @@ private:
    const double tolerance;
    size_t total_number_iterations{0}; /*!< Total number of iterations (optimality and feasibility) */
 
-   [[nodiscard]] Direction compute_direction(Statistics& statistics, Iterate& current_iterate);
+   [[nodiscard]] Direction compute_direction(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information);
    [[nodiscard]] std::tuple<Iterate, double> backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
          const Direction& direction);
    [[nodiscard]] Iterate assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction, double step_length);

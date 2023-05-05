@@ -9,6 +9,7 @@
 #include "ingredients/globalization_strategy/ProgressMeasures.hpp"
 #include "optimization/Model.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "reformulation/l1RelaxedProblem.hpp"
 #include "Direction.hpp"
 #include "linear_algebra/Vector.hpp"
@@ -25,7 +26,8 @@ public:
 
    // virtual methods implemented by subclasses
    virtual void generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) = 0;
-   virtual Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate, bool evaluate_functions) = 0;
+   virtual Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+         const WarmstartInformation& warmstart_information) = 0;
 
    void set_trust_region_radius(double new_trust_region_radius);
    virtual void initialize_feasibility_problem() = 0;

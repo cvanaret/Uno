@@ -107,8 +107,9 @@ void Preprocessing::enforce_linear_constraints(const Options& options, const Mod
          BQPDSolver solver(model.number_variables, linear_constraints.size(), model.number_variables, true, options);
          std::vector<double> d0(model.number_variables); // = 0
          SparseVector<double> linear_objective; // empty
+         WarmstartInformation warmstart_information{true, true, true, true};
          Direction direction = solver.solve_QP(model.number_variables, linear_constraints.size(), variables_bounds, constraints_bounds,
-               linear_objective, constraint_jacobian, hessian, d0);
+               linear_objective, constraint_jacobian, hessian, d0, warmstart_information);
          if (direction.status == SubproblemStatus::INFEASIBLE) {
             throw std::runtime_error("Linear constraints cannot be satisfied");
          }

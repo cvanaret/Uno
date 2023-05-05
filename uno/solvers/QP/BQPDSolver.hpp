@@ -42,12 +42,13 @@ public:
 
    Direction solve_LP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
          const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
-         const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point) override;
+         const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point,
+         const WarmstartInformation& warmstart_information) override;
 
    Direction solve_QP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
          const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
-         const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const std::vector<double>& initial_point)
-         override;
+         const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const std::vector<double>& initial_point,
+         const WarmstartInformation& warmstart_information) override;
 
 private:
    size_t number_hessian_nonzeros;
@@ -67,7 +68,6 @@ private:
    std::vector<double> hessian_values{};
    std::vector<int> hessian_sparsity{};
    int k{0};
-   BQPDMode mode{COLD_START};
    int iprint{0}, nout{6};
    double fmin{-1e20};
    int peq_solution{}, ifail{};
@@ -76,13 +76,13 @@ private:
 
    Direction solve_subproblem(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
          const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
-         const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point);
+         const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point,
+         const WarmstartInformation& warmstart_information);
    void analyze_constraints(size_t number_variables, size_t number_constraints, Direction& direction);
-   void save_hessian_to_local_format(const SymmetricMatrix<double>& hessian);
+   void save_lagrangian_hessian_to_local_format(const SymmetricMatrix<double>& hessian);
    void save_gradients_to_local_format(size_t number_constraints, const SparseVector<double>& linear_objective,
          const RectangularMatrix<double>& constraint_jacobian);
-
-   static void check_termination(BQPDStatus bqpd_status);
+   static BQPDMode determine_mode(const WarmstartInformation& warmstart_information);
    static BQPDStatus bqpd_status_from_int(int ifail);
    static SubproblemStatus status_from_bqpd_status(BQPDStatus bqpd_status);
 };

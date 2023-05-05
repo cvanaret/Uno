@@ -26,10 +26,12 @@ public:
    void set_trust_region_radius(double trust_region_radius) override;
 
    // direction computation
-   [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, bool evaluate_functions) override;
-   [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, bool evaluate_functions) override;
+   [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
+         WarmstartInformation& warmstart_information) override;
    [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
-         const std::vector<double>& initial_point, bool evaluate_functions) override;
+         WarmstartInformation& warmstart_information) override;
+   [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
+         const std::vector<double>& initial_point, WarmstartInformation& warmstart_information) override;
 
    // trial iterate acceptance
    void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length) override;
@@ -51,12 +53,14 @@ protected:
    // preallocated temporary multipliers
    Multipliers trial_multipliers;
 
-   Direction solve_subproblem(Statistics& statistics, Iterate& current_iterate, const NonlinearProblem& problem, bool evaluate_functions);
-   Direction solve_relaxed_problem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter, bool evaluate_functions);
-   Direction solve_with_steering_rule(Statistics& statistics, Iterate& current_iterate, bool evaluate_functions);
+   Direction solve_subproblem(Statistics& statistics, Iterate& current_iterate, const NonlinearProblem& problem,
+         const WarmstartInformation& warmstart_information);
+   Direction solve_relaxed_problem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter,
+         const WarmstartInformation& warmstart_information);
+   Direction solve_with_steering_rule(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information);
    void decrease_parameter_aggressively(Iterate& current_iterate, const Direction& direction);
    [[nodiscard]] bool linearized_residual_sufficient_decrease(const Iterate& current_iterate, double linearized_residual, double residual_lowest_violation) const;
-   [[nodiscard]] bool objective_sufficient_decrease(const Iterate& current_iterate, const Direction& direction, const Direction& direction_lowest_violation) const;
+   [[nodiscard]] bool is_descent_direction_for_l1_merit_function(const Iterate& current_iterate, const Direction& direction, const Direction& direction_lowest_violation) const;
    double compute_dual_error(Iterate& current_iterate);
    void check_exact_relaxation(Iterate& iterate) const;
 

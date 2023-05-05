@@ -5,6 +5,7 @@
 #include <cassert>
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "BacktrackingLineSearch.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
 
 BacktrackingLineSearch::BacktrackingLineSearch(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
@@ -25,21 +26,15 @@ void BacktrackingLineSearch::initialize(Iterate& initial_iterate) {
    this->constraint_relaxation_strategy.initialize(initial_iterate);
 }
 
-Direction BacktrackingLineSearch::compute_direction(Statistics& statistics, Iterate& current_iterate) {
-   try {
-      this->solving_feasibility_problem = false;
-      return this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, true);
-   }
-   catch (const UnstableRegularization&) {
-      this->solving_feasibility_problem = true;
-      DEBUG << "Unstable regularization: switching to solving the feasibility problem\n";
-      return this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, true);
-   }
-}
-
 std::tuple<Iterate, double> BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) {
+   WarmstartInformation warmstart_information{};
+   warmstart_information.objective_changed = true;
+   warmstart_information.constraints_changed = true;
+   warmstart_information.constraint_bounds_changed = true;
+   warmstart_information.variable_bounds_changed = true;
+
    // compute the direction
-   Direction direction = this->compute_direction(statistics, current_iterate);
+   Direction direction = this->compute_direction(statistics, current_iterate, warmstart_information);
    this->solving_feasibility_problem = false;
    this->total_number_iterations = 0;
 
@@ -53,7 +48,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_next_iterate(Statist
       if (not this->solving_feasibility_problem && 0. < direction.multipliers.objective && this->tolerance < current_iterate.progress.infeasibility) {
          this->solving_feasibility_problem = true;
          // compute a direction wrt the feasibility problem and backtrack along it
-         direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, direction.primals, true);
+         direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, direction.primals, warmstart_information);
          auto [trial_iterate, step_norm] = this->backtrack_along_direction(statistics, model, current_iterate, direction);
          this->total_number_iterations += this->number_iterations;
          return {trial_iterate, step_norm};
@@ -61,6 +56,18 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_next_iterate(Statist
       else {
          throw std::runtime_error("Line search: maximum number of iterations reached, failed to make progress.\n");
       }
+   }
+}
+
+Direction BacktrackingLineSearch::compute_direction(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information) {
+   try {
+      this->solving_feasibility_problem = false;
+      return this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, warmstart_information);
+   }
+   catch (const UnstableRegularization&) {
+      this->solving_feasibility_problem = true;
+      DEBUG << "Unstable regularization: switching to solving the feasibility problem\n";
+      return this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, warmstart_information);
    }
 }
 
@@ -99,12 +106,10 @@ std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(St
 }
 
 Iterate BacktrackingLineSearch::assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction, double step_length) {
-   Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, step_length,
-         direction.bound_dual_step_length);
+   Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, step_length, direction.bound_dual_step_length);
 
    // project the steps within the bounds to avoid numerical errors
    model.project_primals_onto_bounds(trial_iterate.primals);
-
    return trial_iterate;
 }
 

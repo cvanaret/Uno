@@ -13,15 +13,16 @@ public:
    LPSubproblem(size_t max_number_variables, size_t max_number_constraints, const Options& options);
 
    void generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) override;
-   [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate, bool evaluate_functions) override;
+   [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+         const WarmstartInformation& warmstart_information) override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
 private:
    // pointer to allow polymorphism
    const std::unique_ptr<LPSolver> solver; /*!< Solver that solves the subproblem */
 
-   void evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate);
-   [[nodiscard]] Direction solve_LP(const NonlinearProblem& problem, Iterate& iterate);
+   void evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate, const WarmstartInformation& warmstart_information);
+   [[nodiscard]] Direction solve_LP(const NonlinearProblem& problem, Iterate& iterate, const WarmstartInformation& warmstart_information);
 };
 
 #endif // UNO_LPSUBPROBLEM_H

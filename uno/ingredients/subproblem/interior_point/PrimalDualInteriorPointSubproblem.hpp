@@ -33,7 +33,8 @@ public:
    void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
    void exit_feasibility_problem(const NonlinearProblem& problem, Iterate& trial_iterate) override;
 
-   [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate, bool evaluate_functions) override;
+   [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+         const WarmstartInformation& warmstart_information) override;
 
    void set_auxiliary_measure(const NonlinearProblem& problem, Iterate& iterate) override;
    [[nodiscard]] double generate_predicted_auxiliary_reduction_model(const NonlinearProblem& problem,
@@ -64,7 +65,8 @@ protected:
    void relax_variable_bounds(const NonlinearProblem& problem, const Iterate& current_iterate);
    // void check_interior_primals(const NonlinearProblem& problem, const Iterate& iterate);
    [[nodiscard]] double push_variable_to_interior(double variable_value, const Interval& variable_bounds) const;
-   void evaluate_functions(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate);
+   void evaluate_functions(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+         const WarmstartInformation& warmstart_information);
    void update_barrier_parameter(const NonlinearProblem& problem, const Iterate& current_iterate);
    [[nodiscard]] bool is_small_step(const NonlinearProblem& problem, const Iterate& current_iterate, const Direction& direction) const;
    [[nodiscard]] double evaluate_subproblem_objective() const;
