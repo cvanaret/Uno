@@ -23,7 +23,6 @@ Uno::Uno(GlobalizationMechanism& globalization_mechanism, const Options& options
 
 Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_iterate) {
    Timer timer{};
-   timer.start();
    size_t major_iterations = 0;
 
    std::cout << "\nProblem " << model.name << '\n';

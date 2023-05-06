@@ -5,8 +5,7 @@
 #include <chrono>
 #include <ctime>
 
-void Timer::start() {
-   this->start_time = std::clock();
+Timer::Timer(): start_time(std::clock()) {
 }
 
 double Timer::get_duration() const {
