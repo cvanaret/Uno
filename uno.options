@@ -5,6 +5,9 @@ tolerance 1e-8
 # maximum outer iterations
 max_iterations 2000
 
+# CPU time limit (in seconds)
+time_limit inf
+
 # print optimal solution (yes|no)
 print_solution no
 

@@ -16,6 +16,7 @@ Uno::Uno(GlobalizationMechanism& globalization_mechanism, const Options& options
       globalization_mechanism(globalization_mechanism),
       tolerance(options.get_double("tolerance")),
       max_iterations(options.get_unsigned_int("max_iterations")),
+      time_limit(options.get_double("time_limit")),
       terminate_with_small_step(options.get_bool("terminate_with_small_step")),
       small_step_threshold(options.get_double("small_step_threshold")) {
 }
@@ -55,15 +56,15 @@ Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_i
          if (Logger::level == INFO) statistics.print_current_line();
 
          current_iterate = std::move(next_iterate);
+         this->check_time_limit(timer.get_duration());
       }
    }
    catch (std::exception& exception) {
-      ERROR << exception.what();
+      ERROR << RED << exception.what() << RESET;
    }
    Uno::postprocess_iterate(model, current_iterate, termination_status);
 
    if (Logger::level == INFO) statistics.print_footer();
-   timer.stop();
 
    const size_t number_subproblems_solved = this->globalization_mechanism.get_number_subproblems_solved();
    const size_t hessian_evaluation_count = this->globalization_mechanism.get_hessian_evaluation_count();
@@ -129,6 +130,12 @@ TerminationStatus Uno::check_termination(const Model& model, Iterate& current_it
       return FEASIBLE_SMALL_STEP;
    }
    return NOT_OPTIMAL;
+}
+
+void Uno::check_time_limit(double current_time) const {
+   if (this->time_limit <= current_time) {
+      throw TimeOut();
+   }
 }
 
 void Uno::postprocess_iterate(const Model& model, Iterate& iterate, TerminationStatus termination_status) {

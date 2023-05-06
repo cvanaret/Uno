@@ -22,7 +22,7 @@ void Result::print(bool print_primal_dual_solution) const {
       std::cout << "Terminated with infeasible small step\n";
    }
    else {
-      std::cout << "Failed with error\n";
+      std::cout << "Failed with suboptimal point\n";
    }
 
    std::cout << "Objective value:\t\t\t" << std::defaultfloat << std::setprecision(7) << this->solution.evaluations.objective << '\n';
