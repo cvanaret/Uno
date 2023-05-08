@@ -32,8 +32,7 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem
 
    // bounds of the variable displacements
    if (warmstart_information.variable_bounds_changed) {
-      this->set_variable_bounds(problem, current_iterate);
-      this->set_variable_displacement_bounds(problem, current_iterate);
+      this->set_direction_bounds(problem, current_iterate);
    }
 
    // bounds of the linearized constraints
@@ -44,7 +43,7 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem
 }
 
 Direction LPSubproblem::solve_LP(const NonlinearProblem& problem, Iterate& iterate, const WarmstartInformation& warmstart_information) {
-   Direction direction = this->solver->solve_LP(problem.number_variables, problem.number_constraints, this->variable_displacement_bounds,
+   Direction direction = this->solver->solve_LP(problem.number_variables, problem.number_constraints, this->direction_bounds,
          this->linearized_constraint_bounds, this->evaluations.objective_gradient, this->evaluations.constraint_jacobian,
          this->initial_point, warmstart_information);
    Subproblem::check_unboundedness(direction);

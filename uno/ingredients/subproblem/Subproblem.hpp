@@ -44,19 +44,15 @@ public:
    [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
    virtual void set_initial_point(const std::vector<double>& initial_point) = 0;
 
-
-   Direction direction;
-
    size_t number_subproblems_solved{0};
    // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it
    bool subproblem_definition_changed{false};
 
 protected:
+   Direction direction;
    Evaluations evaluations;
-   std::vector<Interval> variable_bounds;
    double trust_region_radius{INF<double>};
 
-   void set_variable_bounds(const NonlinearProblem& problem, const Iterate& current_iterate);
    static void check_unboundedness(const Direction& direction);
 };
 

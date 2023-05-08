@@ -6,7 +6,7 @@
 ActiveSetSubproblem::ActiveSetSubproblem(size_t max_number_variables, size_t max_number_constraints):
       Subproblem(max_number_variables, max_number_constraints),
       initial_point(max_number_variables),
-      variable_displacement_bounds(max_number_variables),
+      direction_bounds(max_number_variables),
       linearized_constraint_bounds(max_number_constraints) {
 }
 
@@ -31,11 +31,18 @@ void ActiveSetSubproblem::exit_feasibility_problem(const NonlinearProblem& /*pro
    // do nothing
 }
 
-void ActiveSetSubproblem::set_variable_displacement_bounds(const NonlinearProblem& problem, const Iterate& current_iterate) {
-   for (size_t i: Range(problem.number_variables)) {
-      const double lb = this->variable_bounds[i].lb - current_iterate.primals[i];
-      const double ub = this->variable_bounds[i].ub - current_iterate.primals[i];
-      this->variable_displacement_bounds[i] = {lb, ub};
+void ActiveSetSubproblem::set_direction_bounds(const NonlinearProblem& problem, const Iterate& current_iterate) {
+   // bounds intersected with trust region
+   // very important: apply the trust region only on the original variables
+   for (size_t i: Range(problem.get_number_original_variables())) {
+      double lb = std::max(current_iterate.primals[i] - this->trust_region_radius, problem.get_variable_lower_bound(i));
+      double ub = std::min(current_iterate.primals[i] + this->trust_region_radius, problem.get_variable_upper_bound(i));
+      this->direction_bounds[i] = {lb - current_iterate.primals[i], ub - current_iterate.primals[i]};
+   }
+   for (size_t i: Range(problem.get_number_original_variables(), problem.number_variables)) {
+      const double lb = problem.get_variable_lower_bound(i);
+      const double ub = problem.get_variable_upper_bound(i);
+      this->direction_bounds[i] = {lb - current_iterate.primals[i], ub - current_iterate.primals[i]};
    }
 }
 

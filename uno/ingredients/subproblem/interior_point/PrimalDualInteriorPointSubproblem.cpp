@@ -84,26 +84,6 @@ double PrimalDualInteriorPointSubproblem::barrier_parameter() const {
    return this->barrier_parameter_update_strategy.get_barrier_parameter();
 }
 
-/*
-void InfeasibleInteriorPointSubproblem::check_interior_primals(const NonlinearProblem& problem, const Iterate& iterate) {
-   static double machine_epsilon = std::numeric_limits<double>::epsilon();
-   const double factor = std::pow(machine_epsilon, 0.75);
-   // check that the current iterate is interior
-   for (size_t i: problem.lower_bounded_variables) {
-      if (iterate.primals[i] - this->variable_bounds[i].lb < machine_epsilon*this->barrier_parameter()) {
-         this->variable_bounds[i].lb -= factor * std::max(1., this->variable_bounds[i].lb);
-      }
-      //assert(this->variable_bounds[i].lb < iterate.primals[i] && "Barrier subproblem: a variable is at its lower bound");
-   }
-   for (size_t i: problem.upper_bounded_variables) {
-      if (this->variable_bounds[i].ub - iterate.primals[i] < machine_epsilon*this->barrier_parameter()) {
-         this->variable_bounds[i].ub += factor * std::max(1., this->variable_bounds[i].ub);
-      }
-      //assert(iterate.primals[i] < this->variable_bounds[i].ub && "Barrier subproblem: a variable is at its upper bound");
-   }
-}
-*/
-
 double PrimalDualInteriorPointSubproblem::push_variable_to_interior(double variable_value, const Interval& variable_bounds) const {
    const double range = variable_bounds.ub - variable_bounds.lb;
    const double perturbation_lb = std::min(this->parameters.push_variable_to_interior_k1 * std::max(1., std::abs(variable_bounds.lb)),

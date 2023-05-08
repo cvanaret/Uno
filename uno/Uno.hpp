@@ -23,7 +23,7 @@ public:
    static void print_available_strategies();
 
 private:
-   GlobalizationMechanism& globalization_mechanism; /*!< Step control strategy (trust region or line-search) */
+   GlobalizationMechanism& globalization_mechanism; /*!< Globalization mechanism */
    const double tolerance; /*!< Tolerance of the termination criteria */
    const size_t max_iterations; /*!< Maximum number of iterations */
    const double time_limit; /*!< CPU time limit (can be inf) */
