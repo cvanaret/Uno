@@ -31,7 +31,7 @@ private:
    const double small_step_threshold;
    const double unbounded_objective_threshold;
 
-   static void add_statistics(Statistics& statistics, const Model& model, const Iterate& iterate, size_t major_iterations);
+   static void add_statistics(Statistics& statistics, const Iterate& iterate, size_t major_iterations);
    [[nodiscard]] bool termination_criterion(TerminationStatus current_status, size_t iteration) const;
    [[nodiscard]] TerminationStatus check_termination(const Model& model, Iterate& current_iterate, double step_norm) const;
    void check_time_limit(double current_time) const;

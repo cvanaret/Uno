@@ -52,7 +52,7 @@ Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_i
 
          // compute the status of the next iterate
          termination_status = this->check_termination(model, next_iterate, step_norm);
-         Uno::add_statistics(statistics, model, next_iterate, major_iterations);
+         Uno::add_statistics(statistics, next_iterate, major_iterations);
          if (Logger::level == INFO) statistics.print_current_line();
 
          current_iterate = std::move(next_iterate);
@@ -78,16 +78,13 @@ Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_i
    return result;
 }
 
-void Uno::add_statistics(Statistics& statistics, const Model& model, const Iterate& iterate, size_t major_iterations) {
+void Uno::add_statistics(Statistics& statistics, const Iterate& iterate, size_t major_iterations) {
    statistics.add_statistic(std::string("iters"), major_iterations);
    if (iterate.is_objective_computed) {
       statistics.add_statistic("objective", iterate.evaluations.objective);
    }
    else {
       statistics.add_statistic("objective", "-");
-   }
-   if (model.is_constrained()) {
-      statistics.add_statistic("primal infeas.", iterate.residuals.infeasibility);
    }
 }
 

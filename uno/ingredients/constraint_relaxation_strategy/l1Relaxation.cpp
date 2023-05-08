@@ -254,6 +254,9 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
       statistics.add_statistic("complementarity", trial_iterate.residuals.optimality_complementarity);
       statistics.add_statistic("stationarity", trial_iterate.residuals.optimality_stationarity);
       statistics.add_statistic("penalty param.", this->penalty_parameter);
+      if (this->original_model.is_constrained()) {
+         statistics.add_statistic("primal infeas.", trial_iterate.progress.infeasibility);
+      }
    }
    return accept;
 }
