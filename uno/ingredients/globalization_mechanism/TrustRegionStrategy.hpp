@@ -17,6 +17,7 @@ private:
    double radius; /*!< Current trust region radius */
    const double increase_factor;
    const double decrease_factor;
+   const double aggressive_decrease_factor;
    const double activity_tolerance;
    const double minimum_radius;
    const double radius_reset_threshold;
@@ -25,6 +26,7 @@ private:
    void possibly_increase_radius(double step_norm);
    void decrease_radius(double step_norm);
    void decrease_radius();
+   void decrease_radius_aggressively();
    void reset_radius();
    void reset_active_trust_region_multipliers(const Model& model, const Direction& direction, Iterate& trial_iterate) const;
    void set_statistics(Statistics& statistics, const Direction& direction);

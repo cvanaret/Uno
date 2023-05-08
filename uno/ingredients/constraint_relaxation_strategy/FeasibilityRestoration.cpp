@@ -50,7 +50,6 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
 
 Direction FeasibilityRestoration::solve_optimality_problem(Statistics& statistics, Iterate& current_iterate,
       WarmstartInformation& warmstart_information) {
-   // solve the subproblem
    DEBUG << "Solving the optimality subproblem\n";
 
    if (this->switched_to_optimality_phase) {
@@ -59,6 +58,7 @@ Direction FeasibilityRestoration::solve_optimality_problem(Statistics& statistic
       warmstart_information.constraints_changed = true;
       warmstart_information.constraint_bounds_changed = true;
       warmstart_information.variable_bounds_changed = true;
+      warmstart_information.problem_changed = true;
    }
 
    Direction direction = this->subproblem->solve(statistics, this->optimality_problem, current_iterate, warmstart_information);
@@ -103,7 +103,7 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
       DEBUG << "The subproblem definition changed, the auxiliary measure is recomputed\n";
       this->restoration_phase_strategy->reset();
       this->optimality_phase_strategy->reset();
-      this->subproblem->set_auxiliary_measure(this->current_reformulated_problem(), current_iterate);
+      this->subproblem->set_auxiliary_measure(this->current_problem(), current_iterate);
       this->subproblem->subproblem_definition_changed = false;
    }
 
@@ -122,7 +122,7 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
    // evaluate the progress measures of the trial iterate
    this->set_infeasibility_measure(trial_iterate);
    this->set_optimality_measure(trial_iterate);
-   this->subproblem->set_auxiliary_measure(this->current_reformulated_problem(), trial_iterate);
+   this->subproblem->set_auxiliary_measure(this->current_problem(), trial_iterate);
 }
 
 void FeasibilityRestoration::switch_to_feasibility_restoration(Iterate& current_iterate, WarmstartInformation& warmstart_information) {
@@ -135,7 +135,7 @@ void FeasibilityRestoration::switch_to_feasibility_restoration(Iterate& current_
    // refresh the progress measures of the current iterate
    this->set_infeasibility_measure(current_iterate);
    this->set_optimality_measure(current_iterate);
-   this->subproblem->set_auxiliary_measure(this->current_reformulated_problem(), current_iterate);
+   this->subproblem->set_auxiliary_measure(this->feasibility_problem, current_iterate);
 
    current_iterate.multipliers.objective = 0.;
    this->restoration_phase_strategy->reset();
@@ -145,6 +145,7 @@ void FeasibilityRestoration::switch_to_feasibility_restoration(Iterate& current_
    warmstart_information.constraints_changed = true;
    warmstart_information.constraint_bounds_changed = true;
    warmstart_information.variable_bounds_changed = true;
+   warmstart_information.problem_changed = true;
 }
 
 void FeasibilityRestoration::switch_to_optimality(Iterate& current_iterate, Iterate& trial_iterate) {
@@ -178,17 +179,16 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
       ProgressMeasures predicted_reduction = {
             this->generate_predicted_infeasibility_reduction_model(current_iterate, direction, step_length),
             this->generate_predicted_optimality_reduction_model(current_iterate, direction, step_length),
-            this->subproblem->generate_predicted_auxiliary_reduction_model(this->current_reformulated_problem(), current_iterate, direction,
-                  step_length)
+            this->subproblem->generate_predicted_auxiliary_reduction_model(this->current_problem(), current_iterate, direction, step_length)
       };
       // invoke the globalization strategy for acceptance
       GlobalizationStrategy& current_phase_strategy = this->current_globalization_strategy();
       accept = current_phase_strategy.is_iterate_acceptable(statistics, trial_iterate, current_iterate.progress, trial_iterate.progress,
-            predicted_reduction, this->current_reformulated_problem().get_objective_multiplier());
+            predicted_reduction, this->current_problem().get_objective_multiplier());
    }
 
    // post-process the trial iterate and compute the primal-dual residuals
-   this->subproblem->postprocess_iterate(this->current_reformulated_problem(), trial_iterate);
+   this->subproblem->postprocess_iterate(this->current_problem(), trial_iterate);
    ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, trial_iterate, this->residual_norm);
 
    // print statistics
@@ -206,7 +206,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
    return accept;
 }
 
-const NonlinearProblem& FeasibilityRestoration::current_reformulated_problem() const {
+const NonlinearProblem& FeasibilityRestoration::current_problem() const {
    if (this->current_phase == Phase::OPTIMALITY) {
       return this->optimality_problem;
    }

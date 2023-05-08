@@ -27,13 +27,13 @@ enum class BQPDStatus {
 };
 
 enum BQPDMode {
-   COLD_START = 0, // cold start
-   ACTIVE_SET_EQUALITIES = 1, // hot start
-   USER_DEFINED = 2,
+   COLD_START = 0,
+   ACTIVE_SET_EQUALITIES = 1, // cold start
+   USER_DEFINED = 2, // hot start
    UNCHANGED_ACTIVE_SET = 3,
    UNCHANGED_ACTIVE_SET_AND_JACOBIAN = 4,
-   UNCHANGED_ACTIVE_SET_AND_REDUCED_HESSIAN = 5, // warm start
-   UNCHANGED_ACTIVE_SET_AND_JACOBIAN_AND_REDUCED_HESSIAN = 6,
+   UNCHANGED_ACTIVE_SET_AND_REDUCED_HESSIAN = 5,
+   UNCHANGED_ACTIVE_SET_AND_JACOBIAN_AND_REDUCED_HESSIAN = 6, // warm start
 };
 
 class BQPDSolver : public QPSolver {
@@ -72,6 +72,8 @@ private:
    double fmin{-1e20};
    int peq_solution{}, ifail{};
    const int fortran_shift{1};
+
+   size_t number_calls{0};
    const bool print_subproblem;
 
    Direction solve_subproblem(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
@@ -82,7 +84,7 @@ private:
    void save_lagrangian_hessian_to_local_format(const SymmetricMatrix<double>& hessian);
    void save_gradients_to_local_format(size_t number_constraints, const SparseVector<double>& linear_objective,
          const RectangularMatrix<double>& constraint_jacobian);
-   static BQPDMode determine_mode(const WarmstartInformation& warmstart_information);
+   [[nodiscard]] BQPDMode determine_mode(const WarmstartInformation& warmstart_information) const;
    static BQPDStatus bqpd_status_from_int(int ifail);
    static SubproblemStatus status_from_bqpd_status(BQPDStatus bqpd_status);
 };

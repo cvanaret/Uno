@@ -46,7 +46,7 @@ private:
    const double tolerance;
    bool switched_to_optimality_phase{false};
 
-   [[nodiscard]] const NonlinearProblem& current_reformulated_problem() const;
+   [[nodiscard]] const NonlinearProblem& current_problem() const;
    [[nodiscard]] GlobalizationStrategy& current_globalization_strategy() const;
    [[nodiscard]] Direction solve_optimality_problem(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information);
    void switch_to_feasibility_restoration(Iterate& current_iterate, WarmstartInformation& warmstart_information);

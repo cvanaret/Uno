@@ -29,6 +29,7 @@ private:
    const double time_limit; /*!< CPU time limit (can be inf) */
    const bool terminate_with_small_step;
    const double small_step_threshold;
+   const double unbounded_objective_threshold;
 
    static void add_statistics(Statistics& statistics, const Model& model, const Iterate& iterate, size_t major_iterations);
    [[nodiscard]] bool termination_criterion(TerminationStatus current_status, size_t iteration) const;

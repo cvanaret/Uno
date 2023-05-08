@@ -9,6 +9,7 @@ struct WarmstartInformation {
    bool constraints_changed{false};
    bool constraint_bounds_changed{false};
    bool variable_bounds_changed{false};
+   bool problem_changed{false};
 
    void display() const;
 };
@@ -18,6 +19,7 @@ inline void WarmstartInformation::display() const {
    std::cout << "Constraints: " << std::boolalpha << this->constraints_changed << '\n';
    std::cout << "Constraint bounds: " << std::boolalpha << this->constraint_bounds_changed << '\n';
    std::cout << "Variable bounds: " << std::boolalpha << this->variable_bounds_changed << '\n';
+   std::cout << "Problem: " << std::boolalpha << this->problem_changed << '\n';
 }
 
 #endif // UNO_WARMSTARTINFORMATION_H

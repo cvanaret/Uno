@@ -17,6 +17,9 @@ terminate_with_small_step yes
 # small step threshold
 small_step_threshold 1e-11
 
+# threshold on objective to declare unbounded NLP
+unbounded_objective_threshold -1e20
+
 # enforce linear constraints at the initial point
 enforce_linear_constraints no
 
@@ -148,6 +151,9 @@ TR_increase_factor 2
 
 # TR radius decrease factor
 TR_decrease_factor 2
+
+# TR aggressive radius decrease factor
+TR_aggressive_decrease_factor 4
 
 # tolerance in TR constraint activity
 TR_activity_tolerance 1e-6

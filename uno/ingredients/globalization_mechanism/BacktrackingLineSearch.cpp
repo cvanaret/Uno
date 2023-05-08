@@ -51,6 +51,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_next_iterate(Statist
          direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, direction.primals, warmstart_information);
          auto [trial_iterate, step_norm] = this->backtrack_along_direction(statistics, model, current_iterate, direction);
          this->total_number_iterations += this->number_iterations;
+         DEBUG << "Step norm: " << step_norm << '\n';
          return {trial_iterate, step_norm};
       }
       else {

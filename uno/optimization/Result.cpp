@@ -6,20 +6,23 @@
 
 void Result::print(bool print_primal_dual_solution) const {
    std::cout << "Status:\t\t\t\t\t";
-   if (this->status == FEASIBLE_KKT_POINT) {
+   if (this->status == TerminationStatus::FEASIBLE_KKT_POINT) {
       std::cout << "Converged with feasible KKT point\n";
    }
-   else if (this->status == FEASIBLE_FJ_POINT) {
+   else if (this->status == TerminationStatus::FEASIBLE_FJ_POINT) {
       std::cout << "Converged with feasible FJ point\n";
    }
-   else if (this->status == INFEASIBLE_STATIONARY_POINT) {
+   else if (this->status == TerminationStatus::INFEASIBLE_STATIONARY_POINT) {
       std::cout << "Converged with infeasible stationary point\n";
    }
-   else if (this->status == FEASIBLE_SMALL_STEP) {
+   else if (this->status == TerminationStatus::FEASIBLE_SMALL_STEP) {
       std::cout << "Terminated with feasible small step\n";
    }
-   else if (this->status == INFEASIBLE_SMALL_STEP) {
+   else if (this->status == TerminationStatus::INFEASIBLE_SMALL_STEP) {
       std::cout << "Terminated with infeasible small step\n";
+   }
+   else if (this->status == TerminationStatus::UNBOUNDED) {
+      std::cout << "Terminated with unbounded problem\n";
    }
    else {
       std::cout << "Failed with suboptimal point\n";
