@@ -172,7 +172,12 @@ void PrimalDualInteriorPointSubproblem::evaluate_functions(Statistics& statistic
 
 Direction PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
       const WarmstartInformation& warmstart_information) {
-   assert(problem.inequality_constraints.empty() && "The problem has inequality constraints. Create an instance of EqualityConstrainedModel");
+   if (not problem.inequality_constraints.empty()) {
+      throw std::runtime_error("The problem has inequality constraints. Create an instance of EqualityConstrainedModel.\n");
+   }
+   if (is_finite(this->trust_region_radius)) {
+      throw std::runtime_error("The interior-point subproblem has a trust region. This is not implemented yet.\n");
+   }
    //warmstart_information.display();
 
    // update the barrier parameter if the current iterate solves the subproblem

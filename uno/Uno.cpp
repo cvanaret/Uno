@@ -36,7 +36,7 @@ Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_i
    }
    catch (const std::exception& e) {
       ERROR << RED << "An error occurred at the initial iterate: " << e.what() << RESET;
-      throw e;
+      throw;
    }
 
    TerminationStatus termination_status = TerminationStatus::NOT_OPTIMAL;
@@ -58,6 +58,10 @@ Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_i
          current_iterate = std::move(next_iterate);
          this->check_time_limit(timer.get_duration());
       }
+   }
+   catch (const std::runtime_error& e) {
+      ERROR << RED << e.what() << RESET;
+      throw;
    }
    catch (std::exception& exception) {
       ERROR << RED << exception.what() << RESET;
