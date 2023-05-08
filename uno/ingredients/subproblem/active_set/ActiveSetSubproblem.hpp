@@ -11,6 +11,7 @@ public:
    ActiveSetSubproblem(size_t max_number_variables, size_t max_number_constraints);
    ~ActiveSetSubproblem() override = default;
 
+   void generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) override;
    void set_initial_point(const std::vector<double>& initial_point) override;
    void initialize_feasibility_problem() override;
    void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;

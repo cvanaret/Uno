@@ -98,7 +98,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(St
          }
       }
       catch (const EvaluationError& e) {
-         GlobalizationMechanism::print_warning(e.what());
+         WARNING << YELLOW << e.what() << RESET;
          step_length = this->decrease_step_length(step_length);
       }
    }

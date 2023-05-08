@@ -19,9 +19,6 @@ QPSubproblem::QPSubproblem(Statistics& statistics, size_t max_number_variables, 
    }
 }
 
-void QPSubproblem::generate_initial_iterate(const NonlinearProblem& /*problem*/, Iterate& /*initial_iterate*/) {
-}
-
 void QPSubproblem::evaluate_functions(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
       const WarmstartInformation& warmstart_information) {
    // Lagrangian Hessian
@@ -40,7 +37,6 @@ void QPSubproblem::evaluate_functions(Statistics& statistics, const NonlinearPro
 
 Direction QPSubproblem::solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
       const WarmstartInformation& warmstart_information) {
-   //warmstart_information.display();
    // evaluate the functions at the current iterate
    this->evaluate_functions(statistics, problem, current_iterate, warmstart_information);
 

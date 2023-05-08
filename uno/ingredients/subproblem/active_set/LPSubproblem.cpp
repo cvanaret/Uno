@@ -9,9 +9,6 @@ LPSubproblem::LPSubproblem(size_t max_number_variables, size_t max_number_constr
       solver(LPSolverFactory::create(max_number_variables, max_number_constraints, options.get_string("LP_solver"), options)) {
 }
 
-void LPSubproblem::generate_initial_iterate(const NonlinearProblem& /*problem*/, Iterate& /*initial_iterate*/) {
-}
-
 void LPSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate, const WarmstartInformation& warmstart_information) {
    // objective gradient
    if (warmstart_information.objective_changed) {
@@ -26,7 +23,6 @@ void LPSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& 
 
 Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem& problem, Iterate& current_iterate,
       const WarmstartInformation& warmstart_information) {
-   //warmstart_information.display();
    // evaluate the functions at the current iterate
    this->evaluate_functions(problem, current_iterate, warmstart_information);
 

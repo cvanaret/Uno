@@ -82,12 +82,14 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_next_iterate(Statistics
             warmstart_information.constraints_changed = false;
             warmstart_information.constraint_bounds_changed = false;
             warmstart_information.variable_bounds_changed = true;
-            warmstart_information.variable_bounds_changed = true;
          }
+      }
+      catch (const std::runtime_error& e) {
+         throw;
       }
       // if an error occurs (evaluation error or unstable inertia), decrease the radius
       catch (const std::exception& e) {
-         GlobalizationMechanism::print_warning(e.what());
+         WARNING << YELLOW << e.what() << RESET;
          this->decrease_radius();
          warmstart_information.objective_changed = true;
          warmstart_information.constraints_changed = true;

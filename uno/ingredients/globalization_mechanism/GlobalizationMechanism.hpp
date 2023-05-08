@@ -27,7 +27,6 @@ protected:
 
    static Iterate assemble_trial_iterate(Iterate& current_iterate, const Direction& direction, double primal_dual_step_length,
          double bound_dual_step_length);
-   static void print_warning(const char* message);
 };
 
 #endif // UNO_GLOBALIZATIONMECHANISM_H

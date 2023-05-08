@@ -10,6 +10,9 @@ ActiveSetSubproblem::ActiveSetSubproblem(size_t max_number_variables, size_t max
       linearized_constraint_bounds(max_number_constraints) {
 }
 
+void ActiveSetSubproblem::generate_initial_iterate(const NonlinearProblem& /*problem*/, Iterate& /*initial_iterate*/) {
+}
+
 void ActiveSetSubproblem::set_initial_point(const std::vector<double>& initial_point) {
    copy_from(this->initial_point, initial_point);
 }
@@ -32,17 +35,17 @@ void ActiveSetSubproblem::exit_feasibility_problem(const NonlinearProblem& /*pro
 }
 
 void ActiveSetSubproblem::set_direction_bounds(const NonlinearProblem& problem, const Iterate& current_iterate) {
-   // bounds intersected with trust region
-   // very important: apply the trust region only on the original variables
+   // bounds of original variables intersected with trust region
    for (size_t i: Range(problem.get_number_original_variables())) {
-      double lb = std::max(current_iterate.primals[i] - this->trust_region_radius, problem.get_variable_lower_bound(i));
-      double ub = std::min(current_iterate.primals[i] + this->trust_region_radius, problem.get_variable_upper_bound(i));
-      this->direction_bounds[i] = {lb - current_iterate.primals[i], ub - current_iterate.primals[i]};
+      double lb = std::max(-this->trust_region_radius, problem.get_variable_lower_bound(i) - current_iterate.primals[i]);
+      double ub = std::min(this->trust_region_radius, problem.get_variable_upper_bound(i) - current_iterate.primals[i]);
+      this->direction_bounds[i] = {lb, ub};
    }
+   // bounds of additional variables (no trust region!)
    for (size_t i: Range(problem.get_number_original_variables(), problem.number_variables)) {
-      const double lb = problem.get_variable_lower_bound(i);
-      const double ub = problem.get_variable_upper_bound(i);
-      this->direction_bounds[i] = {lb - current_iterate.primals[i], ub - current_iterate.primals[i]};
+      const double lb = problem.get_variable_lower_bound(i) - current_iterate.primals[i];
+      const double ub = problem.get_variable_upper_bound(i) - current_iterate.primals[i];
+      this->direction_bounds[i] = {lb, ub};
    }
 }
 

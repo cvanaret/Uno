@@ -40,7 +40,3 @@ size_t GlobalizationMechanism::get_hessian_evaluation_count() const {
 size_t GlobalizationMechanism::get_number_subproblems_solved() const {
    return this->constraint_relaxation_strategy.get_number_subproblems_solved();
 }
-
-void GlobalizationMechanism::print_warning(const char* message) {
-   WARNING << YELLOW << message << RESET;
-}
