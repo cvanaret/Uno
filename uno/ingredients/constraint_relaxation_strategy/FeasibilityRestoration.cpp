@@ -50,8 +50,6 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
 
 Direction FeasibilityRestoration::solve_optimality_problem(Statistics& statistics, Iterate& current_iterate,
       WarmstartInformation& warmstart_information) {
-   DEBUG << "Solving the optimality subproblem\n";
-
    if (this->switched_to_optimality_phase) {
       this->switched_to_optimality_phase = false;
       warmstart_information.objective_changed = true;
@@ -61,12 +59,13 @@ Direction FeasibilityRestoration::solve_optimality_problem(Statistics& statistic
       warmstart_information.problem_changed = true;
    }
 
+   DEBUG << "Solving the optimality subproblem\n";
    Direction direction = this->subproblem->solve(statistics, this->optimality_problem, current_iterate, warmstart_information);
    direction.objective_multiplier = 1.;
    direction.norm = norm_inf(direction.primals, Range(this->optimality_problem.number_variables));
    DEBUG2 << direction << '\n';
 
-   // infeasible subproblem: try to minimize the constraint violation by solving the feasibility subproblem
+   // infeasible subproblem: try to minimize constraint violation by solving the feasibility subproblem
    if (direction.status == SubproblemStatus::INFEASIBLE) {
       direction = this->solve_feasibility_problem(statistics, current_iterate, direction.primals, warmstart_information);
    }

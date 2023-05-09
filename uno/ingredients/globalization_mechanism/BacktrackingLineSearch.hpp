@@ -29,9 +29,10 @@ private:
    [[nodiscard]] Direction compute_direction(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information);
    [[nodiscard]] std::tuple<Iterate, double> backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
          const Direction& direction);
-   [[nodiscard]] Iterate assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction, double step_length);
+   [[nodiscard]] static Iterate assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction, double step_length);
    [[nodiscard]] double decrease_step_length(double step_length) const;
    [[nodiscard]] bool termination(double primal_dual_step_length) const;
+   static void check_unboundedness(const Direction& direction);
    void set_statistics(Statistics& statistics, const Direction& direction, double primal_dual_step_length) const;
    void print_iteration(double primal_dual_step_length);
 };

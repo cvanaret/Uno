@@ -52,8 +52,6 @@ protected:
    Direction direction;
    Evaluations evaluations;
    double trust_region_radius{INF<double>};
-
-   static void check_unboundedness(const Direction& direction);
 };
 
 #endif // UNO_SUBPROBLEM_H

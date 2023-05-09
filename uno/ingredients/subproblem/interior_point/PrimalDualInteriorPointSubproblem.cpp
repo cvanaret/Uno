@@ -173,9 +173,8 @@ Direction PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const
    // set up the augmented system (with the correct inertia)
    this->assemble_augmented_system(statistics, problem, current_iterate);
 
-   // compute the solution (Δx, -Δλ)
+   // compute the primal-dual solution
    this->augmented_system.solve(*this->linear_solver);
-   Subproblem::check_unboundedness(this->direction);
    assert(this->direction.status == SubproblemStatus::OPTIMAL && "The barrier subproblem was not solved to optimality");
    this->number_subproblems_solved++;
    this->assemble_primal_dual_direction(problem, current_iterate);
@@ -400,7 +399,7 @@ void PrimalDualInteriorPointSubproblem::generate_augmented_rhs(const NonlinearPr
 void PrimalDualInteriorPointSubproblem::assemble_primal_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate) {
    this->direction.set_dimensions(problem.number_variables, problem.number_constraints);
 
-   // retrieve +Δλ (Nocedal p590)
+   // retrieve the duals with correct signs (Nocedal p590)
    for (size_t j: Range(problem.number_variables, this->augmented_system.solution.size())) {
       this->augmented_system.solution[j] = -this->augmented_system.solution[j];
    }
@@ -415,9 +414,8 @@ void PrimalDualInteriorPointSubproblem::assemble_primal_dual_direction(const Non
       this->direction.multipliers.constraints[j] = this->augmented_system.solution[problem.number_variables + j];
    }
 
-   // compute bound multiplier direction Δz
+   // compute bound multiplier direction
    this->compute_bound_dual_direction(problem, current_iterate);
-
    // "fraction-to-boundary" rule for bound multipliers
    const double bound_dual_step_length = this->dual_fraction_to_boundary(problem, current_iterate, tau);
    for (size_t i: Range(problem.number_variables)) {

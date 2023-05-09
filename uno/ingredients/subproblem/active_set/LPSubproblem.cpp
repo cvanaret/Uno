@@ -40,7 +40,6 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem
    Direction direction = this->solver->solve_LP(problem.number_variables, problem.number_constraints, this->direction_bounds,
          this->linearized_constraint_bounds, this->evaluations.objective_gradient, this->evaluations.constraint_jacobian,
          this->initial_point, warmstart_information);
-   Subproblem::check_unboundedness(direction);
    ActiveSetSubproblem::compute_dual_displacements(problem, current_iterate, direction);
    this->number_subproblems_solved++;
    // reset the initial point

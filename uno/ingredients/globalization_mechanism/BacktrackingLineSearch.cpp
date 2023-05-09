@@ -35,6 +35,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_next_iterate(Statist
 
    // compute the direction
    Direction direction = this->compute_direction(statistics, current_iterate, warmstart_information);
+   BacktrackingLineSearch::check_unboundedness(direction);
    this->solving_feasibility_problem = false;
    this->total_number_iterations = 0;
 
@@ -49,6 +50,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_next_iterate(Statist
          this->solving_feasibility_problem = true;
          // compute a direction wrt the feasibility problem and backtrack along it
          direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, direction.primals, warmstart_information);
+         BacktrackingLineSearch::check_unboundedness(direction);
          auto [trial_iterate, step_norm] = this->backtrack_along_direction(statistics, model, current_iterate, direction);
          this->total_number_iterations += this->number_iterations;
          DEBUG << "Step norm: " << step_norm << '\n';
@@ -84,7 +86,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(St
       this->print_iteration(step_length);
 
       // assemble the trial iterate by going a fraction along the direction
-      Iterate trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction, step_length);
+      Iterate trial_iterate = BacktrackingLineSearch::assemble_trial_iterate(model, current_iterate, direction, step_length);
       try {
          if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, step_length)) {
             this->total_number_iterations += this->number_iterations;
@@ -123,6 +125,13 @@ double BacktrackingLineSearch::decrease_step_length(double step_length) const {
 
 bool BacktrackingLineSearch::termination(double primal_dual_step_length) const {
    return (primal_dual_step_length < this->minimum_step_length);
+}
+
+void BacktrackingLineSearch::check_unboundedness(const Direction& direction) {
+   if (direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
+      throw std::runtime_error("The subproblem is unbounded, this should not happen. If the subproblem has curvature, use regularization. If not, "
+                               "use a trust-region method.\n");
+   }
 }
 
 void BacktrackingLineSearch::set_statistics(Statistics& statistics, const Direction& direction, double primal_dual_step_length) const {
