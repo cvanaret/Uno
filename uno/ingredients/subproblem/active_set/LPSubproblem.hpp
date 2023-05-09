@@ -21,7 +21,6 @@ private:
    const std::unique_ptr<LPSolver> solver; /*!< Solver that solves the subproblem */
 
    void evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate, const WarmstartInformation& warmstart_information);
-   [[nodiscard]] Direction solve_LP(const NonlinearProblem& problem, Iterate& iterate, const WarmstartInformation& warmstart_information);
 };
 
 #endif // UNO_LPSUBPROBLEM_H

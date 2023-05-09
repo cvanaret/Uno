@@ -26,7 +26,6 @@ protected:
 
    void evaluate_functions(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
          const WarmstartInformation& warmstart_information);
-   [[nodiscard]] Direction solve_QP(const NonlinearProblem& problem, Iterate& iterate, const WarmstartInformation& warmstart_information);
 };
 
 #endif // UNO_QPSUBPROBLEM_H
