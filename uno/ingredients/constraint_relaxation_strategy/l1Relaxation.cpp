@@ -20,7 +20,7 @@ l1Relaxation::l1Relaxation(Statistics& statistics, const Model& model, const Opt
       relaxed_problem(model, options.get_double("l1_relaxation_initial_parameter"), options.get_double("l1_constraint_violation_coefficient")),
       subproblem(SubproblemFactory::create(statistics, this->relaxed_problem.number_variables, this->relaxed_problem.number_constraints,
             this->relaxed_problem.get_number_jacobian_nonzeros(), this->relaxed_problem.get_number_hessian_nonzeros(), options)),
-      globalization_strategy(GlobalizationStrategyFactory::create(statistics, options.get_string("globalization_strategy"), options)),
+      globalization_strategy(GlobalizationStrategyFactory::create(statistics, options.get_string("globalization_strategy"), true, options)),
       penalty_parameter(options.get_double("l1_relaxation_initial_parameter")),
       parameters({
          options.get_bool("l1_relaxation_fixed_parameter"),
@@ -49,8 +49,6 @@ void l1Relaxation::initialize(Iterate& initial_iterate) {
 }
 
 Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information) {
-   DEBUG2 << "Current iterate\n" << current_iterate << '\n';
-
    // use Byrd's steering rules to update the penalty parameter and compute a descent direction
    return this->solve_with_steering_rule(statistics, current_iterate, warmstart_information);
 }

@@ -30,7 +30,7 @@ std::string status_to_string(SubproblemStatus status) {
 }
 
 std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
-   stream << "\nDirection:\n";
+   stream << "Direction:\n";
    stream << "Status: " << status_to_string(direction.status) << '\n';
 
    stream << "d^* = ";

@@ -8,10 +8,13 @@
 
 class LeyfferFilterStrategy : public FilterStrategy {
 public:
-   explicit LeyfferFilterStrategy(Statistics& statistics, const Options& options);
+   LeyfferFilterStrategy(Statistics& statistics, bool accept_when_switching_violated, const Options& options);
 
    [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Iterate& trial_iterate, const ProgressMeasures& current_progress_measures,
          const ProgressMeasures& trial_progress_measures, const ProgressMeasures& predicted_reduction, double objective_multiplier) override;
+
+protected:
+   const bool accept_when_switching_violated;
 };
 
 #endif // UNO_LEYFFERFILTERSTRATEGY_H

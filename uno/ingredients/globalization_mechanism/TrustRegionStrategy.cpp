@@ -40,6 +40,7 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_next_iterate(Statistics
    warmstart_information.constraints_changed = true;
    warmstart_information.constraint_bounds_changed = true;
    warmstart_information.variable_bounds_changed = true;
+   DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
    while (not this->termination()) {
       try {

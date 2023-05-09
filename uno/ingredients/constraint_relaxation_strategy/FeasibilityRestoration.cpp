@@ -16,8 +16,8 @@ FeasibilityRestoration::FeasibilityRestoration(Statistics& statistics, const Mod
       subproblem(SubproblemFactory::create(statistics, this->feasibility_problem.number_variables, this->feasibility_problem.number_constraints,
             this->feasibility_problem.get_number_jacobian_nonzeros(), this->feasibility_problem.get_number_hessian_nonzeros(), options)),
       // create the globalization strategies (one for each phase)
-      restoration_phase_strategy(GlobalizationStrategyFactory::create(statistics, options.get_string("globalization_strategy"), options)),
-      optimality_phase_strategy(GlobalizationStrategyFactory::create(statistics, options.get_string("globalization_strategy"), options)),
+      restoration_phase_strategy(GlobalizationStrategyFactory::create(statistics, options.get_string("globalization_strategy"), false, options)),
+      optimality_phase_strategy(GlobalizationStrategyFactory::create(statistics, options.get_string("globalization_strategy"), true, options)),
       l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
       tolerance(options.get_double("tolerance")) {
    statistics.add_column("phase", Statistics::int_width, options.get_int("statistics_restoration_phase_column_order"));
@@ -39,7 +39,6 @@ void FeasibilityRestoration::initialize(Iterate& initial_iterate) {
 
 Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
       WarmstartInformation& warmstart_information) {
-   DEBUG2 << "Current iterate\n" << current_iterate << '\n';
    if (this->current_phase == Phase::OPTIMALITY) {
       return this->solve_optimality_problem(statistics, current_iterate, warmstart_information);
    }
@@ -130,6 +129,7 @@ void FeasibilityRestoration::switch_to_feasibility_restoration(Iterate& current_
    this->optimality_phase_strategy->register_current_progress(current_iterate.progress);
    this->subproblem->initialize_feasibility_problem();
    this->subproblem->set_elastic_variable_values(this->feasibility_problem, current_iterate);
+   DEBUG2 << "Current iterate:\n" << current_iterate << '\n';
 
    // refresh the progress measures of the current iterate
    this->set_infeasibility_measure(current_iterate);

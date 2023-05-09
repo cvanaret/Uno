@@ -32,6 +32,7 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_next_iterate(Statist
    warmstart_information.constraints_changed = true;
    warmstart_information.constraint_bounds_changed = true;
    warmstart_information.variable_bounds_changed = true;
+   DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
    // compute the direction
    Direction direction = this->compute_direction(statistics, current_iterate, warmstart_information);
