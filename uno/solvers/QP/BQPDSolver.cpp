@@ -66,7 +66,7 @@ Direction BQPDSolver::solve_QP(size_t number_variables, size_t number_constraint
 
 Direction BQPDSolver::solve_LP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
       const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
-      const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point,
+      const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point, 
       const WarmstartInformation& warmstart_information) {
    if (this->print_subproblem) {
       DEBUG << "LP:\n";
@@ -93,7 +93,7 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
          DEBUG << "gradient c" << j << ": " << constraint_jacobian[j];
       }
       for (size_t i: Range(number_variables)) {
-         DEBUG << "Δx" << i << " in [" << variables_bounds[i].lb << ", " << variables_bounds[i].ub << "]\n";
+         DEBUG << "d_x" << i << " in [" << variables_bounds[i].lb << ", " << variables_bounds[i].ub << "]\n";
       }
       for (size_t j: Range(number_constraints)) {
          DEBUG << "linearized c" << j << " in [" << constraint_bounds[j].lb << ", " << constraint_bounds[j].ub << "]\n";
@@ -105,13 +105,14 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
       this->save_gradients_to_local_format(number_constraints, linear_objective, constraint_jacobian);
    }
 
-   // bounds
+   // set variable bounds
    if (warmstart_information.variable_bounds_changed) {
       for (size_t i: Range(number_variables)) {
          this->lb[i] = (variables_bounds[i].lb == -INF<double>) ? -BIG : variables_bounds[i].lb;
          this->ub[i] = (variables_bounds[i].ub == INF<double>) ? BIG : variables_bounds[i].ub;
       }
    }
+   // set constraint bounds
    if (warmstart_information.constraint_bounds_changed) {
       for (size_t j: Range(number_constraints)) {
          this->lb[number_variables + j] = (constraint_bounds[j].lb == -INF<double>) ? -BIG : constraint_bounds[j].lb;
@@ -123,6 +124,7 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
    copy_from(direction.primals, initial_point);
    const int n = static_cast<int>(number_variables);
    const int m = static_cast<int>(number_constraints);
+
    BQPDMode mode = this->determine_mode(warmstart_information);
    const int mode_integer = static_cast<int>(mode);
 
@@ -147,7 +149,7 @@ BQPDMode BQPDSolver::determine_mode(const WarmstartInformation& warmstart_inform
    BQPDMode mode = (this->number_calls == 0) ? BQPDMode::ACTIVE_SET_EQUALITIES : BQPDMode::USER_DEFINED;
    // if problem changed, use cold start
    if (warmstart_information.problem_changed) {
-      mode = BQPDMode::COLD_START;
+      mode = BQPDMode::ACTIVE_SET_EQUALITIES;
    }
    // if only the variable bounds changed, reuse the active set estimate and the Jacobian information
    else if (warmstart_information.variable_bounds_changed && not warmstart_information.objective_changed &&
