@@ -54,6 +54,7 @@ void Result::print(bool print_primal_dual_solution) const {
    std::cout << "Iterations:\t\t\t\t"	 << this->iteration << '\n';
    std::cout << "Objective evaluations:\t\t\t" << this->objective_evaluations << '\n';
    std::cout << "Constraints evaluations:\t\t" << this->constraint_evaluations << '\n';
+   std::cout << "Objective gradient evaluations:\t\t" << this->objective_gradient_evaluations << '\n';
    std::cout << "Jacobian evaluations:\t\t\t" << this->jacobian_evaluations << '\n';
    std::cout << "Hessian evaluations:\t\t\t" << this->hessian_evaluations << '\n';
    std::cout << "Number of subproblems solved:\t\t" << this->number_subproblems_solved << '\n';

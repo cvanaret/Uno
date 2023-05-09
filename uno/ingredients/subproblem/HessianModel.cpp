@@ -11,7 +11,7 @@ HessianModel::HessianModel(size_t dimension, size_t maximum_number_nonzeros, con
 
 // Exact Hessian
 ExactHessian::ExactHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options) :
-   HessianModel(dimension, maximum_number_nonzeros, options.get_string("sparse_format"), false) /* not regularized */ {
+   HessianModel(dimension, maximum_number_nonzeros, options.get_string("sparse_format"), /* use_regularization = */false) {
 }
 
 void ExactHessian::evaluate(Statistics& /*statistics*/, const NonlinearProblem& problem, const std::vector<double>& primal_variables,

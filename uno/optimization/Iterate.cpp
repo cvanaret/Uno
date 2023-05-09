@@ -8,6 +8,7 @@
 
 size_t Iterate::number_eval_objective = 0;
 size_t Iterate::number_eval_constraints = 0;
+size_t Iterate::number_eval_objective_gradient = 0;
 size_t Iterate::number_eval_jacobian = 0;
 
 Iterate::Iterate(size_t max_number_variables, size_t max_number_constraints) :
@@ -51,6 +52,7 @@ void Iterate::evaluate_objective_gradient(const Model& model) {
       // evaluate the objective gradient
       model.evaluate_objective_gradient(this->primals, this->evaluations.objective_gradient);
       this->is_objective_gradient_computed = true;
+      Iterate::number_eval_objective_gradient++;
    }
 }
 

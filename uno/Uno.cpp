@@ -73,8 +73,8 @@ Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_i
    const size_t number_subproblems_solved = this->globalization_mechanism.get_number_subproblems_solved();
    const size_t hessian_evaluation_count = this->globalization_mechanism.get_hessian_evaluation_count();
    Result result = {termination_status, std::move(current_iterate), model.number_variables, model.number_constraints, major_iterations,
-         timer.get_duration(), Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_jacobian, hessian_evaluation_count,
-          number_subproblems_solved};
+         timer.get_duration(), Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_objective_gradient,
+         Iterate::number_eval_jacobian, hessian_evaluation_count, number_subproblems_solved};
    return result;
 }
 

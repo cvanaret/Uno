@@ -18,6 +18,7 @@ struct Result {
    double cpu_time;
    size_t objective_evaluations;
    size_t constraint_evaluations;
+   size_t objective_gradient_evaluations;
    size_t jacobian_evaluations;
    size_t hessian_evaluations;
    size_t number_subproblems_solved;
