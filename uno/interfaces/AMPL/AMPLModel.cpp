@@ -100,9 +100,9 @@ void AMPLModel::generate_variables() {
 }
 
 double AMPLModel::evaluate_objective(const std::vector<double>& x) const {
-   int nerror = 0;
-   double result = this->objective_sign * (*(this->asl)->p.Objval)(this->asl, 0, const_cast<double*>(x.data()), &nerror);
-   if (0 < nerror) {
+   int error_flag = 0;
+   double result = this->objective_sign * (*(this->asl)->p.Objval)(this->asl, 0, const_cast<double*>(x.data()), &error_flag);
+   if (0 < error_flag) {
       throw FunctionEvaluationError();
    }
    return result;
@@ -110,14 +110,21 @@ double AMPLModel::evaluate_objective(const std::vector<double>& x) const {
 
 // sparse gradient
 void AMPLModel::evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const {
-   // compute the AMPL gradient (always in dense format)
-   int nerror = 0;
-   (*(this->asl)->p.Objgrd)(this->asl, 0, const_cast<double*>(x.data()), const_cast<double*>(this->ampl_tmp_gradient.data()), &nerror);
-   if (0 < nerror) {
+   int error_flag = 0;
+   // prevent ASL to crash by catching all evaluation errors
+   Jmp_buf err_jmp_uno;
+   asl->i.err_jmp_ = &err_jmp_uno;
+   asl->i.err_jmp1_ = &err_jmp_uno;
+   if (setjmp(err_jmp_uno.jb)) {
+      error_flag = 1;
+   }
+   // evaluate the AMPL gradient (always in a dense vector)
+   (*(this->asl)->p.Objgrd)(this->asl, 0, const_cast<double*>(x.data()), const_cast<double*>(this->ampl_tmp_gradient.data()), &error_flag);
+   if (0 < error_flag) {
       throw GradientEvaluationError();
    }
 
-   // partial derivatives in same order as variables in this->asl_->i.Ograd_[0]
+   // create the sparse vector: partial derivatives in same order as variables in this->asl_->i.Ograd_[0]
    ograd* ampl_variables_tmp = this->asl->i.Ograd_[0];
    while (ampl_variables_tmp != nullptr) {
       const size_t index = static_cast<size_t>(ampl_variables_tmp->varno);
@@ -130,9 +137,9 @@ void AMPLModel::evaluate_objective_gradient(const std::vector<double>& x, Sparse
 
 /*
 double AMPLModel::evaluate_constraint(int j, const std::vector<double>& x) const {
-   int nerror = 0;
-   double result = (*(this->asl)->p.Conival)(this->asl_, j, const_cast<double*>(x.data()), &nerror);
-   if (0 < nerror) {
+   int error_flag = 0;
+   double result = (*(this->asl)->p.Conival)(this->asl_, j, const_cast<double*>(x.data()), &error_flag);
+   if (0 < error_flag) {
       throw FunctionNumericalError();
    }
    return result;
@@ -140,9 +147,9 @@ double AMPLModel::evaluate_constraint(int j, const std::vector<double>& x) const
 */
 
 void AMPLModel::evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const {
-   int nerror = 0;
-   (*(this->asl)->p.Conval)(this->asl, const_cast<double*>(x.data()), constraints.data(), &nerror);
-   if (0 < nerror) {
+   int error_flag = 0;
+   (*(this->asl)->p.Conval)(this->asl, const_cast<double*>(x.data()), constraints.data(), &error_flag);
+   if (0 < error_flag) {
       throw FunctionEvaluationError();
    }
 }
@@ -153,10 +160,10 @@ void AMPLModel::evaluate_constraint_gradient(const std::vector<double>& x, size_
    this->asl->i.congrd_mode = 1; // sparse computation
 
    // compute the AMPL gradient
-   int nerror = 0;
+   int error_flag = 0;
    (*(this->asl)->p.Congrd)(this->asl, static_cast<int>(j), const_cast<double*>(x.data()), const_cast<double*>(this->ampl_tmp_gradient.data()),
-         &nerror);
-   if (0 < nerror) {
+         &error_flag);
+   if (0 < error_flag) {
       throw GradientEvaluationError();
    }
 
@@ -188,8 +195,8 @@ void AMPLModel::set_number_hessian_nonzeros() {
    this->ampl_tmp_hessian.reserve(this->number_hessian_nonzeros);
 
    // use Lagrangian scale: in AMPL, the Lagrangian is f + lambda.g, while Uno uses f - lambda.g
-   int nerror{};
-   lagscale_ASL(this->asl, -1., &nerror);
+   int error_flag{};
+   lagscale_ASL(this->asl, -1., &error_flag);
 }
 
 size_t AMPLModel::get_number_objective_gradient_nonzeros() const {
