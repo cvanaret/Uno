@@ -10,7 +10,6 @@
 struct Result {
    Result() = delete;
 
-   TerminationStatus status;
    Iterate solution;
    size_t number_variables;
    size_t number_constraints;

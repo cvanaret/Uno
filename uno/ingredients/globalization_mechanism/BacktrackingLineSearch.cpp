@@ -9,8 +9,8 @@
 #include "tools/Logger.hpp"
 
 BacktrackingLineSearch::BacktrackingLineSearch(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
-      const Options& options):
-      GlobalizationMechanism(constraint_relaxation_strategy),
+         const Options& options):
+      GlobalizationMechanism(constraint_relaxation_strategy, options),
       backtracking_ratio(options.get_double("LS_backtracking_ratio")),
       minimum_step_length(options.get_double("LS_min_step_length")),
       tolerance(options.get_double("tolerance")) {
@@ -26,7 +26,7 @@ void BacktrackingLineSearch::initialize(Iterate& initial_iterate) {
    this->constraint_relaxation_strategy.initialize(initial_iterate);
 }
 
-std::tuple<Iterate, double> BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) {
+Iterate BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) {
    WarmstartInformation warmstart_information{};
    warmstart_information.objective_changed = true;
    warmstart_information.constraints_changed = true;
@@ -52,10 +52,9 @@ std::tuple<Iterate, double> BacktrackingLineSearch::compute_next_iterate(Statist
          // compute a direction wrt the feasibility problem and backtrack along it
          direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, direction.primals, warmstart_information);
          BacktrackingLineSearch::check_unboundedness(direction);
-         auto [trial_iterate, step_norm] = this->backtrack_along_direction(statistics, model, current_iterate, direction);
+         Iterate trial_iterate = this->backtrack_along_direction(statistics, model, current_iterate, direction);
          this->total_number_iterations += this->number_iterations;
-         DEBUG << "Step norm: " << step_norm << '\n';
-         return {trial_iterate, step_norm};
+         return trial_iterate;
       }
       else {
          throw std::runtime_error("Line search: maximum number of iterations reached, failed to make progress.\n");
@@ -76,7 +75,7 @@ Direction BacktrackingLineSearch::compute_direction(Statistics& statistics, Iter
 }
 
 // backtrack on the primal-dual step length computed by the subproblem
-std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
+Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
       const Direction& direction) {
    // most subproblem methods return a step length of 1. Interior-point methods however apply the fraction-to-boundary condition
    double step_length = direction.primal_dual_step_length;
@@ -94,7 +93,9 @@ std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(St
             this->set_statistics(statistics, direction, step_length);
 
             double step_norm = step_length * direction.norm;
-            return std::make_tuple(std::move(trial_iterate), step_norm);
+            // check termination criteria
+            trial_iterate.status = this->check_termination(model, trial_iterate, step_norm);
+            return trial_iterate;
          }
          else { // trial iterate not acceptable
             step_length = this->decrease_step_length(step_length);

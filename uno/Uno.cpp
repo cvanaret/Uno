@@ -14,12 +14,8 @@
 
 Uno::Uno(GlobalizationMechanism& globalization_mechanism, const Options& options) :
       globalization_mechanism(globalization_mechanism),
-      tolerance(options.get_double("tolerance")),
       max_iterations(options.get_unsigned_int("max_iterations")),
-      time_limit(options.get_double("time_limit")),
-      terminate_with_small_step(options.get_bool("terminate_with_small_step")),
-      small_step_threshold(options.get_double("small_step_threshold")),
-      unbounded_objective_threshold(options.get_double("unbounded_objective_threshold")) {
+      time_limit(options.get_double("time_limit")) {
 }
 
 Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_iterate) {
@@ -39,24 +35,22 @@ Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_i
       throw;
    }
 
-   TerminationStatus termination_status = TerminationStatus::NOT_OPTIMAL;
+   bool termination = false;
    try {
       // check for termination
-      while (not this->termination_criterion(termination_status, major_iterations)) {
+      while (not termination) {
          statistics.new_line();
          major_iterations++;
          DEBUG << "### Outer iteration " << major_iterations << '\n';
 
          // compute an acceptable iterate by solving a subproblem at the current point
-         auto [next_iterate, step_norm] = this->globalization_mechanism.compute_next_iterate(statistics, model, current_iterate);
+         current_iterate = this->globalization_mechanism.compute_next_iterate(statistics, model, current_iterate);
 
          // compute the status of the next iterate
-         termination_status = this->check_termination(model, next_iterate, step_norm);
-         Uno::add_statistics(statistics, next_iterate, major_iterations);
+         Uno::add_statistics(statistics, current_iterate, major_iterations);
          if (Logger::level == INFO) statistics.print_current_line();
 
-         current_iterate = std::move(next_iterate);
-         this->check_time_limit(timer.get_duration());
+         termination = this->termination_criteria(current_iterate.status, major_iterations, timer.get_duration());
       }
    }
    catch (const std::runtime_error& e) {
@@ -66,14 +60,14 @@ Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_i
    catch (std::exception& exception) {
       ERROR << RED << exception.what() << RESET;
    }
-   Uno::postprocess_iterate(model, current_iterate, termination_status);
+   Uno::postprocess_iterate(model, current_iterate, current_iterate.status);
 
    if (Logger::level == INFO) statistics.print_footer();
 
    const size_t number_subproblems_solved = this->globalization_mechanism.get_number_subproblems_solved();
    const size_t hessian_evaluation_count = this->globalization_mechanism.get_hessian_evaluation_count();
-   Result result = {termination_status, std::move(current_iterate), model.number_variables, model.number_constraints, major_iterations,
-         timer.get_duration(), Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_objective_gradient,
+   Result result = {std::move(current_iterate), model.number_variables, model.number_constraints, major_iterations, timer.get_duration(),
+         Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_objective_gradient,
          Iterate::number_eval_jacobian, hessian_evaluation_count, number_subproblems_solved};
    return result;
 }
@@ -88,58 +82,8 @@ void Uno::add_statistics(Statistics& statistics, const Iterate& iterate, size_t 
    }
 }
 
-bool Uno::termination_criterion(TerminationStatus current_status, size_t iteration) const {
-   return current_status != TerminationStatus::NOT_OPTIMAL || this->max_iterations <= iteration;
-}
-
-TerminationStatus Uno::check_termination(const Model& model, Iterate& current_iterate, double step_norm) const {
-   // evaluate termination conditions based on optimality conditions
-   const bool optimality_stationarity = (current_iterate.residuals.optimality_stationarity/current_iterate.residuals.stationarity_scaling <=
-         this->tolerance);
-   const bool feasibility_stationarity = (current_iterate.residuals.feasibility_stationarity/current_iterate.residuals.stationarity_scaling <=
-                                         this->tolerance);
-   const bool optimality_complementarity = (current_iterate.residuals.optimality_complementarity / current_iterate.residuals.complementarity_scaling <= this->tolerance);
-   const bool feasibility_complementarity = (current_iterate.residuals.feasibility_complementarity / current_iterate.residuals.complementarity_scaling
-         <= this->tolerance);
-   const bool primal_feasibility = (current_iterate.residuals.infeasibility <= this->tolerance);
-   const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(model.number_variables, this->tolerance);
-
-   DEBUG << "Termination criteria:\n";
-   DEBUG << "Stationarity (optimality): " << std::boolalpha << optimality_stationarity << '\n';
-   DEBUG << "Stationarity (feasibility): " << std::boolalpha << feasibility_stationarity << '\n';
-   DEBUG << "Complementarity (optimality): " << std::boolalpha << optimality_complementarity << '\n';
-   DEBUG << "Complementarity (feasibility): " << std::boolalpha << feasibility_complementarity << '\n';
-   DEBUG << "Primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
-   DEBUG << "Not all zero multipliers: " << std::boolalpha << no_trivial_duals << "\n\n";
-
-   if (current_iterate.evaluations.objective < this->unbounded_objective_threshold) {
-      return TerminationStatus::UNBOUNDED;
-   }
-   else if (optimality_complementarity && primal_feasibility) {
-      if (feasibility_stationarity && no_trivial_duals) {
-         // feasible but CQ failure
-         return TerminationStatus::FEASIBLE_FJ_POINT;
-      }
-      else if (0. < current_iterate.multipliers.objective && optimality_stationarity) {
-         // feasible regular stationary point
-         return TerminationStatus::FEASIBLE_KKT_POINT;
-      }
-   }
-   else if (feasibility_complementarity && feasibility_stationarity) {
-      // no primal feasibility, stationary point of constraint violation
-     return TerminationStatus::INFEASIBLE_STATIONARY_POINT;
-   }
-   // stationarity & complementarity not achieved, but we can terminate with a small step
-   if (this->terminate_with_small_step && step_norm <= this->small_step_threshold && primal_feasibility) {
-      return TerminationStatus::FEASIBLE_SMALL_STEP;
-   }
-   return TerminationStatus::NOT_OPTIMAL;
-}
-
-void Uno::check_time_limit(double current_time) const {
-   if (this->time_limit <= current_time) {
-      throw TimeOut();
-   }
+bool Uno::termination_criteria(TerminationStatus current_status, size_t iteration, double current_time) const {
+   return current_status != TerminationStatus::NOT_OPTIMAL || this->max_iterations <= iteration || this->time_limit <= current_time;
 }
 
 void Uno::postprocess_iterate(const Model& model, Iterate& iterate, TerminationStatus termination_status) {

@@ -58,6 +58,9 @@ public:
    // measures of progress (infeasibility, optimality, auxiliary)
    ProgressMeasures progress{INF<double>, {}, INF<double>};
 
+   // status
+   TerminationStatus status{TerminationStatus::NOT_OPTIMAL};
+
    void evaluate_objective(const Model& model);
    void evaluate_constraints(const Model& model);
    void evaluate_objective_gradient(const Model& model);

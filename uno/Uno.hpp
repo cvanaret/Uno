@@ -24,17 +24,11 @@ public:
 
 private:
    GlobalizationMechanism& globalization_mechanism; /*!< Globalization mechanism */
-   const double tolerance; /*!< Tolerance of the termination criteria */
    const size_t max_iterations; /*!< Maximum number of iterations */
    const double time_limit; /*!< CPU time limit (can be inf) */
-   const bool terminate_with_small_step;
-   const double small_step_threshold;
-   const double unbounded_objective_threshold;
 
    static void add_statistics(Statistics& statistics, const Iterate& iterate, size_t major_iterations);
-   [[nodiscard]] bool termination_criterion(TerminationStatus current_status, size_t iteration) const;
-   [[nodiscard]] TerminationStatus check_termination(const Model& model, Iterate& current_iterate, double step_norm) const;
-   void check_time_limit(double current_time) const;
+   [[nodiscard]] bool termination_criteria(TerminationStatus current_status, size_t iteration, double current_time) const;
    static void postprocess_iterate(const Model& model, Iterate& iterate, TerminationStatus termination_status);
 };
 

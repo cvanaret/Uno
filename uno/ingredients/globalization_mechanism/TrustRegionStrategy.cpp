@@ -9,8 +9,8 @@
 #include "tools/Logger.hpp"
 
 TrustRegionStrategy::TrustRegionStrategy(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
-      const Options& options) :
-      GlobalizationMechanism(constraint_relaxation_strategy),
+         const Options& options) :
+      GlobalizationMechanism(constraint_relaxation_strategy, options),
       radius(options.get_double("TR_radius")),
       increase_factor(options.get_double("TR_increase_factor")),
       decrease_factor(options.get_double("TR_decrease_factor")),
@@ -31,7 +31,7 @@ void TrustRegionStrategy::initialize(Iterate& initial_iterate) {
    this->constraint_relaxation_strategy.initialize(initial_iterate);
 }
 
-std::tuple<Iterate, double> TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) {
+Iterate TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) {
    this->number_iterations = 0;
    this->reset_radius();
 
@@ -78,7 +78,10 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_next_iterate(Statistics
 
                // increase the radius if trust region is active
                this->possibly_increase_radius(direction.norm);
-               return std::make_tuple(std::move(trial_iterate), direction.norm);
+
+               // check termination criteria
+               trial_iterate.status = this->check_termination(model, trial_iterate, direction.norm);
+               return trial_iterate;
             }
             else { // trial iterate not acceptable
                this->decrease_radius(direction.norm);
