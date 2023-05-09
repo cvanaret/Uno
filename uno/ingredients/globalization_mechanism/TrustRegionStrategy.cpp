@@ -50,12 +50,17 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_next_iterate(Statistics
          this->constraint_relaxation_strategy.set_trust_region_radius(this->radius);
          Direction direction = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, warmstart_information);
          DEBUG << "Step norm: " << direction.norm << '\n';
-         if (direction.status == SubproblemStatus::ERROR) {
-            throw std::exception();
-         }
 
          if (direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
             this->decrease_radius_aggressively();
+            warmstart_information.objective_changed = true;
+            warmstart_information.constraints_changed = true;
+            warmstart_information.constraint_bounds_changed = true;
+            warmstart_information.variable_bounds_changed = true;
+            warmstart_information.problem_changed = true;
+         }
+         if (direction.status == SubproblemStatus::ERROR) {
+            this->decrease_radius();
             warmstart_information.objective_changed = true;
             warmstart_information.constraints_changed = true;
             warmstart_information.constraint_bounds_changed = true;
