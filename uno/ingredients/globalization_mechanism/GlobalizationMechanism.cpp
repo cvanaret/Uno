@@ -6,8 +6,6 @@
 GlobalizationMechanism::GlobalizationMechanism(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options) :
       constraint_relaxation_strategy(constraint_relaxation_strategy),
       tolerance(options.get_double("tolerance")),
-      terminate_with_small_step(options.get_bool("terminate_with_small_step")),
-      small_step_threshold(options.get_double("small_step_threshold")),
       unbounded_objective_threshold(options.get_double("unbounded_objective_threshold")) {
 }
 
@@ -37,7 +35,7 @@ Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate,
    }
 }
 
-TerminationStatus GlobalizationMechanism::check_termination(const Model& model, Iterate& current_iterate, double step_norm) const {
+TerminationStatus GlobalizationMechanism::check_termination(const Model& model, Iterate& current_iterate) const {
    // evaluate termination conditions based on optimality conditions
    const bool optimality_stationarity = (current_iterate.residuals.optimality_stationarity/current_iterate.residuals.stationarity_scaling <=
                                          this->tolerance);
@@ -73,10 +71,6 @@ TerminationStatus GlobalizationMechanism::check_termination(const Model& model, 
    else if (feasibility_complementarity && feasibility_stationarity) {
       // no primal feasibility, stationary point of constraint violation
       return TerminationStatus::INFEASIBLE_STATIONARY_POINT;
-   }
-   // stationarity & complementarity not achieved, but we can terminate with a small step
-   if (this->terminate_with_small_step && step_norm <= this->small_step_threshold && primal_feasibility) {
-      return TerminationStatus::FEASIBLE_SMALL_STEP;
    }
    return TerminationStatus::NOT_OPTIMAL;
 }

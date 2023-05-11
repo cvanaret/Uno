@@ -86,15 +86,14 @@ Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics
       this->print_iteration(step_length);
 
       // assemble the trial iterate by going a fraction along the direction
-      Iterate trial_iterate = BacktrackingLineSearch::assemble_trial_iterate(model, current_iterate, direction, step_length);
+      Iterate trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction, step_length);
       try {
          if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, step_length)) {
             this->total_number_iterations += this->number_iterations;
             this->set_statistics(statistics, direction, step_length);
 
-            double step_norm = step_length * direction.norm;
             // check termination criteria
-            trial_iterate.status = this->check_termination(model, trial_iterate, step_norm);
+            trial_iterate.status = this->check_termination(model, trial_iterate);
             return trial_iterate;
          }
          else { // trial iterate not acceptable
@@ -115,6 +114,9 @@ Iterate BacktrackingLineSearch::assemble_trial_iterate(const Model& model, Itera
 
    // project the steps within the bounds to avoid numerical errors
    model.project_primals_onto_bounds(trial_iterate.primals);
+
+   // compute progress measures
+   this->constraint_relaxation_strategy.compute_progress_measures(current_iterate, trial_iterate, direction, step_length);
    return trial_iterate;
 }
 

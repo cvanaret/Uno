@@ -25,13 +25,11 @@ protected:
    ConstraintRelaxationStrategy& constraint_relaxation_strategy; /*!< Constraint relaxation strategy */
    size_t number_iterations{0}; /*!< Current number of iterations */
    const double tolerance; /*!< Tolerance of the termination criteria */
-   const bool terminate_with_small_step;
-   const double small_step_threshold;
    const double unbounded_objective_threshold;
 
    static Iterate assemble_trial_iterate(Iterate& current_iterate, const Direction& direction, double primal_dual_step_length,
          double bound_dual_step_length);
-   [[nodiscard]] TerminationStatus check_termination(const Model& model, Iterate& current_iterate, double step_norm) const;
+   [[nodiscard]] TerminationStatus check_termination(const Model& model, Iterate& current_iterate) const;
 };
 
 #endif // UNO_GLOBALIZATIONMECHANISM_H

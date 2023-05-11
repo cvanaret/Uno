@@ -48,7 +48,7 @@ protected:
    const std::unique_ptr<GlobalizationStrategy> globalization_strategy;
    double penalty_parameter;
    const l1RelaxationParameters parameters;
-   const double small_duals_threshold{1e-8};
+   const double small_duals_threshold{1e-8}; // TODO put in option file
    const double l1_constraint_violation_coefficient;
    // preallocated temporary multipliers
    Multipliers trial_multipliers;
@@ -57,7 +57,6 @@ protected:
          const WarmstartInformation& warmstart_information);
    Direction solve_relaxed_problem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter,
          const WarmstartInformation& warmstart_information);
-   Direction solve_with_steering_rule(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information);
    void decrease_parameter_aggressively(Iterate& current_iterate, const Direction& direction);
    [[nodiscard]] bool linearized_residual_sufficient_decrease(const Iterate& current_iterate, double linearized_residual, double residual_lowest_violation) const;
    [[nodiscard]] bool is_descent_direction_for_l1_merit_function(const Iterate& current_iterate, const Direction& direction, const Direction& direction_lowest_violation) const;

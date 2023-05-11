@@ -109,10 +109,11 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
    if (this->current_phase == Phase::FEASIBILITY_RESTORATION &&
          ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate, direction,
                step_length) <= this->tolerance) {
-      // evaluate measure of infeasibility (in restoration phase definition, it corresponds to the "scaled optimality" quantity)
-      this->set_optimality_measure(trial_iterate);
-      // if the infeasibility improves upon the best known infeasibility of the globalization strategy
-      if (this->optimality_phase_strategy->is_infeasibility_acceptable(trial_iterate.progress.optimality(1.))) {
+      // if the trial infeasibility improves upon the best known infeasibility of the globalization strategy
+      trial_iterate.evaluate_constraints(this->original_model);
+      const double trial_infeasibility = this->original_model.compute_constraint_violation(trial_iterate.evaluations.constraints,
+            this->progress_norm);
+      if (this->optimality_phase_strategy->is_infeasibility_acceptable(trial_infeasibility)) {
          this->switch_to_optimality(current_iterate, trial_iterate);
       }
    }
@@ -164,12 +165,12 @@ void FeasibilityRestoration::switch_to_optimality(Iterate& current_iterate, Iter
 
 bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
       double step_length) {
-   this->compute_progress_measures(current_iterate, trial_iterate, direction, step_length);
+   // post-process the trial iterate
+   this->subproblem->postprocess_iterate(this->current_problem(), trial_iterate);
 
    bool accept = false;
-   if (this->is_small_step(direction)) {
-      DEBUG << "Small step acceptable\n";
-      // in case the objective was not computed, evaluate it
+   if (direction.norm == 0.) {
+      DEBUG << "Zero step acceptable\n";
       trial_iterate.evaluate_objective(this->original_model);
       accept = true;
    }
@@ -186,12 +187,9 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
             predicted_reduction, this->current_problem().get_objective_multiplier());
    }
 
-   // post-process the trial iterate and compute the primal-dual residuals
-   this->subproblem->postprocess_iterate(this->current_problem(), trial_iterate);
-   ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, trial_iterate, this->residual_norm);
-
-   // print statistics
    if (accept) {
+      // compute the primal-dual residuals
+      ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, trial_iterate, this->residual_norm);
       if (this->current_phase == Phase::OPTIMALITY) {
          statistics.add_statistic("complementarity", trial_iterate.residuals.optimality_complementarity);
          statistics.add_statistic("stationarity", trial_iterate.residuals.optimality_stationarity);

@@ -7,13 +7,7 @@
 ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Model& model, const Options& options):
       original_model(model),
       progress_norm(norm_from_string(options.get_string("progress_norm"))),
-      residual_norm(norm_from_string(options.get_string("residual_norm"))),
-      small_step_threshold(options.get_double("small_step_threshold")) {
-}
-
-bool ConstraintRelaxationStrategy::is_small_step(const Direction& direction) const {
-   // TODO for consistency with Uno.cpp, use tolerance/small_step_factor
-   return (direction.norm <= this->small_step_threshold);
+      residual_norm(norm_from_string(options.get_string("residual_norm"))) {
 }
 
 void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const NonlinearProblem& problem, Iterate& iterate, Norm residual_norm) {

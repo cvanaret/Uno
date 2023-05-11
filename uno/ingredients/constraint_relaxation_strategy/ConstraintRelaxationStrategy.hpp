@@ -40,9 +40,7 @@ protected:
    const Model& original_model;
    const Norm progress_norm;
    const Norm residual_norm;
-   const double small_step_threshold;
 
-   [[nodiscard]] bool is_small_step(const Direction& direction) const;
    static void compute_primal_dual_residuals(const NonlinearProblem& problem, Iterate& iterate, Norm residual_norm);
    static void evaluate_lagrangian_gradient(size_t number_variables, Iterate& iterate, const Multipliers& multipliers, double objective_multiplier);
    [[nodiscard]] static double compute_linearized_constraint_violation(const Model& model, const Iterate& current_iterate, const Direction& direction,
