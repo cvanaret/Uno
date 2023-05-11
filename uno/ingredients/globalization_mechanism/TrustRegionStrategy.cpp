@@ -72,19 +72,22 @@ Iterate TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const 
                return trial_iterate;
             }
             else if (this->radius < this->minimum_radius) { // rejected, but small radius
-               if (0. < direction.objective_multiplier && trial_iterate.progress.infeasibility <= this->tolerance) {
-                  this->set_statistics(statistics, direction);
-                  trial_iterate.status = TerminationStatus::FEASIBLE_SMALL_STEP;
-                  return trial_iterate;
+               if (0. < direction.objective_multiplier) {
+                  // feasible point
+                  if (trial_iterate.progress.infeasibility <= this->tolerance) {
+                     this->set_statistics(statistics, direction);
+                     trial_iterate.status = TerminationStatus::FEASIBLE_SMALL_STEP;
+                     return trial_iterate;
+                  }
+                  else { // infeasible point
+                     throw std::runtime_error("Trust-region strategy reverting to solving the feasibility problem. Not implemented yet.");
+                     // revert to solving the feasibility problem
+                     warmstart_information.set_cold_start();
+                     direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, warmstart_information);
+                     trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction);
+                  }
                }
-               else if (0. < direction.objective_multiplier) {
-                  throw std::runtime_error("Trust-region strategy reverting to solving the feasibility problem. Not implemented yet.");
-                  // revert to solving the feasibility problem
-                  warmstart_information.set_cold_start();
-                  direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, warmstart_information);
-                  trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction);
-               }
-               else {
+               else { // direction.objective_multiplier == 0.
                   this->set_statistics(statistics, direction);
                   trial_iterate.status = TerminationStatus::INFEASIBLE_STATIONARY_POINT;
                   return trial_iterate;
