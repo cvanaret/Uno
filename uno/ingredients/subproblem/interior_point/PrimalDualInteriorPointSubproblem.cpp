@@ -393,7 +393,7 @@ void PrimalDualInteriorPointSubproblem::generate_augmented_rhs(const NonlinearPr
       // constraints
       this->augmented_system.rhs[problem.number_variables + j] = -this->evaluations.constraints[j];
    }
-   DEBUG << "RHS: "; print_vector(DEBUG, this->augmented_system.rhs, 0, problem.number_variables + problem.number_constraints); DEBUG << '\n';
+   DEBUG2 << "RHS: "; print_vector(DEBUG2, this->augmented_system.rhs, 0, problem.number_variables + problem.number_constraints); DEBUG << '\n';
 }
 
 void PrimalDualInteriorPointSubproblem::assemble_primal_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate) {

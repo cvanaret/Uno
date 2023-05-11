@@ -107,7 +107,7 @@ void SymmetricIndefiniteLinearSystem<T>::factorize_matrix(const Model& model, Sy
 template <typename T>
 void SymmetricIndefiniteLinearSystem<T>::regularize_matrix(Statistics& statistics, const Model& model, SymmetricIndefiniteLinearSolver<T>& linear_solver,
       size_t size_primal_block, size_t size_dual_block, T dual_regularization_parameter) {
-   DEBUG << "Original matrix\n" << *this->matrix << '\n';
+   DEBUG2 << "Original matrix\n" << *this->matrix << '\n';
    this->primal_regularization = T(0.);
    this->dual_regularization = T(0.);
    size_t number_attempts = 1;
@@ -144,7 +144,7 @@ void SymmetricIndefiniteLinearSystem<T>::regularize_matrix(Statistics& statistic
    bool good_inertia = false;
    while (not good_inertia) {
       DEBUG << "Testing factorization with regularization factors (" << this->primal_regularization << ", " << this->dual_regularization << ")\n";
-      DEBUG << *this->matrix << '\n';
+      DEBUG2 << *this->matrix << '\n';
       this->factorize_matrix(model, linear_solver);
       number_attempts++;
 
