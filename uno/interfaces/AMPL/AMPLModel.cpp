@@ -33,7 +33,7 @@ AMPLModel::AMPLModel(const std::string& file_name) : AMPLModel(file_name, genera
 }
 
 AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
-      Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_), NONLINEAR),
+      Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_)),
       asl(asl),
       // allocate vectors
       ampl_tmp_gradient(this->number_variables),
@@ -59,7 +59,6 @@ AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
    this->inequality_constraints.reserve(this->number_constraints);
    this->linear_constraints.reserve(this->number_constraints);
    this->generate_constraints();
-   this->set_function_types(file_name);
 
    // compute number of nonzeros
    this->number_objective_gradient_nonzeros = static_cast<size_t>(this->asl->i.nzo_);
@@ -329,60 +328,12 @@ void AMPLModel::generate_constraints() {
    }
    Model::determine_bounds_types(this->constraint_bounds, this->constraint_status);
    this->determine_constraints();
-}
 
-void AMPLModel::set_function_types(std::string file_name) {
-   // allocate a temporary ASL to read Hessian sparsity pattern
-   ASL* asl_fg = ASL_alloc(ASL_read_fg);
-   // char* stub = getstops(file_name, option_info);
-   //if (file_name == nullptr) {
-   //	usage_ASL(option_info, 1);
-   //}
-
-   FILE* nl = jac0dim_ASL(asl_fg, file_name.data(), static_cast<int>(file_name.size()));
-   // specific read function
-   qp_read_ASL(asl_fg, nl, ASL_findgroups);
-
-   // constraints
-   if (asl_fg->i.n_con_ != static_cast<int>(this->number_constraints)) {
-      throw std::length_error("AMPLModel.set_function_types: inconsistent number of constraints");
+   // AMPL orders the constraints based on the function type: nonlinear first, then linear
+   for (size_t j: Range(static_cast<size_t>(asl->i.nlc_))) {
+      this->constraint_type[j] = NONLINEAR;
    }
-   this->constraint_type.reserve(this->number_constraints);
-
-   // determine the type of each constraint and objective function
-   // determine if the problem is nonlinear (non-quadratic objective or nonlinear constraints)
-   this->problem_type = LINEAR;
-   int* rowq;
-   int* colqp;
-   double* delsqp;
-   for (size_t j: Range(this->number_constraints)) {
-      int qp = nqpcheck_ASL(asl_fg, static_cast<int>(-(j + 1)), &rowq, &colqp, &delsqp);
-
-      if (0 < qp) {
-         this->constraint_type[j] = QUADRATIC;
-         this->problem_type = NONLINEAR;
-      }
-      else if (qp == 0) {
-         this->constraint_type[j] = LINEAR;
-         this->linear_constraints.push_back(j);
-      }
-      else {
-         this->constraint_type[j] = NONLINEAR;
-         this->problem_type = NONLINEAR;
-      }
+   for (size_t j: Range(static_cast<size_t>(asl->i.nlc_), this->number_constraints)) {
+      this->constraint_type[j] = LINEAR;
    }
-   // objective function
-   int qp = nqpcheck_ASL(asl_fg, 0, &rowq, &colqp, &delsqp);
-   if (0 < qp) {
-      if (this->problem_type == LINEAR) {
-         this->problem_type = QUADRATIC;
-      }
-   }
-   else if (qp != 0) {
-      this->problem_type = NONLINEAR;
-   }
-   qp_opify_ASL(asl_fg);
-
-   // deallocate memory
-   ASL_free(&asl_fg);
 }

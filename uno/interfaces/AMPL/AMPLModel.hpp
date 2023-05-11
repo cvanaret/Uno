@@ -73,7 +73,6 @@ private:
 
    void generate_variables();
    void generate_constraints();
-   void set_function_types(std::string file_name);
 
    void set_number_hessian_nonzeros();
    [[nodiscard]] size_t compute_hessian_number_nonzeros(double objective_multiplier, const std::vector<double>& multipliers) const;

@@ -43,7 +43,7 @@ private:
 };
 
 inline BoundRelaxedModel::BoundRelaxedModel(std::unique_ptr<Model> original_model, const Options& options):
-      Model(original_model->name + "_boundrelaxed", original_model->number_variables, original_model->number_constraints, original_model->problem_type),
+      Model(original_model->name + "_boundrelaxed", original_model->number_variables, original_model->number_constraints),
       original_model(std::move(original_model)),
       relaxation_factor(options.get_double("tolerance")) {
    // the constraint repartition (inequality/equality, linear) is the same as in the original model

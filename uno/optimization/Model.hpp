@@ -19,13 +19,8 @@ struct Interval {
    double ub;
 };
 
-enum FunctionType {
-   LINEAR = 0, /*!< Linear function */
-   QUADRATIC, /*!< Quadratic function */
-   NONLINEAR /*!< Nonlinear function */
-};
-
-enum BoundType { EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES, UNBOUNDED };
+enum FunctionType {LINEAR, NONLINEAR};
+enum BoundType {EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES, UNBOUNDED};
 
 // forward declaration
 class Iterate;
@@ -37,13 +32,12 @@ class Iterate;
  */
 class Model {
 public:
-   Model(std::string name, size_t number_variables, size_t number_constraints, FunctionType problem_type);
+   Model(std::string name, size_t number_variables, size_t number_constraints);
    virtual ~Model() = default;
 
    std::string name;
    const size_t number_variables; /*!< Number of variables */
    const size_t number_constraints; /*!< Number of constraints */
-   FunctionType problem_type;
 
    // objective
    double objective_sign{1.}; /*!< Sign of the objective function (1: minimization, -1: maximization) */
@@ -105,7 +99,5 @@ protected:
    size_t number_hessian_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */
    void determine_constraints();
 };
-
-std::string type_to_string(FunctionType function_type);
 
 #endif // UNO_MODEL_H
