@@ -335,5 +335,6 @@ void AMPLModel::generate_constraints() {
    }
    for (size_t j: Range(static_cast<size_t>(asl->i.nlc_), this->number_constraints)) {
       this->constraint_type[j] = LINEAR;
+      this->linear_constraints.push_back(j);
    }
 }
