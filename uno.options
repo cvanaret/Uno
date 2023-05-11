@@ -11,12 +11,6 @@ time_limit inf
 # print optimal solution (yes|no)
 print_solution no
 
-# Uno terminates when the step is small
-terminate_with_small_step yes
-
-# small step threshold
-small_step_threshold 1e-11
-
 # threshold on objective to declare unbounded NLP
 unbounded_objective_threshold -1e20
 
@@ -159,7 +153,7 @@ TR_aggressive_decrease_factor 4
 TR_activity_tolerance 1e-6
 
 # minimum TR radius
-TR_min_radius 1e-12
+TR_min_radius 1e-7
 
 # threshold below which the TR radius is reset
 TR_radius_reset_threshold 1e-4
