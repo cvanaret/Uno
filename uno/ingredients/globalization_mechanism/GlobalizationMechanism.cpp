@@ -35,6 +35,25 @@ Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate,
    }
 }
 
+bool GlobalizationMechanism::terminate_with_small_step(const Model& model, const Direction& direction, Iterate& trial_iterate) const {
+   // evaluate infeasibility
+   trial_iterate.evaluate_constraints(model);
+   trial_iterate.residuals.infeasibility = model.compute_constraint_violation(trial_iterate.evaluations.constraints, L1_NORM);
+
+   // terminate with a feasible point
+   if (trial_iterate.residuals.infeasibility <= this->tolerance) {
+      trial_iterate.status = TerminationStatus::FEASIBLE_SMALL_STEP;
+      return true;
+   }
+   else if (direction.objective_multiplier == 0.) { // terminate with an infeasible stationary point
+      trial_iterate.status = TerminationStatus::INFEASIBLE_STATIONARY_POINT;
+      return true;
+   }
+   else { // do not terminate, infeasible non stationary
+      return false;
+   }
+}
+
 TerminationStatus GlobalizationMechanism::check_termination(const Model& model, Iterate& current_iterate) const {
    // evaluate termination conditions based on optimality conditions
    const bool optimality_stationarity = (current_iterate.residuals.optimality_stationarity/current_iterate.residuals.stationarity_scaling <=
@@ -59,13 +78,13 @@ TerminationStatus GlobalizationMechanism::check_termination(const Model& model, 
       return TerminationStatus::UNBOUNDED;
    }
    else if (optimality_complementarity && primal_feasibility) {
-      if (feasibility_stationarity && no_trivial_duals) {
-         // feasible but CQ failure
-         return TerminationStatus::FEASIBLE_FJ_POINT;
-      }
-      else if (0. < current_iterate.multipliers.objective && optimality_stationarity) {
+      if (0. < current_iterate.multipliers.objective && optimality_stationarity) {
          // feasible regular stationary point
          return TerminationStatus::FEASIBLE_KKT_POINT;
+      }
+      else if (feasibility_stationarity && no_trivial_duals) {
+         // feasible but CQ failure
+         return TerminationStatus::FEASIBLE_FJ_POINT;
       }
    }
    else if (feasibility_complementarity && feasibility_stationarity) {

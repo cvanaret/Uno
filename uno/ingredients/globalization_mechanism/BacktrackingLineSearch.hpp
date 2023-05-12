@@ -27,7 +27,8 @@ private:
    size_t total_number_iterations{0}; /*!< Total number of iterations (optimality and feasibility) */
 
    [[nodiscard]] Direction compute_direction(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information);
-   [[nodiscard]] Iterate backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate, const Direction& direction);
+   [[nodiscard]] Iterate backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate, const Direction& direction,
+      WarmstartInformation& warmstart_information);
    [[nodiscard]] Iterate assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction, double step_length);
    [[nodiscard]] double decrease_step_length(double step_length) const;
    [[nodiscard]] bool termination(double primal_dual_step_length) const;

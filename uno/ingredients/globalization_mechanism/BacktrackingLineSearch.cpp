@@ -28,10 +28,7 @@ void BacktrackingLineSearch::initialize(Iterate& initial_iterate) {
 
 Iterate BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) {
    WarmstartInformation warmstart_information{};
-   warmstart_information.objective_changed = true;
-   warmstart_information.constraints_changed = true;
-   warmstart_information.constraint_bounds_changed = true;
-   warmstart_information.variable_bounds_changed = true;
+   warmstart_information.set_hot_start();
    DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
    // compute the direction
@@ -41,25 +38,7 @@ Iterate BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, con
    this->total_number_iterations = 0;
 
    // backtrack along the direction
-   try {
-      return this->backtrack_along_direction(statistics, model, current_iterate, direction);
-   }
-   catch (const StepLengthTooSmall& e) {
-      DEBUG << "The line search terminated with a step length smaller than " << this->minimum_step_length << '\n';
-      // if step length is too small, revert to solving the feasibility problem (if we aren't already solving it)
-      if (not this->solving_feasibility_problem && 0. < direction.multipliers.objective && this->tolerance < current_iterate.progress.infeasibility) {
-         this->solving_feasibility_problem = true;
-         // compute a direction wrt the feasibility problem and backtrack along it
-         direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, direction.primals, warmstart_information);
-         BacktrackingLineSearch::check_unboundedness(direction);
-         Iterate trial_iterate = this->backtrack_along_direction(statistics, model, current_iterate, direction);
-         this->total_number_iterations += this->number_iterations;
-         return trial_iterate;
-      }
-      else {
-         throw std::runtime_error("Line search: maximum number of iterations reached, failed to make progress.\n");
-      }
-   }
+   return this->backtrack_along_direction(statistics, model, current_iterate, direction, warmstart_information);
 }
 
 Direction BacktrackingLineSearch::compute_direction(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information) {
@@ -76,7 +55,7 @@ Direction BacktrackingLineSearch::compute_direction(Statistics& statistics, Iter
 
 // backtrack on the primal-dual step length computed by the subproblem
 Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
-      const Direction& direction) {
+      const Direction& direction, WarmstartInformation& warmstart_information) {
    // most subproblem methods return a step length of 1. Interior-point methods however apply the fraction-to-boundary condition
    double step_length = direction.primal_dual_step_length;
    this->number_iterations = 0;
@@ -85,18 +64,40 @@ Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics
       this->number_iterations++;
       this->print_iteration(step_length);
 
-      // assemble the trial iterate by going a fraction along the direction
-      Iterate trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction, step_length);
       try {
+         // assemble the trial iterate by going a fraction along the direction
+         Iterate trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction, step_length);
+         // check whether the trial iterate is accepted
+         bool acceptable_iterate = false;
          if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, step_length)) {
             this->total_number_iterations += this->number_iterations;
-            this->set_statistics(statistics, direction, step_length);
-
             // check termination criteria
             trial_iterate.status = this->check_termination(model, trial_iterate);
+            acceptable_iterate = true;
+         }
+         else if (step_length < this->minimum_step_length) {  // rejected, but small radius
+            DEBUG << "The line search step length is smaller than " << this->minimum_step_length << '\n';
+            acceptable_iterate = this->terminate_with_small_step(model, direction, trial_iterate);
+            if (not acceptable_iterate) {
+               //throw std::runtime_error("Line-search strategy reverting to solving the feasibility problem. Not implemented yet.");
+               warmstart_information.set_cold_start();
+               // revert to solving the feasibility problem
+               this->solving_feasibility_problem = true;
+               Direction direction_feasibility = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate,
+                     direction.primals, warmstart_information);
+               BacktrackingLineSearch::check_unboundedness(direction_feasibility);
+               Iterate trial_iterate_feasibility = this->backtrack_along_direction(statistics, model, current_iterate, direction_feasibility,
+                     warmstart_information);
+               this->total_number_iterations += this->number_iterations;
+               return trial_iterate_feasibility;
+            }
+         }
+
+         if (acceptable_iterate) {
+            this->set_statistics(statistics, direction, step_length);
             return trial_iterate;
          }
-         else { // trial iterate not acceptable
+         else {
             step_length = this->decrease_step_length(step_length);
          }
       }
@@ -105,8 +106,6 @@ Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics
          step_length = this->decrease_step_length(step_length);
       }
    }
-   // TODO: may still be accepted as solution if the termination criteria are satisfied
-   throw StepLengthTooSmall();
 }
 
 Iterate BacktrackingLineSearch::assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction, double step_length) {
@@ -114,9 +113,6 @@ Iterate BacktrackingLineSearch::assemble_trial_iterate(const Model& model, Itera
 
    // project the steps within the bounds to avoid numerical errors
    model.project_primals_onto_bounds(trial_iterate.primals);
-
-   // compute progress measures
-   this->constraint_relaxation_strategy.compute_progress_measures(current_iterate, trial_iterate, direction, step_length);
    return trial_iterate;
 }
 

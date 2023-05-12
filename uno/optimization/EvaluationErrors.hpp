@@ -20,10 +20,4 @@ struct FunctionEvaluationError : EvaluationError {
    }
 };
 
-struct SolverEvaluationError : EvaluationError {
-   [[nodiscard]] const char* what() const noexcept override {
-      return "A numerical error was encountered while solving a subproblem\n";
-   }
-};
-
 #endif // UNO_EVALUATIONERRORS_H

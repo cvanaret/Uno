@@ -50,7 +50,7 @@ Iterate TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const 
             this->decrease_radius_aggressively();
             warmstart_information.set_cold_start();
          }
-         if (direction.status == SubproblemStatus::ERROR) {
+         else if (direction.status == SubproblemStatus::ERROR) {
             this->decrease_radius();
             warmstart_information.set_cold_start();
          }
@@ -59,45 +59,37 @@ Iterate TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const 
             Iterate trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction);
 
             // check whether the trial iterate is accepted
+            bool acceptable_iterate = false;
             if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction,
                   direction.primal_dual_step_length)) {
-               this->set_statistics(statistics, direction);
-
                // possibly increase the radius if trust region is active
                this->possibly_increase_radius(direction.norm);
-               this->reset_radius();
 
                // check termination criteria
                trial_iterate.status = this->check_termination(model, trial_iterate);
-               return trial_iterate;
+               acceptable_iterate = true;
             }
             else if (this->radius < this->minimum_radius) { // rejected, but small radius
-               if (0. < direction.objective_multiplier) {
-                  // feasible point
-                  if (trial_iterate.progress.infeasibility <= this->tolerance) {
-                     this->set_statistics(statistics, direction);
-                     trial_iterate.status = TerminationStatus::FEASIBLE_SMALL_STEP;
-                     return trial_iterate;
-                  }
-                  else { // infeasible point
-                     throw std::runtime_error("Trust-region strategy reverting to solving the feasibility problem. Not implemented yet.");
-                     // revert to solving the feasibility problem
-                     warmstart_information.set_cold_start();
-                     direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, warmstart_information);
-                     trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction);
-                  }
-               }
-               else { // direction.objective_multiplier == 0.
-                  this->set_statistics(statistics, direction);
-                  trial_iterate.status = TerminationStatus::INFEASIBLE_STATIONARY_POINT;
-                  return trial_iterate;
+               acceptable_iterate = this->terminate_with_small_step(model, direction, trial_iterate);
+               if (not acceptable_iterate) {
+                  // revert to solving the feasibility problem
+                  throw std::runtime_error("Trust-region strategy reverting to solving the feasibility problem. Not implemented yet.");
+                  warmstart_information.set_cold_start();
+                  direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, warmstart_information);
+                  trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction);
                }
             }
-            else { // trial iterate not acceptable
+
+            if (acceptable_iterate) {
+               this->set_statistics(statistics, direction);
+               this->reset_radius();
+               return trial_iterate;
+            }
+            else {
                this->decrease_radius(direction.norm);
+               // after the first iteration, only the variable bounds are updated
+               warmstart_information.only_variable_bounds_changed();
             }
-            // after the first iteration, only the variable bounds are updated
-            warmstart_information.only_variable_bounds_changed();
          }
       }
       catch (const std::runtime_error& e) {
@@ -120,9 +112,6 @@ Iterate TrustRegionStrategy::assemble_trial_iterate(const Model& model, Iterate&
 
    // reset bound multipliers of active trust region
    this->reset_active_trust_region_multipliers(model, direction, trial_iterate);
-
-   // compute progress measures
-   this->constraint_relaxation_strategy.compute_progress_measures(current_iterate, trial_iterate, direction, direction.primal_dual_step_length);
    return trial_iterate;
 }
 

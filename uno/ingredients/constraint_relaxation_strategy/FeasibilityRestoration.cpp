@@ -167,12 +167,14 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
       double step_length) {
    // post-process the trial iterate
    this->subproblem->postprocess_iterate(this->current_problem(), trial_iterate);
+   // compute progress measures
+   this->compute_progress_measures(current_iterate, trial_iterate, direction, step_length);
 
-   bool accept = false;
+   bool accept_iterate = false;
    if (direction.norm == 0.) {
       DEBUG << "Zero step acceptable\n";
       trial_iterate.evaluate_objective(this->original_model);
-      accept = true;
+      accept_iterate = true;
    }
    else {
       // evaluate the predicted reduction
@@ -183,11 +185,11 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
       };
       // invoke the globalization strategy for acceptance
       GlobalizationStrategy& current_phase_strategy = this->current_globalization_strategy();
-      accept = current_phase_strategy.is_iterate_acceptable(statistics, trial_iterate, current_iterate.progress, trial_iterate.progress,
+      accept_iterate = current_phase_strategy.is_iterate_acceptable(statistics, trial_iterate, current_iterate.progress, trial_iterate.progress,
             predicted_reduction, this->current_problem().get_objective_multiplier());
    }
 
-   if (accept) {
+   if (accept_iterate) {
       // compute the primal-dual residuals
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, trial_iterate, this->residual_norm);
       if (this->current_phase == Phase::OPTIMALITY) {
@@ -206,7 +208,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
       }
       statistics.add_statistic("phase", static_cast<int>(this->current_phase));
    }
-   return accept;
+   return accept_iterate;
 }
 
 const NonlinearProblem& FeasibilityRestoration::current_problem() const {

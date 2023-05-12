@@ -29,6 +29,7 @@ protected:
 
    static Iterate assemble_trial_iterate(Iterate& current_iterate, const Direction& direction, double primal_dual_step_length,
          double bound_dual_step_length);
+   bool terminate_with_small_step(const Model& model, const Direction& direction, Iterate& trial_iterate) const;
    [[nodiscard]] TerminationStatus check_termination(const Model& model, Iterate& current_iterate) const;
 };
 
