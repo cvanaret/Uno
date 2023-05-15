@@ -158,6 +158,9 @@ TR_min_radius 1e-7
 # threshold below which the TR radius is reset
 TR_radius_reset_threshold 1e-4
 
+# force QP convexification when in a trust-region setting
+convexify_QP false
+
 ##### constraint relaxation options #####
 ##### l1 relaxation options #####
 # initial value of the penalty parameter
