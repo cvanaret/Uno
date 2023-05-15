@@ -62,8 +62,6 @@ protected:
    bool solving_feasibility_problem{false};
 
    [[nodiscard]] double barrier_parameter() const;
-   void relax_variable_bounds(const NonlinearProblem& problem, const Iterate& current_iterate);
-   // void check_interior_primals(const NonlinearProblem& problem, const Iterate& iterate);
    [[nodiscard]] double push_variable_to_interior(double variable_value, const Interval& variable_bounds) const;
    void evaluate_functions(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
          const WarmstartInformation& warmstart_information);

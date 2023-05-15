@@ -28,10 +28,9 @@ public:
    // direction computation
    [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
          WarmstartInformation& warmstart_information) override;
-   [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
+   [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point,
          WarmstartInformation& warmstart_information) override;
-   [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
-         const std::vector<double>& initial_point, WarmstartInformation& warmstart_information) override;
+   void switch_to_feasibility_problem(Iterate& current_iterate, WarmstartInformation& warmstart_information) override;
 
    // trial iterate acceptance
    void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length) override;
@@ -48,14 +47,15 @@ protected:
    const std::unique_ptr<GlobalizationStrategy> globalization_strategy;
    double penalty_parameter;
    const l1RelaxationParameters parameters;
-   const double small_duals_threshold{1e-8}; // TODO put in option file
+   const double small_duals_threshold{1e-10}; // TODO put in option file
    const double l1_constraint_violation_coefficient;
    // preallocated temporary multipliers
    Multipliers trial_multipliers;
 
-   Direction solve_subproblem(Statistics& statistics, Iterate& current_iterate, const NonlinearProblem& problem,
-         const WarmstartInformation& warmstart_information);
+   Direction solve_sequence_of_relaxed_problems(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information);
    Direction solve_relaxed_problem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter,
+         const WarmstartInformation& warmstart_information);
+   Direction solve_subproblem(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
          const WarmstartInformation& warmstart_information);
    void decrease_parameter_aggressively(Iterate& current_iterate, const Direction& direction);
    [[nodiscard]] bool linearized_residual_sufficient_decrease(const Iterate& current_iterate, double linearized_residual, double residual_lowest_violation) const;

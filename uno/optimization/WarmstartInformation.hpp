@@ -14,6 +14,7 @@ struct WarmstartInformation {
    void display() const;
    void set_cold_start();
    void set_hot_start();
+   void only_objective_changed();
    void only_variable_bounds_changed();
 };
 
@@ -38,6 +39,14 @@ inline void WarmstartInformation::set_hot_start() {
    this->constraints_changed = true;
    this->constraint_bounds_changed = true;
    this->variable_bounds_changed = true;
+   this->problem_changed = false;
+}
+
+inline void WarmstartInformation::only_objective_changed() {
+   this->objective_changed = true;
+   this->constraints_changed = false;
+   this->constraint_bounds_changed = false;
+   this->variable_bounds_changed = false;
    this->problem_changed = false;
 }
 

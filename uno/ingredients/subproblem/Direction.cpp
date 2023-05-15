@@ -41,7 +41,6 @@ std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
    print_vector(stream, direction.multipliers.lower_bounds);
    stream << "upper bound multipliers = ";
    print_vector(stream, direction.multipliers.upper_bounds);
-   stream << "objective multiplier = " << direction.objective_multiplier << '\n';
 
    stream << "objective = " << direction.subproblem_objective << '\n';
    stream << "norm = " << direction.norm << '\n';

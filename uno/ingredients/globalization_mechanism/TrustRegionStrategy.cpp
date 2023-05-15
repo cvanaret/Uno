@@ -35,17 +35,18 @@ Iterate TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const 
    warmstart_information.set_hot_start();
    DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
-   bool termination = false;
-   this->number_iterations = 0;
-   while (not termination) {
+   bool reached_small_radius = false;
+   size_t number_iterations = 0;
+   while (not reached_small_radius) {
       try {
-         this->number_iterations++;
-         this->print_iteration();
+         number_iterations++;
+         this->print_iteration(number_iterations);
 
          // compute the direction within the trust region
          this->constraint_relaxation_strategy.set_trust_region_radius(this->radius);
          Direction direction = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, warmstart_information);
 
+         // deal with errors in the subproblem
          if (direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
             this->decrease_radius_aggressively();
             warmstart_information.set_cold_start();
@@ -66,22 +67,24 @@ Iterate TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const 
                this->possibly_increase_radius(direction.norm);
 
                // check termination criteria
-               trial_iterate.status = this->check_termination(model, trial_iterate);
+               trial_iterate.status = this->check_convergence(model, trial_iterate);
                acceptable_iterate = true;
             }
             else if (this->radius < this->minimum_radius) { // rejected, but small radius
-               acceptable_iterate = this->terminate_with_small_step(model, direction, trial_iterate);
+               acceptable_iterate = this->check_termination_with_small_step(model, direction, trial_iterate);
                if (not acceptable_iterate) {
                   // revert to solving the feasibility problem
                   throw std::runtime_error("Trust-region strategy reverting to solving the feasibility problem. Not implemented yet.");
                   warmstart_information.set_cold_start();
-                  direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, warmstart_information);
+                  this->constraint_relaxation_strategy.switch_to_feasibility_problem(current_iterate, warmstart_information);
+                  direction = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate,
+                        direction.primals, warmstart_information);
                   trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction);
                }
             }
 
             if (acceptable_iterate) {
-               this->set_statistics(statistics, direction);
+               this->set_statistics(statistics, direction, number_iterations);
                this->reset_radius();
                return trial_iterate;
             }
@@ -154,16 +157,12 @@ void TrustRegionStrategy::reset_active_trust_region_multipliers(const Model& mod
    }
 }
 
-void TrustRegionStrategy::set_statistics(Statistics& statistics, const Direction& direction) {
-   statistics.add_statistic("TR iters", this->number_iterations);
+void TrustRegionStrategy::set_statistics(Statistics& statistics, const Direction& direction, size_t number_iterations) {
+   statistics.add_statistic("TR iters", number_iterations);
    statistics.add_statistic("TR radius", this->radius);
    statistics.add_statistic("step norm", direction.norm);
 }
 
-bool TrustRegionStrategy::termination() const {
-   return this->radius < this->minimum_radius;
-}
-
-void TrustRegionStrategy::print_iteration() {
-   DEBUG << "\t### Trust-region inner iteration " << this->number_iterations << " with radius " << this->radius << "\n\n";
+void TrustRegionStrategy::print_iteration(size_t number_iterations) {
+   DEBUG << "\t### Trust-region inner iteration " << number_iterations << " with radius " << this->radius << "\n\n";
 }

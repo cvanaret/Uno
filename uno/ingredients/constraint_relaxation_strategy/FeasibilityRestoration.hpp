@@ -22,10 +22,9 @@ public:
    // direction computation
    [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
          WarmstartInformation& warmstart_information) override;
-   [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
+   [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point,
          WarmstartInformation& warmstart_information) override;
-   [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point,
-         WarmstartInformation& warmstart_information) override;
+   void switch_to_feasibility_problem(Iterate& current_iterate, WarmstartInformation& warmstart_information) override;
 
    // trial iterate acceptance
    void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length) override;
@@ -44,21 +43,23 @@ private:
    Phase current_phase{Phase::OPTIMALITY};
    const double l1_constraint_violation_coefficient;
    const double tolerance;
+   const bool test_linearized_feasibility;
    bool switched_to_optimality_phase{false};
 
    [[nodiscard]] const NonlinearProblem& current_problem() const;
    [[nodiscard]] GlobalizationStrategy& current_globalization_strategy() const;
-   [[nodiscard]] Direction solve_optimality_problem(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information);
+   [[nodiscard]] Direction solve_subproblem(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+         WarmstartInformation& warmstart_information);
    void switch_to_feasibility_restoration(Iterate& current_iterate, WarmstartInformation& warmstart_information);
    void switch_to_optimality(Iterate& current_iterate, Iterate& trial_iterate);
 
    // progress measures and their local models
-   void set_infeasibility_measure(Iterate& iterate);
-   [[nodiscard]] double generate_predicted_infeasibility_reduction_model(const Iterate& current_iterate,
-         const Direction& direction, double step_length) const;
-   void set_optimality_measure(Iterate& iterate);
-   [[nodiscard]] std::function<double (double)> generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
-         const Direction& direction, double step_length) const;
+   void set_progress_measures_for_optimality_problem(Iterate& iterate);
+   void set_progress_measures_for_feasibility_problem(Iterate& iterate);
+   [[nodiscard]] ProgressMeasures compute_predicted_reduction_models_for_optimality_problem(const Iterate& current_iterate, const Direction& direction,
+         double step_length);
+   [[nodiscard]] ProgressMeasures compute_predicted_reduction_models_for_feasibility_problem(const Iterate& current_iterate, const Direction& direction,
+         double step_length);
 };
 
 #endif //UNO_FEASIBILITYRESTORATION_H

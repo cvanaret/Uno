@@ -178,6 +178,10 @@ l1_relaxation_residual_small_threshold 1e-12
 # coefficient of constraint violation
 l1_constraint_violation_coefficient 1
 
+##### feasibility restoration options #####
+# test linearized feasibility when switching back to phase 2
+feasibility_restoration_test_linearized_feasibility no
+
 ##### barrier subproblem options #####
 barrier_initial_parameter 0.1
 barrier_default_multiplier 1

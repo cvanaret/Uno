@@ -6,6 +6,7 @@
 GlobalizationMechanism::GlobalizationMechanism(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options) :
       constraint_relaxation_strategy(constraint_relaxation_strategy),
       tolerance(options.get_double("tolerance")),
+      progress_norm(norm_from_string(options.get_string("progress_norm"))),
       unbounded_objective_threshold(options.get_double("unbounded_objective_threshold")) {
 }
 
@@ -16,7 +17,7 @@ Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate,
       add_vectors(current_iterate.multipliers.constraints, direction.multipliers.constraints, primal_dual_step_length, iterate.multipliers.constraints);
       add_vectors(current_iterate.multipliers.lower_bounds, direction.multipliers.lower_bounds, bound_dual_step_length, iterate.multipliers.lower_bounds);
       add_vectors(current_iterate.multipliers.upper_bounds, direction.multipliers.upper_bounds, bound_dual_step_length, iterate.multipliers.upper_bounds);
-      iterate.multipliers.objective = direction.objective_multiplier;
+      //iterate.multipliers.objective = direction.objective_multiplier;
    };
    if (0. < direction.norm) {
       Iterate trial_iterate(current_iterate.primals.size(), direction.multipliers.constraints.size());
@@ -35,18 +36,18 @@ Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate,
    }
 }
 
-bool GlobalizationMechanism::terminate_with_small_step(const Model& model, const Direction& direction, Iterate& trial_iterate) const {
+bool GlobalizationMechanism::check_termination_with_small_step(const Model& model, const Direction& direction, Iterate& trial_iterate) const {
    // evaluate infeasibility
    trial_iterate.evaluate_constraints(model);
-   trial_iterate.residuals.infeasibility = model.compute_constraint_violation(trial_iterate.evaluations.constraints, L1_NORM);
+   trial_iterate.residuals.infeasibility = model.compute_constraint_violation(trial_iterate.evaluations.constraints, this->progress_norm);
 
    // terminate with a feasible point
    if (trial_iterate.residuals.infeasibility <= this->tolerance) {
       trial_iterate.status = TerminationStatus::FEASIBLE_SMALL_STEP;
       return true;
    }
-   else if (direction.objective_multiplier == 0.) { // terminate with an infeasible stationary point
-      trial_iterate.status = TerminationStatus::INFEASIBLE_STATIONARY_POINT;
+   else if (direction.multipliers.objective == 0.) { // terminate with an infeasible point
+      trial_iterate.status = TerminationStatus::INFEASIBLE_SMALL_STEP;
       return true;
    }
    else { // do not terminate, infeasible non stationary
@@ -54,15 +55,16 @@ bool GlobalizationMechanism::terminate_with_small_step(const Model& model, const
    }
 }
 
-TerminationStatus GlobalizationMechanism::check_termination(const Model& model, Iterate& current_iterate) const {
+TerminationStatus GlobalizationMechanism::check_convergence(const Model& model, Iterate& current_iterate) const {
    // evaluate termination conditions based on optimality conditions
-   const bool optimality_stationarity = (current_iterate.residuals.optimality_stationarity/current_iterate.residuals.stationarity_scaling <=
-                                         this->tolerance);
-   const bool feasibility_stationarity = (current_iterate.residuals.feasibility_stationarity/current_iterate.residuals.stationarity_scaling <=
-                                          this->tolerance);
-   const bool optimality_complementarity = (current_iterate.residuals.optimality_complementarity / current_iterate.residuals.complementarity_scaling <= this->tolerance);
-   const bool feasibility_complementarity = (current_iterate.residuals.feasibility_complementarity / current_iterate.residuals.complementarity_scaling
-                                             <= this->tolerance);
+   const bool optimality_stationarity =
+         (current_iterate.residuals.optimality_stationarity / current_iterate.residuals.stationarity_scaling <= this->tolerance);
+   const bool feasibility_stationarity =
+         (current_iterate.residuals.feasibility_stationarity / current_iterate.residuals.stationarity_scaling <= this->tolerance);
+   const bool optimality_complementarity =
+         (current_iterate.residuals.optimality_complementarity / current_iterate.residuals.complementarity_scaling <= this->tolerance);
+   const bool feasibility_complementarity =
+         (current_iterate.residuals.feasibility_complementarity / current_iterate.residuals.complementarity_scaling <= this->tolerance);
    const bool primal_feasibility = (current_iterate.residuals.infeasibility <= this->tolerance);
    const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(model.number_variables, this->tolerance);
 

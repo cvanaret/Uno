@@ -10,6 +10,7 @@ enum class TerminationStatus {
    FEASIBLE_FJ_POINT, /* stationary point without constraint qualification */
    INFEASIBLE_STATIONARY_POINT, /* infeasible stationary point of constraint violation */
    FEASIBLE_SMALL_STEP,
+   INFEASIBLE_SMALL_STEP,
    UNBOUNDED
 };
 

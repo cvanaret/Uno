@@ -100,6 +100,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["scale_functions"] = "yes";
       options["sparse_format"] = "COO";
       options["tolerance"] = "1e-8";
+      options["feasibility_restoration_test_linearized_feasibility"] = "no";
    }
    else if (preset_name == "filtersqp") {
       options["constraint_relaxation_strategy"] = "feasibility_restoration";
@@ -115,6 +116,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["enforce_linear_constraints"] = "yes";
       options["tolerance"] = "1e-6";
       options["TR_min_radius"] = "1e-8";
+      options["feasibility_restoration_test_linearized_feasibility"] = "yes";
    }
    else if (preset_name == "byrd") {
       options["constraint_relaxation_strategy"] = "l1_relaxation";

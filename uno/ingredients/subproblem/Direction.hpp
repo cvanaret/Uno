@@ -54,7 +54,6 @@ public:
 
    std::vector<double> primals; /*!< Primal variables */
    Multipliers multipliers; /*!< Multipliers */
-   double objective_multiplier{1.}; /*!< Objective multiplier */
 
    SubproblemStatus status{SubproblemStatus::OPTIMAL}; /*!< Status of the solution */
 

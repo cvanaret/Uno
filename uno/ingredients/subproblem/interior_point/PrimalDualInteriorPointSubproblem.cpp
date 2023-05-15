@@ -164,9 +164,6 @@ Direction PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const
       this->update_barrier_parameter(problem, current_iterate);
    }
 
-   //this->relax_variable_bounds(problem, current_iterate);
-   //this->check_interior_primals(problem, current_iterate);
-
    // evaluate the functions at the current iterate
    this->evaluate_functions(statistics, problem, current_iterate, warmstart_information);
 
@@ -186,20 +183,6 @@ Direction PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const
       DEBUG << "This is a small step\n";
    }
    return this->direction;
-}
-
-void PrimalDualInteriorPointSubproblem::relax_variable_bounds(const NonlinearProblem& problem, const Iterate& current_iterate) {
-   // slightly relax the bounds whenever the current point is too close to the bounds (Section 3.5 in IPOPT paper)
-   static double machine_epsilon = std::numeric_limits<double>::epsilon();
-   // const double factor = std::pow(machine_epsilon, 0.75);
-   for (size_t i: problem.lower_bounded_variables) {
-      if (current_iterate.primals[i] - problem.get_variable_lower_bound(i) < machine_epsilon*this->barrier_parameter()) {
-      }
-   }
-   for (size_t i: problem.upper_bounded_variables) {
-      if (problem.get_variable_upper_bound(i) - current_iterate.primals[i] < machine_epsilon*this->barrier_parameter()) {
-      }
-   }
 }
 
 void PrimalDualInteriorPointSubproblem::assemble_augmented_system(Statistics& statistics, const NonlinearProblem& problem,
@@ -260,7 +243,6 @@ void PrimalDualInteriorPointSubproblem::exit_feasibility_problem(const Nonlinear
 }
 
 void PrimalDualInteriorPointSubproblem::set_auxiliary_measure(const NonlinearProblem& problem, Iterate& iterate) {
-   //this->check_interior_primals(problem, iterate);
    // auxiliary measure: barrier terms
    double barrier_terms = 0.;
    for (size_t i: problem.lower_bounded_variables) {
@@ -320,7 +302,7 @@ bool PrimalDualInteriorPointSubproblem::is_small_step(const NonlinearProblem& pr
       return direction.primals[i] / (1 + std::abs(current_iterate.primals[i]));
    };
    static double machine_epsilon = std::numeric_limits<double>::epsilon();
-   return (norm_inf<double>(relative_measure_function, Range(problem.number_variables)) < this->parameters.small_direction_factor * machine_epsilon);
+   return (norm_inf<double>(relative_measure_function, Range(problem.number_variables)) <= this->parameters.small_direction_factor * machine_epsilon);
 }
 
 double PrimalDualInteriorPointSubproblem::evaluate_subproblem_objective() const {
