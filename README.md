@@ -100,10 +100,10 @@ A couple of CUTEst instances are available in the `/examples` directory.
 
 ### Combination of ingredients
 
-To pick a globalization mechanism, use the argument (choose one of the possible options in brackets): ```-mechanism [LS|TR]```  
-To pick a constraint relaxation strategy, use the argument: ```-constraint-relaxation [feasibility-restoration|l1-relaxation]```  
-To pick a globalization strategy, use the argument: ```-strategy [l1-merit|leyffer-filter-strategy|waechter-filter-strategy]```  
-To pick a subproblem method, use the argument: ```-subproblem [QP|LP|barrier]```  
+To pick a globalization mechanism, use the argument (choose one of the possible options in brackets): ```-globalization_mechanism [LS|TR]```  
+To pick a constraint relaxation strategy, use the argument: ```-constraint_relaxation_strategy [feasibility_restoration|l1_relaxation]```  
+To pick a globalization strategy, use the argument: ```-globalization_strategy [l1_merit|leyffer_filter_strategy|waechter_filter_strategy]```  
+To pick a subproblem method, use the argument: ```-subproblem [QP|LP|primal_dual_interior_point]```  
 The options can be combined in the same command line.
 
 For an overview of the available strategies, type: ```./uno_ampl --strategies```
