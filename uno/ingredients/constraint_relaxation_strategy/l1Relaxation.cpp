@@ -174,7 +174,8 @@ double l1Relaxation::compute_dual_error(Iterate& current_iterate) {
 
 Direction l1Relaxation::enforce_linearized_residual_sufficient_decrease(Statistics& statistics, Iterate& current_iterate, Direction& direction,
       double linearized_residual, double residual_lowest_violation, WarmstartInformation& warmstart_information) {
-   while (not this->linearized_residual_sufficient_decrease(current_iterate, linearized_residual, residual_lowest_violation)) {
+   while (0. < this->penalty_parameter && not this->linearized_residual_sufficient_decrease(current_iterate, linearized_residual,
+         residual_lowest_violation)) {
       // decrease the penalty parameter and re-solve the problem
       this->penalty_parameter /= this->parameters.decrease_factor;
       DEBUG << "Further decrease the penalty parameter to " << this->penalty_parameter << '\n';
@@ -201,7 +202,7 @@ bool l1Relaxation::linearized_residual_sufficient_decrease(const Iterate& curren
 
 Direction l1Relaxation::enforce_descent_direction_for_l1_merit(Statistics& statistics, Iterate& current_iterate, Direction& direction,
       const Direction& direction_lowest_violation, WarmstartInformation& warmstart_information) {
-   while (not this->is_descent_direction_for_l1_merit_function(current_iterate, direction, direction_lowest_violation)) {
+   while (0. < this->penalty_parameter && not this->is_descent_direction_for_l1_merit_function(current_iterate, direction, direction_lowest_violation)) {
       // decrease the penalty parameter and re-solve the problem
       this->penalty_parameter /= this->parameters.decrease_factor;
       DEBUG << "Further decrease the penalty parameter to " << this->penalty_parameter << '\n';
