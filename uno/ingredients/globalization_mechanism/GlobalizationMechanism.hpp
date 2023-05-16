@@ -27,8 +27,8 @@ protected:
    const Norm progress_norm;
    const double unbounded_objective_threshold;
 
-   static Iterate assemble_trial_iterate(Iterate& current_iterate, const Direction& direction, double primal_dual_step_length,
-         double bound_dual_step_length);
+   static Iterate assemble_trial_iterate(Iterate& current_iterate, const Direction& direction, double primal_step_length,
+         double dual_step_length, double bound_dual_step_length);
    bool check_termination_with_small_step(const Model& model, const Direction& direction, Iterate& trial_iterate) const;
    [[nodiscard]] TerminationStatus check_convergence(const Model& model, Iterate& current_iterate) const;
 };

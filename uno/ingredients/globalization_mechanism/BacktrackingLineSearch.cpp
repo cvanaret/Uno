@@ -11,7 +11,8 @@ BacktrackingLineSearch::BacktrackingLineSearch(Statistics& statistics, Constrain
          const Options& options):
       GlobalizationMechanism(constraint_relaxation_strategy, options),
       backtracking_ratio(options.get_double("LS_backtracking_ratio")),
-      minimum_step_length(options.get_double("LS_min_step_length")) {
+      minimum_step_length(options.get_double("LS_min_step_length")),
+      scale_duals_with_step_length(options.get_bool("LS_scale_duals_with_step_length")) {
    // check the initial and minimal step lengths
    assert(0 < this->backtracking_ratio && this->backtracking_ratio < 1. && "The LS backtracking ratio should be in (0, 1)");
    assert(0 < this->minimum_step_length && this->minimum_step_length < 1. && "The LS minimum step length should be in (0, 1)");
@@ -48,11 +49,11 @@ Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics
    while (not reached_small_step_length) {
       this->total_number_iterations++;
       number_iterations++;
-      this->print_iteration(number_iterations, step_length);
+      BacktrackingLineSearch::print_iteration(number_iterations, step_length);
 
       try {
          // assemble the trial iterate by going a fraction along the direction
-         Iterate trial_iterate = BacktrackingLineSearch::assemble_trial_iterate(model, current_iterate, direction, step_length);
+         Iterate trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction, step_length);
          // check whether the trial iterate is accepted
          bool acceptable_iterate = false;
          if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, step_length)) {
@@ -93,8 +94,12 @@ Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics
    return trial_iterate_feasibility;
 }
 
-Iterate BacktrackingLineSearch::assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction, double step_length) {
-   Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, step_length, direction.bound_dual_step_length);
+Iterate BacktrackingLineSearch::assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction,
+      double primal_dual_step_length) const {
+   Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, primal_dual_step_length,
+         // scale or not the dual directions with the step lengths
+         this->scale_duals_with_step_length ? primal_dual_step_length : 1.,
+         this->scale_duals_with_step_length ? direction.bound_dual_step_length : 1.);
 
    // project the steps within the bounds to avoid numerical errors
    model.project_primals_onto_bounds(trial_iterate.primals);
@@ -106,10 +111,6 @@ double BacktrackingLineSearch::decrease_step_length(double step_length) const {
    step_length *= this->backtracking_ratio;
    assert(0 < step_length && step_length <= 1 && "The line-search step length is not in (0, 1]");
    return step_length;
-}
-
-bool BacktrackingLineSearch::termination(double primal_dual_step_length) const {
-   return (primal_dual_step_length < this->minimum_step_length);
 }
 
 void BacktrackingLineSearch::check_unboundedness(const Direction& direction) {

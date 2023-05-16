@@ -109,7 +109,7 @@ Iterate TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const 
 
 Iterate TrustRegionStrategy::assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction) {
    Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, direction.primal_dual_step_length,
-         direction.bound_dual_step_length);
+         direction.primal_dual_step_length, direction.bound_dual_step_length);
    // project the trial iterate onto the bounds to avoid numerical errors
    model.project_primals_onto_bounds(trial_iterate.primals);
 
