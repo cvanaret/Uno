@@ -181,6 +181,9 @@ l1_relaxation_residual_small_threshold 1e-12
 # coefficient of constraint violation
 l1_constraint_violation_coefficient 1
 
+# threshold for determining if duals have a zero norm
+l1_small_duals_threshold 1e-10
+
 ##### feasibility restoration options #####
 # test linearized feasibility when switching back to phase 2
 feasibility_restoration_test_linearized_feasibility no
