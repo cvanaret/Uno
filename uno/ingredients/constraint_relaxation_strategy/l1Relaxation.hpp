@@ -75,6 +75,7 @@ protected:
    [[nodiscard]] ProgressMeasures compute_predicted_reduction_models_for_l1_relaxed_problem(const Iterate& current_iterate, const Direction& direction,
          double step_length);
 
+   void add_statistics(Statistics& statistics, const Iterate& trial_iterate) const;
    void check_exact_relaxation(Iterate& iterate) const;
 };
 

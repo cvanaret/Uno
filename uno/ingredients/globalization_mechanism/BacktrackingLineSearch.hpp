@@ -6,12 +6,6 @@
 
 #include "GlobalizationMechanism.hpp"
 
-struct StepLengthTooSmall : public std::exception {
-   [[nodiscard]] const char* what() const noexcept override {
-      return "The step length in the line search is too small.\n";
-   }
-};
-
 class BacktrackingLineSearch : public GlobalizationMechanism {
 public:
    BacktrackingLineSearch(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);

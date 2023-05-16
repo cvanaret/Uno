@@ -183,21 +183,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
    if (accept_iterate) {
       // compute the primal-dual residuals
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, trial_iterate, this->residual_norm);
-      if (this->current_phase == Phase::OPTIMALITY) {
-         statistics.add_statistic("complementarity", trial_iterate.residuals.optimality_complementarity);
-         statistics.add_statistic("stationarity", trial_iterate.residuals.optimality_stationarity);
-         if (this->original_model.is_constrained()) {
-            statistics.add_statistic("primal infeas.", trial_iterate.progress.infeasibility);
-         }
-      }
-      else {
-         statistics.add_statistic("complementarity", trial_iterate.residuals.feasibility_complementarity);
-         statistics.add_statistic("stationarity", trial_iterate.residuals.feasibility_stationarity);
-         if (this->original_model.is_constrained()) {
-            statistics.add_statistic("primal infeas.", trial_iterate.progress.optimality(1.));
-         }
-      }
-      statistics.add_statistic("phase", static_cast<int>(this->current_phase));
+      this->add_statistics(statistics, trial_iterate);
    }
    return accept_iterate;
 }
@@ -294,6 +280,24 @@ ProgressMeasures FeasibilityRestoration::compute_predicted_reduction_models_for_
          current_iterate, direction, step_length);
 
    return {predicted_infeasibility_reduction, predicted_optimality_reduction, predicted_auxiliary_reduction};
+}
+
+void FeasibilityRestoration::add_statistics(Statistics& statistics, const Iterate& trial_iterate) const {
+   if (this->current_phase == Phase::OPTIMALITY) {
+      statistics.add_statistic("complementarity", trial_iterate.residuals.optimality_complementarity);
+      statistics.add_statistic("stationarity", trial_iterate.residuals.optimality_stationarity);
+      if (this->original_model.is_constrained()) {
+         statistics.add_statistic("primal infeas.", trial_iterate.progress.infeasibility);
+      }
+   }
+   else {
+      statistics.add_statistic("complementarity", trial_iterate.residuals.feasibility_complementarity);
+      statistics.add_statistic("stationarity", trial_iterate.residuals.feasibility_stationarity);
+      if (this->original_model.is_constrained()) {
+         statistics.add_statistic("primal infeas.", trial_iterate.progress.optimality(1.));
+      }
+   }
+   statistics.add_statistic("phase", static_cast<int>(this->current_phase));
 }
 
 size_t FeasibilityRestoration::get_hessian_evaluation_count() const {

@@ -60,6 +60,8 @@ private:
          double step_length);
    [[nodiscard]] ProgressMeasures compute_predicted_reduction_models_for_feasibility_problem(const Iterate& current_iterate, const Direction& direction,
          double step_length);
+
+   void add_statistics(Statistics& statistics, const Iterate& trial_iterate) const;
 };
 
 #endif //UNO_FEASIBILITYRESTORATION_H

@@ -254,12 +254,7 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
    if (accept_iterate) {
       // compute the primal-dual residuals
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->l1_relaxed_problem, trial_iterate, this->residual_norm);
-      statistics.add_statistic("complementarity", trial_iterate.residuals.optimality_complementarity);
-      statistics.add_statistic("stationarity", trial_iterate.residuals.optimality_stationarity);
-      statistics.add_statistic("penalty param.", this->penalty_parameter);
-      if (this->original_model.is_constrained()) {
-         statistics.add_statistic("primal infeas.", trial_iterate.progress.infeasibility);
-      }
+      this->add_statistics(statistics, trial_iterate);
       this->check_exact_relaxation(trial_iterate);
    }
    return accept_iterate;
@@ -312,6 +307,15 @@ void l1Relaxation::check_exact_relaxation(Iterate& iterate) const {
    const double norm_inf_multipliers = norm_inf(iterate.multipliers.constraints);
    if (0. < norm_inf_multipliers && this->penalty_parameter <= 1./norm_inf_multipliers) {
       DEBUG << "The value of the penalty parameter is consistent with an exact relaxation\n\n";
+   }
+}
+
+void l1Relaxation::add_statistics(Statistics& statistics, const Iterate& trial_iterate) const {
+   statistics.add_statistic("complementarity", trial_iterate.residuals.optimality_complementarity);
+   statistics.add_statistic("stationarity", trial_iterate.residuals.optimality_stationarity);
+   statistics.add_statistic("penalty param.", this->penalty_parameter);
+   if (this->original_model.is_constrained()) {
+      statistics.add_statistic("primal infeas.", trial_iterate.progress.infeasibility);
    }
 }
 
