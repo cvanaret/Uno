@@ -30,13 +30,15 @@ public:
    [[nodiscard]] FunctionType get_constraint_type(size_t j) const override;
    [[nodiscard]] BoundType get_constraint_bound_type(size_t j) const override;
 
-   [[nodiscard]] size_t get_maximum_number_objective_gradient_nonzeros() const override;
-   [[nodiscard]] size_t get_maximum_number_jacobian_nonzeros() const override;
-   [[nodiscard]] size_t get_maximum_number_hessian_nonzeros() const override;
+   [[nodiscard]] size_t get_number_objective_gradient_nonzeros() const override;
+   [[nodiscard]] size_t get_number_jacobian_nonzeros() const override;
+   [[nodiscard]] size_t get_number_hessian_nonzeros() const override;
 
    void get_initial_primal_point(std::vector<double>& x) const override;
    void get_initial_dual_point(std::vector<double>& multipliers) const override;
    void postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const override;
+
+   [[nodiscard]] const std::vector<size_t>& get_linear_constraints() const override;
 
 protected:
    std::unique_ptr<Model> original_model;
@@ -48,16 +50,15 @@ protected:
 // - inequality constraints get a slack
 // - equality constraints are shifted by their RHS
 inline EqualityConstrainedModel::EqualityConstrainedModel(std::unique_ptr<Model> original_model):
-      Model(original_model->name + "_slacks", original_model->number_variables + original_model->inequality_constraints.size(),
-            original_model->number_constraints, original_model->problem_type),
+      Model(original_model->name + "_equalityconstrained", original_model->number_variables + original_model->inequality_constraints.size(),
+            original_model->number_constraints),
       // transfer ownership of the pointer
       original_model(std::move(original_model)),
       inequality_constraint_of_slack(this->original_model->inequality_constraints.size()),
       slack_of_inequality_constraint(this->original_model->number_constraints) {
+   // all constraints are now equality constraints
    this->equality_constraints.reserve(this->number_constraints);
    this->inequality_constraints.reserve(0);
-
-   // all constraints are now equality constraints
    for (size_t j: Range(this->number_constraints)) {
       this->equality_constraints.push_back(j);
    }
@@ -199,16 +200,16 @@ inline BoundType EqualityConstrainedModel::get_constraint_bound_type(size_t /*j*
    return EQUAL_BOUNDS;
 }
 
-inline size_t EqualityConstrainedModel::get_maximum_number_objective_gradient_nonzeros() const {
-   return this->original_model->get_maximum_number_objective_gradient_nonzeros();
+inline size_t EqualityConstrainedModel::get_number_objective_gradient_nonzeros() const {
+   return this->original_model->get_number_objective_gradient_nonzeros();
 }
 
-inline size_t EqualityConstrainedModel::get_maximum_number_jacobian_nonzeros() const {
-   return this->original_model->get_maximum_number_jacobian_nonzeros();
+inline size_t EqualityConstrainedModel::get_number_jacobian_nonzeros() const {
+   return this->original_model->get_number_jacobian_nonzeros();
 }
 
-inline size_t EqualityConstrainedModel::get_maximum_number_hessian_nonzeros() const {
-   return this->original_model->get_maximum_number_hessian_nonzeros();
+inline size_t EqualityConstrainedModel::get_number_hessian_nonzeros() const {
+   return this->original_model->get_number_hessian_nonzeros();
 }
 
 inline void EqualityConstrainedModel::get_initial_primal_point(std::vector<double>& x) const {
@@ -226,6 +227,13 @@ inline void EqualityConstrainedModel::get_initial_dual_point(std::vector<double>
 
 inline void EqualityConstrainedModel::postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const {
    this->original_model->postprocess_solution(iterate, termination_status);
+
+   // discard the slacks
+   iterate.number_variables = this->original_model->number_variables;
+}
+
+inline const std::vector<size_t>& EqualityConstrainedModel::get_linear_constraints() const {
+   return this->original_model->get_linear_constraints();
 }
 
 #endif // UNO_EQUALITYCONSTRAINEDMODEL_H

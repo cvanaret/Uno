@@ -18,9 +18,9 @@ public:
    explicit GlobalizationStrategy(const Options& options);
    virtual ~GlobalizationStrategy() = default;
 
-   virtual void initialize(const Iterate& first_iterate) = 0;
-   [[nodiscard]] virtual bool is_iterate_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
-         const ProgressMeasures& predicted_reduction, double objective_multiplier) = 0;
+   virtual void initialize(const Iterate& initial_iterate) = 0;
+   [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, const Iterate& trial_iterate, const ProgressMeasures& current_progress,
+         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) = 0;
    [[nodiscard]] virtual bool is_infeasibility_acceptable(double infeasibility_measure) const = 0;
 
    virtual void reset() = 0;

@@ -6,39 +6,31 @@
 
 #include "GlobalizationMechanism.hpp"
 
-/*! \class TrustRegionStrategy
- * \brief Trust region strategy
- *
- *  Trust region strategy
- */
 class TrustRegionStrategy : public GlobalizationMechanism {
 public:
-   TrustRegionStrategy(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);
+   TrustRegionStrategy(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);
 
-   void initialize(Statistics& statistics, Iterate& first_iterate) override;
-   std::tuple<Iterate, double> compute_acceptable_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) override;
+   void initialize(Iterate& initial_iterate) override;
+   Iterate compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) override;
 
 private:
    double radius; /*!< Current trust region radius */
    const double increase_factor;
    const double decrease_factor;
+   const double aggressive_decrease_factor;
    const double activity_tolerance;
    const double minimum_radius;
    const double radius_reset_threshold;
-   const bool use_second_order_correction;
-   // statistics table
-   int statistics_SOC_column_order;
-   int statistics_TR_radius_column_order;
 
    Iterate assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction);
-   void increase_radius(double step_norm);
+   void possibly_increase_radius(double step_norm);
    void decrease_radius(double step_norm);
    void decrease_radius();
+   void decrease_radius_aggressively();
    void reset_radius();
    void reset_active_trust_region_multipliers(const Model& model, const Direction& direction, Iterate& trial_iterate) const;
-   void set_statistics(Statistics& statistics, const Direction& direction);
-   [[nodiscard]] bool termination() const;
-   void print_iteration();
+   void set_statistics(Statistics& statistics, const Direction& direction, size_t number_iterations);
+   void print_iteration(size_t number_iterations);
 };
 
 #endif // UNO_TRUSTREGIONSTRATEGY_H

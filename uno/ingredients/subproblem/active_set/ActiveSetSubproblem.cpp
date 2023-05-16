@@ -6,8 +6,11 @@
 ActiveSetSubproblem::ActiveSetSubproblem(size_t max_number_variables, size_t max_number_constraints):
       Subproblem(max_number_variables, max_number_constraints),
       initial_point(max_number_variables),
-      variable_displacement_bounds(max_number_variables),
+      direction_bounds(max_number_variables),
       linearized_constraint_bounds(max_number_constraints) {
+}
+
+void ActiveSetSubproblem::generate_initial_iterate(const NonlinearProblem& /*problem*/, Iterate& /*initial_iterate*/) {
 }
 
 void ActiveSetSubproblem::set_initial_point(const std::vector<double>& initial_point) {
@@ -27,11 +30,22 @@ void ActiveSetSubproblem::set_elastic_variable_values(const l1RelaxedProblem& pr
    problem.set_elastic_variable_values(current_iterate, elastic_setting_function);
 }
 
-void ActiveSetSubproblem::set_variable_displacement_bounds(const NonlinearProblem& problem, const Iterate& current_iterate) {
-   for (size_t i: Range(problem.number_variables)) {
-      const double lb = this->variable_bounds[i].lb - current_iterate.primals[i];
-      const double ub = this->variable_bounds[i].ub - current_iterate.primals[i];
-      this->variable_displacement_bounds[i] = {lb, ub};
+void ActiveSetSubproblem::exit_feasibility_problem(const NonlinearProblem& /*problem*/, Iterate& /*trial_iterate*/) {
+   // do nothing
+}
+
+void ActiveSetSubproblem::set_direction_bounds(const NonlinearProblem& problem, const Iterate& current_iterate) {
+   // bounds of original variables intersected with trust region
+   for (size_t i: Range(problem.get_number_original_variables())) {
+      double lb = std::max(-this->trust_region_radius, problem.get_variable_lower_bound(i) - current_iterate.primals[i]);
+      double ub = std::min(this->trust_region_radius, problem.get_variable_upper_bound(i) - current_iterate.primals[i]);
+      this->direction_bounds[i] = {lb, ub};
+   }
+   // bounds of additional variables (no trust region!)
+   for (size_t i: Range(problem.get_number_original_variables(), problem.number_variables)) {
+      const double lb = problem.get_variable_lower_bound(i) - current_iterate.primals[i];
+      const double ub = problem.get_variable_upper_bound(i) - current_iterate.primals[i];
+      this->direction_bounds[i] = {lb, ub};
    }
 }
 
@@ -40,14 +54,6 @@ void ActiveSetSubproblem::set_linearized_constraint_bounds(const NonlinearProble
       const double lb = problem.get_constraint_lower_bound(j) - current_constraints[j];
       const double ub = problem.get_constraint_upper_bound(j) - current_constraints[j];
       this->linearized_constraint_bounds[j] = {lb, ub};
-   }
-}
-
-void ActiveSetSubproblem::shift_linearized_constraint_bounds(const NonlinearProblem& problem, const std::vector<double>& trial_constraints) {
-   // shift the RHS with the values of the constraints at the trial iterate
-   for (size_t j: Range(problem.number_constraints)) {
-      this->linearized_constraint_bounds[j].lb -= trial_constraints[j];
-      this->linearized_constraint_bounds[j].ub -= trial_constraints[j];
    }
 }
 
@@ -72,5 +78,5 @@ double ActiveSetSubproblem::generate_predicted_auxiliary_reduction_model(const N
    //}, "0"};
 }
 
-void ActiveSetSubproblem::postprocess_accepted_iterate(const NonlinearProblem& /*problem*/, Iterate& /*iterate*/) {
+void ActiveSetSubproblem::postprocess_iterate(const NonlinearProblem& /*problem*/, Iterate& /*iterate*/) {
 }

@@ -4,13 +4,13 @@
 
 Uno (Unifying Nonlinear Optimization) is a C++ library that unifies methods for solving nonlinearly constrained optimization problems of the form:
 
-```
-   min     f(x)
-  x ∈ Rⁿ
-
-   s.t.    c_L ≤ c(x) ≤ c_U
-           x_L ≤  x   ≤ x_U
-```
+$$
+\begin{align}
+\min_{x \in \mathbb{R}^n}  & ~f(x) \\
+\text{s.t.}                & ~c_L \le c(x) \le c_U \\
+                           & ~x_L \le x \le x_U \\
+\end{align}
+$$
 
 Uno breaks downs optimization methods into four generic ingredients:
 * a **constraint relaxation strategy**: a systematic way to relax the nonlinear constraints;
@@ -35,9 +35,9 @@ Uno 1.0 implements the following strategies:
 For more details, check out my [presentation at the ICCOPT 2022 conference](https://www.researchgate.net/publication/362254109).
 This is joint work with [Sven Leyffer](https://wiki.mcs.anl.gov/leyffer/index.php/Sven_Leyffer) (Argonne National Laboratory).
 
-### Latest results (Jan 25, 2023)
+### Latest results (April 27, 2023)
 
-Some of Uno combinations (called presets, see below) have been tested against state-of-the-art solvers on 429 small problems of the [CUTEst benchmark](https://arnold-neumaier.at/glopt/coconut/Benchmark/Library2_new_v1.html).
+Some of Uno combinations that correspond to existing solvers (called presets, see below) have been tested against state-of-the-art solvers on 429 small problems of the [CUTEst benchmark](https://arnold-neumaier.at/glopt/coconut/Benchmark/Library2_new_v1.html).
 The figure below is a performance profile; it shows how many problems are solved for a given budget of function evaluations (1 time, 2 times, 4 times, ..., $2^x$ times the number of objective evaluations of the best solver for each instance).
 
 <p align="center">
@@ -70,13 +70,13 @@ Uno is released under the MIT license (see the [license file](LICENSE)).
     * MA57 (sparse indefinite symmetric linear solver): http://www.hsl.rl.ac.uk/catalogue/ma57.html
 
 * install BLAS and LAPACK: ```sudo apt-get install libblas-dev liblapack-dev```
-* install cmake and ccmake (CMake curses interface): ```sudo apt-get install cmake cmake-curses-gui```
+* install cmake (and optionally ccmake, CMake curses interface): ```sudo apt-get install cmake cmake-curses-gui```
 
 ### Compilation
 
 1. Create a `build` directory in the main directory: ```mkdir build```
 2. Move to the build directory: ```cd build/```
-3. Type cmake: ```cmake ..```
+3. Type cmake (``Release`` can be replaced with ``Debug``): ```cmake -DCMAKE_BUILD_TYPE=Release ..```
 4. **(optional)** Use ccmake to provide the paths to the required and optional libraries: ```ccmake ..```
 5. Compile (in parallel: `n` being the number of threads, e.g. 6): ```make -jn```
 
@@ -100,11 +100,13 @@ A couple of CUTEst instances are available in the `/examples` directory.
 
 ### Combination of ingredients
 
-To pick a globalization mechanism, use the argument (choose one of the possible options in brackets): ```-mechanism [LS|TR]```  
-To pick a constraint relaxation strategy, use the argument: ```-constraint-relaxation [feasibility-restoration|l1-relaxation]```  
-To pick a globalization strategy, use the argument: ```-strategy [merit|leyffer-filter-strategy|waechter-filter-strategy]```  
-To pick a subproblem method, use the argument: ```-subproblem [QP|LP|barrier]```  
+To pick a globalization mechanism, use the argument (choose one of the possible options in brackets): ```-globalization_mechanism [LS|TR]```  
+To pick a constraint relaxation strategy, use the argument: ```-constraint_relaxation_strategy [feasibility_restoration|l1_relaxation]```  
+To pick a globalization strategy, use the argument: ```-globalization_strategy [l1_merit|leyffer_filter_strategy|waechter_filter_strategy]```  
+To pick a subproblem method, use the argument: ```-subproblem [QP|LP|primal_dual_interior_point]```  
 The options can be combined in the same command line.
+
+For an overview of the available strategies, type: ```./uno_ampl --strategies```
 
 ### Presets
 

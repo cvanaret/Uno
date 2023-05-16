@@ -3,7 +3,7 @@
 
 #include "HessianModel.hpp"
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
-#include "solvers/linear/LinearSolverFactory.hpp"
+#include "solvers/linear/SymmetricIndefiniteLinearSolverFactory.hpp"
 
 HessianModel::HessianModel(size_t dimension, size_t maximum_number_nonzeros, const std::string& sparse_format, bool use_regularization) :
       hessian(SymmetricMatrixFactory<double>::create(sparse_format, dimension, maximum_number_nonzeros, use_regularization)) {
@@ -11,7 +11,7 @@ HessianModel::HessianModel(size_t dimension, size_t maximum_number_nonzeros, con
 
 // Exact Hessian
 ExactHessian::ExactHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options) :
-   HessianModel(dimension, maximum_number_nonzeros, options.get_string("sparse_format"), false) /* not regularized */ {
+   HessianModel(dimension, maximum_number_nonzeros, options.get_string("sparse_format"), /* use_regularization = */false) {
 }
 
 void ExactHessian::evaluate(Statistics& /*statistics*/, const NonlinearProblem& problem, const std::vector<double>& primal_variables,
@@ -24,8 +24,9 @@ void ExactHessian::evaluate(Statistics& /*statistics*/, const NonlinearProblem& 
 
 // Convexified Hessian
 ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options):
-      HessianModel(dimension, maximum_number_nonzeros, options.get_string("sparse_format"), true), // regularized
-      linear_solver(LinearSolverFactory::create(options.get_string("linear_solver"), dimension, maximum_number_nonzeros)),
+      HessianModel(dimension, maximum_number_nonzeros, options.get_string("sparse_format"), /* use_regularization = */true),
+      // inertia-based convexification needs a linear solver
+      linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"), dimension, maximum_number_nonzeros)),
       regularization_initial_value(options.get_double("regularization_initial_value")),
       regularization_increase_factor(options.get_double("regularization_increase_factor")) {
 }
@@ -37,7 +38,7 @@ void ConvexifiedHessian::evaluate(Statistics& statistics, const NonlinearProblem
    problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, *this->hessian);
    this->evaluation_count++;
    // regularize (only on the original variables) to make the problem strictly convex
-   DEBUG << "hessian before convexification: " << *this->hessian;
+   DEBUG2 << "hessian before convexification: " << *this->hessian;
    this->regularize(statistics, *this->hessian, problem.get_number_original_variables());
 }
 
@@ -56,7 +57,9 @@ void ConvexifiedHessian::regularize(Statistics& statistics, SymmetricMatrix<doub
    while (not good_inertia) {
       DEBUG << "Testing factorization with regularization factor " << regularization_factor << '\n';
       if (0. < regularization_factor) {
-         hessian.set_regularization([&](size_t i) { return (i < number_original_variables) ? regularization_factor : 0.; });
+         hessian.set_regularization([=](size_t i) {
+            return (i < number_original_variables) ? regularization_factor : 0.;
+         });
       }
       // TODO check if sparsity pattern changes. If not, perform symbolic factorization once
       this->linear_solver->do_symbolic_factorization(hessian);

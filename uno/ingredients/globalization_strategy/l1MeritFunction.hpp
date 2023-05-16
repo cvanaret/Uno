@@ -6,13 +6,13 @@
 
 #include "GlobalizationStrategy.hpp"
 
-class MeritFunction : public GlobalizationStrategy {
+class l1MeritFunction : public GlobalizationStrategy {
 public:
-   explicit MeritFunction(const Options& options);
+   explicit l1MeritFunction(Statistics& statistics, const Options& options);
 
-   void initialize(const Iterate& first_iterate) override;
-   [[nodiscard]] bool is_iterate_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
-         const ProgressMeasures& predicted_reduction, double objective_multiplier) override;
+   void initialize(const Iterate& initial_iterate) override;
+   [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Iterate& trial_iterate, const ProgressMeasures& current_progress,
+         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) override;
    [[nodiscard]] bool is_infeasibility_acceptable(double infeasibility_measure) const override;
    void reset() override;
    void register_current_progress(const ProgressMeasures& current_progress) override;

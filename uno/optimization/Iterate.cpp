@@ -8,6 +8,7 @@
 
 size_t Iterate::number_eval_objective = 0;
 size_t Iterate::number_eval_constraints = 0;
+size_t Iterate::number_eval_objective_gradient = 0;
 size_t Iterate::number_eval_jacobian = 0;
 
 Iterate::Iterate(size_t max_number_variables, size_t max_number_constraints) :
@@ -51,6 +52,7 @@ void Iterate::evaluate_objective_gradient(const Model& model) {
       // evaluate the objective gradient
       model.evaluate_objective_gradient(this->primals, this->evaluations.objective_gradient);
       this->is_objective_gradient_computed = true;
+      Iterate::number_eval_objective_gradient++;
    }
 }
 
@@ -84,9 +86,10 @@ std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
    stream << "Objective value: " << iterate.evaluations.objective << '\n';
 
    stream << "          ┌ Optimality stationarity: " << iterate.residuals.optimality_stationarity << '\n';
-   stream << "Residuals │ Feasibility stationarity: " << iterate.residuals.feasibility_stationarity << '\n';
-   stream << "          │ Constraint violation: " << iterate.residuals.infeasibility << '\n';
-   stream << "          └ Complementarity: " << iterate.residuals.optimality_complementarity << '\n';
+   stream << "          │ Feasibility stationarity: " << iterate.residuals.feasibility_stationarity << '\n';
+   stream << "Residuals │ Constraint violation: " << iterate.residuals.infeasibility << '\n';
+   stream << "          │ Optimality complementarity: " << iterate.residuals.optimality_complementarity << '\n';
+   stream << "          └ Feasibility complementarity: " << iterate.residuals.feasibility_complementarity << '\n';
 
    stream << "                  ┌ Infeasibility: " << iterate.progress.infeasibility << '\n';
    stream << "Progress measures │ Optimality: " << iterate.progress.optimality(1.) << '\n';

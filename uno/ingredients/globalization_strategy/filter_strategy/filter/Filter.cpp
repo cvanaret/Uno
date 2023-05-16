@@ -27,11 +27,14 @@ bool Filter::is_empty() const {
    return (this->number_entries == 0);
 }
 
-// precondition: filter not empty
 double Filter::get_smallest_infeasibility() const {
-   // left-most entry has the lowest infeasibility
-   // relax it with the envelope coefficient
-   return this->parameters.beta * this->infeasibility[0];
+   if (not this->is_empty()) {
+      // left-most entry has the lowest infeasibility. Relax it with the envelope coefficient
+      return this->parameters.beta * this->infeasibility[0];
+   }
+   else { // filter empty
+      return this->parameters.beta * this->upper_bound;
+   }
 }
 
 void Filter::left_shift(size_t start, size_t shift_size) {
@@ -118,7 +121,7 @@ bool Filter::acceptable(double infeasibility_measure, double optimality_measure)
    else if (optimality_measure <= this->optimality[position - 1] - this->parameters.gamma * infeasibility_measure) {
       return true; // point acceptable
    }
-   DEBUG << "Rejected because the optimality measure is too large\n";
+   DEBUG << "Rejected because of filter domination\n";
    return false;
 }
 
@@ -126,7 +129,7 @@ bool Filter::acceptable(double infeasibility_measure, double optimality_measure)
 bool Filter::acceptable_wrt_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure,
       double trial_optimality_measure) {
    return (trial_optimality_measure <= current_optimality_measure - this->parameters.gamma * trial_infeasibility_measure) ||
-          (trial_infeasibility_measure <= this->parameters.beta * current_infeasibility_measure);
+          (trial_infeasibility_measure < this->parameters.beta * current_infeasibility_measure);
 }
 
 double Filter::compute_actual_reduction(double current_optimality_measure, double /*current_infeasibility_measure*/, double trial_optimality_measure) {
@@ -138,7 +141,7 @@ std::ostream& operator<<(std::ostream& stream, Filter& filter) {
    stream << "************\n";
    stream << "  Current filter (infeasibility, optimality):\n";
    for (size_t position: Range(filter.number_entries)) {
-      stream << "\t" << filter.infeasibility[position] << "\t" << filter.optimality[position] << '\n';
+      stream << "\t" << filter.infeasibility[position] << "\t\t" << filter.optimality[position] << '\n';
    }
    stream << "************\n";
    return stream;

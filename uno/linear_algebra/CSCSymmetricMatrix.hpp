@@ -17,7 +17,7 @@
 template <typename T>
 class CSCSymmetricMatrix : public SymmetricMatrix<T> {
 public:
-   CSCSymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization);
+   CSCSymmetricMatrix(size_t max_dimension, size_t original_capacity, bool use_regularization);
 
    void reset() override;
    void for_each(const std::function<void (size_t, size_t, T)>& f) const override;
@@ -37,12 +37,14 @@ protected:
    std::vector<size_t> column_starts{};
    std::vector<size_t> row_indices{};
    size_t current_column{0};
+   std::vector<T> diagonal_entries;
 };
 
 template <typename T>
-CSCSymmetricMatrix<T>::CSCSymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization):
-      SymmetricMatrix<T>(dimension, original_capacity, use_regularization),
-      column_starts(dimension + 1) {
+CSCSymmetricMatrix<T>::CSCSymmetricMatrix(size_t max_dimension, size_t original_capacity, bool use_regularization):
+      SymmetricMatrix<T>(max_dimension, original_capacity, use_regularization),
+      column_starts(max_dimension + 1),
+      diagonal_entries(max_dimension, T(0)) {
    this->entries.reserve(this->capacity);
    this->row_indices.reserve(this->capacity);
 }
@@ -54,6 +56,7 @@ void CSCSymmetricMatrix<T>::reset() {
    this->row_indices.clear();
    initialize_vector<size_t>(this->column_starts, 0);
    this->current_column = 0;
+   initialize_vector(this->diagonal_entries, T(0));
 }
 
 // generic iterator
@@ -85,6 +88,11 @@ void CSCSymmetricMatrix<T>::insert(T term, size_t row_index, size_t column_index
    this->row_indices.push_back(row_index);
    this->column_starts[column_index + 1]++;
    this->number_nonzeros++;
+
+   // possibly update diagonal
+   if (row_index == column_index) {
+      this->diagonal_entries[row_index] += term;
+   }
 }
 
 template <typename T>
@@ -106,24 +114,9 @@ void CSCSymmetricMatrix<T>::finalize_column(size_t column_index) {
 
 template <typename T>
 T CSCSymmetricMatrix<T>::smallest_diagonal_entry() const {
-   // TODO: there may be several entries for given indices
    T smallest_entry = INF<T>;
-   // go through each column
-   for (size_t j: Range(this->dimension)) {
-      // if it exists, the diagonal entry is the last element of the column
-      const size_t number_elements = this->column_starts[j + 1] - this->column_starts[j];
-      if (0 < number_elements) {
-         const size_t last_entry_index = this->column_starts[j + 1] - 1;
-         // get the row index of the last column entry
-         const size_t i = this->row_indices[last_entry_index];
-         // if the entry is diagonal, update the smallest diagonal entry
-         if (i == j) {
-            smallest_entry = std::min(smallest_entry, this->entries[last_entry_index]);
-         }
-      }
-   }
-   if (smallest_entry == INF<T>) {
-      smallest_entry = T(0);
+   for (size_t i: Range(this->dimension)) {
+      smallest_entry = std::min(smallest_entry, this->diagonal_entries[i]);
    }
    return smallest_entry;
 }
@@ -135,18 +128,18 @@ void CSCSymmetricMatrix<T>::set_regularization(const std::function<T(size_t /*in
    for (size_t i: Range(this->dimension)) {
       // the regularization term is located at the end of the column, that is right before the start of the next column
       const size_t k = this->column_starts[i + 1] - 1;
-      this->entries[k] = regularization_function(i);
+      const T element = regularization_function(i);
+      this->entries[k] = element;
+      // update diagonal
+      this->diagonal_entries[i] += element;
    }
 }
 
 template <typename T>
 void CSCSymmetricMatrix<T>::print(std::ostream& stream) const {
-   stream << "W = ";
-   print_vector(stream, this->entries, 0, this->number_nonzeros);
-   stream << "with column start: ";
-   print_vector(stream, this->column_starts, 0, this->dimension + 1);
-   stream << "and row index: ";
-   print_vector(stream, this->row_indices, 0, this->number_nonzeros);
+   stream << "W = "; print_vector(stream, this->entries, 0, this->number_nonzeros);
+   stream << "with column start: "; print_vector(stream, this->column_starts, 0, this->dimension + 1);
+   stream << "and row index: "; print_vector(stream, this->row_indices, 0, this->number_nonzeros);
 }
 
 template <typename T>

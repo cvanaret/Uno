@@ -30,7 +30,7 @@ class FilterStrategy : public GlobalizationStrategy {
 public:
    explicit FilterStrategy(const Options& options);
 
-   void initialize(const Iterate& first_iterate) override;
+   void initialize(const Iterate& initial_iterate) override;
    [[nodiscard]] bool is_infeasibility_acceptable(double infeasibility_measure) const override;
    void reset() override;
    void register_current_progress(const ProgressMeasures& current_progress_measures) override;

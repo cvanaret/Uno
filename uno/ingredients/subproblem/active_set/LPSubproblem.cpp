@@ -9,49 +9,41 @@ LPSubproblem::LPSubproblem(size_t max_number_variables, size_t max_number_constr
       solver(LPSolverFactory::create(max_number_variables, max_number_constraints, options.get_string("LP_solver"), options)) {
 }
 
-void LPSubproblem::initialize(Statistics& /*statistics*/, const NonlinearProblem& /*problem*/, Iterate& /*first_iterate*/) {
+void LPSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate, const WarmstartInformation& warmstart_information) {
+   // objective gradient
+   if (warmstart_information.objective_changed) {
+      problem.evaluate_objective_gradient(current_iterate, this->evaluations.objective_gradient);
+   }
+   // constraints and constraint Jacobian
+   if (warmstart_information.constraints_changed) {
+      problem.evaluate_constraints(current_iterate, this->evaluations.constraints);
+      problem.evaluate_constraint_jacobian(current_iterate, this->evaluations.constraint_jacobian);
+   }
 }
 
-void LPSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate) {
-   // objective gradient, constraints and constraint Jacobian
-   problem.evaluate_objective_gradient(current_iterate, this->evaluations.objective_gradient);
-   problem.evaluate_constraints(current_iterate, this->evaluations.constraints);
-   problem.evaluate_constraint_jacobian(current_iterate, this->evaluations.constraint_jacobian);
-}
-
-Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem& problem, Iterate& current_iterate) {
+Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem& problem, Iterate& current_iterate,
+      const WarmstartInformation& warmstart_information) {
    // evaluate the functions at the current iterate
-   this->evaluate_functions(problem, current_iterate);
+   this->evaluate_functions(problem, current_iterate, warmstart_information);
 
-   // bounds of the variable displacements
-   this->set_variable_bounds(problem, current_iterate);
-   this->set_variable_displacement_bounds(problem, current_iterate);
+   // set bounds of the variable displacements
+   if (warmstart_information.variable_bounds_changed) {
+      this->set_direction_bounds(problem, current_iterate);
+   }
 
-   // bounds of the linearized constraints
-   this->set_linearized_constraint_bounds(problem, this->evaluations.constraints);
+   // set bounds of the linearized constraints
+   if (warmstart_information.constraint_bounds_changed) {
+      this->set_linearized_constraint_bounds(problem, this->evaluations.constraints);
+   }
 
-   return this->solve_LP(problem, current_iterate);
-}
-
-Direction LPSubproblem::compute_second_order_correction(const NonlinearProblem& /*problem*/, Iterate& /*trial_iterate*/) {
-   // TODO warm start
-   DEBUG << "\nEntered SOC computation\n";
-   assert(false && "Not implemented yet");
-   /*
-   // shift the RHS with the values of the constraints at the trial iterate
-   problem.evaluate_constraints(trial_iterate, trial_iterate.subproblem_evaluations.constraints);
-   ActiveSetSubproblem::shift_linearized_constraint_bounds(problem, trial_iterate.subproblem_evaluations.constraints);
-   return this->solve_LP(problem, trial_iterate);
-   */
-}
-
-Direction LPSubproblem::solve_LP(const NonlinearProblem& problem, Iterate& iterate) {
-   Direction direction = this->solver->solve_LP(problem.number_variables, problem.number_constraints, this->variable_displacement_bounds,
+   // solve the LP
+   Direction direction = this->solver->solve_LP(problem.number_variables, problem.number_constraints, this->direction_bounds,
          this->linearized_constraint_bounds, this->evaluations.objective_gradient, this->evaluations.constraint_jacobian,
-         this->initial_point);
-   Subproblem::check_unboundedness(direction);
-   ActiveSetSubproblem::compute_dual_displacements(problem, iterate, direction);
+         this->initial_point, warmstart_information);
+   ActiveSetSubproblem::compute_dual_displacements(problem, current_iterate, direction);
    this->number_subproblems_solved++;
+   // reset the initial point
+   initialize_vector(this->initial_point, 0.);
    return direction;
 }
 

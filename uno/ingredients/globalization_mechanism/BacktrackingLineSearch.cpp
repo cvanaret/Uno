@@ -1,157 +1,131 @@
 // Copyright (c) 2018-2023 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include <cmath>
 #include <cassert>
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "BacktrackingLineSearch.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
 
-BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options):
-      GlobalizationMechanism(constraint_relaxation_strategy),
+BacktrackingLineSearch::BacktrackingLineSearch(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
+         const Options& options):
+      GlobalizationMechanism(constraint_relaxation_strategy, options),
       backtracking_ratio(options.get_double("LS_backtracking_ratio")),
       minimum_step_length(options.get_double("LS_min_step_length")),
-      use_second_order_correction(options.get_bool("use_second_order_correction")),
-      statistics_SOC_column_order(options.get_int("statistics_SOC_column_order")),
-      statistics_LS_step_length_column_order(options.get_int("statistics_LS_step_length_column_order")) {
+      scale_duals_with_step_length(options.get_bool("LS_scale_duals_with_step_length")) {
    // check the initial and minimal step lengths
    assert(0 < this->backtracking_ratio && this->backtracking_ratio < 1. && "The LS backtracking ratio should be in (0, 1)");
    assert(0 < this->minimum_step_length && this->minimum_step_length < 1. && "The LS minimum step length should be in (0, 1)");
+
+   statistics.add_column("LS iters", Statistics::int_width + 3, options.get_int("statistics_minor_column_order"));
+   statistics.add_column("LS step length", Statistics::double_width, options.get_int("statistics_LS_step_length_column_order"));
 }
 
-void BacktrackingLineSearch::initialize(Statistics& statistics, Iterate& first_iterate) {
-   if (this->use_second_order_correction) {
-      statistics.add_column("SOC", Statistics::char_width, this->statistics_SOC_column_order);
-   }
-   statistics.add_column("LS step length", Statistics::double_width, this->statistics_LS_step_length_column_order);
-
-   // generate the initial point
-   this->constraint_relaxation_strategy.initialize(statistics, first_iterate);
+void BacktrackingLineSearch::initialize(Iterate& initial_iterate) {
+   this->constraint_relaxation_strategy.initialize(initial_iterate);
 }
 
-Direction BacktrackingLineSearch::compute_direction(Statistics& statistics, Iterate& current_iterate) {
-   try {
-      this->solving_feasibility_problem = false;
-      return this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate);
-   }
-   catch (const UnstableRegularization&) {
-      this->solving_feasibility_problem = true;
-      DEBUG << "Unstable regularization: switching to solving the feasibility problem\n";
-      return this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate);
-   }
-}
+Iterate BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) {
+   WarmstartInformation warmstart_information{};
+   warmstart_information.set_hot_start();
+   DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
-std::tuple<Iterate, double> BacktrackingLineSearch::compute_acceptable_iterate(Statistics& statistics, const Model& /*model*/, Iterate& current_iterate) {
    // compute the direction
-   Direction direction = this->compute_direction(statistics, current_iterate);
-   this->solving_feasibility_problem = false;
-   this->total_number_iterations = 0;
+   Direction direction = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, warmstart_information);
+   BacktrackingLineSearch::check_unboundedness(direction);
 
    // backtrack along the direction
-   try {
-      return this->backtrack_along_direction(statistics, current_iterate, direction);
-   }
-   catch (const StepLengthTooSmall& e) {
-      // if step length is too small, revert to solving the feasibility problem (if we aren't already solving it)
-      if (not this->solving_feasibility_problem && 0. < direction.multipliers.objective && 0. < current_iterate.progress.infeasibility) {
-         DEBUG << "The line search terminated with a step length smaller than " << this->minimum_step_length << '\n';
-         // reset the line search with the restoration solution
-         direction = this->constraint_relaxation_strategy.solve_feasibility_problem(statistics, current_iterate, direction.primals);
-         this->solving_feasibility_problem = true;
-         auto [trial_iterate, step_norm] = this->backtrack_along_direction(statistics, current_iterate, direction);
-         this->total_number_iterations += this->number_iterations;
-         return {trial_iterate, step_norm};
-      }
-      else {
-         WARNING << "The feasibility problem failed to make progress\n";
-         throw std::runtime_error("Line search: maximum number of iterations reached\n");
-      }
-   }
+   this->total_number_iterations = 0;
+   return this->backtrack_along_direction(statistics, model, current_iterate, direction, warmstart_information);
 }
 
-std::tuple<Iterate, double> BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, Iterate& current_iterate,
-      const Direction& direction) {
-   // backtrack on the primal-dual step length computed by the subproblem
+// backtrack on the primal-dual step length computed by the subproblem
+Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
+      const Direction& direction, WarmstartInformation& warmstart_information) {
    // most subproblem methods return a step length of 1. Interior-point methods however apply the fraction-to-boundary condition
-   double primal_dual_step_length = direction.primal_dual_step_length;
-   this->number_iterations = 0;
+   double step_length = direction.primal_dual_step_length;
+   bool reached_small_step_length = false;
+   size_t number_iterations = 0;
+   while (not reached_small_step_length) {
+      this->total_number_iterations++;
+      number_iterations++;
+      BacktrackingLineSearch::print_iteration(number_iterations, step_length);
 
-   while (not this->termination(primal_dual_step_length)) {
-      this->number_iterations++;
-      this->print_iteration(primal_dual_step_length);
-
-      // assemble the trial iterate by going a fraction along the direction
-      Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, primal_dual_step_length,
-            direction.bound_dual_step_length);
       try {
-         if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction,
-               primal_dual_step_length)) {
-            this->total_number_iterations += this->number_iterations;
-            this->set_statistics(statistics, direction, primal_dual_step_length);
-
-            double step_norm = primal_dual_step_length * direction.norm;
-            return std::make_tuple(std::move(trial_iterate), step_norm);
+         // assemble the trial iterate by going a fraction along the direction
+         Iterate trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction, step_length);
+         // check whether the trial iterate is accepted
+         bool acceptable_iterate = false;
+         if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, step_length)) {
+            // check termination criteria
+            trial_iterate.status = this->check_convergence(model, trial_iterate);
+            acceptable_iterate = true;
          }
-            // (optional) second-order correction
-         else if (this->use_second_order_correction && this->number_iterations == 1 && not this->solving_feasibility_problem &&
-                  trial_iterate.progress.infeasibility >= current_iterate.progress.infeasibility) {
-            // if full step is rejected, compute a (temporary) SOC direction
-            Direction direction_soc = this->constraint_relaxation_strategy.compute_second_order_correction(trial_iterate);
-            if (direction_soc.status == SubproblemStatus::INFEASIBLE) {
-               DEBUG << "Trial SOC subproblem infeasible\n\n";
-               statistics.add_statistic("SOC", "-");
-               this->decrease_step_length(primal_dual_step_length);
-            }
-            else {
-               // assemble the (temporary) SOC trial iterate
-               Iterate trial_iterate_soc = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction_soc,
-                     direction_soc.primal_dual_step_length, direction.bound_dual_step_length);
-               if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate_soc, direction_soc,
-                     direction_soc.primal_dual_step_length)) {
-                  DEBUG << "Trial SOC step accepted\n";
-                  this->set_statistics(statistics, direction_soc, direction_soc.primal_dual_step_length);
-                  statistics.add_statistic("SOC", "x");
-
-                  // let the subproblem know the accepted iterate
-                  trial_iterate_soc.multipliers.lower_bounds = trial_iterate.multipliers.lower_bounds;
-                  trial_iterate_soc.multipliers.upper_bounds = trial_iterate.multipliers.upper_bounds;
-                  return std::make_tuple(std::move(trial_iterate_soc), direction_soc.norm);
-               }
-               else {
-                  DEBUG << "Trial SOC step discarded\n\n";
-                  statistics.add_statistic("SOC", "-");
-                  this->decrease_step_length(primal_dual_step_length);
-               }
+         else if (step_length < this->minimum_step_length) { // rejected, but small step length
+            DEBUG << "The line search step length is smaller than " << this->minimum_step_length << '\n';
+            acceptable_iterate = this->check_termination_with_small_step(model, direction, trial_iterate);
+            if (not acceptable_iterate) {
+               reached_small_step_length = true;
             }
          }
-         else { // trial iterate not acceptable
-            this->decrease_step_length(primal_dual_step_length);
+
+         if (acceptable_iterate) {
+            this->set_statistics(statistics, direction, step_length);
+            return trial_iterate;
+         }
+         else if (not reached_small_step_length) {
+            step_length = this->decrease_step_length(step_length);
          }
       }
       catch (const EvaluationError& e) {
-         GlobalizationMechanism::print_warning(e.what());
-         this->decrease_step_length(primal_dual_step_length);
+         WARNING << YELLOW << e.what() << RESET;
+         step_length = this->decrease_step_length(step_length);
       }
    }
-   throw StepLengthTooSmall();
+
+   // reached a small step length: revert to solving the feasibility problem
+   warmstart_information.set_cold_start();
+   this->constraint_relaxation_strategy.switch_to_feasibility_problem(current_iterate, warmstart_information);
+   Direction direction_feasibility = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate,
+         direction.primals, warmstart_information);
+   BacktrackingLineSearch::check_unboundedness(direction_feasibility);
+   Iterate trial_iterate_feasibility = this->backtrack_along_direction(statistics, model, current_iterate, direction_feasibility,
+         warmstart_information);
+   return trial_iterate_feasibility;
 }
 
-void BacktrackingLineSearch::decrease_step_length(double& primal_dual_step_length) const {
+Iterate BacktrackingLineSearch::assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction,
+      double primal_dual_step_length) const {
+   Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, primal_dual_step_length,
+         // scale or not the dual directions with the step lengths
+         this->scale_duals_with_step_length ? primal_dual_step_length : 1.,
+         this->scale_duals_with_step_length ? direction.bound_dual_step_length : 1.);
+
+   // project the steps within the bounds to avoid numerical errors
+   model.project_primals_onto_bounds(trial_iterate.primals);
+   return trial_iterate;
+}
+
+double BacktrackingLineSearch::decrease_step_length(double step_length) const {
    // step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ...
-   primal_dual_step_length *= this->backtracking_ratio;
-   assert(0 < primal_dual_step_length && primal_dual_step_length <= 1 && "The line-search step length is not in (0, 1]");
+   step_length *= this->backtracking_ratio;
+   assert(0 < step_length && step_length <= 1 && "The line-search step length is not in (0, 1]");
+   return step_length;
 }
 
-bool BacktrackingLineSearch::termination(double primal_dual_step_length) const {
-   return (primal_dual_step_length < this->minimum_step_length);
+void BacktrackingLineSearch::check_unboundedness(const Direction& direction) {
+   if (direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
+      throw std::runtime_error("The subproblem is unbounded, this should not happen. If the subproblem has curvature, use regularization. If not, "
+                               "use a trust-region method.\n");
+   }
 }
 
 void BacktrackingLineSearch::set_statistics(Statistics& statistics, const Direction& direction, double primal_dual_step_length) const {
-   statistics.add_statistic("minor", this->total_number_iterations);
+   statistics.add_statistic("LS iters", this->total_number_iterations);
    statistics.add_statistic("LS step length", primal_dual_step_length);
    statistics.add_statistic("step norm", primal_dual_step_length * direction.norm);
 }
 
-void BacktrackingLineSearch::print_iteration(double primal_dual_step_length) {
-   DEBUG << "\tLINE SEARCH iteration " << this->number_iterations << ", step_length " << primal_dual_step_length << '\n';
+void BacktrackingLineSearch::print_iteration(size_t number_iterations, double primal_dual_step_length) {
+   DEBUG << "\tLINE SEARCH iteration " << number_iterations << ", step_length " << primal_dual_step_length << '\n';
 }

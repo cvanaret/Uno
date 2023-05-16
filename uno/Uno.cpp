@@ -3,6 +3,10 @@
 
 #include <cmath>
 #include "Uno.hpp"
+#include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategyFactory.hpp"
+#include "ingredients/globalization_mechanism/GlobalizationMechanismFactory.hpp"
+#include "ingredients/globalization_strategy/GlobalizationStrategyFactory.hpp"
+#include "ingredients/subproblem/SubproblemFactory.hpp"
 #include "optimization/Iterate.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
@@ -10,142 +14,105 @@
 
 Uno::Uno(GlobalizationMechanism& globalization_mechanism, const Options& options) :
       globalization_mechanism(globalization_mechanism),
-      tolerance(options.get_double("tolerance")),
       max_iterations(options.get_unsigned_int("max_iterations")),
-      terminate_with_small_step(options.get_bool("terminate_with_small_step")),
-      small_step_threshold(options.get_double("small_step_threshold")) {
+      time_limit(options.get_double("time_limit")) {
 }
 
-Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& options) {
+Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_iterate) {
    Timer timer{};
-   timer.start();
    size_t major_iterations = 0;
 
    std::cout << "\nProblem " << model.name << '\n';
-   std::cout << model.number_variables << " variables, " << model.number_constraints << " constraints\n";
-   std::cout << "Problem type: " << type_to_string(model.problem_type) << "\n\n";
-
-   Statistics statistics = Uno::create_statistics(model, options);
+   std::cout << model.number_variables << " variables, " << model.number_constraints << " constraints\n\n";
 
    // use the current point to initialize the strategies and generate the initial iterate
-   this->globalization_mechanism.initialize(statistics, current_iterate);
+   try {
+      this->globalization_mechanism.initialize(current_iterate);
+   }
+   catch (const std::exception& e) {
+      ERROR << RED << "An error occurred at the initial iterate: " << e.what() << RESET;
+      throw;
+   }
 
-   TerminationStatus termination_status = this->check_termination(model, current_iterate, INF<double>);
+   bool termination = false;
    try {
       // check for termination
-      while (not this->termination_criterion(termination_status, major_iterations)) {
+      while (not termination) {
          statistics.new_line();
          major_iterations++;
          DEBUG << "### Outer iteration " << major_iterations << '\n';
 
          // compute an acceptable iterate by solving a subproblem at the current point
-         auto [new_iterate, step_norm] = this->globalization_mechanism.compute_acceptable_iterate(statistics, model, current_iterate);
+         current_iterate = this->globalization_mechanism.compute_next_iterate(statistics, model, current_iterate);
 
-         // compute the status of the new iterate
-         termination_status = this->check_termination(model, new_iterate, step_norm);
-         Uno::add_statistics(statistics, model, new_iterate, major_iterations);
-         if (Logger::logger_level == INFO) statistics.print_current_line();
+         // compute the status of the next iterate
+         Uno::add_statistics(statistics, current_iterate, major_iterations);
+         if (Logger::level == INFO) statistics.print_current_line();
 
-         current_iterate = std::move(new_iterate);
+         termination = this->termination_criteria(current_iterate.status, major_iterations, timer.get_duration());
       }
    }
-   catch (std::exception& exception) {
-      ERROR << exception.what();
+   catch (const std::runtime_error& e) {
+      ERROR << RED << e.what() << RESET;
+      throw;
    }
-   // in case the objective was not yet evaluated, evaluate it
-   current_iterate.evaluate_objective(model);
-   model.postprocess_solution(current_iterate, termination_status);
-   DEBUG << "Current iterate:\n" << current_iterate;
+   catch (std::exception& exception) {
+      ERROR << RED << exception.what() << RESET;
+   }
+   Uno::postprocess_iterate(model, current_iterate, current_iterate.status);
 
-   if (Logger::logger_level == INFO) statistics.print_footer();
-   timer.stop();
+   if (Logger::level == INFO) statistics.print_footer();
 
    const size_t number_subproblems_solved = this->globalization_mechanism.get_number_subproblems_solved();
    const size_t hessian_evaluation_count = this->globalization_mechanism.get_hessian_evaluation_count();
-   Result result = {termination_status, std::move(current_iterate), model.number_variables, model.number_constraints, major_iterations,
-         timer.get_duration(), Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_jacobian, hessian_evaluation_count,
-          number_subproblems_solved};
+   Result result = {std::move(current_iterate), model.number_variables, model.number_constraints, major_iterations, timer.get_duration(),
+         Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_objective_gradient,
+         Iterate::number_eval_jacobian, hessian_evaluation_count, number_subproblems_solved};
    return result;
 }
 
-Statistics Uno::create_statistics(const Model& model, const Options& options) {
-   Statistics statistics(options);
-   statistics.add_column("major", Statistics::int_width, options.get_int("statistics_major_column_order"));
-   statistics.add_column("minor", Statistics::int_width, options.get_int("statistics_minor_column_order"));
-   statistics.add_column("step norm", Statistics::double_width, options.get_int("statistics_step_norm_column_order"));
-   statistics.add_column("objective", Statistics::double_width, options.get_int("statistics_objective_column_order"));
-   if (model.is_constrained()) {
-      statistics.add_column("primal infeas.", Statistics::double_width, options.get_int("statistics_primal_infeasibility_column_order"));
-   }
-   statistics.add_column("complementarity", Statistics::double_width, options.get_int("statistics_complementarity_column_order"));
-   statistics.add_column("stationarity", Statistics::double_width, options.get_int("statistics_stationarity_column_order"));
-   return statistics;
-}
-
-void Uno::add_statistics(Statistics& statistics, const Model& model, const Iterate& iterate, size_t major_iterations) {
-   statistics.add_statistic(std::string("major"), major_iterations);
+void Uno::add_statistics(Statistics& statistics, const Iterate& iterate, size_t major_iterations) {
+   statistics.add_statistic(std::string("iters"), major_iterations);
    if (iterate.is_objective_computed) {
       statistics.add_statistic("objective", iterate.evaluations.objective);
    }
    else {
       statistics.add_statistic("objective", "-");
    }
-   if (model.is_constrained()) {
-      statistics.add_statistic("primal infeas.", iterate.residuals.infeasibility);
-   }
-   statistics.add_statistic("complementarity", std::min(iterate.residuals.optimality_complementarity, iterate.residuals.feasibility_complementarity));
-   statistics.add_statistic("stationarity", std::min(iterate.residuals.optimality_stationarity, iterate.residuals.feasibility_stationarity));
 }
 
-bool Uno::termination_criterion(TerminationStatus current_status, size_t iteration) const {
-   return current_status != NOT_OPTIMAL || this->max_iterations <= iteration;
+bool Uno::termination_criteria(TerminationStatus current_status, size_t iteration, double current_time) const {
+   return current_status != TerminationStatus::NOT_OPTIMAL || this->max_iterations <= iteration || this->time_limit <= current_time;
 }
 
-TerminationStatus Uno::check_termination(const Model& model, Iterate& current_iterate, double step_norm) const {
-   // evaluate termination conditions based on optimality conditions
-   const bool optimality_stationarity = (current_iterate.residuals.optimality_stationarity/current_iterate.residuals.stationarity_scaling <=
-         this->tolerance);
-   const bool feasibility_stationarity = (current_iterate.residuals.feasibility_stationarity/current_iterate.residuals.stationarity_scaling <=
-                                         this->tolerance);
-   const bool optimality_complementarity = (current_iterate.residuals.optimality_complementarity / current_iterate.residuals.complementarity_scaling <= this->tolerance);
-   const bool feasibility_complementarity = (current_iterate.residuals.feasibility_complementarity / current_iterate.residuals.complementarity_scaling
-         <= this->tolerance);
-   const bool primal_feasibility = (current_iterate.residuals.infeasibility <= this->tolerance);
-   const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(model.number_variables, this->tolerance);
-
-   DEBUG << "Termination criteria:\n";
-   DEBUG << "optimality stationarity: " << std::boolalpha << optimality_stationarity << '\n';
-   DEBUG << "feasibility stationarity: " << std::boolalpha << feasibility_stationarity << '\n';
-   DEBUG << "optimality complementarity: " << std::boolalpha << optimality_complementarity << '\n';
-   DEBUG << "feasibility complementarity: " << std::boolalpha << feasibility_complementarity << '\n';
-   DEBUG << "primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
-   DEBUG << "not all zero multipliers: " << std::boolalpha << no_trivial_duals << "\n\n";
-
-   if (optimality_complementarity && primal_feasibility) {
-      if (feasibility_stationarity && no_trivial_duals) {
-         // feasible but CQ failure
-         return FEASIBLE_FJ_POINT;
-      }
-      else if (0. < current_iterate.multipliers.objective && optimality_stationarity) {
-         // feasible regular stationary point
-         return FEASIBLE_KKT_POINT;
-      }
-   }
-   else if (feasibility_complementarity && feasibility_stationarity) {
-      // no primal feasibility, stationary point of constraint violation
-     return INFEASIBLE_STATIONARY_POINT;
-   }
-   // stationarity & complementarity not achieved, but we can terminate with a small step
-   if (this->terminate_with_small_step && step_norm <= this->small_step_threshold) {
-      if (primal_feasibility) {
-         return FEASIBLE_SMALL_STEP;
-      }
-      /*
-      else {
-         return INFEASIBLE_SMALL_STEP;
-      }*/
-   }
-   return NOT_OPTIMAL;
+void Uno::postprocess_iterate(const Model& model, Iterate& iterate, TerminationStatus termination_status) {
+   // in case the objective was not yet evaluated, evaluate it
+   iterate.evaluate_objective(model);
+   model.postprocess_solution(iterate, termination_status);
+   DEBUG2 << "Final iterate:\n" << iterate;
 }
 
+void join(const std::vector<std::string>& vector, char separator) {
+   if (not vector.empty()) {
+      std::cout << vector[0];
+      for (size_t i: Range(1, vector.size())) {
+         std::cout << separator << ' ' << vector[i];
+      }
+   }
+}
 
+void Uno::print_available_strategies() {
+   std::cout << "Available strategies:\n";
+   std::cout << "Constraint relaxation strategies: ";
+   join(ConstraintRelaxationStrategyFactory::available_strategies(), ',');
+   std::cout << '\n';
+   std::cout << "Globalization mechanisms: ";
+   join(GlobalizationMechanismFactory::available_strategies(), ',');
+   std::cout << '\n';
+   std::cout << "Globalization strategies: ";
+   join(GlobalizationStrategyFactory::available_strategies(), ',');
+   std::cout << '\n';
+   std::cout << "Subproblems: ";
+   join(SubproblemFactory::available_strategies(), ',');
+   std::cout << '\n';
+}

@@ -12,17 +12,15 @@ class LPSubproblem : public ActiveSetSubproblem {
 public:
    LPSubproblem(size_t max_number_variables, size_t max_number_constraints, const Options& options);
 
-   void initialize(Statistics& statistics, const NonlinearProblem& problem, Iterate& first_iterate) override;
-   [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) override;
-   [[nodiscard]] Direction compute_second_order_correction(const NonlinearProblem& model, Iterate& trial_iterate) override;
+   [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+         const WarmstartInformation& warmstart_information) override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
 private:
    // pointer to allow polymorphism
    const std::unique_ptr<LPSolver> solver; /*!< Solver that solves the subproblem */
 
-   void evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate);
-   [[nodiscard]] Direction solve_LP(const NonlinearProblem& problem, Iterate& iterate);
+   void evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate, const WarmstartInformation& warmstart_information);
 };
 
 #endif // UNO_LPSUBPROBLEM_H

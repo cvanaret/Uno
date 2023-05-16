@@ -19,13 +19,8 @@ struct Interval {
    double ub;
 };
 
-enum FunctionType {
-   LINEAR = 0, /*!< Linear function */
-   QUADRATIC, /*!< Quadratic function */
-   NONLINEAR /*!< Nonlinear function */
-};
-
-enum BoundType { EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES, UNBOUNDED };
+enum FunctionType {LINEAR, NONLINEAR};
+enum BoundType {EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES, UNBOUNDED};
 
 // forward declaration
 class Iterate;
@@ -37,13 +32,12 @@ class Iterate;
  */
 class Model {
 public:
-   Model(std::string name, size_t number_variables, size_t number_constraints, FunctionType problem_type);
+   Model(std::string name, size_t number_variables, size_t number_constraints);
    virtual ~Model() = default;
 
    std::string name;
    const size_t number_variables; /*!< Number of variables */
    const size_t number_constraints; /*!< Number of constraints */
-   FunctionType problem_type;
 
    // objective
    double objective_sign{1.}; /*!< Sign of the objective function (1: minimization, -1: maximization) */
@@ -51,7 +45,6 @@ public:
    // data structures to access certain types of variables and constraints
    std::vector<size_t> equality_constraints{};
    std::vector<size_t> inequality_constraints{};
-   std::vector<size_t> linear_constraints;
    SparseVector<size_t> slacks;
    std::vector<size_t> lower_bounded_variables{}; // indices of the lower-bounded variables
    std::vector<size_t> upper_bounded_variables{}; // indices of the upper-bounded variables
@@ -71,9 +64,9 @@ public:
    [[nodiscard]] virtual FunctionType get_constraint_type(size_t j) const = 0;
    [[nodiscard]] virtual BoundType get_constraint_bound_type(size_t j) const = 0;
 
-   [[nodiscard]] virtual size_t get_maximum_number_objective_gradient_nonzeros() const = 0;
-   [[nodiscard]] virtual size_t get_maximum_number_jacobian_nonzeros() const = 0;
-   [[nodiscard]] virtual size_t get_maximum_number_hessian_nonzeros() const = 0;
+   [[nodiscard]] virtual size_t get_number_objective_gradient_nonzeros() const = 0;
+   [[nodiscard]] virtual size_t get_number_jacobian_nonzeros() const = 0;
+   [[nodiscard]] virtual size_t get_number_hessian_nonzeros() const = 0;
 
    [[nodiscard]] virtual double evaluate_objective(const std::vector<double>& x) const = 0;
    virtual void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const = 0;
@@ -87,6 +80,9 @@ public:
    virtual void get_initial_dual_point(std::vector<double>& multipliers) const = 0;
    virtual void postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const = 0;
 
+   // constraints
+   [[nodiscard]] virtual const std::vector<size_t>& get_linear_constraints() const = 0;
+
    // auxiliary functions
    static void determine_bounds_types(std::vector<Interval>& variables_bounds, std::vector<BoundType>& status);
    void project_primals_onto_bounds(std::vector<double>& x) const;
@@ -98,12 +94,10 @@ public:
    [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const;
 
 protected:
-   size_t objective_gradient_maximum_number_nonzeros{0}; /*!< Number of nonzero elements in the objective gradient */
-   size_t jacobian_maximum_number_nonzeros{0}; /*!< Number of nonzero elements in the constraint Jacobian */
-   size_t hessian_maximum_number_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */
+   size_t number_objective_gradient_nonzeros{0}; /*!< Number of nonzero elements in the objective gradient */
+   size_t number_jacobian_nonzeros{0}; /*!< Number of nonzero elements in the constraint Jacobian */
+   size_t number_hessian_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */
    void determine_constraints();
 };
-
-std::string type_to_string(FunctionType function_type);
 
 #endif // UNO_MODEL_H

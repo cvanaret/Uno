@@ -12,7 +12,7 @@
 
 class ModelFactory {
 public:
-   static std::unique_ptr<Model> reformulate(const AMPLModel& ampl_model, Iterate& first_iterate, const Options& options);
+   static std::unique_ptr<Model> reformulate(std::unique_ptr<Model> model, Iterate& initial_iterate, const Options& options);
 };
 
 #endif // UNO_MODELFACTORY_H

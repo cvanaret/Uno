@@ -9,7 +9,8 @@
 
 class ConstraintRelaxationStrategyFactory {
 public:
-   static std::unique_ptr<ConstraintRelaxationStrategy> create(const Model& model, const Options& options);
+   static std::unique_ptr<ConstraintRelaxationStrategy> create(Statistics& statistics, const Model& model, const Options& options);
+   static std::vector<std::string> available_strategies();
 };
 
 #endif // UNO_CONSTRAINTRELAXATIONSTRATEGYFACTORY_H

@@ -11,11 +11,11 @@
 
 class GlobalizationMechanism {
 public:
-   explicit GlobalizationMechanism(ConstraintRelaxationStrategy& constraint_relaxation_strategy);
+   GlobalizationMechanism(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);
    virtual ~GlobalizationMechanism() = default;
 
-   virtual void initialize(Statistics& statistics, Iterate& first_iterate) = 0;
-   virtual std::tuple<Iterate, double> compute_acceptable_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) = 0;
+   virtual void initialize(Iterate& initial_iterate) = 0;
+   virtual Iterate compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) = 0;
 
    [[nodiscard]] size_t get_hessian_evaluation_count() const;
    [[nodiscard]] size_t get_number_subproblems_solved() const;
@@ -23,11 +23,14 @@ public:
 protected:
    // reference to allow polymorphism
    ConstraintRelaxationStrategy& constraint_relaxation_strategy; /*!< Constraint relaxation strategy */
-   size_t number_iterations{0}; /*!< Current number of iterations */
+   const double tolerance; /*!< Tolerance of the termination criteria */
+   const Norm progress_norm;
+   const double unbounded_objective_threshold;
 
-   static Iterate assemble_trial_iterate(Iterate& current_iterate, const Direction& direction, double primal_dual_step_length,
-         double bound_dual_step_length);
-   static void print_warning(const char* message);
+   static Iterate assemble_trial_iterate(Iterate& current_iterate, const Direction& direction, double primal_step_length,
+         double dual_step_length, double bound_dual_step_length);
+   bool check_termination_with_small_step(const Model& model, const Direction& direction, Iterate& trial_iterate) const;
+   [[nodiscard]] TerminationStatus check_convergence(const Model& model, Iterate& current_iterate) const;
 };
 
 #endif // UNO_GLOBALIZATIONMECHANISM_H

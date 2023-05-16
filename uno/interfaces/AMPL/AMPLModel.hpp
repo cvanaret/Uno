@@ -43,13 +43,15 @@ public:
    [[nodiscard]] FunctionType get_constraint_type(size_t j) const override;
    [[nodiscard]] BoundType get_constraint_bound_type(size_t j) const override;
 
-   [[nodiscard]] size_t get_maximum_number_objective_gradient_nonzeros() const override;
-   [[nodiscard]] size_t get_maximum_number_jacobian_nonzeros() const override;
-   [[nodiscard]] size_t get_maximum_number_hessian_nonzeros() const override;
+   [[nodiscard]] size_t get_number_objective_gradient_nonzeros() const override;
+   [[nodiscard]] size_t get_number_jacobian_nonzeros() const override;
+   [[nodiscard]] size_t get_number_hessian_nonzeros() const override;
 
    void get_initial_primal_point(std::vector<double>& x) const override;
    void get_initial_dual_point(std::vector<double>& multipliers) const override;
    void postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const override;
+
+   [[nodiscard]] const std::vector<size_t>& get_linear_constraints() const override;
 
 private:
    // private constructor to pass the dimensions to the Model base constructor
@@ -67,9 +69,10 @@ private:
    std::vector<BoundType> constraint_status; /*!< Status of the constraints (EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES,
  * UNBOUNDED) */
 
+   std::vector<size_t> linear_constraints;
+
    void generate_variables();
    void generate_constraints();
-   void set_function_types(std::string file_name);
 
    void set_number_hessian_nonzeros();
    [[nodiscard]] size_t compute_hessian_number_nonzeros(double objective_multiplier, const std::vector<double>& multipliers) const;

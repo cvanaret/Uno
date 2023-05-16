@@ -5,6 +5,7 @@
 #include <iomanip>
 #include "Statistics.hpp"
 
+// TODO move this to the option file
 int Statistics::int_width = 7;
 int Statistics::double_width = 17;
 int Statistics::char_width = 7;
@@ -31,7 +32,7 @@ void Statistics::add_statistic(std::string name, size_t value) {
 
 void Statistics::add_statistic(std::string name, double value) {
    std::ostringstream stream;
-   stream << std::scientific << std::setprecision(6) << value;
+   stream << std::defaultfloat << std::setprecision(7) << value;
    add_statistic(std::move(name), stream.str());
 }
 

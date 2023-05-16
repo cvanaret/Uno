@@ -78,11 +78,11 @@ Options get_default_options(const std::string& file_name) {
 void find_preset(const std::string& preset_name, Options& options) {
    // shortcuts for state-of-the-art combinations
    if (preset_name == "ipopt") {
-      options["mechanism"] = "LS";
-      options["constraint-relaxation"] = "feasibility-restoration";
-      options["strategy"] = "waechter-filter-strategy";
+      options["constraint_relaxation_strategy"] = "feasibility_restoration";
+      options["subproblem"] = "primal_dual_interior_point";
+      options["globalization_mechanism"] = "LS";
+      options["globalization_strategy"] = "waechter_filter_strategy";
       options["filter_type"] = "standard";
-      options["subproblem"] = "barrier";
       options["filter_beta"] = "0.99999";
       options["filter_gamma"] = "1e-8";
       options["filter_delta"] = "1";
@@ -94,21 +94,21 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["LS_min_step_length"] = "5e-7";
       options["barrier_tau_min"] = "0.99";
       options["barrier_damping_factor"] = "1e-5";
-      options["use_second_order_correction"] = "yes";
       options["l1_constraint_violation_coefficient"] = "1000.";
       options["progress_norm"] = "L1";
       options["residual_norm"] = "INF";
       options["scale_functions"] = "yes";
       options["sparse_format"] = "COO";
       options["tolerance"] = "1e-8";
-      options["terminate_with_small_step"] = "no";
+      options["feasibility_restoration_test_linearized_feasibility"] = "no";
+      options["LS_scale_duals_with_step_length"] = "yes";
    }
    else if (preset_name == "filtersqp") {
-      options["mechanism"] = "TR";
-      options["constraint-relaxation"] = "feasibility-restoration";
-      options["strategy"] = "leyffer-filter-strategy";
-      options["filter_type"] = "standard";
+      options["constraint_relaxation_strategy"] = "feasibility_restoration";
       options["subproblem"] = "QP";
+      options["globalization_mechanism"] = "TR";
+      options["globalization_strategy"] = "leyffer_filter_strategy";
+      options["filter_type"] = "standard";
       options["progress_norm"] = "L1";
       options["residual_norm"] = "L2";
       options["sparse_format"] = "CSC";
@@ -116,14 +116,14 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["l1_constraint_violation_coefficient"] = "1.";
       options["enforce_linear_constraints"] = "yes";
       options["tolerance"] = "1e-6";
-      options["terminate_with_small_step"] = "yes";
-      options["small_step_threshold"] = "1e-6";
+      options["TR_min_radius"] = "1e-8";
+      options["feasibility_restoration_test_linearized_feasibility"] = "yes";
    }
    else if (preset_name == "byrd") {
-      options["mechanism"] = "LS";
-      options["constraint-relaxation"] = "l1-relaxation";
-      options["strategy"] = "merit";
+      options["constraint_relaxation_strategy"] = "l1_relaxation";
       options["subproblem"] = "QP";
+      options["globalization_mechanism"] = "LS";
+      options["globalization_strategy"] = "l1_merit";
       options["l1_relaxation_initial_parameter"] = "1";
       options["LS_backtracking_ratio"] = "0.5";
       options["armijo_decrease_fraction"] = "1e-8";
@@ -131,10 +131,10 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["l1_relaxation_epsilon2"] = "0.1";
       options["l1_constraint_violation_coefficient"] = "1.";
       options["tolerance"] = "1e-6";
-      options["terminate_with_small_step"] = "yes";
       options["progress_norm"] = "L1";
       options["residual_norm"] = "L1";
       options["sparse_format"] = "CSC";
+      options["LS_scale_duals_with_step_length"] = "no";
    }
 }
 
@@ -161,25 +161,5 @@ void get_command_line_options(int argc, char* argv[], Options& options) {
          WARNING << "Argument " << argument << " was ignored\n";
          i++;
       }
-   }
-}
-
-void set_logger(const std::string& logger_level) {
-   try {
-      if (logger_level == "ERROR") {
-         Logger::logger_level = ERROR;
-      }
-      else if (logger_level == "WARNING") {
-         Logger::logger_level = WARNING;
-      }
-      else if (logger_level == "INFO") {
-         Logger::logger_level = INFO;
-      }
-      else if (logger_level == "DEBUG") {
-         Logger::logger_level = DEBUG;
-      }
-   }
-   catch (const std::out_of_range&) {
-      throw std::out_of_range("The logger level " + logger_level + " was not found");
    }
 }

@@ -33,7 +33,7 @@ AMPLModel::AMPLModel(const std::string& file_name) : AMPLModel(file_name, genera
 }
 
 AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
-      Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_), NONLINEAR),
+      Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_)),
       asl(asl),
       // allocate vectors
       ampl_tmp_gradient(this->number_variables),
@@ -48,6 +48,10 @@ AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
    this->objective_sign = (this->asl->i.objtype_[0] == 1) ? -1. : 1.;
 
    // variables
+   this->lower_bounded_variables.reserve(this->number_variables);
+   this->upper_bounded_variables.reserve(this->number_variables);
+   this->single_lower_bounded_variables.reserve(this->number_variables);
+   this->single_upper_bounded_variables.reserve(this->number_variables);
    this->generate_variables();
 
    // constraints
@@ -55,11 +59,10 @@ AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
    this->inequality_constraints.reserve(this->number_constraints);
    this->linear_constraints.reserve(this->number_constraints);
    this->generate_constraints();
-   this->set_function_types(file_name);
 
    // compute number of nonzeros
-   this->objective_gradient_maximum_number_nonzeros = static_cast<size_t>(this->asl->i.nzo_);
-   this->jacobian_maximum_number_nonzeros = static_cast<size_t>(this->asl->i.nzc_);
+   this->number_objective_gradient_nonzeros = static_cast<size_t>(this->asl->i.nzo_);
+   this->number_jacobian_nonzeros = static_cast<size_t>(this->asl->i.nzc_);
    this->set_number_hessian_nonzeros();
 }
 
@@ -96,9 +99,9 @@ void AMPLModel::generate_variables() {
 }
 
 double AMPLModel::evaluate_objective(const std::vector<double>& x) const {
-   int nerror = 0;
-   double result = this->objective_sign * (*(this->asl)->p.Objval)(this->asl, 0, const_cast<double*>(x.data()), &nerror);
-   if (0 < nerror) {
+   int error_flag = 0;
+   double result = this->objective_sign * (*(this->asl)->p.Objval)(this->asl, 0, const_cast<double*>(x.data()), &error_flag);
+   if (0 < error_flag) {
       throw FunctionEvaluationError();
    }
    return result;
@@ -106,14 +109,21 @@ double AMPLModel::evaluate_objective(const std::vector<double>& x) const {
 
 // sparse gradient
 void AMPLModel::evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const {
-   // compute the AMPL gradient (always in dense format)
-   int nerror = 0;
-   (*(this->asl)->p.Objgrd)(this->asl, 0, const_cast<double*>(x.data()), const_cast<double*>(this->ampl_tmp_gradient.data()), &nerror);
-   if (0 < nerror) {
+   int error_flag = 0;
+   // prevent ASL to crash by catching all evaluation errors
+   Jmp_buf err_jmp_uno;
+   asl->i.err_jmp_ = &err_jmp_uno;
+   asl->i.err_jmp1_ = &err_jmp_uno;
+   if (setjmp(err_jmp_uno.jb)) {
+      error_flag = 1;
+   }
+   // evaluate the AMPL gradient (always in a dense vector)
+   (*(this->asl)->p.Objgrd)(this->asl, 0, const_cast<double*>(x.data()), const_cast<double*>(this->ampl_tmp_gradient.data()), &error_flag);
+   if (0 < error_flag) {
       throw GradientEvaluationError();
    }
 
-   // partial derivatives in same order as variables in this->asl_->i.Ograd_[0]
+   // create the sparse vector: partial derivatives in same order as variables in this->asl_->i.Ograd_[0]
    ograd* ampl_variables_tmp = this->asl->i.Ograd_[0];
    while (ampl_variables_tmp != nullptr) {
       const size_t index = static_cast<size_t>(ampl_variables_tmp->varno);
@@ -126,9 +136,9 @@ void AMPLModel::evaluate_objective_gradient(const std::vector<double>& x, Sparse
 
 /*
 double AMPLModel::evaluate_constraint(int j, const std::vector<double>& x) const {
-   int nerror = 0;
-   double result = (*(this->asl)->p.Conival)(this->asl_, j, const_cast<double*>(x.data()), &nerror);
-   if (0 < nerror) {
+   int error_flag = 0;
+   double result = (*(this->asl)->p.Conival)(this->asl_, j, const_cast<double*>(x.data()), &error_flag);
+   if (0 < error_flag) {
       throw FunctionNumericalError();
    }
    return result;
@@ -136,9 +146,9 @@ double AMPLModel::evaluate_constraint(int j, const std::vector<double>& x) const
 */
 
 void AMPLModel::evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const {
-   int nerror = 0;
-   (*(this->asl)->p.Conval)(this->asl, const_cast<double*>(x.data()), constraints.data(), &nerror);
-   if (0 < nerror) {
+   int error_flag = 0;
+   (*(this->asl)->p.Conval)(this->asl, const_cast<double*>(x.data()), constraints.data(), &error_flag);
+   if (0 < error_flag) {
       throw FunctionEvaluationError();
    }
 }
@@ -149,21 +159,21 @@ void AMPLModel::evaluate_constraint_gradient(const std::vector<double>& x, size_
    this->asl->i.congrd_mode = 1; // sparse computation
 
    // compute the AMPL gradient
-   int nerror = 0;
+   int error_flag = 0;
    (*(this->asl)->p.Congrd)(this->asl, static_cast<int>(j), const_cast<double*>(x.data()), const_cast<double*>(this->ampl_tmp_gradient.data()),
-         &nerror);
-   if (0 < nerror) {
+         &error_flag);
+   if (0 < error_flag) {
       throw GradientEvaluationError();
    }
 
    // partial derivatives in ampl_gradient in same order as variables in this->asl_->i.Cgrad_[j]
    gradient.clear();
    cgrad* ampl_variables_tmp = this->asl->i.Cgrad_[j];
-   size_t cpt = 0;
+   size_t index = 0;
    while (ampl_variables_tmp != nullptr) {
-      gradient.insert(static_cast<size_t>(ampl_variables_tmp->varno), this->ampl_tmp_gradient[cpt]);
+      gradient.insert(static_cast<size_t>(ampl_variables_tmp->varno), this->ampl_tmp_gradient[index]);
       ampl_variables_tmp = ampl_variables_tmp->next;
-      cpt++;
+      index++;
    }
    this->asl->i.congrd_mode = congrd_mode_backup;
 }
@@ -180,25 +190,24 @@ void AMPLModel::set_number_hessian_nonzeros() {
    // int (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri);
    const int objective_number = -1;
    const int upper_triangular = 1;
-   this->hessian_maximum_number_nonzeros = static_cast<size_t>((*(this->asl)->p.Sphset)(this->asl, nullptr, objective_number, 1, 1,
-         upper_triangular));
-   this->ampl_tmp_hessian.reserve(this->hessian_maximum_number_nonzeros);
+   this->number_hessian_nonzeros = static_cast<size_t>((*(this->asl)->p.Sphset)(this->asl, nullptr, objective_number, 1, 1, upper_triangular));
+   this->ampl_tmp_hessian.reserve(this->number_hessian_nonzeros);
 
    // use Lagrangian scale: in AMPL, the Lagrangian is f + lambda.g, while Uno uses f - lambda.g
-   int nerror{};
-   lagscale_ASL(this->asl, -1., &nerror);
+   int error_flag{};
+   lagscale_ASL(this->asl, -1., &error_flag);
 }
 
-size_t AMPLModel::get_maximum_number_objective_gradient_nonzeros() const {
-   return this->objective_gradient_maximum_number_nonzeros;
+size_t AMPLModel::get_number_objective_gradient_nonzeros() const {
+   return this->number_objective_gradient_nonzeros;
 }
 
-size_t AMPLModel::get_maximum_number_jacobian_nonzeros() const {
-   return this->jacobian_maximum_number_nonzeros;
+size_t AMPLModel::get_number_jacobian_nonzeros() const {
+   return this->number_jacobian_nonzeros;
 }
 
-size_t AMPLModel::get_maximum_number_hessian_nonzeros() const {
-   return this->hessian_maximum_number_nonzeros;
+size_t AMPLModel::get_number_hessian_nonzeros() const {
+   return this->number_hessian_nonzeros;
 }
 
 bool are_all_zeros(const std::vector<double>& multipliers) {
@@ -212,9 +221,9 @@ size_t AMPLModel::compute_hessian_number_nonzeros(double objective_multiplier, c
    const int objective_number = -1;
    const int upper_triangular = 1;
    const bool all_zeros_multipliers = are_all_zeros(multipliers);
-   int number_non_zeros = (*(this->asl)->p.Sphset)(this->asl, nullptr, objective_number, (objective_multiplier != 0.),
+   int number_nonzeros = (*(this->asl)->p.Sphset)(this->asl, nullptr, objective_number, (objective_multiplier != 0.),
          not all_zeros_multipliers, upper_triangular);
-   return static_cast<size_t>(number_non_zeros);
+   return static_cast<size_t>(number_nonzeros);
 }
 
 void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
@@ -226,9 +235,9 @@ void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double
    objective_multiplier *= this->objective_sign;
 
    // compute the number of nonzeros
-   [[maybe_unused]] const size_t number_non_zeros = this->fixed_hessian_sparsity ? this->hessian_maximum_number_nonzeros :
-         this->compute_hessian_number_nonzeros(objective_multiplier, multipliers);
-   assert(hessian.capacity >= number_non_zeros);
+   [[maybe_unused]] const size_t number_nonzeros = this->fixed_hessian_sparsity ? this->number_hessian_nonzeros :
+                                                   this->compute_hessian_number_nonzeros(objective_multiplier, multipliers);
+   assert(hessian.capacity >= number_nonzeros);
 
    // evaluate the Hessian: store the matrix in a preallocated array this->ampl_tmp_hessian
    const int objective_number = -1;
@@ -247,13 +256,13 @@ void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double
    const int* ampl_column_start = this->asl->i.sputinfo_->hcolstarts;
    const int* ampl_row_index = this->asl->i.sputinfo_->hrownos;
    // check that the column pointers are sorted in increasing order
-   assert(in_increasing_order(ampl_column_start, this->number_variables + 1) && "evaluate_lagrangian_hessian: column starts are not ordered");
+   assert(in_increasing_order(ampl_column_start, this->number_variables + 1) && "AMPLModel::evaluate_lagrangian_hessian: column starts are not ordered");
 
    // copy the nonzeros in the Hessian
    hessian.reset();
    for (size_t j: Range(this->number_variables)) {
       for (size_t k: Range(static_cast<size_t>(ampl_column_start[j]), static_cast<size_t>(ampl_column_start[j + 1]))) {
-         size_t i = static_cast<size_t>(ampl_row_index[k]);
+         const size_t i = static_cast<size_t>(ampl_row_index[k]);
          const double entry = this->ampl_tmp_hessian[k];
          hessian.insert(entry, i, j);
       }
@@ -307,6 +316,10 @@ void AMPLModel::postprocess_solution(Iterate& /*iterate*/, TerminationStatus /*t
    // do nothing
 }
 
+const std::vector<size_t>& AMPLModel::get_linear_constraints() const {
+   return this->linear_constraints;
+}
+
 void AMPLModel::generate_constraints() {
    for (size_t j: Range(this->number_constraints)) {
       double lb = (this->asl->i.LUrhs_ != nullptr) ? this->asl->i.LUrhs_[2 * j] : -INF<double>;
@@ -315,60 +328,13 @@ void AMPLModel::generate_constraints() {
    }
    Model::determine_bounds_types(this->constraint_bounds, this->constraint_status);
    this->determine_constraints();
-}
 
-void AMPLModel::set_function_types(std::string file_name) {
-   // allocate a temporary ASL to read Hessian sparsity pattern
-   ASL* asl_fg = ASL_alloc(ASL_read_fg);
-   // char* stub = getstops(file_name, option_info);
-   //if (file_name == nullptr) {
-   //	usage_ASL(option_info, 1);
-   //}
-
-   FILE* nl = jac0dim_ASL(asl_fg, file_name.data(), static_cast<int>(file_name.size()));
-   // specific read function
-   qp_read_ASL(asl_fg, nl, ASL_findgroups);
-
-   // constraints
-   if (asl_fg->i.n_con_ != static_cast<int>(this->number_constraints)) {
-      throw std::length_error("AMPLModel.set_function_types: inconsistent number of constraints");
+   // AMPL orders the constraints based on the function type: nonlinear first, then linear
+   for (size_t j: Range(static_cast<size_t>(asl->i.nlc_))) {
+      this->constraint_type[j] = NONLINEAR;
    }
-   this->constraint_type.reserve(this->number_constraints);
-
-   // determine the type of each constraint and objective function
-   // determine if the problem is nonlinear (non-quadratic objective or nonlinear constraints)
-   this->problem_type = LINEAR;
-   int* rowq;
-   int* colqp;
-   double* delsqp;
-   for (size_t j: Range(this->number_constraints)) {
-      int qp = nqpcheck_ASL(asl_fg, static_cast<int>(-(j + 1)), &rowq, &colqp, &delsqp);
-
-      if (0 < qp) {
-         this->constraint_type[j] = QUADRATIC;
-         this->problem_type = NONLINEAR;
-      }
-      else if (qp == 0) {
-         this->constraint_type[j] = LINEAR;
-         this->linear_constraints.push_back(j);
-      }
-      else {
-         this->constraint_type[j] = NONLINEAR;
-         this->problem_type = NONLINEAR;
-      }
+   for (size_t j: Range(static_cast<size_t>(asl->i.nlc_), this->number_constraints)) {
+      this->constraint_type[j] = LINEAR;
+      this->linear_constraints.push_back(j);
    }
-   // objective function
-   int qp = nqpcheck_ASL(asl_fg, 0, &rowq, &colqp, &delsqp);
-   if (0 < qp) {
-      if (this->problem_type == LINEAR) {
-         this->problem_type = QUADRATIC;
-      }
-   }
-   else if (qp != 0) {
-      this->problem_type = NONLINEAR;
-   }
-   qp_opify_ASL(asl_fg);
-
-   // deallocate memory
-   ASL_free(&asl_fg);
 }

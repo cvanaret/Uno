@@ -16,17 +16,18 @@
 #define RESET "\x1B[0m"
 
 enum Level {
-    ERROR = 0, WARNING, INFO, DEBUG
+    ERROR = 0, WARNING, INFO, DEBUG, DEBUG2
 };
 
 class Logger {
 public:
-    static Level logger_level;
+    static Level level;
+    static void set_logger(const std::string& logger_level);
 };
 
 template <typename T>
 const Level& operator<<(const Level& level, T& element) {
-    if (level <= Logger::logger_level) {
+    if (level <= Logger::level) {
         std::cout << element;
     }
     return level;
@@ -34,10 +35,31 @@ const Level& operator<<(const Level& level, T& element) {
 
 template <typename T>
 const Level& operator<<(const Level& level, const T& element) {
-    if (level <= Logger::logger_level) {
+    if (level <= Logger::level) {
         std::cout << element;
     }
     return level;
+}
+
+inline void Logger::set_logger(const std::string& logger_level) {
+   if (logger_level == "ERROR") {
+      Logger::level = ERROR;
+   }
+   else if (logger_level == "WARNING") {
+      Logger::level = WARNING;
+   }
+   else if (logger_level == "INFO") {
+      Logger::level = INFO;
+   }
+   else if (logger_level == "DEBUG") {
+      Logger::level = DEBUG;
+   }
+   else if (logger_level == "DEBUG2") {
+      Logger::level = DEBUG2;
+   }
+   else {
+      throw std::out_of_range("The logger level " + logger_level + " was not found");
+   }
 }
 
 #endif // UNO_LOGGER_H

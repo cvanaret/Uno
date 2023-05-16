@@ -63,12 +63,10 @@ double BarrierParameterUpdateStrategy::compute_shifted_complementarity_error(con
    const auto ith_component = [&](size_t i) {
       double result = 0.;
       if (0. < iterate.multipliers.lower_bounds[i]) { // lower bound
-         result = std::max(result, std::abs(iterate.multipliers.lower_bounds[i] * (iterate.primals[i] - problem.get_variable_lower_bound(i,
-               this->tolerance)) - shift_value));
+         result = std::max(result, std::abs(iterate.multipliers.lower_bounds[i] * (iterate.primals[i] - problem.get_variable_lower_bound(i)) - shift_value));
       }
       if (iterate.multipliers.upper_bounds[i] < 0.) { // upper bound
-         result = std::max(result, std::abs(iterate.multipliers.upper_bounds[i] * (iterate.primals[i] - problem.get_variable_upper_bound(i,
-               this->tolerance)) - shift_value));
+         result = std::max(result, std::abs(iterate.multipliers.upper_bounds[i] * (iterate.primals[i] - problem.get_variable_upper_bound(i)) - shift_value));
       }
       return result;
    };

@@ -43,6 +43,7 @@ public:
    Evaluations evaluations;
    static size_t number_eval_objective;
    static size_t number_eval_constraints;
+   static size_t number_eval_objective_gradient;
    static size_t number_eval_jacobian;
    // lazy evaluation flags
    bool is_objective_computed{false};
@@ -56,6 +57,9 @@ public:
 
    // measures of progress (infeasibility, optimality, auxiliary)
    ProgressMeasures progress{INF<double>, {}, INF<double>};
+
+   // status
+   TerminationStatus status{TerminationStatus::NOT_OPTIMAL};
 
    void evaluate_objective(const Model& model);
    void evaluate_constraints(const Model& model);

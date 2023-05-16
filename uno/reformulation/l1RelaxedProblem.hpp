@@ -32,9 +32,9 @@ public:
    [[nodiscard]] double get_constraint_lower_bound(size_t j) const override;
    [[nodiscard]] double get_constraint_upper_bound(size_t j) const override;
 
-   [[nodiscard]] size_t get_maximum_number_objective_gradient_nonzeros() const override;
-   [[nodiscard]] size_t get_maximum_number_jacobian_nonzeros() const override;
-   [[nodiscard]] size_t get_maximum_number_hessian_nonzeros() const override;
+   [[nodiscard]] size_t get_number_objective_gradient_nonzeros() const override;
+   [[nodiscard]] size_t get_number_jacobian_nonzeros() const override;
+   [[nodiscard]] size_t get_number_hessian_nonzeros() const override;
 
    // parameterization
    void set_objective_multiplier(double new_objective_multiplier);
@@ -46,7 +46,6 @@ protected:
    const double constraint_violation_coefficient;
    // elastic variables
    ElasticVariables elastic_variables;
-   std::vector<size_t> violated_constraints{};
 
    [[nodiscard]] static size_t count_elastic_variables(const Model& model);
    void generate_elastic_variables();
@@ -88,7 +87,6 @@ inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_m
    };
    this->elastic_variables.positive.for_each_value(add_nonnegative_elastic);
    this->elastic_variables.negative.for_each_value(add_nonnegative_elastic);
-   this->violated_constraints.reserve(this->number_constraints);
 }
 
 inline double l1RelaxedProblem::get_objective_multiplier() const {
@@ -190,12 +188,12 @@ inline double l1RelaxedProblem::get_constraint_upper_bound(size_t j) const {
    return this->model.get_constraint_upper_bound(j);
 }
 
-inline size_t l1RelaxedProblem::get_maximum_number_objective_gradient_nonzeros() const {
+inline size_t l1RelaxedProblem::get_number_objective_gradient_nonzeros() const {
    size_t number_nonzeros = 0;
 
    // objective contribution
    if (this->objective_multiplier != 0.) {
-      number_nonzeros += this->model.get_maximum_number_objective_gradient_nonzeros();
+      number_nonzeros += this->model.get_number_objective_gradient_nonzeros();
    }
 
    // elastic contribution
@@ -203,12 +201,12 @@ inline size_t l1RelaxedProblem::get_maximum_number_objective_gradient_nonzeros()
    return number_nonzeros;
 }
 
-inline size_t l1RelaxedProblem::get_maximum_number_jacobian_nonzeros() const {
-   return this->model.get_maximum_number_jacobian_nonzeros() + this->elastic_variables.size();
+inline size_t l1RelaxedProblem::get_number_jacobian_nonzeros() const {
+   return this->model.get_number_jacobian_nonzeros() + this->elastic_variables.size();
 }
 
-inline size_t l1RelaxedProblem::get_maximum_number_hessian_nonzeros() const {
-   return this->model.get_maximum_number_hessian_nonzeros();
+inline size_t l1RelaxedProblem::get_number_hessian_nonzeros() const {
+   return this->model.get_number_hessian_nonzeros();
 }
 
 inline void l1RelaxedProblem::set_objective_multiplier(double new_objective_multiplier) {

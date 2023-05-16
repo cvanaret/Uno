@@ -97,7 +97,7 @@ template <typename T>
 void SymmetricIndefiniteLinearSystem<T>::factorize_matrix(const Model& model, SymmetricIndefiniteLinearSolver<T>& linear_solver) {
    // compute the symbolic factorization only when:
    // the problem has a non-constant augmented system (ie is not an LP or a QP) or it is the first factorization
-   if (true || this->number_factorizations == 0 || model.problem_type == NONLINEAR || not model.fixed_hessian_sparsity) {
+   if (true || this->number_factorizations == 0 || not model.fixed_hessian_sparsity) {
       linear_solver.do_symbolic_factorization(*this->matrix);
    }
    linear_solver.do_numerical_factorization(*this->matrix);
@@ -107,7 +107,7 @@ void SymmetricIndefiniteLinearSystem<T>::factorize_matrix(const Model& model, Sy
 template <typename T>
 void SymmetricIndefiniteLinearSystem<T>::regularize_matrix(Statistics& statistics, const Model& model, SymmetricIndefiniteLinearSolver<T>& linear_solver,
       size_t size_primal_block, size_t size_dual_block, T dual_regularization_parameter) {
-   DEBUG << "Original matrix\n" << *this->matrix << '\n';
+   DEBUG2 << "Original matrix\n" << *this->matrix << '\n';
    this->primal_regularization = T(0.);
    this->dual_regularization = T(0.);
    size_t number_attempts = 1;
@@ -144,7 +144,7 @@ void SymmetricIndefiniteLinearSystem<T>::regularize_matrix(Statistics& statistic
    bool good_inertia = false;
    while (not good_inertia) {
       DEBUG << "Testing factorization with regularization factors (" << this->primal_regularization << ", " << this->dual_regularization << ")\n";
-      DEBUG << *this->matrix << '\n';
+      DEBUG2 << *this->matrix << '\n';
       this->factorize_matrix(model, linear_solver);
       number_attempts++;
 
@@ -181,7 +181,7 @@ void SymmetricIndefiniteLinearSystem<T>::regularize_matrix(Statistics& statistic
 
 template <typename T>
 void SymmetricIndefiniteLinearSystem<T>::solve(SymmetricIndefiniteLinearSolver<T>& linear_solver) {
-   linear_solver.solve(*this->matrix, this->rhs, this->solution);
+   linear_solver.solve_indefinite_system(*this->matrix, this->rhs, this->solution);
 }
 
 /*

@@ -17,7 +17,7 @@ public:
    size_t number_nonzeros{0};
    size_t capacity;
 
-   SymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization);
+   SymmetricMatrix(size_t max_dimension, size_t original_capacity, bool use_regularization);
    virtual ~SymmetricMatrix() = default;
 
    virtual void reset();
@@ -46,10 +46,10 @@ protected:
 // implementation
 
 template <typename T>
-SymmetricMatrix<T>::SymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization) :
-      dimension(dimension),
+SymmetricMatrix<T>::SymmetricMatrix(size_t max_dimension, size_t original_capacity, bool use_regularization) :
+      dimension(max_dimension),
       // if regularization is used, allocate the necessary space
-      capacity(original_capacity + (use_regularization ? dimension : 0)),
+      capacity(original_capacity + (use_regularization ? max_dimension : 0)),
       use_regularization(use_regularization) {
    this->entries.reserve(this->capacity);
 }

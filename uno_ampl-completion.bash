@@ -6,27 +6,27 @@ _uno_ampl_completions()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     #  The basic options to complete.
-    opts="-mechanism -strategy -constraint-relaxation -subproblem -preset"
+    opts="-globalization_mechanism -globalization_strategy -constraint_relaxation_strategy -subproblem -preset"
 
     #  Complete the arguments to some of the basic commands.
     case "${prev}" in
-        -mechanism)
-			local mechanisms="TR LS"
-            COMPREPLY=( $(compgen -W "${mechanisms}" -- ${cur}) )
+        -globalization_mechanism)
+			local globalization_mechanisms="TR LS"
+            COMPREPLY=( $(compgen -W "${globalization_mechanisms}" -- ${cur}) )
             return 0
             ;;
-        -strategy)
-			local strategies="merit leyffer-filter-strategy waechter-filter-strategy"
-            COMPREPLY=( $(compgen -W "${strategies}" -- ${cur}) )
+        -globalization_strategy)
+			local globalization_strategies="l1_merit leyffer_filter_strategy waechter_filter_strategy"
+            COMPREPLY=( $(compgen -W "${globalization_strategies}" -- ${cur}) )
             return 0
             ;;
-        -constraint-relaxation)
-			local constraint_relaxation="feasibility-restoration l1-relaxation"
-            COMPREPLY=( $(compgen -W "${constraint_relaxation}" -- ${cur}) )
+        -constraint_relaxation_strategy)
+			local constraint_relaxation_strategies="feasibility_restoration l1_relaxation"
+            COMPREPLY=( $(compgen -W "${constraint_relaxation_strategies}" -- ${cur}) )
             return 0
             ;;
 		-subproblem)
-			local subproblems="QP LP barrier"
+			local subproblems="QP LP primal_dual_interior_point"
             COMPREPLY=( $(compgen -W "${subproblems}" -- ${cur}) )
             return 0
             ;;

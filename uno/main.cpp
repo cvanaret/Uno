@@ -13,63 +13,103 @@
 #include "tools/Options.hpp"
 #include "tools/Timer.hpp"
 
+size_t memory_allocation_amount = 0;
+
+/*
+void* operator new(size_t size) {
+   memory_allocation_amount += size;
+   return malloc(size);
+}
+*/
+
+Statistics create_statistics(const Model& model, const Options& options) {
+   Statistics statistics(options);
+   statistics.add_column("iters", Statistics::int_width, options.get_int("statistics_major_column_order"));
+   statistics.add_column("step norm", Statistics::double_width, options.get_int("statistics_step_norm_column_order"));
+   statistics.add_column("objective", Statistics::double_width, options.get_int("statistics_objective_column_order"));
+   if (model.is_constrained()) {
+      statistics.add_column("primal infeas.", Statistics::double_width, options.get_int("statistics_primal_infeasibility_column_order"));
+   }
+   statistics.add_column("complementarity", Statistics::double_width, options.get_int("statistics_complementarity_column_order"));
+   statistics.add_column("stationarity", Statistics::double_width, options.get_int("statistics_stationarity_column_order"));
+   return statistics;
+}
+
 void run_uno_ampl(const std::string& model_name, const Options& options) {
    // AMPL model
-   AMPLModel ampl_model = AMPLModel(model_name);
+   std::unique_ptr<Model> ampl_model = std::make_unique<AMPLModel>(model_name);
 
    // initialize initial primal and dual points
-   Iterate first_iterate(ampl_model.number_variables, ampl_model.number_constraints);
-   ampl_model.get_initial_primal_point(first_iterate.primals);
-   ampl_model.get_initial_dual_point(first_iterate.multipliers.constraints);
-   ampl_model.project_primals_onto_bounds(first_iterate.primals);
+   Iterate initial_iterate(ampl_model->number_variables, ampl_model->number_constraints);
+   ampl_model->get_initial_primal_point(initial_iterate.primals);
+   ampl_model->get_initial_dual_point(initial_iterate.multipliers.constraints);
+   ampl_model->project_primals_onto_bounds(initial_iterate.primals);
 
-   // reformulate (scale, add slacks) if necessary
-   std::unique_ptr<Model> model = ModelFactory::reformulate(ampl_model, first_iterate, options);
+   // reformulate (scale, add slacks, relax the bounds, ...) if necessary
+   std::unique_ptr<Model> model = ModelFactory::reformulate(std::move(ampl_model), initial_iterate, options);
+
+   // create the statistics
+   Statistics statistics = create_statistics(*model, options);
 
    // enforce linear constraints at initial point
    if (options.get_bool("enforce_linear_constraints")) {
-      Preprocessing::enforce_linear_constraints(options, *model, first_iterate.primals, first_iterate.multipliers);
+      Preprocessing::enforce_linear_constraints(options, *model, initial_iterate.primals, initial_iterate.multipliers);
    }
 
    // create the constraint relaxation strategy
-   auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(*model, options);
+   auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(statistics, *model, options);
 
    // create the globalization mechanism
-   auto mechanism = GlobalizationMechanismFactory::create(*constraint_relaxation_strategy, options);
+   auto mechanism = GlobalizationMechanismFactory::create(statistics, *constraint_relaxation_strategy, options);
 
    // instantiate the combination of ingredients and solve the problem
    Uno uno = Uno(*mechanism, options);
-   Result result = uno.solve(*model, first_iterate, options);
+   try {
+      Result result = uno.solve(statistics, *model, initial_iterate);
 
-   std::string combination = options.get_string("mechanism") + " " + options.get_string("constraint-relaxation") + " " + options.get_string("strategy")
-         + " " + options.get_string("subproblem");
-   std::cout << "\nUno (" << combination << "): optimization summary\n";
-   std::cout << Timer::get_current_date();
-   std::cout << "==============================\n";
-
-   const bool print_solution = options.get_bool("print_solution");
-   result.print(print_solution);
+      // print the optimization summary
+      std::string combination = options.get_string("globalization_mechanism") + " " + options.get_string("constraint_relaxation_strategy") + " " +
+                                options.get_string("globalization_strategy") + " " + options.get_string("subproblem");
+      std::cout << "\nUno (" << combination << ")\n";
+      std::cout << Timer::get_current_date();
+      std::cout << "────────────────────────────────────────\n";
+      const bool print_solution = options.get_bool("print_solution");
+      result.print(print_solution);
+      std::cout << "memory_allocation_amount = " << memory_allocation_amount << '\n';
+   }
+   catch (const std::exception& e) {
+      std::cout << "Uno terminated with an error\n";
+   }
 }
 
-Level Logger::logger_level = INFO;
+Level Logger::level = INFO;
+
+void print_uno_version() {
+   std::cout << "Welcome in Uno 1.0\n";
+   std::cout << "To solve an AMPL model, type ./uno_ampl path_to_file/file.nl\n";
+   std::cout << "To choose a constraint relaxation strategy, use the argument -constraint_relaxation_strategy "
+                "[feasibility_restoration|l1_relaxation]\n";
+   std::cout << "To choose a subproblem method, use the argument -subproblem [QP|LP|primal_dual_interior_point]\n";
+   std::cout << "To choose a globalization mechanism, use the argument -globalization_mechanism [LS|TR]\n";
+   std::cout << "To choose a globalization strategy, use the argument -globalization_strategy "
+                "[l1_merit|leyffer_filter_strategy|waechter_filter_strategy]\n";
+   std::cout << "To choose a preset, use the argument -preset [filtersqp|ipopt|byrd]\n";
+   std::cout << "The options can be combined in the same command line. Autocompletion is possible (see README).\n";
+}
 
 int main(int argc, char* argv[]) {
    if (1 < argc) {
       // get the default options
       Options options = get_default_options("uno.options");
-      // get the command line options
+      // override them with the command line options
       get_command_line_options(argc, argv, options);
-      set_logger(options.get_string("logger"));
+      Logger::set_logger(options.get_string("logger"));
 
       if (std::string(argv[1]) == "-v") {
-         std::cout << "Welcome in Uno 1.0\n";
-         std::cout << "To solve an AMPL model, type ./uno_ampl path_to_file/file.nl\n";
-         std::cout << "To choose a globalization mechanism, use the argument -mechanism [LS|TR]\n";
-         std::cout << "To choose a constraint relaxation strategy, use the argument -constraint-relaxation [feasibility-restoration|l1-relaxation]\n";
-         std::cout << "To choose a globalization strategy, use the argument -strategy [penalty|filter|nonmonotone-filter]\n";
-         std::cout << "To choose a subproblem method, use the argument -subproblem [QP|LP|barrier]\n";
-         std::cout << "To choose a preset, use the argument -preset [filtersqp|ipopt|byrd]\n";
-         std::cout << "The options can be combined in the same command line. Autocompletion is active.\n";
+         print_uno_version();
+      }
+      else if (std::string(argv[1]) == "--strategies") {
+         Uno::print_available_strategies();
       }
       else {
          options.print();
@@ -77,6 +117,9 @@ int main(int argc, char* argv[]) {
          std::string model_name = std::string(argv[argc - 1]);
          run_uno_ampl(model_name, options);
       }
+   }
+   else {
+      print_uno_version();
    }
    return EXIT_SUCCESS;
 }
