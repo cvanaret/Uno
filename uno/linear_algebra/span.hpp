@@ -12,8 +12,6 @@ public:
    using value_type = T;
 
    span(const std::vector<T>& array, size_t length) noexcept;
-   span(const T* array, size_t length) noexcept;
-   span() noexcept;
 
    const T& operator[](size_t i) const noexcept;
    [[nodiscard]] size_t size() const noexcept;
@@ -29,16 +27,6 @@ protected:
 template <typename T>
 span<T>::span(const std::vector<T>& array, size_t length) noexcept:
       array(array.data()), length(std::min(length, array.size())) {
-}
-
-template <typename T>
-span<T>::span(const T* array, size_t length) noexcept:
-      array(array), length(std::min(length, array.size())) {
-}
-
-template <typename T>
-span<T>::span() noexcept:
-      array(nullptr), length(0) {
 }
 
 // preconditions: array != nullptr, i < length
