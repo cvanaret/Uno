@@ -30,7 +30,7 @@ void FeasibilityRestoration::initialize(Iterate& initial_iterate) {
 
    // compute the progress measures and residuals of the initial point
    this->set_progress_measures_for_optimality_problem(initial_iterate);
-   ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, initial_iterate, this->residual_norm);
+   this->compute_primal_dual_residuals(this->optimality_problem, initial_iterate);
 
    // initialize the globalization strategies
    this->restoration_phase_strategy->initialize(initial_iterate);
@@ -182,7 +182,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
 
    if (accept_iterate) {
       // compute the primal-dual residuals
-      ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, trial_iterate, this->residual_norm);
+      this->compute_primal_dual_residuals(this->optimality_problem, trial_iterate);
       this->add_statistics(statistics, trial_iterate);
    }
    return accept_iterate;

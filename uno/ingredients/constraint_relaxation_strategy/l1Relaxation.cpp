@@ -41,7 +41,7 @@ void l1Relaxation::initialize(Iterate& initial_iterate) {
 
    // compute the progress measures and residuals of the initial point
    this->set_progress_measures_for_l1_relaxed_problem(initial_iterate);
-   ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->l1_relaxed_problem, initial_iterate, this->residual_norm);
+   this->compute_primal_dual_residuals(this->l1_relaxed_problem, initial_iterate);
 
    // initialize the globalization strategy
    this->globalization_strategy->initialize(initial_iterate);
@@ -253,7 +253,7 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
 
    if (accept_iterate) {
       // compute the primal-dual residuals
-      ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->l1_relaxed_problem, trial_iterate, this->residual_norm);
+      this->compute_primal_dual_residuals(this->l1_relaxed_problem, trial_iterate);
       this->add_statistics(statistics, trial_iterate);
       this->check_exact_relaxation(trial_iterate);
    }

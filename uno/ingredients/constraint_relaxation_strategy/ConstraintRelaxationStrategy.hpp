@@ -45,13 +45,14 @@ protected:
    const Model& original_model;
    const Norm progress_norm;
    const Norm residual_norm;
+   const double residual_scaling_threshold;
 
-   static void compute_primal_dual_residuals(const NonlinearProblem& problem, Iterate& iterate, Norm residual_norm);
+   void compute_primal_dual_residuals(const NonlinearProblem& problem, Iterate& iterate);
    static void evaluate_lagrangian_gradient(size_t number_variables, Iterate& iterate, const Multipliers& multipliers, double objective_multiplier);
    [[nodiscard]] static double compute_linearized_constraint_violation(const Model& model, const Iterate& current_iterate, const Direction& direction,
          double step_length);
-   static double compute_stationarity_scaling(const Model& model, const Iterate& iterate, double threshold);
-   static double compute_complementarity_scaling(const Model& model, const Iterate& iterate, double threshold);
+   double compute_stationarity_scaling(const Model& model, const Iterate& iterate) const;
+   double compute_complementarity_scaling(const Model& model, const Iterate& iterate) const;
 };
 
 #endif //UNO_CONSTRAINTRELAXATIONSTRATEGY_H

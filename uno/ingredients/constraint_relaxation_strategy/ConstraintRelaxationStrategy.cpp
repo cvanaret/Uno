@@ -7,10 +7,11 @@
 ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Model& model, const Options& options):
       original_model(model),
       progress_norm(norm_from_string(options.get_string("progress_norm"))),
-      residual_norm(norm_from_string(options.get_string("residual_norm"))) {
+      residual_norm(norm_from_string(options.get_string("residual_norm"))),
+      residual_scaling_threshold(options.get_double("residual_scaling_threshold")) {
 }
 
-void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const NonlinearProblem& problem, Iterate& iterate, Norm residual_norm) {
+void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const NonlinearProblem& problem, Iterate& iterate) {
    const Model& model = problem.model;
    iterate.evaluate_objective_gradient(model);
    iterate.evaluate_constraints(model);
@@ -18,11 +19,11 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Nonlinear
 
    // stationarity error
    ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(model.number_variables, iterate, iterate.multipliers, iterate.multipliers.objective);
-   iterate.residuals.optimality_stationarity = NonlinearProblem::compute_optimality_stationarity_error(iterate, residual_norm);
-   iterate.residuals.feasibility_stationarity = NonlinearProblem::compute_feasibility_stationarity_error(iterate, residual_norm);
+   iterate.residuals.optimality_stationarity = NonlinearProblem::compute_optimality_stationarity_error(iterate, this->residual_norm);
+   iterate.residuals.feasibility_stationarity = NonlinearProblem::compute_feasibility_stationarity_error(iterate, this->residual_norm);
 
    // constraint violation of the original problem
-   iterate.residuals.infeasibility = model.compute_constraint_violation(iterate.evaluations.constraints, residual_norm);
+   iterate.residuals.infeasibility = model.compute_constraint_violation(iterate.evaluations.constraints, this->residual_norm);
 
    // complementarity error
    iterate.residuals.optimality_complementarity = problem.compute_complementarity_error(model.number_variables, iterate.primals,
@@ -31,9 +32,8 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Nonlinear
          iterate.evaluations.constraints, iterate.multipliers);
 
    // scaling factors
-   // TODO put these coefficients in the option file
-   iterate.residuals.stationarity_scaling = ConstraintRelaxationStrategy::compute_stationarity_scaling(model, iterate, 100.);
-   iterate.residuals.complementarity_scaling = ConstraintRelaxationStrategy::compute_complementarity_scaling(model, iterate, 100.);
+   iterate.residuals.stationarity_scaling = this->compute_stationarity_scaling(model, iterate);
+   iterate.residuals.complementarity_scaling = this->compute_complementarity_scaling(model, iterate);
 }
 
 void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(size_t number_variables, Iterate& iterate, const Multipliers& multipliers,
@@ -73,13 +73,13 @@ double ConstraintRelaxationStrategy::compute_linearized_constraint_violation(con
    return norm_1<double>(jth_component, Range(model.number_constraints));
 }
 
-double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Model& model, const Iterate& iterate, double threshold) {
+double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Model& model, const Iterate& iterate) const {
    const size_t total_size = model.lower_bounded_variables.size() + model.upper_bounded_variables.size() + model.number_constraints;
    if (total_size == 0) {
       return 1.;
    }
    else {
-      const double scaling_factor = threshold * static_cast<double>(total_size);
+      const double scaling_factor = this->residual_scaling_threshold * static_cast<double>(total_size);
       const double multiplier_norm = norm_1(
             span(iterate.multipliers.constraints, model.number_constraints),
             span(iterate.multipliers.lower_bounds, model.number_variables),
@@ -89,13 +89,13 @@ double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Model& m
    }
 }
 
-double ConstraintRelaxationStrategy::compute_complementarity_scaling(const Model& model, const Iterate& iterate, double threshold) {
+double ConstraintRelaxationStrategy::compute_complementarity_scaling(const Model& model, const Iterate& iterate) const {
    const size_t total_size = model.lower_bounded_variables.size() + model.upper_bounded_variables.size();
    if (total_size == 0) {
       return 1.;
    }
    else {
-      const double scaling_factor = threshold * static_cast<double>(total_size);
+      const double scaling_factor = this->residual_scaling_threshold * static_cast<double>(total_size);
       const double bound_multiplier_norm = norm_1(
             span(iterate.multipliers.lower_bounds, model.number_variables),
             span(iterate.multipliers.upper_bounds, model.number_variables)
