@@ -121,7 +121,6 @@ void PrimalDualInteriorPointSubproblem::evaluate_functions(Statistics& statistic
       problem.evaluate_objective_gradient(current_iterate, this->evaluations.objective_gradient);
 
       // barrier terms
-      // TODO urgent: use the correct bounds (if TR, all the original variables are bounded)
       // TODO: the allocated size for objective_gradient is probably too small
       for (size_t i: Range(problem.number_variables)) {
          double barrier_term = 0.;

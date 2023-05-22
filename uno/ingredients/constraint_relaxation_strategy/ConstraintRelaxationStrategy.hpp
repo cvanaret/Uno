@@ -51,8 +51,8 @@ protected:
    static void evaluate_lagrangian_gradient(size_t number_variables, Iterate& iterate, const Multipliers& multipliers, double objective_multiplier);
    [[nodiscard]] static double compute_linearized_constraint_violation(const Model& model, const Iterate& current_iterate, const Direction& direction,
          double step_length);
-   double compute_stationarity_scaling(const Model& model, const Iterate& iterate) const;
-   double compute_complementarity_scaling(const Model& model, const Iterate& iterate) const;
+   [[nodiscard]] double compute_stationarity_scaling(const Model& model, const Iterate& iterate) const;
+   [[nodiscard]] double compute_complementarity_scaling(const Model& model, const Iterate& iterate) const;
 };
 
 #endif //UNO_CONSTRAINTRELAXATIONSTRATEGY_H
