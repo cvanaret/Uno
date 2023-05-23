@@ -79,6 +79,8 @@ progress_norm L1
 # norm of the primal-dual residuals (L1|L2|INF)
 residual_norm INF
 
+residual_scaling_threshold 100.
+
 ##### solvers #####
 # default QP solver
 QP_solver BQPD
