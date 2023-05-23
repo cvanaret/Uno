@@ -5,7 +5,7 @@
 #define UNO_L1RELAXEDPROBLEM_H
 
 #include <cmath>
-#include "NonlinearProblem.hpp"
+#include "RelaxedProblem.hpp"
 #include "tools/Range.hpp"
 #include "tools/Infinity.hpp"
 
@@ -16,7 +16,7 @@ struct ElasticVariables {
    [[nodiscard]] size_t size() const { return this->positive.size() + this->negative.size(); }
 };
 
-class l1RelaxedProblem: public NonlinearProblem {
+class l1RelaxedProblem: public RelaxedProblem {
 public:
    l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient);
 
@@ -26,6 +26,10 @@ public:
    void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const override;
    void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const override;
    void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix<double>& hessian) const override;
+
+   [[nodiscard]] double compute_stationarity_error(const Iterate& iterate, Norm residual_norm) const;
+   [[nodiscard]] double compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
+         const Multipliers& multipliers) const;
 
    [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
    [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
@@ -52,7 +56,7 @@ protected:
 };
 
 inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient):
-      NonlinearProblem(model, model.number_variables + l1RelaxedProblem::count_elastic_variables(model), model.number_constraints),
+      RelaxedProblem(model, model.number_variables + l1RelaxedProblem::count_elastic_variables(model), model.number_constraints),
       objective_multiplier(objective_multiplier),
       constraint_violation_coefficient(constraint_violation_coefficient),
       // elastic variables
@@ -160,6 +164,46 @@ inline void l1RelaxedProblem::evaluate_lagrangian_hessian(const std::vector<doub
    for (size_t j: Range(this->model.number_variables, this->number_variables)) {
       hessian.finalize_column(j);
    }
+}
+
+inline double l1RelaxedProblem::compute_stationarity_error(const Iterate& iterate, Norm residual_norm) const {
+   // norm of the constraints' contribution of the Lagrangian gradient
+   return norm(iterate.lagrangian_gradient.constraints_contribution, residual_norm);
+}
+
+// complementary slackness error
+inline double l1RelaxedProblem::compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
+      const Multipliers& multipliers) const {
+   double error = 0.;
+   // bound constraints
+   for (size_t i: Range(this->get_number_original_variables())) {
+      if (0. < multipliers.lower_bounds[i]) {
+         error = std::max(error, std::abs(multipliers.lower_bounds[i] * (primals[i] - this->get_variable_lower_bound(i))));
+      }
+      if (multipliers.upper_bounds[i] < 0.) {
+         error = std::max(error, std::abs(multipliers.upper_bounds[i] * (primals[i] - this->get_variable_upper_bound(i))));
+      }
+   }
+   // constraints
+   for (size_t j: Range(constraints.size())) {
+      // violated constraints
+      if (constraints[j] < this->get_constraint_lower_bound(j)) { // lower violated
+         error = std::max(error, std::abs((this->constraint_violation_coefficient - multipliers.constraints[j]) * (constraints[j] -
+            this->get_constraint_lower_bound(j))));
+      }
+      else if (this->get_constraint_upper_bound(j) < constraints[j]) { // upper violated
+         error = std::max(error, std::abs((this->constraint_violation_coefficient + multipliers.constraints[j]) * (constraints[j] -
+            this->get_constraint_upper_bound(j))));
+      }
+      // satisfied constraints
+      else if (0. < multipliers.constraints[j]) { // lower bound
+         error = std::max(error, std::abs(multipliers.constraints[j] * (constraints[j] - this->get_constraint_lower_bound(j))));
+      }
+      else if (multipliers.constraints[j] < 0.) { // upper bound
+         error = std::max(error, std::abs(multipliers.constraints[j] * (constraints[j] - this->get_constraint_upper_bound(j))));
+      }
+   }
+   return error;
 }
 
 inline double l1RelaxedProblem::get_variable_lower_bound(size_t i) const {

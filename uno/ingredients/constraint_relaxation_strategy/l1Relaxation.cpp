@@ -41,7 +41,7 @@ void l1Relaxation::initialize(Iterate& initial_iterate) {
 
    // compute the progress measures and residuals of the initial point
    this->set_progress_measures_for_l1_relaxed_problem(initial_iterate);
-   this->compute_primal_dual_residuals(this->l1_relaxed_problem, initial_iterate);
+   this->compute_primal_dual_residuals(this->original_model, this->feasibility_problem, initial_iterate);
 
    // initialize the globalization strategy
    this->globalization_strategy->initialize(initial_iterate);
@@ -149,10 +149,9 @@ void l1Relaxation::decrease_parameter_aggressively(Iterate& current_iterate, con
    if (this->trial_multipliers.not_all_zero(this->original_model.number_variables, this->small_duals_threshold)) {
       // compute the ideal error (with a zero penalty parameter)
       const double error_lowest_violation = l1Relaxation::compute_dual_error(current_iterate);
-      DEBUG << "Ideal error: " << error_lowest_violation << '\n';
+      DEBUG << "Ideal dual error: " << error_lowest_violation << '\n';
       const double scaled_error = error_lowest_violation / std::max(1., current_iterate.residuals.infeasibility);
-      const double scaled_error_square = scaled_error * scaled_error;
-      this->penalty_parameter = std::min(this->penalty_parameter, scaled_error_square);
+      this->penalty_parameter = std::min(this->penalty_parameter, scaled_error * scaled_error);
       DEBUG << "Further aggressively decrease the penalty parameter to " << this->penalty_parameter << '\n';
    }
    else {
@@ -167,8 +166,8 @@ double l1Relaxation::compute_dual_error(Iterate& current_iterate) {
    double error = norm_1(current_iterate.lagrangian_gradient.constraints_contribution);
 
    // complementarity error
-   error += this->feasibility_problem.compute_feasibility_complementarity_error(this->original_model.number_variables, current_iterate.primals,
-         current_iterate.evaluations.constraints, this->trial_multipliers);
+   error += this->feasibility_problem.compute_complementarity_error(current_iterate.primals, current_iterate.evaluations.constraints,
+         this->trial_multipliers);
    return error;
 }
 
@@ -253,7 +252,7 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
 
    if (accept_iterate) {
       // compute the primal-dual residuals
-      this->compute_primal_dual_residuals(this->l1_relaxed_problem, trial_iterate);
+      this->compute_primal_dual_residuals(this->original_model, this->feasibility_problem, trial_iterate);
       this->add_statistics(statistics, trial_iterate);
       this->check_exact_relaxation(trial_iterate);
    }
@@ -296,6 +295,11 @@ ProgressMeasures l1Relaxation::compute_predicted_reduction_models_for_l1_relaxed
          current_iterate, direction, step_length);
 
    return {predicted_infeasibility_reduction, predicted_optimality_reduction, predicted_auxiliary_reduction};
+}
+
+double l1Relaxation::compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
+      const Multipliers& multipliers) const {
+   return 0.;
 }
 
 void l1Relaxation::set_trust_region_radius(double trust_region_radius) {

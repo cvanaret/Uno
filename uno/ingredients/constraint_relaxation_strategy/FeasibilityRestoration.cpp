@@ -30,7 +30,7 @@ void FeasibilityRestoration::initialize(Iterate& initial_iterate) {
 
    // compute the progress measures and residuals of the initial point
    this->set_progress_measures_for_optimality_problem(initial_iterate);
-   this->compute_primal_dual_residuals(this->optimality_problem, initial_iterate);
+   this->compute_primal_dual_residuals(this->original_model, this->feasibility_problem, initial_iterate);
 
    // initialize the globalization strategies
    this->restoration_phase_strategy->initialize(initial_iterate);
@@ -39,7 +39,7 @@ void FeasibilityRestoration::initialize(Iterate& initial_iterate) {
 
 Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
       WarmstartInformation& warmstart_information) {
-   // solve the optimality problem
+   // if we are in the optimality phase, solve the optimality problem
    if (this->current_phase == Phase::OPTIMALITY) {
       try {
          DEBUG << "Solving the optimality subproblem\n";
@@ -59,7 +59,7 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
       }
    }
 
-   // feasibility problem: minimize constraint violation
+   // solve the feasibility problem (min constraint violation)
    DEBUG << "Solving the feasibility subproblem\n";
    // note: failure of regularization should not happen here, since the feasibility Jacobian is full rank
    return this->solve_subproblem(statistics, this->feasibility_problem, current_iterate, warmstart_information);
@@ -74,7 +74,7 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
 
 void FeasibilityRestoration::switch_to_feasibility_problem(Iterate& current_iterate, WarmstartInformation& warmstart_information) {
    if (this->current_phase == Phase::FEASIBILITY_RESTORATION) {
-      throw std::runtime_error("NOOOOPE\n");
+      throw std::runtime_error("FeasibilityRestoration::switch_to_feasibility_problem: already in feasibility restoration.\n");
    }
    this->switch_to_feasibility_restoration(current_iterate, warmstart_information);
 }
@@ -182,7 +182,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
 
    if (accept_iterate) {
       // compute the primal-dual residuals
-      this->compute_primal_dual_residuals(this->optimality_problem, trial_iterate);
+      this->compute_primal_dual_residuals(this->original_model, this->feasibility_problem, trial_iterate);
       this->add_statistics(statistics, trial_iterate);
    }
    return accept_iterate;
@@ -280,6 +280,31 @@ ProgressMeasures FeasibilityRestoration::compute_predicted_reduction_models_for_
          current_iterate, direction, step_length);
 
    return {predicted_infeasibility_reduction, predicted_optimality_reduction, predicted_auxiliary_reduction};
+}
+
+double FeasibilityRestoration::compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
+      const Multipliers& multipliers) const {
+   double error = 0.;
+   // bound constraints
+   for (size_t i: Range(this->original_model.number_variables)) {
+      if (0. < multipliers.lower_bounds[i]) {
+         error = std::max(error, std::abs(multipliers.lower_bounds[i] * (primals[i] - this->original_model.get_variable_lower_bound(i))));
+      }
+      if (multipliers.upper_bounds[i] < 0.) {
+         error = std::max(error, std::abs(multipliers.upper_bounds[i] * (primals[i] - this->original_model.get_variable_upper_bound(i))));
+      }
+   }
+   // constraints
+   for (size_t j: this->original_model.inequality_constraints) {
+      if (0. < multipliers.constraints[j]) { // lower bound
+         error = std::max(error, std::abs(multipliers.constraints[j] * (constraints[j] - this->original_model.get_constraint_lower_bound(j))));
+      }
+      else if (multipliers.constraints[j] < 0.) { // upper bound
+         error = std::max(error, std::abs(multipliers.constraints[j] * (constraints[j] - this->original_model.get_constraint_upper_bound(j))));
+      }
+   }
+   return error;
+
 }
 
 void FeasibilityRestoration::add_statistics(Statistics& statistics, const Iterate& trial_iterate) const {

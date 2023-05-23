@@ -26,12 +26,6 @@ public:
    [[nodiscard]] virtual Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
          const std::vector<double>& initial_point, WarmstartInformation& warmstart_information) = 0;
    virtual void switch_to_feasibility_problem(Iterate& current_iterate, WarmstartInformation& warmstart_information) = 0;
-   /*
-   [[nodiscard]] virtual Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
-         WarmstartInformation& warmstart_information) = 0;
-   [[nodiscard]] virtual Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
-         const std::vector<double>& initial_point, WarmstartInformation& warmstart_information) = 0;
-         */
 
    // trial iterate acceptance
    virtual void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length) = 0;
@@ -47,10 +41,14 @@ protected:
    const Norm residual_norm;
    const double residual_scaling_threshold;
 
-   void compute_primal_dual_residuals(const NonlinearProblem& problem, Iterate& iterate);
+   void compute_primal_dual_residuals(const Model& model, const RelaxedProblem& feasibility_problem, Iterate& iterate);
    static void evaluate_lagrangian_gradient(size_t number_variables, Iterate& iterate, const Multipliers& multipliers, double objective_multiplier);
    [[nodiscard]] static double compute_linearized_constraint_violation(const Model& model, const Iterate& current_iterate, const Direction& direction,
          double step_length);
+
+   [[nodiscard]] double compute_stationarity_error(const Iterate& iterate) const;
+   [[nodiscard]] virtual double compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
+         const Multipliers& multipliers) const = 0;
    [[nodiscard]] double compute_stationarity_scaling(const Model& model, const Iterate& iterate) const;
    [[nodiscard]] double compute_complementarity_scaling(const Model& model, const Iterate& iterate) const;
 };
