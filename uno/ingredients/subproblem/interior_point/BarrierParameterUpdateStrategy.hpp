@@ -27,7 +27,7 @@ protected:
    const double tolerance;
    const UpdateParameters parameters;
 
-   [[nodiscard]] double compute_shifted_complementarity_error(const NonlinearProblem& problem, const Iterate& iterate, double shift_value) const;
+   [[nodiscard]] static double compute_shifted_complementarity_error(const NonlinearProblem& problem, const Iterate& iterate, double shift_value) ;
 };
 
 #endif // UNO_BARRIERPARAMETERUPDATESTRATEGY_H

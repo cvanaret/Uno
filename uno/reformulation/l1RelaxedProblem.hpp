@@ -7,6 +7,7 @@
 #include "RelaxedProblem.hpp"
 #include "tools/Range.hpp"
 #include "tools/Infinity.hpp"
+#include "linear_algebra/VectorExpression.hpp"
 
 struct ElasticVariables {
    SparseVector<size_t> positive;
@@ -35,7 +36,7 @@ public:
 
    [[nodiscard]] double compute_stationarity_error(const Iterate& iterate, Norm residual_norm) const override;
    [[nodiscard]] double compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
-         const Multipliers& multipliers) const override;
+         const Multipliers& multipliers, Norm residual_norm) const override;
 
    [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
    [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
@@ -240,43 +241,42 @@ inline std::function<double(double)> l1RelaxedProblem::compute_predicted_optimal
 
 inline double l1RelaxedProblem::compute_stationarity_error(const Iterate& iterate, Norm residual_norm) const {
    // norm of the constraints' contribution of the Lagrangian gradient
-   return norm(iterate.lagrangian_gradient.constraints_contribution, residual_norm);
+   return norm(residual_norm, iterate.lagrangian_gradient.constraints_contribution);
 }
 
 // complementary slackness error
-// TODO: generic norm
 inline double l1RelaxedProblem::compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
-      const Multipliers& multipliers) const {
-   double error = 0.;
-   // bound constraints
-   for (size_t i: Range(this->get_number_original_variables())) {
+      const Multipliers& multipliers, Norm residual_norm) const {
+   // construct a lazy expression for complementarity for variable bounds
+   VectorExpression<double> variable_complementarity(this->get_number_original_variables(), [&](size_t i) {
       if (0. < multipliers.lower_bounds[i]) {
-         error = std::max(error, std::abs(multipliers.lower_bounds[i] * (primals[i] - this->get_variable_lower_bound(i))));
+         return multipliers.lower_bounds[i] * (primals[i] - this->model.get_variable_lower_bound(i));
       }
       if (multipliers.upper_bounds[i] < 0.) {
-         error = std::max(error, std::abs(multipliers.upper_bounds[i] * (primals[i] - this->get_variable_upper_bound(i))));
+         return multipliers.upper_bounds[i] * (primals[i] - this->model.get_variable_upper_bound(i));
       }
-   }
-   // constraints
-   for (size_t j: Range(constraints.size())) {
+      return 0.;
+   });
+
+   // construct a lazy expression for complementarity for constraint bounds
+   VectorExpression<double> constraint_complementarity(constraints.size(), [&](size_t j) {
       // violated constraints
       if (constraints[j] < this->get_constraint_lower_bound(j)) { // lower violated
-         error = std::max(error, std::abs((this->constraint_violation_coefficient - multipliers.constraints[j]) * (constraints[j] -
-            this->get_constraint_lower_bound(j))));
+         return (this->constraint_violation_coefficient - multipliers.constraints[j]) * (constraints[j] - this->get_constraint_lower_bound(j));
       }
       else if (this->get_constraint_upper_bound(j) < constraints[j]) { // upper violated
-         error = std::max(error, std::abs((this->constraint_violation_coefficient + multipliers.constraints[j]) * (constraints[j] -
-            this->get_constraint_upper_bound(j))));
+         return (this->constraint_violation_coefficient + multipliers.constraints[j]) * (constraints[j] - this->get_constraint_upper_bound(j));
       }
       // satisfied constraints
       else if (0. < multipliers.constraints[j]) { // lower bound
-         error = std::max(error, std::abs(multipliers.constraints[j] * (constraints[j] - this->get_constraint_lower_bound(j))));
+         return multipliers.constraints[j] * (constraints[j] - this->get_constraint_lower_bound(j));
       }
       else if (multipliers.constraints[j] < 0.) { // upper bound
-         error = std::max(error, std::abs(multipliers.constraints[j] * (constraints[j] - this->get_constraint_upper_bound(j))));
+         return multipliers.constraints[j] * (constraints[j] - this->get_constraint_upper_bound(j));
       }
-   }
-   return error;
+      return 0.;
+   });
+   return norm(residual_norm, variable_complementarity, constraint_complementarity);
 }
 
 inline double l1RelaxedProblem::get_variable_lower_bound(size_t i) const {

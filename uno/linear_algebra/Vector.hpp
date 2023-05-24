@@ -144,83 +144,31 @@ T norm_inf(const ARRAY& x, ARRAYS... other_arrays) {
    return std::max(norm_inf(x), norm_inf(other_arrays...));
 }
 
-template <typename ARRAY, typename T = typename ARRAY::value_type>
-T norm(const ARRAY& x, Norm norm) {
-   // choose the right norm
-   if (norm == Norm::L1) {
-      return norm_1(x);
-   }
-   else if (norm == Norm::L2) {
-      return norm_2(x);
-   }
-   else if (norm == Norm::L2_SQUARED) {
-      return norm_2_squared(x);
-   }
-   else if (norm == Norm::INF) {
-      return norm_inf(x);
-   }
-   throw std::invalid_argument("The norm is not known");
-}
-
-// these methods take:
-// - a callback as argument whose parameter is the current index. This avoids forming the vector explicitly
-// - an array of arbitrary type (can be Range, std::vector, std::array, etc)
+// inf norm where the indices live in a given set
 template <typename T, typename ARRAY>
-T norm_1(const std::function<T(size_t i)>& ith_component, const ARRAY& array) {
+T norm_inf(const std::vector<T>& x, const ARRAY& indices) {
    T norm = T(0);
-   for (size_t i: array) {
-      norm += std::abs(ith_component(i));
-   }
-   return norm;
-}
-
-template <typename T, typename ARRAY>
-T norm_inf(const std::vector<T>& x, const ARRAY& array) {
-   T norm = T(0);
-   for (size_t i: array) {
+   for (size_t i: indices) {
       norm = std::max(norm, std::abs(x[i]));
    }
    return norm;
 }
 
-template <typename T, typename ARRAY>
-T norm_inf(const std::function<T(size_t i)>& ith_component, const ARRAY& array) {
-   T norm = T(0);
-   for (size_t i: array) {
-      norm = std::max(norm, std::abs(ith_component(i)));
-   }
-   return norm;
-}
-
-template <typename T, typename ARRAY>
-T norm_2_squared(const std::function<T(size_t i)>& ith_component, const ARRAY& array) {
-   T norm = T(0);
-   for (size_t i: array) {
-      const T x_i = ith_component(i);
-      norm += x_i * x_i;
-   }
-   return norm;
-}
-
-template <typename T, typename ARRAY>
-T norm_2(const std::function<T(size_t /*i*/)>& ith_component, const ARRAY& array) {
-   return std::sqrt(norm_2_squared(ith_component, array));
-}
-
-template <typename T, typename ARRAY>
-T norm(const std::function<T(size_t /*i*/)>& ith_component, const ARRAY& array, Norm norm) {
+// norm of at least one array
+template<typename ARRAY, typename... ARRAYS, typename T = typename ARRAY::value_type>
+T norm(Norm norm, const ARRAY& x, ARRAYS... other_arrays) {
    // choose the right norm
    if (norm == Norm::L1) {
-      return norm_1(ith_component, array);
+      return norm_1(x, other_arrays...);
    }
    else if (norm == Norm::L2) {
-      return norm_2(ith_component, array);
+      return norm_2(x, other_arrays...);
    }
    else if (norm == Norm::L2_SQUARED) {
-      return norm_2_squared(ith_component, array);
+      return norm_2_squared(x, other_arrays...);
    }
    else if (norm == Norm::INF) {
-      return norm_inf(ith_component, array);
+      return norm_inf(x, other_arrays...);
    }
    throw std::invalid_argument("The norm is not known");
 }

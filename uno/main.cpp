@@ -2,13 +2,11 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "preprocessing/Preprocessing.hpp"
-#include "ingredients/globalization_strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/globalization_mechanism/GlobalizationMechanismFactory.hpp"
 #include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategyFactory.hpp"
 #include "interfaces/AMPL/AMPLModel.hpp"
 #include "Uno.hpp"
 #include "optimization/ModelFactory.hpp"
-#include "optimization/ScaledModel.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Options.hpp"
 #include "tools/Timer.hpp"

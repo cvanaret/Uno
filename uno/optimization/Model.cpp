@@ -6,6 +6,7 @@
 #include <cassert>
 #include <utility>
 #include "Model.hpp"
+#include "linear_algebra/VectorExpression.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "tools/Infinity.hpp"
 
@@ -86,9 +87,8 @@ double Model::compute_constraint_violation(double constraint_value, size_t j) co
 
 // compute ||c||
 double Model::compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const {
-   // create a lambda to avoid allocating an std::vector
-   const auto jth_component = [&](size_t j) {
+   VectorExpression<double> constraint_violation(constraints.size(), [&](size_t j) {
       return this->compute_constraint_violation(constraints[j], j);
-   };
-   return norm<double>(jth_component, Range(constraints.size()), residual_norm);
+   });
+   return norm(residual_norm, constraint_violation);
 }

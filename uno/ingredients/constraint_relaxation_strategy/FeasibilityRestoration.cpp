@@ -104,8 +104,7 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
 
    // possibly go from restoration phase to optimality phase
    if (this->current_phase == Phase::FEASIBILITY_RESTORATION && (not this->test_linearized_feasibility ||
-         ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate, direction, step_length) <=
-               this->tolerance)) {
+         this->compute_linearized_constraint_violation(this->original_model, current_iterate, direction, step_length) <= this->tolerance)) {
       // if the trial infeasibility improves upon the best known infeasibility of the globalization strategy
       trial_iterate.evaluate_constraints(this->original_model);
       const double trial_infeasibility = this->original_model.compute_constraint_violation(trial_iterate.evaluations.constraints, this->progress_norm);
@@ -188,20 +187,19 @@ void FeasibilityRestoration::set_progress_measures(const NonlinearProblem& probl
    this->subproblem->set_auxiliary_measure(problem, iterate);
 }
 
-ProgressMeasures FeasibilityRestoration::compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction,
-      double step_length) {
+ProgressMeasures FeasibilityRestoration::compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length) {
    if (this->current_phase == Phase::OPTIMALITY) {
       return {
             this->optimality_problem.compute_predicted_infeasibility_reduction_model(current_iterate, direction, step_length, this->progress_norm),
             this->optimality_problem.compute_predicted_optimality_reduction_model(current_iterate, direction, step_length),
-            this->subproblem->generate_predicted_auxiliary_reduction_model(this->current_problem(), current_iterate, direction, step_length)
+            this->subproblem->generate_predicted_auxiliary_reduction_model(this->optimality_problem, current_iterate, direction, step_length)
       };
    }
    else { // Phase::FEASIBILITY_RESTORATION
       return {
             this->feasibility_problem.compute_predicted_infeasibility_reduction_model(current_iterate, direction, step_length, this->progress_norm),
             this->feasibility_problem.compute_predicted_optimality_reduction_model(current_iterate, direction, step_length),
-            this->subproblem->generate_predicted_auxiliary_reduction_model(this->current_problem(), current_iterate, direction, step_length)
+            this->subproblem->generate_predicted_auxiliary_reduction_model(this->feasibility_problem, current_iterate, direction, step_length)
       };
    }
 }
@@ -223,29 +221,31 @@ void FeasibilityRestoration::set_trust_region_radius(double trust_region_radius)
    this->subproblem->set_trust_region_radius(trust_region_radius);
 }
 
-// TODO: generic norm
 double FeasibilityRestoration::compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
       const Multipliers& multipliers) const {
-   double error = 0.;
    // bound constraints
-   for (size_t i: Range(this->original_model.number_variables)) {
+   VectorExpression<double> variable_complementarity(this->original_model.number_variables, [&](size_t i) {
       if (0. < multipliers.lower_bounds[i]) {
-         error = std::max(error, std::abs(multipliers.lower_bounds[i] * (primals[i] - this->original_model.get_variable_lower_bound(i))));
+         return multipliers.lower_bounds[i] * (primals[i] - this->original_model.get_variable_lower_bound(i));
       }
       if (multipliers.upper_bounds[i] < 0.) {
-         error = std::max(error, std::abs(multipliers.upper_bounds[i] * (primals[i] - this->original_model.get_variable_upper_bound(i))));
+         return multipliers.upper_bounds[i] * (primals[i] - this->original_model.get_variable_upper_bound(i));
       }
-   }
+      return 0.;
+   });
+
    // constraints
-   for (size_t j: this->original_model.inequality_constraints) {
+   VectorExpression<double> constraint_complementarity(this->original_model.inequality_constraints.size(), [&](size_t inequality_index) {
+      const size_t j = this->original_model.inequality_constraints[inequality_index];
       if (0. < multipliers.constraints[j]) { // lower bound
-         error = std::max(error, std::abs(multipliers.constraints[j] * (constraints[j] - this->original_model.get_constraint_lower_bound(j))));
+         return multipliers.constraints[j] * (constraints[j] - this->original_model.get_constraint_lower_bound(j));
       }
       else if (multipliers.constraints[j] < 0.) { // upper bound
-         error = std::max(error, std::abs(multipliers.constraints[j] * (constraints[j] - this->original_model.get_constraint_upper_bound(j))));
+         return multipliers.constraints[j] * (constraints[j] - this->original_model.get_constraint_upper_bound(j));
       }
-   }
-   return error;
+      return 0.;
+   });
+   return norm(this->residual_norm, variable_complementarity, constraint_complementarity);
 }
 
 void FeasibilityRestoration::add_statistics(Statistics& statistics, const Iterate& trial_iterate) const {

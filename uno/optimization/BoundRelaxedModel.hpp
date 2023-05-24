@@ -79,7 +79,7 @@ inline BoundRelaxedModel::BoundRelaxedModel(std::unique_ptr<Model> original_mode
 inline double BoundRelaxedModel::get_variable_lower_bound(size_t i) const {
    const double lower_bound = this->original_model->get_variable_lower_bound(i);
    // relax the bound
-   return lower_bound - this->relaxation_factor*std::max(1., std::abs(lower_bound));
+   return lower_bound - this->relaxation_factor * std::max(1., std::abs(lower_bound));
 }
 
 inline double BoundRelaxedModel::get_variable_upper_bound(size_t i) const {

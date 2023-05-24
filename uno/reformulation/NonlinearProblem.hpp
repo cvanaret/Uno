@@ -7,6 +7,7 @@
 #include <vector>
 #include "optimization/Iterate.hpp"
 #include "optimization/Model.hpp"
+#include "linear_algebra/VectorExpression.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
@@ -83,13 +84,12 @@ inline size_t NonlinearProblem::get_number_original_variables() const {
 inline double NonlinearProblem::compute_linearized_constraint_violation(const Model& model, const Iterate& current_iterate,
       const Direction& direction, double step_length) {
    // determine the linearized constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
-   const auto jth_component = [&](size_t j) {
+   VectorExpression<double> linearized_constraints(model.number_constraints, [&](size_t j) {
       const double component_j = current_iterate.evaluations.constraints[j] + step_length * dot(direction.primals,
             current_iterate.evaluations.constraint_jacobian[j]);
       return model.compute_constraint_violation(component_j, j);
-   };
-
-   return norm_1<double>(jth_component, Range(model.number_constraints));
+   });
+   return norm_1(linearized_constraints);
 }
 
 #endif // UNO_NONLINEARPROBLEM_H

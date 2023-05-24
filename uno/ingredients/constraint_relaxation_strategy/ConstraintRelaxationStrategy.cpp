@@ -28,7 +28,7 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Model& mo
    iterate.residuals.optimality_complementarity = this->compute_complementarity_error(iterate.primals, iterate.evaluations.constraints,
          iterate.multipliers);
    iterate.residuals.feasibility_complementarity = feasibility_problem.compute_complementarity_error(iterate.primals, iterate.evaluations.constraints,
-         iterate.multipliers);
+         iterate.multipliers, this->residual_norm);
 
    // scaling factors
    iterate.residuals.stationarity_scaling = this->compute_stationarity_scaling(model, iterate);
@@ -63,19 +63,18 @@ void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(size_t number_va
 
 double ConstraintRelaxationStrategy::compute_stationarity_error(const Iterate& iterate) const {
    // norm of the Lagrangian gradient
-   return norm(iterate.lagrangian_gradient, this->residual_norm);
+   return norm(this->residual_norm, iterate.lagrangian_gradient);
 }
 
 double ConstraintRelaxationStrategy::compute_linearized_constraint_violation(const Model& model, const Iterate& current_iterate,
-      const Direction& direction, double step_length) {
+      const Direction& direction, double step_length) const {
    // determine the linearized constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
-   const auto jth_component = [&](size_t j) {
-      const double component_j = current_iterate.evaluations.constraints[j] + step_length * dot(direction.primals,
+   VectorExpression<double> linearized_constraints(model.number_constraints, [&](size_t j) {
+      const double linearized_constraint_j = current_iterate.evaluations.constraints[j] + step_length * dot(direction.primals,
             current_iterate.evaluations.constraint_jacobian[j]);
-      return model.compute_constraint_violation(component_j, j);
-   };
-
-   return norm_1<double>(jth_component, Range(model.number_constraints));
+      return model.compute_constraint_violation(linearized_constraint_j, j);
+   });
+   return norm(this->residual_norm, linearized_constraints);
 }
 
 double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Model& model, const Iterate& iterate) const {

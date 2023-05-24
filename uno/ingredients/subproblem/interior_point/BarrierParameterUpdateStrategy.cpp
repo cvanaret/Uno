@@ -43,8 +43,8 @@ bool BarrierParameterUpdateStrategy::update_barrier_parameter(const NonlinearPro
             std::pow(this->barrier_parameter, this->parameters.theta_mu)));
       DEBUG << "Barrier parameter mu updated to " << this->barrier_parameter << '\n';
       // update complementarity error
-      double scaled_complementarity_error = this->compute_shifted_complementarity_error(problem, current_iterate, this->barrier_parameter) /
-            current_iterate.residuals.complementarity_scaling;
+      double scaled_complementarity_error = BarrierParameterUpdateStrategy::compute_shifted_complementarity_error(problem, current_iterate,
+            this->barrier_parameter) / current_iterate.residuals.complementarity_scaling;
       primal_dual_error = std::max({
          scaled_stationarity,
          current_iterate.residuals.infeasibility,
@@ -58,9 +58,9 @@ bool BarrierParameterUpdateStrategy::update_barrier_parameter(const NonlinearPro
 }
 
 double BarrierParameterUpdateStrategy::compute_shifted_complementarity_error(const NonlinearProblem& problem, const Iterate& iterate,
-      double shift_value) const {
+      double shift_value) {
    // variable bounds
-   const auto ith_component = [&](size_t i) {
+   VectorExpression<double> shifted_bound_complementarity(problem.number_variables, [&](size_t i) {
       double result = 0.;
       if (0. < iterate.multipliers.lower_bounds[i]) { // lower bound
          result = std::max(result, std::abs(iterate.multipliers.lower_bounds[i] * (iterate.primals[i] - problem.get_variable_lower_bound(i)) - shift_value));
@@ -69,6 +69,6 @@ double BarrierParameterUpdateStrategy::compute_shifted_complementarity_error(con
          result = std::max(result, std::abs(iterate.multipliers.upper_bounds[i] * (iterate.primals[i] - problem.get_variable_upper_bound(i)) - shift_value));
       }
       return result;
-   };
-   return norm_inf<double>(ith_component, Range(problem.number_variables));
+   });
+   return norm_inf(shifted_bound_complementarity); // TODO use norm from options
 }

@@ -297,11 +297,11 @@ void PrimalDualInteriorPointSubproblem::update_barrier_parameter(const Nonlinear
 
 // Section 3.9 in IPOPT paper
 bool PrimalDualInteriorPointSubproblem::is_small_step(const NonlinearProblem& problem, const Iterate& current_iterate, const Direction& direction) const {
-   const auto relative_measure_function = [&](size_t i) {
+   VectorExpression<double> relative_direction_size(problem.number_variables, [&](size_t i) {
       return direction.primals[i] / (1 + std::abs(current_iterate.primals[i]));
-   };
+   });
    static double machine_epsilon = std::numeric_limits<double>::epsilon();
-   return (norm_inf<double>(relative_measure_function, Range(problem.number_variables)) <= this->parameters.small_direction_factor * machine_epsilon);
+   return (norm_inf(relative_direction_size) <= this->parameters.small_direction_factor * machine_epsilon);
 }
 
 double PrimalDualInteriorPointSubproblem::evaluate_subproblem_objective() const {

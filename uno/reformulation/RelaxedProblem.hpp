@@ -12,7 +12,7 @@ public:
    
    [[nodiscard]] virtual double compute_stationarity_error(const Iterate& iterate, Norm residual_norm) const = 0;
    [[nodiscard]] virtual double compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
-         const Multipliers& multipliers) const = 0;
+         const Multipliers& multipliers, Norm residual_norm) const = 0;
 };
 
 inline RelaxedProblem::RelaxedProblem(const Model& model, size_t number_variables, size_t number_constraints):
