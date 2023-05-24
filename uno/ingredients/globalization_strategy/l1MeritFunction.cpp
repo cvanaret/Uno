@@ -34,9 +34,6 @@ bool l1MeritFunction::is_iterate_acceptable(Statistics& statistics, const Iterat
    DEBUG << "Trial merit:   " << trial_progress.optimality(objective_multiplier) << " + " << trial_progress.auxiliary_terms << " + " <<
          trial_progress.infeasibility << " = " << trial_exact_merit << '\n';
    DEBUG << "Actual reduction: " << current_exact_merit << " - " << trial_exact_merit << " = " << actual_reduction << '\n';
-
-   GlobalizationStrategy::check_finiteness(current_progress, objective_multiplier);
-   GlobalizationStrategy::check_finiteness(trial_progress, objective_multiplier);
    statistics.add_statistic("penalty param.", objective_multiplier);
 
    // Armijo sufficient decrease condition

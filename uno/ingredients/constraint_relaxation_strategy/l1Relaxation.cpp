@@ -40,7 +40,7 @@ void l1Relaxation::initialize(Iterate& initial_iterate) {
    this->subproblem->generate_initial_iterate(this->l1_relaxed_problem, initial_iterate);
 
    // compute the progress measures and residuals of the initial point
-   this->set_progress_measures_for_l1_relaxed_problem(initial_iterate);
+   this->set_progress_measures(initial_iterate);
    this->compute_primal_dual_residuals(this->original_model, this->feasibility_problem, initial_iterate);
 
    // initialize the globalization strategy
@@ -225,8 +225,9 @@ void l1Relaxation::compute_progress_measures(Iterate& current_iterate, Iterate& 
       this->subproblem->subproblem_definition_changed = false;
    }
    // compute the progress measures for the current and trial iterates
-   this->set_progress_measures_for_l1_relaxed_problem(current_iterate);
-   this->set_progress_measures_for_l1_relaxed_problem(trial_iterate);
+   this->set_progress_measures(current_iterate);
+   this->set_progress_measures(trial_iterate);
+
    trial_iterate.multipliers.objective = this->l1_relaxed_problem.get_objective_multiplier();
 }
 
@@ -243,7 +244,7 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
    }
    else {
       // evaluate the predicted reduction
-      ProgressMeasures predicted_reduction = this->compute_predicted_reduction_models_for_l1_relaxed_problem(current_iterate, direction, step_length);
+      ProgressMeasures predicted_reduction = this->compute_predicted_reduction_models(current_iterate, direction, step_length);
 
       // invoke the globalization strategy for acceptance
       accept_iterate = this->globalization_strategy->is_iterate_acceptable(statistics, trial_iterate, current_iterate.progress, trial_iterate.progress,
@@ -251,7 +252,6 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
    }
 
    if (accept_iterate) {
-      // compute the primal-dual residuals
       this->compute_primal_dual_residuals(this->original_model, this->feasibility_problem, trial_iterate);
       this->add_statistics(statistics, trial_iterate);
       this->check_exact_relaxation(trial_iterate);
@@ -259,47 +259,24 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
    return accept_iterate;
 }
 
-void l1Relaxation::set_progress_measures_for_l1_relaxed_problem(Iterate& iterate) {
-   // infeasibility measure: constraint violation
-   iterate.evaluate_constraints(this->original_model);
-   iterate.progress.infeasibility = this->original_model.compute_constraint_violation(iterate.evaluations.constraints, L1_NORM);
-
-   // optimality measure: scaled objective
-   iterate.evaluate_objective(this->original_model);
-   const double objective = iterate.evaluations.objective;
-   iterate.progress.optimality = [=](double objective_multiplier) {
-      return objective_multiplier*objective;
-   };
-
-   // auxiliary measure
+void l1Relaxation::set_progress_measures(Iterate& iterate) const {
+   this->l1_relaxed_problem.set_infeasibility_measure(iterate, this->progress_norm);
+   this->l1_relaxed_problem.set_optimality_measure(iterate);
    this->subproblem->set_auxiliary_measure(this->l1_relaxed_problem, iterate);
 }
 
-ProgressMeasures l1Relaxation::compute_predicted_reduction_models_for_l1_relaxed_problem(const Iterate& current_iterate, const Direction& direction,
+ProgressMeasures l1Relaxation::compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction,
       double step_length) {
-   // predicted infeasibility reduction: "‖c(x)‖₁ - ‖c(x) + ∇c(x)^T (αd)‖₁"
-   const double current_constraint_violation = this->original_model.compute_constraint_violation(current_iterate.evaluations.constraints,
-         Norm::L1_NORM);
-   const double linearized_constraint_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model,
-         current_iterate, direction, step_length);
-   const double predicted_infeasibility_reduction = current_constraint_violation - linearized_constraint_violation;
-
-   // predicted optimality reduction: "-ρ*∇f(x)^T (αd)"
-   const double directional_derivative = dot(direction.primals, current_iterate.evaluations.objective_gradient);
-   const auto predicted_optimality_reduction = [=](double objective_multiplier) {
-      return step_length * (-objective_multiplier*directional_derivative);
+   return {
+      this->l1_relaxed_problem.compute_predicted_infeasibility_reduction_model(current_iterate, direction, step_length, Norm::L1_NORM),
+      this->l1_relaxed_problem.compute_predicted_optimality_reduction_model(current_iterate, direction, step_length),
+      this->subproblem->generate_predicted_auxiliary_reduction_model(this->l1_relaxed_problem, current_iterate, direction, step_length)
    };
-
-   // predicted auxiliary reduction
-   const double predicted_auxiliary_reduction = this->subproblem->generate_predicted_auxiliary_reduction_model(this->l1_relaxed_problem,
-         current_iterate, direction, step_length);
-
-   return {predicted_infeasibility_reduction, predicted_optimality_reduction, predicted_auxiliary_reduction};
 }
 
 double l1Relaxation::compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
       const Multipliers& multipliers) const {
-   return 0.;
+   return this->l1_relaxed_problem.compute_complementarity_error(primals, constraints, multipliers);
 }
 
 void l1Relaxation::set_trust_region_radius(double trust_region_radius) {

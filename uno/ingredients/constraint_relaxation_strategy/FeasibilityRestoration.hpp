@@ -41,7 +41,6 @@ private:
    const std::unique_ptr<GlobalizationStrategy> restoration_phase_strategy;
    const std::unique_ptr<GlobalizationStrategy> optimality_phase_strategy;
    Phase current_phase{Phase::OPTIMALITY};
-   const double l1_constraint_violation_coefficient;
    const double tolerance;
    const bool test_linearized_feasibility;
    bool switched_to_optimality_phase{false};
@@ -53,13 +52,8 @@ private:
    void switch_to_feasibility_restoration(Iterate& current_iterate, WarmstartInformation& warmstart_information);
    void switch_to_optimality(Iterate& current_iterate, Iterate& trial_iterate);
 
-   // progress measures and their local models
-   void set_progress_measures_for_optimality_problem(Iterate& iterate);
-   void set_progress_measures_for_feasibility_problem(Iterate& iterate);
-   [[nodiscard]] ProgressMeasures compute_predicted_reduction_models_for_optimality_problem(const Iterate& current_iterate, const Direction& direction,
-         double step_length);
-   [[nodiscard]] ProgressMeasures compute_predicted_reduction_models_for_feasibility_problem(const Iterate& current_iterate, const Direction& direction,
-         double step_length);
+   void set_progress_measures(const NonlinearProblem& problem, Iterate& iterate) const;
+   [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length);
 
    [[nodiscard]] double compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers) const override;

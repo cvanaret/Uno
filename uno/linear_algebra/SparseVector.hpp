@@ -18,7 +18,7 @@ class SparseVector {
 public:
    explicit SparseVector(size_t capacity = 0);
    void for_each(const std::function<void (size_t, T)>& f) const;
-   void for_each_index(const std::function<void (size_t)>& f) const;
+   // void for_each_index(const std::function<void (size_t)>& f) const;
    void for_each_value(const std::function<void (T)>& f) const;
    [[nodiscard]] size_t size() const;
    void reserve(size_t capacity);
@@ -50,12 +50,14 @@ void SparseVector<T>::for_each(const std::function<void (size_t, T)>& f) const {
    }
 }
 
+/*
 template <typename T>
 void SparseVector<T>::for_each_index(const std::function<void(size_t)>& f) const {
    for (size_t i: Range(this->number_nonzeros)) {
       f(this->indices[i]);
    }
 }
+*/
 
 template <typename T>
 void SparseVector<T>::for_each_value(const std::function<void(T)>& f) const {

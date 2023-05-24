@@ -31,7 +31,6 @@ protected:
    const double armijo_tolerance;
 
    [[nodiscard]] bool armijo_sufficient_decrease(double predicted_reduction, double actual_reduction) const;
-   static void check_finiteness(const ProgressMeasures& progress, double objective_multiplier);
 };
 
 #endif // UNO_GLOBALIZATIONSTRATEGY_H

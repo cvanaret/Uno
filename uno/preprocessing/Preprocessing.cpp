@@ -5,7 +5,6 @@
 #include "solvers/QP/BQPDSolver.hpp"
 #include "linear_algebra/CSCSymmetricMatrix.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
-#include "tools/Range.hpp"
 
 // compute a least-square approximation of the multipliers by solving a linear system (uses existing linear system)
 void Preprocessing::compute_least_square_multipliers(const Model& model, SymmetricMatrix<double>& matrix, std::vector<double>& rhs,

@@ -4,7 +4,6 @@
 #ifndef UNO_L1RELAXEDPROBLEM_H
 #define UNO_L1RELAXEDPROBLEM_H
 
-#include <cmath>
 #include "RelaxedProblem.hpp"
 #include "tools/Range.hpp"
 #include "tools/Infinity.hpp"
@@ -27,9 +26,16 @@ public:
    void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const override;
    void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix<double>& hessian) const override;
 
-   [[nodiscard]] double compute_stationarity_error(const Iterate& iterate, Norm residual_norm) const;
+   void set_infeasibility_measure(Iterate& iterate, Norm progress_norm) const override;
+   void set_optimality_measure(Iterate& iterate) const override;
+   [[nodiscard]] double compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction,
+         double step_length, Norm progress_norm) const;
+   [[nodiscard]] std::function<double(double)> compute_predicted_optimality_reduction_model(const Iterate& current_iterate,
+         const Direction& direction, double step_length) const override;
+
+   [[nodiscard]] double compute_stationarity_error(const Iterate& iterate, Norm residual_norm) const override;
    [[nodiscard]] double compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
-         const Multipliers& multipliers) const;
+         const Multipliers& multipliers) const override;
 
    [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
    [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
@@ -97,7 +103,7 @@ inline double l1RelaxedProblem::get_objective_multiplier() const {
    return this->objective_multiplier;
 }
 
-// return rho*f(x) + coeff*||c(x)||_1
+// return rho*f(x) + coeff*||c(x)||₁
 inline double l1RelaxedProblem::evaluate_objective(Iterate& iterate) const {
    double objective = 0.;
 
@@ -107,9 +113,9 @@ inline double l1RelaxedProblem::evaluate_objective(Iterate& iterate) const {
       objective += this->objective_multiplier * iterate.evaluations.objective;
    }
 
-   // scaled constraint violation: coeff*||c(x)||_1
+   // scaled constraint violation: coeff*||c(x)||₁
    iterate.evaluate_constraints(this->model);
-   objective += this->constraint_violation_coefficient * this->model.compute_constraint_violation(iterate.evaluations.constraints, L1_NORM);
+   objective += this->constraint_violation_coefficient * this->model.compute_constraint_violation(iterate.evaluations.constraints, Norm::L1_NORM);
    return objective;
 }
 
@@ -166,12 +172,79 @@ inline void l1RelaxedProblem::evaluate_lagrangian_hessian(const std::vector<doub
    }
 }
 
+inline void l1RelaxedProblem::set_infeasibility_measure(Iterate& iterate, Norm /*progress_norm*/) const {
+   if (this->objective_multiplier == 0.) {
+      iterate.progress.infeasibility = 0.;
+   }
+   else { // 0. < objective_multiplier
+      iterate.evaluate_constraints(this->model);
+      iterate.progress.infeasibility = this->model.compute_constraint_violation(iterate.evaluations.constraints, Norm::L1_NORM);
+   }
+}
+
+inline void l1RelaxedProblem::set_optimality_measure(Iterate& iterate) const {
+   if (this->objective_multiplier == 0.) {
+      // constraint violation
+      iterate.evaluate_constraints(this->model);
+      const double constraint_violation = this->constraint_violation_coefficient *
+                                          this->model.compute_constraint_violation(iterate.evaluations.constraints, Norm::L1_NORM);
+      iterate.progress.optimality = [=](double /*objective_multiplier*/) {
+         return constraint_violation;
+      };
+   }
+   else { // 0. < objective_multiplier
+      // scaled objective
+      iterate.evaluate_objective(this->model);
+      const double objective = iterate.evaluations.objective;
+      iterate.progress.optimality = [=](double objective_multiplier) {
+         return objective_multiplier*objective;
+      };
+   }
+}
+
+// predicted infeasibility reduction
+inline double l1RelaxedProblem::compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction,
+      double step_length, Norm /*progress_norm*/) const {
+   if (this->objective_multiplier == 0.) {
+      return 0.;
+   }
+   else { // 0. < objective_multiplier
+      // "‖c(x)‖₁ - ‖c(x) + ∇c(x)^T (αd)‖₁"
+      const double current_constraint_violation = this->model.compute_constraint_violation(current_iterate.evaluations.constraints, Norm::L1_NORM);
+      const double linearized_constraint_violation = NonlinearProblem::compute_linearized_constraint_violation(this->model, current_iterate,
+            direction, step_length);
+      return current_constraint_violation - linearized_constraint_violation;
+   }
+}
+
+// TODO quadratic term
+inline std::function<double(double)> l1RelaxedProblem::compute_predicted_optimality_reduction_model(const Iterate& current_iterate,
+      const Direction& direction, double step_length) const {
+   if (this->objective_multiplier == 0.) {
+      // "‖c(x)‖₁ - ‖c(x) + ∇c(x)^T (αd)‖₁"
+      const double current_constraint_violation = this->model.compute_constraint_violation(current_iterate.evaluations.constraints, Norm::L1_NORM);
+      const double linearized_constraint_violation = NonlinearProblem::compute_linearized_constraint_violation(this->model, current_iterate,
+            direction, step_length);
+      return [=](double /*objective_multiplier*/) {
+         return this->constraint_violation_coefficient * (current_constraint_violation - linearized_constraint_violation);
+      };
+   }
+   else { // 0. < objective_multiplier
+      // "-ρ*∇f(x)^T (αd)"
+      const double directional_derivative = dot(direction.primals, current_iterate.evaluations.objective_gradient);
+      return [=](double objective_multiplier) {
+         return step_length * (-objective_multiplier*directional_derivative);
+      };
+   }
+}
+
 inline double l1RelaxedProblem::compute_stationarity_error(const Iterate& iterate, Norm residual_norm) const {
    // norm of the constraints' contribution of the Lagrangian gradient
    return norm(iterate.lagrangian_gradient.constraints_contribution, residual_norm);
 }
 
 // complementary slackness error
+// TODO: generic norm
 inline double l1RelaxedProblem::compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
       const Multipliers& multipliers) const {
    double error = 0.;

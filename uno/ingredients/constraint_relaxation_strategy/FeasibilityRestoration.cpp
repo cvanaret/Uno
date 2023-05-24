@@ -1,7 +1,6 @@
 // Copyright (c) 2018-2023 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include <cassert>
 #include <functional>
 #include "FeasibilityRestoration.hpp"
 #include "ingredients/globalization_strategy/GlobalizationStrategyFactory.hpp"
@@ -19,7 +18,6 @@ FeasibilityRestoration::FeasibilityRestoration(Statistics& statistics, const Mod
       // create the globalization strategies (one for each phase)
       restoration_phase_strategy(GlobalizationStrategyFactory::create(statistics, options.get_string("globalization_strategy"), false, options)),
       optimality_phase_strategy(GlobalizationStrategyFactory::create(statistics, options.get_string("globalization_strategy"), true, options)),
-      l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
       tolerance(options.get_double("tolerance")),
       test_linearized_feasibility(options.get_bool("feasibility_restoration_test_linearized_feasibility")) {
    statistics.add_column("phase", Statistics::int_width, options.get_int("statistics_restoration_phase_column_order"));
@@ -29,7 +27,7 @@ void FeasibilityRestoration::initialize(Iterate& initial_iterate) {
    this->subproblem->generate_initial_iterate(this->optimality_problem, initial_iterate);
 
    // compute the progress measures and residuals of the initial point
-   this->set_progress_measures_for_optimality_problem(initial_iterate);
+   this->set_progress_measures(this->optimality_problem, initial_iterate);
    this->compute_primal_dual_residuals(this->original_model, this->feasibility_problem, initial_iterate);
 
    // initialize the globalization strategies
@@ -110,8 +108,7 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
                this->tolerance)) {
       // if the trial infeasibility improves upon the best known infeasibility of the globalization strategy
       trial_iterate.evaluate_constraints(this->original_model);
-      const double trial_infeasibility = this->original_model.compute_constraint_violation(trial_iterate.evaluations.constraints,
-            this->progress_norm);
+      const double trial_infeasibility = this->original_model.compute_constraint_violation(trial_iterate.evaluations.constraints, this->progress_norm);
       if (this->optimality_phase_strategy->is_infeasibility_acceptable(trial_infeasibility)) {
          this->switch_to_optimality(current_iterate, trial_iterate);
       }
@@ -119,10 +116,10 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
 
    // evaluate the progress measures of the trial iterate
    if (this->current_phase == Phase::OPTIMALITY) {
-      this->set_progress_measures_for_optimality_problem(trial_iterate);
+      this->set_progress_measures(this->optimality_problem, trial_iterate);
    }
    else {
-      this->set_progress_measures_for_feasibility_problem(trial_iterate);
+      this->set_progress_measures(this->feasibility_problem, trial_iterate);
    }
 }
 
@@ -134,10 +131,10 @@ void FeasibilityRestoration::switch_to_feasibility_restoration(Iterate& current_
    this->subproblem->set_elastic_variable_values(this->feasibility_problem, current_iterate);
    DEBUG2 << "Current iterate:\n" << current_iterate << '\n';
 
-   // refresh the progress measures of the current iterate
-   this->set_progress_measures_for_feasibility_problem(current_iterate);
-
+   // compute the progress measures of the current iterate for the feasibility problem
+   this->set_progress_measures(this->feasibility_problem, current_iterate);
    current_iterate.multipliers.objective = 0.;
+
    this->restoration_phase_strategy->reset();
    this->restoration_phase_strategy->register_current_progress(current_iterate.progress);
    warmstart_information.set_cold_start();
@@ -152,7 +149,7 @@ void FeasibilityRestoration::switch_to_optimality(Iterate& current_iterate, Iter
    this->switched_to_optimality_phase = true;
 
    // refresh the progress measures of current iterate
-   this->set_progress_measures_for_optimality_problem(current_iterate);
+   this->set_progress_measures(this->optimality_problem, current_iterate);
    current_iterate.multipliers.objective = 1.;
    trial_iterate.multipliers.objective = 1.;
 }
@@ -170,9 +167,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
    }
    else {
       // evaluate the predicted reduction
-      ProgressMeasures predicted_reduction = (this->current_phase == Phase::OPTIMALITY) ?
-            this->compute_predicted_reduction_models_for_optimality_problem(current_iterate, direction, step_length) :
-            this->compute_predicted_reduction_models_for_feasibility_problem(current_iterate, direction, step_length);
+      ProgressMeasures predicted_reduction = this->compute_predicted_reduction_models(current_iterate, direction, step_length);
 
       // invoke the globalization strategy for acceptance
       GlobalizationStrategy& current_phase_strategy = this->current_globalization_strategy();
@@ -181,11 +176,34 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
    }
 
    if (accept_iterate) {
-      // compute the primal-dual residuals
       this->compute_primal_dual_residuals(this->original_model, this->feasibility_problem, trial_iterate);
       this->add_statistics(statistics, trial_iterate);
    }
    return accept_iterate;
+}
+
+void FeasibilityRestoration::set_progress_measures(const NonlinearProblem& problem, Iterate& iterate) const {
+   problem.set_infeasibility_measure(iterate, this->progress_norm);
+   problem.set_optimality_measure(iterate);
+   this->subproblem->set_auxiliary_measure(problem, iterate);
+}
+
+ProgressMeasures FeasibilityRestoration::compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction,
+      double step_length) {
+   if (this->current_phase == Phase::OPTIMALITY) {
+      return {
+            this->optimality_problem.compute_predicted_infeasibility_reduction_model(current_iterate, direction, step_length, this->progress_norm),
+            this->optimality_problem.compute_predicted_optimality_reduction_model(current_iterate, direction, step_length),
+            this->subproblem->generate_predicted_auxiliary_reduction_model(this->current_problem(), current_iterate, direction, step_length)
+      };
+   }
+   else { // Phase::FEASIBILITY_RESTORATION
+      return {
+            this->feasibility_problem.compute_predicted_infeasibility_reduction_model(current_iterate, direction, step_length, this->progress_norm),
+            this->feasibility_problem.compute_predicted_optimality_reduction_model(current_iterate, direction, step_length),
+            this->subproblem->generate_predicted_auxiliary_reduction_model(this->current_problem(), current_iterate, direction, step_length)
+      };
+   }
 }
 
 const NonlinearProblem& FeasibilityRestoration::current_problem() const {
@@ -205,83 +223,7 @@ void FeasibilityRestoration::set_trust_region_radius(double trust_region_radius)
    this->subproblem->set_trust_region_radius(trust_region_radius);
 }
 
-/* progress measures */
-
-void FeasibilityRestoration::set_progress_measures_for_optimality_problem(Iterate& iterate) {
-   // infeasibility measure: constraint violation
-   iterate.evaluate_constraints(this->original_model);
-   iterate.progress.infeasibility = this->original_model.compute_constraint_violation(iterate.evaluations.constraints, this->progress_norm);
-
-   // optimality measure: scaled objective
-   iterate.evaluate_objective(this->original_model);
-   const double objective = iterate.evaluations.objective;
-   iterate.progress.optimality = [=](double objective_multiplier) {
-      return objective_multiplier*objective;
-   };
-
-   // auxiliary measure
-   this->subproblem->set_auxiliary_measure(this->optimality_problem, iterate);
-}
-
-void FeasibilityRestoration::set_progress_measures_for_feasibility_problem(Iterate& iterate) {
-   // infeasibility measure: 0
-   iterate.progress.infeasibility = 0.;
-
-   // optimality measure: constraint violation
-   iterate.evaluate_constraints(this->original_model);
-   const double constraint_violation = this->l1_constraint_violation_coefficient *
-                                       this->original_model.compute_constraint_violation(iterate.evaluations.constraints, this->progress_norm);
-   iterate.progress.optimality = [=](double /*objective_multiplier*/) {
-      return constraint_violation;
-   };
-
-   // auxiliary measure
-   this->subproblem->set_auxiliary_measure(this->feasibility_problem, iterate);
-}
-
-ProgressMeasures FeasibilityRestoration::compute_predicted_reduction_models_for_optimality_problem(const Iterate& current_iterate,
-      const Direction& direction, double step_length) {
-   // predicted infeasibility reduction: "‖c(x)‖₁ - ‖c(x) + ∇c(x)^T (αd)‖₁"
-   const double current_constraint_violation = this->original_model.compute_constraint_violation(current_iterate.evaluations.constraints,
-         this->progress_norm);
-   const double linearized_constraint_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model,
-         current_iterate, direction, step_length);
-   const double predicted_infeasibility_reduction = current_constraint_violation - linearized_constraint_violation;
-
-   // predicted optimality reduction: "-∇f(x)^T (αd)"
-   const double directional_derivative = dot(direction.primals, current_iterate.evaluations.objective_gradient);
-   const auto predicted_optimality_reduction = [=](double objective_multiplier) {
-      return step_length * (-objective_multiplier*directional_derivative);
-   };
-
-   // predicted auxiliary reduction
-   const double predicted_auxiliary_reduction = this->subproblem->generate_predicted_auxiliary_reduction_model(this->optimality_problem,
-         current_iterate, direction, step_length);
-
-   return {predicted_infeasibility_reduction, predicted_optimality_reduction, predicted_auxiliary_reduction};
-}
-
-ProgressMeasures FeasibilityRestoration::compute_predicted_reduction_models_for_feasibility_problem(const Iterate& current_iterate,
-      const Direction& direction, double step_length) {
-   // predicted infeasibility reduction: 0
-   const double predicted_infeasibility_reduction = 0.;
-
-   // predicted optimality reduction: "‖c(x)‖₁ - ‖c(x) + ∇c(x)^T (αd)‖₁"
-   const double current_constraint_violation = this->original_model.compute_constraint_violation(current_iterate.evaluations.constraints,
-         this->progress_norm);
-   const double linearized_constraint_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model,
-         current_iterate, direction, step_length);
-   const auto predicted_optimality_reduction = [=](double /*objective_multiplier*/) {
-      return this->l1_constraint_violation_coefficient * (current_constraint_violation - linearized_constraint_violation);
-   };
-
-   // predicted auxiliary reduction
-   const double predicted_auxiliary_reduction = this->subproblem->generate_predicted_auxiliary_reduction_model(this->feasibility_problem,
-         current_iterate, direction, step_length);
-
-   return {predicted_infeasibility_reduction, predicted_optimality_reduction, predicted_auxiliary_reduction};
-}
-
+// TODO: generic norm
 double FeasibilityRestoration::compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
       const Multipliers& multipliers) const {
    double error = 0.;
@@ -304,7 +246,6 @@ double FeasibilityRestoration::compute_complementarity_error(const std::vector<d
       }
    }
    return error;
-
 }
 
 void FeasibilityRestoration::add_statistics(Statistics& statistics, const Iterate& trial_iterate) const {

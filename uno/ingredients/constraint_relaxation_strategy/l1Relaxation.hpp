@@ -70,9 +70,8 @@ protected:
    [[nodiscard]] bool is_descent_direction_for_l1_merit_function(const Iterate& current_iterate, const Direction& direction,
          const Direction& direction_lowest_violation) const;
 
-   // progress measures and their local models
-   void set_progress_measures_for_l1_relaxed_problem(Iterate& iterate);
-   [[nodiscard]] ProgressMeasures compute_predicted_reduction_models_for_l1_relaxed_problem(const Iterate& current_iterate, const Direction& direction,
+   void set_progress_measures(Iterate& iterate) const;
+   [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction,
          double step_length);
 
    [[nodiscard]] double compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,

@@ -5,7 +5,6 @@
 #include <algorithm>
 #include "BQPDSolver.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "optimization/EvaluationErrors.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Infinity.hpp"
 

@@ -4,7 +4,6 @@
 #ifndef UNO_OPTIMALITYPROBLEM_H
 #define UNO_OPTIMALITYPROBLEM_H
 
-#include <cmath>
 #include "NonlinearProblem.hpp"
 
 class OptimalityProblem: public NonlinearProblem {
@@ -17,6 +16,13 @@ public:
    void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const override;
    void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const override;
    void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix<double>& hessian) const override;
+
+   void set_infeasibility_measure(Iterate& iterate, Norm progress_norm) const override;
+   void set_optimality_measure(Iterate& iterate) const override;
+   [[nodiscard]] double compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction,
+         double step_length, Norm progress_norm) const;
+   [[nodiscard]] std::function<double(double)> compute_predicted_optimality_reduction_model(const Iterate& current_iterate,
+         const Direction& direction, double step_length) const override;
 
    [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
    [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
@@ -79,6 +85,40 @@ inline void OptimalityProblem::evaluate_constraint_jacobian(Iterate& iterate, Re
 inline void OptimalityProblem::evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers,
       SymmetricMatrix<double>& hessian) const {
    this->model.evaluate_lagrangian_hessian(x, this->get_objective_multiplier(), multipliers, hessian);
+}
+
+// infeasibility measure: constraint violation
+inline void OptimalityProblem::set_infeasibility_measure(Iterate& iterate, Norm progress_norm) const {
+   iterate.evaluate_constraints(this->model);
+   iterate.progress.infeasibility = this->model.compute_constraint_violation(iterate.evaluations.constraints, progress_norm);
+}
+
+// optimality measure: scaled objective
+inline void OptimalityProblem::set_optimality_measure(Iterate& iterate) const {
+   iterate.evaluate_objective(this->model);
+   const double objective = iterate.evaluations.objective;
+   iterate.progress.optimality = [=](double objective_multiplier) {
+      return objective_multiplier*objective;
+   };
+}
+
+inline double OptimalityProblem::compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction,
+      double step_length, Norm progress_norm) const {
+   // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
+   const double current_constraint_violation = this->model.compute_constraint_violation(current_iterate.evaluations.constraints,
+         progress_norm);
+   const double linearized_constraint_violation = NonlinearProblem::compute_linearized_constraint_violation(this->model, current_iterate, direction,
+         step_length);
+   return current_constraint_violation - linearized_constraint_violation;
+}
+
+inline std::function<double(double)> OptimalityProblem::compute_predicted_optimality_reduction_model(const Iterate& current_iterate,
+      const Direction& direction, double step_length) const {
+   // predicted optimality reduction: "-∇f(x)^T (αd)"
+   const double directional_derivative = dot(direction.primals, current_iterate.evaluations.objective_gradient);
+   return [=](double objective_multiplier) {
+      return step_length * (-objective_multiplier*directional_derivative);  // TODO quadratic term
+   };
 }
 
 inline double OptimalityProblem::get_variable_lower_bound(size_t i) const {

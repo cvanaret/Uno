@@ -25,9 +25,6 @@ bool LeyfferFilterStrategy::is_iterate_acceptable(Statistics& /*statistics*/, co
    DEBUG << "Trial:   η = " << trial_progress_measures.infeasibility << ",\t ω = " << trial_optimality_measure << '\n';
    DEBUG << "Unconstrained predicted reduction: " << predicted_reduction.optimality(1.) << " + " << predicted_reduction.auxiliary_terms <<
          " = " <<  unconstrained_predicted_reduction << '\n';
-
-   GlobalizationStrategy::check_finiteness(current_progress_measures, 1.);
-   GlobalizationStrategy::check_finiteness(trial_progress_measures, 1.);
    DEBUG << *this->filter << '\n';
 
    bool accept = false;

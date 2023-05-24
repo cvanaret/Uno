@@ -12,7 +12,7 @@
 #include "tools/Logger.hpp"
 #include "tools/Range.hpp"
 
-enum Norm {
+enum class Norm {
    L1_NORM = 1,
    L2_NORM = 2,
    L2_SQUARED_NORM,
@@ -21,13 +21,13 @@ enum Norm {
 
 inline Norm norm_from_string(const std::string& norm_string) {
    if (norm_string == "L1") {
-      return L1_NORM;
+      return Norm::L1_NORM;
    }
    else if (norm_string == "L2") {
-      return L2_NORM;
+      return Norm::L2_NORM;
    }
    else if (norm_string == "INF") {
-      return INF_NORM;
+      return Norm::INF_NORM;
    }
    throw std::invalid_argument("The norm " + norm_string + " is not known");
 }
@@ -147,16 +147,16 @@ T norm_inf(const ARRAY& x, ARRAYS... other_arrays) {
 template <typename ARRAY, typename T = typename ARRAY::value_type>
 T norm(const ARRAY& x, Norm norm) {
    // choose the right norm
-   if (norm == L1_NORM) {
+   if (norm == Norm::L1_NORM) {
       return norm_1(x);
    }
-   else if (norm == L2_NORM) {
+   else if (norm == Norm::L2_NORM) {
       return norm_2(x);
    }
-   else if (norm == L2_SQUARED_NORM) {
+   else if (norm == Norm::L2_SQUARED_NORM) {
       return norm_2_squared(x);
    }
-   else if (norm == INF_NORM) {
+   else if (norm == Norm::INF_NORM) {
       return norm_inf(x);
    }
    throw std::invalid_argument("The norm is not known");
@@ -164,7 +164,7 @@ T norm(const ARRAY& x, Norm norm) {
 
 // these methods take:
 // - a callback as argument whose parameter is the current index. This avoids forming the vector explicitly
-// - an array of arbitrary type (can be range, std::vector, std::array, etc)
+// - an array of arbitrary type (can be Range, std::vector, std::array, etc)
 template <typename T, typename ARRAY>
 T norm_1(const std::function<T(size_t i)>& ith_component, const ARRAY& array) {
    T norm = T(0);
@@ -210,16 +210,16 @@ T norm_2(const std::function<T(size_t /*i*/)>& ith_component, const ARRAY& array
 template <typename T, typename ARRAY>
 T norm(const std::function<T(size_t /*i*/)>& ith_component, const ARRAY& array, Norm norm) {
    // choose the right norm
-   if (norm == L1_NORM) {
+   if (norm == Norm::L1_NORM) {
       return norm_1(ith_component, array);
    }
-   else if (norm == L2_NORM) {
+   else if (norm == Norm::L2_NORM) {
       return norm_2(ith_component, array);
    }
-   else if (norm == L2_SQUARED_NORM) {
+   else if (norm == Norm::L2_SQUARED_NORM) {
       return norm_2_squared(ith_component, array);
    }
-   else if (norm == INF_NORM) {
+   else if (norm == Norm::INF_NORM) {
       return norm_inf(ith_component, array);
    }
    throw std::invalid_argument("The norm is not known");

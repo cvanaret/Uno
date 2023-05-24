@@ -4,9 +4,7 @@
 #ifndef UNO_NONLINEARPROBLEM_H
 #define UNO_NONLINEARPROBLEM_H
 
-#include <string>
 #include <vector>
-#include <map>
 #include "optimization/Iterate.hpp"
 #include "optimization/Model.hpp"
 #include "linear_algebra/SparseVector.hpp"
@@ -43,6 +41,16 @@ public:
    virtual void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const = 0;
    virtual void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix<double>& hessian) const = 0;
 
+   virtual void set_infeasibility_measure(Iterate& iterate, Norm progress_norm) const = 0;
+   virtual void set_optimality_measure(Iterate& iterate) const = 0;
+   [[nodiscard]] virtual double compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction,
+         double step_length, Norm progress_norm) const = 0;
+   [[nodiscard]] virtual std::function<double(double)> compute_predicted_optimality_reduction_model(const Iterate& current_iterate,
+         const Direction& direction, double step_length) const = 0;
+
+   [[nodiscard]] static double compute_linearized_constraint_violation(const Model& model, const Iterate& current_iterate,
+         const Direction& direction, double step_length);
+
    [[nodiscard]] size_t get_number_original_variables() const;
    [[nodiscard]] virtual double get_variable_lower_bound(size_t i) const = 0;
    [[nodiscard]] virtual double get_variable_upper_bound(size_t i) const = 0;
@@ -70,6 +78,18 @@ inline bool NonlinearProblem::is_constrained() const {
 
 inline size_t NonlinearProblem::get_number_original_variables() const {
    return this->model.number_variables;
+}
+
+inline double NonlinearProblem::compute_linearized_constraint_violation(const Model& model, const Iterate& current_iterate,
+      const Direction& direction, double step_length) {
+   // determine the linearized constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
+   const auto jth_component = [&](size_t j) {
+      const double component_j = current_iterate.evaluations.constraints[j] + step_length * dot(direction.primals,
+            current_iterate.evaluations.constraint_jacobian[j]);
+      return model.compute_constraint_violation(component_j, j);
+   };
+
+   return norm_1<double>(jth_component, Range(model.number_constraints));
 }
 
 #endif // UNO_NONLINEARPROBLEM_H

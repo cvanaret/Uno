@@ -30,9 +30,6 @@ bool WaechterFilterStrategy::is_iterate_acceptable(Statistics& /*statistics*/, c
       trial_progress_measures.auxiliary_terms << '\n';
    DEBUG << "Unconstrained predicted reduction: " << predicted_reduction.optimality(1.) << " + " << predicted_reduction.auxiliary_terms <<
          " = " <<  unconstrained_predicted_reduction << '\n';
-
-   GlobalizationStrategy::check_finiteness(current_progress_measures, 1.);
-   GlobalizationStrategy::check_finiteness(trial_progress_measures, 1.);
    DEBUG << *this->filter;
 
    bool accept = false;
@@ -41,6 +38,7 @@ bool WaechterFilterStrategy::is_iterate_acceptable(Statistics& /*statistics*/, c
    if (filter_acceptable) {
       DEBUG << "Filter acceptable\n";
       // compute actual reduction (and protect against roundoff errors)
+      // TODO put constants in the option file
       static double machine_epsilon = std::numeric_limits<double>::epsilon();
       const double actual_reduction = this->filter->compute_actual_reduction(current_optimality_measure, current_progress_measures.infeasibility,
             trial_optimality_measure) + 10. * machine_epsilon * std::abs(current_optimality_measure);
