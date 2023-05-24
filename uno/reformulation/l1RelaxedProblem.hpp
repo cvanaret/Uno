@@ -115,7 +115,7 @@ inline double l1RelaxedProblem::evaluate_objective(Iterate& iterate) const {
 
    // scaled constraint violation: coeff*||c(x)||₁
    iterate.evaluate_constraints(this->model);
-   objective += this->constraint_violation_coefficient * this->model.compute_constraint_violation(iterate.evaluations.constraints, Norm::L1_NORM);
+   objective += this->constraint_violation_coefficient * this->model.compute_constraint_violation(iterate.evaluations.constraints, Norm::L1);
    return objective;
 }
 
@@ -178,7 +178,7 @@ inline void l1RelaxedProblem::set_infeasibility_measure(Iterate& iterate, Norm /
    }
    else { // 0. < objective_multiplier
       iterate.evaluate_constraints(this->model);
-      iterate.progress.infeasibility = this->model.compute_constraint_violation(iterate.evaluations.constraints, Norm::L1_NORM);
+      iterate.progress.infeasibility = this->model.compute_constraint_violation(iterate.evaluations.constraints, Norm::L1);
    }
 }
 
@@ -187,7 +187,7 @@ inline void l1RelaxedProblem::set_optimality_measure(Iterate& iterate) const {
       // constraint violation
       iterate.evaluate_constraints(this->model);
       const double constraint_violation = this->constraint_violation_coefficient *
-                                          this->model.compute_constraint_violation(iterate.evaluations.constraints, Norm::L1_NORM);
+                                          this->model.compute_constraint_violation(iterate.evaluations.constraints, Norm::L1);
       iterate.progress.optimality = [=](double /*objective_multiplier*/) {
          return constraint_violation;
       };
@@ -210,7 +210,7 @@ inline double l1RelaxedProblem::compute_predicted_infeasibility_reduction_model(
    }
    else { // 0. < objective_multiplier
       // "‖c(x)‖₁ - ‖c(x) + ∇c(x)^T (αd)‖₁"
-      const double current_constraint_violation = this->model.compute_constraint_violation(current_iterate.evaluations.constraints, Norm::L1_NORM);
+      const double current_constraint_violation = this->model.compute_constraint_violation(current_iterate.evaluations.constraints, Norm::L1);
       const double linearized_constraint_violation = NonlinearProblem::compute_linearized_constraint_violation(this->model, current_iterate,
             direction, step_length);
       return current_constraint_violation - linearized_constraint_violation;
@@ -222,7 +222,7 @@ inline std::function<double(double)> l1RelaxedProblem::compute_predicted_optimal
       const Direction& direction, double step_length) const {
    if (this->objective_multiplier == 0.) {
       // "‖c(x)‖₁ - ‖c(x) + ∇c(x)^T (αd)‖₁"
-      const double current_constraint_violation = this->model.compute_constraint_violation(current_iterate.evaluations.constraints, Norm::L1_NORM);
+      const double current_constraint_violation = this->model.compute_constraint_violation(current_iterate.evaluations.constraints, Norm::L1);
       const double linearized_constraint_violation = NonlinearProblem::compute_linearized_constraint_violation(this->model, current_iterate,
             direction, step_length);
       return [=](double /*objective_multiplier*/) {

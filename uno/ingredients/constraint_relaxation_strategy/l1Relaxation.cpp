@@ -268,7 +268,7 @@ void l1Relaxation::set_progress_measures(Iterate& iterate) const {
 ProgressMeasures l1Relaxation::compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction,
       double step_length) {
    return {
-      this->l1_relaxed_problem.compute_predicted_infeasibility_reduction_model(current_iterate, direction, step_length, Norm::L1_NORM),
+      this->l1_relaxed_problem.compute_predicted_infeasibility_reduction_model(current_iterate, direction, step_length, Norm::L1),
       this->l1_relaxed_problem.compute_predicted_optimality_reduction_model(current_iterate, direction, step_length),
       this->subproblem->generate_predicted_auxiliary_reduction_model(this->l1_relaxed_problem, current_iterate, direction, step_length)
    };

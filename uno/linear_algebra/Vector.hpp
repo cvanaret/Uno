@@ -13,21 +13,21 @@
 #include "tools/Range.hpp"
 
 enum class Norm {
-   L1_NORM = 1,
-   L2_NORM = 2,
-   L2_SQUARED_NORM,
-   INF_NORM
+   L1 = 1,
+   L2 = 2,
+   L2_SQUARED,
+   INF
 };
 
 inline Norm norm_from_string(const std::string& norm_string) {
    if (norm_string == "L1") {
-      return Norm::L1_NORM;
+      return Norm::L1;
    }
    else if (norm_string == "L2") {
-      return Norm::L2_NORM;
+      return Norm::L2;
    }
    else if (norm_string == "INF") {
-      return Norm::INF_NORM;
+      return Norm::INF;
    }
    throw std::invalid_argument("The norm " + norm_string + " is not known");
 }
@@ -147,16 +147,16 @@ T norm_inf(const ARRAY& x, ARRAYS... other_arrays) {
 template <typename ARRAY, typename T = typename ARRAY::value_type>
 T norm(const ARRAY& x, Norm norm) {
    // choose the right norm
-   if (norm == Norm::L1_NORM) {
+   if (norm == Norm::L1) {
       return norm_1(x);
    }
-   else if (norm == Norm::L2_NORM) {
+   else if (norm == Norm::L2) {
       return norm_2(x);
    }
-   else if (norm == Norm::L2_SQUARED_NORM) {
+   else if (norm == Norm::L2_SQUARED) {
       return norm_2_squared(x);
    }
-   else if (norm == Norm::INF_NORM) {
+   else if (norm == Norm::INF) {
       return norm_inf(x);
    }
    throw std::invalid_argument("The norm is not known");
@@ -210,16 +210,16 @@ T norm_2(const std::function<T(size_t /*i*/)>& ith_component, const ARRAY& array
 template <typename T, typename ARRAY>
 T norm(const std::function<T(size_t /*i*/)>& ith_component, const ARRAY& array, Norm norm) {
    // choose the right norm
-   if (norm == Norm::L1_NORM) {
+   if (norm == Norm::L1) {
       return norm_1(ith_component, array);
    }
-   else if (norm == Norm::L2_NORM) {
+   else if (norm == Norm::L2) {
       return norm_2(ith_component, array);
    }
-   else if (norm == Norm::L2_SQUARED_NORM) {
+   else if (norm == Norm::L2_SQUARED) {
       return norm_2_squared(ith_component, array);
    }
-   else if (norm == Norm::INF_NORM) {
+   else if (norm == Norm::INF) {
       return norm_inf(ith_component, array);
    }
    throw std::invalid_argument("The norm is not known");
