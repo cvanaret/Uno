@@ -43,25 +43,9 @@ void Model::determine_bounds_types(std::vector<Interval>& bounds, std::vector<Bo
    });
 }
 
-void Model::determine_constraints() {
-   for (size_t j: Range(this->number_constraints)) {
-      if (this->get_constraint_bound_type(j) == EQUAL_BOUNDS) {
-         this->equality_constraints.push_back(j);
-      }
-      else {
-         this->inequality_constraints.push_back(j);
-      }
-   }
-}
-
 void Model::project_primals_onto_bounds(std::vector<double>& x) const {
    for (size_t i: Range(this->number_variables)) {
-      if (x[i] < this->get_variable_lower_bound(i)) {
-         x[i] = this->get_variable_lower_bound(i);
-      }
-      else if (this->get_variable_upper_bound(i) < x[i]) {
-         x[i] = this->get_variable_upper_bound(i);
-      }
+      x[i] = std::max(std::min(x[i], this->get_variable_upper_bound(i)), this->get_variable_lower_bound(i));
    }
 }
 

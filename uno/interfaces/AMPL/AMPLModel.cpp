@@ -327,7 +327,16 @@ void AMPLModel::generate_constraints() {
       this->constraint_bounds[j] = {lb, ub};
    }
    Model::determine_bounds_types(this->constraint_bounds, this->constraint_status);
-   this->determine_constraints();
+
+   // partition equality and inequality constraints
+   for (size_t j: Range(this->number_constraints)) {
+      if (this->get_constraint_bound_type(j) == EQUAL_BOUNDS) {
+         this->equality_constraints.push_back(j);
+      }
+      else {
+         this->inequality_constraints.push_back(j);
+      }
+   }
 
    // AMPL orders the constraints based on the function type: nonlinear first, then linear
    for (size_t j: Range(static_cast<size_t>(asl->i.nlc_))) {

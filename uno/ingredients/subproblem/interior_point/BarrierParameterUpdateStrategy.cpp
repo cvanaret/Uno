@@ -1,9 +1,10 @@
 // Copyright (c) 2018-2023 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include "BarrierParameterUpdateStrategy.hpp"
-#include "tools/Logger.hpp"
 #include <cmath>
+#include "BarrierParameterUpdateStrategy.hpp"
+#include "linear_algebra/VectorExpression.hpp"
+#include "tools/Logger.hpp"
 
 BarrierParameterUpdateStrategy::BarrierParameterUpdateStrategy(const Options& options):
    barrier_parameter(options.get_double("barrier_initial_parameter")),
@@ -31,7 +32,7 @@ bool BarrierParameterUpdateStrategy::update_barrier_parameter(const NonlinearPro
    double primal_dual_error = std::max({
       scaled_stationarity,
       current_iterate.residuals.infeasibility,
-         current_iterate.residuals.optimality_complementarity / current_iterate.residuals.complementarity_scaling
+      current_iterate.residuals.optimality_complementarity / current_iterate.residuals.complementarity_scaling
    });
    DEBUG << "Max scaled primal-dual error for barrier subproblem is " << primal_dual_error << '\n';
 
@@ -53,13 +54,11 @@ bool BarrierParameterUpdateStrategy::update_barrier_parameter(const NonlinearPro
       DEBUG << "Max scaled primal-dual error for barrier subproblem is " << primal_dual_error << '\n';
       parameter_updated = true;
    }
-   // the barrier parameter was not updated
    return parameter_updated;
 }
 
 double BarrierParameterUpdateStrategy::compute_shifted_complementarity_error(const NonlinearProblem& problem, const Iterate& iterate,
       double shift_value) {
-   // variable bounds
    VectorExpression<double> shifted_bound_complementarity(problem.number_variables, [&](size_t i) {
       double result = 0.;
       if (0. < iterate.multipliers.lower_bounds[i]) { // lower bound
@@ -70,5 +69,5 @@ double BarrierParameterUpdateStrategy::compute_shifted_complementarity_error(con
       }
       return result;
    });
-   return norm_inf(shifted_bound_complementarity); // TODO use norm from options
+   return norm_inf(shifted_bound_complementarity); // TODO use a generic norm
 }

@@ -5,15 +5,11 @@
 #define UNO_SUBPROBLEM_H
 
 #include <vector>
-#include <memory>
-#include "ingredients/globalization_strategy/ProgressMeasures.hpp"
-#include "optimization/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "reformulation/l1RelaxedProblem.hpp"
 #include "Direction.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 #include "tools/Statistics.hpp"
 
 /*! \class Subproblem
@@ -41,7 +37,7 @@ public:
    [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const NonlinearProblem& problem,
          const Iterate& current_iterate, const Direction& direction, double step_length) const = 0;
 
-   virtual void postprocess_iterate(const NonlinearProblem& model, Iterate& iterate) = 0;
+   virtual void postprocess_iterate(const NonlinearProblem& problem, Iterate& iterate) = 0;
 
    [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
    virtual void set_initial_point(const std::vector<double>& initial_point) = 0;

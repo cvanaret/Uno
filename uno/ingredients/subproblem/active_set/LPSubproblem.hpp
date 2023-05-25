@@ -4,6 +4,7 @@
 #ifndef UNO_LPSUBPROBLEM_H
 #define UNO_LPSUBPROBLEM_H
 
+#include <memory>
 #include "ActiveSetSubproblem.hpp"
 #include "solvers/LP/LPSolver.hpp"
 #include "tools/Options.hpp"

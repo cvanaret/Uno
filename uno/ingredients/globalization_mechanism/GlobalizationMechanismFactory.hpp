@@ -4,6 +4,7 @@
 #ifndef UNO_GLOBALIZATIONMECHANISMFACTORY_H
 #define UNO_GLOBALIZATIONMECHANISMFACTORY_H
 
+#include <memory>
 #include "GlobalizationMechanism.hpp"
 #include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategy.hpp"
 #include "tools/Options.hpp"

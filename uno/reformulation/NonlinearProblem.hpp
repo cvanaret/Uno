@@ -7,12 +7,10 @@
 #include <vector>
 #include "optimization/Iterate.hpp"
 #include "optimization/Model.hpp"
-#include "linear_algebra/VectorExpression.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "ingredients/subproblem/Direction.hpp"
-#include "tools/Range.hpp"
 
 class NonlinearProblem {
 public:
@@ -24,10 +22,8 @@ public:
    const size_t number_constraints; /*!< Number of constraints */
 
    [[nodiscard]] bool is_constrained() const;
+   [[nodiscard]] bool has_inequality_constraints() const;
 
-   // SparseVector<size_t> equality_constraints{}; /*!< inequality constraints */
-   std::vector<size_t> equality_constraints{}; /*!< inequality constraints */
-   std::vector<size_t> inequality_constraints{}; /*!< inequality constraints */
    // lists of bounded variables
    std::vector<size_t> lower_bounded_variables{}; // indices of the lower-bounded variables
    std::vector<size_t> upper_bounded_variables{}; // indices of the upper-bounded variables
@@ -62,8 +58,6 @@ public:
 
 inline NonlinearProblem::NonlinearProblem(const Model& model, size_t number_variables, size_t number_constraints):
       model(model), number_variables(number_variables), number_constraints(number_constraints) {
-   this->equality_constraints.reserve(this->number_constraints);
-   this->inequality_constraints.reserve(this->number_constraints);
    this->lower_bounded_variables.reserve(this->number_variables);
    this->upper_bounded_variables.reserve(this->number_variables);
    this->single_lower_bounded_variables.reserve(this->number_variables);
@@ -72,6 +66,10 @@ inline NonlinearProblem::NonlinearProblem(const Model& model, size_t number_vari
 
 inline bool NonlinearProblem::is_constrained() const {
    return (0 < this->number_constraints);
+}
+
+inline bool NonlinearProblem::has_inequality_constraints() const {
+   return (not this->model.inequality_constraints.empty());
 }
 
 inline size_t NonlinearProblem::get_number_original_variables() const {

@@ -97,7 +97,6 @@ protected:
    size_t number_objective_gradient_nonzeros{0}; /*!< Number of nonzero elements in the objective gradient */
    size_t number_jacobian_nonzeros{0}; /*!< Number of nonzero elements in the constraint Jacobian */
    size_t number_hessian_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */
-   void determine_constraints();
 };
 
 #endif // UNO_MODEL_H

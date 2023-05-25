@@ -4,6 +4,7 @@
 #ifndef UNO_L1RELAXATION_H
 #define UNO_L1RELAXATION_H
 
+#include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategy/GlobalizationStrategy.hpp"
 #include "reformulation/OptimalityProblem.hpp"

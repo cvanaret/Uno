@@ -43,7 +43,7 @@ PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(Statistics&
 }
 
 inline void PrimalDualInteriorPointSubproblem::generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) {
-   assert(problem.inequality_constraints.empty() && "The problem has inequality constraints. Create an instance of EqualityConstrainedModel");
+   assert(problem.has_inequality_constraints() && "The problem has inequality constraints. Create an instance of EqualityConstrainedModel");
 
    // evaluate the constraints at the original point
    initial_iterate.evaluate_constraints(problem.model);
@@ -151,7 +151,7 @@ void PrimalDualInteriorPointSubproblem::evaluate_functions(Statistics& statistic
 
 Direction PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
       const WarmstartInformation& warmstart_information) {
-   if (not problem.inequality_constraints.empty()) {
+   if (problem.has_inequality_constraints()) {
       throw std::runtime_error("The problem has inequality constraints. Create an instance of EqualityConstrainedModel.\n");
    }
    if (is_finite(this->trust_region_radius)) {
@@ -271,6 +271,7 @@ double PrimalDualInteriorPointSubproblem::compute_predicted_auxiliary_reduction_
       const Iterate& current_iterate, const Direction& direction, double step_length) const {
    const double directional_derivative = this->compute_barrier_term_directional_derivative(problem, current_iterate, direction);
    // TODO: take exponent of (-directional_derivative), see IPOPT paper
+   // TODO: damping terms?
    return step_length * (-directional_derivative);
    // }, "α*(μ*X^{-1} e^T d)"};
 }

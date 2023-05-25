@@ -55,7 +55,6 @@ public:
 protected:
    double objective_multiplier;
    const double constraint_violation_coefficient;
-   // elastic variables
    ElasticVariables elastic_variables;
 
    [[nodiscard]] static size_t count_elastic_variables(const Model& model);
@@ -66,17 +65,7 @@ inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_m
       RelaxedProblem(model, model.number_variables + l1RelaxedProblem::count_elastic_variables(model), model.number_constraints),
       objective_multiplier(objective_multiplier),
       constraint_violation_coefficient(constraint_violation_coefficient),
-      // elastic variables
       elastic_variables(this->number_constraints) {
-   // register equality and inequality constraints
-   for (size_t j: this->model.equality_constraints) {
-      this->equality_constraints.push_back(j);
-   }
-   for (size_t j: this->model.inequality_constraints) {
-      this->inequality_constraints.push_back(j);
-   }
-
-   // generate elastic variables
    this->generate_elastic_variables();
 
    // figure out bounded variables

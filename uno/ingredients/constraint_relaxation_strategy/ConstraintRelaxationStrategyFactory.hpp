@@ -4,6 +4,7 @@
 #ifndef UNO_CONSTRAINTRELAXATIONSTRATEGYFACTORY_H
 #define UNO_CONSTRAINTRELAXATIONSTRATEGYFACTORY_H
 
+#include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "tools/Options.hpp"
 
