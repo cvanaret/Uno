@@ -69,19 +69,9 @@ bool Model::is_constrained() const {
    return (0 < this->number_constraints);
 }
 
-double Model::compute_constraint_lower_bound_violation(double constraint_value, size_t j) const {
-   const double lower_bound = this->get_constraint_lower_bound(j);
-   return std::max(0., lower_bound - constraint_value);
-}
-
-double Model::compute_constraint_upper_bound_violation(double constraint_value, size_t j) const {
-   const double upper_bound = this->get_constraint_upper_bound(j);
-   return std::max(0., constraint_value - upper_bound);
-}
-
 double Model::compute_constraint_violation(double constraint_value, size_t j) const {
-   const double lower_bound_violation = this->compute_constraint_lower_bound_violation(constraint_value, j);
-   const double upper_bound_violation = this->compute_constraint_upper_bound_violation(constraint_value, j);
+   const double lower_bound_violation = std::max(0., this->get_constraint_lower_bound(j) - constraint_value);
+   const double upper_bound_violation = std::max(0., constraint_value - this->get_constraint_upper_bound(j));
    return std::max(lower_bound_violation, upper_bound_violation);
 }
 

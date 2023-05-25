@@ -1,6 +1,7 @@
 // Copyright (c) 2018-2023 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <linear_algebra/COOSymmetricMatrix.hpp>
 #include "LPSubproblem.hpp"
 #include "solvers/LP/LPSolverFactory.hpp"
 
@@ -45,6 +46,12 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem
    // reset the initial point
    initialize_vector(this->initial_point, 0.);
    return direction;
+}
+
+std::function<double(double)> LPSubproblem::compute_predicted_optimality_reduction_model(const NonlinearProblem& problem,
+      const Iterate& current_iterate, const Direction& direction, double step_length) const {
+   return problem.compute_predicted_optimality_reduction_model(current_iterate, direction, step_length,
+         COOSymmetricMatrix<double>::zero_hessian(direction.number_variables));
 }
 
 size_t LPSubproblem::get_hessian_evaluation_count() const {

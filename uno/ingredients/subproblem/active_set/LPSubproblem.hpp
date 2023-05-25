@@ -14,6 +14,8 @@ public:
 
    [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
          const WarmstartInformation& warmstart_information) override;
+   [[nodiscard]] std::function<double(double)> compute_predicted_optimality_reduction_model(const NonlinearProblem& problem,
+         const Iterate& current_iterate, const Direction& direction, double step_length) const override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
 private:

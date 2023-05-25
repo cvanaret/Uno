@@ -241,6 +241,11 @@ void PrimalDualInteriorPointSubproblem::exit_feasibility_problem(const Nonlinear
    this->compute_least_square_multipliers(problem, trial_iterate);
 }
 
+std::function<double(double)> PrimalDualInteriorPointSubproblem::compute_predicted_optimality_reduction_model(const NonlinearProblem& problem,
+      const Iterate& current_iterate, const Direction& direction, double step_length) const {
+   return problem.compute_predicted_optimality_reduction_model(current_iterate, direction, step_length, *this->hessian_model->hessian);
+}
+
 void PrimalDualInteriorPointSubproblem::set_auxiliary_measure(const NonlinearProblem& problem, Iterate& iterate) {
    // auxiliary measure: barrier terms
    double barrier_terms = 0.;

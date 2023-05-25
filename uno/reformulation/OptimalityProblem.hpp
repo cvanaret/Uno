@@ -20,9 +20,9 @@ public:
    void set_infeasibility_measure(Iterate& iterate, Norm progress_norm) const override;
    void set_optimality_measure(Iterate& iterate) const override;
    [[nodiscard]] double compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction,
-         double step_length, Norm progress_norm) const;
+         double step_length, Norm progress_norm) const override;
    [[nodiscard]] std::function<double(double)> compute_predicted_optimality_reduction_model(const Iterate& current_iterate,
-         const Direction& direction, double step_length) const override;
+         const Direction& direction, double step_length, const SymmetricMatrix<double>& hessian) const override;
 
    [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
    [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
@@ -113,11 +113,12 @@ inline double OptimalityProblem::compute_predicted_infeasibility_reduction_model
 }
 
 inline std::function<double(double)> OptimalityProblem::compute_predicted_optimality_reduction_model(const Iterate& current_iterate,
-      const Direction& direction, double step_length) const {
+      const Direction& direction, double step_length, const SymmetricMatrix<double>& hessian) const {
    // predicted optimality reduction: "-∇f(x)^T (αd)"
    const double directional_derivative = dot(direction.primals, current_iterate.evaluations.objective_gradient);
+   const double quadratic_product = hessian.quadratic_product(direction.primals, direction.primals);
    return [=](double objective_multiplier) {
-      return step_length * (-objective_multiplier*directional_derivative);  // TODO quadratic term
+      return step_length * (-objective_multiplier*directional_derivative) - step_length*step_length/2. * quadratic_product;
    };
 }
 

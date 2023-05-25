@@ -47,7 +47,7 @@ public:
    [[nodiscard]] virtual double compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction,
          double step_length, Norm progress_norm) const = 0;
    [[nodiscard]] virtual std::function<double(double)> compute_predicted_optimality_reduction_model(const Iterate& current_iterate,
-         const Direction& direction, double step_length) const = 0;
+         const Direction& direction, double step_length, const SymmetricMatrix<double>& hessian) const = 0;
 
    [[nodiscard]] size_t get_number_original_variables() const;
    [[nodiscard]] virtual double get_variable_lower_bound(size_t i) const = 0;

@@ -28,6 +28,8 @@ public:
 
    void print(std::ostream& stream) const override;
 
+   static COOSymmetricMatrix<T> zero_hessian(size_t dimension);
+
 protected:
    std::vector<size_t> row_indices;
    std::vector<size_t> column_indices;
@@ -130,6 +132,11 @@ void COOSymmetricMatrix<T>::initialize_regularization() {
    for (size_t i: Range(this->dimension)) {
       this->insert(T(0), i, i);
    }
+}
+
+template <typename T>
+COOSymmetricMatrix<T> COOSymmetricMatrix<T>::zero_hessian(size_t dimension) {
+   return COOSymmetricMatrix<T>(dimension, 0, false);
 }
 
 #endif // UNO_COOSYMMETRICMATRIX_H

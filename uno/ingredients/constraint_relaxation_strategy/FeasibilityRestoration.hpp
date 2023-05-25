@@ -49,7 +49,6 @@ private:
    [[nodiscard]] GlobalizationStrategy& current_globalization_strategy() const;
    [[nodiscard]] Direction solve_subproblem(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
          WarmstartInformation& warmstart_information);
-   void switch_to_feasibility_restoration(Iterate& current_iterate, WarmstartInformation& warmstart_information);
    void switch_to_optimality(Iterate& current_iterate, Iterate& trial_iterate);
 
    void set_progress_measures(const NonlinearProblem& problem, Iterate& iterate) const;

@@ -143,6 +143,7 @@ std::ostream& operator<<(std::ostream& stream, Filter& filter) {
    for (size_t position: Range(filter.number_entries)) {
       stream << "\t" << filter.infeasibility[position] << "\t\t" << filter.optimality[position] << '\n';
    }
+   std::cout << "Upper bound: " << filter.upper_bound << '\n';
    stream << "************\n";
    return stream;
 }
