@@ -43,8 +43,6 @@ protected:
 
    void compute_primal_dual_residuals(const Model& model, const RelaxedProblem& feasibility_problem, Iterate& iterate);
    static void evaluate_lagrangian_gradient(size_t number_variables, Iterate& iterate, const Multipliers& multipliers, double objective_multiplier);
-   [[nodiscard]] double compute_linearized_constraint_violation(const Model& model, const Iterate& current_iterate, const Direction& direction,
-         double step_length) const;
 
    [[nodiscard]] double compute_stationarity_error(const Iterate& iterate) const;
    [[nodiscard]] virtual double compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,

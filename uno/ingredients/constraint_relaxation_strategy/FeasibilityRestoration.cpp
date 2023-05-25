@@ -6,6 +6,7 @@
 #include "ingredients/globalization_strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
+#include "linear_algebra/view.hpp"
 
 FeasibilityRestoration::FeasibilityRestoration(Statistics& statistics, const Model& model, const Options& options) :
       ConstraintRelaxationStrategy(model, options),
@@ -85,7 +86,7 @@ Direction FeasibilityRestoration::solve_subproblem(Statistics& statistics, const
    }
 
    Direction direction = this->subproblem->solve(statistics, problem, current_iterate, warmstart_information);
-   direction.norm = norm_inf(direction.primals, Range(this->optimality_problem.number_variables));
+   direction.norm = norm_inf(view(direction.primals, this->optimality_problem.number_variables));
    direction.multipliers.objective = problem.get_objective_multiplier();
    DEBUG2 << direction << '\n';
    return direction;
@@ -104,7 +105,8 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
 
    // possibly go from restoration phase to optimality phase
    if (this->current_phase == Phase::FEASIBILITY_RESTORATION && (not this->test_linearized_feasibility ||
-         this->compute_linearized_constraint_violation(this->original_model, current_iterate, direction, step_length) <= this->tolerance)) {
+         this->original_model.compute_linearized_constraint_violation(direction.primals, current_iterate.evaluations.constraints,
+               current_iterate.evaluations.constraint_jacobian, step_length, this->residual_norm) <= this->tolerance)) {
       // if the trial infeasibility improves upon the best known infeasibility of the globalization strategy
       trial_iterate.evaluate_constraints(this->original_model);
       const double trial_infeasibility = this->original_model.compute_constraint_violation(trial_iterate.evaluations.constraints, this->progress_norm);
@@ -192,14 +194,14 @@ ProgressMeasures FeasibilityRestoration::compute_predicted_reduction_models(Iter
       return {
             this->optimality_problem.compute_predicted_infeasibility_reduction_model(current_iterate, direction, step_length, this->progress_norm),
             this->optimality_problem.compute_predicted_optimality_reduction_model(current_iterate, direction, step_length),
-            this->subproblem->generate_predicted_auxiliary_reduction_model(this->optimality_problem, current_iterate, direction, step_length)
+            this->subproblem->compute_predicted_auxiliary_reduction_model(this->optimality_problem, current_iterate, direction, step_length)
       };
    }
    else { // Phase::FEASIBILITY_RESTORATION
       return {
             this->feasibility_problem.compute_predicted_infeasibility_reduction_model(current_iterate, direction, step_length, this->progress_norm),
             this->feasibility_problem.compute_predicted_optimality_reduction_model(current_iterate, direction, step_length),
-            this->subproblem->generate_predicted_auxiliary_reduction_model(this->feasibility_problem, current_iterate, direction, step_length)
+            this->subproblem->compute_predicted_auxiliary_reduction_model(this->feasibility_problem, current_iterate, direction, step_length)
       };
    }
 }

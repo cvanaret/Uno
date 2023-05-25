@@ -72,7 +72,7 @@ void ActiveSetSubproblem::set_auxiliary_measure(const NonlinearProblem& /*proble
    iterate.progress.auxiliary_terms = 0.;
 }
 
-double ActiveSetSubproblem::generate_predicted_auxiliary_reduction_model(const NonlinearProblem& /*problem*/,
+double ActiveSetSubproblem::compute_predicted_auxiliary_reduction_model(const NonlinearProblem& /*problem*/,
       const Iterate& /*current_iterate*/, const Direction& /*direction*/, double /*step_length*/) const {
    return 0.;
    //}, "0"};

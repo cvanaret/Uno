@@ -12,12 +12,7 @@
 #include "tools/Logger.hpp"
 #include "tools/Range.hpp"
 
-enum class Norm {
-   L1 = 1,
-   L2 = 2,
-   L2_SQUARED,
-   INF
-};
+enum class Norm {L1, L2, L2_SQUARED, INF};
 
 inline Norm norm_from_string(const std::string& norm_string) {
    if (norm_string == "L1") {

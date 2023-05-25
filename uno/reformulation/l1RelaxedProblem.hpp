@@ -212,8 +212,8 @@ inline double l1RelaxedProblem::compute_predicted_infeasibility_reduction_model(
    else { // 0. < objective_multiplier
       // "‖c(x)‖₁ - ‖c(x) + ∇c(x)^T (αd)‖₁"
       const double current_constraint_violation = this->model.compute_constraint_violation(current_iterate.evaluations.constraints, Norm::L1);
-      const double linearized_constraint_violation = NonlinearProblem::compute_linearized_constraint_violation(this->model, current_iterate,
-            direction, step_length);
+      const double linearized_constraint_violation = this->model.compute_linearized_constraint_violation(direction.primals,
+            current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian, step_length, Norm::L1);
       return current_constraint_violation - linearized_constraint_violation;
    }
 }
@@ -224,8 +224,8 @@ inline std::function<double(double)> l1RelaxedProblem::compute_predicted_optimal
    if (this->objective_multiplier == 0.) {
       // "‖c(x)‖₁ - ‖c(x) + ∇c(x)^T (αd)‖₁"
       const double current_constraint_violation = this->model.compute_constraint_violation(current_iterate.evaluations.constraints, Norm::L1);
-      const double linearized_constraint_violation = NonlinearProblem::compute_linearized_constraint_violation(this->model, current_iterate,
-            direction, step_length);
+      const double linearized_constraint_violation = this->model.compute_linearized_constraint_violation(direction.primals,
+            current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian, step_length, Norm::L1);
       return [=](double /*objective_multiplier*/) {
          return this->constraint_violation_coefficient * (current_constraint_violation - linearized_constraint_violation);
       };

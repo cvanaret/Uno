@@ -92,3 +92,13 @@ double Model::compute_constraint_violation(const std::vector<double>& constraint
    });
    return norm(residual_norm, constraint_violation);
 }
+
+double Model::compute_linearized_constraint_violation(const std::vector<double>& primal_direction, const std::vector<double>& constraints,
+      const RectangularMatrix<double>& constraint_jacobian, double step_length, Norm residual_norm) const {
+   // determine the linearized constraint violation term: ||c(x_k) + α ∇c(x_k)^T d||
+   VectorExpression<double> linearized_constraints(this->number_constraints, [&](size_t j) {
+      const double linearized_constraint_j = constraints[j] + step_length * dot(primal_direction, constraint_jacobian[j]);
+      return this->compute_constraint_violation(linearized_constraint_j, j);
+   });
+   return norm(residual_norm, linearized_constraints);
+}

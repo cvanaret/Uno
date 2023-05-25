@@ -52,7 +52,7 @@ protected:
    // preallocated temporary multipliers
    Multipliers trial_multipliers;
 
-   Direction solve_sequence_of_relaxed_problems(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information);
+   Direction solve_sequence_of_relaxed_subproblems(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information);
    Direction solve_l1_relaxed_problem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter,
          const WarmstartInformation& warmstart_information);
    Direction solve_subproblem(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
@@ -60,7 +60,7 @@ protected:
 
    // functions that decrease the penalty parameter to enforce particular conditions
    void decrease_parameter_aggressively(Iterate& current_iterate, const Direction& direction);
-   double compute_dual_error(Iterate& current_iterate);
+   double compute_infeasible_dual_error(Iterate& current_iterate);
    [[nodiscard]] Direction enforce_linearized_residual_sufficient_decrease(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          double linearized_residual, double residual_lowest_violation, WarmstartInformation& warmstart_information);
    [[nodiscard]] bool linearized_residual_sufficient_decrease(const Iterate& current_iterate, double linearized_residual,

@@ -49,9 +49,6 @@ public:
    [[nodiscard]] virtual std::function<double(double)> compute_predicted_optimality_reduction_model(const Iterate& current_iterate,
          const Direction& direction, double step_length) const = 0;
 
-   [[nodiscard]] static double compute_linearized_constraint_violation(const Model& model, const Iterate& current_iterate,
-         const Direction& direction, double step_length);
-
    [[nodiscard]] size_t get_number_original_variables() const;
    [[nodiscard]] virtual double get_variable_lower_bound(size_t i) const = 0;
    [[nodiscard]] virtual double get_variable_upper_bound(size_t i) const = 0;
@@ -79,17 +76,6 @@ inline bool NonlinearProblem::is_constrained() const {
 
 inline size_t NonlinearProblem::get_number_original_variables() const {
    return this->model.number_variables;
-}
-
-inline double NonlinearProblem::compute_linearized_constraint_violation(const Model& model, const Iterate& current_iterate,
-      const Direction& direction, double step_length) {
-   // determine the linearized constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
-   VectorExpression<double> linearized_constraints(model.number_constraints, [&](size_t j) {
-      const double component_j = current_iterate.evaluations.constraints[j] + step_length * dot(direction.primals,
-            current_iterate.evaluations.constraint_jacobian[j]);
-      return model.compute_constraint_violation(component_j, j);
-   });
-   return norm_1(linearized_constraints);
 }
 
 #endif // UNO_NONLINEARPROBLEM_H

@@ -36,7 +36,7 @@ public:
 
    // globalization metrics
    virtual void set_auxiliary_measure(const NonlinearProblem& problem, Iterate& iterate) = 0;
-   [[nodiscard]] virtual double generate_predicted_auxiliary_reduction_model(const NonlinearProblem& problem,
+   [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const NonlinearProblem& problem,
          const Iterate& current_iterate, const Direction& direction, double step_length) const = 0;
 
    virtual void postprocess_iterate(const NonlinearProblem& model, Iterate& iterate) = 0;

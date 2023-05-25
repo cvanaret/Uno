@@ -107,8 +107,8 @@ inline double OptimalityProblem::compute_predicted_infeasibility_reduction_model
    // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
    const double current_constraint_violation = this->model.compute_constraint_violation(current_iterate.evaluations.constraints,
          progress_norm);
-   const double linearized_constraint_violation = NonlinearProblem::compute_linearized_constraint_violation(this->model, current_iterate, direction,
-         step_length);
+   const double linearized_constraint_violation = this->model.compute_linearized_constraint_violation(direction.primals,
+         current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian, step_length, progress_norm);
    return current_constraint_violation - linearized_constraint_violation;
 }
 

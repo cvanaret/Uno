@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "ConstraintRelaxationStrategy.hpp"
-#include "linear_algebra/span.hpp"
+#include "linear_algebra/view.hpp"
 
 ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Model& model, const Options& options):
       original_model(model),
@@ -66,17 +66,6 @@ double ConstraintRelaxationStrategy::compute_stationarity_error(const Iterate& i
    return norm(this->residual_norm, iterate.lagrangian_gradient);
 }
 
-double ConstraintRelaxationStrategy::compute_linearized_constraint_violation(const Model& model, const Iterate& current_iterate,
-      const Direction& direction, double step_length) const {
-   // determine the linearized constraint violation term: c(x_k) + alpha*\nabla c(x_k)^T d
-   VectorExpression<double> linearized_constraints(model.number_constraints, [&](size_t j) {
-      const double linearized_constraint_j = current_iterate.evaluations.constraints[j] + step_length * dot(direction.primals,
-            current_iterate.evaluations.constraint_jacobian[j]);
-      return model.compute_constraint_violation(linearized_constraint_j, j);
-   });
-   return norm(this->residual_norm, linearized_constraints);
-}
-
 double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Model& model, const Iterate& iterate) const {
    const size_t total_size = model.lower_bounded_variables.size() + model.upper_bounded_variables.size() + model.number_constraints;
    if (total_size == 0) {
@@ -85,9 +74,9 @@ double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Model& m
    else {
       const double scaling_factor = this->residual_scaling_threshold * static_cast<double>(total_size);
       const double multiplier_norm = norm_1(
-            span(iterate.multipliers.constraints, model.number_constraints),
-            span(iterate.multipliers.lower_bounds, model.number_variables),
-            span(iterate.multipliers.upper_bounds, model.number_variables)
+            view(iterate.multipliers.constraints, model.number_constraints),
+            view(iterate.multipliers.lower_bounds, model.number_variables),
+            view(iterate.multipliers.upper_bounds, model.number_variables)
       );
       return std::max(1., multiplier_norm / scaling_factor);
    }
@@ -101,8 +90,8 @@ double ConstraintRelaxationStrategy::compute_complementarity_scaling(const Model
    else {
       const double scaling_factor = this->residual_scaling_threshold * static_cast<double>(total_size);
       const double bound_multiplier_norm = norm_1(
-            span(iterate.multipliers.lower_bounds, model.number_variables),
-            span(iterate.multipliers.upper_bounds, model.number_variables)
+            view(iterate.multipliers.lower_bounds, model.number_variables),
+            view(iterate.multipliers.upper_bounds, model.number_variables)
       );
       return std::max(1., bound_multiplier_norm / scaling_factor);
    }

@@ -37,7 +37,7 @@ public:
          const WarmstartInformation& warmstart_information) override;
 
    void set_auxiliary_measure(const NonlinearProblem& problem, Iterate& iterate) override;
-   [[nodiscard]] double generate_predicted_auxiliary_reduction_model(const NonlinearProblem& problem,
+   [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const NonlinearProblem& problem,
          const Iterate& current_iterate, const Direction& direction, double step_length) const override;
 
    void postprocess_iterate(const NonlinearProblem& problem, Iterate& iterate) override;

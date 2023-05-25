@@ -92,6 +92,8 @@ public:
    [[nodiscard]] double compute_constraint_upper_bound_violation(double constraint_value, size_t j) const;
    [[nodiscard]] virtual double compute_constraint_violation(double constraint_value, size_t j) const;
    [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const;
+   [[nodiscard]] double compute_linearized_constraint_violation(const std::vector<double>& primal_direction, const std::vector<double>& constraints,
+         const RectangularMatrix<double>& constraint_jacobian, double step_length, Norm residual_norm) const;
 
 protected:
    size_t number_objective_gradient_nonzeros{0}; /*!< Number of nonzero elements in the objective gradient */

@@ -18,7 +18,7 @@ public:
    void exit_feasibility_problem(const NonlinearProblem& problem, Iterate& trial_iterate) override;
 
    void set_auxiliary_measure(const NonlinearProblem& problem, Iterate& iterate) override;
-   [[nodiscard]] double generate_predicted_auxiliary_reduction_model(const NonlinearProblem&, const Iterate&, const Direction&, double) const override;
+   [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const NonlinearProblem&, const Iterate&, const Direction&, double) const override;
 
    void postprocess_iterate(const NonlinearProblem& model, Iterate& iterate) override;
 
