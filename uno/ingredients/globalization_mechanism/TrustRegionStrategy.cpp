@@ -63,6 +63,7 @@ Iterate TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const 
             bool acceptable_iterate = false;
             if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction,
                   direction.primal_dual_step_length)) {
+               this->set_statistics(statistics, direction, number_iterations);
                // possibly increase the radius if trust region is active
                this->possibly_increase_radius(direction.norm);
 
@@ -72,7 +73,10 @@ Iterate TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const 
             }
             else if (this->radius < this->minimum_radius) { // rejected, but small radius
                acceptable_iterate = this->check_termination_with_small_step(model, direction, trial_iterate);
-               if (not acceptable_iterate) {
+               if (acceptable_iterate) {
+                  this->set_statistics(statistics, direction, number_iterations);
+               }
+               else {
                   // revert to solving the feasibility problem
                   throw std::runtime_error("Trust-region strategy reverting to solving the feasibility problem. Not implemented yet.");
                   warmstart_information.set_cold_start();
@@ -84,7 +88,6 @@ Iterate TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const 
             }
 
             if (acceptable_iterate) {
-               this->set_statistics(statistics, direction, number_iterations);
                this->reset_radius();
                return trial_iterate;
             }
@@ -98,8 +101,8 @@ Iterate TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const 
       catch (const std::runtime_error& e) {
          throw;
       }
-      // if an error occurs (evaluation error or unstable inertia), decrease the radius
-      catch (const std::exception& e) {
+      // if an evaluation error occurs, decrease the radius
+      catch (const EvaluationError& e) {
          WARNING << YELLOW << e.what() << RESET;
          this->decrease_radius();
          warmstart_information.set_cold_start();
