@@ -28,7 +28,7 @@ public:
 
    void print(std::ostream& stream) const override;
 
-   static COOSymmetricMatrix<T> zero_hessian(size_t dimension);
+   static COOSymmetricMatrix<T> zero(size_t dimension);
 
 protected:
    std::vector<size_t> row_indices;
@@ -135,7 +135,7 @@ void COOSymmetricMatrix<T>::initialize_regularization() {
 }
 
 template <typename T>
-COOSymmetricMatrix<T> COOSymmetricMatrix<T>::zero_hessian(size_t dimension) {
+COOSymmetricMatrix<T> COOSymmetricMatrix<T>::zero(size_t dimension) {
    return COOSymmetricMatrix<T>(dimension, 0, false);
 }
 

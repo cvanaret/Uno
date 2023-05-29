@@ -99,7 +99,7 @@ Direction FeasibilityRestoration::solve_subproblem(Statistics& statistics, const
    }
 
    Direction direction = this->subproblem->solve(statistics, problem, current_iterate, warmstart_information);
-   direction.norm = norm_inf(view(direction.primals, this->optimality_problem.number_variables));
+   direction.norm = norm_inf(view(direction.primals, this->original_model.number_variables));
    direction.multipliers.objective = problem.get_objective_multiplier();
    DEBUG2 << direction << '\n';
    return direction;
@@ -158,7 +158,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
 
    bool accept_iterate = false;
    if (direction.norm == 0.) {
-      DEBUG << "Zero step acceptable\n";
+      DEBUG << "Zero step acceptable\n\n";
       trial_iterate.evaluate_objective(this->original_model);
       accept_iterate = true;
    }

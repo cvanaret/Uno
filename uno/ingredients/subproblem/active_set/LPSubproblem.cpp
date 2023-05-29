@@ -51,7 +51,7 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem
 std::function<double(double)> LPSubproblem::compute_predicted_optimality_reduction_model(const NonlinearProblem& problem,
       const Iterate& current_iterate, const Direction& direction, double step_length) const {
    return problem.compute_predicted_optimality_reduction_model(current_iterate, direction, step_length,
-         COOSymmetricMatrix<double>::zero_hessian(direction.number_variables));
+         COOSymmetricMatrix<double>::zero(direction.number_variables));
 }
 
 size_t LPSubproblem::get_hessian_evaluation_count() const {
