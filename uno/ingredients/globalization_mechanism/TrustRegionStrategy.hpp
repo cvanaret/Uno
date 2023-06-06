@@ -29,7 +29,7 @@ private:
    void decrease_radius_aggressively();
    void reset_radius();
    void reset_active_trust_region_multipliers(const Model& model, const Direction& direction, Iterate& trial_iterate) const;
-   void set_statistics(Statistics& statistics, const Direction& direction, size_t number_iterations);
+   void set_statistics(Statistics& statistics, const Direction& direction, size_t number_iterations) const;
    void print_iteration(size_t number_iterations);
 };
 

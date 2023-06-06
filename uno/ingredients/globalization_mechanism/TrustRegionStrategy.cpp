@@ -122,12 +122,14 @@ Iterate TrustRegionStrategy::assemble_trial_iterate(const Model& model, Iterate&
 }
 
 void TrustRegionStrategy::possibly_increase_radius(double step_norm) {
+   // increase the radius if the trust-region is active
    if (step_norm >= this->radius - this->activity_tolerance) {
       this->radius *= this->increase_factor;
    }
 }
 
 void TrustRegionStrategy::decrease_radius(double step_norm) {
+   // reduce the radius to a value smaller than the primal step norm (otherwise, the reduction won't have an effect)
    this->radius = std::min(this->radius, step_norm) / this->decrease_factor;
 }
 
@@ -160,7 +162,7 @@ void TrustRegionStrategy::reset_active_trust_region_multipliers(const Model& mod
    }
 }
 
-void TrustRegionStrategy::set_statistics(Statistics& statistics, const Direction& direction, size_t number_iterations) {
+void TrustRegionStrategy::set_statistics(Statistics& statistics, const Direction& direction, size_t number_iterations) const {
    statistics.add_statistic("TR iters", number_iterations);
    statistics.add_statistic("TR radius", this->radius);
    statistics.add_statistic("step norm", direction.norm);
