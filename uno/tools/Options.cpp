@@ -100,6 +100,8 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["scale_functions"] = "yes";
       options["sparse_format"] = "COO";
       options["tolerance"] = "1e-8";
+      options["loose_tolerance"] = "1e-6";
+      options["loose_tolerance_consecutive_iteration_threshold"] = "15";
       options["feasibility_restoration_test_linearized_feasibility"] = "no";
       options["LS_scale_duals_with_step_length"] = "yes";
    }
@@ -116,6 +118,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["l1_constraint_violation_coefficient"] = "1.";
       options["enforce_linear_constraints"] = "yes";
       options["tolerance"] = "1e-6";
+      options["loose_tolerance"] = "1e-6";
       options["TR_min_radius"] = "1e-8";
       options["feasibility_restoration_test_linearized_feasibility"] = "yes";
    }
@@ -131,6 +134,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["l1_relaxation_epsilon2"] = "0.1";
       options["l1_constraint_violation_coefficient"] = "1.";
       options["tolerance"] = "1e-6";
+      options["loose_tolerance"] = "1e-6";
       options["progress_norm"] = "L1";
       options["residual_norm"] = "L1";
       options["sparse_format"] = "CSC";

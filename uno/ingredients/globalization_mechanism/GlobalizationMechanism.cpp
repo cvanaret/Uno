@@ -5,7 +5,9 @@
 
 GlobalizationMechanism::GlobalizationMechanism(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options) :
       constraint_relaxation_strategy(constraint_relaxation_strategy),
-      tolerance(options.get_double("tolerance")),
+      tight_tolerance(options.get_double("tolerance")),
+      loose_tolerance(options.get_double("loose_tolerance")),
+      loose_tolerance_consecutive_iteration_threshold(options.get_unsigned_int("loose_tolerance_consecutive_iteration_threshold")),
       progress_norm(norm_from_string(options.get_string("progress_norm"))),
       unbounded_objective_threshold(options.get_double("unbounded_objective_threshold")) {
 }
@@ -42,7 +44,7 @@ bool GlobalizationMechanism::check_termination_with_small_step(const Model& mode
    trial_iterate.residuals.infeasibility = model.compute_constraint_violation(trial_iterate.evaluations.constraints, this->progress_norm);
 
    // terminate with a feasible point
-   if (trial_iterate.residuals.infeasibility <= this->tolerance) {
+   if (trial_iterate.residuals.infeasibility <= this->tight_tolerance) {
       trial_iterate.status = TerminationStatus::FEASIBLE_SMALL_STEP;
       return true;
    }
@@ -55,18 +57,44 @@ bool GlobalizationMechanism::check_termination_with_small_step(const Model& mode
    }
 }
 
-TerminationStatus GlobalizationMechanism::check_convergence(const Model& model, Iterate& current_iterate) const {
+TerminationStatus GlobalizationMechanism::check_convergence(const Model& model, Iterate& current_iterate) {
+   // test convergence wrt the tight tolerance
+   TerminationStatus status_tight_tolerance = this->check_convergence(model, current_iterate, this->tight_tolerance);
+   if (status_tight_tolerance != TerminationStatus::NOT_OPTIMAL || this->loose_tolerance <= this->tight_tolerance) {
+      return status_tight_tolerance;
+   }
+
+   // if not converged, check convergence wrt loose tolerance (provided it is strictly looser than the tight tolerance)
+   TerminationStatus status_loose_tolerance = this->check_convergence(model, current_iterate, this->loose_tolerance);
+   // if converged, keep track of the number of consecutive iterations
+   if (status_loose_tolerance != TerminationStatus::NOT_OPTIMAL) {
+      this->loose_tolerance_consecutive_iterations++;
+   }
+   else {
+      this->loose_tolerance_consecutive_iterations = 0;
+      return TerminationStatus::NOT_OPTIMAL;
+   }
+   // check if loose tolerance achieved for enough consecutive iterations
+   if (this->loose_tolerance_consecutive_iteration_threshold <= this->loose_tolerance_consecutive_iterations) {
+      return status_loose_tolerance;
+   }
+   else {
+      return TerminationStatus::NOT_OPTIMAL;
+   }
+}
+
+TerminationStatus GlobalizationMechanism::check_convergence(const Model& model, Iterate& current_iterate, double tolerance) const {
    // evaluate termination conditions based on optimality conditions
    const bool optimality_stationarity =
-         (current_iterate.residuals.optimality_stationarity / current_iterate.residuals.stationarity_scaling <= this->tolerance);
+         (current_iterate.residuals.optimality_stationarity / current_iterate.residuals.stationarity_scaling <= tolerance);
    const bool feasibility_stationarity =
-         (current_iterate.residuals.feasibility_stationarity / current_iterate.residuals.stationarity_scaling <= this->tolerance);
+         (current_iterate.residuals.feasibility_stationarity / current_iterate.residuals.stationarity_scaling <= tolerance);
    const bool optimality_complementarity =
-         (current_iterate.residuals.optimality_complementarity / current_iterate.residuals.complementarity_scaling <= this->tolerance);
+         (current_iterate.residuals.optimality_complementarity / current_iterate.residuals.complementarity_scaling <= tolerance);
    const bool feasibility_complementarity =
-         (current_iterate.residuals.feasibility_complementarity / current_iterate.residuals.complementarity_scaling <= this->tolerance);
-   const bool primal_feasibility = (current_iterate.residuals.infeasibility <= this->tolerance);
-   const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(model.number_variables, this->tolerance);
+         (current_iterate.residuals.feasibility_complementarity / current_iterate.residuals.complementarity_scaling <= tolerance);
+   const bool primal_feasibility = (current_iterate.residuals.infeasibility <= tolerance);
+   const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(model.number_variables, tolerance);
 
    DEBUG << "Termination criteria:\n";
    DEBUG << "Stationarity (optimality): " << std::boolalpha << optimality_stationarity << '\n';
