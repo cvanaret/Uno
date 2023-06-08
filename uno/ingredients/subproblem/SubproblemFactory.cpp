@@ -2,9 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "SubproblemFactory.hpp"
-#include "ingredients/subproblem/active_set/QPSubproblem.hpp"
-#include "ingredients/subproblem/active_set/LPSubproblem.hpp"
-#include "ingredients/subproblem/interior_point/PrimalDualInteriorPointSubproblem.hpp"
+#include "ingredients/subproblem/inequality_constrained_methods/QPSubproblem.hpp"
+#include "ingredients/subproblem/inequality_constrained_methods/LPSubproblem.hpp"
+#include "ingredients/subproblem/interior_point_methods/PrimalDualInteriorPointSubproblem.hpp"
 #include "solvers/QP/QPSolverFactory.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolverFactory.hpp"
 

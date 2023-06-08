@@ -35,8 +35,8 @@ file(GLOB UNO_SOURCE_FILES
     uno/ingredients/globalization_strategy/filter_strategy/filter/*.cpp
     uno/ingredients/constraint_relaxation_strategy/*.cpp
     uno/ingredients/subproblem/*.cpp
-    uno/ingredients/subproblem/active_set/*.cpp
-    uno/ingredients/subproblem/interior_point/*.cpp
+    uno/ingredients/subproblem/inequality_constrained_methods/*.cpp
+    uno/ingredients/subproblem/interior_point_methods/*.cpp
     uno/optimization/*.cpp
     uno/preprocessing/*.cpp
     uno/tools/*.cpp

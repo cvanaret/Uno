@@ -37,7 +37,7 @@ void ConvexifiedHessian::evaluate(Statistics& statistics, const NonlinearProblem
    this->hessian->dimension = problem.number_variables;
    problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, *this->hessian);
    this->evaluation_count++;
-   // regularize (only on the original variables) to make the problem strictly convex
+   // regularize (only on the original variables) to convexify the problem
    DEBUG2 << "hessian before convexification: " << *this->hessian;
    this->regularize(statistics, *this->hessian, problem.get_number_original_variables());
 }
@@ -50,9 +50,6 @@ void ConvexifiedHessian::regularize(Statistics& statistics, SymmetricMatrix<doub
    DEBUG << "The minimal diagonal entry of the matrix is " << hessian.smallest_diagonal_entry() << '\n';
 
    double regularization_factor = (smallest_diagonal_entry <= 0.) ? this->regularization_initial_value - smallest_diagonal_entry : 0.;
-   /*
-   double regularization = (smallest_diagonal_entry <= 0.) ? this->regularization_initial_value - smallest_diagonal_entry : this->regularization_initial_value;
-   */
    bool good_inertia = false;
    while (not good_inertia) {
       DEBUG << "Testing factorization with regularization factor " << regularization_factor << '\n';
