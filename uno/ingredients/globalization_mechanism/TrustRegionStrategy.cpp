@@ -76,15 +76,6 @@ Iterate TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const 
                if (acceptable_iterate) {
                   this->set_statistics(statistics, direction, number_iterations);
                }
-               else {
-                  // revert to solving the feasibility problem
-                  throw std::runtime_error("Trust-region strategy reverting to solving the feasibility problem. Not implemented yet.");
-                  warmstart_information.set_cold_start();
-                  this->constraint_relaxation_strategy.switch_to_feasibility_problem(current_iterate, warmstart_information);
-                  direction = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate,
-                        direction.primals, warmstart_information);
-                  trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction);
-               }
             }
 
             if (acceptable_iterate) {
