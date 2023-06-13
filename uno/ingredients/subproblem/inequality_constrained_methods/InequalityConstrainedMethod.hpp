@@ -1,15 +1,15 @@
 // Copyright (c) 2018-2023 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_ACTIVESETSUBPROBLEM_H
-#define UNO_ACTIVESETSUBPROBLEM_H
+#ifndef UNO_INEQUALITYCONSTRAINEDMETHOD_H
+#define UNO_INEQUALITYCONSTRAINEDMETHOD_H
 
 #include "ingredients/subproblem/Subproblem.hpp"
 
-class ActiveSetSubproblem : public Subproblem {
+class InequalityConstrainedMethod : public Subproblem {
 public:
-   ActiveSetSubproblem(size_t max_number_variables, size_t max_number_constraints);
-   ~ActiveSetSubproblem() override = default;
+   InequalityConstrainedMethod(size_t max_number_variables, size_t max_number_constraints);
+   ~InequalityConstrainedMethod() override = default;
 
    void generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) override;
    void set_initial_point(const std::vector<double>& initial_point) override;
@@ -32,4 +32,4 @@ protected:
    static void compute_dual_displacements(const NonlinearProblem& problem, const Iterate& current_iterate, Direction& direction);
 };
 
-#endif // UNO_ACTIVESETSUBPROBLEM_H
+#endif // UNO_INEQUALITYCONSTRAINEDMETHOD_H

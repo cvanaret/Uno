@@ -6,7 +6,7 @@
 
 QPSubproblem::QPSubproblem(Statistics& statistics, size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros,
          const Options& options) :
-      ActiveSetSubproblem(max_number_variables, max_number_constraints),
+      InequalityConstrainedMethod(max_number_variables, max_number_constraints),
       use_regularization(options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP")),
       // if no trust region is used, the problem should be convexified to guarantee boundedness
       hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), max_number_variables,
@@ -54,7 +54,7 @@ Direction QPSubproblem::solve(Statistics& statistics, const NonlinearProblem& pr
    Direction direction = this->solver->solve_QP(problem.number_variables, problem.number_constraints, this->direction_bounds,
          this->linearized_constraint_bounds, this->evaluations.objective_gradient, this->evaluations.constraint_jacobian,
          *this->hessian_model->hessian, this->initial_point, warmstart_information);
-   ActiveSetSubproblem::compute_dual_displacements(problem, current_iterate, direction);
+   InequalityConstrainedMethod::compute_dual_displacements(problem, current_iterate, direction);
    this->number_subproblems_solved++;
    // reset the initial point
    initialize_vector(this->initial_point, 0.);

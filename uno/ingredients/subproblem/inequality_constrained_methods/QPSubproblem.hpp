@@ -4,12 +4,12 @@
 #ifndef UNO_QPSUBPROBLEM_H
 #define UNO_QPSUBPROBLEM_H
 
-#include "ActiveSetSubproblem.hpp"
+#include "InequalityConstrainedMethod.hpp"
 #include "ingredients/subproblem/HessianModel.hpp"
 #include "solvers/QP/QPSolver.hpp"
 #include "tools/Options.hpp"
 
-class QPSubproblem : public ActiveSetSubproblem {
+class QPSubproblem : public InequalityConstrainedMethod {
 public:
    QPSubproblem(Statistics& statistics, size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros,
          const Options& options);

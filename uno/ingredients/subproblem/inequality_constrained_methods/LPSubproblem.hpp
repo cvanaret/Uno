@@ -5,11 +5,11 @@
 #define UNO_LPSUBPROBLEM_H
 
 #include <memory>
-#include "ActiveSetSubproblem.hpp"
+#include "InequalityConstrainedMethod.hpp"
 #include "solvers/LP/LPSolver.hpp"
 #include "tools/Options.hpp"
 
-class LPSubproblem : public ActiveSetSubproblem {
+class LPSubproblem : public InequalityConstrainedMethod {
 public:
    LPSubproblem(size_t max_number_variables, size_t max_number_constraints, const Options& options);
 
