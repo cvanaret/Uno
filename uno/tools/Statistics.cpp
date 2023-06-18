@@ -40,7 +40,7 @@ void Statistics::print_header(bool first_occurrence) {
    /* line above */
    std::cout << (first_occurrence ? Statistics::symbol("top-left") : Statistics::symbol("left-mid"));
    int k = 0;
-   for (const std::pair<const int, std::string>& element: this->columns) {
+   for (const auto& element: this->columns) {
       if (0 < k) {
          std::cout << (first_occurrence ? Statistics::symbol("top-mid") : Statistics::symbol("mid-mid"));
       }
@@ -54,7 +54,7 @@ void Statistics::print_header(bool first_occurrence) {
    /* headers */
    std::cout << Statistics::symbol("left");
    k = 0;
-   for (const std::pair<const int, std::string>& element: this->columns) {
+   for (const auto& element: this->columns) {
       if (0 < k) {
          std::cout << Statistics::symbol("middle");
       }
@@ -74,7 +74,7 @@ void Statistics::print_current_line() {
    }
    std::cout << Statistics::symbol("left-mid");
    int k = 0;
-   for (const std::pair<const int, std::string>& element: this->columns) {
+   for (const auto& element: this->columns) {
       if (0 < k) {
          std::cout << Statistics::symbol("mid-mid");
       }
@@ -88,7 +88,7 @@ void Statistics::print_current_line() {
    /* headers */
    std::cout << Statistics::symbol("left");
    k = 0;
-   for (const std::pair<const int, std::string>& element: this->columns) {
+   for (const auto& element: this->columns) {
       if (0 < k) {
          std::cout << Statistics::symbol("middle");
       }
@@ -116,7 +116,7 @@ void Statistics::print_current_line() {
 void Statistics::print_footer() {
    std::cout << Statistics::symbol("bottom-left");
    int k = 0;
-   for (const std::pair<const int, std::string>& element: this->columns) {
+   for (const auto& element: this->columns) {
       if (0 < k) {
          std::cout << Statistics::symbol("bottom-mid");
       }
