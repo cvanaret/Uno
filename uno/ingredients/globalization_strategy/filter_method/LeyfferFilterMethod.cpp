@@ -1,10 +1,10 @@
 // Copyright (c) 2018-2023 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include "LeyfferFilterStrategy.hpp"
+#include "LeyfferFilterMethod.hpp"
 
-LeyfferFilterStrategy::LeyfferFilterStrategy(Statistics& /*statistics*/, bool accept_when_switching_violated, const Options& options):
-      FilterStrategy(options),
+LeyfferFilterMethod::LeyfferFilterMethod(Statistics& /*statistics*/, bool accept_when_switching_violated, const Options& options):
+      FilterMethod(options),
       accept_when_switching_violated(accept_when_switching_violated) {
 }
 
@@ -12,7 +12,7 @@ LeyfferFilterStrategy::LeyfferFilterStrategy(Statistics& /*statistics*/, bool ac
  * filter methods enforce an *unconstrained* sufficient decrease condition
  * precondition: feasible step
  * */
-bool LeyfferFilterStrategy::is_iterate_acceptable(Statistics& /*statistics*/, const Iterate& /*trial_iterate*/,
+bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& /*statistics*/, const Iterate& /*trial_iterate*/,
       const ProgressMeasures& current_progress_measures, const ProgressMeasures& trial_progress_measures, const ProgressMeasures& predicted_reduction,
       double /*objective_multiplier*/) {
    const double current_optimality_measure = current_progress_measures.optimality(1.) + current_progress_measures.auxiliary_terms;

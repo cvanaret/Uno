@@ -1,21 +1,21 @@
 // Copyright (c) 2018-2023 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include "WaechterFilterStrategy.hpp"
+#include "WaechterFilterMethod.hpp"
 
-WaechterFilterStrategy::WaechterFilterStrategy(Statistics& /*statistics*/, const Options& options): FilterStrategy(options) {
+WaechterFilterMethod::WaechterFilterMethod(Statistics& /*statistics*/, const Options& options): FilterMethod(options) {
 }
 
-void WaechterFilterStrategy::initialize(const Iterate& initial_iterate) {
+void WaechterFilterMethod::initialize(const Iterate& initial_iterate) {
    this->initial_infeasibility = initial_iterate.residuals.infeasibility;
-   FilterStrategy::initialize(initial_iterate);
+   FilterMethod::initialize(initial_iterate);
 }
 
 /* check acceptability of step(s) (filter & sufficient reduction)
  * filter methods enforce an *unconstrained* sufficient decrease condition
  * precondition: feasible step
  * */
-bool WaechterFilterStrategy::is_iterate_acceptable(Statistics& /*statistics*/, const Iterate& /*trial_iterate*/,
+bool WaechterFilterMethod::is_iterate_acceptable(Statistics& /*statistics*/, const Iterate& /*trial_iterate*/,
       const ProgressMeasures& current_progress_measures, const ProgressMeasures& trial_progress_measures, const ProgressMeasures& predicted_reduction,
       double /*objective_multiplier*/) {
    const double current_optimality_measure = current_progress_measures.optimality(1.) + current_progress_measures.auxiliary_terms;

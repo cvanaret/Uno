@@ -48,8 +48,8 @@ constraint_relaxation_strategy feasibility_restoration
 # default subproblem (QP|LP|primal_dual_interior_point)
 subproblem QP
 
-# default globalization strategy (l1_merit|leyffer_filter_strategy|waechter_filter_strategy)
-globalization_strategy leyffer_filter_strategy
+# default globalization strategy (l1_merit|leyffer_filter_method|waechter_filter_method)
+globalization_strategy leyffer_filter_method
 
 # default globalization mechanism (TR|LS)
 globalization_mechanism TR

@@ -90,7 +90,7 @@ void print_uno_version() {
    std::cout << "To choose a subproblem method, use the argument -subproblem [QP|LP|primal_dual_interior_point]\n";
    std::cout << "To choose a globalization mechanism, use the argument -globalization_mechanism [LS|TR]\n";
    std::cout << "To choose a globalization strategy, use the argument -globalization_strategy "
-                "[l1_merit|leyffer_filter_strategy|waechter_filter_strategy]\n";
+                "[l1_merit|leyffer_filter_method|waechter_filter_method]\n";
    std::cout << "To choose a preset, use the argument -preset [filtersqp|ipopt|byrd]\n";
    std::cout << "The options can be combined in the same command line. Autocompletion is possible (see README).\n";
 }

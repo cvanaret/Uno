@@ -1,8 +1,8 @@
 // Copyright (c) 2018-2023 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_FILTERSTRATEGY_H
-#define UNO_FILTERSTRATEGY_H
+#ifndef UNO_FILTERMETHOD_H
+#define UNO_FILTERMETHOD_H
 
 #include "../GlobalizationStrategy.hpp"
 #include "filter/Filter.hpp"
@@ -21,14 +21,9 @@ struct FilterStrategyParameters {
    double switching_infeasibility_exponent;
 };
 
-/*! \class FilterStrategy
- * \brief Step acceptance strategy based on a filter
- *
- *  Strategy that accepts or declines a trial step
- */
-class FilterStrategy : public GlobalizationStrategy {
+class FilterMethod : public GlobalizationStrategy {
 public:
-   explicit FilterStrategy(const Options& options);
+   explicit FilterMethod(const Options& options);
 
    void initialize(const Iterate& initial_iterate) override;
    [[nodiscard]] bool is_infeasibility_acceptable(double infeasibility_measure) const override;
@@ -44,4 +39,4 @@ protected:
    [[nodiscard]] bool switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const;
 };
 
-#endif // UNO_FILTERSTRATEGY_H
+#endif // UNO_FILTERMETHOD_H

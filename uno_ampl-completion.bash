@@ -16,7 +16,7 @@ _uno_ampl_completions()
             return 0
             ;;
         -globalization_strategy)
-			local globalization_strategies="l1_merit leyffer_filter_strategy waechter_filter_strategy"
+			local globalization_strategies="l1_merit leyffer_filter_method waechter_filter_method"
             COMPREPLY=( $(compgen -W "${globalization_strategies}" -- ${cur}) )
             return 0
             ;;

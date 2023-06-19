@@ -81,7 +81,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["constraint_relaxation_strategy"] = "feasibility_restoration";
       options["subproblem"] = "primal_dual_interior_point";
       options["globalization_mechanism"] = "LS";
-      options["globalization_strategy"] = "waechter_filter_strategy";
+      options["globalization_strategy"] = "waechter_filter_method";
       options["filter_type"] = "standard";
       options["filter_beta"] = "0.99999";
       options["filter_gamma"] = "1e-8";
@@ -109,7 +109,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["constraint_relaxation_strategy"] = "feasibility_restoration";
       options["subproblem"] = "QP";
       options["globalization_mechanism"] = "TR";
-      options["globalization_strategy"] = "leyffer_filter_strategy";
+      options["globalization_strategy"] = "leyffer_filter_method";
       options["filter_type"] = "standard";
       options["progress_norm"] = "L1";
       options["residual_norm"] = "L2";
