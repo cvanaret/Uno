@@ -43,7 +43,9 @@ PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(Statistics&
 }
 
 inline void PrimalDualInteriorPointSubproblem::generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) {
-   assert(problem.has_inequality_constraints() && "The problem has inequality constraints. Create an instance of EqualityConstrainedModel");
+   if (problem.has_inequality_constraints()) {
+      throw std::runtime_error("The problem has inequality constraints. Create an instance of EqualityConstrainedModel.\n");
+   }
 
    // evaluate the constraints at the original point
    initial_iterate.evaluate_constraints(problem.model);
