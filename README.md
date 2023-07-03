@@ -38,11 +38,13 @@ This is joint work with [Sven Leyffer](https://wiki.mcs.anl.gov/leyffer/index.ph
 ### Latest results (April 27, 2023)
 
 Some of Uno combinations that correspond to existing solvers (called presets, see below) have been tested against state-of-the-art solvers on 429 small problems of the [CUTEst benchmark](https://arnold-neumaier.at/glopt/coconut/Benchmark/Library2_new_v1.html).
-The figure below is a performance profile; it shows how many problems are solved for a given budget of function evaluations (1 time, 2 times, 4 times, ..., $2^x$ times the number of objective evaluations of the best solver for each instance).
+The figure below is a performance profile of Uno and state-of-the-art solvers CONOPT, filterSQP, IPOPT, LANCELOT, LOQO, MINOS and SNOPT; it shows how many problems are solved for a given budget of function evaluations (1 time, 2 times, 4 times, ..., $2^x$ times the number of objective evaluations of the best solver for each instance).
 
 <p align="center">
    <img src="docs/figures/uno_performance_profile.png" alt="Performance profile of Uno 1.0" width="75%" />
 </p>
+
+All log files can be found [here](https://github.com/cvanaret/NLP_comparison).
 
 ## How to cite Uno
 
