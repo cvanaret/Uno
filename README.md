@@ -78,8 +78,9 @@ Uno is released under the MIT license (see the [license file](LICENSE)).
 
 1. Create a `build` directory in the main directory: ```mkdir build```
 2. Move to the build directory: ```cd build/```
-3. Type cmake (``Release`` can be replaced with ``Debug``): ```cmake -DCMAKE_BUILD_TYPE=Release ..```
-4. **(optional)** Use ccmake to provide the paths to the required and optional libraries: ```ccmake ..```
+3. Execute cmake by providing the paths to the required and optional libraries ASL, BQPD and MA57:  
+```cmake -Dbqpd=path -Dma57=path -Damplsolver=path -DCMAKE_BUILD_TYPE=[Release|Debug] ..```
+4. **(or)** Use ccmake to provide the paths to the required and optional libraries: ```ccmake ..```
 5. Compile (in parallel: `n` being the number of threads, e.g. 6): ```make -jn```
 
 To compile the code with different configurations, simply create a `build` directory for each configuration and perform instructions 1 to 5.
