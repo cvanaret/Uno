@@ -33,7 +33,6 @@ Uno 1.0 implements the following strategies:
 **Any strategy combination** can be automatically generated without any programming effort from the user. Note that all combinations do not necessarily result in sensible algorithms, or even convergent approaches.
 
 For more details, check out my [presentation at the ICCOPT 2022 conference](https://www.researchgate.net/publication/362254109).
-This is joint work with [Sven Leyffer](https://wiki.mcs.anl.gov/leyffer/index.php/Sven_Leyffer) (Argonne National Laboratory).
 
 ### Latest results (April 27, 2023)
 
@@ -48,12 +47,19 @@ All log files can be found [here](https://github.com/cvanaret/NLP_comparison).
 
 ## How to cite Uno
 
+### In an article
+
 Please be patient, we are actively working on our article.
+
+### On social media
+
+To mention Uno on Twitter, use [@UnoSolver](https://twitter.com/UnoSolver).  
+To mention Uno on LinkedIn, use [#unosolver](https://www.linkedin.com/feed/hashtag/?keywords=unosolver).  
 
 ## Contributions
 
 Uno was designed and implemented by [Charlie Vanaret](https://github.com/cvanaret/) (Zuse-Institut Berlin).  
-The theoretical abstract framework for unifying nonlinear optimization was developed by Charlie Vanaret and Sven Leyffer.
+The theoretical abstract framework for unifying nonlinear optimization was developed by Charlie Vanaret and [Sven Leyffer](https://wiki.mcs.anl.gov/leyffer/index.php/Sven_Leyffer) (Argonne National Laboratory).
 
 [Silvio Traversaro](https://github.com/traversaro) contributed to the CMakeLists.
 
