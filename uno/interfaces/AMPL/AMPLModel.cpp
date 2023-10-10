@@ -42,7 +42,8 @@ AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
       variable_status(this->number_variables),
       constraint_type(this->number_constraints),
       constraint_status(this->number_constraints) {
-   this->asl->i.congrd_mode = 0;
+   // evaluate the constraint Jacobian in sparse mode
+   this->asl->i.congrd_mode = 1;
 
    // dimensions
    this->objective_sign = (this->asl->i.objtype_[0] == 1) ? -1. : 1.;
@@ -123,13 +124,13 @@ void AMPLModel::evaluate_objective_gradient(const std::vector<double>& x, Sparse
       throw GradientEvaluationError();
    }
 
-   // create the sparse vector: partial derivatives in same order as variables in this->asl_->i.Ograd_[0]
+   // create the Uno sparse vector
    ograd* ampl_variables_tmp = this->asl->i.Ograd_[0];
    while (ampl_variables_tmp != nullptr) {
-      const size_t index = static_cast<size_t>(ampl_variables_tmp->varno);
+      const size_t variable_index = static_cast<size_t>(ampl_variables_tmp->varno);
       // scale by the objective sign
-      const double partial_derivative = this->objective_sign*this->ampl_tmp_gradient[index];
-      gradient.insert(index, partial_derivative);
+      const double partial_derivative = this->objective_sign*this->ampl_tmp_gradient[variable_index];
+      gradient.insert(variable_index, partial_derivative);
       ampl_variables_tmp = ampl_variables_tmp->next;
    }
 }
@@ -155,10 +156,7 @@ void AMPLModel::evaluate_constraints(const std::vector<double>& x, std::vector<d
 
 // sparse gradient
 void AMPLModel::evaluate_constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const {
-   const int congrd_mode_backup = this->asl->i.congrd_mode;
-   this->asl->i.congrd_mode = 1; // sparse computation
-
-   // compute the AMPL gradient
+   // compute the AMPL sparse gradient
    int error_flag = 0;
    (*(this->asl)->p.Congrd)(this->asl, static_cast<int>(j), const_cast<double*>(x.data()), const_cast<double*>(this->ampl_tmp_gradient.data()),
          &error_flag);
@@ -166,16 +164,16 @@ void AMPLModel::evaluate_constraint_gradient(const std::vector<double>& x, size_
       throw GradientEvaluationError();
    }
 
-   // partial derivatives in ampl_gradient in same order as variables in this->asl_->i.Cgrad_[j]
+   // construct the Uno sparse vector
    gradient.clear();
    cgrad* ampl_variables_tmp = this->asl->i.Cgrad_[j];
-   size_t index = 0;
+   size_t sparse_AMPL_index = 0;
    while (ampl_variables_tmp != nullptr) {
-      gradient.insert(static_cast<size_t>(ampl_variables_tmp->varno), this->ampl_tmp_gradient[index]);
+      const size_t variable_index = static_cast<size_t>(ampl_variables_tmp->varno);
+      gradient.insert(variable_index, this->ampl_tmp_gradient[sparse_AMPL_index]);
       ampl_variables_tmp = ampl_variables_tmp->next;
-      index++;
+      sparse_AMPL_index++;
    }
-   this->asl->i.congrd_mode = congrd_mode_backup;
 }
 
 void AMPLModel::evaluate_constraint_jacobian(const std::vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const {
