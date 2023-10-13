@@ -1,4 +1,4 @@
-# Uno (Unifying Nonlinear Optimization)
+# The Uno solver for nonlinearly constrained nonconvex optimization
 
 ## What is Uno?
 
