@@ -1,7 +1,9 @@
 # Uno
 
 <div align="center">
-*A modern, modular solver for nonlinearly constrained nonconvex optimization*
+
+   *A modern, modular solver for nonlinearly constrained nonconvex optimization*
+
 </div>
 
 Uno (Unifying Nonlinear Optimization) is a C++ library that unifies methods for solving nonlinearly constrained optimization problems of the form:
