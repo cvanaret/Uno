@@ -1,6 +1,8 @@
-# The Uno solver for nonlinearly constrained nonconvex optimization
+# Uno
 
-## What is Uno?
+<div align="center">
+*A modern, modular solver for nonlinearly constrained nonconvex optimization*
+</div>
 
 Uno (Unifying Nonlinear Optimization) is a C++ library that unifies methods for solving nonlinearly constrained optimization problems of the form:
 
@@ -12,18 +14,28 @@ $$
 \end{align}
 $$
 
-Uno breaks downs optimization methods into four generic ingredients:
+Uno was designed and implemented by [Charlie Vanaret](https://github.com/cvanaret/) (Zuse-Institut Berlin).  
+The theoretical abstract framework for unifying nonlinearly constrained nonconvex optimization was developed by Charlie Vanaret and [Sven Leyffer](https://wiki.mcs.anl.gov/leyffer/index.php/Sven_Leyffer) (Argonne National Laboratory).
+[Silvio Traversaro](https://github.com/traversaro) contributed to the CMakeLists.
+
+Uno is released under the MIT license (see the [license file](LICENSE)).
+
+## Unifying nonlinearly constrained nonconvex optimization
+
+We argue that most optimization methods can be broken down into four generic ingredients:
 * a **constraint relaxation strategy**: a systematic way to relax the nonlinear constraints;
 * a **subproblem**: a local model of the (possibly relaxed) problem at the current primal-dual iterate;
 * a **globalization strategy**: an acceptance test of the trial iterate;
 * a **globalization mechanism**: a recourse action upon rejection of the trial iterate.
 
+<!--
 The following hypergraph illustrates how some of the state-of-the-art solvers can be decomposed in terms of the four ingredients:
 <p align="center">
    <img src="docs/figures/combination_hypergraph.png" alt="Combination hypergraph" width="75%" />
 </p>
 
-### Uno 1.0
+## Uno 1.0
+-->
 
 Uno 1.0 implements the following strategies:
 <p align="center">
@@ -34,7 +46,7 @@ Uno 1.0 implements the following strategies:
 
 For more details, check out my [presentation at the ICCOPT 2022 conference](https://www.researchgate.net/publication/362254109).
 
-### Latest results (April 27, 2023)
+## Latest results (April 27, 2023)
 
 Some of Uno combinations that correspond to existing solvers (called presets, see below) have been tested against state-of-the-art solvers on 429 small problems of the [CUTEst benchmark](https://arnold-neumaier.at/glopt/coconut/Benchmark/Library2_new_v1.html).
 The figure below is a performance profile of Uno and state-of-the-art solvers filterSQP, IPOPT, SNOPT, MINOS, LANCELOT, LOQO and CONOPT; it shows how many problems are solved for a given budget of function evaluations (1 time, 2 times, 4 times, ..., $2^x$ times the number of objective evaluations of the best solver for each instance).
@@ -55,17 +67,6 @@ Please be patient, we are actively working on our article.
 
 To mention Uno on Twitter, use [@UnoSolver](https://twitter.com/UnoSolver).  
 To mention Uno on LinkedIn, use [#unosolver](https://www.linkedin.com/feed/hashtag/?keywords=unosolver).  
-
-## Contributions
-
-Uno was designed and implemented by [Charlie Vanaret](https://github.com/cvanaret/) (Zuse-Institut Berlin).  
-The theoretical abstract framework for unifying nonlinear optimization was developed by Charlie Vanaret and [Sven Leyffer](https://wiki.mcs.anl.gov/leyffer/index.php/Sven_Leyffer) (Argonne National Laboratory).
-
-[Silvio Traversaro](https://github.com/traversaro) contributed to the CMakeLists.
-
-## License
-
-Uno is released under the MIT license (see the [license file](LICENSE)).
 
 ## Installation instructions
 
@@ -94,7 +95,7 @@ To compile the code with different configurations, simply create a `build` direc
 ### Unit tests
 
 6. Install the GoogleTest suite: ```sudo apt-get install googletest```
-7. Perform steps 2 and 3
+7. Perform steps 2 and 3 with the flag ```-DWITH_GTEST=ON```
 8. Run the test suite: ```./run_unotest```
 
 ### Autocompletion
