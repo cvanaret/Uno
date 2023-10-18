@@ -44,9 +44,12 @@ Uno 1.0 implements the following strategies:
    <img src="docs/figures/hypergraph_uno.png" alt="Uno 1.0 hypergraph" width="65%" />
 </p>
 
-**Any strategy combination** can be automatically generated without any programming effort from the user. Note that all combinations do not necessarily result in sensible algorithms, or even convergent approaches.
+**Any strategy combination** can be automatically generated without any programming effort from the user. Note that all combinations do not necessarily result in sensible algorithms, or even convergent approaches. For more details, check out my [presentation at the ICCOPT 2022 conference](https://www.researchgate.net/publication/362254109).
 
-For more details, check out my [presentation at the ICCOPT 2022 conference](https://www.researchgate.net/publication/362254109).
+Uno 1.0 implements three **presets**, that is strategy combinations that correspond to existing solvers (as well as hyperparameter values found in their documentations):
+* `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method);
+* `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method);
+* `byrd` mimics Byrd's S $\ell_1$ QP (line-search $\ell_1$ merit S $\ell_1$ QP method).
 
 ## Latest results (April 27, 2023)
 
@@ -119,12 +122,5 @@ To pick a subproblem method, use the argument: ```-subproblem [QP|LP|primal_dual
 The options can be combined in the same command line.
 
 For an overview of the available strategies, type: ```./uno_ampl --strategies```
-
-### Presets
-
-Uno presets are strategy combinations that correspond to existing solvers (as well as known values for their hyperparameters). Uno 1.0 implements three presets:
-* `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method);
-* `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method);
-* `byrd` mimics Byrd's S $\ell_1$ QP (line-search $\ell_1$ merit S $\ell_1$ QP method).
 
 To pick a preset, use the argument: ```-preset [filtersqp|ipopt|byrd]```
