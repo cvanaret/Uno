@@ -13,7 +13,7 @@ public:
    Scaling(size_t number_constraints, double gradient_threshold);
    void compute(const SparseVector<double>& objective_gradient, const RectangularMatrix<double>& constraint_jacobian);
    [[nodiscard]] double get_objective_scaling() const;
-   [[nodiscard]] double get_constraint_scaling(size_t j) const;
+   [[nodiscard]] double get_constraint_scaling(size_t constraint_index) const;
 
 protected:
    const double gradient_threshold;

@@ -27,10 +27,10 @@ public:
    ~PrimalDualInteriorPointSubproblem() override = default;
 
    void set_initial_point(const std::vector<double>& initial_point) override;
-   void generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) override;
+   void generate_initial_iterate(const NonlinearProblem& constraint_index, Iterate& initial_iterate) override;
 
    void initialize_feasibility_problem() override;
-   void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
+   void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& constraint_index) override;
    void exit_feasibility_problem(const NonlinearProblem& problem, Iterate& trial_iterate) override;
 
    [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
@@ -68,14 +68,14 @@ protected:
    void evaluate_functions(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
          const WarmstartInformation& warmstart_information);
    void update_barrier_parameter(const NonlinearProblem& problem, const Iterate& current_iterate);
-   [[nodiscard]] bool is_small_step(const NonlinearProblem& problem, const Iterate& current_iterate, const Direction& direction) const;
+   [[nodiscard]] bool is_small_step(const NonlinearProblem& variable_index, const Iterate& current_iterate, const Direction& direction) const;
    [[nodiscard]] double evaluate_subproblem_objective() const;
    [[nodiscard]] double compute_barrier_term_directional_derivative(const NonlinearProblem& problem, const Iterate& current_iterate,
          const Direction& direction) const;
    [[nodiscard]] double primal_fraction_to_boundary(const NonlinearProblem& problem, const Iterate& current_iterate, double tau);
    [[nodiscard]] double dual_fraction_to_boundary(const NonlinearProblem& problem, const Iterate& current_iterate, double tau);
    void assemble_augmented_system(Statistics& statistics, const NonlinearProblem& problem, const Iterate& current_iterate);
-   void generate_augmented_rhs(const NonlinearProblem& problem, const Iterate& current_iterate);
+   void generate_augmented_rhs(const NonlinearProblem& variable_index, const Iterate& current_iterate);
    void assemble_primal_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate);
    void compute_bound_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate);
    void compute_least_square_multipliers(const NonlinearProblem& problem, Iterate& iterate);

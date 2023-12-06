@@ -10,7 +10,7 @@
 #include "Vector.hpp"
 #include "SparseVector.hpp"
 
-template <typename T>
+template <typename ElementType>
 class SymmetricMatrix {
 public:
    size_t dimension;
@@ -22,31 +22,32 @@ public:
 
    virtual void reset();
 
-   T quadratic_product(const std::vector<T>& x, const std::vector<T>& y) const;
+   ElementType quadratic_product(const std::vector<ElementType>& row_index, const std::vector<ElementType>& column_index) const;
 
-   virtual void for_each(const std::function<void (size_t, size_t, T)>& f) const = 0;
+   virtual void for_each(const std::function<void(size_t, size_t, ElementType)>& f) const = 0;
    // build the matrix incrementally
-   virtual void insert(T term, size_t row_index, size_t column_index) = 0;
+   virtual void insert(ElementType term, size_t row_index, size_t column_index) = 0;
    // this method will be used by the CSCSymmetricMatrix subclass
    virtual void finalize_column(size_t column_index) = 0;
-   [[nodiscard]] virtual T smallest_diagonal_entry() const = 0;
-   virtual void set_regularization(const std::function<T(size_t index)>& regularization_function) = 0;
-   [[nodiscard]] const T* data_raw_pointer() const;
+   [[nodiscard]] virtual ElementType smallest_diagonal_entry() const = 0;
+   virtual void set_regularization(const std::function<ElementType(size_t /*index*/)>& regularization_function) = 0;
+
+   [[nodiscard]] const ElementType* data_raw_pointer() const;
 
    virtual void print(std::ostream& stream) const = 0;
    template <typename U>
    friend std::ostream& operator<<(std::ostream& stream, const SymmetricMatrix<U>& matrix);
 
 protected:
-   std::vector<T> entries{};
+   std::vector<ElementType> entries{};
    // regularization
    const bool use_regularization;
 };
 
 // implementation
 
-template <typename T>
-SymmetricMatrix<T>::SymmetricMatrix(size_t max_dimension, size_t original_capacity, bool use_regularization) :
+template <typename ElementType>
+SymmetricMatrix<ElementType>::SymmetricMatrix(size_t max_dimension, size_t original_capacity, bool use_regularization) :
       dimension(max_dimension),
       // if regularization is used, allocate the necessary space
       capacity(original_capacity + (use_regularization ? max_dimension : 0)),
@@ -54,30 +55,30 @@ SymmetricMatrix<T>::SymmetricMatrix(size_t max_dimension, size_t original_capaci
    this->entries.reserve(this->capacity);
 }
 
-template <typename T>
-void SymmetricMatrix<T>::reset() {
+template <typename ElementType>
+void SymmetricMatrix<ElementType>::reset() {
    this->number_nonzeros = 0;
    this->entries.clear();
 }
 
-template <typename T>
-T SymmetricMatrix<T>::quadratic_product(const std::vector<T>& x, const std::vector<T>& y) const {
+template <typename ElementType>
+ElementType SymmetricMatrix<ElementType>::quadratic_product(const std::vector<ElementType>& x, const std::vector<ElementType>& y) const {
    assert(x.size() == y.size() && "SymmetricMatrix::quadratic_product: the two vectors x and y do not have the same size");
 
-   T result = T(0);
-   this->for_each([&](size_t i, size_t j, T entry) {
-      result += (i == j ? T(1) : T(2)) * entry * x[i] * y[j];
+   ElementType result = ElementType(0);
+   this->for_each([&](size_t row_index, size_t column_index, ElementType entry) {
+      result += (row_index == column_index ? ElementType(1) : ElementType(2)) * entry * x[row_index] * y[column_index];
    });
    return result;
 }
 
-template <typename T>
-const T* SymmetricMatrix<T>::data_raw_pointer() const {
+template <typename ElementType>
+const ElementType* SymmetricMatrix<ElementType>::data_raw_pointer() const {
    return this->entries.data();
 }
 
-template <typename T>
-std::ostream& operator<<(std::ostream& stream, const SymmetricMatrix<T>& matrix) {
+template <typename ElementType>
+std::ostream& operator<<(std::ostream& stream, const SymmetricMatrix<ElementType>& matrix) {
    stream << "Dimension: " << matrix.dimension << ", number of nonzeros: " << matrix.number_nonzeros << '\n';
    matrix.print(stream);
    return stream;

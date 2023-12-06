@@ -218,24 +218,24 @@ void FeasibilityRestoration::set_trust_region_radius(double trust_region_radius)
 double FeasibilityRestoration::compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
       const Multipliers& multipliers) const {
    // bound constraints
-   VectorExpression<double> variable_complementarity(this->original_model.number_variables, [&](size_t i) {
-      if (0. < multipliers.lower_bounds[i]) {
-         return multipliers.lower_bounds[i] * (primals[i] - this->original_model.get_variable_lower_bound(i));
+   VectorExpression<double> variable_complementarity(this->original_model.number_variables, [&](size_t variable_index) {
+      if (0. < multipliers.lower_bounds[variable_index]) {
+         return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->original_model.get_variable_lower_bound(variable_index));
       }
-      if (multipliers.upper_bounds[i] < 0.) {
-         return multipliers.upper_bounds[i] * (primals[i] - this->original_model.get_variable_upper_bound(i));
+      if (multipliers.upper_bounds[variable_index] < 0.) {
+         return multipliers.upper_bounds[variable_index] * (primals[variable_index] - this->original_model.get_variable_upper_bound(variable_index));
       }
       return 0.;
    });
 
    // constraints
    VectorExpression<double> constraint_complementarity(this->original_model.inequality_constraints.size(), [&](size_t inequality_index) {
-      const size_t j = this->original_model.inequality_constraints[inequality_index];
-      if (0. < multipliers.constraints[j]) { // lower bound
-         return multipliers.constraints[j] * (constraints[j] - this->original_model.get_constraint_lower_bound(j));
+      const size_t constraint_index = this->original_model.inequality_constraints[inequality_index];
+      if (0. < multipliers.constraints[constraint_index]) { // lower bound
+         return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->original_model.get_constraint_lower_bound(constraint_index));
       }
-      else if (multipliers.constraints[j] < 0.) { // upper bound
-         return multipliers.constraints[j] * (constraints[j] - this->original_model.get_constraint_upper_bound(j));
+      else if (multipliers.constraints[constraint_index] < 0.) { // upper bound
+         return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->original_model.get_constraint_upper_bound(constraint_index));
       }
       return 0.;
    });

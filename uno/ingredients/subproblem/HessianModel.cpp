@@ -54,8 +54,8 @@ void ConvexifiedHessian::regularize(Statistics& statistics, SymmetricMatrix<doub
    while (not good_inertia) {
       DEBUG << "Testing factorization with regularization factor " << regularization_factor << '\n';
       if (0. < regularization_factor) {
-         hessian.set_regularization([=](size_t i) {
-            return (i < number_original_variables) ? regularization_factor : 0.;
+         hessian.set_regularization([=](size_t variable_index) {
+            return (variable_index < number_original_variables) ? regularization_factor : 0.;
          });
       }
       // TODO check if sparsity pattern changes. If not, perform symbolic factorization once

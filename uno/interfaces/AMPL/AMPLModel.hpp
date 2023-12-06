@@ -29,19 +29,19 @@ public:
    void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const override;
    // constraints
    void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const override;
-   void evaluate_constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const override;
+   void evaluate_constraint_gradient(const std::vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const override;
    void evaluate_constraint_jacobian(const std::vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const override;
    // Hessian
    void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
          SymmetricMatrix<double>& hessian) const override;
 
-   [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
-   [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
-   [[nodiscard]] BoundType get_variable_bound_type(size_t i) const override;
-   [[nodiscard]] double get_constraint_lower_bound(size_t j) const override;
-   [[nodiscard]] double get_constraint_upper_bound(size_t j) const override;
-   [[nodiscard]] FunctionType get_constraint_type(size_t j) const override;
-   [[nodiscard]] BoundType get_constraint_bound_type(size_t j) const override;
+   [[nodiscard]] double get_variable_lower_bound(size_t variable_index) const override;
+   [[nodiscard]] double get_variable_upper_bound(size_t variable_index) const override;
+   [[nodiscard]] BoundType get_variable_bound_type(size_t variable_index) const override;
+   [[nodiscard]] double get_constraint_lower_bound(size_t constraint_index) const override;
+   [[nodiscard]] double get_constraint_upper_bound(size_t constraint_index) const override;
+   [[nodiscard]] FunctionType get_constraint_type(size_t constraint_index) const override;
+   [[nodiscard]] BoundType get_constraint_bound_type(size_t constraint_index) const override;
 
    [[nodiscard]] size_t get_number_objective_gradient_nonzeros() const override;
    [[nodiscard]] size_t get_number_jacobian_nonzeros() const override;

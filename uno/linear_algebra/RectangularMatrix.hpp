@@ -6,7 +6,8 @@
 
 #include "SparseVector.hpp"
 
-template <typename T>
-using RectangularMatrix = std::vector<SparseVector<T>>;
+// TODO use more appropriate sparse representation
+template <typename ElementType>
+using RectangularMatrix = std::vector<SparseVector<ElementType>>;
 
 #endif // UNO_RECTANGULARMATRIX_H

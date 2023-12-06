@@ -15,28 +15,28 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
    /* build the symmetric matrix */
    matrix.reset();
    // identity block
-   for (size_t i: Range(model.number_variables)) {
-      matrix.insert(1., i, i);
-      matrix.finalize_column(i);
+   for (size_t variable_index: Range(model.number_variables)) {
+      matrix.insert(1., variable_index, variable_index);
+      matrix.finalize_column(variable_index);
    }
    // Jacobian of general constraints
-   for (size_t j: Range(model.number_constraints)) {
-      current_iterate.evaluations.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
-         matrix.insert(derivative, i, model.number_variables + j);
+   for (size_t constraint_index: Range(model.number_constraints)) {
+      current_iterate.evaluations.constraint_jacobian[constraint_index].for_each([&](size_t variable_index, double derivative) {
+         matrix.insert(derivative, variable_index, model.number_variables + constraint_index);
       });
-      matrix.finalize_column(model.number_variables + j);
+      matrix.finalize_column(model.number_variables + constraint_index);
    }
    DEBUG2 << "Matrix for least-square multipliers:\n" << matrix << '\n';
 
    /* generate the right-hand side */
    initialize_vector(rhs, 0.);
    // objective gradient
-   current_iterate.evaluations.objective_gradient.for_each([&](size_t i, double derivative) {
-      rhs[i] += model.objective_sign * derivative;
+   current_iterate.evaluations.objective_gradient.for_each([&](size_t variable_index, double derivative) {
+      rhs[variable_index] += model.objective_sign * derivative;
    });
    // variable bound constraints
-   for (size_t i: Range(model.number_variables)) {
-      rhs[i] -= current_iterate.multipliers.lower_bounds[i] + current_iterate.multipliers.upper_bounds[i];
+   for (size_t variable_index: Range(model.number_variables)) {
+      rhs[variable_index] -= current_iterate.multipliers.lower_bounds[variable_index] + current_iterate.multipliers.upper_bounds[variable_index];
    }
    DEBUG2 << "RHS for least-square multipliers: "; print_vector(DEBUG2, rhs, 0, matrix.dimension);
    
@@ -48,8 +48,8 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
 
    // if least-square multipliers too big, discard them. Otherwise, keep them
    if (norm_inf(solution, Range(model.number_variables, model.number_variables + model.number_constraints)) <= multiplier_max_norm) {
-      for (size_t j: Range(model.number_constraints)) {
-         multipliers[j] = solution[model.number_variables + j];
+      for (size_t constraint_index: Range(model.number_constraints)) {
+         multipliers[constraint_index] = solution[model.number_variables + constraint_index];
       }
    }
    else {
@@ -60,8 +60,9 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
 
 size_t count_infeasible_linear_constraints(const Model& model, const std::vector<double>& constraint_values) {
    size_t infeasible_linear_constraints = 0;
-   for (size_t j: model.get_linear_constraints()) {
-      if (constraint_values[j] < model.get_constraint_lower_bound(j) || model.get_constraint_upper_bound(j) < constraint_values[j]) {
+   for (size_t constraint_index: model.get_linear_constraints()) {
+      if (constraint_values[constraint_index] < model.get_constraint_lower_bound(constraint_index) ||
+            model.get_constraint_upper_bound(constraint_index) < constraint_values[constraint_index]) {
          infeasible_linear_constraints++;
       }
    }
@@ -86,20 +87,21 @@ void Preprocessing::enforce_linear_constraints(const Options& options, const Mod
             constraint_gradient.reserve(model.number_variables);
          }
          for (size_t linear_constraint_index: Range(linear_constraints.size())) {
-            const size_t j = linear_constraints[linear_constraint_index];
-            model.evaluate_constraint_gradient(x, j, constraint_jacobian[linear_constraint_index]);
+            const size_t constraint_index = linear_constraints[linear_constraint_index];
+            model.evaluate_constraint_gradient(x, constraint_index, constraint_jacobian[linear_constraint_index]);
          }
          // variables bounds
          std::vector<Interval> variables_bounds(model.number_variables);
-         for (size_t i: Range(model.number_variables)) {
-            variables_bounds[i] = {model.get_variable_lower_bound(i) - x[i], model.get_variable_upper_bound(i) - x[i]};
+         for (size_t variable_index: Range(model.number_variables)) {
+            variables_bounds[variable_index] = {model.get_variable_lower_bound(variable_index) - x[variable_index],
+                  model.get_variable_upper_bound(variable_index) - x[variable_index]};
          }
          // constraints bounds
          std::vector<Interval> constraints_bounds(linear_constraints.size());
          for (size_t linear_constraint_index: Range(linear_constraints.size())) {
-            const size_t j = linear_constraints[linear_constraint_index];
-            constraints_bounds[linear_constraint_index] =
-                  {model.get_constraint_lower_bound(j) - constraints[j], model.get_constraint_upper_bound(j) - constraints[j]};
+            const size_t constraint_index = linear_constraints[linear_constraint_index];
+            constraints_bounds[linear_constraint_index] = {model.get_constraint_lower_bound(constraint_index) - constraints[constraint_index],
+                  model.get_constraint_upper_bound(constraint_index) - constraints[constraint_index]};
          }
 
          // solve the strictly convex QP
@@ -118,8 +120,8 @@ void Preprocessing::enforce_linear_constraints(const Options& options, const Mod
          add_vectors(multipliers.lower_bounds, direction.multipliers.lower_bounds, 1., multipliers.lower_bounds);
          add_vectors(multipliers.upper_bounds, direction.multipliers.upper_bounds, 1., multipliers.upper_bounds);
          for (size_t linear_constraint_index: Range(linear_constraints.size())) {
-            const size_t j = linear_constraints[linear_constraint_index];
-            multipliers.constraints[j] += direction.multipliers.constraints[linear_constraint_index];
+            const size_t constraint_index = linear_constraints[linear_constraint_index];
+            multipliers.constraints[constraint_index] += direction.multipliers.constraints[linear_constraint_index];
          }
          DEBUG2 << "Linear feasible initial point: "; print_vector(DEBUG2, x);
       }

@@ -38,10 +38,10 @@ public:
    [[nodiscard]] double compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const override;
 
-   [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
-   [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
-   [[nodiscard]] double get_constraint_lower_bound(size_t j) const override;
-   [[nodiscard]] double get_constraint_upper_bound(size_t j) const override;
+   [[nodiscard]] double get_variable_lower_bound(size_t variable_index) const override;
+   [[nodiscard]] double get_variable_upper_bound(size_t variable_index) const override;
+   [[nodiscard]] double get_constraint_lower_bound(size_t constraint_index) const override;
+   [[nodiscard]] double get_constraint_upper_bound(size_t constraint_index) const override;
 
    [[nodiscard]] size_t get_number_objective_gradient_nonzeros() const override;
    [[nodiscard]] size_t get_number_jacobian_nonzeros() const override;
@@ -69,17 +69,17 @@ inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_m
    this->generate_elastic_variables();
 
    // figure out bounded variables
-   for (size_t i: this->model.lower_bounded_variables) {
-      this->lower_bounded_variables.push_back(i);
+   for (size_t variable_index: this->model.lower_bounded_variables) {
+      this->lower_bounded_variables.push_back(variable_index);
    }
-   for (size_t i: this->model.upper_bounded_variables) {
-      this->upper_bounded_variables.push_back(i);
+   for (size_t variable_index: this->model.upper_bounded_variables) {
+      this->upper_bounded_variables.push_back(variable_index);
    }
-   for (size_t i: this->model.single_lower_bounded_variables) {
-      this->single_lower_bounded_variables.push_back(i);
+   for (size_t variable_index: this->model.single_lower_bounded_variables) {
+      this->single_lower_bounded_variables.push_back(variable_index);
    }
-   for (size_t i: this->model.single_upper_bounded_variables) {
-      this->single_upper_bounded_variables.push_back(i);
+   for (size_t variable_index: this->model.single_upper_bounded_variables) {
+      this->single_upper_bounded_variables.push_back(variable_index);
    }
    const auto add_nonnegative_elastic = [&](size_t elastic_index) {
       this->lower_bounded_variables.push_back(elastic_index);
@@ -132,11 +132,11 @@ inline void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, std::vector
    iterate.evaluate_constraints(this->model);
    copy_from(constraints, iterate.evaluations.constraints);
    // add the contribution of the elastics
-   this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {
-      constraints[j] -= iterate.primals[elastic_index];
+   this->elastic_variables.positive.for_each([&](size_t constraint_index, size_t elastic_index) {
+      constraints[constraint_index] -= iterate.primals[elastic_index];
    });
-   this->elastic_variables.negative.for_each([&](size_t j, size_t elastic_index) {
-      constraints[j] += iterate.primals[elastic_index];
+   this->elastic_variables.negative.for_each([&](size_t constraint_index, size_t elastic_index) {
+      constraints[constraint_index] += iterate.primals[elastic_index];
    });
 }
 
@@ -144,11 +144,11 @@ inline void l1RelaxedProblem::evaluate_constraint_jacobian(Iterate& iterate, Rec
    iterate.evaluate_constraint_jacobian(this->model);
    constraint_jacobian = iterate.evaluations.constraint_jacobian;
    // add the contribution of the elastics
-   this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {
-      constraint_jacobian[j].insert(elastic_index, -1.);
+   this->elastic_variables.positive.for_each([&](size_t constraint_index, size_t elastic_index) {
+      constraint_jacobian[constraint_index].insert(elastic_index, -1.);
    });
-   this->elastic_variables.negative.for_each([&](size_t j, size_t elastic_index) {
-      constraint_jacobian[j].insert(elastic_index, 1.);
+   this->elastic_variables.negative.for_each([&](size_t constraint_index, size_t elastic_index) {
+      constraint_jacobian[constraint_index].insert(elastic_index, 1.);
    });
 }
 
@@ -157,8 +157,8 @@ inline void l1RelaxedProblem::evaluate_lagrangian_hessian(const std::vector<doub
    this->model.evaluate_lagrangian_hessian(x, this->objective_multiplier, multipliers, hessian);
 
    // extend the dimension of the Hessian by finalizing the remaining columns (note: the elastics do not enter the Hessian)
-   for (size_t j: Range(this->model.number_variables, this->number_variables)) {
-      hessian.finalize_column(j);
+   for (size_t constraint_index: Range(this->model.number_variables, this->number_variables)) {
+      hessian.finalize_column(constraint_index);
    }
 }
 
@@ -238,61 +238,63 @@ inline double l1RelaxedProblem::compute_stationarity_error(const Iterate& iterat
 inline double l1RelaxedProblem::compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
       const Multipliers& multipliers, Norm residual_norm) const {
    // construct a lazy expression for complementarity for variable bounds
-   VectorExpression<double> variable_complementarity(this->get_number_original_variables(), [&](size_t i) {
-      if (0. < multipliers.lower_bounds[i]) {
-         return multipliers.lower_bounds[i] * (primals[i] - this->model.get_variable_lower_bound(i));
+   VectorExpression<double> variable_complementarity(this->get_number_original_variables(), [&](size_t variable_index) {
+      if (0. < multipliers.lower_bounds[variable_index]) {
+         return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->model.get_variable_lower_bound(variable_index));
       }
-      if (multipliers.upper_bounds[i] < 0.) {
-         return multipliers.upper_bounds[i] * (primals[i] - this->model.get_variable_upper_bound(i));
+      if (multipliers.upper_bounds[variable_index] < 0.) {
+         return multipliers.upper_bounds[variable_index] * (primals[variable_index] - this->model.get_variable_upper_bound(variable_index));
       }
       return 0.;
    });
 
    // construct a lazy expression for complementarity for constraint bounds
-   VectorExpression<double> constraint_complementarity(constraints.size(), [&](size_t j) {
+   VectorExpression<double> constraint_complementarity(constraints.size(), [&](size_t constraint_index) {
       // violated constraints
-      if (constraints[j] < this->get_constraint_lower_bound(j)) { // lower violated
-         return (this->constraint_violation_coefficient - multipliers.constraints[j]) * (constraints[j] - this->get_constraint_lower_bound(j));
+      if (constraints[constraint_index] < this->get_constraint_lower_bound(constraint_index)) { // lower violated
+         return (this->constraint_violation_coefficient - multipliers.constraints[constraint_index]) * (constraints[constraint_index] -
+         this->get_constraint_lower_bound(constraint_index));
       }
-      else if (this->get_constraint_upper_bound(j) < constraints[j]) { // upper violated
-         return (this->constraint_violation_coefficient + multipliers.constraints[j]) * (constraints[j] - this->get_constraint_upper_bound(j));
+      else if (this->get_constraint_upper_bound(constraint_index) < constraints[constraint_index]) { // upper violated
+         return (this->constraint_violation_coefficient + multipliers.constraints[constraint_index]) * (constraints[constraint_index] -
+         this->get_constraint_upper_bound(constraint_index));
       }
       // satisfied constraints
-      else if (0. < multipliers.constraints[j]) { // lower bound
-         return multipliers.constraints[j] * (constraints[j] - this->get_constraint_lower_bound(j));
+      else if (0. < multipliers.constraints[constraint_index]) { // lower bound
+         return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->get_constraint_lower_bound(constraint_index));
       }
-      else if (multipliers.constraints[j] < 0.) { // upper bound
-         return multipliers.constraints[j] * (constraints[j] - this->get_constraint_upper_bound(j));
+      else if (multipliers.constraints[constraint_index] < 0.) { // upper bound
+         return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->get_constraint_upper_bound(constraint_index));
       }
       return 0.;
    });
    return norm(residual_norm, variable_complementarity, constraint_complementarity);
 }
 
-inline double l1RelaxedProblem::get_variable_lower_bound(size_t i) const {
-   if (i < this->model.number_variables) { // original variable
-      return this->model.get_variable_lower_bound(i);
+inline double l1RelaxedProblem::get_variable_lower_bound(size_t variable_index) const {
+   if (variable_index < this->model.number_variables) { // original variable
+      return this->model.get_variable_lower_bound(variable_index);
    }
    else { // elastic variable in [0, +inf[
       return 0.;
    }
 }
 
-inline double l1RelaxedProblem::get_variable_upper_bound(size_t i) const {
-   if (i < this->model.number_variables) { // original variable
-      return this->model.get_variable_upper_bound(i);
+inline double l1RelaxedProblem::get_variable_upper_bound(size_t variable_index) const {
+   if (variable_index < this->model.number_variables) { // original variable
+      return this->model.get_variable_upper_bound(variable_index);
    }
    else { // elastic variable in [0, +inf[
       return INF<double>;
    }
 }
 
-inline double l1RelaxedProblem::get_constraint_lower_bound(size_t j) const {
-   return this->model.get_constraint_lower_bound(j);
+inline double l1RelaxedProblem::get_constraint_lower_bound(size_t constraint_index) const {
+   return this->model.get_constraint_lower_bound(constraint_index);
 }
 
-inline double l1RelaxedProblem::get_constraint_upper_bound(size_t j) const {
-   return this->model.get_constraint_upper_bound(j);
+inline double l1RelaxedProblem::get_constraint_upper_bound(size_t constraint_index) const {
+   return this->model.get_constraint_upper_bound(constraint_index);
 }
 
 inline size_t l1RelaxedProblem::get_number_objective_gradient_nonzeros() const {
@@ -325,11 +327,11 @@ inline void l1RelaxedProblem::set_objective_multiplier(double new_objective_mult
 inline size_t l1RelaxedProblem::count_elastic_variables(const Model& model) {
    size_t number_elastic_variables = 0;
    // if the subproblem uses slack variables, the bounds of the constraints are [0, 0]
-   for (size_t j: Range(model.number_constraints)) {
-      if (is_finite(model.get_constraint_lower_bound(j))) {
+   for (size_t constraint_index: Range(model.number_constraints)) {
+      if (is_finite(model.get_constraint_lower_bound(constraint_index))) {
          number_elastic_variables++;
       }
-      if (is_finite(model.get_constraint_upper_bound(j))) {
+      if (is_finite(model.get_constraint_upper_bound(constraint_index))) {
          number_elastic_variables++;
       }
    }
@@ -339,15 +341,15 @@ inline size_t l1RelaxedProblem::count_elastic_variables(const Model& model) {
 inline void l1RelaxedProblem::generate_elastic_variables() {
    // generate elastic variables to relax the constraints
    size_t elastic_index = this->model.number_variables;
-   for (size_t j: Range(this->model.number_constraints)) {
-      if (is_finite(this->model.get_constraint_upper_bound(j))) {
+   for (size_t constraint_index: Range(this->model.number_constraints)) {
+      if (is_finite(this->model.get_constraint_upper_bound(constraint_index))) {
          // nonnegative variable p that captures the positive part of the constraint violation
-         this->elastic_variables.positive.insert(j, elastic_index);
+         this->elastic_variables.positive.insert(constraint_index, elastic_index);
          elastic_index++;
       }
-      if (is_finite(this->model.get_constraint_lower_bound(j))) {
+      if (is_finite(this->model.get_constraint_lower_bound(constraint_index))) {
          // nonpositive variable n that captures the negative part of the constraint violation
-         this->elastic_variables.negative.insert(j, elastic_index);
+         this->elastic_variables.negative.insert(constraint_index, elastic_index);
          elastic_index++;
       }
    }
@@ -356,11 +358,11 @@ inline void l1RelaxedProblem::generate_elastic_variables() {
 inline void l1RelaxedProblem::set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t, double)>&
       elastic_setting_function) const {
    iterate.set_number_variables(this->number_variables);
-   this->elastic_variables.positive.for_each([&](size_t j, size_t elastic_index) {
-      elastic_setting_function(iterate, j, elastic_index, -1.);
+   this->elastic_variables.positive.for_each([&](size_t constraint_index, size_t elastic_index) {
+      elastic_setting_function(iterate, constraint_index, elastic_index, -1.);
    });
-   this->elastic_variables.negative.for_each([&](size_t j, size_t elastic_index) {
-      elastic_setting_function(iterate, j, elastic_index, 1.);
+   this->elastic_variables.negative.for_each([&](size_t constraint_index, size_t elastic_index) {
+      elastic_setting_function(iterate, constraint_index, elastic_index, 1.);
    });
 }
 

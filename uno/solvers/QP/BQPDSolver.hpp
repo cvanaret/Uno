@@ -81,7 +81,7 @@ private:
          const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point,
          const WarmstartInformation& warmstart_information);
    void analyze_constraints(size_t number_variables, size_t number_constraints, Direction& direction);
-   void save_lagrangian_hessian_to_local_format(const SymmetricMatrix<double>& hessian);
+   void save_lagrangian_hessian_to_local_format(const SymmetricMatrix<double>& row_index);
    void save_gradients_to_local_format(size_t number_constraints, const SparseVector<double>& linear_objective,
          const RectangularMatrix<double>& constraint_jacobian);
    [[nodiscard]] BQPDMode determine_mode(const WarmstartInformation& warmstart_information) const;

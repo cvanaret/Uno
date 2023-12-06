@@ -43,8 +43,8 @@ BQPDSolver::BQPDSolver(size_t max_number_variables, size_t number_constraints, s
       hessian_values(this->size_hessian_workspace), hessian_sparsity(this->size_hessian_sparsity_workspace),
       print_subproblem(options.get_bool("BQPD_print_subproblem")) {
    // default active set
-   for (size_t i: Range(max_number_variables + number_constraints)) {
-      this->active_set[i] = static_cast<int>(i) + this->fortran_shift;
+   for (size_t variable_index: Range(max_number_variables + number_constraints)) {
+      this->active_set[variable_index] = static_cast<int>(variable_index) + this->fortran_shift;
    }
 }
 
@@ -88,14 +88,14 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
 
    if (this->print_subproblem) {
       DEBUG << "objective gradient: " << linear_objective;
-      for (size_t j: Range(number_constraints)) {
-         DEBUG << "gradient c" << j << ": " << constraint_jacobian[j];
+      for (size_t constraint_index: Range(number_constraints)) {
+         DEBUG << "gradient c" << constraint_index << ": " << constraint_jacobian[constraint_index];
       }
-      for (size_t i: Range(number_variables)) {
-         DEBUG << "d_x" << i << " in [" << variables_bounds[i].lb << ", " << variables_bounds[i].ub << "]\n";
+      for (size_t variable_index: Range(number_variables)) {
+         DEBUG << "d_x" << variable_index << " in [" << variables_bounds[variable_index].lb << ", " << variables_bounds[variable_index].ub << "]\n";
       }
-      for (size_t j: Range(number_constraints)) {
-         DEBUG << "linearized c" << j << " in [" << constraint_bounds[j].lb << ", " << constraint_bounds[j].ub << "]\n";
+      for (size_t constraint_index: Range(number_constraints)) {
+         DEBUG << "linearized c" << constraint_index << " in [" << constraint_bounds[constraint_index].lb << ", " << constraint_bounds[constraint_index].ub << "]\n";
       }
    }
 
@@ -106,16 +106,16 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
 
    // set variable bounds
    if (warmstart_information.variable_bounds_changed) {
-      for (size_t i: Range(number_variables)) {
-         this->lb[i] = (variables_bounds[i].lb == -INF<double>) ? -BIG : variables_bounds[i].lb;
-         this->ub[i] = (variables_bounds[i].ub == INF<double>) ? BIG : variables_bounds[i].ub;
+      for (size_t variable_index: Range(number_variables)) {
+         this->lb[variable_index] = (variables_bounds[variable_index].lb == -INF<double>) ? -BIG : variables_bounds[variable_index].lb;
+         this->ub[variable_index] = (variables_bounds[variable_index].ub == INF<double>) ? BIG : variables_bounds[variable_index].ub;
       }
    }
    // set constraint bounds
    if (warmstart_information.constraint_bounds_changed) {
-      for (size_t j: Range(number_constraints)) {
-         this->lb[number_variables + j] = (constraint_bounds[j].lb == -INF<double>) ? -BIG : constraint_bounds[j].lb;
-         this->ub[number_variables + j] = (constraint_bounds[j].ub == INF<double>) ? BIG : constraint_bounds[j].ub;
+      for (size_t constraint_index: Range(number_constraints)) {
+         this->lb[number_variables + constraint_index] = (constraint_bounds[constraint_index].lb == -INF<double>) ? -BIG : constraint_bounds[constraint_index].lb;
+         this->ub[number_variables + constraint_index] = (constraint_bounds[constraint_index].ub == INF<double>) ? BIG : constraint_bounds[constraint_index].ub;
       }
    }
 
@@ -137,8 +137,8 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
    this->number_calls++;
 
    // project solution into bounds
-   for (size_t i: Range(number_variables)) {
-      direction.primals[i] = std::min(std::max(direction.primals[i], variables_bounds[i].lb), variables_bounds[i].ub);
+   for (size_t variable_index: Range(number_variables)) {
+      direction.primals[variable_index] = std::min(std::max(direction.primals[variable_index], variables_bounds[variable_index].lb), variables_bounds[variable_index].ub);
    }
    this->analyze_constraints(number_variables, number_constraints, direction);
    return direction;
@@ -167,42 +167,42 @@ void BQPDSolver::save_lagrangian_hessian_to_local_format(const SymmetricMatrix<d
    // header
    this->hessian_sparsity[0] = static_cast<int>(hessian.number_nonzeros + 1);
    // count the elements in each column
-   for (size_t j: Range(hessian.dimension + 1)) {
-      column_starts[j] = 0;
+   for (size_t column_index: Range(hessian.dimension + 1)) {
+      column_starts[column_index] = 0;
    }
-   hessian.for_each([&](size_t /*i*/, size_t j, double /*entry*/) {
-      column_starts[j + 1]++;
+   hessian.for_each([&](size_t /*row_index*/, size_t column_index, double /*entry*/) {
+      column_starts[column_index + 1]++;
    });
    // carry over the column starts
-   for (size_t j: Range(1, hessian.dimension + 1)) {
-      column_starts[j] += column_starts[j-1];
-      column_starts[j-1] += this->fortran_shift;
+   for (size_t column_index: Range(1, hessian.dimension + 1)) {
+      column_starts[column_index] += column_starts[column_index - 1];
+      column_starts[column_index - 1] += this->fortran_shift;
    }
    column_starts[hessian.dimension] += this->fortran_shift;
    // copy the entries
    std::vector<int> current_indices(hessian.dimension);
-   hessian.for_each([&](size_t i, size_t j, double entry) {
-      const size_t index = static_cast<size_t>(column_starts[j] + current_indices[j] - this->fortran_shift);
-      assert(index <= static_cast<size_t>(column_starts[j+1]) &&
-         "BQPD: error in converting the Hessian matrix to the local format. Try setting the sparse format to CSC");
+   hessian.for_each([&](size_t row_index, size_t column_index, double entry) {
+      const size_t index = static_cast<size_t>(column_starts[column_index] + current_indices[column_index] - this->fortran_shift);
+      assert(index <= static_cast<size_t>(column_starts[column_index + 1]) &&
+             "BQPD: error in converting the Hessian matrix to the local format. Try setting the sparse format to CSC");
       this->hessian_values[index] = entry;
-      row_indices[index] = static_cast<int>(i) + this->fortran_shift;
-      current_indices[j]++;
+      row_indices[index] = static_cast<int>(row_index) + this->fortran_shift;
+      current_indices[column_index]++;
    });
 }
 
 void BQPDSolver::save_gradients_to_local_format(size_t number_constraints, const SparseVector<double>& linear_objective,
       const RectangularMatrix<double>& constraint_jacobian) {
    size_t current_index = 0;
-   linear_objective.for_each([&](size_t i, double derivative) {
+   linear_objective.for_each([&](size_t variable_index, double derivative) {
       this->jacobian[current_index] = derivative;
-      this->jacobian_sparsity[current_index + 1] = static_cast<int>(i) + this->fortran_shift;
+      this->jacobian_sparsity[current_index + 1] = static_cast<int>(variable_index) + this->fortran_shift;
       current_index++;
    });
-   for (size_t j: Range(number_constraints)) {
-      constraint_jacobian[j].for_each([&](size_t i, double derivative) {
+   for (size_t constraint_index: Range(number_constraints)) {
+      constraint_jacobian[constraint_index].for_each([&](size_t variable_index, double derivative) {
          this->jacobian[current_index] = derivative;
-         this->jacobian_sparsity[current_index + 1] = static_cast<int>(i) + this->fortran_shift;
+         this->jacobian_sparsity[current_index + 1] = static_cast<int>(variable_index) + this->fortran_shift;
          current_index++;
       });
    }
@@ -215,8 +215,8 @@ void BQPDSolver::save_gradients_to_local_format(size_t number_constraints, const
    size += linear_objective.size();
    this->jacobian_sparsity[current_index] = static_cast<int>(size);
    current_index++;
-   for (size_t j: Range(number_constraints)) {
-      size += constraint_jacobian[j].size();
+   for (size_t constraint_index: Range(number_constraints)) {
+      size += constraint_jacobian[constraint_index].size();
       this->jacobian_sparsity[current_index] = static_cast<int>(size);
       current_index++;
    }
@@ -226,12 +226,12 @@ void BQPDSolver::analyze_constraints(size_t number_variables, size_t number_cons
    ConstraintPartition constraint_partition(number_constraints);
 
    // active constraints
-   for (size_t j: Range(number_variables - static_cast<size_t>(this->k))) {
-      const size_t index = static_cast<size_t>(std::abs(this->active_set[j]) - this->fortran_shift);
+   for (size_t active_constraint_index: Range(number_variables - static_cast<size_t>(this->k))) {
+      const size_t index = static_cast<size_t>(std::abs(this->active_set[active_constraint_index]) - this->fortran_shift);
 
       if (index < number_variables) {
          // bound constraint
-         if (0 <= this->active_set[j]) { // lower bound active
+         if (0 <= this->active_set[active_constraint_index]) { // lower bound active
             direction.multipliers.lower_bounds[index] = this->residuals[index];
             direction.active_set.bounds.at_lower_bound.push_back(index);
          }
@@ -244,7 +244,7 @@ void BQPDSolver::analyze_constraints(size_t number_variables, size_t number_cons
          // general constraint
          size_t constraint_index = index - number_variables;
          constraint_partition.feasible.push_back(constraint_index);
-         if (0 <= this->active_set[j]) { // lower bound active
+         if (0 <= this->active_set[active_constraint_index]) { // lower bound active
             direction.multipliers.constraints[constraint_index] = this->residuals[index];
             direction.active_set.constraints.at_lower_bound.push_back(constraint_index);
          }
@@ -256,14 +256,14 @@ void BQPDSolver::analyze_constraints(size_t number_variables, size_t number_cons
    }
 
    // inactive constraints
-   for (size_t j: Range(number_variables - static_cast<size_t>(this->k), number_variables + number_constraints)) {
-      size_t index = static_cast<size_t>(std::abs(this->active_set[j]) - this->fortran_shift);
+   for (size_t inactive_constraint_index: Range(number_variables - static_cast<size_t>(this->k), number_variables + number_constraints)) {
+      size_t index = static_cast<size_t>(std::abs(this->active_set[inactive_constraint_index]) - this->fortran_shift);
 
       if (number_variables <= index) { // general constraints
          size_t constraint_index = index - number_variables;
          if (this->residuals[index] < 0.) { // infeasible constraint
             constraint_partition.infeasible.push_back(constraint_index);
-            if (this->active_set[j] < 0) { // upper bound violated
+            if (this->active_set[inactive_constraint_index] < 0) { // upper bound violated
                constraint_partition.upper_bound_infeasible.push_back(constraint_index);
             }
             else { // lower bound violated

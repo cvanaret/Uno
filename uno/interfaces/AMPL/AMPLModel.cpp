@@ -72,28 +72,28 @@ AMPLModel::~AMPLModel() {
 }
 
 void AMPLModel::generate_variables() {
-   for (size_t i: Range(this->number_variables)) {
-      double lb = (this->asl->i.LUv_ != nullptr) ? this->asl->i.LUv_[2 * i] : -INF<double>;
-      double ub = (this->asl->i.LUv_ != nullptr) ? this->asl->i.LUv_[2 * i + 1] : INF<double>;
+   for (size_t variable_index: Range(this->number_variables)) {
+      double lb = (this->asl->i.LUv_ != nullptr) ? this->asl->i.LUv_[2*variable_index] : -INF<double>;
+      double ub = (this->asl->i.LUv_ != nullptr) ? this->asl->i.LUv_[2*variable_index + 1] : INF<double>;
       if (lb == ub) {
-         WARNING << "Variable x" << i << " has identical bounds\n";
+         WARNING << "Variable x" << variable_index << " has identical bounds\n";
       }
-      this->variables_bounds[i] = {lb, ub};
+      this->variables_bounds[variable_index] = {lb, ub};
    }
    Model::determine_bounds_types(this->variables_bounds, this->variable_status);
    // figure out the bounded variables
-   for (size_t i: Range(this->number_variables)) {
-      const BoundType status = this->get_variable_bound_type(i);
+   for (size_t variable_index: Range(this->number_variables)) {
+      const BoundType status = this->get_variable_bound_type(variable_index);
       if (status == BOUNDED_LOWER || status == BOUNDED_BOTH_SIDES) {
-         this->lower_bounded_variables.push_back(i);
+         this->lower_bounded_variables.push_back(variable_index);
          if (status == BOUNDED_LOWER) {
-            this->single_lower_bounded_variables.push_back(i);
+            this->single_lower_bounded_variables.push_back(variable_index);
          }
       }
       if (status == BOUNDED_UPPER || status == BOUNDED_BOTH_SIDES) {
-         this->upper_bounded_variables.push_back(i);
+         this->upper_bounded_variables.push_back(variable_index);
          if (status == BOUNDED_UPPER) {
-            this->single_upper_bounded_variables.push_back(i);
+            this->single_upper_bounded_variables.push_back(variable_index);
          }
       }
    }
@@ -155,10 +155,10 @@ void AMPLModel::evaluate_constraints(const std::vector<double>& x, std::vector<d
 }
 
 // sparse gradient
-void AMPLModel::evaluate_constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const {
+void AMPLModel::evaluate_constraint_gradient(const std::vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const {
    // compute the AMPL sparse gradient
    int error_flag = 0;
-   (*(this->asl)->p.Congrd)(this->asl, static_cast<int>(j), const_cast<double*>(x.data()), const_cast<double*>(this->ampl_tmp_gradient.data()),
+   (*(this->asl)->p.Congrd)(this->asl, static_cast<int>(constraint_index), const_cast<double*>(x.data()), const_cast<double*>(this->ampl_tmp_gradient.data()),
          &error_flag);
    if (0 < error_flag) {
       throw GradientEvaluationError();
@@ -166,7 +166,7 @@ void AMPLModel::evaluate_constraint_gradient(const std::vector<double>& x, size_
 
    // construct the Uno sparse vector
    gradient.clear();
-   cgrad* ampl_variables_tmp = this->asl->i.Cgrad_[j];
+   cgrad* ampl_variables_tmp = this->asl->i.Cgrad_[constraint_index];
    size_t sparse_AMPL_index = 0;
    while (ampl_variables_tmp != nullptr) {
       const size_t variable_index = static_cast<size_t>(ampl_variables_tmp->varno);
@@ -177,9 +177,9 @@ void AMPLModel::evaluate_constraint_gradient(const std::vector<double>& x, size_
 }
 
 void AMPLModel::evaluate_constraint_jacobian(const std::vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const {
-   for (size_t j: Range(this->number_constraints)) {
-      constraint_jacobian[j].clear();
-      this->evaluate_constraint_gradient(x, j, constraint_jacobian[j]);
+   for (size_t constraint_index: Range(this->number_constraints)) {
+      constraint_jacobian[constraint_index].clear();
+      this->evaluate_constraint_gradient(x, constraint_index, constraint_jacobian[constraint_index]);
    }
 }
 
@@ -258,44 +258,44 @@ void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double
 
    // copy the nonzeros in the Hessian
    hessian.reset();
-   for (size_t j: Range(this->number_variables)) {
-      for (size_t k: Range(static_cast<size_t>(ampl_column_start[j]), static_cast<size_t>(ampl_column_start[j + 1]))) {
-         const size_t i = static_cast<size_t>(ampl_row_index[k]);
+   for (size_t column_index: Range(this->number_variables)) {
+      for (size_t k: Range(static_cast<size_t>(ampl_column_start[column_index]), static_cast<size_t>(ampl_column_start[column_index + 1]))) {
+         const size_t row_index = static_cast<size_t>(ampl_row_index[k]);
          const double entry = this->ampl_tmp_hessian[k];
-         hessian.insert(entry, i, j);
+         hessian.insert(entry, row_index, column_index);
       }
-      hessian.finalize_column(j);
+      hessian.finalize_column(column_index);
    }
    // unregister the vector of variables
    this->asl->i.x_known = 0;
 }
 
-double AMPLModel::get_variable_lower_bound(size_t i) const {
-   return this->variables_bounds[i].lb;
+double AMPLModel::get_variable_lower_bound(size_t variable_index) const {
+   return this->variables_bounds[variable_index].lb;
 }
 
-double AMPLModel::get_variable_upper_bound(size_t i) const {
-   return this->variables_bounds[i].ub;
+double AMPLModel::get_variable_upper_bound(size_t variable_index) const {
+   return this->variables_bounds[variable_index].ub;
 }
 
-BoundType AMPLModel::get_variable_bound_type(size_t i) const {
-   return this->variable_status[i];
+BoundType AMPLModel::get_variable_bound_type(size_t variable_index) const {
+   return this->variable_status[variable_index];
 }
 
-double AMPLModel::get_constraint_lower_bound(size_t j) const {
-   return this->constraint_bounds[j].lb;
+double AMPLModel::get_constraint_lower_bound(size_t constraint_index) const {
+   return this->constraint_bounds[constraint_index].lb;
 }
 
-double AMPLModel::get_constraint_upper_bound(size_t j) const {
-   return this->constraint_bounds[j].ub;
+double AMPLModel::get_constraint_upper_bound(size_t constraint_index) const {
+   return this->constraint_bounds[constraint_index].ub;
 }
 
-FunctionType AMPLModel::get_constraint_type(size_t j) const {
-   return this->constraint_type[j];
+FunctionType AMPLModel::get_constraint_type(size_t constraint_index) const {
+   return this->constraint_type[constraint_index];
 }
 
-BoundType AMPLModel::get_constraint_bound_type(size_t j) const {
-   return this->constraint_status[j];
+BoundType AMPLModel::get_constraint_bound_type(size_t constraint_index) const {
+   return this->constraint_status[constraint_index];
 }
 
 // initial primal point
@@ -319,29 +319,30 @@ const std::vector<size_t>& AMPLModel::get_linear_constraints() const {
 }
 
 void AMPLModel::generate_constraints() {
-   for (size_t j: Range(this->number_constraints)) {
-      double lb = (this->asl->i.LUrhs_ != nullptr) ? this->asl->i.LUrhs_[2 * j] : -INF<double>;
-      double ub = (this->asl->i.LUrhs_ != nullptr) ? this->asl->i.LUrhs_[2 * j + 1] : INF<double>;
-      this->constraint_bounds[j] = {lb, ub};
+   for (size_t constraint_index: Range(this->number_constraints)) {
+      double lb = (this->asl->i.LUrhs_ != nullptr) ? this->asl->i.LUrhs_[2*constraint_index] : -INF<double>;
+      double ub = (this->asl->i.LUrhs_ != nullptr) ? this->asl->i.LUrhs_[2*constraint_index + 1] : INF<double>;
+      this->constraint_bounds[constraint_index] = {lb, ub};
    }
    Model::determine_bounds_types(this->constraint_bounds, this->constraint_status);
 
    // partition equality and inequality constraints
-   for (size_t j: Range(this->number_constraints)) {
-      if (this->get_constraint_bound_type(j) == EQUAL_BOUNDS) {
-         this->equality_constraints.push_back(j);
+   for (size_t constraint_index: Range(this->number_constraints)) {
+      if (this->get_constraint_bound_type(constraint_index) == EQUAL_BOUNDS) {
+         this->equality_constraints.push_back(constraint_index);
       }
       else {
-         this->inequality_constraints.push_back(j);
+         this->inequality_constraints.push_back(constraint_index);
       }
    }
 
    // AMPL orders the constraints based on the function type: nonlinear first, then linear
-   for (size_t j: Range(static_cast<size_t>(asl->i.nlc_))) {
-      this->constraint_type[j] = NONLINEAR;
+   const size_t number_nonlinear_constraints = static_cast<size_t>(asl->i.nlc_);
+   for (size_t constraint_index: Range(number_nonlinear_constraints)) {
+      this->constraint_type[constraint_index] = NONLINEAR;
    }
-   for (size_t j: Range(static_cast<size_t>(asl->i.nlc_), this->number_constraints)) {
-      this->constraint_type[j] = LINEAR;
-      this->linear_constraints.push_back(j);
+   for (size_t constraint_index: Range(number_nonlinear_constraints, this->number_constraints)) {
+      this->constraint_type[constraint_index] = LINEAR;
+      this->linear_constraints.push_back(constraint_index);
    }
 }

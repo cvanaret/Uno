@@ -55,14 +55,14 @@ public:
    const bool fixed_hessian_sparsity{true};
 
    // purely virtual functions
-   [[nodiscard]] virtual double get_variable_lower_bound(size_t i) const = 0;
-   [[nodiscard]] virtual double get_variable_upper_bound(size_t i) const = 0;
-   [[nodiscard]] virtual double get_constraint_lower_bound(size_t j) const = 0;
-   [[nodiscard]] virtual double get_constraint_upper_bound(size_t j) const = 0;
+   [[nodiscard]] virtual double get_variable_lower_bound(size_t variable_index) const = 0;
+   [[nodiscard]] virtual double get_variable_upper_bound(size_t variable_index) const = 0;
+   [[nodiscard]] virtual double get_constraint_lower_bound(size_t constraint_index) const = 0;
+   [[nodiscard]] virtual double get_constraint_upper_bound(size_t constraint_index) const = 0;
 
-   [[nodiscard]] virtual BoundType get_variable_bound_type(size_t i) const = 0;
-   [[nodiscard]] virtual FunctionType get_constraint_type(size_t j) const = 0;
-   [[nodiscard]] virtual BoundType get_constraint_bound_type(size_t j) const = 0;
+   [[nodiscard]] virtual BoundType get_variable_bound_type(size_t variable_index) const = 0;
+   [[nodiscard]] virtual FunctionType get_constraint_type(size_t constraint_index) const = 0;
+   [[nodiscard]] virtual BoundType get_constraint_bound_type(size_t constraint_index) const = 0;
 
    [[nodiscard]] virtual size_t get_number_objective_gradient_nonzeros() const = 0;
    [[nodiscard]] virtual size_t get_number_jacobian_nonzeros() const = 0;
@@ -71,7 +71,7 @@ public:
    [[nodiscard]] virtual double evaluate_objective(const std::vector<double>& x) const = 0;
    virtual void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const = 0;
    virtual void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const = 0;
-   virtual void evaluate_constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const = 0;
+   virtual void evaluate_constraint_gradient(const std::vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const = 0;
    virtual void evaluate_constraint_jacobian(const std::vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const = 0;
    virtual void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
          SymmetricMatrix<double>& hessian) const = 0;
@@ -88,7 +88,7 @@ public:
    void project_primals_onto_bounds(std::vector<double>& x) const;
    [[nodiscard]] bool is_constrained() const;
    // constraint violation
-   [[nodiscard]] virtual double compute_constraint_violation(double constraint_value, size_t j) const;
+   [[nodiscard]] virtual double compute_constraint_violation(double constraint_value, size_t constraint_index) const;
    [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const;
    [[nodiscard]] double compute_linearized_constraint_violation(const std::vector<double>& primal_direction, const std::vector<double>& constraints,
          const RectangularMatrix<double>& constraint_jacobian, double step_length, Norm residual_norm) const;

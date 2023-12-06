@@ -13,22 +13,22 @@ class EqualityConstrainedModel: public Model {
 public:
    explicit EqualityConstrainedModel(std::unique_ptr<Model> original_model);
 
-   [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
-   [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
-   [[nodiscard]] double get_constraint_lower_bound(size_t j) const override;
-   [[nodiscard]] double get_constraint_upper_bound(size_t j) const override;
+   [[nodiscard]] double get_variable_lower_bound(size_t variable_index) const override;
+   [[nodiscard]] double get_variable_upper_bound(size_t variable_index) const override;
+   [[nodiscard]] double get_constraint_lower_bound(size_t constraint_index) const override;
+   [[nodiscard]] double get_constraint_upper_bound(size_t constraint_index) const override;
 
    [[nodiscard]] double evaluate_objective(const std::vector<double>& x) const override;
    void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const override;
    void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const override;
-   void evaluate_constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const override;
+   void evaluate_constraint_gradient(const std::vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const override;
    void evaluate_constraint_jacobian(const std::vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const override;
    void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
          SymmetricMatrix<double>& hessian) const override;
 
-   [[nodiscard]] BoundType get_variable_bound_type(size_t i) const override;
-   [[nodiscard]] FunctionType get_constraint_type(size_t j) const override;
-   [[nodiscard]] BoundType get_constraint_bound_type(size_t j) const override;
+   [[nodiscard]] BoundType get_variable_bound_type(size_t variable_index) const override;
+   [[nodiscard]] FunctionType get_constraint_type(size_t constraint_index) const override;
+   [[nodiscard]] BoundType get_constraint_bound_type(size_t constraint_index) const override;
 
    [[nodiscard]] size_t get_number_objective_gradient_nonzeros() const override;
    [[nodiscard]] size_t get_number_jacobian_nonzeros() const override;
@@ -59,64 +59,64 @@ inline EqualityConstrainedModel::EqualityConstrainedModel(std::unique_ptr<Model>
    // all constraints are now equality constraints
    this->equality_constraints.reserve(this->number_constraints);
    this->inequality_constraints.reserve(0);
-   for (size_t j: Range(this->number_constraints)) {
-      this->equality_constraints.push_back(j);
+   for (size_t constraint_index: Range(this->number_constraints)) {
+      this->equality_constraints.push_back(constraint_index);
    }
 
    // figure out bounded variables
-   for (size_t i: this->original_model->lower_bounded_variables) {
-      this->lower_bounded_variables.push_back(i);
+   for (size_t variable_index: this->original_model->lower_bounded_variables) {
+      this->lower_bounded_variables.push_back(variable_index);
    }
-   for (size_t i: this->original_model->upper_bounded_variables) {
-      this->upper_bounded_variables.push_back(i);
+   for (size_t variable_index: this->original_model->upper_bounded_variables) {
+      this->upper_bounded_variables.push_back(variable_index);
    }
-   for (size_t i: this->original_model->single_lower_bounded_variables) {
-      this->single_lower_bounded_variables.push_back(i);
+   for (size_t variable_index: this->original_model->single_lower_bounded_variables) {
+      this->single_lower_bounded_variables.push_back(variable_index);
    }
-   for (size_t i: this->original_model->single_upper_bounded_variables) {
-      this->single_upper_bounded_variables.push_back(i);
+   for (size_t variable_index: this->original_model->single_upper_bounded_variables) {
+      this->single_upper_bounded_variables.push_back(variable_index);
    }
    // register the inequality constraint of each slack
-   for (size_t i: Range(this->original_model->inequality_constraints.size())) {
-      const size_t j = this->original_model->inequality_constraints[i];
-      const size_t slack_index = i + this->original_model->number_variables;
-      this->inequality_constraint_of_slack[i] = j;
-      this->slack_of_inequality_constraint[j] = i;
-      this->slacks.insert(j, slack_index);
-      if (is_finite(this->original_model->get_constraint_lower_bound(j))) {
+   for (size_t variable_index: Range(this->original_model->inequality_constraints.size())) {
+      const size_t constraint_index = this->original_model->inequality_constraints[variable_index];
+      const size_t slack_index = variable_index + this->original_model->number_variables;
+      this->inequality_constraint_of_slack[variable_index] = constraint_index;
+      this->slack_of_inequality_constraint[constraint_index] = variable_index;
+      this->slacks.insert(constraint_index, slack_index);
+      if (is_finite(this->original_model->get_constraint_lower_bound(constraint_index))) {
          this->lower_bounded_variables.push_back(slack_index);
-         if (not is_finite(this->original_model->get_constraint_upper_bound(j))) {
+         if (not is_finite(this->original_model->get_constraint_upper_bound(constraint_index))) {
             this->single_lower_bounded_variables.push_back(slack_index);
          }
       }
-      if (is_finite(this->original_model->get_constraint_upper_bound(j))) {
+      if (is_finite(this->original_model->get_constraint_upper_bound(constraint_index))) {
          this->upper_bounded_variables.push_back(slack_index);
-         if (not is_finite(this->original_model->get_constraint_lower_bound(j))) {
+         if (not is_finite(this->original_model->get_constraint_lower_bound(constraint_index))) {
             this->single_upper_bounded_variables.push_back(slack_index);
          }
       }
    }
 }
 
-inline double EqualityConstrainedModel::get_variable_lower_bound(size_t i) const {
-   if (i < this->original_model->number_variables) { // original variable
-      return this->original_model->get_variable_lower_bound(i);
+inline double EqualityConstrainedModel::get_variable_lower_bound(size_t variable_index) const {
+   if (variable_index < this->original_model->number_variables) { // original variable
+      return this->original_model->get_variable_lower_bound(variable_index);
    }
    else { // slack variable
-      const size_t slack_index = i - this->original_model->number_variables;
-      const size_t j = this->inequality_constraint_of_slack[slack_index];
-      return this->original_model->get_constraint_lower_bound(j);
+      const size_t slack_index = variable_index - this->original_model->number_variables;
+      const size_t constraint_index = this->inequality_constraint_of_slack[slack_index];
+      return this->original_model->get_constraint_lower_bound(constraint_index);
    }
 }
 
-inline double EqualityConstrainedModel::get_variable_upper_bound(size_t i) const {
-   if (i < this->original_model->number_variables) { // original variable
-      return this->original_model->get_variable_upper_bound(i);
+inline double EqualityConstrainedModel::get_variable_upper_bound(size_t variable_index) const {
+   if (variable_index < this->original_model->number_variables) { // original variable
+      return this->original_model->get_variable_upper_bound(variable_index);
    }
    else { // slack variable
-      const size_t slack_index = i - this->original_model->number_variables;
-      const size_t j = this->inequality_constraint_of_slack[slack_index];
-      return this->original_model->get_constraint_upper_bound(j);
+      const size_t slack_index = variable_index - this->original_model->number_variables;
+      const size_t constraint_index = this->inequality_constraint_of_slack[slack_index];
+      return this->original_model->get_constraint_upper_bound(constraint_index);
    }
 }
 
@@ -141,22 +141,22 @@ inline void EqualityConstrainedModel::evaluate_objective_gradient(const std::vec
 inline void EqualityConstrainedModel::evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const {
    this->original_model->evaluate_constraints(x, constraints);
    // inequality constraints: add the slacks
-   for (size_t i: Range(this->original_model->inequality_constraints.size())) {
-      const size_t j = this->original_model->inequality_constraints[i];
-      const size_t slack_index = this->original_model->number_variables + i;
-      constraints[j] -= x[slack_index];
+   for (size_t variable_index: Range(this->original_model->inequality_constraints.size())) {
+      const size_t constraint_index = this->original_model->inequality_constraints[variable_index];
+      const size_t slack_index = this->original_model->number_variables + variable_index;
+      constraints[constraint_index] -= x[slack_index];
    }
    // equality constraints: make sure they are "c(x) = 0"
-   for (size_t j: this->original_model->equality_constraints) {
-      constraints[j] -= this->original_model->get_constraint_lower_bound(j);
+   for (size_t constraint_index: this->original_model->equality_constraints) {
+      constraints[constraint_index] -= this->original_model->get_constraint_lower_bound(constraint_index);
    }
 }
 
-inline void EqualityConstrainedModel::evaluate_constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const {
-   this->original_model->evaluate_constraint_gradient(x, j, gradient);
+inline void EqualityConstrainedModel::evaluate_constraint_gradient(const std::vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const {
+   this->original_model->evaluate_constraint_gradient(x, constraint_index, gradient);
    // if the original constraint is an inequality, add the slack contribution
-   if (this->original_model->get_constraint_bound_type(j) != EQUAL_BOUNDS) {
-      const size_t slack_index = this->slack_of_inequality_constraint[j];
+   if (this->original_model->get_constraint_bound_type(constraint_index) != EQUAL_BOUNDS) {
+      const size_t slack_index = this->slack_of_inequality_constraint[constraint_index];
       gradient.insert(slack_index, -1.);
    }
 }
@@ -164,10 +164,10 @@ inline void EqualityConstrainedModel::evaluate_constraint_gradient(const std::ve
 inline void EqualityConstrainedModel::evaluate_constraint_jacobian(const std::vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const {
    this->original_model->evaluate_constraint_jacobian(x, constraint_jacobian);
    // add the slack contributions
-   for (size_t i: Range(this->original_model->inequality_constraints.size())) {
-      const size_t j = this->original_model->inequality_constraints[i];
-      const size_t slack_index = this->original_model->number_variables + i;
-      constraint_jacobian[j].insert(slack_index, -1.);
+   for (size_t variable_index: Range(this->original_model->inequality_constraints.size())) {
+      const size_t constraint_index = this->original_model->inequality_constraints[variable_index];
+      const size_t slack_index = this->original_model->number_variables + variable_index;
+      constraint_jacobian[constraint_index].insert(slack_index, -1.);
    }
 }
 
@@ -175,24 +175,24 @@ inline void EqualityConstrainedModel::evaluate_lagrangian_hessian(const std::vec
       SymmetricMatrix<double>& hessian) const {
    this->original_model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian);
    // extend the dimension of the Hessian by finalizing the remaining columns (note: the slacks do not enter the Hessian)
-   for (size_t j: Range(this->original_model->number_variables, this->number_variables)) {
-      hessian.finalize_column(j);
+   for (size_t constraint_index: Range(this->original_model->number_variables, this->number_variables)) {
+      hessian.finalize_column(constraint_index);
    }
 }
 
-inline BoundType EqualityConstrainedModel::get_variable_bound_type(size_t i) const {
-   if (i < this->original_model->number_variables) { // original variable
-      return this->original_model->get_variable_bound_type(i);
+inline BoundType EqualityConstrainedModel::get_variable_bound_type(size_t variable_index) const {
+   if (variable_index < this->original_model->number_variables) { // original variable
+      return this->original_model->get_variable_bound_type(variable_index);
    }
    else { // slack variable
-      const size_t slack_index = i - this->original_model->number_variables;
-      const size_t j = this->inequality_constraint_of_slack[slack_index];
-      return this->original_model->get_constraint_bound_type(j);
+      const size_t slack_index = variable_index - this->original_model->number_variables;
+      const size_t constraint_index = this->inequality_constraint_of_slack[slack_index];
+      return this->original_model->get_constraint_bound_type(constraint_index);
    }
 }
 
-inline FunctionType EqualityConstrainedModel::get_constraint_type(size_t j) const {
-   return this->original_model->get_constraint_type(j);
+inline FunctionType EqualityConstrainedModel::get_constraint_type(size_t constraint_index) const {
+   return this->original_model->get_constraint_type(constraint_index);
 }
 
 inline BoundType EqualityConstrainedModel::get_constraint_bound_type(size_t /*j*/) const {
@@ -215,8 +215,8 @@ inline size_t EqualityConstrainedModel::get_number_hessian_nonzeros() const {
 inline void EqualityConstrainedModel::get_initial_primal_point(std::vector<double>& x) const {
    this->original_model->get_initial_primal_point(x);
    // set the slacks
-   for (size_t i: Range(this->original_model->inequality_constraints.size())) {
-      const size_t slack_index = this->original_model->number_variables + i;
+   for (size_t variable_index: Range(this->original_model->inequality_constraints.size())) {
+      const size_t slack_index = this->original_model->number_variables + variable_index;
       x[slack_index] = 0.;
    }
 }

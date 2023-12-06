@@ -42,22 +42,22 @@ void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(size_t number_va
    initialize_vector(iterate.lagrangian_gradient.constraints_contribution, 0.);
 
    // objective gradient
-   iterate.evaluations.objective_gradient.for_each([&](size_t i, double derivative) {
-      iterate.lagrangian_gradient.objective_contribution[i] += objective_multiplier * derivative;
+   iterate.evaluations.objective_gradient.for_each([&](size_t variable_index, double derivative) {
+      iterate.lagrangian_gradient.objective_contribution[variable_index] += objective_multiplier * derivative;
    });
 
    // constraints
-   for (size_t j: Range(iterate.number_constraints)) {
-      if (multipliers.constraints[j] != 0.) {
-         iterate.evaluations.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
-            iterate.lagrangian_gradient.constraints_contribution[i] -= multipliers.constraints[j] * derivative;
+   for (size_t constraint_index: Range(iterate.number_constraints)) {
+      if (multipliers.constraints[constraint_index] != 0.) {
+         iterate.evaluations.constraint_jacobian[constraint_index].for_each([&](size_t variable_index, double derivative) {
+            iterate.lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
          });
       }
    }
 
    // bound constraints
-   for (size_t i: Range(number_variables)) {
-      iterate.lagrangian_gradient.constraints_contribution[i] -= multipliers.lower_bounds[i] + multipliers.upper_bounds[i];
+   for (size_t variable_index: Range(number_variables)) {
+      iterate.lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.lower_bounds[variable_index] + multipliers.upper_bounds[variable_index];
    }
 }
 

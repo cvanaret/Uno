@@ -6,33 +6,33 @@
 
 #include <functional>
 
-template <typename T>
+template <typename ElementType>
 class VectorExpression {
 public:
    // compatible with algorithms that query the type of the elements
-   using value_type = T;
+   using value_type = ElementType;
 
-   VectorExpression(size_t size, const std::function<T(size_t)>& ith_component);
+   VectorExpression(size_t size, const std::function<ElementType(size_t)>& ith_component);
    [[nodiscard]] size_t size() const;
-   [[nodiscard]] T operator[](size_t i) const;
+   [[nodiscard]] ElementType operator[](size_t index) const;
 
 protected:
    const size_t length;
-   const std::function<T (size_t)> ith_component;
+   const std::function<ElementType(size_t)> ith_component;
 };
 
-template <typename T>
-VectorExpression<T>::VectorExpression(size_t size, const std::function<T(size_t)>& ith_component): length(size), ith_component(ith_component) {
+template <typename ElementType>
+VectorExpression<ElementType>::VectorExpression(size_t size, const std::function<ElementType(size_t)>& ith_component): length(size), ith_component(ith_component) {
 }
 
-template <typename T>
-size_t VectorExpression<T>::size() const {
+template <typename ElementType>
+size_t VectorExpression<ElementType>::size() const {
    return this->length;
 }
 
-template <typename T>
-T VectorExpression<T>::operator[](size_t i) const {
-   return this->ith_component(i);
+template <typename ElementType>
+ElementType VectorExpression<ElementType>::operator[](size_t index) const {
+   return this->ith_component(index);
 }
 
 #endif // UNO_VECTOREXPRESSION_H

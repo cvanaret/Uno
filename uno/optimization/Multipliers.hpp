@@ -28,8 +28,8 @@ inline bool Multipliers::not_all_zero(size_t number_variables, double tolerance)
       }
    }
    // bound multipliers
-   for (size_t i: Range(number_variables)) {
-      if (tolerance < std::abs(this->lower_bounds[i] + this->upper_bounds[i])) {
+   for (size_t variable_index: Range(number_variables)) {
+      if (tolerance < std::abs(this->lower_bounds[variable_index] + this->upper_bounds[variable_index])) {
          return true;
       }
    }

@@ -12,21 +12,21 @@ NonmonotoneFilter::NonmonotoneFilter(const Options& options) :
 //! add (infeasibility_measure, optimality_measure) to the filter
 void NonmonotoneFilter::add(double infeasibility_measure, double optimality_measure) {
    // find entries in filter that are dominated by M other entries
-   for (size_t i: Range(this->number_entries)) {
+   for (size_t entry_index: Range(this->number_entries)) {
       size_t number_dominated = 0;
       // check whether ith entry dominated by (infeasibility_measure,optimality_measure)
-      if ((this->optimality[i] > optimality_measure) && (this->infeasibility[i] > infeasibility_measure)) {
+      if ((this->optimality[entry_index] > optimality_measure) && (this->infeasibility[entry_index] > infeasibility_measure)) {
          number_dominated = 1;
       }
       // find other filter entries that dominate ith entry
-      for (size_t j: Range(this->number_entries)) {
-         if ((this->optimality[i] > this->optimality[j]) && (this->infeasibility[i] > this->infeasibility[j])) {
+      for (size_t other_entry_index: Range(this->number_entries)) {
+         if ((this->optimality[entry_index] > this->optimality[other_entry_index]) && (this->infeasibility[entry_index] > this->infeasibility[other_entry_index])) {
             number_dominated++;
          }
       }
       if (number_dominated > this->max_number_dominated_entries) {
          // remove this entry
-         this->left_shift(i, 1);
+         this->left_shift(entry_index, 1);
          this->number_entries--;
       }
    }
@@ -46,13 +46,13 @@ void NonmonotoneFilter::add(double infeasibility_measure, double optimality_meas
 
 size_t NonmonotoneFilter::compute_number_dominated_entries(double infeasibility_measure, double optimality_measure) {
    size_t number_dominated_entries = 0;
-   for (size_t i: Range(this->number_entries)) {
-      if ((optimality_measure > this->optimality[i] - this->parameters.gamma * infeasibility_measure) &&
-          (infeasibility_measure >= this->parameters.beta * this->infeasibility[i])) {
+   for (size_t entry_index: Range(this->number_entries)) {
+      if ((optimality_measure > this->optimality[entry_index] - this->parameters.gamma * infeasibility_measure) &&
+          (infeasibility_measure >= this->parameters.beta * this->infeasibility[entry_index])) {
          number_dominated_entries++;
       }
-      else if ((optimality_measure >= this->optimality[i] - this->parameters.gamma * infeasibility_measure) &&
-               (infeasibility_measure > this->parameters.beta * this->infeasibility[i])) {
+      else if ((optimality_measure >= this->optimality[entry_index] - this->parameters.gamma * infeasibility_measure) &&
+               (infeasibility_measure > this->parameters.beta * this->infeasibility[entry_index])) {
          number_dominated_entries++;
       }
    }
@@ -90,10 +90,10 @@ double NonmonotoneFilter::compute_actual_reduction(double current_optimality_mea
    // check NON-MONOTONE sufficient reduction condition
    // max penalty among most recent entries
    double max_objective = current_optimality_measure;
-   for (size_t i: Range(this->max_number_dominated_entries)) {
-      const double gamma = (current_infeasibility_measure < this->infeasibility[this->number_entries - i]) ? 1 / this->parameters.gamma : this->parameters.gamma;
-      const double dash_objective = this->optimality[this->number_entries - i] + gamma * (this->infeasibility[this->number_entries - i] -
-                                                                                          current_infeasibility_measure);
+   for (size_t entry_index: Range(this->max_number_dominated_entries)) {
+      const double gamma = (current_infeasibility_measure < this->infeasibility[this->number_entries - entry_index]) ? 1 / this->parameters.gamma : this->parameters.gamma;
+      const double dash_objective = this->optimality[this->number_entries - entry_index] + gamma * (this->infeasibility[this->number_entries - entry_index] -
+                                                                                                    current_infeasibility_measure);
       max_objective = std::max(max_objective, dash_objective);
    }
    // non-monotone actual reduction

@@ -9,24 +9,24 @@
 
 class ScaledModel: public Model {
 public:
-   ScaledModel(std::unique_ptr<Model> original_model, Iterate& initial_iterate, const Options& options);
+   ScaledModel(std::unique_ptr<Model> constraint_index, Iterate& initial_iterate, const Options& options);
 
-   [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
-   [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
-   [[nodiscard]] double get_constraint_lower_bound(size_t j) const override;
-   [[nodiscard]] double get_constraint_upper_bound(size_t j) const override;
+   [[nodiscard]] double get_variable_lower_bound(size_t variable_index) const override;
+   [[nodiscard]] double get_variable_upper_bound(size_t variable_index) const override;
+   [[nodiscard]] double get_constraint_lower_bound(size_t constraint_index) const override;
+   [[nodiscard]] double get_constraint_upper_bound(size_t constraint_index) const override;
 
    [[nodiscard]] double evaluate_objective(const std::vector<double>& x) const override;
    void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const override;
    void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const override;
-   void evaluate_constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const override;
+   void evaluate_constraint_gradient(const std::vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const override;
    void evaluate_constraint_jacobian(const std::vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const override;
    void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
          SymmetricMatrix<double>& hessian) const override;
 
-   [[nodiscard]] BoundType get_variable_bound_type(size_t i) const override;
-   [[nodiscard]] FunctionType get_constraint_type(size_t j) const override;
-   [[nodiscard]] BoundType get_constraint_bound_type(size_t j) const override;
+   [[nodiscard]] BoundType get_variable_bound_type(size_t variable_index) const override;
+   [[nodiscard]] FunctionType get_constraint_type(size_t constraint_index) const override;
+   [[nodiscard]] BoundType get_constraint_bound_type(size_t constraint_index) const override;
 
    [[nodiscard]] size_t get_number_objective_gradient_nonzeros() const override;
    [[nodiscard]] size_t get_number_jacobian_nonzeros() const override;
@@ -54,64 +54,64 @@ inline ScaledModel::ScaledModel(std::unique_ptr<Model> original_model, Iterate& 
       this->scaling.compute(initial_iterate.evaluations.objective_gradient, initial_iterate.evaluations.constraint_jacobian);
       // scale the gradients
       scale(initial_iterate.evaluations.objective_gradient, this->scaling.get_objective_scaling());
-      for (size_t j: Range(this->original_model->number_constraints)) {
-         scale(initial_iterate.evaluations.constraint_jacobian[j], this->scaling.get_constraint_scaling(j));
+      for (size_t constraint_index: Range(this->original_model->number_constraints)) {
+         scale(initial_iterate.evaluations.constraint_jacobian[constraint_index], this->scaling.get_constraint_scaling(constraint_index));
       }
    }
    // check the scaling factors
    assert(0 < this->scaling.get_objective_scaling() && "Objective scaling failed.");
-   for ([[maybe_unused]] size_t j: Range(this->number_constraints)) {
+   for ([[maybe_unused]] size_t constraint_index: Range(this->number_constraints)) {
       assert(0 < this->scaling.get_constraint_scaling(j) && "Constraint scaling failed.");
    }
 
    // the constraint repartition (inequality/equality, linear) is the same as in the original model
    this->equality_constraints.reserve(this->number_constraints);
    this->inequality_constraints.reserve(this->number_constraints);
-   for (size_t j: this->original_model->equality_constraints) {
-      this->equality_constraints.push_back(j);
+   for (size_t constraint_index: this->original_model->equality_constraints) {
+      this->equality_constraints.push_back(constraint_index);
    }
-   for (size_t j: this->original_model->inequality_constraints) {
-      this->inequality_constraints.push_back(j);
+   for (size_t constraint_index: this->original_model->inequality_constraints) {
+      this->inequality_constraints.push_back(constraint_index);
    }
 
    // the slacks are the same as in the original model
-   this->original_model->slacks.for_each([&](size_t j, size_t i) {
-      this->slacks.insert(j, i);
+   this->original_model->slacks.for_each([&](size_t constraint_index, size_t variable_index) {
+      this->slacks.insert(constraint_index, variable_index);
    });
 
    // the bounded variables are the same as in the original model
-   for (size_t i: this->original_model->lower_bounded_variables) {
-      this->lower_bounded_variables.push_back(i);
+   for (size_t variable_index: this->original_model->lower_bounded_variables) {
+      this->lower_bounded_variables.push_back(variable_index);
    }
-   for (size_t i: this->original_model->upper_bounded_variables) {
-      this->upper_bounded_variables.push_back(i);
+   for (size_t variable_index: this->original_model->upper_bounded_variables) {
+      this->upper_bounded_variables.push_back(variable_index);
    }
-   for (size_t i: this->original_model->single_lower_bounded_variables) {
-      this->single_lower_bounded_variables.push_back(i);
+   for (size_t variable_index: this->original_model->single_lower_bounded_variables) {
+      this->single_lower_bounded_variables.push_back(variable_index);
    }
-   for (size_t i: this->original_model->single_upper_bounded_variables) {
-      this->single_upper_bounded_variables.push_back(i);
+   for (size_t variable_index: this->original_model->single_upper_bounded_variables) {
+      this->single_upper_bounded_variables.push_back(variable_index);
    }
 }
 
-inline double ScaledModel::get_variable_lower_bound(size_t i) const {
-   return this->original_model->get_variable_lower_bound(i);
+inline double ScaledModel::get_variable_lower_bound(size_t variable_index) const {
+   return this->original_model->get_variable_lower_bound(variable_index);
 }
 
-inline double ScaledModel::get_variable_upper_bound(size_t i) const {
-   return this->original_model->get_variable_upper_bound(i);
+inline double ScaledModel::get_variable_upper_bound(size_t variable_index) const {
+   return this->original_model->get_variable_upper_bound(variable_index);
 }
 
-inline double ScaledModel::get_constraint_lower_bound(size_t j) const {
-   const double lb = this->original_model->get_constraint_lower_bound(j);
+inline double ScaledModel::get_constraint_lower_bound(size_t constraint_index) const {
+   const double lb = this->original_model->get_constraint_lower_bound(constraint_index);
    // scale
-   return this->scaling.get_constraint_scaling(j)*lb;
+   return this->scaling.get_constraint_scaling(constraint_index)*lb;
 }
 
-inline double ScaledModel::get_constraint_upper_bound(size_t j) const {
-   const double ub = this->original_model->get_constraint_upper_bound(j);
+inline double ScaledModel::get_constraint_upper_bound(size_t constraint_index) const {
+   const double ub = this->original_model->get_constraint_upper_bound(constraint_index);
    // scale
-   return this->scaling.get_constraint_scaling(j)*ub;
+   return this->scaling.get_constraint_scaling(constraint_index)*ub;
 }
 
 inline double ScaledModel::evaluate_objective(const std::vector<double>& x) const {
@@ -129,22 +129,22 @@ inline void ScaledModel::evaluate_objective_gradient(const std::vector<double>& 
 inline void ScaledModel::evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const {
    this->original_model->evaluate_constraints(x, constraints);
    // scale
-   for (size_t j: Range(this->number_constraints)) {
-      constraints[j] *= this->scaling.get_constraint_scaling(j);
+   for (size_t constraint_index: Range(this->number_constraints)) {
+      constraints[constraint_index] *= this->scaling.get_constraint_scaling(constraint_index);
    }
 }
 
-inline void ScaledModel::evaluate_constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const {
-   this->original_model->evaluate_constraint_gradient(x, j, gradient);
+inline void ScaledModel::evaluate_constraint_gradient(const std::vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const {
+   this->original_model->evaluate_constraint_gradient(x, constraint_index, gradient);
    // scale
-   scale(gradient, this->scaling.get_constraint_scaling(j));
+   scale(gradient, this->scaling.get_constraint_scaling(constraint_index));
 }
 
 inline void ScaledModel::evaluate_constraint_jacobian(const std::vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const {
    this->original_model->evaluate_constraint_jacobian(x, constraint_jacobian);
    // scale
-   for (size_t j: Range(this->number_constraints)) {
-      scale(constraint_jacobian[j], this->scaling.get_constraint_scaling(j));
+   for (size_t constraint_index: Range(this->number_constraints)) {
+      scale(constraint_jacobian[constraint_index], this->scaling.get_constraint_scaling(constraint_index));
    }
 }
 
@@ -155,22 +155,22 @@ inline void ScaledModel::evaluate_lagrangian_hessian(const std::vector<double>& 
    // TODO preallocate this vector
    // TODO check if the multipliers should be scaled
    static std::vector<double> scaled_multipliers(this->number_constraints);
-   for (size_t j: Range(this->number_constraints)) {
-      scaled_multipliers[j] = scaling.get_constraint_scaling(j)*multipliers[j];
+   for (size_t constraint_index: Range(this->number_constraints)) {
+      scaled_multipliers[constraint_index] = scaling.get_constraint_scaling(constraint_index)*multipliers[constraint_index];
    }
    this->original_model->evaluate_lagrangian_hessian(x, scaled_objective_multiplier, scaled_multipliers, hessian);
 }
 
-inline BoundType ScaledModel::get_variable_bound_type(size_t i) const {
-   return this->original_model->get_variable_bound_type(i);
+inline BoundType ScaledModel::get_variable_bound_type(size_t variable_index) const {
+   return this->original_model->get_variable_bound_type(variable_index);
 }
 
-inline FunctionType ScaledModel::get_constraint_type(size_t j) const {
-   return this->original_model->get_constraint_type(j);
+inline FunctionType ScaledModel::get_constraint_type(size_t constraint_index) const {
+   return this->original_model->get_constraint_type(constraint_index);
 }
 
-inline BoundType ScaledModel::get_constraint_bound_type(size_t j) const {
-   return this->original_model->get_constraint_bound_type(j);
+inline BoundType ScaledModel::get_constraint_bound_type(size_t constraint_index) const {
+   return this->original_model->get_constraint_bound_type(constraint_index);
 }
 
 inline size_t ScaledModel::get_number_objective_gradient_nonzeros() const {
@@ -200,14 +200,14 @@ inline void ScaledModel::postprocess_solution(Iterate& iterate, TerminationStatu
    iterate.evaluations.objective /= this->scaling.get_objective_scaling();
 
    // unscale the constraint multipliers
-   for (size_t j: Range(iterate.number_constraints)) {
-      iterate.multipliers.constraints[j] *= this->scaling.get_constraint_scaling(j) / this->scaling.get_objective_scaling();
+   for (size_t constraint_index: Range(iterate.number_constraints)) {
+      iterate.multipliers.constraints[constraint_index] *= this->scaling.get_constraint_scaling(constraint_index) / this->scaling.get_objective_scaling();
    }
 
    // unscale the bound multipliers
-   for (size_t i: Range(iterate.number_variables)) {
-      iterate.multipliers.lower_bounds[i] /= this->scaling.get_objective_scaling();
-      iterate.multipliers.upper_bounds[i] /= this->scaling.get_objective_scaling();
+   for (size_t variable_index: Range(iterate.number_variables)) {
+      iterate.multipliers.lower_bounds[variable_index] /= this->scaling.get_objective_scaling();
+      iterate.multipliers.upper_bounds[variable_index] /= this->scaling.get_objective_scaling();
    }
 }
 

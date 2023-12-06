@@ -36,35 +36,35 @@ void InequalityConstrainedMethod::exit_feasibility_problem(const NonlinearProble
 
 void InequalityConstrainedMethod::set_direction_bounds(const NonlinearProblem& problem, const Iterate& current_iterate) {
    // bounds of original variables intersected with trust region
-   for (size_t i: Range(problem.get_number_original_variables())) {
-      double lb = std::max(-this->trust_region_radius, problem.get_variable_lower_bound(i) - current_iterate.primals[i]);
-      double ub = std::min(this->trust_region_radius, problem.get_variable_upper_bound(i) - current_iterate.primals[i]);
-      this->direction_bounds[i] = {lb, ub};
+   for (size_t variable_index: Range(problem.get_number_original_variables())) {
+      double lb = std::max(-this->trust_region_radius, problem.get_variable_lower_bound(variable_index) - current_iterate.primals[variable_index]);
+      double ub = std::min(this->trust_region_radius, problem.get_variable_upper_bound(variable_index) - current_iterate.primals[variable_index]);
+      this->direction_bounds[variable_index] = {lb, ub};
    }
    // bounds of additional variables (no trust region!)
-   for (size_t i: Range(problem.get_number_original_variables(), problem.number_variables)) {
-      const double lb = problem.get_variable_lower_bound(i) - current_iterate.primals[i];
-      const double ub = problem.get_variable_upper_bound(i) - current_iterate.primals[i];
-      this->direction_bounds[i] = {lb, ub};
+   for (size_t variable_index: Range(problem.get_number_original_variables(), problem.number_variables)) {
+      const double lb = problem.get_variable_lower_bound(variable_index) - current_iterate.primals[variable_index];
+      const double ub = problem.get_variable_upper_bound(variable_index) - current_iterate.primals[variable_index];
+      this->direction_bounds[variable_index] = {lb, ub};
    }
 }
 
 void InequalityConstrainedMethod::set_linearized_constraint_bounds(const NonlinearProblem& problem, const std::vector<double>& current_constraints) {
-   for (size_t j: Range(problem.number_constraints)) {
-      const double lb = problem.get_constraint_lower_bound(j) - current_constraints[j];
-      const double ub = problem.get_constraint_upper_bound(j) - current_constraints[j];
-      this->linearized_constraint_bounds[j] = {lb, ub};
+   for (size_t constraint_index: Range(problem.number_constraints)) {
+      const double lb = problem.get_constraint_lower_bound(constraint_index) - current_constraints[constraint_index];
+      const double ub = problem.get_constraint_upper_bound(constraint_index) - current_constraints[constraint_index];
+      this->linearized_constraint_bounds[constraint_index] = {lb, ub};
    }
 }
 
 void InequalityConstrainedMethod::compute_dual_displacements(const NonlinearProblem& problem, const Iterate& current_iterate, Direction& direction) {
    // compute dual *displacements* (note: active-set methods usually compute the new duals, not the displacements)
-   for (size_t j: Range(problem.number_constraints)) {
-      direction.multipliers.constraints[j] -= current_iterate.multipliers.constraints[j];
+   for (size_t constraint_index: Range(problem.number_constraints)) {
+      direction.multipliers.constraints[constraint_index] -= current_iterate.multipliers.constraints[constraint_index];
    }
-   for (size_t i: Range(problem.number_variables)) {
-      direction.multipliers.lower_bounds[i] -= current_iterate.multipliers.lower_bounds[i];
-      direction.multipliers.upper_bounds[i] -= current_iterate.multipliers.upper_bounds[i];
+   for (size_t variable_index: Range(problem.number_variables)) {
+      direction.multipliers.lower_bounds[variable_index] -= current_iterate.multipliers.lower_bounds[variable_index];
+      direction.multipliers.upper_bounds[variable_index] -= current_iterate.multipliers.upper_bounds[variable_index];
    }
 }
 

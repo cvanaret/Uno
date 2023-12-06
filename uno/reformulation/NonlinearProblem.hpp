@@ -46,10 +46,10 @@ public:
          const Direction& direction, double step_length, const SymmetricMatrix<double>& hessian) const = 0;
 
    [[nodiscard]] size_t get_number_original_variables() const;
-   [[nodiscard]] virtual double get_variable_lower_bound(size_t i) const = 0;
-   [[nodiscard]] virtual double get_variable_upper_bound(size_t i) const = 0;
-   [[nodiscard]] virtual double get_constraint_lower_bound(size_t j) const = 0;
-   [[nodiscard]] virtual double get_constraint_upper_bound(size_t j) const = 0;
+   [[nodiscard]] virtual double get_variable_lower_bound(size_t variable_index) const = 0;
+   [[nodiscard]] virtual double get_variable_upper_bound(size_t variable_index) const = 0;
+   [[nodiscard]] virtual double get_constraint_lower_bound(size_t constraint_index) const = 0;
+   [[nodiscard]] virtual double get_constraint_upper_bound(size_t constraint_index) const = 0;
 
    [[nodiscard]] virtual size_t get_number_objective_gradient_nonzeros() const = 0;
    [[nodiscard]] virtual size_t get_number_jacobian_nonzeros() const = 0;

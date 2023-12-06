@@ -95,8 +95,8 @@ void Uno::postprocess_iterate(const Model& model, Iterate& iterate, TerminationS
 void join(const std::vector<std::string>& vector, char separator) {
    if (not vector.empty()) {
       std::cout << vector[0];
-      for (size_t i: Range(1, vector.size())) {
-         std::cout << separator << ' ' << vector[i];
+      for (size_t variable_index: Range(1, vector.size())) {
+         std::cout << separator << ' ' << vector[variable_index];
       }
    }
 }

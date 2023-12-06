@@ -63,7 +63,7 @@ private:
 
    MA57Factorization factorization{};
    bool use_iterative_refinement{false};
-   void save_matrix_to_local_format(const SymmetricMatrix<double>& matrix);
+   void save_matrix_to_local_format(const SymmetricMatrix<double>& row_index);
 };
 
 #endif // UNO_MA57SOLVER_H

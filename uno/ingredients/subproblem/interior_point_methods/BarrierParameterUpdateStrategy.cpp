@@ -59,13 +59,15 @@ bool BarrierParameterUpdateStrategy::update_barrier_parameter(const NonlinearPro
 
 double BarrierParameterUpdateStrategy::compute_shifted_complementarity_error(const NonlinearProblem& problem, const Iterate& iterate,
       double shift_value) {
-   VectorExpression<double> shifted_bound_complementarity(problem.number_variables, [&](size_t i) {
+   VectorExpression<double> shifted_bound_complementarity(problem.number_variables, [&](size_t variable_index) {
       double result = 0.;
-      if (0. < iterate.multipliers.lower_bounds[i]) { // lower bound
-         result = std::max(result, std::abs(iterate.multipliers.lower_bounds[i] * (iterate.primals[i] - problem.get_variable_lower_bound(i)) - shift_value));
+      if (0. < iterate.multipliers.lower_bounds[variable_index]) { // lower bound
+         result = std::max(result, std::abs(iterate.multipliers.lower_bounds[variable_index] *
+            (iterate.primals[variable_index] - problem.get_variable_lower_bound(variable_index)) - shift_value));
       }
-      if (iterate.multipliers.upper_bounds[i] < 0.) { // upper bound
-         result = std::max(result, std::abs(iterate.multipliers.upper_bounds[i] * (iterate.primals[i] - problem.get_variable_upper_bound(i)) - shift_value));
+      if (iterate.multipliers.upper_bounds[variable_index] < 0.) { // upper bound
+         result = std::max(result, std::abs(iterate.multipliers.upper_bounds[variable_index] *
+            (iterate.primals[variable_index] - problem.get_variable_upper_bound(variable_index)) - shift_value));
       }
       return result;
    });

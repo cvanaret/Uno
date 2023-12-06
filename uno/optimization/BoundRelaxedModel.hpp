@@ -8,24 +8,24 @@
 
 class BoundRelaxedModel: public Model {
 public:
-   BoundRelaxedModel(std::unique_ptr<Model> original_model, const Options& options);
+   BoundRelaxedModel(std::unique_ptr<Model> constraint_index, const Options& slack_index);
 
-   [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
-   [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
-   [[nodiscard]] double get_constraint_lower_bound(size_t j) const override;
-   [[nodiscard]] double get_constraint_upper_bound(size_t j) const override;
+   [[nodiscard]] double get_variable_lower_bound(size_t variable_index) const override;
+   [[nodiscard]] double get_variable_upper_bound(size_t variable_index) const override;
+   [[nodiscard]] double get_constraint_lower_bound(size_t constraint_index) const override;
+   [[nodiscard]] double get_constraint_upper_bound(size_t constraint_index) const override;
 
    [[nodiscard]] double evaluate_objective(const std::vector<double>& x) const override;
    void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const override;
    void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const override;
-   void evaluate_constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const override;
+   void evaluate_constraint_gradient(const std::vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const override;
    void evaluate_constraint_jacobian(const std::vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const override;
    void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
          SymmetricMatrix<double>& hessian) const override;
 
-   [[nodiscard]] BoundType get_variable_bound_type(size_t i) const override;
-   [[nodiscard]] FunctionType get_constraint_type(size_t j) const override;
-   [[nodiscard]] BoundType get_constraint_bound_type(size_t j) const override;
+   [[nodiscard]] BoundType get_variable_bound_type(size_t variable_index) const override;
+   [[nodiscard]] FunctionType get_constraint_type(size_t constraint_index) const override;
+   [[nodiscard]] BoundType get_constraint_bound_type(size_t constraint_index) const override;
 
    [[nodiscard]] size_t get_number_objective_gradient_nonzeros() const override;
    [[nodiscard]] size_t get_number_jacobian_nonzeros() const override;
@@ -49,51 +49,51 @@ inline BoundRelaxedModel::BoundRelaxedModel(std::unique_ptr<Model> original_mode
    // the constraint repartition (inequality/equality, linear) is the same as in the original model
    this->equality_constraints.reserve(this->number_constraints);
    this->inequality_constraints.reserve(this->number_constraints);
-   for (size_t j: this->original_model->equality_constraints) {
-      this->equality_constraints.push_back(j);
+   for (size_t constraint_index: this->original_model->equality_constraints) {
+      this->equality_constraints.push_back(constraint_index);
    }
-   for (size_t j: this->original_model->inequality_constraints) {
-      this->inequality_constraints.push_back(j);
+   for (size_t constraint_index: this->original_model->inequality_constraints) {
+      this->inequality_constraints.push_back(constraint_index);
    }
 
    // the slacks are the same as in the original model
-   this->original_model->slacks.for_each([&](size_t j, size_t i) {
-      this->slacks.insert(j, i);
+   this->original_model->slacks.for_each([&](size_t constraint_index, size_t slack_index) {
+      this->slacks.insert(constraint_index, slack_index);
    });
 
    // the bounded variables are the same as in the original model
-   for (size_t i: this->original_model->lower_bounded_variables) {
-      this->lower_bounded_variables.push_back(i);
+   for (size_t variable_index: this->original_model->lower_bounded_variables) {
+      this->lower_bounded_variables.push_back(variable_index);
    }
-   for (size_t i: this->original_model->upper_bounded_variables) {
-      this->upper_bounded_variables.push_back(i);
+   for (size_t variable_index: this->original_model->upper_bounded_variables) {
+      this->upper_bounded_variables.push_back(variable_index);
    }
-   for (size_t i: this->original_model->single_lower_bounded_variables) {
-      this->single_lower_bounded_variables.push_back(i);
+   for (size_t variable_index: this->original_model->single_lower_bounded_variables) {
+      this->single_lower_bounded_variables.push_back(variable_index);
    }
-   for (size_t i: this->original_model->single_upper_bounded_variables) {
-      this->single_upper_bounded_variables.push_back(i);
+   for (size_t variable_index: this->original_model->single_upper_bounded_variables) {
+      this->single_upper_bounded_variables.push_back(variable_index);
    }
 }
 
-inline double BoundRelaxedModel::get_variable_lower_bound(size_t i) const {
-   const double lower_bound = this->original_model->get_variable_lower_bound(i);
+inline double BoundRelaxedModel::get_variable_lower_bound(size_t variable_index) const {
+   const double lower_bound = this->original_model->get_variable_lower_bound(variable_index);
    // relax the bound
    return lower_bound - this->relaxation_factor * std::max(1., std::abs(lower_bound));
 }
 
-inline double BoundRelaxedModel::get_variable_upper_bound(size_t i) const {
-   const double upper_bound = this->original_model->get_variable_upper_bound(i);
+inline double BoundRelaxedModel::get_variable_upper_bound(size_t variable_index) const {
+   const double upper_bound = this->original_model->get_variable_upper_bound(variable_index);
    // relax the bound
    return upper_bound + this->relaxation_factor * std::max(1., std::abs(upper_bound));
 }
 
-inline double BoundRelaxedModel::get_constraint_lower_bound(size_t j) const {
-   return this->original_model->get_constraint_lower_bound(j);
+inline double BoundRelaxedModel::get_constraint_lower_bound(size_t constraint_index) const {
+   return this->original_model->get_constraint_lower_bound(constraint_index);
 }
 
-inline double BoundRelaxedModel::get_constraint_upper_bound(size_t j) const {
-   return this->original_model->get_constraint_upper_bound(j);
+inline double BoundRelaxedModel::get_constraint_upper_bound(size_t constraint_index) const {
+   return this->original_model->get_constraint_upper_bound(constraint_index);
 }
 
 inline double BoundRelaxedModel::evaluate_objective(const std::vector<double>& x) const {
@@ -108,8 +108,8 @@ inline void BoundRelaxedModel::evaluate_constraints(const std::vector<double>& x
    this->original_model->evaluate_constraints(x, constraints);
 }
 
-inline void BoundRelaxedModel::evaluate_constraint_gradient(const std::vector<double>& x, size_t j, SparseVector<double>& gradient) const {
-   this->original_model->evaluate_constraint_gradient(x, j, gradient);
+inline void BoundRelaxedModel::evaluate_constraint_gradient(const std::vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const {
+   this->original_model->evaluate_constraint_gradient(x, constraint_index, gradient);
 }
 
 inline void BoundRelaxedModel::evaluate_constraint_jacobian(const std::vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const {
@@ -121,16 +121,16 @@ inline void BoundRelaxedModel::evaluate_lagrangian_hessian(const std::vector<dou
    this->original_model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian);
 }
 
-inline BoundType BoundRelaxedModel::get_variable_bound_type(size_t i) const {
-   return this->original_model->get_variable_bound_type(i);
+inline BoundType BoundRelaxedModel::get_variable_bound_type(size_t variable_index) const {
+   return this->original_model->get_variable_bound_type(variable_index);
 }
 
-inline FunctionType BoundRelaxedModel::get_constraint_type(size_t j) const {
-   return this->original_model->get_constraint_type(j);
+inline FunctionType BoundRelaxedModel::get_constraint_type(size_t constraint_index) const {
+   return this->original_model->get_constraint_type(constraint_index);
 }
 
-inline BoundType BoundRelaxedModel::get_constraint_bound_type(size_t j) const {
-   return this->original_model->get_constraint_bound_type(j);
+inline BoundType BoundRelaxedModel::get_constraint_bound_type(size_t constraint_index) const {
+   return this->original_model->get_constraint_bound_type(constraint_index);
 }
 
 inline size_t BoundRelaxedModel::get_number_objective_gradient_nonzeros() const {

@@ -5,48 +5,48 @@
 #define UNO_VIEW_H
 
 // span of an arbitrary container: allocation-free view of a certain length
-template <typename T>
+template <typename ElementType>
 class view {
 public:
    // compatible with algorithms that query the type of the elements
-   using value_type = T;
+   using value_type = ElementType;
 
-   view(const std::vector<T>& array, size_t length) noexcept;
+   view(const std::vector<ElementType>& array, size_t length) noexcept;
 
-   const T& operator[](size_t i) const noexcept;
+   const ElementType& operator[](size_t index) const noexcept;
    [[nodiscard]] size_t size() const noexcept;
 
-   const T* begin() noexcept;
-   const T* end() noexcept;
+   const ElementType* begin() noexcept;
+   const ElementType* end() noexcept;
 
 protected:
-   const T* array;
+   const ElementType* array;
    const size_t length;
 };
 
-template <typename T>
-view<T>::view(const std::vector<T>& array, size_t length) noexcept:
+template <typename ElementType>
+view<ElementType>::view(const std::vector<ElementType>& array, size_t length) noexcept:
       array(array.data()), length(std::min(length, array.size())) {
 }
 
 // preconditions: array != nullptr, i < length
-template <typename T>
-const T& view<T>::operator[](size_t i) const noexcept {
-   return this->array[i];
+template <typename ElementType>
+const ElementType& view<ElementType>::operator[](size_t index) const noexcept {
+   return this->array[index];
 }
 
-template <typename T>
-size_t view<T>::size() const noexcept {
+template <typename ElementType>
+size_t view<ElementType>::size() const noexcept {
    return this->length;
 }
 
-template <typename T>
-const T* view<T>::begin() noexcept {
+template <typename ElementType>
+const ElementType* view<ElementType>::begin() noexcept {
    return this->array;
 }
 
-template <typename T>
-const T* view<T>::end() noexcept {
+template <typename ElementType>
+const ElementType* view<ElementType>::end() noexcept {
    return this->array + this->length;
 }
 

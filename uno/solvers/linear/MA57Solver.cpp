@@ -159,8 +159,8 @@ void MA57Solver::save_matrix_to_local_format(const SymmetricMatrix<double>& matr
    // build the internal matrix representation
    this->row_indices.clear();
    this->column_indices.clear();
-   matrix.for_each([&](size_t i, size_t j, double /*entry*/) {
-      this->row_indices.push_back(static_cast<int>(i + this->fortran_shift));
-      this->column_indices.push_back(static_cast<int>(j + this->fortran_shift));
+   matrix.for_each([&](size_t row_index, size_t column_index, double /*entry*/) {
+      this->row_indices.push_back(static_cast<int>(row_index + this->fortran_shift));
+      this->column_indices.push_back(static_cast<int>(column_index + this->fortran_shift));
    });
 }

@@ -46,40 +46,40 @@ std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
    stream << "norm = " << direction.norm << '\n';
 
    stream << "bound constraints active at lower bound =";
-   for (size_t i: direction.active_set.bounds.at_lower_bound) {
-      stream << " x" << i;
+   for (size_t variable_index: direction.active_set.bounds.at_lower_bound) {
+      stream << " x" << variable_index;
    }
    stream << '\n';
    stream << "bound constraints active at upper bound =";
-   for (size_t i: direction.active_set.bounds.at_upper_bound) {
-      stream << " x" << i;
+   for (size_t variable_index: direction.active_set.bounds.at_upper_bound) {
+      stream << " x" << variable_index;
    }
    stream << '\n';
 
    stream << "constraints at lower bound =";
-   for (size_t j: direction.active_set.constraints.at_lower_bound) {
-      stream << " c" << j;
+   for (size_t constraint_index: direction.active_set.constraints.at_lower_bound) {
+      stream << " c" << constraint_index;
    }
    stream << '\n';
    stream << "constraints at upper bound =";
-   for (size_t j: direction.active_set.constraints.at_upper_bound) {
-      stream << " c" << j;
+   for (size_t constraint_index: direction.active_set.constraints.at_upper_bound) {
+      stream << " c" << constraint_index;
    }
    stream << '\n';
 
    if (direction.constraint_partition.has_value()) {
       const ConstraintPartition& constraint_partition = direction.constraint_partition.value();
       stream << "general feasible =";
-      for (size_t j: constraint_partition.feasible) {
-         stream << " c" << j;
+      for (size_t constraint_index: constraint_partition.feasible) {
+         stream << " c" << constraint_index;
       }
       stream << "\ngeneral lower infeasible =";
-      for (size_t j: constraint_partition.lower_bound_infeasible) {
-         stream << " c" << j;
+      for (size_t constraint_index: constraint_partition.lower_bound_infeasible) {
+         stream << " c" << constraint_index;
       }
       stream << "\ngeneral upper infeasible =";
-      for (size_t j: constraint_partition.upper_bound_infeasible) {
-         stream << " c" << j;
+      for (size_t constraint_index: constraint_partition.upper_bound_infeasible) {
+         stream << " c" << constraint_index;
       }
       stream << '\n';
    }

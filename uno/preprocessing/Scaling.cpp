@@ -16,8 +16,8 @@ void Scaling::compute(const SparseVector<double>& objective_gradient, const Rect
    this->objective_scaling = std::min(1., this->gradient_threshold / norm_inf(objective_gradient));
 
    // set the constraints scaling
-   for (size_t j: Range(this->constraint_scaling.size())) {
-      this->constraint_scaling[j] = std::min(1., this->gradient_threshold / norm_inf(constraint_jacobian[j]));
+   for (size_t constraint_index: Range(this->constraint_scaling.size())) {
+      this->constraint_scaling[constraint_index] = std::min(1., this->gradient_threshold / norm_inf(constraint_jacobian[constraint_index]));
    }
    DEBUG2 << "Objective scaling: " << this->objective_scaling << '\n';
    DEBUG2 << "Constraint scaling: "; print_vector(DEBUG2, this->constraint_scaling);
@@ -27,6 +27,6 @@ double Scaling::get_objective_scaling() const {
    return this->objective_scaling;
 }
 
-double Scaling::get_constraint_scaling(size_t j) const {
-   return this->constraint_scaling[j];
+double Scaling::get_constraint_scaling(size_t constraint_index) const {
+   return this->constraint_scaling[constraint_index];
 }

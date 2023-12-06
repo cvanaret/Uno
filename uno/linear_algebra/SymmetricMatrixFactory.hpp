@@ -8,21 +8,21 @@
 #include "COOSymmetricMatrix.hpp"
 #include "CSCSymmetricMatrix.hpp"
 
-template <typename T>
+template <typename ElementType>
 class SymmetricMatrixFactory {
 public:
-   static std::unique_ptr<SymmetricMatrix<T>> create(const std::string& symmetric_matrix_type, size_t dimension, size_t capacity,
+   static std::unique_ptr<SymmetricMatrix<ElementType>> create(const std::string& symmetric_matrix_type, size_t dimension, size_t capacity,
          bool use_regularization);
 };
 
-template <typename T>
-std::unique_ptr<SymmetricMatrix<T>> SymmetricMatrixFactory<T>::create(const std::string& symmetric_matrix_type, size_t dimension, size_t capacity,
-      bool use_regularization) {
+template <typename ElementType>
+std::unique_ptr<SymmetricMatrix<ElementType>> SymmetricMatrixFactory<ElementType>::create(const std::string& symmetric_matrix_type, size_t dimension,
+      size_t capacity, bool use_regularization) {
    if (symmetric_matrix_type == "COO") {
-      return std::make_unique<COOSymmetricMatrix<T>>(dimension, capacity, use_regularization);
+      return std::make_unique<COOSymmetricMatrix<ElementType>>(dimension, capacity, use_regularization);
    }
    else if (symmetric_matrix_type == "CSC") {
-      return std::make_unique<CSCSymmetricMatrix<T>>(dimension, capacity, use_regularization);
+      return std::make_unique<CSCSymmetricMatrix<ElementType>>(dimension, capacity, use_regularization);
    }
    throw std::invalid_argument("Symmetric matrix type " + symmetric_matrix_type + " unknown");
 }
