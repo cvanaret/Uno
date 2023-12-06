@@ -71,6 +71,10 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
    return this->compute_feasible_direction(statistics, current_iterate, warmstart_information);
 }
 
+bool FeasibilityRestoration::solving_feasibility_problem() {
+   return (this->current_phase == Phase::FEASIBILITY_RESTORATION);
+}
+
 void FeasibilityRestoration::switch_to_feasibility_problem(Iterate& current_iterate, WarmstartInformation& warmstart_information) {
    if (this->current_phase == Phase::FEASIBILITY_RESTORATION) {
       throw std::runtime_error("FeasibilityRestoration::switch_to_feasibility_problem: already in feasibility restoration.\n");

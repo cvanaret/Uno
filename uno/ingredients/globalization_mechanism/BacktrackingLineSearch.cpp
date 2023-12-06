@@ -55,25 +55,18 @@ Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics
          // assemble the trial iterate by going a fraction along the direction
          Iterate trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction, step_length);
          // check whether the trial iterate is accepted
-         bool acceptable_iterate = false;
          if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, step_length)) {
             // check termination criteria
             trial_iterate.status = this->check_convergence(model, trial_iterate);
-            acceptable_iterate = true;
-         }
-         else if (step_length < this->minimum_step_length) { // rejected, but small step length
-            DEBUG << "The line search step length is smaller than " << this->minimum_step_length << '\n';
-            acceptable_iterate = this->check_termination_with_small_step(model, direction, trial_iterate);
-            if (not acceptable_iterate) {
-               reached_small_step_length = true;
-            }
-         }
-
-         if (acceptable_iterate) {
             this->set_statistics(statistics, direction, step_length);
             return trial_iterate;
          }
-         else if (not reached_small_step_length) {
+         // small step length
+         else if (step_length < this->minimum_step_length) {
+            DEBUG << "The line search step length is smaller than " << this->minimum_step_length << '\n';
+            reached_small_step_length = true;
+         }
+         else {
             step_length = this->decrease_step_length(step_length);
          }
       }
@@ -84,14 +77,19 @@ Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics
    }
 
    // reached a small step length: revert to solving the feasibility problem
-   warmstart_information.set_cold_start();
-   this->constraint_relaxation_strategy.switch_to_feasibility_problem(current_iterate, warmstart_information);
-   Direction direction_feasibility = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate,
-         direction.primals, warmstart_information);
-   BacktrackingLineSearch::check_unboundedness(direction_feasibility);
-   Iterate trial_iterate_feasibility = this->backtrack_along_direction(statistics, model, current_iterate, direction_feasibility,
-         warmstart_information);
-   return trial_iterate_feasibility;
+   if (this->constraint_relaxation_strategy.solving_feasibility_problem()) {
+      throw std::runtime_error("LS on feasibility problem failed.");
+   }
+   else {
+      warmstart_information.set_cold_start();
+      this->constraint_relaxation_strategy.switch_to_feasibility_problem(current_iterate, warmstart_information);
+      Direction direction_feasibility = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate,
+            direction.primals, warmstart_information);
+      BacktrackingLineSearch::check_unboundedness(direction_feasibility);
+      Iterate trial_iterate_feasibility = this->backtrack_along_direction(statistics, model, current_iterate, direction_feasibility,
+            warmstart_information);
+      return trial_iterate_feasibility;
+   }
 }
 
 Iterate BacktrackingLineSearch::assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction,

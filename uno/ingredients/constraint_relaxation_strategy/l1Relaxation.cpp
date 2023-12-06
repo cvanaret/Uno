@@ -64,6 +64,10 @@ Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Itera
    return this->compute_feasible_direction(statistics, current_iterate, warmstart_information);
 }
 
+bool l1Relaxation::solving_feasibility_problem() {
+   return (this->penalty_parameter == 0.);
+}
+
 void l1Relaxation::switch_to_feasibility_problem(Iterate& /*current_iterate*/, WarmstartInformation& /*warmstart_information*/) {
    throw std::runtime_error("l1Relaxation::switch_to_feasibility_problem is not implemented\n");
 }

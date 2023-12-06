@@ -38,25 +38,6 @@ Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate,
    }
 }
 
-bool GlobalizationMechanism::check_termination_with_small_step(const Model& model, const Direction& direction, Iterate& trial_iterate) const {
-   // evaluate infeasibility
-   trial_iterate.evaluate_constraints(model);
-   trial_iterate.residuals.infeasibility = model.compute_constraint_violation(trial_iterate.evaluations.constraints, this->progress_norm);
-
-   // terminate with a feasible point
-   if (trial_iterate.residuals.infeasibility <= this->tight_tolerance) {
-      trial_iterate.status = TerminationStatus::FEASIBLE_SMALL_STEP;
-      return true;
-   }
-   else if (direction.multipliers.objective == 0.) { // terminate with an infeasible point
-      trial_iterate.status = TerminationStatus::INFEASIBLE_SMALL_STEP;
-      return true;
-   }
-   else { // do not terminate, infeasible non stationary
-      return false;
-   }
-}
-
 TerminationStatus GlobalizationMechanism::check_convergence(const Model& model, Iterate& current_iterate) {
    // test convergence wrt the tight tolerance
    TerminationStatus status_tight_tolerance = this->check_convergence(model, current_iterate, this->tight_tolerance);
