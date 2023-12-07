@@ -21,7 +21,6 @@ public:
    l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient);
 
    [[nodiscard]] double get_objective_multiplier() const override;
-   [[nodiscard]] double evaluate_objective(Iterate& iterate) const override;
    void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const override;
    void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const override;
    void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const override;
@@ -91,22 +90,6 @@ inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_m
 
 inline double l1RelaxedProblem::get_objective_multiplier() const {
    return this->objective_multiplier;
-}
-
-// return rho*f(x) + coeff*||c(x)||₁
-inline double l1RelaxedProblem::evaluate_objective(Iterate& iterate) const {
-   double objective = 0.;
-
-   // scaled objective: rho*f(x)
-   if (this->objective_multiplier != 0.) {
-      iterate.evaluate_objective(this->model);
-      objective += this->objective_multiplier * iterate.evaluations.objective;
-   }
-
-   // scaled constraint violation: coeff*||c(x)||₁
-   iterate.evaluate_constraints(this->model);
-   objective += this->constraint_violation_coefficient * this->model.compute_constraint_violation(iterate.evaluations.constraints, Norm::L1);
-   return objective;
 }
 
 inline void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const {

@@ -32,7 +32,6 @@ public:
 
    // function evaluations
    [[nodiscard]] virtual double get_objective_multiplier() const = 0;
-   [[nodiscard]] virtual double evaluate_objective(Iterate& iterate) const = 0;
    virtual void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const = 0;
    virtual void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const = 0;
    virtual void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const = 0;

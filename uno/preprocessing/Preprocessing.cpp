@@ -90,13 +90,13 @@ void Preprocessing::enforce_linear_constraints(const Options& options, const Mod
             const size_t constraint_index = linear_constraints[linear_constraint_index];
             model.evaluate_constraint_gradient(x, constraint_index, constraint_jacobian[linear_constraint_index]);
          }
-         // variables bounds
+         // variable bounds
          std::vector<Interval> variables_bounds(model.number_variables);
          for (size_t variable_index: Range(model.number_variables)) {
             variables_bounds[variable_index] = {model.get_variable_lower_bound(variable_index) - x[variable_index],
                   model.get_variable_upper_bound(variable_index) - x[variable_index]};
          }
-         // constraints bounds
+         // constraint bounds
          std::vector<Interval> constraints_bounds(linear_constraints.size());
          for (size_t linear_constraint_index: Range(linear_constraints.size())) {
             const size_t constraint_index = linear_constraints[linear_constraint_index];

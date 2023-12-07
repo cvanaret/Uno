@@ -11,7 +11,6 @@ public:
    explicit OptimalityProblem(const Model& model);
 
    [[nodiscard]] double get_objective_multiplier() const override;
-   [[nodiscard]] double evaluate_objective(Iterate& iterate) const override;
    void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const override;
    void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const override;
    void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const override;
@@ -53,11 +52,6 @@ inline OptimalityProblem::OptimalityProblem(const Model& model):
 
 inline double OptimalityProblem::get_objective_multiplier() const {
    return 1.;
-}
-
-inline double OptimalityProblem::evaluate_objective(Iterate& iterate) const {
-   iterate.evaluate_objective(this->model);
-   return iterate.evaluations.objective;
 }
 
 inline void OptimalityProblem::evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const {
