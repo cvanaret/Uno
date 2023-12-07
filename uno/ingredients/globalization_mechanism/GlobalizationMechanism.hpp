@@ -14,7 +14,7 @@ public:
    GlobalizationMechanism(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);
    virtual ~GlobalizationMechanism() = default;
 
-   virtual void initialize(Iterate& initial_iterate) = 0;
+   virtual void initialize(Statistics& statistics, Iterate& initial_iterate) = 0;
    virtual Iterate compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) = 0;
 
    [[nodiscard]] size_t get_hessian_evaluation_count() const;

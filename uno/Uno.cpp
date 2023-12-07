@@ -27,7 +27,10 @@ Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_i
 
    // use the current point to initialize the strategies and generate the initial iterate
    try {
-      this->globalization_mechanism.initialize(current_iterate);
+      statistics.new_line();
+      this->globalization_mechanism.initialize(statistics, current_iterate);
+      Uno::add_statistics(statistics, current_iterate, major_iterations);
+      if (Logger::level == INFO) statistics.print_current_line();
    }
    catch (const std::exception& e) {
       ERROR << RED << "An error occurred at the initial iterate: " << e.what() << RESET;

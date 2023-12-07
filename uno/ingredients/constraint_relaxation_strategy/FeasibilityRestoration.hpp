@@ -16,7 +16,7 @@ enum class Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 class FeasibilityRestoration : public ConstraintRelaxationStrategy {
 public:
    FeasibilityRestoration(Statistics& statistics, const Model& model, const Options& options);
-   void initialize(Iterate& initial_iterate) override;
+   void initialize(Statistics& statistics, Iterate& initial_iterate) override;
 
    void set_trust_region_radius(double trust_region_radius) override;
 
@@ -59,7 +59,7 @@ private:
    [[nodiscard]] double compute_complementarity_error(const std::vector<double>& inequality_index, const std::vector<double>& constraints,
          const Multipliers& multipliers) const override;
 
-   void add_statistics(Statistics& statistics, const Iterate& trial_iterate) const;
+   void add_statistics(Statistics& statistics, const Iterate& iterate) const;
 };
 
 #endif //UNO_FEASIBILITYRESTORATION_H

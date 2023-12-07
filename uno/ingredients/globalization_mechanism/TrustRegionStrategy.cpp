@@ -25,9 +25,9 @@ TrustRegionStrategy::TrustRegionStrategy(Statistics& statistics, ConstraintRelax
    statistics.add_column("TR radius", Statistics::double_width, options.get_int("statistics_TR_radius_column_order"));
 }
 
-void TrustRegionStrategy::initialize(Iterate& initial_iterate) {
+void TrustRegionStrategy::initialize(Statistics& statistics, Iterate& initial_iterate) {
    this->constraint_relaxation_strategy.set_trust_region_radius(this->radius);
-   this->constraint_relaxation_strategy.initialize(initial_iterate);
+   this->constraint_relaxation_strategy.initialize(statistics, initial_iterate);
 }
 
 Iterate TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) {

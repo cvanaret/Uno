@@ -24,7 +24,7 @@ FeasibilityRestoration::FeasibilityRestoration(Statistics& statistics, const Mod
    statistics.add_column("phase", Statistics::int_width, options.get_int("statistics_restoration_phase_column_order"));
 }
 
-void FeasibilityRestoration::initialize(Iterate& initial_iterate) {
+void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& initial_iterate) {
    this->subproblem->generate_initial_iterate(this->optimality_problem, initial_iterate);
 
    // compute the progress measures and residuals of the initial point
@@ -34,6 +34,8 @@ void FeasibilityRestoration::initialize(Iterate& initial_iterate) {
    // initialize the globalization strategies
    this->restoration_phase_strategy->initialize(initial_iterate);
    this->optimality_phase_strategy->initialize(initial_iterate);
+
+   this->add_statistics(statistics, initial_iterate);
 }
 
 Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
@@ -242,19 +244,19 @@ double FeasibilityRestoration::compute_complementarity_error(const std::vector<d
    return norm(this->residual_norm, variable_complementarity, constraint_complementarity);
 }
 
-void FeasibilityRestoration::add_statistics(Statistics& statistics, const Iterate& trial_iterate) const {
+void FeasibilityRestoration::add_statistics(Statistics& statistics, const Iterate& iterate) const {
    if (this->current_phase == Phase::OPTIMALITY) {
-      statistics.add_statistic("complementarity", trial_iterate.residuals.optimality_complementarity);
-      statistics.add_statistic("stationarity", trial_iterate.residuals.optimality_stationarity);
+      statistics.add_statistic("complementarity", iterate.residuals.optimality_complementarity);
+      statistics.add_statistic("stationarity", iterate.residuals.optimality_stationarity);
       if (this->original_model.is_constrained()) {
-         statistics.add_statistic("primal infeas.", trial_iterate.progress.infeasibility);
+         statistics.add_statistic("primal infeas.", iterate.progress.infeasibility);
       }
    }
    else {
-      statistics.add_statistic("complementarity", trial_iterate.residuals.feasibility_complementarity);
-      statistics.add_statistic("stationarity", trial_iterate.residuals.feasibility_stationarity);
+      statistics.add_statistic("complementarity", iterate.residuals.feasibility_complementarity);
+      statistics.add_statistic("stationarity", iterate.residuals.feasibility_stationarity);
       if (this->original_model.is_constrained()) {
-         statistics.add_statistic("primal infeas.", trial_iterate.progress.optimality(1.));
+         statistics.add_statistic("primal infeas.", iterate.progress.optimality(1.));
       }
    }
    statistics.add_statistic("phase", static_cast<int>(this->current_phase));

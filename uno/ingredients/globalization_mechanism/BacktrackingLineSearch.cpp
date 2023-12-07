@@ -21,8 +21,8 @@ BacktrackingLineSearch::BacktrackingLineSearch(Statistics& statistics, Constrain
    statistics.add_column("LS step length", Statistics::double_width, options.get_int("statistics_LS_step_length_column_order"));
 }
 
-void BacktrackingLineSearch::initialize(Iterate& initial_iterate) {
-   this->constraint_relaxation_strategy.initialize(initial_iterate);
+void BacktrackingLineSearch::initialize(Statistics& statistics, Iterate& initial_iterate) {
+   this->constraint_relaxation_strategy.initialize(statistics, initial_iterate);
 }
 
 Iterate BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) {

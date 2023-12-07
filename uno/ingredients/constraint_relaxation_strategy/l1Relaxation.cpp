@@ -36,7 +36,7 @@ l1Relaxation::l1Relaxation(Statistics& statistics, const Model& model, const Opt
    statistics.add_column("penalty param.", Statistics::double_width, options.get_int("statistics_penalty_parameter_column_order"));
 }
 
-void l1Relaxation::initialize(Iterate& initial_iterate) {
+void l1Relaxation::initialize(Statistics& statistics, Iterate& initial_iterate) {
    this->subproblem->set_elastic_variable_values(this->l1_relaxed_problem, initial_iterate);
    this->subproblem->generate_initial_iterate(this->l1_relaxed_problem, initial_iterate);
 
@@ -46,6 +46,8 @@ void l1Relaxation::initialize(Iterate& initial_iterate) {
 
    // initialize the globalization strategy
    this->globalization_strategy->initialize(initial_iterate);
+
+   this->add_statistics(statistics, initial_iterate);
 }
 
 Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information) {
@@ -297,12 +299,12 @@ void l1Relaxation::check_exact_relaxation(Iterate& iterate) const {
    }
 }
 
-void l1Relaxation::add_statistics(Statistics& statistics, const Iterate& trial_iterate) const {
-   statistics.add_statistic("complementarity", trial_iterate.residuals.optimality_complementarity);
-   statistics.add_statistic("stationarity", trial_iterate.residuals.optimality_stationarity);
+void l1Relaxation::add_statistics(Statistics& statistics, const Iterate& iterate) const {
+   statistics.add_statistic("complementarity", iterate.residuals.optimality_complementarity);
+   statistics.add_statistic("stationarity", iterate.residuals.optimality_stationarity);
    statistics.add_statistic("penalty param.", this->penalty_parameter);
    if (this->original_model.is_constrained()) {
-      statistics.add_statistic("primal infeas.", trial_iterate.progress.infeasibility);
+      statistics.add_statistic("primal infeas.", iterate.progress.infeasibility);
    }
 }
 
