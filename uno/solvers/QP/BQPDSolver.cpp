@@ -53,7 +53,7 @@ Direction BQPDSolver::solve_QP(size_t number_variables, size_t number_constraint
       const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const std::vector<double>& initial_point,
       const WarmstartInformation& warmstart_information) {
    if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-      this->save_lagrangian_hessian_to_local_format(hessian);
+      this->save_hessian_to_local_format(hessian);
    }
    if (this->print_subproblem) {
       DEBUG << "QP:\n";
@@ -159,7 +159,7 @@ BQPDMode BQPDSolver::determine_mode(const WarmstartInformation& warmstart_inform
 }
 
 // save Hessian (in arbitrary format) to a "weak" CSC format: compressed columns but row indices are not sorted, nor unique
-void BQPDSolver::save_lagrangian_hessian_to_local_format(const SymmetricMatrix<double>& hessian) {
+void BQPDSolver::save_hessian_to_local_format(const SymmetricMatrix<double>& hessian) {
    const size_t header_size = 1;
    // pointers withing the single array
    int* row_indices = &this->hessian_sparsity[header_size];
