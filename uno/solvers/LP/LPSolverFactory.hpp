@@ -17,7 +17,7 @@ public:
          const Options& options) {
 #ifdef HAS_BQPD
       if (LP_solver_name == "BQPD") {
-         return std::make_unique<BQPDSolver>(number_variables, number_constraints, 0, false, options);
+         return std::make_unique<BQPDSolver>(number_variables, number_constraints, 0, BQPDProblemType::LP, options);
       }
 #endif
       throw std::invalid_argument("LP solver not found");

@@ -66,7 +66,6 @@ size_t count_infeasible_linear_constraints(const Model& model, const std::vector
          infeasible_linear_constraints++;
       }
    }
-   INFO << "There are " << infeasible_linear_constraints << " infeasible linear constraints at the initial point\n";
    return infeasible_linear_constraints;
 }
 
@@ -78,6 +77,7 @@ void Preprocessing::enforce_linear_constraints(const Options& options, const Mod
       std::vector<double> constraints(model.number_constraints);
       model.evaluate_constraints(x, constraints);
       const size_t infeasible_linear_constraints = count_infeasible_linear_constraints(model, constraints);
+      INFO << "There are " << infeasible_linear_constraints << " infeasible linear constraints at the initial point\n";
       if (0 < infeasible_linear_constraints) {
          // Hessian
          const CSCSymmetricMatrix<double> hessian = CSCSymmetricMatrix<double>::identity(model.number_variables);
@@ -105,7 +105,7 @@ void Preprocessing::enforce_linear_constraints(const Options& options, const Mod
          }
 
          // solve the strictly convex QP
-         BQPDSolver solver(model.number_variables, linear_constraints.size(), model.number_variables, true, options);
+         BQPDSolver solver(model.number_variables, linear_constraints.size(), model.number_variables, BQPDProblemType::QP, options);
          std::vector<double> d0(model.number_variables); // = 0
          SparseVector<double> linear_objective; // empty
          WarmstartInformation warmstart_information{true, true, true, true};

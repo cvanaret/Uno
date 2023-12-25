@@ -36,9 +36,12 @@ enum BQPDMode {
    UNCHANGED_ACTIVE_SET_AND_JACOBIAN_AND_REDUCED_HESSIAN = 6, // warm start
 };
 
+enum class BQPDProblemType {LP, QP};
+
 class BQPDSolver : public QPSolver {
 public:
-   BQPDSolver(size_t max_number_variables, size_t number_constraints, size_t number_hessian_nonzeros, bool quadratic_programming, const Options& options);
+   BQPDSolver(size_t max_number_variables, size_t number_constraints, size_t number_hessian_nonzeros, BQPDProblemType problem_type,
+         const Options& options);
 
    Direction solve_LP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
          const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,

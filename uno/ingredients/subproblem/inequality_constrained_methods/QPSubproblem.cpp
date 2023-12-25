@@ -13,7 +13,7 @@ QPSubproblem::QPSubproblem(Statistics& statistics, size_t max_number_variables, 
             max_number_hessian_nonzeros + max_number_variables, this->use_regularization, options)),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
       solver(QPSolverFactory::create(options.get_string("QP_solver"), max_number_variables, max_number_constraints,
-            hessian_model->hessian->capacity, true, options)) {
+            hessian_model->hessian->capacity, options)) {
    if (this->use_regularization) {
       statistics.add_column("regularization", Statistics::double_width, options.get_int("statistics_regularization_column_order"));
    }
