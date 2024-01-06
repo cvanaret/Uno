@@ -1,4 +1,4 @@
-C Copyright (c) 2018-2023 Sven Leyffer
+C Copyright (c) 2018-2024 Sven Leyffer
 C Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 C     hristen this file wdotd.f
