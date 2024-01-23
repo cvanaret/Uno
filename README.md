@@ -60,7 +60,7 @@ The figure below is a performance profile of Uno and state-of-the-art solvers fi
    <img src="docs/figures/uno_performance_profile.png" alt="Performance profile of Uno 1.0" width="75%" />
 </p>
 
-All log files can be found [here](https://github.com/cvanaret/NLP_comparison).
+All log files can be found [here](https://github.com/cvanaret/nonconvex_solver_comparison).
 
 ## How to cite Uno
 
