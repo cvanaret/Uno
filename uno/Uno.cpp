@@ -8,6 +8,7 @@
 #include "ingredients/globalization_strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 #include "optimization/Iterate.hpp"
+#include "preprocessing/Preprocessing.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/Timer.hpp"
@@ -18,12 +19,17 @@ Uno::Uno(GlobalizationMechanism& globalization_mechanism, const Options& options
       time_limit(options.get_double("time_limit")) {
 }
 
-Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_iterate) {
+Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options) {
    Timer timer{};
    size_t major_iterations = 0;
 
    std::cout << "\nProblem " << model.name << '\n';
    std::cout << model.number_variables << " variables, " << model.number_constraints << " constraints\n\n";
+
+   // enforce linear constraints at initial point
+   if (options.get_bool("enforce_linear_constraints")) {
+      Preprocessing::enforce_linear_constraints(options, model, current_iterate.primals, current_iterate.multipliers);
+   }
 
    // use the current point to initialize the strategies and generate the initial iterate
    try {

@@ -1,7 +1,6 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include "preprocessing/Preprocessing.hpp"
 #include "ingredients/globalization_mechanism/GlobalizationMechanismFactory.hpp"
 #include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategyFactory.hpp"
 #include "interfaces/AMPL/AMPLModel.hpp"
@@ -49,21 +48,16 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
    // create the statistics
    Statistics statistics = create_statistics(*model, options);
 
-   // enforce linear constraints at initial point
-   if (options.get_bool("enforce_linear_constraints")) {
-      Preprocessing::enforce_linear_constraints(options, *model, initial_iterate.primals, initial_iterate.multipliers);
-   }
-
    // create the constraint relaxation strategy
    auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(statistics, *model, options);
 
    // create the globalization mechanism
-   auto mechanism = GlobalizationMechanismFactory::create(statistics, *constraint_relaxation_strategy, options);
+   auto globalization_mechanism = GlobalizationMechanismFactory::create(statistics, *constraint_relaxation_strategy, options);
 
    // instantiate the combination of ingredients and solve the problem
-   Uno uno = Uno(*mechanism, options);
+   Uno uno = Uno(*globalization_mechanism, options);
    try {
-      Result result = uno.solve(statistics, *model, initial_iterate);
+      Result result = uno.solve(statistics, *model, initial_iterate, options);
 
       // print the optimization summary
       std::string combination = options.get_string("globalization_mechanism") + " " + options.get_string("constraint_relaxation_strategy") + " " +

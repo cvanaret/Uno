@@ -112,6 +112,7 @@ void Preprocessing::enforce_linear_constraints(const Options& options, const Mod
          Direction direction = solver.solve_QP(model.number_variables, linear_constraints.size(), variables_bounds, constraints_bounds,
                linear_objective, constraint_jacobian, hessian, d0, warmstart_information);
          if (direction.status == SubproblemStatus::INFEASIBLE) {
+            // TODO switch to solving feasibility problem
             throw std::runtime_error("Linear constraints cannot be satisfied");
          }
 
