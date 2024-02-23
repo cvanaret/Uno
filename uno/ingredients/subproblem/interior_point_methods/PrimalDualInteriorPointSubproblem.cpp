@@ -430,7 +430,7 @@ void PrimalDualInteriorPointSubproblem::compute_bound_dual_direction(const Nonli
       const double distance_to_bound = current_iterate.primals[variable_index] - problem.get_variable_lower_bound(variable_index);
       this->lower_delta_z[variable_index] = (this->barrier_parameter() - this->augmented_system.solution[variable_index] * current_iterate.multipliers.lower_bounds[variable_index]) /
                                             distance_to_bound - current_iterate.multipliers.lower_bounds[variable_index];
-      assert(is_finite(this->lower_delta_z[i]) && "The displacement lower_delta_z is infinite");
+      assert(is_finite(this->lower_delta_z[variable_index]) && "The displacement lower_delta_z is infinite");
    }
    for (size_t variable_index: problem.upper_bounded_variables) {
       const double distance_to_bound = current_iterate.primals[variable_index] - problem.get_variable_upper_bound(variable_index);
