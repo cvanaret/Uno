@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "ModelFactory.hpp"
-#include "EqualityConstrainedModel.hpp"
+#include "HomogeneousEqualityConstrainedModel.hpp"
 #include "ScaledModel.hpp"
 #include "BoundRelaxedModel.hpp"
 #include "preprocessing/Scaling.hpp"
@@ -19,7 +19,7 @@ std::unique_ptr<Model> ModelFactory::reformulate(std::unique_ptr<Model> model, I
       // generate an equality-constrained model by:
       // - introducing slacks in inequality constraints
       // - subtracting the (possibly nonzero) RHS of equality constraints
-      model = std::make_unique<EqualityConstrainedModel>(std::move(model));
+      model = std::make_unique<HomogeneousEqualityConstrainedModel>(std::move(model));
       // slightly relax the bound constraints
       model = std::make_unique<BoundRelaxedModel>(std::move(model), options);
       initial_iterate.set_number_variables(model->number_variables);

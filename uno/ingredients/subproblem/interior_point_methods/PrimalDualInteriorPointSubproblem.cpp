@@ -44,7 +44,7 @@ PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(Statistics&
 
 inline void PrimalDualInteriorPointSubproblem::generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) {
    if (problem.has_inequality_constraints()) {
-      throw std::runtime_error("The problem has inequality constraints. Create an instance of EqualityConstrainedModel.\n");
+      throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel.\n");
    }
 
    // evaluate the constraints at the original point
@@ -156,7 +156,7 @@ void PrimalDualInteriorPointSubproblem::evaluate_functions(Statistics& statistic
 Direction PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
       const WarmstartInformation& warmstart_information) {
    if (problem.has_inequality_constraints()) {
-      throw std::runtime_error("The problem has inequality constraints. Create an instance of EqualityConstrainedModel.\n");
+      throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel.\n");
    }
    if (is_finite(this->trust_region_radius)) {
       throw std::runtime_error("The interior-point subproblem has a trust region. This is not implemented yet.\n");

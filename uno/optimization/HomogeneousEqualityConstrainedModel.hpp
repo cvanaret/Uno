@@ -1,17 +1,17 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_EQUALITYCONSTRAINEDMODEL_H
-#define UNO_EQUALITYCONSTRAINEDMODEL_H
+#ifndef UNO_HOMOGENEOUSEQUALITYCONSTRAINEDMODEL_H
+#define UNO_HOMOGENEOUSEQUALITYCONSTRAINEDMODEL_H
 
 #include "Model.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Range.hpp"
 
 // all constraints are of the form "c(x) = 0"
-class EqualityConstrainedModel: public Model {
+class HomogeneousEqualityConstrainedModel: public Model {
 public:
-   explicit EqualityConstrainedModel(std::unique_ptr<Model> original_model);
+   explicit HomogeneousEqualityConstrainedModel(std::unique_ptr<Model> original_model);
 
    [[nodiscard]] double get_variable_lower_bound(size_t variable_index) const override;
    [[nodiscard]] double get_variable_upper_bound(size_t variable_index) const override;
@@ -49,7 +49,7 @@ protected:
 // Transform the problem into an equality-constrained problem with constraints c(x) = 0. This implies:
 // - inequality constraints get a slack
 // - equality constraints are shifted by their RHS
-inline EqualityConstrainedModel::EqualityConstrainedModel(std::unique_ptr<Model> original_model):
+inline HomogeneousEqualityConstrainedModel::HomogeneousEqualityConstrainedModel(std::unique_ptr<Model> original_model):
       Model(original_model->name + "_equalityconstrained", original_model->number_variables + original_model->inequality_constraints.size(),
             original_model->number_constraints),
       // transfer ownership of the pointer
@@ -98,7 +98,7 @@ inline EqualityConstrainedModel::EqualityConstrainedModel(std::unique_ptr<Model>
    }
 }
 
-inline double EqualityConstrainedModel::get_variable_lower_bound(size_t variable_index) const {
+inline double HomogeneousEqualityConstrainedModel::get_variable_lower_bound(size_t variable_index) const {
    if (variable_index < this->original_model->number_variables) { // original variable
       return this->original_model->get_variable_lower_bound(variable_index);
    }
@@ -109,7 +109,7 @@ inline double EqualityConstrainedModel::get_variable_lower_bound(size_t variable
    }
 }
 
-inline double EqualityConstrainedModel::get_variable_upper_bound(size_t variable_index) const {
+inline double HomogeneousEqualityConstrainedModel::get_variable_upper_bound(size_t variable_index) const {
    if (variable_index < this->original_model->number_variables) { // original variable
       return this->original_model->get_variable_upper_bound(variable_index);
    }
@@ -120,25 +120,25 @@ inline double EqualityConstrainedModel::get_variable_upper_bound(size_t variable
    }
 }
 
-inline double EqualityConstrainedModel::get_constraint_lower_bound(size_t /*j*/) const {
+inline double HomogeneousEqualityConstrainedModel::get_constraint_lower_bound(size_t /*j*/) const {
    // all constraints are of the form "c(x) = 0"
    return 0.;
 }
 
-inline double EqualityConstrainedModel::get_constraint_upper_bound(size_t /*j*/) const {
+inline double HomogeneousEqualityConstrainedModel::get_constraint_upper_bound(size_t /*j*/) const {
    // all constraints are of the form "c(x) = 0"
    return 0.;
 }
 
-inline double EqualityConstrainedModel::evaluate_objective(const std::vector<double>& x) const {
+inline double HomogeneousEqualityConstrainedModel::evaluate_objective(const std::vector<double>& x) const {
    return this->original_model->evaluate_objective(x);
 }
 
-inline void EqualityConstrainedModel::evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const {
+inline void HomogeneousEqualityConstrainedModel::evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const {
    this->original_model->evaluate_objective_gradient(x, gradient);
 }
 
-inline void EqualityConstrainedModel::evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const {
+inline void HomogeneousEqualityConstrainedModel::evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const {
    this->original_model->evaluate_constraints(x, constraints);
    // inequality constraints: add the slacks
    for (size_t variable_index: Range(this->original_model->inequality_constraints.size())) {
@@ -152,7 +152,7 @@ inline void EqualityConstrainedModel::evaluate_constraints(const std::vector<dou
    }
 }
 
-inline void EqualityConstrainedModel::evaluate_constraint_gradient(const std::vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const {
+inline void HomogeneousEqualityConstrainedModel::evaluate_constraint_gradient(const std::vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const {
    this->original_model->evaluate_constraint_gradient(x, constraint_index, gradient);
    // if the original constraint is an inequality, add the slack contribution
    if (this->original_model->get_constraint_bound_type(constraint_index) != EQUAL_BOUNDS) {
@@ -161,7 +161,7 @@ inline void EqualityConstrainedModel::evaluate_constraint_gradient(const std::ve
    }
 }
 
-inline void EqualityConstrainedModel::evaluate_constraint_jacobian(const std::vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const {
+inline void HomogeneousEqualityConstrainedModel::evaluate_constraint_jacobian(const std::vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const {
    this->original_model->evaluate_constraint_jacobian(x, constraint_jacobian);
    // add the slack contributions
    for (size_t variable_index: Range(this->original_model->inequality_constraints.size())) {
@@ -171,7 +171,7 @@ inline void EqualityConstrainedModel::evaluate_constraint_jacobian(const std::ve
    }
 }
 
-inline void EqualityConstrainedModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
+inline void HomogeneousEqualityConstrainedModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
       SymmetricMatrix<double>& hessian) const {
    this->original_model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian);
    // extend the dimension of the Hessian by finalizing the remaining columns (note: the slacks do not enter the Hessian)
@@ -180,7 +180,7 @@ inline void EqualityConstrainedModel::evaluate_lagrangian_hessian(const std::vec
    }
 }
 
-inline BoundType EqualityConstrainedModel::get_variable_bound_type(size_t variable_index) const {
+inline BoundType HomogeneousEqualityConstrainedModel::get_variable_bound_type(size_t variable_index) const {
    if (variable_index < this->original_model->number_variables) { // original variable
       return this->original_model->get_variable_bound_type(variable_index);
    }
@@ -191,28 +191,28 @@ inline BoundType EqualityConstrainedModel::get_variable_bound_type(size_t variab
    }
 }
 
-inline FunctionType EqualityConstrainedModel::get_constraint_type(size_t constraint_index) const {
+inline FunctionType HomogeneousEqualityConstrainedModel::get_constraint_type(size_t constraint_index) const {
    return this->original_model->get_constraint_type(constraint_index);
 }
 
-inline BoundType EqualityConstrainedModel::get_constraint_bound_type(size_t /*j*/) const {
+inline BoundType HomogeneousEqualityConstrainedModel::get_constraint_bound_type(size_t /*j*/) const {
    // all constraints are of the form "c(x) = 0"
    return EQUAL_BOUNDS;
 }
 
-inline size_t EqualityConstrainedModel::get_number_objective_gradient_nonzeros() const {
+inline size_t HomogeneousEqualityConstrainedModel::get_number_objective_gradient_nonzeros() const {
    return this->original_model->get_number_objective_gradient_nonzeros();
 }
 
-inline size_t EqualityConstrainedModel::get_number_jacobian_nonzeros() const {
+inline size_t HomogeneousEqualityConstrainedModel::get_number_jacobian_nonzeros() const {
    return this->original_model->get_number_jacobian_nonzeros();
 }
 
-inline size_t EqualityConstrainedModel::get_number_hessian_nonzeros() const {
+inline size_t HomogeneousEqualityConstrainedModel::get_number_hessian_nonzeros() const {
    return this->original_model->get_number_hessian_nonzeros();
 }
 
-inline void EqualityConstrainedModel::get_initial_primal_point(std::vector<double>& x) const {
+inline void HomogeneousEqualityConstrainedModel::get_initial_primal_point(std::vector<double>& x) const {
    this->original_model->get_initial_primal_point(x);
    // set the slacks
    for (size_t variable_index: Range(this->original_model->inequality_constraints.size())) {
@@ -221,19 +221,19 @@ inline void EqualityConstrainedModel::get_initial_primal_point(std::vector<doubl
    }
 }
 
-inline void EqualityConstrainedModel::get_initial_dual_point(std::vector<double>& multipliers) const {
+inline void HomogeneousEqualityConstrainedModel::get_initial_dual_point(std::vector<double>& multipliers) const {
    this->original_model->get_initial_dual_point(multipliers);
 }
 
-inline void EqualityConstrainedModel::postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const {
+inline void HomogeneousEqualityConstrainedModel::postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const {
    this->original_model->postprocess_solution(iterate, termination_status);
 
    // discard the slacks
    iterate.number_variables = this->original_model->number_variables;
 }
 
-inline const std::vector<size_t>& EqualityConstrainedModel::get_linear_constraints() const {
+inline const std::vector<size_t>& HomogeneousEqualityConstrainedModel::get_linear_constraints() const {
    return this->original_model->get_linear_constraints();
 }
 
-#endif // UNO_EQUALITYCONSTRAINEDMODEL_H
+#endif // UNO_HOMOGENEOUSEQUALITYCONSTRAINEDMODEL_H
