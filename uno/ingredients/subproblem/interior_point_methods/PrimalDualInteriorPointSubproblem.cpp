@@ -47,6 +47,11 @@ inline void PrimalDualInteriorPointSubproblem::generate_initial_iterate(const No
       throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel.\n");
    }
 
+   // TODO: enforce linear constraints at initial point
+   //if (options.get_bool("enforce_linear_constraints")) {
+   //   Preprocessing::enforce_linear_constraints(problem.model, initial_iterate.primals, initial_iterate.multipliers, this->solver);
+   //}
+
    // evaluate the constraints at the original point
    initial_iterate.evaluate_constraints(problem.model);
 

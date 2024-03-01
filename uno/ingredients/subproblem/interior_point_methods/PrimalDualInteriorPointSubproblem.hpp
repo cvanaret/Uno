@@ -24,10 +24,10 @@ class PrimalDualInteriorPointSubproblem : public Subproblem {
 public:
    PrimalDualInteriorPointSubproblem(Statistics& statistics, size_t max_number_variables, size_t max_number_constraints,
          size_t max_number_jacobian_nonzeros, size_t max_number_hessian_nonzeros, const Options& options);
-   ~PrimalDualInteriorPointSubproblem() override = default;
+   ~PrimalDualInteriorPointSubproblem() override = default; // TODO remove
 
+   void generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) override;
    void set_initial_point(const std::vector<double>& initial_point) override;
-   void generate_initial_iterate(const NonlinearProblem& constraint_index, Iterate& initial_iterate) override;
 
    void initialize_feasibility_problem() override;
    void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& constraint_index) override;

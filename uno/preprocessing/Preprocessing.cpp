@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "Preprocessing.hpp"
-#include "solvers/QP/BQPDSolver.hpp"
 #include "linear_algebra/CSCSymmetricMatrix.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 
@@ -69,7 +68,7 @@ size_t count_infeasible_linear_constraints(const Model& model, const std::vector
    return infeasible_linear_constraints;
 }
 
-void Preprocessing::enforce_linear_constraints(const Options& options, const Model& model, std::vector<double>& x, Multipliers& multipliers) {
+void Preprocessing::enforce_linear_constraints(const Model& model, std::vector<double>& x, Multipliers& multipliers, QPSolver& qp_solver) {
    const auto& linear_constraints = model.get_linear_constraints();
    INFO << "Preprocessing phase: the problem has " << linear_constraints.size() << " linear constraints\n";
    if (not linear_constraints.empty()) {
@@ -105,14 +104,14 @@ void Preprocessing::enforce_linear_constraints(const Options& options, const Mod
          }
 
          // solve the strictly convex QP
-         BQPDSolver solver(model.number_variables, linear_constraints.size(), model.number_variables, BQPDProblemType::QP, options);
          std::vector<double> d0(model.number_variables); // = 0
          SparseVector<double> linear_objective; // empty
          WarmstartInformation warmstart_information{true, true, true, true};
-         Direction direction = solver.solve_QP(model.number_variables, linear_constraints.size(), variables_bounds, constraints_bounds,
+         Direction direction = qp_solver.solve_QP(model.number_variables, linear_constraints.size(), variables_bounds, constraints_bounds,
                linear_objective, constraint_jacobian, hessian, d0, warmstart_information);
          if (direction.status == SubproblemStatus::INFEASIBLE) {
             // TODO switch to solving feasibility problem
+            INFO << "Linear constraints cannot be satisfied.\n";
             throw std::runtime_error("Linear constraints cannot be satisfied");
          }
 

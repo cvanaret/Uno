@@ -19,7 +19,7 @@ class Uno {
 public:
    Uno(GlobalizationMechanism& globalization_mechanism, const Options& options);
 
-   [[nodiscard]] Result solve(Statistics& statistics, const Model& model, Iterate& initial_iterate, const Options& options);
+   [[nodiscard]] Result solve(Statistics& statistics, const Model& model, Iterate& initial_iterate);
    static void print_available_strategies();
 
 private:

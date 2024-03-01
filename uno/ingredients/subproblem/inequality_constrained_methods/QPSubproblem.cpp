@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "QPSubproblem.hpp"
+#include "preprocessing/Preprocessing.hpp"
 #include "solvers/QP/QPSolverFactory.hpp"
 
 QPSubproblem::QPSubproblem(Statistics& statistics, size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros,
@@ -13,9 +14,19 @@ QPSubproblem::QPSubproblem(Statistics& statistics, size_t max_number_variables, 
             max_number_hessian_nonzeros + max_number_variables, this->use_regularization, options)),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
       solver(QPSolverFactory::create(options.get_string("QP_solver"), max_number_variables, max_number_constraints,
-            hessian_model->hessian->capacity, options)) {
+            // if the QP solver is used during preprocessing, we need to allocate the Hessian with at least number_variables elements
+            std::max(this->enforce_linear_constraints_at_initial_iterate ? max_number_variables : 0, hessian_model->hessian->capacity),
+            options)),
+      enforce_linear_constraints_at_initial_iterate(options.get_bool("enforce_linear_constraints")) {
    if (this->use_regularization) {
       statistics.add_column("regularization", Statistics::double_width, options.get_int("statistics_regularization_column_order"));
+   }
+}
+
+void QPSubproblem::generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) {
+   // enforce linear constraints at initial point
+   if (this->enforce_linear_constraints_at_initial_iterate) {
+      Preprocessing::enforce_linear_constraints(problem.model, initial_iterate.primals, initial_iterate.multipliers, *this->solver);
    }
 }
 

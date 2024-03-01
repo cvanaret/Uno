@@ -13,6 +13,7 @@ class LPSubproblem : public InequalityConstrainedMethod {
 public:
    LPSubproblem(size_t max_number_variables, size_t max_number_constraints, const Options& options);
 
+   void generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) override;
    [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
          const WarmstartInformation& warmstart_information) override;
    [[nodiscard]] std::function<double(double)> compute_predicted_optimality_reduction_model(const NonlinearProblem& problem,

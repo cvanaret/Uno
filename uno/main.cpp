@@ -57,7 +57,7 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
    // instantiate the combination of ingredients and solve the problem
    Uno uno = Uno(*globalization_mechanism, options);
    try {
-      Result result = uno.solve(statistics, *model, initial_iterate, options);
+      Result result = uno.solve(statistics, *model, initial_iterate);
 
       // print the optimization summary
       std::string combination = options.get_string("globalization_mechanism") + " " + options.get_string("constraint_relaxation_strategy") + " " +
