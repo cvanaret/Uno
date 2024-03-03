@@ -8,7 +8,7 @@
 #include "SymmetricIndefiniteLinearSolver.hpp"
 
 #ifdef HAS_MA57
-#include "MA57Solver.hpp"
+#include "direct/MA57Solver.hpp"
 #endif
 
 class SymmetricIndefiniteLinearSolverFactory {
