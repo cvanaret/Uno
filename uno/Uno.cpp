@@ -43,10 +43,6 @@ Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_i
          termination = this->termination_criteria(current_iterate.status, major_iterations, timer.get_duration());
       }
    }
-   catch (const std::runtime_error& e) {
-      ERROR << RED << e.what() << RESET;
-      throw;
-   }
    catch (std::exception& exception) {
       ERROR << RED << exception.what() << RESET;
    }
