@@ -93,6 +93,7 @@ Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics
    }
    else {
       warmstart_information.set_cold_start();
+      statistics.add_statistic("status", "LS failed");
       this->constraint_relaxation_strategy.switch_to_feasibility_problem(statistics, current_iterate, warmstart_information);
       Direction direction_feasibility = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate,
             direction.primals, warmstart_information);

@@ -49,6 +49,7 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
          Direction direction = this->solve_subproblem(statistics, this->optimality_problem, current_iterate, warmstart_information);
          // infeasible subproblem: switch to the feasibility problem, starting from the current direction
          if (direction.status == SubproblemStatus::INFEASIBLE) {
+            statistics.add_statistic("status", "infeas. subproblem");
             this->switch_to_feasibility_problem(statistics, current_iterate, warmstart_information);
             this->subproblem->set_initial_point(direction.primals);
          }
@@ -100,7 +101,6 @@ void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistic
    this->restoration_phase_strategy->register_current_progress(current_iterate.progress);
    warmstart_information.set_cold_start();
    
-   statistics.add_statistic("status", "infeas. subproblem");
    if (Logger::level == INFO) statistics.print_current_line();
    statistics.new_line();
 }
