@@ -12,10 +12,10 @@ std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(Sta
       return std::make_unique<l1MeritFunction>(statistics, options);
    }
    else if (strategy_type == "leyffer_filter_method") {
-      return std::make_unique<LeyfferFilterMethod>(statistics, accept_when_switching_violated, options);
+      return std::make_unique<LeyfferFilterMethod>(accept_when_switching_violated, options);
    }
    else if (strategy_type == "waechter_filter_method") {
-      return std::make_unique<WaechterFilterMethod>(statistics, options);
+      return std::make_unique<WaechterFilterMethod>(options);
    }
    throw std::invalid_argument("GlobalizationStrategy " + strategy_type + " is not supported");
 }

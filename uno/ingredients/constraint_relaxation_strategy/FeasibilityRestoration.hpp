@@ -26,7 +26,7 @@ public:
    [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point,
          WarmstartInformation& warmstart_information) override;
    bool solving_feasibility_problem() override;
-   void switch_to_feasibility_problem(Iterate& current_iterate, WarmstartInformation& warmstart_information) override;
+   void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information) override;
 
    // trial iterate acceptance
    void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length) override;
@@ -44,7 +44,8 @@ private:
    const std::unique_ptr<GlobalizationStrategy> optimality_phase_strategy;
    Phase current_phase{Phase::OPTIMALITY};
    const double tolerance;
-   const bool test_linearized_feasibility;
+   const bool switch_to_optimality_requires_acceptance;
+   const bool switch_to_optimality_requires_linearized_feasibility;
    bool switched_to_optimality_phase{false};
 
    [[nodiscard]] const NonlinearProblem& current_problem() const;

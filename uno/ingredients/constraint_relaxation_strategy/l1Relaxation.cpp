@@ -70,7 +70,7 @@ bool l1Relaxation::solving_feasibility_problem() {
    return (this->penalty_parameter == 0.);
 }
 
-void l1Relaxation::switch_to_feasibility_problem(Iterate& /*current_iterate*/, WarmstartInformation& /*warmstart_information*/) {
+void l1Relaxation::switch_to_feasibility_problem(Statistics& /*statistics*/, Iterate& /*current_iterate*/, WarmstartInformation& /*warmstart_information*/) {
    throw std::runtime_error("l1Relaxation::switch_to_feasibility_problem is not implemented\n");
 }
 
@@ -205,6 +205,9 @@ bool l1Relaxation::linearized_residual_sufficient_decrease(const Iterate& curren
    }
    const double linearized_residual_reduction = current_iterate.progress.infeasibility - linearized_residual;
    const double lowest_linearized_residual_reduction = current_iterate.progress.infeasibility - residual_lowest_violation;
+   if (lowest_linearized_residual_reduction < 0.) {
+      WARNING << "The lowest_linearized_residual_reduction quantity is negative. Negative curvature in your problem\n";
+   }
    return (linearized_residual_reduction >= this->parameters.epsilon1 * lowest_linearized_residual_reduction);
 }
 
@@ -250,6 +253,7 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
       DEBUG << "Zero step acceptable\n\n";
       trial_iterate.evaluate_objective(this->original_model);
       accept_iterate = true;
+      statistics.add_statistic("status", "accepted (0 step)");
    }
    else {
       // evaluate the predicted reduction

@@ -3,7 +3,8 @@
 
 #include "WaechterFilterMethod.hpp"
 
-WaechterFilterMethod::WaechterFilterMethod(Statistics& /*statistics*/, const Options& options): FilterMethod(options) {
+WaechterFilterMethod::WaechterFilterMethod(const Options& options):
+      FilterMethod(options) {
 }
 
 void WaechterFilterMethod::initialize(const Iterate& initial_iterate) {
@@ -15,7 +16,7 @@ void WaechterFilterMethod::initialize(const Iterate& initial_iterate) {
  * filter methods enforce an *unconstrained* sufficient decrease condition
  * precondition: feasible step
  * */
-bool WaechterFilterMethod::is_iterate_acceptable(Statistics& /*statistics*/, const Iterate& /*trial_iterate*/,
+bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const Iterate& /*trial_iterate*/,
       const ProgressMeasures& current_progress_measures, const ProgressMeasures& trial_progress_measures, const ProgressMeasures& predicted_reduction,
       double /*objective_multiplier*/) {
    const double current_optimality_measure = current_progress_measures.optimality(1.) + current_progress_measures.auxiliary_terms;
@@ -57,9 +58,11 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& /*statistics*/, con
          if (sufficient_decrease) {
             DEBUG << "Trial iterate was accepted by satisfying Armijo condition\n";
             accept = true;
+            statistics.add_statistic("status", "accepted (Armijo)");
          }
          else {
             DEBUG << "Armijo condition not satisfied\n";
+            statistics.add_statistic("status", "rejected (Armijo)");
          }
       }
       else {
@@ -68,9 +71,11 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& /*statistics*/, con
                trial_progress_measures.infeasibility, trial_optimality_measure)) {
             DEBUG << "Acceptable with respect to current point\n";
             accept = true;
+            statistics.add_statistic("status", "accepted (current point)");
          }
          else {
             DEBUG << "Not acceptable with respect to current point\n";
+            statistics.add_statistic("status", "rejected (current point)");
          }
       }
       // possibly augment the filter
@@ -81,6 +86,7 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& /*statistics*/, con
    }
    else {
       DEBUG << "Not filter acceptable\n";
+      statistics.add_statistic("status", "rejected (filter)");
    }
    DEBUG << '\n';
    return accept;

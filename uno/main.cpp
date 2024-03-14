@@ -21,14 +21,15 @@ void* operator new(size_t size) {
 
 Statistics create_statistics(const Model& model, const Options& options) {
    Statistics statistics(options);
-   statistics.add_column("iters", Statistics::int_width, options.get_int("statistics_major_column_order"));
+   statistics.add_column("iter", Statistics::int_width, options.get_int("statistics_major_column_order"));
    statistics.add_column("step norm", Statistics::double_width, options.get_int("statistics_step_norm_column_order"));
-   statistics.add_column("objective", Statistics::double_width, options.get_int("statistics_objective_column_order"));
+   statistics.add_column("objective", Statistics::double_width - 2, options.get_int("statistics_objective_column_order"));
    if (model.is_constrained()) {
       statistics.add_column("primal infeas.", Statistics::double_width, options.get_int("statistics_primal_infeasibility_column_order"));
    }
    statistics.add_column("complementarity", Statistics::double_width, options.get_int("statistics_complementarity_column_order"));
    statistics.add_column("stationarity", Statistics::double_width, options.get_int("statistics_stationarity_column_order"));
+   statistics.add_column("status", Statistics::char_width + 16, options.get_int("statistics_status_column_order"));
    return statistics;
 }
 

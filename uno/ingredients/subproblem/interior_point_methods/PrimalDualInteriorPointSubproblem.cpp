@@ -39,7 +39,7 @@ PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(Statistics&
       damping_factor(options.get_double("barrier_damping_factor")),
       lower_delta_z(max_number_variables), upper_delta_z(max_number_variables) {
    statistics.add_column("regularization", Statistics::double_width, options.get_int("statistics_regularization_column_order"));
-   statistics.add_column("barrier param.", Statistics::double_width, options.get_int("statistics_barrier_parameter_column_order"));
+   statistics.add_column("barrier param.", Statistics::double_width - 1, options.get_int("statistics_barrier_parameter_column_order"));
 }
 
 inline void PrimalDualInteriorPointSubproblem::generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) {

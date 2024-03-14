@@ -8,7 +8,7 @@
 
 class LeyfferFilterMethod : public FilterMethod {
 public:
-   LeyfferFilterMethod(Statistics& statistics, bool accept_when_switching_violated, const Options& options);
+   LeyfferFilterMethod(bool accept_when_switching_violated, const Options& options);
 
    [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Iterate& trial_iterate, const ProgressMeasures& current_progress_measures,
          const ProgressMeasures& trial_progress_measures, const ProgressMeasures& predicted_reduction, double objective_multiplier) override;

@@ -41,6 +41,10 @@ bool l1MeritFunction::is_iterate_acceptable(Statistics& statistics, const Iterat
    if (accept) {
       DEBUG << "Trial iterate was accepted by satisfying Armijo condition\n";
       this->smallest_known_infeasibility = std::min(this->smallest_known_infeasibility, trial_progress.infeasibility);
+      statistics.add_statistic("status", "accepted (Armijo)");
+   }
+   else {
+      statistics.add_statistic("status", "rejected (Armijo)");
    }
    return accept;
 }

@@ -23,8 +23,7 @@ private:
    const double radius_reset_threshold;
 
    Iterate assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction);
-   bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         size_t number_iterations);
+   bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction);
    void possibly_increase_radius(double step_norm);
    void decrease_radius(double step_norm);
    void decrease_radius();
@@ -32,7 +31,9 @@ private:
    void reset_radius();
    void reset_active_trust_region_multipliers(const Model& model, const Direction& direction, Iterate& trial_iterate) const;
    bool check_termination_with_small_step(const Model& model, Iterate& trial_iterate) const;
-   void set_statistics(Statistics& statistics, const Direction& direction, size_t number_iterations) const;
+   void set_statistics(Statistics& statistics) const;
+   void set_statistics(Statistics& statistics, const Direction& direction) const;
+   void set_statistics(Statistics& statistics, const Iterate& trial_iterate, const Direction& direction) const;
    void print_iteration(size_t number_iterations);
 };
 

@@ -19,39 +19,27 @@ Uno::Uno(GlobalizationMechanism& globalization_mechanism, const Options& options
 }
 
 Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_iterate) {
-   Timer timer{};
-   size_t major_iterations = 0;
-
    std::cout << "\nProblem " << model.name << '\n';
    std::cout << model.number_variables << " variables, " << model.number_constraints << " constraints\n\n";
    
+   Timer timer{};
    // use the current point to initialize the strategies and generate the initial iterate
-   try {
-      statistics.new_line();
-      this->globalization_mechanism.initialize(statistics, current_iterate);
-      Uno::add_statistics(statistics, current_iterate, major_iterations);
-      if (Logger::level == INFO) statistics.print_current_line();
-   }
-   catch (const std::exception& e) {
-      ERROR << RED << "An error occurred at the initial iterate: " << e.what() << RESET;
-      throw;
-   }
+   initialize(statistics, current_iterate);
 
    bool termination = false;
+   size_t major_iterations = 0;
    try {
       // check for termination
       while (not termination) {
-         statistics.new_line();
          major_iterations++;
+         statistics.new_line();
+         Uno::add_statistics(statistics, current_iterate, major_iterations);
          DEBUG << "### Outer iteration " << major_iterations << '\n';
 
          // compute an acceptable iterate by solving a subproblem at the current point
          current_iterate = this->globalization_mechanism.compute_next_iterate(statistics, model, current_iterate);
-
-         // compute the status of the next iterate
-         Uno::add_statistics(statistics, current_iterate, major_iterations);
-         if (Logger::level == INFO) statistics.print_current_line();
-
+         
+         // determine if Uno can terminate
          termination = this->termination_criteria(current_iterate.status, major_iterations, timer.get_duration());
       }
    }
@@ -67,21 +55,39 @@ Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_i
    if (Logger::level == INFO) statistics.print_footer();
 
    const size_t number_subproblems_solved = this->globalization_mechanism.get_number_subproblems_solved();
-   const size_t hessian_evaluation_count = this->globalization_mechanism.get_hessian_evaluation_count();
+   const size_t number_hessian_evaluations = this->globalization_mechanism.get_hessian_evaluation_count();
    Result result = {std::move(current_iterate), model.number_variables, model.number_constraints, major_iterations, timer.get_duration(),
          Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_objective_gradient,
-         Iterate::number_eval_jacobian, hessian_evaluation_count, number_subproblems_solved};
+         Iterate::number_eval_jacobian, number_hessian_evaluations, number_subproblems_solved};
    return result;
 }
 
+void Uno::initialize(Statistics& statistics, Iterate& current_iterate) {
+   try {
+      statistics.new_line();
+      this->globalization_mechanism.initialize(statistics, current_iterate);
+      Uno::add_statistics(statistics, current_iterate, 0);
+      statistics.add_statistic("status", "initial point");
+      if (Logger::level == INFO) statistics.print_current_line();
+   }
+   catch (const std::exception& e) {
+      ERROR << RED << "An error occurred at the initial iterate: " << e.what() << RESET;
+      throw;
+   }
+}
+
+void Uno::add_statistics(Statistics& statistics, size_t major_iterations) {
+   statistics.add_statistic(std::string("iter"), major_iterations);
+}
+
 void Uno::add_statistics(Statistics& statistics, const Iterate& iterate, size_t major_iterations) {
-   statistics.add_statistic(std::string("iters"), major_iterations);
    if (iterate.is_objective_computed) {
       statistics.add_statistic("objective", iterate.evaluations.objective);
    }
    else {
       statistics.add_statistic("objective", "-");
    }
+   Uno::add_statistics(statistics, major_iterations);
 }
 
 bool Uno::termination_criteria(TerminationStatus current_status, size_t iteration, double current_time) const {
