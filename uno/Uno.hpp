@@ -19,7 +19,7 @@ class Uno {
 public:
    Uno(GlobalizationMechanism& globalization_mechanism, const Options& options);
 
-   [[nodiscard]] Result solve(Statistics& statistics, const Model& model, Iterate& initial_iterate);
+   [[nodiscard]] Result solve(const Model& model, Iterate& initial_iterate, const Options& options);
    static void print_available_strategies();
 
 private:
@@ -27,7 +27,8 @@ private:
    const size_t max_iterations; /*!< Maximum number of iterations */
    const double time_limit; /*!< CPU time limit (can be inf) */
 
-   void initialize(Statistics& statistics, Iterate& current_iterate);
+   Statistics create_statistics(const Model& model, const Options& options);
+   void initialize(Statistics& statistics, Iterate& current_iterate, const Options& options);
    static void add_statistics(Statistics& statistics, size_t major_iterations);
    static void add_statistics(Statistics& statistics, const Iterate& iterate, size_t major_iterations);
    [[nodiscard]] bool termination_criteria(TerminationStatus current_status, size_t iteration, double current_time) const;

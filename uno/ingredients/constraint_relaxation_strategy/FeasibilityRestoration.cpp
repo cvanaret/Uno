@@ -8,36 +8,37 @@
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "linear_algebra/view.hpp"
 
-FeasibilityRestoration::FeasibilityRestoration(Statistics& statistics, const Model& model, const Options& options) :
+FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options& options) :
       ConstraintRelaxationStrategy(model, options),
       // create the (optimality phase) optimality problem (= original model)
       optimality_problem(model),
       // create the (restoration phase) feasibility problem (objective multiplier = 0)
       feasibility_problem(model, 0., options.get_double("l1_constraint_violation_coefficient")),
-      subproblem(SubproblemFactory::create(statistics, this->feasibility_problem.number_variables, this->feasibility_problem.number_constraints,
+      subproblem(SubproblemFactory::create(this->feasibility_problem.number_variables, this->feasibility_problem.number_constraints,
             this->feasibility_problem.get_number_jacobian_nonzeros(), this->feasibility_problem.get_number_hessian_nonzeros(), options)),
       // create the globalization strategies (one for each phase)
-      restoration_phase_strategy(GlobalizationStrategyFactory::create(statistics, options.get_string("globalization_strategy"), false, options)),
-      optimality_phase_strategy(GlobalizationStrategyFactory::create(statistics, options.get_string("globalization_strategy"), true, options)),
+      restoration_phase_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), false, options)),
+      optimality_phase_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), true, options)),
       tolerance(options.get_double("tolerance")),
       switch_to_optimality_requires_acceptance(options.get_bool("switch_to_optimality_requires_acceptance")),
       switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")) {
-   statistics.add_column("phase", Statistics::int_width, options.get_int("statistics_restoration_phase_column_order"));
 }
 
-void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& initial_iterate) {
+void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) {
    this->subproblem->generate_initial_iterate(this->optimality_problem, initial_iterate);
+   this->subproblem->initialize(statistics, options);
 
    // compute the progress measures and residuals of the initial point
    this->set_progress_measures(this->optimality_problem, initial_iterate);
    this->compute_primal_dual_residuals(this->original_model, this->feasibility_problem, initial_iterate);
 
    // initialize the globalization strategies
-   this->restoration_phase_strategy->initialize(initial_iterate);
-   this->optimality_phase_strategy->initialize(initial_iterate);
+   this->restoration_phase_strategy->initialize(statistics, initial_iterate, options);
+   this->optimality_phase_strategy->initialize(statistics, initial_iterate, options);
 
+   statistics.add_column("phase", Statistics::int_width, options.get_int("statistics_restoration_phase_column_order"));
    statistics.add_statistic("phase", static_cast<int>(this->current_phase));
-   this->add_statistics(statistics, initial_iterate);
+   this->set_statistics(statistics, initial_iterate);
 }
 
 Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
@@ -191,7 +192,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
    if (accept_iterate) {
       this->compute_primal_dual_residuals(this->original_model, this->feasibility_problem, trial_iterate);
    }
-   this->add_statistics(statistics, trial_iterate);  
+   this->set_statistics(statistics, trial_iterate);  
    return accept_iterate;
 }
 
@@ -254,7 +255,7 @@ double FeasibilityRestoration::compute_complementarity_error(const std::vector<d
    return norm(this->residual_norm, variable_complementarity, constraint_complementarity);
 }
 
-void FeasibilityRestoration::add_statistics(Statistics& statistics, const Iterate& iterate) const {
+void FeasibilityRestoration::set_statistics(Statistics& statistics, const Iterate& iterate) const {
    if (this->current_phase == Phase::OPTIMALITY) {
       statistics.add_statistic("complementarity", iterate.residuals.optimality_complementarity);
       statistics.add_statistic("stationarity", iterate.residuals.optimality_stationarity);

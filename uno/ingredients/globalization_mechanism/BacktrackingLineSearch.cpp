@@ -7,7 +7,7 @@
 #include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
 
-BacktrackingLineSearch::BacktrackingLineSearch(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
+BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy,
          const Options& options):
       GlobalizationMechanism(constraint_relaxation_strategy, options),
       backtracking_ratio(options.get_double("LS_backtracking_ratio")),
@@ -16,13 +16,13 @@ BacktrackingLineSearch::BacktrackingLineSearch(Statistics& statistics, Constrain
    // check the initial and minimal step lengths
    assert(0 < this->backtracking_ratio && this->backtracking_ratio < 1. && "The LS backtracking ratio should be in (0, 1)");
    assert(0 < this->minimum_step_length && this->minimum_step_length < 1. && "The LS minimum step length should be in (0, 1)");
-
-   statistics.add_column("LS iter", Statistics::int_width + 2, options.get_int("statistics_minor_column_order"));
-   statistics.add_column("step length", Statistics::double_width - 3, options.get_int("statistics_LS_step_length_column_order"));
 }
 
-void BacktrackingLineSearch::initialize(Statistics& statistics, Iterate& initial_iterate) {
-   this->constraint_relaxation_strategy.initialize(statistics, initial_iterate);
+void BacktrackingLineSearch::initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) {
+   statistics.add_column("LS iter", Statistics::int_width + 2, options.get_int("statistics_minor_column_order"));
+   statistics.add_column("step length", Statistics::double_width - 3, options.get_int("statistics_LS_step_length_column_order"));
+   
+   this->constraint_relaxation_strategy.initialize(statistics, initial_iterate, options);
 }
 
 Iterate BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) {

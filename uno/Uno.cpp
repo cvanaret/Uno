@@ -18,13 +18,14 @@ Uno::Uno(GlobalizationMechanism& globalization_mechanism, const Options& options
       time_limit(options.get_double("time_limit")) {
 }
 
-Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_iterate) {
+Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& options) {
    std::cout << "\nProblem " << model.name << '\n';
    std::cout << model.number_variables << " variables, " << model.number_constraints << " constraints\n\n";
    
    Timer timer{};
+   Statistics statistics = create_statistics(model, options);
    // use the current point to initialize the strategies and generate the initial iterate
-   initialize(statistics, current_iterate);
+   initialize(statistics, current_iterate, options);
 
    bool termination = false;
    size_t major_iterations = 0;
@@ -58,10 +59,24 @@ Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_i
    return result;
 }
 
-void Uno::initialize(Statistics& statistics, Iterate& current_iterate) {
+Statistics Uno::create_statistics(const Model& model, const Options& options) {
+   Statistics statistics(options);
+   statistics.add_column("iter", Statistics::int_width, options.get_int("statistics_major_column_order"));
+   statistics.add_column("step norm", Statistics::double_width - 1, options.get_int("statistics_step_norm_column_order"));
+   statistics.add_column("objective", Statistics::double_width - 2, options.get_int("statistics_objective_column_order"));
+   if (model.is_constrained()) {
+      statistics.add_column("primal infeas.", Statistics::double_width, options.get_int("statistics_primal_infeasibility_column_order"));
+   }
+   statistics.add_column("complementarity", Statistics::double_width, options.get_int("statistics_complementarity_column_order"));
+   statistics.add_column("stationarity", Statistics::double_width - 1, options.get_int("statistics_stationarity_column_order"));
+   statistics.add_column("status", Statistics::char_width + 19, options.get_int("statistics_status_column_order"));
+   return statistics;
+}
+
+void Uno::initialize(Statistics& statistics, Iterate& current_iterate, const Options& options) {
    try {
       statistics.new_line();
-      this->globalization_mechanism.initialize(statistics, current_iterate);
+      this->globalization_mechanism.initialize(statistics, current_iterate, options);
       Uno::add_statistics(statistics, current_iterate, 0);
       statistics.add_statistic("status", "initial point");
       if (Logger::level == INFO) statistics.print_current_line();

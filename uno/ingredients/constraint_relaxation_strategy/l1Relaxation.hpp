@@ -21,8 +21,8 @@ struct l1RelaxationParameters {
 
 class l1Relaxation : public ConstraintRelaxationStrategy {
 public:
-   l1Relaxation(Statistics& statistics, const Model& model, const Options& options);
-   void initialize(Statistics& statistics, Iterate& initial_iterate) override;
+   l1Relaxation(const Model& model, const Options& options);
+   void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) override;
 
    void set_trust_region_radius(double trust_region_radius) override;
 
@@ -79,7 +79,7 @@ protected:
    [[nodiscard]] double compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers) const override;
 
-   void add_statistics(Statistics& statistics, const Iterate& iterate) const;
+   void set_statistics(Statistics& statistics, const Iterate& iterate) const;
    void check_exact_relaxation(Iterate& iterate) const;
 };
 

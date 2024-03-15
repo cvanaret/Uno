@@ -11,9 +11,9 @@
 
 class QPSubproblem : public InequalityConstrainedMethod {
 public:
-   QPSubproblem(Statistics& statistics, size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros,
-         const Options& options);
+   QPSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros, const Options& options);
 
+   void initialize(Statistics& statistics, const Options& options) override;
    void generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) override;
    [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
          const WarmstartInformation& warmstart_information) override;

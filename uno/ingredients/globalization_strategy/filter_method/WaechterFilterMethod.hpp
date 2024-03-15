@@ -10,7 +10,7 @@ class WaechterFilterMethod : public FilterMethod {
 public:
    explicit WaechterFilterMethod(const Options& options);
 
-   void initialize(const Iterate& initial_iterate) override;
+   void initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) override;
    [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Iterate& trial_iterate, const ProgressMeasures& current_progress_measures,
          const ProgressMeasures& trial_progress_measures, const ProgressMeasures& predicted_reduction, double objective_multiplier) override;
 

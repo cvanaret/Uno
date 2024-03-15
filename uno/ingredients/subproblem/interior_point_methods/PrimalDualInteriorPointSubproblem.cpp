@@ -8,7 +8,7 @@
 #include "preprocessing/Preprocessing.hpp"
 #include "tools/Infinity.hpp"
 
-PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(Statistics& statistics, size_t max_number_variables, size_t max_number_constraints,
+PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(size_t max_number_variables, size_t max_number_constraints,
          size_t max_number_jacobian_nonzeros, size_t max_number_hessian_nonzeros, const Options& options):
       Subproblem(max_number_variables, max_number_constraints),
       augmented_system(options.get_string("sparse_format"), max_number_variables + max_number_constraints,
@@ -38,6 +38,9 @@ PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(Statistics&
       least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")),
       damping_factor(options.get_double("barrier_damping_factor")),
       lower_delta_z(max_number_variables), upper_delta_z(max_number_variables) {
+}
+
+inline void PrimalDualInteriorPointSubproblem::initialize(Statistics& statistics, const Options& options) {
    statistics.add_column("regularization", Statistics::double_width - 1, options.get_int("statistics_regularization_column_order"));
    statistics.add_column("barrier param.", Statistics::double_width - 1, options.get_int("statistics_barrier_parameter_column_order"));
 }

@@ -19,20 +19,6 @@ void* operator new(size_t size) {
 }
 */
 
-Statistics create_statistics(const Model& model, const Options& options) {
-   Statistics statistics(options);
-   statistics.add_column("iter", Statistics::int_width, options.get_int("statistics_major_column_order"));
-   statistics.add_column("step norm", Statistics::double_width - 1, options.get_int("statistics_step_norm_column_order"));
-   statistics.add_column("objective", Statistics::double_width - 2, options.get_int("statistics_objective_column_order"));
-   if (model.is_constrained()) {
-      statistics.add_column("primal infeas.", Statistics::double_width, options.get_int("statistics_primal_infeasibility_column_order"));
-   }
-   statistics.add_column("complementarity", Statistics::double_width, options.get_int("statistics_complementarity_column_order"));
-   statistics.add_column("stationarity", Statistics::double_width - 1, options.get_int("statistics_stationarity_column_order"));
-   statistics.add_column("status", Statistics::char_width + 19, options.get_int("statistics_status_column_order"));
-   return statistics;
-}
-
 void run_uno_ampl(const std::string& model_name, const Options& options) {
    // AMPL model
    std::unique_ptr<Model> ampl_model = std::make_unique<AMPLModel>(model_name);
@@ -45,20 +31,17 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
 
    // reformulate (scale, add slacks, relax the bounds, ...) if necessary
    std::unique_ptr<Model> model = ModelFactory::reformulate(std::move(ampl_model), initial_iterate, options);
-
-   // create the statistics
-   Statistics statistics = create_statistics(*model, options);
-
+   
    // create the constraint relaxation strategy
-   auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(statistics, *model, options);
+   auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(*model, options);
 
    // create the globalization mechanism
-   auto globalization_mechanism = GlobalizationMechanismFactory::create(statistics, *constraint_relaxation_strategy, options);
+   auto globalization_mechanism = GlobalizationMechanismFactory::create(*constraint_relaxation_strategy, options);
 
    // instantiate the combination of ingredients and solve the problem
    Uno uno = Uno(*globalization_mechanism, options);
    try {
-      Result result = uno.solve(statistics, *model, initial_iterate);
+      Result result = uno.solve(*model, initial_iterate, options);
 
       // print the optimization summary
       std::string combination = options.get_string("globalization_mechanism") + " " + options.get_string("constraint_relaxation_strategy") + " " +

@@ -8,9 +8,9 @@
 
 class BacktrackingLineSearch : public GlobalizationMechanism {
 public:
-   BacktrackingLineSearch(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);
+   BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);
 
-   void initialize(Statistics& statistics, Iterate& initial_iterate) override;
+   void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) override;
    [[nodiscard]] Iterate compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) override;
 
 private:

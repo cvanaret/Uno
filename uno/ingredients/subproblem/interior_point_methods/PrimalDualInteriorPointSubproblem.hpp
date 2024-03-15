@@ -22,10 +22,11 @@ struct InteriorPointParameters {
 
 class PrimalDualInteriorPointSubproblem : public Subproblem {
 public:
-   PrimalDualInteriorPointSubproblem(Statistics& statistics, size_t max_number_variables, size_t max_number_constraints,
+   PrimalDualInteriorPointSubproblem(size_t max_number_variables, size_t max_number_constraints,
          size_t max_number_jacobian_nonzeros, size_t max_number_hessian_nonzeros, const Options& options);
    ~PrimalDualInteriorPointSubproblem() override = default; // TODO remove
 
+   void initialize(Statistics& statistics, const Options& options) override;
    void generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) override;
    void set_initial_point(const std::vector<double>& initial_point) override;
 

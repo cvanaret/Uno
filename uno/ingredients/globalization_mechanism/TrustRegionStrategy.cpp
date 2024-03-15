@@ -7,7 +7,7 @@
 #include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
 
-TrustRegionStrategy::TrustRegionStrategy(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
+TrustRegionStrategy::TrustRegionStrategy(ConstraintRelaxationStrategy& constraint_relaxation_strategy,
          const Options& options) :
       GlobalizationMechanism(constraint_relaxation_strategy, options),
       radius(options.get_double("TR_radius")),
@@ -20,15 +20,15 @@ TrustRegionStrategy::TrustRegionStrategy(Statistics& statistics, ConstraintRelax
    assert(0 < this->radius && "The trust-region radius should be positive");
    assert(1. < this->increase_factor && "The trust-region increase factor should be > 1");
    assert(1. < this->decrease_factor && "The trust-region decrease factor should be > 1");
-
-   statistics.add_column("TR iter", Statistics::int_width + 3, options.get_int("statistics_minor_column_order"));
-   statistics.add_column("TR radius", Statistics::double_width - 3, options.get_int("statistics_TR_radius_column_order"));
 }
 
-void TrustRegionStrategy::initialize(Statistics& statistics, Iterate& initial_iterate) {
-   this->constraint_relaxation_strategy.set_trust_region_radius(this->radius);
-   this->constraint_relaxation_strategy.initialize(statistics, initial_iterate);
+void TrustRegionStrategy::initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) {
+   statistics.add_column("TR iter", Statistics::int_width + 3, options.get_int("statistics_minor_column_order"));
+   statistics.add_column("TR radius", Statistics::double_width - 3, options.get_int("statistics_TR_radius_column_order"));
    statistics.add_statistic("TR radius", this->radius);
+   
+   this->constraint_relaxation_strategy.set_trust_region_radius(this->radius);
+   this->constraint_relaxation_strategy.initialize(statistics, initial_iterate, options);
 }
 
 Iterate TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) {

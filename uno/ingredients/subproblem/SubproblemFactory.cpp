@@ -8,19 +8,19 @@
 #include "solvers/QP/QPSolverFactory.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolverFactory.hpp"
 
-std::unique_ptr<Subproblem> SubproblemFactory::create(Statistics& statistics, size_t max_number_variables, size_t max_number_constraints,
+std::unique_ptr<Subproblem> SubproblemFactory::create(size_t max_number_variables, size_t max_number_constraints,
       size_t max_number_jacobian_nonzeros, size_t max_number_hessian_nonzeros, const Options& options) {
    const std::string subproblem_strategy = options.get_string("subproblem");
    // active-set methods
    if (subproblem_strategy == "QP") {
-      return std::make_unique<QPSubproblem>(statistics, max_number_variables, max_number_constraints, max_number_hessian_nonzeros, options);
+      return std::make_unique<QPSubproblem>(max_number_variables, max_number_constraints, max_number_hessian_nonzeros, options);
    }
    else if (subproblem_strategy == "LP") {
       return std::make_unique<LPSubproblem>(max_number_variables, max_number_constraints, options);
    }
    // interior-point method
    else if (subproblem_strategy == "primal_dual_interior_point") {
-      return std::make_unique<PrimalDualInteriorPointSubproblem>(statistics, max_number_variables, max_number_constraints,
+      return std::make_unique<PrimalDualInteriorPointSubproblem>(max_number_variables, max_number_constraints,
             max_number_jacobian_nonzeros, max_number_hessian_nonzeros, options);
    }
    throw std::invalid_argument("Subproblem strategy " + subproblem_strategy + " is not supported");

@@ -3,11 +3,11 @@
 
 #include "l1MeritFunction.hpp"
 
-l1MeritFunction::l1MeritFunction(Statistics& statistics, const Options& options): GlobalizationStrategy(options) {
-   statistics.add_column("penalty param.", Statistics::double_width, options.get_int("statistics_penalty_parameter_column_order"));
+l1MeritFunction::l1MeritFunction(const Options& options): GlobalizationStrategy(options) {
 }
 
-void l1MeritFunction::initialize(const Iterate& /*initial_iterate*/) {
+void l1MeritFunction::initialize(Statistics& statistics, const Iterate& /*initial_iterate*/, const Options& options) {
+   statistics.add_column("penalty param.", Statistics::double_width, options.get_int("statistics_penalty_parameter_column_order"));
 }
 
 void l1MeritFunction::reset() {

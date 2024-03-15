@@ -7,9 +7,9 @@ WaechterFilterMethod::WaechterFilterMethod(const Options& options):
       FilterMethod(options) {
 }
 
-void WaechterFilterMethod::initialize(const Iterate& initial_iterate) {
+void WaechterFilterMethod::initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) {
    this->initial_infeasibility = initial_iterate.residuals.infeasibility;
-   FilterMethod::initialize(initial_iterate);
+   FilterMethod::initialize(statistics, initial_iterate, options);
 }
 
 /* check acceptability of step(s) (filter & sufficient reduction)

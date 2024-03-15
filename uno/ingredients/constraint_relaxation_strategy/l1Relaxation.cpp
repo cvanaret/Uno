@@ -13,15 +13,15 @@
  * http://epubs.siam.org/doi/pdf/10.1137/080738222
  */
 
-l1Relaxation::l1Relaxation(Statistics& statistics, const Model& model, const Options& options) :
+l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
       ConstraintRelaxationStrategy(model, options),
       // create the l1 feasibility problem (objective multiplier = 0)
       feasibility_problem(model, 0., options.get_double("l1_constraint_violation_coefficient")),
       // create the l1 relaxed problem
       l1_relaxed_problem(model, options.get_double("l1_relaxation_initial_parameter"), options.get_double("l1_constraint_violation_coefficient")),
-      subproblem(SubproblemFactory::create(statistics, this->l1_relaxed_problem.number_variables, this->l1_relaxed_problem.number_constraints,
+      subproblem(SubproblemFactory::create(this->l1_relaxed_problem.number_variables, this->l1_relaxed_problem.number_constraints,
             this->l1_relaxed_problem.get_number_jacobian_nonzeros(), this->l1_relaxed_problem.get_number_hessian_nonzeros(), options)),
-      globalization_strategy(GlobalizationStrategyFactory::create(statistics, options.get_string("globalization_strategy"), true, options)),
+      globalization_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), true, options)),
       penalty_parameter(options.get_double("l1_relaxation_initial_parameter")),
       tolerance(options.get_double("tolerance")),
       parameters({
@@ -33,21 +33,23 @@ l1Relaxation::l1Relaxation(Statistics& statistics, const Model& model, const Opt
       }),
       small_duals_threshold(options.get_double("l1_small_duals_threshold")),
       trial_multipliers(this->l1_relaxed_problem.number_variables, model.number_constraints) {
-   statistics.add_column("penalty param.", Statistics::double_width, options.get_int("statistics_penalty_parameter_column_order"));
 }
 
-void l1Relaxation::initialize(Statistics& statistics, Iterate& initial_iterate) {
+void l1Relaxation::initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) {
+   statistics.add_column("penalty param.", Statistics::double_width, options.get_int("statistics_penalty_parameter_column_order"));
+   
    this->subproblem->set_elastic_variable_values(this->l1_relaxed_problem, initial_iterate);
    this->subproblem->generate_initial_iterate(this->l1_relaxed_problem, initial_iterate);
+   this->subproblem->initialize(statistics, options);
 
    // compute the progress measures and residuals of the initial point
    this->set_progress_measures(initial_iterate);
    this->compute_primal_dual_residuals(this->original_model, this->feasibility_problem, initial_iterate);
 
    // initialize the globalization strategy
-   this->globalization_strategy->initialize(initial_iterate);
+   this->globalization_strategy->initialize(statistics, initial_iterate, options);
 
-   this->add_statistics(statistics, initial_iterate);
+   this->set_statistics(statistics, initial_iterate);
 }
 
 Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information) {
@@ -266,7 +268,7 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
 
    if (accept_iterate) {
       this->compute_primal_dual_residuals(this->original_model, this->feasibility_problem, trial_iterate);
-      this->add_statistics(statistics, trial_iterate);
+      this->set_statistics(statistics, trial_iterate);
       this->check_exact_relaxation(trial_iterate);
    }
    return accept_iterate;
@@ -303,7 +305,7 @@ void l1Relaxation::check_exact_relaxation(Iterate& iterate) const {
    }
 }
 
-void l1Relaxation::add_statistics(Statistics& statistics, const Iterate& iterate) const {
+void l1Relaxation::set_statistics(Statistics& statistics, const Iterate& iterate) const {
    statistics.add_statistic("complementarity", iterate.residuals.optimality_complementarity);
    statistics.add_statistic("stationarity", iterate.residuals.optimality_stationarity);
    statistics.add_statistic("penalty param.", this->penalty_parameter);

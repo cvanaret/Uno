@@ -10,6 +10,9 @@ InequalityConstrainedMethod::InequalityConstrainedMethod(size_t max_number_varia
       linearized_constraint_bounds(max_number_constraints) {
 }
 
+void InequalityConstrainedMethod::initialize(Statistics& /*statistics*/, const Options& /*options*/) {
+}
+
 void InequalityConstrainedMethod::set_initial_point(const std::vector<double>& initial_point) {
    copy_from(this->initial_point, initial_point);
 }
