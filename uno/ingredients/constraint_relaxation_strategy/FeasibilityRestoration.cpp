@@ -258,16 +258,13 @@ void FeasibilityRestoration::add_statistics(Statistics& statistics, const Iterat
    if (this->current_phase == Phase::OPTIMALITY) {
       statistics.add_statistic("complementarity", iterate.residuals.optimality_complementarity);
       statistics.add_statistic("stationarity", iterate.residuals.optimality_stationarity);
-      if (this->original_model.is_constrained()) {
-         statistics.add_statistic("primal infeas.", iterate.progress.infeasibility);
-      }
    }
    else {
       statistics.add_statistic("complementarity", iterate.residuals.feasibility_complementarity);
       statistics.add_statistic("stationarity", iterate.residuals.feasibility_stationarity);
-      if (this->original_model.is_constrained()) {
-         statistics.add_statistic("primal infeas.", iterate.progress.optimality(1.));
-      }
+   }
+   if (this->original_model.is_constrained()) {
+      statistics.add_statistic("primal infeas.", iterate.residuals.infeasibility);
    }
 }
 

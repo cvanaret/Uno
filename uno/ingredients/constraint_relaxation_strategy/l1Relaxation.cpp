@@ -308,7 +308,7 @@ void l1Relaxation::add_statistics(Statistics& statistics, const Iterate& iterate
    statistics.add_statistic("stationarity", iterate.residuals.optimality_stationarity);
    statistics.add_statistic("penalty param.", this->penalty_parameter);
    if (this->original_model.is_constrained()) {
-      statistics.add_statistic("primal infeas.", iterate.progress.infeasibility);
+      statistics.add_statistic("primal infeas.", iterate.residuals.infeasibility);
    }
 }
 
