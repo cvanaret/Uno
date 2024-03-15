@@ -61,7 +61,7 @@ inline ScaledModel::ScaledModel(std::unique_ptr<Model> original_model, Iterate& 
    // check the scaling factors
    assert(0 < this->scaling.get_objective_scaling() && "Objective scaling failed.");
    for ([[maybe_unused]] size_t constraint_index: Range(this->number_constraints)) {
-      assert(0 < this->scaling.get_constraint_scaling(j) && "Constraint scaling failed.");
+      assert(0 < this->scaling.get_constraint_scaling(constraint_index) && "Constraint scaling failed.");
    }
 
    // the constraint repartition (inequality/equality, linear) is the same as in the original model
