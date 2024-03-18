@@ -34,17 +34,17 @@ bool l1MeritFunction::is_iterate_acceptable(Statistics& statistics, const Iterat
    DEBUG << "Trial merit:   " << trial_progress.optimality(objective_multiplier) << " + " << trial_progress.auxiliary_terms << " + " <<
          trial_progress.infeasibility << " = " << trial_exact_merit << '\n';
    DEBUG << "Actual reduction: " << current_exact_merit << " - " << trial_exact_merit << " = " << actual_reduction << '\n';
-   statistics.add_statistic("penalty param.", objective_multiplier);
+   statistics.set("penalty param.", objective_multiplier);
 
    // Armijo sufficient decrease condition
    const bool accept = this->armijo_sufficient_decrease(constrained_predicted_reduction, actual_reduction);
    if (accept) {
       DEBUG << "Trial iterate was accepted by satisfying Armijo condition\n";
       this->smallest_known_infeasibility = std::min(this->smallest_known_infeasibility, trial_progress.infeasibility);
-      statistics.add_statistic("status", "accepted (Armijo)");
+      statistics.set("status", "accepted (Armijo)");
    }
    else {
-      statistics.add_statistic("status", "rejected (Armijo)");
+      statistics.set("status", "rejected (Armijo)");
    }
    return accept;
 }

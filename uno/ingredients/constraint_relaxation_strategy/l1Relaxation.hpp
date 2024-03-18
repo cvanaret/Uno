@@ -72,7 +72,7 @@ protected:
    [[nodiscard]] bool is_descent_direction_for_l1_merit_function(const Iterate& current_iterate, const Direction& direction,
          const Direction& direction_lowest_violation) const;
 
-   void set_progress_measures(Iterate& iterate) const;
+   void evaluate_progress_measures(Iterate& iterate) const;
    [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction,
          double step_length);
 

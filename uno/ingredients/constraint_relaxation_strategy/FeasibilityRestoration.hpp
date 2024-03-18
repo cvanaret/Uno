@@ -52,9 +52,9 @@ private:
    [[nodiscard]] GlobalizationStrategy& current_globalization_strategy() const;
    [[nodiscard]] Direction solve_subproblem(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
          WarmstartInformation& warmstart_information);
-   void switch_to_optimality(Iterate& current_iterate, Iterate& trial_iterate);
+   void switch_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate);
 
-   void set_progress_measures(const NonlinearProblem& problem, Iterate& iterate) const;
+   void evaluate_progress_measures(const NonlinearProblem& problem, Iterate& iterate) const;
    [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length);
 
    [[nodiscard]] double compute_complementarity_error(const std::vector<double>& inequality_index, const std::vector<double>& constraints,

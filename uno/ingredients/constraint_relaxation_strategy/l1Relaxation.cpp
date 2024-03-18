@@ -40,10 +40,10 @@ void l1Relaxation::initialize(Statistics& statistics, Iterate& initial_iterate, 
    
    this->subproblem->set_elastic_variable_values(this->l1_relaxed_problem, initial_iterate);
    this->subproblem->generate_initial_iterate(this->l1_relaxed_problem, initial_iterate);
-   this->subproblem->initialize(statistics, options);
+   this->subproblem->initialize_statistics(statistics, options);
 
    // compute the progress measures and residuals of the initial point
-   this->set_progress_measures(initial_iterate);
+   this->evaluate_progress_measures(initial_iterate);
    this->compute_primal_dual_residuals(this->original_model, this->feasibility_problem, initial_iterate);
 
    // initialize the globalization strategy
@@ -239,8 +239,8 @@ void l1Relaxation::compute_progress_measures(Iterate& current_iterate, Iterate& 
       this->subproblem->subproblem_definition_changed = false;
    }
    // compute the progress measures for the current and trial iterates
-   this->set_progress_measures(current_iterate);
-   this->set_progress_measures(trial_iterate);
+   this->evaluate_progress_measures(current_iterate);
+   this->evaluate_progress_measures(trial_iterate);
 
    trial_iterate.multipliers.objective = this->l1_relaxed_problem.get_objective_multiplier();
 }
@@ -255,7 +255,7 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
       DEBUG << "Zero step acceptable\n\n";
       trial_iterate.evaluate_objective(this->original_model);
       accept_iterate = true;
-      statistics.add_statistic("status", "accepted (0 step)");
+      statistics.set("status", "accepted (0 step)");
    }
    else {
       // evaluate the predicted reduction
@@ -274,7 +274,7 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
    return accept_iterate;
 }
 
-void l1Relaxation::set_progress_measures(Iterate& iterate) const {
+void l1Relaxation::evaluate_progress_measures(Iterate& iterate) const {
    this->l1_relaxed_problem.set_infeasibility_measure(iterate, Norm::L1);
    this->l1_relaxed_problem.set_optimality_measure(iterate);
    this->subproblem->set_auxiliary_measure(this->l1_relaxed_problem, iterate);
@@ -306,11 +306,11 @@ void l1Relaxation::check_exact_relaxation(Iterate& iterate) const {
 }
 
 void l1Relaxation::set_statistics(Statistics& statistics, const Iterate& iterate) const {
-   statistics.add_statistic("complementarity", iterate.residuals.optimality_complementarity);
-   statistics.add_statistic("stationarity", iterate.residuals.optimality_stationarity);
-   statistics.add_statistic("penalty param.", this->penalty_parameter);
+   statistics.set("complementarity", iterate.residuals.optimality_complementarity);
+   statistics.set("stationarity", iterate.residuals.optimality_stationarity);
+   statistics.set("penalty param.", this->penalty_parameter);
    if (this->original_model.is_constrained()) {
-      statistics.add_statistic("primal infeas.", iterate.residuals.infeasibility);
+      statistics.set("primal infeas.", iterate.residuals.infeasibility);
    }
 }
 

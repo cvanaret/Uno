@@ -25,7 +25,7 @@ TrustRegionStrategy::TrustRegionStrategy(ConstraintRelaxationStrategy& constrain
 void TrustRegionStrategy::initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) {
    statistics.add_column("TR iter", Statistics::int_width + 3, options.get_int("statistics_minor_column_order"));
    statistics.add_column("TR radius", Statistics::double_width - 3, options.get_int("statistics_TR_radius_column_order"));
-   statistics.add_statistic("TR radius", this->radius);
+   statistics.set("TR radius", this->radius);
    
    this->constraint_relaxation_strategy.set_trust_region_radius(this->radius);
    this->constraint_relaxation_strategy.initialize(statistics, initial_iterate, options);
@@ -42,13 +42,13 @@ Iterate TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const 
          number_iterations++;
          this->print_iteration(number_iterations);
          if (1 < number_iterations) {
-            statistics.new_line();
+            statistics.start_new_line();
          }
-         statistics.add_statistic("TR iter", number_iterations);
+         statistics.set("TR iter", number_iterations);
 
          // compute the direction within the trust region
          this->constraint_relaxation_strategy.set_trust_region_radius(this->radius);
-         statistics.add_statistic("TR radius", this->radius);
+         statistics.set("TR radius", this->radius);
          Direction direction = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, warmstart_information);
 
          // deal with errors in the subproblem
@@ -83,7 +83,7 @@ Iterate TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const 
       catch (const EvaluationError& e) {
          // WARNING << YELLOW << e.what() << RESET;
          this->set_statistics(statistics);
-         statistics.add_statistic("status", "eval. error");
+         statistics.set("status", "eval. error");
          if (Logger::level == INFO) statistics.print_current_line();
          warmstart_information.set_cold_start();
          this->decrease_radius();
@@ -187,17 +187,17 @@ bool TrustRegionStrategy::check_termination_with_small_step(const Model& model, 
 }
 
 void TrustRegionStrategy::set_statistics(Statistics& statistics) const {
-   statistics.add_statistic("TR radius", this->radius);
+   statistics.set("TR radius", this->radius);
 }
 
 void TrustRegionStrategy::set_statistics(Statistics& statistics, const Direction& direction) const {
-   statistics.add_statistic("step norm", direction.norm);
+   statistics.set("step norm", direction.norm);
    this->set_statistics(statistics);
 }
 
 void TrustRegionStrategy::set_statistics(Statistics& statistics, const Iterate& trial_iterate, const Direction& direction) const {
    if (trial_iterate.is_objective_computed) {
-      statistics.add_statistic("objective", trial_iterate.evaluations.objective);
+      statistics.set("objective", trial_iterate.evaluations.objective);
    }
    this->set_statistics(statistics, direction);
 }

@@ -48,11 +48,11 @@ bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& statistics, const It
             if (this->armijo_sufficient_decrease(unconstrained_predicted_reduction, actual_reduction)) {
                DEBUG << "Trial iterate was accepted by satisfying the Armijo condition\n";
                accept = true;
-               statistics.add_statistic("status", "accepted (Armijo)");
+               statistics.set("status", "accepted (Armijo)");
             }
             else { // switching condition holds, but not Armijo condition
                DEBUG << "Trial iterate was rejected by violating the Armijo condition\n";
-               statistics.add_statistic("status", "rejected (Armijo)");
+               statistics.set("status", "rejected (Armijo)");
             }
          }
          else if (this->accept_when_switching_violated) { // switching condition violated: predicted reduction is not promising
@@ -60,21 +60,21 @@ bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& statistics, const It
             accept = true;
             DEBUG << "Current iterate was added to the filter\n";
             this->filter->add(current_progress_measures.infeasibility, current_optimality_measure);
-            statistics.add_statistic("status", "accepted (!switching)");
+            statistics.set("status", "accepted (!switching)");
          }
          else {
             DEBUG << "Trial iterate was rejected by violating the switching condition\n";
-            statistics.add_statistic("status", "rejected (switching)");
+            statistics.set("status", "rejected (switching)");
          }
       }
       else {
          DEBUG << "Not acceptable with respect to current point\n";
-         statistics.add_statistic("status", "rejected (current point)");
+         statistics.set("status", "rejected (current point)");
       }
    }
    else {
       DEBUG << "Not filter acceptable\n";
-      statistics.add_statistic("status", "rejected (filter)");
+      statistics.set("status", "rejected (filter)");
    }
    DEBUG << '\n';
    return accept;

@@ -17,14 +17,14 @@ public:
    static int char_width;
 
    void add_column(std::string name, int width, int order);
-   void add_statistic(std::string name, std::string value);
-   void add_statistic(std::string name, int value);
-   void add_statistic(std::string name, size_t value);
-   void add_statistic(std::string name, double value);
+   void set(std::string name, std::string value);
+   void set(std::string name, int value);
+   void set(std::string name, size_t value);
+   void set(std::string name, double value);
    void print_header(bool first_occurrence);
    void print_current_line();
    void print_footer();
-   void new_line();
+   void start_new_line();
 
 private:
    size_t iteration{0};

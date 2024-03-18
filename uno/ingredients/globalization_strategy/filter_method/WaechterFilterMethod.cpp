@@ -58,11 +58,11 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const I
          if (sufficient_decrease) {
             DEBUG << "Trial iterate was accepted by satisfying Armijo condition\n";
             accept = true;
-            statistics.add_statistic("status", "accepted (Armijo)");
+            statistics.set("status", "accepted (Armijo)");
          }
          else {
             DEBUG << "Armijo condition not satisfied\n";
-            statistics.add_statistic("status", "rejected (Armijo)");
+            statistics.set("status", "rejected (Armijo)");
          }
       }
       else {
@@ -71,11 +71,11 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const I
                trial_progress_measures.infeasibility, trial_optimality_measure)) {
             DEBUG << "Acceptable with respect to current point\n";
             accept = true;
-            statistics.add_statistic("status", "accepted (current point)");
+            statistics.set("status", "accepted (current point)");
          }
          else {
             DEBUG << "Not acceptable with respect to current point\n";
-            statistics.add_statistic("status", "rejected (current point)");
+            statistics.set("status", "rejected (current point)");
          }
       }
       // possibly augment the filter
@@ -86,7 +86,7 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const I
    }
    else {
       DEBUG << "Not filter acceptable\n";
-      statistics.add_statistic("status", "rejected (filter)");
+      statistics.set("status", "rejected (filter)");
    }
    DEBUG << '\n';
    return accept;

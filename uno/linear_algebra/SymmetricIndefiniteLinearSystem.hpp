@@ -116,7 +116,7 @@ void SymmetricIndefiniteLinearSystem<ElementType>::regularize_matrix(Statistics&
 
    if (not linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_dual_block) {
       DEBUG << "Inertia is good\n";
-      statistics.add_statistic("regularization", this->primal_regularization);
+      statistics.set("regularization", this->primal_regularization);
       return;
    }
    auto[number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = linear_solver.get_inertia();
@@ -177,7 +177,7 @@ void SymmetricIndefiniteLinearSystem<ElementType>::regularize_matrix(Statistics&
          }
       }
    }
-   statistics.add_statistic("regularization", this->primal_regularization);
+   statistics.set("regularization", this->primal_regularization);
 }
 
 template <typename ElementType>

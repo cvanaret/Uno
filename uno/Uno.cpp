@@ -34,7 +34,7 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
       // check for termination
       while (not termination) {
          major_iterations++;
-         statistics.new_line();
+         statistics.start_new_line();
          Uno::add_statistics(statistics, current_iterate, major_iterations);
          DEBUG << "### Outer iteration " << major_iterations << '\n';
 
@@ -76,10 +76,10 @@ Statistics Uno::create_statistics(const Model& model, const Options& options) {
 
 void Uno::initialize(Statistics& statistics, Iterate& current_iterate, const Options& options) {
    try {
-      statistics.new_line();
+      statistics.start_new_line();
       this->globalization_mechanism.initialize(statistics, current_iterate, options);
       Uno::add_statistics(statistics, current_iterate, 0);
-      statistics.add_statistic("status", "initial point");
+      statistics.set("status", "initial point");
       if (Logger::level == INFO) statistics.print_current_line();
    }
    catch (const std::exception& e) {
@@ -89,15 +89,15 @@ void Uno::initialize(Statistics& statistics, Iterate& current_iterate, const Opt
 }
 
 void Uno::add_statistics(Statistics& statistics, size_t major_iterations) {
-   statistics.add_statistic(std::string("iter"), major_iterations);
+   statistics.set(std::string("iter"), major_iterations);
 }
 
 void Uno::add_statistics(Statistics& statistics, const Iterate& iterate, size_t major_iterations) {
    if (iterate.is_objective_computed) {
-      statistics.add_statistic("objective", iterate.evaluations.objective);
+      statistics.set("objective", iterate.evaluations.objective);
    }
    else {
-      statistics.add_statistic("objective", "-");
+      statistics.set("objective", "-");
    }
    Uno::add_statistics(statistics, major_iterations);
 }

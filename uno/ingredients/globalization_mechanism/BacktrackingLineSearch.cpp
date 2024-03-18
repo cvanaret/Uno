@@ -50,10 +50,10 @@ Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics
       this->total_number_iterations++;
       number_iterations++;
       if (1 < number_iterations) {
-         statistics.new_line();
+         statistics.start_new_line();
       }
       BacktrackingLineSearch::print_iteration(number_iterations, step_length);
-      statistics.add_statistic("step length", step_length);
+      statistics.set("step length", step_length);
 
       try {
          // assemble the trial iterate by going a fraction along the direction
@@ -81,7 +81,7 @@ Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics
       catch (const EvaluationError& e) {
          WARNING << YELLOW << e.what() << RESET;
          this->set_statistics(statistics);
-         statistics.add_statistic("status", "eval. error");
+         statistics.set("status", "eval. error");
          if (Logger::level == INFO) statistics.print_current_line();
          step_length = this->decrease_step_length(step_length);
       }
@@ -93,7 +93,7 @@ Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics
    }
    else {
       warmstart_information.set_cold_start();
-      statistics.add_statistic("status", "LS failed");
+      statistics.set("status", "LS failed");
       this->constraint_relaxation_strategy.switch_to_feasibility_problem(statistics, current_iterate, warmstart_information);
       Direction direction_feasibility = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate,
             direction.primals, warmstart_information);
@@ -131,11 +131,11 @@ void BacktrackingLineSearch::check_unboundedness(const Direction& direction) {
 }
 
 void BacktrackingLineSearch::set_statistics(Statistics& statistics) const {
-   statistics.add_statistic("LS iter", this->total_number_iterations);
+   statistics.set("LS iter", this->total_number_iterations);
 }
 
 void BacktrackingLineSearch::set_statistics(Statistics& statistics, const Direction& direction, double primal_dual_step_length) const {
-   statistics.add_statistic("step norm", primal_dual_step_length * direction.norm);
+   statistics.set("step norm", primal_dual_step_length * direction.norm);
    this->set_statistics(statistics);
 }
 

@@ -5,8 +5,7 @@
 #include "preprocessing/Preprocessing.hpp"
 #include "solvers/QP/QPSolverFactory.hpp"
 
-QPSubproblem::QPSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros,
-         const Options& options) :
+QPSubproblem::QPSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros, const Options& options) :
       InequalityConstrainedMethod(max_number_variables, max_number_constraints),
       use_regularization(options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP")),
       // if no trust region is used, the problem should be convexified to guarantee boundedness
@@ -20,7 +19,7 @@ QPSubproblem::QPSubproblem(size_t max_number_variables, size_t max_number_constr
       enforce_linear_constraints_at_initial_iterate(options.get_bool("enforce_linear_constraints")) {
 }
 
-void QPSubproblem::initialize(Statistics& statistics, const Options& options) {
+void QPSubproblem::initialize_statistics(Statistics& statistics, const Options& options) {
    if (this->use_regularization) {
       statistics.add_column("regularization", Statistics::double_width, options.get_int("statistics_regularization_column_order"));
    }

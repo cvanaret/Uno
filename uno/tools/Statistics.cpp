@@ -18,22 +18,22 @@ void Statistics::add_column(std::string name, int width, int order) {
    this->widths[std::move(name)] = width;
 }
 
-void Statistics::add_statistic(std::string name, std::string value) {
+void Statistics::set(std::string name, std::string value) {
    this->current_line[std::move(name)] = std::move(value);
 }
 
-void Statistics::add_statistic(std::string name, int value) {
-   add_statistic(std::move(name), std::to_string(value));
+void Statistics::set(std::string name, int value) {
+   set(std::move(name), std::to_string(value));
 }
 
-void Statistics::add_statistic(std::string name, size_t value) {
-   add_statistic(std::move(name), std::to_string(value));
+void Statistics::set(std::string name, size_t value) {
+   set(std::move(name), std::to_string(value));
 }
 
-void Statistics::add_statistic(std::string name, double value) {
+void Statistics::set(std::string name, double value) {
    std::ostringstream stream;
    stream << std::defaultfloat << std::setprecision(7) << value;
-   add_statistic(std::move(name), stream.str());
+   set(std::move(name), stream.str());
 }
 
 void Statistics::print_header(bool first_occurrence) {
@@ -129,7 +129,7 @@ void Statistics::print_footer() {
    std::cout << Statistics::symbol("bottom-right") << '\n';
 }
 
-void Statistics::new_line() {
+void Statistics::start_new_line() {
    this->current_line.clear();
 }
 
