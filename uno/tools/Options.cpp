@@ -144,7 +144,7 @@ void find_preset(const std::string& preset_name, Options& options) {
    }
 }
 
-void get_command_line_options(int argc, char* argv[], Options& options) {
+void get_command_line_arguments(int argc, char* argv[], Options& options) {
    // build the (name, value) map
    int i = 1;
    while (i < argc - 1) {

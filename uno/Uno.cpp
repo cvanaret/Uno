@@ -122,6 +122,19 @@ void join(const std::vector<std::string>& vector, char separator) {
    }
 }
 
+void Uno::print_uno_version() {
+   std::cout << "Welcome in Uno 1.0\n";
+   std::cout << "To solve an AMPL model, type ./uno_ampl path_to_file/file.nl\n";
+   std::cout << "To choose a constraint relaxation strategy, use the argument -constraint_relaxation_strategy "
+                "[feasibility_restoration|l1_relaxation]\n";
+   std::cout << "To choose a subproblem method, use the argument -subproblem [QP|LP|primal_dual_interior_point]\n";
+   std::cout << "To choose a globalization mechanism, use the argument -globalization_mechanism [LS|TR]\n";
+   std::cout << "To choose a globalization strategy, use the argument -globalization_strategy "
+                "[l1_merit|leyffer_filter_method|waechter_filter_method]\n";
+   std::cout << "To choose a preset, use the argument -preset [filtersqp|ipopt|byrd]\n";
+   std::cout << "The options can be combined in the same command line. Autocompletion is possible (see README).\n";
+}
+
 void Uno::print_available_strategies() {
    std::cout << "Available strategies:\n";
    std::cout << "Constraint relaxation strategies: ";
@@ -136,4 +149,18 @@ void Uno::print_available_strategies() {
    std::cout << "Subproblems: ";
    join(SubproblemFactory::available_strategies(), ',');
    std::cout << '\n';
+}
+
+void Uno::print_strategy_combination(const Options& options) {
+   std::string combination = options.get_string("globalization_mechanism") + " " + options.get_string("constraint_relaxation_strategy") + " " +
+                             options.get_string("globalization_strategy") + " " + options.get_string("subproblem");
+   std::cout << "\nUno (" << combination << ")\n";
+}
+
+void Uno::print_optimization_summary(const Options& options, const Result& result) {
+   Uno::print_strategy_combination(options);
+   std::cout << Timer::get_current_date();
+   std::cout << "────────────────────────────────────────\n";
+   const bool print_solution = options.get_bool("print_solution");
+   result.print(print_solution);
 }

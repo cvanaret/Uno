@@ -9,18 +9,23 @@
 #include "optimization/TerminationStatus.hpp"
 #include "ingredients/globalization_mechanism/GlobalizationMechanism.hpp"
 
+/*
 struct TimeOut : public std::exception {
    [[nodiscard]] const char* what() const noexcept override {
       return "The time limit was exceeded.\n";
    }
 };
+*/
 
 class Uno {
 public:
    Uno(GlobalizationMechanism& globalization_mechanism, const Options& options);
 
    [[nodiscard]] Result solve(const Model& model, Iterate& initial_iterate, const Options& options);
+   static void print_uno_version();
    static void print_available_strategies();
+   static void print_strategy_combination(const Options& options);
+   static void print_optimization_summary(const Options& options, const Result& result);
 
 private:
    GlobalizationMechanism& globalization_mechanism; /*!< Globalization mechanism */
