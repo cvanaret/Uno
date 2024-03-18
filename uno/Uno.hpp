@@ -32,10 +32,10 @@ private:
    const size_t max_iterations; /*!< Maximum number of iterations */
    const double time_limit; /*!< CPU time limit (can be inf) */
 
-   Statistics create_statistics(const Model& model, const Options& options);
+   static Statistics create_statistics(const Model& model, const Options& options);
    void initialize(Statistics& statistics, Iterate& current_iterate, const Options& options);
-   static void add_statistics(Statistics& statistics, size_t major_iterations);
-   static void add_statistics(Statistics& statistics, const Iterate& iterate, size_t major_iterations);
+   static void set_statistics(Statistics& statistics, size_t major_iterations);
+   static void set_statistics(Statistics& statistics, const Iterate& iterate, size_t major_iterations);
    [[nodiscard]] bool termination_criteria(TerminationStatus current_status, size_t iteration, double current_time) const;
    static void postprocess_iterate(const Model& model, Iterate& iterate, TerminationStatus termination_status);
 };

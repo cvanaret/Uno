@@ -15,12 +15,13 @@ public:
    static int int_width;
    static int double_width;
    static int char_width;
+   static int string_width;
 
-   void add_column(std::string name, int width, int order);
-   void set(std::string name, std::string value);
-   void set(std::string name, int value);
-   void set(std::string name, size_t value);
-   void set(std::string name, double value);
+   void add_column(std::string_view name, int width, int order);
+   void set(std::string_view name, std::string value);
+   void set(std::string_view name, int value);
+   void set(std::string_view name, size_t value);
+   void set(std::string_view name, double value);
    void print_header(bool first_occurrence);
    void print_current_line();
    void print_footer();
@@ -29,8 +30,8 @@ public:
 private:
    size_t iteration{0};
    std::map<int, std::string> columns{};
-   std::map<std::string, int> widths{};
-   std::map<std::string, std::string> current_line{};
+   std::map<std::string_view, int> widths{};
+   std::map<std::string_view, std::string> current_line{};
 
    size_t print_header_every_iterations{};
    static const std::string& symbol(const std::string& value);

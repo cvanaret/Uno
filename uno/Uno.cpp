@@ -19,11 +19,10 @@ Uno::Uno(GlobalizationMechanism& globalization_mechanism, const Options& options
 }
 
 Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& options) {
-   std::cout << "\nProblem " << model.name << '\n';
-   std::cout << model.number_variables << " variables, " << model.number_constraints << " constraints\n\n";
+   std::cout << "\nProblem " << model.name << '\n' << model.number_variables << " variables, " << model.number_constraints << " constraints\n\n";
    
    Timer timer{};
-   Statistics statistics = create_statistics(model, options);
+   Statistics statistics = Uno::create_statistics(model, options);
    // use the current point to initialize the strategies and generate the initial iterate
    initialize(statistics, current_iterate, options);
 
@@ -35,7 +34,7 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
       while (not termination) {
          major_iterations++;
          statistics.start_new_line();
-         Uno::add_statistics(statistics, current_iterate, major_iterations);
+         Uno::set_statistics(statistics, current_iterate, major_iterations);
          DEBUG << "### Outer iteration " << major_iterations << '\n';
 
          // compute an acceptable iterate by solving a subproblem at the current point
@@ -70,7 +69,7 @@ Statistics Uno::create_statistics(const Model& model, const Options& options) {
    }
    statistics.add_column("complementarity", Statistics::double_width, options.get_int("statistics_complementarity_column_order"));
    statistics.add_column("stationarity", Statistics::double_width - 1, options.get_int("statistics_stationarity_column_order"));
-   statistics.add_column("status", Statistics::char_width + 19, options.get_int("statistics_status_column_order"));
+   statistics.add_column("status", Statistics::string_width, options.get_int("statistics_status_column_order"));
    return statistics;
 }
 
@@ -78,7 +77,7 @@ void Uno::initialize(Statistics& statistics, Iterate& current_iterate, const Opt
    try {
       statistics.start_new_line();
       this->globalization_mechanism.initialize(statistics, current_iterate, options);
-      Uno::add_statistics(statistics, current_iterate, 0);
+      Uno::set_statistics(statistics, current_iterate, 0);
       statistics.set("status", "initial point");
       if (Logger::level == INFO) statistics.print_current_line();
    }
@@ -88,18 +87,18 @@ void Uno::initialize(Statistics& statistics, Iterate& current_iterate, const Opt
    }
 }
 
-void Uno::add_statistics(Statistics& statistics, size_t major_iterations) {
-   statistics.set(std::string("iter"), major_iterations);
+void Uno::set_statistics(Statistics& statistics, size_t major_iterations) {
+   statistics.set("iter", major_iterations);
 }
 
-void Uno::add_statistics(Statistics& statistics, const Iterate& iterate, size_t major_iterations) {
+void Uno::set_statistics(Statistics& statistics, const Iterate& iterate, size_t major_iterations) {
    if (iterate.is_objective_computed) {
       statistics.set("objective", iterate.evaluations.objective);
    }
    else {
       statistics.set("objective", "-");
    }
-   Uno::add_statistics(statistics, major_iterations);
+   Uno::set_statistics(statistics, major_iterations);
 }
 
 bool Uno::termination_criteria(TerminationStatus current_status, size_t iteration, double current_time) const {
