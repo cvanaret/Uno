@@ -33,14 +33,10 @@ std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
    stream << "Direction:\n";
    stream << "Status: " << status_to_string(direction.status) << '\n';
 
-   stream << "d^* = ";
-   print_vector(stream, direction.primals, 0, direction.number_variables);
-   stream << "constraint multipliers = ";
-   print_vector(stream, direction.multipliers.constraints);
-   stream << "lower bound multipliers = ";
-   print_vector(stream, direction.multipliers.lower_bounds);
-   stream << "upper bound multipliers = ";
-   print_vector(stream, direction.multipliers.upper_bounds);
+   stream << "d^* = "; print_vector(stream, direction.primals, 0, direction.number_variables);
+   stream << "constraint multipliers = "; print_vector(stream, direction.multipliers.constraints);
+   stream << "lower bound multipliers = "; print_vector(stream, direction.multipliers.lower_bounds);
+   stream << "upper bound multipliers = "; print_vector(stream, direction.multipliers.upper_bounds);
 
    stream << "objective = " << direction.subproblem_objective << '\n';
    stream << "norm = " << direction.norm << '\n';

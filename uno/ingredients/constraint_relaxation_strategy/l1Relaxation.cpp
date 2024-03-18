@@ -137,7 +137,7 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Nonlinear
    Direction direction = this->subproblem->solve(statistics, problem, current_iterate, warmstart_information);
    direction.norm = norm_inf(view(direction.primals, this->original_model.number_variables));
    direction.multipliers.objective = problem.get_objective_multiplier();
-   DEBUG2 << direction << '\n';
+   DEBUG3 << direction << '\n';
    assert(direction.status == SubproblemStatus::OPTIMAL && "The subproblem was not solved to optimality");
    return direction;
 }
