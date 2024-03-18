@@ -28,6 +28,7 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
    initialize(statistics, current_iterate, options);
 
    bool termination = false;
+   current_iterate.status = TerminationStatus::NOT_OPTIMAL;
    size_t major_iterations = 0;
    try {
       // check for termination

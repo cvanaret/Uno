@@ -25,9 +25,9 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const I
    // - ignore the predicted infeasibility reduction
    // - scale the scaled optimality measure with 1
    const double unconstrained_predicted_reduction = predicted_reduction.optimality(1.) + predicted_reduction.auxiliary_terms;
-   DEBUG << "Current: η = " << current_progress_measures.infeasibility << ",\t ω = " << current_progress_measures.optimality(1.) << " + " <<
+   DEBUG << "Current: η = " << current_progress_measures.infeasibility << ",\t\t ω = " << current_progress_measures.optimality(1.) << " + " <<
       current_progress_measures.auxiliary_terms << '\n';
-   DEBUG << "Trial:   η = " << trial_progress_measures.infeasibility << ",\t ω = " << trial_progress_measures.optimality(1.) << " + " <<
+   DEBUG << "Trial:   η = " << trial_progress_measures.infeasibility << ",\t\t ω = " << trial_progress_measures.optimality(1.) << " + " <<
       trial_progress_measures.auxiliary_terms << '\n';
    DEBUG << "Unconstrained predicted reduction: " << predicted_reduction.optimality(1.) << " + " << predicted_reduction.auxiliary_terms <<
          " = " <<  unconstrained_predicted_reduction << '\n';

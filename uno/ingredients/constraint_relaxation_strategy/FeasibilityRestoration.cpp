@@ -144,12 +144,7 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
    }
 
    // evaluate the progress measures of the trial iterate
-   if (this->current_phase == Phase::OPTIMALITY) {
-      this->set_progress_measures(this->optimality_problem, trial_iterate);
-   }
-   else {
-      this->set_progress_measures(this->feasibility_problem, trial_iterate);
-   }
+   this->set_progress_measures(this->current_problem(), trial_iterate);
 }
 
 void FeasibilityRestoration::switch_to_optimality(Iterate& current_iterate, Iterate& trial_iterate) {
