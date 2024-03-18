@@ -9,7 +9,7 @@
 
 class ScaledModel: public Model {
 public:
-   ScaledModel(std::unique_ptr<Model> constraint_index, Iterate& initial_iterate, const Options& options);
+   ScaledModel(std::unique_ptr<Model> original_model, Iterate& initial_iterate, const Options& options);
 
    [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
    [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;

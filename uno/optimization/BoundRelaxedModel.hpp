@@ -8,7 +8,7 @@
 
 class BoundRelaxedModel: public Model {
 public:
-   BoundRelaxedModel(std::unique_ptr<Model> constraint_index, const Options& slack_index);
+   BoundRelaxedModel(std::unique_ptr<Model> original_model, const Options& options);
 
    [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
    [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
