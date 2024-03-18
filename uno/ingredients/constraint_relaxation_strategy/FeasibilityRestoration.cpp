@@ -261,7 +261,7 @@ void FeasibilityRestoration::set_statistics(Statistics& statistics, const Iterat
       statistics.set("stationarity", iterate.residuals.feasibility_stationarity);
    }
    if (this->original_model.is_constrained()) {
-      statistics.set("primal infeas.", iterate.residuals.infeasibility);
+      statistics.set("primal infeas.", iterate.progress.infeasibility);
    }
 }
 
