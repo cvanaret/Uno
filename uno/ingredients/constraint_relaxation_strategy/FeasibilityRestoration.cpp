@@ -15,7 +15,8 @@ FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options
       // create the (restoration phase) feasibility problem (objective multiplier = 0)
       feasibility_problem(model, 0., options.get_double("l1_constraint_violation_coefficient")),
       subproblem(SubproblemFactory::create(this->feasibility_problem.number_variables, this->feasibility_problem.number_constraints,
-            this->feasibility_problem.get_number_jacobian_nonzeros(), this->feasibility_problem.get_number_hessian_nonzeros(), options)),
+            this->feasibility_problem.get_number_objective_gradient_nonzeros(), this->feasibility_problem.get_number_jacobian_nonzeros(),
+            this->feasibility_problem.get_number_hessian_nonzeros(), options)),
       // create the globalization strategies (one for each phase)
       restoration_phase_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), false, options)),
       optimality_phase_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), true, options)),

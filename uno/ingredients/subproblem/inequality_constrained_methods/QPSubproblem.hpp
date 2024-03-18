@@ -11,7 +11,8 @@
 
 class QPSubproblem : public InequalityConstrainedMethod {
 public:
-   QPSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros, const Options& options);
+   QPSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_objective_gradient_nonzeros,
+         size_t max_number_jacobian_nonzeros, size_t max_number_hessian_nonzeros, const Options& options);
 
    void initialize_statistics(Statistics& statistics, const Options& options) override;
    void generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) override;
@@ -23,7 +24,7 @@ public:
 
 protected:
    const bool use_regularization;
-   bool enforce_linear_constraints_at_initial_iterate;
+   const bool enforce_linear_constraints_at_initial_iterate;
    // pointers to allow polymorphism
    const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
    const std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */

@@ -11,7 +11,8 @@
 
 class LPSubproblem : public InequalityConstrainedMethod {
 public:
-   LPSubproblem(size_t max_number_variables, size_t max_number_constraints, const Options& options);
+   LPSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_objective_gradient_nonzeros,
+         size_t max_number_jacobian_nonzeros, const Options& options);
 
    void generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) override;
    [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,

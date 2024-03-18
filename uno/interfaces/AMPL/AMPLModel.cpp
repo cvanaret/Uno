@@ -20,8 +20,8 @@ ASL* generate_asl(std::string file_name) {
    }
 
    // preallocate initial primal and dual solutions
-   asl->i.X0_ = static_cast<double*>(M1zapalloc_ASL(&asl->i, sizeof(double) * static_cast<size_t>(n_var)));
-   asl->i.pi0_ = static_cast<double*>(M1zapalloc_ASL(&asl->i, sizeof(double) * static_cast<size_t>(n_con)));
+   asl->i.X0_ = static_cast<double*>(M1zapalloc_ASL(&asl->i, sizeof(double) * static_cast<size_t>(asl->i.n_var_)));
+   asl->i.pi0_ = static_cast<double*>(M1zapalloc_ASL(&asl->i, sizeof(double) * static_cast<size_t>(asl->i.n_con_)));
 
    // read the file_name.nl file
    pfgh_read_ASL(asl, nl, ASL_findgroups);
