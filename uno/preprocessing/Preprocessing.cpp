@@ -60,8 +60,8 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
 size_t count_infeasible_linear_constraints(const Model& model, const std::vector<double>& constraint_values) {
    size_t infeasible_linear_constraints = 0;
    for (size_t constraint_index: model.get_linear_constraints()) {
-      if (constraint_values[constraint_index] < model.get_constraint_lower_bound(constraint_index) ||
-            model.get_constraint_upper_bound(constraint_index) < constraint_values[constraint_index]) {
+      if (constraint_values[constraint_index] < model.constraint_lower_bound(constraint_index) ||
+            model.constraint_upper_bound(constraint_index) < constraint_values[constraint_index]) {
          infeasible_linear_constraints++;
       }
    }
@@ -92,15 +92,15 @@ void Preprocessing::enforce_linear_constraints(const Model& model, std::vector<d
          // variable bounds
          std::vector<Interval> variables_bounds(model.number_variables);
          for (size_t variable_index: Range(model.number_variables)) {
-            variables_bounds[variable_index] = {model.get_variable_lower_bound(variable_index) - x[variable_index],
-                  model.get_variable_upper_bound(variable_index) - x[variable_index]};
+            variables_bounds[variable_index] = {model.variable_lower_bound(variable_index) - x[variable_index],
+                  model.variable_upper_bound(variable_index) - x[variable_index]};
          }
          // constraint bounds
          std::vector<Interval> constraints_bounds(linear_constraints.size());
          for (size_t linear_constraint_index: Range(linear_constraints.size())) {
             const size_t constraint_index = linear_constraints[linear_constraint_index];
-            constraints_bounds[linear_constraint_index] = {model.get_constraint_lower_bound(constraint_index) - constraints[constraint_index],
-                  model.get_constraint_upper_bound(constraint_index) - constraints[constraint_index]};
+            constraints_bounds[linear_constraint_index] = {model.constraint_lower_bound(constraint_index) - constraints[constraint_index],
+                  model.constraint_upper_bound(constraint_index) - constraints[constraint_index]};
          }
 
          // solve the strictly convex QP

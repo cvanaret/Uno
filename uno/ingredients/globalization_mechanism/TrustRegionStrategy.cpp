@@ -96,7 +96,7 @@ Iterate TrustRegionStrategy::assemble_trial_iterate(const Model& model, Iterate&
    Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, direction.primal_dual_step_length,
          direction.primal_dual_step_length, direction.bound_dual_step_length);
    // project the trial iterate onto the bounds to avoid numerical errors
-   model.project_primals_onto_bounds(trial_iterate.primals);
+   model.project_onto_variable_bounds(trial_iterate.primals);
 
    // reset bound multipliers of active trust region
    this->reset_active_trust_region_multipliers(model, direction, trial_iterate);
@@ -155,13 +155,13 @@ void TrustRegionStrategy::reset_active_trust_region_multipliers(const Model& mod
    // set multipliers for bound constraints active at trust region to 0 (except if one of the original bounds is active)
    for (size_t variable_index: direction.active_set.bounds.at_lower_bound) {
       if (variable_index < model.number_variables && std::abs(direction.primals[variable_index] + this->radius) <= this->activity_tolerance &&
-            this->activity_tolerance < std::abs(trial_iterate.primals[variable_index] - model.get_variable_lower_bound(variable_index))) {
+            this->activity_tolerance < std::abs(trial_iterate.primals[variable_index] - model.variable_lower_bound(variable_index))) {
          trial_iterate.multipliers.lower_bounds[variable_index] = 0.;
       }
    }
    for (size_t variable_index: direction.active_set.bounds.at_upper_bound) {
       if (variable_index < model.number_variables && std::abs(direction.primals[variable_index] - this->radius) <= this->activity_tolerance &&
-            this->activity_tolerance < std::abs(model.get_variable_upper_bound(variable_index) - trial_iterate.primals[variable_index])) {
+            this->activity_tolerance < std::abs(model.variable_upper_bound(variable_index) - trial_iterate.primals[variable_index])) {
          trial_iterate.multipliers.upper_bounds[variable_index] = 0.;
       }
    }
@@ -170,7 +170,7 @@ void TrustRegionStrategy::reset_active_trust_region_multipliers(const Model& mod
 bool TrustRegionStrategy::check_termination_with_small_step(const Model& model, Iterate& trial_iterate) const {
    // evaluate infeasibility
    trial_iterate.evaluate_constraints(model);
-   trial_iterate.residuals.infeasibility = model.compute_constraint_violation(trial_iterate.evaluations.constraints, this->progress_norm);
+   trial_iterate.residuals.infeasibility = model.constraint_violation(trial_iterate.evaluations.constraints, this->progress_norm);
 
    // terminate with a feasible point
    if (trial_iterate.residuals.infeasibility <= this->tight_tolerance) {

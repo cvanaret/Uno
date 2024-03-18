@@ -133,11 +133,11 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
 
    // possibly go from restoration phase to optimality phase
    if (this->current_phase == Phase::FEASIBILITY_RESTORATION && not this->switch_to_optimality_requires_acceptance &&
-         (not this->switch_to_optimality_requires_linearized_feasibility || this->original_model.compute_linearized_constraint_violation(direction.primals,
+         (not this->switch_to_optimality_requires_linearized_feasibility || this->original_model.linearized_constraint_violation(direction.primals,
                current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian, step_length, this->residual_norm) <= this->tolerance)) {
       // if the trial infeasibility improves upon the best known infeasibility of the globalization strategy
       trial_iterate.evaluate_constraints(this->original_model);
-      const double trial_infeasibility = this->original_model.compute_constraint_violation(trial_iterate.evaluations.constraints, this->progress_norm);
+      const double trial_infeasibility = this->original_model.constraint_violation(trial_iterate.evaluations.constraints, this->progress_norm);
       if (this->optimality_phase_strategy->is_infeasibility_acceptable(trial_infeasibility)) {
          this->switch_to_optimality(current_iterate, trial_iterate);
       }
@@ -228,10 +228,10 @@ double FeasibilityRestoration::compute_complementarity_error(const std::vector<d
    // bound constraints
    VectorExpression<double> variable_complementarity(this->original_model.number_variables, [&](size_t variable_index) {
       if (0. < multipliers.lower_bounds[variable_index]) {
-         return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->original_model.get_variable_lower_bound(variable_index));
+         return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->original_model.variable_lower_bound(variable_index));
       }
       if (multipliers.upper_bounds[variable_index] < 0.) {
-         return multipliers.upper_bounds[variable_index] * (primals[variable_index] - this->original_model.get_variable_upper_bound(variable_index));
+         return multipliers.upper_bounds[variable_index] * (primals[variable_index] - this->original_model.variable_upper_bound(variable_index));
       }
       return 0.;
    });
@@ -240,10 +240,12 @@ double FeasibilityRestoration::compute_complementarity_error(const std::vector<d
    VectorExpression<double> constraint_complementarity(this->original_model.inequality_constraints.size(), [&](size_t inequality_index) {
       const size_t constraint_index = this->original_model.inequality_constraints[inequality_index];
       if (0. < multipliers.constraints[constraint_index]) { // lower bound
-         return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->original_model.get_constraint_lower_bound(constraint_index));
+         return multipliers.constraints[constraint_index] * (constraints[constraint_index] -
+               this->original_model.constraint_lower_bound(constraint_index));
       }
       else if (multipliers.constraints[constraint_index] < 0.) { // upper bound
-         return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->original_model.get_constraint_upper_bound(constraint_index));
+         return multipliers.constraints[constraint_index] * (constraints[constraint_index] -
+               this->original_model.constraint_upper_bound(constraint_index));
       }
       return 0.;
    });

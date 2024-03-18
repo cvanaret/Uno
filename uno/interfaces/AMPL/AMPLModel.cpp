@@ -270,11 +270,11 @@ void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double
    this->asl->i.x_known = 0;
 }
 
-double AMPLModel::get_variable_lower_bound(size_t variable_index) const {
+double AMPLModel::variable_lower_bound(size_t variable_index) const {
    return this->variables_bounds[variable_index].lb;
 }
 
-double AMPLModel::get_variable_upper_bound(size_t variable_index) const {
+double AMPLModel::variable_upper_bound(size_t variable_index) const {
    return this->variables_bounds[variable_index].ub;
 }
 
@@ -282,11 +282,11 @@ BoundType AMPLModel::get_variable_bound_type(size_t variable_index) const {
    return this->variable_status[variable_index];
 }
 
-double AMPLModel::get_constraint_lower_bound(size_t constraint_index) const {
+double AMPLModel::constraint_lower_bound(size_t constraint_index) const {
    return this->constraint_bounds[constraint_index].lb;
 }
 
-double AMPLModel::get_constraint_upper_bound(size_t constraint_index) const {
+double AMPLModel::constraint_upper_bound(size_t constraint_index) const {
    return this->constraint_bounds[constraint_index].ub;
 }
 

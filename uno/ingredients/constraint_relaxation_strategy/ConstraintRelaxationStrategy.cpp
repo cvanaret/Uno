@@ -22,7 +22,7 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Model& mo
    iterate.residuals.feasibility_stationarity = feasibility_problem.compute_stationarity_error(iterate, this->residual_norm);
 
    // constraint violation of the original problem
-   iterate.residuals.infeasibility = model.compute_constraint_violation(iterate.evaluations.constraints, this->residual_norm);
+   iterate.residuals.infeasibility = model.constraint_violation(iterate.evaluations.constraints, this->residual_norm);
 
    // complementarity error
    iterate.residuals.optimality_complementarity = this->compute_complementarity_error(iterate.primals, iterate.evaluations.constraints,

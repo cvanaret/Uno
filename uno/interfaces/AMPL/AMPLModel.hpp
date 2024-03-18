@@ -35,11 +35,11 @@ public:
    void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
          SymmetricMatrix<double>& hessian) const override;
 
-   [[nodiscard]] double get_variable_lower_bound(size_t variable_index) const override;
-   [[nodiscard]] double get_variable_upper_bound(size_t variable_index) const override;
+   [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
+   [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
    [[nodiscard]] BoundType get_variable_bound_type(size_t variable_index) const override;
-   [[nodiscard]] double get_constraint_lower_bound(size_t constraint_index) const override;
-   [[nodiscard]] double get_constraint_upper_bound(size_t constraint_index) const override;
+   [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
+   [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;
    [[nodiscard]] FunctionType get_constraint_type(size_t constraint_index) const override;
    [[nodiscard]] BoundType get_constraint_bound_type(size_t constraint_index) const override;
 

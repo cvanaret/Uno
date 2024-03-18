@@ -27,7 +27,7 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
    Iterate initial_iterate(ampl_model->number_variables, ampl_model->number_constraints);
    ampl_model->get_initial_primal_point(initial_iterate.primals);
    ampl_model->get_initial_dual_point(initial_iterate.multipliers.constraints);
-   ampl_model->project_primals_onto_bounds(initial_iterate.primals);
+   ampl_model->project_onto_variable_bounds(initial_iterate.primals);
 
    // reformulate (scale, add slacks, relax the bounds, ...) if necessary
    std::unique_ptr<Model> model = ModelFactory::reformulate(std::move(ampl_model), initial_iterate, options);

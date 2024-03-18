@@ -86,7 +86,7 @@ Direction l1Relaxation::solve_sequence_of_relaxed_subproblems(Statistics& statis
 
    // penalty update: if penalty parameter is already 0 or fixed by the user, no need to decrease it
    if (0. < this->penalty_parameter && not this->parameters.fixed_parameter) {
-      double linearized_residual = this->original_model.compute_linearized_constraint_violation(direction.primals,
+      double linearized_residual = this->original_model.linearized_constraint_violation(direction.primals,
             current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian, direction.primal_dual_step_length, Norm::L1);
       DEBUG << "Linearized infeasibility mk(dk): " << linearized_residual << "\n\n";
 
@@ -98,7 +98,7 @@ Direction l1Relaxation::solve_sequence_of_relaxed_subproblems(Statistics& statis
          DEBUG << "Compute ideal solution by solving the feasibility problem:\n";
          this->subproblem->initialize_feasibility_problem();
          Direction feasibility_direction = this->solve_subproblem(statistics, this->feasibility_problem, current_iterate, warmstart_information);
-         const double residual_lowest_violation = this->original_model.compute_linearized_constraint_violation(feasibility_direction.primals,
+         const double residual_lowest_violation = this->original_model.linearized_constraint_violation(feasibility_direction.primals,
                current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian,
                feasibility_direction.primal_dual_step_length, Norm::L1);
          DEBUG << "Lowest linearized infeasibility mk(dk): " << residual_lowest_violation << '\n';
@@ -112,7 +112,7 @@ Direction l1Relaxation::solve_sequence_of_relaxed_subproblems(Statistics& statis
          else {
             if (this->penalty_parameter < current_penalty_parameter) {
                direction = this->solve_l1_relaxed_problem(statistics, current_iterate, this->penalty_parameter, warmstart_information);
-               linearized_residual = this->original_model.compute_linearized_constraint_violation(direction.primals,
+               linearized_residual = this->original_model.linearized_constraint_violation(direction.primals,
                      current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian, direction.primal_dual_step_length,
                      Norm::L1);
             }
@@ -192,7 +192,7 @@ Direction l1Relaxation::enforce_linearized_residual_sufficient_decrease(Statisti
       direction = this->solve_l1_relaxed_problem(statistics, current_iterate, this->penalty_parameter, warmstart_information);
 
       // recompute the linearized residual
-      linearized_residual = this->original_model.compute_linearized_constraint_violation(direction.primals, current_iterate.evaluations.constraints,
+      linearized_residual = this->original_model.linearized_constraint_violation(direction.primals, current_iterate.evaluations.constraints,
             current_iterate.evaluations.constraint_jacobian, direction.primal_dual_step_length, Norm::L1);
       DEBUG << "Linearized infeasibility mk(dk): " << linearized_residual << "\n\n";
    }

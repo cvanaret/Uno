@@ -112,7 +112,7 @@ Iterate BacktrackingLineSearch::assemble_trial_iterate(const Model& model, Itera
          this->scale_duals_with_step_length ? direction.bound_dual_step_length : 1.);
 
    // project the steps within the bounds to avoid numerical errors
-   model.project_primals_onto_bounds(trial_iterate.primals);
+   model.project_onto_variable_bounds(trial_iterate.primals);
    return trial_iterate;
 }
 

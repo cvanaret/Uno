@@ -55,10 +55,10 @@ public:
    const bool fixed_hessian_sparsity{true};
 
    // purely virtual functions
-   [[nodiscard]] virtual double get_variable_lower_bound(size_t variable_index) const = 0;
-   [[nodiscard]] virtual double get_variable_upper_bound(size_t variable_index) const = 0;
-   [[nodiscard]] virtual double get_constraint_lower_bound(size_t constraint_index) const = 0;
-   [[nodiscard]] virtual double get_constraint_upper_bound(size_t constraint_index) const = 0;
+   [[nodiscard]] virtual double variable_lower_bound(size_t variable_index) const = 0;
+   [[nodiscard]] virtual double variable_upper_bound(size_t variable_index) const = 0;
+   [[nodiscard]] virtual double constraint_lower_bound(size_t constraint_index) const = 0;
+   [[nodiscard]] virtual double constraint_upper_bound(size_t constraint_index) const = 0;
 
    [[nodiscard]] virtual BoundType get_variable_bound_type(size_t variable_index) const = 0;
    [[nodiscard]] virtual FunctionType get_constraint_type(size_t constraint_index) const = 0;
@@ -85,12 +85,12 @@ public:
 
    // auxiliary functions
    static void determine_bounds_types(std::vector<Interval>& variables_bounds, std::vector<BoundType>& status);
-   void project_primals_onto_bounds(std::vector<double>& x) const;
+   void project_onto_variable_bounds(std::vector<double>& x) const;
    [[nodiscard]] bool is_constrained() const;
    // constraint violation
-   [[nodiscard]] virtual double compute_constraint_violation(double constraint_value, size_t constraint_index) const;
-   [[nodiscard]] double compute_constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const;
-   [[nodiscard]] double compute_linearized_constraint_violation(const std::vector<double>& primal_direction, const std::vector<double>& constraints,
+   [[nodiscard]] virtual double constraint_violation(double constraint_value, size_t constraint_index) const;
+   [[nodiscard]] double constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const;
+   [[nodiscard]] double linearized_constraint_violation(const std::vector<double>& primal_direction, const std::vector<double>& constraints,
          const RectangularMatrix<double>& constraint_jacobian, double step_length, Norm residual_norm) const;
 
 protected:
