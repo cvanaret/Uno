@@ -23,10 +23,10 @@ public:
 
 protected:
    const bool use_regularization;
+   bool enforce_linear_constraints_at_initial_iterate;
    // pointers to allow polymorphism
    const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
    const std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
-   bool enforce_linear_constraints_at_initial_iterate;
 
    void evaluate_functions(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
          const WarmstartInformation& warmstart_information);
