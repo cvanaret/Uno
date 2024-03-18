@@ -14,7 +14,6 @@ public:
 
    static int int_width;
    static int double_width;
-   static int char_width;
    static int string_width;
 
    void add_column(std::string_view name, int width, int order);

@@ -167,7 +167,7 @@ void l1Relaxation::decrease_parameter_aggressively(Iterate& current_iterate, con
       DEBUG << "Further aggressively decrease the penalty parameter to " << this->penalty_parameter << '\n';
    }
    else {
-      WARNING << RED << "l1Relaxation: all multipliers are almost 0. The penalty parameter won't be decreased" << RESET << '\n';
+      DEBUG << RED << "l1Relaxation: all multipliers are almost 0. The penalty parameter won't be decreased" << RESET << '\n';
    }
 }
 

@@ -8,6 +8,9 @@
 #include "tools/Infinity.hpp"
 #include "tools/Range.hpp"
 
+// generate an equality-constrained model by:
+// - introducing slacks in inequality constraints
+// - subtracting the (possibly nonzero) RHS of equality constraints
 // all constraints are of the form "c(x) = 0"
 class HomogeneousEqualityConstrainedModel: public Model {
 public:

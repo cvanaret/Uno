@@ -8,7 +8,6 @@
 // TODO move this to the option file
 int Statistics::int_width = 7;
 int Statistics::double_width = 17;
-int Statistics::char_width = 7;
 int Statistics::string_width = 26;
 
 Statistics::Statistics(const Options& options): print_header_every_iterations(options.get_unsigned_int("statistics_print_header_every_iterations")) {

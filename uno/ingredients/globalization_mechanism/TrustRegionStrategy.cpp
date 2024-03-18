@@ -44,28 +44,25 @@ Iterate TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const 
          if (1 < number_iterations) {
             statistics.start_new_line();
          }
-         statistics.set("TR iter", number_iterations);
-
          // compute the direction within the trust region
          this->constraint_relaxation_strategy.set_trust_region_radius(this->radius);
-         statistics.set("TR radius", this->radius);
          Direction direction = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, warmstart_information);
 
          // deal with errors in the subproblem
          if (direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
-            this->set_statistics(statistics, direction);
+            this->set_statistics(statistics, direction, number_iterations);
             this->decrease_radius_aggressively();
             warmstart_information.set_cold_start();
          }
          else if (direction.status == SubproblemStatus::ERROR) {
-            this->set_statistics(statistics, direction);
+            this->set_statistics(statistics, direction, number_iterations);
             this->decrease_radius();
             warmstart_information.set_cold_start();
          }
          else {
             // check whether the trial iterate (current iterate + full step) is acceptable
             Iterate trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction);
-            if (this->is_iterate_acceptable(statistics, model, current_iterate, trial_iterate, direction)) {
+            if (this->is_iterate_acceptable(statistics, model, current_iterate, trial_iterate, direction, number_iterations)) {
                this->reset_radius();
                return trial_iterate;
             }
@@ -82,7 +79,7 @@ Iterate TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const 
       // if an evaluation error occurs, decrease the radius
       catch (const EvaluationError& e) {
          // WARNING << YELLOW << e.what() << RESET;
-         this->set_statistics(statistics);
+         this->set_statistics(statistics, number_iterations);
          statistics.set("status", "eval. error");
          if (Logger::level == INFO) statistics.print_current_line();
          warmstart_information.set_cold_start();
@@ -105,11 +102,11 @@ Iterate TrustRegionStrategy::assemble_trial_iterate(const Model& model, Iterate&
 
 // the trial iterate is accepted by the constraint relaxation strategy or if the step is small and we cannot switch to solving the feasibility problem
 bool TrustRegionStrategy::is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-      const Direction& direction) {
+      const Direction& direction, size_t number_iterations) {
    bool acceptable_iterate = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction,
          direction.primal_dual_step_length);
          
-   this->set_statistics(statistics, trial_iterate, direction);
+   this->set_statistics(statistics, trial_iterate, direction, number_iterations);
    if (Logger::level == INFO) statistics.print_current_line();
          
    if (acceptable_iterate) {
@@ -186,20 +183,21 @@ bool TrustRegionStrategy::check_termination_with_small_step(const Model& model, 
    }
 }
 
-void TrustRegionStrategy::set_statistics(Statistics& statistics) const {
+void TrustRegionStrategy::set_statistics(Statistics& statistics, size_t number_iterations) const {
+   statistics.set("TR iter", number_iterations);
    statistics.set("TR radius", this->radius);
 }
 
-void TrustRegionStrategy::set_statistics(Statistics& statistics, const Direction& direction) const {
+void TrustRegionStrategy::set_statistics(Statistics& statistics, const Direction& direction, size_t number_iterations) const {
    statistics.set("step norm", direction.norm);
-   this->set_statistics(statistics);
+   this->set_statistics(statistics, number_iterations);
 }
 
-void TrustRegionStrategy::set_statistics(Statistics& statistics, const Iterate& trial_iterate, const Direction& direction) const {
+void TrustRegionStrategy::set_statistics(Statistics& statistics, const Iterate& trial_iterate, const Direction& direction, size_t number_iterations) const {
    if (trial_iterate.is_objective_computed) {
       statistics.set("objective", trial_iterate.evaluations.objective);
    }
-   this->set_statistics(statistics, direction);
+   this->set_statistics(statistics, direction, number_iterations);
 }
 
 void TrustRegionStrategy::print_iteration(size_t number_iterations) {

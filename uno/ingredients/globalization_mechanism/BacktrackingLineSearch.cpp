@@ -62,7 +62,7 @@ Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics
          if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, step_length)) {
             // check termination criteria
             trial_iterate.status = this->check_convergence(model, trial_iterate);
-            this->set_statistics(statistics, direction, step_length);
+            this->set_statistics(statistics, trial_iterate, direction, step_length);
             if (Logger::level == INFO) statistics.print_current_line();
             return trial_iterate;
          }
@@ -70,10 +70,10 @@ Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics
          else if (step_length < this->minimum_step_length) {
             DEBUG << "The line search step length is smaller than " << this->minimum_step_length << '\n';
             reached_small_step_length = true;
-            this->set_statistics(statistics, direction, step_length);
+            this->set_statistics(statistics, trial_iterate, direction, step_length);
          }
          else {
-            this->set_statistics(statistics, direction, step_length);
+            this->set_statistics(statistics, trial_iterate, direction, step_length);
             step_length = this->decrease_step_length(step_length);
          }
          if (Logger::level == INFO) statistics.print_current_line();
@@ -134,7 +134,11 @@ void BacktrackingLineSearch::set_statistics(Statistics& statistics) const {
    statistics.set("LS iter", this->total_number_iterations);
 }
 
-void BacktrackingLineSearch::set_statistics(Statistics& statistics, const Direction& direction, double primal_dual_step_length) const {
+void BacktrackingLineSearch::set_statistics(Statistics& statistics, const Iterate& trial_iterate, const Direction& direction,
+      double primal_dual_step_length) const {
+   if (trial_iterate.is_objective_computed) {
+      statistics.set("objective", trial_iterate.evaluations.objective);
+   }
    statistics.set("step norm", primal_dual_step_length * direction.norm);
    this->set_statistics(statistics);
 }

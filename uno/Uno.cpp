@@ -10,7 +10,6 @@
 #include "optimization/Iterate.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
-#include "tools/Timer.hpp"
 
 Uno::Uno(GlobalizationMechanism& globalization_mechanism, const Options& options) :
       globalization_mechanism(globalization_mechanism),
@@ -39,7 +38,6 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
 
          // compute an acceptable iterate by solving a subproblem at the current point
          current_iterate = this->globalization_mechanism.compute_next_iterate(statistics, model, current_iterate);
-         
          // determine if Uno can terminate
          termination = this->termination_criteria(current_iterate.status, major_iterations, timer.get_duration());
       }
@@ -47,30 +45,10 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
    catch (std::exception& exception) {
       ERROR << RED << exception.what() << RESET;
    }
-   Uno::postprocess_iterate(model, current_iterate, current_iterate.status);
-
    if (Logger::level == INFO) statistics.print_footer();
 
-   const size_t number_subproblems_solved = this->globalization_mechanism.get_number_subproblems_solved();
-   const size_t number_hessian_evaluations = this->globalization_mechanism.get_hessian_evaluation_count();
-   Result result = {std::move(current_iterate), model.number_variables, model.number_constraints, major_iterations, timer.get_duration(),
-         Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_objective_gradient,
-         Iterate::number_eval_jacobian, number_hessian_evaluations, number_subproblems_solved};
-   return result;
-}
-
-Statistics Uno::create_statistics(const Model& model, const Options& options) {
-   Statistics statistics(options);
-   statistics.add_column("iter", Statistics::int_width, options.get_int("statistics_major_column_order"));
-   statistics.add_column("step norm", Statistics::double_width - 1, options.get_int("statistics_step_norm_column_order"));
-   statistics.add_column("objective", Statistics::double_width - 2, options.get_int("statistics_objective_column_order"));
-   if (model.is_constrained()) {
-      statistics.add_column("primal infeas.", Statistics::double_width, options.get_int("statistics_primal_infeasibility_column_order"));
-   }
-   statistics.add_column("complementarity", Statistics::double_width, options.get_int("statistics_complementarity_column_order"));
-   statistics.add_column("stationarity", Statistics::double_width - 1, options.get_int("statistics_stationarity_column_order"));
-   statistics.add_column("status", Statistics::string_width, options.get_int("statistics_status_column_order"));
-   return statistics;
+   Uno::postprocess_iterate(model, current_iterate, current_iterate.status);
+   return this->create_result(model, current_iterate, major_iterations, timer);
 }
 
 void Uno::initialize(Statistics& statistics, Iterate& current_iterate, const Options& options) {
@@ -87,18 +65,25 @@ void Uno::initialize(Statistics& statistics, Iterate& current_iterate, const Opt
    }
 }
 
-void Uno::set_statistics(Statistics& statistics, size_t major_iterations) {
-   statistics.set("iter", major_iterations);
+Statistics Uno::create_statistics(const Model& model, const Options& options) {
+   Statistics statistics(options);
+   statistics.add_column("iter", Statistics::int_width, options.get_int("statistics_major_column_order"));
+   statistics.add_column("step norm", Statistics::double_width - 1, options.get_int("statistics_step_norm_column_order"));
+   statistics.add_column("objective", Statistics::double_width - 2, options.get_int("statistics_objective_column_order"));
+   if (model.is_constrained()) {
+      statistics.add_column("primal infeas.", Statistics::double_width, options.get_int("statistics_primal_infeasibility_column_order"));
+   }
+   statistics.add_column("complementarity", Statistics::double_width, options.get_int("statistics_complementarity_column_order"));
+   statistics.add_column("stationarity", Statistics::double_width - 1, options.get_int("statistics_stationarity_column_order"));
+   statistics.add_column("status", Statistics::string_width, options.get_int("statistics_status_column_order"));
+   return statistics;
 }
 
 void Uno::set_statistics(Statistics& statistics, const Iterate& iterate, size_t major_iterations) {
    if (iterate.is_objective_computed) {
       statistics.set("objective", iterate.evaluations.objective);
    }
-   else {
-      statistics.set("objective", "-");
-   }
-   Uno::set_statistics(statistics, major_iterations);
+   statistics.set("iter", major_iterations);
 }
 
 bool Uno::termination_criteria(TerminationStatus current_status, size_t iteration, double current_time) const {
@@ -110,6 +95,14 @@ void Uno::postprocess_iterate(const Model& model, Iterate& iterate, TerminationS
    iterate.evaluate_objective(model);
    model.postprocess_solution(iterate, termination_status);
    DEBUG2 << "Final iterate:\n" << iterate;
+}
+
+Result Uno::create_result(const Model& model, Iterate& current_iterate, size_t major_iterations, const Timer& timer) {
+   const size_t number_subproblems_solved = this->globalization_mechanism.get_number_subproblems_solved();
+   const size_t number_hessian_evaluations = this->globalization_mechanism.get_hessian_evaluation_count();
+   return {std::move(current_iterate), model.number_variables, model.number_constraints, major_iterations, timer.get_duration(),
+         Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_objective_gradient,
+         Iterate::number_eval_jacobian, number_hessian_evaluations, number_subproblems_solved};
 }
 
 void join(const std::vector<std::string>& vector, char separator) {

@@ -26,7 +26,7 @@ private:
    [[nodiscard]] double decrease_step_length(double step_length) const;
    static void check_unboundedness(const Direction& direction);
    void set_statistics(Statistics& statistics) const;
-   void set_statistics(Statistics& statistics, const Direction& direction, double primal_dual_step_length) const;
+   void set_statistics(Statistics& statistics, const Iterate& trial_iterate, const Direction& direction, double primal_dual_step_length) const;
    static void print_iteration(size_t number_iterations, double primal_dual_step_length);
 };
 
