@@ -17,7 +17,7 @@ public:
    ConstraintRelaxationStrategy(const Model& model, const Options& options);
    virtual ~ConstraintRelaxationStrategy() = default;
 
-   virtual void initialize(Statistics& statistics, Iterate& initial_iterate) = 0;
+   virtual void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) = 0;
    virtual void set_trust_region_radius(double trust_region_radius) = 0;
 
    // direction computation
@@ -26,7 +26,7 @@ public:
    [[nodiscard]] virtual Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
          const std::vector<double>& initial_point, WarmstartInformation& warmstart_information) = 0;
    virtual bool solving_feasibility_problem() = 0;
-   virtual void switch_to_feasibility_problem(Iterate& current_iterate, WarmstartInformation& warmstart_information) = 0;
+   virtual void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information) = 0;
 
    // trial iterate acceptance
    virtual void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length) = 0;

@@ -25,7 +25,7 @@ class FilterMethod : public GlobalizationStrategy {
 public:
    explicit FilterMethod(const Options& options);
 
-   void initialize(const Iterate& initial_iterate) override;
+   void initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) override;
    [[nodiscard]] bool is_infeasibility_acceptable(double infeasibility_measure) const override;
    void reset() override;
    void register_current_progress(const ProgressMeasures& current_progress_measures) override;

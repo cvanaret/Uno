@@ -8,15 +8,18 @@
 #include "tools/Infinity.hpp"
 #include "tools/Range.hpp"
 
+// generate an equality-constrained model by:
+// - introducing slacks in inequality constraints
+// - subtracting the (possibly nonzero) RHS of equality constraints
 // all constraints are of the form "c(x) = 0"
 class HomogeneousEqualityConstrainedModel: public Model {
 public:
    explicit HomogeneousEqualityConstrainedModel(std::unique_ptr<Model> original_model);
 
-   [[nodiscard]] double get_variable_lower_bound(size_t variable_index) const override;
-   [[nodiscard]] double get_variable_upper_bound(size_t variable_index) const override;
-   [[nodiscard]] double get_constraint_lower_bound(size_t constraint_index) const override;
-   [[nodiscard]] double get_constraint_upper_bound(size_t constraint_index) const override;
+   [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
+   [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
+   [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
+   [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;
 
    [[nodiscard]] double evaluate_objective(const std::vector<double>& x) const override;
    void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const override;
@@ -83,49 +86,49 @@ inline HomogeneousEqualityConstrainedModel::HomogeneousEqualityConstrainedModel(
       this->inequality_constraint_of_slack[variable_index] = constraint_index;
       this->slack_of_inequality_constraint[constraint_index] = variable_index;
       this->slacks.insert(constraint_index, slack_index);
-      if (is_finite(this->original_model->get_constraint_lower_bound(constraint_index))) {
+      if (is_finite(this->original_model->constraint_lower_bound(constraint_index))) {
          this->lower_bounded_variables.push_back(slack_index);
-         if (not is_finite(this->original_model->get_constraint_upper_bound(constraint_index))) {
+         if (not is_finite(this->original_model->constraint_upper_bound(constraint_index))) {
             this->single_lower_bounded_variables.push_back(slack_index);
          }
       }
-      if (is_finite(this->original_model->get_constraint_upper_bound(constraint_index))) {
+      if (is_finite(this->original_model->constraint_upper_bound(constraint_index))) {
          this->upper_bounded_variables.push_back(slack_index);
-         if (not is_finite(this->original_model->get_constraint_lower_bound(constraint_index))) {
+         if (not is_finite(this->original_model->constraint_lower_bound(constraint_index))) {
             this->single_upper_bounded_variables.push_back(slack_index);
          }
       }
    }
 }
 
-inline double HomogeneousEqualityConstrainedModel::get_variable_lower_bound(size_t variable_index) const {
+inline double HomogeneousEqualityConstrainedModel::variable_lower_bound(size_t variable_index) const {
    if (variable_index < this->original_model->number_variables) { // original variable
-      return this->original_model->get_variable_lower_bound(variable_index);
+      return this->original_model->variable_lower_bound(variable_index);
    }
    else { // slack variable
       const size_t slack_index = variable_index - this->original_model->number_variables;
       const size_t constraint_index = this->inequality_constraint_of_slack[slack_index];
-      return this->original_model->get_constraint_lower_bound(constraint_index);
+      return this->original_model->constraint_lower_bound(constraint_index);
    }
 }
 
-inline double HomogeneousEqualityConstrainedModel::get_variable_upper_bound(size_t variable_index) const {
+inline double HomogeneousEqualityConstrainedModel::variable_upper_bound(size_t variable_index) const {
    if (variable_index < this->original_model->number_variables) { // original variable
-      return this->original_model->get_variable_upper_bound(variable_index);
+      return this->original_model->variable_upper_bound(variable_index);
    }
    else { // slack variable
       const size_t slack_index = variable_index - this->original_model->number_variables;
       const size_t constraint_index = this->inequality_constraint_of_slack[slack_index];
-      return this->original_model->get_constraint_upper_bound(constraint_index);
+      return this->original_model->constraint_upper_bound(constraint_index);
    }
 }
 
-inline double HomogeneousEqualityConstrainedModel::get_constraint_lower_bound(size_t /*j*/) const {
+inline double HomogeneousEqualityConstrainedModel::constraint_lower_bound(size_t /*j*/) const {
    // all constraints are of the form "c(x) = 0"
    return 0.;
 }
 
-inline double HomogeneousEqualityConstrainedModel::get_constraint_upper_bound(size_t /*j*/) const {
+inline double HomogeneousEqualityConstrainedModel::constraint_upper_bound(size_t /*j*/) const {
    // all constraints are of the form "c(x) = 0"
    return 0.;
 }
@@ -148,7 +151,7 @@ inline void HomogeneousEqualityConstrainedModel::evaluate_constraints(const std:
    }
    // equality constraints: make sure they are "c(x) = 0"
    for (size_t constraint_index: this->original_model->equality_constraints) {
-      constraints[constraint_index] -= this->original_model->get_constraint_lower_bound(constraint_index);
+      constraints[constraint_index] -= this->original_model->constraint_lower_bound(constraint_index);
    }
 }
 

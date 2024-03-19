@@ -21,6 +21,7 @@ public:
    virtual ~Subproblem() = default;
 
    // virtual methods implemented by subclasses
+   virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
    virtual void generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) = 0;
    virtual Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
          const WarmstartInformation& warmstart_information) = 0;

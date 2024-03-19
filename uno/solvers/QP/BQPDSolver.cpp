@@ -28,23 +28,25 @@ bqpd_(const int* n, const int* m, int* k, int* kmax, double* a, int* la, double*
 }
 
 // preallocate a bunch of stuff
-BQPDSolver::BQPDSolver(size_t max_number_variables, size_t number_constraints, size_t number_hessian_nonzeros, BQPDProblemType problem_type,
-         const Options& options):
+BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros,
+         size_t number_hessian_nonzeros, BQPDProblemType problem_type, const Options& options):
       QPSolver(), number_hessian_nonzeros(number_hessian_nonzeros),
-      lb(max_number_variables + number_constraints),
-      ub(max_number_variables + number_constraints), jacobian(max_number_variables * (number_constraints + 1)),
-      jacobian_sparsity(max_number_variables * (number_constraints + 1) + number_constraints + 3),
+      lb(number_variables + number_constraints),
+      ub(number_variables + number_constraints),
+      jacobian(number_jacobian_nonzeros + number_objective_gradient_nonzeros), // Jacobian + objective gradient
+      jacobian_sparsity(number_jacobian_nonzeros + number_objective_gradient_nonzeros + number_constraints + 3),
       kmax(problem_type == BQPDProblemType::QP ? options.get_int("BQPD_kmax") : 0), alp(this->mlp), lp(this->mlp),
-      active_set(max_number_variables + number_constraints),
-      w(max_number_variables + number_constraints), gradient_solution(max_number_variables), residuals(max_number_variables + number_constraints),
-      e(max_number_variables + number_constraints),
-      size_hessian_sparsity(problem_type == BQPDProblemType::QP ? number_hessian_nonzeros + max_number_variables + 3 : 0),
-      size_hessian_workspace(number_hessian_nonzeros + this->kmax * (this->kmax + 9) / 2 + 2 * max_number_variables + number_constraints + this->mxwk0),
+      active_set(number_variables + number_constraints),
+      w(number_variables + number_constraints), gradient_solution(number_variables), residuals(number_variables + number_constraints),
+      e(number_variables + number_constraints),
+      size_hessian_sparsity(problem_type == BQPDProblemType::QP ? number_hessian_nonzeros + number_variables + 3 : 0),
+      size_hessian_workspace(number_hessian_nonzeros + this->kmax * (this->kmax + 9) / 2 + 2 * number_variables + number_constraints + this->mxwk0),
       size_hessian_sparsity_workspace(this->size_hessian_sparsity + this->kmax + this->mxiwk0),
-      hessian_values(this->size_hessian_workspace), hessian_sparsity(this->size_hessian_sparsity_workspace),
+      hessian_values(this->size_hessian_workspace),
+      hessian_sparsity(this->size_hessian_sparsity_workspace),
       print_subproblem(options.get_bool("BQPD_print_subproblem")) {
    // default active set
-   for (size_t variable_index: Range(max_number_variables + number_constraints)) {
+   for (size_t variable_index: Range(number_variables + number_constraints)) {
       this->active_set[variable_index] = static_cast<int>(variable_index) + this->fortran_shift;
    }
 }
@@ -141,7 +143,7 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
    for (size_t variable_index: Range(number_variables)) {
       direction.primals[variable_index] = std::min(std::max(direction.primals[variable_index], variables_bounds[variable_index].lb), variables_bounds[variable_index].ub);
    }
-   this->analyze_constraints(number_variables, number_constraints, direction);
+   this->categorize_constraints(number_variables, number_constraints, direction);
    return direction;
 }
 
@@ -223,7 +225,7 @@ void BQPDSolver::save_gradients_to_local_format(size_t number_constraints, const
    }
 }
 
-void BQPDSolver::analyze_constraints(size_t number_variables, size_t number_constraints, Direction& direction) {
+void BQPDSolver::categorize_constraints(size_t number_variables, size_t number_constraints, Direction& direction) {
    ConstraintPartition constraint_partition(number_constraints);
 
    // active constraints

@@ -3,7 +3,7 @@
 
 #include "LeyfferFilterMethod.hpp"
 
-LeyfferFilterMethod::LeyfferFilterMethod(Statistics& /*statistics*/, bool accept_when_switching_violated, const Options& options):
+LeyfferFilterMethod::LeyfferFilterMethod(bool accept_when_switching_violated, const Options& options):
       FilterMethod(options),
       accept_when_switching_violated(accept_when_switching_violated) {
 }
@@ -12,7 +12,7 @@ LeyfferFilterMethod::LeyfferFilterMethod(Statistics& /*statistics*/, bool accept
  * filter methods enforce an *unconstrained* sufficient decrease condition
  * precondition: feasible step
  * */
-bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& /*statistics*/, const Iterate& /*trial_iterate*/,
+bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& statistics, const Iterate& /*trial_iterate*/,
       const ProgressMeasures& current_progress_measures, const ProgressMeasures& trial_progress_measures, const ProgressMeasures& predicted_reduction,
       double /*objective_multiplier*/) {
    const double current_optimality_measure = current_progress_measures.optimality(1.) + current_progress_measures.auxiliary_terms;
@@ -21,8 +21,8 @@ bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& /*statistics*/, cons
    // - ignore the predicted infeasibility reduction
    // - scale the scaled optimality measure with 1
    const double unconstrained_predicted_reduction = predicted_reduction.optimality(1.) + predicted_reduction.auxiliary_terms;
-   DEBUG << "Current: η = " << current_progress_measures.infeasibility << ",\t ω = " << current_optimality_measure << '\n';
-   DEBUG << "Trial:   η = " << trial_progress_measures.infeasibility << ",\t ω = " << trial_optimality_measure << '\n';
+   DEBUG << "Current: η = " << current_progress_measures.infeasibility << ",\t\t ω = " << current_optimality_measure << '\n';
+   DEBUG << "Trial:   η = " << trial_progress_measures.infeasibility << ",\t\t ω = " << trial_optimality_measure << '\n';
    DEBUG << "Unconstrained predicted reduction: " << predicted_reduction.optimality(1.) << " + " << predicted_reduction.auxiliary_terms <<
          " = " <<  unconstrained_predicted_reduction << '\n';
    DEBUG << *this->filter << '\n';
@@ -48,9 +48,11 @@ bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& /*statistics*/, cons
             if (this->armijo_sufficient_decrease(unconstrained_predicted_reduction, actual_reduction)) {
                DEBUG << "Trial iterate was accepted by satisfying the Armijo condition\n";
                accept = true;
+               statistics.set("status", "accepted (Armijo)");
             }
             else { // switching condition holds, but not Armijo condition
                DEBUG << "Trial iterate was rejected by violating the Armijo condition\n";
+               statistics.set("status", "rejected (Armijo)");
             }
          }
          else if (this->accept_when_switching_violated) { // switching condition violated: predicted reduction is not promising
@@ -58,17 +60,21 @@ bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& /*statistics*/, cons
             accept = true;
             DEBUG << "Current iterate was added to the filter\n";
             this->filter->add(current_progress_measures.infeasibility, current_optimality_measure);
+            statistics.set("status", "accepted (!switching)");
          }
          else {
             DEBUG << "Trial iterate was rejected by violating the switching condition\n";
+            statistics.set("status", "rejected (switching)");
          }
       }
       else {
          DEBUG << "Not acceptable with respect to current point\n";
+         statistics.set("status", "rejected (current point)");
       }
    }
    else {
       DEBUG << "Not filter acceptable\n";
+      statistics.set("status", "rejected (filter)");
    }
    DEBUG << '\n';
    return accept;

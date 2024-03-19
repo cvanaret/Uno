@@ -8,7 +8,7 @@
 #include "preprocessing/Preprocessing.hpp"
 #include "tools/Infinity.hpp"
 
-PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(Statistics& statistics, size_t max_number_variables, size_t max_number_constraints,
+PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(size_t max_number_variables, size_t max_number_constraints,
          size_t max_number_jacobian_nonzeros, size_t max_number_hessian_nonzeros, const Options& options):
       Subproblem(max_number_variables, max_number_constraints),
       augmented_system(options.get_string("sparse_format"), max_number_variables + max_number_constraints,
@@ -38,8 +38,11 @@ PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(Statistics&
       least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")),
       damping_factor(options.get_double("barrier_damping_factor")),
       lower_delta_z(max_number_variables), upper_delta_z(max_number_variables) {
-   statistics.add_column("regularization", Statistics::double_width, options.get_int("statistics_regularization_column_order"));
-   statistics.add_column("barrier param.", Statistics::double_width, options.get_int("statistics_barrier_parameter_column_order"));
+}
+
+inline void PrimalDualInteriorPointSubproblem::initialize_statistics(Statistics& statistics, const Options& options) {
+   statistics.add_column("regularization", Statistics::double_width - 1, options.get_int("statistics_regularization_column_order"));
+   statistics.add_column("barrier param.", Statistics::double_width - 1, options.get_int("statistics_barrier_parameter_column_order"));
 }
 
 inline void PrimalDualInteriorPointSubproblem::generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) {
@@ -52,9 +55,6 @@ inline void PrimalDualInteriorPointSubproblem::generate_initial_iterate(const No
    //   Preprocessing::enforce_linear_constraints(problem.model, initial_iterate.primals, initial_iterate.multipliers, this->solver);
    //}
 
-   // evaluate the constraints at the original point
-   initial_iterate.evaluate_constraints(problem.model);
-
    // make the initial point strictly feasible wrt the bounds
    for (size_t variable_index: Range(problem.number_variables)) {
       const Interval bounds = {problem.get_variable_lower_bound(variable_index), problem.get_variable_upper_bound(variable_index)};
@@ -63,15 +63,19 @@ inline void PrimalDualInteriorPointSubproblem::generate_initial_iterate(const No
 
    // set the slack variables (if any)
    if (not problem.model.slacks.empty()) {
+      // evaluate the constraints at the original point
+      initial_iterate.evaluate_constraints(problem.model);
+
       // set the slacks to the constraint values
       problem.model.slacks.for_each([&](size_t constraint_index, size_t slack_index) {
          const Interval bounds = {problem.get_variable_lower_bound(slack_index), problem.get_variable_upper_bound(slack_index)};
          initial_iterate.primals[slack_index] = PrimalDualInteriorPointSubproblem::push_variable_to_interior(initial_iterate.evaluations.constraints[constraint_index], bounds);
       });
+      // since the slacks have been set, the function evaluations should also be updated
+      initial_iterate.is_objective_gradient_computed = false;
+      initial_iterate.are_constraints_computed = false;
+      initial_iterate.is_constraint_jacobian_computed = false;
    }
-   initial_iterate.is_objective_gradient_computed = false;
-   initial_iterate.are_constraints_computed = false;
-   initial_iterate.is_constraint_jacobian_computed = false;
 
    // set the bound multipliers
    for (size_t variable_index: problem.lower_bounded_variables) {
@@ -183,7 +187,7 @@ Direction PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const
    assert(this->direction.status == SubproblemStatus::OPTIMAL && "The primal-dual perturbed subproblem was not solved to optimality");
    this->number_subproblems_solved++;
    this->assemble_primal_dual_direction(problem, current_iterate);
-   statistics.add_statistic("barrier param.", this->barrier_parameter());
+   statistics.set("barrier param.", this->barrier_parameter());
 
    // determine if the direction is a "small direction" (Section 3.9 of the Ipopt paper) TODO
    const bool is_small_step = PrimalDualInteriorPointSubproblem::is_small_step(problem, current_iterate, this->direction);

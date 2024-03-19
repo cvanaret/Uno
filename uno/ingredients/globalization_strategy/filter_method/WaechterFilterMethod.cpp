@@ -3,19 +3,20 @@
 
 #include "WaechterFilterMethod.hpp"
 
-WaechterFilterMethod::WaechterFilterMethod(Statistics& /*statistics*/, const Options& options): FilterMethod(options) {
+WaechterFilterMethod::WaechterFilterMethod(const Options& options):
+      FilterMethod(options) {
 }
 
-void WaechterFilterMethod::initialize(const Iterate& initial_iterate) {
+void WaechterFilterMethod::initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) {
    this->initial_infeasibility = initial_iterate.residuals.infeasibility;
-   FilterMethod::initialize(initial_iterate);
+   FilterMethod::initialize(statistics, initial_iterate, options);
 }
 
 /* check acceptability of step(s) (filter & sufficient reduction)
  * filter methods enforce an *unconstrained* sufficient decrease condition
  * precondition: feasible step
  * */
-bool WaechterFilterMethod::is_iterate_acceptable(Statistics& /*statistics*/, const Iterate& /*trial_iterate*/,
+bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const Iterate& /*trial_iterate*/,
       const ProgressMeasures& current_progress_measures, const ProgressMeasures& trial_progress_measures, const ProgressMeasures& predicted_reduction,
       double /*objective_multiplier*/) {
    const double current_optimality_measure = current_progress_measures.optimality(1.) + current_progress_measures.auxiliary_terms;
@@ -24,9 +25,9 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& /*statistics*/, con
    // - ignore the predicted infeasibility reduction
    // - scale the scaled optimality measure with 1
    const double unconstrained_predicted_reduction = predicted_reduction.optimality(1.) + predicted_reduction.auxiliary_terms;
-   DEBUG << "Current: η = " << current_progress_measures.infeasibility << ",\t ω = " << current_progress_measures.optimality(1.) << " + " <<
+   DEBUG << "Current: η = " << current_progress_measures.infeasibility << ",\t\t ω = " << current_progress_measures.optimality(1.) << " + " <<
       current_progress_measures.auxiliary_terms << '\n';
-   DEBUG << "Trial:   η = " << trial_progress_measures.infeasibility << ",\t ω = " << trial_progress_measures.optimality(1.) << " + " <<
+   DEBUG << "Trial:   η = " << trial_progress_measures.infeasibility << ",\t\t ω = " << trial_progress_measures.optimality(1.) << " + " <<
       trial_progress_measures.auxiliary_terms << '\n';
    DEBUG << "Unconstrained predicted reduction: " << predicted_reduction.optimality(1.) << " + " << predicted_reduction.auxiliary_terms <<
          " = " <<  unconstrained_predicted_reduction << '\n';
@@ -57,9 +58,11 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& /*statistics*/, con
          if (sufficient_decrease) {
             DEBUG << "Trial iterate was accepted by satisfying Armijo condition\n";
             accept = true;
+            statistics.set("status", "accepted (Armijo)");
          }
          else {
             DEBUG << "Armijo condition not satisfied\n";
+            statistics.set("status", "rejected (Armijo)");
          }
       }
       else {
@@ -68,9 +71,11 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& /*statistics*/, con
                trial_progress_measures.infeasibility, trial_optimality_measure)) {
             DEBUG << "Acceptable with respect to current point\n";
             accept = true;
+            statistics.set("status", "accepted (current point)");
          }
          else {
             DEBUG << "Not acceptable with respect to current point\n";
+            statistics.set("status", "rejected (current point)");
          }
       }
       // possibly augment the filter
@@ -81,6 +86,7 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& /*statistics*/, con
    }
    else {
       DEBUG << "Not filter acceptable\n";
+      statistics.set("status", "rejected (filter)");
    }
    DEBUG << '\n';
    return accept;

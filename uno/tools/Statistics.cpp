@@ -8,32 +8,32 @@
 // TODO move this to the option file
 int Statistics::int_width = 7;
 int Statistics::double_width = 17;
-int Statistics::char_width = 7;
+int Statistics::string_width = 26;
 
 Statistics::Statistics(const Options& options): print_header_every_iterations(options.get_unsigned_int("statistics_print_header_every_iterations")) {
 }
 
-void Statistics::add_column(std::string name, int width, int order) {
+void Statistics::add_column(std::string_view name, int width, int order) {
    this->columns[order] = name;
-   this->widths[std::move(name)] = width;
+   this->widths[name] = width;
 }
 
-void Statistics::add_statistic(std::string name, std::string value) {
-   this->current_line[std::move(name)] = std::move(value);
+void Statistics::set(std::string_view name, std::string value) {
+   this->current_line[name] = std::move(value);
 }
 
-void Statistics::add_statistic(std::string name, int value) {
-   add_statistic(std::move(name), std::to_string(value));
+void Statistics::set(std::string_view name, int value) {
+   this->set(name, std::to_string(value));
 }
 
-void Statistics::add_statistic(std::string name, size_t value) {
-   add_statistic(std::move(name), std::to_string(value));
+void Statistics::set(std::string_view name, size_t value) {
+   this->set(name, std::to_string(value));
 }
 
-void Statistics::add_statistic(std::string name, double value) {
+void Statistics::set(std::string_view name, double value) {
    std::ostringstream stream;
    stream << std::defaultfloat << std::setprecision(7) << value;
-   add_statistic(std::move(name), stream.str());
+   this->set(name, stream.str());
 }
 
 void Statistics::print_header(bool first_occurrence) {
@@ -129,7 +129,7 @@ void Statistics::print_footer() {
    std::cout << Statistics::symbol("bottom-right") << '\n';
 }
 
-void Statistics::new_line() {
+void Statistics::start_new_line() {
    this->current_line.clear();
 }
 

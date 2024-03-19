@@ -7,7 +7,7 @@
 #include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
 
-BacktrackingLineSearch::BacktrackingLineSearch(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
+BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy,
          const Options& options):
       GlobalizationMechanism(constraint_relaxation_strategy, options),
       backtracking_ratio(options.get_double("LS_backtracking_ratio")),
@@ -16,13 +16,13 @@ BacktrackingLineSearch::BacktrackingLineSearch(Statistics& statistics, Constrain
    // check the initial and minimal step lengths
    assert(0 < this->backtracking_ratio && this->backtracking_ratio < 1. && "The LS backtracking ratio should be in (0, 1)");
    assert(0 < this->minimum_step_length && this->minimum_step_length < 1. && "The LS minimum step length should be in (0, 1)");
-
-   statistics.add_column("LS iters", Statistics::int_width + 3, options.get_int("statistics_minor_column_order"));
-   statistics.add_column("LS step length", Statistics::double_width, options.get_int("statistics_LS_step_length_column_order"));
 }
 
-void BacktrackingLineSearch::initialize(Statistics& statistics, Iterate& initial_iterate) {
-   this->constraint_relaxation_strategy.initialize(statistics, initial_iterate);
+void BacktrackingLineSearch::initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) {
+   statistics.add_column("LS iter", Statistics::int_width + 2, options.get_int("statistics_minor_column_order"));
+   statistics.add_column("step length", Statistics::double_width - 3, options.get_int("statistics_LS_step_length_column_order"));
+   
+   this->constraint_relaxation_strategy.initialize(statistics, initial_iterate, options);
 }
 
 Iterate BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) {
@@ -49,7 +49,11 @@ Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics
    while (not reached_small_step_length) {
       this->total_number_iterations++;
       number_iterations++;
+      if (1 < number_iterations) {
+         statistics.start_new_line();
+      }
       BacktrackingLineSearch::print_iteration(number_iterations, step_length);
+      statistics.set("step length", step_length);
 
       try {
          // assemble the trial iterate by going a fraction along the direction
@@ -58,20 +62,27 @@ Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics
          if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, step_length)) {
             // check termination criteria
             trial_iterate.status = this->check_convergence(model, trial_iterate);
-            this->set_statistics(statistics, direction, step_length);
+            this->set_statistics(statistics, trial_iterate, direction, step_length);
+            if (Logger::level == INFO) statistics.print_current_line();
             return trial_iterate;
          }
          // small step length
          else if (step_length < this->minimum_step_length) {
             DEBUG << "The line search step length is smaller than " << this->minimum_step_length << '\n';
             reached_small_step_length = true;
+            this->set_statistics(statistics, trial_iterate, direction, step_length);
          }
          else {
+            this->set_statistics(statistics, trial_iterate, direction, step_length);
             step_length = this->decrease_step_length(step_length);
          }
+         if (Logger::level == INFO) statistics.print_current_line();
       }
       catch (const EvaluationError& e) {
          WARNING << YELLOW << e.what() << RESET;
+         this->set_statistics(statistics);
+         statistics.set("status", "eval. error");
+         if (Logger::level == INFO) statistics.print_current_line();
          step_length = this->decrease_step_length(step_length);
       }
    }
@@ -82,7 +93,8 @@ Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics
    }
    else {
       warmstart_information.set_cold_start();
-      this->constraint_relaxation_strategy.switch_to_feasibility_problem(current_iterate, warmstart_information);
+      statistics.set("status", "LS failed");
+      this->constraint_relaxation_strategy.switch_to_feasibility_problem(statistics, current_iterate, warmstart_information);
       Direction direction_feasibility = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate,
             direction.primals, warmstart_information);
       BacktrackingLineSearch::check_unboundedness(direction_feasibility);
@@ -100,7 +112,7 @@ Iterate BacktrackingLineSearch::assemble_trial_iterate(const Model& model, Itera
          this->scale_duals_with_step_length ? direction.bound_dual_step_length : 1.);
 
    // project the steps within the bounds to avoid numerical errors
-   model.project_primals_onto_bounds(trial_iterate.primals);
+   model.project_onto_variable_bounds(trial_iterate.primals);
    return trial_iterate;
 }
 
@@ -118,10 +130,17 @@ void BacktrackingLineSearch::check_unboundedness(const Direction& direction) {
    }
 }
 
-void BacktrackingLineSearch::set_statistics(Statistics& statistics, const Direction& direction, double primal_dual_step_length) const {
-   statistics.add_statistic("LS iters", this->total_number_iterations);
-   statistics.add_statistic("LS step length", primal_dual_step_length);
-   statistics.add_statistic("step norm", primal_dual_step_length * direction.norm);
+void BacktrackingLineSearch::set_statistics(Statistics& statistics) const {
+   statistics.set("LS iter", this->total_number_iterations);
+}
+
+void BacktrackingLineSearch::set_statistics(Statistics& statistics, const Iterate& trial_iterate, const Direction& direction,
+      double primal_dual_step_length) const {
+   if (trial_iterate.is_objective_computed) {
+      statistics.set("objective", trial_iterate.evaluations.objective);
+   }
+   statistics.set("step norm", primal_dual_step_length * direction.norm);
+   this->set_statistics(statistics);
 }
 
 void BacktrackingLineSearch::print_iteration(size_t number_iterations, double primal_dual_step_length) {

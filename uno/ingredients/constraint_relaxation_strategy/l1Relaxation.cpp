@@ -13,15 +13,16 @@
  * http://epubs.siam.org/doi/pdf/10.1137/080738222
  */
 
-l1Relaxation::l1Relaxation(Statistics& statistics, const Model& model, const Options& options) :
+l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
       ConstraintRelaxationStrategy(model, options),
       // create the l1 feasibility problem (objective multiplier = 0)
       feasibility_problem(model, 0., options.get_double("l1_constraint_violation_coefficient")),
       // create the l1 relaxed problem
       l1_relaxed_problem(model, options.get_double("l1_relaxation_initial_parameter"), options.get_double("l1_constraint_violation_coefficient")),
-      subproblem(SubproblemFactory::create(statistics, this->l1_relaxed_problem.number_variables, this->l1_relaxed_problem.number_constraints,
-            this->l1_relaxed_problem.get_number_jacobian_nonzeros(), this->l1_relaxed_problem.get_number_hessian_nonzeros(), options)),
-      globalization_strategy(GlobalizationStrategyFactory::create(statistics, options.get_string("globalization_strategy"), true, options)),
+      subproblem(SubproblemFactory::create(this->l1_relaxed_problem.number_variables, this->l1_relaxed_problem.number_constraints,
+            this->l1_relaxed_problem.get_number_objective_gradient_nonzeros(), this->l1_relaxed_problem.get_number_jacobian_nonzeros(),
+            this->l1_relaxed_problem.get_number_hessian_nonzeros(), options)),
+      globalization_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), true, options)),
       penalty_parameter(options.get_double("l1_relaxation_initial_parameter")),
       tolerance(options.get_double("tolerance")),
       parameters({
@@ -33,21 +34,23 @@ l1Relaxation::l1Relaxation(Statistics& statistics, const Model& model, const Opt
       }),
       small_duals_threshold(options.get_double("l1_small_duals_threshold")),
       trial_multipliers(this->l1_relaxed_problem.number_variables, model.number_constraints) {
-   statistics.add_column("penalty param.", Statistics::double_width, options.get_int("statistics_penalty_parameter_column_order"));
 }
 
-void l1Relaxation::initialize(Statistics& statistics, Iterate& initial_iterate) {
+void l1Relaxation::initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) {
+   statistics.add_column("penalty param.", Statistics::double_width, options.get_int("statistics_penalty_parameter_column_order"));
+   
    this->subproblem->set_elastic_variable_values(this->l1_relaxed_problem, initial_iterate);
    this->subproblem->generate_initial_iterate(this->l1_relaxed_problem, initial_iterate);
+   this->subproblem->initialize_statistics(statistics, options);
 
    // compute the progress measures and residuals of the initial point
-   this->set_progress_measures(initial_iterate);
+   this->evaluate_progress_measures(initial_iterate);
    this->compute_primal_dual_residuals(this->original_model, this->feasibility_problem, initial_iterate);
 
    // initialize the globalization strategy
-   this->globalization_strategy->initialize(initial_iterate);
+   this->globalization_strategy->initialize(statistics, initial_iterate, options);
 
-   this->add_statistics(statistics, initial_iterate);
+   this->set_statistics(statistics, initial_iterate);
 }
 
 Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information) {
@@ -70,7 +73,7 @@ bool l1Relaxation::solving_feasibility_problem() {
    return (this->penalty_parameter == 0.);
 }
 
-void l1Relaxation::switch_to_feasibility_problem(Iterate& /*current_iterate*/, WarmstartInformation& /*warmstart_information*/) {
+void l1Relaxation::switch_to_feasibility_problem(Statistics& /*statistics*/, Iterate& /*current_iterate*/, WarmstartInformation& /*warmstart_information*/) {
    throw std::runtime_error("l1Relaxation::switch_to_feasibility_problem is not implemented\n");
 }
 
@@ -84,7 +87,7 @@ Direction l1Relaxation::solve_sequence_of_relaxed_subproblems(Statistics& statis
 
    // penalty update: if penalty parameter is already 0 or fixed by the user, no need to decrease it
    if (0. < this->penalty_parameter && not this->parameters.fixed_parameter) {
-      double linearized_residual = this->original_model.compute_linearized_constraint_violation(direction.primals,
+      double linearized_residual = this->original_model.linearized_constraint_violation(direction.primals,
             current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian, direction.primal_dual_step_length, Norm::L1);
       DEBUG << "Linearized infeasibility mk(dk): " << linearized_residual << "\n\n";
 
@@ -96,7 +99,7 @@ Direction l1Relaxation::solve_sequence_of_relaxed_subproblems(Statistics& statis
          DEBUG << "Compute ideal solution by solving the feasibility problem:\n";
          this->subproblem->initialize_feasibility_problem();
          Direction feasibility_direction = this->solve_subproblem(statistics, this->feasibility_problem, current_iterate, warmstart_information);
-         const double residual_lowest_violation = this->original_model.compute_linearized_constraint_violation(feasibility_direction.primals,
+         const double residual_lowest_violation = this->original_model.linearized_constraint_violation(feasibility_direction.primals,
                current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian,
                feasibility_direction.primal_dual_step_length, Norm::L1);
          DEBUG << "Lowest linearized infeasibility mk(dk): " << residual_lowest_violation << '\n';
@@ -110,7 +113,7 @@ Direction l1Relaxation::solve_sequence_of_relaxed_subproblems(Statistics& statis
          else {
             if (this->penalty_parameter < current_penalty_parameter) {
                direction = this->solve_l1_relaxed_problem(statistics, current_iterate, this->penalty_parameter, warmstart_information);
-               linearized_residual = this->original_model.compute_linearized_constraint_violation(direction.primals,
+               linearized_residual = this->original_model.linearized_constraint_violation(direction.primals,
                      current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian, direction.primal_dual_step_length,
                      Norm::L1);
             }
@@ -135,7 +138,7 @@ Direction l1Relaxation::solve_subproblem(Statistics& statistics, const Nonlinear
    Direction direction = this->subproblem->solve(statistics, problem, current_iterate, warmstart_information);
    direction.norm = norm_inf(view(direction.primals, this->original_model.number_variables));
    direction.multipliers.objective = problem.get_objective_multiplier();
-   DEBUG2 << direction << '\n';
+   DEBUG3 << direction << '\n';
    assert(direction.status == SubproblemStatus::OPTIMAL && "The subproblem was not solved to optimality");
    return direction;
 }
@@ -164,7 +167,7 @@ void l1Relaxation::decrease_parameter_aggressively(Iterate& current_iterate, con
       DEBUG << "Further aggressively decrease the penalty parameter to " << this->penalty_parameter << '\n';
    }
    else {
-      WARNING << RED << "l1Relaxation: all multipliers are almost 0. The penalty parameter won't be decreased" << RESET << '\n';
+      DEBUG << RED << "l1Relaxation: all multipliers are almost 0. The penalty parameter won't be decreased" << RESET << '\n';
    }
 }
 
@@ -190,7 +193,7 @@ Direction l1Relaxation::enforce_linearized_residual_sufficient_decrease(Statisti
       direction = this->solve_l1_relaxed_problem(statistics, current_iterate, this->penalty_parameter, warmstart_information);
 
       // recompute the linearized residual
-      linearized_residual = this->original_model.compute_linearized_constraint_violation(direction.primals, current_iterate.evaluations.constraints,
+      linearized_residual = this->original_model.linearized_constraint_violation(direction.primals, current_iterate.evaluations.constraints,
             current_iterate.evaluations.constraint_jacobian, direction.primal_dual_step_length, Norm::L1);
       DEBUG << "Linearized infeasibility mk(dk): " << linearized_residual << "\n\n";
    }
@@ -205,6 +208,9 @@ bool l1Relaxation::linearized_residual_sufficient_decrease(const Iterate& curren
    }
    const double linearized_residual_reduction = current_iterate.progress.infeasibility - linearized_residual;
    const double lowest_linearized_residual_reduction = current_iterate.progress.infeasibility - residual_lowest_violation;
+   if (lowest_linearized_residual_reduction < 0.) {
+      WARNING << "The lowest_linearized_residual_reduction quantity is negative. Negative curvature in your problem\n";
+   }
    return (linearized_residual_reduction >= this->parameters.epsilon1 * lowest_linearized_residual_reduction);
 }
 
@@ -234,8 +240,8 @@ void l1Relaxation::compute_progress_measures(Iterate& current_iterate, Iterate& 
       this->subproblem->subproblem_definition_changed = false;
    }
    // compute the progress measures for the current and trial iterates
-   this->set_progress_measures(current_iterate);
-   this->set_progress_measures(trial_iterate);
+   this->evaluate_progress_measures(current_iterate);
+   this->evaluate_progress_measures(trial_iterate);
 
    trial_iterate.multipliers.objective = this->l1_relaxed_problem.get_objective_multiplier();
 }
@@ -250,6 +256,7 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
       DEBUG << "Zero step acceptable\n\n";
       trial_iterate.evaluate_objective(this->original_model);
       accept_iterate = true;
+      statistics.set("status", "accepted (0 step)");
    }
    else {
       // evaluate the predicted reduction
@@ -262,13 +269,13 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
 
    if (accept_iterate) {
       this->compute_primal_dual_residuals(this->original_model, this->feasibility_problem, trial_iterate);
-      this->add_statistics(statistics, trial_iterate);
+      this->set_statistics(statistics, trial_iterate);
       this->check_exact_relaxation(trial_iterate);
    }
    return accept_iterate;
 }
 
-void l1Relaxation::set_progress_measures(Iterate& iterate) const {
+void l1Relaxation::evaluate_progress_measures(Iterate& iterate) const {
    this->l1_relaxed_problem.set_infeasibility_measure(iterate, Norm::L1);
    this->l1_relaxed_problem.set_optimality_measure(iterate);
    this->subproblem->set_auxiliary_measure(this->l1_relaxed_problem, iterate);
@@ -299,12 +306,12 @@ void l1Relaxation::check_exact_relaxation(Iterate& iterate) const {
    }
 }
 
-void l1Relaxation::add_statistics(Statistics& statistics, const Iterate& iterate) const {
-   statistics.add_statistic("complementarity", iterate.residuals.optimality_complementarity);
-   statistics.add_statistic("stationarity", iterate.residuals.optimality_stationarity);
-   statistics.add_statistic("penalty param.", this->penalty_parameter);
+void l1Relaxation::set_statistics(Statistics& statistics, const Iterate& iterate) const {
+   statistics.set("complementarity", iterate.residuals.optimality_complementarity);
+   statistics.set("stationarity", iterate.residuals.optimality_stationarity);
+   statistics.set("penalty param.", this->penalty_parameter);
    if (this->original_model.is_constrained()) {
-      statistics.add_statistic("primal infeas.", iterate.progress.infeasibility);
+      statistics.set("primal infeas.", iterate.progress.infeasibility);
    }
 }
 

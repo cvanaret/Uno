@@ -16,7 +16,7 @@ FilterMethod::FilterMethod(const Options& options) :
       }) {
 }
 
-void FilterMethod::initialize(const Iterate& initial_iterate) {
+void FilterMethod::initialize(Statistics& /*statistics*/, const Iterate& initial_iterate, const Options& /*options*/) {
    // set the filter upper bound
    double upper_bound = std::max(this->parameters.upper_bound, this->parameters.infeasibility_fraction * initial_iterate.progress.infeasibility);
    this->filter->upper_bound = upper_bound;

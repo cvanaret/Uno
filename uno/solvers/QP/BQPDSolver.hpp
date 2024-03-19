@@ -40,8 +40,8 @@ enum class BQPDProblemType {LP, QP};
 
 class BQPDSolver : public QPSolver {
 public:
-   BQPDSolver(size_t max_number_variables, size_t number_constraints, size_t number_hessian_nonzeros, BQPDProblemType problem_type,
-         const Options& options);
+   BQPDSolver(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros,
+         size_t number_hessian_nonzeros, BQPDProblemType problem_type, const Options& options);
 
    Direction solve_LP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
          const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
@@ -83,7 +83,7 @@ private:
          const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
          const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point,
          const WarmstartInformation& warmstart_information);
-   void analyze_constraints(size_t number_variables, size_t number_constraints, Direction& direction);
+   void categorize_constraints(size_t number_variables, size_t number_constraints, Direction& direction);
    void save_hessian_to_local_format(const SymmetricMatrix<double>& hessian);
    void save_gradients_to_local_format(size_t number_constraints, const SparseVector<double>& linear_objective,
          const RectangularMatrix<double>& constraint_jacobian);

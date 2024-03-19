@@ -8,12 +8,12 @@
 
 class BoundRelaxedModel: public Model {
 public:
-   BoundRelaxedModel(std::unique_ptr<Model> constraint_index, const Options& slack_index);
+   BoundRelaxedModel(std::unique_ptr<Model> original_model, const Options& options);
 
-   [[nodiscard]] double get_variable_lower_bound(size_t variable_index) const override;
-   [[nodiscard]] double get_variable_upper_bound(size_t variable_index) const override;
-   [[nodiscard]] double get_constraint_lower_bound(size_t constraint_index) const override;
-   [[nodiscard]] double get_constraint_upper_bound(size_t constraint_index) const override;
+   [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
+   [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
+   [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
+   [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;
 
    [[nodiscard]] double evaluate_objective(const std::vector<double>& x) const override;
    void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const override;
@@ -76,24 +76,24 @@ inline BoundRelaxedModel::BoundRelaxedModel(std::unique_ptr<Model> original_mode
    }
 }
 
-inline double BoundRelaxedModel::get_variable_lower_bound(size_t variable_index) const {
-   const double lower_bound = this->original_model->get_variable_lower_bound(variable_index);
+inline double BoundRelaxedModel::variable_lower_bound(size_t variable_index) const {
+   const double lower_bound = this->original_model->variable_lower_bound(variable_index);
    // relax the bound
    return lower_bound - this->relaxation_factor * std::max(1., std::abs(lower_bound));
 }
 
-inline double BoundRelaxedModel::get_variable_upper_bound(size_t variable_index) const {
-   const double upper_bound = this->original_model->get_variable_upper_bound(variable_index);
+inline double BoundRelaxedModel::variable_upper_bound(size_t variable_index) const {
+   const double upper_bound = this->original_model->variable_upper_bound(variable_index);
    // relax the bound
    return upper_bound + this->relaxation_factor * std::max(1., std::abs(upper_bound));
 }
 
-inline double BoundRelaxedModel::get_constraint_lower_bound(size_t constraint_index) const {
-   return this->original_model->get_constraint_lower_bound(constraint_index);
+inline double BoundRelaxedModel::constraint_lower_bound(size_t constraint_index) const {
+   return this->original_model->constraint_lower_bound(constraint_index);
 }
 
-inline double BoundRelaxedModel::get_constraint_upper_bound(size_t constraint_index) const {
-   return this->original_model->get_constraint_upper_bound(constraint_index);
+inline double BoundRelaxedModel::constraint_upper_bound(size_t constraint_index) const {
+   return this->original_model->constraint_upper_bound(constraint_index);
 }
 
 inline double BoundRelaxedModel::evaluate_objective(const std::vector<double>& x) const {

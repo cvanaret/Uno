@@ -21,8 +21,8 @@ struct l1RelaxationParameters {
 
 class l1Relaxation : public ConstraintRelaxationStrategy {
 public:
-   l1Relaxation(Statistics& statistics, const Model& model, const Options& options);
-   void initialize(Statistics& statistics, Iterate& initial_iterate) override;
+   l1Relaxation(const Model& model, const Options& options);
+   void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) override;
 
    void set_trust_region_radius(double trust_region_radius) override;
 
@@ -32,7 +32,7 @@ public:
    [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point,
          WarmstartInformation& warmstart_information) override;
    bool solving_feasibility_problem() override;
-   void switch_to_feasibility_problem(Iterate& current_iterate, WarmstartInformation& warmstart_information) override;
+   void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information) override;
 
    // trial iterate acceptance
    void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length) override;
@@ -72,14 +72,14 @@ protected:
    [[nodiscard]] bool is_descent_direction_for_l1_merit_function(const Iterate& current_iterate, const Direction& direction,
          const Direction& direction_lowest_violation) const;
 
-   void set_progress_measures(Iterate& iterate) const;
+   void evaluate_progress_measures(Iterate& iterate) const;
    [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction,
          double step_length);
 
    [[nodiscard]] double compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers) const override;
 
-   void add_statistics(Statistics& statistics, const Iterate& iterate) const;
+   void set_statistics(Statistics& statistics, const Iterate& iterate) const;
    void check_exact_relaxation(Iterate& iterate) const;
 };
 

@@ -72,7 +72,7 @@ void ConvexifiedHessian::regularize(Statistics& statistics, SymmetricMatrix<doub
          assert(is_finite(regularization_factor) && "The regularization coefficient diverged");
       }
    }
-   statistics.add_statistic("regularization", regularization_factor);
+   statistics.set("regularization", regularization_factor);
 }
 
 // Factory

@@ -8,9 +8,9 @@
 
 class BacktrackingLineSearch : public GlobalizationMechanism {
 public:
-   BacktrackingLineSearch(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);
+   BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);
 
-   void initialize(Statistics& statistics, Iterate& initial_iterate) override;
+   void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) override;
    [[nodiscard]] Iterate compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) override;
 
 private:
@@ -25,7 +25,8 @@ private:
          double primal_dual_step_length) const;
    [[nodiscard]] double decrease_step_length(double step_length) const;
    static void check_unboundedness(const Direction& direction);
-   void set_statistics(Statistics& statistics, const Direction& direction, double primal_dual_step_length) const;
+   void set_statistics(Statistics& statistics) const;
+   void set_statistics(Statistics& statistics, const Iterate& trial_iterate, const Direction& direction, double primal_dual_step_length) const;
    static void print_iteration(size_t number_iterations, double primal_dual_step_length);
 };
 

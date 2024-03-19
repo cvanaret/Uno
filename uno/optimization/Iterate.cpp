@@ -82,7 +82,6 @@ std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
    stream << "            ┌ Constraint: "; print_vector(stream, iterate.multipliers.constraints);
    stream << "Multipliers │ Lower bound: "; print_vector(stream, iterate.multipliers.lower_bounds);
    stream << "            └ Upper bound: "; print_vector(stream, iterate.multipliers.upper_bounds);
-
    stream << "Objective value: " << iterate.evaluations.objective << '\n';
 
    stream << "          ┌ Optimality stationarity: " << iterate.residuals.optimality_stationarity << '\n';

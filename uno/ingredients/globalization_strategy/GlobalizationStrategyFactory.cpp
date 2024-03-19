@@ -6,16 +6,16 @@
 #include "filter_method/LeyfferFilterMethod.hpp"
 #include "filter_method/WaechterFilterMethod.hpp"
 
-std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(Statistics& statistics, const std::string& strategy_type,
+std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& strategy_type,
       bool accept_when_switching_violated, const Options& options) {
    if (strategy_type == "l1_merit") {
-      return std::make_unique<l1MeritFunction>(statistics, options);
+      return std::make_unique<l1MeritFunction>(options);
    }
    else if (strategy_type == "leyffer_filter_method") {
-      return std::make_unique<LeyfferFilterMethod>(statistics, accept_when_switching_violated, options);
+      return std::make_unique<LeyfferFilterMethod>(accept_when_switching_violated, options);
    }
    else if (strategy_type == "waechter_filter_method") {
-      return std::make_unique<WaechterFilterMethod>(statistics, options);
+      return std::make_unique<WaechterFilterMethod>(options);
    }
    throw std::invalid_argument("GlobalizationStrategy " + strategy_type + " is not supported");
 }

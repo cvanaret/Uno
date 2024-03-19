@@ -9,12 +9,12 @@
 
 class ScaledModel: public Model {
 public:
-   ScaledModel(std::unique_ptr<Model> constraint_index, Iterate& initial_iterate, const Options& options);
+   ScaledModel(std::unique_ptr<Model> original_model, Iterate& initial_iterate, const Options& options);
 
-   [[nodiscard]] double get_variable_lower_bound(size_t variable_index) const override;
-   [[nodiscard]] double get_variable_upper_bound(size_t variable_index) const override;
-   [[nodiscard]] double get_constraint_lower_bound(size_t constraint_index) const override;
-   [[nodiscard]] double get_constraint_upper_bound(size_t constraint_index) const override;
+   [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
+   [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
+   [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
+   [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;
 
    [[nodiscard]] double evaluate_objective(const std::vector<double>& x) const override;
    void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const override;
@@ -61,7 +61,7 @@ inline ScaledModel::ScaledModel(std::unique_ptr<Model> original_model, Iterate& 
    // check the scaling factors
    assert(0 < this->scaling.get_objective_scaling() && "Objective scaling failed.");
    for ([[maybe_unused]] size_t constraint_index: Range(this->number_constraints)) {
-      assert(0 < this->scaling.get_constraint_scaling(j) && "Constraint scaling failed.");
+      assert(0 < this->scaling.get_constraint_scaling(constraint_index) && "Constraint scaling failed.");
    }
 
    // the constraint repartition (inequality/equality, linear) is the same as in the original model
@@ -94,22 +94,22 @@ inline ScaledModel::ScaledModel(std::unique_ptr<Model> original_model, Iterate& 
    }
 }
 
-inline double ScaledModel::get_variable_lower_bound(size_t variable_index) const {
-   return this->original_model->get_variable_lower_bound(variable_index);
+inline double ScaledModel::variable_lower_bound(size_t variable_index) const {
+   return this->original_model->variable_lower_bound(variable_index);
 }
 
-inline double ScaledModel::get_variable_upper_bound(size_t variable_index) const {
-   return this->original_model->get_variable_upper_bound(variable_index);
+inline double ScaledModel::variable_upper_bound(size_t variable_index) const {
+   return this->original_model->variable_upper_bound(variable_index);
 }
 
-inline double ScaledModel::get_constraint_lower_bound(size_t constraint_index) const {
-   const double lb = this->original_model->get_constraint_lower_bound(constraint_index);
+inline double ScaledModel::constraint_lower_bound(size_t constraint_index) const {
+   const double lb = this->original_model->constraint_lower_bound(constraint_index);
    // scale
    return this->scaling.get_constraint_scaling(constraint_index)*lb;
 }
 
-inline double ScaledModel::get_constraint_upper_bound(size_t constraint_index) const {
-   const double ub = this->original_model->get_constraint_upper_bound(constraint_index);
+inline double ScaledModel::constraint_upper_bound(size_t constraint_index) const {
+   const double ub = this->original_model->constraint_upper_bound(constraint_index);
    // scale
    return this->scaling.get_constraint_scaling(constraint_index)*ub;
 }

@@ -151,7 +151,7 @@ inline void l1RelaxedProblem::set_infeasibility_measure(Iterate& iterate, Norm /
    }
    else { // 0. < objective_multiplier
       iterate.evaluate_constraints(this->model);
-      iterate.progress.infeasibility = this->model.compute_constraint_violation(iterate.evaluations.constraints, Norm::L1);
+      iterate.progress.infeasibility = this->model.constraint_violation(iterate.evaluations.constraints, Norm::L1);
    }
 }
 
@@ -160,7 +160,7 @@ inline void l1RelaxedProblem::set_optimality_measure(Iterate& iterate) const {
       // constraint violation
       iterate.evaluate_constraints(this->model);
       const double constraint_violation = this->constraint_violation_coefficient *
-                                          this->model.compute_constraint_violation(iterate.evaluations.constraints, Norm::L1);
+            this->model.constraint_violation(iterate.evaluations.constraints, Norm::L1);
       iterate.progress.optimality = [=](double /*objective_multiplier*/) {
          return constraint_violation;
       };
@@ -183,8 +183,8 @@ inline double l1RelaxedProblem::compute_predicted_infeasibility_reduction_model(
    }
    else { // 0. < objective_multiplier
       // "‖c(x)‖₁ - ‖c(x) + ∇c(x)^T (αd)‖₁"
-      const double current_constraint_violation = this->model.compute_constraint_violation(current_iterate.evaluations.constraints, Norm::L1);
-      const double trial_linearized_constraint_violation = this->model.compute_linearized_constraint_violation(direction.primals,
+      const double current_constraint_violation = this->model.constraint_violation(current_iterate.evaluations.constraints, Norm::L1);
+      const double trial_linearized_constraint_violation = this->model.linearized_constraint_violation(direction.primals,
             current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian, step_length, Norm::L1);
       return current_constraint_violation - trial_linearized_constraint_violation;
    }
@@ -192,22 +192,22 @@ inline double l1RelaxedProblem::compute_predicted_infeasibility_reduction_model(
 
 inline std::function<double(double)> l1RelaxedProblem::compute_predicted_optimality_reduction_model(const Iterate& current_iterate,
       const Direction& direction, double step_length, const SymmetricMatrix<double>& hessian) const {
-   const double quadratic_problem = hessian.quadratic_product(direction.primals, direction.primals);
+   const double quadratic_term = hessian.quadratic_product(direction.primals, direction.primals);
    if (this->objective_multiplier == 0.) {
       // "‖c(x)‖₁ - ‖c(x) + ∇c(x)^T (αd)‖₁"
-      const double current_constraint_violation = this->model.compute_constraint_violation(current_iterate.evaluations.constraints, Norm::L1);
-      const double trial_linearized_constraint_violation = this->model.compute_linearized_constraint_violation(direction.primals,
+      const double current_constraint_violation = this->model.constraint_violation(current_iterate.evaluations.constraints, Norm::L1);
+      const double trial_linearized_constraint_violation = this->model.linearized_constraint_violation(direction.primals,
             current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian, step_length, Norm::L1);
       return [=](double /*objective_multiplier*/) {
          return this->constraint_violation_coefficient * (current_constraint_violation - trial_linearized_constraint_violation) -
-            step_length*step_length/2. * quadratic_problem;
+            step_length*step_length/2. * quadratic_term;
       };
    }
    else { // 0. < objective_multiplier
       // "-ρ*∇f(x)^T (αd)"
       const double directional_derivative = dot(direction.primals, current_iterate.evaluations.objective_gradient);
       return [=](double objective_multiplier) {
-         return step_length * (-objective_multiplier*directional_derivative) - step_length*step_length/2. * quadratic_problem;
+         return step_length * (-objective_multiplier*directional_derivative) - step_length*step_length/2. * quadratic_term;
       };
    }
 }
@@ -223,10 +223,10 @@ inline double l1RelaxedProblem::compute_complementarity_error(const std::vector<
    // construct a lazy expression for complementarity for variable bounds
    VectorExpression<double> variable_complementarity(this->get_number_original_variables(), [&](size_t variable_index) {
       if (0. < multipliers.lower_bounds[variable_index]) {
-         return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->model.get_variable_lower_bound(variable_index));
+         return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->model.variable_lower_bound(variable_index));
       }
       if (multipliers.upper_bounds[variable_index] < 0.) {
-         return multipliers.upper_bounds[variable_index] * (primals[variable_index] - this->model.get_variable_upper_bound(variable_index));
+         return multipliers.upper_bounds[variable_index] * (primals[variable_index] - this->model.variable_upper_bound(variable_index));
       }
       return 0.;
    });
@@ -256,7 +256,7 @@ inline double l1RelaxedProblem::compute_complementarity_error(const std::vector<
 
 inline double l1RelaxedProblem::get_variable_lower_bound(size_t variable_index) const {
    if (variable_index < this->model.number_variables) { // original variable
-      return this->model.get_variable_lower_bound(variable_index);
+      return this->model.variable_lower_bound(variable_index);
    }
    else { // elastic variable in [0, +inf[
       return 0.;
@@ -265,7 +265,7 @@ inline double l1RelaxedProblem::get_variable_lower_bound(size_t variable_index) 
 
 inline double l1RelaxedProblem::get_variable_upper_bound(size_t variable_index) const {
    if (variable_index < this->model.number_variables) { // original variable
-      return this->model.get_variable_upper_bound(variable_index);
+      return this->model.variable_upper_bound(variable_index);
    }
    else { // elastic variable in [0, +inf[
       return INF<double>;
@@ -273,11 +273,11 @@ inline double l1RelaxedProblem::get_variable_upper_bound(size_t variable_index) 
 }
 
 inline double l1RelaxedProblem::get_constraint_lower_bound(size_t constraint_index) const {
-   return this->model.get_constraint_lower_bound(constraint_index);
+   return this->model.constraint_lower_bound(constraint_index);
 }
 
 inline double l1RelaxedProblem::get_constraint_upper_bound(size_t constraint_index) const {
-   return this->model.get_constraint_upper_bound(constraint_index);
+   return this->model.constraint_upper_bound(constraint_index);
 }
 
 inline size_t l1RelaxedProblem::get_number_objective_gradient_nonzeros() const {
@@ -311,10 +311,10 @@ inline size_t l1RelaxedProblem::count_elastic_variables(const Model& model) {
    size_t number_elastic_variables = 0;
    // if the subproblem uses slack variables, the bounds of the constraints are [0, 0]
    for (size_t constraint_index: Range(model.number_constraints)) {
-      if (is_finite(model.get_constraint_lower_bound(constraint_index))) {
+      if (is_finite(model.constraint_lower_bound(constraint_index))) {
          number_elastic_variables++;
       }
-      if (is_finite(model.get_constraint_upper_bound(constraint_index))) {
+      if (is_finite(model.constraint_upper_bound(constraint_index))) {
          number_elastic_variables++;
       }
    }
@@ -325,12 +325,12 @@ inline void l1RelaxedProblem::generate_elastic_variables() {
    // generate elastic variables to relax the constraints
    size_t elastic_index = this->model.number_variables;
    for (size_t constraint_index: Range(this->model.number_constraints)) {
-      if (is_finite(this->model.get_constraint_upper_bound(constraint_index))) {
+      if (is_finite(this->model.constraint_upper_bound(constraint_index))) {
          // nonnegative variable p that captures the positive part of the constraint violation
          this->elastic_variables.positive.insert(constraint_index, elastic_index);
          elastic_index++;
       }
-      if (is_finite(this->model.get_constraint_lower_bound(constraint_index))) {
+      if (is_finite(this->model.constraint_lower_bound(constraint_index))) {
          // nonpositive variable n that captures the negative part of the constraint violation
          this->elastic_variables.negative.insert(constraint_index, elastic_index);
          elastic_index++;

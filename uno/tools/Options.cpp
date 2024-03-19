@@ -102,7 +102,8 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["tolerance"] = "1e-8";
       options["loose_tolerance"] = "1e-6";
       options["loose_tolerance_consecutive_iteration_threshold"] = "15";
-      options["feasibility_restoration_test_linearized_feasibility"] = "no";
+      options["switch_to_optimality_requires_acceptance"] = "yes";
+      options["switch_to_optimality_requires_linearized_feasibility"] = "no";
       options["LS_scale_duals_with_step_length"] = "yes";
    }
    else if (preset_name == "filtersqp") {
@@ -120,7 +121,8 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["tolerance"] = "1e-6";
       options["loose_tolerance"] = "1e-6";
       options["TR_min_radius"] = "1e-8";
-      options["feasibility_restoration_test_linearized_feasibility"] = "yes";
+      options["switch_to_optimality_requires_acceptance"] = "no";
+      options["switch_to_optimality_requires_linearized_feasibility"] = "yes";
    }
    else if (preset_name == "byrd") {
       options["constraint_relaxation_strategy"] = "l1_relaxation";
@@ -142,7 +144,7 @@ void find_preset(const std::string& preset_name, Options& options) {
    }
 }
 
-void get_command_line_options(int argc, char* argv[], Options& options) {
+void get_command_line_arguments(int argc, char* argv[], Options& options) {
    // build the (name, value) map
    int i = 1;
    while (i < argc - 1) {

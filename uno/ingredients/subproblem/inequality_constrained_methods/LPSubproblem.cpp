@@ -5,9 +5,11 @@
 #include "LPSubproblem.hpp"
 #include "solvers/LP/LPSolverFactory.hpp"
 
-LPSubproblem::LPSubproblem(size_t max_number_variables, size_t max_number_constraints, const Options& options) :
+LPSubproblem::LPSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_objective_gradient_nonzeros,
+      size_t max_number_jacobian_nonzeros, const Options& options) :
       InequalityConstrainedMethod(max_number_variables, max_number_constraints),
-      solver(LPSolverFactory::create(max_number_variables, max_number_constraints, options.get_string("LP_solver"), options)) {
+      solver(LPSolverFactory::create(options.get_string("LP_solver"), max_number_variables, max_number_constraints,
+            max_number_objective_gradient_nonzeros, max_number_jacobian_nonzeros, options)) {
 }
 
 void LPSubproblem::generate_initial_iterate(const NonlinearProblem& /*problem*/, Iterate& /*initial_iterate*/) {
