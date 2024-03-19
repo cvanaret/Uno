@@ -22,7 +22,6 @@ private:
    const double minimum_radius;
    const double radius_reset_threshold;
 
-   Iterate assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction);
    bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, size_t number_iterations);
    void possibly_increase_radius(double step_norm);

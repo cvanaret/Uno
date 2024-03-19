@@ -12,10 +12,10 @@ GlobalizationMechanism::GlobalizationMechanism(ConstraintRelaxationStrategy& con
       unbounded_objective_threshold(options.get_double("unbounded_objective_threshold")) {
 }
 
-Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate, const Direction& direction, double primal_step_length,
-      double dual_step_length, double bound_dual_step_length) {
+Iterate GlobalizationMechanism::assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction,
+      double primal_step_length, double dual_step_length, double bound_dual_step_length) {
    const auto take_dual_step = [&](Iterate& iterate) {
-      // take dual step: line-search carried out only on constraint multipliers. Bound multipliers updated with full step length
+      // take dual step: line-search carried out only on constraint multipliers. Bound multipliers updated with full bound dual step length
       add_vectors(current_iterate.multipliers.constraints, direction.multipliers.constraints, dual_step_length, iterate.multipliers.constraints);
       add_vectors(current_iterate.multipliers.lower_bounds, direction.multipliers.lower_bounds, bound_dual_step_length, iterate.multipliers.lower_bounds);
       add_vectors(current_iterate.multipliers.upper_bounds, direction.multipliers.upper_bounds, bound_dual_step_length, iterate.multipliers.upper_bounds);
@@ -25,12 +25,14 @@ Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate,
       Iterate trial_iterate(current_iterate.primals.size(), direction.multipliers.constraints.size());
       // take primal step
       add_vectors(current_iterate.primals, direction.primals, primal_step_length, trial_iterate.primals);
+      // project the trial iterate onto the bounds to avoid numerical errors
+      model.project_onto_variable_bounds(trial_iterate.primals);
       // take dual step
       take_dual_step(trial_iterate);
       return trial_iterate;
    }
    else {
-      // d = 0, no primal step to take. Take only dual step
+      // d = 0, no primal step to take. Take only dual step (reuse the current iterate)
       take_dual_step(current_iterate);
       current_iterate.progress = {INF<double>, {}, INF<double>};
       DEBUG << "Primal step is 0. The objective and constraints will not be re-evaluated.\n";

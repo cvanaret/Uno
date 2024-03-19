@@ -7,8 +7,7 @@
 #include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
 
-BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy,
-         const Options& options):
+BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options):
       GlobalizationMechanism(constraint_relaxation_strategy, options),
       backtracking_ratio(options.get_double("LS_backtracking_ratio")),
       minimum_step_length(options.get_double("LS_min_step_length")),
@@ -57,7 +56,11 @@ Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics
 
       try {
          // assemble the trial iterate by going a fraction along the direction
-         Iterate trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction, step_length);
+         Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, direction, step_length,
+               // scale or not the dual directions with the step lengths
+               this->scale_duals_with_step_length ? step_length : 1.,
+               this->scale_duals_with_step_length ? direction.bound_dual_step_length : 1.);
+
          // check whether the trial iterate is accepted
          if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, step_length)) {
             // check termination criteria
@@ -102,18 +105,6 @@ Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics
             warmstart_information);
       return trial_iterate_feasibility;
    }
-}
-
-Iterate BacktrackingLineSearch::assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction,
-      double primal_dual_step_length) const {
-   Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, primal_dual_step_length,
-         // scale or not the dual directions with the step lengths
-         this->scale_duals_with_step_length ? primal_dual_step_length : 1.,
-         this->scale_duals_with_step_length ? direction.bound_dual_step_length : 1.);
-
-   // project the steps within the bounds to avoid numerical errors
-   model.project_onto_variable_bounds(trial_iterate.primals);
-   return trial_iterate;
 }
 
 double BacktrackingLineSearch::decrease_step_length(double step_length) const {

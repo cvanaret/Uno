@@ -30,7 +30,7 @@ protected:
    const Norm progress_norm;
    const double unbounded_objective_threshold;
 
-   static Iterate assemble_trial_iterate(Iterate& current_iterate, const Direction& direction, double primal_step_length,
+   static Iterate assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction, double primal_step_length,
          double dual_step_length, double bound_dual_step_length);
    [[nodiscard]] TerminationStatus check_convergence(const Model& model, Iterate& current_iterate);
    [[nodiscard]] TerminationStatus check_convergence(const Model& model, Iterate& current_iterate, double tolerance) const;

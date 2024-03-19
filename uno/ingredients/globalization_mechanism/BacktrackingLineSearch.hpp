@@ -21,8 +21,6 @@ private:
 
    [[nodiscard]] Iterate backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate, const Direction& direction,
       WarmstartInformation& warmstart_information);
-   [[nodiscard]] Iterate assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction,
-         double primal_dual_step_length) const;
    [[nodiscard]] double decrease_step_length(double step_length) const;
    static void check_unboundedness(const Direction& direction);
    void set_statistics(Statistics& statistics) const;
