@@ -7,8 +7,7 @@
 #include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
 
-TrustRegionStrategy::TrustRegionStrategy(ConstraintRelaxationStrategy& constraint_relaxation_strategy,
-         const Options& options) :
+TrustRegionStrategy::TrustRegionStrategy(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options) :
       GlobalizationMechanism(constraint_relaxation_strategy, options),
       radius(options.get_double("TR_radius")),
       increase_factor(options.get_double("TR_increase_factor")),
@@ -50,6 +49,7 @@ Iterate TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const 
 
          // deal with errors in the subproblem
          if (direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
+            // the subproblem is always bounded, but the objective may exceed a very large negative value
             this->set_statistics(statistics, direction, number_iterations);
             this->decrease_radius_aggressively();
             warmstart_information.set_cold_start();
@@ -60,8 +60,13 @@ Iterate TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const 
             warmstart_information.set_cold_start();
          }
          else {
+            //Iterate trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction);
+            Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, direction, direction.primal_dual_step_length,
+                  direction.primal_dual_step_length, direction.bound_dual_step_length);
+            // reset bound multipliers of active trust region
+            this->reset_active_trust_region_multipliers(model, direction, trial_iterate);
+
             // check whether the trial iterate (current iterate + full step) is acceptable
-            Iterate trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction);
             if (this->is_iterate_acceptable(statistics, model, current_iterate, trial_iterate, direction, number_iterations)) {
                this->reset_radius();
                return trial_iterate;
@@ -73,12 +78,8 @@ Iterate TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const 
             }
          }
       }
-      catch (const std::runtime_error& e) {
-         throw;
-      }
       // if an evaluation error occurs, decrease the radius
       catch (const EvaluationError& e) {
-         // WARNING << YELLOW << e.what() << RESET;
          this->set_statistics(statistics, number_iterations);
          statistics.set("status", "eval. error");
          if (Logger::level == INFO) statistics.print_current_line();
@@ -87,17 +88,6 @@ Iterate TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const 
       }
    }
    throw std::runtime_error("TR strategy failed for unknown reasons, this should not happen.");
-}
-
-Iterate TrustRegionStrategy::assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction) {
-   Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(current_iterate, direction, direction.primal_dual_step_length,
-         direction.primal_dual_step_length, direction.bound_dual_step_length);
-   // project the trial iterate onto the bounds to avoid numerical errors
-   model.project_onto_variable_bounds(trial_iterate.primals);
-
-   // reset bound multipliers of active trust region
-   this->reset_active_trust_region_multipliers(model, direction, trial_iterate);
-   return trial_iterate;
 }
 
 // the trial iterate is accepted by the constraint relaxation strategy or if the step is small and we cannot switch to solving the feasibility problem
