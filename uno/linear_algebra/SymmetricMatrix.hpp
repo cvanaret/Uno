@@ -7,11 +7,12 @@
 #include <vector>
 #include <functional>
 #include <cassert>
+#include "Matrix.hpp"
 #include "Vector.hpp"
 #include "SparseVector.hpp"
 
 template <typename ElementType>
-class SymmetricMatrix {
+class SymmetricMatrix: public Matrix<ElementType> {
 public:
    size_t dimension;
    size_t number_nonzeros{0};
@@ -22,9 +23,14 @@ public:
 
    virtual void reset();
 
-   ElementType quadratic_product(const std::vector<ElementType>& row_index, const std::vector<ElementType>& column_index) const;
+   [[nodiscard]] size_t number_rows() const;
+   [[nodiscard]] size_t number_columns() const;
 
-   virtual void for_each(const std::function<void(size_t, size_t, ElementType)>& f) const = 0;
+   template <typename VectorType, typename ResultType>
+   void product(const VectorType& vector, ResultType& result) const;
+
+   ElementType quadratic_product(const std::vector<ElementType>& x, const std::vector<ElementType>& y) const;
+
    // build the matrix incrementally
    virtual void insert(ElementType term, size_t row_index, size_t column_index) = 0;
    // this method will be used by the CSCSymmetricMatrix subclass
@@ -47,7 +53,8 @@ protected:
 // implementation
 
 template <typename ElementType>
-SymmetricMatrix<ElementType>::SymmetricMatrix(size_t max_dimension, size_t original_capacity, bool use_regularization) :
+SymmetricMatrix<ElementType>::SymmetricMatrix(size_t max_dimension, size_t original_capacity, bool use_regularization):
+      Matrix<ElementType>(),
       dimension(max_dimension),
       // if regularization is used, allocate the necessary space
       capacity(original_capacity + (use_regularization ? max_dimension : 0)),
@@ -59,6 +66,28 @@ template <typename ElementType>
 void SymmetricMatrix<ElementType>::reset() {
    this->number_nonzeros = 0;
    this->entries.clear();
+}
+
+template <typename ElementType>
+size_t SymmetricMatrix<ElementType>::number_rows() const {
+   return this->dimension;
+}
+
+template <typename ElementType>
+size_t SymmetricMatrix<ElementType>::number_columns() const {
+   return this->dimension;
+}
+
+template <typename ElementType>
+template <typename VectorType, typename ResultType>
+void SymmetricMatrix<ElementType>::product(const VectorType& vector, ResultType& result) const {
+   this->for_each([&](size_t row_index, size_t column_index, double entry) {
+      result[row_index] += entry*vector[column_index];
+      // off-diagonal term on the other side of the diagonal
+      if (row_index != column_index) {
+         result[column_index] += entry*vector[row_index];
+      }
+   });
 }
 
 template <typename ElementType>

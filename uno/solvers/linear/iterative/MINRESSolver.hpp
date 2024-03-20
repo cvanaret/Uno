@@ -99,7 +99,8 @@ MINRESSolver<NumericalType, LinearOperator>::MINRESSolver(const LinearOperator& 
 
 // TODO: user-defined termination criterion
 template <typename NumericalType, typename LinearOperator>
-void MINRESSolver<NumericalType, LinearOperator>::solve_indefinite_system(const SymmetricMatrix<NumericalType>& /*matrix*/, const std::vector<NumericalType>& rhs, std::vector<NumericalType>& /*result*/) {
+void MINRESSolver<NumericalType, LinearOperator>::solve_indefinite_system(const SymmetricMatrix<NumericalType>& /*matrix*/,
+      const std::vector<NumericalType>& rhs, std::vector<NumericalType>& result) {
    this->iteration = 1;
    // v_0 = 0
    initialize_vector(this->v_km1, NumericalType(0));
@@ -107,19 +108,19 @@ void MINRESSolver<NumericalType, LinearOperator>::solve_indefinite_system(const 
    this->beta_k = std::sqrt(dot_product(rhs, rhs));
    // set phi_0 = tau_0 = beta_1
    this->phi_km1 = this->tau_km1 = this->beta_k;
-   std::cout << "beta_1 = " << this->beta_k << '\n';
+   // std::cout << "beta_1 = " << this->beta_k << '\n';
    
    this->v_k = rhs;
    scale(this->v_k, NumericalType(1)/this->beta_k);
    
    bool termination = false;
    while (not termination) {
-      std::cout << "\nCurrent x: "; print_vector(std::cout, this->x_k);
-      std::cout << "v_" << this->iteration << " = "; print_vector(std::cout, v_k);
+      // std::cout << "\nCurrent x: "; print_vector(std::cout, this->x_k);
+      // std::cout << "v_" << this->iteration << " = "; print_vector(std::cout, v_k);
       
       // compute the Lanczos step
       const auto lanczos_coefs = this->compute_lanczos_step(this->linear_operator);
-      std::cout << "beta_" << this->iteration+1 << " = " << lanczos_coefs.beta_kp1 << '\n';
+      // std::cout << "beta_" << this->iteration+1 << " = " << lanczos_coefs.beta_kp1 << '\n';
       
       // last left orthogonalization on middle two entries in last column of Tk
       const NumericalType delta2_k = this->givens_rotation_km1.cosine*this->delta1_k + this->givens_rotation_km1.sine*this->alpha_k;
@@ -127,8 +128,8 @@ void MINRESSolver<NumericalType, LinearOperator>::solve_indefinite_system(const 
       
       // test for negative curvature descent
       if (this->givens_rotation_km1.cosine*gamma1_k >= NumericalType(0)) {
-         std::cout << this->givens_rotation_km1.cosine*gamma1_k << '\n';
-         std::cout << "DIRECTION OF NEGATIVE CURVATURE\n";
+         // std::cout << this->givens_rotation_km1.cosine*gamma1_k << '\n';
+         // std::cout << "DIRECTION OF NEGATIVE CURVATURE\n";
       }
       
       // last left orthogonalization to produce first two entries of T_k+1 e_k+1
@@ -181,12 +182,13 @@ void MINRESSolver<NumericalType, LinearOperator>::solve_indefinite_system(const 
       // move on to next iteration
       this->iteration++;
    }
-   std::cout << "SOLUTION: "; print_vector(std::cout, this->x_k);
+   // std::cout << "SOLUTION: "; print_vector(std::cout, this->x_k);
+   copy_from(result, this->x_k);
 }
 
 template <typename NumericalType, typename LinearOperator>
 LanczosCoefficients<NumericalType> MINRESSolver<NumericalType, LinearOperator>::compute_lanczos_step(const LinearOperator& linear_operator) {
-   std::cout << "Starting compute_lanczos_step\n";
+   // std::cout << "Starting compute_lanczos_step\n";
    // compute matrix-vector product in p_k
    linear_operator(this->v_k, this->p_k);
    
