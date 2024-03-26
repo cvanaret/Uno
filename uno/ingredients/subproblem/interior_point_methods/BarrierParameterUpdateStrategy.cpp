@@ -26,7 +26,7 @@ void BarrierParameterUpdateStrategy::set_barrier_parameter(double new_barrier_pa
    this->barrier_parameter = new_barrier_parameter;
 }
 
-bool BarrierParameterUpdateStrategy::update_barrier_parameter(const NonlinearProblem& problem, const Iterate& current_iterate) {
+bool BarrierParameterUpdateStrategy::update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate) {
    // primal-dual errors
    const double scaled_stationarity = current_iterate.residuals.optimality_stationarity/current_iterate.residuals.stationarity_scaling;
    double primal_dual_error = std::max({
@@ -57,7 +57,7 @@ bool BarrierParameterUpdateStrategy::update_barrier_parameter(const NonlinearPro
    return parameter_updated;
 }
 
-double BarrierParameterUpdateStrategy::compute_shifted_complementarity_error(const NonlinearProblem& problem, const Iterate& iterate,
+double BarrierParameterUpdateStrategy::compute_shifted_complementarity_error(const OptimizationProblem& problem, const Iterate& iterate,
       double shift_value) {
    VectorExpression<double> shifted_bound_complementarity(problem.number_variables, [&](size_t variable_index) {
       double result = 0.;

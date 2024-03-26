@@ -22,23 +22,23 @@ public:
 
    // virtual methods implemented by subclasses
    virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
-   virtual void generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) = 0;
-   virtual Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+   virtual void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) = 0;
+   virtual Direction solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const WarmstartInformation& warmstart_information) = 0;
 
    void set_trust_region_radius(double new_trust_region_radius);
    virtual void initialize_feasibility_problem() = 0;
    virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
-   virtual void exit_feasibility_problem(const NonlinearProblem& problem, Iterate& trial_iterate) = 0;
+   virtual void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) = 0;
 
    // progress measures
-   [[nodiscard]] virtual std::function<double(double)> compute_predicted_optimality_reduction_model(const NonlinearProblem& problem,
+   [[nodiscard]] virtual std::function<double(double)> compute_predicted_optimality_reduction_model(const OptimizationProblem& problem,
          const Iterate& current_iterate, const Direction& direction, double step_length) const = 0;
-   virtual void set_auxiliary_measure(const NonlinearProblem& problem, Iterate& iterate) = 0;
-   [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const NonlinearProblem& problem,
+   virtual void set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) = 0;
+   [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const OptimizationProblem& problem,
          const Iterate& current_iterate, const Direction& direction, double step_length) const = 0;
 
-   virtual void postprocess_iterate(const NonlinearProblem& problem, Iterate& iterate) = 0;
+   virtual void postprocess_iterate(const OptimizationProblem& problem, Iterate& iterate) = 0;
 
    [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
    virtual void set_initial_point(const std::vector<double>& initial_point) = 0;

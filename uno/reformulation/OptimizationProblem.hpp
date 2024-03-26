@@ -1,8 +1,8 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_NONLINEARPROBLEM_H
-#define UNO_NONLINEARPROBLEM_H
+#ifndef UNO_OPTIMIZATIONPROBLEM_H
+#define UNO_OPTIMIZATIONPROBLEM_H
 
 #include <vector>
 #include "optimization/Iterate.hpp"
@@ -12,10 +12,10 @@
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "ingredients/subproblem/Direction.hpp"
 
-class NonlinearProblem {
+class OptimizationProblem {
 public:
-   NonlinearProblem(const Model& model, size_t number_variables, size_t number_constraints);
-   virtual ~NonlinearProblem() = default;
+   OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints);
+   virtual ~OptimizationProblem() = default;
 
    const Model& model;
    const size_t number_variables; /*!< Number of variables */
@@ -55,7 +55,7 @@ public:
    [[nodiscard]] virtual size_t get_number_hessian_nonzeros() const = 0;
 };
 
-inline NonlinearProblem::NonlinearProblem(const Model& model, size_t number_variables, size_t number_constraints):
+inline OptimizationProblem::OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints):
       model(model), number_variables(number_variables), number_constraints(number_constraints) {
    this->lower_bounded_variables.reserve(this->number_variables);
    this->upper_bounded_variables.reserve(this->number_variables);
@@ -63,16 +63,16 @@ inline NonlinearProblem::NonlinearProblem(const Model& model, size_t number_vari
    this->single_upper_bounded_variables.reserve(this->number_variables);
 }
 
-inline bool NonlinearProblem::is_constrained() const {
+inline bool OptimizationProblem::is_constrained() const {
    return (0 < this->number_constraints);
 }
 
-inline bool NonlinearProblem::has_inequality_constraints() const {
+inline bool OptimizationProblem::has_inequality_constraints() const {
    return (not this->model.inequality_constraints.empty());
 }
 
-inline size_t NonlinearProblem::get_number_original_variables() const {
+inline size_t OptimizationProblem::get_number_original_variables() const {
    return this->model.number_variables;
 }
 
-#endif // UNO_NONLINEARPROBLEM_H
+#endif // UNO_OPTIMIZATIONPROBLEM_H

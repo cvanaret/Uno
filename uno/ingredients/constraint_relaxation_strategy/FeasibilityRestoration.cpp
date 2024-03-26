@@ -54,6 +54,7 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
          else {
             // infeasible subproblem: switch to the feasibility problem, starting from the current direction
             statistics.set("status", "infeas. subproblem");
+            DEBUG << "/!\\ The subproblem is infeasible\n";
             this->switch_to_feasibility_problem(statistics, current_iterate, warmstart_information);
             this->subproblem->set_initial_point(direction.primals);
          }
@@ -105,7 +106,7 @@ void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistic
    statistics.start_new_line();
 }
 
-Direction FeasibilityRestoration::solve_subproblem(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+Direction FeasibilityRestoration::solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
       WarmstartInformation& warmstart_information) {
    if (this->switched_to_optimality_phase) {
       this->switched_to_optimality_phase = false;
@@ -190,14 +191,14 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
    return accept_iterate;
 }
 
-void FeasibilityRestoration::evaluate_progress_measures(const NonlinearProblem& problem, Iterate& iterate) const {
+void FeasibilityRestoration::evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate) const {
    problem.set_infeasibility_measure(iterate, this->progress_norm);
    problem.set_optimality_measure(iterate);
    this->subproblem->set_auxiliary_measure(problem, iterate);
 }
 
 ProgressMeasures FeasibilityRestoration::compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length) {
-   const NonlinearProblem& current_problem = this->current_problem();
+   const OptimizationProblem& current_problem = this->current_problem();
    return {
       current_problem.compute_predicted_infeasibility_reduction_model(current_iterate, direction, step_length, this->progress_norm),
       this->subproblem->compute_predicted_optimality_reduction_model(current_problem, current_iterate, direction, step_length),
@@ -205,7 +206,7 @@ ProgressMeasures FeasibilityRestoration::compute_predicted_reduction_models(Iter
    };
 }
 
-const NonlinearProblem& FeasibilityRestoration::current_problem() const {
+const OptimizationProblem& FeasibilityRestoration::current_problem() const {
    if (this->current_phase == Phase::OPTIMALITY) {
       return this->optimality_problem;
    }

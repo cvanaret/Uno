@@ -15,10 +15,10 @@ public:
          size_t max_number_jacobian_nonzeros, size_t max_number_hessian_nonzeros, const Options& options);
 
    void initialize_statistics(Statistics& statistics, const Options& options) override;
-   void generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) override;
-   [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+   void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
+   [[nodiscard]] Direction solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const WarmstartInformation& warmstart_information) override;
-   [[nodiscard]] std::function<double(double)> compute_predicted_optimality_reduction_model(const NonlinearProblem& problem,
+   [[nodiscard]] std::function<double(double)> compute_predicted_optimality_reduction_model(const OptimizationProblem& problem,
          const Iterate& current_iterate, const Direction& direction, double step_length) const override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
@@ -29,7 +29,7 @@ protected:
    const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
    const std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
 
-   void evaluate_functions(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+   void evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const WarmstartInformation& warmstart_information);
 };
 

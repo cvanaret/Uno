@@ -130,7 +130,7 @@ Direction l1Relaxation::solve_sequence_of_relaxed_subproblems(Statistics& statis
    return direction;
 }
 
-Direction l1Relaxation::solve_subproblem(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+Direction l1Relaxation::solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
       const WarmstartInformation& warmstart_information) {
    DEBUG << "Solving the subproblem with penalty parameter " << problem.get_objective_multiplier() << "\n\n";
 

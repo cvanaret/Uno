@@ -6,7 +6,7 @@
 
 #include <memory>
 #include <vector>
-#include "reformulation/NonlinearProblem.hpp"
+#include "reformulation/OptimizationProblem.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 #include "tools/Options.hpp"
 #include "tools/Statistics.hpp"
@@ -19,7 +19,7 @@ public:
    std::unique_ptr<SymmetricMatrix<double>> hessian;
    size_t evaluation_count{0};
 
-   virtual void evaluate(Statistics& statistics, const NonlinearProblem& problem, const std::vector<double>& primal_variables,
+   virtual void evaluate(Statistics& statistics, const OptimizationProblem& problem, const std::vector<double>& primal_variables,
          const std::vector<double>& constraint_multipliers) = 0;
 };
 
@@ -28,7 +28,7 @@ class ExactHessian : public HessianModel {
 public:
    explicit ExactHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options);
 
-   void evaluate(Statistics& statistics, const NonlinearProblem& problem, const std::vector<double>& primal_variables,
+   void evaluate(Statistics& statistics, const OptimizationProblem& problem, const std::vector<double>& primal_variables,
          const std::vector<double>& constraint_multipliers) override;
 };
 
@@ -37,7 +37,7 @@ class ConvexifiedHessian : public HessianModel {
 public:
    ConvexifiedHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options);
 
-   void evaluate(Statistics& statistics, const NonlinearProblem& problem, const std::vector<double>& primal_variables,
+   void evaluate(Statistics& statistics, const OptimizationProblem& problem, const std::vector<double>& primal_variables,
          const std::vector<double>& constraint_multipliers) override;
 
 protected:

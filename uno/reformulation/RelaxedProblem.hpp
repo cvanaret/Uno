@@ -4,9 +4,9 @@
 #ifndef UNO_RELAXEDPROBLEM_H
 #define UNO_RELAXEDPROBLEM_H
 
-#include "NonlinearProblem.hpp"
+#include "OptimizationProblem.hpp"
 
-class RelaxedProblem: public NonlinearProblem {
+class RelaxedProblem: public OptimizationProblem {
 public:
    RelaxedProblem(const Model& model, size_t number_variables, size_t number_constraints);
    
@@ -16,7 +16,7 @@ public:
 };
 
 inline RelaxedProblem::RelaxedProblem(const Model& model, size_t number_variables, size_t number_constraints):
-      NonlinearProblem(model, number_variables, number_constraints) {
+      OptimizationProblem(model, number_variables, number_constraints) {
 }
 
 #endif // UNO_RELAXEDPROBLEM_H

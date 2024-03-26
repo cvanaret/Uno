@@ -4,9 +4,9 @@
 #ifndef UNO_OPTIMALITYPROBLEM_H
 #define UNO_OPTIMALITYPROBLEM_H
 
-#include "NonlinearProblem.hpp"
+#include "OptimizationProblem.hpp"
 
-class OptimalityProblem: public NonlinearProblem {
+class OptimalityProblem: public OptimizationProblem {
 public:
    explicit OptimalityProblem(const Model& model);
 
@@ -34,7 +34,7 @@ public:
 };
 
 inline OptimalityProblem::OptimalityProblem(const Model& model):
-      NonlinearProblem(model, model.number_variables, model.number_constraints) {
+      OptimizationProblem(model, model.number_variables, model.number_constraints) {
    // figure out bounded variables
    for (size_t variable_index: this->model.lower_bounded_variables) {
       this->lower_bounded_variables.push_back(variable_index);

@@ -57,7 +57,7 @@ protected:
    Direction solve_sequence_of_relaxed_subproblems(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information);
    Direction solve_l1_relaxed_problem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter,
          const WarmstartInformation& warmstart_information);
-   Direction solve_subproblem(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+   Direction solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const WarmstartInformation& warmstart_information);
 
    // functions that decrease the penalty parameter to enforce particular conditions
