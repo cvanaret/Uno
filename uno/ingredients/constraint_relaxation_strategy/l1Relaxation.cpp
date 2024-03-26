@@ -51,9 +51,14 @@ void l1Relaxation::initialize(Statistics& statistics, Iterate& initial_iterate, 
    this->globalization_strategy->initialize(statistics, initial_iterate, options);
 
    this->set_statistics(statistics, initial_iterate);
+   statistics.set("penalty param.", this->penalty_parameter);
+   if (this->original_model.is_constrained()) {
+      statistics.set("primal infeas.", initial_iterate.progress.infeasibility);
+   }
 }
 
 Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information) {
+   statistics.set("penalty param.", this->penalty_parameter);
    if (0. < this->penalty_parameter) {
       return this->solve_sequence_of_relaxed_subproblems(statistics, current_iterate, warmstart_information);
    }
@@ -222,7 +227,7 @@ Direction l1Relaxation::enforce_descent_direction_for_l1_merit(Statistics& stati
       DEBUG << "Further decrease the penalty parameter to " << this->penalty_parameter << '\n';
       direction = this->solve_l1_relaxed_problem(statistics, current_iterate, this->penalty_parameter, warmstart_information);
    }
-   DEBUG << "Condition enforce_descent_direction_for_l1_merit is true\n";
+   DEBUG << "Condition enforce_descent_direction_for_l1_merit is true\n\n";
    return direction;
 }
 
@@ -272,6 +277,9 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
       this->set_statistics(statistics, trial_iterate);
       this->check_exact_relaxation(trial_iterate);
    }
+   if (this->original_model.is_constrained()) {
+      statistics.set("primal infeas.", trial_iterate.progress.infeasibility);
+   }
    return accept_iterate;
 }
 
@@ -309,10 +317,6 @@ void l1Relaxation::check_exact_relaxation(Iterate& iterate) const {
 void l1Relaxation::set_statistics(Statistics& statistics, const Iterate& iterate) const {
    statistics.set("complementarity", iterate.residuals.optimality_complementarity);
    statistics.set("stationarity", iterate.residuals.optimality_stationarity);
-   statistics.set("penalty param.", this->penalty_parameter);
-   if (this->original_model.is_constrained()) {
-      statistics.set("primal infeas.", iterate.progress.infeasibility);
-   }
 }
 
 size_t l1Relaxation::get_hessian_evaluation_count() const {

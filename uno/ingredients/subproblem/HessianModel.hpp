@@ -26,7 +26,7 @@ public:
 // Exact Hessian
 class ExactHessian : public HessianModel {
 public:
-   explicit ExactHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options);
+   ExactHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options);
 
    void evaluate(Statistics& statistics, const OptimizationProblem& problem, const std::vector<double>& primal_variables,
          const std::vector<double>& constraint_multipliers) override;

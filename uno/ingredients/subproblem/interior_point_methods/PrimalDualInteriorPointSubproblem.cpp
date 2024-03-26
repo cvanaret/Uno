@@ -175,6 +175,7 @@ Direction PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const
    if (not this->solving_feasibility_problem) {
       this->update_barrier_parameter(problem, current_iterate);
    }
+   statistics.set("barrier param.", this->barrier_parameter());
 
    // evaluate the functions at the current iterate
    this->evaluate_functions(statistics, problem, current_iterate, warmstart_information);
@@ -187,7 +188,6 @@ Direction PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const
    assert(this->direction.status == SubproblemStatus::OPTIMAL && "The primal-dual perturbed subproblem was not solved to optimality");
    this->number_subproblems_solved++;
    this->assemble_primal_dual_direction(problem, current_iterate);
-   statistics.set("barrier param.", this->barrier_parameter());
 
    // determine if the direction is a "small direction" (Section 3.9 of the Ipopt paper) TODO
    const bool is_small_step = PrimalDualInteriorPointSubproblem::is_small_step(problem, current_iterate, this->direction);
