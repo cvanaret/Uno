@@ -37,22 +37,22 @@ void InequalityConstrainedMethod::exit_feasibility_problem(const OptimizationPro
 void InequalityConstrainedMethod::set_direction_bounds(const OptimizationProblem& problem, const Iterate& current_iterate) {
    // bounds of original variables intersected with trust region
    for (size_t variable_index: Range(problem.get_number_original_variables())) {
-      double lb = std::max(-this->trust_region_radius, problem.get_variable_lower_bound(variable_index) - current_iterate.primals[variable_index]);
-      double ub = std::min(this->trust_region_radius, problem.get_variable_upper_bound(variable_index) - current_iterate.primals[variable_index]);
+      double lb = std::max(-this->trust_region_radius, problem.variable_lower_bound(variable_index) - current_iterate.primals[variable_index]);
+      double ub = std::min(this->trust_region_radius, problem.variable_upper_bound(variable_index) - current_iterate.primals[variable_index]);
       this->direction_bounds[variable_index] = {lb, ub};
    }
    // bounds of additional variables (no trust region!)
    for (size_t variable_index: Range(problem.get_number_original_variables(), problem.number_variables)) {
-      const double lb = problem.get_variable_lower_bound(variable_index) - current_iterate.primals[variable_index];
-      const double ub = problem.get_variable_upper_bound(variable_index) - current_iterate.primals[variable_index];
+      const double lb = problem.variable_lower_bound(variable_index) - current_iterate.primals[variable_index];
+      const double ub = problem.variable_upper_bound(variable_index) - current_iterate.primals[variable_index];
       this->direction_bounds[variable_index] = {lb, ub};
    }
 }
 
 void InequalityConstrainedMethod::set_linearized_constraint_bounds(const OptimizationProblem& problem, const std::vector<double>& current_constraints) {
    for (size_t constraint_index: Range(problem.number_constraints)) {
-      const double lb = problem.get_constraint_lower_bound(constraint_index) - current_constraints[constraint_index];
-      const double ub = problem.get_constraint_upper_bound(constraint_index) - current_constraints[constraint_index];
+      const double lb = problem.constraint_lower_bound(constraint_index) - current_constraints[constraint_index];
+      const double ub = problem.constraint_upper_bound(constraint_index) - current_constraints[constraint_index];
       this->linearized_constraint_bounds[constraint_index] = {lb, ub};
    }
 }

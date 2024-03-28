@@ -23,14 +23,14 @@ public:
    [[nodiscard]] std::function<double(double)> compute_predicted_optimality_reduction_model(const Iterate& current_iterate,
          const Direction& direction, double step_length, const SymmetricMatrix<double>& hessian) const override;
 
-   [[nodiscard]] double get_variable_lower_bound(size_t variable_index) const override;
-   [[nodiscard]] double get_variable_upper_bound(size_t variable_index) const override;
-   [[nodiscard]] double get_constraint_lower_bound(size_t constraint_index) const override;
-   [[nodiscard]] double get_constraint_upper_bound(size_t constraint_index) const override;
+   [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
+   [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
+   [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
+   [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;
 
-   [[nodiscard]] size_t get_number_objective_gradient_nonzeros() const override;
-   [[nodiscard]] size_t get_number_jacobian_nonzeros() const override;
-   [[nodiscard]] size_t get_number_hessian_nonzeros() const override;
+   [[nodiscard]] size_t number_objective_gradient_nonzeros() const override;
+   [[nodiscard]] size_t number_jacobian_nonzeros() const override;
+   [[nodiscard]] size_t number_hessian_nonzeros() const override;
 };
 
 inline OptimalityProblem::OptimalityProblem(const Model& model):
@@ -109,31 +109,31 @@ inline std::function<double(double)> OptimalityProblem::compute_predicted_optima
    };
 }
 
-inline double OptimalityProblem::get_variable_lower_bound(size_t variable_index) const {
+inline double OptimalityProblem::variable_lower_bound(size_t variable_index) const {
    return this->model.variable_lower_bound(variable_index);
 }
 
-inline double OptimalityProblem::get_variable_upper_bound(size_t variable_index) const {
+inline double OptimalityProblem::variable_upper_bound(size_t variable_index) const {
    return this->model.variable_upper_bound(variable_index);
 }
 
-inline double OptimalityProblem::get_constraint_lower_bound(size_t constraint_index) const {
+inline double OptimalityProblem::constraint_lower_bound(size_t constraint_index) const {
    return this->model.constraint_lower_bound(constraint_index);
 }
 
-inline double OptimalityProblem::get_constraint_upper_bound(size_t constraint_index) const {
+inline double OptimalityProblem::constraint_upper_bound(size_t constraint_index) const {
    return this->model.constraint_upper_bound(constraint_index);
 }
 
-inline size_t OptimalityProblem::get_number_objective_gradient_nonzeros() const {
+inline size_t OptimalityProblem::number_objective_gradient_nonzeros() const {
    return this->model.get_number_objective_gradient_nonzeros();
 }
 
-inline size_t OptimalityProblem::get_number_jacobian_nonzeros() const {
+inline size_t OptimalityProblem::number_jacobian_nonzeros() const {
    return this->model.get_number_jacobian_nonzeros();
 }
 
-inline size_t OptimalityProblem::get_number_hessian_nonzeros() const {
+inline size_t OptimalityProblem::number_hessian_nonzeros() const {
    return this->model.get_number_hessian_nonzeros();
 }
 

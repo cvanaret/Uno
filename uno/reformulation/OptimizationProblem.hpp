@@ -45,14 +45,14 @@ public:
          const Direction& direction, double step_length, const SymmetricMatrix<double>& hessian) const = 0;
 
    [[nodiscard]] size_t get_number_original_variables() const;
-   [[nodiscard]] virtual double get_variable_lower_bound(size_t variable_index) const = 0;
-   [[nodiscard]] virtual double get_variable_upper_bound(size_t variable_index) const = 0;
-   [[nodiscard]] virtual double get_constraint_lower_bound(size_t constraint_index) const = 0;
-   [[nodiscard]] virtual double get_constraint_upper_bound(size_t constraint_index) const = 0;
+   [[nodiscard]] virtual double variable_lower_bound(size_t variable_index) const = 0;
+   [[nodiscard]] virtual double variable_upper_bound(size_t variable_index) const = 0;
+   [[nodiscard]] virtual double constraint_lower_bound(size_t constraint_index) const = 0;
+   [[nodiscard]] virtual double constraint_upper_bound(size_t constraint_index) const = 0;
 
-   [[nodiscard]] virtual size_t get_number_objective_gradient_nonzeros() const = 0;
-   [[nodiscard]] virtual size_t get_number_jacobian_nonzeros() const = 0;
-   [[nodiscard]] virtual size_t get_number_hessian_nonzeros() const = 0;
+   [[nodiscard]] virtual size_t number_objective_gradient_nonzeros() const = 0;
+   [[nodiscard]] virtual size_t number_jacobian_nonzeros() const = 0;
+   [[nodiscard]] virtual size_t number_hessian_nonzeros() const = 0;
 };
 
 inline OptimizationProblem::OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints):

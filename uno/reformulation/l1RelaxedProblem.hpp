@@ -37,14 +37,14 @@ public:
    [[nodiscard]] double compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const override;
 
-   [[nodiscard]] double get_variable_lower_bound(size_t variable_index) const override;
-   [[nodiscard]] double get_variable_upper_bound(size_t variable_index) const override;
-   [[nodiscard]] double get_constraint_lower_bound(size_t constraint_index) const override;
-   [[nodiscard]] double get_constraint_upper_bound(size_t constraint_index) const override;
+   [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
+   [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
+   [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
+   [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;
 
-   [[nodiscard]] size_t get_number_objective_gradient_nonzeros() const override;
-   [[nodiscard]] size_t get_number_jacobian_nonzeros() const override;
-   [[nodiscard]] size_t get_number_hessian_nonzeros() const override;
+   [[nodiscard]] size_t number_objective_gradient_nonzeros() const override;
+   [[nodiscard]] size_t number_jacobian_nonzeros() const override;
+   [[nodiscard]] size_t number_hessian_nonzeros() const override;
 
    // parameterization
    void set_objective_multiplier(double new_objective_multiplier);
@@ -234,27 +234,27 @@ inline double l1RelaxedProblem::compute_complementarity_error(const std::vector<
    // construct a lazy expression for complementarity for constraint bounds
    VectorExpression<double> constraint_complementarity(constraints.size(), [&](size_t constraint_index) {
       // violated constraints
-      if (constraints[constraint_index] < this->get_constraint_lower_bound(constraint_index)) { // lower violated
+      if (constraints[constraint_index] < this->constraint_lower_bound(constraint_index)) { // lower violated
          return (this->constraint_violation_coefficient - multipliers.constraints[constraint_index]) * (constraints[constraint_index] -
-         this->get_constraint_lower_bound(constraint_index));
+               this->constraint_lower_bound(constraint_index));
       }
-      else if (this->get_constraint_upper_bound(constraint_index) < constraints[constraint_index]) { // upper violated
+      else if (this->constraint_upper_bound(constraint_index) < constraints[constraint_index]) { // upper violated
          return (this->constraint_violation_coefficient + multipliers.constraints[constraint_index]) * (constraints[constraint_index] -
-         this->get_constraint_upper_bound(constraint_index));
+               this->constraint_upper_bound(constraint_index));
       }
       // satisfied constraints
       else if (0. < multipliers.constraints[constraint_index]) { // lower bound
-         return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->get_constraint_lower_bound(constraint_index));
+         return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->constraint_lower_bound(constraint_index));
       }
       else if (multipliers.constraints[constraint_index] < 0.) { // upper bound
-         return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->get_constraint_upper_bound(constraint_index));
+         return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->constraint_upper_bound(constraint_index));
       }
       return 0.;
    });
    return norm(residual_norm, variable_complementarity, constraint_complementarity);
 }
 
-inline double l1RelaxedProblem::get_variable_lower_bound(size_t variable_index) const {
+inline double l1RelaxedProblem::variable_lower_bound(size_t variable_index) const {
    if (variable_index < this->model.number_variables) { // original variable
       return this->model.variable_lower_bound(variable_index);
    }
@@ -263,7 +263,7 @@ inline double l1RelaxedProblem::get_variable_lower_bound(size_t variable_index) 
    }
 }
 
-inline double l1RelaxedProblem::get_variable_upper_bound(size_t variable_index) const {
+inline double l1RelaxedProblem::variable_upper_bound(size_t variable_index) const {
    if (variable_index < this->model.number_variables) { // original variable
       return this->model.variable_upper_bound(variable_index);
    }
@@ -272,15 +272,15 @@ inline double l1RelaxedProblem::get_variable_upper_bound(size_t variable_index) 
    }
 }
 
-inline double l1RelaxedProblem::get_constraint_lower_bound(size_t constraint_index) const {
+inline double l1RelaxedProblem::constraint_lower_bound(size_t constraint_index) const {
    return this->model.constraint_lower_bound(constraint_index);
 }
 
-inline double l1RelaxedProblem::get_constraint_upper_bound(size_t constraint_index) const {
+inline double l1RelaxedProblem::constraint_upper_bound(size_t constraint_index) const {
    return this->model.constraint_upper_bound(constraint_index);
 }
 
-inline size_t l1RelaxedProblem::get_number_objective_gradient_nonzeros() const {
+inline size_t l1RelaxedProblem::number_objective_gradient_nonzeros() const {
    size_t number_nonzeros = 0;
 
    // objective contribution
@@ -293,17 +293,16 @@ inline size_t l1RelaxedProblem::get_number_objective_gradient_nonzeros() const {
    return number_nonzeros;
 }
 
-inline size_t l1RelaxedProblem::get_number_jacobian_nonzeros() const {
+inline size_t l1RelaxedProblem::number_jacobian_nonzeros() const {
    return this->model.get_number_jacobian_nonzeros() + this->elastic_variables.size();
 }
 
-inline size_t l1RelaxedProblem::get_number_hessian_nonzeros() const {
+inline size_t l1RelaxedProblem::number_hessian_nonzeros() const {
    return this->model.get_number_hessian_nonzeros();
 }
 
 inline void l1RelaxedProblem::set_objective_multiplier(double new_objective_multiplier) {
    assert(0. <= new_objective_multiplier && "The objective multiplier should be non-negative");
-   // update the objective multiplier
    this->objective_multiplier = new_objective_multiplier;
 }
 
