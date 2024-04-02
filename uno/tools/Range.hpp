@@ -14,6 +14,8 @@ enum RangeDirection {
 template <RangeDirection direction = FORWARD>
 class Range {
 public:
+   using value_type = size_t;
+
    explicit Range(size_t end_index);
    Range(size_t start_index, size_t end_index);
 
@@ -21,12 +23,9 @@ public:
    [[nodiscard]] const Range& begin() const;
    [[nodiscard]] const Range& end() const;
 
-   // iterator functions
    [[nodiscard]] bool operator!=(const Range&) const;
    void operator++();
    [[nodiscard]] size_t operator*() const;
-
-   // size
    [[nodiscard]] size_t size() const;
 
 protected:

@@ -100,6 +100,8 @@ void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistic
    this->optimality_phase_strategy->register_current_progress(current_iterate.progress);
    this->subproblem->initialize_feasibility_problem();
    this->subproblem->set_elastic_variable_values(this->feasibility_problem, current_iterate);
+   // reset constraint multipliers (this means no curvature in the first feasibility restoration iteration)
+   initialize_vector(current_iterate.multipliers.constraints, 0.);
    DEBUG2 << "Current iterate:\n" << current_iterate << '\n';
 
    // compute the progress measures of the current iterate for the feasibility problem
