@@ -32,17 +32,19 @@ void Iterate::evaluate_objective(const Model& model) {
 }
 
 void Iterate::evaluate_constraints(const Model& model) {
-   if (not this->are_constraints_computed && model.is_constrained()) {
-      // evaluate the constraints
-      model.evaluate_constraints(this->primals, this->evaluations.constraints);
-      // check finiteness
-      if (std::any_of(this->evaluations.constraints.cbegin(), this->evaluations.constraints.cend(), [](double constraint_j) {
-         return constraint_j == INF<double>;
-      })) {
-         throw FunctionEvaluationError();
+   if (not this->are_constraints_computed) {
+      if (model.is_constrained()) {
+         // evaluate the constraints
+         model.evaluate_constraints(this->primals, this->evaluations.constraints);
+         Iterate::number_eval_constraints++;
+         // check finiteness
+         if (std::any_of(this->evaluations.constraints.cbegin(), this->evaluations.constraints.cend(), [](double constraint_j) {
+            return constraint_j == INF<double>;
+         })) {
+            throw FunctionEvaluationError();
+         }
       }
       this->are_constraints_computed = true;
-      Iterate::number_eval_constraints++;
    }
 }
 
@@ -57,14 +59,15 @@ void Iterate::evaluate_objective_gradient(const Model& model) {
 }
 
 void Iterate::evaluate_constraint_jacobian(const Model& model) {
-   if (not this->is_constraint_jacobian_computed && model.is_constrained()) {
+   if (not this->is_constraint_jacobian_computed) {
       for (auto& row: this->evaluations.constraint_jacobian) {
          row.clear();
       }
-      // evaluate the constraint Jacobian
-      model.evaluate_constraint_jacobian(this->primals, this->evaluations.constraint_jacobian);
+      if (model.is_constrained()) {
+         model.evaluate_constraint_jacobian(this->primals, this->evaluations.constraint_jacobian);
+         Iterate::number_eval_jacobian++;
+      }
       this->is_constraint_jacobian_computed = true;
-      Iterate::number_eval_jacobian++;
    }
 }
 
