@@ -197,7 +197,12 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
       this->set_statistics(statistics, trial_iterate);
    }
    if (this->original_model.is_constrained()) {
-      statistics.set("primal infeas.", trial_iterate.progress.infeasibility);
+      if (this->current_phase == Phase::OPTIMALITY) {
+         statistics.set("primal infeas.", trial_iterate.progress.infeasibility);
+      }
+      else {
+         statistics.set("primal infeas.", trial_iterate.progress.optimality(1.));
+      }
    }
    return accept_iterate;
 }
