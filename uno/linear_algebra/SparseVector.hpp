@@ -105,7 +105,7 @@ void SparseVector<ElementType>::transform(const std::function<ElementType (Eleme
 
 template <typename ElementType>
 std::ostream& operator<<(std::ostream& stream, const SparseVector<ElementType>& x) {
-   stream << "sparse vector with " << x.size() << " non zeros\n";
+   stream << "sparse vector with " << x.size() << " nonzeros\n";
    x.for_each([&](size_t index, ElementType entry) {
       stream << "index " << index << ", value " << entry << '\n';
    });

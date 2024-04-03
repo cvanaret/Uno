@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <iostream>
+#include <iomanip>
 #include <algorithm>
 #include "Filter.hpp"
 #include "tools/Logger.hpp"
@@ -136,14 +137,43 @@ double Filter::compute_actual_reduction(double current_optimality_measure, doubl
    return current_optimality_measure - trial_optimality_measure;
 }
 
-//! print: print the content of the filter
+std::string to_string(double number) {
+   std::ostringstream stream;
+   stream << std::defaultfloat << std::setprecision(7) << number;
+   return stream.str();
+}
+
+// print the content of the filter
 std::ostream& operator<<(std::ostream& stream, Filter& filter) {
-   stream << "************\n";
-   stream << "  Current filter (infeasibility, optimality):\n";
+   const size_t fixed_length_column1 = 14;
+   const size_t fixed_length_column2 = 11;
+
+   stream << "┌───────────────┬────────────┐\n";
+   stream << "│ infeasibility │ optimality │\n";
+   stream << "├───────────────┼────────────┤\n";
    for (size_t position: Range(filter.number_entries)) {
-      stream << "\t" << filter.infeasibility[position] << "\t\t" << filter.optimality[position] << '\n';
+      // convert numbers to strings
+      const std::string infeasibility_string = to_string(filter.infeasibility[position]);
+      const std::string optimality_string = to_string(filter.optimality[position]);
+
+      // compute lengths of columns
+      const size_t infeasibility_length = infeasibility_string.size();
+      const size_t number_infeasibility_spaces = (infeasibility_length < fixed_length_column1) ? fixed_length_column1 - infeasibility_length : 0;
+      const size_t optimality_length = optimality_string.size();
+      const size_t number_optimality_spaces = (optimality_length < fixed_length_column2) ? fixed_length_column2 - optimality_length : 0;
+
+      // print line
+      stream << "│ " << infeasibility_string;
+      for ([[maybe_unused]] size_t k: Range(number_infeasibility_spaces)) {
+         stream << ' ';
+      }
+      stream << "│ " << optimality_string;
+      for ([[maybe_unused]] size_t k: Range(number_optimality_spaces)) {
+         stream << ' ';
+      }
+      stream << "│\n";
    }
-   std::cout << "Upper bound: " << filter.upper_bound << '\n';
-   stream << "************\n";
+   stream << "└───────────────┴────────────┘\n";
+   std::cout << "Infeasibility upper bound: " << filter.upper_bound << '\n';
    return stream;
 }

@@ -31,33 +31,33 @@ std::string status_to_string(SubproblemStatus status) {
 
 std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
    stream << "Direction:\n";
-   stream << "Status: " << status_to_string(direction.status) << '\n';
+   stream << "│ status: " << status_to_string(direction.status) << '\n';
 
-   stream << "d^* = "; print_vector(stream, direction.primals, 0, direction.number_variables);
-   stream << "constraint multipliers = "; print_vector(stream, direction.multipliers.constraints);
-   stream << "lower bound multipliers = "; print_vector(stream, direction.multipliers.lower_bounds);
-   stream << "upper bound multipliers = "; print_vector(stream, direction.multipliers.upper_bounds);
+   stream << "│ primals = "; print_vector(stream, direction.primals, 0, direction.number_variables);
+   stream << "│ constraint multipliers = "; print_vector(stream, direction.multipliers.constraints);
+   stream << "│ lower bound multipliers = "; print_vector(stream, direction.multipliers.lower_bounds);
+   stream << "│ upper bound multipliers = "; print_vector(stream, direction.multipliers.upper_bounds);
 
-   stream << "objective = " << direction.subproblem_objective << '\n';
-   stream << "norm = " << direction.norm << '\n';
+   stream << "│ objective = " << direction.subproblem_objective << '\n';
+   stream << "│ norm = " << direction.norm << '\n';
 
-   stream << "bound constraints active at lower bound =";
+   stream << "│ bound constraints active at lower bound =";
    for (size_t variable_index: direction.active_set.bounds.at_lower_bound) {
       stream << " x" << variable_index;
    }
    stream << '\n';
-   stream << "bound constraints active at upper bound =";
+   stream << "│ bound constraints active at upper bound =";
    for (size_t variable_index: direction.active_set.bounds.at_upper_bound) {
       stream << " x" << variable_index;
    }
    stream << '\n';
 
-   stream << "constraints at lower bound =";
+   stream << "│ constraints at lower bound =";
    for (size_t constraint_index: direction.active_set.constraints.at_lower_bound) {
       stream << " c" << constraint_index;
    }
    stream << '\n';
-   stream << "constraints at upper bound =";
+   stream << "│ constraints at upper bound =";
    for (size_t constraint_index: direction.active_set.constraints.at_upper_bound) {
       stream << " c" << constraint_index;
    }
@@ -65,15 +65,15 @@ std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
 
    if (direction.constraint_partition.has_value()) {
       const ConstraintPartition& constraint_partition = direction.constraint_partition.value();
-      stream << "general feasible =";
+      stream << "│ general feasible =";
       for (size_t constraint_index: constraint_partition.feasible) {
          stream << " c" << constraint_index;
       }
-      stream << "\ngeneral lower infeasible =";
+      stream << "\n│ general lower infeasible =";
       for (size_t constraint_index: constraint_partition.lower_bound_infeasible) {
          stream << " c" << constraint_index;
       }
-      stream << "\ngeneral upper infeasible =";
+      stream << "\n└ general upper infeasible =";
       for (size_t constraint_index: constraint_partition.upper_bound_infeasible) {
          stream << " c" << constraint_index;
       }
