@@ -110,6 +110,8 @@ void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistic
 
    this->restoration_phase_strategy->reset();
    this->restoration_phase_strategy->register_current_progress(current_iterate.progress);
+   // transfer the infeasibility upper bound from optimality phase to restoration phase
+   this->restoration_phase_strategy->set_infeasibility_upper_bound(this->optimality_phase_strategy->get_infeasibility_upper_bound());
    warmstart_information.set_cold_start();
    
    if (Logger::level == INFO) statistics.print_current_line();

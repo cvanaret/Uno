@@ -38,6 +38,14 @@ double Filter::get_smallest_infeasibility() const {
    }
 }
 
+double Filter::get_infeasibility_upper_bound() const {
+   return this->upper_bound;
+}
+
+void Filter::set_infeasibility_upper_bound(double new_upper_bound) {
+   this->upper_bound = new_upper_bound;
+}
+
 void Filter::left_shift(size_t start, size_t shift_size) {
    for (size_t position: Range(start, this->number_entries - shift_size)) {
       this->infeasibility[position] = this->infeasibility[position + shift_size];

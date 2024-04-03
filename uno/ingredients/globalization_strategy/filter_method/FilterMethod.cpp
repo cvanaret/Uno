@@ -1,7 +1,6 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include <cmath>
 #include "FilterMethod.hpp"
 #include "filter/FilterFactory.hpp"
 
@@ -19,20 +18,24 @@ FilterMethod::FilterMethod(const Options& options) :
 void FilterMethod::initialize(Statistics& /*statistics*/, const Iterate& initial_iterate, const Options& /*options*/) {
    // set the filter upper bound
    double upper_bound = std::max(this->parameters.upper_bound, this->parameters.infeasibility_fraction * initial_iterate.progress.infeasibility);
-   this->filter->upper_bound = upper_bound;
-   this->initial_filter_upper_bound = upper_bound;
+   this->filter->set_infeasibility_upper_bound(upper_bound);
 }
 
 void FilterMethod::reset() {
-   // re-initialize the restoration filter
    this->filter->reset();
-   // TODO: we should set the ub of the optimality filter. But now, our 2 filters live independently...
-   this->filter->upper_bound = this->initial_filter_upper_bound;
 }
 
 void FilterMethod::register_current_progress(const ProgressMeasures& current_progress_measures) {
    const double current_optimality_measure = current_progress_measures.optimality(1.) + current_progress_measures.auxiliary_terms;
    this->filter->add(current_progress_measures.infeasibility, current_optimality_measure);
+}
+
+double FilterMethod::get_infeasibility_upper_bound() const {
+   return this->filter->get_infeasibility_upper_bound();
+}
+
+void FilterMethod::set_infeasibility_upper_bound(double new_upper_bound) const {
+   this->filter->set_infeasibility_upper_bound(new_upper_bound);
 }
 
 bool FilterMethod::is_infeasibility_acceptable(double infeasibility_measure) const {

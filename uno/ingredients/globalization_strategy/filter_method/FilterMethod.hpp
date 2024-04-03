@@ -29,11 +29,12 @@ public:
    [[nodiscard]] bool is_infeasibility_acceptable(double infeasibility_measure) const override;
    void reset() override;
    void register_current_progress(const ProgressMeasures& current_progress_measures) override;
+   [[nodiscard]] double get_infeasibility_upper_bound() const override;
+   void set_infeasibility_upper_bound(double new_upper_bound) const override;
 
 protected:
    // pointer to allow polymorphism
    const std::unique_ptr<Filter> filter;
-   double initial_filter_upper_bound{INF<double>};
    const FilterStrategyParameters parameters; /*!< Set of constants */
 
    [[nodiscard]] bool switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const;

@@ -16,13 +16,14 @@ struct FilterParameters {
 
 class Filter {
 public:
-   double upper_bound{INF<double>}; /*!< Upper bound on constraint violation */
-
    explicit Filter(const Options& options);
    virtual ~Filter() = default;
 
    void reset();
    [[nodiscard]] double get_smallest_infeasibility() const;
+   [[nodiscard]] double get_infeasibility_upper_bound() const;
+   void set_infeasibility_upper_bound(double new_upper_bound);
+
    virtual void add(double infeasibility_measure, double optimality_measure);
    virtual bool acceptable(double infeasibility_measure, double optimality_measure);
    virtual bool acceptable_wrt_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure,
@@ -35,6 +36,7 @@ protected:
    const size_t capacity; /*!< Max filter size */
    std::vector<double> infeasibility{}; // infeasibility increases
    std::vector<double> optimality{}; // optimality decreases
+   double upper_bound{INF<double>}; /*!< Upper bound on constraint violation */
    size_t number_entries{0};
    const FilterParameters parameters; /*!< Set of parameters */
 
