@@ -32,7 +32,7 @@ void Iterate::evaluate_objective(const Model& model) {
 }
 
 void Iterate::evaluate_constraints(const Model& model) {
-   if (not this->are_constraints_computed) {
+   if (not this->are_constraints_computed && model.is_constrained()) {
       // evaluate the constraints
       model.evaluate_constraints(this->primals, this->evaluations.constraints);
       // check finiteness
@@ -57,7 +57,7 @@ void Iterate::evaluate_objective_gradient(const Model& model) {
 }
 
 void Iterate::evaluate_constraint_jacobian(const Model& model) {
-   if (not this->is_constraint_jacobian_computed) {
+   if (not this->is_constraint_jacobian_computed && model.is_constrained()) {
       for (auto& row: this->evaluations.constraint_jacobian) {
          row.clear();
       }
