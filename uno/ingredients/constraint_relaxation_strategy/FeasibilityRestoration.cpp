@@ -24,7 +24,7 @@ FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options
       // create the globalization strategies (one for each phase)
       restoration_phase_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), false, options)),
       optimality_phase_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), true, options)),
-      tolerance(options.get_double("tolerance")),
+      linear_feasibility_tolerance(options.get_double("tolerance")),
       switch_to_optimality_requires_acceptance(options.get_bool("switch_to_optimality_requires_acceptance")),
       switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")) {
 }
@@ -33,7 +33,7 @@ void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& initial
    // compute the progress measures and residuals of the initial point
    this->subproblem->generate_initial_iterate(this->optimality_problem, initial_iterate);
    this->evaluate_progress_measures(this->optimality_problem, initial_iterate);
-   this->compute_primal_dual_residuals(this->original_model, this->feasibility_problem, initial_iterate);
+   this->compute_primal_dual_residuals(this->feasibility_problem, initial_iterate);
 
    // initialize the globalization strategies
    this->restoration_phase_strategy->initialize(statistics, initial_iterate, options);
@@ -43,7 +43,7 @@ void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& initial
    this->set_statistics(statistics, initial_iterate);
    statistics.add_column("phase", Statistics::int_width, options.get_int("statistics_restoration_phase_column_order"));
    statistics.set("phase", static_cast<int>(this->current_phase));
-   if (this->original_model.is_constrained()) {
+   if (this->model.is_constrained()) {
       statistics.set("primal infeas.", initial_iterate.progress.infeasibility);
    }
 }
@@ -126,7 +126,7 @@ Direction FeasibilityRestoration::solve_subproblem(Statistics& statistics, const
    }
 
    Direction direction = this->subproblem->solve(statistics, problem, current_iterate, warmstart_information);
-   direction.norm = norm_inf(view(direction.primals, this->original_model.number_variables));
+   direction.norm = norm_inf(view(direction.primals, this->model.number_variables));
    direction.multipliers.objective = problem.get_objective_multiplier();
    DEBUG3 << direction << '\n';
    return direction;
@@ -145,11 +145,12 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
 
    // possibly go from restoration phase to optimality phase
    if (this->current_phase == Phase::FEASIBILITY_RESTORATION && not this->switch_to_optimality_requires_acceptance &&
-         (not this->switch_to_optimality_requires_linearized_feasibility || this->original_model.linearized_constraint_violation(direction.primals,
-               current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian, step_length, this->residual_norm) <= this->tolerance)) {
+         (not this->switch_to_optimality_requires_linearized_feasibility || this->model.linearized_constraint_violation(direction.primals,
+         current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian, step_length, this->residual_norm) <=
+         this->linear_feasibility_tolerance)) {
       // if the trial infeasibility improves upon the best known infeasibility of the globalization strategy
-      trial_iterate.evaluate_constraints(this->original_model);
-      const double trial_infeasibility = this->original_model.constraint_violation(trial_iterate.evaluations.constraints, this->progress_norm);
+      trial_iterate.evaluate_constraints(this->model);
+      const double trial_infeasibility = this->model.constraint_violation(trial_iterate.evaluations.constraints, this->progress_norm);
       if (this->optimality_phase_strategy->is_infeasibility_acceptable(trial_infeasibility)) {
          this->switch_to_optimality_phase(current_iterate, trial_iterate);
       }
@@ -169,8 +170,8 @@ void FeasibilityRestoration::switch_to_optimality_phase(Iterate& current_iterate
 
    // refresh the progress measures of current iterate
    this->evaluate_progress_measures(this->optimality_problem, current_iterate);
-   current_iterate.multipliers.objective = 1.;
-   trial_iterate.multipliers.objective = 1.;
+   current_iterate.multipliers.objective = FeasibilityRestoration::objective_multiplier;
+   trial_iterate.multipliers.objective = FeasibilityRestoration::objective_multiplier;
 }
 
 bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
@@ -181,7 +182,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
    bool accept_iterate = false;
    if (direction.norm == 0.) {
       DEBUG << "Zero step acceptable\n\n";
-      trial_iterate.evaluate_objective(this->original_model);
+      trial_iterate.evaluate_objective(this->model);
       accept_iterate = true;
       statistics.set("status", "accepted (0 step)");
    }
@@ -195,15 +196,16 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
    }
 
    if (accept_iterate) {
-      this->compute_primal_dual_residuals(this->original_model, this->feasibility_problem, trial_iterate);
+      this->compute_primal_dual_residuals(this->feasibility_problem, trial_iterate);
       this->set_statistics(statistics, trial_iterate);
    }
-   if (this->original_model.is_constrained()) {
+   if (this->model.is_constrained()) {
       if (this->current_phase == Phase::OPTIMALITY) {
          statistics.set("primal infeas.", trial_iterate.progress.infeasibility);
       }
       else {
-         statistics.set("primal infeas.", trial_iterate.progress.optimality(1.));
+         // during feasibility restoration, infeasibility becomes the optimality measure
+         statistics.set("primal infeas.", trial_iterate.progress.optimality(FeasibilityRestoration::objective_multiplier));
       }
    }
    return accept_iterate;
@@ -244,26 +246,26 @@ void FeasibilityRestoration::set_trust_region_radius(double trust_region_radius)
 double FeasibilityRestoration::compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
       const Multipliers& multipliers) const {
    // bound constraints
-   VectorExpression<double> variable_complementarity(this->original_model.number_variables, [&](size_t variable_index) {
+   VectorExpression<double> variable_complementarity(this->model.number_variables, [&](size_t variable_index) {
       if (0. < multipliers.lower_bounds[variable_index]) {
-         return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->original_model.variable_lower_bound(variable_index));
+         return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->model.variable_lower_bound(variable_index));
       }
       if (multipliers.upper_bounds[variable_index] < 0.) {
-         return multipliers.upper_bounds[variable_index] * (primals[variable_index] - this->original_model.variable_upper_bound(variable_index));
+         return multipliers.upper_bounds[variable_index] * (primals[variable_index] - this->model.variable_upper_bound(variable_index));
       }
       return 0.;
    });
 
    // constraints
-   VectorExpression<double> constraint_complementarity(this->original_model.inequality_constraints.size(), [&](size_t inequality_index) {
-      const size_t constraint_index = this->original_model.inequality_constraints[inequality_index];
+   VectorExpression<double> constraint_complementarity(this->model.inequality_constraints.size(), [&](size_t inequality_index) {
+      const size_t constraint_index = this->model.inequality_constraints[inequality_index];
       if (0. < multipliers.constraints[constraint_index]) { // lower bound
          return multipliers.constraints[constraint_index] * (constraints[constraint_index] -
-               this->original_model.constraint_lower_bound(constraint_index));
+               this->model.constraint_lower_bound(constraint_index));
       }
       else if (multipliers.constraints[constraint_index] < 0.) { // upper bound
          return multipliers.constraints[constraint_index] * (constraints[constraint_index] -
-               this->original_model.constraint_upper_bound(constraint_index));
+               this->model.constraint_upper_bound(constraint_index));
       }
       return 0.;
    });

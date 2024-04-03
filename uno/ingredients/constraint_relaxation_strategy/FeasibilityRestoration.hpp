@@ -43,10 +43,12 @@ private:
    const std::unique_ptr<GlobalizationStrategy> restoration_phase_strategy;
    const std::unique_ptr<GlobalizationStrategy> optimality_phase_strategy;
    Phase current_phase{Phase::OPTIMALITY};
-   const double tolerance;
+   const double linear_feasibility_tolerance;
    const bool switch_to_optimality_requires_acceptance;
    const bool switch_to_optimality_requires_linearized_feasibility;
    bool switched_to_optimality_phase{false};
+
+   static constexpr double objective_multiplier = 1.;
 
    [[nodiscard]] const OptimizationProblem& current_problem() const;
    [[nodiscard]] GlobalizationStrategy& current_globalization_strategy() const;

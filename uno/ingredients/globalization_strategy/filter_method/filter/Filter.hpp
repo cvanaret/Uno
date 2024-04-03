@@ -36,7 +36,7 @@ protected:
    const size_t capacity; /*!< Max filter size */
    std::vector<double> infeasibility{}; // infeasibility increases
    std::vector<double> optimality{}; // optimality decreases
-   double upper_bound{INF<double>}; /*!< Upper bound on constraint violation */
+   double infeasibility_upper_bound{INF<double>}; /*!< Upper bound on infeasibility measure */
    size_t number_entries{0};
    const FilterParameters parameters; /*!< Set of parameters */
 

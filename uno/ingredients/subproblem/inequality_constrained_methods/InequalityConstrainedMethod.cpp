@@ -22,12 +22,10 @@ void InequalityConstrainedMethod::initialize_feasibility_problem() {
 }
 
 void InequalityConstrainedMethod::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) {
-   // set the values of the elastic variables
-   const auto elastic_setting_function = [&](Iterate& iterate, size_t /*j*/, size_t elastic_index, double /*jacobian_coefficient*/) {
+   problem.set_elastic_variable_values(current_iterate, [&](Iterate& iterate, size_t /*j*/, size_t elastic_index, double /*jacobian_coefficient*/) {
       iterate.primals[elastic_index] = 0.;
       iterate.multipliers.lower_bounds[elastic_index] = 1.;
-   };
-   problem.set_elastic_variable_values(current_iterate, elastic_setting_function);
+   });
 }
 
 void InequalityConstrainedMethod::exit_feasibility_problem(const OptimizationProblem& /*problem*/, Iterate& /*trial_iterate*/) {
@@ -68,6 +66,7 @@ void InequalityConstrainedMethod::compute_dual_displacements(const OptimizationP
    }
 }
 
+// auxiliary measure is 0 in inequality-constrained methods
 void InequalityConstrainedMethod::set_auxiliary_measure(const OptimizationProblem& /*problem*/, Iterate& iterate) {
    iterate.progress.auxiliary_terms = 0.;
 }
@@ -75,7 +74,6 @@ void InequalityConstrainedMethod::set_auxiliary_measure(const OptimizationProble
 double InequalityConstrainedMethod::compute_predicted_auxiliary_reduction_model(const OptimizationProblem& /*problem*/,
       const Iterate& /*current_iterate*/, const Direction& /*direction*/, double /*step_length*/) const {
    return 0.;
-   //}, "0"};
 }
 
 void InequalityConstrainedMethod::postprocess_iterate(const OptimizationProblem& /*problem*/, Iterate& /*iterate*/) {

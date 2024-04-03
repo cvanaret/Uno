@@ -20,7 +20,7 @@ Filter::Filter(const Options& options) :
 }
 
 void Filter::reset() {
-   this->upper_bound = INF<double>;
+   this->infeasibility_upper_bound = INF<double>;
    this->number_entries = 0;
 }
 
@@ -34,16 +34,16 @@ double Filter::get_smallest_infeasibility() const {
       return this->parameters.beta * this->infeasibility[0];
    }
    else { // filter empty
-      return this->parameters.beta * this->upper_bound;
+      return this->parameters.beta * this->infeasibility_upper_bound;
    }
 }
 
 double Filter::get_infeasibility_upper_bound() const {
-   return this->upper_bound;
+   return this->infeasibility_upper_bound;
 }
 
 void Filter::set_infeasibility_upper_bound(double new_upper_bound) {
-   this->upper_bound = new_upper_bound;
+   this->infeasibility_upper_bound = new_upper_bound;
 }
 
 void Filter::left_shift(size_t start, size_t shift_size) {
@@ -84,7 +84,7 @@ void Filter::add(double infeasibility_measure, double optimality_measure) {
 
    // check sufficient space available for new entry (remove last entry, if not)
    if (this->number_entries >= this->capacity) {
-      this->upper_bound = this->parameters.beta * std::max(this->upper_bound, this->infeasibility[this->number_entries - 1]);
+      this->infeasibility_upper_bound = this->parameters.beta * std::max(this->infeasibility_upper_bound, this->infeasibility[this->number_entries - 1]);
       // create space in filter: remove last entry
       this->number_entries--;
    }
@@ -105,7 +105,7 @@ void Filter::add(double infeasibility_measure, double optimality_measure) {
 }
 
 bool Filter::acceptable_wrt_upper_bound(double infeasibility_measure) const {
-   return (infeasibility_measure < this->parameters.beta * this->upper_bound);
+   return (infeasibility_measure < this->parameters.beta * this->infeasibility_upper_bound);
 }
 
 // return true if (infeasibility_measure, optimality_measure) acceptable, false otherwise
@@ -182,6 +182,6 @@ std::ostream& operator<<(std::ostream& stream, Filter& filter) {
       stream << "│\n";
    }
    stream << "└───────────────┴────────────┘\n";
-   std::cout << "Infeasibility upper bound: " << filter.upper_bound << '\n';
+   std::cout << "Infeasibility upper bound: " << filter.infeasibility_upper_bound << '\n';
    return stream;
 }

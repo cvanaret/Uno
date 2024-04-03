@@ -494,6 +494,6 @@ size_t PrimalDualInteriorPointSubproblem::get_hessian_evaluation_count() const {
    return this->hessian_model->evaluation_count;
 }
 
-void PrimalDualInteriorPointSubproblem::set_initial_point(const std::vector<double>& /*initial_point*/) {
+void PrimalDualInteriorPointSubproblem::set_initial_point(const std::vector<double>& /*point*/) {
    // do nothing
 }

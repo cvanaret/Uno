@@ -28,7 +28,7 @@ public:
 
    void initialize_statistics(Statistics& statistics, const Options& options) override;
    void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
-   void set_initial_point(const std::vector<double>& initial_point) override;
+   void set_initial_point(const std::vector<double>& point) override;
 
    void initialize_feasibility_problem() override;
    void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& constraint_index) override;
