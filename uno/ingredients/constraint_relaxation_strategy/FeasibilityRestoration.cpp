@@ -196,6 +196,15 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
    }
 
    if (accept_iterate) {
+      if (this->current_phase == Phase::FEASIBILITY_RESTORATION && this->switch_to_optimality_requires_acceptance) {
+         // if the trial infeasibility improves upon the best known infeasibility of the globalization strategy
+         trial_iterate.evaluate_constraints(this->model);
+         const double trial_infeasibility = this->model.constraint_violation(trial_iterate.evaluations.constraints, this->progress_norm);
+         if (this->optimality_phase_strategy->is_infeasibility_acceptable(trial_infeasibility)) {
+            this->switch_to_optimality_phase(current_iterate, trial_iterate);
+         }
+      }
+
       this->compute_primal_dual_residuals(this->feasibility_problem, trial_iterate);
       this->set_statistics(statistics, trial_iterate);
    }
