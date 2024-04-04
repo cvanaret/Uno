@@ -23,6 +23,7 @@ public:
    Uno(GlobalizationMechanism& globalization_mechanism, const Options& options);
 
    [[nodiscard]] Result solve(const Model& model, Iterate& initial_iterate, const Options& options);
+
    static void print_uno_version();
    static void print_available_strategies();
    static void print_strategy_combination(const Options& options);

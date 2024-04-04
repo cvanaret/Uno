@@ -149,7 +149,7 @@ inline void HomogeneousEqualityConstrainedModel::evaluate_constraints(const std:
       const size_t slack_index = this->original_model->number_variables + variable_index;
       constraints[constraint_index] -= x[slack_index];
    }
-   // equality constraints: make sure they are "c(x) = 0"
+   // equality constraints: make sure they are homogeneous (c(x) = 0)
    for (size_t constraint_index: this->original_model->equality_constraints) {
       constraints[constraint_index] -= this->original_model->constraint_lower_bound(constraint_index);
    }

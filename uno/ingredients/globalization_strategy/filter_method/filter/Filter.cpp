@@ -20,7 +20,6 @@ Filter::Filter(const Options& options) :
 }
 
 void Filter::reset() {
-   this->infeasibility_upper_bound = INF<double>;
    this->number_entries = 0;
 }
 
