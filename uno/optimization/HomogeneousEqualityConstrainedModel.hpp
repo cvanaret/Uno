@@ -89,10 +89,11 @@ inline HomogeneousEqualityConstrainedModel::HomogeneousEqualityConstrainedModel(
       single_lower_bounded_variables(concatenate(this->model->get_single_lower_bounded_variables(), CollectionAdapter(this->single_lower_bounded_slacks))),
       single_upper_bounded_variables(concatenate(this->model->get_single_upper_bounded_variables(), CollectionAdapter(this->single_upper_bounded_slacks))){
    // register the inequality constraint of each slack
-   this->model->get_inequality_constraints().for_each([&](size_t index, size_t constraint_index) {
-      const size_t slack_index = index + this->model->number_variables;
-      this->inequality_constraint_of_slack[index] = constraint_index;
-      this->slack_of_inequality_constraint[constraint_index] = index;
+   size_t inequality_index = 0;
+   this->model->get_inequality_constraints().for_each([&](size_t, size_t constraint_index) {
+      const size_t slack_index = this->model->number_variables + inequality_index;
+      this->inequality_constraint_of_slack[inequality_index] = constraint_index;
+      this->slack_of_inequality_constraint[constraint_index] = slack_index;
       this->slacks.insert(constraint_index, slack_index);
       if (is_finite(this->model->constraint_lower_bound(constraint_index))) {
          this->lower_bounded_slacks.push_back(slack_index);
@@ -106,6 +107,7 @@ inline HomogeneousEqualityConstrainedModel::HomogeneousEqualityConstrainedModel(
             this->single_upper_bounded_slacks.push_back(slack_index);
          }
       }
+      inequality_index++;
    });
 }
 
