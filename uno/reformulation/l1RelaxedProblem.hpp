@@ -39,6 +39,11 @@ public:
 
    [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
    [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
+   [[nodiscard]] const Collection<size_t>& get_lower_bounded_variables() const override;
+   [[nodiscard]] const Collection<size_t>& get_upper_bounded_variables() const override;
+   [[nodiscard]] const Collection<size_t>& get_single_lower_bounded_variables() const override;
+   [[nodiscard]] const Collection<size_t>& get_single_upper_bounded_variables() const override;
+
    [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
    [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;
 
@@ -55,6 +60,8 @@ protected:
    double objective_multiplier;
    const double constraint_violation_coefficient;
    ElasticVariables elastic_variables;
+   const ChainCollection<const Collection<size_t>&, Range<FORWARD>> lower_bounded_variables; // original variables + elastic variables
+   const ChainCollection<const Collection<size_t>&, Range<FORWARD>> single_lower_bounded_variables; // original variables + elastic variables
 
    [[nodiscard]] static size_t count_elastic_variables(const Model& model);
    void generate_elastic_variables();
@@ -64,28 +71,13 @@ inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_m
       RelaxedProblem(model, model.number_variables + l1RelaxedProblem::count_elastic_variables(model), model.number_constraints),
       objective_multiplier(objective_multiplier),
       constraint_violation_coefficient(constraint_violation_coefficient),
-      elastic_variables(this->number_constraints) {
+      elastic_variables(this->number_constraints),
+      // lower bounded variables are the original variables + the elastic variables
+      lower_bounded_variables(concatenate(this->model.get_lower_bounded_variables(), Range(model.number_variables,
+            model.number_variables + this->elastic_variables.size()))),
+      single_lower_bounded_variables(concatenate(this->model.get_single_lower_bounded_variables(),
+            Range(model.number_variables, model.number_variables + this->elastic_variables.size()))) {
    this->generate_elastic_variables();
-
-   // figure out bounded variables
-   for (size_t variable_index: this->model.lower_bounded_variables) {
-      this->lower_bounded_variables.push_back(variable_index);
-   }
-   for (size_t variable_index: this->model.upper_bounded_variables) {
-      this->upper_bounded_variables.push_back(variable_index);
-   }
-   for (size_t variable_index: this->model.single_lower_bounded_variables) {
-      this->single_lower_bounded_variables.push_back(variable_index);
-   }
-   for (size_t variable_index: this->model.single_upper_bounded_variables) {
-      this->single_upper_bounded_variables.push_back(variable_index);
-   }
-   const auto add_nonnegative_elastic = [&](size_t elastic_index) {
-      this->lower_bounded_variables.push_back(elastic_index);
-      this->single_lower_bounded_variables.push_back(elastic_index);
-   };
-   this->elastic_variables.positive.for_each_value(add_nonnegative_elastic);
-   this->elastic_variables.negative.for_each_value(add_nonnegative_elastic);
 }
 
 inline double l1RelaxedProblem::get_objective_multiplier() const {
@@ -96,6 +88,7 @@ inline void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, Spar
    // scale nabla f(x) by rho
    if (this->objective_multiplier != 0.) {
       iterate.evaluate_objective_gradient(this->model);
+      // TODO change that
       objective_gradient = iterate.evaluations.objective_gradient;
       scale(objective_gradient, this->objective_multiplier);
    }
@@ -221,7 +214,7 @@ inline double l1RelaxedProblem::compute_stationarity_error(const Iterate& iterat
 inline double l1RelaxedProblem::compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
       const Multipliers& multipliers, Norm residual_norm) const {
    // construct a lazy expression for complementarity for variable bounds
-   VectorExpression<double> variable_complementarity(this->get_number_original_variables(), [&](size_t variable_index) {
+   VectorExpression<double> variable_complementarity(Range(this->get_number_original_variables()), [&](size_t variable_index) {
       if (0. < multipliers.lower_bounds[variable_index]) {
          return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->model.variable_lower_bound(variable_index));
       }
@@ -232,7 +225,7 @@ inline double l1RelaxedProblem::compute_complementarity_error(const std::vector<
    });
 
    // construct a lazy expression for complementarity for constraint bounds
-   VectorExpression<double> constraint_complementarity(constraints.size(), [&](size_t constraint_index) {
+   VectorExpression<double> constraint_complementarity(Range(constraints.size()), [&](size_t constraint_index) {
       // violated constraints
       if (constraints[constraint_index] < this->constraint_lower_bound(constraint_index)) { // lower violated
          return (this->constraint_violation_coefficient - multipliers.constraints[constraint_index]) * (constraints[constraint_index] -
@@ -280,25 +273,41 @@ inline double l1RelaxedProblem::constraint_upper_bound(size_t constraint_index) 
    return this->model.constraint_upper_bound(constraint_index);
 }
 
+inline const Collection<size_t>& l1RelaxedProblem::get_lower_bounded_variables() const {
+   return this->lower_bounded_variables;
+}
+
+inline const Collection<size_t>& l1RelaxedProblem::get_upper_bounded_variables() const {
+   // same set as the model
+   return this->model.get_upper_bounded_variables();
+}
+
+inline const Collection<size_t>& l1RelaxedProblem::get_single_lower_bounded_variables() const {
+   return this->single_lower_bounded_variables;
+}
+
+inline const Collection<size_t>& l1RelaxedProblem::get_single_upper_bounded_variables() const {
+   // same set as the model
+   return this->model.get_single_upper_bounded_variables();
+}
+
 inline size_t l1RelaxedProblem::number_objective_gradient_nonzeros() const {
-   size_t number_nonzeros = 0;
+   // elastic contribution
+   size_t number_nonzeros = this->elastic_variables.size();
 
    // objective contribution
    if (this->objective_multiplier != 0.) {
-      number_nonzeros += this->model.get_number_objective_gradient_nonzeros();
+      number_nonzeros += this->model.number_objective_gradient_nonzeros();
    }
-
-   // elastic contribution
-   number_nonzeros += this->elastic_variables.size();
    return number_nonzeros;
 }
 
 inline size_t l1RelaxedProblem::number_jacobian_nonzeros() const {
-   return this->model.get_number_jacobian_nonzeros() + this->elastic_variables.size();
+   return this->model.number_jacobian_nonzeros() + this->elastic_variables.size();
 }
 
 inline size_t l1RelaxedProblem::number_hessian_nonzeros() const {
-   return this->model.get_number_hessian_nonzeros();
+   return this->model.number_hessian_nonzeros();
 }
 
 inline void l1RelaxedProblem::set_objective_multiplier(double new_objective_multiplier) {

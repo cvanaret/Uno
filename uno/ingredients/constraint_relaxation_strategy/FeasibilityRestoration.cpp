@@ -255,7 +255,7 @@ void FeasibilityRestoration::set_trust_region_radius(double trust_region_radius)
 double FeasibilityRestoration::compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
       const Multipliers& multipliers) const {
    // bound constraints
-   VectorExpression<double> variable_complementarity(this->model.number_variables, [&](size_t variable_index) {
+   VectorExpression<double> variable_complementarity(Range(this->model.number_variables), [&](size_t variable_index) {
       if (0. < multipliers.lower_bounds[variable_index]) {
          return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->model.variable_lower_bound(variable_index));
       }
@@ -265,16 +265,13 @@ double FeasibilityRestoration::compute_complementarity_error(const std::vector<d
       return 0.;
    });
 
-   // constraints
-   VectorExpression<double> constraint_complementarity(this->model.inequality_constraints.size(), [&](size_t inequality_index) {
-      const size_t constraint_index = this->model.inequality_constraints[inequality_index];
+   // inequality constraints
+   VectorExpression<double> constraint_complementarity(this->model.get_inequality_constraints(), [&](size_t constraint_index) {
       if (0. < multipliers.constraints[constraint_index]) { // lower bound
-         return multipliers.constraints[constraint_index] * (constraints[constraint_index] -
-               this->model.constraint_lower_bound(constraint_index));
+         return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->model.constraint_lower_bound(constraint_index));
       }
       else if (multipliers.constraints[constraint_index] < 0.) { // upper bound
-         return multipliers.constraints[constraint_index] * (constraints[constraint_index] -
-               this->model.constraint_upper_bound(constraint_index));
+         return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->model.constraint_upper_bound(constraint_index));
       }
       return 0.;
    });

@@ -24,12 +24,6 @@ public:
    [[nodiscard]] bool is_constrained() const;
    [[nodiscard]] bool has_inequality_constraints() const;
 
-   // lists of bounded variables
-   std::vector<size_t> lower_bounded_variables{}; // indices of the lower-bounded variables
-   std::vector<size_t> upper_bounded_variables{}; // indices of the upper-bounded variables
-   std::vector<size_t> single_lower_bounded_variables{}; // indices of the single lower-bounded variables
-   std::vector<size_t> single_upper_bounded_variables{}; // indices of the single upper-bounded variables
-
    // function evaluations
    [[nodiscard]] virtual double get_objective_multiplier() const = 0;
    virtual void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const = 0;
@@ -49,6 +43,10 @@ public:
    [[nodiscard]] virtual double variable_upper_bound(size_t variable_index) const = 0;
    [[nodiscard]] virtual double constraint_lower_bound(size_t constraint_index) const = 0;
    [[nodiscard]] virtual double constraint_upper_bound(size_t constraint_index) const = 0;
+   [[nodiscard]] virtual const Collection<size_t>& get_lower_bounded_variables() const = 0;
+   [[nodiscard]] virtual const Collection<size_t>& get_upper_bounded_variables() const = 0;
+   [[nodiscard]] virtual const Collection<size_t>& get_single_lower_bounded_variables() const = 0;
+   [[nodiscard]] virtual const Collection<size_t>& get_single_upper_bounded_variables() const = 0;
 
    [[nodiscard]] virtual size_t number_objective_gradient_nonzeros() const = 0;
    [[nodiscard]] virtual size_t number_jacobian_nonzeros() const = 0;
@@ -57,10 +55,6 @@ public:
 
 inline OptimizationProblem::OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints):
       model(model), number_variables(number_variables), number_constraints(number_constraints) {
-   this->lower_bounded_variables.reserve(this->number_variables);
-   this->upper_bounded_variables.reserve(this->number_variables);
-   this->single_lower_bounded_variables.reserve(this->number_variables);
-   this->single_upper_bounded_variables.reserve(this->number_variables);
 }
 
 inline bool OptimizationProblem::is_constrained() const {
@@ -68,7 +62,7 @@ inline bool OptimizationProblem::is_constrained() const {
 }
 
 inline bool OptimizationProblem::has_inequality_constraints() const {
-   return (not this->model.inequality_constraints.empty());
+   return (not this->model.get_inequality_constraints().is_empty());
 }
 
 inline size_t OptimizationProblem::get_number_original_variables() const {

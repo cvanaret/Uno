@@ -67,7 +67,7 @@ double ConstraintRelaxationStrategy::compute_stationarity_error(const Iterate& i
 }
 
 double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Iterate& iterate) const {
-   const size_t total_size = this->model.lower_bounded_variables.size() + this->model.upper_bounded_variables.size() + this->model.number_constraints;
+   const size_t total_size = this->model.get_lower_bounded_variables().size() + this->model.get_upper_bounded_variables().size() + this->model.number_constraints;
    if (total_size == 0) {
       return 1.;
    }
@@ -83,7 +83,7 @@ double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Iterate&
 }
 
 double ConstraintRelaxationStrategy::compute_complementarity_scaling(const Iterate& iterate) const {
-   const size_t total_size = this->model.lower_bounded_variables.size() + this->model.upper_bounded_variables.size();
+   const size_t total_size = this->model.get_lower_bounded_variables().size() + this->model.get_upper_bounded_variables().size();
    if (total_size == 0) {
       return 1.;
    }

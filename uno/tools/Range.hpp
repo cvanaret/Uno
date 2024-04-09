@@ -4,6 +4,8 @@
 #ifndef UNO_RANGE_H
 #define UNO_RANGE_H
 
+#include "Collection.hpp"
+
 // direction of the range (FORWARD = increasing or BACKWARD = decreasing)
 enum RangeDirection {
    FORWARD, BACKWARD
@@ -12,7 +14,7 @@ enum RangeDirection {
 // https://en.wikipedia.org/wiki/Generator_(computer_programming)#C++
 // Default direction is FORWARD (increasing)
 template <RangeDirection direction = FORWARD>
-class Range {
+class Range: public Collection<size_t> {
 public:
    using value_type = size_t;
 
@@ -26,7 +28,9 @@ public:
    [[nodiscard]] bool operator!=(const Range&) const;
    void operator++();
    [[nodiscard]] size_t operator*() const;
-   [[nodiscard]] size_t size() const;
+   [[nodiscard]] size_t size() const override;
+
+   void for_each(const std::function<void (size_t, size_t)>& f) const override;
 
 protected:
    size_t end_index{};
@@ -84,6 +88,15 @@ inline size_t Range<direction>::size() const {
    }
    else {
       return this->current_index - this->end_index;
+   }
+}
+
+template <RangeDirection direction>
+inline void Range<direction>::for_each(const std::function<void (size_t, size_t)>& f) const {
+   size_t index_no_offset = 0;
+   for (size_t index: *this) {
+      f(index_no_offset, index);
+      index_no_offset++;
    }
 }
 

@@ -25,6 +25,11 @@ public:
 
    [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
    [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
+   [[nodiscard]] const Collection<size_t>& get_lower_bounded_variables() const override;
+   [[nodiscard]] const Collection<size_t>& get_upper_bounded_variables() const override;
+   [[nodiscard]] const Collection<size_t>& get_single_lower_bounded_variables() const override;
+   [[nodiscard]] const Collection<size_t>& get_single_upper_bounded_variables() const override;
+
    [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
    [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;
 
@@ -33,21 +38,7 @@ public:
    [[nodiscard]] size_t number_hessian_nonzeros() const override;
 };
 
-inline OptimalityProblem::OptimalityProblem(const Model& model):
-      OptimizationProblem(model, model.number_variables, model.number_constraints) {
-   // figure out bounded variables
-   for (size_t variable_index: this->model.lower_bounded_variables) {
-      this->lower_bounded_variables.push_back(variable_index);
-   }
-   for (size_t variable_index: this->model.upper_bounded_variables) {
-      this->upper_bounded_variables.push_back(variable_index);
-   }
-   for (size_t variable_index: this->model.single_lower_bounded_variables) {
-      this->single_lower_bounded_variables.push_back(variable_index);
-   }
-   for (size_t variable_index: this->model.single_upper_bounded_variables) {
-      this->single_upper_bounded_variables.push_back(variable_index);
-   }
+inline OptimalityProblem::OptimalityProblem(const Model& model): OptimizationProblem(model, model.number_variables, model.number_constraints) {
 }
 
 inline double OptimalityProblem::get_objective_multiplier() const {
@@ -125,16 +116,32 @@ inline double OptimalityProblem::constraint_upper_bound(size_t constraint_index)
    return this->model.constraint_upper_bound(constraint_index);
 }
 
+inline const Collection<size_t>& OptimalityProblem::get_lower_bounded_variables() const {
+   return this->model.get_lower_bounded_variables();
+}
+
+inline const Collection<size_t>& OptimalityProblem::get_upper_bounded_variables() const {
+   return this->model.get_upper_bounded_variables();
+}
+
+inline const Collection<size_t>& OptimalityProblem::get_single_lower_bounded_variables() const {
+   return this->model.get_single_lower_bounded_variables();
+}
+
+inline const Collection<size_t>& OptimalityProblem::get_single_upper_bounded_variables() const {
+   return this->model.get_single_upper_bounded_variables();
+}
+
 inline size_t OptimalityProblem::number_objective_gradient_nonzeros() const {
-   return this->model.get_number_objective_gradient_nonzeros();
+   return this->model.number_objective_gradient_nonzeros();
 }
 
 inline size_t OptimalityProblem::number_jacobian_nonzeros() const {
-   return this->model.get_number_jacobian_nonzeros();
+   return this->model.number_jacobian_nonzeros();
 }
 
 inline size_t OptimalityProblem::number_hessian_nonzeros() const {
-   return this->model.get_number_hessian_nonzeros();
+   return this->model.number_hessian_nonzeros();
 }
 
 #endif // UNO_OPTIMALITYPROBLEM_H

@@ -11,36 +11,8 @@
 #include "tools/Infinity.hpp"
 
 // abstract Problem class
-Model::Model(std::string name, size_t number_variables, size_t number_constraints) :
-      name(std::move(name)), number_variables(number_variables), number_constraints(number_constraints), slacks(number_constraints) {
-   this->equality_constraints.reserve(number_constraints);
-   this->inequality_constraints.reserve(number_constraints);
-   this->lower_bounded_variables.reserve(number_variables);
-   this->upper_bounded_variables.reserve(number_variables);
-   this->single_lower_bounded_variables.reserve(number_variables);
-   this->single_upper_bounded_variables.reserve(number_variables);
-}
-
-void Model::determine_bounds_types(std::vector<Interval>& bounds, std::vector<BoundType>& status) {
-   assert(bounds.size() == status.size());
-   // build the "status" vector as a mapping (map/transform operation) of the "bounds" vector
-   std::transform(begin(bounds), end(bounds), begin(status), [](const Interval& bounds_i) {
-      if (bounds_i.lb == bounds_i.ub) {
-         return EQUAL_BOUNDS;
-      }
-      else if (is_finite(bounds_i.lb) && is_finite(bounds_i.ub)) {
-         return BOUNDED_BOTH_SIDES;
-      }
-      else if (is_finite(bounds_i.lb)) {
-         return BOUNDED_LOWER;
-      }
-      else if (is_finite(bounds_i.ub)) {
-         return BOUNDED_UPPER;
-      }
-      else {
-         return UNBOUNDED;
-      }
-   });
+Model::Model(std::string name, size_t number_variables, size_t number_constraints, double objective_sign) :
+      name(std::move(name)), number_variables(number_variables), number_constraints(number_constraints), objective_sign(objective_sign) {
 }
 
 void Model::project_onto_variable_bounds(std::vector<double>& x) const {
@@ -53,6 +25,7 @@ bool Model::is_constrained() const {
    return (0 < this->number_constraints);
 }
 
+// individual constraint violation
 double Model::constraint_violation(double constraint_value, size_t constraint_index) const {
    const double lower_bound_violation = std::max(0., this->constraint_lower_bound(constraint_index) - constraint_value);
    const double upper_bound_violation = std::max(0., constraint_value - this->constraint_upper_bound(constraint_index));
@@ -61,7 +34,7 @@ double Model::constraint_violation(double constraint_value, size_t constraint_in
 
 // compute ||c||
 double Model::constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const {
-   VectorExpression<double> constraint_violation(constraints.size(), [&](size_t constraint_index) {
+   VectorExpression<double> constraint_violation(Range(constraints.size()), [&](size_t constraint_index) {
       return this->constraint_violation(constraints[constraint_index], constraint_index);
    });
    return norm(residual_norm, constraint_violation);
@@ -70,7 +43,7 @@ double Model::constraint_violation(const std::vector<double>& constraints, Norm 
 double Model::linearized_constraint_violation(const std::vector<double>& primal_direction, const std::vector<double>& constraints,
       const RectangularMatrix<double>& constraint_jacobian, double step_length, Norm residual_norm) const {
    // determine the linearized constraint violation term: ||c(x_k) + α ∇c(x_k)^T d||
-   VectorExpression<double> linearized_constraints(this->number_constraints, [&](size_t constraint_index) {
+   VectorExpression<double> linearized_constraints(Range(this->number_constraints), [&](size_t constraint_index) {
       const double linearized_constraint_j = constraints[constraint_index] + step_length * dot(primal_direction, constraint_jacobian[constraint_index]);
       return this->constraint_violation(linearized_constraint_j, constraint_index);
    });
