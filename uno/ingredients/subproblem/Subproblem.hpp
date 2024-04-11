@@ -27,7 +27,7 @@ public:
          const WarmstartInformation& warmstart_information) = 0;
 
    void set_trust_region_radius(double new_trust_region_radius);
-   virtual void initialize_feasibility_problem() = 0;
+   virtual void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
    virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
    virtual void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) = 0;
 

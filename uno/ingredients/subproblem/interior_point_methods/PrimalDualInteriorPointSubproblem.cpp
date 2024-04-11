@@ -213,14 +213,25 @@ void PrimalDualInteriorPointSubproblem::assemble_augmented_system(Statistics& st
    this->generate_augmented_rhs(problem, current_iterate);
 }
 
-void PrimalDualInteriorPointSubproblem::initialize_feasibility_problem() {
-   // if we're building the feasibility subproblem, temporarily update the objective multiplier
+void PrimalDualInteriorPointSubproblem::initialize_feasibility_problem(const l1RelaxedProblem& /*problem*/, Iterate& /*current_iterate*/) {
    this->solving_feasibility_problem = true;
+   this->subproblem_definition_changed = true;
+
+   // temporarily update the objective multiplier
    this->previous_barrier_parameter = this->barrier_parameter();
    const double new_barrier_parameter = std::max(this->barrier_parameter(), norm_inf(this->evaluations.constraints));
    this->barrier_parameter_update_strategy.set_barrier_parameter(new_barrier_parameter);
    DEBUG << "Barrier parameter mu temporarily updated to " << this->barrier_parameter() << '\n';
-   this->subproblem_definition_changed = true;
+
+   // set the bound multipliers
+   /*
+   problem.get_lower_bounded_variables().for_each([&](size_t, size_t variable_index) {
+      current_iterate.multipliers.lower_bounds[variable_index] = std::min(this->default_multiplier, problem.constraint_violation_coefficient);
+   });
+   problem.get_upper_bounded_variables().for_each([&](size_t, size_t variable_index) {
+      current_iterate.multipliers.upper_bounds[variable_index] = -this->default_multiplier;
+   });
+    */
 }
 
 // set the elastic variables of the current iterate
@@ -425,7 +436,7 @@ void PrimalDualInteriorPointSubproblem::assemble_primal_dual_direction(const Opt
       this->direction.multipliers.upper_bounds[variable_index] = this->upper_delta_z[variable_index];
    }
    DEBUG << "primal-dual step length = " << primal_dual_step_length << '\n';
-   DEBUG << "bound dual step length = " << bound_dual_step_length << '\n';
+   DEBUG << "bound dual step length = " << bound_dual_step_length << "\n\n";
 
    this->direction.primal_dual_step_length = primal_dual_step_length;
    this->direction.bound_dual_step_length = bound_dual_step_length;

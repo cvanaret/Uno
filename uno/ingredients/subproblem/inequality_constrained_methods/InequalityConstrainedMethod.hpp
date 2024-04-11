@@ -13,7 +13,7 @@ public:
    
    void initialize_statistics(Statistics& statistics, const Options& options) override;
    void set_initial_point(const std::vector<double>& point) override;
-   void initialize_feasibility_problem() override;
+   void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
    void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
    void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) override;
 

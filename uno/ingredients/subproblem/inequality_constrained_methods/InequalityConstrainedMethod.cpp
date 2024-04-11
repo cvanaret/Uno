@@ -17,7 +17,7 @@ void InequalityConstrainedMethod::set_initial_point(const std::vector<double>& p
    copy_from(this->initial_point, point);
 }
 
-void InequalityConstrainedMethod::initialize_feasibility_problem() {
+void InequalityConstrainedMethod::initialize_feasibility_problem(const l1RelaxedProblem& /*problem*/, Iterate& /*current_iterate*/) {
    // do nothing
 }
 
