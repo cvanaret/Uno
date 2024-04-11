@@ -51,9 +51,9 @@ public:
    [[nodiscard]] size_t number_hessian_nonzeros() const override { return this->model->number_hessian_nonzeros(); }
 
 protected:
-   std::unique_ptr<Model> model;
-   std::vector<size_t> inequality_constraint_of_slack;
-   std::vector<size_t> slack_of_inequality_constraint;
+   const std::unique_ptr<Model> model;
+   std::vector<size_t> constraint_index_of_inequality_index;
+   std::vector<size_t> slack_index_of_constraint_index;
 
    CollectionAdapter<Range<FORWARD>> equality_constraints;
    CollectionAdapter<Range<FORWARD>> inequality_constraints;
@@ -76,8 +76,8 @@ inline HomogeneousEqualityConstrainedModel::HomogeneousEqualityConstrainedModel(
             original_model->number_constraints, original_model->objective_sign),
       // transfer ownership of the pointer
       model(std::move(original_model)),
-      inequality_constraint_of_slack(this->model->get_inequality_constraints().size()),
-      slack_of_inequality_constraint(this->model->number_constraints),
+      constraint_index_of_inequality_index(this->model->get_inequality_constraints().size()),
+      slack_index_of_constraint_index(this->model->number_constraints),
       // all constraints are equality constraints
       equality_constraints(Range(this->number_constraints)),
       inequality_constraints(Range(0)),
@@ -91,20 +91,20 @@ inline HomogeneousEqualityConstrainedModel::HomogeneousEqualityConstrainedModel(
    // register the inequality constraint of each slack
    size_t inequality_index = 0;
    this->model->get_inequality_constraints().for_each([&](size_t, size_t constraint_index) {
-      const size_t slack_index = this->model->number_variables + inequality_index;
-      this->inequality_constraint_of_slack[inequality_index] = constraint_index;
-      this->slack_of_inequality_constraint[constraint_index] = slack_index;
-      this->slacks.insert(constraint_index, slack_index);
+      const size_t slack_variable_index = this->model->number_variables + inequality_index;
+      this->constraint_index_of_inequality_index[inequality_index] = constraint_index;
+      this->slack_index_of_constraint_index[constraint_index] = slack_variable_index;
+      this->slacks.insert(constraint_index, slack_variable_index);
       if (is_finite(this->model->constraint_lower_bound(constraint_index))) {
-         this->lower_bounded_slacks.push_back(slack_index);
+         this->lower_bounded_slacks.push_back(slack_variable_index);
          if (not is_finite(this->model->constraint_upper_bound(constraint_index))) {
-            this->single_lower_bounded_slacks.push_back(slack_index);
+            this->single_lower_bounded_slacks.push_back(slack_variable_index);
          }
       }
       if (is_finite(this->model->constraint_upper_bound(constraint_index))) {
-         this->upper_bounded_slacks.push_back(slack_index);
+         this->upper_bounded_slacks.push_back(slack_variable_index);
          if (not is_finite(this->model->constraint_lower_bound(constraint_index))) {
-            this->single_upper_bounded_slacks.push_back(slack_index);
+            this->single_upper_bounded_slacks.push_back(slack_variable_index);
          }
       }
       inequality_index++;
@@ -128,8 +128,8 @@ inline void HomogeneousEqualityConstrainedModel::evaluate_constraint_gradient(co
    this->model->evaluate_constraint_gradient(x, constraint_index, gradient);
    // if the original constraint is an inequality, add the slack contribution
    if (this->model->get_constraint_bound_type(constraint_index) != EQUAL_BOUNDS) {
-      const size_t slack_index = this->slack_of_inequality_constraint[constraint_index];
-      gradient.insert(slack_index, -1.);
+      const size_t slack_variable_index = this->slack_index_of_constraint_index[constraint_index];
+      gradient.insert(slack_variable_index, -1.);
    }
 }
 
@@ -156,7 +156,7 @@ inline double HomogeneousEqualityConstrainedModel::variable_lower_bound(size_t v
    }
    else { // slack variable
       const size_t slack_index = variable_index - this->model->number_variables;
-      const size_t constraint_index = this->inequality_constraint_of_slack[slack_index];
+      const size_t constraint_index = this->constraint_index_of_inequality_index[slack_index];
       return this->model->constraint_lower_bound(constraint_index);
    }
 }
@@ -166,8 +166,8 @@ inline double HomogeneousEqualityConstrainedModel::variable_upper_bound(size_t v
       return this->model->variable_upper_bound(variable_index);
    }
    else { // slack variable
-      const size_t slack_index = variable_index - this->model->number_variables;
-      const size_t constraint_index = this->inequality_constraint_of_slack[slack_index];
+      const size_t inequality_index = variable_index - this->model->number_variables;
+      const size_t constraint_index = this->constraint_index_of_inequality_index[inequality_index];
       return this->model->constraint_upper_bound(constraint_index);
    }
 }
@@ -177,8 +177,8 @@ inline BoundType HomogeneousEqualityConstrainedModel::get_variable_bound_type(si
       return this->model->get_variable_bound_type(variable_index);
    }
    else { // slack variable
-      const size_t slack_index = variable_index - this->model->number_variables;
-      const size_t constraint_index = this->inequality_constraint_of_slack[slack_index];
+      const size_t inequality_index = variable_index - this->model->number_variables;
+      const size_t constraint_index = this->constraint_index_of_inequality_index[inequality_index];
       return this->model->get_constraint_bound_type(constraint_index);
    }
 }

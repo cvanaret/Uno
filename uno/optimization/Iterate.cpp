@@ -22,12 +22,11 @@ void Iterate::evaluate_objective(const Model& model) {
    if (not this->is_objective_computed) {
       // evaluate the objective
       this->evaluations.objective = model.evaluate_objective(this->primals);
-      // check finiteness
-      if (this->evaluations.objective == INF<double>) {
+      Iterate::number_eval_objective++;
+      if (not is_finite(this->evaluations.objective)) {
          throw FunctionEvaluationError();
       }
       this->is_objective_computed = true;
-      Iterate::number_eval_objective++;
    }
 }
 
@@ -39,7 +38,7 @@ void Iterate::evaluate_constraints(const Model& model) {
          Iterate::number_eval_constraints++;
          // check finiteness
          if (std::any_of(this->evaluations.constraints.cbegin(), this->evaluations.constraints.cend(), [](double constraint_j) {
-            return constraint_j == INF<double>;
+            return not is_finite(constraint_j);
          })) {
             throw FunctionEvaluationError();
          }

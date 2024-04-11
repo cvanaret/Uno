@@ -45,7 +45,7 @@ public:
    [[nodiscard]] size_t number_hessian_nonzeros() const override { return this->model->number_hessian_nonzeros(); }
 
 private:
-   std::unique_ptr<Model> model;
+   const std::unique_ptr<Model> model;
    Scaling scaling;
 };
 
@@ -127,7 +127,9 @@ inline void ScaledModel::postprocess_solution(Iterate& iterate, TerminationStatu
    this->model->postprocess_solution(iterate, termination_status);
 
    // unscale the objective value
-   iterate.evaluations.objective /= this->scaling.get_objective_scaling();
+   if (iterate.is_objective_computed) {
+      iterate.evaluations.objective /= this->scaling.get_objective_scaling();
+   }
 
    // unscale the constraint multipliers
    for (size_t constraint_index: Range(iterate.number_constraints)) {

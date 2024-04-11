@@ -57,7 +57,7 @@ public:
    [[nodiscard]] size_t number_hessian_nonzeros() const override { return this->model->number_hessian_nonzeros(); }
 
 private:
-   std::unique_ptr<Model> model;
+   const std::unique_ptr<Model> model;
    const double relaxation_factor;
 };
 

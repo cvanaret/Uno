@@ -10,6 +10,7 @@
 // note: ownership of the pointer is transferred
 std::unique_ptr<Model> ModelFactory::reformulate(std::unique_ptr<Model> model, Iterate& initial_iterate, const Options& options) {
    // optional: scale the problem using the evaluations at the first iterate
+   // TODO create scaling *after* generating the IPM initial iterate
    if (options.get_string("scale_functions") == "yes") {
       model = std::make_unique<ScaledModel>(std::move(model), initial_iterate, options);
    }
