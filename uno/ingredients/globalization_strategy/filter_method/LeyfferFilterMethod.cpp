@@ -21,8 +21,6 @@ bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& statistics, const It
    // - ignore the predicted infeasibility reduction
    // - scale the scaled optimality measure with 1
    const double unconstrained_predicted_reduction = predicted_reduction.optimality(1.) + predicted_reduction.auxiliary_terms;
-   DEBUG << "Current: (infeas., optimality+auxiliary) = (" << current_progress_measures.infeasibility << ", " << current_optimality_measure << ")\n";
-   DEBUG << "Trial:   (infeas., optimality+auxiliary) = (" << trial_progress_measures.infeasibility << ", " << trial_optimality_measure << ")\n";
    DEBUG << "Unconstrained predicted reduction: " << unconstrained_predicted_reduction << '\n';
    DEBUG << "Current filter:\n" << *this->filter << '\n';
 
@@ -31,6 +29,8 @@ bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& statistics, const It
    const bool filter_acceptable = this->filter->acceptable(trial_progress_measures.infeasibility, trial_optimality_measure);
    if (filter_acceptable) {
       DEBUG << "Filter acceptable\n";
+      DEBUG << "Current: (infeas., optimality+auxiliary) = (" << current_progress_measures.infeasibility << ", " << current_optimality_measure << ")\n";
+      DEBUG << "Trial:   (infeas., optimality+auxiliary) = (" << trial_progress_measures.infeasibility << ", " << trial_optimality_measure << ")\n";
 
       // check acceptance wrt current point
       const bool improves_current_iterate = this->filter->acceptable_wrt_current_iterate(current_progress_measures.infeasibility,

@@ -12,11 +12,7 @@ Filter::Filter(const Options& options) :
       capacity(options.get_unsigned_int("filter_capacity")),
       infeasibility(this->capacity),
       optimality(this->capacity),
-      parameters({
-         options.get_double("filter_beta"),
-         options.get_double("filter_gamma")
-      }) {
-   this->reset();
+      parameters({options.get_double("filter_beta"), options.get_double("filter_gamma")}) {
 }
 
 void Filter::reset() {
@@ -125,7 +121,7 @@ bool Filter::acceptable(double infeasibility_measure, double optimality_measure)
    if (position == 0) {
       return true; // acceptable as left-most entry
    }
-   // until here, the optimality measure was not required
+   // until here, the optimality measure was not evaluated
    else if (optimality_measure <= this->optimality[position - 1] - this->parameters.gamma * infeasibility_measure) {
       return true; // point acceptable
    }

@@ -18,16 +18,15 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const RelaxedPr
 
    // stationarity error
    ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(this->model.number_variables, iterate, iterate.multipliers, iterate.multipliers.objective);
-   iterate.residuals.optimality_stationarity = this->compute_stationarity_error(iterate);
-   iterate.residuals.feasibility_stationarity = feasibility_problem.compute_stationarity_error(iterate, this->residual_norm);
+   iterate.residuals.optimality_stationarity = this->stationarity_error(iterate);
+   iterate.residuals.feasibility_stationarity = feasibility_problem.stationarity_error(iterate, this->residual_norm);
 
    // constraint violation of the original problem
    iterate.residuals.infeasibility = this->model.constraint_violation(iterate.evaluations.constraints, this->residual_norm);
 
    // complementarity error
-   iterate.residuals.optimality_complementarity = this->compute_complementarity_error(iterate.primals, iterate.evaluations.constraints,
-         iterate.multipliers);
-   iterate.residuals.feasibility_complementarity = feasibility_problem.compute_complementarity_error(iterate.primals, iterate.evaluations.constraints,
+   iterate.residuals.optimality_complementarity = this->complementarity_error(iterate.primals, iterate.evaluations.constraints, iterate.multipliers);
+   iterate.residuals.feasibility_complementarity = feasibility_problem.complementarity_error(iterate.primals, iterate.evaluations.constraints,
          iterate.multipliers, this->residual_norm);
 
    // scaling factors
@@ -61,7 +60,7 @@ void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(size_t number_va
    }
 }
 
-double ConstraintRelaxationStrategy::compute_stationarity_error(const Iterate& iterate) const {
+double ConstraintRelaxationStrategy::stationarity_error(const Iterate& iterate) const {
    // norm of the Lagrangian gradient
    return norm(this->residual_norm, iterate.lagrangian_gradient);
 }

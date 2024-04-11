@@ -102,13 +102,13 @@ Direction l1Relaxation::solve_sequence_of_relaxed_subproblems(Statistics& statis
 
          // stage c: compute the lowest possible constraint violation (penalty parameter = 0)
          DEBUG << "Compute ideal solution by solving the feasibility problem:\n";
-         this->subproblem->initialize_feasibility_problem();
+         this->subproblem->initialize_feasibility_problem(this->feasibility_problem, current_iterate);
          Direction feasibility_direction = this->solve_subproblem(statistics, this->feasibility_problem, current_iterate, warmstart_information);
          const double residual_lowest_violation = this->model.linearized_constraint_violation(feasibility_direction.primals,
                current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian,
                feasibility_direction.primal_dual_step_length, Norm::L1);
          DEBUG << "Lowest linearized infeasibility mk(dk): " << residual_lowest_violation << '\n';
-         // TODO let the subproblem exit the feasibility problem
+         this->subproblem->exit_feasibility_problem(this->feasibility_problem, current_iterate);
 
          // stage f: update the penalty parameter based on the current dual error
          this->decrease_parameter_aggressively(current_iterate, feasibility_direction);
@@ -183,7 +183,7 @@ double l1Relaxation::compute_infeasible_dual_error(Iterate& current_iterate) {
    double error = norm_1(current_iterate.lagrangian_gradient.constraints_contribution);
 
    // complementarity error
-   error += this->feasibility_problem.compute_complementarity_error(current_iterate.primals, current_iterate.evaluations.constraints,
+   error += this->feasibility_problem.complementarity_error(current_iterate.primals, current_iterate.evaluations.constraints,
          this->trial_multipliers, Norm::L1);
    return error;
 }
@@ -271,15 +271,11 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
       accept_iterate = this->globalization_strategy->is_iterate_acceptable(statistics, trial_iterate, current_iterate.progress, trial_iterate.progress,
             predicted_reduction, this->penalty_parameter);
    }
-
    if (accept_iterate) {
-      this->compute_primal_dual_residuals(this->feasibility_problem, trial_iterate);
-      this->set_statistics(statistics, trial_iterate);
       this->check_exact_relaxation(trial_iterate);
    }
-   if (this->model.is_constrained()) {
-      statistics.set("primal infeas.", trial_iterate.progress.infeasibility);
-   }
+   this->compute_primal_dual_residuals(this->feasibility_problem, trial_iterate);
+   this->set_statistics(statistics, trial_iterate);
    return accept_iterate;
 }
 
@@ -297,9 +293,9 @@ ProgressMeasures l1Relaxation::compute_predicted_reduction_models(Iterate& curre
    };
 }
 
-double l1Relaxation::compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
+double l1Relaxation::complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
       const Multipliers& multipliers) const {
-   return this->l1_relaxed_problem.compute_complementarity_error(primals, constraints, multipliers, Norm::L1);
+   return this->l1_relaxed_problem.complementarity_error(primals, constraints, multipliers, Norm::L1);
 }
 
 void l1Relaxation::set_trust_region_radius(double trust_region_radius) {
@@ -315,6 +311,9 @@ void l1Relaxation::check_exact_relaxation(Iterate& iterate) const {
 }
 
 void l1Relaxation::set_statistics(Statistics& statistics, const Iterate& iterate) const {
+   if (this->model.is_constrained()) {
+      statistics.set("primal infeas.", iterate.residuals.infeasibility);
+   }
    statistics.set("complementarity", iterate.residuals.optimality_complementarity);
    statistics.set("stationarity", iterate.residuals.optimality_stationarity);
 }

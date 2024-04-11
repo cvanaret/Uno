@@ -79,7 +79,7 @@ TerminationStatus GlobalizationMechanism::check_convergence(const Model& model, 
    const bool primal_feasibility = (current_iterate.residuals.infeasibility <= tolerance);
    const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(model.number_variables, tolerance);
 
-   DEBUG << "Termination criteria:\n";
+   DEBUG << "Termination criteria for tolerance = " << tolerance << ":\n";
    DEBUG << "Stationarity (optimality): " << std::boolalpha << optimality_stationarity << '\n';
    DEBUG << "Stationarity (feasibility): " << std::boolalpha << feasibility_stationarity << '\n';
    DEBUG << "Complementarity (optimality): " << std::boolalpha << optimality_complementarity << '\n';
@@ -87,7 +87,7 @@ TerminationStatus GlobalizationMechanism::check_convergence(const Model& model, 
    DEBUG << "Primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
    DEBUG << "Not all zero multipliers: " << std::boolalpha << no_trivial_duals << "\n\n";
 
-   if (current_iterate.evaluations.objective < this->unbounded_objective_threshold) {
+   if (current_iterate.is_objective_computed && current_iterate.evaluations.objective < this->unbounded_objective_threshold) {
       return TerminationStatus::UNBOUNDED;
    }
    else if (optimality_complementarity && primal_feasibility) {

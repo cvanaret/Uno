@@ -98,15 +98,15 @@ void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistic
    DEBUG << "Switching from optimality to restoration phase\n";
    this->current_phase = Phase::FEASIBILITY_RESTORATION;
    this->optimality_phase_strategy->register_current_progress(current_iterate.progress);
-   this->subproblem->initialize_feasibility_problem();
-   this->subproblem->set_elastic_variable_values(this->feasibility_problem, current_iterate);
+   this->subproblem->initialize_feasibility_problem(this->feasibility_problem, current_iterate);
    // reset constraint multipliers (this means no curvature in the first feasibility restoration iteration)
    initialize_vector(current_iterate.multipliers.constraints, 0.);
-   DEBUG2 << "Current iterate:\n" << current_iterate << '\n';
+   current_iterate.multipliers.objective = 0.;
+   this->subproblem->set_elastic_variable_values(this->feasibility_problem, current_iterate);
 
    // compute the progress measures of the current iterate for the feasibility problem
    this->evaluate_progress_measures(this->feasibility_problem, current_iterate);
-   current_iterate.multipliers.objective = 0.;
+   DEBUG2 << "Current iterate:\n" << current_iterate << '\n';
 
    this->restoration_phase_strategy->reset();
    this->restoration_phase_strategy->register_current_progress(current_iterate.progress);
@@ -194,7 +194,6 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
       accept_iterate = this->current_globalization_strategy().is_iterate_acceptable(statistics, trial_iterate, current_iterate.progress,
             trial_iterate.progress, predicted_reduction, this->current_problem().get_objective_multiplier());
    }
-
    if (accept_iterate) {
       if (this->current_phase == Phase::FEASIBILITY_RESTORATION && this->switch_to_optimality_requires_acceptance) {
          // if the trial infeasibility improves upon the best known infeasibility of the globalization strategy
@@ -204,19 +203,9 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
             this->switch_to_optimality_phase(current_iterate, trial_iterate);
          }
       }
-
-      this->compute_primal_dual_residuals(this->feasibility_problem, trial_iterate);
-      this->set_statistics(statistics, trial_iterate);
    }
-   if (this->model.is_constrained()) {
-      if (this->current_phase == Phase::OPTIMALITY) {
-         statistics.set("primal infeas.", trial_iterate.progress.infeasibility);
-      }
-      else {
-         // during feasibility restoration, infeasibility becomes the optimality measure
-         statistics.set("primal infeas.", trial_iterate.progress.optimality(FeasibilityRestoration::objective_multiplier));
-      }
-   }
+   this->compute_primal_dual_residuals(this->feasibility_problem, trial_iterate);
+   this->set_statistics(statistics, trial_iterate);
    return accept_iterate;
 }
 
@@ -252,7 +241,7 @@ void FeasibilityRestoration::set_trust_region_radius(double trust_region_radius)
    this->subproblem->set_trust_region_radius(trust_region_radius);
 }
 
-double FeasibilityRestoration::compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
+double FeasibilityRestoration::complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
       const Multipliers& multipliers) const {
    // bound constraints
    VectorExpression<double> variable_complementarity(Range(this->model.number_variables), [&](size_t variable_index) {
@@ -279,6 +268,9 @@ double FeasibilityRestoration::compute_complementarity_error(const std::vector<d
 }
 
 void FeasibilityRestoration::set_statistics(Statistics& statistics, const Iterate& iterate) const {
+   if (this->model.is_constrained()) {
+      statistics.set("primal infeas.", iterate.residuals.infeasibility);
+   }
    if (this->current_phase == Phase::OPTIMALITY) {
       statistics.set("complementarity", iterate.residuals.optimality_complementarity);
       statistics.set("stationarity", iterate.residuals.optimality_stationarity);

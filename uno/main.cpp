@@ -10,11 +10,12 @@
 #include "tools/Options.hpp"
 #include "tools/Timer.hpp"
 
+/*
 size_t memory_allocation_amount = 0;
 
-/*
 void* operator new(size_t size) {
    memory_allocation_amount += size;
+   std::cout << "Memory: " << size << '\n';
    return malloc(size);
 }
 */

@@ -25,8 +25,6 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const I
    // - ignore the predicted infeasibility reduction
    // - scale the scaled optimality measure with 1
    const double unconstrained_predicted_reduction = predicted_reduction.optimality(1.) + predicted_reduction.auxiliary_terms;
-   DEBUG << "Current (infeas., optimality+auxiliary) = (" << current_progress_measures.infeasibility << ", " << current_optimality_measure << ")\n";
-   DEBUG << "Trial   (infeas., optimality+auxiliary) = (" << trial_progress_measures.infeasibility << ", " << trial_optimality_measure << ")\n";
    DEBUG << "Unconstrained predicted reduction: " << unconstrained_predicted_reduction << '\n';
    DEBUG << "Current filter:\n" << *this->filter;
 
@@ -35,6 +33,9 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const I
    const bool filter_acceptable = this->filter->acceptable(trial_progress_measures.infeasibility, trial_optimality_measure);
    if (filter_acceptable) {
       DEBUG << "Filter acceptable\n";
+      DEBUG << "Current (infeas., optimality+auxiliary) = (" << current_progress_measures.infeasibility << ", " << current_optimality_measure << ")\n";
+      DEBUG << "Trial   (infeas., optimality+auxiliary) = (" << trial_progress_measures.infeasibility << ", " << trial_optimality_measure << ")\n";
+
       // compute actual reduction (and protect against roundoff errors)
       // TODO put constants in the option file
       static double machine_epsilon = std::numeric_limits<double>::epsilon();

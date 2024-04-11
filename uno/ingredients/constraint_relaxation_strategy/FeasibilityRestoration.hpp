@@ -59,7 +59,7 @@ private:
    void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate) const;
    [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length);
 
-   [[nodiscard]] double compute_complementarity_error(const std::vector<double>& inequality_index, const std::vector<double>& constraints,
+   [[nodiscard]] double complementarity_error(const std::vector<double>& inequality_index, const std::vector<double>& constraints,
          const Multipliers& multipliers) const override;
 
    void set_statistics(Statistics& statistics, const Iterate& iterate) const;
