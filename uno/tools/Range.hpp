@@ -4,8 +4,8 @@
 #ifndef UNO_RANGE_H
 #define UNO_RANGE_H
 
+#include <stdexcept>
 #include "Collection.hpp"
-#include <iostream>
 
 // direction of the range (FORWARD = increasing or BACKWARD = decreasing)
 enum RangeDirection {
@@ -66,6 +66,12 @@ inline Range<direction>::Range(size_t end_index): Range(0, end_index) {
 
 template <RangeDirection direction>
 inline Range<direction>::Range(size_t start_index, size_t end_index): start_index(start_index), end_index(end_index) {
+   if (direction == FORWARD && end_index < start_index) {
+      throw std::runtime_error("Forward range: end index is smaller than start index\n");
+   }
+   else if (direction == BACKWARD && end_index > start_index) {
+      throw std::runtime_error("Backward range: end index is larger than start index\n");
+   }
 }
 
 template <RangeDirection direction>
