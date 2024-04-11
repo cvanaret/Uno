@@ -33,8 +33,8 @@ public:
    [[nodiscard]] std::function<double(double)> compute_predicted_optimality_reduction_model(const Iterate& current_iterate,
          const Direction& direction, double step_length, const SymmetricMatrix<double>& hessian) const override;
 
-   [[nodiscard]] double compute_stationarity_error(const Iterate& iterate, Norm residual_norm) const override;
-   [[nodiscard]] double compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
+   [[nodiscard]] double stationarity_error(const Iterate& iterate, Norm residual_norm) const override;
+   [[nodiscard]] double complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const override;
 
    [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
@@ -60,8 +60,8 @@ protected:
    double objective_multiplier;
    const double constraint_violation_coefficient;
    ElasticVariables elastic_variables;
-   const ChainCollection<const Collection<size_t>&, Range<FORWARD>> lower_bounded_variables; // original variables + elastic variables
-   const ChainCollection<const Collection<size_t>&, Range<FORWARD>> single_lower_bounded_variables; // original variables + elastic variables
+   const ChainCollection<const Collection<size_t>&, Range<FORWARD>> lower_bounded_variables; // model variables + elastic variables
+   const ChainCollection<const Collection<size_t>&, Range<FORWARD>> single_lower_bounded_variables; // model variables + elastic variables
 
    [[nodiscard]] static size_t count_elastic_variables(const Model& model);
    void generate_elastic_variables();
@@ -72,7 +72,7 @@ inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_m
       objective_multiplier(objective_multiplier),
       constraint_violation_coefficient(constraint_violation_coefficient),
       elastic_variables(this->number_constraints),
-      // lower bounded variables are the original variables + the elastic variables
+      // lower bounded variables are the model variables + the elastic variables
       lower_bounded_variables(concatenate(this->model.get_lower_bounded_variables(), Range(model.number_variables,
             model.number_variables + this->elastic_variables.size()))),
       single_lower_bounded_variables(concatenate(this->model.get_single_lower_bounded_variables(),
@@ -88,7 +88,7 @@ inline void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, Spar
    // scale nabla f(x) by rho
    if (this->objective_multiplier != 0.) {
       iterate.evaluate_objective_gradient(this->model);
-      // TODO change that
+      // TODO change this
       objective_gradient = iterate.evaluations.objective_gradient;
       scale(objective_gradient, this->objective_multiplier);
    }
@@ -118,6 +118,7 @@ inline void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, std::vector
 
 inline void l1RelaxedProblem::evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const {
    iterate.evaluate_constraint_jacobian(this->model);
+   // TODO change this
    constraint_jacobian = iterate.evaluations.constraint_jacobian;
    // add the contribution of the elastics
    this->elastic_variables.positive.for_each([&](size_t constraint_index, size_t elastic_index) {
@@ -152,8 +153,7 @@ inline void l1RelaxedProblem::set_optimality_measure(Iterate& iterate) const {
    if (this->objective_multiplier == 0.) {
       // constraint violation
       iterate.evaluate_constraints(this->model);
-      const double constraint_violation = this->constraint_violation_coefficient *
-            this->model.constraint_violation(iterate.evaluations.constraints, Norm::L1);
+      const double constraint_violation = this->model.constraint_violation(iterate.evaluations.constraints, Norm::L1);
       iterate.progress.optimality = [=](double /*objective_multiplier*/) {
          return constraint_violation;
       };
@@ -205,26 +205,26 @@ inline std::function<double(double)> l1RelaxedProblem::compute_predicted_optimal
    }
 }
 
-inline double l1RelaxedProblem::compute_stationarity_error(const Iterate& iterate, Norm residual_norm) const {
+inline double l1RelaxedProblem::stationarity_error(const Iterate& iterate, Norm residual_norm) const {
    // norm of the constraints' contribution of the Lagrangian gradient
    return norm(residual_norm, iterate.lagrangian_gradient.constraints_contribution);
 }
 
-// complementary slackness error
-inline double l1RelaxedProblem::compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
+// complementary slackness error: expression for violated constraints depends on the definition of the relaxed problem
+inline double l1RelaxedProblem::complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
       const Multipliers& multipliers, Norm residual_norm) const {
-   // construct a lazy expression for complementarity for variable bounds
-   VectorExpression<double> variable_complementarity(Range(this->get_number_original_variables()), [&](size_t variable_index) {
+   // complementarity for variable bounds
+   VectorExpression<double> variable_complementarity(Range(this->model.number_variables), [&](size_t variable_index) {
       if (0. < multipliers.lower_bounds[variable_index]) {
-         return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->model.variable_lower_bound(variable_index));
+         return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->variable_lower_bound(variable_index));
       }
       if (multipliers.upper_bounds[variable_index] < 0.) {
-         return multipliers.upper_bounds[variable_index] * (primals[variable_index] - this->model.variable_upper_bound(variable_index));
+         return multipliers.upper_bounds[variable_index] * (primals[variable_index] - this->variable_upper_bound(variable_index));
       }
       return 0.;
    });
 
-   // construct a lazy expression for complementarity for constraint bounds
+   // complementarity for constraint bounds
    VectorExpression<double> constraint_complementarity(Range(constraints.size()), [&](size_t constraint_index) {
       // violated constraints
       if (constraints[constraint_index] < this->constraint_lower_bound(constraint_index)) { // lower violated
@@ -248,7 +248,7 @@ inline double l1RelaxedProblem::compute_complementarity_error(const std::vector<
 }
 
 inline double l1RelaxedProblem::variable_lower_bound(size_t variable_index) const {
-   if (variable_index < this->model.number_variables) { // original variable
+   if (variable_index < this->model.number_variables) { // model variable
       return this->model.variable_lower_bound(variable_index);
    }
    else { // elastic variable in [0, +inf[
@@ -257,7 +257,7 @@ inline double l1RelaxedProblem::variable_lower_bound(size_t variable_index) cons
 }
 
 inline double l1RelaxedProblem::variable_upper_bound(size_t variable_index) const {
-   if (variable_index < this->model.number_variables) { // original variable
+   if (variable_index < this->model.number_variables) { // model variable
       return this->model.variable_upper_bound(variable_index);
    }
    else { // elastic variable in [0, +inf[
