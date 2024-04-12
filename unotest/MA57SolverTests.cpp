@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <gtest/gtest.h>
-#include "solvers/linear/MA57Solver.hpp"
+#include "solvers/linear/direct/MA57Solver.hpp"
 
 const size_t n = 5;
 const size_t nnz = 7;
