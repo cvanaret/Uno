@@ -21,8 +21,7 @@ public:
    virtual ~SymmetricMatrix() = default;
 
    virtual void reset();
-
-   ElementType quadratic_product(const std::vector<ElementType>& row_index, const std::vector<ElementType>& column_index) const;
+   [[nodiscard]] ElementType quadratic_product(const std::vector<ElementType>& x, const std::vector<ElementType>& y) const;
 
    virtual void for_each(const std::function<void(size_t, size_t, ElementType)>& f) const = 0;
    // build the matrix incrementally

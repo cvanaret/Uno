@@ -15,14 +15,13 @@
  */
 template <typename ElementType>
 class COOSymmetricMatrix: public SymmetricMatrix<ElementType> {
-   // Coordinate list
 public:
    COOSymmetricMatrix(size_t max_dimension, size_t original_capacity, bool use_regularization);
 
    void reset() override;
    void for_each(const std::function<void(size_t, size_t, ElementType)>& f) const override;
    void insert(ElementType term, size_t row_index, size_t column_index) override;
-   void finalize_column(size_t column_index) override;
+   void finalize_column(size_t /*column_index*/) override { /* do nothing */ }
    [[nodiscard]] ElementType smallest_diagonal_entry() const override;
    void set_regularization(const std::function<ElementType(size_t index)>& regularization_function) override;
 
@@ -90,11 +89,6 @@ void COOSymmetricMatrix<ElementType>::insert(ElementType term, size_t row_index,
    if (row_index == column_index) {
       this->diagonal_entries[row_index] += term;
    }
-}
-
-template <typename ElementType>
-void COOSymmetricMatrix<ElementType>::finalize_column(size_t /*column_index*/) {
-   // do nothing
 }
 
 template <typename ElementType>
