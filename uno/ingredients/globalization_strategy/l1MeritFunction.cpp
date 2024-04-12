@@ -25,7 +25,7 @@ void l1MeritFunction::set_infeasibility_upper_bound(double /*new_upper_bound*/) 
    // do nothing
 }
 
-bool l1MeritFunction::is_iterate_acceptable(Statistics& statistics, const Iterate& /*trial_iterate*/, const ProgressMeasures& current_progress,
+bool l1MeritFunction::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
       const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) {
    // predicted reduction with all contributions. This quantity should be positive (= negative directional derivative)
    double constrained_predicted_reduction = predicted_reduction.optimality(objective_multiplier) + predicted_reduction.auxiliary_terms +

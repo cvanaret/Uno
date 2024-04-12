@@ -22,7 +22,7 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
    
    Timer timer{};
    Statistics statistics = Uno::create_statistics(model, options);
-   // use the current point to initialize the strategies and generate the initial iterate
+   // use the initial primal-dual point to initialize the strategies and generate the initial iterate
    this->initialize(statistics, current_iterate, options);
 
    bool termination = false;

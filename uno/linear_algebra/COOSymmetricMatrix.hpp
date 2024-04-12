@@ -26,7 +26,7 @@ public:
    [[nodiscard]] ElementType smallest_diagonal_entry() const override;
    void set_regularization(const std::function<ElementType(size_t index)>& regularization_function) override;
 
-   void print(std::ostream& row_index) const override;
+   void print(std::ostream& stream) const override;
 
    static COOSymmetricMatrix<ElementType> zero(size_t dimension);
 

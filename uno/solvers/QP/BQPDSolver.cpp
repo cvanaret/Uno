@@ -11,20 +11,20 @@
 #define BIG 1e30
 
 extern "C" {
-// fortran common block used in bqpd/bqpd.f
-extern struct {
-   int kk, ll, kkk, lll, mxws, mxlws;
-} wsc_;
+   // fortran common block used in bqpd/bqpd.f
+   extern struct {
+      int kk, ll, kkk, lll, mxws, mxlws;
+   } wsc_;
 
-// fortran common for inertia correction in wdotd
-extern struct {
-   double alpha;
-} kktalphac_;
+   // fortran common for inertia correction in wdotd
+   extern struct {
+      double alpha;
+   } kktalphac_;
 
-extern void
-bqpd_(const int* n, const int* m, int* k, int* kmax, double* a, int* la, double* x, double* bl, double* bu, double* f, double* fmin, double* g,
-      double* r, double* w, double* e, int* ls, double* alp, int* lp, int* mlp, int* peq, double* ws, int* lws, const int* mode, int* ifail,
-      int* info, int* iprint, int* nout);
+   extern void
+   bqpd_(const int* n, const int* m, int* k, int* kmax, double* a, int* la, double* x, double* bl, double* bu, double* f, double* fmin, double* g,
+         double* r, double* w, double* e, int* ls, double* alp, int* lp, int* mlp, int* peq, double* ws, int* lws, const int* mode, int* ifail,
+         int* info, int* iprint, int* nout);
 }
 
 // preallocate a bunch of stuff
@@ -135,7 +135,7 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
          this->ub.data(), &direction.subproblem_objective, &this->fmin, this->gradient_solution.data(), this->residuals.data(), this->w.data(),
          this->e.data(), this->active_set.data(), this->alp.data(), this->lp.data(), &this->mlp, &this->peq_solution, this->hessian_values.data(),
          this->hessian_sparsity.data(), &mode_integer, &this->ifail, this->info.data(), &this->iprint, &this->nout);
-   BQPDStatus bqpd_status = BQPDSolver::bqpd_status_from_int(this->ifail);
+   const BQPDStatus bqpd_status = BQPDSolver::bqpd_status_from_int(this->ifail);
    direction.status = BQPDSolver::status_from_bqpd_status(bqpd_status);
    this->number_calls++;
 

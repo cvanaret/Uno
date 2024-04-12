@@ -268,7 +268,7 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
       ProgressMeasures predicted_reduction = this->compute_predicted_reduction_models(current_iterate, direction, step_length);
 
       // invoke the globalization strategy for acceptance
-      accept_iterate = this->globalization_strategy->is_iterate_acceptable(statistics, trial_iterate, current_iterate.progress, trial_iterate.progress,
+      accept_iterate = this->globalization_strategy->is_iterate_acceptable(statistics, current_iterate.progress, trial_iterate.progress,
             predicted_reduction, this->penalty_parameter);
    }
    if (accept_iterate) {
