@@ -27,14 +27,14 @@ void QPSubproblem::initialize_statistics(Statistics& statistics, const Options& 
    }
 }
 
-void QPSubproblem::generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) {
+void QPSubproblem::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
    // enforce linear constraints at initial point
    if (this->enforce_linear_constraints_at_initial_iterate) {
       Preprocessing::enforce_linear_constraints(problem.model, initial_iterate.primals, initial_iterate.multipliers, *this->solver);
    }
 }
 
-void QPSubproblem::evaluate_functions(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+void QPSubproblem::evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
       const WarmstartInformation& warmstart_information) {
    // Lagrangian Hessian
    if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
@@ -50,7 +50,7 @@ void QPSubproblem::evaluate_functions(Statistics& statistics, const NonlinearPro
    }
 }
 
-Direction QPSubproblem::solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+Direction QPSubproblem::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
       const WarmstartInformation& warmstart_information) {
    // evaluate the functions at the current iterate
    this->evaluate_functions(statistics, problem, current_iterate, warmstart_information);
@@ -76,7 +76,7 @@ Direction QPSubproblem::solve(Statistics& statistics, const NonlinearProblem& pr
    return direction;
 }
 
-std::function<double(double)> QPSubproblem::compute_predicted_optimality_reduction_model(const NonlinearProblem& problem,
+std::function<double(double)> QPSubproblem::compute_predicted_optimality_reduction_model(const OptimizationProblem& problem,
       const Iterate& current_iterate, const Direction& direction, double step_length) const {
    return problem.compute_predicted_optimality_reduction_model(current_iterate, direction, step_length, *this->hessian_model->hessian);
 }

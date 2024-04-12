@@ -43,21 +43,23 @@ private:
    const std::unique_ptr<GlobalizationStrategy> restoration_phase_strategy;
    const std::unique_ptr<GlobalizationStrategy> optimality_phase_strategy;
    Phase current_phase{Phase::OPTIMALITY};
-   const double tolerance;
+   const double linear_feasibility_tolerance;
    const bool switch_to_optimality_requires_acceptance;
    const bool switch_to_optimality_requires_linearized_feasibility;
    bool switched_to_optimality_phase{false};
 
-   [[nodiscard]] const NonlinearProblem& current_problem() const;
+   static constexpr double objective_multiplier = 1.;
+
+   [[nodiscard]] const OptimizationProblem& current_problem() const;
    [[nodiscard]] GlobalizationStrategy& current_globalization_strategy() const;
-   [[nodiscard]] Direction solve_subproblem(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+   [[nodiscard]] Direction solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          WarmstartInformation& warmstart_information);
    void switch_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate);
 
-   void evaluate_progress_measures(const NonlinearProblem& problem, Iterate& iterate) const;
+   void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate) const;
    [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length);
 
-   [[nodiscard]] double compute_complementarity_error(const std::vector<double>& inequality_index, const std::vector<double>& constraints,
+   [[nodiscard]] double complementarity_error(const std::vector<double>& inequality_index, const std::vector<double>& constraints,
          const Multipliers& multipliers) const override;
 
    void set_statistics(Statistics& statistics, const Iterate& iterate) const;

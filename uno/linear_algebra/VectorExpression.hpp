@@ -5,29 +5,32 @@
 #define UNO_VECTOREXPRESSION_H
 
 #include <functional>
+#include "tools/Collection.hpp"
 
 template <typename ElementType>
 class VectorExpression {
 public:
+   const Collection<size_t>& indices;
+
    // compatible with algorithms that query the type of the elements
    using value_type = ElementType;
 
-   VectorExpression(size_t size, const std::function<ElementType(size_t)>& ith_component);
+   VectorExpression(const Collection<size_t>& indices, const std::function<ElementType(size_t)>& ith_component);
    [[nodiscard]] size_t size() const;
    [[nodiscard]] ElementType operator[](size_t index) const;
 
 protected:
-   const size_t length;
    const std::function<ElementType(size_t)> ith_component;
 };
 
 template <typename ElementType>
-VectorExpression<ElementType>::VectorExpression(size_t size, const std::function<ElementType(size_t)>& ith_component): length(size), ith_component(ith_component) {
+VectorExpression<ElementType>::VectorExpression(const Collection<size_t>& indices, const std::function<ElementType(size_t)>& ith_component):
+      indices(indices), ith_component(ith_component) {
 }
 
 template <typename ElementType>
 size_t VectorExpression<ElementType>::size() const {
-   return this->length;
+   return this->indices.size();
 }
 
 template <typename ElementType>

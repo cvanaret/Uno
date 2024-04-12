@@ -13,6 +13,8 @@
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "TerminationStatus.hpp"
 #include "EvaluationErrors.hpp"
+#include "tools/Collection.hpp"
+#include "tools/ChainCollection.hpp"
 
 struct Interval {
    double lb;
@@ -32,41 +34,16 @@ class Iterate;
  */
 class Model {
 public:
-   Model(std::string name, size_t number_variables, size_t number_constraints);
+   Model(std::string name, size_t number_variables, size_t number_constraints, double objective_sign);
    virtual ~Model() = default;
 
-   std::string name;
+   const std::string name;
    const size_t number_variables; /*!< Number of variables */
    const size_t number_constraints; /*!< Number of constraints */
-
-   // objective
-   double objective_sign{1.}; /*!< Sign of the objective function (1: minimization, -1: maximization) */
-
-   // data structures to access certain types of variables and constraints
-   std::vector<size_t> equality_constraints{};
-   std::vector<size_t> inequality_constraints{};
-   SparseVector<size_t> slacks;
-   std::vector<size_t> lower_bounded_variables{}; // indices of the lower-bounded variables
-   std::vector<size_t> upper_bounded_variables{}; // indices of the upper-bounded variables
-   std::vector<size_t> single_lower_bounded_variables{}; // indices of the single lower-bounded variables
-   std::vector<size_t> single_upper_bounded_variables{}; // indices of the single upper-bounded variables
+   const double objective_sign; /*!< Sign of the objective function (1: minimization, -1: maximization) */
 
    // Hessian
    const bool fixed_hessian_sparsity{true};
-
-   // purely virtual functions
-   [[nodiscard]] virtual double variable_lower_bound(size_t variable_index) const = 0;
-   [[nodiscard]] virtual double variable_upper_bound(size_t variable_index) const = 0;
-   [[nodiscard]] virtual double constraint_lower_bound(size_t constraint_index) const = 0;
-   [[nodiscard]] virtual double constraint_upper_bound(size_t constraint_index) const = 0;
-
-   [[nodiscard]] virtual BoundType get_variable_bound_type(size_t variable_index) const = 0;
-   [[nodiscard]] virtual FunctionType get_constraint_type(size_t constraint_index) const = 0;
-   [[nodiscard]] virtual BoundType get_constraint_bound_type(size_t constraint_index) const = 0;
-
-   [[nodiscard]] virtual size_t get_number_objective_gradient_nonzeros() const = 0;
-   [[nodiscard]] virtual size_t get_number_jacobian_nonzeros() const = 0;
-   [[nodiscard]] virtual size_t get_number_hessian_nonzeros() const = 0;
 
    [[nodiscard]] virtual double evaluate_objective(const std::vector<double>& x) const = 0;
    virtual void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const = 0;
@@ -76,27 +53,42 @@ public:
    virtual void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
          SymmetricMatrix<double>& hessian) const = 0;
 
-   virtual void get_initial_primal_point(std::vector<double>& x) const = 0;
-   virtual void get_initial_dual_point(std::vector<double>& multipliers) const = 0;
-   virtual void postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const = 0;
+   // purely virtual functions
+   [[nodiscard]] virtual double variable_lower_bound(size_t variable_index) const = 0;
+   [[nodiscard]] virtual double variable_upper_bound(size_t variable_index) const = 0;
+   [[nodiscard]] virtual BoundType get_variable_bound_type(size_t variable_index) const = 0;
+   [[nodiscard]] virtual const Collection<size_t>& get_lower_bounded_variables() const = 0;
+   [[nodiscard]] virtual const Collection<size_t>& get_upper_bounded_variables() const = 0;
+   [[nodiscard]] virtual const Collection<size_t>& get_slacks() const = 0;
+   [[nodiscard]] virtual const Collection<size_t>& get_single_lower_bounded_variables() const = 0;
+   [[nodiscard]] virtual const Collection<size_t>& get_single_upper_bounded_variables() const = 0;
 
-   // constraints
+   [[nodiscard]] virtual double constraint_lower_bound(size_t constraint_index) const = 0;
+   [[nodiscard]] virtual double constraint_upper_bound(size_t constraint_index) const = 0;
+   [[nodiscard]] virtual FunctionType get_constraint_type(size_t constraint_index) const = 0;
+   [[nodiscard]] virtual BoundType get_constraint_bound_type(size_t constraint_index) const = 0;
+   [[nodiscard]] virtual const Collection<size_t>& get_equality_constraints() const = 0;
+   [[nodiscard]] virtual const Collection<size_t>& get_inequality_constraints() const = 0;
    [[nodiscard]] virtual const std::vector<size_t>& get_linear_constraints() const = 0;
 
+   virtual void initial_primal_point(std::vector<double>& x) const = 0;
+   virtual void initial_dual_point(std::vector<double>& multipliers) const = 0;
+   virtual void postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const = 0;
+
+   [[nodiscard]] virtual size_t number_objective_gradient_nonzeros() const = 0;
+   [[nodiscard]] virtual size_t number_jacobian_nonzeros() const = 0;
+   [[nodiscard]] virtual size_t number_hessian_nonzeros() const = 0;
+
    // auxiliary functions
-   static void determine_bounds_types(std::vector<Interval>& variables_bounds, std::vector<BoundType>& status);
    void project_onto_variable_bounds(std::vector<double>& x) const;
    [[nodiscard]] bool is_constrained() const;
+
    // constraint violation
    [[nodiscard]] virtual double constraint_violation(double constraint_value, size_t constraint_index) const;
    [[nodiscard]] double constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const;
+   // TODO: use expressions instead
    [[nodiscard]] double linearized_constraint_violation(const std::vector<double>& primal_direction, const std::vector<double>& constraints,
          const RectangularMatrix<double>& constraint_jacobian, double step_length, Norm residual_norm) const;
-
-protected:
-   size_t number_objective_gradient_nonzeros{0}; /*!< Number of nonzero elements in the objective gradient */
-   size_t number_jacobian_nonzeros{0}; /*!< Number of nonzero elements in the constraint Jacobian */
-   size_t number_hessian_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */
 };
 
 #endif // UNO_MODEL_H

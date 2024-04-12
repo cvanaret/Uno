@@ -9,8 +9,10 @@
 #include <vector>
 #include <functional>
 #include <cmath>
+#include "linear_algebra/VectorExpression.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Range.hpp"
+#include "tools/Collection.hpp"
 
 enum class Norm {L1, L2, L2_SQUARED, INF};
 
@@ -86,10 +88,19 @@ void copy_from(std::vector<ElementType>& destination, const std::vector<ElementT
 // norms of any array with elements of any type
 
 // compute l1 norm = sum |x|_i
+template <typename ElementType>
+ElementType norm_1(const VectorExpression<ElementType>& expression) {
+   ElementType norm{0};
+   expression.indices.for_each([&](size_t, size_t index) {
+      norm += std::abs(expression[index]);
+   });
+   return norm;
+}
+
 template <typename Array, typename ElementType = typename Array::value_type>
 ElementType norm_1(const Array& x) {
    ElementType norm{0};
-   for (size_t index = 0; index < x.size(); index++) {
+   for (size_t index: Range(x.size())) {
       norm += std::abs(x[index]);
    }
    return norm;
@@ -105,7 +116,7 @@ ElementType norm_1(const Array& x, Arrays... other_arrays) {
 template <typename Array, typename ElementType = typename Array::value_type>
 ElementType norm_2_squared(const Array& x) {
    ElementType norm_squared{0};
-   for (size_t index = 0; index < x.size(); index++) {
+   for (size_t index: Range(x.size())) {
       const ElementType xi = x[index];
       norm_squared += xi * xi;
    }
@@ -131,10 +142,28 @@ ElementType norm_2(const Array& x, Arrays... other_arrays) {
 }
 
 // compute ||x||_inf
+template <typename ElementType>
+ElementType norm_inf(const VectorExpression<ElementType>& expression) {
+   ElementType norm{0};
+   expression.indices.for_each([&](size_t, size_t index) {
+      norm = std::max(norm, std::abs(expression[index]));
+   });
+   return norm;
+}
+
 template <typename Array, typename ElementType = typename Array::value_type>
 ElementType norm_inf(const Array& x) {
    ElementType norm{0};
-   for (size_t index = 0; index < x.size(); index++) {
+   for (size_t index: Range(x.size())) {
+      norm = std::max(norm, std::abs(x[index]));
+   }
+   return norm;
+}
+
+template <typename Array, RangeDirection Direction, typename ElementType = typename Array::value_type>
+ElementType norm_inf(const Array& x, const Range<Direction>& range) {
+   ElementType norm{0};
+   for (size_t index: range) {
       norm = std::max(norm, std::abs(x[index]));
    }
    return norm;
@@ -146,15 +175,17 @@ ElementType norm_inf(const Array& x, Arrays... other_arrays) {
    return std::max(norm_inf(x), norm_inf(other_arrays...));
 }
 
+/*
 // inf norm where the indices live in a given set
-template <typename ElementType, typename Array>
-ElementType norm_inf(const std::vector<ElementType>& x, const Array& indices) {
+template <typename ElementType, typename Indices>
+ElementType norm_inf(const std::vector<ElementType>& x, const Indices& indices) {
    ElementType norm = ElementType(0);
    for (size_t index: indices) {
       norm = std::max(norm, std::abs(x[index]));
    }
    return norm;
 }
+*/
 
 // norm of at least one array
 template<typename Array, typename... Arrays, typename ElementType = typename Array::value_type>
@@ -196,5 +227,15 @@ bool in_increasing_order(const Array& array, size_t length) {
    }
    return true;
 }
+
+/*
+// see here: https://stackoverflow.com/questions/10173623/override-operators-for-an-existing-class
+template <typename T>
+void operator+=(std::vector<T>& vector, const T& value) {
+   for (T& element: vector) {
+      element += value;
+   }
+}
+*/
 
 #endif // UNO_VECTOR_H

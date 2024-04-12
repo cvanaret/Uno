@@ -8,16 +8,17 @@
 #include <functional>
 #include "tools/Logger.hpp"
 #include "tools/Range.hpp"
+#include "tools/Collection.hpp"
 
 // SparseVector is a sparse vector that uses contiguous memory. It contains:
 // - a vector of indices of type size_t
 // - a vector of values of type T
 // the indices are unique but not sorted
 template <typename ElementType>
-class SparseVector {
+class SparseVector: public Collection<ElementType> {
 public:
    explicit SparseVector(size_t capacity = 0);
-   void for_each(const std::function<void(size_t, ElementType)>& f) const;
+   void for_each(const std::function<void(size_t, ElementType)>& f) const override;
    // void for_each_index(const std::function<void (size_t)>& f) const;
    void for_each_value(const std::function<void(ElementType)>& f) const;
    [[nodiscard]] size_t size() const;
@@ -105,9 +106,9 @@ void SparseVector<ElementType>::transform(const std::function<ElementType (Eleme
 
 template <typename ElementType>
 std::ostream& operator<<(std::ostream& stream, const SparseVector<ElementType>& x) {
-   stream << "sparse vector with " << x.size() << " non zeros\n";
-   x.for_each([&](size_t index, ElementType entry) {
-      stream << "index " << index << ", value " << entry << '\n';
+   stream << "sparse vector with " << x.size() << " nonzeros\n";
+   x.for_each([&](size_t index, ElementType element) {
+      stream << "index " << index << ", value " << element << '\n';
    });
    return stream;
 }
@@ -147,8 +148,8 @@ ElementType dot(const std::vector<ElementType>& x, const SparseVector<ElementTyp
 // precondition: factor != 0
 template <typename ElementType>
 void scale(SparseVector<ElementType>& x, ElementType factor) {
-   x.transform([=](ElementType entry) {
-      return factor * entry;
+   x.transform([=](ElementType element) {
+      return factor * element;
    });
 }
 

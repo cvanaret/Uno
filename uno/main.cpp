@@ -10,11 +10,12 @@
 #include "tools/Options.hpp"
 #include "tools/Timer.hpp"
 
+/*
 size_t memory_allocation_amount = 0;
 
-/*
 void* operator new(size_t size) {
    memory_allocation_amount += size;
+   std::cout << "Memory: " << size << '\n';
    return malloc(size);
 }
 */
@@ -25,9 +26,9 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
 
    // initialize initial primal and dual points
    Iterate initial_iterate(ampl_model->number_variables, ampl_model->number_constraints);
-   ampl_model->get_initial_primal_point(initial_iterate.primals);
+   ampl_model->initial_primal_point(initial_iterate.primals);
    ampl_model->project_onto_variable_bounds(initial_iterate.primals);
-   ampl_model->get_initial_dual_point(initial_iterate.multipliers.constraints);
+   ampl_model->initial_dual_point(initial_iterate.multipliers.constraints);
 
    // reformulate (scale, add slacks, relax the bounds, ...) if necessary
    std::unique_ptr<Model> model = ModelFactory::reformulate(std::move(ampl_model), initial_iterate, options);

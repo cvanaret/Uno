@@ -54,26 +54,26 @@ public:
          const WarmstartInformation& warmstart_information) override;
 
 private:
-   size_t number_hessian_nonzeros;
-   std::vector<double> lb, ub; // lower and upper bounds of variables and constraints
+   const size_t number_hessian_nonzeros;
+   std::vector<double> lb{}, ub{}; // lower and upper bounds of variables and constraints
 
-   std::vector<double> jacobian;
-   std::vector<int> jacobian_sparsity;
-   int kmax, mlp{1000};
+   std::vector<double> jacobian{};
+   std::vector<int> jacobian_sparsity{};
+   int kmax{0}, mlp{1000};
    size_t mxwk0{2000000}, mxiwk0{500000};
    std::array<int, 100> info{};
-   std::vector<double> alp;
-   std::vector<int> lp, active_set;
-   std::vector<double> w, gradient_solution, residuals, e;
-   size_t size_hessian_sparsity;
-   size_t size_hessian_workspace;
-   size_t size_hessian_sparsity_workspace;
+   std::vector<double> alp{};
+   std::vector<int> lp{}, active_set{};
+   std::vector<double> w{}, gradient_solution{}, residuals{}, e{};
+   size_t size_hessian_sparsity{};
+   size_t size_hessian_workspace{};
+   size_t size_hessian_sparsity_workspace{};
    std::vector<double> hessian_values{};
    std::vector<int> hessian_sparsity{};
    int k{0};
    int iprint{0}, nout{6};
    double fmin{-1e20};
-   int peq_solution{}, ifail{};
+   int peq_solution{0}, ifail{0};
    const int fortran_shift{1};
 
    size_t number_calls{0};

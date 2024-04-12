@@ -68,6 +68,7 @@ bool NonmonotoneFilter::acceptable(double infeasibility_measure, double optimali
    }
 
    // check acceptability ** by counting how many entries dominate **
+   // until here, the optimality measure was not evaluated
    const size_t number_dominated_entries = this->compute_number_dominated_entries(infeasibility_measure, optimality_measure);
    return (number_dominated_entries <= this->max_number_dominated_entries);
 }

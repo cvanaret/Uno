@@ -74,13 +74,13 @@ void SymmetricIndefiniteLinearSystem<ElementType>::assemble_matrix(const Symmetr
    this->matrix->dimension = number_variables + number_constraints;
    this->matrix->reset();
    // copy the Lagrangian Hessian in the top left block
-   size_t current_column = 0;
+   //size_t current_column = 0;
    hessian.for_each([&](size_t row_index, size_t column_index, double entry) {
       // finalize all empty columns
-      for (size_t column: Range(current_column, column_index)) {
+      /*for (size_t column: Range(current_column, column_index)) {
          this->matrix->finalize_column(column);
          current_column++;
-      }
+      }*/
       this->matrix->insert(entry, row_index, column_index);
    });
 

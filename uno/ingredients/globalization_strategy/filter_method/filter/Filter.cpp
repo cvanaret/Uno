@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <iostream>
+#include <iomanip>
 #include <algorithm>
 #include "Filter.hpp"
 #include "tools/Logger.hpp"
@@ -11,15 +12,10 @@ Filter::Filter(const Options& options) :
       capacity(options.get_unsigned_int("filter_capacity")),
       infeasibility(this->capacity),
       optimality(this->capacity),
-      parameters({
-         options.get_double("filter_beta"),
-         options.get_double("filter_gamma")
-      }) {
-   this->reset();
+      parameters({options.get_double("filter_beta"), options.get_double("filter_gamma")}) {
 }
 
 void Filter::reset() {
-   this->upper_bound = INF<double>;
    this->number_entries = 0;
 }
 
@@ -33,8 +29,16 @@ double Filter::get_smallest_infeasibility() const {
       return this->parameters.beta * this->infeasibility[0];
    }
    else { // filter empty
-      return this->parameters.beta * this->upper_bound;
+      return this->parameters.beta * this->infeasibility_upper_bound;
    }
+}
+
+double Filter::get_infeasibility_upper_bound() const {
+   return this->infeasibility_upper_bound;
+}
+
+void Filter::set_infeasibility_upper_bound(double new_upper_bound) {
+   this->infeasibility_upper_bound = new_upper_bound;
 }
 
 void Filter::left_shift(size_t start, size_t shift_size) {
@@ -75,7 +79,7 @@ void Filter::add(double infeasibility_measure, double optimality_measure) {
 
    // check sufficient space available for new entry (remove last entry, if not)
    if (this->number_entries >= this->capacity) {
-      this->upper_bound = this->parameters.beta * std::max(this->upper_bound, this->infeasibility[this->number_entries - 1]);
+      this->infeasibility_upper_bound = this->parameters.beta * std::max(this->infeasibility_upper_bound, this->infeasibility[this->number_entries - 1]);
       // create space in filter: remove last entry
       this->number_entries--;
    }
@@ -96,7 +100,7 @@ void Filter::add(double infeasibility_measure, double optimality_measure) {
 }
 
 bool Filter::acceptable_wrt_upper_bound(double infeasibility_measure) const {
-   return (infeasibility_measure < this->parameters.beta * this->upper_bound);
+   return (infeasibility_measure < this->parameters.beta * this->infeasibility_upper_bound);
 }
 
 // return true if (infeasibility_measure, optimality_measure) acceptable, false otherwise
@@ -117,7 +121,7 @@ bool Filter::acceptable(double infeasibility_measure, double optimality_measure)
    if (position == 0) {
       return true; // acceptable as left-most entry
    }
-   // until here, the optimality measure was not required
+   // until here, the optimality measure was not evaluated
    else if (optimality_measure <= this->optimality[position - 1] - this->parameters.gamma * infeasibility_measure) {
       return true; // point acceptable
    }
@@ -136,14 +140,43 @@ double Filter::compute_actual_reduction(double current_optimality_measure, doubl
    return current_optimality_measure - trial_optimality_measure;
 }
 
-//! print: print the content of the filter
+std::string to_string(double number) {
+   std::ostringstream stream;
+   stream << std::defaultfloat << std::setprecision(7) << number;
+   return stream.str();
+}
+
+// print the content of the filter
 std::ostream& operator<<(std::ostream& stream, Filter& filter) {
-   stream << "************\n";
-   stream << "  Current filter (infeasibility, optimality):\n";
+   const size_t fixed_length_column1 = 14;
+   const size_t fixed_length_column2 = 11;
+
+   stream << "┌───────────────┬────────────┐\n";
+   stream << "│ infeasibility │ optimality │\n";
+   stream << "├───────────────┼────────────┤\n";
    for (size_t position: Range(filter.number_entries)) {
-      stream << "\t" << filter.infeasibility[position] << "\t\t" << filter.optimality[position] << '\n';
+      // convert numbers to strings
+      const std::string infeasibility_string = to_string(filter.infeasibility[position]);
+      const std::string optimality_string = to_string(filter.optimality[position]);
+
+      // compute lengths of columns
+      const size_t infeasibility_length = infeasibility_string.size();
+      const size_t number_infeasibility_spaces = (infeasibility_length < fixed_length_column1) ? fixed_length_column1 - infeasibility_length : 0;
+      const size_t optimality_length = optimality_string.size();
+      const size_t number_optimality_spaces = (optimality_length < fixed_length_column2) ? fixed_length_column2 - optimality_length : 0;
+
+      // print line
+      stream << "│ " << infeasibility_string;
+      for ([[maybe_unused]] size_t k: Range(number_infeasibility_spaces)) {
+         stream << ' ';
+      }
+      stream << "│ " << optimality_string;
+      for ([[maybe_unused]] size_t k: Range(number_optimality_spaces)) {
+         stream << ' ';
+      }
+      stream << "│\n";
    }
-   std::cout << "Upper bound: " << filter.upper_bound << '\n';
-   stream << "************\n";
+   stream << "└───────────────┴────────────┘\n";
+   std::cout << "Infeasibility upper bound: " << filter.infeasibility_upper_bound << '\n';
    return stream;
 }

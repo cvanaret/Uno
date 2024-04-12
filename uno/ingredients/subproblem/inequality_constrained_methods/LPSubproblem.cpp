@@ -12,10 +12,10 @@ LPSubproblem::LPSubproblem(size_t max_number_variables, size_t max_number_constr
             max_number_objective_gradient_nonzeros, max_number_jacobian_nonzeros, options)) {
 }
 
-void LPSubproblem::generate_initial_iterate(const NonlinearProblem& /*problem*/, Iterate& /*initial_iterate*/) {
+void LPSubproblem::generate_initial_iterate(const OptimizationProblem& /*problem*/, Iterate& /*initial_iterate*/) {
 }
 
-void LPSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate, const WarmstartInformation& warmstart_information) {
+void LPSubproblem::evaluate_functions(const OptimizationProblem& problem, Iterate& current_iterate, const WarmstartInformation& warmstart_information) {
    // objective gradient
    if (warmstart_information.objective_changed) {
       problem.evaluate_objective_gradient(current_iterate, this->evaluations.objective_gradient);
@@ -27,7 +27,7 @@ void LPSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& 
    }
 }
 
-Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem& problem, Iterate& current_iterate,
+Direction LPSubproblem::solve(Statistics& /*statistics*/, const OptimizationProblem& problem, Iterate& current_iterate,
       const WarmstartInformation& warmstart_information) {
    // evaluate the functions at the current iterate
    this->evaluate_functions(problem, current_iterate, warmstart_information);
@@ -53,7 +53,7 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem
    return direction;
 }
 
-std::function<double(double)> LPSubproblem::compute_predicted_optimality_reduction_model(const NonlinearProblem& problem,
+std::function<double(double)> LPSubproblem::compute_predicted_optimality_reduction_model(const OptimizationProblem& problem,
       const Iterate& current_iterate, const Direction& direction, double step_length) const {
    return problem.compute_predicted_optimality_reduction_model(current_iterate, direction, step_length,
          COOSymmetricMatrix<double>::zero(direction.number_variables));

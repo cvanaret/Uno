@@ -27,23 +27,23 @@ public:
    ~PrimalDualInteriorPointSubproblem() override = default; // TODO remove
 
    void initialize_statistics(Statistics& statistics, const Options& options) override;
-   void generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) override;
-   void set_initial_point(const std::vector<double>& initial_point) override;
+   void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
+   void set_initial_point(const std::vector<double>& point) override;
 
-   void initialize_feasibility_problem() override;
+   void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
    void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& constraint_index) override;
-   void exit_feasibility_problem(const NonlinearProblem& problem, Iterate& trial_iterate) override;
+   void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) override;
 
-   [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+   [[nodiscard]] Direction solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const WarmstartInformation& warmstart_information) override;
 
-   [[nodiscard]] std::function<double(double)> compute_predicted_optimality_reduction_model(const NonlinearProblem& problem,
+   [[nodiscard]] std::function<double(double)> compute_predicted_optimality_reduction_model(const OptimizationProblem& problem,
          const Iterate& current_iterate, const Direction& direction, double step_length) const override;
-   void set_auxiliary_measure(const NonlinearProblem& problem, Iterate& iterate) override;
-   [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const NonlinearProblem& problem,
+   void set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) override;
+   [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const OptimizationProblem& problem,
          const Iterate& current_iterate, const Direction& direction, double step_length) const override;
 
-   void postprocess_iterate(const NonlinearProblem& problem, Iterate& iterate) override;
+   void postprocess_iterate(const OptimizationProblem& problem, Iterate& iterate) override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
 protected:
@@ -66,20 +66,20 @@ protected:
 
    [[nodiscard]] double barrier_parameter() const;
    [[nodiscard]] double push_variable_to_interior(double variable_value, const Interval& variable_bounds) const;
-   void evaluate_functions(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+   void evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const WarmstartInformation& warmstart_information);
-   void update_barrier_parameter(const NonlinearProblem& problem, const Iterate& current_iterate);
-   [[nodiscard]] bool is_small_step(const NonlinearProblem& variable_index, const Iterate& current_iterate, const Direction& direction) const;
+   void update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate);
+   [[nodiscard]] bool is_small_step(const OptimizationProblem& variable_index, const Iterate& current_iterate, const Direction& direction) const;
    [[nodiscard]] double evaluate_subproblem_objective() const;
-   [[nodiscard]] double compute_barrier_term_directional_derivative(const NonlinearProblem& problem, const Iterate& current_iterate,
+   [[nodiscard]] double compute_barrier_term_directional_derivative(const OptimizationProblem& problem, const Iterate& current_iterate,
          const Direction& direction) const;
-   [[nodiscard]] double primal_fraction_to_boundary(const NonlinearProblem& problem, const Iterate& current_iterate, double tau);
-   [[nodiscard]] double dual_fraction_to_boundary(const NonlinearProblem& problem, const Iterate& current_iterate, double tau);
-   void assemble_augmented_system(Statistics& statistics, const NonlinearProblem& problem, const Iterate& current_iterate);
-   void generate_augmented_rhs(const NonlinearProblem& variable_index, const Iterate& current_iterate);
-   void assemble_primal_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate);
-   void compute_bound_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate);
-   void compute_least_square_multipliers(const NonlinearProblem& problem, Iterate& iterate);
+   [[nodiscard]] double primal_fraction_to_boundary(const OptimizationProblem& problem, const Iterate& current_iterate, double tau);
+   [[nodiscard]] double dual_fraction_to_boundary(const OptimizationProblem& problem, const Iterate& current_iterate, double tau);
+   void assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem, const Iterate& current_iterate);
+   void generate_augmented_rhs(const OptimizationProblem& variable_index, const Iterate& current_iterate);
+   void assemble_primal_dual_direction(const OptimizationProblem& problem, const Iterate& current_iterate);
+   void compute_bound_dual_direction(const OptimizationProblem& problem, const Iterate& current_iterate);
+   void compute_least_square_multipliers(const OptimizationProblem& problem, Iterate& iterate);
 };
 
 #endif // UNO_INFEASIBLEINTERIORPOINTSUBPROBLEM_H

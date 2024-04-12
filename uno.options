@@ -4,6 +4,7 @@ tolerance 1e-8
 
 # loose tolerance used if tight tolerance cannot be reached
 loose_tolerance 1e-6
+
 # number of iterations during which the loose tolerance is monitored
 loose_tolerance_consecutive_iteration_threshold 15
 

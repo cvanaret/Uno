@@ -23,7 +23,7 @@ public:
    explicit LagrangianGradient(size_t number_variables);
    [[nodiscard]] size_t size() const;
    [[nodiscard]] ElementType operator[](size_t variable_index) const;
-   void resize(size_t new_number_variables);
+   void resize(size_t number_variables);
 };
 
 template <typename ElementType>
@@ -44,9 +44,9 @@ ElementType LagrangianGradient<ElementType>::operator[](size_t variable_index) c
 }
 
 template <typename ElementType>
-void LagrangianGradient<ElementType>::resize(size_t new_number_variables) {
-   this->objective_contribution.resize(new_number_variables);
-   this->constraints_contribution.resize(new_number_variables);
+void LagrangianGradient<ElementType>::resize(size_t number_variables) {
+   this->objective_contribution.resize(number_variables);
+   this->constraints_contribution.resize(number_variables);
 }
 
 template <typename ElementType>

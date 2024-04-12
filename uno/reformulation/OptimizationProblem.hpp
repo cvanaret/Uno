@@ -1,8 +1,8 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_NONLINEARPROBLEM_H
-#define UNO_NONLINEARPROBLEM_H
+#ifndef UNO_OPTIMIZATIONPROBLEM_H
+#define UNO_OPTIMIZATIONPROBLEM_H
 
 #include <vector>
 #include "optimization/Iterate.hpp"
@@ -12,10 +12,10 @@
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "ingredients/subproblem/Direction.hpp"
 
-class NonlinearProblem {
+class OptimizationProblem {
 public:
-   NonlinearProblem(const Model& model, size_t number_variables, size_t number_constraints);
-   virtual ~NonlinearProblem() = default;
+   OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints);
+   virtual ~OptimizationProblem() = default;
 
    const Model& model;
    const size_t number_variables; /*!< Number of variables */
@@ -23,12 +23,6 @@ public:
 
    [[nodiscard]] bool is_constrained() const;
    [[nodiscard]] bool has_inequality_constraints() const;
-
-   // lists of bounded variables
-   std::vector<size_t> lower_bounded_variables{}; // indices of the lower-bounded variables
-   std::vector<size_t> upper_bounded_variables{}; // indices of the upper-bounded variables
-   std::vector<size_t> single_lower_bounded_variables{}; // indices of the single lower-bounded variables
-   std::vector<size_t> single_upper_bounded_variables{}; // indices of the single upper-bounded variables
 
    // function evaluations
    [[nodiscard]] virtual double get_objective_multiplier() const = 0;
@@ -45,34 +39,34 @@ public:
          const Direction& direction, double step_length, const SymmetricMatrix<double>& hessian) const = 0;
 
    [[nodiscard]] size_t get_number_original_variables() const;
-   [[nodiscard]] virtual double get_variable_lower_bound(size_t variable_index) const = 0;
-   [[nodiscard]] virtual double get_variable_upper_bound(size_t variable_index) const = 0;
-   [[nodiscard]] virtual double get_constraint_lower_bound(size_t constraint_index) const = 0;
-   [[nodiscard]] virtual double get_constraint_upper_bound(size_t constraint_index) const = 0;
+   [[nodiscard]] virtual double variable_lower_bound(size_t variable_index) const = 0;
+   [[nodiscard]] virtual double variable_upper_bound(size_t variable_index) const = 0;
+   [[nodiscard]] virtual double constraint_lower_bound(size_t constraint_index) const = 0;
+   [[nodiscard]] virtual double constraint_upper_bound(size_t constraint_index) const = 0;
+   [[nodiscard]] virtual const Collection<size_t>& get_lower_bounded_variables() const = 0;
+   [[nodiscard]] virtual const Collection<size_t>& get_upper_bounded_variables() const = 0;
+   [[nodiscard]] virtual const Collection<size_t>& get_single_lower_bounded_variables() const = 0;
+   [[nodiscard]] virtual const Collection<size_t>& get_single_upper_bounded_variables() const = 0;
 
-   [[nodiscard]] virtual size_t get_number_objective_gradient_nonzeros() const = 0;
-   [[nodiscard]] virtual size_t get_number_jacobian_nonzeros() const = 0;
-   [[nodiscard]] virtual size_t get_number_hessian_nonzeros() const = 0;
+   [[nodiscard]] virtual size_t number_objective_gradient_nonzeros() const = 0;
+   [[nodiscard]] virtual size_t number_jacobian_nonzeros() const = 0;
+   [[nodiscard]] virtual size_t number_hessian_nonzeros() const = 0;
 };
 
-inline NonlinearProblem::NonlinearProblem(const Model& model, size_t number_variables, size_t number_constraints):
+inline OptimizationProblem::OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints):
       model(model), number_variables(number_variables), number_constraints(number_constraints) {
-   this->lower_bounded_variables.reserve(this->number_variables);
-   this->upper_bounded_variables.reserve(this->number_variables);
-   this->single_lower_bounded_variables.reserve(this->number_variables);
-   this->single_upper_bounded_variables.reserve(this->number_variables);
 }
 
-inline bool NonlinearProblem::is_constrained() const {
+inline bool OptimizationProblem::is_constrained() const {
    return (0 < this->number_constraints);
 }
 
-inline bool NonlinearProblem::has_inequality_constraints() const {
-   return (not this->model.inequality_constraints.empty());
+inline bool OptimizationProblem::has_inequality_constraints() const {
+   return (not this->model.get_inequality_constraints().is_empty());
 }
 
-inline size_t NonlinearProblem::get_number_original_variables() const {
+inline size_t OptimizationProblem::get_number_original_variables() const {
    return this->model.number_variables;
 }
 
-#endif // UNO_NONLINEARPROBLEM_H
+#endif // UNO_OPTIMIZATIONPROBLEM_H

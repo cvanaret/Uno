@@ -45,7 +45,7 @@ inline void PrimalDualInteriorPointSubproblem::initialize_statistics(Statistics&
    statistics.add_column("barrier param.", Statistics::double_width - 1, options.get_int("statistics_barrier_parameter_column_order"));
 }
 
-inline void PrimalDualInteriorPointSubproblem::generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) {
+inline void PrimalDualInteriorPointSubproblem::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
    if (problem.has_inequality_constraints()) {
       throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel.\n");
    }
@@ -57,18 +57,18 @@ inline void PrimalDualInteriorPointSubproblem::generate_initial_iterate(const No
 
    // make the initial point strictly feasible wrt the bounds
    for (size_t variable_index: Range(problem.number_variables)) {
-      const Interval bounds = {problem.get_variable_lower_bound(variable_index), problem.get_variable_upper_bound(variable_index)};
+      const Interval bounds = {problem.variable_lower_bound(variable_index), problem.variable_upper_bound(variable_index)};
       initial_iterate.primals[variable_index] = PrimalDualInteriorPointSubproblem::push_variable_to_interior(initial_iterate.primals[variable_index], bounds);
    }
 
    // set the slack variables (if any)
-   if (not problem.model.slacks.empty()) {
+   if (not problem.model.get_slacks().is_empty()) {
       // evaluate the constraints at the original point
       initial_iterate.evaluate_constraints(problem.model);
 
       // set the slacks to the constraint values
-      problem.model.slacks.for_each([&](size_t constraint_index, size_t slack_index) {
-         const Interval bounds = {problem.get_variable_lower_bound(slack_index), problem.get_variable_upper_bound(slack_index)};
+      problem.model.get_slacks().for_each([&](size_t constraint_index, size_t slack_index) {
+         const Interval bounds = {problem.variable_lower_bound(slack_index), problem.variable_upper_bound(slack_index)};
          initial_iterate.primals[slack_index] = PrimalDualInteriorPointSubproblem::push_variable_to_interior(initial_iterate.evaluations.constraints[constraint_index], bounds);
       });
       // since the slacks have been set, the function evaluations should also be updated
@@ -78,12 +78,12 @@ inline void PrimalDualInteriorPointSubproblem::generate_initial_iterate(const No
    }
 
    // set the bound multipliers
-   for (size_t variable_index: problem.lower_bounded_variables) {
+   problem.get_lower_bounded_variables().for_each([&](size_t, size_t variable_index) {
       initial_iterate.multipliers.lower_bounds[variable_index] = this->default_multiplier;
-   }
-   for (size_t variable_index: problem.upper_bounded_variables) {
+   });
+   problem.get_upper_bounded_variables().for_each([&](size_t, size_t variable_index) {
       initial_iterate.multipliers.upper_bounds[variable_index] = -this->default_multiplier;
-   }
+   });
 
    // compute least-square multipliers
    if (problem.is_constrained()) {
@@ -106,7 +106,7 @@ double PrimalDualInteriorPointSubproblem::push_variable_to_interior(double varia
    return variable_value;
 }
 
-void PrimalDualInteriorPointSubproblem::evaluate_functions(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+void PrimalDualInteriorPointSubproblem::evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
       const WarmstartInformation& warmstart_information) {
    // barrier Lagrangian Hessian
    if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
@@ -116,13 +116,13 @@ void PrimalDualInteriorPointSubproblem::evaluate_functions(Statistics& statistic
       // diagonal barrier terms (grouped by variable)
       for (size_t variable_index: Range(problem.number_variables)) {
          double diagonal_barrier_term = 0.;
-         if (is_finite(problem.get_variable_lower_bound(variable_index))) { // lower bounded
+         if (is_finite(problem.variable_lower_bound(variable_index))) { // lower bounded
             diagonal_barrier_term += current_iterate.multipliers.lower_bounds[variable_index] /
-                  (current_iterate.primals[variable_index] - problem.get_variable_lower_bound(variable_index));
+                  (current_iterate.primals[variable_index] - problem.variable_lower_bound(variable_index));
          }
-         if (is_finite(problem.get_variable_upper_bound(variable_index))) { // upper bounded
+         if (is_finite(problem.variable_upper_bound(variable_index))) { // upper bounded
             diagonal_barrier_term += current_iterate.multipliers.upper_bounds[variable_index] /
-                  (current_iterate.primals[variable_index] - problem.get_variable_upper_bound(variable_index));
+                  (current_iterate.primals[variable_index] - problem.variable_upper_bound(variable_index));
          }
          this->hessian_model->hessian->insert(diagonal_barrier_term, variable_index, variable_index);
       }
@@ -137,17 +137,17 @@ void PrimalDualInteriorPointSubproblem::evaluate_functions(Statistics& statistic
       // TODO: the allocated size for objective_gradient is probably too small
       for (size_t variable_index: Range(problem.number_variables)) {
          double barrier_term = 0.;
-         if (is_finite(problem.get_variable_lower_bound(variable_index))) { // lower bounded
-            barrier_term += -this->barrier_parameter()/(current_iterate.primals[variable_index] - problem.get_variable_lower_bound(variable_index));
+         if (is_finite(problem.variable_lower_bound(variable_index))) { // lower bounded
+            barrier_term += -this->barrier_parameter()/(current_iterate.primals[variable_index] - problem.variable_lower_bound(variable_index));
             // damping
-            if (not is_finite(problem.get_variable_upper_bound(variable_index))) {
+            if (not is_finite(problem.variable_upper_bound(variable_index))) {
                barrier_term += this->damping_factor * this->barrier_parameter();
             }
          }
-         if (is_finite(problem.get_variable_upper_bound(variable_index))) { // upper bounded
-            barrier_term += -this->barrier_parameter()/(current_iterate.primals[variable_index] - problem.get_variable_upper_bound(variable_index));
+         if (is_finite(problem.variable_upper_bound(variable_index))) { // upper bounded
+            barrier_term += -this->barrier_parameter()/(current_iterate.primals[variable_index] - problem.variable_upper_bound(variable_index));
             // damping
-            if (not is_finite(problem.get_variable_lower_bound(variable_index))) {
+            if (not is_finite(problem.variable_lower_bound(variable_index))) {
                barrier_term -= this->damping_factor * this->barrier_parameter();
             }
          }
@@ -162,7 +162,7 @@ void PrimalDualInteriorPointSubproblem::evaluate_functions(Statistics& statistic
    }
 }
 
-Direction PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+Direction PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
       const WarmstartInformation& warmstart_information) {
    if (problem.has_inequality_constraints()) {
       throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel.\n");
@@ -175,6 +175,7 @@ Direction PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const
    if (not this->solving_feasibility_problem) {
       this->update_barrier_parameter(problem, current_iterate);
    }
+   statistics.set("barrier param.", this->barrier_parameter());
 
    // evaluate the functions at the current iterate
    this->evaluate_functions(statistics, problem, current_iterate, warmstart_information);
@@ -187,7 +188,6 @@ Direction PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const
    assert(this->direction.status == SubproblemStatus::OPTIMAL && "The primal-dual perturbed subproblem was not solved to optimality");
    this->number_subproblems_solved++;
    this->assemble_primal_dual_direction(problem, current_iterate);
-   statistics.set("barrier param.", this->barrier_parameter());
 
    // determine if the direction is a "small direction" (Section 3.9 of the Ipopt paper) TODO
    const bool is_small_step = PrimalDualInteriorPointSubproblem::is_small_step(problem, current_iterate, this->direction);
@@ -197,7 +197,7 @@ Direction PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const
    return this->direction;
 }
 
-void PrimalDualInteriorPointSubproblem::assemble_augmented_system(Statistics& statistics, const NonlinearProblem& problem,
+void PrimalDualInteriorPointSubproblem::assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem,
       const Iterate& current_iterate) {
    // assemble, factorize and regularize the augmented matrix
    this->augmented_system.assemble_matrix(*this->hessian_model->hessian, this->evaluations.constraint_jacobian,
@@ -213,14 +213,25 @@ void PrimalDualInteriorPointSubproblem::assemble_augmented_system(Statistics& st
    this->generate_augmented_rhs(problem, current_iterate);
 }
 
-void PrimalDualInteriorPointSubproblem::initialize_feasibility_problem() {
-   // if we're building the feasibility subproblem, temporarily update the objective multiplier
+void PrimalDualInteriorPointSubproblem::initialize_feasibility_problem(const l1RelaxedProblem& /*problem*/, Iterate& /*current_iterate*/) {
    this->solving_feasibility_problem = true;
+   this->subproblem_definition_changed = true;
+
+   // temporarily update the objective multiplier
    this->previous_barrier_parameter = this->barrier_parameter();
    const double new_barrier_parameter = std::max(this->barrier_parameter(), norm_inf(this->evaluations.constraints));
    this->barrier_parameter_update_strategy.set_barrier_parameter(new_barrier_parameter);
    DEBUG << "Barrier parameter mu temporarily updated to " << this->barrier_parameter() << '\n';
-   this->subproblem_definition_changed = true;
+
+   // set the bound multipliers
+   /*
+   problem.get_lower_bounded_variables().for_each([&](size_t, size_t variable_index) {
+      current_iterate.multipliers.lower_bounds[variable_index] = std::min(this->default_multiplier, problem.constraint_violation_coefficient);
+   });
+   problem.get_upper_bounded_variables().for_each([&](size_t, size_t variable_index) {
+      current_iterate.multipliers.upper_bounds[variable_index] = -this->default_multiplier;
+   });
+    */
 }
 
 // set the elastic variables of the current iterate
@@ -247,40 +258,40 @@ void PrimalDualInteriorPointSubproblem::set_elastic_variable_values(const l1Rela
    problem.set_elastic_variable_values(current_iterate, elastic_setting_function);
 }
 
-void PrimalDualInteriorPointSubproblem::exit_feasibility_problem(const NonlinearProblem& problem, Iterate& trial_iterate) {
+void PrimalDualInteriorPointSubproblem::exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) {
    assert(this->solving_feasibility_problem && "The barrier subproblem did not know it was solving the feasibility problem.");
    this->barrier_parameter_update_strategy.set_barrier_parameter(this->previous_barrier_parameter);
    this->solving_feasibility_problem = false;
    this->compute_least_square_multipliers(problem, trial_iterate);
 }
 
-std::function<double(double)> PrimalDualInteriorPointSubproblem::compute_predicted_optimality_reduction_model(const NonlinearProblem& problem,
+std::function<double(double)> PrimalDualInteriorPointSubproblem::compute_predicted_optimality_reduction_model(const OptimizationProblem& problem,
       const Iterate& current_iterate, const Direction& direction, double step_length) const {
    return problem.compute_predicted_optimality_reduction_model(current_iterate, direction, step_length, *this->hessian_model->hessian);
 }
 
-void PrimalDualInteriorPointSubproblem::set_auxiliary_measure(const NonlinearProblem& problem, Iterate& iterate) {
+void PrimalDualInteriorPointSubproblem::set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) {
    // auxiliary measure: barrier terms
    double barrier_terms = 0.;
-   for (size_t variable_index: problem.lower_bounded_variables) {
-      barrier_terms -= std::log(iterate.primals[variable_index] - problem.get_variable_lower_bound(variable_index));
-   }
-   for (size_t variable_index: problem.upper_bounded_variables) {
-      barrier_terms -= std::log(problem.get_variable_upper_bound(variable_index) - iterate.primals[variable_index]);
-   }
+   problem.get_lower_bounded_variables().for_each([&](size_t, size_t variable_index) {
+      barrier_terms -= std::log(iterate.primals[variable_index] - problem.variable_lower_bound(variable_index));
+   });
+   problem.get_upper_bounded_variables().for_each([&](size_t, size_t variable_index) {
+      barrier_terms -= std::log(problem.variable_upper_bound(variable_index) - iterate.primals[variable_index]);
+   });
    // damping
-   for (size_t variable_index: problem.single_lower_bounded_variables) {
-      barrier_terms += this->damping_factor*(iterate.primals[variable_index] - problem.get_variable_lower_bound(variable_index));
-   }
-   for (size_t variable_index: problem.single_upper_bounded_variables) {
-      barrier_terms += this->damping_factor*(problem.get_variable_upper_bound(variable_index) - iterate.primals[variable_index]);
-   }
+   problem.get_single_lower_bounded_variables().for_each([&](size_t, size_t variable_index) {
+      barrier_terms += this->damping_factor*(iterate.primals[variable_index] - problem.variable_lower_bound(variable_index));
+   });
+   problem.get_single_upper_bounded_variables().for_each([&](size_t, size_t variable_index) {
+      barrier_terms += this->damping_factor*(problem.variable_upper_bound(variable_index) - iterate.primals[variable_index]);
+   });
    barrier_terms *= this->barrier_parameter();
    assert(not std::isnan(barrier_terms) && "The auxiliary measure is not an number.");
    iterate.progress.auxiliary_terms = barrier_terms;
 }
 
-double PrimalDualInteriorPointSubproblem::compute_predicted_auxiliary_reduction_model(const NonlinearProblem& problem,
+double PrimalDualInteriorPointSubproblem::compute_predicted_auxiliary_reduction_model(const OptimizationProblem& problem,
       const Iterate& current_iterate, const Direction& direction, double step_length) const {
    const double directional_derivative = this->compute_barrier_term_directional_derivative(problem, current_iterate, direction);
    // TODO: take exponent of (-directional_derivative), see IPOPT paper
@@ -289,36 +300,36 @@ double PrimalDualInteriorPointSubproblem::compute_predicted_auxiliary_reduction_
    // }, "α*(μ*X^{-1} e^T d)"};
 }
 
-double PrimalDualInteriorPointSubproblem::compute_barrier_term_directional_derivative(const NonlinearProblem& problem, const Iterate& current_iterate,
+double PrimalDualInteriorPointSubproblem::compute_barrier_term_directional_derivative(const OptimizationProblem& problem, const Iterate& current_iterate,
       const Direction& direction) const {
    double directional_derivative = 0.;
-   for (size_t variable_index: problem.lower_bounded_variables) {
+   problem.get_lower_bounded_variables().for_each([&](size_t, size_t variable_index) {
       directional_derivative += -this->barrier_parameter() / (current_iterate.primals[variable_index] -
-            problem.get_variable_lower_bound(variable_index)) * direction.primals[variable_index];
-   }
-   for (size_t variable_index: problem.upper_bounded_variables) {
+            problem.variable_lower_bound(variable_index)) * direction.primals[variable_index];
+   });
+   problem.get_upper_bounded_variables().for_each([&](size_t, size_t variable_index) {
       directional_derivative += -this->barrier_parameter() / (current_iterate.primals[variable_index] -
-            problem.get_variable_upper_bound(variable_index)) * direction.primals[variable_index];
-   }
+            problem.variable_upper_bound(variable_index)) * direction.primals[variable_index];
+   });
    // damping
-   for (size_t variable_index: problem.single_lower_bounded_variables) {
+   problem.get_single_lower_bounded_variables().for_each([&](size_t, size_t variable_index) {
       directional_derivative += this->damping_factor*this->barrier_parameter()*direction.primals[variable_index];
-   }
-   for (size_t variable_index: problem.single_upper_bounded_variables) {
+   });
+   problem.get_single_upper_bounded_variables().for_each([&](size_t, size_t variable_index) {
       directional_derivative -= this->damping_factor*this->barrier_parameter()*direction.primals[variable_index];
-   }
+   });
    return directional_derivative;
 }
 
-void PrimalDualInteriorPointSubproblem::update_barrier_parameter(const NonlinearProblem& problem, const Iterate& current_iterate) {
+void PrimalDualInteriorPointSubproblem::update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate) {
     const bool barrier_parameter_updated = this->barrier_parameter_update_strategy.update_barrier_parameter(problem, current_iterate);
     // the barrier parameter may have been changed earlier when entering restoration
     this->subproblem_definition_changed = this->subproblem_definition_changed || barrier_parameter_updated;
 }
 
 // Section 3.9 in IPOPT paper
-bool PrimalDualInteriorPointSubproblem::is_small_step(const NonlinearProblem& problem, const Iterate& current_iterate, const Direction& direction) const {
-   VectorExpression<double> relative_direction_size(problem.number_variables, [&](size_t variable_index) {
+bool PrimalDualInteriorPointSubproblem::is_small_step(const OptimizationProblem& problem, const Iterate& current_iterate, const Direction& direction) const {
+   VectorExpression<double> relative_direction_size(Range(problem.number_variables), [&](size_t variable_index) {
       return direction.primals[variable_index] / (1 + std::abs(current_iterate.primals[variable_index]));
    });
    static double machine_epsilon = std::numeric_limits<double>::epsilon();
@@ -331,52 +342,52 @@ double PrimalDualInteriorPointSubproblem::evaluate_subproblem_objective() const 
    return linear_term + quadratic_term;
 }
 
-double PrimalDualInteriorPointSubproblem::primal_fraction_to_boundary(const NonlinearProblem& problem, const Iterate& current_iterate, double tau) {
+double PrimalDualInteriorPointSubproblem::primal_fraction_to_boundary(const OptimizationProblem& problem, const Iterate& current_iterate, double tau) {
    double primal_length = 1.;
-   for (size_t variable_index: problem.lower_bounded_variables) {
+   problem.get_lower_bounded_variables().for_each([&](size_t, size_t variable_index) {
       if (this->augmented_system.solution[variable_index] < 0.) {
-         double trial_alpha_xi = -tau * (current_iterate.primals[variable_index] - problem.get_variable_lower_bound(variable_index)) / this->augmented_system.solution[variable_index];
+         double trial_alpha_xi = -tau * (current_iterate.primals[variable_index] - problem.variable_lower_bound(variable_index)) / this->augmented_system.solution[variable_index];
          if (0. < trial_alpha_xi) {
             primal_length = std::min(primal_length, trial_alpha_xi);
          }
       }
-   }
-   for (size_t variable_index: problem.upper_bounded_variables) {
+   });
+   problem.get_upper_bounded_variables().for_each([&](size_t, size_t variable_index){
       if (0. < this->augmented_system.solution[variable_index]) {
-         double trial_alpha_xi = -tau * (current_iterate.primals[variable_index] - problem.get_variable_upper_bound(variable_index)) / this->augmented_system.solution[variable_index];
+         double trial_alpha_xi = -tau * (current_iterate.primals[variable_index] - problem.variable_upper_bound(variable_index)) / this->augmented_system.solution[variable_index];
          if (0. < trial_alpha_xi) {
             primal_length = std::min(primal_length, trial_alpha_xi);
          }
       }
-   }
+   });
    assert(0. < primal_length && primal_length <= 1. && "The primal fraction-to-boundary factor is not in (0, 1]");
    return primal_length;
 }
 
-double PrimalDualInteriorPointSubproblem::dual_fraction_to_boundary(const NonlinearProblem& problem, const Iterate& current_iterate, double tau) {
+double PrimalDualInteriorPointSubproblem::dual_fraction_to_boundary(const OptimizationProblem& problem, const Iterate& current_iterate, double tau) {
    double dual_length = 1.;
-   for (size_t variable_index: problem.lower_bounded_variables) {
+   problem.get_lower_bounded_variables().for_each([&](size_t, size_t variable_index) {
       if (this->lower_delta_z[variable_index] < 0.) {
          double trial_alpha_zj = -tau * current_iterate.multipliers.lower_bounds[variable_index] / this->lower_delta_z[variable_index];
          if (0. < trial_alpha_zj) {
             dual_length = std::min(dual_length, trial_alpha_zj);
          }
       }
-   }
-   for (size_t variable_index: problem.upper_bounded_variables) {
+   });
+   problem.get_upper_bounded_variables().for_each([&](size_t, size_t variable_index) {
       if (0. < this->upper_delta_z[variable_index]) {
          double trial_alpha_zj = -tau * current_iterate.multipliers.upper_bounds[variable_index] / this->upper_delta_z[variable_index];
          if (0. < trial_alpha_zj) {
             dual_length = std::min(dual_length, trial_alpha_zj);
          }
       }
-   }
+   });
    assert(0. < dual_length && dual_length <= 1. && "The dual fraction-to-boundary factor is not in (0, 1]");
    return dual_length;
 }
 
 // generate the right-hand side
-void PrimalDualInteriorPointSubproblem::generate_augmented_rhs(const NonlinearProblem& problem, const Iterate& current_iterate) {
+void PrimalDualInteriorPointSubproblem::generate_augmented_rhs(const OptimizationProblem& problem, const Iterate& current_iterate) {
    initialize_vector(this->augmented_system.rhs, 0.);
 
    // objective gradient
@@ -398,7 +409,7 @@ void PrimalDualInteriorPointSubproblem::generate_augmented_rhs(const NonlinearPr
    DEBUG2 << "RHS: "; print_vector(DEBUG2, this->augmented_system.rhs, 0, problem.number_variables + problem.number_constraints); DEBUG << '\n';
 }
 
-void PrimalDualInteriorPointSubproblem::assemble_primal_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate) {
+void PrimalDualInteriorPointSubproblem::assemble_primal_dual_direction(const OptimizationProblem& problem, const Iterate& current_iterate) {
    this->direction.set_dimensions(problem.number_variables, problem.number_constraints);
 
    // retrieve the duals with correct signs (Nocedal p590)
@@ -424,42 +435,42 @@ void PrimalDualInteriorPointSubproblem::assemble_primal_dual_direction(const Non
       this->direction.multipliers.lower_bounds[variable_index] = this->lower_delta_z[variable_index];
       this->direction.multipliers.upper_bounds[variable_index] = this->upper_delta_z[variable_index];
    }
-   DEBUG << "primal-dual length = " << primal_dual_step_length << '\n';
-   DEBUG << "bound dual length = " << bound_dual_step_length << '\n';
+   DEBUG << "primal-dual step length = " << primal_dual_step_length << '\n';
+   DEBUG << "bound dual step length = " << bound_dual_step_length << "\n\n";
 
    this->direction.primal_dual_step_length = primal_dual_step_length;
    this->direction.bound_dual_step_length = bound_dual_step_length;
    this->direction.subproblem_objective = this->evaluate_subproblem_objective();
 }
 
-void PrimalDualInteriorPointSubproblem::compute_bound_dual_direction(const NonlinearProblem& problem, const Iterate& current_iterate) {
+void PrimalDualInteriorPointSubproblem::compute_bound_dual_direction(const OptimizationProblem& problem, const Iterate& current_iterate) {
    initialize_vector(this->lower_delta_z, 0.);
    initialize_vector(this->upper_delta_z, 0.);
-   for (size_t variable_index: problem.lower_bounded_variables) {
-      const double distance_to_bound = current_iterate.primals[variable_index] - problem.get_variable_lower_bound(variable_index);
+   problem.get_lower_bounded_variables().for_each([&](size_t, size_t variable_index) {
+      const double distance_to_bound = current_iterate.primals[variable_index] - problem.variable_lower_bound(variable_index);
       this->lower_delta_z[variable_index] = (this->barrier_parameter() - this->augmented_system.solution[variable_index] * current_iterate.multipliers.lower_bounds[variable_index]) /
                                             distance_to_bound - current_iterate.multipliers.lower_bounds[variable_index];
       assert(is_finite(this->lower_delta_z[variable_index]) && "The displacement lower_delta_z is infinite");
-   }
-   for (size_t variable_index: problem.upper_bounded_variables) {
-      const double distance_to_bound = current_iterate.primals[variable_index] - problem.get_variable_upper_bound(variable_index);
+   });
+   problem.get_upper_bounded_variables().for_each([&](size_t, size_t variable_index) {
+      const double distance_to_bound = current_iterate.primals[variable_index] - problem.variable_upper_bound(variable_index);
       this->upper_delta_z[variable_index] = (this->barrier_parameter() - this->augmented_system.solution[variable_index] * current_iterate.multipliers.upper_bounds[variable_index]) /
                                             distance_to_bound - current_iterate.multipliers.upper_bounds[variable_index];
       assert(is_finite(this->upper_delta_z[variable_index]) && "The displacement upper_delta_z is infinite");
-   }
+   });
 }
 
-void PrimalDualInteriorPointSubproblem::compute_least_square_multipliers(const NonlinearProblem& problem, Iterate& iterate) {
+void PrimalDualInteriorPointSubproblem::compute_least_square_multipliers(const OptimizationProblem& problem, Iterate& iterate) {
    this->augmented_system.matrix->dimension = problem.number_variables + problem.number_constraints;
    this->augmented_system.matrix->reset();
    Preprocessing::compute_least_square_multipliers(problem.model, *this->augmented_system.matrix, this->augmented_system.rhs, *this->linear_solver,
          iterate, iterate.multipliers.constraints, this->least_square_multiplier_max_norm);
 }
 
-void PrimalDualInteriorPointSubproblem::postprocess_iterate(const NonlinearProblem& problem, Iterate& iterate) {
+void PrimalDualInteriorPointSubproblem::postprocess_iterate(const OptimizationProblem& problem, Iterate& iterate) {
    // rescale the bound multipliers (Eq. 16 in Ipopt paper)
-   for (size_t variable_index: problem.lower_bounded_variables) {
-      const double coefficient = this->barrier_parameter() / (iterate.primals[variable_index] - problem.get_variable_lower_bound(variable_index));
+   problem.get_lower_bounded_variables().for_each([&](size_t, size_t variable_index) {
+      const double coefficient = this->barrier_parameter() / (iterate.primals[variable_index] - problem.variable_lower_bound(variable_index));
       const double lb = coefficient / this->parameters.k_sigma;
       const double ub = coefficient * this->parameters.k_sigma;
       if (lb <= ub) {
@@ -472,9 +483,9 @@ void PrimalDualInteriorPointSubproblem::postprocess_iterate(const NonlinearProbl
       else {
          WARNING << YELLOW << "Barrier subproblem: the bounds are in the wrong order in the lower bound multiplier reset" << RESET << '\n';
       }
-   }
-   for (size_t variable_index: problem.upper_bounded_variables) {
-      const double coefficient = this->barrier_parameter() / (iterate.primals[variable_index] - problem.get_variable_upper_bound(variable_index));
+   });
+   problem.get_upper_bounded_variables().for_each([&](size_t, size_t variable_index) {
+      const double coefficient = this->barrier_parameter() / (iterate.primals[variable_index] - problem.variable_upper_bound(variable_index));
       const double lb = coefficient * this->parameters.k_sigma;
       const double ub = coefficient / this->parameters.k_sigma;
       if (lb <= ub) {
@@ -487,13 +498,13 @@ void PrimalDualInteriorPointSubproblem::postprocess_iterate(const NonlinearProbl
       else {
          WARNING << YELLOW << "Barrier subproblem: the bounds are in the wrong order in the upper bound multiplier reset" << RESET << '\n';
       }
-   }
+   });
 }
 
 size_t PrimalDualInteriorPointSubproblem::get_hessian_evaluation_count() const {
    return this->hessian_model->evaluation_count;
 }
 
-void PrimalDualInteriorPointSubproblem::set_initial_point(const std::vector<double>& /*initial_point*/) {
+void PrimalDualInteriorPointSubproblem::set_initial_point(const std::vector<double>& /*point*/) {
    // do nothing
 }

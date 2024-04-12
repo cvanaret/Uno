@@ -6,6 +6,7 @@
 #include "linear_algebra/Vector.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Infinity.hpp"
+#include "tools/ChainCollection.hpp"
 
 ASL* generate_asl(std::string file_name) {
    ASL* asl = ASL_alloc(ASL_read_pfgh);
@@ -33,20 +34,24 @@ AMPLModel::AMPLModel(const std::string& file_name) : AMPLModel(file_name, genera
 }
 
 AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
-      Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_)),
+      Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_), (asl->i.objtype_[0] == 1) ? -1. : 1.),
       asl(asl),
       // allocate vectors
-      ampl_tmp_gradient(this->number_variables),
-      variables_bounds(this->number_variables),
+      asl_gradient(this->number_variables),
+      variable_bounds(this->number_variables),
       constraint_bounds(this->number_constraints),
       variable_status(this->number_variables),
       constraint_type(this->number_constraints),
-      constraint_status(this->number_constraints) {
+      constraint_status(this->number_constraints),
+      equality_constraints_collection(CollectionAdapter(this->equality_constraints)),
+      inequality_constraints_collection(CollectionAdapter(this->inequality_constraints)),
+      slacks(Range(0)),
+      lower_bounded_variables_collection(CollectionAdapter(this->lower_bounded_variables)),
+      upper_bounded_variables_collection(CollectionAdapter(this->upper_bounded_variables)),
+      single_lower_bounded_variables_collection(CollectionAdapter(this->single_lower_bounded_variables)),
+      single_upper_bounded_variables_collection(CollectionAdapter(this->single_upper_bounded_variables)) {
    // evaluate the constraint Jacobian in sparse mode
    this->asl->i.congrd_mode = 1;
-
-   // dimensions
-   this->objective_sign = (this->asl->i.objtype_[0] == 1) ? -1. : 1.;
 
    // variables
    this->lower_bounded_variables.reserve(this->number_variables);
@@ -61,9 +66,7 @@ AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
    this->linear_constraints.reserve(this->number_constraints);
    this->generate_constraints();
 
-   // compute number of nonzeros
-   this->number_objective_gradient_nonzeros = static_cast<size_t>(this->asl->i.nzo_);
-   this->number_jacobian_nonzeros = static_cast<size_t>(this->asl->i.nzc_);
+   // compute number of nonzeros in the Lagrangian Hessian
    this->set_number_hessian_nonzeros();
 }
 
@@ -78,9 +81,9 @@ void AMPLModel::generate_variables() {
       if (lb == ub) {
          WARNING << "Variable x" << variable_index << " has identical bounds\n";
       }
-      this->variables_bounds[variable_index] = {lb, ub};
+      this->variable_bounds[variable_index] = {lb, ub};
    }
-   Model::determine_bounds_types(this->variables_bounds, this->variable_status);
+   AMPLModel::determine_bounds_types(this->variable_bounds, this->variable_status);
    // figure out the bounded variables
    for (size_t variable_index: Range(this->number_variables)) {
       const BoundType status = this->get_variable_bound_type(variable_index);
@@ -118,20 +121,20 @@ void AMPLModel::evaluate_objective_gradient(const std::vector<double>& x, Sparse
    if (setjmp(err_jmp_uno.jb)) {
       error_flag = 1;
    }
-   // evaluate the AMPL gradient (always in a dense vector)
-   (*(this->asl)->p.Objgrd)(this->asl, 0, const_cast<double*>(x.data()), const_cast<double*>(this->ampl_tmp_gradient.data()), &error_flag);
+   // evaluate the ASL gradient (always in a dense vector)
+   (*(this->asl)->p.Objgrd)(this->asl, 0, const_cast<double*>(x.data()), const_cast<double*>(this->asl_gradient.data()), &error_flag);
    if (0 < error_flag) {
       throw GradientEvaluationError();
    }
 
    // create the Uno sparse vector
-   ograd* ampl_variables_tmp = this->asl->i.Ograd_[0];
-   while (ampl_variables_tmp != nullptr) {
-      const size_t variable_index = static_cast<size_t>(ampl_variables_tmp->varno);
+   ograd* asl_variables_tmp = this->asl->i.Ograd_[0];
+   while (asl_variables_tmp != nullptr) {
+      const size_t variable_index = static_cast<size_t>(asl_variables_tmp->varno);
       // scale by the objective sign
-      const double partial_derivative = this->objective_sign*this->ampl_tmp_gradient[variable_index];
+      const double partial_derivative = this->objective_sign*this->asl_gradient[variable_index];
       gradient.insert(variable_index, partial_derivative);
-      ampl_variables_tmp = ampl_variables_tmp->next;
+      asl_variables_tmp = asl_variables_tmp->next;
    }
 }
 
@@ -158,7 +161,7 @@ void AMPLModel::evaluate_constraints(const std::vector<double>& x, std::vector<d
 void AMPLModel::evaluate_constraint_gradient(const std::vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const {
    // compute the AMPL sparse gradient
    int error_flag = 0;
-   (*(this->asl)->p.Congrd)(this->asl, static_cast<int>(constraint_index), const_cast<double*>(x.data()), const_cast<double*>(this->ampl_tmp_gradient.data()),
+   (*(this->asl)->p.Congrd)(this->asl, static_cast<int>(constraint_index), const_cast<double*>(x.data()), const_cast<double*>(this->asl_gradient.data()),
          &error_flag);
    if (0 < error_flag) {
       throw GradientEvaluationError();
@@ -166,13 +169,13 @@ void AMPLModel::evaluate_constraint_gradient(const std::vector<double>& x, size_
 
    // construct the Uno sparse vector
    gradient.clear();
-   cgrad* ampl_variables_tmp = this->asl->i.Cgrad_[constraint_index];
-   size_t sparse_AMPL_index = 0;
-   while (ampl_variables_tmp != nullptr) {
-      const size_t variable_index = static_cast<size_t>(ampl_variables_tmp->varno);
-      gradient.insert(variable_index, this->ampl_tmp_gradient[sparse_AMPL_index]);
-      ampl_variables_tmp = ampl_variables_tmp->next;
-      sparse_AMPL_index++;
+   cgrad* asl_variables_tmp = this->asl->i.Cgrad_[constraint_index];
+   size_t sparse_asl_index = 0;
+   while (asl_variables_tmp != nullptr) {
+      const size_t variable_index = static_cast<size_t>(asl_variables_tmp->varno);
+      gradient.insert(variable_index, this->asl_gradient[sparse_asl_index]);
+      asl_variables_tmp = asl_variables_tmp->next;
+      sparse_asl_index++;
    }
 }
 
@@ -188,24 +191,56 @@ void AMPLModel::set_number_hessian_nonzeros() {
    // int (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri);
    const int objective_number = -1;
    const int upper_triangular = 1;
-   this->number_hessian_nonzeros = static_cast<size_t>((*(this->asl)->p.Sphset)(this->asl, nullptr, objective_number, 1, 1, upper_triangular));
-   this->ampl_tmp_hessian.reserve(this->number_hessian_nonzeros);
+   this->number_asl_hessian_nonzeros = static_cast<size_t>((*(this->asl)->p.Sphset)(this->asl, nullptr, objective_number, 1, 1, upper_triangular));
+   this->asl_hessian.reserve(this->number_asl_hessian_nonzeros);
 
    // use Lagrangian scale: in AMPL, the Lagrangian is f + lambda.g, while Uno uses f - lambda.g
    int error_flag{};
    lagscale_ASL(this->asl, -1., &error_flag);
 }
 
-size_t AMPLModel::get_number_objective_gradient_nonzeros() const {
-   return this->number_objective_gradient_nonzeros;
+size_t AMPLModel::number_objective_gradient_nonzeros() const {
+   return static_cast<size_t>(this->asl->i.nzo_);
 }
 
-size_t AMPLModel::get_number_jacobian_nonzeros() const {
-   return this->number_jacobian_nonzeros;
+size_t AMPLModel::number_jacobian_nonzeros() const {
+   return static_cast<size_t>(this->asl->i.nzc_);
 }
 
-size_t AMPLModel::get_number_hessian_nonzeros() const {
-   return this->number_hessian_nonzeros;
+size_t AMPLModel::number_hessian_nonzeros() const {
+   return this->number_asl_hessian_nonzeros;
+}
+
+const Collection<size_t>& AMPLModel::get_equality_constraints() const {
+   return this->equality_constraints_collection;
+}
+
+const Collection<size_t>& AMPLModel::get_inequality_constraints() const {
+   return this->inequality_constraints_collection;
+}
+
+const std::vector<size_t>& AMPLModel::get_linear_constraints() const {
+   return this->linear_constraints;
+}
+
+const Collection<size_t>& AMPLModel::get_slacks() const {
+   return this->slacks;
+}
+
+const Collection<size_t>& AMPLModel::get_single_lower_bounded_variables() const {
+   return this->single_lower_bounded_variables_collection;
+}
+
+const Collection<size_t>& AMPLModel::get_single_upper_bounded_variables() const {
+   return this->single_upper_bounded_variables_collection;
+}
+
+const Collection<size_t>& AMPLModel::get_lower_bounded_variables() const {
+   return this->lower_bounded_variables_collection;
+}
+
+const Collection<size_t>& AMPLModel::get_upper_bounded_variables() const {
+   return this->upper_bounded_variables_collection;
 }
 
 bool are_all_zeros(const std::vector<double>& multipliers) {
@@ -233,35 +268,36 @@ void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double
    objective_multiplier *= this->objective_sign;
 
    // compute the number of nonzeros
-   [[maybe_unused]] const size_t number_nonzeros = this->fixed_hessian_sparsity ? this->number_hessian_nonzeros :
+   [[maybe_unused]] const size_t number_nonzeros = this->fixed_hessian_sparsity ? this->number_asl_hessian_nonzeros :
                                                    this->compute_hessian_number_nonzeros(objective_multiplier, multipliers);
    assert(hessian.capacity >= number_nonzeros);
 
-   // evaluate the Hessian: store the matrix in a preallocated array this->ampl_tmp_hessian
+   // evaluate the Hessian: store the matrix in a preallocated array this->asl_hessian
    const int objective_number = -1;
    if (this->fixed_hessian_sparsity) {
-      (*(this->asl)->p.Sphes)(this->asl, nullptr, const_cast<double*>(this->ampl_tmp_hessian.data()), objective_number, &objective_multiplier,
+      (*(this->asl)->p.Sphes)(this->asl, nullptr, const_cast<double*>(this->asl_hessian.data()), objective_number, &objective_multiplier,
             const_cast<double*>(multipliers.data()));
    }
    else {
       double* objective_multiplier_pointer = (objective_multiplier != 0.) ? &objective_multiplier : nullptr;
-      bool all_zeros_multipliers = are_all_zeros(multipliers);
-      (*(this->asl)->p.Sphes)(this->asl, nullptr, const_cast<double*>(this->ampl_tmp_hessian.data()), objective_number, objective_multiplier_pointer,
+      const bool all_zeros_multipliers = are_all_zeros(multipliers);
+      (*(this->asl)->p.Sphes)(this->asl, nullptr, const_cast<double*>(this->asl_hessian.data()), objective_number, objective_multiplier_pointer,
             all_zeros_multipliers ? nullptr : const_cast<double*>(multipliers.data()));
    }
 
    // generate the sparsity pattern in the right sparse format
-   const int* ampl_column_start = this->asl->i.sputinfo_->hcolstarts;
-   const int* ampl_row_index = this->asl->i.sputinfo_->hrownos;
+   const int* asl_column_start = this->asl->i.sputinfo_->hcolstarts;
+   const int* asl_row_index = this->asl->i.sputinfo_->hrownos;
    // check that the column pointers are sorted in increasing order
-   assert(in_increasing_order(ampl_column_start, this->number_variables + 1) && "AMPLModel::evaluate_lagrangian_hessian: column starts are not ordered");
+   // TODO throw exception
+   assert(in_increasing_order(asl_column_start, this->number_variables + 1) && "AMPLModel::evaluate_lagrangian_hessian: column starts are not ordered");
 
    // copy the nonzeros in the Hessian
    hessian.reset();
    for (size_t column_index: Range(this->number_variables)) {
-      for (size_t k: Range(static_cast<size_t>(ampl_column_start[column_index]), static_cast<size_t>(ampl_column_start[column_index + 1]))) {
-         const size_t row_index = static_cast<size_t>(ampl_row_index[k]);
-         const double entry = this->ampl_tmp_hessian[k];
+      for (size_t k: Range(static_cast<size_t>(asl_column_start[column_index]), static_cast<size_t>(asl_column_start[column_index + 1]))) {
+         const size_t row_index = static_cast<size_t>(asl_row_index[k]);
+         const double entry = this->asl_hessian[k];
          hessian.insert(entry, row_index, column_index);
       }
       hessian.finalize_column(column_index);
@@ -271,11 +307,11 @@ void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double
 }
 
 double AMPLModel::variable_lower_bound(size_t variable_index) const {
-   return this->variables_bounds[variable_index].lb;
+   return this->variable_bounds[variable_index].lb;
 }
 
 double AMPLModel::variable_upper_bound(size_t variable_index) const {
-   return this->variables_bounds[variable_index].ub;
+   return this->variable_bounds[variable_index].ub;
 }
 
 BoundType AMPLModel::get_variable_bound_type(size_t variable_index) const {
@@ -299,13 +335,13 @@ BoundType AMPLModel::get_constraint_bound_type(size_t constraint_index) const {
 }
 
 // initial primal point
-void AMPLModel::get_initial_primal_point(std::vector<double>& x) const {
+void AMPLModel::initial_primal_point(std::vector<double>& x) const {
    assert(x.size() >= this->number_variables);
    std::copy(this->asl->i.X0_, this->asl->i.X0_ + this->number_variables, begin(x));
 }
 
 // initial dual point
-void AMPLModel::get_initial_dual_point(std::vector<double>& multipliers) const {
+void AMPLModel::initial_dual_point(std::vector<double>& multipliers) const {
    assert(multipliers.size() >= this->number_constraints);
    std::copy(this->asl->i.pi0_, this->asl->i.pi0_ + this->number_constraints, begin(multipliers));
 }
@@ -314,17 +350,13 @@ void AMPLModel::postprocess_solution(Iterate& /*iterate*/, TerminationStatus /*t
    // do nothing
 }
 
-const std::vector<size_t>& AMPLModel::get_linear_constraints() const {
-   return this->linear_constraints;
-}
-
 void AMPLModel::generate_constraints() {
    for (size_t constraint_index: Range(this->number_constraints)) {
       double lb = (this->asl->i.LUrhs_ != nullptr) ? this->asl->i.LUrhs_[2*constraint_index] : -INF<double>;
       double ub = (this->asl->i.LUrhs_ != nullptr) ? this->asl->i.LUrhs_[2*constraint_index + 1] : INF<double>;
       this->constraint_bounds[constraint_index] = {lb, ub};
    }
-   Model::determine_bounds_types(this->constraint_bounds, this->constraint_status);
+   AMPLModel::determine_bounds_types(this->constraint_bounds, this->constraint_status);
 
    // partition equality and inequality constraints
    for (size_t constraint_index: Range(this->number_constraints)) {
@@ -337,7 +369,7 @@ void AMPLModel::generate_constraints() {
    }
 
    // AMPL orders the constraints based on the function type: nonlinear first, then linear
-   const size_t number_nonlinear_constraints = static_cast<size_t>(asl->i.nlc_);
+   const size_t number_nonlinear_constraints = static_cast<size_t>(this->asl->i.nlc_);
    for (size_t constraint_index: Range(number_nonlinear_constraints)) {
       this->constraint_type[constraint_index] = NONLINEAR;
    }
@@ -345,4 +377,26 @@ void AMPLModel::generate_constraints() {
       this->constraint_type[constraint_index] = LINEAR;
       this->linear_constraints.push_back(constraint_index);
    }
+}
+
+void AMPLModel::determine_bounds_types(std::vector<Interval>& bounds, std::vector<BoundType>& status) {
+   assert(bounds.size() == status.size());
+   // build the "status" vector as a mapping (map/transform operation) of the "bounds" vector
+   std::transform(begin(bounds), end(bounds), begin(status), [](const Interval& bounds_i) {
+      if (bounds_i.lb == bounds_i.ub) {
+         return EQUAL_BOUNDS;
+      }
+      else if (is_finite(bounds_i.lb) && is_finite(bounds_i.ub)) {
+         return BOUNDED_BOTH_SIDES;
+      }
+      else if (is_finite(bounds_i.lb)) {
+         return BOUNDED_LOWER;
+      }
+      else if (is_finite(bounds_i.ub)) {
+         return BOUNDED_UPPER;
+      }
+      else {
+         return UNBOUNDED;
+      }
+   });
 }

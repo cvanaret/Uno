@@ -4,19 +4,19 @@
 #ifndef UNO_RELAXEDPROBLEM_H
 #define UNO_RELAXEDPROBLEM_H
 
-#include "NonlinearProblem.hpp"
+#include "OptimizationProblem.hpp"
 
-class RelaxedProblem: public NonlinearProblem {
+class RelaxedProblem: public OptimizationProblem {
 public:
    RelaxedProblem(const Model& model, size_t number_variables, size_t number_constraints);
    
-   [[nodiscard]] virtual double compute_stationarity_error(const Iterate& iterate, Norm residual_norm) const = 0;
-   [[nodiscard]] virtual double compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
+   [[nodiscard]] virtual double stationarity_error(const Iterate& iterate, Norm residual_norm) const = 0;
+   [[nodiscard]] virtual double complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const = 0;
 };
 
 inline RelaxedProblem::RelaxedProblem(const Model& model, size_t number_variables, size_t number_constraints):
-      NonlinearProblem(model, number_variables, number_constraints) {
+      OptimizationProblem(model, number_variables, number_constraints) {
 }
 
 #endif // UNO_RELAXEDPROBLEM_H

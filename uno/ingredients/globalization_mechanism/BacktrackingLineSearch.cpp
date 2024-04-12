@@ -82,7 +82,6 @@ Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics
          if (Logger::level == INFO) statistics.print_current_line();
       }
       catch (const EvaluationError& e) {
-         WARNING << YELLOW << e.what() << RESET;
          this->set_statistics(statistics);
          statistics.set("status", "eval. error");
          if (Logger::level == INFO) statistics.print_current_line();
