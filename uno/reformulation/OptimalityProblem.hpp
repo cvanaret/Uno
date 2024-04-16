@@ -17,10 +17,10 @@ public:
    void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix<double>& hessian) const override;
 
    void set_infeasibility_measure(Iterate& iterate, Norm progress_norm) const override;
-   void set_optimality_measure(Iterate& iterate) const override;
+   void set_objective_measure(Iterate& iterate) const override;
    [[nodiscard]] double compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction,
          double step_length, Norm progress_norm) const override;
-   [[nodiscard]] std::function<double(double)> compute_predicted_optimality_reduction_model(const Iterate& current_iterate,
+   [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction_model(const Iterate& current_iterate,
          const Direction& direction, double step_length, const SymmetricMatrix<double>& hessian) const override;
 
    [[nodiscard]] double variable_lower_bound(size_t variable_index) const override { return this->model.variable_lower_bound(variable_index); }
@@ -69,11 +69,11 @@ inline void OptimalityProblem::set_infeasibility_measure(Iterate& iterate, Norm 
    iterate.progress.infeasibility = this->model.constraint_violation(iterate.evaluations.constraints, progress_norm);
 }
 
-// optimality measure: scaled objective
-inline void OptimalityProblem::set_optimality_measure(Iterate& iterate) const {
+// objective measure: scaled objective
+inline void OptimalityProblem::set_objective_measure(Iterate& iterate) const {
    iterate.evaluate_objective(this->model);
    const double objective = iterate.evaluations.objective;
-   iterate.progress.optimality = [=](double objective_multiplier) {
+   iterate.progress.objective = [=](double objective_multiplier) {
       return objective_multiplier * objective;
    };
 }
@@ -87,9 +87,9 @@ inline double OptimalityProblem::compute_predicted_infeasibility_reduction_model
    return current_constraint_violation - trial_linearized_constraint_violation;
 }
 
-inline std::function<double(double)> OptimalityProblem::compute_predicted_optimality_reduction_model(const Iterate& current_iterate,
+inline std::function<double(double)> OptimalityProblem::compute_predicted_objective_reduction_model(const Iterate& current_iterate,
       const Direction& direction, double step_length, const SymmetricMatrix<double>& hessian) const {
-   // predicted optimality reduction: "-∇f(x)^T (αd) - α^2/2 d^T H d"
+   // predicted objective reduction: "-∇f(x)^T (αd) - α^2/2 d^T H d"
    const double directional_derivative = dot(direction.primals, current_iterate.evaluations.objective_gradient);
    const double quadratic_product = hessian.quadratic_product(direction.primals, direction.primals);
    return [=](double objective_multiplier) {

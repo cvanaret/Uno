@@ -18,7 +18,7 @@ public:
    void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
    [[nodiscard]] Direction solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const WarmstartInformation& warmstart_information) override;
-   [[nodiscard]] std::function<double(double)> compute_predicted_optimality_reduction_model(const OptimizationProblem& problem,
+   [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction_model(const OptimizationProblem& problem,
          const Iterate& current_iterate, const Direction& direction, double step_length) const override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 

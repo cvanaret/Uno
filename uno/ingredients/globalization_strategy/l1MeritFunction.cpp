@@ -28,19 +28,19 @@ void l1MeritFunction::set_infeasibility_upper_bound(double /*new_upper_bound*/) 
 bool l1MeritFunction::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
       const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) {
    // predicted reduction with all contributions. This quantity should be positive (= negative directional derivative)
-   double constrained_predicted_reduction = predicted_reduction.optimality(objective_multiplier) + predicted_reduction.auxiliary_terms +
-         predicted_reduction.infeasibility;
+   double constrained_predicted_reduction = predicted_reduction.objective(objective_multiplier) + predicted_reduction.auxiliary +
+                                            predicted_reduction.infeasibility;
    DEBUG << "Constrained predicted reduction: " << constrained_predicted_reduction << '\n';
    if (constrained_predicted_reduction <= 0.) {
       WARNING << YELLOW << "The direction is not a descent direction for the merit function. You should decrease the penalty parameter.\n" << RESET;
    }
    // compute current exact penalty
-   const double current_exact_merit = current_progress.optimality(objective_multiplier) + current_progress.auxiliary_terms + current_progress.infeasibility;
-   const double trial_exact_merit = trial_progress.optimality(objective_multiplier) + trial_progress.auxiliary_terms + trial_progress.infeasibility;
+   const double current_exact_merit = current_progress.objective(objective_multiplier) + current_progress.auxiliary + current_progress.infeasibility;
+   const double trial_exact_merit = trial_progress.objective(objective_multiplier) + trial_progress.auxiliary + trial_progress.infeasibility;
    const double actual_reduction = current_exact_merit - trial_exact_merit;
-   DEBUG << "Current merit: " << current_progress.optimality(objective_multiplier) << " + " << current_progress.auxiliary_terms << " + " <<
+   DEBUG << "Current merit: " << current_progress.objective(objective_multiplier) << " + " << current_progress.auxiliary << " + " <<
          current_progress.infeasibility << " = " << current_exact_merit << '\n';
-   DEBUG << "Trial merit:   " << trial_progress.optimality(objective_multiplier) << " + " << trial_progress.auxiliary_terms << " + " <<
+   DEBUG << "Trial merit:   " << trial_progress.objective(objective_multiplier) << " + " << trial_progress.auxiliary << " + " <<
          trial_progress.infeasibility << " = " << trial_exact_merit << '\n';
    DEBUG << "Actual reduction: " << current_exact_merit << " - " << trial_exact_merit << " = " << actual_reduction << '\n';
    statistics.set("penalty param.", objective_multiplier);

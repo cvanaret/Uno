@@ -26,8 +26,8 @@ void FilterMethod::reset() {
 }
 
 void FilterMethod::register_current_progress(const ProgressMeasures& current_progress_measures) {
-   const double current_optimality_measure = current_progress_measures.optimality(1.) + current_progress_measures.auxiliary_terms;
-   this->filter->add(current_progress_measures.infeasibility, current_optimality_measure);
+   const double current_objective_measure = current_progress_measures.objective(1.) + current_progress_measures.auxiliary;
+   this->filter->add(current_progress_measures.infeasibility, current_objective_measure);
 }
 
 double FilterMethod::get_infeasibility_upper_bound() const {

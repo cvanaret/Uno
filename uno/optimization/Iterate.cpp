@@ -93,8 +93,8 @@ std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
    stream << "          └ Feasibility complementarity: " << iterate.residuals.feasibility_complementarity << '\n';
 
    stream << "                  ┌ Infeasibility: " << iterate.progress.infeasibility << '\n';
-   stream << "Progress measures │ Optimality: " << iterate.progress.optimality(1.) << '\n';
-   stream << "                  └ Auxiliary terms: " << iterate.progress.auxiliary_terms << '\n';
+   stream << "Progress measures │ Optimality: " << iterate.progress.objective(1.) << '\n';
+   stream << "                  └ Auxiliary terms: " << iterate.progress.auxiliary << '\n';
 
    stream << "Lagrangian gradient: " << iterate.lagrangian_gradient;
    return stream;

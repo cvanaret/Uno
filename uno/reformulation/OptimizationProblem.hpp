@@ -32,10 +32,10 @@ public:
    virtual void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix<double>& hessian) const = 0;
 
    virtual void set_infeasibility_measure(Iterate& iterate, Norm progress_norm) const = 0;
-   virtual void set_optimality_measure(Iterate& iterate) const = 0;
+   virtual void set_objective_measure(Iterate& iterate) const = 0;
    [[nodiscard]] virtual double compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction,
          double step_length, Norm progress_norm) const = 0;
-   [[nodiscard]] virtual std::function<double(double)> compute_predicted_optimality_reduction_model(const Iterate& current_iterate,
+   [[nodiscard]] virtual std::function<double(double)> compute_predicted_objective_reduction_model(const Iterate& current_iterate,
          const Direction& direction, double step_length, const SymmetricMatrix<double>& hessian) const = 0;
 
    [[nodiscard]] size_t get_number_original_variables() const;

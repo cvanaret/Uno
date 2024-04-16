@@ -210,7 +210,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
 
 void FeasibilityRestoration::evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate) const {
    problem.set_infeasibility_measure(iterate, this->progress_norm);
-   problem.set_optimality_measure(iterate);
+   problem.set_objective_measure(iterate);
    this->subproblem->set_auxiliary_measure(problem, iterate);
 }
 
@@ -218,7 +218,7 @@ ProgressMeasures FeasibilityRestoration::compute_predicted_reduction_models(Iter
    const OptimizationProblem& current_problem = this->current_problem();
    return {
       current_problem.compute_predicted_infeasibility_reduction_model(current_iterate, direction, step_length, this->progress_norm),
-      this->subproblem->compute_predicted_optimality_reduction_model(current_problem, current_iterate, direction, step_length),
+         this->subproblem->compute_predicted_objective_reduction_model(current_problem, current_iterate, direction, step_length),
       this->subproblem->compute_predicted_auxiliary_reduction_model(current_problem, current_iterate, direction, step_length)
    };
 }

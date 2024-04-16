@@ -37,8 +37,8 @@ void Result::print(bool print_primal_dual_solution) const {
    std::cout << "└ Feasibility complementarity residual:\t" << this->solution.residuals.feasibility_complementarity << '\n';
 
    std::cout << "┌ Infeasibility measure:\t\t" << this->solution.progress.infeasibility << '\n';
-   std::cout << "│ Optimality measure:\t\t\t" << this->solution.progress.optimality(1.) << '\n';
-   std::cout << "└ Auxiliary measure:\t\t\t" << this->solution.progress.auxiliary_terms << '\n';
+   std::cout << "│ Optimality measure:\t\t\t" << this->solution.progress.objective(1.) << '\n';
+   std::cout << "└ Auxiliary measure:\t\t\t" << this->solution.progress.auxiliary << '\n';
 
    if (print_primal_dual_solution) {
       std::cout << "Primal solution:\t\t\t"; print_vector(std::cout, this->solution.primals, 0, this->solution.number_variables);

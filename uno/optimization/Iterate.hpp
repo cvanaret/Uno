@@ -55,7 +55,7 @@ public:
    PrimalDualResiduals residuals{};
    LagrangianGradient<double> lagrangian_gradient;
 
-   // measures of progress (infeasibility, optimality, auxiliary)
+   // measures of progress (infeasibility, objective, auxiliary)
    ProgressMeasures progress{INF<double>, {}, INF<double>};
 
    // status

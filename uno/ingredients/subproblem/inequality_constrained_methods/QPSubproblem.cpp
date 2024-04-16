@@ -76,9 +76,9 @@ Direction QPSubproblem::solve(Statistics& statistics, const OptimizationProblem&
    return direction;
 }
 
-std::function<double(double)> QPSubproblem::compute_predicted_optimality_reduction_model(const OptimizationProblem& problem,
+std::function<double(double)> QPSubproblem::compute_predicted_objective_reduction_model(const OptimizationProblem& problem,
       const Iterate& current_iterate, const Direction& direction, double step_length) const {
-   return problem.compute_predicted_optimality_reduction_model(current_iterate, direction, step_length, *this->hessian_model->hessian);
+   return problem.compute_predicted_objective_reduction_model(current_iterate, direction, step_length, *this->hessian_model->hessian);
 }
 
 size_t QPSubproblem::get_hessian_evaluation_count() const {

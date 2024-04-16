@@ -68,7 +68,7 @@ void InequalityConstrainedMethod::compute_dual_displacements(const OptimizationP
 
 // auxiliary measure is 0 in inequality-constrained methods
 void InequalityConstrainedMethod::set_auxiliary_measure(const OptimizationProblem& /*problem*/, Iterate& iterate) {
-   iterate.progress.auxiliary_terms = 0.;
+   iterate.progress.auxiliary = 0.;
 }
 
 double InequalityConstrainedMethod::compute_predicted_auxiliary_reduction_model(const OptimizationProblem& /*problem*/,
