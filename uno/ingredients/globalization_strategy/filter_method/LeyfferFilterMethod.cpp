@@ -43,9 +43,9 @@ bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& statistics, const Pr
 
          // switching condition: the unconstrained predicted reduction is sufficiently positive
          if (this->switching_condition(unconstrained_predicted_reduction, current_progress_measures.infeasibility, this->parameters.delta)) {
-            // unconstrained Armijo sufficient decrease condition (predicted reduction should be positive)
+            // unconstrained Armijo sufficient decrease condition: predicted reduction should be positive (f-type)
             if (this->armijo_sufficient_decrease(unconstrained_predicted_reduction, actual_reduction)) {
-               DEBUG << "Trial iterate was accepted by satisfying the Armijo condition\n";
+               DEBUG << "Trial iterate (f-type) was accepted by satisfying the Armijo condition\n";
                accept = true;
                statistics.set("status", "accepted (Armijo)");
             }
@@ -54,8 +54,8 @@ bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& statistics, const Pr
                statistics.set("status", "rejected (Armijo)");
             }
          }
-         else if (not this->is_solving_feasibility_problem) { // switching condition violated: predicted reduction is not promising
-            DEBUG << "Trial iterate was accepted by violating the switching condition\n";
+         else if (not this->is_solving_feasibility_problem) { // switching condition violated: predicted reduction is not promising (h-type)
+            DEBUG << "Trial iterate (h-type) was accepted by violating the switching condition\n";
             accept = true;
             DEBUG << "Current iterate was added to the filter\n";
             this->filter->add(current_progress_measures.infeasibility, current_objective_measure);

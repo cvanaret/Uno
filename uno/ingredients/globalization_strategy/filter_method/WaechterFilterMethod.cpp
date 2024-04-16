@@ -52,9 +52,9 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
       // switching condition: the unconstrained predicted reduction is sufficiently positive
       if (small_infeasibility && switching) {
          DEBUG << "Switching condition satisfied\n";
-         // unconstrained Armijo sufficient decrease condition (predicted reduction should be positive)
+         // unconstrained Armijo sufficient decrease condition: predicted reduction should be positive (f-type)
          if (sufficient_decrease) {
-            DEBUG << "Trial iterate was accepted by satisfying Armijo condition\n";
+            DEBUG << "Trial iterate (f-type) was accepted by satisfying Armijo condition\n";
             accept = true;
             statistics.set("status", "accepted (Armijo)");
          }
@@ -67,12 +67,12 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
          DEBUG << "Switching condition violated\n";
          if (this->filter->acceptable_wrt_current_iterate(current_progress_measures.infeasibility, current_objective_measure,
                trial_progress_measures.infeasibility, trial_objective_measure)) {
-            DEBUG << "Acceptable with respect to current point\n";
+            DEBUG << "Trial iterate (h-type) acceptable with respect to current point\n";
             accept = true;
             statistics.set("status", "accepted (current point)");
          }
          else {
-            DEBUG << "Not acceptable with respect to current point\n";
+            DEBUG << "Trial iterate (h-type) not acceptable with respect to current point\n";
             statistics.set("status", "rejected (current point)");
          }
       }
@@ -83,7 +83,7 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
       }
    }
    else {
-      DEBUG << "Not filter acceptable\n";
+      DEBUG << "Trial iterate not filter acceptable\n";
       statistics.set("status", "rejected (filter)");
    }
    DEBUG << '\n';
