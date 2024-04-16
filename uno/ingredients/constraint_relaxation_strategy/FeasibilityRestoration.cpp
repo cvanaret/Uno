@@ -147,13 +147,9 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
    if (this->current_phase == Phase::FEASIBILITY_RESTORATION && not this->switch_to_optimality_requires_acceptance &&
          (not this->switch_to_optimality_requires_linearized_feasibility || this->model.linearized_constraint_violation(direction.primals,
          current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian, step_length, this->residual_norm) <=
-         this->linear_feasibility_tolerance)) {
-      // if the trial infeasibility improves upon the best known infeasibility of the globalization strategy
-      trial_iterate.evaluate_constraints(this->model);
-      const double trial_infeasibility = this->model.constraint_violation(trial_iterate.evaluations.constraints, this->progress_norm);
-      if (this->optimality_phase_strategy->is_infeasibility_acceptable(trial_infeasibility)) {
-         this->switch_to_optimality_phase(current_iterate, trial_iterate);
-      }
+         this->linear_feasibility_tolerance) && this->optimality_phase_strategy->is_infeasibility_acceptable(this->model, trial_iterate,
+               this->progress_norm)) {
+      this->switch_to_optimality_phase(current_iterate, trial_iterate);
    }
 
    // evaluate the progress measures of the trial iterate
@@ -195,13 +191,9 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
             predicted_reduction, this->current_problem().get_objective_multiplier());
    }
    // possibly switch back to optimality phase if the trial iterate in feasibility restoration was accepted
-   if (accept_iterate && this->current_phase == Phase::FEASIBILITY_RESTORATION && this->switch_to_optimality_requires_acceptance) {
-      // if the trial infeasibility improves upon the best known infeasibility of the globalization strategy
-      trial_iterate.evaluate_constraints(this->model);
-      const double trial_infeasibility = this->model.constraint_violation(trial_iterate.evaluations.constraints, this->progress_norm);
-      if (this->optimality_phase_strategy->is_infeasibility_acceptable(trial_infeasibility)) {
-         this->switch_to_optimality_phase(current_iterate, trial_iterate);
-      }
+   if (accept_iterate && this->current_phase == Phase::FEASIBILITY_RESTORATION && this->switch_to_optimality_requires_acceptance &&
+         this->optimality_phase_strategy->is_infeasibility_acceptable(this->model, trial_iterate, this->progress_norm)) {
+      this->switch_to_optimality_phase(current_iterate, trial_iterate);
    }
    this->compute_primal_dual_residuals(this->feasibility_problem, trial_iterate);
    this->set_statistics(statistics, trial_iterate);

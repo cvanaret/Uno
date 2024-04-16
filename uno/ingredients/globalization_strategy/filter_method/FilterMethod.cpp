@@ -38,10 +38,6 @@ void FilterMethod::set_infeasibility_upper_bound(double new_upper_bound) const {
    this->filter->set_infeasibility_upper_bound(new_upper_bound);
 }
 
-bool FilterMethod::is_infeasibility_acceptable(double infeasibility_measure) const {
-   return (infeasibility_measure < this->filter->get_smallest_infeasibility());
-}
-
 bool FilterMethod::switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const {
    return predicted_reduction > switching_fraction * std::pow(current_infeasibility, this->parameters.switching_infeasibility_exponent);
 }

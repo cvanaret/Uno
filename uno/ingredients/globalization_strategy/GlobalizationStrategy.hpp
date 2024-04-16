@@ -21,7 +21,7 @@ public:
    virtual void initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) = 0;
    [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) = 0;
-   [[nodiscard]] virtual bool is_infeasibility_acceptable(double infeasibility_measure) const = 0;
+   [[nodiscard]] virtual bool is_infeasibility_acceptable(const Model& model, Iterate& trial_iterate, Norm progress_norm) const = 0;
 
    virtual void reset() = 0;
    virtual void register_current_progress(const ProgressMeasures& current_progress) = 0;

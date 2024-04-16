@@ -89,3 +89,11 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
    DEBUG << '\n';
    return accept;
 }
+
+bool WaechterFilterMethod::is_infeasibility_acceptable(const Model& model, Iterate& trial_iterate, Norm progress_norm) const {
+   // if the trial infeasibility improves upon the best known infeasibility
+   trial_iterate.evaluate_constraints(model);
+   const double trial_infeasibility = model.constraint_violation(trial_iterate.evaluations.constraints, progress_norm);
+   // TODO use the IPOPT approach: filter acceptable and infeasibility decrease
+   return (trial_infeasibility < this->filter->get_smallest_infeasibility());
+}

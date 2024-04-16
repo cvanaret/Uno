@@ -58,7 +58,9 @@ bool l1MeritFunction::is_iterate_acceptable(Statistics& statistics, const Progre
    return accept;
 }
 
-bool l1MeritFunction::is_infeasibility_acceptable(double infeasibility_measure) const {
-   // accept if the infeasibility measure improves upon the smallest known infeasibility
-   return (infeasibility_measure < this->smallest_known_infeasibility);
+bool l1MeritFunction::is_infeasibility_acceptable(const Model& model, Iterate& trial_iterate, Norm progress_norm) const {
+   // if the trial infeasibility improves upon the best known infeasibility
+   trial_iterate.evaluate_constraints(model);
+   const double trial_infeasibility = model.constraint_violation(trial_iterate.evaluations.constraints, progress_norm);
+   return (trial_infeasibility < this->smallest_known_infeasibility);
 }

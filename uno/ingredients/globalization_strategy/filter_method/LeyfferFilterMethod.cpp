@@ -78,3 +78,10 @@ bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& statistics, const Pr
    DEBUG << '\n';
    return accept;
 }
+
+bool LeyfferFilterMethod::is_infeasibility_acceptable(const Model& model, Iterate& trial_iterate, Norm progress_norm) const {
+   // if the trial infeasibility improves upon the best known infeasibility
+   trial_iterate.evaluate_constraints(model);
+   const double trial_infeasibility = model.constraint_violation(trial_iterate.evaluations.constraints, progress_norm);
+   return (trial_infeasibility < this->filter->get_smallest_infeasibility());
+}
