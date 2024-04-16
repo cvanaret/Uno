@@ -42,7 +42,7 @@ void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& initial
    this->subproblem->initialize_statistics(statistics, options);
    this->set_statistics(statistics, initial_iterate);
    statistics.add_column("phase", Statistics::int_width, options.get_int("statistics_restoration_phase_column_order"));
-   statistics.set("phase", static_cast<int>(this->current_phase));
+   statistics.set("phase", "OPT");
    if (this->model.is_constrained()) {
       statistics.set("primal infeas.", initial_iterate.progress.infeasibility);
    }
@@ -52,7 +52,7 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
       WarmstartInformation& warmstart_information) {
    // if we are in the optimality phase, solve the optimality problem
    if (this->current_phase == Phase::OPTIMALITY) {
-      statistics.set("phase", static_cast<int>(this->current_phase));
+      statistics.set("phase", "OPT");
       try {
          DEBUG << "Solving the optimality subproblem\n";
          Direction direction = this->solve_subproblem(statistics, this->optimality_problem, current_iterate, warmstart_information);
@@ -74,7 +74,7 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
 
    // solve the feasibility problem (minimize the constraint violation)
    DEBUG << "Solving the feasibility subproblem\n";
-   statistics.set("phase", static_cast<int>(this->current_phase));
+   statistics.set("phase", "FEAS");
    // note: failure of regularization should not happen here, since the feasibility Jacobian has full rank
    return this->solve_subproblem(statistics, this->feasibility_problem, current_iterate, warmstart_information);
 }
