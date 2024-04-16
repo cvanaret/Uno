@@ -22,8 +22,8 @@ FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options
             std::max(this->optimality_problem.number_hessian_nonzeros(), this->feasibility_problem.number_hessian_nonzeros()),
             options)),
       // create the globalization strategies (one for each phase)
-      restoration_phase_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), false, options)),
-      optimality_phase_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), true, options)),
+      restoration_phase_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), true, options)),
+      optimality_phase_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), false, options)),
       linear_feasibility_tolerance(options.get_double("tolerance")),
       switch_to_optimality_requires_acceptance(options.get_bool("switch_to_optimality_requires_acceptance")),
       switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")) {
@@ -113,7 +113,7 @@ void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistic
    this->restoration_phase_strategy->set_infeasibility_upper_bound(this->optimality_phase_strategy->get_infeasibility_upper_bound());
    this->restoration_phase_strategy->register_current_progress(current_iterate.progress);
    warmstart_information.set_cold_start();
-   
+
    if (Logger::level == INFO) statistics.print_current_line();
    statistics.start_new_line();
 }

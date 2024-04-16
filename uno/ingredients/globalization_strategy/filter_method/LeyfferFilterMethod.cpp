@@ -3,9 +3,9 @@
 
 #include "LeyfferFilterMethod.hpp"
 
-LeyfferFilterMethod::LeyfferFilterMethod(bool accept_when_switching_violated, const Options& options):
+LeyfferFilterMethod::LeyfferFilterMethod(bool is_solving_feasibility_problem, const Options& options):
       FilterMethod(options),
-      accept_when_switching_violated(accept_when_switching_violated) {
+      is_solving_feasibility_problem(is_solving_feasibility_problem) {
 }
 
 /* check acceptability of step(s) (filter & sufficient reduction)
@@ -54,7 +54,7 @@ bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& statistics, const Pr
                statistics.set("status", "rejected (Armijo)");
             }
          }
-         else if (this->accept_when_switching_violated) { // switching condition violated: predicted reduction is not promising
+         else if (not this->is_solving_feasibility_problem) { // switching condition violated: predicted reduction is not promising
             DEBUG << "Trial iterate was accepted by violating the switching condition\n";
             accept = true;
             DEBUG << "Current iterate was added to the filter\n";
