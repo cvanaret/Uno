@@ -242,7 +242,8 @@ void FeasibilityRestoration::set_trust_region_radius(double trust_region_radius)
 double FeasibilityRestoration::complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
       const Multipliers& multipliers) const {
    // bound constraints
-   VectorExpression<double> variable_complementarity(Range(this->model.number_variables), [&](size_t variable_index) {
+   const Range variable_range = Range(this->model.number_variables);
+   VectorExpression<double> variable_complementarity(variable_range, [&](size_t variable_index) {
       if (0. < multipliers.lower_bounds[variable_index]) {
          return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->model.variable_lower_bound(variable_index));
       }

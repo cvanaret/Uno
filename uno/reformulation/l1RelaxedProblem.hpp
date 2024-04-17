@@ -214,7 +214,8 @@ inline double l1RelaxedProblem::stationarity_error(const Iterate& iterate, Norm 
 inline double l1RelaxedProblem::complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
       const Multipliers& multipliers, Norm residual_norm) const {
    // complementarity for variable bounds
-   VectorExpression<double> variable_complementarity(Range(this->model.number_variables), [&](size_t variable_index) {
+   const Range variable_range = Range(this->model.number_variables);
+   VectorExpression<double> variable_complementarity(variable_range, [&](size_t variable_index) {
       if (0. < multipliers.lower_bounds[variable_index]) {
          return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->variable_lower_bound(variable_index));
       }
@@ -225,7 +226,8 @@ inline double l1RelaxedProblem::complementarity_error(const std::vector<double>&
    });
 
    // complementarity for constraint bounds
-   VectorExpression<double> constraint_complementarity(Range(constraints.size()), [&](size_t constraint_index) {
+   const Range constraint_range = Range(constraints.size());
+   VectorExpression<double> constraint_complementarity(constraint_range, [&](size_t constraint_index) {
       // violated constraints
       if (constraints[constraint_index] < this->constraint_lower_bound(constraint_index)) { // lower violated
          return (this->constraint_violation_coefficient - multipliers.constraints[constraint_index]) * (constraints[constraint_index] -

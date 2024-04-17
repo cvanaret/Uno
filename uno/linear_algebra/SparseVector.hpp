@@ -40,7 +40,7 @@ protected:
 
 // SparseVector methods
 template <typename ElementType>
-SparseVector<ElementType>::SparseVector(size_t capacity) {
+SparseVector<ElementType>::SparseVector(size_t capacity): Collection<ElementType>() {
    this->reserve(capacity);
 }
 

@@ -11,6 +11,7 @@ template <typename Iterator>
 class CollectionAdapter: public Collection<typename std::remove_reference<Iterator>::type::value_type> {
 public:
    explicit CollectionAdapter(Iterator&& iterator);
+
    void for_each(const std::function<void(size_t /*index*/, typename CollectionAdapter::value_type /*element*/)>& f) const override;
    [[nodiscard]] size_t size() const override;
 
@@ -19,7 +20,8 @@ protected:
 };
 
 template <typename Iterator>
-CollectionAdapter<Iterator>::CollectionAdapter(Iterator&& iterator): iterator(std::forward<Iterator>(iterator)) {
+CollectionAdapter<Iterator>::CollectionAdapter(Iterator&& iterator):
+   Collection<typename std::remove_reference<Iterator>::type::value_type>(), iterator(std::forward<Iterator>(iterator)) {
 }
 
 template <typename Iterator>

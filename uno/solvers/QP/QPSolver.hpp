@@ -15,8 +15,9 @@
  */
 class QPSolver : public LPSolver {
 public:
-   QPSolver() = default;
+   QPSolver();
    ~QPSolver() override = default;
+
    virtual Direction solve_QP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
          const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
          const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const std::vector<double>& initial_point,
@@ -26,5 +27,8 @@ public:
          const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point,
          const WarmstartInformation& warmstart_information) override = 0;
 };
+
+inline QPSolver::QPSolver(): LPSolver() {
+}
 
 #endif // UNO_QPSOLVER_H
