@@ -59,7 +59,7 @@ bool BarrierParameterUpdateStrategy::update_barrier_parameter(const Optimization
 
 double BarrierParameterUpdateStrategy::compute_shifted_complementarity_error(const OptimizationProblem& problem, const Iterate& iterate,
       double shift_value) {
-   VectorExpression<double> shifted_bound_complementarity(Range(problem.number_variables), [&](size_t variable_index) {
+   const VectorExpression<double, Range<FORWARD>> shifted_bound_complementarity(Range(problem.number_variables), [&](size_t variable_index) {
       double result = 0.;
       if (0. < iterate.multipliers.lower_bounds[variable_index]) { // lower bound
          result = std::max(result, std::abs(iterate.multipliers.lower_bounds[variable_index] *
