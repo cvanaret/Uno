@@ -142,6 +142,30 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["sparse_format"] = "CSC";
       options["LS_scale_duals_with_step_length"] = "no";
    }
+      else if (preset_name == "funnelsqp") {
+      options["constraint_relaxation_strategy"] = "feasibility_restoration";
+      options["subproblem"] = "QP";
+      options["globalization_mechanism"] = "TR";
+      options["globalization_strategy"] = "funnel_method";
+      options["progress_norm"] = "L1";
+      options["residual_norm"] = "L2";
+      options["sparse_format"] = "CSC";
+      options["TR_radius"] = "10";
+      options["l1_constraint_violation_coefficient"] = "1.";
+      options["enforce_linear_constraints"] = "yes";
+      options["tolerance"] = "1e-6";
+      options["loose_tolerance"] = "1e-6";
+      options["TR_min_radius"] = "1e-8";
+      options["switch_to_optimality_requires_acceptance"] = "no";
+      options["switch_to_optimality_requires_linearized_feasibility"] = "yes";
+
+      options["funnel_beta"] = "0.999";
+      options["funnel_gamma"] = "0.001";
+      options["funnel_delta"] = "0.999";
+      options["funnel_ubd"] = "1e2";
+      options["funnel_fact"] = "1.25";
+      options["funnel_switching_infeasibility_exponent"] = "2";
+   }
 }
 
 void get_command_line_arguments(int argc, char* argv[], Options& options) {

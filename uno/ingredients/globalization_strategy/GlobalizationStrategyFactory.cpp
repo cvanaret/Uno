@@ -3,6 +3,7 @@
 
 #include "GlobalizationStrategyFactory.hpp"
 #include "l1MeritFunction.hpp"
+#include "FunnelMethod.hpp"
 #include "filter_method/LeyfferFilterMethod.hpp"
 #include "filter_method/WaechterFilterMethod.hpp"
 
@@ -16,6 +17,9 @@ std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(con
    }
    else if (strategy_type == "waechter_filter_method") {
       return std::make_unique<WaechterFilterMethod>(options);
+   }
+   else if (strategy_type == "funnel_method") {
+      return std::make_unique<FunnelMethod>(solving_feasibility_problem, options);
    }
    throw std::invalid_argument("GlobalizationStrategy " + strategy_type + " is not supported");
 }
