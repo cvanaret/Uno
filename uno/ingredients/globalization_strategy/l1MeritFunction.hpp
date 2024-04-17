@@ -13,7 +13,7 @@ public:
    void initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) override;
    [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) override;
-   [[nodiscard]] bool is_infeasibility_acceptable(const Model& model, Iterate& trial_iterate, Norm progress_norm) const override;
+   [[nodiscard]] bool is_infeasibility_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress) const override;
    void reset() override;
    void register_current_progress(const ProgressMeasures& current_progress) override;
    [[nodiscard]] double get_infeasibility_upper_bound() const override;

@@ -46,7 +46,7 @@ private:
    const double linear_feasibility_tolerance;
    const bool switch_to_optimality_requires_acceptance;
    const bool switch_to_optimality_requires_linearized_feasibility;
-   bool switched_to_optimality_phase{false};
+   bool switching_to_optimality_phase{false};
 
    static constexpr double objective_multiplier = 1.;
 

@@ -120,8 +120,8 @@ void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistic
 
 Direction FeasibilityRestoration::solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
       WarmstartInformation& warmstart_information) {
-   if (this->switched_to_optimality_phase) {
-      this->switched_to_optimality_phase = false;
+   if (this->switching_to_optimality_phase) {
+      this->switching_to_optimality_phase = false;
       warmstart_information.set_cold_start();
    }
 
@@ -147,9 +147,11 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
    if (this->current_phase == Phase::FEASIBILITY_RESTORATION && not this->switch_to_optimality_requires_acceptance &&
          (not this->switch_to_optimality_requires_linearized_feasibility || this->model.linearized_constraint_violation(direction.primals,
          current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian, step_length, this->residual_norm) <=
-         this->linear_feasibility_tolerance) && this->optimality_phase_strategy->is_infeasibility_acceptable(this->model, trial_iterate,
-               this->progress_norm)) {
-      this->switch_to_optimality_phase(current_iterate, trial_iterate);
+         this->linear_feasibility_tolerance)) {
+      this->evaluate_progress_measures(this->optimality_problem, trial_iterate);
+      if (this->optimality_phase_strategy->is_infeasibility_acceptable(current_iterate.progress, trial_iterate.progress)) {
+         this->switch_to_optimality_phase(current_iterate, trial_iterate);
+      }
    }
 
    // evaluate the progress measures of the trial iterate
@@ -162,7 +164,7 @@ void FeasibilityRestoration::switch_to_optimality_phase(Iterate& current_iterate
    current_iterate.set_number_variables(this->optimality_problem.number_variables);
    trial_iterate.set_number_variables(this->optimality_problem.number_variables);
    this->subproblem->exit_feasibility_problem(this->optimality_problem, trial_iterate);
-   this->switched_to_optimality_phase = true;
+   this->switching_to_optimality_phase = true;
 
    // refresh the progress measures of current iterate
    this->evaluate_progress_measures(this->optimality_problem, current_iterate);
@@ -194,9 +196,11 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
             predicted_reduction, this->current_problem().get_objective_multiplier());
    }
    // possibly switch back to optimality phase if the trial iterate in feasibility restoration was accepted
-   if (accept_iterate && this->current_phase == Phase::FEASIBILITY_RESTORATION && this->switch_to_optimality_requires_acceptance &&
-         this->optimality_phase_strategy->is_infeasibility_acceptable(this->model, trial_iterate, this->progress_norm)) {
-      this->switch_to_optimality_phase(current_iterate, trial_iterate);
+   if (accept_iterate && this->current_phase == Phase::FEASIBILITY_RESTORATION && this->switch_to_optimality_requires_acceptance) {
+      this->evaluate_progress_measures(this->optimality_problem, trial_iterate);
+      if (this->optimality_phase_strategy->is_infeasibility_acceptable(current_iterate.progress, trial_iterate.progress)) {
+         this->switch_to_optimality_phase(current_iterate, trial_iterate);
+      }
    }
    this->compute_primal_dual_residuals(this->feasibility_problem, trial_iterate);
    this->set_statistics(statistics, trial_iterate);

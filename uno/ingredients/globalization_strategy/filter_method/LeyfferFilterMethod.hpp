@@ -12,7 +12,7 @@ public:
 
    [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress_measures,
          const ProgressMeasures& trial_progress_measures, const ProgressMeasures& predicted_reduction, double objective_multiplier) override;
-   [[nodiscard]] bool is_infeasibility_acceptable(const Model& model, Iterate& trial_iterate, Norm progress_norm) const override;
+   [[nodiscard]] bool is_infeasibility_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress) const override;
 
 protected:
    const bool is_solving_feasibility_problem;

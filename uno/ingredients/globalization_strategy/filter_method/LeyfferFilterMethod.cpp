@@ -54,6 +54,7 @@ bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& statistics, const Pr
                statistics.set("status", "rejected (Armijo)");
             }
          }
+         // TODO: switching condition always satisfied in feasibility restoration (pred > 0 and infeasibility = 0). Why is there this test?
          else if (not this->is_solving_feasibility_problem) { // switching condition violated: predicted reduction is not promising (h-type)
             DEBUG << "Trial iterate (h-type) was accepted by violating the switching condition\n";
             accept = true;
@@ -79,9 +80,7 @@ bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& statistics, const Pr
    return accept;
 }
 
-bool LeyfferFilterMethod::is_infeasibility_acceptable(const Model& model, Iterate& trial_iterate, Norm progress_norm) const {
+bool LeyfferFilterMethod::is_infeasibility_acceptable(const ProgressMeasures& /*current_progress*/, const ProgressMeasures& trial_progress) const {
    // if the trial infeasibility improves upon the best known infeasibility
-   trial_iterate.evaluate_constraints(model);
-   const double trial_infeasibility = model.constraint_violation(trial_iterate.evaluations.constraints, progress_norm);
-   return (trial_infeasibility < this->filter->get_smallest_infeasibility());
+   return (trial_progress.infeasibility < this->filter->get_smallest_infeasibility());
 }
