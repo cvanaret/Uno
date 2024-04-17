@@ -21,7 +21,10 @@ FunnelMethod::FunnelMethod(bool in_restoration_phase, const Options& options) :
       in_restoration_phase(in_restoration_phase) {
 }
 
-void FunnelMethod::initialize(Statistics& /*statistics*/, const Iterate& initial_iterate, const Options& /*options*/) {
+void FunnelMethod::initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) {
+    // Add a column of the of the funnel width in the output table
+    statistics.add_column("funnel width", Statistics::double_width, options.get_int("statistics_funnel_width_column_order"));
+
    // set the funnel upper bound
    double upper_bound = std::max(this->parameters.kappa_initial_upper_bound,
                                  this->parameters.kappa_initial_multiplication * initial_iterate.progress.infeasibility);
@@ -251,6 +254,7 @@ bool FunnelMethod::is_iterate_acceptable(Statistics& statistics, const ProgressM
             if (this->in_restoration_phase){
                DEBUG << "\t\tEntering funnel reduction mechanism in Restoration Phase\n";
                this->update_funnel_width_restoration(current_optimality_measure, trial_optimality_measure);
+               statistics.set("funnel width", this->funnel_width);
             }
          }
          else { // switching condition holds, but not Armijo condition
@@ -276,6 +280,7 @@ bool FunnelMethod::is_iterate_acceptable(Statistics& statistics, const ProgressM
       // // Feasibility measures
       this->update_funnel_width(current_infeasibility_measure, 
                                              trial_infeasibility_measure);
+      statistics.set("funnel width", this->funnel_width);
       // this->funnel_width = this->get_funnel_width(); //?                                            ;
    }
 
