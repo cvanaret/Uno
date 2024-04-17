@@ -329,7 +329,7 @@ void PrimalDualInteriorPointSubproblem::update_barrier_parameter(const Optimizat
 
 // Section 3.9 in IPOPT paper
 bool PrimalDualInteriorPointSubproblem::is_small_step(const OptimizationProblem& problem, const Iterate& current_iterate, const Direction& direction) const {
-   VectorExpression<double> relative_direction_size(Range(problem.number_variables), [&](size_t variable_index) {
+   const VectorExpression<double, Range<FORWARD>> relative_direction_size(Range(problem.number_variables), [&](size_t variable_index) {
       return direction.primals[variable_index] / (1 + std::abs(current_iterate.primals[variable_index]));
    });
    static double machine_epsilon = std::numeric_limits<double>::epsilon();
