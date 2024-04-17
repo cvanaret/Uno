@@ -92,6 +92,7 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
 
 bool WaechterFilterMethod::is_infeasibility_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress) const {
    // TODO put constant in the option file
+   // TODO current_progress.infeasibility should be replaced with the infeasibility of the first feasibility restoration iterate
    return trial_progress.infeasibility < 0.9*current_progress.infeasibility &&
       this->filter->acceptable(trial_progress.infeasibility, trial_progress.objective(1.));
 }

@@ -3,9 +3,9 @@
 
 #include "LeyfferFilterMethod.hpp"
 
-LeyfferFilterMethod::LeyfferFilterMethod(bool is_solving_feasibility_problem, const Options& options):
+LeyfferFilterMethod::LeyfferFilterMethod(bool solving_feasibility_problem, const Options& options):
       FilterMethod(options),
-      is_solving_feasibility_problem(is_solving_feasibility_problem) {
+      solving_feasibility_problem(solving_feasibility_problem) {
 }
 
 /* check acceptability of step(s) (filter & sufficient reduction)
@@ -48,23 +48,24 @@ bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& statistics, const Pr
                DEBUG << "Trial iterate (f-type) was accepted by satisfying the Armijo condition\n";
                accept = true;
                statistics.set("status", "accepted (Armijo)");
+
+               // if we are solving the feasibility problem, this is similar to an h-type: augment the filter
+               if (this->solving_feasibility_problem) {
+                  this->filter->add(current_progress_measures.infeasibility, current_objective_measure);
+                  DEBUG << "Current iterate was added to the filter\n";
+               }
             }
             else { // switching condition holds, but not Armijo condition
                DEBUG << "Trial iterate was rejected by violating the Armijo condition\n";
                statistics.set("status", "rejected (Armijo)");
             }
          }
-         // TODO: switching condition always satisfied in feasibility restoration (pred > 0 and infeasibility = 0). Why is there this test?
-         else if (not this->is_solving_feasibility_problem) { // switching condition violated: predicted reduction is not promising (h-type)
+         else { // switching condition violated: predicted reduction is not promising (h-type)
             DEBUG << "Trial iterate (h-type) was accepted by violating the switching condition\n";
             accept = true;
-            DEBUG << "Current iterate was added to the filter\n";
             this->filter->add(current_progress_measures.infeasibility, current_objective_measure);
+            DEBUG << "Current iterate was added to the filter\n";
             statistics.set("status", "accepted (!switching)");
-         }
-         else {
-            DEBUG << "Trial iterate was rejected by violating the switching condition\n";
-            statistics.set("status", "rejected (switching)");
          }
       }
       else {
