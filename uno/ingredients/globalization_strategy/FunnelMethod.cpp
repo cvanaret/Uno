@@ -50,16 +50,15 @@ void FunnelMethod::register_current_progress(const ProgressMeasures& /*current_p
 }
 
 double FunnelMethod::get_infeasibility_upper_bound() const {
- 
-    if (this->in_restoration_phase){
-        return this->funnel_width_restoration;
-    } else {
-        return this->funnel_width;
-    }
+    return this->funnel_width;
 }
 
-void FunnelMethod::set_infeasibility_upper_bound(double new_upper_bound) {
-   this->funnel_width = new_upper_bound;
+void FunnelMethod::set_infeasibility_upper_bound(double new_upper_bound, double current_infeasibility, double trial_infeasibility) {
+   if (!this->in_restoration_phase){
+    this->funnel_width = new_upper_bound;
+   } else {
+    this->update_funnel_width_restoration(current_infeasibility, trial_infeasibility);
+   }
    this->first_iteration_in_solver_phase = true;
 }
 
@@ -85,11 +84,9 @@ bool FunnelMethod::is_funnel_sufficient_decrease_satisfied(double infeasibility_
    }
 }
 
-bool FunnelMethod::is_infeasibility_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress) const {
-   bool accept = false;
+bool FunnelMethod::is_infeasibility_acceptable(const ProgressMeasures& /*current_progress*/, const ProgressMeasures& trial_progress) const {
    if (this->in_restoration_phase){
         if (this->is_infeasibility_acceptable_to_funnel(trial_progress.infeasibility) && (trial_progress.infeasibility <= this->parameters.kappa_infeasibility_1*this->restoration_entry_infeasibility)){
-            this->update_funnel_width_restoration(current_progress.infeasibility, trial_progress.infeasibility);
             return true;
         } else {
             return false;
@@ -114,10 +111,6 @@ void FunnelMethod::update_funnel_width(double current_infeasibility_measure, dou
 void FunnelMethod::update_funnel_width_restoration(double current_infeasibility_measure, double trial_infeasibility_measure) {
 
     this->funnel_width = std::min(trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (this->funnel_width - trial_infeasibility_measure), std::max(this->parameters.beta*this->funnel_width, trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (current_infeasibility_measure - trial_infeasibility_measure)));
-
-    // strict funnel update
-//    this->funnel_width = 1.01* (trial_infeasibility_measure / this->parameters.beta);
-
    DEBUG << "\t\tNew funnel parameter is: " << this->funnel_width << "\n"; 
    
 }
@@ -189,11 +182,11 @@ bool FunnelMethod::is_iterate_acceptable(Statistics& statistics, const ProgressM
             DEBUG << "\t\tTrial iterate was ACCEPTED by satisfying Armijo condition\n";
             accept = true;
             statistics.set("status", "accepted (Armijo O)");
-            if (this->in_restoration_phase){
-               DEBUG << "\t\tEntering funnel reduction mechanism in Restoration Phase\n";
-               this->update_funnel_width_restoration(current_optimality_measure, trial_optimality_measure);
-               statistics.set("funnel width", this->funnel_width);
-            }
+            // if (this->in_restoration_phase){
+            //    DEBUG << "\t\tEntering funnel reduction mechanism in Restoration Phase\n";
+            //    this->update_funnel_width_restoration(current_optimality_measure, trial_optimality_measure);
+            //    statistics.set("funnel width", this->funnel_width);
+            // }
          }
          else { // switching condition holds, but not Armijo condition
             DEBUG << "\t\tArmijo condition not satisfied, trial iterate REJECTED\n";

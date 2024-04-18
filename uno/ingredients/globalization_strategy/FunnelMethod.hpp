@@ -54,7 +54,7 @@ public:
    double get_funnel_width();
 
    double get_infeasibility_upper_bound() const;
-   void set_infeasibility_upper_bound(double new_upper_bound) override;
+   void set_infeasibility_upper_bound(double new_upper_bound, double current_infeasibility, double trial_infeasibility) override;
 
 protected:   
    // pointer to allow polymorphism
