@@ -110,7 +110,7 @@ void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistic
 
    this->restoration_phase_strategy->reset();
    // transfer the infeasibility upper bound from optimality phase to restoration phase
-   this->restoration_phase_strategy->set_infeasibility_upper_bound(this->optimality_phase_strategy->get_infeasibility_upper_bound());
+   this->restoration_phase_strategy->set_infeasibility_upper_bound(this->optimality_phase_strategy->get_infeasibility_upper_bound(), 0., 0.);
    this->restoration_phase_strategy->register_current_progress(current_iterate.progress);
    warmstart_information.set_cold_start();
 
@@ -172,7 +172,8 @@ void FeasibilityRestoration::switch_to_optimality_phase(Iterate& current_iterate
    trial_iterate.multipliers.objective = FeasibilityRestoration::objective_multiplier;
 
    // transfer the infeasibility upper bound from restoration phase to optimality phase
-   this->optimality_phase_strategy->set_infeasibility_upper_bound(this->restoration_phase_strategy->get_infeasibility_upper_bound());
+   this->optimality_phase_strategy->set_infeasibility_upper_bound(this->restoration_phase_strategy->get_infeasibility_upper_bound(),
+         current_iterate.progress.infeasibility, trial_iterate.progress.infeasibility);
 }
 
 bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,

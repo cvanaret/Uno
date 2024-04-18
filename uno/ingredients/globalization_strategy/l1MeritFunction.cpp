@@ -21,7 +21,7 @@ double l1MeritFunction::get_infeasibility_upper_bound() const {
    return INF<double>;
 }
 
-void l1MeritFunction::set_infeasibility_upper_bound(double /*new_upper_bound*/) {
+void l1MeritFunction::set_infeasibility_upper_bound(double /*new_upper_bound*/, double /*current_infeasibility*/, double /*trial_infeasibility*/) {
    // do nothing
 }
 
