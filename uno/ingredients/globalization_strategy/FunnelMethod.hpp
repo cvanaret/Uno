@@ -39,6 +39,7 @@ public:
 
    void initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) override;
    bool is_infeasibility_acceptable_to_funnel(double infeasibility_measure) const;
+   bool is_funnel_sufficient_decrease_satisfied(double infeasibility_measure) const;
    [[nodiscard]] bool is_infeasibility_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress) const override;
    [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) override;
@@ -58,10 +59,12 @@ public:
 protected:   
    // pointer to allow polymorphism
    double funnel_width;
+   double restoration_entry_infeasibility;
 //    bool current_iterate_acceptable_to_funnel;
    double initial_funnel_upper_bound{INF<double>};
    const FunnelMethodParameters parameters; /*!< Set of constants */
    const bool in_restoration_phase;
+   bool first_iteration_in_solver_phase; // determines if first iteration of solver phase is used
    [[nodiscard]] bool switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const;
 };
 
