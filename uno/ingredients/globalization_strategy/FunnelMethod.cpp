@@ -55,9 +55,11 @@ double FunnelMethod::get_infeasibility_upper_bound() const {
 
 void FunnelMethod::set_infeasibility_upper_bound(double new_upper_bound, double current_infeasibility, double trial_infeasibility) {
    if (!this->in_restoration_phase){
-    this->funnel_width = new_upper_bound;
-   } else {
+    std::cout << "Funnel is reduced after restoration phase" << std::endl;
     this->update_funnel_width_restoration(current_infeasibility, trial_infeasibility);
+   } else {
+    this->funnel_width = new_upper_bound;
+    std::cout << "We chenge funnel upper bound" << std::endl;
    }
    this->first_iteration_in_solver_phase = true;
 }
