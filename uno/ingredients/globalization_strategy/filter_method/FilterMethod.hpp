@@ -36,6 +36,7 @@ protected:
    const std::unique_ptr<Filter> filter;
    const FilterStrategyParameters parameters; /*!< Set of constants */
 
+   [[nodiscard]] double compute_actual_objective_reduction(double current_objective_measure, double current_infeasibility, double trial_objective_measure);
    [[nodiscard]] bool switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const;
 };
 

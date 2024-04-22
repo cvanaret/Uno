@@ -35,14 +35,14 @@ bool l1MeritFunction::is_iterate_acceptable(Statistics& statistics, const Progre
       WARNING << YELLOW << "The direction is not a descent direction for the merit function. You should decrease the penalty parameter.\n" << RESET;
    }
    // compute current exact penalty
-   const double current_exact_merit = current_progress.objective(objective_multiplier) + current_progress.auxiliary + current_progress.infeasibility;
-   const double trial_exact_merit = trial_progress.objective(objective_multiplier) + trial_progress.auxiliary + trial_progress.infeasibility;
-   const double actual_reduction = current_exact_merit - trial_exact_merit;
+   const double current_merit_value = current_progress.objective(objective_multiplier) + current_progress.auxiliary + current_progress.infeasibility;
+   const double trial_merit_value = trial_progress.objective(objective_multiplier) + trial_progress.auxiliary + trial_progress.infeasibility;
+   const double actual_reduction = this->compute_merit_actual_reduction(current_merit_value, trial_merit_value);
    DEBUG << "Current merit: " << current_progress.objective(objective_multiplier) << " + " << current_progress.auxiliary << " + " <<
-         current_progress.infeasibility << " = " << current_exact_merit << '\n';
+         current_progress.infeasibility << " = " << current_merit_value << '\n';
    DEBUG << "Trial merit:   " << trial_progress.objective(objective_multiplier) << " + " << trial_progress.auxiliary << " + " <<
-         trial_progress.infeasibility << " = " << trial_exact_merit << '\n';
-   DEBUG << "Actual reduction: " << current_exact_merit << " - " << trial_exact_merit << " = " << actual_reduction << '\n';
+         trial_progress.infeasibility << " = " << trial_merit_value << '\n';
+   DEBUG << "Actual reduction: " << current_merit_value << " - " << trial_merit_value << " = " << actual_reduction << '\n';
    statistics.set("penalty param.", objective_multiplier);
 
    // Armijo sufficient decrease condition
@@ -61,4 +61,13 @@ bool l1MeritFunction::is_iterate_acceptable(Statistics& statistics, const Progre
 bool l1MeritFunction::is_infeasibility_acceptable(const ProgressMeasures& /*current_progress*/, const ProgressMeasures& trial_progress) const {
    // if the trial infeasibility improves upon the best known infeasibility
    return (trial_progress.infeasibility < this->smallest_known_infeasibility);
+}
+
+double l1MeritFunction::compute_merit_actual_reduction(double current_merit_value, double trial_merit_value) const {
+   double actual_reduction = current_merit_value - trial_merit_value;
+   if (this->protect_actual_reduction_against_roundoff) {
+      static double machine_epsilon = std::numeric_limits<double>::epsilon();
+      actual_reduction += 10. * machine_epsilon * std::abs(current_merit_value);
+   }
+   return actual_reduction;
 }

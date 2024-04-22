@@ -136,7 +136,7 @@ bool Filter::acceptable_wrt_current_iterate(double current_infeasibility_measure
           (trial_infeasibility_measure < this->parameters.beta * current_infeasibility_measure);
 }
 
-double Filter::compute_actual_reduction(double current_objective_measure, double /*current_infeasibility_measure*/, double trial_objective_measure) {
+double Filter::compute_actual_objective_reduction(double current_objective_measure, double /*current_infeasibility_measure*/, double trial_objective_measure) {
    return current_objective_measure - trial_objective_measure;
 }
 

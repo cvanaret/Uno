@@ -37,13 +37,12 @@ bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& statistics, const Pr
             current_objective_measure, trial_progress_measures.infeasibility, trial_objective_measure);
       if (improves_current_iterate) {
          DEBUG << "Acceptable with respect to current point\n";
-         const double actual_reduction = this->filter->compute_actual_reduction(current_objective_measure, current_progress_measures.infeasibility,
-               trial_objective_measure);
-         DEBUG << "Actual reduction: " << actual_reduction << '\n';
-
          // switching condition: the unconstrained predicted reduction is sufficiently positive
          if (this->switching_condition(unconstrained_predicted_reduction, current_progress_measures.infeasibility, this->parameters.delta)) {
             // unconstrained Armijo sufficient decrease condition: predicted reduction should be positive (f-type)
+            const double actual_reduction = this->compute_actual_objective_reduction(current_objective_measure, current_progress_measures.infeasibility,
+                  trial_objective_measure);
+            DEBUG << "Actual reduction: " << actual_reduction << '\n';
             if (this->armijo_sufficient_decrease(unconstrained_predicted_reduction, actual_reduction)) {
                DEBUG << "Trial iterate (f-type) was accepted by satisfying the Armijo condition\n";
                accept = true;

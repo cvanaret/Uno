@@ -36,11 +36,9 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
       DEBUG << "Current (infeas., objective+auxiliary) = (" << current_progress_measures.infeasibility << ", " << current_objective_measure << ")\n";
       DEBUG << "Trial   (infeas., objective+auxiliary) = (" << trial_progress_measures.infeasibility << ", " << trial_objective_measure << ")\n";
 
-      // compute actual reduction (and protect against roundoff errors)
-      // TODO put constants in the option file
-      static double machine_epsilon = std::numeric_limits<double>::epsilon();
-      const double actual_reduction = this->filter->compute_actual_reduction(current_objective_measure, current_progress_measures.infeasibility,
-            trial_objective_measure) + 10. * machine_epsilon * std::abs(current_objective_measure);
+      // compute actual reduction
+      const double actual_reduction = this->compute_actual_objective_reduction(current_objective_measure, current_progress_measures.infeasibility,
+            trial_objective_measure);
       DEBUG << "Actual reduction: " << actual_reduction << '\n';
 
       // TODO put this coefficient in the option file

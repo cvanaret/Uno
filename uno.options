@@ -88,6 +88,8 @@ residual_norm INF
 
 residual_scaling_threshold 100.
 
+protect_actual_reduction_against_roundoff no
+
 ##### solvers #####
 # default QP solver
 QP_solver BQPD

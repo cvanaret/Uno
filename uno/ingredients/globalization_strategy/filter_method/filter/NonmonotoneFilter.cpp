@@ -87,7 +87,7 @@ bool NonmonotoneFilter::acceptable_wrt_current_iterate(double current_infeasibil
 }
 
 // compute_actual_reduction: check nonmonotone sufficient reduction condition
-double NonmonotoneFilter::compute_actual_reduction(double current_objective_measure, double current_infeasibility_measure, double trial_objective_measure) {
+double NonmonotoneFilter::compute_actual_objective_reduction(double current_objective_measure, double current_infeasibility_measure, double trial_objective_measure) {
    // check NON-MONOTONE sufficient reduction condition
    // max penalty among most recent entries
    double max_objective = current_objective_measure;

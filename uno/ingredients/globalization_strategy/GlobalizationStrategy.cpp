@@ -6,7 +6,8 @@
 
 GlobalizationStrategy::GlobalizationStrategy(const Options& options):
    armijo_decrease_fraction(options.get_double("armijo_decrease_fraction")),
-   armijo_tolerance(options.get_double("armijo_tolerance")) {
+   armijo_tolerance(options.get_double("armijo_tolerance")),
+   protect_actual_reduction_against_roundoff(options.get_bool("protect_actual_reduction_against_roundoff")) {
 }
 
 bool GlobalizationStrategy::armijo_sufficient_decrease(double predicted_reduction, double actual_reduction) const {

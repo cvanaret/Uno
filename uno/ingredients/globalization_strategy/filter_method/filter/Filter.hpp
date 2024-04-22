@@ -28,7 +28,7 @@ public:
    virtual bool acceptable(double infeasibility_measure, double objective_measure);
    virtual bool acceptable_wrt_current_iterate(double current_infeasibility_measure, double current_objective_measure, double trial_infeasibility_measure,
          double trial_objective_measure);
-   virtual double compute_actual_reduction(double current_objective_measure, double current_infeasibility_measure, double trial_objective_measure);
+   virtual double compute_actual_objective_reduction(double current_objective_measure, double current_infeasibility_measure, double trial_objective_measure);
 
    friend std::ostream& operator<<(std::ostream& stream, Filter& filter);
 
