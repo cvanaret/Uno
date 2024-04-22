@@ -22,8 +22,8 @@ FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options
             std::max(this->optimality_problem.number_hessian_nonzeros(), this->feasibility_problem.number_hessian_nonzeros()),
             options)),
       // create the globalization strategies (one for each phase)
-      restoration_phase_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), false, options)),
-      optimality_phase_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), true, options)),
+      restoration_phase_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), true, options)),
+      optimality_phase_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), false, options)),
       linear_feasibility_tolerance(options.get_double("tolerance")),
       switch_to_optimality_requires_acceptance(options.get_bool("switch_to_optimality_requires_acceptance")),
       switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")) {
@@ -42,7 +42,7 @@ void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& initial
    this->subproblem->initialize_statistics(statistics, options);
    this->set_statistics(statistics, initial_iterate);
    statistics.add_column("phase", Statistics::int_width, options.get_int("statistics_restoration_phase_column_order"));
-   statistics.set("phase", static_cast<int>(this->current_phase));
+   statistics.set("phase", "OPT");
    if (this->model.is_constrained()) {
       statistics.set("primal infeas.", initial_iterate.progress.infeasibility);
    }
@@ -52,7 +52,7 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
       WarmstartInformation& warmstart_information) {
    // if we are in the optimality phase, solve the optimality problem
    if (this->current_phase == Phase::OPTIMALITY) {
-      statistics.set("phase", static_cast<int>(this->current_phase));
+      statistics.set("phase", "OPT");
       try {
          DEBUG << "Solving the optimality subproblem\n";
          Direction direction = this->solve_subproblem(statistics, this->optimality_problem, current_iterate, warmstart_information);
@@ -74,7 +74,7 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
 
    // solve the feasibility problem (minimize the constraint violation)
    DEBUG << "Solving the feasibility subproblem\n";
-   statistics.set("phase", static_cast<int>(this->current_phase));
+   statistics.set("phase", "FEAS");
    // note: failure of regularization should not happen here, since the feasibility Jacobian has full rank
    return this->solve_subproblem(statistics, this->feasibility_problem, current_iterate, warmstart_information);
 }
@@ -109,19 +109,19 @@ void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistic
    DEBUG2 << "Current iterate:\n" << current_iterate << '\n';
 
    this->restoration_phase_strategy->reset();
-   this->restoration_phase_strategy->register_current_progress(current_iterate.progress);
    // transfer the infeasibility upper bound from optimality phase to restoration phase
-   this->restoration_phase_strategy->set_infeasibility_upper_bound(this->optimality_phase_strategy->get_infeasibility_upper_bound());
+   this->restoration_phase_strategy->set_infeasibility_upper_bound(this->optimality_phase_strategy->get_infeasibility_upper_bound(), 0., 0.);
+   this->restoration_phase_strategy->register_current_progress(current_iterate.progress);
    warmstart_information.set_cold_start();
-   
+
    if (Logger::level == INFO) statistics.print_current_line();
    statistics.start_new_line();
 }
 
 Direction FeasibilityRestoration::solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
       WarmstartInformation& warmstart_information) {
-   if (this->switched_to_optimality_phase) {
-      this->switched_to_optimality_phase = false;
+   if (this->switching_to_optimality_phase) {
+      this->switching_to_optimality_phase = false;
       warmstart_information.set_cold_start();
    }
 
@@ -148,10 +148,8 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
          (not this->switch_to_optimality_requires_linearized_feasibility || this->model.linearized_constraint_violation(direction.primals,
          current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian, step_length, this->residual_norm) <=
          this->linear_feasibility_tolerance)) {
-      // if the trial infeasibility improves upon the best known infeasibility of the globalization strategy
-      trial_iterate.evaluate_constraints(this->model);
-      const double trial_infeasibility = this->model.constraint_violation(trial_iterate.evaluations.constraints, this->progress_norm);
-      if (this->optimality_phase_strategy->is_infeasibility_acceptable(trial_infeasibility)) {
+      this->evaluate_progress_measures(this->optimality_problem, trial_iterate);
+      if (this->optimality_phase_strategy->is_infeasibility_acceptable(current_iterate.progress, trial_iterate.progress)) {
          this->switch_to_optimality_phase(current_iterate, trial_iterate);
       }
    }
@@ -166,12 +164,16 @@ void FeasibilityRestoration::switch_to_optimality_phase(Iterate& current_iterate
    current_iterate.set_number_variables(this->optimality_problem.number_variables);
    trial_iterate.set_number_variables(this->optimality_problem.number_variables);
    this->subproblem->exit_feasibility_problem(this->optimality_problem, trial_iterate);
-   this->switched_to_optimality_phase = true;
+   this->switching_to_optimality_phase = true;
 
    // refresh the progress measures of current iterate
    this->evaluate_progress_measures(this->optimality_problem, current_iterate);
    current_iterate.multipliers.objective = FeasibilityRestoration::objective_multiplier;
    trial_iterate.multipliers.objective = FeasibilityRestoration::objective_multiplier;
+
+   // transfer the infeasibility upper bound from restoration phase to optimality phase
+   this->optimality_phase_strategy->set_infeasibility_upper_bound(this->restoration_phase_strategy->get_infeasibility_upper_bound(),
+         current_iterate.progress.infeasibility, trial_iterate.progress.infeasibility);
 }
 
 bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
@@ -196,10 +198,8 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
    }
    // possibly switch back to optimality phase if the trial iterate in feasibility restoration was accepted
    if (accept_iterate && this->current_phase == Phase::FEASIBILITY_RESTORATION && this->switch_to_optimality_requires_acceptance) {
-      // if the trial infeasibility improves upon the best known infeasibility of the globalization strategy
-      trial_iterate.evaluate_constraints(this->model);
-      const double trial_infeasibility = this->model.constraint_violation(trial_iterate.evaluations.constraints, this->progress_norm);
-      if (this->optimality_phase_strategy->is_infeasibility_acceptable(trial_infeasibility)) {
+      this->evaluate_progress_measures(this->optimality_problem, trial_iterate);
+      if (this->optimality_phase_strategy->is_infeasibility_acceptable(current_iterate.progress, trial_iterate.progress)) {
          this->switch_to_optimality_phase(current_iterate, trial_iterate);
       }
    }
@@ -210,7 +210,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
 
 void FeasibilityRestoration::evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate) const {
    problem.set_infeasibility_measure(iterate, this->progress_norm);
-   problem.set_optimality_measure(iterate);
+   problem.set_objective_measure(iterate);
    this->subproblem->set_auxiliary_measure(problem, iterate);
 }
 
@@ -218,7 +218,7 @@ ProgressMeasures FeasibilityRestoration::compute_predicted_reduction_models(Iter
    const OptimizationProblem& current_problem = this->current_problem();
    return {
       current_problem.compute_predicted_infeasibility_reduction_model(current_iterate, direction, step_length, this->progress_norm),
-      this->subproblem->compute_predicted_optimality_reduction_model(current_problem, current_iterate, direction, step_length),
+         this->subproblem->compute_predicted_objective_reduction_model(current_problem, current_iterate, direction, step_length),
       this->subproblem->compute_predicted_auxiliary_reduction_model(current_problem, current_iterate, direction, step_length)
    };
 }
@@ -243,7 +243,7 @@ void FeasibilityRestoration::set_trust_region_radius(double trust_region_radius)
 double FeasibilityRestoration::complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
       const Multipliers& multipliers) const {
    // bound constraints
-   VectorExpression<double> variable_complementarity(Range(this->model.number_variables), [&](size_t variable_index) {
+   const VectorExpression<double, Range<FORWARD>> variable_complementarity(Range(this->model.number_variables), [&](size_t variable_index) {
       if (0. < multipliers.lower_bounds[variable_index]) {
          return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->model.variable_lower_bound(variable_index));
       }
@@ -254,7 +254,8 @@ double FeasibilityRestoration::complementarity_error(const std::vector<double>& 
    });
 
    // inequality constraints
-   VectorExpression<double> constraint_complementarity(this->model.get_inequality_constraints(), [&](size_t constraint_index) {
+   const VectorExpression<double, const Collection<size_t>&> constraint_complementarity(this->model.get_inequality_constraints(), [&](size_t
+   constraint_index) {
       if (0. < multipliers.constraints[constraint_index]) { // lower bound
          return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->model.constraint_lower_bound(constraint_index));
       }

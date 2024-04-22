@@ -11,7 +11,7 @@ FilterMethod::FilterMethod(const Options& options) :
          options.get_double("filter_delta"),
          options.get_double("filter_ubd"),
          options.get_double("filter_fact"),
-         options.get_double("filter_switching_infeasibility_exponent")
+         options.get_double("filter_switching_infeasibility_exponent"),
       }) {
 }
 
@@ -26,20 +26,25 @@ void FilterMethod::reset() {
 }
 
 void FilterMethod::register_current_progress(const ProgressMeasures& current_progress_measures) {
-   const double current_optimality_measure = current_progress_measures.optimality(1.) + current_progress_measures.auxiliary_terms;
-   this->filter->add(current_progress_measures.infeasibility, current_optimality_measure);
+   const double current_objective_measure = current_progress_measures.objective(1.) + current_progress_measures.auxiliary;
+   this->filter->add(current_progress_measures.infeasibility, current_objective_measure);
 }
 
 double FilterMethod::get_infeasibility_upper_bound() const {
    return this->filter->get_infeasibility_upper_bound();
 }
 
-void FilterMethod::set_infeasibility_upper_bound(double new_upper_bound) const {
+void FilterMethod::set_infeasibility_upper_bound(double new_upper_bound, double /*current_infeasibility*/, double /*trial_infeasibility*/) {
    this->filter->set_infeasibility_upper_bound(new_upper_bound);
 }
 
-bool FilterMethod::is_infeasibility_acceptable(double infeasibility_measure) const {
-   return (infeasibility_measure < this->filter->get_smallest_infeasibility());
+double FilterMethod::compute_actual_objective_reduction(double current_objective_measure, double current_infeasibility, double trial_objective_measure) {
+   double actual_reduction = this->filter->compute_actual_objective_reduction(current_objective_measure, current_infeasibility, trial_objective_measure);
+   if (this->protect_actual_reduction_against_roundoff) {
+      static double machine_epsilon = std::numeric_limits<double>::epsilon();
+      actual_reduction += 10. * machine_epsilon * std::abs(current_objective_measure);
+   }
+   return actual_reduction;
 }
 
 bool FilterMethod::switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const {

@@ -8,13 +8,14 @@
 
 class LeyfferFilterMethod : public FilterMethod {
 public:
-   LeyfferFilterMethod(bool accept_when_switching_violated, const Options& options);
+   LeyfferFilterMethod(bool solving_feasibility_problem, const Options& options);
 
    [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress_measures,
          const ProgressMeasures& trial_progress_measures, const ProgressMeasures& predicted_reduction, double objective_multiplier) override;
+   [[nodiscard]] bool is_infeasibility_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress) const override;
 
 protected:
-   const bool accept_when_switching_violated;
+   const bool solving_feasibility_problem;
 };
 
 #endif // UNO_LEYFFERFILTERMETHOD_H

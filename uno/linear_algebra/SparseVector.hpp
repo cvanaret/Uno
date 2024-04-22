@@ -40,7 +40,7 @@ protected:
 
 // SparseVector methods
 template <typename ElementType>
-SparseVector<ElementType>::SparseVector(size_t capacity) {
+SparseVector<ElementType>::SparseVector(size_t capacity): Collection<ElementType>() {
    this->reserve(capacity);
 }
 
@@ -50,15 +50,6 @@ void SparseVector<ElementType>::for_each(const std::function<void(size_t, Elemen
       f(this->indices[index], this->values[index]);
    }
 }
-
-/*
-template <typename ElementType>
-void SparseVector<ElementType>::for_each_index(const std::function<void(size_t)>& f) const {
-   for (size_t index: Range(this->number_nonzeros)) {
-      f(this->indices[index]);
-   }
-}
-*/
 
 template <typename ElementType>
 void SparseVector<ElementType>::for_each_value(const std::function<void(ElementType)>& f) const {

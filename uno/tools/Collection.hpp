@@ -14,6 +14,7 @@ public:
 
    explicit Collection() = default;
    virtual ~Collection() = default;
+
    virtual void for_each(const std::function<void (size_t /*index*/, ElementType /*element*/)>& f) const = 0;
    [[nodiscard]] virtual size_t size() const = 0;
    [[nodiscard]] bool is_empty() const;

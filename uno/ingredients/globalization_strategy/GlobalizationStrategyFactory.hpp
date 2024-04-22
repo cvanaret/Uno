@@ -10,8 +10,7 @@
 
 class GlobalizationStrategyFactory {
 public:
-   static std::unique_ptr<GlobalizationStrategy> create(const std::string& strategy_type, bool accept_when_switching_violated,
-      const Options& options);
+   static std::unique_ptr<GlobalizationStrategy> create(const std::string& strategy_type, bool solving_feasibility_problem, const Options& options);
    static std::vector<std::string> available_strategies();
 };
 

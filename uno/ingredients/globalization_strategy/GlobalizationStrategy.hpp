@@ -21,16 +21,17 @@ public:
    virtual void initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) = 0;
    [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) = 0;
-   [[nodiscard]] virtual bool is_infeasibility_acceptable(double infeasibility_measure) const = 0;
+   [[nodiscard]] virtual bool is_infeasibility_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress) const = 0;
 
    virtual void reset() = 0;
    virtual void register_current_progress(const ProgressMeasures& current_progress) = 0;
    [[nodiscard]] virtual double get_infeasibility_upper_bound() const = 0;
-   virtual void set_infeasibility_upper_bound(double new_upper_bound) const = 0;
+   virtual void set_infeasibility_upper_bound(double new_upper_bound, double current_infeasibility, double trial_infeasibility) = 0;
 
 protected:
    const double armijo_decrease_fraction; /*!< Sufficient reduction constant */
    const double armijo_tolerance;
+   const bool protect_actual_reduction_against_roundoff;
 
    [[nodiscard]] bool armijo_sufficient_decrease(double predicted_reduction, double actual_reduction) const;
 };

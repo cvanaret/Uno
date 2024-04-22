@@ -11,6 +11,7 @@
 #include "Vector.hpp"
 #include "SparseVector.hpp"
 
+// abstract class
 template <typename ElementType>
 class SymmetricMatrix: public Matrix<ElementType> {
 public:

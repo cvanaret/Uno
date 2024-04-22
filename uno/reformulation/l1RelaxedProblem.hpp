@@ -27,10 +27,10 @@ public:
    void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix<double>& hessian) const override;
 
    void set_infeasibility_measure(Iterate& iterate, Norm progress_norm) const override;
-   void set_optimality_measure(Iterate& iterate) const override;
+   void set_objective_measure(Iterate& iterate) const override;
    [[nodiscard]] double compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction,
          double step_length, Norm progress_norm) const override;
-   [[nodiscard]] std::function<double(double)> compute_predicted_optimality_reduction_model(const Iterate& current_iterate,
+   [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction_model(const Iterate& current_iterate,
          const Direction& direction, double step_length, const SymmetricMatrix<double>& hessian) const override;
 
    [[nodiscard]] double stationarity_error(const Iterate& iterate, Norm residual_norm) const override;
@@ -149,12 +149,12 @@ inline void l1RelaxedProblem::set_infeasibility_measure(Iterate& iterate, Norm /
    }
 }
 
-inline void l1RelaxedProblem::set_optimality_measure(Iterate& iterate) const {
+inline void l1RelaxedProblem::set_objective_measure(Iterate& iterate) const {
    if (this->objective_multiplier == 0.) {
       // constraint violation
       iterate.evaluate_constraints(this->model);
       const double constraint_violation = this->model.constraint_violation(iterate.evaluations.constraints, Norm::L1);
-      iterate.progress.optimality = [=](double /*objective_multiplier*/) {
+      iterate.progress.objective = [=](double /*objective_multiplier*/) {
          return constraint_violation;
       };
    }
@@ -162,7 +162,7 @@ inline void l1RelaxedProblem::set_optimality_measure(Iterate& iterate) const {
       // scaled objective
       iterate.evaluate_objective(this->model);
       const double objective = iterate.evaluations.objective;
-      iterate.progress.optimality = [=](double objective_multiplier) {
+      iterate.progress.objective = [=](double objective_multiplier) {
          return objective_multiplier*objective;
       };
    }
@@ -183,7 +183,7 @@ inline double l1RelaxedProblem::compute_predicted_infeasibility_reduction_model(
    }
 }
 
-inline std::function<double(double)> l1RelaxedProblem::compute_predicted_optimality_reduction_model(const Iterate& current_iterate,
+inline std::function<double(double)> l1RelaxedProblem::compute_predicted_objective_reduction_model(const Iterate& current_iterate,
       const Direction& direction, double step_length, const SymmetricMatrix<double>& hessian) const {
    const double quadratic_term = hessian.quadratic_product(direction.primals, direction.primals);
    if (this->objective_multiplier == 0.) {
@@ -214,7 +214,7 @@ inline double l1RelaxedProblem::stationarity_error(const Iterate& iterate, Norm 
 inline double l1RelaxedProblem::complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
       const Multipliers& multipliers, Norm residual_norm) const {
    // complementarity for variable bounds
-   VectorExpression<double> variable_complementarity(Range(this->model.number_variables), [&](size_t variable_index) {
+   const VectorExpression<double, Range<FORWARD>> variable_complementarity(Range(this->model.number_variables), [&](size_t variable_index) {
       if (0. < multipliers.lower_bounds[variable_index]) {
          return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->variable_lower_bound(variable_index));
       }
@@ -225,7 +225,7 @@ inline double l1RelaxedProblem::complementarity_error(const std::vector<double>&
    });
 
    // complementarity for constraint bounds
-   VectorExpression<double> constraint_complementarity(Range(constraints.size()), [&](size_t constraint_index) {
+   const VectorExpression<double, Range<FORWARD>> constraint_complementarity(Range(constraints.size()), [&](size_t constraint_index) {
       // violated constraints
       if (constraints[constraint_index] < this->constraint_lower_bound(constraint_index)) { // lower violated
          return (this->constraint_violation_coefficient - multipliers.constraints[constraint_index]) * (constraints[constraint_index] -

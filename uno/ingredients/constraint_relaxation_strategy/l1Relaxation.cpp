@@ -281,14 +281,14 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
 
 void l1Relaxation::evaluate_progress_measures(Iterate& iterate) const {
    this->l1_relaxed_problem.set_infeasibility_measure(iterate, Norm::L1);
-   this->l1_relaxed_problem.set_optimality_measure(iterate);
+   this->l1_relaxed_problem.set_objective_measure(iterate);
    this->subproblem->set_auxiliary_measure(this->l1_relaxed_problem, iterate);
 }
 
 ProgressMeasures l1Relaxation::compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length) {
    return {
       this->l1_relaxed_problem.compute_predicted_infeasibility_reduction_model(current_iterate, direction, step_length, Norm::L1),
-      this->subproblem->compute_predicted_optimality_reduction_model(this->l1_relaxed_problem, current_iterate, direction, step_length),
+         this->subproblem->compute_predicted_objective_reduction_model(this->l1_relaxed_problem, current_iterate, direction, step_length),
       this->subproblem->compute_predicted_auxiliary_reduction_model(this->l1_relaxed_problem, current_iterate, direction, step_length)
    };
 }

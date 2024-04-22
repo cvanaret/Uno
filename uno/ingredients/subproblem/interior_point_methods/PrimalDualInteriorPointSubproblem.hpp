@@ -37,7 +37,7 @@ public:
    [[nodiscard]] Direction solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const WarmstartInformation& warmstart_information) override;
 
-   [[nodiscard]] std::function<double(double)> compute_predicted_optimality_reduction_model(const OptimizationProblem& problem,
+   [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction_model(const OptimizationProblem& problem,
          const Iterate& current_iterate, const Direction& direction, double step_length) const override;
    void set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) override;
    [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const OptimizationProblem& problem,
@@ -69,14 +69,14 @@ protected:
    void evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const WarmstartInformation& warmstart_information);
    void update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate);
-   [[nodiscard]] bool is_small_step(const OptimizationProblem& variable_index, const Iterate& current_iterate, const Direction& direction) const;
+   [[nodiscard]] bool is_small_step(const OptimizationProblem& problem, const Iterate& current_iterate, const Direction& direction) const;
    [[nodiscard]] double evaluate_subproblem_objective() const;
    [[nodiscard]] double compute_barrier_term_directional_derivative(const OptimizationProblem& problem, const Iterate& current_iterate,
          const Direction& direction) const;
    [[nodiscard]] double primal_fraction_to_boundary(const OptimizationProblem& problem, const Iterate& current_iterate, double tau);
    [[nodiscard]] double dual_fraction_to_boundary(const OptimizationProblem& problem, const Iterate& current_iterate, double tau);
    void assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem, const Iterate& current_iterate);
-   void generate_augmented_rhs(const OptimizationProblem& variable_index, const Iterate& current_iterate);
+   void generate_augmented_rhs(const OptimizationProblem& problem, const Iterate& current_iterate);
    void assemble_primal_dual_direction(const OptimizationProblem& problem, const Iterate& current_iterate);
    void compute_bound_dual_direction(const OptimizationProblem& problem, const Iterate& current_iterate);
    void compute_least_square_multipliers(const OptimizationProblem& problem, Iterate& iterate);
