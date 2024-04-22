@@ -51,15 +51,6 @@ void SparseVector<ElementType>::for_each(const std::function<void(size_t, Elemen
    }
 }
 
-/*
-template <typename ElementType>
-void SparseVector<ElementType>::for_each_index(const std::function<void(size_t)>& f) const {
-   for (size_t index: Range(this->number_nonzeros)) {
-      f(this->indices[index]);
-   }
-}
-*/
-
 template <typename ElementType>
 void SparseVector<ElementType>::for_each_value(const std::function<void(ElementType)>& f) const {
    for (size_t index: Range(this->number_nonzeros)) {

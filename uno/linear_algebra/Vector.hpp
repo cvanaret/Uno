@@ -84,7 +84,7 @@ void copy_from(std::vector<ElementType>& destination, const std::vector<ElementT
 template <typename ElementType, typename Indices>
 ElementType norm_1(const VectorExpression<ElementType, Indices>& expression) {
    ElementType norm{0};
-   expression.indices.for_each([&](size_t, size_t index) {
+   expression.for_each([&](size_t, size_t index) {
       norm += std::abs(expression[index]);
    });
    return norm;
@@ -138,7 +138,7 @@ ElementType norm_2(const Array& x, Arrays... other_arrays) {
 template <typename ElementType, typename Indices>
 ElementType norm_inf(const VectorExpression<ElementType, Indices>& expression) {
    ElementType norm{0};
-   expression.indices.for_each([&](size_t, size_t index) {
+   expression.for_each([&](size_t, size_t index) {
       norm = std::max(norm, std::abs(expression[index]));
    });
    return norm;
