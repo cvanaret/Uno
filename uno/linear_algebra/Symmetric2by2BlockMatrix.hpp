@@ -34,18 +34,26 @@ Symmetric2by2BlockMatrix<TopLeftBlock, TopRightBlock, BottomRightBlock>::Symmetr
    }
 }
 
-// iterator: goes through upper triangular terms
+// iterator
 template <typename TopLeftBlock, typename TopRightBlock, typename BottomRightBlock>
 void Symmetric2by2BlockMatrix<TopLeftBlock, TopRightBlock, BottomRightBlock>::for_each(const std::function<void(size_t, size_t, double)>& f) const {
+   const size_t column_offset = this->A.number_columns();
+   const size_t row_offset = this->A.number_rows();
+
    // top left block
    this->A.for_each(f);
-   // top right block: offset on column indices
-   const size_t column_offset = this->A.number_columns();
+
+   // top right block
    this->B.for_each([=](size_t row_index, size_t column_index, double entry) {
       f(row_index, column_index + column_offset, entry);
    });
-   // bottom right block: offset on row and column indices
-   const size_t row_offset = this->A.number_rows();
+
+   // bottom left block
+   transpose(this->B).for_each([=](size_t row_index, size_t column_index, double entry) {
+      f(row_index + row_offset, column_index, entry);
+   });
+
+   // bottom right block
    this->C.for_each([=](size_t row_index, size_t column_index, double entry) {
       f(row_index + row_offset, column_index + column_offset, entry);
    });
@@ -53,7 +61,7 @@ void Symmetric2by2BlockMatrix<TopLeftBlock, TopRightBlock, BottomRightBlock>::fo
 
 template <typename TopLeftBlock, typename TopRightBlock, typename BottomRightBlock>
 void Symmetric2by2BlockMatrix<TopLeftBlock, TopRightBlock, BottomRightBlock>::product(const std::vector<double>& vector, std::vector<double>& result) const {
-   // create vector views (= lazy subvectors) of the vector and the result
+   // create vector views of the vector and the result
    const VectorView vector_top_part = view(vector, 0, this->A.number_columns());
    const VectorView vector_bottom_part = view(vector, this->A.number_rows(), result.size());
    VectorView result_top_part = view(result, 0, this->A.number_rows());
