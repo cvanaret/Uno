@@ -16,10 +16,7 @@ COOSymmetricMatrix<double> identity(size_t dimension) {
 
 TEST(Symmetric2by2BlockMatrix, Correctness) {
    const size_t block_dimension = 2;
-   const auto identity_block = identity(block_dimension);
-   const auto zero_block = COOSymmetricMatrix<double>(block_dimension, block_dimension, false);
-
-   const Symmetric2by2BlockMatrix block_matrix{identity_block, identity_block, identity_block};
+   const Symmetric2by2BlockMatrix block_matrix{identity(block_dimension), identity(block_dimension), identity(block_dimension)};
    const std::vector<double> x{1., 2., 100., 200.};
 
    // matrix-vector product

@@ -4,25 +4,27 @@
 #ifndef UNO_TRANSPOSEDMATRIX_H
 #define UNO_TRANSPOSEDMATRIX_H
 
+#include "Matrix.hpp"
+
 template <typename MatrixType>
-class TransposedMatrix: Matrix<typename MatrixType::value_type> {
+class TransposedMatrix: Matrix<typename std::remove_reference<MatrixType>::type::value_type> {
 public:
-   explicit TransposedMatrix(MatrixType& matrix);
-   void for_each(const std::function<void(size_t, size_t, typename MatrixType::value_type)>& f) const;
+   explicit TransposedMatrix(MatrixType&& matrix);
+   void for_each(const std::function<void(size_t, size_t, typename TransposedMatrix::value_type)>& f) const;
    template <typename VectorType, typename ResultType>
    void product(const VectorType& vector, ResultType& result) const;
 
 protected:
-   MatrixType& matrix;
+   MatrixType matrix;
 };
 
 template <typename MatrixType>
-TransposedMatrix<MatrixType>::TransposedMatrix(MatrixType& matrix): matrix(matrix) {
+TransposedMatrix<MatrixType>::TransposedMatrix(MatrixType&& matrix): matrix(std::forward<MatrixType>(matrix)) {
 }
 
 template <typename MatrixType>
-void TransposedMatrix<MatrixType>::for_each(const std::function<void(size_t, size_t, typename MatrixType::value_type)>& f) const {
-   this->matrix.for_each([&](size_t row_index, size_t column_index, typename MatrixType::value_type entry) {
+void TransposedMatrix<MatrixType>::for_each(const std::function<void(size_t, size_t, typename TransposedMatrix::value_type)>& f) const {
+   this->matrix.for_each([&](size_t row_index, size_t column_index, typename TransposedMatrix::value_type entry) {
       // switch row and column indices
       f(column_index, row_index, entry);
    });
@@ -42,8 +44,8 @@ void TransposedMatrix<MatrixType>::product(const VectorType& vector, ResultType&
 
 // free function
 template <typename MatrixType>
-TransposedMatrix<MatrixType> transpose(MatrixType& matrix) {
-   return TransposedMatrix(matrix);
+TransposedMatrix<MatrixType> transpose(MatrixType&& matrix) {
+   return TransposedMatrix(std::forward<MatrixType>(matrix));
 }
 
 #endif // UNO_TRANSPOSEDMATRIX_H
