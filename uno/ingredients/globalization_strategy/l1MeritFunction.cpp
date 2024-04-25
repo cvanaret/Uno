@@ -58,9 +58,10 @@ bool l1MeritFunction::is_iterate_acceptable(Statistics& statistics, const Progre
    return accept;
 }
 
-bool l1MeritFunction::is_infeasibility_acceptable(const ProgressMeasures& /*current_progress*/, const ProgressMeasures& trial_progress) const {
+bool l1MeritFunction::is_feasibility_iterate_acceptable(const ProgressMeasures& /*current_progress*/, const ProgressMeasures& trial_progress) const {
    // if the trial infeasibility improves upon the best known infeasibility
-   return (trial_progress.infeasibility < this->smallest_known_infeasibility);
+   // TODO put constant in option file
+   return (trial_progress.infeasibility <= 0.9*this->smallest_known_infeasibility);
 }
 
 double l1MeritFunction::compute_merit_actual_reduction(double current_merit_value, double trial_merit_value) const {

@@ -26,13 +26,6 @@ public:
    void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const override;
    void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix<double>& hessian) const override;
 
-   void set_infeasibility_measure(Iterate& iterate, Norm progress_norm) const override;
-   void set_objective_measure(Iterate& iterate) const override;
-   [[nodiscard]] double compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction,
-         double step_length, Norm progress_norm) const override;
-   [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction_model(const Iterate& current_iterate,
-         const Direction& direction, double step_length, const SymmetricMatrix<double>& hessian) const override;
-
    [[nodiscard]] double stationarity_error(const Iterate& iterate, Norm residual_norm) const override;
    [[nodiscard]] double complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const override;
@@ -136,72 +129,6 @@ inline void l1RelaxedProblem::evaluate_lagrangian_hessian(const std::vector<doub
    // extend the dimension of the Hessian by finalizing the remaining columns (note: the elastics do not enter the Hessian)
    for (size_t constraint_index: Range(this->model.number_variables, this->number_variables)) {
       hessian.finalize_column(constraint_index);
-   }
-}
-
-inline void l1RelaxedProblem::set_infeasibility_measure(Iterate& iterate, Norm /*progress_norm*/) const {
-   if (this->objective_multiplier == 0.) {
-      iterate.progress.infeasibility = 0.;
-   }
-   else { // 0. < objective_multiplier
-      iterate.evaluate_constraints(this->model);
-      iterate.progress.infeasibility = this->model.constraint_violation(iterate.evaluations.constraints, Norm::L1);
-   }
-}
-
-inline void l1RelaxedProblem::set_objective_measure(Iterate& iterate) const {
-   if (this->objective_multiplier == 0.) {
-      // constraint violation
-      iterate.evaluate_constraints(this->model);
-      const double constraint_violation = this->model.constraint_violation(iterate.evaluations.constraints, Norm::L1);
-      iterate.progress.objective = [=](double /*objective_multiplier*/) {
-         return constraint_violation;
-      };
-   }
-   else { // 0. < objective_multiplier
-      // scaled objective
-      iterate.evaluate_objective(this->model);
-      const double objective = iterate.evaluations.objective;
-      iterate.progress.objective = [=](double objective_multiplier) {
-         return objective_multiplier*objective;
-      };
-   }
-}
-
-// predicted infeasibility reduction
-inline double l1RelaxedProblem::compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction,
-      double step_length, Norm /*progress_norm*/) const {
-   if (this->objective_multiplier == 0.) {
-      return 0.;
-   }
-   else { // 0. < objective_multiplier
-      // "‖c(x)‖₁ - ‖c(x) + ∇c(x)^T (αd)‖₁"
-      const double current_constraint_violation = this->model.constraint_violation(current_iterate.evaluations.constraints, Norm::L1);
-      const double trial_linearized_constraint_violation = this->model.linearized_constraint_violation(direction.primals,
-            current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian, step_length, Norm::L1);
-      return current_constraint_violation - trial_linearized_constraint_violation;
-   }
-}
-
-inline std::function<double(double)> l1RelaxedProblem::compute_predicted_objective_reduction_model(const Iterate& current_iterate,
-      const Direction& direction, double step_length, const SymmetricMatrix<double>& hessian) const {
-   const double quadratic_term = hessian.quadratic_product(direction.primals, direction.primals);
-   if (this->objective_multiplier == 0.) {
-      // "‖c(x)‖₁ - ‖c(x) + ∇c(x)^T (αd)‖₁"
-      const double current_constraint_violation = this->model.constraint_violation(current_iterate.evaluations.constraints, Norm::L1);
-      const double trial_linearized_constraint_violation = this->model.linearized_constraint_violation(direction.primals,
-            current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian, step_length, Norm::L1);
-      return [=](double /*objective_multiplier*/) {
-         return this->constraint_violation_coefficient * (current_constraint_violation - trial_linearized_constraint_violation) -
-            step_length*step_length/2. * quadratic_term;
-      };
-   }
-   else { // 0. < objective_multiplier
-      // "-ρ*∇f(x)^T (αd)"
-      const double directional_derivative = dot(direction.primals, current_iterate.evaluations.objective_gradient);
-      return [=](double objective_multiplier) {
-         return step_length * (-objective_multiplier*directional_derivative) - step_length*step_length/2. * quadratic_term;
-      };
    }
 }
 

@@ -6,13 +6,12 @@
 #include "filter_method/LeyfferFilterMethod.hpp"
 #include "filter_method/WaechterFilterMethod.hpp"
 
-std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& strategy_type, bool solving_feasibility_problem,
-      const Options& options) {
+std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& strategy_type, const Options& options) {
    if (strategy_type == "l1_merit") {
       return std::make_unique<l1MeritFunction>(options);
    }
    else if (strategy_type == "leyffer_filter_method") {
-      return std::make_unique<LeyfferFilterMethod>(solving_feasibility_problem, options);
+      return std::make_unique<LeyfferFilterMethod>(options);
    }
    else if (strategy_type == "waechter_filter_method") {
       return std::make_unique<WaechterFilterMethod>(options);

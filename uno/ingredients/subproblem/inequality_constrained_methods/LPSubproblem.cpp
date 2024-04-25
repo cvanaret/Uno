@@ -9,7 +9,8 @@ LPSubproblem::LPSubproblem(size_t max_number_variables, size_t max_number_constr
       size_t max_number_jacobian_nonzeros, const Options& options) :
       InequalityConstrainedMethod(max_number_variables, max_number_constraints),
       solver(LPSolverFactory::create(options.get_string("LP_solver"), max_number_variables, max_number_constraints,
-            max_number_objective_gradient_nonzeros, max_number_jacobian_nonzeros, options)) {
+            max_number_objective_gradient_nonzeros, max_number_jacobian_nonzeros, options)),
+      zero_hessian(COOSymmetricMatrix<double>::zero(max_number_variables)) {
 }
 
 void LPSubproblem::generate_initial_iterate(const OptimizationProblem& /*problem*/, Iterate& /*initial_iterate*/) {
@@ -53,10 +54,8 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const OptimizationProb
    return direction;
 }
 
-std::function<double(double)> LPSubproblem::compute_predicted_objective_reduction_model(const OptimizationProblem& problem,
-      const Iterate& current_iterate, const Direction& direction, double step_length) const {
-   return problem.compute_predicted_objective_reduction_model(current_iterate, direction, step_length,
-         COOSymmetricMatrix<double>::zero(direction.number_variables));
+const SymmetricMatrix<double>& LPSubproblem::get_lagrangian_hessian() const {
+   return this->zero_hessian;
 }
 
 size_t LPSubproblem::get_hessian_evaluation_count() const {

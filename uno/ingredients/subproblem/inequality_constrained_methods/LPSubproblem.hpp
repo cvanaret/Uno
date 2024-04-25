@@ -6,6 +6,7 @@
 
 #include <memory>
 #include "InequalityConstrainedMethod.hpp"
+#include "linear_algebra/COOSymmetricMatrix.hpp"
 #include "solvers/LP/LPSolver.hpp"
 #include "tools/Options.hpp"
 
@@ -17,13 +18,13 @@ public:
    void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
    [[nodiscard]] Direction solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const WarmstartInformation& warmstart_information) override;
-   [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction_model(const OptimizationProblem& problem,
-         const Iterate& current_iterate, const Direction& direction, double step_length) const override;
+   [[nodiscard]] const SymmetricMatrix<double>& get_lagrangian_hessian() const override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
 private:
    // pointer to allow polymorphism
    const std::unique_ptr<LPSolver> solver; /*!< Solver that solves the subproblem */
+   const COOSymmetricMatrix<double> zero_hessian;
 
    void evaluate_functions(const OptimizationProblem& problem, Iterate& current_iterate, const WarmstartInformation& warmstart_information);
 };

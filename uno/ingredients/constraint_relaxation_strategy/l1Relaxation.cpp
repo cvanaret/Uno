@@ -22,7 +22,7 @@ l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
       subproblem(SubproblemFactory::create(this->l1_relaxed_problem.number_variables, this->l1_relaxed_problem.number_constraints,
             this->l1_relaxed_problem.number_objective_gradient_nonzeros(), this->l1_relaxed_problem.number_jacobian_nonzeros(),
             this->l1_relaxed_problem.number_hessian_nonzeros(), options)),
-      globalization_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), true, options)),
+      globalization_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), options)),
       penalty_parameter(options.get_double("l1_relaxation_initial_parameter")),
       tolerance(options.get_double("tolerance")),
       parameters({
@@ -280,15 +280,15 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
 }
 
 void l1Relaxation::evaluate_progress_measures(Iterate& iterate) const {
-   this->l1_relaxed_problem.set_infeasibility_measure(iterate, Norm::L1);
-   this->l1_relaxed_problem.set_objective_measure(iterate);
+   this->set_infeasibility_measure(iterate);
+   this->set_objective_measure(iterate);
    this->subproblem->set_auxiliary_measure(this->l1_relaxed_problem, iterate);
 }
 
 ProgressMeasures l1Relaxation::compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length) {
    return {
-      this->l1_relaxed_problem.compute_predicted_infeasibility_reduction_model(current_iterate, direction, step_length, Norm::L1),
-         this->subproblem->compute_predicted_objective_reduction_model(this->l1_relaxed_problem, current_iterate, direction, step_length),
+      this->compute_predicted_infeasibility_reduction_model(current_iterate, direction, step_length),
+      this->compute_predicted_objective_reduction_model(current_iterate, direction, step_length, this->subproblem->get_lagrangian_hessian()),
       this->subproblem->compute_predicted_auxiliary_reduction_model(this->l1_relaxed_problem, current_iterate, direction, step_length)
    };
 }

@@ -11,6 +11,40 @@ ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Model& model, c
       residual_scaling_threshold(options.get_double("residual_scaling_threshold")) {
 }
 
+// objective measure: scaled objective
+void ConstraintRelaxationStrategy::set_objective_measure(Iterate& iterate) const {
+   iterate.evaluate_objective(this->model);
+   const double objective = iterate.evaluations.objective;
+   iterate.progress.objective = [=](double objective_multiplier) {
+      return objective_multiplier * objective;
+   };
+}
+
+// infeasibility measure: constraint violation
+void ConstraintRelaxationStrategy::set_infeasibility_measure(Iterate& iterate) const {
+   iterate.evaluate_constraints(this->model);
+   iterate.progress.infeasibility = this->model.constraint_violation(iterate.evaluations.constraints, this->progress_norm);
+}
+
+double ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction,
+      double step_length) const {
+   // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
+   const double current_constraint_violation = this->model.constraint_violation(current_iterate.evaluations.constraints, this->progress_norm);
+   const double trial_linearized_constraint_violation = this->model.linearized_constraint_violation(direction.primals,
+         current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian, step_length, this->progress_norm);
+   return current_constraint_violation - trial_linearized_constraint_violation;
+}
+
+std::function<double(double)> ConstraintRelaxationStrategy::compute_predicted_objective_reduction_model(const Iterate& current_iterate,
+      const Direction& direction, double step_length, const SymmetricMatrix<double>& hessian) const {
+   // predicted objective reduction: "-∇f(x)^T (αd) - α^2/2 d^T H d"
+   const double directional_derivative = dot(direction.primals, current_iterate.evaluations.objective_gradient);
+   const double quadratic_term = hessian.quadratic_product(direction.primals, direction.primals);
+   return [=](double objective_multiplier) {
+      return step_length * (-objective_multiplier*directional_derivative) - step_length*step_length/2. * quadratic_term;
+   };
+}
+
 void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const RelaxedProblem& feasibility_problem, Iterate& iterate) {
    iterate.evaluate_objective_gradient(this->model);
    iterate.evaluate_constraints(this->model);
