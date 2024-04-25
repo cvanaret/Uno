@@ -2,21 +2,15 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <gtest/gtest.h>
-#include "linear_algebra/COOSymmetricMatrix.hpp"
+#include "expression/MatrixExpression.hpp"
 #include "linear_algebra/Symmetric2by2BlockMatrix.hpp"
-
-COOSymmetricMatrix<double> identity(size_t dimension) {
-   COOSymmetricMatrix<double> matrix(dimension, dimension, false);
-   for (size_t index: Range(dimension)) {
-      matrix.insert(1., index, index);
-      matrix.finalize_column(index);
-   }
-   return matrix;
-}
 
 TEST(Symmetric2by2BlockMatrix, Correctness) {
    const size_t block_dimension = 2;
-   const Symmetric2by2BlockMatrix block_matrix{identity(block_dimension), identity(block_dimension), identity(block_dimension)};
+   const Symmetric2by2BlockMatrix block_matrix(
+         identity(block_dimension), identity(block_dimension),
+         /* identity(block_dimension) */ identity(block_dimension)
+   );
    const std::vector<double> x{1., 2., 100., 200.};
 
    // matrix-vector product

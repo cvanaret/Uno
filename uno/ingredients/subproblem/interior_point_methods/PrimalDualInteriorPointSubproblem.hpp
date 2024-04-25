@@ -6,7 +6,8 @@
 
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
-#include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
+#include "solvers/linear/direct/DirectIndefiniteLinearSolver.hpp"
+#include "solvers/linear/direct/DirectIndefiniteLinearSolverFactory.hpp"
 #include "ingredients/subproblem/HessianModel.hpp"
 #include "tools/Options.hpp"
 #include "BarrierParameterUpdateStrategy.hpp"
@@ -49,7 +50,7 @@ public:
 protected:
    SymmetricIndefiniteLinearSystem<double> augmented_system;
    const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
-   const std::unique_ptr<SymmetricIndefiniteLinearSolver<double>> linear_solver;
+   const std::unique_ptr<DirectIndefiniteLinearSolver<double>> linear_solver;
 
    BarrierParameterUpdateStrategy barrier_parameter_update_strategy;
    double previous_barrier_parameter;

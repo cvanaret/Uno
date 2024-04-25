@@ -1,19 +1,19 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_LINEARSOLVERFACTORY_H
-#define UNO_LINEARSOLVERFACTORY_H
+#ifndef UNO_DIRECTINDEFINITELINEARSOLVERFACTORY_H
+#define UNO_DIRECTINDEFINITELINEARSOLVERFACTORY_H
 
 #include <memory>
-#include "SymmetricIndefiniteLinearSolver.hpp"
+#include "DirectIndefiniteLinearSolver.hpp"
 
 #ifdef HAS_MA57
-#include "direct/MA57Solver.hpp"
+#include "MA57Solver.hpp"
 #endif
 
-class SymmetricIndefiniteLinearSolverFactory {
+class DirectIndefiniteLinearSolverFactory {
 public:
-   static std::unique_ptr<SymmetricIndefiniteLinearSolver<double>> create(const std::string& linear_solver_name, size_t max_dimension,
+   static std::unique_ptr<DirectIndefiniteLinearSolver<double>> create(const std::string& linear_solver_name, size_t max_dimension,
          size_t max_number_nonzeros) {
 #ifdef HAS_MA57
       if (linear_solver_name == "MA57") {
@@ -33,4 +33,4 @@ public:
    }
 };
 
-#endif // UNO_LINEARSOLVERFACTORY_H
+#endif // UNO_DIRECTINDEFINITELINEARSOLVERFACTORY_H

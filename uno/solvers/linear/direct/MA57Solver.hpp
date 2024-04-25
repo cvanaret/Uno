@@ -6,6 +6,7 @@
 
 #include <vector>
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
+#include "solvers/linear/direct/DirectIndefiniteLinearSolver.hpp"
 #include "linear_algebra/COOSymmetricMatrix.hpp"
 
 struct MA57Factorization {
@@ -27,7 +28,7 @@ struct MA57Factorization {
  *
  *  Interface to the symmetric indefinite linear solver MA57
  */
-class MA57Solver : public SymmetricIndefiniteLinearSolver<double> {
+class MA57Solver : public DirectIndefiniteLinearSolver<double> {
 public:
    MA57Solver(size_t max_dimension, size_t max_number_nonzeros);
    ~MA57Solver() override = default;
@@ -44,6 +45,7 @@ public:
    [[nodiscard]] size_t rank() const override;
 
 private:
+   bool is_matrix_factorized{false};
    // internal matrix representation
    std::vector<int> row_indices;
    std::vector<int> column_indices;

@@ -32,15 +32,7 @@ public:
    explicit MINRESSolver(const LinearOperator& linear_operator, size_t max_dimension);
    ~MINRESSolver() override = default;
 
-   void factorize(const SymmetricMatrix<NumericalType>& /*matrix*/) override { /* do nothing */  }
-   void do_symbolic_factorization(const SymmetricMatrix<NumericalType>& /*matrix*/) override { /* do nothing */ }
-   void do_numerical_factorization(const SymmetricMatrix<NumericalType>& /*matrix*/) override { /* do nothing */ }
    void solve_indefinite_system(const SymmetricMatrix<NumericalType>& matrix, const std::vector<NumericalType>& rhs, std::vector<NumericalType>& result) override;
-
-   [[nodiscard]] std::tuple<size_t, size_t, size_t> get_inertia() const override { return {0, 0, 0}; }
-   [[nodiscard]] size_t number_negative_eigenvalues() const override { return 0; }
-   [[nodiscard]] bool matrix_is_singular() const override { return false; }
-   [[nodiscard]] size_t rank() const override { return 0; }
 
 private:
    static constexpr NumericalType tolerance{1e-6};

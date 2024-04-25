@@ -4,13 +4,13 @@
 #ifndef UNO_TRANSPOSEDMATRIX_H
 #define UNO_TRANSPOSEDMATRIX_H
 
-#include "Matrix.hpp"
-
 template <typename MatrixType>
-class TransposedMatrix: Matrix<typename std::remove_reference<MatrixType>::type::value_type> {
+class TransposedMatrix: public Expression {
 public:
+   using value_type = double;
+
    explicit TransposedMatrix(MatrixType&& matrix);
-   void for_each(const std::function<void(size_t, size_t, typename TransposedMatrix::value_type)>& f) const;
+   void for_each(const std::function<void(size_t, size_t, double)>& f) const override;
    template <typename VectorType, typename ResultType>
    void product(const VectorType& vector, ResultType& result) const;
 
@@ -19,12 +19,12 @@ protected:
 };
 
 template <typename MatrixType>
-TransposedMatrix<MatrixType>::TransposedMatrix(MatrixType&& matrix): matrix(std::forward<MatrixType>(matrix)) {
+TransposedMatrix<MatrixType>::TransposedMatrix(MatrixType&& matrix): Expression(), matrix(std::forward<MatrixType>(matrix)) {
 }
 
 template <typename MatrixType>
-void TransposedMatrix<MatrixType>::for_each(const std::function<void(size_t, size_t, typename TransposedMatrix::value_type)>& f) const {
-   this->matrix.for_each([&](size_t row_index, size_t column_index, typename TransposedMatrix::value_type entry) {
+void TransposedMatrix<MatrixType>::for_each(const std::function<void(size_t, size_t, double)>& f) const {
+   this->matrix.for_each([&](size_t row_index, size_t column_index, double entry) {
       // switch row and column indices
       f(column_index, row_index, entry);
    });

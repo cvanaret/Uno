@@ -5,7 +5,8 @@
 #define UNO_SYMMETRIC2BY2BLOCKMATRIX_H
 
 #include "VectorView.hpp"
-#include "TransposedMatrix.hpp"
+#include "expression/TransposedMatrix.hpp"
+#include "linear_algebra/Vector.hpp"
 
 // symmetric block matrix
 // (let's start with 2 rows and columns)
@@ -61,6 +62,7 @@ void Symmetric2by2BlockMatrix<TopLeftBlock, TopRightBlock, BottomRightBlock>::fo
 
 template <typename TopLeftBlock, typename TopRightBlock, typename BottomRightBlock>
 void Symmetric2by2BlockMatrix<TopLeftBlock, TopRightBlock, BottomRightBlock>::product(const std::vector<double>& vector, std::vector<double>& result) const {
+   initialize_vector(result, 0.);
    // create vector views of the vector and the result
    const VectorView vector_top_part = view(vector, 0, this->A.number_columns());
    const VectorView vector_bottom_part = view(vector, this->A.number_rows(), result.size());
