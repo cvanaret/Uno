@@ -149,6 +149,7 @@ void FeasibilityRestoration::switch_to_optimality_phase(Iterate& current_iterate
    trial_iterate.set_number_variables(this->optimality_problem.number_variables);
    this->subproblem->exit_feasibility_problem(this->optimality_problem, trial_iterate);
    this->switching_to_optimality_phase = true;
+   this->globalization_strategy->register_current_progress(current_iterate.progress);
 
    current_iterate.multipliers.objective = FeasibilityRestoration::objective_multiplier;
    trial_iterate.multipliers.objective = FeasibilityRestoration::objective_multiplier;
