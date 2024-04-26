@@ -27,3 +27,29 @@ TEST(MINRESSolver, TwoDimensional) {
       ASSERT_NEAR(result[i], reference_result[i], tolerance);
    }
 }
+
+void hs015_linear_operator(const std::vector<NumericalType>& x, std::vector<NumericalType>& result) {
+   result[0] = 1.*x[0] + 1.*x[4] + 1.*x[5];
+   result[1] = 1.*x[1] + -2.*x[4] + 2.*x[5];
+   result[2] = 1.*x[2] + -1.*x[4];
+   result[3] = 1.*x[3] + -1.*x[5];
+   result[4] = 1.*x[0] + -2.*x[1] + -1.*x[2];
+   result[5] = 1.*x[0] + 2.*x[1] + -1.*x[3];
+}
+
+TEST(MINRESSolver, Hs015LeastSquareDuals) {
+   const size_t dimension = 6;
+   // reference result of MA57
+   const std::vector<NumericalType> reference_result{-33.6667, -2.77085, -28.125, -39.2084, -27.125, -38.2084};
+   const NumericalType tolerance{1e-3};
+   // dummy matrix
+   COOSymmetricMatrix<NumericalType> matrix(0, 0, false);
+   std::vector<NumericalType> rhs{-99, -24.9377, -1, -1, 0, 0 };
+   std::vector<NumericalType> result(dimension);
+   MINRESSolver<NumericalType, decltype(hs015_linear_operator)> solver(hs015_linear_operator, dimension);
+
+   solver.solve_indefinite_system(matrix, rhs, result);
+   for (size_t i: Range(dimension)) {
+      ASSERT_NEAR(result[i], reference_result[i], tolerance);
+   }
+}
