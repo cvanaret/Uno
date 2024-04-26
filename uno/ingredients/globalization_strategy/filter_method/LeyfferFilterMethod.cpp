@@ -26,8 +26,7 @@ bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& statistics, const Pr
    bool accept = false;
    // solving the feasibility problem = working on infeasibility only (no filter acceptability test)
    if (solving_feasibility_problem) {
-      if (trial_progress.infeasibility <= current_progress.infeasibility && 0. < predicted_reduction.infeasibility &&
-            this->armijo_sufficient_decrease(predicted_reduction.infeasibility, current_progress.infeasibility - trial_progress.infeasibility)) {
+      if (this->armijo_sufficient_decrease(predicted_reduction.infeasibility, current_progress.infeasibility - trial_progress.infeasibility)) {
          DEBUG << "Trial iterate (h-type) was accepted by satisfying the Armijo condition\n";
          accept = true;
       }

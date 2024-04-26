@@ -35,10 +35,9 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
       if (this->armijo_sufficient_decrease(predicted_reduction.infeasibility, current_progress.infeasibility - trial_progress.infeasibility)) {
          DEBUG << "Trial iterate (h-type) was accepted by satisfying the Armijo condition\n";
          accept = true;
-         if (this->filter->acceptable(trial_progress.infeasibility, trial_objective_measure)) {
-            this->filter->add(current_progress.infeasibility, current_objective_measure);
-            DEBUG << "Current iterate was added to the filter\n";
-         }
+      }
+      else {
+         DEBUG << "Trial iterate (h-type) was rejected by violating the Armijo condition\n";
       }
       scenario = "h-type Armijo";
    }
@@ -89,6 +88,7 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
    else {
       DEBUG << "Trial iterate not filter acceptable\n";
       statistics.set("status", "rejected (filter)");
+      scenario = "filter";
    }
    statistics.set("status", std::string(accept ? "accepted" : "rejected") + " (" + scenario + ")");
    DEBUG << '\n';
