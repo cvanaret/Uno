@@ -29,8 +29,10 @@ bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& statistics, const Pr
       if (this->armijo_sufficient_decrease(predicted_reduction.infeasibility, current_progress.infeasibility - trial_progress.infeasibility)) {
          DEBUG << "Trial iterate (h-type) was accepted by satisfying the Armijo condition\n";
          accept = true;
-         this->filter->add(current_progress.infeasibility, current_objective_measure);
-         DEBUG << "Current iterate was added to the filter\n";
+         if (this->filter->acceptable(trial_progress.infeasibility, trial_objective_measure)) {
+            this->filter->add(current_progress.infeasibility, current_objective_measure);
+            DEBUG << "Current iterate was added to the filter\n";
+         }
       }
       else {
          DEBUG << "Trial iterate (h-type) was rejected by violating the Armijo condition\n";
