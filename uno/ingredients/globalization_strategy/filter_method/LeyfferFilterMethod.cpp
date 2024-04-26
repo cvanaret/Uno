@@ -30,6 +30,10 @@ bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& statistics, const Pr
          DEBUG << "Trial iterate (h-type) was accepted by satisfying the Armijo condition\n";
          accept = true;
          this->filter->add(current_progress.infeasibility, current_objective_measure);
+         DEBUG << "Current iterate was added to the filter\n";
+      }
+      else {
+         DEBUG << "Trial iterate (h-type) was rejected by violating the Armijo condition\n";
       }
       scenario = "h-type Armijo";
    }
@@ -47,7 +51,7 @@ bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& statistics, const Pr
                accept = true;
             }
             else { // switching condition holds, but not Armijo condition
-               DEBUG << "Trial iterate was rejected by violating the Armijo condition\n";
+               DEBUG << "Trial iterate (f-type) was rejected by violating the Armijo condition\n";
             }
             scenario = "f-type Armijo";
          }
@@ -74,5 +78,5 @@ bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& statistics, const Pr
 
 bool LeyfferFilterMethod::is_feasibility_iterate_acceptable(const ProgressMeasures& /*current_progress*/, const ProgressMeasures& trial_progress) const {
    // if the trial infeasibility improves upon the best known infeasibility
-   return (trial_progress.infeasibility <= this->filter->get_smallest_infeasibility());
+   return (trial_progress.infeasibility < this->filter->get_smallest_infeasibility());
 }
