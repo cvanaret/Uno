@@ -34,7 +34,7 @@ Iterate GlobalizationMechanism::assemble_trial_iterate(const Model& model, Itera
    else {
       // d = 0, no primal step to take. Take only dual step (reuse the current iterate)
       take_dual_step(current_iterate);
-      current_iterate.progress = {INF<double>, [](double) { return INF<double>; }, INF<double>};
+      current_iterate.progress.reset();
       DEBUG << "Primal step is 0. The objective and constraints will not be re-evaluated.\n";
       return current_iterate;
    }
