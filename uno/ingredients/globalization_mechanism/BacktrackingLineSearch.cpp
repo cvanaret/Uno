@@ -100,14 +100,12 @@ Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics
       Direction direction_feasibility = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate,
             direction.primals, warmstart_information);
       BacktrackingLineSearch::check_unboundedness(direction_feasibility);
-      Iterate trial_iterate_feasibility = this->backtrack_along_direction(statistics, model, current_iterate, direction_feasibility,
-            warmstart_information);
-      return trial_iterate_feasibility;
+      return this->backtrack_along_direction(statistics, model, current_iterate, direction_feasibility, warmstart_information);
    }
 }
 
+// step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ...
 double BacktrackingLineSearch::decrease_step_length(double step_length) const {
-   // step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ...
    step_length *= this->backtracking_ratio;
    assert(0 < step_length && step_length <= 1 && "The line-search step length is not in (0, 1]");
    return step_length;

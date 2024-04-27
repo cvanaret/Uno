@@ -37,18 +37,13 @@ l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
 }
 
 void l1Relaxation::initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) {
-   statistics.add_column("penalty param.", Statistics::double_width, options.get_int("statistics_penalty_parameter_column_order"));
-   
    this->subproblem->set_elastic_variable_values(this->l1_relaxed_problem, initial_iterate);
    this->subproblem->generate_initial_iterate(this->l1_relaxed_problem, initial_iterate);
-   this->subproblem->initialize_statistics(statistics, options);
-
-   // compute the progress measures and residuals of the initial point
    this->evaluate_progress_measures(initial_iterate);
    this->compute_primal_dual_residuals(this->feasibility_problem, initial_iterate);
-
-   // initialize the globalization strategy
    this->globalization_strategy->initialize(statistics, initial_iterate, options);
+   this->subproblem->initialize_statistics(statistics, options);
+   statistics.add_column("penalty param.", Statistics::double_width, options.get_int("statistics_penalty_parameter_column_order"));
 
    this->set_statistics(statistics, initial_iterate);
    statistics.set("penalty param.", this->penalty_parameter);
@@ -74,7 +69,7 @@ Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Itera
    return this->compute_feasible_direction(statistics, current_iterate, warmstart_information);
 }
 
-bool l1Relaxation::solving_feasibility_problem() {
+bool l1Relaxation::solving_feasibility_problem() const {
    return (this->penalty_parameter == 0.);
 }
 
@@ -264,10 +259,8 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
       statistics.set("status", "accepted (0 step)");
    }
    else {
-      // evaluate the predicted reduction
-      ProgressMeasures predicted_reduction = this->compute_predicted_reduction_models(current_iterate, direction, step_length);
-
       // invoke the globalization strategy for acceptance
+      const ProgressMeasures predicted_reduction = this->compute_predicted_reduction_models(current_iterate, direction, step_length);
       accept_iterate = this->globalization_strategy->is_iterate_acceptable(statistics, current_iterate.progress, trial_iterate.progress,
             predicted_reduction, this->penalty_parameter);
    }
