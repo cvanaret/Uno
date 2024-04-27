@@ -60,7 +60,9 @@ inline void Logger::set_logger(const std::string& logger_level) {
    else if (logger_level == "DEBUG3") {
       Logger::level = DEBUG3;
    }
-   throw std::out_of_range("The logger level " + logger_level + " was not found");
+   else {
+      throw std::out_of_range("The logger level " + logger_level + " was not found");
+   }
 }
 
 #endif // UNO_LOGGER_H
