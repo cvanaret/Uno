@@ -37,8 +37,7 @@ public:
    [[nodiscard]] Direction solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const WarmstartInformation& warmstart_information) override;
 
-   [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction_model(const OptimizationProblem& problem,
-         const Iterate& current_iterate, const Direction& direction, double step_length) const override;
+   [[nodiscard]] const SymmetricMatrix<double>& get_lagrangian_hessian() const override;
    void set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) override;
    [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const OptimizationProblem& problem,
          const Iterate& current_iterate, const Direction& direction, double step_length) const override;

@@ -265,9 +265,8 @@ void PrimalDualInteriorPointSubproblem::exit_feasibility_problem(const Optimizat
    this->compute_least_square_multipliers(problem, trial_iterate);
 }
 
-std::function<double(double)> PrimalDualInteriorPointSubproblem::compute_predicted_objective_reduction_model(const OptimizationProblem& problem,
-      const Iterate& current_iterate, const Direction& direction, double step_length) const {
-   return problem.compute_predicted_objective_reduction_model(current_iterate, direction, step_length, *this->hessian_model->hessian);
+const SymmetricMatrix<double>& PrimalDualInteriorPointSubproblem::get_lagrangian_hessian() const {
+   return *this->hessian_model->hessian;
 }
 
 void PrimalDualInteriorPointSubproblem::set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) {

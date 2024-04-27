@@ -73,8 +73,7 @@ protected:
          const Direction& direction_lowest_violation) const;
 
    void evaluate_progress_measures(Iterate& iterate) const;
-   [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction,
-         double step_length);
+   [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length);
 
    [[nodiscard]] double complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers) const override;

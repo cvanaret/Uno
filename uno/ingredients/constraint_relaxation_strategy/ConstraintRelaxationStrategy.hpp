@@ -42,6 +42,12 @@ protected:
    const Norm residual_norm;
    const double residual_scaling_threshold;
 
+   void set_objective_measure(Iterate& iterate) const;
+   void set_infeasibility_measure(Iterate& iterate) const;
+   [[nodiscard]] double compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction, double step_length) const;
+   [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction_model(const Iterate& current_iterate, const Direction& direction,
+         double step_length, const SymmetricMatrix<double>& hessian) const;
+
    void compute_primal_dual_residuals(const RelaxedProblem& feasibility_problem, Iterate& iterate);
    static void evaluate_lagrangian_gradient(size_t number_variables, Iterate& iterate, const Multipliers& multipliers, double objective_multiplier);
 
