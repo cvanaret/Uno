@@ -13,11 +13,19 @@ struct Multipliers {
    double objective{1.};
 
    Multipliers(size_t number_variables, size_t number_constraints);
+   void reset();
    [[nodiscard]] bool not_all_zero(size_t number_variables, double tolerance) const;
 };
 
 inline Multipliers::Multipliers(size_t number_variables, size_t number_constraints) : lower_bounds(number_variables),
       upper_bounds(number_variables), constraints(number_constraints) {
+}
+
+inline void Multipliers::reset() {
+   initialize_vector(this->constraints, 0.);
+   initialize_vector(this->lower_bounds, 0.);
+   initialize_vector(this->upper_bounds, 0.);
+   this->objective = 0.;
 }
 
 inline bool Multipliers::not_all_zero(size_t number_variables, double tolerance) const {

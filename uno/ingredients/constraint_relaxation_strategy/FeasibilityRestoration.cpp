@@ -108,10 +108,7 @@ void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistic
    this->subproblem->initialize_feasibility_problem(this->feasibility_problem, current_iterate);
 
    // reset multipliers (this means no curvature in the first feasibility restoration iteration)
-   initialize_vector(current_iterate.multipliers.constraints, 0.);
-   initialize_vector(current_iterate.multipliers.lower_bounds, 0.);
-   initialize_vector(current_iterate.multipliers.upper_bounds, 0.);
-   current_iterate.multipliers.objective = 0.;
+   current_iterate.multipliers.reset();
    // TODO: allocate the iterates with the maximum number of dimensions and never physically resize
    current_iterate.set_number_variables(this->feasibility_problem.number_variables);
    this->subproblem->set_elastic_variable_values(this->feasibility_problem, current_iterate);

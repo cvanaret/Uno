@@ -25,7 +25,7 @@ public:
          WarmstartInformation& warmstart_information) = 0;
    [[nodiscard]] virtual Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
          const std::vector<double>& initial_point, WarmstartInformation& warmstart_information) = 0;
-   virtual bool solving_feasibility_problem() const = 0;
+   [[nodiscard]] virtual bool solving_feasibility_problem() const = 0;
    virtual void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate) = 0;
 
    // trial iterate acceptance
