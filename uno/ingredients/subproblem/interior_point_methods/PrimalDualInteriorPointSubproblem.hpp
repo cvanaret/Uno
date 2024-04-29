@@ -27,7 +27,7 @@ public:
    ~PrimalDualInteriorPointSubproblem() override = default; // TODO remove
 
    void initialize_statistics(Statistics& statistics, const Options& options) override;
-   void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
+   [[nodiscard]] bool generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
    void set_initial_point(const std::vector<double>& point) override;
 
    void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) override;

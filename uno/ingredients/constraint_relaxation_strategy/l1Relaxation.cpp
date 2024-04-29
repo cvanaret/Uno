@@ -37,19 +37,22 @@ l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
 }
 
 void l1Relaxation::initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) {
-   this->subproblem->set_elastic_variable_values(this->l1_relaxed_problem, initial_iterate);
-   this->subproblem->generate_initial_iterate(this->l1_relaxed_problem, initial_iterate);
-   this->evaluate_progress_measures(initial_iterate);
-   this->compute_primal_dual_residuals(this->feasibility_problem, initial_iterate);
-   this->globalization_strategy->initialize(statistics, initial_iterate, options);
+   // statistics
    this->subproblem->initialize_statistics(statistics, options);
    statistics.add_column("penalty param.", Statistics::double_width, options.get_int("statistics_penalty_parameter_column_order"));
-
-   this->set_statistics(statistics, initial_iterate);
    statistics.set("penalty param.", this->penalty_parameter);
-   if (this->model.is_constrained()) {
-      statistics.set("primal infeas.", initial_iterate.progress.infeasibility);
+
+   // initial iterate
+   this->subproblem->set_elastic_variable_values(this->l1_relaxed_problem, initial_iterate);
+   const bool is_linearly_feasible = this->subproblem->generate_initial_iterate(this->l1_relaxed_problem, initial_iterate);
+   this->evaluate_progress_measures(initial_iterate);
+   this->compute_primal_dual_residuals(this->feasibility_problem, initial_iterate);
+   this->set_statistics(statistics, initial_iterate);
+   if (not is_linearly_feasible) {
+      this->switch_to_feasibility_problem(statistics, initial_iterate);
+      statistics.set("status", "linearly infeas.");
    }
+   this->globalization_strategy->initialize(statistics, initial_iterate, options);
 }
 
 Direction l1Relaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information) {
@@ -73,7 +76,7 @@ bool l1Relaxation::solving_feasibility_problem() const {
    return (this->penalty_parameter == 0.);
 }
 
-void l1Relaxation::switch_to_feasibility_problem(Statistics& /*statistics*/, Iterate& /*current_iterate*/, WarmstartInformation& /*warmstart_information*/) {
+void l1Relaxation::switch_to_feasibility_problem(Statistics& /*statistics*/, Iterate& /*current_iterate*/) {
    throw std::runtime_error("l1Relaxation::switch_to_feasibility_problem is not implemented\n");
 }
 
@@ -304,6 +307,7 @@ void l1Relaxation::check_exact_relaxation(Iterate& iterate) const {
 }
 
 void l1Relaxation::set_statistics(Statistics& statistics, const Iterate& iterate) const {
+   statistics.set("objective", iterate.evaluations.objective);
    if (this->model.is_constrained()) {
       statistics.set("primal infeas.", iterate.residuals.infeasibility);
    }

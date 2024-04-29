@@ -60,7 +60,6 @@ Iterate TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const 
             warmstart_information.set_cold_start();
          }
          else {
-            //Iterate trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction);
             Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, direction, direction.primal_dual_step_length,
                   direction.primal_dual_step_length, direction.bound_dual_step_length);
             // reset bound multipliers of active trust region

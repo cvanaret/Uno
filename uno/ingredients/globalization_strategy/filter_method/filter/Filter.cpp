@@ -176,7 +176,7 @@ std::ostream& operator<<(std::ostream& stream, Filter& filter) {
       }
       stream << "│\n";
    }
-   stream << "└───────────────┴────────────┘\n";
+   stream << "└───────────────┴───────────┘\n";
    std::cout << "Infeasibility upper bound: " << filter.infeasibility_upper_bound << '\n';
    return stream;
 }

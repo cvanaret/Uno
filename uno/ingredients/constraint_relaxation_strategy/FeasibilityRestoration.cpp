@@ -29,22 +29,35 @@ FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options
 }
 
 void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) {
-   this->subproblem->generate_initial_iterate(this->optimality_problem, initial_iterate);
-   this->evaluate_progress_measures(initial_iterate);
-   this->compute_primal_dual_residuals(this->feasibility_problem, initial_iterate);
-   this->globalization_strategy->initialize(statistics, initial_iterate, options);
+   // statistics
    this->subproblem->initialize_statistics(statistics, options);
    statistics.add_column("phase", Statistics::int_width, options.get_int("statistics_restoration_phase_column_order"));
-
-   this->set_statistics(statistics, initial_iterate);
    statistics.set("phase", "OPT");
-   if (this->model.is_constrained()) {
-      statistics.set("primal infeas.", initial_iterate.progress.infeasibility);
+
+   // initial iterate
+   const bool is_linearly_feasible = this->subproblem->generate_initial_iterate(this->optimality_problem, initial_iterate);
+   this->evaluate_progress_measures(initial_iterate);
+   this->compute_primal_dual_residuals(this->feasibility_problem, initial_iterate);
+   this->set_statistics(statistics, initial_iterate);
+   if (not is_linearly_feasible) {
+      this->switch_to_feasibility_problem(statistics, initial_iterate);
+      statistics.set("phase", "OPT");
+      statistics.set("status", "linearly infeas.");
    }
+   this->globalization_strategy->initialize(statistics, initial_iterate, options);
 }
 
 Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
       WarmstartInformation& warmstart_information) {
+   /*
+   if (1e6 < norm_inf(current_iterate.multipliers.constraints)) {
+      // large duals are an indication of CQ failure
+      statistics.set("status", "large duals");
+      DEBUG << "/!\\ The duals are large\n";
+      this->switch_to_feasibility_problem(statistics, current_iterate);
+      warmstart_information.set_cold_start();
+   }
+   */
    // if we are in the optimality phase, solve the optimality problem
    if (this->current_phase == Phase::OPTIMALITY) {
       statistics.set("phase", "OPT");
@@ -55,22 +68,17 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
             // switch to the feasibility problem, starting from the current direction
             statistics.set("status", "infeas. subproblem");
             DEBUG << "/!\\ The subproblem is infeasible\n";
-            this->switch_to_feasibility_problem(statistics, current_iterate, warmstart_information);
+            this->switch_to_feasibility_problem(statistics, current_iterate);
+            warmstart_information.set_cold_start();
             this->subproblem->set_initial_point(direction.primals);
          }
-         /*
-         else if (1e6 < norm_inf(direction.multipliers.constraints)) {
-            // large duals are an indication of CQ failure
-            statistics.set("status", "large duals");
-            this->switch_to_feasibility_problem(statistics, current_iterate, warmstart_information);
-         }
-          */
          else {
             return direction;
          }
       }
       catch (const UnstableRegularization&) {
-         this->switch_to_feasibility_problem(statistics, current_iterate, warmstart_information);
+         this->switch_to_feasibility_problem(statistics, current_iterate);
+         warmstart_information.set_cold_start();
       }
    }
 
@@ -93,20 +101,21 @@ bool FeasibilityRestoration::solving_feasibility_problem() const {
 }
 
 // precondition: this->current_phase == Phase::OPTIMALITY
-void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information) {
+void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate) {
    DEBUG << "Switching from optimality to restoration phase\n";
    this->current_phase = Phase::FEASIBILITY_RESTORATION;
    this->globalization_strategy->register_current_progress(current_iterate.progress);
    this->subproblem->initialize_feasibility_problem(this->feasibility_problem, current_iterate);
 
-   // reset constraint multipliers (this means no curvature in the first feasibility restoration iteration)
+   // reset multipliers (this means no curvature in the first feasibility restoration iteration)
    initialize_vector(current_iterate.multipliers.constraints, 0.);
+   initialize_vector(current_iterate.multipliers.lower_bounds, 0.);
+   initialize_vector(current_iterate.multipliers.upper_bounds, 0.);
    current_iterate.multipliers.objective = 0.;
    // TODO: allocate the iterates with the maximum number of dimensions and never physically resize
    current_iterate.set_number_variables(this->feasibility_problem.number_variables);
    this->subproblem->set_elastic_variable_values(this->feasibility_problem, current_iterate);
    DEBUG2 << "Current iterate:\n" << current_iterate << '\n';
-   warmstart_information.set_cold_start();
 
    if (Logger::level == INFO) statistics.print_current_line();
    statistics.start_new_line();
@@ -165,12 +174,14 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
    this->compute_progress_measures(current_iterate, trial_iterate, direction, step_length);
 
    bool accept_iterate = false;
-   // detect trivial multipliers
    /*
+   // detect trivial multipliers
    if (this->current_phase == Phase::FEASIBILITY_RESTORATION && not trial_iterate.multipliers.not_all_zero(this->model.number_variables, 1e-6)) {
+      DEBUG << "Trivial duals in restoration phase, trial iterate rejected\n\n";
       statistics.set("status", "rejected (trivial duals)");
    }
-   else*/
+   else
+   */
    if (direction.norm == 0.) {
       DEBUG << "Zero step acceptable\n\n";
       trial_iterate.evaluate_objective(this->model);
@@ -248,6 +259,7 @@ double FeasibilityRestoration::complementarity_error(const std::vector<double>& 
 }
 
 void FeasibilityRestoration::set_statistics(Statistics& statistics, const Iterate& iterate) const {
+   statistics.set("objective", iterate.evaluations.objective);
    if (this->model.is_constrained()) {
       statistics.set("primal infeas.", iterate.residuals.infeasibility);
    }

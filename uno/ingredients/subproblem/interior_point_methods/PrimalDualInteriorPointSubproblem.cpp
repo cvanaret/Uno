@@ -45,7 +45,7 @@ inline void PrimalDualInteriorPointSubproblem::initialize_statistics(Statistics&
    statistics.add_column("barrier param.", Statistics::double_width - 1, options.get_int("statistics_barrier_parameter_column_order"));
 }
 
-inline void PrimalDualInteriorPointSubproblem::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
+inline bool PrimalDualInteriorPointSubproblem::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
    if (problem.has_inequality_constraints()) {
       throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel.\n");
    }
@@ -89,6 +89,7 @@ inline void PrimalDualInteriorPointSubproblem::generate_initial_iterate(const Op
    if (problem.is_constrained()) {
       this->compute_least_square_multipliers(problem, initial_iterate);
    }
+   return true;
 }
 
 double PrimalDualInteriorPointSubproblem::barrier_parameter() const {

@@ -33,7 +33,7 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
       while (not termination) {
          major_iterations++;
          statistics.start_new_line();
-         Uno::set_statistics(statistics, current_iterate, major_iterations);
+         statistics.set("iter", major_iterations);
          DEBUG << "### Outer iteration " << major_iterations << '\n';
 
          // compute an acceptable iterate by solving a subproblem at the current point
@@ -54,9 +54,9 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
 void Uno::initialize(Statistics& statistics, Iterate& current_iterate, const Options& options) {
    try {
       statistics.start_new_line();
-      this->globalization_mechanism.initialize(statistics, current_iterate, options);
-      Uno::set_statistics(statistics, current_iterate, 0);
+      statistics.set("iter", 0);
       statistics.set("status", "initial point");
+      this->globalization_mechanism.initialize(statistics, current_iterate, options);
       if (Logger::level == INFO) statistics.print_current_line();
    }
    catch (const std::exception& e) {
@@ -77,13 +77,6 @@ Statistics Uno::create_statistics(const Model& model, const Options& options) {
    statistics.add_column("stationarity", Statistics::double_width - 1, options.get_int("statistics_stationarity_column_order"));
    statistics.add_column("status", Statistics::string_width, options.get_int("statistics_status_column_order"));
    return statistics;
-}
-
-void Uno::set_statistics(Statistics& statistics, const Iterate& iterate, size_t major_iterations) {
-   if (iterate.is_objective_computed) {
-      statistics.set("objective", iterate.evaluations.objective);
-   }
-   statistics.set("iter", major_iterations);
 }
 
 bool Uno::termination_criteria(TerminationStatus current_status, size_t iteration, double current_time) const {
