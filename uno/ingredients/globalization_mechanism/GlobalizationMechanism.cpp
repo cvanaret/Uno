@@ -19,7 +19,6 @@ Iterate GlobalizationMechanism::assemble_trial_iterate(const Model& model, Itera
       add_vectors(current_iterate.multipliers.constraints, direction.multipliers.constraints, dual_step_length, iterate.multipliers.constraints);
       add_vectors(current_iterate.multipliers.lower_bounds, direction.multipliers.lower_bounds, bound_dual_step_length, iterate.multipliers.lower_bounds);
       add_vectors(current_iterate.multipliers.upper_bounds, direction.multipliers.upper_bounds, bound_dual_step_length, iterate.multipliers.upper_bounds);
-      //iterate.multipliers.objective = direction.objective_multiplier;
    };
    if (0. < direction.norm) {
       Iterate trial_iterate(current_iterate.primals.size(), direction.multipliers.constraints.size());
@@ -40,7 +39,7 @@ Iterate GlobalizationMechanism::assemble_trial_iterate(const Model& model, Itera
    }
 }
 
-TerminationStatus GlobalizationMechanism::check_convergence(const Model& model, Iterate& current_iterate) {
+TerminationStatus GlobalizationMechanism::check_termination(const Model& model, Iterate& current_iterate) {
    // test convergence wrt the tight tolerance
    const TerminationStatus status_tight_tolerance = this->check_convergence_with_given_tolerance(model, current_iterate, this->tight_tolerance);
    if (status_tight_tolerance != TerminationStatus::NOT_OPTIMAL || this->loose_tolerance <= this->tight_tolerance) {
@@ -96,7 +95,7 @@ TerminationStatus GlobalizationMechanism::check_convergence_with_given_tolerance
          return TerminationStatus::FEASIBLE_KKT_POINT;
       }
       else if (feasibility_stationarity && no_trivial_duals) {
-         // feasible but CQ failure
+         // feasible but violation of CQ
          return TerminationStatus::FEASIBLE_FJ_POINT;
       }
    }

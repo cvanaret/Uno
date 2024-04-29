@@ -25,7 +25,7 @@ public:
          WarmstartInformation& warmstart_information) override;
    [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point,
          WarmstartInformation& warmstart_information) override;
-   bool solving_feasibility_problem() const override;
+   [[nodiscard]] bool solving_feasibility_problem() const override;
    void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate) override;
 
    // trial iterate acceptance

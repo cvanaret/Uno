@@ -59,7 +59,7 @@ bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& statistics, const Pr
             accept = true;
             this->filter->add(current_progress.infeasibility, current_objective_measure);
             DEBUG << "Current iterate was added to the filter\n";
-            scenario = "!switching";
+            scenario = "h-type";
          }
       }
       else {

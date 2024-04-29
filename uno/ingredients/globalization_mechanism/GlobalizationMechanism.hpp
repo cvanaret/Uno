@@ -32,7 +32,7 @@ protected:
 
    static Iterate assemble_trial_iterate(const Model& model, Iterate& current_iterate, const Direction& direction, double primal_step_length,
          double dual_step_length, double bound_dual_step_length);
-   [[nodiscard]] TerminationStatus check_convergence(const Model& model, Iterate& current_iterate);
+   [[nodiscard]] TerminationStatus check_termination(const Model& model, Iterate& current_iterate);
    [[nodiscard]] TerminationStatus check_convergence_with_given_tolerance(const Model& model, Iterate& current_iterate, double tolerance) const;
 };
 

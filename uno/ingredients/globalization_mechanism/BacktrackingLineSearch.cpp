@@ -64,7 +64,7 @@ Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics
          // check whether the trial iterate is accepted
          if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, step_length)) {
             // check termination criteria
-            trial_iterate.status = this->check_convergence(model, trial_iterate);
+            trial_iterate.status = this->check_termination(model, trial_iterate);
             this->set_statistics(statistics, trial_iterate, direction, step_length);
             if (Logger::level == INFO) statistics.print_current_line();
             return trial_iterate;
