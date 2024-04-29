@@ -162,7 +162,7 @@ void FeasibilityRestoration::switch_to_optimality_phase(Iterate& current_iterate
    this->switching_to_optimality_phase = true;
    this->globalization_strategy->register_current_progress(current_iterate.progress);
 
-   current_iterate.multipliers.objective = trial_iterate.multipliers.objective = FeasibilityRestoration::objective_multiplier;
+   current_iterate.multipliers.objective = trial_iterate.multipliers.objective = 1.;
 }
 
 bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,

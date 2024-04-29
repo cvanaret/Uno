@@ -42,13 +42,13 @@ Iterate GlobalizationMechanism::assemble_trial_iterate(const Model& model, Itera
 
 TerminationStatus GlobalizationMechanism::check_convergence(const Model& model, Iterate& current_iterate) {
    // test convergence wrt the tight tolerance
-   TerminationStatus status_tight_tolerance = this->check_convergence(model, current_iterate, this->tight_tolerance);
+   const TerminationStatus status_tight_tolerance = this->check_convergence_with_given_tolerance(model, current_iterate, this->tight_tolerance);
    if (status_tight_tolerance != TerminationStatus::NOT_OPTIMAL || this->loose_tolerance <= this->tight_tolerance) {
       return status_tight_tolerance;
    }
 
    // if not converged, check convergence wrt loose tolerance (provided it is strictly looser than the tight tolerance)
-   TerminationStatus status_loose_tolerance = this->check_convergence(model, current_iterate, this->loose_tolerance);
+   const TerminationStatus status_loose_tolerance = this->check_convergence_with_given_tolerance(model, current_iterate, this->loose_tolerance);
    // if converged, keep track of the number of consecutive iterations
    if (status_loose_tolerance != TerminationStatus::NOT_OPTIMAL) {
       this->loose_tolerance_consecutive_iterations++;
@@ -66,7 +66,7 @@ TerminationStatus GlobalizationMechanism::check_convergence(const Model& model, 
    }
 }
 
-TerminationStatus GlobalizationMechanism::check_convergence(const Model& model, Iterate& current_iterate, double tolerance) const {
+TerminationStatus GlobalizationMechanism::check_convergence_with_given_tolerance(const Model& model, Iterate& current_iterate, double tolerance) const {
    // evaluate termination conditions based on optimality conditions
    const bool optimality_stationarity =
          (current_iterate.residuals.optimality_stationarity / current_iterate.residuals.stationarity_scaling <= tolerance);

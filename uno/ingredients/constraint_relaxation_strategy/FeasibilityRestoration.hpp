@@ -47,8 +47,6 @@ private:
    const bool switch_to_optimality_requires_linearized_feasibility;
    bool switching_to_optimality_phase{false};
 
-   static constexpr double objective_multiplier = 1.;
-
    [[nodiscard]] const OptimizationProblem& current_problem() const;
    [[nodiscard]] Direction solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          WarmstartInformation& warmstart_information);
