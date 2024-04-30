@@ -8,7 +8,7 @@ WaechterFilterMethod::WaechterFilterMethod(const Options& options):
 }
 
 void WaechterFilterMethod::initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) {
-   this->initial_infeasibility = initial_iterate.residuals.infeasibility;
+   this->initial_infeasibility = initial_iterate.progress.infeasibility;
    FilterMethod::initialize(statistics, initial_iterate, options);
 }
 
