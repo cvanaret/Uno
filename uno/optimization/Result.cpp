@@ -19,7 +19,7 @@ void Result::print(bool print_primal_dual_solution) const {
       std::cout << "Terminated with feasible small step\n";
    }
    else if (this->solution.status == TerminationStatus::INFEASIBLE_SMALL_STEP) {
-      std::cout << "Terminated with infeasible small step\n";
+      std::cout << "Failed with infeasible small step\n";
    }
    else if (this->solution.status == TerminationStatus::UNBOUNDED) {
       std::cout << "Terminated with unbounded problem\n";
