@@ -139,7 +139,7 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
       this->subproblem->subproblem_definition_changed = false;
       DEBUG << "The subproblem definition changed, the globalization strategy is reset and the auxiliary measure is recomputed\n";
       this->globalization_strategy->reset();
-      this->subproblem->set_auxiliary_measure(this->current_problem(), current_iterate);
+      this->subproblem->set_auxiliary_measure(this->model, current_iterate);
    }
    this->evaluate_progress_measures(trial_iterate);
 
@@ -213,14 +213,14 @@ const OptimizationProblem& FeasibilityRestoration::current_problem() const {
 void FeasibilityRestoration::evaluate_progress_measures(Iterate& iterate) const {
    this->set_infeasibility_measure(iterate);
    this->set_objective_measure(iterate);
-   this->subproblem->set_auxiliary_measure(this->optimality_problem, iterate);
+   this->subproblem->set_auxiliary_measure(this->model, iterate);
 }
 
 ProgressMeasures FeasibilityRestoration::compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length) {
    return {
       this->compute_predicted_infeasibility_reduction_model(current_iterate, direction, step_length),
       this->compute_predicted_objective_reduction_model(current_iterate, direction, step_length, this->subproblem->get_lagrangian_hessian()),
-      this->subproblem->compute_predicted_auxiliary_reduction_model(this->optimality_problem, current_iterate, direction, step_length)
+      this->subproblem->compute_predicted_auxiliary_reduction_model(this->model, current_iterate, direction, step_length)
    };
 }
 

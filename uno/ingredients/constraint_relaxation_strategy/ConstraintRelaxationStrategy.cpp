@@ -76,6 +76,7 @@ void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(size_t number_va
 
    // objective gradient
    iterate.evaluations.objective_gradient.for_each([&](size_t variable_index, double derivative) {
+      // TODO remove objective multiplier. It should be introduced only a posteriori (e.g. when computing the norm of the Lagrangian gradient)
       iterate.lagrangian_gradient.objective_contribution[variable_index] += objective_multiplier * derivative;
    });
 

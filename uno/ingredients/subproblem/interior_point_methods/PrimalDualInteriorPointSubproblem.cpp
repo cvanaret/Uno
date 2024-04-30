@@ -270,52 +270,52 @@ const SymmetricMatrix<double>& PrimalDualInteriorPointSubproblem::get_lagrangian
    return *this->hessian_model->hessian;
 }
 
-void PrimalDualInteriorPointSubproblem::set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) {
+void PrimalDualInteriorPointSubproblem::set_auxiliary_measure(const Model& model, Iterate& iterate) {
    // auxiliary measure: barrier terms
    double barrier_terms = 0.;
-   problem.get_lower_bounded_variables().for_each([&](size_t, size_t variable_index) {
-      barrier_terms -= std::log(iterate.primals[variable_index] - problem.variable_lower_bound(variable_index));
+   model.get_lower_bounded_variables().for_each([&](size_t, size_t variable_index) {
+      barrier_terms -= std::log(iterate.primals[variable_index] - model.variable_lower_bound(variable_index));
    });
-   problem.get_upper_bounded_variables().for_each([&](size_t, size_t variable_index) {
-      barrier_terms -= std::log(problem.variable_upper_bound(variable_index) - iterate.primals[variable_index]);
+   model.get_upper_bounded_variables().for_each([&](size_t, size_t variable_index) {
+      barrier_terms -= std::log(model.variable_upper_bound(variable_index) - iterate.primals[variable_index]);
    });
    // damping
-   problem.get_single_lower_bounded_variables().for_each([&](size_t, size_t variable_index) {
-      barrier_terms += this->damping_factor*(iterate.primals[variable_index] - problem.variable_lower_bound(variable_index));
+   model.get_single_lower_bounded_variables().for_each([&](size_t, size_t variable_index) {
+      barrier_terms += this->damping_factor*(iterate.primals[variable_index] - model.variable_lower_bound(variable_index));
    });
-   problem.get_single_upper_bounded_variables().for_each([&](size_t, size_t variable_index) {
-      barrier_terms += this->damping_factor*(problem.variable_upper_bound(variable_index) - iterate.primals[variable_index]);
+   model.get_single_upper_bounded_variables().for_each([&](size_t, size_t variable_index) {
+      barrier_terms += this->damping_factor*(model.variable_upper_bound(variable_index) - iterate.primals[variable_index]);
    });
    barrier_terms *= this->barrier_parameter();
    assert(not std::isnan(barrier_terms) && "The auxiliary measure is not an number.");
    iterate.progress.auxiliary = barrier_terms;
 }
 
-double PrimalDualInteriorPointSubproblem::compute_predicted_auxiliary_reduction_model(const OptimizationProblem& problem,
-      const Iterate& current_iterate, const Direction& direction, double step_length) const {
-   const double directional_derivative = this->compute_barrier_term_directional_derivative(problem, current_iterate, direction);
+double PrimalDualInteriorPointSubproblem::compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate,
+      const Direction& direction, double step_length) const {
+   const double directional_derivative = this->compute_barrier_term_directional_derivative(model, current_iterate, direction);
    // TODO: take exponent of (-directional_derivative), see IPOPT paper
    // TODO: damping terms?
    return step_length * (-directional_derivative);
    // }, "α*(μ*X^{-1} e^T d)"};
 }
 
-double PrimalDualInteriorPointSubproblem::compute_barrier_term_directional_derivative(const OptimizationProblem& problem, const Iterate& current_iterate,
+double PrimalDualInteriorPointSubproblem::compute_barrier_term_directional_derivative(const Model& model, const Iterate& current_iterate,
       const Direction& direction) const {
    double directional_derivative = 0.;
-   problem.get_lower_bounded_variables().for_each([&](size_t, size_t variable_index) {
+   model.get_lower_bounded_variables().for_each([&](size_t, size_t variable_index) {
       directional_derivative += -this->barrier_parameter() / (current_iterate.primals[variable_index] -
-            problem.variable_lower_bound(variable_index)) * direction.primals[variable_index];
+            model.variable_lower_bound(variable_index)) * direction.primals[variable_index];
    });
-   problem.get_upper_bounded_variables().for_each([&](size_t, size_t variable_index) {
+   model.get_upper_bounded_variables().for_each([&](size_t, size_t variable_index) {
       directional_derivative += -this->barrier_parameter() / (current_iterate.primals[variable_index] -
-            problem.variable_upper_bound(variable_index)) * direction.primals[variable_index];
+            model.variable_upper_bound(variable_index)) * direction.primals[variable_index];
    });
    // damping
-   problem.get_single_lower_bounded_variables().for_each([&](size_t, size_t variable_index) {
+   model.get_single_lower_bounded_variables().for_each([&](size_t, size_t variable_index) {
       directional_derivative += this->damping_factor*this->barrier_parameter()*direction.primals[variable_index];
    });
-   problem.get_single_upper_bounded_variables().for_each([&](size_t, size_t variable_index) {
+   model.get_single_upper_bounded_variables().for_each([&](size_t, size_t variable_index) {
       directional_derivative -= this->damping_factor*this->barrier_parameter()*direction.primals[variable_index];
    });
    return directional_derivative;

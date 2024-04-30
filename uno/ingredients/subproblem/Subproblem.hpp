@@ -33,9 +33,9 @@ public:
 
    // progress measures
    [[nodiscard]] virtual const SymmetricMatrix<double>& get_lagrangian_hessian() const = 0;
-   virtual void set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) = 0;
-   [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const OptimizationProblem& problem,
-         const Iterate& current_iterate, const Direction& direction, double step_length) const = 0;
+   virtual void set_auxiliary_measure(const Model& model, Iterate& iterate) = 0;
+   [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate,
+         const Direction& direction, double step_length) const = 0;
 
    virtual void postprocess_iterate(const OptimizationProblem& problem, Iterate& iterate) = 0;
 
