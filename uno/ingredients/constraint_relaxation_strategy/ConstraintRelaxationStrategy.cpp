@@ -75,17 +75,17 @@ void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(size_t number_va
    initialize_vector(iterate.lagrangian_gradient.constraints_contribution, 0.);
 
    // objective gradient
-   iterate.evaluations.objective_gradient.for_each([&](size_t variable_index, double derivative) {
+   for (const auto [variable_index, derivative]: iterate.evaluations.objective_gradient) {
       // TODO remove objective multiplier. It should be introduced only a posteriori (e.g. when computing the norm of the Lagrangian gradient)
       iterate.lagrangian_gradient.objective_contribution[variable_index] += objective_multiplier * derivative;
-   });
+   }
 
    // constraints
    for (size_t constraint_index: Range(iterate.number_constraints)) {
       if (multipliers.constraints[constraint_index] != 0.) {
-         iterate.evaluations.constraint_jacobian[constraint_index].for_each([&](size_t variable_index, double derivative) {
+         for (const auto [variable_index, derivative]: iterate.evaluations.constraint_jacobian[constraint_index]) {
             iterate.lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
-         });
+         }
       }
    }
 

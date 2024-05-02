@@ -17,10 +17,33 @@
 template <typename ElementType>
 class SparseVector: public Collection<ElementType> {
 public:
+   class Iterator {
+   public:
+      Iterator(const SparseVector<ElementType>& vector, size_t index) : vector(vector), index(index) {
+      }
+      std::pair<size_t, ElementType> operator*() {
+         // copy the element in the pair. Cheap only for trivial types
+         return {this->vector.indices[this->index], this->vector.values[this->index]};
+      }
+      // prefix increment
+      Iterator& operator++() { this->index++; return *this; }
+
+      friend bool operator== (const Iterator& a, const Iterator& b) { return &(a.vector) == &(b.vector) && a.index == b.index; };
+      friend bool operator!= (const Iterator& a, const Iterator& b) { return &(a.vector) != &(b.vector) || a.index != b.index; };
+
+   private:
+      const SparseVector<ElementType>& vector;
+      size_t index;
+   };
+
    explicit SparseVector(size_t capacity = 0);
    void for_each(const std::function<void(size_t, ElementType)>& f) const override;
    // void for_each_index(const std::function<void (size_t)>& f) const;
    void for_each_value(const std::function<void(ElementType)>& f) const;
+
+   [[nodiscard]] Iterator begin() const { return Iterator(*this, 0); }
+   [[nodiscard]] Iterator end() const { return Iterator(*this, this->number_nonzeros); }
+
    [[nodiscard]] size_t size() const;
    void reserve(size_t capacity);
 
@@ -71,7 +94,12 @@ void SparseVector<ElementType>::reserve(size_t capacity) {
 
 template <typename ElementType>
 void SparseVector<ElementType>::insert(size_t index, ElementType value) {
+   const size_t current_capacity = this->indices.capacity();
    this->indices.push_back(index);
+   const size_t new_capacity = this->indices.capacity();
+   if (current_capacity < new_capacity) {
+      throw std::runtime_error("SparseVector had to be resized");
+   }
    this->values.push_back(value);
    this->number_nonzeros++;
 }
@@ -98,9 +126,9 @@ void SparseVector<ElementType>::transform(const std::function<ElementType (Eleme
 template <typename ElementType>
 std::ostream& operator<<(std::ostream& stream, const SparseVector<ElementType>& x) {
    stream << "sparse vector with " << x.size() << " nonzeros\n";
-   x.for_each([&](size_t index, ElementType element) {
+   for (const auto [index, element]: x) {
       stream << "index " << index << ", value " << element << '\n';
-   });
+   }
    return stream;
 }
 
@@ -120,19 +148,19 @@ ElementType norm_1(const SparseVector<ElementType>& x) {
 template <typename ElementType>
 ElementType norm_inf(const SparseVector<ElementType>& x) {
    ElementType norm = ElementType(0);
-   x.for_each_value([&](ElementType value) {
-      norm = std::max(norm, std::abs(value));
-   });
+   for (const auto [index, element]: x) {
+      norm = std::max(norm, std::abs(element));
+   }
    return norm;
 }
 
 template <typename ElementType>
 ElementType dot(const std::vector<ElementType>& x, const SparseVector<ElementType>& y) {
    ElementType dot_product = ElementType(0);
-   y.for_each([&](size_t index, ElementType y_element) {
+   for (const auto [index, y_element]: y) {
       assert(index < x.size() && "Vector.dot: the sparse vector y is larger than the dense vector x");
       dot_product += x[index] * y_element;
-   });
+   }
    return dot_product;
 }
 
