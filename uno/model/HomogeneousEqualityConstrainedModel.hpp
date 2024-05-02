@@ -5,6 +5,7 @@
 #define UNO_HOMOGENEOUSEQUALITYCONSTRAINEDMODEL_H
 
 #include "Model.hpp"
+#include "tools/ChainCollection.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Range.hpp"
 #include "tools/CollectionAdapter.hpp"

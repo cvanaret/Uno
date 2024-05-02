@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cassert>
 #include "TrustRegionStrategy.hpp"
+#include "optimization/EvaluationErrors.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
 

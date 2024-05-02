@@ -9,7 +9,6 @@
 #include "optimization/Iterate.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 #include "solvers/QP/QPSolver.hpp"
-#include "tools/Options.hpp"
 
 class Preprocessing {
 public:

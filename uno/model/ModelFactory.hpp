@@ -6,7 +6,6 @@
 
 #include <memory>
 #include "Model.hpp"
-#include "interfaces/AMPL/AMPLModel.hpp"
 #include "optimization/Iterate.hpp"
 #include "tools/Options.hpp"
 

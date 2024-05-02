@@ -3,12 +3,10 @@
 
 #include <cmath>
 #include <iostream>
-#include <cassert>
 #include <utility>
 #include "Model.hpp"
 #include "linear_algebra/VectorExpression.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "tools/Infinity.hpp"
 
 // abstract Problem class
 Model::Model(std::string name, size_t number_variables, size_t number_constraints, double objective_sign) :

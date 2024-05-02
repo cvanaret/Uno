@@ -4,6 +4,7 @@
 #include <cassert>
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "BacktrackingLineSearch.hpp"
+#include "optimization/EvaluationErrors.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
 

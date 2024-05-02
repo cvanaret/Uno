@@ -4,6 +4,7 @@
 #include <cassert>
 #include "AMPLModel.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/EvaluationErrors.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/ChainCollection.hpp"
