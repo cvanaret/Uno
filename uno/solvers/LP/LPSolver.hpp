@@ -8,7 +8,7 @@
 #include "ingredients/subproblem/Direction.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
-#include "optimization/Model.hpp"
+#include "model/Model.hpp"
 #include "optimization/WarmstartInformation.hpp"
 
 /*! \class LPSolver

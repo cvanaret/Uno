@@ -5,8 +5,8 @@
 #define UNO_AMPLMODEL_H
 
 #include <vector>
-#include "optimization/Model.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
+#include "model/Model.hpp"
 #include "tools/CollectionAdapter.hpp"
 
 // include AMPL Solver Library (ASL)

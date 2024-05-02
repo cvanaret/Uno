@@ -5,12 +5,12 @@
 #define UNO_OPTIMIZATIONPROBLEM_H
 
 #include <vector>
-#include "optimization/Iterate.hpp"
-#include "optimization/Model.hpp"
+#include "ingredients/subproblem/Direction.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
-#include "ingredients/subproblem/Direction.hpp"
+#include "model/Model.hpp"
+#include "optimization/Iterate.hpp"
 
 class OptimizationProblem {
 public:

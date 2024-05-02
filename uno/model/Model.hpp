@@ -11,8 +11,8 @@
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
-#include "TerminationStatus.hpp"
-#include "EvaluationErrors.hpp"
+#include "optimization/TerminationStatus.hpp"
+#include "optimization/EvaluationErrors.hpp"
 #include "tools/Collection.hpp"
 #include "tools/ChainCollection.hpp"
 

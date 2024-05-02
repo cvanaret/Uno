@@ -3,7 +3,6 @@
 
 #include "Iterate.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "optimization/Model.hpp"
 #include "tools/Logger.hpp"
 
 size_t Iterate::number_eval_objective = 0;

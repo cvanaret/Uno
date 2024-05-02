@@ -5,7 +5,7 @@
 #define UNO_PREPROCESSING_H
 
 #include <vector>
-#include "optimization/Model.hpp"
+#include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 #include "solvers/QP/QPSolver.hpp"

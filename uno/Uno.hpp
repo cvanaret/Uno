@@ -4,7 +4,7 @@
 #ifndef UNO_H
 #define UNO_H
 
-#include "optimization/Model.hpp"
+#include "model/Model.hpp"
 #include "optimization/Result.hpp"
 #include "optimization/TerminationStatus.hpp"
 #include "ingredients/globalization_mechanism/GlobalizationMechanism.hpp"

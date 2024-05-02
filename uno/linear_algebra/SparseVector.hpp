@@ -12,8 +12,8 @@
 
 // SparseVector is a sparse vector that uses contiguous memory. It contains:
 // - a vector of indices of type size_t
-// - a vector of values of type T
-// the indices are unique but not sorted
+// - a vector of values of type ElementType
+// the indices are neither unique nor sorted
 template <typename ElementType>
 class SparseVector: public Collection<ElementType> {
 public:
