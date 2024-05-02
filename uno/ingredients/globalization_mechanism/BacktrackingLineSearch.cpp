@@ -24,23 +24,23 @@ void BacktrackingLineSearch::initialize(Statistics& statistics, Iterate& initial
    this->constraint_relaxation_strategy.initialize(statistics, initial_iterate, options);
 }
 
-Iterate BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) {
+void BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate) {
    WarmstartInformation warmstart_information{};
    warmstart_information.set_hot_start();
    DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
    // compute the direction
-   Direction direction = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, warmstart_information);
-   BacktrackingLineSearch::check_unboundedness(direction);
+   this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, this->direction, warmstart_information);
+   BacktrackingLineSearch::check_unboundedness(this->direction);
 
    // backtrack along the direction
    this->total_number_iterations = 0;
-   return this->backtrack_along_direction(statistics, model, current_iterate, direction, warmstart_information);
+   this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate, this->direction, warmstart_information);
 }
 
 // backtrack on the primal-dual step length computed by the subproblem
-Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
-      const Direction& direction, WarmstartInformation& warmstart_information) {
+void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
+      Iterate& trial_iterate, const Direction& direction, WarmstartInformation& warmstart_information) {
    // most subproblem methods return a step length of 1. Interior-point methods however apply the fraction-to-boundary condition
    double step_length = direction.primal_dual_step_length;
    bool reached_small_step_length = false;
@@ -56,7 +56,7 @@ Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics
 
       try {
          // assemble the trial iterate by going a fraction along the direction
-         Iterate trial_iterate = GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, direction, step_length,
+         GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, direction, step_length,
                // scale or not the dual directions with the step lengths
                this->scale_duals_with_step_length ? step_length : 1.,
                this->scale_duals_with_step_length ? direction.bound_dual_step_length : 1.);
@@ -67,7 +67,7 @@ Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics
             trial_iterate.status = this->check_termination(model, trial_iterate);
             this->set_statistics(statistics, trial_iterate, direction, step_length);
             if (Logger::level == INFO) statistics.print_current_line();
-            return trial_iterate;
+            return;
          }
          // small step length
          else if (step_length < this->minimum_step_length) {
@@ -98,10 +98,10 @@ Iterate BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics
       statistics.set("status", "LS failed");
       this->constraint_relaxation_strategy.switch_to_feasibility_problem(statistics, current_iterate);
       warmstart_information.set_cold_start();
-      Direction direction_feasibility = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate,
-            direction.primals, warmstart_information);
-      BacktrackingLineSearch::check_unboundedness(direction_feasibility);
-      return this->backtrack_along_direction(statistics, model, current_iterate, direction_feasibility, warmstart_information);
+      this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, this->direction, this->direction.primals,
+            warmstart_information);
+      BacktrackingLineSearch::check_unboundedness(this->direction);
+      this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate, this->direction, warmstart_information);
    }
 }
 

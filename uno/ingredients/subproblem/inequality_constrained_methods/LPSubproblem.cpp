@@ -29,7 +29,7 @@ void LPSubproblem::evaluate_functions(const OptimizationProblem& problem, Iterat
    }
 }
 
-Direction LPSubproblem::solve(Statistics& /*statistics*/, const OptimizationProblem& problem, Iterate& current_iterate,
+void LPSubproblem::solve(Statistics& /*statistics*/, const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction,
       const WarmstartInformation& warmstart_information) {
    // evaluate the functions at the current iterate
    this->evaluate_functions(problem, current_iterate, warmstart_information);
@@ -45,14 +45,13 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const OptimizationProb
    }
 
    // solve the LP
-   Direction direction = this->solver->solve_LP(problem.number_variables, problem.number_constraints, this->direction_bounds,
+   this->solver->solve_LP(problem.number_variables, problem.number_constraints, this->direction_bounds,
          this->linearized_constraint_bounds, this->evaluations.objective_gradient, this->evaluations.constraint_jacobian,
-         this->initial_point, warmstart_information);
+         this->initial_point, direction, warmstart_information);
    InequalityConstrainedMethod::compute_dual_displacements(problem, current_iterate, direction);
    this->number_subproblems_solved++;
    // reset the initial point
    initialize_vector(this->initial_point, 0.);
-   return direction;
 }
 
 const SymmetricMatrix<double>& LPSubproblem::get_lagrangian_hessian() const {

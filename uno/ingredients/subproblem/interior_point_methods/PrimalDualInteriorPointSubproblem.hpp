@@ -34,7 +34,7 @@ public:
    void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& constraint_index) override;
    void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) override;
 
-   [[nodiscard]] Direction solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+   void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction,
          const WarmstartInformation& warmstart_information) override;
 
    [[nodiscard]] const SymmetricMatrix<double>& get_lagrangian_hessian() const override;
@@ -69,13 +69,13 @@ protected:
          const WarmstartInformation& warmstart_information);
    void update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate);
    [[nodiscard]] bool is_small_step(const OptimizationProblem& problem, const Iterate& current_iterate, const Direction& direction) const;
-   [[nodiscard]] double evaluate_subproblem_objective() const;
+   [[nodiscard]] double evaluate_subproblem_objective(const Direction& direction) const;
    [[nodiscard]] double compute_barrier_term_directional_derivative(const Model& model, const Iterate& current_iterate, const Direction& direction) const;
    [[nodiscard]] double primal_fraction_to_boundary(const OptimizationProblem& problem, const Iterate& current_iterate, double tau);
    [[nodiscard]] double dual_fraction_to_boundary(const OptimizationProblem& problem, const Iterate& current_iterate, double tau);
    void assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem, const Iterate& current_iterate);
    void generate_augmented_rhs(const OptimizationProblem& problem, const Iterate& current_iterate);
-   void assemble_primal_dual_direction(const OptimizationProblem& problem, const Iterate& current_iterate);
+   void assemble_primal_dual_direction(const OptimizationProblem& problem, const Iterate& current_iterate, Direction& direction);
    void compute_bound_dual_direction(const OptimizationProblem& problem, const Iterate& current_iterate);
    void compute_least_square_multipliers(const OptimizationProblem& problem, Iterate& iterate);
 };

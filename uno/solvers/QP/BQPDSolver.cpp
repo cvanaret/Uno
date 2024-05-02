@@ -44,6 +44,7 @@ BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_
       size_hessian_sparsity_workspace(this->size_hessian_sparsity + this->kmax + this->mxiwk0),
       hessian_values(this->size_hessian_workspace),
       hessian_sparsity(this->size_hessian_sparsity_workspace),
+      current_hessian_indices(number_variables),
       print_subproblem(options.get_bool("BQPD_print_subproblem")) {
    // default active set
    for (size_t variable_index: Range(number_variables + number_constraints)) {
@@ -51,10 +52,11 @@ BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_
    }
 }
 
-Direction BQPDSolver::solve_QP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
+void BQPDSolver::solve_QP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
       const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
       const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const std::vector<double>& initial_point,
-      const WarmstartInformation& warmstart_information) {
+      Direction& direction, const WarmstartInformation& warmstart_information) {
+
    if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
       this->save_hessian_to_local_format(hessian);
    }
@@ -62,24 +64,24 @@ Direction BQPDSolver::solve_QP(size_t number_variables, size_t number_constraint
       DEBUG << "QP:\n";
       DEBUG << "Hessian: " << hessian;
    }
-   return this->solve_subproblem(number_variables, number_constraints, variables_bounds, constraint_bounds, linear_objective, constraint_jacobian,
-         initial_point, warmstart_information);
+   this->solve_subproblem(number_variables, number_constraints, variables_bounds, constraint_bounds, linear_objective, constraint_jacobian,
+         initial_point, direction, warmstart_information);
 }
 
-Direction BQPDSolver::solve_LP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
+void BQPDSolver::solve_LP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
       const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
-      const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point,
+      const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point, Direction& direction,
       const WarmstartInformation& warmstart_information) {
    if (this->print_subproblem) {
       DEBUG << "LP:\n";
    }
-   return this->solve_subproblem(number_variables, number_constraints, variables_bounds, constraint_bounds, linear_objective, constraint_jacobian,
-         initial_point, warmstart_information);
+   this->solve_subproblem(number_variables, number_constraints, variables_bounds, constraint_bounds, linear_objective, constraint_jacobian,
+         initial_point, direction, warmstart_information);
 }
 
-Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
+void BQPDSolver::solve_subproblem(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
       const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
-      const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point,
+      const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point, Direction& direction,
       const WarmstartInformation& warmstart_information) {
    // initialize wsc_ common block (Hessian & workspace for BQPD)
    // setting the common block here ensures that several instances of BQPD can run simultaneously
@@ -122,7 +124,7 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
       }
    }
 
-   Direction direction(number_variables, number_constraints);
+   initialize_vector(direction.primals, 0.);
    copy_from(direction.primals, initial_point);
    const int n = static_cast<int>(number_variables);
    const int m = static_cast<int>(number_constraints);
@@ -144,7 +146,6 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
       direction.primals[variable_index] = std::min(std::max(direction.primals[variable_index], variables_bounds[variable_index].lb), variables_bounds[variable_index].ub);
    }
    this->categorize_constraints(number_variables, number_constraints, direction);
-   return direction;
 }
 
 BQPDMode BQPDSolver::determine_mode(const WarmstartInformation& warmstart_information) const {
@@ -183,14 +184,15 @@ void BQPDSolver::save_hessian_to_local_format(const SymmetricMatrix<double>& hes
    }
    column_starts[hessian.dimension] += this->fortran_shift;
    // copy the entries
-   std::vector<int> current_indices(hessian.dimension);
+   //std::vector<int> current_indices(hessian.dimension);
+   initialize_vector(this->current_hessian_indices, 0);
    hessian.for_each([&](size_t row_index, size_t column_index, double entry) {
-      const size_t index = static_cast<size_t>(column_starts[column_index] + current_indices[column_index] - this->fortran_shift);
+      const size_t index = static_cast<size_t>(column_starts[column_index] + this->current_hessian_indices[column_index] - this->fortran_shift);
       assert(index <= static_cast<size_t>(column_starts[column_index + 1]) &&
              "BQPD: error in converting the Hessian matrix to the local format. Try setting the sparse format to CSC");
       this->hessian_values[index] = entry;
       row_indices[index] = static_cast<int>(row_index) + this->fortran_shift;
-      current_indices[column_index]++;
+      this->current_hessian_indices[column_index]++;
    });
 }
 
@@ -226,6 +228,9 @@ void BQPDSolver::save_gradients_to_local_format(size_t number_constraints, const
 }
 
 void BQPDSolver::categorize_constraints(size_t number_variables, size_t number_constraints, Direction& direction) {
+   initialize_vector(direction.multipliers.constraints, 0.);
+   initialize_vector(direction.multipliers.lower_bounds, 0.);
+   initialize_vector(direction.multipliers.upper_bounds, 0.);
    ConstraintPartition constraint_partition(number_constraints);
 
    // active constraints

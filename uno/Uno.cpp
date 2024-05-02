@@ -27,6 +27,8 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
 
    bool termination = false;
    current_iterate.status = TerminationStatus::NOT_OPTIMAL;
+   // allocate the trial iterate once and for all here
+   Iterate trial_iterate(current_iterate.number_variables, current_iterate.number_constraints);
    size_t major_iterations = 0;
    try {
       // check for termination
@@ -37,9 +39,10 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
          DEBUG << "### Outer iteration " << major_iterations << '\n';
 
          // compute an acceptable iterate by solving a subproblem at the current point
-         current_iterate = this->globalization_mechanism.compute_next_iterate(statistics, model, current_iterate);
+         this->globalization_mechanism.compute_next_iterate(statistics, model, current_iterate, trial_iterate);
          // determine if Uno can terminate
-         termination = this->termination_criteria(current_iterate.status, major_iterations, timer.get_duration());
+         termination = this->termination_criteria(trial_iterate.status, major_iterations, timer.get_duration());
+         std::swap(current_iterate, trial_iterate);
       }
    }
    catch (std::exception& exception) {

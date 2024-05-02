@@ -22,16 +22,19 @@ struct l1RelaxationParameters {
 class l1Relaxation : public ConstraintRelaxationStrategy {
 public:
    l1Relaxation(const Model& model, const Options& options);
-   void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) override;
 
+   void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) override;
    void set_trust_region_radius(double trust_region_radius) override;
 
+   [[nodiscard]] size_t maximum_number_variables() const override;
+   [[nodiscard]] size_t maximum_number_constraints() const override;
+
    // direction computation
-   [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
+   void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          WarmstartInformation& warmstart_information) override;
-   [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point,
+   void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction, const std::vector<double>& initial_point,
          WarmstartInformation& warmstart_information) override;
-   bool solving_feasibility_problem() const override;
+   [[nodiscard]] bool solving_feasibility_problem() const override;
    void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate) override;
 
    // trial iterate acceptance
@@ -54,20 +57,21 @@ protected:
    // preallocated temporary multipliers
    Multipliers trial_multipliers;
 
-   Direction solve_sequence_of_relaxed_subproblems(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information);
-   Direction solve_l1_relaxed_problem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter,
+   void solve_sequence_of_relaxed_subproblems(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+         WarmstartInformation& warmstart_information);
+   void solve_l1_relaxed_problem(Statistics& statistics, Iterate& current_iterate, Direction& direction, double current_penalty_parameter,
          const WarmstartInformation& warmstart_information);
-   Direction solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+   void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction,
          const WarmstartInformation& warmstart_information);
 
    // functions that decrease the penalty parameter to enforce particular conditions
    void decrease_parameter_aggressively(Iterate& current_iterate, const Direction& direction);
    double compute_infeasible_dual_error(Iterate& current_iterate);
-   [[nodiscard]] Direction enforce_linearized_residual_sufficient_decrease(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+   void enforce_linearized_residual_sufficient_decrease(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          double linearized_residual, double residual_lowest_violation, WarmstartInformation& warmstart_information);
    [[nodiscard]] bool linearized_residual_sufficient_decrease(const Iterate& current_iterate, double linearized_residual,
          double residual_lowest_violation) const;
-   [[nodiscard]] Direction enforce_descent_direction_for_l1_merit(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+   void enforce_descent_direction_for_l1_merit(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          const Direction& direction_lowest_violation, WarmstartInformation& warmstart_information);
    [[nodiscard]] bool is_descent_direction_for_l1_merit_function(const Iterate& current_iterate, const Direction& direction,
          const Direction& direction_lowest_violation) const;

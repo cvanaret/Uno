@@ -163,8 +163,8 @@ void PrimalDualInteriorPointSubproblem::evaluate_functions(Statistics& statistic
    }
 }
 
-Direction PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-      const WarmstartInformation& warmstart_information) {
+void PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+      Direction& direction, const WarmstartInformation& warmstart_information) {
    if (problem.has_inequality_constraints()) {
       throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel.\n");
    }
@@ -188,14 +188,13 @@ Direction PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const
    this->augmented_system.solve(*this->linear_solver);
    assert(this->direction.status == SubproblemStatus::OPTIMAL && "The primal-dual perturbed subproblem was not solved to optimality");
    this->number_subproblems_solved++;
-   this->assemble_primal_dual_direction(problem, current_iterate);
+   this->assemble_primal_dual_direction(problem, current_iterate, direction);
 
    // determine if the direction is a "small direction" (Section 3.9 of the Ipopt paper) TODO
-   const bool is_small_step = PrimalDualInteriorPointSubproblem::is_small_step(problem, current_iterate, this->direction);
+   const bool is_small_step = PrimalDualInteriorPointSubproblem::is_small_step(problem, current_iterate, direction);
    if (is_small_step) {
       DEBUG << "This is a small step\n";
    }
-   return this->direction;
 }
 
 void PrimalDualInteriorPointSubproblem::assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem,
@@ -336,9 +335,9 @@ bool PrimalDualInteriorPointSubproblem::is_small_step(const OptimizationProblem&
    return (norm_inf(relative_direction_size) <= this->parameters.small_direction_factor * machine_epsilon);
 }
 
-double PrimalDualInteriorPointSubproblem::evaluate_subproblem_objective() const {
-   const double linear_term = dot(this->direction.primals, this->evaluations.objective_gradient);
-   const double quadratic_term = this->hessian_model->hessian->quadratic_product(this->direction.primals, this->direction.primals) / 2.;
+double PrimalDualInteriorPointSubproblem::evaluate_subproblem_objective(const Direction& direction) const {
+   const double linear_term = dot(direction.primals, this->evaluations.objective_gradient);
+   const double quadratic_term = this->hessian_model->hessian->quadratic_product(direction.primals, direction.primals) / 2.;
    return linear_term + quadratic_term;
 }
 
@@ -409,8 +408,9 @@ void PrimalDualInteriorPointSubproblem::generate_augmented_rhs(const Optimizatio
    DEBUG2 << "RHS: "; print_vector(DEBUG2, this->augmented_system.rhs, 0, problem.number_variables + problem.number_constraints); DEBUG << '\n';
 }
 
-void PrimalDualInteriorPointSubproblem::assemble_primal_dual_direction(const OptimizationProblem& problem, const Iterate& current_iterate) {
-   this->direction.set_dimensions(problem.number_variables, problem.number_constraints);
+void PrimalDualInteriorPointSubproblem::assemble_primal_dual_direction(const OptimizationProblem& problem, const Iterate& current_iterate,
+      Direction& direction) {
+   direction.set_dimensions(problem.number_variables, problem.number_constraints);
 
    // retrieve the duals with correct signs (Nocedal p590)
    for (size_t constraint_index: Range(problem.number_variables, this->augmented_system.solution.size())) {
@@ -421,10 +421,10 @@ void PrimalDualInteriorPointSubproblem::assemble_primal_dual_direction(const Opt
    const double tau = std::max(this->parameters.tau_min, 1. - this->barrier_parameter());
    const double primal_dual_step_length = this->primal_fraction_to_boundary(problem, current_iterate, tau);
    for (size_t variable_index: Range(problem.number_variables)) {
-      this->direction.primals[variable_index] = this->augmented_system.solution[variable_index];
+      direction.primals[variable_index] = this->augmented_system.solution[variable_index];
    }
    for (size_t constraint_index: Range(problem.number_constraints)) {
-      this->direction.multipliers.constraints[constraint_index] = this->augmented_system.solution[problem.number_variables + constraint_index];
+      direction.multipliers.constraints[constraint_index] = this->augmented_system.solution[problem.number_variables + constraint_index];
    }
 
    // compute bound multiplier direction
@@ -432,15 +432,15 @@ void PrimalDualInteriorPointSubproblem::assemble_primal_dual_direction(const Opt
    // "fraction-to-boundary" rule for bound multipliers
    const double bound_dual_step_length = this->dual_fraction_to_boundary(problem, current_iterate, tau);
    for (size_t variable_index: Range(problem.number_variables)) {
-      this->direction.multipliers.lower_bounds[variable_index] = this->lower_delta_z[variable_index];
-      this->direction.multipliers.upper_bounds[variable_index] = this->upper_delta_z[variable_index];
+      direction.multipliers.lower_bounds[variable_index] = this->lower_delta_z[variable_index];
+      direction.multipliers.upper_bounds[variable_index] = this->upper_delta_z[variable_index];
    }
    DEBUG << "primal-dual step length = " << primal_dual_step_length << '\n';
    DEBUG << "bound dual step length = " << bound_dual_step_length << "\n\n";
 
-   this->direction.primal_dual_step_length = primal_dual_step_length;
-   this->direction.bound_dual_step_length = bound_dual_step_length;
-   this->direction.subproblem_objective = this->evaluate_subproblem_objective();
+   direction.primal_dual_step_length = primal_dual_step_length;
+   direction.bound_dual_step_length = bound_dual_step_length;
+   direction.subproblem_objective = this->evaluate_subproblem_objective(direction);
 }
 
 void PrimalDualInteriorPointSubproblem::compute_bound_dual_direction(const OptimizationProblem& problem, const Iterate& current_iterate) {

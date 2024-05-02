@@ -20,10 +20,13 @@ public:
    virtual void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) = 0;
    virtual void set_trust_region_radius(double trust_region_radius) = 0;
 
+   virtual size_t maximum_number_variables() const = 0;
+   virtual size_t maximum_number_constraints() const = 0;
+
    // direction computation
-   [[nodiscard]] virtual Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
+   virtual void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          WarmstartInformation& warmstart_information) = 0;
-   [[nodiscard]] virtual Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
+   virtual void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          const std::vector<double>& initial_point, WarmstartInformation& warmstart_information) = 0;
    [[nodiscard]] virtual bool solving_feasibility_problem() const = 0;
    virtual void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate) = 0;

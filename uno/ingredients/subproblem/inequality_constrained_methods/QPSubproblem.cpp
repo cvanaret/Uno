@@ -54,7 +54,7 @@ void QPSubproblem::evaluate_functions(Statistics& statistics, const Optimization
    }
 }
 
-Direction QPSubproblem::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+void QPSubproblem::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction,
       const WarmstartInformation& warmstart_information) {
    // evaluate the functions at the current iterate
    this->evaluate_functions(statistics, problem, current_iterate, warmstart_information);
@@ -70,14 +70,13 @@ Direction QPSubproblem::solve(Statistics& statistics, const OptimizationProblem&
    }
 
    // solve the QP
-   Direction direction = this->solver->solve_QP(problem.number_variables, problem.number_constraints, this->direction_bounds,
+   this->solver->solve_QP(problem.number_variables, problem.number_constraints, this->direction_bounds,
          this->linearized_constraint_bounds, this->evaluations.objective_gradient, this->evaluations.constraint_jacobian,
-         *this->hessian_model->hessian, this->initial_point, warmstart_information);
+         *this->hessian_model->hessian, this->initial_point, direction, warmstart_information);
    InequalityConstrainedMethod::compute_dual_displacements(problem, current_iterate, direction);
    this->number_subproblems_solved++;
    // reset the initial point
    initialize_vector(this->initial_point, 0.);
-   return direction;
 }
 
 const SymmetricMatrix<double>& QPSubproblem::get_lagrangian_hessian() const {

@@ -16,14 +16,16 @@ enum class Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 class FeasibilityRestoration : public ConstraintRelaxationStrategy {
 public:
    FeasibilityRestoration(const Model& model, const Options& options);
-   void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) override;
 
+   void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) override;
    void set_trust_region_radius(double trust_region_radius) override;
 
+   [[nodiscard]] size_t maximum_number_variables() const override;
+   [[nodiscard]] size_t maximum_number_constraints() const override;
+
    // direction computation
-   [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
-         WarmstartInformation& warmstart_information) override;
-   [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point,
+   void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction, WarmstartInformation& warmstart_information) override;
+   void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction, const std::vector<double>& initial_point,
          WarmstartInformation& warmstart_information) override;
    [[nodiscard]] bool solving_feasibility_problem() const override;
    void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate) override;
@@ -48,7 +50,7 @@ private:
    bool switching_to_optimality_phase{false};
 
    [[nodiscard]] const OptimizationProblem& current_problem() const;
-   [[nodiscard]] Direction solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+   void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction,
          WarmstartInformation& warmstart_information);
    void switch_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate);
 

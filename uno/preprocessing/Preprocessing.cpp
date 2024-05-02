@@ -107,8 +107,9 @@ bool Preprocessing::enforce_linear_constraints(const Model& model, std::vector<d
          std::vector<double> d0(model.number_variables); // = 0
          SparseVector<double> linear_objective; // empty
          WarmstartInformation warmstart_information{true, true, true, true};
-         Direction direction = qp_solver.solve_QP(model.number_variables, linear_constraints.size(), variables_bounds, constraints_bounds,
-               linear_objective, constraint_jacobian, hessian, d0, warmstart_information);
+         Direction direction(model.number_variables, model.number_constraints);
+         qp_solver.solve_QP(model.number_variables, linear_constraints.size(), variables_bounds, constraints_bounds,
+               linear_objective, constraint_jacobian, hessian, d0, direction, warmstart_information);
          if (direction.status == SubproblemStatus::INFEASIBLE) {
             INFO << "Linear constraints cannot be satisfied.\n";
             return false;

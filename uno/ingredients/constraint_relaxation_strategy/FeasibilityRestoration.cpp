@@ -47,7 +47,7 @@ void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& initial
    this->globalization_strategy->initialize(statistics, initial_iterate, options);
 }
 
-Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
+void FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
       WarmstartInformation& warmstart_information) {
    /*
    if (1e6 < norm_inf(current_iterate.multipliers.constraints)) {
@@ -63,7 +63,7 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
       statistics.set("phase", "OPT");
       try {
          DEBUG << "Solving the optimality subproblem\n";
-         Direction direction = this->solve_subproblem(statistics, this->optimality_problem, current_iterate, warmstart_information);
+         this->solve_subproblem(statistics, this->optimality_problem, current_iterate, direction, warmstart_information);
          if (direction.status == SubproblemStatus::INFEASIBLE) {
             // switch to the feasibility problem, starting from the current direction
             statistics.set("status", "infeas. subproblem");
@@ -73,7 +73,7 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
             this->subproblem->set_initial_point(direction.primals);
          }
          else {
-            return direction;
+            return;
          }
       }
       catch (const UnstableRegularization&) {
@@ -86,14 +86,14 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
    DEBUG << "Solving the feasibility subproblem\n";
    statistics.set("phase", "FEAS");
    // note: failure of regularization should not happen here, since the feasibility Jacobian has full rank
-   return this->solve_subproblem(statistics, this->feasibility_problem, current_iterate, warmstart_information);
+   this->solve_subproblem(statistics, this->feasibility_problem, current_iterate, direction, warmstart_information);
 }
 
 // an initial point is provided
-Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
+void FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
       const std::vector<double>& initial_point, WarmstartInformation& warmstart_information) {
    this->subproblem->set_initial_point(initial_point);
-   return this->compute_feasible_direction(statistics, current_iterate, warmstart_information);
+   this->compute_feasible_direction(statistics, current_iterate, direction, warmstart_information);
 }
 
 bool FeasibilityRestoration::solving_feasibility_problem() const {
@@ -118,19 +118,18 @@ void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistic
    statistics.start_new_line();
 }
 
-Direction FeasibilityRestoration::solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-      WarmstartInformation& warmstart_information) {
+void FeasibilityRestoration::solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+      Direction& direction, WarmstartInformation& warmstart_information) {
    // upon switching to the optimality phase, set a cold start in the subproblem solver
    if (this->switching_to_optimality_phase) {
       this->switching_to_optimality_phase = false;
       warmstart_information.set_cold_start();
    }
 
-   Direction direction = this->subproblem->solve(statistics, problem, current_iterate, warmstart_information);
+   this->subproblem->solve(statistics, problem, current_iterate, direction, warmstart_information);
    direction.norm = norm_inf(view(direction.primals, this->model.number_variables));
    direction.multipliers.objective = problem.get_objective_multiplier();
    DEBUG3 << direction << '\n';
-   return direction;
 }
 
 void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
@@ -226,6 +225,14 @@ ProgressMeasures FeasibilityRestoration::compute_predicted_reduction_models(Iter
 
 void FeasibilityRestoration::set_trust_region_radius(double trust_region_radius) {
    this->subproblem->set_trust_region_radius(trust_region_radius);
+}
+
+size_t FeasibilityRestoration::maximum_number_variables() const {
+   return std::max(this->optimality_problem.number_variables, this->feasibility_problem.number_variables);
+}
+
+size_t FeasibilityRestoration::maximum_number_constraints() const {
+   return std::max(this->optimality_problem.number_constraints, this->feasibility_problem.number_constraints);
 }
 
 double FeasibilityRestoration::complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
