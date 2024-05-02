@@ -101,7 +101,7 @@ ElementType norm_1(const Array& x) {
 
 // l1 norm of several arrays
 template<typename Array, typename... Arrays, typename ElementType = typename Array::value_type>
-ElementType norm_1(const Array& x, Arrays... other_arrays) {
+ElementType norm_1(const Array& x, const Arrays&... other_arrays) {
    return norm_1(x) + norm_1(other_arrays...);
 }
 
@@ -118,7 +118,7 @@ ElementType norm_2_squared(const Array& x) {
 
 // l2 squared norm of several arrays
 template<typename Array, typename... Arrays, typename ElementType = typename Array::value_type>
-ElementType norm_2_squared(const Array& x, Arrays... other_arrays) {
+ElementType norm_2_squared(const Array& x, const Arrays&... other_arrays) {
    return norm_2_squared(x) + norm_2_squared(other_arrays...);
 }
 
@@ -130,7 +130,7 @@ ElementType norm_2(const Array& x) {
 
 // l2 norm of several arrays
 template<typename Array, typename... Arrays, typename ElementType = typename Array::value_type>
-ElementType norm_2(const Array& x, Arrays... other_arrays) {
+ElementType norm_2(const Array& x, const Arrays&... other_arrays) {
    return std::sqrt(norm_2_squared(x) + norm_2_squared(other_arrays...));
 }
 
@@ -164,7 +164,7 @@ ElementType norm_inf(const Array& x, const Range<Direction>& range) {
 
 // inf norm of several arrays
 template<typename Array, typename... Arrays, typename ElementType = typename Array::value_type>
-ElementType norm_inf(const Array& x, Arrays... other_arrays) {
+ElementType norm_inf(const Array& x, const Arrays&... other_arrays) {
    return std::max(norm_inf(x), norm_inf(other_arrays...));
 }
 
@@ -182,7 +182,7 @@ ElementType norm_inf(const std::vector<ElementType>& x, const Indices& indices) 
 
 // norm of at least one array
 template<typename Array, typename... Arrays, typename ElementType = typename Array::value_type>
-ElementType norm(Norm norm, const Array& x, Arrays... other_arrays) {
+ElementType norm(Norm norm, const Array& x, const Arrays&... other_arrays) {
    // choose the right norm
    if (norm == Norm::L1) {
       return norm_1(x, other_arrays...);
