@@ -94,12 +94,7 @@ void SparseVector<ElementType>::reserve(size_t capacity) {
 
 template <typename ElementType>
 void SparseVector<ElementType>::insert(size_t index, ElementType value) {
-   const size_t current_capacity = this->indices.capacity();
    this->indices.push_back(index);
-   const size_t new_capacity = this->indices.capacity();
-   if (current_capacity < new_capacity) {
-      throw std::runtime_error("SparseVector had to be resized");
-   }
    this->values.push_back(value);
    this->number_nonzeros++;
 }
