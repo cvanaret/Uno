@@ -13,7 +13,7 @@ public:
    // compatible with algorithms that query the type of the elements
    using value_type = ElementType;
 
-   VectorExpression(Indices&& indices, const std::function<ElementType(size_t)>& ith_component);
+   VectorExpression(Indices&& indices, std::function<ElementType(size_t)>&& ith_component);
    [[nodiscard]] size_t size() const;
    [[nodiscard]] ElementType operator[](size_t index) const;
 
@@ -21,12 +21,12 @@ public:
 
 protected:
    Indices indices; // store const reference or rvalue (temporary)
-   const std::function<ElementType(size_t)> ith_component;
+   std::function<ElementType(size_t)> ith_component;
 };
 
 template <typename ElementType, typename Indices>
-VectorExpression<ElementType, Indices>::VectorExpression(Indices&& indices, const std::function<ElementType(size_t)>& ith_component):
-      indices(std::forward<Indices>(indices)), ith_component(ith_component) {
+VectorExpression<ElementType, Indices>::VectorExpression(Indices&& indices, std::function<ElementType(size_t)>&& ith_component):
+      indices(std::forward<Indices>(indices)), ith_component(std::forward<std::function<ElementType(size_t)>>(ith_component)) {
 }
 
 template <typename ElementType, typename Indices>
