@@ -13,9 +13,7 @@ class Sum {
 public:
    using value_type = typename std::remove_reference_t<E1>::value_type;
 
-   Sum(E1&& expression1, E2&& expression2): expression1(std::forward<E1>(expression1)), expression2(std::forward<E2>(expression2)) {
-      static_assert(std::is_same_v<typename std::remove_reference_t<E1>::value_type, typename std::remove_reference_t<E2>::value_type>);
-   }
+   Sum(E1&& expression1, E2&& expression2): expression1(std::forward<E1>(expression1)), expression2(std::forward<E2>(expression2)) { }
 
    [[nodiscard]] constexpr size_t size() const { return this->expression1.size(); }
    [[nodiscard]] typename Sum::value_type operator[](size_t index) const { return this->expression1[index] + this->expression2[index]; }

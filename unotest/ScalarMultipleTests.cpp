@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 #include <vector>
-#include "expression/ScalarMultiple.hpp"
+#include "symbolic/ScalarMultiple.hpp"
 #include "tools/Range.hpp"
 
 TEST(ScalarMultiple, TimesThree) {
