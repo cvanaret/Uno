@@ -186,7 +186,7 @@ void PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const Opti
 
    // compute the primal-dual solution
    this->augmented_system.solve(*this->linear_solver);
-   assert(this->direction.status == SubproblemStatus::OPTIMAL && "The primal-dual perturbed subproblem was not solved to optimality");
+   assert(direction.status == SubproblemStatus::OPTIMAL && "The primal-dual perturbed subproblem was not solved to optimality");
    this->number_subproblems_solved++;
    this->assemble_primal_dual_direction(problem, current_iterate, direction);
 
