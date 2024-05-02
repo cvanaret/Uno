@@ -56,7 +56,6 @@ void BQPDSolver::solve_QP(size_t number_variables, size_t number_constraints, co
       const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
       const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const std::vector<double>& initial_point,
       Direction& direction, const WarmstartInformation& warmstart_information) {
-
    if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
       this->save_hessian_to_local_format(hessian);
    }
@@ -129,7 +128,7 @@ void BQPDSolver::solve_subproblem(size_t number_variables, size_t number_constra
    const int n = static_cast<int>(number_variables);
    const int m = static_cast<int>(number_constraints);
 
-   BQPDMode mode = this->determine_mode(warmstart_information);
+   const BQPDMode mode = this->determine_mode(warmstart_information);
    const int mode_integer = static_cast<int>(mode);
 
    // solve the LP/QP

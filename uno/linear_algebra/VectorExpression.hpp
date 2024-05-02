@@ -7,40 +7,40 @@
 #include <functional>
 #include "tools/Collection.hpp"
 
-template <typename ElementType, typename Indices>
+template <typename Indices>
 class VectorExpression {
 public:
    // compatible with algorithms that query the type of the elements
-   using value_type = ElementType;
+   using value_type = double;
 
-   VectorExpression(Indices&& indices, std::function<ElementType(size_t)>&& ith_component);
+   VectorExpression(Indices&& indices, std::function<double(size_t)>&& ith_component);
    [[nodiscard]] size_t size() const;
-   [[nodiscard]] ElementType operator[](size_t index) const;
+   [[nodiscard]] double operator[](size_t index) const;
 
    void for_each(const std::function<void (size_t, size_t)>& f) const;
 
 protected:
    Indices indices; // store const reference or rvalue (temporary)
-   std::function<ElementType(size_t)> ith_component;
+   std::function<double(size_t)> ith_component;
 };
 
-template <typename ElementType, typename Indices>
-VectorExpression<ElementType, Indices>::VectorExpression(Indices&& indices, std::function<ElementType(size_t)>&& ith_component):
-      indices(std::forward<Indices>(indices)), ith_component(std::forward<std::function<ElementType(size_t)>>(ith_component)) {
+template <typename Indices>
+VectorExpression<Indices>::VectorExpression(Indices&& indices, std::function<double(size_t)>&& ith_component):
+      indices(std::forward<Indices>(indices)), ith_component(std::forward<std::function<double(size_t)>>(ith_component)) {
 }
 
-template <typename ElementType, typename Indices>
-size_t VectorExpression<ElementType, Indices>::size() const {
+template <typename Indices>
+size_t VectorExpression<Indices>::size() const {
    return this->indices.size();
 }
 
-template <typename ElementType, typename Indices>
-ElementType VectorExpression<ElementType, Indices>::operator[](size_t index) const {
+template <typename Indices>
+double VectorExpression<Indices>::operator[](size_t index) const {
    return this->ith_component(index);
 }
 
-template <typename ElementType, typename Indices>
-void VectorExpression<ElementType, Indices>::for_each(const std::function<void (size_t, size_t)>& f) const {
+template <typename Indices>
+void VectorExpression<Indices>::for_each(const std::function<void (size_t, size_t)>& f) const {
    this->indices.for_each(f);
 }
 

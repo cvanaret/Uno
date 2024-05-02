@@ -238,7 +238,7 @@ size_t FeasibilityRestoration::maximum_number_constraints() const {
 double FeasibilityRestoration::complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
       const Multipliers& multipliers) const {
    // bound constraints
-   const VectorExpression<double, Range<FORWARD>> variable_complementarity(Range(this->model.number_variables), [&](size_t variable_index) {
+   const VectorExpression variable_complementarity(Range(this->model.number_variables), [&](size_t variable_index) {
       if (0. < multipliers.lower_bounds[variable_index]) {
          return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->model.variable_lower_bound(variable_index));
       }
@@ -249,7 +249,7 @@ double FeasibilityRestoration::complementarity_error(const std::vector<double>& 
    });
 
    // inequality constraints
-   const VectorExpression<double, const Collection<size_t>&> constraint_complementarity(this->model.get_inequality_constraints(), [&](size_t
+   const VectorExpression<const Collection<size_t>&> constraint_complementarity(this->model.get_inequality_constraints(), [&](size_t
    constraint_index) {
       if (0. < multipliers.constraints[constraint_index]) { // lower bound
          return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->model.constraint_lower_bound(constraint_index));
