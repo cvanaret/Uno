@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "ConstraintRelaxationStrategy.hpp"
+#include "expression/Expression.hpp"
 #include "linear_algebra/view.hpp"
 
 ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Model& model, const Options& options):
@@ -51,8 +52,8 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const RelaxedPr
    iterate.evaluate_constraint_jacobian(this->model);
 
    // stationarity error
-   ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(this->model.number_variables, iterate, iterate.multipliers, iterate.multipliers.objective);
-   iterate.residuals.optimality_stationarity = this->stationarity_error(iterate);
+   ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(this->model.number_variables, iterate, iterate.multipliers);
+   iterate.residuals.optimality_stationarity = this->stationarity_error(iterate, iterate.multipliers.objective);
    iterate.residuals.feasibility_stationarity = feasibility_problem.stationarity_error(iterate, this->residual_norm);
 
    // constraint violation of the original problem
@@ -69,15 +70,13 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const RelaxedPr
 }
 
 // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
-void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(size_t number_variables, Iterate& iterate, const Multipliers& multipliers,
-      double objective_multiplier) {
+void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(size_t number_variables, Iterate& iterate, const Multipliers& multipliers) {
    initialize_vector(iterate.lagrangian_gradient.objective_contribution, 0.);
    initialize_vector(iterate.lagrangian_gradient.constraints_contribution, 0.);
 
    // objective gradient
-   // TODO remove objective multiplier. It should be introduced only a posteriori (e.g. when computing the norm of the Lagrangian gradient)
    for (const auto [variable_index, derivative]: iterate.evaluations.objective_gradient) {
-      iterate.lagrangian_gradient.objective_contribution[variable_index] += objective_multiplier * derivative;
+      iterate.lagrangian_gradient.objective_contribution[variable_index] += derivative;
    }
 
    // constraints
@@ -95,9 +94,11 @@ void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(size_t number_va
    }
 }
 
-double ConstraintRelaxationStrategy::stationarity_error(const Iterate& iterate) const {
-   // norm of the Lagrangian gradient
-   return norm(this->residual_norm, iterate.lagrangian_gradient);
+double ConstraintRelaxationStrategy::stationarity_error(const Iterate& iterate, double objective_multiplier) const {
+   // norm of the scaled Lagrangian gradient
+   const auto scaled_lagrangian = objective_multiplier * iterate.lagrangian_gradient.objective_contribution +
+         iterate.lagrangian_gradient.constraints_contribution;
+   return norm(this->residual_norm, scaled_lagrangian);
 }
 
 double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Iterate& iterate) const {

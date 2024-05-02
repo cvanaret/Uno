@@ -8,7 +8,7 @@
 
 // Adapter to adapt standard iterators (e.g. std::vector) to the Collection interface
 template <typename Iterator>
-class CollectionAdapter: public Collection<typename std::remove_reference<Iterator>::type::value_type> {
+class CollectionAdapter: public Collection<typename std::remove_reference_t<Iterator>::value_type> {
 public:
    explicit CollectionAdapter(Iterator&& iterator);
 
@@ -21,7 +21,7 @@ protected:
 
 template <typename Iterator>
 CollectionAdapter<Iterator>::CollectionAdapter(Iterator&& iterator):
-   Collection<typename std::remove_reference<Iterator>::type::value_type>(), iterator(std::forward<Iterator>(iterator)) {
+   Collection<typename std::remove_reference_t<Iterator>::value_type>(), iterator(std::forward<Iterator>(iterator)) {
 }
 
 template <typename Iterator>

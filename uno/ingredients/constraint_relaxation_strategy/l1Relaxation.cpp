@@ -176,7 +176,7 @@ void l1Relaxation::decrease_parameter_aggressively(Iterate& current_iterate, con
 // measure that combines KKT error and complementarity error
 double l1Relaxation::compute_infeasible_dual_error(Iterate& current_iterate) {
    // stationarity error
-   ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(this->model.number_variables, current_iterate, this->trial_multipliers, 0.);
+   ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(this->model.number_variables, current_iterate, this->trial_multipliers);
    double error = norm_1(current_iterate.lagrangian_gradient.constraints_contribution);
 
    // complementarity error

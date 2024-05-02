@@ -8,9 +8,14 @@
 template <typename ExpressionType>
 class ScalarMultiple {
 public:
+   using value_type = typename std::remove_reference_t<ExpressionType>::value_type;
+
    ScalarMultiple(double factor, ExpressionType&& expression): factor(factor), expression(std::forward<ExpressionType>(expression)) { }
-   [[nodiscard]] size_t size() const { return this->expression.size(); }
-   double operator[](size_t index) const { return (this->factor == 0.) ? 0. : this->factor * this->expression[index]; }
+
+   [[nodiscard]] constexpr size_t size() const { return this->expression.size(); }
+   [[nodiscard]] typename ScalarMultiple::value_type operator[](size_t index) const {
+      return (this->factor == 0.) ? 0. : this->factor * this->expression[index];
+   }
 
 protected:
    const double factor;

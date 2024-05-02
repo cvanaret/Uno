@@ -9,7 +9,7 @@
 // Chain collection based on https://stackoverflow.com/questions/24175279/how-to-store-either-rvalue-or-lvalue-references-in-template
 // Aggregates two collections, not necessarily of the same type.
 template <typename Collection1, typename Collection2>
-class ChainCollection: public Collection<typename std::remove_reference<Collection1>::type::value_type> {
+class ChainCollection: public Collection<typename std::remove_reference_t<Collection1>::value_type> {
 public:
    ChainCollection(Collection1&& collection1, Collection2&& collection2);
    void for_each(const std::function<void(size_t /*index*/, typename ChainCollection::value_type /*element*/)>& f) const override;
@@ -24,8 +24,8 @@ template <typename Collection1, typename Collection2>
 ChainCollection<Collection1, Collection2>::ChainCollection(Collection1&& collection1, Collection2&& collection2):
       Collection<typename ChainCollection::value_type>(),
       collection1(std::forward<Collection1>(collection1)), collection2(std::forward<Collection2>(collection2)) {
-   static_assert(std::is_same<typename std::remove_reference<Collection1>::type::value_type,
-         typename std::remove_reference<Collection2>::type::value_type>::value, "The iterators should contain the same type");
+   static_assert(std::is_same<typename std::remove_reference_t<Collection1>::value_type,
+         typename std::remove_reference_t<Collection2>::value_type>::value, "The iterators should contain the same type");
 }
 
 template <typename Collection1, typename Collection2>
