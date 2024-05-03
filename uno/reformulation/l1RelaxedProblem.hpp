@@ -27,7 +27,7 @@ public:
    void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const override;
    void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix<double>& hessian) const override;
 
-   [[nodiscard]] double stationarity_error(const Iterate& iterate, Norm residual_norm) const override;
+   [[nodiscard]] double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, Norm residual_norm) const override;
    [[nodiscard]] double complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const override;
 
@@ -133,9 +133,9 @@ inline void l1RelaxedProblem::evaluate_lagrangian_hessian(const std::vector<doub
    }
 }
 
-inline double l1RelaxedProblem::stationarity_error(const Iterate& iterate, Norm residual_norm) const {
+inline double l1RelaxedProblem::stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, Norm residual_norm) const {
    // norm of the constraints' contribution of the Lagrangian gradient
-   return norm(residual_norm, iterate.lagrangian_gradient.constraints_contribution);
+   return norm(residual_norm, lagrangian_gradient.constraints_contribution);
 }
 
 // complementary slackness error: expression for violated constraints depends on the definition of the relaxed problem

@@ -11,7 +11,7 @@ public:
    RelaxedProblem(const Model& model, size_t number_variables, size_t number_constraints);
    ~RelaxedProblem() override = default;
    
-   [[nodiscard]] virtual double stationarity_error(const Iterate& iterate, Norm residual_norm) const = 0;
+   [[nodiscard]] virtual double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, Norm residual_norm) const = 0;
    [[nodiscard]] virtual double complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const = 0;
 };

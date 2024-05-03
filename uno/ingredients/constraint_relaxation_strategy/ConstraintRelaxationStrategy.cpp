@@ -53,8 +53,8 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const RelaxedPr
 
    // stationarity error
    ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(this->model.number_variables, iterate, iterate.multipliers);
-   iterate.residuals.optimality_stationarity = this->stationarity_error(iterate, iterate.multipliers.objective);
-   iterate.residuals.feasibility_stationarity = feasibility_problem.stationarity_error(iterate, this->residual_norm);
+   iterate.residuals.optimality_stationarity = this->stationarity_error(iterate.lagrangian_gradient, iterate.multipliers.objective);
+   iterate.residuals.feasibility_stationarity = feasibility_problem.stationarity_error(iterate.lagrangian_gradient, this->residual_norm);
 
    // constraint violation of the original problem
    iterate.residuals.infeasibility = this->model.constraint_violation(iterate.evaluations.constraints, this->residual_norm);
@@ -94,10 +94,9 @@ void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(size_t number_va
    }
 }
 
-double ConstraintRelaxationStrategy::stationarity_error(const Iterate& iterate, double objective_multiplier) const {
+double ConstraintRelaxationStrategy::stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier) const {
    // norm of the scaled Lagrangian gradient
-   const auto scaled_lagrangian = objective_multiplier * iterate.lagrangian_gradient.objective_contribution +
-         iterate.lagrangian_gradient.constraints_contribution;
+   const auto scaled_lagrangian = objective_multiplier * lagrangian_gradient.objective_contribution + lagrangian_gradient.constraints_contribution;
    return norm(this->residual_norm, scaled_lagrangian);
 }
 
