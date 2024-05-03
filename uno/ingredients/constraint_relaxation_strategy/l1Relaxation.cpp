@@ -5,7 +5,7 @@
 #include "l1Relaxation.hpp"
 #include "ingredients/globalization_strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
-#include "symbolic/view.hpp"
+#include "symbolic/VectorView.hpp"
 
 /*
  * Infeasibility detection and SQP methods for nonlinear optimization

@@ -390,17 +390,17 @@ void PrimalDualInteriorPointSubproblem::generate_augmented_rhs(const Optimizatio
    initialize_vector(this->augmented_system.rhs, 0.);
 
    // objective gradient
-   this->evaluations.objective_gradient.for_each([&](size_t variable_index, double derivative) {
+   for (const auto [variable_index, derivative]: this->evaluations.objective_gradient) {
       this->augmented_system.rhs[variable_index] -= derivative;
-   });
+   }
 
    // constraint: evaluations and gradients
    for (size_t constraint_index: Range(problem.number_constraints)) {
       // Lagrangian
       if (current_iterate.multipliers.constraints[constraint_index] != 0.) {
-         this->evaluations.constraint_jacobian[constraint_index].for_each([&](size_t variable_index, double derivative) {
+         for (const auto [variable_index, derivative]: this->evaluations.constraint_jacobian[constraint_index]) {
             this->augmented_system.rhs[variable_index] += current_iterate.multipliers.constraints[constraint_index] * derivative;
-         });
+         }
       }
       // constraints
       this->augmented_system.rhs[problem.number_variables + constraint_index] = -this->evaluations.constraints[constraint_index];

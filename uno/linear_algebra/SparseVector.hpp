@@ -129,17 +129,6 @@ std::ostream& operator<<(std::ostream& stream, const SparseVector<ElementType>& 
 
 // free functions
 
-/*
-template <typename ElementType>
-ElementType norm_1(const SparseVector<ElementType>& x) {
-   ElementType norm = ElementType(0);
-   x.for_each_value([&](ElementType value) {
-      norm += std::abs(value);
-   });
-   return norm;
-}
-*/
-
 template <typename ElementType>
 ElementType norm_inf(const SparseVector<ElementType>& x) {
    ElementType norm = ElementType(0);

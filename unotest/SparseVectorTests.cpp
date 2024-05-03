@@ -27,10 +27,10 @@ TEST(SparseVector, AllIdentical) {
    x.insert(0, constant_term);
    x.insert(3, constant_term);
    x.insert(7, constant_term);
-   x.for_each([&](size_t index, double entry) {
+   for (const auto [index, entry]: x) {
       EXPECT_TRUE(index <= 7);
       ASSERT_EQ(entry, constant_term);
-   });
+   }
 }
 
 TEST(SparseVector, Clear) {

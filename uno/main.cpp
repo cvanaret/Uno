@@ -8,7 +8,6 @@
 #include "model/ModelFactory.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Options.hpp"
-#include "tools/Timer.hpp"
 
 /*
 size_t memory_allocation_amount = 0;
