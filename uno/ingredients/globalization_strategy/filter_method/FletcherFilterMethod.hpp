@@ -6,9 +6,9 @@
 
 #include "FilterMethod.hpp"
 
-class LeyfferFilterMethod : public FilterMethod {
+class FletcherFilterMethod : public FilterMethod {
 public:
-   explicit LeyfferFilterMethod(const Options& options);
+   explicit FletcherFilterMethod(const Options& options);
 
    [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) override;

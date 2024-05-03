@@ -1,16 +1,16 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include "LeyfferFilterMethod.hpp"
+#include "FletcherFilterMethod.hpp"
 
-LeyfferFilterMethod::LeyfferFilterMethod(const Options& options): FilterMethod(options) {
+FletcherFilterMethod::FletcherFilterMethod(const Options& options): FilterMethod(options) {
 }
 
 /* check acceptability of step(s) (filter & sufficient reduction)
  * filter methods enforce an *unconstrained* sufficient decrease condition
  * precondition: feasible step
  * */
-bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
+bool FletcherFilterMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
       const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) {
    const bool solving_feasibility_problem = (objective_multiplier == 0.);
    std::string scenario;
@@ -77,7 +77,7 @@ bool LeyfferFilterMethod::is_iterate_acceptable(Statistics& statistics, const Pr
    return accept;
 }
 
-bool LeyfferFilterMethod::is_feasibility_iterate_acceptable(const ProgressMeasures& /*current_progress*/, const ProgressMeasures& trial_progress) const {
+bool FletcherFilterMethod::is_feasibility_iterate_acceptable(const ProgressMeasures& /*current_progress*/, const ProgressMeasures& trial_progress) const {
    // if the trial infeasibility improves upon the best known infeasibility
    return (trial_progress.infeasibility < this->filter->get_smallest_infeasibility());
 }

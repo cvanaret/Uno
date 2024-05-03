@@ -11,6 +11,12 @@ ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Model& model, c
       residual_scaling_threshold(options.get_double("residual_scaling_threshold")) {
 }
 
+// infeasibility measure: constraint violation
+void ConstraintRelaxationStrategy::set_infeasibility_measure(Iterate& iterate) const {
+   iterate.evaluate_constraints(this->model);
+   iterate.progress.infeasibility = this->model.constraint_violation(iterate.evaluations.constraints, this->progress_norm);
+}
+
 // objective measure: scaled objective
 void ConstraintRelaxationStrategy::set_objective_measure(Iterate& iterate) const {
    iterate.evaluate_objective(this->model);
@@ -18,12 +24,6 @@ void ConstraintRelaxationStrategy::set_objective_measure(Iterate& iterate) const
    iterate.progress.objective = [=](double objective_multiplier) {
       return objective_multiplier * objective;
    };
-}
-
-// infeasibility measure: constraint violation
-void ConstraintRelaxationStrategy::set_infeasibility_measure(Iterate& iterate) const {
-   iterate.evaluate_constraints(this->model);
-   iterate.progress.infeasibility = this->model.constraint_violation(iterate.evaluations.constraints, this->progress_norm);
 }
 
 double ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction,

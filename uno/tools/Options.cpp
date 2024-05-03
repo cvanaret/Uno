@@ -111,7 +111,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["constraint_relaxation_strategy"] = "feasibility_restoration";
       options["subproblem"] = "QP";
       options["globalization_mechanism"] = "TR";
-      options["globalization_strategy"] = "leyffer_filter_method";
+      options["globalization_strategy"] = "fletcher_filter_method";
       options["filter_type"] = "standard";
       options["progress_norm"] = "L1";
       options["residual_norm"] = "L2";
