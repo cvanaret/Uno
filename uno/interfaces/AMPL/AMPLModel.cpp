@@ -381,7 +381,8 @@ void AMPLModel::generate_constraints() {
 }
 
 void AMPLModel::determine_bounds_types(const std::vector<double>& lower_bounds, const std::vector<double>& upper_bounds, std::vector<BoundType>& status) {
-   assert(bounds.size() == status.size());
+   assert(lower_bounds.size() == status.size());
+   assert(upper_bounds.size() == status.size());
    // build the "status" vector as a mapping (map/transform operation) of the "bounds" vector
    for (size_t index: Range(lower_bounds.size())) {
       if (lower_bounds[index] == upper_bounds[index]) {
