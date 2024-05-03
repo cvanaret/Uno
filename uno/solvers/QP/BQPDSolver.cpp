@@ -234,7 +234,13 @@ void BQPDSolver::categorize_constraints(size_t number_variables, size_t number_c
    initialize_vector(direction.multipliers.constraints, 0.);
    initialize_vector(direction.multipliers.lower_bounds, 0.);
    initialize_vector(direction.multipliers.upper_bounds, 0.);
-   ConstraintPartition constraint_partition(number_constraints);
+   if (direction.constraint_partition.has_value()) {
+      direction.constraint_partition.value().reset();
+   }
+   else {
+      direction.constraint_partition = ConstraintPartition(number_constraints);
+   }
+   ConstraintPartition& constraint_partition = direction.constraint_partition.value();
 
    // active constraints
    for (size_t active_constraint_index: Range(number_variables - static_cast<size_t>(this->k))) {
@@ -286,7 +292,6 @@ void BQPDSolver::categorize_constraints(size_t number_variables, size_t number_c
          }
       }
    }
-   direction.constraint_partition = constraint_partition;
 }
 
 BQPDStatus BQPDSolver::bqpd_status_from_int(int ifail) {
