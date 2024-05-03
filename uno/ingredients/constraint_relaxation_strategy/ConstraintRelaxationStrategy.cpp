@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "ConstraintRelaxationStrategy.hpp"
-#include "symbolic/Expression.hpp"
 #include "symbolic/VectorView.hpp"
 
 ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Model& model, const Options& options):
@@ -46,21 +45,24 @@ std::function<double(double)> ConstraintRelaxationStrategy::compute_predicted_ob
    };
 }
 
-void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const RelaxedProblem& feasibility_problem, Iterate& iterate) {
+void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const OptimizationProblem& optimality_problem, const OptimizationProblem& feasibility_problem,
+      Iterate& iterate) {
    iterate.evaluate_objective_gradient(this->model);
    iterate.evaluate_constraints(this->model);
    iterate.evaluate_constraint_jacobian(this->model);
 
    // stationarity error
    this->evaluate_lagrangian_gradient(iterate, iterate.multipliers);
-   iterate.residuals.optimality_stationarity = this->stationarity_error(iterate.lagrangian_gradient, iterate.multipliers.objective);
-   iterate.residuals.feasibility_stationarity = feasibility_problem.stationarity_error(iterate.lagrangian_gradient, this->residual_norm);
+   iterate.residuals.optimality_stationarity = optimality_problem.stationarity_error(iterate.lagrangian_gradient, iterate.multipliers.objective,
+         this->residual_norm);
+   iterate.residuals.feasibility_stationarity = feasibility_problem.stationarity_error(iterate.lagrangian_gradient, 0., this->residual_norm);
 
    // constraint violation of the original problem
    iterate.residuals.infeasibility = this->model.constraint_violation(iterate.evaluations.constraints, this->residual_norm);
 
    // complementarity error
-   iterate.residuals.optimality_complementarity = this->complementarity_error(iterate.primals, iterate.evaluations.constraints, iterate.multipliers);
+   iterate.residuals.optimality_complementarity = optimality_problem.complementarity_error(iterate.primals, iterate.evaluations.constraints,
+         iterate.multipliers, this->residual_norm);
    iterate.residuals.feasibility_complementarity = feasibility_problem.complementarity_error(iterate.primals, iterate.evaluations.constraints,
          iterate.multipliers, this->residual_norm);
 
@@ -92,12 +94,6 @@ void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(Iterate& iterate
    for (size_t variable_index: Range(this->model.number_variables)) {
       iterate.lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.lower_bounds[variable_index] + multipliers.upper_bounds[variable_index];
    }
-}
-
-double ConstraintRelaxationStrategy::stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier) const {
-   // norm of the scaled Lagrangian gradient
-   const auto scaled_lagrangian = objective_multiplier * lagrangian_gradient.objective_contribution + lagrangian_gradient.constraints_contribution;
-   return norm(this->residual_norm, scaled_lagrangian);
 }
 
 double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Iterate& iterate) const {

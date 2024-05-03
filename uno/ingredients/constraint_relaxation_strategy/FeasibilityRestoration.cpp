@@ -37,7 +37,7 @@ void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& initial
    // initial iterate
    const bool is_linearly_feasible = this->subproblem->generate_initial_iterate(this->optimality_problem, initial_iterate);
    this->evaluate_progress_measures(initial_iterate);
-   this->compute_primal_dual_residuals(this->feasibility_problem, initial_iterate);
+   this->compute_primal_dual_residuals(this->optimality_problem, this->feasibility_problem, initial_iterate);
    this->set_statistics(statistics, initial_iterate);
    if (not is_linearly_feasible) {
       this->switch_to_feasibility_problem(statistics, initial_iterate);
@@ -195,7 +195,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
          this->globalization_strategy->is_feasibility_iterate_acceptable(current_iterate.progress, trial_iterate.progress)) {
       this->switch_to_optimality_phase(current_iterate, trial_iterate);
    }
-   this->compute_primal_dual_residuals(this->feasibility_problem, trial_iterate);
+   this->compute_primal_dual_residuals(this->optimality_problem, this->feasibility_problem, trial_iterate);
    this->set_statistics(statistics, trial_iterate);
    return accept_iterate;
 }
@@ -233,33 +233,6 @@ size_t FeasibilityRestoration::maximum_number_variables() const {
 
 size_t FeasibilityRestoration::maximum_number_constraints() const {
    return std::max(this->optimality_problem.number_constraints, this->feasibility_problem.number_constraints);
-}
-
-double FeasibilityRestoration::complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
-      const Multipliers& multipliers) const {
-   // bound constraints
-   const VectorExpression variable_complementarity(Range(this->model.number_variables), [&](size_t variable_index) {
-      if (0. < multipliers.lower_bounds[variable_index]) {
-         return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->model.variable_lower_bound(variable_index));
-      }
-      if (multipliers.upper_bounds[variable_index] < 0.) {
-         return multipliers.upper_bounds[variable_index] * (primals[variable_index] - this->model.variable_upper_bound(variable_index));
-      }
-      return 0.;
-   });
-
-   // inequality constraints
-   const VectorExpression<const Collection<size_t>&> constraint_complementarity(this->model.get_inequality_constraints(), [&](size_t
-   constraint_index) {
-      if (0. < multipliers.constraints[constraint_index]) { // lower bound
-         return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->model.constraint_lower_bound(constraint_index));
-      }
-      else if (multipliers.constraints[constraint_index] < 0.) { // upper bound
-         return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->model.constraint_upper_bound(constraint_index));
-      }
-      return 0.;
-   });
-   return norm(this->residual_norm, variable_complementarity, constraint_complementarity);
 }
 
 void FeasibilityRestoration::set_statistics(Statistics& statistics, const Iterate& iterate) const {

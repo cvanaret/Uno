@@ -7,7 +7,7 @@
 #include "ingredients/subproblem/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
-#include "reformulation/RelaxedProblem.hpp"
+#include "reformulation/OptimizationProblem.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/Options.hpp"
 
@@ -50,12 +50,9 @@ protected:
    [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction_model(const Iterate& current_iterate, const Direction& direction,
          double step_length, const SymmetricMatrix<double>& hessian) const;
 
-   void compute_primal_dual_residuals(const RelaxedProblem& feasibility_problem, Iterate& iterate);
+   void compute_primal_dual_residuals(const OptimizationProblem& optimality_problem, const OptimizationProblem& feasibility_problem, Iterate& iterate);
    void evaluate_lagrangian_gradient(Iterate& iterate, const Multipliers& multipliers) const;
 
-   [[nodiscard]] double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier) const;
-   [[nodiscard]] virtual double complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
-         const Multipliers& multipliers) const = 0;
    [[nodiscard]] double compute_stationarity_scaling(const Iterate& iterate) const;
    [[nodiscard]] double compute_complementarity_scaling(const Iterate& iterate) const;
 };

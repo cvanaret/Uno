@@ -46,7 +46,7 @@ void l1Relaxation::initialize(Statistics& statistics, Iterate& initial_iterate, 
    this->subproblem->set_elastic_variable_values(this->l1_relaxed_problem, initial_iterate);
    const bool is_linearly_feasible = this->subproblem->generate_initial_iterate(this->l1_relaxed_problem, initial_iterate);
    this->evaluate_progress_measures(initial_iterate);
-   this->compute_primal_dual_residuals(this->feasibility_problem, initial_iterate);
+   this->compute_primal_dual_residuals(this->l1_relaxed_problem, this->feasibility_problem, initial_iterate);
    this->set_statistics(statistics, initial_iterate);
    if (not is_linearly_feasible) {
       this->switch_to_feasibility_problem(statistics, initial_iterate);
@@ -266,7 +266,7 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
    if (accept_iterate) {
       this->check_exact_relaxation(trial_iterate);
    }
-   this->compute_primal_dual_residuals(this->feasibility_problem, trial_iterate);
+   this->compute_primal_dual_residuals(this->l1_relaxed_problem, this->feasibility_problem, trial_iterate);
    this->set_statistics(statistics, trial_iterate);
    return accept_iterate;
 }
@@ -283,11 +283,6 @@ ProgressMeasures l1Relaxation::compute_predicted_reduction_models(Iterate& curre
       this->compute_predicted_objective_reduction_model(current_iterate, direction, step_length, this->subproblem->get_lagrangian_hessian()),
       this->subproblem->compute_predicted_auxiliary_reduction_model(this->model, current_iterate, direction, step_length)
    };
-}
-
-double l1Relaxation::complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
-      const Multipliers& multipliers) const {
-   return this->l1_relaxed_problem.complementarity_error(primals, constraints, multipliers, Norm::L1);
 }
 
 void l1Relaxation::set_trust_region_radius(double trust_region_radius) {

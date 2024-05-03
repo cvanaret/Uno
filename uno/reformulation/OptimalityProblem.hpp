@@ -5,6 +5,7 @@
 #define UNO_OPTIMALITYPROBLEM_H
 
 #include "OptimizationProblem.hpp"
+#include "symbolic/Expression.hpp"
 
 class OptimalityProblem: public OptimizationProblem {
 public:
@@ -29,6 +30,11 @@ public:
    [[nodiscard]] size_t number_objective_gradient_nonzeros() const override { return this->model.number_objective_gradient_nonzeros(); }
    [[nodiscard]] size_t number_jacobian_nonzeros() const override { return this->model.number_jacobian_nonzeros(); }
    [[nodiscard]] size_t number_hessian_nonzeros() const override { return this->model.number_hessian_nonzeros(); }
+
+   [[nodiscard]] double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
+         Norm residual_norm) const override;
+   [[nodiscard]] double complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
+         const Multipliers& multipliers, Norm residual_norm) const override;
 };
 
 inline OptimalityProblem::OptimalityProblem(const Model& model): OptimizationProblem(model, model.number_variables, model.number_constraints) {
@@ -54,6 +60,40 @@ inline void OptimalityProblem::evaluate_constraint_jacobian(Iterate& iterate, Re
 inline void OptimalityProblem::evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers,
       SymmetricMatrix<double>& hessian) const {
    this->model.evaluate_lagrangian_hessian(x, this->get_objective_multiplier(), multipliers, hessian);
+}
+
+inline double OptimalityProblem::stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
+      Norm residual_norm) const {
+   // norm of the scaled Lagrangian gradient
+   const auto scaled_lagrangian = objective_multiplier * lagrangian_gradient.objective_contribution + lagrangian_gradient.constraints_contribution;
+   return norm(residual_norm, scaled_lagrangian);
+}
+
+inline double OptimalityProblem::complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
+      const Multipliers& multipliers, Norm residual_norm) const {
+   // bound constraints
+   const VectorExpression variable_complementarity(Range(this->model.number_variables), [&](size_t variable_index) {
+      if (0. < multipliers.lower_bounds[variable_index]) {
+         return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->model.variable_lower_bound(variable_index));
+      }
+      if (multipliers.upper_bounds[variable_index] < 0.) {
+         return multipliers.upper_bounds[variable_index] * (primals[variable_index] - this->model.variable_upper_bound(variable_index));
+      }
+      return 0.;
+   });
+
+   // inequality constraints
+   const VectorExpression<const Collection<size_t>&> constraint_complementarity(this->model.get_inequality_constraints(), [&](size_t
+   constraint_index) {
+      if (0. < multipliers.constraints[constraint_index]) { // lower bound
+         return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->model.constraint_lower_bound(constraint_index));
+      }
+      else if (multipliers.constraints[constraint_index] < 0.) { // upper bound
+         return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->model.constraint_upper_bound(constraint_index));
+      }
+      return 0.;
+   });
+   return norm(residual_norm, variable_complementarity, constraint_complementarity);
 }
 
 #endif // UNO_OPTIMALITYPROBLEM_H

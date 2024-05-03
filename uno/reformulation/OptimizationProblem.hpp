@@ -44,6 +44,11 @@ public:
    [[nodiscard]] virtual size_t number_objective_gradient_nonzeros() const = 0;
    [[nodiscard]] virtual size_t number_jacobian_nonzeros() const = 0;
    [[nodiscard]] virtual size_t number_hessian_nonzeros() const = 0;
+
+   [[nodiscard]] virtual double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
+         Norm residual_norm) const = 0;
+   [[nodiscard]] virtual double complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
+         const Multipliers& multipliers, Norm residual_norm) const = 0;
 };
 
 inline OptimizationProblem::OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints):
