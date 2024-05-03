@@ -52,7 +52,7 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const RelaxedPr
    iterate.evaluate_constraint_jacobian(this->model);
 
    // stationarity error
-   ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(this->model.number_variables, iterate, iterate.multipliers);
+   this->evaluate_lagrangian_gradient(iterate, iterate.multipliers);
    iterate.residuals.optimality_stationarity = this->stationarity_error(iterate.lagrangian_gradient, iterate.multipliers.objective);
    iterate.residuals.feasibility_stationarity = feasibility_problem.stationarity_error(iterate.lagrangian_gradient, this->residual_norm);
 
@@ -70,7 +70,7 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const RelaxedPr
 }
 
 // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
-void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(size_t number_variables, Iterate& iterate, const Multipliers& multipliers) {
+void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(Iterate& iterate, const Multipliers& multipliers) const {
    initialize_vector(iterate.lagrangian_gradient.objective_contribution, 0.);
    initialize_vector(iterate.lagrangian_gradient.constraints_contribution, 0.);
 
@@ -89,7 +89,7 @@ void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(size_t number_va
    }
 
    // bound constraints
-   for (size_t variable_index: Range(number_variables)) {
+   for (size_t variable_index: Range(this->model.number_variables)) {
       iterate.lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.lower_bounds[variable_index] + multipliers.upper_bounds[variable_index];
    }
 }

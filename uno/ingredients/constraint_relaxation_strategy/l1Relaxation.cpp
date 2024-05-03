@@ -91,8 +91,8 @@ void l1Relaxation::solve_sequence_of_relaxed_subproblems(Statistics& statistics,
 
    // penalty update: if penalty parameter is already 0 or fixed by the user, no need to decrease it
    if (0. < this->penalty_parameter && not this->parameters.fixed_parameter) {
-      double linearized_residual = this->model.linearized_constraint_violation(direction.primals,
-            current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian, direction.primal_dual_step_length, Norm::L1);
+      double linearized_residual = this->model.linearized_constraint_violation(direction.primals, current_iterate.evaluations.constraints,
+            current_iterate.evaluations.constraint_jacobian, direction.primal_dual_step_length, Norm::L1);
       DEBUG << "Linearized infeasibility mk(dk): " << linearized_residual << "\n\n";
 
       // if the current direction is already feasible, terminate
@@ -118,9 +118,8 @@ void l1Relaxation::solve_sequence_of_relaxed_subproblems(Statistics& statistics,
          else {
             if (this->penalty_parameter < current_penalty_parameter) {
                this->solve_l1_relaxed_problem(statistics, current_iterate, direction, this->penalty_parameter, warmstart_information);
-               linearized_residual = this->model.linearized_constraint_violation(direction.primals,
-                     current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian, direction.primal_dual_step_length,
-                     Norm::L1);
+               linearized_residual = this->model.linearized_constraint_violation(direction.primals, current_iterate.evaluations.constraints,
+                     current_iterate.evaluations.constraint_jacobian, direction.primal_dual_step_length, Norm::L1);
             }
 
             // stage d: further decrease penalty parameter to reach a fraction of the ideal decrease
@@ -176,7 +175,7 @@ void l1Relaxation::decrease_parameter_aggressively(Iterate& current_iterate, con
 // measure that combines KKT error and complementarity error
 double l1Relaxation::compute_infeasible_dual_error(Iterate& current_iterate) {
    // stationarity error
-   ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(this->model.number_variables, current_iterate, this->trial_multipliers);
+   this->evaluate_lagrangian_gradient(current_iterate, this->trial_multipliers);
    double error = norm_1(current_iterate.lagrangian_gradient.constraints_contribution);
 
    // complementarity error
