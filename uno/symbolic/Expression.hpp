@@ -6,5 +6,7 @@
 
 #include "ScalarMultiple.hpp"
 #include "Sum.hpp"
+#include "Indicator.hpp"
+#include "Hadamard.hpp"
 
 #endif // UNO_EXPRESSION_H
