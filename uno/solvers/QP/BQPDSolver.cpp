@@ -52,8 +52,9 @@ BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_
    }
 }
 
-void BQPDSolver::solve_QP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
-      const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
+void BQPDSolver::solve_QP(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
+      const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
+      const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
       const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const std::vector<double>& initial_point,
       Direction& direction, const WarmstartInformation& warmstart_information) {
    if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
@@ -63,23 +64,25 @@ void BQPDSolver::solve_QP(size_t number_variables, size_t number_constraints, co
       DEBUG << "QP:\n";
       DEBUG << "Hessian: " << hessian;
    }
-   this->solve_subproblem(number_variables, number_constraints, variables_bounds, constraint_bounds, linear_objective, constraint_jacobian,
-         initial_point, direction, warmstart_information);
+   this->solve_subproblem(number_variables, number_constraints, variables_lower_bounds, variables_upper_bounds, constraints_lower_bounds,
+         constraints_upper_bounds, linear_objective, constraint_jacobian, initial_point, direction, warmstart_information);
 }
 
-void BQPDSolver::solve_LP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
-      const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
+void BQPDSolver::solve_LP(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
+      const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
+      const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
       const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point, Direction& direction,
       const WarmstartInformation& warmstart_information) {
    if (this->print_subproblem) {
       DEBUG << "LP:\n";
    }
-   this->solve_subproblem(number_variables, number_constraints, variables_bounds, constraint_bounds, linear_objective, constraint_jacobian,
-         initial_point, direction, warmstart_information);
+   this->solve_subproblem(number_variables, number_constraints, variables_lower_bounds, variables_upper_bounds, constraints_lower_bounds,
+         constraints_upper_bounds, linear_objective, constraint_jacobian, initial_point, direction, warmstart_information);
 }
 
-void BQPDSolver::solve_subproblem(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
-      const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
+void BQPDSolver::solve_subproblem(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
+      const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
+      const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
       const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point, Direction& direction,
       const WarmstartInformation& warmstart_information) {
    // initialize wsc_ common block (Hessian & workspace for BQPD)
@@ -96,10 +99,10 @@ void BQPDSolver::solve_subproblem(size_t number_variables, size_t number_constra
          DEBUG << "gradient c" << constraint_index << ": " << constraint_jacobian[constraint_index];
       }
       for (size_t variable_index: Range(number_variables)) {
-         DEBUG << "d_x" << variable_index << " in [" << variables_bounds[variable_index].lb << ", " << variables_bounds[variable_index].ub << "]\n";
+         DEBUG << "d_x" << variable_index << " in [" << variables_lower_bounds[variable_index] << ", " << variables_upper_bounds[variable_index] << "]\n";
       }
       for (size_t constraint_index: Range(number_constraints)) {
-         DEBUG << "linearized c" << constraint_index << " in [" << constraint_bounds[constraint_index].lb << ", " << constraint_bounds[constraint_index].ub << "]\n";
+         DEBUG << "linearized c" << constraint_index << " in [" << constraints_lower_bounds[constraint_index] << ", " << constraints_upper_bounds[constraint_index] << "]\n";
       }
    }
 
@@ -111,15 +114,15 @@ void BQPDSolver::solve_subproblem(size_t number_variables, size_t number_constra
    // set variable bounds
    if (warmstart_information.variable_bounds_changed) {
       for (size_t variable_index: Range(number_variables)) {
-         this->lb[variable_index] = (variables_bounds[variable_index].lb == -INF<double>) ? -BIG : variables_bounds[variable_index].lb;
-         this->ub[variable_index] = (variables_bounds[variable_index].ub == INF<double>) ? BIG : variables_bounds[variable_index].ub;
+         this->lb[variable_index] = (variables_lower_bounds[variable_index] == -INF<double>) ? -BIG : variables_lower_bounds[variable_index];
+         this->ub[variable_index] = (variables_upper_bounds[variable_index] == INF<double>) ? BIG : variables_upper_bounds[variable_index];
       }
    }
    // set constraint bounds
    if (warmstart_information.constraint_bounds_changed) {
       for (size_t constraint_index: Range(number_constraints)) {
-         this->lb[number_variables + constraint_index] = (constraint_bounds[constraint_index].lb == -INF<double>) ? -BIG : constraint_bounds[constraint_index].lb;
-         this->ub[number_variables + constraint_index] = (constraint_bounds[constraint_index].ub == INF<double>) ? BIG : constraint_bounds[constraint_index].ub;
+         this->lb[number_variables + constraint_index] = (constraints_lower_bounds[constraint_index] == -INF<double>) ? -BIG : constraints_lower_bounds[constraint_index];
+         this->ub[number_variables + constraint_index] = (constraints_upper_bounds[constraint_index] == INF<double>) ? BIG : constraints_upper_bounds[constraint_index];
       }
    }
 
@@ -142,7 +145,8 @@ void BQPDSolver::solve_subproblem(size_t number_variables, size_t number_constra
 
    // project solution into bounds
    for (size_t variable_index: Range(number_variables)) {
-      direction.primals[variable_index] = std::min(std::max(direction.primals[variable_index], variables_bounds[variable_index].lb), variables_bounds[variable_index].ub);
+      direction.primals[variable_index] = std::min(std::max(direction.primals[variable_index], variables_lower_bounds[variable_index]),
+            variables_upper_bounds[variable_index]);
    }
    this->categorize_constraints(number_variables, number_constraints, direction);
 }

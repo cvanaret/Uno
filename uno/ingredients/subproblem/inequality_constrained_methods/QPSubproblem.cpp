@@ -70,9 +70,9 @@ void QPSubproblem::solve(Statistics& statistics, const OptimizationProblem& prob
    }
 
    // solve the QP
-   this->solver->solve_QP(problem.number_variables, problem.number_constraints, this->direction_bounds,
-         this->linearized_constraint_bounds, this->evaluations.objective_gradient, this->evaluations.constraint_jacobian,
-         *this->hessian_model->hessian, this->initial_point, direction, warmstart_information);
+   this->solver->solve_QP(problem.number_variables, problem.number_constraints, this->direction_lower_bounds, this->direction_upper_bounds,
+         this->linearized_constraints_lower_bounds, this->linearized_constraints_upper_bounds, this->evaluations.objective_gradient,
+         this->evaluations.constraint_jacobian, *this->hessian_model->hessian, this->initial_point, direction, warmstart_information);
    InequalityConstrainedMethod::compute_dual_displacements(problem, current_iterate, direction);
    this->number_subproblems_solved++;
    // reset the initial point

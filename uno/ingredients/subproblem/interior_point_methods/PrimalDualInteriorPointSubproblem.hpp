@@ -24,7 +24,6 @@ class PrimalDualInteriorPointSubproblem : public Subproblem {
 public:
    PrimalDualInteriorPointSubproblem(size_t max_number_variables, size_t max_number_constraints,
          size_t max_number_jacobian_nonzeros, size_t max_number_hessian_nonzeros, const Options& options);
-   ~PrimalDualInteriorPointSubproblem() override = default; // TODO remove
 
    void initialize_statistics(Statistics& statistics, const Options& options) override;
    [[nodiscard]] bool generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
@@ -64,7 +63,7 @@ protected:
    bool solving_feasibility_problem{false};
 
    [[nodiscard]] double barrier_parameter() const;
-   [[nodiscard]] double push_variable_to_interior(double variable_value, const Interval& variable_bounds) const;
+   [[nodiscard]] double push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const;
    void evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const WarmstartInformation& warmstart_information);
    void update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate);

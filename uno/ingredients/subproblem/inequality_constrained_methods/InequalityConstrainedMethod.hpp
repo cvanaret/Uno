@@ -24,8 +24,10 @@ public:
 
 protected:
    std::vector<double> initial_point{};
-   std::vector<Interval> direction_bounds{};
-   std::vector<Interval> linearized_constraint_bounds{};
+   std::vector<double> direction_lower_bounds{};
+   std::vector<double> direction_upper_bounds{};
+   std::vector<double> linearized_constraints_lower_bounds{};
+   std::vector<double> linearized_constraints_upper_bounds{};
 
    void set_direction_bounds(const OptimizationProblem& problem, const Iterate& current_iterate);
    void set_linearized_constraint_bounds(const OptimizationProblem& problem, const std::vector<double>& current_constraints);

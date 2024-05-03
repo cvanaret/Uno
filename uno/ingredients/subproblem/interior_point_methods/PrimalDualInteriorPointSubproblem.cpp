@@ -57,8 +57,8 @@ inline bool PrimalDualInteriorPointSubproblem::generate_initial_iterate(const Op
 
    // make the initial point strictly feasible wrt the bounds
    for (size_t variable_index: Range(problem.number_variables)) {
-      const Interval bounds = {problem.variable_lower_bound(variable_index), problem.variable_upper_bound(variable_index)};
-      initial_iterate.primals[variable_index] = PrimalDualInteriorPointSubproblem::push_variable_to_interior(initial_iterate.primals[variable_index], bounds);
+      initial_iterate.primals[variable_index] = PrimalDualInteriorPointSubproblem::push_variable_to_interior(initial_iterate.primals[variable_index],
+            problem.variable_lower_bound(variable_index), problem.variable_upper_bound(variable_index));
    }
 
    // set the slack variables (if any)
@@ -68,8 +68,8 @@ inline bool PrimalDualInteriorPointSubproblem::generate_initial_iterate(const Op
 
       // set the slacks to the constraint values
       problem.model.get_slacks().for_each([&](size_t constraint_index, size_t slack_index) {
-         const Interval bounds = {problem.variable_lower_bound(slack_index), problem.variable_upper_bound(slack_index)};
-         initial_iterate.primals[slack_index] = PrimalDualInteriorPointSubproblem::push_variable_to_interior(initial_iterate.evaluations.constraints[constraint_index], bounds);
+         initial_iterate.primals[slack_index] = PrimalDualInteriorPointSubproblem::push_variable_to_interior(initial_iterate.evaluations.constraints[constraint_index],
+               problem.variable_lower_bound(slack_index), problem.variable_upper_bound(slack_index));
       });
       // since the slacks have been set, the function evaluations should also be updated
       initial_iterate.is_objective_gradient_computed = false;
@@ -96,14 +96,14 @@ double PrimalDualInteriorPointSubproblem::barrier_parameter() const {
    return this->barrier_parameter_update_strategy.get_barrier_parameter();
 }
 
-double PrimalDualInteriorPointSubproblem::push_variable_to_interior(double variable_value, const Interval& variable_bounds) const {
-   const double range = variable_bounds.ub - variable_bounds.lb;
-   const double perturbation_lb = std::min(this->parameters.push_variable_to_interior_k1 * std::max(1., std::abs(variable_bounds.lb)),
+double PrimalDualInteriorPointSubproblem::push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const {
+   const double range = upper_bound - lower_bound;
+   const double perturbation_lb = std::min(this->parameters.push_variable_to_interior_k1 * std::max(1., std::abs(lower_bound)),
          this->parameters.push_variable_to_interior_k2 * range);
-   const double perturbation_ub = std::min(this->parameters.push_variable_to_interior_k1 * std::max(1., std::abs(variable_bounds.ub)),
+   const double perturbation_ub = std::min(this->parameters.push_variable_to_interior_k1 * std::max(1., std::abs(upper_bound)),
          this->parameters.push_variable_to_interior_k2 * range);
-   variable_value = std::max(variable_value, variable_bounds.lb + perturbation_lb);
-   variable_value = std::min(variable_value, variable_bounds.ub - perturbation_ub);
+   variable_value = std::max(variable_value, lower_bound + perturbation_lb);
+   variable_value = std::min(variable_value, upper_bound - perturbation_ub);
    return variable_value;
 }
 

@@ -14,11 +14,6 @@
 #include "optimization/TerminationStatus.hpp"
 #include "tools/Collection.hpp"
 
-struct Interval {
-   double lb;
-   double ub;
-};
-
 enum FunctionType {LINEAR, NONLINEAR};
 enum BoundType {EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES, UNBOUNDED};
 

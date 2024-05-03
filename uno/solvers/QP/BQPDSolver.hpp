@@ -43,13 +43,15 @@ public:
    BQPDSolver(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros,
          size_t number_hessian_nonzeros, BQPDProblemType problem_type, const Options& options);
 
-   void solve_LP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
-         const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
+   void solve_LP(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
+         const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
+         const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
          const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information) override;
 
-   void solve_QP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
-         const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
+   void solve_QP(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
+         const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
+         const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
          const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const std::vector<double>& initial_point,
          Direction& direction, const WarmstartInformation& warmstart_information) override;
 
@@ -80,8 +82,9 @@ private:
    size_t number_calls{0};
    const bool print_subproblem;
 
-   void solve_subproblem(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
-         const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
+   void solve_subproblem(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
+         const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
+         const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
          const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information);
    void categorize_constraints(size_t number_variables, size_t number_constraints, Direction& direction);
