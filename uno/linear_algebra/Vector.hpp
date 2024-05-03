@@ -9,7 +9,7 @@
 #include <vector>
 #include <functional>
 #include <cmath>
-#include "linear_algebra/VectorExpression.hpp"
+#include "symbolic/VectorExpression.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Range.hpp"
 #include "tools/Collection.hpp"

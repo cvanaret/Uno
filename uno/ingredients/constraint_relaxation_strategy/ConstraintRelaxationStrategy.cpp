@@ -3,7 +3,7 @@
 
 #include "ConstraintRelaxationStrategy.hpp"
 #include "symbolic/Expression.hpp"
-#include "linear_algebra/view.hpp"
+#include "symbolic/view.hpp"
 
 ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Model& model, const Options& options):
       model(model),

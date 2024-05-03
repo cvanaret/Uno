@@ -5,7 +5,7 @@
 #include <iostream>
 #include <utility>
 #include "Model.hpp"
-#include "linear_algebra/VectorExpression.hpp"
+#include "symbolic/VectorExpression.hpp"
 #include "linear_algebra/Vector.hpp"
 
 // abstract Problem class

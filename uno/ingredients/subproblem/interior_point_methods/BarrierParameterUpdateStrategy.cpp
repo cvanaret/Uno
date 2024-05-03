@@ -3,7 +3,7 @@
 
 #include <cmath>
 #include "BarrierParameterUpdateStrategy.hpp"
-#include "linear_algebra/VectorExpression.hpp"
+#include "symbolic/VectorExpression.hpp"
 #include "tools/Logger.hpp"
 
 BarrierParameterUpdateStrategy::BarrierParameterUpdateStrategy(const Options& options):

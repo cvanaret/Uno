@@ -5,7 +5,7 @@
 #define UNO_L1RELAXEDPROBLEM_H
 
 #include "RelaxedProblem.hpp"
-#include "linear_algebra/VectorExpression.hpp"
+#include "symbolic/VectorExpression.hpp"
 #include "tools/ChainCollection.hpp"
 #include "tools/Range.hpp"
 #include "tools/Infinity.hpp"

@@ -5,41 +5,43 @@
 #define UNO_VIEW_H
 
 // span of an arbitrary container: allocation-free view of a certain length
-template <typename ElementType>
+template <typename Expression>
 class view {
 public:
-   // compatible with algorithms that query the type of the elements
-   using value_type = ElementType;
+   using value_type = typename std::remove_reference_t<Expression>::value_type;
 
-   view(const std::vector<ElementType>& array, size_t length) noexcept;
+   view(Expression&& array, size_t length) noexcept;
 
-   const ElementType& operator[](size_t index) const noexcept;
+   [[nodiscard]] const typename view::value_type& operator[](size_t index) const noexcept;
    [[nodiscard]] size_t size() const noexcept;
 
+   /*
    const ElementType* begin() noexcept;
    const ElementType* end() noexcept;
+    */
 
 protected:
-   const ElementType* array;
+   Expression array;
    const size_t length;
 };
 
-template <typename ElementType>
-view<ElementType>::view(const std::vector<ElementType>& array, size_t length) noexcept:
-      array(array.data()), length(std::min(length, array.size())) {
+template <typename Expression>
+view<Expression>::view(Expression&& array, size_t length) noexcept:
+      array(std::forward<Expression>(array)), length(std::min(length, array.size())) {
 }
 
 // preconditions: array != nullptr, i < length
-template <typename ElementType>
-const ElementType& view<ElementType>::operator[](size_t index) const noexcept {
+template <typename Expression>
+const typename view<Expression>::value_type& view<Expression>::operator[](size_t index) const noexcept {
    return this->array[index];
 }
 
-template <typename ElementType>
-size_t view<ElementType>::size() const noexcept {
+template <typename Expression>
+size_t view<Expression>::size() const noexcept {
    return this->length;
 }
 
+/*
 template <typename ElementType>
 const ElementType* view<ElementType>::begin() noexcept {
    return this->array;
@@ -49,5 +51,6 @@ template <typename ElementType>
 const ElementType* view<ElementType>::end() noexcept {
    return this->array + this->length;
 }
+*/
 
 #endif //UNO_VIEW_H
