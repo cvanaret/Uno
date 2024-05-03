@@ -4,11 +4,10 @@
 #ifndef UNO_CONSTRAINTRELAXATIONSTRATEGY_H
 #define UNO_CONSTRAINTRELAXATIONSTRATEGY_H
 
-#include "ingredients/globalization_strategy/ProgressMeasures.hpp"
-#include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
+#include "reformulation/RelaxedProblem.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/Options.hpp"
 

@@ -9,6 +9,7 @@
 #include <vector>
 #include <functional>
 #include <cmath>
+#include <cassert>
 #include "symbolic/VectorExpression.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Range.hpp"

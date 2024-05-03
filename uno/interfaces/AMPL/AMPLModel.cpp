@@ -46,13 +46,13 @@ AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
       variable_status(this->number_variables),
       constraint_type(this->number_constraints),
       constraint_status(this->number_constraints),
-      equality_constraints_collection(CollectionAdapter(this->equality_constraints)),
-      inequality_constraints_collection(CollectionAdapter(this->inequality_constraints)),
+      equality_constraints_collection(this->equality_constraints),
+      inequality_constraints_collection(this->inequality_constraints),
       slacks(Range(0)),
-      lower_bounded_variables_collection(CollectionAdapter(this->lower_bounded_variables)),
-      upper_bounded_variables_collection(CollectionAdapter(this->upper_bounded_variables)),
-      single_lower_bounded_variables_collection(CollectionAdapter(this->single_lower_bounded_variables)),
-      single_upper_bounded_variables_collection(CollectionAdapter(this->single_upper_bounded_variables)) {
+      lower_bounded_variables_collection(this->lower_bounded_variables),
+      upper_bounded_variables_collection(this->upper_bounded_variables),
+      single_lower_bounded_variables_collection(this->single_lower_bounded_variables),
+      single_upper_bounded_variables_collection(this->single_upper_bounded_variables) {
    // evaluate the constraint Jacobian in sparse mode
    this->asl->i.congrd_mode = 1;
 

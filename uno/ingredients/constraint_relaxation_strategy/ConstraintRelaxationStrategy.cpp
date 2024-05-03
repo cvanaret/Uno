@@ -75,14 +75,14 @@ void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(Iterate& iterate
    initialize_vector(iterate.lagrangian_gradient.constraints_contribution, 0.);
 
    // objective gradient
-   for (const auto [variable_index, derivative]: iterate.evaluations.objective_gradient) {
+   for (auto [variable_index, derivative]: iterate.evaluations.objective_gradient) {
       iterate.lagrangian_gradient.objective_contribution[variable_index] += derivative;
    }
 
    // constraints
    for (size_t constraint_index: Range(iterate.number_constraints)) {
       if (multipliers.constraints[constraint_index] != 0.) {
-         for (const auto [variable_index, derivative]: iterate.evaluations.constraint_jacobian[constraint_index]) {
+         for (auto [variable_index, derivative]: iterate.evaluations.constraint_jacobian[constraint_index]) {
             iterate.lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
          }
       }
