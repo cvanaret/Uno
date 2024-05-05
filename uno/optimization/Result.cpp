@@ -47,7 +47,7 @@ void Result::print(bool print_primal_dual_solution) const {
       }
       std::cout << "Lower bound multipliers:\t\t"; print_vector(std::cout, this->solution.multipliers.lower_bounds, 0, this->solution.number_variables);
       std::cout << "Upper bound multipliers:\t\t"; print_vector(std::cout, this->solution.multipliers.upper_bounds, 0, this->solution.number_variables);
-      std::cout << "Objective multiplier:\t\t\t" << this->solution.multipliers.objective << '\n';
+      std::cout << "Objective multiplier:\t\t\t" << this->solution.objective_multiplier << '\n';
    }
 
    std::cout << "CPU time:\t\t\t\t" << this->cpu_time << "s\n";

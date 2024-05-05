@@ -53,7 +53,7 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Optimizat
 
    // stationarity error
    this->evaluate_lagrangian_gradient(iterate, iterate.multipliers);
-   iterate.residuals.optimality_stationarity = optimality_problem.stationarity_error(iterate.lagrangian_gradient, iterate.multipliers.objective,
+   iterate.residuals.optimality_stationarity = optimality_problem.stationarity_error(iterate.lagrangian_gradient, iterate.objective_multiplier,
          this->residual_norm);
    iterate.residuals.feasibility_stationarity = feasibility_problem.stationarity_error(iterate.lagrangian_gradient, 0., this->residual_norm);
 

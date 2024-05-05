@@ -10,7 +10,6 @@ struct Multipliers {
    std::vector<double> lower_bounds{}; /*!< Multipliers of the lower bound constraints */
    std::vector<double> upper_bounds{}; /*!< Multipliers of the lower bound constraints */
    std::vector<double> constraints{}; /*!< Multipliers of the general constraints */
-   double objective{1.};
 
    Multipliers(size_t number_variables, size_t number_constraints);
    void reset();
@@ -25,7 +24,6 @@ inline void Multipliers::reset() {
    initialize_vector(this->constraints, 0.);
    initialize_vector(this->lower_bounds, 0.);
    initialize_vector(this->upper_bounds, 0.);
-   this->objective = 0.;
 }
 
 inline bool Multipliers::not_all_zero(size_t number_variables, double tolerance) const {

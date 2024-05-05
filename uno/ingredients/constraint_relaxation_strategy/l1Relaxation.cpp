@@ -139,7 +139,6 @@ void l1Relaxation::solve_subproblem(Statistics& statistics, const OptimizationPr
    // solve the subproblem
    this->subproblem->solve(statistics, problem, current_iterate, direction, warmstart_information);
    direction.norm = norm_inf(view(direction.primals, this->model.number_variables));
-   direction.multipliers.objective = problem.get_objective_multiplier();
    DEBUG3 << direction << '\n';
    assert(direction.status == SubproblemStatus::OPTIMAL && "The subproblem was not solved to optimality");
 }
@@ -242,7 +241,7 @@ void l1Relaxation::compute_progress_measures(Iterate& current_iterate, Iterate& 
    this->evaluate_progress_measures(current_iterate);
    this->evaluate_progress_measures(trial_iterate);
 
-   trial_iterate.multipliers.objective = this->l1_relaxed_problem.get_objective_multiplier();
+   trial_iterate.objective_multiplier = this->l1_relaxed_problem.get_objective_multiplier();
 }
 
 bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,

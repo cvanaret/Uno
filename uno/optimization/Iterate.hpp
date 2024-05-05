@@ -38,6 +38,7 @@ public:
    size_t number_constraints;
    std::vector<double> primals; /*!< \f$\mathbb{R}^n\f$ primal variables */
    Multipliers multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
+   double objective_multiplier{1.};
 
    // evaluations
    Evaluations evaluations;

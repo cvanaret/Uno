@@ -83,7 +83,7 @@ TerminationStatus GlobalizationMechanism::check_convergence_with_given_tolerance
       return TerminationStatus::UNBOUNDED;
    }
    else if (optimality_complementarity && primal_feasibility) {
-      if (0. < current_iterate.multipliers.objective && optimality_stationarity) {
+      if (0. < current_iterate.objective_multiplier && optimality_stationarity) {
          // feasible regular stationary point
          return TerminationStatus::FEASIBLE_KKT_POINT;
       }

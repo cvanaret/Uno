@@ -128,7 +128,6 @@ void FeasibilityRestoration::solve_subproblem(Statistics& statistics, const Opti
 
    this->subproblem->solve(statistics, problem, current_iterate, direction, warmstart_information);
    direction.norm = norm_inf(view(direction.primals, this->model.number_variables));
-   direction.multipliers.objective = problem.get_objective_multiplier();
    DEBUG3 << direction << '\n';
 }
 
@@ -157,7 +156,7 @@ void FeasibilityRestoration::switch_to_optimality_phase(Iterate& current_iterate
    this->current_phase = Phase::OPTIMALITY;
    current_iterate.set_number_variables(this->optimality_problem.number_variables);
    trial_iterate.set_number_variables(this->optimality_problem.number_variables);
-   current_iterate.multipliers.objective = trial_iterate.multipliers.objective = 1.;
+   current_iterate.objective_multiplier = trial_iterate.objective_multiplier = 1.;
 
    this->subproblem->exit_feasibility_problem(this->optimality_problem, trial_iterate);
    this->switching_to_optimality_phase = true;
