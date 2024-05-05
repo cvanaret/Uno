@@ -25,8 +25,6 @@ public:
 
    virtual void reset() = 0;
    virtual void register_current_progress(const ProgressMeasures& current_progress) = 0;
-   [[nodiscard]] virtual double get_infeasibility_upper_bound() const = 0;
-   virtual void set_infeasibility_upper_bound(double new_upper_bound, double current_infeasibility, double trial_infeasibility) = 0;
 
 protected:
    const double armijo_decrease_fraction; /*!< Sufficient reduction constant */

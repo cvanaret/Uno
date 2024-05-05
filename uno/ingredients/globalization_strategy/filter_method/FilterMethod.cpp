@@ -30,14 +30,6 @@ void FilterMethod::register_current_progress(const ProgressMeasures& current_pro
    this->filter->add(current_progress.infeasibility, current_objective_measure);
 }
 
-double FilterMethod::get_infeasibility_upper_bound() const {
-   return this->filter->get_infeasibility_upper_bound();
-}
-
-void FilterMethod::set_infeasibility_upper_bound(double new_upper_bound, double /*current_infeasibility*/, double /*trial_infeasibility*/) {
-   this->filter->set_infeasibility_upper_bound(new_upper_bound);
-}
-
 double FilterMethod::unconstrained_merit_function(const ProgressMeasures& progress) {
    return progress.objective(1.) + progress.auxiliary;
 }

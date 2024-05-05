@@ -28,8 +28,6 @@ public:
    void initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) override;
    void reset() override;
    void register_current_progress(const ProgressMeasures& current_progress) override;
-   [[nodiscard]] double get_infeasibility_upper_bound() const override;
-   void set_infeasibility_upper_bound(double new_upper_bound, double current_infeasibility, double trial_infeasibility) override;
 
 protected:
    // pointer to allow polymorphism

@@ -16,15 +16,6 @@ void l1MeritFunction::reset() {
 void l1MeritFunction::register_current_progress(const ProgressMeasures& /*current_progress*/) {
 }
 
-double l1MeritFunction::get_infeasibility_upper_bound() const {
-   // no upper bound monitored
-   return INF<double>;
-}
-
-void l1MeritFunction::set_infeasibility_upper_bound(double /*new_upper_bound*/, double /*current_infeasibility*/, double /*trial_infeasibility*/) {
-   // do nothing
-}
-
 bool l1MeritFunction::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
       const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) {
    // predicted reduction with all contributions. This quantity should be positive (= negative directional derivative)

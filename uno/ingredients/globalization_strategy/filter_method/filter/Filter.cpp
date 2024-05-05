@@ -33,10 +33,6 @@ double Filter::get_smallest_infeasibility() const {
    }
 }
 
-double Filter::get_infeasibility_upper_bound() const {
-   return this->infeasibility_upper_bound;
-}
-
 void Filter::set_infeasibility_upper_bound(double new_upper_bound) {
    this->infeasibility_upper_bound = new_upper_bound;
 }

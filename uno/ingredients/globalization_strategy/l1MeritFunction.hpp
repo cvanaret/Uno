@@ -16,8 +16,6 @@ public:
    [[nodiscard]] bool is_feasibility_iterate_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress) const override;
    void reset() override;
    void register_current_progress(const ProgressMeasures& current_progress) override;
-   [[nodiscard]] double get_infeasibility_upper_bound() const override;
-   void set_infeasibility_upper_bound(double new_upper_bound, double current_infeasibility, double trial_infeasibility) override;
 
 protected:
    double smallest_known_infeasibility{INF<double>};
