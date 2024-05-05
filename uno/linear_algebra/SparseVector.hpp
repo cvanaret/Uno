@@ -17,19 +17,19 @@
 template <typename ElementType>
 class SparseVector: public Collection<ElementType> {
 public:
-   class Iterator {
+   class iterator {
    public:
-      Iterator(const SparseVector<ElementType>& vector, size_t index) : vector(vector), index(index) {
+      iterator(const SparseVector<ElementType>& vector, size_t index) : vector(vector), index(index) {
       }
       std::pair<size_t, ElementType> operator*() {
          // copy the element in the pair. Cheap only for trivial types
          return {this->vector.indices[this->index], this->vector.values[this->index]};
       }
       // prefix increment
-      Iterator& operator++() { this->index++; return *this; }
+      iterator& operator++() { this->index++; return *this; }
 
-      friend bool operator== (const Iterator& a, const Iterator& b) { return &(a.vector) == &(b.vector) && a.index == b.index; };
-      friend bool operator!= (const Iterator& a, const Iterator& b) { return &(a.vector) != &(b.vector) || a.index != b.index; };
+      friend bool operator==(const iterator& a, const iterator& b) { return &(a.vector) == &(b.vector) && a.index == b.index; };
+      friend bool operator!=(const iterator& a, const iterator& b) { return &(a.vector) != &(b.vector) || a.index != b.index; };
 
    private:
       const SparseVector<ElementType>& vector;
@@ -41,8 +41,8 @@ public:
    // void for_each_index(const std::function<void (size_t)>& f) const;
    void for_each_value(const std::function<void(ElementType)>& f) const;
 
-   [[nodiscard]] Iterator begin() const { return Iterator(*this, 0); }
-   [[nodiscard]] Iterator end() const { return Iterator(*this, this->number_nonzeros); }
+   [[nodiscard]] iterator begin() const { return iterator(*this, 0); }
+   [[nodiscard]] iterator end() const { return iterator(*this, this->number_nonzeros); }
 
    [[nodiscard]] size_t size() const;
    void reserve(size_t capacity);
