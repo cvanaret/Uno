@@ -35,26 +35,25 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
    }
    else {
       // in filter methods, we construct an unconstrained measure by ignoring infeasibility and scaling the objective measure by 1
-      const double current_objective_measure = current_progress.objective(1.) + current_progress.auxiliary;
-      const double trial_objective_measure = trial_progress.objective(1.) + trial_progress.auxiliary;
-      const double unconstrained_predicted_reduction = predicted_reduction.objective(1.) + predicted_reduction.auxiliary;
-      DEBUG << "Current (infeas., objective+auxiliary) = (" << current_progress.infeasibility << ", " << current_objective_measure << ")\n";
-      DEBUG << "Trial   (infeas., objective+auxiliary) = (" << trial_progress.infeasibility << ", " << trial_objective_measure << ")\n";
-      DEBUG << "Unconstrained predicted reduction: " << unconstrained_predicted_reduction << '\n';
+      const double current_merit = FilterMethod::unconstrained_merit_function(current_progress);
+      const double trial_merit = FilterMethod::unconstrained_merit_function(trial_progress);
+      const double unconstrained_merit = FilterMethod::unconstrained_merit_function(predicted_reduction);
+      DEBUG << "Current (infeas., objective+auxiliary) = (" << current_progress.infeasibility << ", " << current_merit << ")\n";
+      DEBUG << "Trial   (infeas., objective+auxiliary) = (" << trial_progress.infeasibility << ", " << trial_merit << ")\n";
+      DEBUG << "Unconstrained predicted reduction: " << unconstrained_merit << '\n';
       DEBUG << "Current filter:\n" << *this->filter;
 
-      if (this->filter->acceptable(trial_progress.infeasibility, trial_objective_measure)) {
+      if (this->filter->acceptable(trial_progress.infeasibility, trial_merit)) {
          DEBUG << "Filter acceptable\n";
          // compute actual reduction
-         const double actual_reduction = this->compute_actual_objective_reduction(current_objective_measure, current_progress.infeasibility,
-               trial_objective_measure);
+         const double actual_reduction = this->compute_actual_objective_reduction(current_merit, current_progress.infeasibility, trial_merit);
          DEBUG << "Actual reduction: " << actual_reduction << '\n';
 
          // TODO put this coefficient in the option file
          const bool small_infeasibility = current_progress.infeasibility <= 1e-4 * std::max(1., this->initial_infeasibility);
-         const bool switching = (0. < unconstrained_predicted_reduction) && this->switching_condition(unconstrained_predicted_reduction,
-               current_progress.infeasibility, this->parameters.delta);
-         const bool sufficient_decrease = this->armijo_sufficient_decrease(unconstrained_predicted_reduction, actual_reduction);
+         const bool switching = (0. < unconstrained_merit) && this->switching_condition(unconstrained_merit, current_progress.infeasibility,
+               this->parameters.delta);
+         const bool sufficient_decrease = this->armijo_sufficient_decrease(unconstrained_merit, actual_reduction);
 
          // switching condition: the unconstrained predicted reduction is sufficiently positive
          if (small_infeasibility && switching) {
@@ -71,8 +70,8 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
          }
          else {
             DEBUG << "Switching condition violated\n";
-            if (this->filter->acceptable_wrt_current_iterate(current_progress.infeasibility, current_objective_measure, trial_progress.infeasibility,
-                  trial_objective_measure)) {
+            if (this->filter->acceptable_wrt_current_iterate(current_progress.infeasibility, current_merit, trial_progress.infeasibility,
+                  trial_merit)) {
                DEBUG << "Trial iterate (h-type) acceptable with respect to current point\n";
                accept = true;
             }
@@ -84,7 +83,7 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
          // possibly augment the filter
          if (accept && (not switching || not sufficient_decrease)) {
             DEBUG << "Adding current iterate to the filter\n";
-            this->filter->add(current_progress.infeasibility, current_objective_measure);
+            this->filter->add(current_progress.infeasibility, current_merit);
          }
       }
       else {
@@ -102,5 +101,5 @@ bool WaechterFilterMethod::is_feasibility_iterate_acceptable(const ProgressMeasu
    // TODO put constant in the option file
    // TODO current_progress.infeasibility should be replaced with the infeasibility of the first feasibility restoration iterate
    return trial_progress.infeasibility <= 0.9*current_progress.infeasibility &&
-      this->filter->acceptable(trial_progress.infeasibility, trial_progress.objective(1.));
+      this->filter->acceptable(trial_progress.infeasibility, FilterMethod::unconstrained_merit_function(trial_progress));
 }

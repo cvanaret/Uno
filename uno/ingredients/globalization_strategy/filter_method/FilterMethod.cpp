@@ -25,9 +25,9 @@ void FilterMethod::reset() {
    this->filter->reset();
 }
 
-void FilterMethod::register_current_progress(const ProgressMeasures& current_progress_measures) {
-   const double current_objective_measure = current_progress_measures.objective(1.) + current_progress_measures.auxiliary;
-   this->filter->add(current_progress_measures.infeasibility, current_objective_measure);
+void FilterMethod::register_current_progress(const ProgressMeasures& current_progress) {
+   const double current_objective_measure = FilterMethod::unconstrained_merit_function(current_progress);
+   this->filter->add(current_progress.infeasibility, current_objective_measure);
 }
 
 double FilterMethod::get_infeasibility_upper_bound() const {
@@ -36,6 +36,10 @@ double FilterMethod::get_infeasibility_upper_bound() const {
 
 void FilterMethod::set_infeasibility_upper_bound(double new_upper_bound, double /*current_infeasibility*/, double /*trial_infeasibility*/) {
    this->filter->set_infeasibility_upper_bound(new_upper_bound);
+}
+
+double FilterMethod::unconstrained_merit_function(const ProgressMeasures& progress) {
+   return progress.objective(1.) + progress.auxiliary;
 }
 
 double FilterMethod::compute_actual_objective_reduction(double current_objective_measure, double current_infeasibility, double trial_objective_measure) {

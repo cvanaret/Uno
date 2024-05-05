@@ -22,6 +22,7 @@ public:
 protected:
    double smallest_known_infeasibility{INF<double>};
 
+   [[nodiscard]] static double constrained_merit_function(const ProgressMeasures& progress, double objective_multiplier);
    [[nodiscard]] double compute_merit_actual_reduction(double current_merit_value, double trial_merit_value) const;
 };
 
