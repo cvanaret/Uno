@@ -154,13 +154,13 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
 void FeasibilityRestoration::switch_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate) {
    DEBUG << "Switching from restoration to optimality phase\n";
    this->current_phase = Phase::OPTIMALITY;
+   this->globalization_strategy->register_current_progress(current_iterate.progress);
    current_iterate.set_number_variables(this->optimality_problem.number_variables);
    trial_iterate.set_number_variables(this->optimality_problem.number_variables);
    current_iterate.objective_multiplier = trial_iterate.objective_multiplier = 1.;
 
    this->subproblem->exit_feasibility_problem(this->optimality_problem, trial_iterate);
    this->switching_to_optimality_phase = true;
-   this->globalization_strategy->register_current_progress(current_iterate.progress);
 }
 
 bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,

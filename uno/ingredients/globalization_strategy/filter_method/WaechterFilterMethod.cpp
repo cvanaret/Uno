@@ -78,7 +78,7 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
             else {
                DEBUG << "Trial iterate (h-type) not acceptable with respect to current point\n";
             }
-            scenario = "current point";
+            scenario = "h-type";
          }
          // possibly augment the filter
          if (accept && (not switching || not sufficient_decrease)) {
