@@ -28,6 +28,14 @@ acceptable_area_color = 'g'
 
 # filter entries
 plt.scatter(infeasibility, unconstrained_merit, c=entries_color)
+number_entries = len(infeasibility)
+# labels
+(xmin, xmax) = plt.xlim()
+x_range = xmax - xmin
+offset = x_range/100.
+for index in range(number_entries):
+    plt.annotate(str(index + 1), (infeasibility[index] + offset, unconstrained_merit[index] + offset))
+    
 # infeasibility upper bound
 plt.axvline(x=infeasibility_upper_bound, color=upper_bound_color, linestyle='-')
 plt.gca().set_xlim(left=0.)
@@ -36,7 +44,6 @@ def merge_lists(lst1, lst2):
    return np.array([[i, j] for i, j in zip(lst1, lst2)]).ravel()
 
 # filter borders
-number_entries = len(infeasibility)
 for i in range(number_entries):
    if 0 < i:
       plt.vlines(x=infeasibility[i], ymin=unconstrained_merit[i], ymax=unconstrained_merit[i-1], colors=filter_borders_color)
