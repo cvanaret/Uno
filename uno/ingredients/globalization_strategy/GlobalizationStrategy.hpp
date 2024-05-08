@@ -6,7 +6,6 @@
 
 #include "ProgressMeasures.hpp"
 #include "optimization/Iterate.hpp"
-#include "ingredients/subproblem/Direction.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/Options.hpp"
 

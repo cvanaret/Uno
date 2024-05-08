@@ -9,7 +9,7 @@
 #include "SymmetricMatrixFactory.hpp"
 #include "RectangularMatrix.hpp"
 #include "model/Model.hpp"
-#include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
+#include "solvers/linear/direct/DirectIndefiniteLinearSolver.hpp"
 #include "tools/Options.hpp"
 #include "tools/Statistics.hpp"
 
@@ -31,10 +31,10 @@ public:
          const Options& options);
    void assemble_matrix(const SymmetricMatrix<double>& hessian, const RectangularMatrix<double>& constraint_jacobian,
          size_t number_variables, size_t number_constraints);
-   void factorize_matrix(const Model& model, SymmetricIndefiniteLinearSolver<ElementType>& linear_solver);
-   void regularize_matrix(Statistics& statistics, const Model& model, SymmetricIndefiniteLinearSolver<ElementType>& linear_solver, size_t size_primal_block,
-         size_t size_dual_block, ElementType dual_regularization_parameter);
-   void solve(SymmetricIndefiniteLinearSolver<ElementType>& linear_solver);
+   void factorize_matrix(DirectIndefiniteLinearSolver<ElementType>& linear_solver, bool fixed_sparsity_pattern);
+   void regularize_matrix(Statistics& statistics, DirectIndefiniteLinearSolver<ElementType>& linear_solver,
+         bool fixed_sparsity_pattern, size_t size_primal_block, size_t size_dual_block, ElementType dual_regularization_parameter);
+   void solve(DirectIndefiniteLinearSolver<ElementType>& linear_solver);
    // [[nodiscard]] T get_primal_regularization() const;
 
 protected:
@@ -94,10 +94,10 @@ void SymmetricIndefiniteLinearSystem<ElementType>::assemble_matrix(const Symmetr
 }
 
 template <typename ElementType>
-void SymmetricIndefiniteLinearSystem<ElementType>::factorize_matrix(const Model& model, SymmetricIndefiniteLinearSolver<ElementType>& linear_solver) {
+void SymmetricIndefiniteLinearSystem<ElementType>::factorize_matrix(DirectIndefiniteLinearSolver<ElementType>& linear_solver, bool fixed_sparsity_pattern) {
    // compute the symbolic factorization only when:
    // the problem has a non-constant augmented system (ie is not an LP or a QP) or it is the first factorization
-   if (true || this->number_factorizations == 0 || not model.fixed_hessian_sparsity) {
+   if (true || this->number_factorizations == 0 || not fixed_sparsity_pattern) {
       linear_solver.do_symbolic_factorization(*this->matrix);
    }
    linear_solver.do_numerical_factorization(*this->matrix);
@@ -105,9 +105,8 @@ void SymmetricIndefiniteLinearSystem<ElementType>::factorize_matrix(const Model&
 }
 
 template <typename ElementType>
-void SymmetricIndefiniteLinearSystem<ElementType>::regularize_matrix(Statistics& statistics, const Model& model,
-      SymmetricIndefiniteLinearSolver<ElementType>& linear_solver, size_t size_primal_block, size_t size_dual_block,
-      ElementType dual_regularization_parameter) {
+void SymmetricIndefiniteLinearSystem<ElementType>::regularize_matrix(Statistics& statistics, DirectIndefiniteLinearSolver<ElementType>& linear_solver,
+      bool fixed_sparsity_pattern, size_t size_primal_block, size_t size_dual_block, ElementType dual_regularization_parameter) {
    DEBUG2 << "Original matrix\n" << *this->matrix << '\n';
    this->primal_regularization = ElementType(0.);
    this->dual_regularization = ElementType(0.);
@@ -146,7 +145,7 @@ void SymmetricIndefiniteLinearSystem<ElementType>::regularize_matrix(Statistics&
    while (not good_inertia) {
       DEBUG << "Testing factorization with regularization factors (" << this->primal_regularization << ", " << this->dual_regularization << ")\n";
       DEBUG2 << *this->matrix << '\n';
-      this->factorize_matrix(model, linear_solver);
+      this->factorize_matrix(linear_solver, fixed_sparsity_pattern);
       number_attempts++;
 
       if (not linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_dual_block) {
@@ -181,7 +180,7 @@ void SymmetricIndefiniteLinearSystem<ElementType>::regularize_matrix(Statistics&
 }
 
 template <typename ElementType>
-void SymmetricIndefiniteLinearSystem<ElementType>::solve(SymmetricIndefiniteLinearSolver<ElementType>& linear_solver) {
+void SymmetricIndefiniteLinearSystem<ElementType>::solve(DirectIndefiniteLinearSolver<ElementType>& linear_solver) {
    linear_solver.solve_indefinite_system(*this->matrix, this->rhs, this->solution);
 }
 

@@ -25,10 +25,10 @@ lifact, const double rhs[], double x[], double resid[], double work[], int iwork
       double cntl[], int info[], double rinfo[]);
 }
 
-MA57Solver::MA57Solver(size_t max_dimension, size_t max_number_nonzeros) : SymmetricIndefiniteLinearSolver<double>(max_dimension),
-   iwork(5 * max_dimension),
-   lwork(static_cast<int>(1.2 * static_cast<double>(max_dimension))),
-   work(static_cast<size_t>(this->lwork)), residuals(max_dimension) {
+MA57Solver::MA57Solver(size_t max_dimension, size_t max_number_nonzeros) : DirectIndefiniteLinearSolver<double>(max_dimension),
+      iwork(5 * max_dimension),
+      lwork(static_cast<int>(1.2 * static_cast<double>(max_dimension))),
+      work(static_cast<size_t>(this->lwork)), residuals(max_dimension) {
    this->row_indices.reserve(max_number_nonzeros);
    this->column_indices.reserve(max_number_nonzeros);
    // set the default values of the controlling parameters
@@ -105,6 +105,12 @@ void MA57Solver::do_numerical_factorization(const SymmetricMatrix<double>& matri
 }
 
 void MA57Solver::solve_indefinite_system(const SymmetricMatrix<double>& matrix, const std::vector<double>& rhs, std::vector<double>& result) {
+   if (not this->is_matrix_factorized) {
+      this->do_symbolic_factorization(matrix);
+      this->do_numerical_factorization(matrix);
+      this->is_matrix_factorized = true;
+   }
+
    // solve
    const int n = static_cast<int>(matrix.dimension);
    const int lrhs = n; // integer, length of rhs

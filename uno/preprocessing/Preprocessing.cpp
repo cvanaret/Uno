@@ -2,8 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "Preprocessing.hpp"
+#include "symbolic/JacobianExpression.hpp"
 #include "linear_algebra/CSCSymmetricMatrix.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
+#include "linear_algebra/Symmetric2by2BlockMatrix.hpp"
 
 // compute a least-square approximation of the multipliers by solving a linear system (uses existing linear system)
 void Preprocessing::compute_least_square_multipliers(const Model& model, SymmetricMatrix<double>& matrix, std::vector<double>& rhs,
@@ -27,7 +29,7 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
    }
    DEBUG2 << "Matrix for least-square multipliers:\n" << matrix << '\n';
 
-   /* generate the right-hand side */
+   // generate the right-hand side
    initialize_vector(rhs, 0.);
    // objective gradient
    current_iterate.evaluations.objective_gradient.for_each([&](size_t variable_index, double derivative) {
@@ -41,7 +43,6 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
    
    /* solve the system */
    std::vector<double> solution(matrix.dimension);
-   linear_solver.factorize(matrix);
    linear_solver.solve_indefinite_system(matrix, rhs, solution);
    DEBUG2 << "Solution: "; print_vector(DEBUG2, solution, 0, matrix.dimension);
 

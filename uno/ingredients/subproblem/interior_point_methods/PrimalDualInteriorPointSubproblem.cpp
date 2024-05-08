@@ -19,7 +19,7 @@ PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(size_t max_
             options),
       // the Hessian is not convexified. Instead, the augmented system will be.
       hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), max_number_variables, max_number_hessian_nonzeros, false, options)),
-      linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"), max_number_variables + max_number_constraints,
+      linear_solver(DirectIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"), max_number_variables + max_number_constraints,
             max_number_hessian_nonzeros
             + max_number_variables + max_number_constraints /* regularization */
             + 2 * max_number_variables /* diagonal barrier terms */
@@ -202,10 +202,10 @@ void PrimalDualInteriorPointSubproblem::assemble_augmented_system(Statistics& st
    // assemble, factorize and regularize the augmented matrix
    this->augmented_system.assemble_matrix(*this->hessian_model->hessian, this->evaluations.constraint_jacobian,
          problem.number_variables, problem.number_constraints);
-   this->augmented_system.factorize_matrix(problem.model, *this->linear_solver);
+   this->augmented_system.factorize_matrix(*this->linear_solver, problem.model.fixed_hessian_sparsity);
    const double dual_regularization_parameter = std::pow(this->barrier_parameter(), this->parameters.regularization_exponent);
-   this->augmented_system.regularize_matrix(statistics, problem.model, *this->linear_solver, problem.number_variables, problem.number_constraints,
-         dual_regularization_parameter);
+   this->augmented_system.regularize_matrix(statistics, *this->linear_solver, problem.model.fixed_hessian_sparsity, problem.number_variables,
+         problem.number_constraints, dual_regularization_parameter);
    [[maybe_unused]] auto[number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = this->linear_solver->get_inertia();
    assert(number_pos_eigenvalues == problem.number_variables && number_neg_eigenvalues == problem.number_constraints && number_zero_eigenvalues == 0);
 

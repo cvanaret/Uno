@@ -41,6 +41,17 @@ void add_vectors(const std::vector<ElementType>& x, const std::vector<ElementTyp
    }
 }
 
+// result <- a*x + b*y
+template <typename ElementType>
+void add_vectors(ElementType a, const std::vector<ElementType>& x, ElementType b, const std::vector<ElementType>& y, std::vector<ElementType>& result) {
+   assert(x.size() <= y.size() && "Vector.add_vectors: x is longer than y");
+   assert(x.size() <= result.size() && "Vector.add_vectors: result is not long enough");
+
+   for (size_t index: Range(x.size())) {
+      result[index] = a*x[index] + b*y[index];
+   }
+}
+
 template <typename ElementType>
 void initialize_vector(std::vector<ElementType>& x, ElementType value) {
    for (ElementType& xi: x) {
@@ -48,27 +59,23 @@ void initialize_vector(std::vector<ElementType>& x, ElementType value) {
    }
 }
 
-/*
 template <typename ElementType>
-void scale(std::vector<ElementType>& x, T scaling_factor) {
+void scale(std::vector<ElementType>& x, ElementType scaling_factor) {
    for (ElementType& xi: x) {
       xi *= scaling_factor;
    }
 }
-*/
 
-/*
 template <typename ElementType>
-ElementType dot(const std::vector<ElementType>& x, const std::vector<ElementType>& y) {
+ElementType dot_product(const std::vector<ElementType>& x, const std::vector<ElementType>& y) {
    assert(x.size() == y.size() && "The vectors do not have the same size.");
 
-   ElementType dot_product = 0.;
-   for (size_t index: range(x.size())) {
-      dot_product += x[index]*y[index];
+   ElementType result = ElementType(0);
+   for (size_t index: Range(x.size())) {
+      result += x[index]*y[index];
    }
-   return dot_product;
+   return result;
 }
-*/
 
 template <typename ElementType>
 void copy_from(std::vector<ElementType>& destination, const std::vector<ElementType>& source, size_t length = std::numeric_limits<size_t>::max()) {

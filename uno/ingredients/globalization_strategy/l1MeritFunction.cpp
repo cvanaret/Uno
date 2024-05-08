@@ -38,10 +38,8 @@ bool l1MeritFunction::is_iterate_acceptable(Statistics& statistics, const Progre
    const double current_merit_value = current_progress.objective(objective_multiplier) + current_progress.auxiliary + current_progress.infeasibility;
    const double trial_merit_value = trial_progress.objective(objective_multiplier) + trial_progress.auxiliary + trial_progress.infeasibility;
    const double actual_reduction = this->compute_merit_actual_reduction(current_merit_value, trial_merit_value);
-   DEBUG << "Current merit: " << current_progress.objective(objective_multiplier) << " + " << current_progress.auxiliary << " + " <<
-         current_progress.infeasibility << " = " << current_merit_value << '\n';
-   DEBUG << "Trial merit:   " << trial_progress.objective(objective_multiplier) << " + " << trial_progress.auxiliary << " + " <<
-         trial_progress.infeasibility << " = " << trial_merit_value << '\n';
+   DEBUG << "Current merit: " << current_merit_value << '\n';
+   DEBUG << "Trial merit:   " << trial_merit_value << '\n';
    DEBUG << "Actual reduction: " << current_merit_value << " - " << trial_merit_value << " = " << actual_reduction << '\n';
    statistics.set("penalty param.", objective_multiplier);
 

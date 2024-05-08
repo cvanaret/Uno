@@ -7,7 +7,7 @@
 #include <memory>
 #include <vector>
 #include "reformulation/OptimizationProblem.hpp"
-#include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
+#include "solvers/linear/direct/DirectIndefiniteLinearSolver.hpp"
 #include "tools/Options.hpp"
 #include "tools/Statistics.hpp"
 
@@ -41,7 +41,7 @@ public:
          const std::vector<double>& constraint_multipliers) override;
 
 protected:
-   std::unique_ptr<SymmetricIndefiniteLinearSolver<double>> linear_solver; /*!< Solver that computes the inertia */
+   std::unique_ptr<DirectIndefiniteLinearSolver<double>> linear_solver; /*!< Solver that computes the inertia */
    const double regularization_initial_value{};
    const double regularization_increase_factor{};
 
