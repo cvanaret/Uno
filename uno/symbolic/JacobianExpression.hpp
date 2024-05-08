@@ -21,7 +21,7 @@ protected:
    const Iterate& iterate;
 };
 
-inline void JacobianExpression::for_each(const std::function<void (size_t /*row_index*/, size_t /*column_index*/, double /*element*/)>& f) const {
+inline void JacobianExpression::for_each(const std::function<void (size_t /*row_index*/, size_t /*column_index*/, double /*element*/)>& /*f*/) const {
    /*this->problem.evaluate_constraint_jacobian(this->iterate, RectangularMatrix<double>);
 
    // go through the elements

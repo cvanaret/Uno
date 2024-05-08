@@ -6,14 +6,14 @@
 #include "symbolic/Expression.hpp"
 #include "linear_algebra/Vector.hpp"
 
-TEST(Hadamard, Test) {
+TEST(HadamardProduct, Test) {
    const std::vector<double> mask{0., 1., 1., 0., 1.};
    const std::vector<double> x{100., 200., 300., 400., 500.};
    const auto hadamard_product = hadamard(mask, x);
    //print_vector(std::cout, hadamard_product);
 }
 
-TEST(Hadamard, Combination) {
+TEST(HadamardProduct, Combination) {
    const std::vector<double> mask1{0., 0., 1., 0., 1.};
    const std::vector<double> x{100., 200., 300., 400., 500.};
 

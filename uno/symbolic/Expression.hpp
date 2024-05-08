@@ -9,6 +9,7 @@
 #include "Indicator.hpp"
 #include "HadamardProduct.hpp"
 #include "Transpose.hpp"
+#include "MatrixExpression.hpp"
 #include "JacobianExpression.hpp"
 
 #endif // UNO_EXPRESSION_H
