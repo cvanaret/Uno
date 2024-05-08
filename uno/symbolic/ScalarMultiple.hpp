@@ -25,7 +25,7 @@ protected:
 // free function
 template <typename ExpressionType>
 inline ScalarMultiple<ExpressionType> operator*(double factor, ExpressionType&& expression) {
-   return ScalarMultiple<ExpressionType>(factor, std::forward<ExpressionType>(expression));
+   return {factor, std::forward<ExpressionType>(expression)};
 }
 
 #endif // UNO_SCALARMULTIPLE_H

@@ -50,7 +50,7 @@ VectorView<Expression>::VectorView(Expression&& expression, size_t length) noexc
 
 // free function
 template <typename Expression>
-VectorView<Expression> view(Expression&& expression, size_t length) {
+inline VectorView<Expression> view(Expression&& expression, size_t length) {
    return {std::forward<Expression>(expression), length};
 }
 

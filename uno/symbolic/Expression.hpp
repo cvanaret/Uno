@@ -7,6 +7,8 @@
 #include "ScalarMultiple.hpp"
 #include "Sum.hpp"
 #include "Indicator.hpp"
-#include "Hadamard.hpp"
+#include "HadamardProduct.hpp"
+#include "Transpose.hpp"
+#include "JacobianExpression.hpp"
 
 #endif // UNO_EXPRESSION_H
