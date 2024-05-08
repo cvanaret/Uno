@@ -18,14 +18,13 @@ template <RangeDirection direction = FORWARD>
 class Range: public Collection<size_t> {
 public:
    // https://internalpointers.com/post/writing-custom-iterators-modern-cpp
-   class Iterator {
+   class iterator {
    public:
-      explicit Iterator(size_t value) : value(value) {
-      }
+      explicit iterator(size_t value) : value(value) { }
       const size_t& operator*() const { return this->value; }
       const size_t& operator->() { return this->value; }
       // prefix increment
-      Iterator& operator++() {
+      iterator& operator++() {
          if constexpr (direction == FORWARD) {
             this->value++;
          }
@@ -35,8 +34,8 @@ public:
          return *this;
       }
 
-      friend bool operator== (const Iterator& a, const Iterator& b) { return a.value == b.value; };
-      friend bool operator!= (const Iterator& a, const Iterator& b) { return a.value != b.value; };
+      friend bool operator==(const iterator& a, const iterator& b) { return a.value == b.value; };
+      friend bool operator!=(const iterator& a, const iterator& b) { return a.value != b.value; };
 
    private:
       size_t value;
@@ -48,8 +47,8 @@ public:
    Range(size_t start_index, size_t end_index);
 
    // iterable functions
-   [[nodiscard]] Iterator begin() const { return Iterator(this->start_index); }
-   [[nodiscard]] Iterator end() const { return Iterator(this->end_index); }
+   [[nodiscard]] iterator begin() const { return iterator(this->start_index); }
+   [[nodiscard]] iterator end() const { return iterator(this->end_index); }
    [[nodiscard]] size_t size() const override;
 
    void for_each(const std::function<void (size_t, size_t)>& f) const override;

@@ -24,3 +24,15 @@ TEST(ChainCollection, Range) {
    const auto chain = concatenate(range, CollectionAdapter(x));
    ASSERT_EQ(chain.size(), range.size() + x.size());
 }
+
+/*
+TEST(ChainCollection, Iterators) {
+   std::vector<size_t> x{5, 6, 7};
+   const auto range = Range(100, 105);
+   const auto chain = concatenate(CollectionAdapter(x), range);
+   for (size_t index: chain) {
+      std::cout << index << ' ';
+   }
+   std::cout << "\n";
+}
+*/

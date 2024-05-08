@@ -15,11 +15,10 @@ public:
          size_t max_number_jacobian_nonzeros, size_t max_number_hessian_nonzeros, const Options& options);
 
    void initialize_statistics(Statistics& statistics, const Options& options) override;
-   void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
-   [[nodiscard]] Direction solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+   [[nodiscard]] bool generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
+   void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction,
          const WarmstartInformation& warmstart_information) override;
-   [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction_model(const OptimizationProblem& problem,
-         const Iterate& current_iterate, const Direction& direction, double step_length) const override;
+   [[nodiscard]] const SymmetricMatrix<double>& get_lagrangian_hessian() const override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
 protected:

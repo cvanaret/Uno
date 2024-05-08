@@ -14,7 +14,7 @@ public:
    bool acceptable(double infeasibility_measure, double objective_measure) override;
    bool acceptable_wrt_current_iterate(double current_infeasibility_measure, double current_objective_measure, double trial_infeasibility_measure,
          double trial_objective_measure) override;
-   double compute_actual_reduction(double current_objective_measure, double current_infeasibility_measure, double trial_objective_measure) override;
+   double compute_actual_objective_reduction(double current_objective_measure, double current_infeasibility_measure, double trial_objective_measure) override;
 
 protected:
    const size_t max_number_dominated_entries; /*!< Memory of filter */

@@ -11,7 +11,7 @@ public:
    BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);
 
    void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) override;
-   [[nodiscard]] Iterate compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) override;
+   void compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate) override;
 
 private:
    const double backtracking_ratio;
@@ -19,8 +19,8 @@ private:
    const bool scale_duals_with_step_length;
    size_t total_number_iterations{0}; /*!< Total number of iterations (optimality and feasibility) */
 
-   [[nodiscard]] Iterate backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate, const Direction& direction,
-      WarmstartInformation& warmstart_information);
+   void backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
+         const Direction& direction, WarmstartInformation& warmstart_information);
    [[nodiscard]] double decrease_step_length(double step_length) const;
    static void check_unboundedness(const Direction& direction);
    void set_statistics(Statistics& statistics) const;

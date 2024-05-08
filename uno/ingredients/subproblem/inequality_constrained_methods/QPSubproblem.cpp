@@ -27,11 +27,15 @@ void QPSubproblem::initialize_statistics(Statistics& statistics, const Options& 
    }
 }
 
-void QPSubproblem::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
-   // enforce linear constraints at initial point
+bool QPSubproblem::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
    if (this->enforce_linear_constraints_at_initial_iterate) {
-      Preprocessing::enforce_linear_constraints(problem.model, initial_iterate.primals, initial_iterate.multipliers, *this->solver);
+      const bool is_feasible = Preprocessing::enforce_linear_constraints(problem.model, initial_iterate.primals, initial_iterate.multipliers,
+            *this->solver);
+      if (not is_feasible) {
+         return false;
+      }
    }
+   return true;
 }
 
 void QPSubproblem::evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
@@ -50,7 +54,7 @@ void QPSubproblem::evaluate_functions(Statistics& statistics, const Optimization
    }
 }
 
-Direction QPSubproblem::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+void QPSubproblem::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction,
       const WarmstartInformation& warmstart_information) {
    // evaluate the functions at the current iterate
    this->evaluate_functions(statistics, problem, current_iterate, warmstart_information);
@@ -66,19 +70,17 @@ Direction QPSubproblem::solve(Statistics& statistics, const OptimizationProblem&
    }
 
    // solve the QP
-   Direction direction = this->solver->solve_QP(problem.number_variables, problem.number_constraints, this->direction_bounds,
-         this->linearized_constraint_bounds, this->evaluations.objective_gradient, this->evaluations.constraint_jacobian,
-         *this->hessian_model->hessian, this->initial_point, warmstart_information);
+   this->solver->solve_QP(problem.number_variables, problem.number_constraints, this->direction_lower_bounds, this->direction_upper_bounds,
+         this->linearized_constraints_lower_bounds, this->linearized_constraints_upper_bounds, this->evaluations.objective_gradient,
+         this->evaluations.constraint_jacobian, *this->hessian_model->hessian, this->initial_point, direction, warmstart_information);
    InequalityConstrainedMethod::compute_dual_displacements(problem, current_iterate, direction);
    this->number_subproblems_solved++;
    // reset the initial point
    initialize_vector(this->initial_point, 0.);
-   return direction;
 }
 
-std::function<double(double)> QPSubproblem::compute_predicted_objective_reduction_model(const OptimizationProblem& problem,
-      const Iterate& current_iterate, const Direction& direction, double step_length) const {
-   return problem.compute_predicted_objective_reduction_model(current_iterate, direction, step_length, *this->hessian_model->hessian);
+const SymmetricMatrix<double>& QPSubproblem::get_lagrangian_hessian() const {
+   return *this->hessian_model->hessian;
 }
 
 size_t QPSubproblem::get_hessian_evaluation_count() const {

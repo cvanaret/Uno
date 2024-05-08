@@ -5,12 +5,12 @@
 #define UNO_OPTIMIZATIONPROBLEM_H
 
 #include <vector>
-#include "optimization/Iterate.hpp"
-#include "optimization/Model.hpp"
+#include "ingredients/subproblem/Direction.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
-#include "ingredients/subproblem/Direction.hpp"
+#include "model/Model.hpp"
+#include "optimization/Iterate.hpp"
 
 class OptimizationProblem {
 public:
@@ -31,13 +31,6 @@ public:
    virtual void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const = 0;
    virtual void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix<double>& hessian) const = 0;
 
-   virtual void set_infeasibility_measure(Iterate& iterate, Norm progress_norm) const = 0;
-   virtual void set_objective_measure(Iterate& iterate) const = 0;
-   [[nodiscard]] virtual double compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction,
-         double step_length, Norm progress_norm) const = 0;
-   [[nodiscard]] virtual std::function<double(double)> compute_predicted_objective_reduction_model(const Iterate& current_iterate,
-         const Direction& direction, double step_length, const SymmetricMatrix<double>& hessian) const = 0;
-
    [[nodiscard]] size_t get_number_original_variables() const;
    [[nodiscard]] virtual double variable_lower_bound(size_t variable_index) const = 0;
    [[nodiscard]] virtual double variable_upper_bound(size_t variable_index) const = 0;
@@ -51,6 +44,11 @@ public:
    [[nodiscard]] virtual size_t number_objective_gradient_nonzeros() const = 0;
    [[nodiscard]] virtual size_t number_jacobian_nonzeros() const = 0;
    [[nodiscard]] virtual size_t number_hessian_nonzeros() const = 0;
+
+   [[nodiscard]] virtual double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
+         Norm residual_norm) const = 0;
+   [[nodiscard]] virtual double complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
+         const Multipliers& multipliers, Norm residual_norm) const = 0;
 };
 
 inline OptimizationProblem::OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints):

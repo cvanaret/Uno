@@ -8,7 +8,7 @@
 #include "SymmetricMatrix.hpp"
 #include "SymmetricMatrixFactory.hpp"
 #include "RectangularMatrix.hpp"
-#include "optimization/Model.hpp"
+#include "model/Model.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 #include "tools/Options.hpp"
 #include "tools/Statistics.hpp"
@@ -29,10 +29,10 @@ public:
 
    SymmetricIndefiniteLinearSystem(const std::string& sparse_format, size_t max_dimension, size_t max_number_non_zeros, bool use_regularization,
          const Options& options);
-   void assemble_matrix(const SymmetricMatrix<double>& row_index, const RectangularMatrix<double>& column_index,
+   void assemble_matrix(const SymmetricMatrix<double>& hessian, const RectangularMatrix<double>& constraint_jacobian,
          size_t number_variables, size_t number_constraints);
    void factorize_matrix(const Model& model, SymmetricIndefiniteLinearSolver<ElementType>& linear_solver);
-   void regularize_matrix(Statistics& row_index, const Model& model, SymmetricIndefiniteLinearSolver<ElementType>& linear_solver, size_t size_primal_block,
+   void regularize_matrix(Statistics& statistics, const Model& model, SymmetricIndefiniteLinearSolver<ElementType>& linear_solver, size_t size_primal_block,
          size_t size_dual_block, ElementType dual_regularization_parameter);
    void solve(SymmetricIndefiniteLinearSolver<ElementType>& linear_solver);
    // [[nodiscard]] T get_primal_regularization() const;

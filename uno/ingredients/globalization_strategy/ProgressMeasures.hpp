@@ -5,11 +5,18 @@
 #define UNO_PROGRESSMEASURES_H
 
 #include <functional>
+#include "tools/Infinity.hpp"
 
 struct ProgressMeasures {
    double infeasibility{}; // constraint violation
    std::function<double(double objective_multiplier)> objective{}; // objective measure (scaled by penalty parameter): objective, Lagrangian
    double auxiliary{}; // auxiliary terms (independent of penalty parameter): barrier terms, proximal term, ...
+
+   void reset() {
+      this->infeasibility = INF<double>;
+      this->objective = [](double) { return INF<double>; };
+      this->auxiliary = INF<double>;
+   }
 };
 
 #endif // UNO_PROGRESSMEASURES_H

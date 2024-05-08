@@ -87,14 +87,14 @@ bool NonmonotoneFilter::acceptable_wrt_current_iterate(double current_infeasibil
 }
 
 // compute_actual_reduction: check nonmonotone sufficient reduction condition
-double NonmonotoneFilter::compute_actual_reduction(double current_objective_measure, double current_infeasibility_measure, double trial_objective_measure) {
+double NonmonotoneFilter::compute_actual_objective_reduction(double current_objective_measure, double current_infeasibility_measure, double trial_objective_measure) {
    // check NON-MONOTONE sufficient reduction condition
    // max penalty among most recent entries
    double max_objective = current_objective_measure;
    for (size_t entry_index: Range(this->max_number_dominated_entries)) {
-      const double gamma = (current_infeasibility_measure < this->infeasibility[this->number_entries - entry_index]) ? 1 / this->parameters.gamma : this->parameters.gamma;
-      const double dash_objective = this->objective[this->number_entries - entry_index] + gamma * (this->infeasibility[this->number_entries - entry_index] -
-                                                                                                   current_infeasibility_measure);
+      const size_t index = this->number_entries - entry_index;
+      const double gamma = (current_infeasibility_measure < this->infeasibility[index]) ? 1 / this->parameters.gamma : this->parameters.gamma;
+      const double dash_objective = this->objective[index] + gamma * (this->infeasibility[index] - current_infeasibility_measure);
       max_objective = std::max(max_objective, dash_objective);
    }
    // non-monotone actual reduction

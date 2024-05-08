@@ -27,15 +27,15 @@ public:
 
    void initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) override;
    void reset() override;
-   void register_current_progress(const ProgressMeasures& current_progress_measures) override;
-   [[nodiscard]] double get_infeasibility_upper_bound() const override;
-   void set_infeasibility_upper_bound(double new_upper_bound, double current_infeasibility, double trial_infeasibility) override;
+   void register_current_progress(const ProgressMeasures& current_progress) override;
 
 protected:
    // pointer to allow polymorphism
    const std::unique_ptr<Filter> filter;
    const FilterStrategyParameters parameters; /*!< Set of constants */
 
+   [[nodiscard]] static double unconstrained_merit_function(const ProgressMeasures& progress);
+   [[nodiscard]] double compute_actual_objective_reduction(double current_objective_measure, double current_infeasibility, double trial_objective_measure);
    [[nodiscard]] bool switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const;
 };
 

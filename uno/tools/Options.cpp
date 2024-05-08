@@ -105,12 +105,13 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["switch_to_optimality_requires_acceptance"] = "yes";
       options["switch_to_optimality_requires_linearized_feasibility"] = "no";
       options["LS_scale_duals_with_step_length"] = "yes";
+      options["protect_actual_reduction_against_roundoff"] = "yes";
    }
    else if (preset_name == "filtersqp") {
       options["constraint_relaxation_strategy"] = "feasibility_restoration";
       options["subproblem"] = "QP";
       options["globalization_mechanism"] = "TR";
-      options["globalization_strategy"] = "leyffer_filter_method";
+      options["globalization_strategy"] = "fletcher_filter_method";
       options["filter_type"] = "standard";
       options["progress_norm"] = "L1";
       options["residual_norm"] = "L2";
@@ -123,6 +124,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["TR_min_radius"] = "1e-8";
       options["switch_to_optimality_requires_acceptance"] = "no";
       options["switch_to_optimality_requires_linearized_feasibility"] = "yes";
+      options["protect_actual_reduction_against_roundoff"] = "no";
    }
    else if (preset_name == "byrd") {
       options["constraint_relaxation_strategy"] = "l1_relaxation";
@@ -141,6 +143,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["residual_norm"] = "L1";
       options["sparse_format"] = "CSC";
       options["LS_scale_duals_with_step_length"] = "no";
+      options["protect_actual_reduction_against_roundoff"] = "no";
    }
       else if (preset_name == "funnelsqp") {
       options["constraint_relaxation_strategy"] = "feasibility_restoration";

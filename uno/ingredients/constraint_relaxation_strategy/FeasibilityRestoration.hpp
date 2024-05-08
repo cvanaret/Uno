@@ -7,6 +7,7 @@
 #include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategy/GlobalizationStrategy.hpp"
+#include "ingredients/subproblem/Subproblem.hpp"
 #include "reformulation/OptimalityProblem.hpp"
 #include "reformulation/l1RelaxedProblem.hpp"
 #include "tools/Options.hpp"
@@ -16,17 +17,19 @@ enum class Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 class FeasibilityRestoration : public ConstraintRelaxationStrategy {
 public:
    FeasibilityRestoration(const Model& model, const Options& options);
-   void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) override;
 
+   void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) override;
    void set_trust_region_radius(double trust_region_radius) override;
 
+   [[nodiscard]] size_t maximum_number_variables() const override;
+   [[nodiscard]] size_t maximum_number_constraints() const override;
+
    // direction computation
-   [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
+   void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction, WarmstartInformation& warmstart_information) override;
+   void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction, const std::vector<double>& initial_point,
          WarmstartInformation& warmstart_information) override;
-   [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point,
-         WarmstartInformation& warmstart_information) override;
-   bool solving_feasibility_problem() override;
-   void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information) override;
+   [[nodiscard]] bool solving_feasibility_problem() const override;
+   void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate) override;
 
    // trial iterate acceptance
    void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length) override;
@@ -40,27 +43,20 @@ private:
    const OptimalityProblem optimality_problem;
    l1RelaxedProblem feasibility_problem;
    std::unique_ptr<Subproblem> subproblem;
-   const std::unique_ptr<GlobalizationStrategy> restoration_phase_strategy;
-   const std::unique_ptr<GlobalizationStrategy> optimality_phase_strategy;
+   const std::unique_ptr<GlobalizationStrategy> globalization_strategy;
    Phase current_phase{Phase::OPTIMALITY};
    const double linear_feasibility_tolerance;
    const bool switch_to_optimality_requires_acceptance;
    const bool switch_to_optimality_requires_linearized_feasibility;
    bool switching_to_optimality_phase{false};
 
-   static constexpr double objective_multiplier = 1.;
-
    [[nodiscard]] const OptimizationProblem& current_problem() const;
-   [[nodiscard]] GlobalizationStrategy& current_globalization_strategy() const;
-   [[nodiscard]] Direction solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+   void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction,
          WarmstartInformation& warmstart_information);
    void switch_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate);
 
-   void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate) const;
+   void evaluate_progress_measures(Iterate& iterate) const;
    [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length);
-
-   [[nodiscard]] double complementarity_error(const std::vector<double>& inequality_index, const std::vector<double>& constraints,
-         const Multipliers& multipliers) const override;
 
    void set_statistics(Statistics& statistics, const Iterate& iterate) const;
 };

@@ -19,7 +19,7 @@ void Result::print(bool print_primal_dual_solution) const {
       std::cout << "Terminated with feasible small step\n";
    }
    else if (this->solution.status == TerminationStatus::INFEASIBLE_SMALL_STEP) {
-      std::cout << "Terminated with infeasible small step\n";
+      std::cout << "Failed with infeasible small step\n";
    }
    else if (this->solution.status == TerminationStatus::UNBOUNDED) {
       std::cout << "Terminated with unbounded problem\n";
@@ -37,7 +37,7 @@ void Result::print(bool print_primal_dual_solution) const {
    std::cout << "└ Feasibility complementarity residual:\t" << this->solution.residuals.feasibility_complementarity << '\n';
 
    std::cout << "┌ Infeasibility measure:\t\t" << this->solution.progress.infeasibility << '\n';
-   std::cout << "│ Optimality measure:\t\t\t" << this->solution.progress.objective(1.) << '\n';
+   std::cout << "│ Objective measure:\t\t\t" << this->solution.progress.objective(1.) << '\n';
    std::cout << "└ Auxiliary measure:\t\t\t" << this->solution.progress.auxiliary << '\n';
 
    if (print_primal_dual_solution) {
@@ -47,7 +47,7 @@ void Result::print(bool print_primal_dual_solution) const {
       }
       std::cout << "Lower bound multipliers:\t\t"; print_vector(std::cout, this->solution.multipliers.lower_bounds, 0, this->solution.number_variables);
       std::cout << "Upper bound multipliers:\t\t"; print_vector(std::cout, this->solution.multipliers.upper_bounds, 0, this->solution.number_variables);
-      std::cout << "Objective multiplier:\t\t\t" << this->solution.multipliers.objective << '\n';
+      std::cout << "Objective multiplier:\t\t\t" << this->solution.objective_multiplier << '\n';
    }
 
    std::cout << "CPU time:\t\t\t\t" << this->cpu_time << "s\n";

@@ -33,10 +33,6 @@ double Filter::get_smallest_infeasibility() const {
    }
 }
 
-double Filter::get_infeasibility_upper_bound() const {
-   return this->infeasibility_upper_bound;
-}
-
 void Filter::set_infeasibility_upper_bound(double new_upper_bound) {
    this->infeasibility_upper_bound = new_upper_bound;
 }
@@ -133,10 +129,10 @@ bool Filter::acceptable(double infeasibility_measure, double objective_measure) 
 bool Filter::acceptable_wrt_current_iterate(double current_infeasibility_measure, double current_objective_measure, double trial_infeasibility_measure,
       double trial_objective_measure) {
    return (trial_objective_measure <= current_objective_measure - this->parameters.gamma * trial_infeasibility_measure) ||
-          (trial_infeasibility_measure < this->parameters.beta * current_infeasibility_measure);
+          (trial_infeasibility_measure <= this->parameters.beta * current_infeasibility_measure);
 }
 
-double Filter::compute_actual_reduction(double current_objective_measure, double /*current_infeasibility_measure*/, double trial_objective_measure) {
+double Filter::compute_actual_objective_reduction(double current_objective_measure, double /*current_infeasibility_measure*/, double trial_objective_measure) {
    return current_objective_measure - trial_objective_measure;
 }
 
@@ -176,7 +172,7 @@ std::ostream& operator<<(std::ostream& stream, Filter& filter) {
       }
       stream << "│\n";
    }
-   stream << "└───────────────┴────────────┘\n";
+   stream << "└───────────────┴───────────┘\n";
    std::cout << "Infeasibility upper bound: " << filter.infeasibility_upper_bound << '\n';
    return stream;
 }

@@ -5,7 +5,7 @@
 #include "Subproblem.hpp"
 
 Subproblem::Subproblem(size_t max_number_variables, size_t max_number_constraints):
-      direction(max_number_variables, max_number_constraints),
+      //direction(max_number_variables, max_number_constraints),
       evaluations(max_number_variables, max_number_constraints) {
 }
 

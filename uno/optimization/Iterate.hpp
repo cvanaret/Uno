@@ -8,8 +8,8 @@
 #include "ingredients/globalization_strategy/ProgressMeasures.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
+#include "model/Model.hpp"
 #include "optimization/LagrangianGradient.hpp"
-#include "optimization/Model.hpp"
 #include "optimization/Multipliers.hpp"
 #include "optimization/PrimalDualResiduals.hpp"
 #include "tools/Infinity.hpp"
@@ -38,6 +38,7 @@ public:
    size_t number_constraints;
    std::vector<double> primals; /*!< \f$\mathbb{R}^n\f$ primal variables */
    Multipliers multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
+   double objective_multiplier{1.};
 
    // evaluations
    Evaluations evaluations;

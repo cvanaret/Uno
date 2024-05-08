@@ -5,7 +5,6 @@
 #include "HomogeneousEqualityConstrainedModel.hpp"
 #include "ScaledModel.hpp"
 #include "BoundRelaxedModel.hpp"
-#include "preprocessing/Scaling.hpp"
 
 // note: ownership of the pointer is transferred
 std::unique_ptr<Model> ModelFactory::reformulate(std::unique_ptr<Model> model, Iterate& initial_iterate, const Options& options) {
