@@ -5,13 +5,22 @@ import numpy as np
 #infeasibility = np.array([10, 20, 45, 70])
 #unconstrained_merit = np.array([39, 36, 32, 21])
 #infeasibility_upper_bound = 100
-infeasibility = np.array([10, 29.51275, 133.1133])
-unconstrained_merit = np.array([54.59781, 39.84375, 0])
-infeasibility_upper_bound = 166.392
+
+# polak2.nl
+# infeasibility = np.array([10, 29.51275, 133.1133])
+# unconstrained_merit = np.array([54.59781, 39.84375, 0])
+# infeasibility_upper_bound = 166.392
+
+# hs027.nl
+infeasibility = np.array([7])
+unconstrained_merit = np.array([4.01])
+infeasibility_upper_bound = 100
+current_progress = np.array([3.06032, 0.00995019])
+trial_progress = np.array([4.23914, 3.73614])
 
 # filter parameters
-infeasibility_margin = 0.95 # 0.999
-envelope_slope = 0.01 # 0.001
+infeasibility_margin = 0.999
+envelope_slope = 0.001
 
 # envelope calculation
 margin_infeasibility = infeasibility_margin * infeasibility
@@ -27,15 +36,13 @@ upper_bound_color = 'r'
 acceptable_area_color = 'g'
 
 # filter entries
-plt.scatter(infeasibility, unconstrained_merit, c=entries_color)
+plt.scatter(infeasibility, unconstrained_merit, c=entries_color, s=10)
 number_entries = len(infeasibility)
-# labels
-(xmin, xmax) = plt.xlim()
-x_range = xmax - xmin
-offset = x_range/100.
-for index in range(number_entries):
-    plt.annotate(str(index + 1), (infeasibility[index] + offset, unconstrained_merit[index] + offset))
     
+# current and trial iterates
+plt.scatter(current_progress[0], current_progress[1], s=10)
+plt.scatter(trial_progress[0], trial_progress[1], s=10)
+
 # infeasibility upper bound
 plt.axvline(x=infeasibility_upper_bound, color=upper_bound_color, linestyle='-')
 plt.gca().set_xlim(left=0.)
@@ -52,6 +59,8 @@ for i in range(number_entries):
 plt.hlines(unconstrained_merit[-1], infeasibility[-1], infeasibility_upper_bound, colors=filter_borders_color)
 
 (ymin, ymax) = plt.ylim()
+# make sure the smallest y value isn't above the latest inner cusp point
+ymin = min(ymin, inner_cusps[-1])
 
 # first vertical line
 plt.vlines(x=infeasibility[0], ymin=unconstrained_merit[0], ymax=ymax, colors=filter_borders_color)
@@ -64,6 +73,16 @@ y1 = merge_lists(outer_cusps, inner_cusps)
 y1 = np.insert(y1, 0, ymax)
 y1 = np.insert(y1, 0, ymax)
 plt.fill_between(x, y1=y1, y2=ymin, facecolor=acceptable_area_color, alpha=0.3)
+
+# labels
+(xmin, xmax) = plt.xlim()
+x_offset = (xmax - xmin)/100.
+(ymin, ymax) = plt.ylim()
+y_offset = (ymax - ymin)/100.
+for index in range(number_entries):
+    plt.annotate(str(index + 1), (infeasibility[index] + x_offset, unconstrained_merit[index] + y_offset))
+plt.annotate("current", (current_progress[0] + x_offset, current_progress[1] + y_offset))
+plt.annotate("trial", (trial_progress[0] + x_offset, trial_progress[1] + y_offset))
 
 plt.xlabel("infeasibility")
 plt.ylabel("unconstrained merit")
