@@ -4,7 +4,7 @@
 #include <gtest/gtest.h>
 #include "linear_algebra/VectorView.hpp"
 
-TEST(VectorView, size) {
+TEST(VectorView, Size) {
    const std::vector<double> x{1., 2., 3., 100., 200., 300.};
    // vector view
    const size_t start_index = 2;

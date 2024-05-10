@@ -6,7 +6,7 @@
 #include "symbolic/Indicator.hpp"
 #include "tools/Range.hpp"
 
-TEST(Indicator, Test) {
+TEST(Indicator, Cutoff) {
    const std::vector<double> x{1., 2., 3., 4., 5., 6., 7.};
    const auto indicator = (x < 4.5);
    const std::vector<double> reference_result{1., 1., 1., 1., 0., 0., 0.};

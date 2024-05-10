@@ -5,7 +5,7 @@
 #include <vector>
 #include "symbolic/Expression.hpp"
 
-TEST(HadamardProduct, Test) {
+TEST(HadamardProduct, Masking) {
    const std::vector<double> mask{0., 1., 1., 0., 1.};
    const std::vector<double> x{100., 200., 300., 400., 500.};
    const auto hadamard_product = hadamard(mask, x);
@@ -15,7 +15,7 @@ TEST(HadamardProduct, Test) {
    }
 }
 
-TEST(HadamardProduct, Combination) {
+TEST(HadamardProduct, MaskingCombination) {
    const std::vector<double> mask1{0., 0., 1., 0., 1.};
    const std::vector<double> x{100., 200., 300., 400., 500.};
 
