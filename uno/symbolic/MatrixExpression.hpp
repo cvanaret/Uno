@@ -63,7 +63,7 @@ protected:
    const size_t number_of_rows, number_of_columns;
 };
 
-// free function
+// free functions
 inline ZeroMatrix zeros(size_t dimension) {
    return {dimension, dimension};
 }

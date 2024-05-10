@@ -5,6 +5,7 @@
 #define UNO_TRANSPOSE_H
 
 #include "MatrixExpression.hpp"
+#include "linear_algebra/Matrix.hpp"
 
 // Transpose: symbolic transpose of an expression
 template <typename E>
@@ -15,6 +16,8 @@ public:
    explicit Transpose(E&& expression): expression(std::forward<E>(expression)) { }
 
    [[nodiscard]] size_t size() const { return this->expression.size(); }
+   [[nodiscard]] size_t number_rows() const { return this->expression.number_columns(); }
+   [[nodiscard]] size_t number_columns() const { return this->expression.number_rows(); }
 
    [[nodiscard]] typename Transpose::value_type operator[](const std::pair<size_t, size_t>& indices) const {
       // switch the order of the indices
@@ -24,6 +27,15 @@ public:
    template <typename VectorType, typename ResultType>
    void product(const VectorType& /*vector*/, ResultType& /*result*/) const {
       throw std::runtime_error("Transpose::product is not implemented yet");
+   }
+
+   void for_each(const std::function<void (size_t /*row_index*/, size_t /*column_index*/, double /*element*/)>& f) const {
+      this->expression.for_each([&](size_t row_index, size_t column_index, double element) {
+         f(column_index, row_index, element);
+      });
+   }
+
+   void evaluate(Matrix<double>& /*matrix*/) {
    }
 
 protected:
