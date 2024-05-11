@@ -55,6 +55,7 @@ protected:
 
    [[nodiscard]] double compute_stationarity_scaling(const Iterate& iterate) const;
    [[nodiscard]] double compute_complementarity_scaling(const Iterate& iterate) const;
+   static void set_objective_statistics(Statistics& statistics, const Iterate& iterate);
 };
 
 #endif //UNO_CONSTRAINTRELAXATIONSTRATEGY_H

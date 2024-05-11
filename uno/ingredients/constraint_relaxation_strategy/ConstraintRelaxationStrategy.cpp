@@ -126,3 +126,7 @@ double ConstraintRelaxationStrategy::compute_complementarity_scaling(const Itera
       return std::max(1., bound_multiplier_norm / scaling_factor);
    }
 }
+
+void ConstraintRelaxationStrategy::set_objective_statistics(Statistics& statistics, const Iterate& iterate) {
+   statistics.set("objective", iterate.evaluations.objective);
+}

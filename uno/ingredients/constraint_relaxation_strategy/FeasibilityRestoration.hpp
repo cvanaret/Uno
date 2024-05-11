@@ -59,6 +59,7 @@ private:
    [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length);
 
    void set_statistics(Statistics& statistics, const Iterate& iterate) const;
+   void set_residuals_statistics(Statistics& statistics, const Iterate& iterate) const;
 };
 
 #endif //UNO_FEASIBILITYRESTORATION_H
