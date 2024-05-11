@@ -2,9 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <gtest/gtest.h>
-#include "tools/ChainCollection.hpp"
-#include "tools/CollectionAdapter.hpp"
-#include "tools/Range.hpp"
+#include "symbolic/ChainCollection.hpp"
+#include "symbolic/CollectionAdapter.hpp"
+#include "symbolic/Range.hpp"
 #include <vector>
 
 TEST(ChainCollection, Size) {

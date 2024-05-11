@@ -7,7 +7,7 @@
 #include <vector>
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "model/Model.hpp"
-#include "tools/CollectionAdapter.hpp"
+#include "symbolic/CollectionAdapter.hpp"
 
 // include AMPL Solver Library (ASL)
 extern "C" {

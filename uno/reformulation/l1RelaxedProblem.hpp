@@ -7,8 +7,8 @@
 #include "OptimizationProblem.hpp"
 #include "symbolic/Expression.hpp"
 #include "symbolic/VectorExpression.hpp"
-#include "tools/ChainCollection.hpp"
-#include "tools/Range.hpp"
+#include "symbolic/ChainCollection.hpp"
+#include "symbolic/Range.hpp"
 #include "tools/Infinity.hpp"
 
 struct ElasticVariables {

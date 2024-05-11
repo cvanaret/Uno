@@ -6,7 +6,7 @@
 #include <algorithm>
 #include "Filter.hpp"
 #include "tools/Logger.hpp"
-#include "tools/Range.hpp"
+#include "symbolic/Range.hpp"
 
 Filter::Filter(const Options& options) :
       capacity(options.get_unsigned_int("filter_capacity")),

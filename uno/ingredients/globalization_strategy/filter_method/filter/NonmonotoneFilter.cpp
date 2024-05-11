@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "NonmonotoneFilter.hpp"
-#include "tools/Range.hpp"
+#include "symbolic/Range.hpp"
 #include "tools/Logger.hpp"
 
 NonmonotoneFilter::NonmonotoneFilter(const Options& options) :

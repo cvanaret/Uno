@@ -12,7 +12,7 @@
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "optimization/TerminationStatus.hpp"
-#include "tools/Collection.hpp"
+#include "symbolic/Collection.hpp"
 
 enum FunctionType {LINEAR, NONLINEAR};
 enum BoundType {EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES, UNBOUNDED};
