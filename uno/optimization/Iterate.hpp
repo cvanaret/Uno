@@ -24,8 +24,8 @@ struct Evaluations {
          constraints(max_number_constraints),
          objective_gradient(max_number_variables),
          constraint_jacobian(max_number_constraints) {
-      for (auto& constraint_gradient: this->constraint_jacobian) {
-         constraint_gradient.reserve(max_number_variables);
+      for (auto& row: this->constraint_jacobian) {
+         row.reserve(max_number_variables);
       }
    }
 };
@@ -45,11 +45,16 @@ public:
    static size_t number_eval_constraints;
    static size_t number_eval_objective_gradient;
    static size_t number_eval_jacobian;
-   // lazy evaluation flags
+   // lazy evaluation flags: indicate if the quantities have already been computed
    bool is_objective_computed{false};
    bool are_constraints_computed{false};
-   bool is_objective_gradient_computed{false}; /*!< Flag that indicates if the objective gradient has already been computed */
-   bool is_constraint_jacobian_computed{false}; /*!< Flag that indicates if the constraint Jacobian has already been computed */
+   bool is_objective_gradient_computed{false};
+   bool is_constraint_jacobian_computed{false};
+
+   void evaluate_objective(const Model& model);
+   void evaluate_constraints(const Model& model);
+   void evaluate_objective_gradient(const Model& model);
+   void evaluate_constraint_jacobian(const Model& model);
 
    // primal-dual residuals
    PrimalDualResiduals residuals{};
@@ -58,14 +63,8 @@ public:
    // measures of progress (infeasibility, objective, auxiliary)
    ProgressMeasures progress{INF<double>, {}, INF<double>};
 
-   // status
    TerminationStatus status{TerminationStatus::NOT_OPTIMAL};
-
-   void evaluate_objective(const Model& model);
-   void evaluate_constraints(const Model& model);
-   void evaluate_objective_gradient(const Model& model);
-   void evaluate_constraint_jacobian(const Model& model);
-
+   
    void set_number_variables(size_t number_variables);
 
    friend std::ostream& operator<<(std::ostream& stream, const Iterate& iterate);

@@ -20,8 +20,7 @@ public:
    // https://internalpointers.com/post/writing-custom-iterators-modern-cpp
    class Iterator {
    public:
-      explicit Iterator(size_t value) : value(value) {
-      }
+      explicit Iterator(size_t value) : value(value) { }
       const size_t& operator*() const { return this->value; }
       const size_t& operator->() { return this->value; }
       // prefix increment
