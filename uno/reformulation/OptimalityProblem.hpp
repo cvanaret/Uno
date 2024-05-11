@@ -83,7 +83,7 @@ inline double OptimalityProblem::complementarity_error(const std::vector<double>
    });
 
    // inequality constraints
-   const VectorExpression<const Collection<size_t>&> constraint_complementarity(this->model.get_inequality_constraints(), [&](size_t
+   const VectorExpression constraint_complementarity(this->model.get_inequality_constraints(), [&](size_t
    constraint_index) {
       if (0. < multipliers.constraints[constraint_index]) { // lower bound
          return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->model.constraint_lower_bound(constraint_index));

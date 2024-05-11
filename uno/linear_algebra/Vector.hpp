@@ -82,8 +82,8 @@ void copy_from(std::vector<ElementType>& destination, const std::vector<ElementT
 // norms of any array with elements of any type
 
 // compute l1 norm = sum |x|_i
-template <typename ElementType, typename Indices>
-ElementType norm_1(const VectorExpression<Indices>& expression) {
+template <typename ElementType, typename Indices, typename Callable>
+ElementType norm_1(const VectorExpression<Indices, Callable>& expression) {
    ElementType norm{0};
    expression.for_each([&](size_t, size_t index) {
       norm += std::abs(expression[index]);
@@ -117,8 +117,8 @@ ElementType norm_2_squared(const Array& x) {
    return norm_squared;
 }
 
-template <typename ElementType, typename Indices>
-ElementType norm_2_squared(const VectorExpression<Indices>& expression) {
+template <typename ElementType, typename Indices, typename Callable>
+ElementType norm_2_squared(const VectorExpression<Indices, Callable>& expression) {
    ElementType norm_squared{0};
    expression.for_each([&](size_t, size_t index) {
       const ElementType xi = expression[index];
@@ -146,8 +146,8 @@ ElementType norm_2(const Array& x, const Arrays&... other_arrays) {
 }
 
 // compute ||x||_inf
-template <typename ElementType, typename Indices>
-ElementType norm_inf(const VectorExpression<Indices>& expression) {
+template <typename ElementType, typename Indices, typename Callable>
+ElementType norm_inf(const VectorExpression<Indices, Callable>& expression) {
    ElementType norm{0};
    expression.for_each([&](size_t, size_t index) {
       norm = std::max(norm, std::abs(expression[index]));
