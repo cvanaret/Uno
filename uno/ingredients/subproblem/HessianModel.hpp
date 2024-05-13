@@ -48,11 +48,4 @@ protected:
    void regularize(Statistics& statistics, SymmetricMatrix<double>& hessian, size_t number_original_variables);
 };
 
-// HessianModel factory
-class HessianModelFactory {
-public:
-   static std::unique_ptr<HessianModel> create(const std::string& hessian_model, size_t dimension, size_t maximum_number_nonzeros,
-         bool convexify, const Options& options);
-};
-
 #endif // UNO_HESSIANMODEL_H

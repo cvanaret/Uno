@@ -143,10 +143,9 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
 
    // possibly go from restoration phase to optimality phase
    if (this->current_phase == Phase::FEASIBILITY_RESTORATION && not this->switch_to_optimality_requires_acceptance &&
-         (not this->switch_to_optimality_requires_linearized_feasibility || this->model.linearized_constraint_violation(direction.primals,
-         current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian, step_length, this->residual_norm) <=
-         this->linear_feasibility_tolerance) && this->globalization_strategy->is_feasibility_iterate_acceptable(current_iterate.progress,
-               trial_iterate.progress)) {
+         (not this->switch_to_optimality_requires_linearized_feasibility || this->model.constraint_violation(current_iterate.evaluations.constraints +
+         step_length*(current_iterate.evaluations.constraint_jacobian * direction.primals), this->residual_norm) <= this->linear_feasibility_tolerance) &&
+         this->globalization_strategy->is_feasibility_iterate_acceptable(current_iterate.progress, trial_iterate.progress)) {
       this->switch_to_optimality_phase(current_iterate, trial_iterate);
    }
 }
@@ -190,12 +189,15 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
             predicted_reduction, this->current_problem().get_objective_multiplier());
    }
    // possibly switch back to optimality phase if the trial iterate in feasibility restoration was accepted
-   if (accept_iterate && this->current_phase == Phase::FEASIBILITY_RESTORATION && this->switch_to_optimality_requires_acceptance &&
-         this->globalization_strategy->is_feasibility_iterate_acceptable(current_iterate.progress, trial_iterate.progress)) {
-      this->switch_to_optimality_phase(current_iterate, trial_iterate);
+   if (accept_iterate) {
+      if (this->current_phase == Phase::FEASIBILITY_RESTORATION && this->switch_to_optimality_requires_acceptance &&
+          this->globalization_strategy->is_feasibility_iterate_acceptable(current_iterate.progress, trial_iterate.progress)) {
+         this->switch_to_optimality_phase(current_iterate, trial_iterate);
+      }
+      this->compute_primal_dual_residuals(this->optimality_problem, this->feasibility_problem, trial_iterate);
+      this->set_residuals_statistics(statistics, trial_iterate);
    }
-   this->compute_primal_dual_residuals(this->optimality_problem, this->feasibility_problem, trial_iterate);
-   this->set_statistics(statistics, trial_iterate);
+   ConstraintRelaxationStrategy::set_objective_statistics(statistics, trial_iterate);
    return accept_iterate;
 }
 
@@ -235,7 +237,11 @@ size_t FeasibilityRestoration::maximum_number_constraints() const {
 }
 
 void FeasibilityRestoration::set_statistics(Statistics& statistics, const Iterate& iterate) const {
-   statistics.set("objective", iterate.evaluations.objective);
+   ConstraintRelaxationStrategy::set_objective_statistics(statistics, iterate);
+   this->set_residuals_statistics(statistics, iterate);
+}
+
+void FeasibilityRestoration::set_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
    if (this->model.is_constrained()) {
       statistics.set("primal infeas.", iterate.residuals.infeasibility);
    }

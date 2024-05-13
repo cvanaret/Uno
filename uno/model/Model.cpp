@@ -29,21 +29,3 @@ double Model::constraint_violation(double constraint_value, size_t constraint_in
    const double upper_bound_violation = std::max(0., constraint_value - this->constraint_upper_bound(constraint_index));
    return std::max(lower_bound_violation, upper_bound_violation);
 }
-
-// compute ||c||
-double Model::constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const {
-   const VectorExpression constraint_violation(Range(constraints.size()), [&](size_t constraint_index) {
-      return this->constraint_violation(constraints[constraint_index], constraint_index);
-   });
-   return norm(residual_norm, constraint_violation);
-}
-
-double Model::linearized_constraint_violation(const std::vector<double>& primal_direction, const std::vector<double>& constraints,
-      const RectangularMatrix<double>& constraint_jacobian, double step_length, Norm residual_norm) const {
-   // determine the linearized constraint violation term: ||c(x_k) + α ∇c(x_k)^T d||
-   const VectorExpression linearized_constraints(Range(this->number_constraints), [&](size_t constraint_index) {
-      const double linearized_constraint_j = constraints[constraint_index] + step_length * dot(primal_direction, constraint_jacobian[constraint_index]);
-      return this->constraint_violation(linearized_constraint_j, constraint_index);
-   });
-   return norm(residual_norm, linearized_constraints);
-}

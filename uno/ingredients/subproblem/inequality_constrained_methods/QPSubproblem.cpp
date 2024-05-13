@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "QPSubproblem.hpp"
+#include "ingredients/subproblem/HessianModelFactory.hpp"
 #include "preprocessing/Preprocessing.hpp"
 #include "solvers/QP/QPSolverFactory.hpp"
 

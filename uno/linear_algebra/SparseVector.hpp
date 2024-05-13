@@ -7,8 +7,8 @@
 #include <cassert>
 #include <functional>
 #include "tools/Logger.hpp"
-#include "tools/Range.hpp"
-#include "tools/Collection.hpp"
+#include "symbolic/Range.hpp"
+#include "symbolic/Collection.hpp"
 
 // SparseVector is a sparse vector that uses contiguous memory. It contains:
 // - a vector of indices of type size_t

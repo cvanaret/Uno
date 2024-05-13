@@ -4,7 +4,7 @@
 #include <gtest/gtest.h>
 #include <vector>
 #include "symbolic/ScalarMultiple.hpp"
-#include "tools/Range.hpp"
+#include "symbolic/Range.hpp"
 
 TEST(ScalarMultiple, TimesThree) {
    const std::vector<double> x{1., 2., 3.};

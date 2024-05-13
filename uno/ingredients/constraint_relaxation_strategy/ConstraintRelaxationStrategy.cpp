@@ -3,6 +3,7 @@
 
 #include "ConstraintRelaxationStrategy.hpp"
 #include "symbolic/VectorView.hpp"
+#include "symbolic/Expression.hpp"
 
 ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Model& model, const Options& options):
       model(model),
@@ -30,8 +31,8 @@ double ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction_m
       double step_length) const {
    // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
    const double current_constraint_violation = this->model.constraint_violation(current_iterate.evaluations.constraints, this->progress_norm);
-   const double trial_linearized_constraint_violation = this->model.linearized_constraint_violation(direction.primals,
-         current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian, step_length, this->progress_norm);
+   const double trial_linearized_constraint_violation = this->model.constraint_violation(current_iterate.evaluations.constraints + step_length *
+         (current_iterate.evaluations.constraint_jacobian * direction.primals), this->progress_norm);
    return current_constraint_violation - trial_linearized_constraint_violation;
 }
 
@@ -125,4 +126,8 @@ double ConstraintRelaxationStrategy::compute_complementarity_scaling(const Itera
       );
       return std::max(1., bound_multiplier_norm / scaling_factor);
    }
+}
+
+void ConstraintRelaxationStrategy::set_objective_statistics(Statistics& statistics, const Iterate& iterate) {
+   statistics.set("objective", iterate.evaluations.objective);
 }

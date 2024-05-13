@@ -44,13 +44,12 @@ void ConvexifiedHessian::evaluate(Statistics& statistics, const OptimizationProb
 
 // Nocedal and Wright, p51
 void ConvexifiedHessian::regularize(Statistics& statistics, SymmetricMatrix<double>& hessian, size_t number_original_variables) {
-   //assert(size_block_to_regularize <= matrix.dimension && "The block to regularize is larger than the matrix");
-
    const double smallest_diagonal_entry = hessian.smallest_diagonal_entry();
    DEBUG << "The minimal diagonal entry of the matrix is " << hessian.smallest_diagonal_entry() << '\n';
 
    double regularization_factor = (smallest_diagonal_entry <= 0.) ? this->regularization_initial_value - smallest_diagonal_entry : 0.;
    bool good_inertia = false;
+   bool symbolic_factorization_performed = false;
    while (not good_inertia) {
       DEBUG << "Testing factorization with regularization factor " << regularization_factor << '\n';
       if (0. < regularization_factor) {
@@ -58,8 +57,11 @@ void ConvexifiedHessian::regularize(Statistics& statistics, SymmetricMatrix<doub
             return (variable_index < number_original_variables) ? regularization_factor : 0.;
          });
       }
-      // TODO check if sparsity pattern changes. If not, perform symbolic factorization once
-      this->linear_solver->do_symbolic_factorization(hessian);
+      // perform the symbolic factorization only once
+      if (not symbolic_factorization_performed) {
+         this->linear_solver->do_symbolic_factorization(hessian);
+         symbolic_factorization_performed = true;
+      }
       this->linear_solver->do_numerical_factorization(hessian);
 
       if (this->linear_solver->rank() == number_original_variables && this->linear_solver->number_negative_eigenvalues() == 0) {
@@ -73,18 +75,4 @@ void ConvexifiedHessian::regularize(Statistics& statistics, SymmetricMatrix<doub
       }
    }
    statistics.set("regularization", regularization_factor);
-}
-
-// Factory
-std::unique_ptr<HessianModel> HessianModelFactory::create(const std::string& hessian_model, size_t dimension, size_t maximum_number_nonzeros,
-      bool convexify, const Options& options) {
-   if (hessian_model == "exact") {
-      if (convexify) {
-         return std::make_unique<ConvexifiedHessian>(dimension, maximum_number_nonzeros, options);
-      }
-      else {
-         return std::make_unique<ExactHessian>(dimension, maximum_number_nonzeros, options);
-      }
-   }
-   throw std::invalid_argument("Hessian model " + hessian_model + " does not exist");
 }

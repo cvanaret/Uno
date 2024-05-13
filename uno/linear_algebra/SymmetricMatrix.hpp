@@ -14,6 +14,8 @@
 template <typename ElementType>
 class SymmetricMatrix {
 public:
+   using value_type = ElementType;
+
    size_t dimension;
    size_t number_nonzeros{0};
    size_t capacity;

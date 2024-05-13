@@ -10,19 +10,19 @@ class VectorView {
 public:
    using value_type = typename std::remove_reference_t<Expression>::value_type;
 
-   class Iterator {
+   class iterator {
    public:
-      Iterator(const VectorView<Expression>& view, size_t index) : view(view), index(index) {
+      iterator(const VectorView<Expression>& view, size_t index) : view(view), index(index) {
       }
       std::pair<size_t, value_type> operator*() {
          // copy the element in the pair. Cheap only for trivial types
          return {this->index, this->view[this->index]};
       }
       // prefix increment
-      Iterator& operator++() { this->index++; return *this; }
+      iterator& operator++() { this->index++; return *this; }
 
-      friend bool operator== (const Iterator& a, const Iterator& b) { return &(a.view) == &(b.view) && a.index == b.index; };
-      friend bool operator!= (const Iterator& a, const Iterator& b) { return &(a.view) != &(b.view) || a.index != b.index; };
+      friend bool operator==(const iterator& a, const iterator& b) { return &(a.view) == &(b.view) && a.index == b.index; };
+      friend bool operator!=(const iterator& a, const iterator& b) { return &(a.view) != &(b.view) || a.index != b.index; };
 
    private:
       const VectorView<Expression>& view;
@@ -35,8 +35,8 @@ public:
    [[nodiscard]] const value_type& operator[](size_t index) const noexcept { return this->expression[index]; }
    [[nodiscard]] size_t size() const noexcept { return this->length; }
 
-   [[nodiscard]] Iterator begin() const noexcept { return Iterator(*this, 0); }
-   [[nodiscard]] Iterator end() const noexcept { return Iterator(*this, this->length); }
+   [[nodiscard]] iterator begin() const noexcept { return iterator(*this, 0); }
+   [[nodiscard]] iterator end() const noexcept { return iterator(*this, this->length); }
 
 protected:
    Expression expression;

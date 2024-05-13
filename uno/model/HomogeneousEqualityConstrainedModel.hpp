@@ -5,10 +5,10 @@
 #define UNO_HOMOGENEOUSEQUALITYCONSTRAINEDMODEL_H
 
 #include "Model.hpp"
-#include "tools/ChainCollection.hpp"
+#include "symbolic/ChainCollection.hpp"
 #include "tools/Infinity.hpp"
-#include "tools/Range.hpp"
-#include "tools/CollectionAdapter.hpp"
+#include "symbolic/Range.hpp"
+#include "symbolic/CollectionAdapter.hpp"
 
 // generate an equality-constrained model by:
 // - introducing slacks in inequality constraints
