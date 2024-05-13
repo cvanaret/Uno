@@ -342,6 +342,7 @@ double PrimalDualInteriorPointSubproblem::evaluate_subproblem_objective(const Di
    return linear_term + quadratic_term;
 }
 
+// TODO use a single function for primal and dual fraction-to-boundary rules
 double PrimalDualInteriorPointSubproblem::primal_fraction_to_boundary(const OptimizationProblem& problem, const Iterate& current_iterate, double tau) {
    double primal_length = 1.;
    problem.get_lower_bounded_variables().for_each([&](size_t, size_t variable_index) {

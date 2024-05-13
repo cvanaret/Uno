@@ -237,7 +237,6 @@ void l1Relaxation::compute_progress_measures(Iterate& current_iterate, Iterate& 
       this->globalization_strategy->reset();
       this->subproblem->subproblem_definition_changed = false;
    }
-   // compute the progress measures for the current and trial iterates
    this->evaluate_progress_measures(current_iterate);
    this->evaluate_progress_measures(trial_iterate);
 
