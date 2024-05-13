@@ -5,7 +5,8 @@
 #define UNO_SYMMETRIC2BY2BLOCKMATRIX_H
 
 #include "VectorView.hpp"
-#include "expression/TransposedMatrix.hpp"
+#include "symbolic/Transpose.hpp"
+#include "linear_algebra/Matrix.hpp"
 #include "linear_algebra/Vector.hpp"
 
 // symmetric block matrix
@@ -19,6 +20,7 @@ public:
    Symmetric2by2BlockMatrix(TopLeftBlock&& A, TopRightBlock&& B, BottomRightBlock&& C);
    void for_each(const std::function<void(size_t, size_t, double)>& f) const;
    void product(const std::vector<double>& vector, std::vector<double>& result) const;
+   void evaluate(Matrix<double>& matrix);
 
 protected:
    TopLeftBlock A;
@@ -74,6 +76,11 @@ void Symmetric2by2BlockMatrix<TopLeftBlock, TopRightBlock, BottomRightBlock>::pr
    this->B.product(vector_bottom_part, result_top_part);
    transpose(this->B).product(vector_top_part, result_bottom_part);
    this->C.product(vector_bottom_part, result_bottom_part);
+}
+
+template <typename TopLeftBlock, typename TopRightBlock, typename BottomRightBlock>
+void Symmetric2by2BlockMatrix<TopLeftBlock, TopRightBlock, BottomRightBlock>::evaluate(Matrix<double>& /*matrix*/) {
+   std::cout << "Symmetric2by2BlockMatrix::evaluate\n";
 }
 
 #endif // UNO_SYMMETRIC2BY2BLOCKMATRIX_H

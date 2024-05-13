@@ -465,7 +465,7 @@ void PrimalDualInteriorPointSubproblem::compute_bound_dual_direction(const Optim
 void PrimalDualInteriorPointSubproblem::compute_least_square_multipliers(const OptimizationProblem& problem, Iterate& iterate) {
    this->augmented_system.matrix->dimension = problem.number_variables + problem.number_constraints;
    this->augmented_system.matrix->reset();
-   Preprocessing::compute_least_square_multipliers(problem.model, *this->augmented_system.matrix, this->augmented_system.rhs, *this->linear_solver,
+   Preprocessing::compute_least_square_multipliers(problem, *this->augmented_system.matrix, this->augmented_system.rhs, *this->linear_solver,
          iterate, iterate.multipliers.constraints, this->least_square_multiplier_max_norm);
 }
 

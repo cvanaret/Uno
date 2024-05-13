@@ -2,14 +2,14 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <gtest/gtest.h>
-#include "expression/MatrixExpression.hpp"
 #include "linear_algebra/Symmetric2by2BlockMatrix.hpp"
+#include "symbolic/MatrixExpression.hpp"
 
 TEST(Symmetric2by2BlockMatrix, Correctness) {
    const size_t block_dimension = 2;
    const Symmetric2by2BlockMatrix block_matrix(
          identity(block_dimension), identity(block_dimension),
-         /* identity(block_dimension) */ identity(block_dimension)
+                                    identity(block_dimension)
    );
    const std::vector<double> x{1., 2., 100., 200.};
 

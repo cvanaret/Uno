@@ -2,14 +2,14 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "Preprocessing.hpp"
-#include "expression/MatrixExpression.hpp"
+#include "symbolic/JacobianExpression.hpp"
 #include "linear_algebra/CSCSymmetricMatrix.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
-#include "linear_algebra/Symmetric2by2BlockMatrix.hpp"
 
 // compute a least-square approximation of the multipliers by solving a linear system (uses existing linear system)
-void Preprocessing::compute_least_square_multipliers(const Model& model, SymmetricMatrix<double>& matrix, std::vector<double>& rhs,
+void Preprocessing::compute_least_square_multipliers(const OptimizationProblem& problem, SymmetricMatrix<double>& matrix, std::vector<double>& rhs,
       SymmetricIndefiniteLinearSolver<double>& linear_solver, Iterate& current_iterate, std::vector<double>& multipliers, double multiplier_max_norm) {
+   const Model& model = problem.model;
    current_iterate.evaluate_objective_gradient(model);
    current_iterate.evaluate_constraint_jacobian(model);
 
