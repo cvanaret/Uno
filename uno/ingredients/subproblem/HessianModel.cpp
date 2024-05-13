@@ -51,6 +51,7 @@ void ConvexifiedHessian::regularize(Statistics& statistics, SymmetricMatrix<doub
 
    double regularization_factor = (smallest_diagonal_entry <= 0.) ? this->regularization_initial_value - smallest_diagonal_entry : 0.;
    bool good_inertia = false;
+   bool symbolic_factorization_performed = false;
    while (not good_inertia) {
       DEBUG << "Testing factorization with regularization factor " << regularization_factor << '\n';
       if (0. < regularization_factor) {
@@ -58,8 +59,11 @@ void ConvexifiedHessian::regularize(Statistics& statistics, SymmetricMatrix<doub
             return (variable_index < number_original_variables) ? regularization_factor : 0.;
          });
       }
-      // TODO check if sparsity pattern changes. If not, perform symbolic factorization once
-      this->linear_solver->do_symbolic_factorization(hessian);
+      // perform the symbolic factorization only once
+      if (not symbolic_factorization_performed) {
+         this->linear_solver->do_symbolic_factorization(hessian);
+         symbolic_factorization_performed = true;
+      }
       this->linear_solver->do_numerical_factorization(hessian);
 
       if (this->linear_solver->rank() == number_original_variables && this->linear_solver->number_negative_eigenvalues() == 0) {
