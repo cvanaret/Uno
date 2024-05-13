@@ -143,10 +143,9 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
 
    // possibly go from restoration phase to optimality phase
    if (this->current_phase == Phase::FEASIBILITY_RESTORATION && not this->switch_to_optimality_requires_acceptance &&
-         (not this->switch_to_optimality_requires_linearized_feasibility || this->model.linearized_constraint_violation(direction.primals,
-         current_iterate.evaluations.constraints, current_iterate.evaluations.constraint_jacobian, step_length, this->residual_norm) <=
-         this->linear_feasibility_tolerance) && this->globalization_strategy->is_feasibility_iterate_acceptable(current_iterate.progress,
-               trial_iterate.progress)) {
+         (not this->switch_to_optimality_requires_linearized_feasibility || this->model.constraint_violation(current_iterate.evaluations.constraints +
+         step_length*(current_iterate.evaluations.constraint_jacobian * direction.primals), this->residual_norm) <= this->linear_feasibility_tolerance) &&
+         this->globalization_strategy->is_feasibility_iterate_acceptable(current_iterate.progress, trial_iterate.progress)) {
       this->switch_to_optimality_phase(current_iterate, trial_iterate);
    }
 }

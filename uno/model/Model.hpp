@@ -78,10 +78,17 @@ public:
 
    // constraint violation
    [[nodiscard]] virtual double constraint_violation(double constraint_value, size_t constraint_index) const;
-   [[nodiscard]] double constraint_violation(const std::vector<double>& constraints, Norm residual_norm) const;
-   // TODO: use expressions instead
-   [[nodiscard]] double linearized_constraint_violation(const std::vector<double>& primal_direction, const std::vector<double>& constraints,
-         const RectangularMatrix<double>& constraint_jacobian, double step_length, Norm residual_norm) const;
+   template <typename Array>
+   double constraint_violation(const Array& constraints, Norm residual_norm) const;
 };
+
+// compute ||c||
+template <typename Array>
+double Model::constraint_violation(const Array& constraints, Norm residual_norm) const {
+   const VectorExpression constraint_violation(Range(constraints.size()), [&](size_t constraint_index) {
+      return this->constraint_violation(constraints[constraint_index], constraint_index);
+   });
+   return norm(residual_norm, constraint_violation);
+}
 
 #endif // UNO_MODEL_H
