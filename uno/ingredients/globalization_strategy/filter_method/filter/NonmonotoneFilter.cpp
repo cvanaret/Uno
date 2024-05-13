@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "NonmonotoneFilter.hpp"
-#include "tools/Range.hpp"
+#include "symbolic/Range.hpp"
 #include "tools/Logger.hpp"
 
 NonmonotoneFilter::NonmonotoneFilter(const Options& options) :
@@ -92,9 +92,9 @@ double NonmonotoneFilter::compute_actual_objective_reduction(double current_obje
    // max penalty among most recent entries
    double max_objective = current_objective_measure;
    for (size_t entry_index: Range(this->max_number_dominated_entries)) {
-      const double gamma = (current_infeasibility_measure < this->infeasibility[this->number_entries - entry_index]) ? 1 / this->parameters.gamma : this->parameters.gamma;
-      const double dash_objective = this->objective[this->number_entries - entry_index] + gamma * (this->infeasibility[this->number_entries - entry_index] -
-                                                                                                   current_infeasibility_measure);
+      const size_t index = this->number_entries - entry_index;
+      const double gamma = (current_infeasibility_measure < this->infeasibility[index]) ? 1 / this->parameters.gamma : this->parameters.gamma;
+      const double dash_objective = this->objective[index] + gamma * (this->infeasibility[index] - current_infeasibility_measure);
       max_objective = std::max(max_objective, dash_objective);
    }
    // non-monotone actual reduction

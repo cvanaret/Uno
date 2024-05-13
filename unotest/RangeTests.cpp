@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <gtest/gtest.h>
-#include "tools/Range.hpp"
+#include "symbolic/Range.hpp"
 
 TEST(Range, Size) {
    const size_t size = 5;

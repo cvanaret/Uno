@@ -17,15 +17,17 @@ public:
    void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
    void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) override;
 
-   void set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) override;
-   [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const OptimizationProblem&, const Iterate&, const Direction&, double) const override;
+   void set_auxiliary_measure(const Model& model, Iterate& iterate) override;
+   [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate&, const Direction&, double) const override;
 
    void postprocess_iterate(const OptimizationProblem& model, Iterate& iterate) override;
 
 protected:
    std::vector<double> initial_point{};
-   std::vector<Interval> direction_bounds{};
-   std::vector<Interval> linearized_constraint_bounds{};
+   std::vector<double> direction_lower_bounds{};
+   std::vector<double> direction_upper_bounds{};
+   std::vector<double> linearized_constraints_lower_bounds{};
+   std::vector<double> linearized_constraints_upper_bounds{};
 
    void set_direction_bounds(const OptimizationProblem& problem, const Iterate& current_iterate);
    void set_linearized_constraint_bounds(const OptimizationProblem& problem, const std::vector<double>& current_constraints);

@@ -6,8 +6,10 @@
 InequalityConstrainedMethod::InequalityConstrainedMethod(size_t max_number_variables, size_t max_number_constraints):
       Subproblem(max_number_variables, max_number_constraints),
       initial_point(max_number_variables),
-      direction_bounds(max_number_variables),
-      linearized_constraint_bounds(max_number_constraints) {
+      direction_lower_bounds(max_number_variables),
+      direction_upper_bounds(max_number_variables),
+      linearized_constraints_lower_bounds(max_number_constraints),
+      linearized_constraints_upper_bounds(max_number_constraints) {
 }
 
 void InequalityConstrainedMethod::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) {
@@ -35,23 +37,24 @@ void InequalityConstrainedMethod::exit_feasibility_problem(const OptimizationPro
 void InequalityConstrainedMethod::set_direction_bounds(const OptimizationProblem& problem, const Iterate& current_iterate) {
    // bounds of original variables intersected with trust region
    for (size_t variable_index: Range(problem.get_number_original_variables())) {
-      double lb = std::max(-this->trust_region_radius, problem.variable_lower_bound(variable_index) - current_iterate.primals[variable_index]);
-      double ub = std::min(this->trust_region_radius, problem.variable_upper_bound(variable_index) - current_iterate.primals[variable_index]);
-      this->direction_bounds[variable_index] = {lb, ub};
+      this->direction_lower_bounds[variable_index] = std::max(-this->trust_region_radius,
+            problem.variable_lower_bound(variable_index) - current_iterate.primals[variable_index]);
+      this->direction_upper_bounds[variable_index] = std::min(this->trust_region_radius,
+            problem.variable_upper_bound(variable_index) - current_iterate.primals[variable_index]);
    }
    // bounds of additional variables (no trust region!)
    for (size_t variable_index: Range(problem.get_number_original_variables(), problem.number_variables)) {
-      const double lb = problem.variable_lower_bound(variable_index) - current_iterate.primals[variable_index];
-      const double ub = problem.variable_upper_bound(variable_index) - current_iterate.primals[variable_index];
-      this->direction_bounds[variable_index] = {lb, ub};
+      this->direction_lower_bounds[variable_index] = problem.variable_lower_bound(variable_index) - current_iterate.primals[variable_index];
+      this->direction_upper_bounds[variable_index] = problem.variable_upper_bound(variable_index) - current_iterate.primals[variable_index];
    }
 }
 
 void InequalityConstrainedMethod::set_linearized_constraint_bounds(const OptimizationProblem& problem, const std::vector<double>& current_constraints) {
    for (size_t constraint_index: Range(problem.number_constraints)) {
-      const double lb = problem.constraint_lower_bound(constraint_index) - current_constraints[constraint_index];
-      const double ub = problem.constraint_upper_bound(constraint_index) - current_constraints[constraint_index];
-      this->linearized_constraint_bounds[constraint_index] = {lb, ub};
+      this->linearized_constraints_lower_bounds[constraint_index] = problem.constraint_lower_bound(constraint_index) -
+            current_constraints[constraint_index];
+      this->linearized_constraints_upper_bounds[constraint_index] = problem.constraint_upper_bound(constraint_index) -
+            current_constraints[constraint_index];
    }
 }
 
@@ -67,12 +70,12 @@ void InequalityConstrainedMethod::compute_dual_displacements(const OptimizationP
 }
 
 // auxiliary measure is 0 in inequality-constrained methods
-void InequalityConstrainedMethod::set_auxiliary_measure(const OptimizationProblem& /*problem*/, Iterate& iterate) {
+void InequalityConstrainedMethod::set_auxiliary_measure(const Model& /*model*/, Iterate& iterate) {
    iterate.progress.auxiliary = 0.;
 }
 
-double InequalityConstrainedMethod::compute_predicted_auxiliary_reduction_model(const OptimizationProblem& /*problem*/,
-      const Iterate& /*current_iterate*/, const Direction& /*direction*/, double /*step_length*/) const {
+double InequalityConstrainedMethod::compute_predicted_auxiliary_reduction_model(const Model& /*model*/, const Iterate& /*current_iterate*/,
+      const Direction& /*direction*/, double /*step_length*/) const {
    return 0.;
 }
 

@@ -37,6 +37,7 @@ file(GLOB UNO_SOURCE_FILES
     uno/ingredients/subproblem/*.cpp
     uno/ingredients/subproblem/inequality_constrained_methods/*.cpp
     uno/ingredients/subproblem/interior_point_methods/*.cpp
+    uno/model/*.cpp
     uno/optimization/*.cpp
     uno/preprocessing/*.cpp
     uno/tools/*.cpp

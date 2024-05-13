@@ -4,9 +4,10 @@
 #include <cassert>
 #include "AMPLModel.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/EvaluationErrors.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Infinity.hpp"
-#include "tools/ChainCollection.hpp"
+#include "symbolic/ChainCollection.hpp"
 
 ASL* generate_asl(std::string file_name) {
    ASL* asl = ASL_alloc(ASL_read_pfgh);
@@ -38,18 +39,20 @@ AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
       asl(asl),
       // allocate vectors
       asl_gradient(this->number_variables),
-      variable_bounds(this->number_variables),
-      constraint_bounds(this->number_constraints),
+      variable_lower_bounds(this->number_variables),
+      variable_upper_bounds(this->number_variables),
+      constraint_lower_bounds(this->number_constraints),
+      constraint_upper_bounds(this->number_constraints),
       variable_status(this->number_variables),
       constraint_type(this->number_constraints),
       constraint_status(this->number_constraints),
-      equality_constraints_collection(CollectionAdapter(this->equality_constraints)),
-      inequality_constraints_collection(CollectionAdapter(this->inequality_constraints)),
+      equality_constraints_collection(this->equality_constraints),
+      inequality_constraints_collection(this->inequality_constraints),
       slacks(Range(0)),
-      lower_bounded_variables_collection(CollectionAdapter(this->lower_bounded_variables)),
-      upper_bounded_variables_collection(CollectionAdapter(this->upper_bounded_variables)),
-      single_lower_bounded_variables_collection(CollectionAdapter(this->single_lower_bounded_variables)),
-      single_upper_bounded_variables_collection(CollectionAdapter(this->single_upper_bounded_variables)) {
+      lower_bounded_variables_collection(this->lower_bounded_variables),
+      upper_bounded_variables_collection(this->upper_bounded_variables),
+      single_lower_bounded_variables_collection(this->single_lower_bounded_variables),
+      single_upper_bounded_variables_collection(this->single_upper_bounded_variables) {
    // evaluate the constraint Jacobian in sparse mode
    this->asl->i.congrd_mode = 1;
 
@@ -76,14 +79,13 @@ AMPLModel::~AMPLModel() {
 
 void AMPLModel::generate_variables() {
    for (size_t variable_index: Range(this->number_variables)) {
-      double lb = (this->asl->i.LUv_ != nullptr) ? this->asl->i.LUv_[2*variable_index] : -INF<double>;
-      double ub = (this->asl->i.LUv_ != nullptr) ? this->asl->i.LUv_[2*variable_index + 1] : INF<double>;
-      if (lb == ub) {
+      this->variable_lower_bounds[variable_index] = (this->asl->i.LUv_ != nullptr) ? this->asl->i.LUv_[2*variable_index] : -INF<double>;
+      this->variable_upper_bounds[variable_index] = (this->asl->i.LUv_ != nullptr) ? this->asl->i.LUv_[2*variable_index + 1] : INF<double>;
+      if (this->variable_lower_bounds[variable_index] == this->variable_upper_bounds[variable_index]) {
          WARNING << "Variable x" << variable_index << " has identical bounds\n";
       }
-      this->variable_bounds[variable_index] = {lb, ub};
    }
-   AMPLModel::determine_bounds_types(this->variable_bounds, this->variable_status);
+   AMPLModel::determine_bounds_types(this->variable_lower_bounds, this->variable_upper_bounds, this->variable_status);
    // figure out the bounded variables
    for (size_t variable_index: Range(this->number_variables)) {
       const BoundType status = this->get_variable_bound_type(variable_index);
@@ -307,11 +309,11 @@ void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double
 }
 
 double AMPLModel::variable_lower_bound(size_t variable_index) const {
-   return this->variable_bounds[variable_index].lb;
+   return this->variable_lower_bounds[variable_index];
 }
 
 double AMPLModel::variable_upper_bound(size_t variable_index) const {
-   return this->variable_bounds[variable_index].ub;
+   return this->variable_upper_bounds[variable_index];
 }
 
 BoundType AMPLModel::get_variable_bound_type(size_t variable_index) const {
@@ -319,11 +321,11 @@ BoundType AMPLModel::get_variable_bound_type(size_t variable_index) const {
 }
 
 double AMPLModel::constraint_lower_bound(size_t constraint_index) const {
-   return this->constraint_bounds[constraint_index].lb;
+   return this->constraint_lower_bounds[constraint_index];
 }
 
 double AMPLModel::constraint_upper_bound(size_t constraint_index) const {
-   return this->constraint_bounds[constraint_index].ub;
+   return this->constraint_upper_bounds[constraint_index];
 }
 
 FunctionType AMPLModel::get_constraint_type(size_t constraint_index) const {
@@ -352,11 +354,10 @@ void AMPLModel::postprocess_solution(Iterate& /*iterate*/, TerminationStatus /*t
 
 void AMPLModel::generate_constraints() {
    for (size_t constraint_index: Range(this->number_constraints)) {
-      double lb = (this->asl->i.LUrhs_ != nullptr) ? this->asl->i.LUrhs_[2*constraint_index] : -INF<double>;
-      double ub = (this->asl->i.LUrhs_ != nullptr) ? this->asl->i.LUrhs_[2*constraint_index + 1] : INF<double>;
-      this->constraint_bounds[constraint_index] = {lb, ub};
+      this->constraint_lower_bounds[constraint_index] = (this->asl->i.LUrhs_ != nullptr) ? this->asl->i.LUrhs_[2*constraint_index] : -INF<double>;
+      this->constraint_upper_bounds[constraint_index] = (this->asl->i.LUrhs_ != nullptr) ? this->asl->i.LUrhs_[2*constraint_index + 1] : INF<double>;
    }
-   AMPLModel::determine_bounds_types(this->constraint_bounds, this->constraint_status);
+   AMPLModel::determine_bounds_types(this->constraint_lower_bounds, this->constraint_upper_bounds, this->constraint_status);
 
    // partition equality and inequality constraints
    for (size_t constraint_index: Range(this->number_constraints)) {
@@ -379,24 +380,25 @@ void AMPLModel::generate_constraints() {
    }
 }
 
-void AMPLModel::determine_bounds_types(std::vector<Interval>& bounds, std::vector<BoundType>& status) {
-   assert(bounds.size() == status.size());
+void AMPLModel::determine_bounds_types(const std::vector<double>& lower_bounds, const std::vector<double>& upper_bounds, std::vector<BoundType>& status) {
+   assert(lower_bounds.size() == status.size());
+   assert(upper_bounds.size() == status.size());
    // build the "status" vector as a mapping (map/transform operation) of the "bounds" vector
-   std::transform(begin(bounds), end(bounds), begin(status), [](const Interval& bounds_i) {
-      if (bounds_i.lb == bounds_i.ub) {
-         return EQUAL_BOUNDS;
+   for (size_t index: Range(lower_bounds.size())) {
+      if (lower_bounds[index] == upper_bounds[index]) {
+         status[index] = EQUAL_BOUNDS;
       }
-      else if (is_finite(bounds_i.lb) && is_finite(bounds_i.ub)) {
-         return BOUNDED_BOTH_SIDES;
+      else if (is_finite(lower_bounds[index]) && is_finite(upper_bounds[index])) {
+         status[index] = BOUNDED_BOTH_SIDES;
       }
-      else if (is_finite(bounds_i.lb)) {
-         return BOUNDED_LOWER;
+      else if (is_finite(lower_bounds[index])) {
+         status[index] = BOUNDED_LOWER;
       }
-      else if (is_finite(bounds_i.ub)) {
-         return BOUNDED_UPPER;
+      else if (is_finite(upper_bounds[index])) {
+         status[index] = BOUNDED_UPPER;
       }
       else {
-         return UNBOUNDED;
+         status[index] = UNBOUNDED;
       }
-   });
+   }
 }

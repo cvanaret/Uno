@@ -5,7 +5,7 @@
 #define UNO_MATRIXEXPRESSION_H
 
 #include "Expression.hpp"
-#include "tools/Range.hpp"
+#include "symbolic/Range.hpp"
 
 class IdentityMatrix: public Expression {
 public:

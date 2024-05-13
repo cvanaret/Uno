@@ -9,10 +9,12 @@ LPSubproblem::LPSubproblem(size_t max_number_variables, size_t max_number_constr
       size_t max_number_jacobian_nonzeros, const Options& options) :
       InequalityConstrainedMethod(max_number_variables, max_number_constraints),
       solver(LPSolverFactory::create(options.get_string("LP_solver"), max_number_variables, max_number_constraints,
-            max_number_objective_gradient_nonzeros, max_number_jacobian_nonzeros, options)) {
+            max_number_objective_gradient_nonzeros, max_number_jacobian_nonzeros, options)),
+      zero_hessian(COOSymmetricMatrix<double>::zero(max_number_variables)) {
 }
 
-void LPSubproblem::generate_initial_iterate(const OptimizationProblem& /*problem*/, Iterate& /*initial_iterate*/) {
+bool LPSubproblem::generate_initial_iterate(const OptimizationProblem& /*problem*/, Iterate& /*initial_iterate*/) {
+   return true;
 }
 
 void LPSubproblem::evaluate_functions(const OptimizationProblem& problem, Iterate& current_iterate, const WarmstartInformation& warmstart_information) {
@@ -27,7 +29,7 @@ void LPSubproblem::evaluate_functions(const OptimizationProblem& problem, Iterat
    }
 }
 
-Direction LPSubproblem::solve(Statistics& /*statistics*/, const OptimizationProblem& problem, Iterate& current_iterate,
+void LPSubproblem::solve(Statistics& /*statistics*/, const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction,
       const WarmstartInformation& warmstart_information) {
    // evaluate the functions at the current iterate
    this->evaluate_functions(problem, current_iterate, warmstart_information);
@@ -43,20 +45,17 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const OptimizationProb
    }
 
    // solve the LP
-   Direction direction = this->solver->solve_LP(problem.number_variables, problem.number_constraints, this->direction_bounds,
-         this->linearized_constraint_bounds, this->evaluations.objective_gradient, this->evaluations.constraint_jacobian,
-         this->initial_point, warmstart_information);
+   this->solver->solve_LP(problem.number_variables, problem.number_constraints, this->direction_lower_bounds, this->direction_upper_bounds,
+         this->linearized_constraints_lower_bounds, this->linearized_constraints_upper_bounds, this->evaluations.objective_gradient,
+         this->evaluations.constraint_jacobian, this->initial_point, direction, warmstart_information);
    InequalityConstrainedMethod::compute_dual_displacements(problem, current_iterate, direction);
    this->number_subproblems_solved++;
    // reset the initial point
    initialize_vector(this->initial_point, 0.);
-   return direction;
 }
 
-std::function<double(double)> LPSubproblem::compute_predicted_objective_reduction_model(const OptimizationProblem& problem,
-      const Iterate& current_iterate, const Direction& direction, double step_length) const {
-   return problem.compute_predicted_objective_reduction_model(current_iterate, direction, step_length,
-         COOSymmetricMatrix<double>::zero(direction.number_variables));
+const SymmetricMatrix<double>& LPSubproblem::get_lagrangian_hessian() const {
+   return this->zero_hessian;
 }
 
 size_t LPSubproblem::get_hessian_evaluation_count() const {

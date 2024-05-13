@@ -6,7 +6,7 @@
 #include <algorithm>
 #include "Filter.hpp"
 #include "tools/Logger.hpp"
-#include "tools/Range.hpp"
+#include "symbolic/Range.hpp"
 
 Filter::Filter(const Options& options) :
       capacity(options.get_unsigned_int("filter_capacity")),
@@ -31,10 +31,6 @@ double Filter::get_smallest_infeasibility() const {
    else { // filter empty
       return this->parameters.beta * this->infeasibility_upper_bound;
    }
-}
-
-double Filter::get_infeasibility_upper_bound() const {
-   return this->infeasibility_upper_bound;
 }
 
 void Filter::set_infeasibility_upper_bound(double new_upper_bound) {
@@ -133,7 +129,7 @@ bool Filter::acceptable(double infeasibility_measure, double objective_measure) 
 bool Filter::acceptable_wrt_current_iterate(double current_infeasibility_measure, double current_objective_measure, double trial_infeasibility_measure,
       double trial_objective_measure) {
    return (trial_objective_measure <= current_objective_measure - this->parameters.gamma * trial_infeasibility_measure) ||
-          (trial_infeasibility_measure < this->parameters.beta * current_infeasibility_measure);
+          (trial_infeasibility_measure <= this->parameters.beta * current_infeasibility_measure);
 }
 
 double Filter::compute_actual_objective_reduction(double current_objective_measure, double /*current_infeasibility_measure*/, double trial_objective_measure) {

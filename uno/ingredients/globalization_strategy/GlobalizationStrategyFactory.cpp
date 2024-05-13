@@ -3,16 +3,15 @@
 
 #include "GlobalizationStrategyFactory.hpp"
 #include "l1MeritFunction.hpp"
-#include "filter_method/LeyfferFilterMethod.hpp"
+#include "filter_method/FletcherFilterMethod.hpp"
 #include "filter_method/WaechterFilterMethod.hpp"
 
-std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& strategy_type, bool solving_feasibility_problem,
-      const Options& options) {
+std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& strategy_type, const Options& options) {
    if (strategy_type == "l1_merit") {
       return std::make_unique<l1MeritFunction>(options);
    }
-   else if (strategy_type == "leyffer_filter_method") {
-      return std::make_unique<LeyfferFilterMethod>(solving_feasibility_problem, options);
+   else if (strategy_type == "fletcher_filter_method") {
+      return std::make_unique<FletcherFilterMethod>(options);
    }
    else if (strategy_type == "waechter_filter_method") {
       return std::make_unique<WaechterFilterMethod>(options);
@@ -21,5 +20,5 @@ std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(con
 }
 
 std::vector<std::string> GlobalizationStrategyFactory::available_strategies() {
-   return {"l1_merit", "leyffer_filter_strategy", "waechter_filter_strategy"};
+   return {"l1_merit", "fletcher_filter_strategy", "waechter_filter_strategy"};
 }

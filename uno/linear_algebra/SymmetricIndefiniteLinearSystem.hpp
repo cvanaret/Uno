@@ -8,7 +8,7 @@
 #include "SymmetricMatrix.hpp"
 #include "SymmetricMatrixFactory.hpp"
 #include "RectangularMatrix.hpp"
-#include "optimization/Model.hpp"
+#include "model/Model.hpp"
 #include "solvers/linear/direct/DirectIndefiniteLinearSolver.hpp"
 #include "tools/Options.hpp"
 #include "tools/Statistics.hpp"

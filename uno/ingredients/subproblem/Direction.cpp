@@ -16,6 +16,16 @@ void Direction::set_dimensions(size_t new_number_variables, size_t new_number_co
    this->number_constraints = new_number_constraints;
 }
 
+void Direction::reset() {
+   this->active_set.constraints.at_lower_bound.clear();
+   this->active_set.constraints.at_upper_bound.clear();
+   this->active_set.bounds.at_lower_bound.clear();
+   this->active_set.bounds.at_upper_bound.clear();
+   if (this->constraint_partition.has_value()) {
+      this->constraint_partition.value().reset();
+   }
+}
+
 std::string status_to_string(SubproblemStatus status) {
    switch (status) {
       case SubproblemStatus::OPTIMAL:
@@ -95,4 +105,11 @@ ConstraintPartition::ConstraintPartition(size_t number_constraints) {
    this->infeasible.reserve(number_constraints);
    this->lower_bound_infeasible.reserve(number_constraints);
    this->upper_bound_infeasible.reserve(number_constraints);
+}
+
+void ConstraintPartition::reset() {
+   this->feasible.clear();
+   this->infeasible.clear();
+   this->lower_bound_infeasible.clear();
+   this->upper_bound_infeasible.clear();
 }

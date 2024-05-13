@@ -4,7 +4,7 @@
 #ifndef UNO_H
 #define UNO_H
 
-#include "optimization/Model.hpp"
+#include "model/Model.hpp"
 #include "optimization/Result.hpp"
 #include "optimization/TerminationStatus.hpp"
 #include "ingredients/globalization_mechanism/GlobalizationMechanism.hpp"
@@ -36,7 +36,6 @@ private:
 
    void initialize(Statistics& statistics, Iterate& current_iterate, const Options& options);
    static Statistics create_statistics(const Model& model, const Options& options);
-   static void set_statistics(Statistics& statistics, const Iterate& iterate, size_t major_iterations);
    [[nodiscard]] bool termination_criteria(TerminationStatus current_status, size_t iteration, double current_time) const;
    static void postprocess_iterate(const Model& model, Iterate& iterate, TerminationStatus termination_status);
    Result create_result(const Model& model, Iterate& current_iterate, size_t major_iterations, const Timer& timer);

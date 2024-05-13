@@ -27,19 +27,22 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
 
    bool termination = false;
    current_iterate.status = TerminationStatus::NOT_OPTIMAL;
+   // allocate the trial iterate once and for all here
+   Iterate trial_iterate(current_iterate.number_variables, current_iterate.number_constraints);
    size_t major_iterations = 0;
    try {
       // check for termination
       while (not termination) {
          major_iterations++;
          statistics.start_new_line();
-         Uno::set_statistics(statistics, current_iterate, major_iterations);
+         statistics.set("iter", major_iterations);
          DEBUG << "### Outer iteration " << major_iterations << '\n';
 
          // compute an acceptable iterate by solving a subproblem at the current point
-         current_iterate = this->globalization_mechanism.compute_next_iterate(statistics, model, current_iterate);
+         this->globalization_mechanism.compute_next_iterate(statistics, model, current_iterate, trial_iterate);
          // determine if Uno can terminate
-         termination = this->termination_criteria(current_iterate.status, major_iterations, timer.get_duration());
+         termination = this->termination_criteria(trial_iterate.status, major_iterations, timer.get_duration());
+         std::swap(current_iterate, trial_iterate);
       }
    }
    catch (std::exception& exception) {
@@ -54,9 +57,9 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
 void Uno::initialize(Statistics& statistics, Iterate& current_iterate, const Options& options) {
    try {
       statistics.start_new_line();
-      this->globalization_mechanism.initialize(statistics, current_iterate, options);
-      Uno::set_statistics(statistics, current_iterate, 0);
+      statistics.set("iter", 0);
       statistics.set("status", "initial point");
+      this->globalization_mechanism.initialize(statistics, current_iterate, options);
       if (Logger::level == INFO) statistics.print_current_line();
    }
    catch (const std::exception& e) {
@@ -77,13 +80,6 @@ Statistics Uno::create_statistics(const Model& model, const Options& options) {
    statistics.add_column("stationarity", Statistics::double_width - 1, options.get_int("statistics_stationarity_column_order"));
    statistics.add_column("status", Statistics::string_width, options.get_int("statistics_status_column_order"));
    return statistics;
-}
-
-void Uno::set_statistics(Statistics& statistics, const Iterate& iterate, size_t major_iterations) {
-   if (iterate.is_objective_computed) {
-      statistics.set("objective", iterate.evaluations.objective);
-   }
-   statistics.set("iter", major_iterations);
 }
 
 bool Uno::termination_criteria(TerminationStatus current_status, size_t iteration, double current_time) const {
@@ -122,7 +118,7 @@ void Uno::print_uno_version() {
    std::cout << "To choose a subproblem method, use the argument -subproblem [QP|LP|primal_dual_interior_point]\n";
    std::cout << "To choose a globalization mechanism, use the argument -globalization_mechanism [LS|TR]\n";
    std::cout << "To choose a globalization strategy, use the argument -globalization_strategy "
-                "[l1_merit|leyffer_filter_method|waechter_filter_method]\n";
+                "[l1_merit|fletcher_filter_method|waechter_filter_method]\n";
    std::cout << "To choose a preset, use the argument -preset [filtersqp|ipopt|byrd]\n";
    std::cout << "The options can be combined in the same command line. Autocompletion is possible (see README).\n";
 }

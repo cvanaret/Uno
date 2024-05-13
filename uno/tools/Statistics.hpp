@@ -4,7 +4,7 @@
 #ifndef UNO_STATISTICS_H
 #define UNO_STATISTICS_H
 
-#include <string>
+#include <string_view>
 #include <map>
 #include "tools/Options.hpp"
 
@@ -33,7 +33,7 @@ private:
    std::map<std::string_view, std::string> current_line{};
 
    size_t print_header_every_iterations{};
-   static const std::string& symbol(const std::string& value);
+   static std::string_view symbol(std::string_view value);
 };
 
 #endif // UNO_STATISTICS_H

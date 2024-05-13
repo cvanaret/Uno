@@ -21,7 +21,6 @@ public:
 
    void reset();
    [[nodiscard]] double get_smallest_infeasibility() const;
-   [[nodiscard]] double get_infeasibility_upper_bound() const;
    void set_infeasibility_upper_bound(double new_upper_bound);
 
    virtual void add(double infeasibility_measure, double objective_measure);

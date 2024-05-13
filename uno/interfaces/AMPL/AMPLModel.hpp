@@ -5,9 +5,9 @@
 #define UNO_AMPLMODEL_H
 
 #include <vector>
-#include "optimization/Model.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
-#include "tools/CollectionAdapter.hpp"
+#include "model/Model.hpp"
+#include "symbolic/CollectionAdapter.hpp"
 
 // include AMPL Solver Library (ASL)
 extern "C" {
@@ -68,8 +68,10 @@ private:
    mutable std::vector<double> asl_hessian{};
    size_t number_asl_hessian_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */
 
-   std::vector<Interval> variable_bounds;
-   std::vector<Interval> constraint_bounds;
+   std::vector<double> variable_lower_bounds;
+   std::vector<double> variable_upper_bounds;
+   std::vector<double> constraint_lower_bounds;
+   std::vector<double> constraint_upper_bounds;
    std::vector<BoundType> variable_status; /*!< Status of the variables (EQUALITY, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES) */
    std::vector<FunctionType> constraint_type; /*!< Types of the constraints (LINEAR, QUADRATIC, NONLINEAR) */
    std::vector<BoundType> constraint_status; /*!< Status of the constraints (EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES,
@@ -96,7 +98,7 @@ private:
 
    void set_number_hessian_nonzeros();
    [[nodiscard]] size_t compute_hessian_number_nonzeros(double objective_multiplier, const std::vector<double>& multipliers) const;
-   static void determine_bounds_types(std::vector<Interval>& variables_bounds, std::vector<BoundType>& status);
+   static void determine_bounds_types(const std::vector<double>& lower_bounds, const std::vector<double>& upper_bounds, std::vector<BoundType>& status);
 };
 
 #endif // UNO_AMPLMODEL_H
