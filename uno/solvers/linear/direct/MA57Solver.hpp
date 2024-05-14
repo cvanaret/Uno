@@ -7,6 +7,7 @@
 #include <vector>
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 #include "solvers/linear/direct/DirectIndefiniteLinearSolver.hpp"
+#include "linear_algebra/COOSymmetricMatrix.hpp"
 
 struct MA57Factorization {
    int n{};
@@ -45,8 +46,7 @@ public:
 private:
    bool is_matrix_factorized{false};
    // internal matrix representation
-   std::vector<int> row_indices;
-   std::vector<int> column_indices;
+   COOSymmetricMatrix<int, double> my_coo_matrix;
 
    std::vector<int> iwork;
    int lwork;
