@@ -4,8 +4,6 @@
 #include <gtest/gtest.h>
 #include <vector>
 #include "symbolic/Expression.hpp"
-#include "linear_algebra/Vector.hpp"
-#include "symbolic/Range.hpp"
 
 TEST(Sum, Test) {
    const std::vector<double> x{100., 200., 300., 400.};
