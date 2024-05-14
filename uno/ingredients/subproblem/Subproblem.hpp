@@ -47,7 +47,6 @@ public:
    bool subproblem_definition_changed{false};
 
 protected:
-   //Direction direction;
    Evaluations evaluations;
    double trust_region_radius{INF<double>};
 };
