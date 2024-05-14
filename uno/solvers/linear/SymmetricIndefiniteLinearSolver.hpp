@@ -7,13 +7,14 @@
 #include <vector>
 #include <linear_algebra/SymmetricMatrix.hpp>
 
-template <typename ElementType>
+template <typename IndexType, typename ElementType>
 class SymmetricIndefiniteLinearSolver {
 public:
    explicit SymmetricIndefiniteLinearSolver(size_t max_dimension): max_dimension(max_dimension) {};
    virtual ~SymmetricIndefiniteLinearSolver() = default;
 
-   virtual void solve_indefinite_system(const SymmetricMatrix<ElementType>& matrix, const std::vector<ElementType>& rhs, std::vector<ElementType>& result) = 0;
+   virtual void solve_indefinite_system(const SymmetricMatrix<IndexType, ElementType>& matrix, const std::vector<ElementType>& rhs,
+         std::vector<ElementType>& result) = 0;
 
 protected:
    const size_t max_dimension;

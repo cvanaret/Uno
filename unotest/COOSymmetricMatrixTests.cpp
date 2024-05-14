@@ -7,8 +7,8 @@
 const size_t n = 5;
 const size_t nnz = 7;
 
-COOSymmetricMatrix<double> create_COO_matrix() {
-   COOSymmetricMatrix<double> matrix(n, nnz, false);
+COOSymmetricMatrix<size_t, double> create_COO_matrix() {
+   COOSymmetricMatrix<size_t, double> matrix(n, nnz, false);
    matrix.insert(2., 0, 0);
    matrix.insert(3., 0, 1);
    matrix.insert(4., 1, 2);
@@ -20,6 +20,6 @@ COOSymmetricMatrix<double> create_COO_matrix() {
 }
 
 TEST(COOSymmetricMatrix, NNZ) {
-   const COOSymmetricMatrix<double> matrix = create_COO_matrix();
+   const COOSymmetricMatrix<size_t, double> matrix = create_COO_matrix();
    ASSERT_EQ(matrix.number_nonzeros, nnz);
 }

@@ -18,7 +18,7 @@ public:
    [[nodiscard]] bool generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
    void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction,
          const WarmstartInformation& warmstart_information) override;
-   [[nodiscard]] const SymmetricMatrix<double>& get_lagrangian_hessian() const override;
+   [[nodiscard]] const SymmetricMatrix<size_t, double>& get_lagrangian_hessian() const override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
 protected:

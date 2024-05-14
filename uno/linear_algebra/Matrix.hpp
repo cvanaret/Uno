@@ -4,7 +4,7 @@
 #ifndef UNO_MATRIX_H
 #define UNO_MATRIX_H
 
-template <typename ElementType>
+template <typename IndexType, typename ElementType>
 class Matrix {
 public:
    using value_type = ElementType;
@@ -12,7 +12,7 @@ public:
    Matrix() = default;
    virtual ~Matrix() = default;
 
-   virtual void for_each(const std::function<void(size_t, size_t, ElementType)>& f) const = 0;
+   virtual void for_each(const std::function<void(IndexType, IndexType, ElementType)>& f) const = 0;
 };
 
 #endif // UNO_MATRIX_H

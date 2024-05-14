@@ -7,7 +7,6 @@
 #include <vector>
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 #include "solvers/linear/direct/DirectIndefiniteLinearSolver.hpp"
-#include "linear_algebra/COOSymmetricMatrix.hpp"
 
 struct MA57Factorization {
    int n{};
@@ -28,15 +27,14 @@ struct MA57Factorization {
  *
  *  Interface to the symmetric indefinite linear solver MA57
  */
-class MA57Solver : public DirectIndefiniteLinearSolver<double> {
+class MA57Solver : public DirectIndefiniteLinearSolver<size_t, double> {
 public:
    MA57Solver(size_t max_dimension, size_t max_number_nonzeros);
    ~MA57Solver() override = default;
 
-   void factorize(const SymmetricMatrix<double>& matrix) override;
-   void do_symbolic_factorization(const SymmetricMatrix<double>& matrix) override;
-   void do_numerical_factorization(const SymmetricMatrix<double>& matrix) override;
-   void solve_indefinite_system(const SymmetricMatrix<double>& matrix, const std::vector<double>& rhs, std::vector<double>& result) override;
+   void do_symbolic_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
+   void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
+   void solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const std::vector<double>& rhs, std::vector<double>& result) override;
 
    [[nodiscard]] std::tuple<size_t, size_t, size_t> get_inertia() const override;
    [[nodiscard]] size_t number_negative_eigenvalues() const override;
@@ -65,7 +63,7 @@ private:
 
    MA57Factorization factorization{};
    bool use_iterative_refinement{false};
-   void save_matrix_to_local_format(const SymmetricMatrix<double>& row_index);
+   void save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& row_index);
 };
 
 #endif // UNO_MA57SOLVER_H

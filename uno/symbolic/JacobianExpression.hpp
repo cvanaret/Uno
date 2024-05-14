@@ -16,7 +16,7 @@ public:
    [[nodiscard]] size_t number_rows() const { return this->problem.number_constraints; }
    [[nodiscard]] size_t number_columns() const { return this->problem.number_variables; }
    void for_each(const std::function<void (size_t row_index, size_t column_index, double element)>& f) const;
-   void evaluate(Matrix<double>& matrix);
+   void evaluate(Matrix<size_t, double>& matrix);
 
 protected:
    const OptimizationProblem& problem;
@@ -44,7 +44,7 @@ inline JacobianExpression jacobian(const OptimizationProblem& problem, Iterate& 
    return {problem, iterate};
 }
 
-inline void JacobianExpression::evaluate(Matrix<double>& /*matrix*/) {
+inline void JacobianExpression::evaluate(Matrix<size_t, double>& /*matrix*/) {
    std::cout << "JacobianExpression::evaluate\n";
 }
 

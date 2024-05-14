@@ -20,7 +20,7 @@ public:
    Symmetric2by2BlockMatrix(TopLeftBlock&& A, TopRightBlock&& B, BottomRightBlock&& C);
    void for_each(const std::function<void(size_t, size_t, double)>& f) const;
    void product(const std::vector<double>& vector, std::vector<double>& result) const;
-   void evaluate(Matrix<double>& matrix);
+   void evaluate(Matrix<size_t, double>& matrix);
 
 protected:
    TopLeftBlock A;
@@ -79,7 +79,7 @@ void Symmetric2by2BlockMatrix<TopLeftBlock, TopRightBlock, BottomRightBlock>::pr
 }
 
 template <typename TopLeftBlock, typename TopRightBlock, typename BottomRightBlock>
-void Symmetric2by2BlockMatrix<TopLeftBlock, TopRightBlock, BottomRightBlock>::evaluate(Matrix<double>& /*matrix*/) {
+void Symmetric2by2BlockMatrix<TopLeftBlock, TopRightBlock, BottomRightBlock>::evaluate(Matrix<size_t, double>& /*matrix*/) {
    std::cout << "Symmetric2by2BlockMatrix::evaluate\n";
 }
 

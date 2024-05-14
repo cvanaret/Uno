@@ -16,7 +16,7 @@ public:
    HessianModel(size_t dimension, size_t maximum_number_nonzeros, const std::string& sparse_format, bool use_regularization);
    virtual ~HessianModel() = default;
 
-   std::unique_ptr<SymmetricMatrix<double>> hessian;
+   std::unique_ptr<SymmetricMatrix<size_t, double>> hessian;
    size_t evaluation_count{0};
 
    virtual void evaluate(Statistics& statistics, const OptimizationProblem& problem, const std::vector<double>& primal_variables,
@@ -41,11 +41,11 @@ public:
          const std::vector<double>& constraint_multipliers) override;
 
 protected:
-   std::unique_ptr<DirectIndefiniteLinearSolver<double>> linear_solver; /*!< Solver that computes the inertia */
+   std::unique_ptr<DirectIndefiniteLinearSolver<size_t, double>> linear_solver; /*!< Solver that computes the inertia */
    const double regularization_initial_value{};
    const double regularization_increase_factor{};
 
-   void regularize(Statistics& statistics, SymmetricMatrix<double>& hessian, size_t number_original_variables);
+   void regularize(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian, size_t number_original_variables);
 };
 
 #endif // UNO_HESSIANMODEL_H

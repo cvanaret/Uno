@@ -37,7 +37,7 @@ double ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction_m
 }
 
 std::function<double(double)> ConstraintRelaxationStrategy::compute_predicted_objective_reduction_model(const Iterate& current_iterate,
-      const Direction& direction, double step_length, const SymmetricMatrix<double>& hessian) const {
+      const Direction& direction, double step_length, const SymmetricMatrix<size_t, double>& hessian) const {
    // predicted objective reduction: "-∇f(x)^T (αd) - α^2/2 d^T H d"
    const double directional_derivative = dot(direction.primals, current_iterate.evaluations.objective_gradient);
    const double quadratic_term = hessian.quadratic_product(direction.primals, direction.primals);

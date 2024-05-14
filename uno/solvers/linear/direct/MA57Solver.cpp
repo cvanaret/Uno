@@ -25,7 +25,7 @@ lifact, const double rhs[], double x[], double resid[], double work[], int iwork
       double cntl[], int info[], double rinfo[]);
 }
 
-MA57Solver::MA57Solver(size_t max_dimension, size_t max_number_nonzeros) : DirectIndefiniteLinearSolver<double>(max_dimension),
+MA57Solver::MA57Solver(size_t max_dimension, size_t max_number_nonzeros) : DirectIndefiniteLinearSolver<size_t, double>(max_dimension),
       iwork(5 * max_dimension),
       lwork(static_cast<int>(1.2 * static_cast<double>(max_dimension))),
       work(static_cast<size_t>(this->lwork)), residuals(max_dimension) {
@@ -39,13 +39,7 @@ MA57Solver::MA57Solver(size_t max_dimension, size_t max_number_nonzeros) : Direc
    this->icntl[8] = 1;
 }
 
-void MA57Solver::factorize(const SymmetricMatrix<double>& matrix) {
-   // general factorization method: symbolic factorization and numerical factorization
-   this->do_symbolic_factorization(matrix);
-   this->do_numerical_factorization(matrix);
-}
-
-void MA57Solver::do_symbolic_factorization(const SymmetricMatrix<double>& matrix) {
+void MA57Solver::do_symbolic_factorization(const SymmetricMatrix<size_t, double>& matrix) {
    assert(matrix.dimension <= this->max_dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
    assert(matrix.number_nonzeros <= this->row_indices.capacity() &&
       "MA57Solver: the number of nonzeros of the matrix is larger than the preallocated size");
@@ -85,7 +79,7 @@ void MA57Solver::do_symbolic_factorization(const SymmetricMatrix<double>& matrix
    this->factorization = {n, nnz, std::move(fact), lfact, std::move(ifact), lifact, lkeep, std::move(keep)};
 }
 
-void MA57Solver::do_numerical_factorization(const SymmetricMatrix<double>& matrix) {
+void MA57Solver::do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) {
    assert(matrix.dimension <= this->max_dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
    assert(this->factorization.nnz == static_cast<int>(matrix.number_nonzeros) && "MA57Solver: the numbers of nonzeros do not match");
 
@@ -104,7 +98,7 @@ void MA57Solver::do_numerical_factorization(const SymmetricMatrix<double>& matri
          /* out */ this->rinfo.data());
 }
 
-void MA57Solver::solve_indefinite_system(const SymmetricMatrix<double>& matrix, const std::vector<double>& rhs, std::vector<double>& result) {
+void MA57Solver::solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const std::vector<double>& rhs, std::vector<double>& result) {
    if (not this->is_matrix_factorized) {
       this->do_symbolic_factorization(matrix);
       this->do_numerical_factorization(matrix);
@@ -161,11 +155,11 @@ size_t MA57Solver::rank() const {
    return static_cast<size_t>(this->info[24]);
 }
 
-void MA57Solver::save_matrix_to_local_format(const SymmetricMatrix<double>& matrix) {
+void MA57Solver::save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix) {
    // build the internal matrix representation
    this->row_indices.clear();
    this->column_indices.clear();
-   matrix.for_each([&](size_t row_index, size_t column_index, double /*entry*/) {
+   matrix.for_each([&](size_t row_index, size_t column_index, double /*element*/) {
       this->row_indices.push_back(static_cast<int>(row_index + this->fortran_shift));
       this->column_indices.push_back(static_cast<int>(column_index + this->fortran_shift));
    });

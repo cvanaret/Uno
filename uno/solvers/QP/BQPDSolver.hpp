@@ -52,8 +52,8 @@ public:
    void solve_QP(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
          const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
          const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
-         const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const std::vector<double>& initial_point,
-         Direction& direction, const WarmstartInformation& warmstart_information) override;
+         const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<size_t, double>& hessian,
+         const std::vector<double>& initial_point, Direction& direction, const WarmstartInformation& warmstart_information) override;
 
 private:
    const size_t number_hessian_nonzeros;
@@ -88,7 +88,7 @@ private:
          const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information);
    void categorize_constraints(size_t number_variables, size_t number_constraints, Direction& direction);
-   void save_hessian_to_local_format(const SymmetricMatrix<double>& hessian);
+   void save_hessian_to_local_format(const SymmetricMatrix<size_t, double>& hessian);
    void save_gradients_to_local_format(size_t number_constraints, const SparseVector<double>& linear_objective,
          const RectangularMatrix<double>& constraint_jacobian);
    [[nodiscard]] BQPDMode determine_mode(const WarmstartInformation& warmstart_information) const;

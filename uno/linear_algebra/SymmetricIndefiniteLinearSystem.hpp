@@ -20,21 +20,21 @@ struct UnstableRegularization : public std::exception {
    }
 };
 
-template <typename ElementType>
+template <typename IndexType, typename ElementType>
 class SymmetricIndefiniteLinearSystem {
 public:
-   std::unique_ptr<SymmetricMatrix<ElementType>> matrix;
+   std::unique_ptr<SymmetricMatrix<IndexType, ElementType>> matrix;
    std::vector<ElementType> rhs{};
    std::vector<ElementType> solution{};
 
    SymmetricIndefiniteLinearSystem(const std::string& sparse_format, size_t max_dimension, size_t max_number_non_zeros, bool use_regularization,
          const Options& options);
-   void assemble_matrix(const SymmetricMatrix<double>& hessian, const RectangularMatrix<double>& constraint_jacobian,
+   void assemble_matrix(const SymmetricMatrix<IndexType, ElementType>& hessian, const RectangularMatrix<ElementType>& constraint_jacobian,
          size_t number_variables, size_t number_constraints);
-   void factorize_matrix(DirectIndefiniteLinearSolver<ElementType>& linear_solver, bool fixed_sparsity_pattern);
-   void regularize_matrix(Statistics& statistics, DirectIndefiniteLinearSolver<ElementType>& linear_solver, bool fixed_sparsity_pattern,
+   void factorize_matrix(DirectIndefiniteLinearSolver<IndexType, ElementType>& linear_solver, bool fixed_sparsity_pattern);
+   void regularize_matrix(Statistics& statistics, DirectIndefiniteLinearSolver<IndexType, ElementType>& linear_solver, bool fixed_sparsity_pattern,
          size_t size_primal_block, size_t size_dual_block, ElementType dual_regularization_parameter);
-   void solve(DirectIndefiniteLinearSolver<ElementType>& linear_solver);
+   void solve(DirectIndefiniteLinearSolver<IndexType, ElementType>& linear_solver);
 
 protected:
    size_t number_factorizations{0};
@@ -51,10 +51,10 @@ protected:
    const size_t threshold_unsuccessful_attempts;
 };
 
-template <typename ElementType>
-SymmetricIndefiniteLinearSystem<ElementType>::SymmetricIndefiniteLinearSystem(const std::string& sparse_format, size_t max_dimension,
+template <typename IndexType, typename ElementType>
+SymmetricIndefiniteLinearSystem<IndexType, ElementType>::SymmetricIndefiniteLinearSystem(const std::string& sparse_format, size_t max_dimension,
       size_t max_number_non_zeros, bool use_regularization, const Options& options):
-      matrix(SymmetricMatrixFactory<ElementType>::create(sparse_format, max_dimension, max_number_non_zeros, use_regularization)),
+      matrix(SymmetricMatrixFactory<IndexType, ElementType>::create(sparse_format, max_dimension, max_number_non_zeros, use_regularization)),
       rhs(max_dimension),
       solution(max_dimension),
       regularization_failure_threshold(ElementType(options.get_double("regularization_failure_threshold"))),
@@ -67,14 +67,14 @@ SymmetricIndefiniteLinearSystem<ElementType>::SymmetricIndefiniteLinearSystem(co
       threshold_unsuccessful_attempts(options.get_unsigned_int("threshold_unsuccessful_attempts")) {
 }
 
-template <typename ElementType>
-void SymmetricIndefiniteLinearSystem<ElementType>::assemble_matrix(const SymmetricMatrix<double>& hessian, const RectangularMatrix<double>& constraint_jacobian,
-      size_t number_variables, size_t number_constraints) {
+template <typename IndexType, typename ElementType>
+void SymmetricIndefiniteLinearSystem<IndexType, ElementType>::assemble_matrix(const SymmetricMatrix<IndexType, ElementType>& hessian,
+      const RectangularMatrix<ElementType>& constraint_jacobian, size_t number_variables, size_t number_constraints) {
    this->matrix->dimension = number_variables + number_constraints;
    this->matrix->reset();
    // copy the Lagrangian Hessian in the top left block
    //size_t current_column = 0;
-   hessian.for_each([&](size_t row_index, size_t column_index, double entry) {
+   hessian.for_each([&](IndexType row_index, IndexType column_index, ElementType entry) {
       // finalize all empty columns
       /*for (size_t column: Range(current_column, column_index)) {
          this->matrix->finalize_column(column);
@@ -85,15 +85,15 @@ void SymmetricIndefiniteLinearSystem<ElementType>::assemble_matrix(const Symmetr
 
    // Jacobian of general constraints
    for (size_t column_index: Range(number_constraints)) {
-      constraint_jacobian[column_index].for_each([&](size_t row_index, double derivative) {
+      constraint_jacobian[column_index].for_each([&](IndexType row_index, ElementType derivative) {
          this->matrix->insert(derivative, row_index, number_variables + column_index);
       });
       this->matrix->finalize_column(column_index);
    }
 }
 
-template <typename ElementType>
-void SymmetricIndefiniteLinearSystem<ElementType>::factorize_matrix(DirectIndefiniteLinearSolver<ElementType>& linear_solver, bool fixed_sparsity_pattern) {
+template <typename IndexType, typename ElementType>
+void SymmetricIndefiniteLinearSystem<IndexType, ElementType>::factorize_matrix(DirectIndefiniteLinearSolver<IndexType, ElementType>& linear_solver, bool fixed_sparsity_pattern) {
    // compute the symbolic factorization only when:
    // the problem has a non-constant augmented system (ie is not an LP or a QP) or it is the first factorization
    if (true || this->number_factorizations == 0 || not fixed_sparsity_pattern) {
@@ -103,8 +103,8 @@ void SymmetricIndefiniteLinearSystem<ElementType>::factorize_matrix(DirectIndefi
    this->number_factorizations++;
 }
 
-template <typename ElementType>
-void SymmetricIndefiniteLinearSystem<ElementType>::regularize_matrix(Statistics& statistics, DirectIndefiniteLinearSolver<ElementType>& linear_solver,
+template <typename IndexType, typename ElementType>
+void SymmetricIndefiniteLinearSystem<IndexType, ElementType>::regularize_matrix(Statistics& statistics, DirectIndefiniteLinearSolver<IndexType, ElementType>& linear_solver,
       bool fixed_sparsity_pattern, size_t size_primal_block, size_t size_dual_block, ElementType dual_regularization_parameter) {
    DEBUG2 << "Original matrix\n" << *this->matrix << '\n';
    this->primal_regularization = ElementType(0.);
@@ -178,14 +178,14 @@ void SymmetricIndefiniteLinearSystem<ElementType>::regularize_matrix(Statistics&
    statistics.set("regularization", this->primal_regularization);
 }
 
-template <typename ElementType>
-void SymmetricIndefiniteLinearSystem<ElementType>::solve(DirectIndefiniteLinearSolver<ElementType>& linear_solver) {
+template <typename IndexType, typename ElementType>
+void SymmetricIndefiniteLinearSystem<IndexType, ElementType>::solve(DirectIndefiniteLinearSolver<IndexType, ElementType>& linear_solver) {
    linear_solver.solve_indefinite_system(*this->matrix, this->rhs, this->solution);
 }
 
 /*
-template <typename ElementType>
-ElementType SymmetricIndefiniteLinearSystem<ElementType>::get_primal_regularization() const {
+template <typename IndexType, typename ElementType>
+ElementType SymmetricIndefiniteLinearSystem<IndexType, ElementType>::get_primal_regularization() const {
    return this->primal_regularization;
 }
 */

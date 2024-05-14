@@ -13,7 +13,7 @@
 
 class DirectIndefiniteLinearSolverFactory {
 public:
-   static std::unique_ptr<DirectIndefiniteLinearSolver<double>> create(const std::string& linear_solver_name, size_t max_dimension,
+   static std::unique_ptr<DirectIndefiniteLinearSolver<size_t, double>> create(const std::string& linear_solver_name, size_t max_dimension,
          size_t max_number_nonzeros) {
 #ifdef HAS_MA57
       if (linear_solver_name == "MA57") {

@@ -48,7 +48,7 @@ protected:
    void set_infeasibility_measure(Iterate& iterate) const;
    [[nodiscard]] double compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction, double step_length) const;
    [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction_model(const Iterate& current_iterate, const Direction& direction,
-         double step_length, const SymmetricMatrix<double>& hessian) const;
+         double step_length, const SymmetricMatrix<size_t, double>& hessian) const;
 
    void compute_primal_dual_residuals(const OptimizationProblem& optimality_problem, const OptimizationProblem& feasibility_problem, Iterate& iterate);
    void evaluate_lagrangian_gradient(Iterate& iterate, const Multipliers& multipliers) const;

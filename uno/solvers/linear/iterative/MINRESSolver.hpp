@@ -26,13 +26,14 @@ struct GivensRotation {
    NumericalType sine;
 };
 
-template <typename NumericalType, typename LinearOperator>
-class MINRESSolver : public SymmetricIndefiniteLinearSolver<NumericalType> {
+template <typename IndexType, typename NumericalType, typename LinearOperator>
+class MINRESSolver : public SymmetricIndefiniteLinearSolver<IndexType, NumericalType> {
 public:
-   explicit MINRESSolver(const LinearOperator& linear_operator, size_t max_dimension);
+   MINRESSolver(const LinearOperator& linear_operator, size_t max_dimension);
    ~MINRESSolver() override = default;
 
-   void solve_indefinite_system(const SymmetricMatrix<NumericalType>& matrix, const std::vector<NumericalType>& rhs, std::vector<NumericalType>& result) override;
+   void solve_indefinite_system(const SymmetricMatrix<IndexType, NumericalType>& matrix, const std::vector<NumericalType>& rhs,
+         std::vector<NumericalType>& result) override;
 
 private:
    static constexpr NumericalType tolerance{1e-6};
@@ -55,13 +56,13 @@ private:
    GivensRotation<NumericalType> givens_rotation_km1{-1, 0};
    
    // functions
-   std::pair<NumericalType, NumericalType> compute_lanczos_step(const LinearOperator& linear_operator, NumericalType beta_k);
+   std::pair<NumericalType, NumericalType> compute_lanczos_step(NumericalType beta_k);
    NumericalType compute_symmetric_orthogonalization(NumericalType a, NumericalType b);
 };
 
-template <typename NumericalType, typename LinearOperator>
-MINRESSolver<NumericalType, LinearOperator>::MINRESSolver(const LinearOperator& linear_operator, size_t max_dimension):
-   SymmetricIndefiniteLinearSolver<NumericalType>(max_dimension),
+template <typename IndexType, typename NumericalType, typename LinearOperator>
+MINRESSolver<IndexType, NumericalType, LinearOperator>::MINRESSolver(const LinearOperator& linear_operator, size_t max_dimension):
+   SymmetricIndefiniteLinearSolver<IndexType, NumericalType>(max_dimension),
    linear_operator(linear_operator),
    max_dimension(max_dimension),
    p_k(max_dimension),
@@ -71,8 +72,8 @@ MINRESSolver<NumericalType, LinearOperator>::MINRESSolver(const LinearOperator& 
 }
 
 // TODO: user-defined termination criterion
-template <typename NumericalType, typename LinearOperator>
-void MINRESSolver<NumericalType, LinearOperator>::solve_indefinite_system(const SymmetricMatrix<NumericalType>& /*matrix*/,
+template <typename IndexType, typename NumericalType, typename LinearOperator>
+void MINRESSolver<IndexType, NumericalType, LinearOperator>::solve_indefinite_system(const SymmetricMatrix<IndexType, NumericalType>& /*matrix*/,
       const std::vector<NumericalType>& rhs, std::vector<NumericalType>& result) {
    this->iteration = 1;
    // v_0 = 0
@@ -92,7 +93,7 @@ void MINRESSolver<NumericalType, LinearOperator>::solve_indefinite_system(const 
       // std::cout << "v_" << this->iteration << " = "; print_vector(std::cout, v_k);
       
       // compute the Lanczos step
-      const auto [alpha_k, beta_kp1] = this->compute_lanczos_step(this->linear_operator, beta_k);
+      const auto [alpha_k, beta_kp1] = this->compute_lanczos_step(beta_k);
       // std::cout << "beta_" << this->iteration+1 << " = " << lanczos_coefs.beta_kp1 << '\n';
       
       // last left orthogonalization on middle two entries in last column of Tk
@@ -140,7 +141,6 @@ void MINRESSolver<NumericalType, LinearOperator>::solve_indefinite_system(const 
          this->epsilon_k = epsilon_kp1;
          this->tau_km1 = tau_k;
          this->phi_km1 = phi_k;
-         this->tau_km1 = tau_k;
          
          this->v_km1 = this->v_k;
          this->v_k = this->v_kp1;
@@ -155,12 +155,11 @@ void MINRESSolver<NumericalType, LinearOperator>::solve_indefinite_system(const 
    copy_from(result, this->x_k);
 }
 
-template <typename NumericalType, typename LinearOperator>
-std::pair<NumericalType, NumericalType> MINRESSolver<NumericalType, LinearOperator>::compute_lanczos_step(const LinearOperator& linear_operator,
-      NumericalType beta_k) {
+template <typename IndexType, typename NumericalType, typename LinearOperator>
+std::pair<NumericalType, NumericalType> MINRESSolver<IndexType, NumericalType, LinearOperator>::compute_lanczos_step(NumericalType beta_k) {
    // std::cout << "Starting compute_lanczos_step\n";
    // compute matrix-vector product in p_k
-   linear_operator(this->v_k, this->p_k);
+   this->linear_operator(this->v_k, this->p_k);
    
    // compute alpha_k = v_k^T A v_k
    const NumericalType alpha_k = dot_product(this->v_k, this->p_k);
@@ -187,8 +186,8 @@ NumericalType sign(NumericalType x) {
    }
 }
 
-template <typename NumericalType, typename LinearOperator>
-NumericalType MINRESSolver<NumericalType, LinearOperator>::compute_symmetric_orthogonalization(NumericalType a, NumericalType b) {
+template <typename IndexType, typename NumericalType, typename LinearOperator>
+NumericalType MINRESSolver<IndexType, NumericalType, LinearOperator>::compute_symmetric_orthogonalization(NumericalType a, NumericalType b) {
    if (b == NumericalType(0)) {
       this->givens_rotation_km1.sine = NumericalType(0);
       if (a == NumericalType(0)) {

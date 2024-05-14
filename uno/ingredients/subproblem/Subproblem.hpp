@@ -32,7 +32,7 @@ public:
    virtual void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) = 0;
 
    // progress measures
-   [[nodiscard]] virtual const SymmetricMatrix<double>& get_lagrangian_hessian() const = 0;
+   [[nodiscard]] virtual const SymmetricMatrix<size_t, double>& get_lagrangian_hessian() const = 0;
    virtual void set_auxiliary_measure(const Model& model, Iterate& iterate) = 0;
    [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate,
          const Direction& direction, double step_length) const = 0;

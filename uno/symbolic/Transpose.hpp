@@ -35,7 +35,7 @@ public:
       });
    }
 
-   void evaluate(Matrix<double>& /*matrix*/) {
+   void evaluate(Matrix<size_t, double>& /*matrix*/) {
    }
 
 protected:

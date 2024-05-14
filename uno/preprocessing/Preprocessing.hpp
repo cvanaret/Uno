@@ -12,8 +12,8 @@
 
 class Preprocessing {
 public:
-   static void compute_least_square_multipliers(const OptimizationProblem& problem, SymmetricMatrix<double>& matrix, std::vector<double>& rhs,
-         SymmetricIndefiniteLinearSolver<double>& linear_solver, Iterate& current_iterate, std::vector<double>& multipliers,
+   static void compute_least_square_multipliers(const OptimizationProblem& problem, SymmetricMatrix<size_t, double>& matrix, std::vector<double>& rhs,
+         SymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, Iterate& current_iterate, std::vector<double>& multipliers,
          double multiplier_max_norm);
    [[nodiscard]] static bool enforce_linear_constraints(const Model& model, std::vector<double>& x, Multipliers& multipliers, QPSolver& qp_solver);
 };

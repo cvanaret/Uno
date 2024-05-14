@@ -10,7 +10,7 @@ LPSubproblem::LPSubproblem(size_t max_number_variables, size_t max_number_constr
       InequalityConstrainedMethod(max_number_variables, max_number_constraints),
       solver(LPSolverFactory::create(options.get_string("LP_solver"), max_number_variables, max_number_constraints,
             max_number_objective_gradient_nonzeros, max_number_jacobian_nonzeros, options)),
-      zero_hessian(COOSymmetricMatrix<double>::zero(max_number_variables)) {
+      zero_hessian(COOSymmetricMatrix<size_t, double>::zero(max_number_variables)) {
 }
 
 bool LPSubproblem::generate_initial_iterate(const OptimizationProblem& /*problem*/, Iterate& /*initial_iterate*/) {
@@ -54,7 +54,7 @@ void LPSubproblem::solve(Statistics& /*statistics*/, const OptimizationProblem& 
    initialize_vector(this->initial_point, 0.);
 }
 
-const SymmetricMatrix<double>& LPSubproblem::get_lagrangian_hessian() const {
+const SymmetricMatrix<size_t, double>& LPSubproblem::get_lagrangian_hessian() const {
    return this->zero_hessian;
 }
 

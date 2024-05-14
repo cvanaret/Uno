@@ -262,7 +262,7 @@ size_t AMPLModel::compute_hessian_number_nonzeros(double objective_multiplier, c
 }
 
 void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
-      SymmetricMatrix<double>& hessian) const {
+      SymmetricMatrix<size_t, double>& hessian) const {
    // register the vector of variables
    (*(this->asl)->p.Xknown)(this->asl, const_cast<double*>(x.data()), nullptr);
 

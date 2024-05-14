@@ -7,8 +7,9 @@
 #include "linear_algebra/RectangularMatrix.hpp"
 
 // compute a least-square approximation of the multipliers by solving a linear system (uses existing linear system)
-void Preprocessing::compute_least_square_multipliers(const OptimizationProblem& problem, SymmetricMatrix<double>& matrix, std::vector<double>& rhs,
-      SymmetricIndefiniteLinearSolver<double>& linear_solver, Iterate& current_iterate, std::vector<double>& multipliers, double multiplier_max_norm) {
+void Preprocessing::compute_least_square_multipliers(const OptimizationProblem& problem, SymmetricMatrix<size_t, double>& matrix,
+      std::vector<double>& rhs, SymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, Iterate& current_iterate,
+      std::vector<double>& multipliers, double multiplier_max_norm) {
    const Model& model = problem.model;
    current_iterate.evaluate_objective_gradient(model);
    current_iterate.evaluate_constraint_jacobian(model);
@@ -80,7 +81,7 @@ bool Preprocessing::enforce_linear_constraints(const Model& model, std::vector<d
       INFO << "There are " << infeasible_linear_constraints << " infeasible linear constraints at the initial point\n";
       if (0 < infeasible_linear_constraints) {
          // Hessian
-         const CSCSymmetricMatrix<double> hessian = CSCSymmetricMatrix<double>::identity(model.number_variables);
+         const CSCSymmetricMatrix<size_t, double> hessian = CSCSymmetricMatrix<size_t, double>::identity(model.number_variables);
          // constraint Jacobian
          RectangularMatrix<double> constraint_jacobian(linear_constraints.size());
          for (auto& constraint_gradient: constraint_jacobian) {

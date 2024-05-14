@@ -6,16 +6,15 @@
 
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 
-template <typename ElementType>
-class DirectIndefiniteLinearSolver: public SymmetricIndefiniteLinearSolver<ElementType> {
+template <typename IndexType, typename ElementType>
+class DirectIndefiniteLinearSolver: public SymmetricIndefiniteLinearSolver<IndexType, ElementType> {
 public:
-   explicit DirectIndefiniteLinearSolver(size_t max_dimension): SymmetricIndefiniteLinearSolver<ElementType>(max_dimension) {
+   explicit DirectIndefiniteLinearSolver(size_t max_dimension): SymmetricIndefiniteLinearSolver<IndexType, ElementType>(max_dimension) {
    }
    virtual ~DirectIndefiniteLinearSolver() = default;
 
-   virtual void factorize(const SymmetricMatrix<ElementType>& matrix) = 0;
-   virtual void do_symbolic_factorization(const SymmetricMatrix<ElementType>& matrix) = 0;
-   virtual void do_numerical_factorization(const SymmetricMatrix<ElementType>& matrix) = 0;
+   virtual void do_symbolic_factorization(const SymmetricMatrix<IndexType, ElementType>& matrix) = 0;
+   virtual void do_numerical_factorization(const SymmetricMatrix<IndexType, ElementType>& matrix) = 0;
    
    [[nodiscard]] virtual std::tuple<size_t, size_t, size_t> get_inertia() const = 0;
    [[nodiscard]] virtual size_t number_negative_eigenvalues() const = 0;

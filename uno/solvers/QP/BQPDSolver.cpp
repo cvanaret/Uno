@@ -55,7 +55,7 @@ BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_
 void BQPDSolver::solve_QP(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
       const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
       const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
-      const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const std::vector<double>& initial_point,
+      const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<size_t, double>& hessian, const std::vector<double>& initial_point,
       Direction& direction, const WarmstartInformation& warmstart_information) {
    if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
       this->save_hessian_to_local_format(hessian);
@@ -166,7 +166,7 @@ BQPDMode BQPDSolver::determine_mode(const WarmstartInformation& warmstart_inform
 }
 
 // save Hessian (in arbitrary format) to a "weak" CSC format: compressed columns but row indices are not sorted, nor unique
-void BQPDSolver::save_hessian_to_local_format(const SymmetricMatrix<double>& hessian) {
+void BQPDSolver::save_hessian_to_local_format(const SymmetricMatrix<size_t, double>& hessian) {
    const size_t header_size = 1;
    // pointers withing the single array
    int* row_indices = &this->hessian_sparsity[header_size];

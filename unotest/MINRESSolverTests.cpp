@@ -5,6 +5,7 @@
 #include "solvers/linear/iterative/MINRESSolver.hpp"
 #include "linear_algebra/COOSymmetricMatrix.hpp"
 
+using IndexType = size_t;
 using NumericalType = double;
 
 void linear_operator(const std::vector<NumericalType>& x, std::vector<NumericalType>& result) {
@@ -17,10 +18,10 @@ TEST(MINRESSolver, TwoDimensional) {
    const std::vector<NumericalType> reference_result{3., 4.};
    const NumericalType tolerance{1e-6};
    // dummy matrix
-   COOSymmetricMatrix<NumericalType> matrix(0, 0, false);
+   COOSymmetricMatrix<IndexType, NumericalType> matrix(0, 0, false);
    std::vector<NumericalType> rhs{11., 18.};
    std::vector<NumericalType> result(dimension);
-   MINRESSolver<NumericalType, decltype(linear_operator)> solver(linear_operator, dimension);
+   MINRESSolver<size_t, double, decltype(linear_operator)> solver(linear_operator, dimension);
 
    solver.solve_indefinite_system(matrix, rhs, result);
    for (size_t i: Range(dimension)) {
@@ -43,10 +44,10 @@ TEST(MINRESSolver, Hs015LeastSquareDuals) {
    const std::vector<NumericalType> reference_result{-33.6667, -2.77085, -28.125, -39.2084, -27.125, -38.2084};
    const NumericalType tolerance{1e-3};
    // dummy matrix
-   COOSymmetricMatrix<NumericalType> matrix(0, 0, false);
+   COOSymmetricMatrix<IndexType, NumericalType> matrix(0, 0, false);
    std::vector<NumericalType> rhs{-99, -24.9377, -1, -1, 0, 0 };
    std::vector<NumericalType> result(dimension);
-   MINRESSolver<NumericalType, decltype(hs015_linear_operator)> solver(hs015_linear_operator, dimension);
+   MINRESSolver<size_t, double, decltype(hs015_linear_operator)> solver(hs015_linear_operator, dimension);
 
    solver.solve_indefinite_system(matrix, rhs, result);
    for (size_t i: Range(dimension)) {

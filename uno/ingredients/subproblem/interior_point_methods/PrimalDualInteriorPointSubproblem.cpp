@@ -266,7 +266,7 @@ void PrimalDualInteriorPointSubproblem::exit_feasibility_problem(const Optimizat
    this->compute_least_square_multipliers(problem, trial_iterate);
 }
 
-const SymmetricMatrix<double>& PrimalDualInteriorPointSubproblem::get_lagrangian_hessian() const {
+const SymmetricMatrix<size_t, double>& PrimalDualInteriorPointSubproblem::get_lagrangian_hessian() const {
    return *this->hessian_model->hessian;
 }
 
