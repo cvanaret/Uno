@@ -5,12 +5,11 @@
 #define UNO_BQPDSOLVER_H
 
 #include <vector>
+#include "ingredients/subproblem/SubproblemStatus.hpp"
 #include "QPSolver.hpp"
-#include "solvers/LP/LPSolver.hpp"
-#include "linear_algebra/SymmetricMatrix.hpp"
-#include "linear_algebra/SparseVector.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
-#include "tools/Options.hpp"
+
+// forward declaration
+class Options;
 
 // see bqpd.f
 enum class BQPDStatus {

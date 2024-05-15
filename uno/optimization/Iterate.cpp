@@ -2,7 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "Iterate.hpp"
+#include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "model/Model.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "tools/Logger.hpp"
 
@@ -59,9 +61,7 @@ void Iterate::evaluate_objective_gradient(const Model& model) {
 
 void Iterate::evaluate_constraint_jacobian(const Model& model) {
    if (not this->is_constraint_jacobian_computed) {
-      for (auto& row: this->evaluations.constraint_jacobian) {
-         row.clear();
-      }
+      this->evaluations.constraint_jacobian.clear();
       if (model.is_constrained()) {
          model.evaluate_constraint_jacobian(this->primals, this->evaluations.constraint_jacobian);
          Iterate::number_eval_jacobian++;

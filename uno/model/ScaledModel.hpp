@@ -5,7 +5,9 @@
 #define UNO_SCALEDMODEL_H
 
 #include "Model.hpp"
+#include "optimization/Iterate.hpp"
 #include "preprocessing/Scaling.hpp"
+#include "tools/Options.hpp"
 
 class ScaledModel: public Model {
 public:

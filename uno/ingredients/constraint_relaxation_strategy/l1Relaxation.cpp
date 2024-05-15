@@ -4,7 +4,9 @@
 #include <cassert>
 #include "l1Relaxation.hpp"
 #include "ingredients/globalization_strategy/GlobalizationStrategyFactory.hpp"
+#include "ingredients/subproblem/Direction.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
+#include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Options.hpp"

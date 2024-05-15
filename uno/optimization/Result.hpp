@@ -5,7 +5,6 @@
 #define UNO_RESULT_H
 
 #include "Iterate.hpp"
-#include "TerminationStatus.hpp"
 
 struct Result {
    Result() = delete;

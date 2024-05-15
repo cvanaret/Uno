@@ -5,11 +5,14 @@
 #define UNO_LPSOLVER_H
 
 #include <vector>
-#include "ingredients/subproblem/Direction.hpp"
-#include "linear_algebra/SparseVector.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
-#include "model/Model.hpp"
-#include "optimization/WarmstartInformation.hpp"
+
+// forward declarations
+class Direction;
+template <typename ElementType>
+class RectangularMatrix;
+template <typename ElementType>
+class SparseVector;
+class WarmstartInformation;
 
 /*! \class LPSolver
  * \brief LP solver

@@ -5,6 +5,10 @@
 #define UNO_L1RELAXEDPROBLEM_H
 
 #include "OptimizationProblem.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
+#include "model/Model.hpp"
+#include "optimization/Iterate.hpp"
+#include "optimization/LagrangianGradient.hpp"
 #include "symbolic/Expression.hpp"
 #include "symbolic/VectorExpression.hpp"
 #include "symbolic/ChainCollection.hpp"

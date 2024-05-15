@@ -18,10 +18,7 @@ struct Evaluations {
    Evaluations(size_t max_number_variables, size_t max_number_constraints):
          constraints(max_number_constraints),
          objective_gradient(max_number_variables),
-         constraint_jacobian(max_number_constraints) {
-      for (auto& constraint_gradient: this->constraint_jacobian) {
-         constraint_gradient.reserve(max_number_variables);
-      }
+         constraint_jacobian(max_number_constraints, max_number_variables) {
    }
 };
 

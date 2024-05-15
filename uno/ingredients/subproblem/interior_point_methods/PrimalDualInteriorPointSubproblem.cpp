@@ -3,9 +3,11 @@
 
 #include <cmath>
 #include "PrimalDualInteriorPointSubproblem.hpp"
+#include "ingredients/subproblem/Direction.hpp"
 #include "ingredients/subproblem/HessianModelFactory.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "preprocessing/Preprocessing.hpp"
 #include "reformulation/l1RelaxedProblem.hpp"
 #include "tools/Infinity.hpp"

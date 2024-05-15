@@ -4,10 +4,38 @@
 #ifndef UNO_RECTANGULARMATRIX_H
 #define UNO_RECTANGULARMATRIX_H
 
+#include <vector>
 #include "SparseVector.hpp"
 
 // TODO use more appropriate sparse representation
+//template <typename ElementType>
+//using RectangularMatrix = std::vector<SparseVector<ElementType>>;
+
 template <typename ElementType>
-using RectangularMatrix = std::vector<SparseVector<ElementType>>;
+class RectangularMatrix {
+public:
+   RectangularMatrix(size_t number_rows, size_t number_columns): matrix(number_rows) {
+      for (auto& row: this->matrix) {
+         row.reserve(number_columns);
+      }
+   }
+
+   SparseVector<ElementType>& operator[](size_t row_index) {
+      return this->matrix[row_index];
+   }
+
+   const SparseVector<ElementType>& operator[](size_t row_index) const {
+      return this->matrix[row_index];
+   }
+
+   void clear() {
+      for (auto& row: this->matrix) {
+         row.clear();
+      }
+   }
+
+protected:
+   std::vector<SparseVector<ElementType>> matrix;
+};
 
 #endif // UNO_RECTANGULARMATRIX_H

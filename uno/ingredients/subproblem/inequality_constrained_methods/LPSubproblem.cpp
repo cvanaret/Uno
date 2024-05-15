@@ -3,8 +3,10 @@
 
 #include <linear_algebra/COOSymmetricMatrix.hpp>
 #include "LPSubproblem.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "reformulation/OptimizationProblem.hpp"
 #include "solvers/LP/LPSolverFactory.hpp"
+#include "tools/Options.hpp"
 
 LPSubproblem::LPSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_objective_gradient_nonzeros,
       size_t max_number_jacobian_nonzeros, const Options& options) :

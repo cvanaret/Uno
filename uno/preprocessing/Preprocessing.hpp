@@ -5,10 +5,16 @@
 #define UNO_PREPROCESSING_H
 
 #include <vector>
-#include "model/Model.hpp"
-#include "optimization/Iterate.hpp"
-#include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
-#include "solvers/QP/QPSolver.hpp"
+
+// forward declarations
+class Iterate;
+class Model;
+class Multipliers;
+class QPSolver;
+template <typename ElementType>
+class SymmetricIndefiniteLinearSolver;
+template <typename ElementType>
+class SymmetricMatrix;
 
 class Preprocessing {
 public:

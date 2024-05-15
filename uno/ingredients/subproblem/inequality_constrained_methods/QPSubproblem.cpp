@@ -3,6 +3,8 @@
 
 #include "QPSubproblem.hpp"
 #include "ingredients/subproblem/HessianModelFactory.hpp"
+#include "optimization/Iterate.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "preprocessing/Preprocessing.hpp"
 #include "reformulation/OptimizationProblem.hpp"
 #include "solvers/QP/QPSolverFactory.hpp"

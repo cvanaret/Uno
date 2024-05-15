@@ -4,8 +4,11 @@
 #include <functional>
 #include "FeasibilityRestoration.hpp"
 #include "ingredients/globalization_strategy/GlobalizationStrategyFactory.hpp"
+#include "ingredients/subproblem/Direction.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
+#include "model/Model.hpp"
+#include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Options.hpp"

@@ -6,14 +6,14 @@
 
 #include <vector>
 #include "Evaluations.hpp"
+#include "TerminationStatus.hpp"
 #include "ingredients/globalization_strategy/ProgressMeasures.hpp"
-#include "linear_algebra/SparseVector.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
-#include "model/Model.hpp"
 #include "optimization/LagrangianGradient.hpp"
 #include "optimization/Multipliers.hpp"
 #include "optimization/PrimalDualResiduals.hpp"
-#include "tools/Infinity.hpp"
+
+// forward declaration
+class Model;
 
 class Iterate {
 public:

@@ -2,8 +2,14 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "Preprocessing.hpp"
+#include "ingredients/subproblem/Direction.hpp"
 #include "linear_algebra/CSCSymmetricMatrix.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
+#include "model/Model.hpp"
+#include "optimization/Iterate.hpp"
+#include "optimization/WarmstartInformation.hpp"
+#include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
+#include "solvers/QP/QPSolver.hpp"
 
 // compute a least-square approximation of the multipliers by solving a linear system (uses existing linear system)
 void Preprocessing::compute_least_square_multipliers(const Model& model, SymmetricMatrix<double>& matrix, std::vector<double>& rhs,
@@ -81,10 +87,7 @@ bool Preprocessing::enforce_linear_constraints(const Model& model, std::vector<d
          // Hessian
          const CSCSymmetricMatrix<double> hessian = CSCSymmetricMatrix<double>::identity(model.number_variables);
          // constraint Jacobian
-         RectangularMatrix<double> constraint_jacobian(linear_constraints.size());
-         for (auto& constraint_gradient: constraint_jacobian) {
-            constraint_gradient.reserve(model.number_variables);
-         }
+         RectangularMatrix<double> constraint_jacobian(linear_constraints.size(), model.number_variables);
          for (size_t linear_constraint_index: Range(linear_constraints.size())) {
             const size_t constraint_index = linear_constraints[linear_constraint_index];
             model.evaluate_constraint_gradient(x, constraint_index, constraint_jacobian[linear_constraint_index]);

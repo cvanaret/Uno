@@ -7,15 +7,9 @@
 #include <vector>
 #include <optional>
 #include <ostream>
+#include "SubproblemStatus.hpp"
 #include "optimization/Multipliers.hpp"
 #include "tools/Infinity.hpp"
-
-enum class SubproblemStatus {
-   OPTIMAL = 0,
-   UNBOUNDED_PROBLEM,
-   INFEASIBLE,
-   ERROR
-};
 
 /*! \struct ConstraintActivity
 * \brief Constraints at lower or upper bound at the optimum solution
