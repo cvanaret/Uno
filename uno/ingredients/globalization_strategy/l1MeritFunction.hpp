@@ -5,6 +5,7 @@
 #define UNO_MERITFUNCTION_H
 
 #include "GlobalizationStrategy.hpp"
+#include "tools/Infinity.hpp"
 
 class l1MeritFunction : public GlobalizationStrategy {
 public:

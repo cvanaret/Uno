@@ -6,8 +6,9 @@
 
 #include "../GlobalizationStrategy.hpp"
 #include "filter/Filter.hpp"
-#include "tools/Options.hpp"
-#include "tools/Infinity.hpp"
+
+// forward declaration
+class Options;
 
 /*! \class TwoPhaseConstants
  * \brief Constants for filter strategy

@@ -2,6 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "WaechterFilterMethod.hpp"
+#include "../ProgressMeasures.hpp"
+#include "optimization/Iterate.hpp"
+#include "tools/Statistics.hpp"
+#include "tools/Logger.hpp"
 
 WaechterFilterMethod::WaechterFilterMethod(const Options& options):
       FilterMethod(options) {

@@ -3,7 +3,6 @@
 
 #include <cassert>
 #include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategy.hpp"
-#include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "BacktrackingLineSearch.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"

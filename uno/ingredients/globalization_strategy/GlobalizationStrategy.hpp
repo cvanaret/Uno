@@ -4,11 +4,11 @@
 #ifndef UNO_GLOBALIZATIONSTRATEGY_H
 #define UNO_GLOBALIZATIONSTRATEGY_H
 
-#include "ProgressMeasures.hpp"
-#include "optimization/Iterate.hpp"
-#include "ingredients/subproblem/Direction.hpp"
-#include "tools/Statistics.hpp"
-#include "tools/Options.hpp"
+// forward declarations
+class Iterate;
+struct ProgressMeasures;
+class Statistics;
+class Options;
 
 /*! \class GlobalizationStrategy
  *  Ingredient that accepts or rejects a trial iterate

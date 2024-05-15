@@ -5,8 +5,11 @@
 #define UNO_GLOBALIZATIONSTRATEGYFACTORY_H
 
 #include <memory>
+#include <vector>
 #include "GlobalizationStrategy.hpp"
-#include "tools/Options.hpp"
+
+// forward declaration
+class Options;
 
 class GlobalizationStrategyFactory {
 public:

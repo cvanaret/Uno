@@ -2,6 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "FletcherFilterMethod.hpp"
+#include "../ProgressMeasures.hpp"
+#include "optimization/Iterate.hpp"
+#include "tools/Logger.hpp"
+#include "tools/Statistics.hpp"
 
 FletcherFilterMethod::FletcherFilterMethod(const Options& options): FilterMethod(options) {
 }

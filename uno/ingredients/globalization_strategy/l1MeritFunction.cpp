@@ -2,6 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "l1MeritFunction.hpp"
+#include "ProgressMeasures.hpp"
+#include "tools/Logger.hpp"
+#include "tools/Options.hpp"
+#include "tools/Statistics.hpp"
 
 l1MeritFunction::l1MeritFunction(const Options& options): GlobalizationStrategy(options) {
 }

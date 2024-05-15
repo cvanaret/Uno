@@ -3,6 +3,7 @@
 
 #include "FilterMethod.hpp"
 #include "filter/FilterFactory.hpp"
+#include "optimization/Iterate.hpp"
 
 FilterMethod::FilterMethod(const Options& options) :
       GlobalizationStrategy(options),
