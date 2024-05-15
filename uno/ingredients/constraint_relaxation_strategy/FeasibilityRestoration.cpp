@@ -7,6 +7,7 @@
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "symbolic/VectorView.hpp"
+#include "tools/Options.hpp"
 
 FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options& options) :
       ConstraintRelaxationStrategy(model, options),

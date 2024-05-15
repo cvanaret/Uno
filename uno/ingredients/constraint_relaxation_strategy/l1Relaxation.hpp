@@ -8,9 +8,7 @@
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategy/GlobalizationStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
-#include "reformulation/OptimalityProblem.hpp"
 #include "reformulation/l1RelaxedProblem.hpp"
-#include "tools/Options.hpp"
 
 struct l1RelaxationParameters {
    bool fixed_parameter;

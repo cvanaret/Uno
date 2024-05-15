@@ -6,6 +6,7 @@
 #include "ingredients/globalization_strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 #include "symbolic/VectorView.hpp"
+#include "tools/Options.hpp"
 
 /*
  * Infeasibility detection and SQP methods for nonlinear optimization

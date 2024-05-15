@@ -2,8 +2,16 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "ConstraintRelaxationStrategy.hpp"
+#include "ingredients/subproblem/Direction.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
+#include "model/Model.hpp"
+#include "optimization/Iterate.hpp"
+#include "optimization/Multipliers.hpp"
+#include "reformulation/OptimizationProblem.hpp"
 #include "symbolic/VectorView.hpp"
 #include "symbolic/Expression.hpp"
+#include "tools/Options.hpp"
+#include "tools/Statistics.hpp"
 
 ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Model& model, const Options& options):
       model(model),
