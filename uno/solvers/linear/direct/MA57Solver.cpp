@@ -26,7 +26,9 @@ lifact, const double rhs[], double x[], double resid[], double work[], int iwork
 }
 
 MA57Solver::MA57Solver(size_t max_dimension, size_t max_number_nonzeros) : DirectIndefiniteLinearSolver<size_t, double>(max_dimension),
-      my_coo_matrix(max_dimension, max_number_nonzeros + 1, false),
+      COO_matrix(max_dimension, max_number_nonzeros, false),
+      hessian(this->COO_matrix.view(0, 0)),
+      jacobian(this->COO_matrix.view(0, 0)),
       iwork(5 * max_dimension),
       lwork(static_cast<int>(1.2 * static_cast<double>(max_dimension))),
       work(static_cast<size_t>(this->lwork)), residuals(max_dimension) {
@@ -40,8 +42,8 @@ MA57Solver::MA57Solver(size_t max_dimension, size_t max_number_nonzeros) : Direc
 
 void MA57Solver::do_symbolic_factorization(const SymmetricMatrix<size_t, double>& matrix) {
    assert(matrix.dimension <= this->max_dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
-   assert(matrix.number_nonzeros <= this->my_coo_matrix.capacity &&
-      "MA57Solver: the number of nonzeros of the matrix is larger than the preallocated size");
+   assert(matrix.number_nonzeros <= this->COO_matrix.capacity &&
+          "MA57Solver: the number of nonzeros of the matrix is larger than the preallocated size");
 
    // build the internal matrix representation
    this->save_matrix_to_local_format(matrix);
@@ -56,8 +58,8 @@ void MA57Solver::do_symbolic_factorization(const SymmetricMatrix<size_t, double>
    // symbolic factorization
    ma57ad_(/* const */ &n,
          /* const */ &nnz,
-         /* const */ this->my_coo_matrix.row_indices_pointer(),
-         /* const */ this->my_coo_matrix.column_indices_pointer(),
+         /* const */ this->COO_matrix.row_indices_pointer(),
+         /* const */ this->COO_matrix.column_indices_pointer(),
          /* const */ &lkeep,
          /* const */ keep.data(),
          /* out */ this->iwork.data(),
@@ -110,8 +112,8 @@ void MA57Solver::solve_indefinite_system(const SymmetricMatrix<size_t, double>& 
 
    // solve the linear system
    if (this->use_iterative_refinement) {
-      ma57dd_(&this->job, &n, &this->factorization.nnz, matrix.data_raw_pointer(), this->my_coo_matrix.row_indices_pointer(),
-            this->my_coo_matrix.column_indices_pointer(), this->factorization.fact.data(), &this->factorization.lfact,
+      ma57dd_(&this->job, &n, &this->factorization.nnz, matrix.data_raw_pointer(), this->COO_matrix.row_indices_pointer(),
+            this->COO_matrix.column_indices_pointer(), this->factorization.fact.data(), &this->factorization.lfact,
             this->factorization.ifact.data(), &this->factorization.lifact, rhs.data(), result.data(), this->residuals.data(), this->work.data(),
             this->iwork.data(), this->icntl.data(), this->cntl.data(), this->info.data(), this->rinfo.data());
    }
@@ -156,8 +158,8 @@ size_t MA57Solver::rank() const {
 
 void MA57Solver::save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix) {
    // build the internal matrix representation
-   this->my_coo_matrix.reset();
+   this->COO_matrix.reset();
    matrix.for_each([&](size_t row_index, size_t column_index, double element) {
-      this->my_coo_matrix.insert(element, static_cast<int>(row_index + this->fortran_shift), static_cast<int>(column_index + this->fortran_shift));
+      this->COO_matrix.insert(element, static_cast<int>(row_index + this->fortran_shift), static_cast<int>(column_index + this->fortran_shift));
    });
 }

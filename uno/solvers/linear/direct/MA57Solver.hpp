@@ -45,8 +45,10 @@ public:
 
 private:
    bool is_matrix_factorized{false};
-   // internal matrix representation
-   COOSymmetricMatrix<int, double> my_coo_matrix;
+   // internal matrix representation: COO matrix for the (augmented) system + views for individual blocks
+   COOSymmetricMatrix<int, double> COO_matrix;
+   COOSymmetricMatrix<int, double>::View hessian;
+   COOSymmetricMatrix<int, double>::View jacobian;
 
    std::vector<int> iwork;
    int lwork;

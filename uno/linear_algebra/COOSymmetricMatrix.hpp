@@ -16,6 +16,20 @@
 template <typename IndexType, typename ElementType>
 class COOSymmetricMatrix: public SymmetricMatrix<IndexType, ElementType> {
 public:
+   // matrix view with an index range in [start, end)
+   class View {
+   public:
+      View(const COOSymmetricMatrix<IndexType, ElementType>& matrix, size_t start, size_t end): matrix(matrix), start(start), end(end) {
+         assert(start <= end && "COOSymmetricMatrix::view: start > end");
+         assert(end <= matrix.number_nonzeros && "COOSymmetricMatrix::view: end > NNZ");
+      }
+
+   protected:
+      const COOSymmetricMatrix<IndexType, ElementType>& matrix;
+      size_t start;
+      size_t end;
+   };
+
    COOSymmetricMatrix(size_t max_dimension, size_t original_capacity, bool use_regularization);
 
    void reset() override;
@@ -27,6 +41,8 @@ public:
 
    [[nodiscard]] const IndexType* row_indices_pointer() const { return this->row_indices.data(); }
    [[nodiscard]] const IndexType* column_indices_pointer() const { return this->column_indices.data(); }
+
+   [[nodiscard]] View view(size_t start, size_t end) const { return {*this, start, end}; }
 
    void print(std::ostream& stream) const override;
 
