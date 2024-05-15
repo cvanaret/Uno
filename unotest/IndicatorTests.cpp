@@ -8,6 +8,9 @@
 
 TEST(Indicator, Test) {
    const std::vector<double> x{1., 2., 3., 4., 5., 6., 7.};
-   const auto indicator = (x < 4.5);
-   //print_vector(std::cout, indicator);
+   const auto result = (x < 4.5);
+   const std::vector<double> reference_result{1., 1., 1., 1., 0., 0., 0.};
+   for (size_t i: Range(result.size())) {
+      ASSERT_EQ(result[i], reference_result[i]);
+   }
 }
