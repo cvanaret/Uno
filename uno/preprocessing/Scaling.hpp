@@ -5,6 +5,7 @@
 #define UNO_SCALING_H
 
 #include <vector>
+#include <cstddef>
 
 // forward declarations
 template <typename ElementType>
