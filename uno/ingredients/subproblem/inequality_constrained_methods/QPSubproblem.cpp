@@ -3,11 +3,13 @@
 
 #include "QPSubproblem.hpp"
 #include "ingredients/subproblem/HessianModelFactory.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "preprocessing/Preprocessing.hpp"
 #include "reformulation/OptimizationProblem.hpp"
 #include "solvers/QP/QPSolverFactory.hpp"
+#include "tools/Options.hpp"
 #include "tools/Statistics.hpp"
 
 QPSubproblem::QPSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_objective_gradient_nonzeros,

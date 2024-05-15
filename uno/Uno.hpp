@@ -4,11 +4,15 @@
 #ifndef UNO_H
 #define UNO_H
 
-#include "model/Model.hpp"
 #include "optimization/Result.hpp"
 #include "optimization/TerminationStatus.hpp"
-#include "ingredients/globalization_mechanism/GlobalizationMechanism.hpp"
-#include "tools/Timer.hpp"
+
+// forward declarations
+class GlobalizationMechanism;
+class Model;
+class Options;
+class Statistics;
+class Timer;
 
 /*
 struct TimeOut : public std::exception {

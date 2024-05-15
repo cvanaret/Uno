@@ -4,9 +4,9 @@
 #ifndef UNO_MA57SOLVER_H
 #define UNO_MA57SOLVER_H
 
+#include <array>
 #include <vector>
 #include "SymmetricIndefiniteLinearSolver.hpp"
-#include "linear_algebra/COOSymmetricMatrix.hpp"
 
 struct MA57Factorization {
    int n{};

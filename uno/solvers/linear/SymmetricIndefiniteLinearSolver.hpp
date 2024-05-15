@@ -5,7 +5,9 @@
 #define UNO_SYMMETRICINDEFINITELINEARSOLVER_H
 
 #include <vector>
-#include <linear_algebra/SymmetricMatrix.hpp>
+
+template <typename ElementType>
+class SymmetricMatrix;
 
 template <typename ElementType>
 class SymmetricIndefiniteLinearSolver {

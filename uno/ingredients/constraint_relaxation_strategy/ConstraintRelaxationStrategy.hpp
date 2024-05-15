@@ -8,16 +8,16 @@
 #include "linear_algebra/Vector.hpp"
 
 // forward declarations
-class Model;
-class Options;
-class Iterate;
 class Direction;
+class Iterate;
+class Model;
 struct Multipliers;
-class Statistics;
 class OptimizationProblem;
-class WarmstartInformation;
+class Options;
+class Statistics;
 template <typename ElementType>
 class SymmetricMatrix;
+class WarmstartInformation;
 
 class ConstraintRelaxationStrategy {
 public:

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cassert>
 #include "MA57Solver.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 
 extern "C" {
