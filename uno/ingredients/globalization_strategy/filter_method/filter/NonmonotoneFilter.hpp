@@ -10,16 +10,15 @@ class NonmonotoneFilter : public Filter {
 public:
    explicit NonmonotoneFilter(const Options& options);
 
-   void add(double infeasibility_measure, double objective_measure) override;
-   bool acceptable(double infeasibility_measure, double objective_measure) override;
-   bool acceptable_wrt_current_iterate(double current_infeasibility_measure, double current_objective_measure, double trial_infeasibility_measure,
-         double trial_objective_measure) override;
-   double compute_actual_objective_reduction(double current_objective_measure, double current_infeasibility_measure, double trial_objective_measure) override;
+   void add(double current_infeasibility, double current_objective) override;
+   bool acceptable(double trial_infeasibility, double trial_objective) override;
+   bool acceptable_wrt_current_iterate(double current_infeasibility, double current_objective, double trial_infeasibility, double trial_objective) override;
+   double compute_actual_objective_reduction(double current_objective, double current_infeasibility, double trial_objective) override;
 
 protected:
    const size_t max_number_dominated_entries; /*!< Memory of filter */
 
-   size_t compute_number_dominated_entries(double infeasibility_measure, double objective_measure);
+   size_t compute_number_dominated_entries(double trial_infeasibility, double trial_objective);
 };
 
 #endif // UNO_NONMONOTONEFILTER_H
