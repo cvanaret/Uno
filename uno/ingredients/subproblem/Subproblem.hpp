@@ -5,12 +5,20 @@
 #define UNO_SUBPROBLEM_H
 
 #include <vector>
-#include "optimization/Iterate.hpp"
-#include "optimization/WarmstartInformation.hpp"
-#include "reformulation/l1RelaxedProblem.hpp"
-#include "Direction.hpp"
-#include "linear_algebra/Vector.hpp"
-#include "tools/Statistics.hpp"
+#include "optimization/Evaluations.hpp"
+#include "tools/Infinity.hpp"
+
+// forward declarations
+class Direction;
+class Iterate;
+class l1RelaxedProblem;
+class Model;
+class OptimizationProblem;
+class Options;
+class Statistics;
+template <typename ElementType>
+class SymmetricMatrix;
+struct WarmstartInformation;
 
 /*! \class Subproblem
  * \brief Subproblem
@@ -47,7 +55,6 @@ public:
    bool subproblem_definition_changed{false};
 
 protected:
-   //Direction direction;
    Evaluations evaluations;
    double trust_region_radius{INF<double>};
 };

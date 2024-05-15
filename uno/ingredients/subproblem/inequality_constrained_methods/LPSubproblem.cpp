@@ -3,6 +3,7 @@
 
 #include <linear_algebra/COOSymmetricMatrix.hpp>
 #include "LPSubproblem.hpp"
+#include "reformulation/OptimizationProblem.hpp"
 #include "solvers/LP/LPSolverFactory.hpp"
 
 LPSubproblem::LPSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_objective_gradient_nonzeros,

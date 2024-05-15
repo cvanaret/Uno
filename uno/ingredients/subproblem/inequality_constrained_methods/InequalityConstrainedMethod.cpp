@@ -2,6 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "InequalityConstrainedMethod.hpp"
+#include "linear_algebra/Vector.hpp"
+#include "reformulation/l1RelaxedProblem.hpp"
+#include "tools/Options.hpp"
 
 InequalityConstrainedMethod::InequalityConstrainedMethod(size_t max_number_variables, size_t max_number_constraints):
       Subproblem(max_number_variables, max_number_constraints),

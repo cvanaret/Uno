@@ -7,7 +7,6 @@
 #include "InequalityConstrainedMethod.hpp"
 #include "ingredients/subproblem/HessianModel.hpp"
 #include "solvers/QP/QPSolver.hpp"
-#include "tools/Options.hpp"
 
 class QPSubproblem : public InequalityConstrainedMethod {
 public:

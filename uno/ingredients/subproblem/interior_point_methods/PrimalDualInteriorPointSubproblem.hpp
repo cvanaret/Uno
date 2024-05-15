@@ -8,7 +8,6 @@
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem/HessianModel.hpp"
-#include "tools/Options.hpp"
 #include "BarrierParameterUpdateStrategy.hpp"
 
 struct InteriorPointParameters {

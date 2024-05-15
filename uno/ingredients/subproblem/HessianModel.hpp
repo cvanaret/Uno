@@ -6,10 +6,12 @@
 
 #include <memory>
 #include <vector>
-#include "reformulation/OptimizationProblem.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
-#include "tools/Options.hpp"
-#include "tools/Statistics.hpp"
+
+// forward declarations
+class OptimizationProblem;
+class Options;
+class Statistics;
 
 class HessianModel {
 public:

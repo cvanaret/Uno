@@ -6,6 +6,7 @@
 #include "ingredients/globalization_strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Options.hpp"
 

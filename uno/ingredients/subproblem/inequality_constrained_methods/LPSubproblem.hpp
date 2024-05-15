@@ -8,7 +8,6 @@
 #include "InequalityConstrainedMethod.hpp"
 #include "linear_algebra/COOSymmetricMatrix.hpp"
 #include "solvers/LP/LPSolver.hpp"
-#include "tools/Options.hpp"
 
 class LPSubproblem : public InequalityConstrainedMethod {
 public:

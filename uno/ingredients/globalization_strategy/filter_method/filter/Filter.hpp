@@ -6,8 +6,10 @@
 
 #include <vector>
 #include <memory>
-#include "tools/Options.hpp"
 #include "tools/Infinity.hpp"
+
+// forward declaration
+class Options;
 
 struct FilterParameters {
    double beta; /*!< Margin around filter */

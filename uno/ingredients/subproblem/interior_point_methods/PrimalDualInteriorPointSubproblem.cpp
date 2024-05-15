@@ -7,6 +7,7 @@
 #include "solvers/linear/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
 #include "preprocessing/Preprocessing.hpp"
+#include "reformulation/l1RelaxedProblem.hpp"
 #include "tools/Infinity.hpp"
 
 PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(size_t max_number_variables, size_t max_number_constraints,

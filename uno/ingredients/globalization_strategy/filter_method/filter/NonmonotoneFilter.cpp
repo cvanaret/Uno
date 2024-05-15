@@ -4,6 +4,7 @@
 #include "NonmonotoneFilter.hpp"
 #include "symbolic/Range.hpp"
 #include "tools/Logger.hpp"
+#include "tools/Options.hpp"
 
 NonmonotoneFilter::NonmonotoneFilter(const Options& options) :
       Filter(options), max_number_dominated_entries(options.get_unsigned_int("nonmonotone_filter_number_dominated_entries")) {

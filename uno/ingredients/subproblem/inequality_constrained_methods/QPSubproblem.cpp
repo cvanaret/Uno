@@ -4,7 +4,9 @@
 #include "QPSubproblem.hpp"
 #include "ingredients/subproblem/HessianModelFactory.hpp"
 #include "preprocessing/Preprocessing.hpp"
+#include "reformulation/OptimizationProblem.hpp"
 #include "solvers/QP/QPSolverFactory.hpp"
+#include "tools/Statistics.hpp"
 
 QPSubproblem::QPSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_objective_gradient_nonzeros,
       size_t max_number_jacobian_nonzeros, size_t max_number_hessian_nonzeros, const Options& options) :

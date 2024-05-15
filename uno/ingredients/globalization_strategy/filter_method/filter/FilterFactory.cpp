@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include "FilterFactory.hpp"
 #include "NonmonotoneFilter.hpp"
+#include "tools/Options.hpp"
 
 // FilterFactory class
 std::unique_ptr<Filter> FilterFactory::create(const Options& options) {
