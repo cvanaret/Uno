@@ -13,7 +13,9 @@ std::string& Options::operator[](const std::string& key) {
 
 const std::string& Options::at(const std::string& key) const {
    try {
-      return this->options.at(key);
+      const std::string& value = this->options.at(key);
+      this->is_used[key] = true;
+      return value;
    }
    catch(const std::out_of_range&) {
       throw std::out_of_range("The option " + key + " was not found");
@@ -44,10 +46,12 @@ bool Options::get_bool(const std::string& key) const {
    return entry == "yes";
 }
 
-void Options::print() const {
+void Options::print(bool only_used) const {
    std::cout << "Options:\n";
    for (const auto& [key, value]: this->options) {
-      std::cout << "- " << key << " = " << value << '\n';
+      if (not only_used || this->is_used[key]) {
+         std::cout << "- " << key << " = " << value << '\n';
+      }
    }
 }
 

@@ -20,7 +20,7 @@ Uno::Uno(GlobalizationMechanism& globalization_mechanism, const Options& options
 }
 
 Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& options) {
-   std::cout << "\nProblem " << model.name << '\n' << model.number_variables << " variables, " << model.number_constraints << " constraints\n\n";
+   std::cout << "Problem " << model.name << '\n' << model.number_variables << " variables, " << model.number_constraints << " constraints\n\n";
    
    Timer timer{};
    Statistics statistics = Uno::create_statistics(model, options);
@@ -62,6 +62,7 @@ void Uno::initialize(Statistics& statistics, Iterate& current_iterate, const Opt
       statistics.set("iter", 0);
       statistics.set("status", "initial point");
       this->globalization_mechanism.initialize(statistics, current_iterate, options);
+      options.print(true);
       if (Logger::level == INFO) statistics.print_current_line();
    }
    catch (const std::exception& e) {

@@ -60,7 +60,6 @@ int main(int argc, char* argv[]) {
          Uno::print_available_strategies();
       }
       else {
-         options.print();
          // run Uno on the .nl file (last command line argument)
          std::string model_name = std::string(argv[argc - 1]);
          run_uno_ampl(model_name, options);
