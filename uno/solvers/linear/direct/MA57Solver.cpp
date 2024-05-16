@@ -45,9 +45,9 @@ MA57Solver::MA57Solver(size_t dimension, size_t number_nonzeros) : DirectIndefin
 
 void MA57Solver::do_symbolic_factorization(const SymmetricMatrix<size_t, double>& matrix) {
    assert(matrix.dimension <= this->dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
-   assert(matrix.number_nonzeros <= this->row_indices.capacity() &&
+   assert(matrix.number_nonzeros <= this->COO_matrix.number_nonzeros &&
       "MA57Solver: the number of nonzeros of the matrix is larger than the preallocated size");
-
+   
    // build the internal matrix representation
    this->save_matrix_to_local_format(matrix);
 
