@@ -176,7 +176,7 @@ void PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const Opti
       throw std::runtime_error("The interior-point subproblem has a trust region. This is not implemented yet.\n");
    }
 
-   // update the barrier parameter if the current iterate solves the subproblem
+   // possibly update the barrier parameter
    if (not this->solving_feasibility_problem) {
       this->update_barrier_parameter(problem, current_iterate);
    }
