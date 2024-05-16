@@ -15,8 +15,6 @@ struct MA57Factorization {
    int lfact{};
    std::vector<int> ifact{};
    int lifact{};
-   int lkeep{};
-   std::vector<int> keep{};
 
    MA57Factorization() = default;
 };
@@ -48,20 +46,25 @@ private:
    std::vector<int> row_indices;
    std::vector<int> column_indices;
 
-   std::vector<int> iwork;
+   // factorization
+   MA57Factorization factorization{};
+   const int lkeep;
+   std::vector<int> keep{};
+   std::vector<int> iwork{};
    int lwork;
-   std::vector<double> work;
-   /* for ma57id_ (default values of controlling parameters) */
+   std::vector<double> work{};
+
+   // for ma57id_ (default values of controlling parameters)
    std::array<double, 5> cntl{};
    std::array<int, 20> icntl{};
    std::array<double, 20> rinfo{};
    std::array<int, 40> info{};
+
    const int nrhs{1}; // number of right hand side being solved
    const int job{1};
    std::vector<double> residuals;
    const size_t fortran_shift{1};
 
-   MA57Factorization factorization{};
    bool use_iterative_refinement{false};
    void save_matrix_to_local_format(const SymmetricMatrix<double>& row_index);
 };

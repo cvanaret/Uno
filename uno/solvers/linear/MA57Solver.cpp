@@ -27,6 +27,8 @@ lifact, const double rhs[], double x[], double resid[], double work[], int iwork
 }
 
 MA57Solver::MA57Solver(size_t dimension, size_t number_nonzeros) : SymmetricIndefiniteLinearSolver<double>(dimension),
+   lkeep(static_cast<int>(5 * dimension + number_nonzeros + std::max(dimension, number_nonzeros) + 42)),
+   keep(static_cast<size_t>(lkeep)),
    iwork(5 * dimension),
    lwork(static_cast<int>(1.2 * static_cast<double>(dimension))),
    work(static_cast<size_t>(this->lwork)), residuals(dimension) {
@@ -57,17 +59,13 @@ void MA57Solver::do_symbolic_factorization(const SymmetricMatrix<double>& matrix
    const int n = static_cast<int>(matrix.dimension);
    const int nnz = static_cast<int>(matrix.number_nonzeros);
 
-   // sparsity pattern
-   const int lkeep = 5 * n + nnz + std::max(n, nnz) + 42;
-   std::vector<int> keep(static_cast<size_t>(lkeep));
-
    // symbolic factorization
    ma57ad_(/* const */ &n,
          /* const */ &nnz,
          /* const */ this->row_indices.data(),
          /* const */ this->column_indices.data(),
-         /* const */ &lkeep,
-         /* const */ keep.data(),
+         /* const */ &this->lkeep,
+         /* const */ this->keep.data(),
          /* out */ this->iwork.data(),
          /* const */ this->icntl.data(),
          /* out */ this->info.data(),
@@ -83,7 +81,7 @@ void MA57Solver::do_symbolic_factorization(const SymmetricMatrix<double>& matrix
    std::vector<int> ifact(static_cast<size_t>(lifact));
 
    // store the symbolic factorization
-   this->factorization = {n, nnz, std::move(fact), lfact, std::move(ifact), lifact, lkeep, std::move(keep)};
+   this->factorization = {n, nnz, std::move(fact), lfact, std::move(ifact), lifact};
 }
 
 void MA57Solver::do_numerical_factorization(const SymmetricMatrix<double>& matrix) {
@@ -91,16 +89,18 @@ void MA57Solver::do_numerical_factorization(const SymmetricMatrix<double>& matri
    assert(this->factorization.nnz == static_cast<int>(matrix.number_nonzeros) && "MA57Solver: the numbers of nonzeros do not match");
 
    const int n = static_cast<int>(matrix.dimension);
+   int nnz = static_cast<int>(matrix.number_nonzeros);
+
    // numerical factorization
    ma57bd_(&n,
-         &this->factorization.nnz,
+         &nnz,
          /* const */ matrix.data_raw_pointer(),
          /* out */ this->factorization.fact.data(),
          /* const */ &this->factorization.lfact,
-         /* out*/ this->factorization.ifact.data(),
+         /* out */ this->factorization.ifact.data(),
          /* const */ &this->factorization.lifact,
-         /* const */ &this->factorization.lkeep,
-         /* const */ this->factorization.keep.data(), this->iwork.data(), this->icntl.data(), this->cntl.data(),
+         /* const */ &this->lkeep,
+         /* const */ this->keep.data(), this->iwork.data(), this->icntl.data(), this->cntl.data(),
          /* out */ this->info.data(),
          /* out */ this->rinfo.data());
 }
@@ -108,11 +108,12 @@ void MA57Solver::do_numerical_factorization(const SymmetricMatrix<double>& matri
 void MA57Solver::solve_indefinite_system(const SymmetricMatrix<double>& matrix, const std::vector<double>& rhs, std::vector<double>& result) {
    // solve
    const int n = static_cast<int>(matrix.dimension);
+   int nnz = static_cast<int>(matrix.number_nonzeros);
    const int lrhs = n; // integer, length of rhs
 
    // solve the linear system
    if (this->use_iterative_refinement) {
-      ma57dd_(&this->job, &n, &this->factorization.nnz, matrix.data_raw_pointer(), this->row_indices.data(), this->column_indices.data(),
+      ma57dd_(&this->job, &n, &nnz, matrix.data_raw_pointer(), this->row_indices.data(), this->column_indices.data(),
             this->factorization.fact.data(), &this->factorization.lfact, this->factorization.ifact.data(), &this->factorization.lifact,
             rhs.data(), result.data(), this->residuals.data(), this->work.data(), this->iwork.data(), this->icntl.data(),
             this->cntl.data(), this->info.data(), this->rinfo.data());
