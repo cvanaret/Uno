@@ -12,7 +12,7 @@ class SymmetricMatrix;
 template <typename ElementType>
 class SymmetricIndefiniteLinearSolver {
 public:
-   explicit SymmetricIndefiniteLinearSolver(size_t max_dimension): max_dimension(max_dimension) {};
+   explicit SymmetricIndefiniteLinearSolver(size_t dimension): dimension(dimension) {};
    virtual ~SymmetricIndefiniteLinearSolver() = default;
 
    virtual void factorize(const SymmetricMatrix<ElementType>& matrix) = 0;
@@ -27,7 +27,7 @@ public:
    [[nodiscard]] virtual size_t rank() const = 0;
 
 protected:
-   const size_t max_dimension;
+   const size_t dimension;
 };
 
 #endif // UNO_SYMMETRICINDEFINITELINEARSOLVER_H

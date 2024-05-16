@@ -17,7 +17,7 @@ class Model;
 
 class Iterate {
 public:
-   Iterate(size_t max_number_variables, size_t max_number_constraints);
+   Iterate(size_t number_variables, size_t number_constraints);
 
    size_t number_variables;
    size_t number_constraints;

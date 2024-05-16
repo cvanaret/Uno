@@ -5,10 +5,10 @@
 #include "tools/Logger.hpp"
 #include "linear_algebra/Vector.hpp"
 
-Direction::Direction(size_t max_number_variables, size_t max_number_constraints) :
-      number_variables(max_number_variables), number_constraints(max_number_constraints),
-      primals(max_number_variables), multipliers(max_number_variables, max_number_constraints),
-      active_set(max_number_variables, max_number_constraints) {
+Direction::Direction(size_t number_variables, size_t number_constraints) :
+      number_variables(number_variables), number_constraints(number_constraints),
+      primals(number_variables), multipliers(number_variables, number_constraints),
+      active_set(number_variables, number_constraints) {
 }
 
 void Direction::set_dimensions(size_t new_number_variables, size_t new_number_constraints) {

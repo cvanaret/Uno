@@ -25,7 +25,7 @@ struct WarmstartInformation;
  */
 class Subproblem {
 public:
-   Subproblem(size_t max_number_variables, size_t max_number_constraints);
+   Subproblem(size_t number_variables, size_t number_constraints);
    virtual ~Subproblem() = default;
 
    // virtual methods implemented by subclasses

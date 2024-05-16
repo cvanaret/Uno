@@ -15,10 +15,10 @@ struct Evaluations {
    SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
    RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
 
-   Evaluations(size_t max_number_variables, size_t max_number_constraints):
-         constraints(max_number_constraints),
-         objective_gradient(max_number_variables),
-         constraint_jacobian(max_number_constraints, max_number_variables) {
+   Evaluations(size_t number_variables, size_t number_constraints):
+         constraints(number_constraints),
+         objective_gradient(number_variables),
+         constraint_jacobian(number_constraints, number_variables) {
    }
 };
 

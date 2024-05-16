@@ -16,7 +16,7 @@
 template <typename ElementType>
 class COOSymmetricMatrix: public SymmetricMatrix<ElementType> {
 public:
-   COOSymmetricMatrix(size_t max_dimension, size_t original_capacity, bool use_regularization);
+   COOSymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization);
 
    void reset() override;
    void for_each(const std::function<void(size_t, size_t, ElementType)>& f) const override;
@@ -40,9 +40,9 @@ protected:
 // implementation
 
 template <typename ElementType>
-COOSymmetricMatrix<ElementType>::COOSymmetricMatrix(size_t max_dimension, size_t original_capacity, bool use_regularization):
-      SymmetricMatrix<ElementType>(max_dimension, original_capacity, use_regularization),
-      diagonal_entries(max_dimension, ElementType(0)) {
+COOSymmetricMatrix<ElementType>::COOSymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization):
+      SymmetricMatrix<ElementType>(dimension, original_capacity, use_regularization),
+      diagonal_entries(dimension, ElementType(0)) {
    this->row_indices.reserve(this->capacity);
    this->column_indices.reserve(this->capacity);
 

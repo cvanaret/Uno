@@ -42,7 +42,7 @@ struct ConstraintPartition {
 
 class Direction {
 public:
-   Direction(size_t max_number_variables, size_t max_number_constraints);
+   Direction(size_t number_variables, size_t number_constraints);
 
    size_t number_variables;
    size_t number_constraints;

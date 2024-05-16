@@ -7,13 +7,13 @@
 #include "reformulation/l1RelaxedProblem.hpp"
 #include "tools/Options.hpp"
 
-InequalityConstrainedMethod::InequalityConstrainedMethod(size_t max_number_variables, size_t max_number_constraints):
-      Subproblem(max_number_variables, max_number_constraints),
-      initial_point(max_number_variables),
-      direction_lower_bounds(max_number_variables),
-      direction_upper_bounds(max_number_variables),
-      linearized_constraints_lower_bounds(max_number_constraints),
-      linearized_constraints_upper_bounds(max_number_constraints) {
+InequalityConstrainedMethod::InequalityConstrainedMethod(size_t number_variables, size_t number_constraints):
+      Subproblem(number_variables, number_constraints),
+      initial_point(number_variables),
+      direction_lower_bounds(number_variables),
+      direction_upper_bounds(number_variables),
+      linearized_constraints_lower_bounds(number_constraints),
+      linearized_constraints_upper_bounds(number_constraints) {
 }
 
 void InequalityConstrainedMethod::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) {

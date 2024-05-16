@@ -29,7 +29,7 @@ struct MA57Factorization {
  */
 class MA57Solver : public SymmetricIndefiniteLinearSolver<double> {
 public:
-   MA57Solver(size_t max_dimension, size_t max_number_nonzeros);
+   MA57Solver(size_t dimension, size_t number_nonzeros);
    ~MA57Solver() override = default;
 
    void factorize(const SymmetricMatrix<double>& matrix) override;

@@ -8,7 +8,7 @@
 
 class InequalityConstrainedMethod : public Subproblem {
 public:
-   InequalityConstrainedMethod(size_t max_number_variables, size_t max_number_constraints);
+   InequalityConstrainedMethod(size_t number_variables, size_t number_constraints);
    ~InequalityConstrainedMethod() override = default;
    
    void initialize_statistics(Statistics& statistics, const Options& options) override;

@@ -26,12 +26,12 @@ lifact, const double rhs[], double x[], double resid[], double work[], int iwork
       double cntl[], int info[], double rinfo[]);
 }
 
-MA57Solver::MA57Solver(size_t max_dimension, size_t max_number_nonzeros) : SymmetricIndefiniteLinearSolver<double>(max_dimension),
-   iwork(5 * max_dimension),
-   lwork(static_cast<int>(1.2 * static_cast<double>(max_dimension))),
-   work(static_cast<size_t>(this->lwork)), residuals(max_dimension) {
-   this->row_indices.reserve(max_number_nonzeros);
-   this->column_indices.reserve(max_number_nonzeros);
+MA57Solver::MA57Solver(size_t dimension, size_t number_nonzeros) : SymmetricIndefiniteLinearSolver<double>(dimension),
+   iwork(5 * dimension),
+   lwork(static_cast<int>(1.2 * static_cast<double>(dimension))),
+   work(static_cast<size_t>(this->lwork)), residuals(dimension) {
+   this->row_indices.reserve(number_nonzeros);
+   this->column_indices.reserve(number_nonzeros);
    // set the default values of the controlling parameters
    ma57id_(this->cntl.data(), this->icntl.data());
    // suppress warning messages
@@ -47,7 +47,7 @@ void MA57Solver::factorize(const SymmetricMatrix<double>& matrix) {
 }
 
 void MA57Solver::do_symbolic_factorization(const SymmetricMatrix<double>& matrix) {
-   assert(matrix.dimension <= this->max_dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
+   assert(matrix.dimension <= this->dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
    assert(matrix.number_nonzeros <= this->row_indices.capacity() &&
       "MA57Solver: the number of nonzeros of the matrix is larger than the preallocated size");
 
@@ -87,7 +87,7 @@ void MA57Solver::do_symbolic_factorization(const SymmetricMatrix<double>& matrix
 }
 
 void MA57Solver::do_numerical_factorization(const SymmetricMatrix<double>& matrix) {
-   assert(matrix.dimension <= this->max_dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
+   assert(matrix.dimension <= this->dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
    assert(this->factorization.nnz == static_cast<int>(matrix.number_nonzeros) && "MA57Solver: the numbers of nonzeros do not match");
 
    const int n = static_cast<int>(matrix.dimension);

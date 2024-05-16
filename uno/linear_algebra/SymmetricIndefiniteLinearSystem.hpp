@@ -27,7 +27,7 @@ public:
    std::vector<ElementType> rhs{};
    std::vector<ElementType> solution{};
 
-   SymmetricIndefiniteLinearSystem(const std::string& sparse_format, size_t max_dimension, size_t max_number_non_zeros, bool use_regularization,
+   SymmetricIndefiniteLinearSystem(const std::string& sparse_format, size_t dimension, size_t number_non_zeros, bool use_regularization,
          const Options& options);
    void assemble_matrix(const SymmetricMatrix<double>& hessian, const RectangularMatrix<double>& constraint_jacobian,
          size_t number_variables, size_t number_constraints);
@@ -53,11 +53,11 @@ protected:
 };
 
 template <typename ElementType>
-SymmetricIndefiniteLinearSystem<ElementType>::SymmetricIndefiniteLinearSystem(const std::string& sparse_format, size_t max_dimension,
-      size_t max_number_non_zeros, bool use_regularization, const Options& options):
-      matrix(SymmetricMatrixFactory<ElementType>::create(sparse_format, max_dimension, max_number_non_zeros, use_regularization)),
-      rhs(max_dimension),
-      solution(max_dimension),
+SymmetricIndefiniteLinearSystem<ElementType>::SymmetricIndefiniteLinearSystem(const std::string& sparse_format, size_t dimension,
+      size_t number_non_zeros, bool use_regularization, const Options& options):
+      matrix(SymmetricMatrixFactory<ElementType>::create(sparse_format, dimension, number_non_zeros, use_regularization)),
+      rhs(dimension),
+      solution(dimension),
       regularization_failure_threshold(ElementType(options.get_double("regularization_failure_threshold"))),
       primal_regularization_initial_factor(ElementType(options.get_double("primal_regularization_initial_factor"))),
       dual_regularization_fraction(ElementType(options.get_double("dual_regularization_fraction"))),
