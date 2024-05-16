@@ -76,7 +76,8 @@ void Filter::add(double current_infeasibility, double current_objective) {
 
    // check sufficient space available for new entry (remove last entry, if not)
    if (this->number_entries >= this->capacity) {
-      this->set_infeasibility_upper_bound(this->parameters.beta * std::max(this->infeasibility_upper_bound, this->infeasibility[this->number_entries - 1]));
+      const double largest_filter_infeasibility = std::max(this->infeasibility_upper_bound, this->infeasibility[this->number_entries - 1]);
+      this->set_infeasibility_upper_bound(this->parameters.beta * largest_filter_infeasibility);
       // create space in filter: remove last entry
       this->number_entries--;
    }

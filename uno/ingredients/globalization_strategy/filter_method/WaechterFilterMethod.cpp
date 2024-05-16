@@ -74,8 +74,7 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
          }
          else {
             DEBUG << "Switching condition violated\n";
-            if (this->filter->acceptable_wrt_current_iterate(current_progress.infeasibility, current_merit, trial_progress.infeasibility,
-                  trial_merit)) {
+            if (this->filter->acceptable_wrt_current_iterate(current_progress.infeasibility, current_merit, trial_progress.infeasibility, trial_merit)) {
                DEBUG << "Trial iterate (h-type) acceptable with respect to current point\n";
                accept = true;
             }
