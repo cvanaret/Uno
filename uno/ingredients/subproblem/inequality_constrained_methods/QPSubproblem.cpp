@@ -3,22 +3,28 @@
 
 #include "QPSubproblem.hpp"
 #include "ingredients/subproblem/HessianModelFactory.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
+#include "optimization/Iterate.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "preprocessing/Preprocessing.hpp"
+#include "reformulation/OptimizationProblem.hpp"
 #include "solvers/QP/QPSolverFactory.hpp"
+#include "tools/Options.hpp"
+#include "tools/Statistics.hpp"
 
-QPSubproblem::QPSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_objective_gradient_nonzeros,
-      size_t max_number_jacobian_nonzeros, size_t max_number_hessian_nonzeros, const Options& options) :
-      InequalityConstrainedMethod(max_number_variables, max_number_constraints),
+QPSubproblem::QPSubproblem(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros,
+      size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options) :
+      InequalityConstrainedMethod(number_variables, number_constraints),
       use_regularization(options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP")),
       enforce_linear_constraints_at_initial_iterate(options.get_bool("enforce_linear_constraints")),
       // if no trust region is used, the problem should be convexified to guarantee boundedness
-      hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), max_number_variables,
-            max_number_hessian_nonzeros + max_number_variables, this->use_regularization, options)),
+      hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), number_variables,
+            number_hessian_nonzeros + number_variables, this->use_regularization, options)),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
-      solver(QPSolverFactory::create(options.get_string("QP_solver"), max_number_variables, max_number_constraints,
-            max_number_objective_gradient_nonzeros, max_number_jacobian_nonzeros,
+      solver(QPSolverFactory::create(options.get_string("QP_solver"), number_variables, number_constraints,
+            number_objective_gradient_nonzeros, number_jacobian_nonzeros,
             // if the QP solver is used during preprocessing, we need to allocate the Hessian with at least number_variables elements
-            std::max(this->enforce_linear_constraints_at_initial_iterate ? max_number_variables : 0, hessian_model->hessian->capacity),
+            std::max(this->enforce_linear_constraints_at_initial_iterate ? number_variables : 0, hessian_model->hessian->capacity),
             options)) {
 }
 

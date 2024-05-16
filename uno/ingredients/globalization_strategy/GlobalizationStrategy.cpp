@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include "GlobalizationStrategy.hpp"
+#include "tools/Options.hpp"
 
 GlobalizationStrategy::GlobalizationStrategy(const Options& options):
    armijo_decrease_fraction(options.get_double("armijo_decrease_fraction")),

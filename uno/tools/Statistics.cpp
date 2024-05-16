@@ -4,6 +4,7 @@
 #include <iostream>
 #include <iomanip>
 #include "Statistics.hpp"
+#include "Options.hpp"
 
 // TODO move this to the option file
 int Statistics::int_width = 7;

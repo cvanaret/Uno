@@ -5,8 +5,13 @@
 #define UNO_SCALING_H
 
 #include <vector>
-#include "linear_algebra/SparseVector.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
+#include <cstddef>
+
+// forward declarations
+template <typename ElementType>
+class RectangularMatrix;
+template <typename ElementType>
+class SparseVector;
 
 class Scaling {
 public:

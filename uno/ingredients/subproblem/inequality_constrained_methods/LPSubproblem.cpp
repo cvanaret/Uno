@@ -3,14 +3,17 @@
 
 #include <linear_algebra/COOSymmetricMatrix.hpp>
 #include "LPSubproblem.hpp"
+#include "optimization/WarmstartInformation.hpp"
+#include "reformulation/OptimizationProblem.hpp"
 #include "solvers/LP/LPSolverFactory.hpp"
+#include "tools/Options.hpp"
 
-LPSubproblem::LPSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_objective_gradient_nonzeros,
-      size_t max_number_jacobian_nonzeros, const Options& options) :
-      InequalityConstrainedMethod(max_number_variables, max_number_constraints),
-      solver(LPSolverFactory::create(options.get_string("LP_solver"), max_number_variables, max_number_constraints,
-            max_number_objective_gradient_nonzeros, max_number_jacobian_nonzeros, options)),
-      zero_hessian(COOSymmetricMatrix<size_t, double>::zero(max_number_variables)) {
+LPSubproblem::LPSubproblem(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros,
+      size_t number_jacobian_nonzeros, const Options& options) :
+      InequalityConstrainedMethod(number_variables, number_constraints),
+      solver(LPSolverFactory::create(options.get_string("LP_solver"), number_variables, number_constraints,
+            number_objective_gradient_nonzeros, number_jacobian_nonzeros, options)),
+      zero_hessian(COOSymmetricMatrix<size_t, double>::zero(number_variables)) {
 }
 
 bool LPSubproblem::generate_initial_iterate(const OptimizationProblem& /*problem*/, Iterate& /*initial_iterate*/) {

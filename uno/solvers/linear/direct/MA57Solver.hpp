@@ -4,9 +4,9 @@
 #ifndef UNO_MA57SOLVER_H
 #define UNO_MA57SOLVER_H
 
+#include <array>
 #include <vector>
-#include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
-#include "solvers/linear/direct/DirectIndefiniteLinearSolver.hpp"
+#include "DirectIndefiniteLinearSolver.hpp"
 #include "linear_algebra/COOSymmetricMatrix.hpp"
 
 struct MA57Factorization {
@@ -16,8 +16,6 @@ struct MA57Factorization {
    int lfact{};
    std::vector<int> ifact{};
    int lifact{};
-   int lkeep{};
-   std::vector<int> keep{};
 
    MA57Factorization() = default;
 };
@@ -30,7 +28,7 @@ struct MA57Factorization {
  */
 class MA57Solver : public DirectIndefiniteLinearSolver<size_t, double> {
 public:
-   MA57Solver(size_t max_dimension, size_t max_number_nonzeros);
+   MA57Solver(size_t dimension, size_t number_nonzeros);
    ~MA57Solver() override = default;
 
    void do_symbolic_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
@@ -50,20 +48,25 @@ private:
    COOSymmetricMatrix<int, double>::View hessian;
    COOSymmetricMatrix<int, double>::View jacobian;
 
-   std::vector<int> iwork;
+   // factorization
+   MA57Factorization factorization{};
+   const int lkeep;
+   std::vector<int> keep{};
+   std::vector<int> iwork{};
    int lwork;
-   std::vector<double> work;
-   /* for ma57id_ (default values of controlling parameters) */
+   std::vector<double> work{};
+
+   // for ma57id_ (default values of controlling parameters)
    std::array<double, 5> cntl{};
    std::array<int, 20> icntl{};
    std::array<double, 20> rinfo{};
    std::array<int, 40> info{};
+
    const int nrhs{1}; // number of right hand side being solved
    const int job{1};
    std::vector<double> residuals;
    const size_t fortran_shift{1};
 
-   MA57Factorization factorization{};
    bool use_iterative_refinement{false};
    void save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& row_index);
 };

@@ -2,6 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "l1MeritFunction.hpp"
+#include "ProgressMeasures.hpp"
+#include "tools/Logger.hpp"
+#include "tools/Options.hpp"
+#include "tools/Statistics.hpp"
 
 l1MeritFunction::l1MeritFunction(const Options& options): GlobalizationStrategy(options) {
 }
@@ -46,7 +50,7 @@ bool l1MeritFunction::is_iterate_acceptable(Statistics& statistics, const Progre
    return accept;
 }
 
-bool l1MeritFunction::is_feasibility_iterate_acceptable(const ProgressMeasures& /*current_progress*/, const ProgressMeasures& trial_progress) const {
+bool l1MeritFunction::is_infeasibility_sufficiently_reduced(const ProgressMeasures& /*current_progress*/, const ProgressMeasures& trial_progress) const {
    // if the trial infeasibility improves upon the best known infeasibility
    // TODO put constant in option file
    return (trial_progress.infeasibility <= 0.9*this->smallest_known_infeasibility);

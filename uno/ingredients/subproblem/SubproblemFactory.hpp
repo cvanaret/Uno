@@ -6,7 +6,9 @@
 
 #include <memory>
 #include "Subproblem.hpp"
-#include "tools/Options.hpp"
+
+// forward declaration
+class Options;
 
 class SubproblemFactory {
 	public:

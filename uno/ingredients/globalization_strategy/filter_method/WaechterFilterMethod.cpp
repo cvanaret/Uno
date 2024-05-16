@@ -2,6 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "WaechterFilterMethod.hpp"
+#include "../ProgressMeasures.hpp"
+#include "optimization/Iterate.hpp"
+#include "tools/Statistics.hpp"
+#include "tools/Logger.hpp"
 
 WaechterFilterMethod::WaechterFilterMethod(const Options& options):
       FilterMethod(options) {
@@ -70,8 +74,7 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
          }
          else {
             DEBUG << "Switching condition violated\n";
-            if (this->filter->acceptable_wrt_current_iterate(current_progress.infeasibility, current_merit, trial_progress.infeasibility,
-                  trial_merit)) {
+            if (this->filter->acceptable_wrt_current_iterate(current_progress.infeasibility, current_merit, trial_progress.infeasibility, trial_merit)) {
                DEBUG << "Trial iterate (h-type) acceptable with respect to current point\n";
                accept = true;
             }
@@ -97,7 +100,7 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
    return accept;
 }
 
-bool WaechterFilterMethod::is_feasibility_iterate_acceptable(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress) const {
+bool WaechterFilterMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress) const {
    // TODO put constant in the option file
    // TODO current_progress.infeasibility should be replaced with the infeasibility of the first feasibility restoration iterate
    return trial_progress.infeasibility <= 0.9*current_progress.infeasibility &&

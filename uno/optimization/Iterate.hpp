@@ -5,34 +5,19 @@
 #define UNO_ITERATE_H
 
 #include <vector>
+#include "Evaluations.hpp"
+#include "TerminationStatus.hpp"
 #include "ingredients/globalization_strategy/ProgressMeasures.hpp"
-#include "linear_algebra/SparseVector.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
-#include "model/Model.hpp"
 #include "optimization/LagrangianGradient.hpp"
 #include "optimization/Multipliers.hpp"
 #include "optimization/PrimalDualResiduals.hpp"
-#include "tools/Infinity.hpp"
 
-struct Evaluations {
-   double objective{INF<double>}; /*!< Objective value */
-   std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
-   SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
-   RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
-
-   Evaluations(size_t max_number_variables, size_t max_number_constraints):
-         constraints(max_number_constraints),
-         objective_gradient(max_number_variables),
-         constraint_jacobian(max_number_constraints) {
-      for (auto& row: this->constraint_jacobian) {
-         row.reserve(max_number_variables);
-      }
-   }
-};
+// forward declaration
+class Model;
 
 class Iterate {
 public:
-   Iterate(size_t max_number_variables, size_t max_number_constraints);
+   Iterate(size_t number_variables, size_t number_constraints);
 
    size_t number_variables;
    size_t number_constraints;

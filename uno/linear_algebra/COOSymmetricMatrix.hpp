@@ -16,7 +16,6 @@
 template <typename IndexType, typename ElementType>
 class COOSymmetricMatrix: public SymmetricMatrix<IndexType, ElementType> {
 public:
-   // matrix view with an index range in [start, end)
    class View {
    public:
       View(const COOSymmetricMatrix<IndexType, ElementType>& matrix, size_t start, size_t end): matrix(matrix), start(start), end(end) {
@@ -30,7 +29,7 @@ public:
       size_t end;
    };
 
-   COOSymmetricMatrix(size_t max_dimension, size_t original_capacity, bool use_regularization);
+   COOSymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization);
 
    void reset() override;
    void for_each(const std::function<void(IndexType, IndexType, ElementType)>& f) const override;
@@ -58,8 +57,8 @@ protected:
 // implementation
 
 template <typename IndexType, typename ElementType>
-COOSymmetricMatrix<IndexType, ElementType>::COOSymmetricMatrix(size_t max_dimension, size_t original_capacity, bool use_regularization):
-      SymmetricMatrix<IndexType, ElementType>(max_dimension, original_capacity, use_regularization) {
+COOSymmetricMatrix<IndexType, ElementType>::COOSymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization):
+      SymmetricMatrix<IndexType, ElementType>(dimension, original_capacity, use_regularization) {
    this->row_indices.reserve(this->capacity);
    this->column_indices.reserve(this->capacity);
 

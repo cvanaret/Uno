@@ -6,8 +6,16 @@
 
 #include <vector>
 #include "solvers/LP/LPSolver.hpp"
-#include "linear_algebra/SymmetricMatrix.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
+
+// forward declarations
+class Direction;
+template <typename ElementType>
+class RectangularMatrix;
+template <typename ElementType>
+class SparseVector;
+template <typename IndexType, typename ElementType>
+class SymmetricMatrix;
+class WarmstartInformation;
 
 /*! \class QPSolver
  * \brief QP solver

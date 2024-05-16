@@ -3,28 +3,31 @@
 
 #include <cmath>
 #include "PrimalDualInteriorPointSubproblem.hpp"
+#include "ingredients/subproblem/Direction.hpp"
 #include "ingredients/subproblem/HessianModelFactory.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "preprocessing/Preprocessing.hpp"
+#include "reformulation/l1RelaxedProblem.hpp"
 #include "tools/Infinity.hpp"
 
-PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(size_t max_number_variables, size_t max_number_constraints,
-         size_t max_number_jacobian_nonzeros, size_t max_number_hessian_nonzeros, const Options& options):
-      Subproblem(max_number_variables, max_number_constraints),
-      augmented_system(options.get_string("sparse_format"), max_number_variables + max_number_constraints,
-            max_number_hessian_nonzeros
-            + max_number_variables /* diagonal barrier terms for bound constraints */
-            + max_number_jacobian_nonzeros /* Jacobian */,
+PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(size_t number_variables, size_t number_constraints,
+         size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options):
+      Subproblem(number_variables, number_constraints),
+      augmented_system(options.get_string("sparse_format"), number_variables + number_constraints,
+            number_hessian_nonzeros
+            + number_variables /* diagonal barrier terms for bound constraints */
+            + number_jacobian_nonzeros /* Jacobian */,
             true, /* use regularization */
             options),
       // the Hessian is not convexified. Instead, the augmented system will be.
-      hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), max_number_variables, max_number_hessian_nonzeros, false, options)),
-      linear_solver(DirectIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"), max_number_variables + max_number_constraints,
-            max_number_hessian_nonzeros
-            + max_number_variables + max_number_constraints /* regularization */
-            + 2 * max_number_variables /* diagonal barrier terms */
-            + max_number_jacobian_nonzeros /* Jacobian */)),
+      hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), number_variables, number_hessian_nonzeros, false, options)),
+      linear_solver(DirectIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"), number_variables + number_constraints,
+            number_hessian_nonzeros
+            + number_variables + number_constraints /* regularization */
+            + 2 * number_variables /* diagonal barrier terms */
+            + number_jacobian_nonzeros /* Jacobian */)),
       barrier_parameter_update_strategy(options),
       previous_barrier_parameter(options.get_double("barrier_initial_parameter")),
       default_multiplier(options.get_double("barrier_default_multiplier")),
@@ -38,7 +41,7 @@ PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(size_t max_
       }),
       least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")),
       damping_factor(options.get_double("barrier_damping_factor")),
-      lower_delta_z(max_number_variables), upper_delta_z(max_number_variables) {
+      lower_delta_z(number_variables), upper_delta_z(number_variables) {
 }
 
 inline void PrimalDualInteriorPointSubproblem::initialize_statistics(Statistics& statistics, const Options& options) {
@@ -173,7 +176,7 @@ void PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const Opti
       throw std::runtime_error("The interior-point subproblem has a trust region. This is not implemented yet.\n");
    }
 
-   // update the barrier parameter if the current iterate solves the subproblem
+   // possibly update the barrier parameter
    if (not this->solving_feasibility_problem) {
       this->update_barrier_parameter(problem, current_iterate);
    }

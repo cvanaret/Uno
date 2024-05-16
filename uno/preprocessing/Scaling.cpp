@@ -4,6 +4,7 @@
 #include "Scaling.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
+#include "linear_algebra/SparseVector.hpp"
 
 Scaling::Scaling(size_t number_constraints, double gradient_threshold):
       gradient_threshold(gradient_threshold),

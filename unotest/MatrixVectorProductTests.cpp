@@ -10,10 +10,7 @@ TEST(MatrixVectorProduct, Test) {
    // (3, 7)
    // (7, 11)
    const size_t dimension = 2;
-   RectangularMatrix<double> matrix(dimension);
-   for (auto& row: matrix) {
-      row.reserve(dimension);
-   }
+   RectangularMatrix<double> matrix(dimension, dimension);
    matrix[0].insert(0, 3.);
    matrix[0].insert(1, 7.);
    matrix[1].insert(0, 7.);

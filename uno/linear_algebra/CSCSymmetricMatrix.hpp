@@ -17,7 +17,7 @@
 template <typename IndexType, typename ElementType>
 class CSCSymmetricMatrix : public SymmetricMatrix<IndexType, ElementType> {
 public:
-   CSCSymmetricMatrix(size_t max_dimension, size_t original_capacity, bool use_regularization);
+   CSCSymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization);
 
    void reset() override;
    void for_each(const std::function<void(size_t, size_t, ElementType)>& f) const override;
@@ -41,10 +41,10 @@ protected:
 };
 
 template <typename IndexType, typename ElementType>
-CSCSymmetricMatrix<IndexType, ElementType>::CSCSymmetricMatrix(size_t max_dimension, size_t original_capacity, bool use_regularization):
-      SymmetricMatrix<IndexType, ElementType>(max_dimension, original_capacity, use_regularization),
-      column_starts(max_dimension + 1),
-      diagonal_entries(max_dimension, ElementType(0)) {
+CSCSymmetricMatrix<IndexType, ElementType>::CSCSymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization):
+      SymmetricMatrix<IndexType, ElementType>(dimension, original_capacity, use_regularization),
+      column_starts(dimension + 1),
+      diagonal_entries(dimension, ElementType(0)) {
    this->entries.reserve(this->capacity);
    this->row_indices.reserve(this->capacity);
 }

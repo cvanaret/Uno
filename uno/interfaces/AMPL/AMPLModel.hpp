@@ -5,7 +5,6 @@
 #define UNO_AMPLMODEL_H
 
 #include <vector>
-#include "linear_algebra/RectangularMatrix.hpp"
 #include "model/Model.hpp"
 #include "symbolic/CollectionAdapter.hpp"
 

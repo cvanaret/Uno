@@ -5,6 +5,8 @@
 #define UNO_OPTIMALITYPROBLEM_H
 
 #include "OptimizationProblem.hpp"
+#include "optimization/Iterate.hpp"
+#include "optimization/LagrangianGradient.hpp"
 #include "symbolic/Expression.hpp"
 
 class OptimalityProblem: public OptimizationProblem {

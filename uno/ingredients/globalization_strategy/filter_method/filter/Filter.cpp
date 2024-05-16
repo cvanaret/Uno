@@ -5,8 +5,9 @@
 #include <iomanip>
 #include <algorithm>
 #include "Filter.hpp"
-#include "tools/Logger.hpp"
 #include "symbolic/Range.hpp"
+#include "tools/Logger.hpp"
+#include "tools/Options.hpp"
 
 Filter::Filter(const Options& options) :
       capacity(options.get_unsigned_int("filter_capacity")),
@@ -25,11 +26,11 @@ bool Filter::is_empty() const {
 
 double Filter::get_smallest_infeasibility() const {
    if (not this->is_empty()) {
-      // left-most entry has the lowest infeasibility. Relax it with the envelope coefficient
-      return this->parameters.beta * this->infeasibility[0];
+      // left-most entry has the lowest infeasibility
+      return this->infeasibility[0];
    }
-   else { // filter empty
-      return this->parameters.beta * this->infeasibility_upper_bound;
+   else { // empty filter
+      return this->infeasibility_upper_bound;
    }
 }
 
@@ -51,18 +52,18 @@ void Filter::right_shift(size_t start, size_t shift_size) {
    }
 }
 
-//  add (infeasibility_measure, objective_measure) to the filter
-void Filter::add(double infeasibility_measure, double objective_measure) {
+//  add (infeasibility, objective) to the filter
+void Filter::add(double current_infeasibility, double current_objective) {
    // remove dominated filter entries
    // find position in filter without margin
    size_t start_position = 0;
-   while (start_position < this->number_entries && this->infeasibility[start_position] < infeasibility_measure) {
+   while (start_position < this->number_entries && this->infeasibility[start_position] < current_infeasibility) {
       start_position++;
    }
 
    // find redundant entries starting from position
    size_t end_position = start_position;
-   while (end_position < this->number_entries && objective_measure <= this->objective[end_position]) {
+   while (end_position < this->number_entries && current_objective <= this->objective[end_position]) {
       end_position++;
    }
 
@@ -75,14 +76,15 @@ void Filter::add(double infeasibility_measure, double objective_measure) {
 
    // check sufficient space available for new entry (remove last entry, if not)
    if (this->number_entries >= this->capacity) {
-      this->infeasibility_upper_bound = this->parameters.beta * std::max(this->infeasibility_upper_bound, this->infeasibility[this->number_entries - 1]);
+      const double largest_filter_infeasibility = std::max(this->infeasibility_upper_bound, this->infeasibility[this->number_entries - 1]);
+      this->set_infeasibility_upper_bound(this->parameters.beta * largest_filter_infeasibility);
       // create space in filter: remove last entry
       this->number_entries--;
    }
 
    // add new entry to the filter at position
    start_position = 0;
-   while (start_position < this->number_entries && infeasibility_measure >= this->parameters.beta * this->infeasibility[start_position]) {
+   while (start_position < this->number_entries && not this->infeasibility_sufficient_reduction(this->infeasibility[start_position], current_infeasibility)) {
       start_position++;
    }
    // shift entries by one to right to make room for new entry
@@ -90,26 +92,26 @@ void Filter::add(double infeasibility_measure, double objective_measure) {
       this->right_shift(start_position, 1);
    }
    // add new entry to filter
-   this->infeasibility[start_position] = infeasibility_measure;
-   this->objective[start_position] = objective_measure;
+   this->infeasibility[start_position] = current_infeasibility;
+   this->objective[start_position] = current_objective;
    this->number_entries++;
 }
 
-bool Filter::acceptable_wrt_upper_bound(double infeasibility_measure) const {
-   return (infeasibility_measure < this->parameters.beta * this->infeasibility_upper_bound);
+bool Filter::acceptable_wrt_upper_bound(double trial_infeasibility) const {
+   return this->infeasibility_sufficient_reduction(this->infeasibility_upper_bound, trial_infeasibility);
 }
 
-// return true if (infeasibility_measure, objective_measure) acceptable, false otherwise
-bool Filter::acceptable(double infeasibility_measure, double objective_measure) {
+// return true if (infeasibility, objective) acceptable, false otherwise
+bool Filter::acceptable(double trial_infeasibility, double trial_objective) {
    // check upper bound first
-   if (not this->acceptable_wrt_upper_bound(infeasibility_measure)) {
+   if (not this->acceptable_wrt_upper_bound(trial_infeasibility)) {
       DEBUG << "Rejected because of filter upper bound\n";
       return false;
    }
 
    // TODO: use binary search
    size_t position = 0;
-   while (position < this->number_entries && infeasibility_measure >= this->parameters.beta * this->infeasibility[position]) {
+   while (position < this->number_entries && not this->infeasibility_sufficient_reduction(this->infeasibility[position], trial_infeasibility)) {
       position++;
    }
 
@@ -118,7 +120,7 @@ bool Filter::acceptable(double infeasibility_measure, double objective_measure) 
       return true; // acceptable as left-most entry
    }
    // until here, the objective measure was not evaluated
-   else if (objective_measure <= this->objective[position - 1] - this->parameters.gamma * infeasibility_measure) {
+   else if (this->objective_sufficient_reduction(this->objective[position - 1], trial_objective, trial_infeasibility)) {
       return true; // point acceptable
    }
    DEBUG << "Rejected because of filter domination\n";
@@ -126,14 +128,21 @@ bool Filter::acceptable(double infeasibility_measure, double objective_measure) 
 }
 
 //! check acceptability wrt current point
-bool Filter::acceptable_wrt_current_iterate(double current_infeasibility_measure, double current_objective_measure, double trial_infeasibility_measure,
-      double trial_objective_measure) {
-   return (trial_objective_measure <= current_objective_measure - this->parameters.gamma * trial_infeasibility_measure) ||
-          (trial_infeasibility_measure <= this->parameters.beta * current_infeasibility_measure);
+bool Filter::acceptable_wrt_current_iterate(double current_infeasibility, double current_objective, double trial_infeasibility, double trial_objective) {
+   return this->objective_sufficient_reduction(current_objective, trial_objective, trial_infeasibility) ||
+         this->infeasibility_sufficient_reduction(current_infeasibility, trial_infeasibility);
 }
 
-double Filter::compute_actual_objective_reduction(double current_objective_measure, double /*current_infeasibility_measure*/, double trial_objective_measure) {
-   return current_objective_measure - trial_objective_measure;
+double Filter::compute_actual_objective_reduction(double current_objective, double /*current_infeasibility*/, double trial_objective) {
+   return current_objective - trial_objective;
+}
+
+bool Filter::infeasibility_sufficient_reduction(double current_infeasibility, double trial_infeasibility) const {
+   return (trial_infeasibility < this->parameters.beta * current_infeasibility);
+}
+
+bool Filter::objective_sufficient_reduction(double current_objective, double trial_objective, double trial_infeasibility) const {
+   return (trial_objective <= current_objective - this->parameters.gamma * trial_infeasibility);
 }
 
 std::string to_string(double number) {

@@ -6,13 +6,18 @@
 
 #include <string>
 #include <vector>
-#include <map>
-#include "linear_algebra/SymmetricMatrix.hpp"
-#include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
 #include "optimization/TerminationStatus.hpp"
-#include "symbolic/Collection.hpp"
+
+// forward declarations
+template <typename ElementType>
+class Collection;
+template <typename ElementType>
+class RectangularMatrix;
+template <typename ElementType>
+class SparseVector;
+template <typename IndexType, typename ElementType>
+class SymmetricMatrix;
 
 enum FunctionType {LINEAR, NONLINEAR};
 enum BoundType {EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES, UNBOUNDED};

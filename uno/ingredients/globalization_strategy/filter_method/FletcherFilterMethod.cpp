@@ -2,6 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "FletcherFilterMethod.hpp"
+#include "../ProgressMeasures.hpp"
+#include "optimization/Iterate.hpp"
+#include "tools/Logger.hpp"
+#include "tools/Statistics.hpp"
 
 FletcherFilterMethod::FletcherFilterMethod(const Options& options): FilterMethod(options) {
 }
@@ -76,7 +80,7 @@ bool FletcherFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
    return accept;
 }
 
-bool FletcherFilterMethod::is_feasibility_iterate_acceptable(const ProgressMeasures& /*current_progress*/, const ProgressMeasures& trial_progress) const {
+bool FletcherFilterMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures& /*current_progress*/, const ProgressMeasures& trial_progress) const {
    // if the trial infeasibility improves upon the best known infeasibility
-   return (trial_progress.infeasibility < this->filter->get_smallest_infeasibility());
+   return this->filter->infeasibility_sufficient_reduction(this->filter->get_smallest_infeasibility(), trial_progress.infeasibility);
 }

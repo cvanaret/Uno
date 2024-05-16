@@ -25,10 +25,7 @@ protected:
 
 inline void JacobianExpression::for_each(const std::function<void (size_t /*row_index*/, size_t /*column_index*/, double /*element*/)>& f) const {
    //RectangularMatrix<double> constraint_jacobian(this->number_rows(), this->number_columns());
-   RectangularMatrix<double> constraint_jacobian(this->number_rows());
-   for (auto& row: constraint_jacobian) {
-      row.reserve(this->number_columns());
-   }
+   RectangularMatrix<double> constraint_jacobian(this->number_rows(), this->number_columns());
    this->problem.evaluate_constraint_jacobian(this->iterate, constraint_jacobian);
 
    // go through the elements

@@ -5,6 +5,8 @@
 #define UNO_BOUNDRELAXEDMODEL_H
 
 #include "Model.hpp"
+#include "optimization/Iterate.hpp"
+#include "tools/Options.hpp"
 
 class BoundRelaxedModel: public Model {
 public:

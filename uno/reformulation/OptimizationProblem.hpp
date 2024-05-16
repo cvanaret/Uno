@@ -5,12 +5,22 @@
 #define UNO_OPTIMIZATIONPROBLEM_H
 
 #include <vector>
-#include "ingredients/subproblem/Direction.hpp"
-#include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
 #include "model/Model.hpp"
-#include "optimization/Iterate.hpp"
+
+// forward declarations
+template <typename ElementType>
+class Collection;
+class Iterate;
+template <typename ElementType>
+class LagrangianGradient;
+class Multipliers;
+template <typename ElementType>
+class RectangularMatrix;
+template <typename ElementType>
+class SparseVector;
+template <typename IndexType, typename ElementType>
+class SymmetricMatrix;
 
 class OptimizationProblem {
 public:

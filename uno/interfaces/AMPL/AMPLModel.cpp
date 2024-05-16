@@ -3,7 +3,8 @@
 
 #include <cassert>
 #include "AMPLModel.hpp"
-#include "linear_algebra/Vector.hpp"
+#include "linear_algebra/RectangularMatrix.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Infinity.hpp"

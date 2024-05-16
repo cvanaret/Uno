@@ -5,19 +5,27 @@
 #define UNO_SUBPROBLEM_H
 
 #include <vector>
-#include "optimization/Iterate.hpp"
-#include "optimization/WarmstartInformation.hpp"
-#include "reformulation/l1RelaxedProblem.hpp"
-#include "Direction.hpp"
-#include "linear_algebra/Vector.hpp"
-#include "tools/Statistics.hpp"
+#include "optimization/Evaluations.hpp"
+#include "tools/Infinity.hpp"
+
+// forward declarations
+class Direction;
+class Iterate;
+class l1RelaxedProblem;
+class Model;
+class OptimizationProblem;
+class Options;
+class Statistics;
+template <typename IndexType, typename ElementType>
+class SymmetricMatrix;
+struct WarmstartInformation;
 
 /*! \class Subproblem
  * \brief Subproblem
  */
 class Subproblem {
 public:
-   Subproblem(size_t max_number_variables, size_t max_number_constraints);
+   Subproblem(size_t number_variables, size_t number_constraints);
    virtual ~Subproblem() = default;
 
    // virtual methods implemented by subclasses

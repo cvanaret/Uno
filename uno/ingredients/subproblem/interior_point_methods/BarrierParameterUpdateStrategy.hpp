@@ -4,9 +4,10 @@
 #ifndef UNO_BARRIERPARAMETERUPDATESTRATEGY_H
 #define UNO_BARRIERPARAMETERUPDATESTRATEGY_H
 
-#include "reformulation/OptimizationProblem.hpp"
-#include "optimization/Iterate.hpp"
-#include "tools/Options.hpp"
+// forward declarations
+class Iterate;
+class OptimizationProblem;
+class Options;
 
 struct UpdateParameters {
    double k_mu;

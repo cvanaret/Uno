@@ -2,11 +2,14 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cassert>
-#include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
+#include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategy.hpp"
 #include "BacktrackingLineSearch.hpp"
 #include "optimization/EvaluationErrors.hpp"
+#include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
+#include "tools/Options.hpp"
+#include "tools/Statistics.hpp"
 
 BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options):
       GlobalizationMechanism(constraint_relaxation_strategy, options),

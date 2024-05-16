@@ -2,6 +2,11 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "GlobalizationMechanism.hpp"
+#include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategy.hpp"
+#include "model/Model.hpp"
+#include "optimization/Iterate.hpp"
+#include "tools/Options.hpp"
+#include "tools/Statistics.hpp"
 
 GlobalizationMechanism::GlobalizationMechanism(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options) :
       constraint_relaxation_strategy(constraint_relaxation_strategy),

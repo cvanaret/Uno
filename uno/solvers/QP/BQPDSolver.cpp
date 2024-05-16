@@ -4,9 +4,14 @@
 #include <cassert>
 #include <algorithm>
 #include "BQPDSolver.hpp"
+#include "ingredients/subproblem/Direction.hpp"
+#include "linear_algebra/RectangularMatrix.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "tools/Logger.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "tools/Infinity.hpp"
+#include "tools/Logger.hpp"
+#include "tools/Options.hpp"
 
 #define BIG 1e30
 

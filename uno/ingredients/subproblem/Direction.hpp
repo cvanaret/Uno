@@ -7,15 +7,9 @@
 #include <vector>
 #include <optional>
 #include <ostream>
+#include "SubproblemStatus.hpp"
 #include "optimization/Multipliers.hpp"
 #include "tools/Infinity.hpp"
-
-enum class SubproblemStatus {
-   OPTIMAL = 0,
-   UNBOUNDED_PROBLEM,
-   INFEASIBLE,
-   ERROR
-};
 
 /*! \struct ConstraintActivity
 * \brief Constraints at lower or upper bound at the optimum solution
@@ -48,7 +42,7 @@ struct ConstraintPartition {
 
 class Direction {
 public:
-   Direction(size_t max_number_variables, size_t max_number_constraints);
+   Direction(size_t number_variables, size_t number_constraints);
 
    size_t number_variables;
    size_t number_constraints;

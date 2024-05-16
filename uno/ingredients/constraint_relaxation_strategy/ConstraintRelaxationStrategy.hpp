@@ -4,12 +4,20 @@
 #ifndef UNO_CONSTRAINTRELAXATIONSTRATEGY_H
 #define UNO_CONSTRAINTRELAXATIONSTRATEGY_H
 
-#include "ingredients/subproblem/Direction.hpp"
-#include "optimization/Iterate.hpp"
-#include "optimization/WarmstartInformation.hpp"
-#include "reformulation/OptimizationProblem.hpp"
-#include "tools/Statistics.hpp"
-#include "tools/Options.hpp"
+#include <cstddef>
+#include "linear_algebra/Vector.hpp"
+
+// forward declarations
+class Direction;
+class Iterate;
+class Model;
+struct Multipliers;
+class OptimizationProblem;
+class Options;
+class Statistics;
+template <typename IndexType, typename ElementType>
+class SymmetricMatrix;
+class WarmstartInformation;
 
 class ConstraintRelaxationStrategy {
 public:

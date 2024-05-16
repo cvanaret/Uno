@@ -21,7 +21,7 @@ public:
    size_t number_nonzeros{0};
    size_t capacity;
 
-   SymmetricMatrix(size_t max_dimension, size_t original_capacity, bool use_regularization);
+   SymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization);
    virtual ~SymmetricMatrix() = default;
 
    virtual void reset();
@@ -56,11 +56,10 @@ protected:
 // implementation
 
 template <typename IndexType, typename ElementType>
-SymmetricMatrix<IndexType, ElementType>::SymmetricMatrix(size_t max_dimension, size_t original_capacity, bool use_regularization):
-      Matrix<IndexType, ElementType>(),
-      dimension(max_dimension),
+SymmetricMatrix<IndexType, ElementType>::SymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization) :
+      dimension(dimension),
       // if regularization is used, allocate the necessary space
-      capacity(original_capacity + (use_regularization ? max_dimension : 0)),
+      capacity(original_capacity + (use_regularization ? dimension : 0)),
       use_regularization(use_regularization) {
    this->entries.reserve(this->capacity);
 }

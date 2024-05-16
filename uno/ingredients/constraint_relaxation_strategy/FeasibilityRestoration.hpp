@@ -10,7 +10,6 @@
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "reformulation/OptimalityProblem.hpp"
 #include "reformulation/l1RelaxedProblem.hpp"
-#include "tools/Options.hpp"
 
 enum class Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 
