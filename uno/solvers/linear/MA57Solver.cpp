@@ -75,13 +75,15 @@ void MA57Solver::do_symbolic_factorization(const SymmetricMatrix<double>& matrix
    if (0 < info[0]) {
       WARNING << "MA57 has issued a warning: info(1) = " << info[0] << '\n';
    }
-   int lfact = 2 * this->info[8];
-   std::vector<double> fact(static_cast<size_t>(lfact));
-   int lifact = 2 * this->info[9];
-   std::vector<int> ifact(static_cast<size_t>(lifact));
 
-   // store the symbolic factorization
-   this->factorization = {n, nnz, std::move(fact), lfact, std::move(ifact), lifact};
+   // get LFACT and LIFACT and resize FACT and IFACT (no effect if resized to <= size)
+   int lfact = 2 * this->info[8];
+   int lifact = 2 * this->info[9];
+   this->fact.resize(static_cast<size_t>(lfact));
+   this->ifact.resize(static_cast<size_t>(lifact));
+
+   // store the sizes of the symbolic factorization
+   this->factorization = {n, nnz, lfact, lifact};
 }
 
 void MA57Solver::do_numerical_factorization(const SymmetricMatrix<double>& matrix) {
@@ -95,9 +97,9 @@ void MA57Solver::do_numerical_factorization(const SymmetricMatrix<double>& matri
    ma57bd_(&n,
          &nnz,
          /* const */ matrix.data_raw_pointer(),
-         /* out */ this->factorization.fact.data(),
+         /* out */ this->fact.data(),
          /* const */ &this->factorization.lfact,
-         /* out */ this->factorization.ifact.data(),
+         /* out */ this->ifact.data(),
          /* const */ &this->factorization.lifact,
          /* const */ &this->lkeep,
          /* const */ this->keep.data(), this->iwork.data(), this->icntl.data(), this->cntl.data(),
@@ -114,7 +116,7 @@ void MA57Solver::solve_indefinite_system(const SymmetricMatrix<double>& matrix, 
    // solve the linear system
    if (this->use_iterative_refinement) {
       ma57dd_(&this->job, &n, &nnz, matrix.data_raw_pointer(), this->row_indices.data(), this->column_indices.data(),
-            this->factorization.fact.data(), &this->factorization.lfact, this->factorization.ifact.data(), &this->factorization.lifact,
+            this->fact.data(), &this->factorization.lfact, this->ifact.data(), &this->factorization.lifact,
             rhs.data(), result.data(), this->residuals.data(), this->work.data(), this->iwork.data(), this->icntl.data(),
             this->cntl.data(), this->info.data(), this->rinfo.data());
    }
@@ -122,7 +124,7 @@ void MA57Solver::solve_indefinite_system(const SymmetricMatrix<double>& matrix, 
       // copy rhs into result (overwritten by MA57)
       copy_from(result, rhs);
 
-      ma57cd_(&this->job, &n, this->factorization.fact.data(), &this->factorization.lfact, this->factorization.ifact.data(),
+      ma57cd_(&this->job, &n, this->fact.data(), &this->factorization.lfact, this->ifact.data(),
             &this->factorization.lifact, &this->nrhs, result.data(), &lrhs, this->work.data(), &this->lwork, this->iwork.data(),
             this->icntl.data(), this->info.data());
    }
