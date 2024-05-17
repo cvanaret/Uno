@@ -48,7 +48,10 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
       }
    }
    catch (std::exception& exception) {
-      ERROR << RED << exception.what() << RESET;
+      statistics.start_new_line();
+      statistics.set("status", exception.what());
+      if (Logger::level == INFO) statistics.print_current_line();
+      DEBUG << exception.what();
    }
    if (Logger::level == INFO) statistics.print_footer();
 
