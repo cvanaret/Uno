@@ -136,6 +136,14 @@ double ConstraintRelaxationStrategy::compute_complementarity_scaling(const Itera
    }
 }
 
-void ConstraintRelaxationStrategy::set_objective_statistics(Statistics& statistics, const Iterate& iterate) {
+void ConstraintRelaxationStrategy::set_statistics(Statistics& statistics, const Iterate& iterate) const {
+   this->set_progress_statistics(statistics, iterate);
+   this->set_dual_residuals_statistics(statistics, iterate);
+}
+
+void ConstraintRelaxationStrategy::set_progress_statistics(Statistics& statistics, const Iterate& iterate) const {
    statistics.set("objective", iterate.evaluations.objective);
+   if (this->model.is_constrained()) {
+      statistics.set("infeasibility", iterate.progress.infeasibility);
+   }
 }

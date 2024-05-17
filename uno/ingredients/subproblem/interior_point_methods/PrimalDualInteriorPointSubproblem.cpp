@@ -440,6 +440,7 @@ void PrimalDualInteriorPointSubproblem::assemble_primal_dual_direction(const Opt
       direction.multipliers.lower_bounds[variable_index] = this->lower_delta_z[variable_index];
       direction.multipliers.upper_bounds[variable_index] = this->upper_delta_z[variable_index];
    }
+   DEBUG << "Fraction-to-boundary rules:\n";
    DEBUG << "primal-dual step length = " << primal_dual_step_length << '\n';
    DEBUG << "bound dual step length = " << bound_dual_step_length << "\n\n";
 

@@ -200,9 +200,9 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
          this->switch_to_optimality_phase(current_iterate, trial_iterate);
       }
       this->compute_primal_dual_residuals(this->optimality_problem, this->feasibility_problem, trial_iterate);
-      this->set_residuals_statistics(statistics, trial_iterate);
+      this->set_dual_residuals_statistics(statistics, trial_iterate);
    }
-   ConstraintRelaxationStrategy::set_objective_statistics(statistics, trial_iterate);
+   ConstraintRelaxationStrategy::set_progress_statistics(statistics, trial_iterate);
    return accept_iterate;
 }
 
@@ -241,15 +241,7 @@ size_t FeasibilityRestoration::maximum_number_constraints() const {
    return std::max(this->optimality_problem.number_constraints, this->feasibility_problem.number_constraints);
 }
 
-void FeasibilityRestoration::set_statistics(Statistics& statistics, const Iterate& iterate) const {
-   ConstraintRelaxationStrategy::set_objective_statistics(statistics, iterate);
-   this->set_residuals_statistics(statistics, iterate);
-}
-
-void FeasibilityRestoration::set_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
-   if (this->model.is_constrained()) {
-      statistics.set("primal infeas.", iterate.residuals.infeasibility);
-   }
+void FeasibilityRestoration::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
    if (this->current_phase == Phase::OPTIMALITY) {
       statistics.set("complementarity", iterate.residuals.optimality_complementarity);
       statistics.set("stationarity", iterate.residuals.optimality_stationarity);

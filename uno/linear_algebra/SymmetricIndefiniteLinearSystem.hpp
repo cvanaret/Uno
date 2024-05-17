@@ -151,7 +151,7 @@ void SymmetricIndefiniteLinearSystem<ElementType>::regularize_matrix(Statistics&
 
       if (not linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_dual_block) {
          good_inertia = true;
-         DEBUG << "Factorization was a success\n\n";
+         DEBUG << "Factorization was a success\n";
          this->previous_primal_regularization = this->primal_regularization;
       }
       else {
