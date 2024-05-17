@@ -32,9 +32,8 @@ TEST(MA57Solver, SystemSize5) {
    std::vector<double> result(n, 0.);
 
    MA57Solver solver(n, nnz);
-   solver.do_symbolic_factorization(matrix);
-   solver.do_numerical_factorization(matrix);
-   solver.solve_indefinite_system(matrix, rhs, result);
+   const bool from_scratch = true;
+   solver.solve_indefinite_system(matrix, rhs, result, from_scratch);
 
    for (size_t index: Range(n)) {
       EXPECT_DOUBLE_EQ(result[index], reference[index]);

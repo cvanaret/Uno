@@ -23,7 +23,8 @@ TEST(MINRESSolver, TwoDimensional) {
    std::vector<NumericalType> result(dimension);
    MINRESSolver<size_t, double, decltype(linear_operator)> solver(linear_operator, dimension);
 
-   solver.solve_indefinite_system(matrix, rhs, result);
+   const bool from_scratch = true;
+   solver.solve_indefinite_system(matrix, rhs, result, from_scratch);
    for (size_t i: Range(dimension)) {
       ASSERT_NEAR(result[i], reference_result[i], tolerance);
    }
@@ -49,7 +50,8 @@ TEST(MINRESSolver, Hs015LeastSquareDuals) {
    std::vector<NumericalType> result(dimension);
    MINRESSolver<size_t, double, decltype(hs015_linear_operator)> solver(hs015_linear_operator, dimension);
 
-   solver.solve_indefinite_system(matrix, rhs, result);
+   const bool from_scratch = true;
+   solver.solve_indefinite_system(matrix, rhs, result, from_scratch);
    for (size_t i: Range(dimension)) {
       ASSERT_NEAR(result[i], reference_result[i], tolerance);
    }

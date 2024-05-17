@@ -180,7 +180,8 @@ void SymmetricIndefiniteLinearSystem<IndexType, ElementType>::regularize_matrix(
 
 template <typename IndexType, typename ElementType>
 void SymmetricIndefiniteLinearSystem<IndexType, ElementType>::solve(DirectIndefiniteLinearSolver<IndexType, ElementType>& linear_solver) {
-   linear_solver.solve_indefinite_system(*this->matrix, this->rhs, this->solution);
+   const bool from_scratch = (this->number_factorizations == 0);
+   linear_solver.solve_indefinite_system(*this->matrix, this->rhs, this->solution, from_scratch);
 }
 
 /*

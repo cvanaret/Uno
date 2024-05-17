@@ -50,7 +50,8 @@ void Preprocessing::compute_least_square_multipliers(const OptimizationProblem& 
    
    /* solve the system */
    std::vector<double> solution(matrix.dimension);
-   linear_solver.solve_indefinite_system(matrix, rhs, solution);
+   const bool from_scratch = true;
+   linear_solver.solve_indefinite_system(matrix, rhs, solution, from_scratch);
    DEBUG2 << "Solution: "; print_vector(DEBUG2, solution, 0, matrix.dimension);
 
    // if least-square multipliers too big, discard them. Otherwise, keep them

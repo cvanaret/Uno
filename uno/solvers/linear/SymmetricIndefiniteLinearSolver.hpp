@@ -16,7 +16,7 @@ public:
    virtual ~SymmetricIndefiniteLinearSolver() = default;
 
    virtual void solve_indefinite_system(const SymmetricMatrix<IndexType, ElementType>& matrix, const std::vector<ElementType>& rhs,
-         std::vector<ElementType>& result) = 0;
+         std::vector<ElementType>& result, bool from_scratch) = 0;
 
 protected:
    const size_t dimension;

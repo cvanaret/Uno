@@ -33,7 +33,7 @@ public:
    ~MINRESSolver() override = default;
 
    void solve_indefinite_system(const SymmetricMatrix<IndexType, NumericalType>& matrix, const std::vector<NumericalType>& rhs,
-         std::vector<NumericalType>& result) override;
+         std::vector<NumericalType>& result, bool from_scratch) override;
 
 private:
    static constexpr NumericalType tolerance{1e-6};
@@ -74,7 +74,7 @@ MINRESSolver<IndexType, NumericalType, LinearOperator>::MINRESSolver(const Linea
 // TODO: user-defined termination criterion
 template <typename IndexType, typename NumericalType, typename LinearOperator>
 void MINRESSolver<IndexType, NumericalType, LinearOperator>::solve_indefinite_system(const SymmetricMatrix<IndexType, NumericalType>& /*matrix*/,
-      const std::vector<NumericalType>& rhs, std::vector<NumericalType>& result) {
+      const std::vector<NumericalType>& rhs, std::vector<NumericalType>& result, bool /*from_scratch*/) {
    this->iteration = 1;
    // v_0 = 0
    initialize_vector(this->v_km1, NumericalType(0));

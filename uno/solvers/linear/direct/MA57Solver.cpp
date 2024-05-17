@@ -47,7 +47,7 @@ void MA57Solver::do_symbolic_factorization(const SymmetricMatrix<size_t, double>
    assert(matrix.dimension <= this->dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
    assert(matrix.number_nonzeros <= this->COO_matrix.number_nonzeros &&
       "MA57Solver: the number of nonzeros of the matrix is larger than the preallocated size");
-   
+
    // build the internal matrix representation
    this->save_matrix_to_local_format(matrix);
 
@@ -89,7 +89,7 @@ void MA57Solver::do_numerical_factorization(const SymmetricMatrix<size_t, double
    // numerical factorization
    ma57bd_(&n,
          &nnz,
-         /* const */ matrix.data_raw_pointer(),
+         /* const */ this->COO_matrix.data_raw_pointer(),
          /* out */ this->factorization.fact.data(),
          /* const */ &this->factorization.lfact,
          /* out */ this->factorization.ifact.data(),
@@ -100,12 +100,12 @@ void MA57Solver::do_numerical_factorization(const SymmetricMatrix<size_t, double
          /* out */ this->rinfo.data());
 }
 
-void MA57Solver::solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const std::vector<double>& rhs, std::vector<double>& result) {
-   if (not this->is_matrix_factorized) {
+void MA57Solver::solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const std::vector<double>& rhs, std::vector<double>& result,
+      bool from_scratch) {
+   if (from_scratch) {
       this->do_symbolic_factorization(matrix);
-      this->do_numerical_factorization(matrix);
-      this->is_matrix_factorized = true;
    }
+   this->do_numerical_factorization(matrix);
 
    // solve
    const int n = static_cast<int>(matrix.dimension);
@@ -161,6 +161,7 @@ size_t MA57Solver::rank() const {
 void MA57Solver::save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix) {
    // build the internal matrix representation
    this->COO_matrix.reset();
+   this->COO_matrix.dimension = matrix.dimension;
    matrix.for_each([&](size_t row_index, size_t column_index, double element) {
       this->COO_matrix.insert(element, static_cast<int>(row_index + this->fortran_shift), static_cast<int>(column_index + this->fortran_shift));
    });

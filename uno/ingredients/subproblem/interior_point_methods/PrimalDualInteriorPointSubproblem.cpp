@@ -266,7 +266,9 @@ void PrimalDualInteriorPointSubproblem::exit_feasibility_problem(const Optimizat
    assert(this->solving_feasibility_problem && "The barrier subproblem did not know it was solving the feasibility problem.");
    this->barrier_parameter_update_strategy.set_barrier_parameter(this->previous_barrier_parameter);
    this->solving_feasibility_problem = false;
-   this->compute_least_square_multipliers(problem, trial_iterate);
+   if (problem.is_constrained()) {
+      this->compute_least_square_multipliers(problem, trial_iterate);
+   }
 }
 
 const SymmetricMatrix<size_t, double>& PrimalDualInteriorPointSubproblem::get_lagrangian_hessian() const {

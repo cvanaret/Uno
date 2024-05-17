@@ -33,7 +33,8 @@ public:
 
    void do_symbolic_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
    void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
-   void solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const std::vector<double>& rhs, std::vector<double>& result) override;
+   void solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const std::vector<double>& rhs, std::vector<double>& result,
+         bool from_scratch) override;
 
    [[nodiscard]] std::tuple<size_t, size_t, size_t> get_inertia() const override;
    [[nodiscard]] size_t number_negative_eigenvalues() const override;
@@ -42,7 +43,6 @@ public:
    [[nodiscard]] size_t rank() const override;
 
 private:
-   bool is_matrix_factorized{false};
    // internal matrix representation: COO matrix for the (augmented) system + views for individual blocks
    COOSymmetricMatrix<int, double> COO_matrix;
    COOSymmetricMatrix<int, double>::View hessian;
