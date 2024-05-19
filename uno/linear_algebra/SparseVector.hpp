@@ -28,8 +28,7 @@ public:
       // prefix increment
       iterator& operator++() { this->index++; return *this; }
 
-      friend bool operator==(const iterator& a, const iterator& b) { return &(a.vector) == &(b.vector) && a.index == b.index; };
-      friend bool operator!=(const iterator& a, const iterator& b) { return &(a.vector) != &(b.vector) || a.index != b.index; };
+      friend bool operator!=(const iterator& a, const iterator& b) { return &a.vector != &b.vector || a.index != b.index; };
 
    private:
       const SparseVector<ElementType>& vector;

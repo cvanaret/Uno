@@ -34,7 +34,6 @@ public:
          return *this;
       }
 
-      friend bool operator==(const iterator& a, const iterator& b) { return a.value == b.value; };
       friend bool operator!=(const iterator& a, const iterator& b) { return a.value != b.value; };
 
    private:

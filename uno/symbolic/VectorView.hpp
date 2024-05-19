@@ -21,7 +21,6 @@ public:
       // prefix increment
       iterator& operator++() { this->index++; return *this; }
 
-      friend bool operator==(const iterator& a, const iterator& b) { return &(a.view) == &(b.view) && a.index == b.index; };
       friend bool operator!=(const iterator& a, const iterator& b) { return &(a.view) != &(b.view) || a.index != b.index; };
 
    private:
