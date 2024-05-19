@@ -35,6 +35,10 @@ protected:
    std::vector<ElementType> diagonal_entries;
 
    void initialize_regularization();
+
+   // iterator functions
+   [[nodiscard]] std::tuple<size_t, size_t, ElementType> dereference_iterator(size_t column_index, size_t nonzero_index) const override;
+   void increment_iterator(size_t& column_index, size_t& nonzero_index) const override;
 };
 
 // implementation
@@ -125,6 +129,20 @@ void COOSymmetricMatrix<ElementType>::initialize_regularization() {
    // introduce elements at the start of the entries
    for (size_t row_index: Range(this->dimension)) {
       this->insert(ElementType(0), row_index, row_index);
+   }
+}
+
+template <typename ElementType>
+std::tuple<size_t, size_t, ElementType> COOSymmetricMatrix<ElementType>::dereference_iterator(size_t /*column_index*/, size_t nonzero_index) const {
+   return {this->row_indices[nonzero_index], this->column_indices[nonzero_index], this->entries[nonzero_index]};
+}
+
+template <typename ElementType>
+void COOSymmetricMatrix<ElementType>::increment_iterator(size_t& column_index, size_t& nonzero_index) const {
+   nonzero_index++;
+   // if end reached
+   if (nonzero_index == this->number_nonzeros) {
+      column_index = this->dimension;
    }
 }
 

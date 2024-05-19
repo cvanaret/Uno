@@ -38,6 +38,10 @@ protected:
    std::vector<size_t> row_indices{};
    size_t current_column{0};
    std::vector<ElementType> diagonal_entries;
+
+   // iterator functions
+   [[nodiscard]] std::tuple<size_t, size_t, ElementType> dereference_iterator(size_t column_index, size_t nonzero_index) const override;
+   void increment_iterator(size_t& column_index, size_t& nonzero_index) const override;
 };
 
 template <typename ElementType>
@@ -132,6 +136,26 @@ void CSCSymmetricMatrix<ElementType>::set_regularization(const std::function<Ele
       this->entries[k] = element;
       // update diagonal
       this->diagonal_entries[row_index] += element;
+   }
+}
+
+template <typename ElementType>
+std::tuple<size_t, size_t, ElementType> CSCSymmetricMatrix<ElementType>::dereference_iterator(size_t column_index, size_t nonzero_index) const {
+   return {this->row_indices[nonzero_index], column_index, this->entries[nonzero_index]};
+}
+
+template <typename ElementType>
+void CSCSymmetricMatrix<ElementType>::increment_iterator(size_t& column_index, size_t& nonzero_index) const {
+   if (this->column_starts[column_index] <= nonzero_index && nonzero_index < this->column_starts[column_index + 1] - 1) {
+      // stay in the column
+      nonzero_index++;
+   }
+   else {
+      // move on to the next non-empty column
+      do {
+         column_index++;
+      } while (column_index <= this->dimension && this->column_starts[column_index] == this->column_starts[column_index + 1]);
+      nonzero_index = this->column_starts[column_index];
    }
 }
 

@@ -14,6 +14,30 @@
 template <typename ElementType>
 class SymmetricMatrix {
 public:
+   class iterator {
+   public:
+      iterator(const SymmetricMatrix<ElementType>& matrix, size_t column_index, size_t nonzero_index):
+         matrix(matrix), column_index(column_index), nonzero_index(nonzero_index) { }
+
+      [[nodiscard]] std::tuple<size_t, size_t, ElementType> operator*() const {
+         return this->matrix.dereference_iterator(this->column_index, this->nonzero_index);
+      }
+
+      iterator& operator++() {
+         this->matrix.increment_iterator(this->column_index, this->nonzero_index);
+         return *this;
+      }
+
+      friend bool operator!=(const iterator& a, const iterator& b) {
+         return &a.matrix != &b.matrix || a.column_index != b.column_index || a.nonzero_index != b.nonzero_index;
+      };
+
+   protected:
+      const SymmetricMatrix<ElementType>& matrix;
+      size_t column_index;
+      size_t nonzero_index;
+   };
+
    using value_type = ElementType;
 
    size_t dimension;
@@ -34,6 +58,9 @@ public:
    [[nodiscard]] virtual ElementType smallest_diagonal_entry() const = 0;
    virtual void set_regularization(const std::function<ElementType(size_t /*index*/)>& regularization_function) = 0;
 
+   [[nodiscard]] iterator begin() const { return iterator(*this, 0, 0); }
+   [[nodiscard]] iterator end() const { return iterator(*this, this->dimension, this->number_nonzeros); }
+
    [[nodiscard]] const ElementType* data_raw_pointer() const;
 
    virtual void print(std::ostream& stream) const = 0;
@@ -44,6 +71,10 @@ protected:
    std::vector<ElementType> entries{};
    // regularization
    const bool use_regularization;
+
+   // virtual iterator functions
+   [[nodiscard]] virtual std::tuple<size_t, size_t, ElementType> dereference_iterator(size_t column_index, size_t nonzero_index) const = 0;
+   virtual void increment_iterator(size_t& column_index, size_t& nonzero_index) const = 0;
 };
 
 // implementation
