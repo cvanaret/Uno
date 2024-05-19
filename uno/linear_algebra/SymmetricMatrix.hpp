@@ -50,7 +50,6 @@ public:
    virtual void reset();
    [[nodiscard]] ElementType quadratic_product(const std::vector<ElementType>& x, const std::vector<ElementType>& y) const;
 
-   virtual void for_each(const std::function<void(size_t, size_t, ElementType)>& f) const = 0;
    // build the matrix incrementally
    virtual void insert(ElementType term, size_t row_index, size_t column_index) = 0;
    // this method will be used by the CSCSymmetricMatrix subclass
@@ -99,9 +98,9 @@ ElementType SymmetricMatrix<ElementType>::quadratic_product(const std::vector<El
    assert(x.size() == y.size() && "SymmetricMatrix::quadratic_product: the two vectors x and y do not have the same size");
 
    ElementType result = ElementType(0);
-   this->for_each([&](size_t row_index, size_t column_index, ElementType entry) {
-      result += (row_index == column_index ? ElementType(1) : ElementType(2)) * entry * x[row_index] * y[column_index];
-   });
+   for (const auto [row_index, column_index, element]: *this) {
+      result += (row_index == column_index ? ElementType(1) : ElementType(2)) * element * x[row_index] * y[column_index];
+   }
    return result;
 }
 

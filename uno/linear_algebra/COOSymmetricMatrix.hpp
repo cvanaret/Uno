@@ -19,7 +19,6 @@ public:
    COOSymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization);
 
    void reset() override;
-   void for_each(const std::function<void(size_t, size_t, ElementType)>& f) const override;
    void insert(ElementType term, size_t row_index, size_t column_index) override;
    void finalize_column(size_t /*column_index*/) override { /* do nothing */ }
    [[nodiscard]] ElementType smallest_diagonal_entry() const override;
@@ -70,17 +69,6 @@ void COOSymmetricMatrix<ElementType>::reset() {
    }
 }
 
-// generic iterator
-template <typename ElementType>
-void COOSymmetricMatrix<ElementType>::for_each(const std::function<void(size_t, size_t, ElementType)>& f) const {
-   for (size_t k: Range(this->number_nonzeros)) {
-      const size_t row_index = this->row_indices[k];
-      const size_t column_index = this->column_indices[k];
-      const ElementType entry = this->entries[k];
-      f(row_index, column_index, entry);
-   }
-}
-
 template <typename ElementType>
 void COOSymmetricMatrix<ElementType>::insert(ElementType term, size_t row_index, size_t column_index) {
    assert(this->number_nonzeros <= this->row_indices.size() && "The COO matrix doesn't have a sufficient capacity");
@@ -119,9 +107,9 @@ void COOSymmetricMatrix<ElementType>::set_regularization(const std::function<Ele
 
 template <typename ElementType>
 void COOSymmetricMatrix<ElementType>::print(std::ostream& stream) const {
-   this->for_each([&](size_t row_index, size_t column_index, ElementType entry) {
-      stream << "m(" << row_index << ", " << column_index << ") = " << entry << '\n';
-   });
+   for (const auto [row_index, column_index, element]: *this) {
+      stream << "m(" << row_index << ", " << column_index << ") = " << element << '\n';
+   }
 }
 
 template <typename ElementType>

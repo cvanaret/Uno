@@ -20,8 +20,6 @@ public:
    CSCSymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization);
 
    void reset() override;
-   void for_each(const std::function<void(size_t, size_t, ElementType)>& f) const override;
-   void for_each(size_t column_index, const std::function<void(size_t, ElementType)>& f) const;
    void insert(ElementType term, size_t row_index, size_t column_index) override;
    void finalize_column(size_t column_index) override;
    [[nodiscard]] ElementType smallest_diagonal_entry() const override;
@@ -61,27 +59,6 @@ void CSCSymmetricMatrix<ElementType>::reset() {
    initialize_vector<size_t>(this->column_starts, 0);
    this->current_column = 0;
    initialize_vector(this->diagonal_entries, ElementType(0));
-}
-
-// generic iterator
-template <typename ElementType>
-void CSCSymmetricMatrix<ElementType>::for_each(const std::function<void(size_t, size_t, ElementType)>& f) const {
-   for (size_t column_index: Range(this->dimension)) {
-      for (size_t k: Range(this->column_starts[column_index], this->column_starts[column_index + 1])) {
-         const size_t row_index = this->row_indices[k];
-         const ElementType entry = this->entries[k];
-         f(row_index, column_index, entry);
-      }
-   }
-}
-
-template <typename ElementType>
-void CSCSymmetricMatrix<ElementType>::for_each(size_t column_index, const std::function<void(size_t, ElementType)>& f) const {
-   for (size_t k: Range(this->column_starts[column_index], this->column_starts[column_index + 1])) {
-      const size_t row_index = this->row_indices[k];
-      const ElementType entry = this->entries[k];
-      f(row_index, entry);
-   }
 }
 
 template <typename ElementType>
