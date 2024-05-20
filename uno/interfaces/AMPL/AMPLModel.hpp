@@ -82,7 +82,7 @@ private:
    CollectionAdapter<std::vector<size_t>&> equality_constraints_collection;
    std::vector<size_t> inequality_constraints{};
    CollectionAdapter<std::vector<size_t>&> inequality_constraints_collection;
-   Range<FORWARD> slacks;
+   ForwardRange slacks;
    std::vector<size_t> lower_bounded_variables;
    CollectionAdapter<std::vector<size_t>&> lower_bounded_variables_collection;
    std::vector<size_t> upper_bounded_variables;

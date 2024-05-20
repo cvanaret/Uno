@@ -20,7 +20,7 @@ TEST(Range, SumLoop) {
 }
 
 TEST(Range, BackwardSumLoop) {
-   const Range<BACKWARD> range(5, 2);
+   const BackwardRange range(5, 2);
    size_t sum = 0;
    for (size_t element: range) {
       sum += element;
@@ -38,7 +38,7 @@ TEST(Range, SumForeach) {
 }
 
 TEST(Range, BackwardSumForeach) {
-   const Range<BACKWARD> range(5, 2);
+   const BackwardRange range(5, 2);
    size_t sum = 0;
    range.for_each([&](size_t, size_t element) {
       sum += element;

@@ -12,7 +12,6 @@ enum RangeDirection {
    FORWARD, BACKWARD
 };
 
-// https://en.wikipedia.org/wiki/Generator_(computer_programming)#C++
 // Default direction is FORWARD (increasing)
 template <RangeDirection direction = FORWARD>
 class Range: public Collection<size_t> {
@@ -22,7 +21,6 @@ public:
    public:
       explicit iterator(size_t value) : value(value) { }
       const size_t& operator*() const { return this->value; }
-      const size_t& operator->() { return this->value; }
       // prefix increment
       iterator& operator++() {
          if constexpr (direction == FORWARD) {
@@ -90,5 +88,8 @@ inline void Range<direction>::for_each(const std::function<void (size_t, size_t)
       index_no_offset++;
    }
 }
+
+using ForwardRange = Range<FORWARD>;
+using BackwardRange = Range<BACKWARD>;
 
 #endif // UNO_RANGE_H

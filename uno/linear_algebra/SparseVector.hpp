@@ -19,13 +19,13 @@ class SparseVector: public Collection<ElementType> {
 public:
    class iterator {
    public:
-      iterator(const SparseVector<ElementType>& vector, size_t index) : vector(vector), index(index) {
-      }
+      iterator(const SparseVector<ElementType>& vector, size_t index) : vector(vector), index(index) { }
+
       std::pair<size_t, ElementType> operator*() {
          // copy the element in the pair. Cheap only for trivial types
          return {this->vector.indices[this->index], this->vector.values[this->index]};
       }
-      // prefix increment
+
       iterator& operator++() { this->index++; return *this; }
 
       friend bool operator!=(const iterator& a, const iterator& b) { return &a.vector != &b.vector || a.index != b.index; };

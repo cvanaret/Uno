@@ -58,8 +58,8 @@ protected:
    std::vector<size_t> constraint_index_of_inequality_index;
    std::vector<size_t> slack_index_of_constraint_index;
 
-   CollectionAdapter<Range<FORWARD>> equality_constraints;
-   CollectionAdapter<Range<FORWARD>> inequality_constraints;
+   CollectionAdapter<ForwardRange> equality_constraints;
+   CollectionAdapter<ForwardRange> inequality_constraints;
    SparseVector<size_t> slacks;
    std::vector<size_t> lower_bounded_slacks;
    std::vector<size_t> upper_bounded_slacks;
