@@ -16,7 +16,7 @@ public:
 
       [[nodiscard]] std::pair<size_t, double> operator*() const {
          const auto [_, expression_index] = expression.indices.dereference_iterator(this->index);
-         return {expression_index, expression.ith_component[index]};
+         return {expression_index, expression.component_function[index]};
       }
 
       iterator& operator++() {
@@ -45,12 +45,12 @@ public:
 
 protected:
    Indices indices; // store const reference or rvalue (temporary)
-   Callable ith_component;
+   Callable component_function;
 };
 
 template <typename Indices, typename Callable>
 VectorExpression<Indices, Callable>::VectorExpression(Indices&& indices, Callable&& component_function):
-      indices(std::forward<Indices>(indices)), ith_component(std::forward<Callable>(component_function)) {
+      indices(std::forward<Indices>(indices)), component_function(std::forward<Callable>(component_function)) {
 }
 
 template <typename Indices, typename Callable>
@@ -60,7 +60,7 @@ size_t VectorExpression<Indices, Callable>::size() const {
 
 template <typename Indices, typename Callable>
 double VectorExpression<Indices, Callable>::operator[](size_t index) const {
-   return this->ith_component(index);
+   return this->component_function(index);
 }
 
 #endif // UNO_VECTOREXPRESSION_H

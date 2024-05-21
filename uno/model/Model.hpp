@@ -6,7 +6,7 @@
 
 #include <string>
 #include <vector>
-#include "linear_algebra/Vector.hpp"
+#include "linear_algebra/Norm.hpp"
 #include "optimization/TerminationStatus.hpp"
 
 // forward declarations

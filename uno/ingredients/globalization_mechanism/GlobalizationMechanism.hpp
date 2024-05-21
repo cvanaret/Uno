@@ -5,7 +5,7 @@
 #define UNO_GLOBALIZATIONMECHANISM_H
 
 #include "ingredients/subproblem/Direction.hpp"
-#include "linear_algebra/Vector.hpp"
+#include "linear_algebra/Norm.hpp"
 #include "optimization/TerminationStatus.hpp"
 
 // forward declarations

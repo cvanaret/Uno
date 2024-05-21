@@ -159,12 +159,9 @@ void TrustRegionStrategy::reset_active_trust_region_multipliers(const Model& mod
    }
 }
 
-bool TrustRegionStrategy::check_termination_with_small_step(const Model& model, Iterate& trial_iterate) const {
-   trial_iterate.evaluate_constraints(model);
-   trial_iterate.residuals.infeasibility = model.constraint_violation(trial_iterate.evaluations.constraints, this->progress_norm);
-
+bool TrustRegionStrategy::check_termination_with_small_step(const Model& /*model*/, Iterate& trial_iterate) const {
    // terminate with a feasible point
-   if (trial_iterate.residuals.infeasibility <= this->tight_tolerance) {
+   if (trial_iterate.progress.infeasibility <= this->tight_tolerance) {
       trial_iterate.status = TerminationStatus::FEASIBLE_SMALL_STEP;
       return true;
    }

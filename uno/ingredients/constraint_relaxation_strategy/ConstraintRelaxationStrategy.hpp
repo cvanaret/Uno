@@ -5,7 +5,7 @@
 #define UNO_CONSTRAINTRELAXATIONSTRATEGY_H
 
 #include <cstddef>
-#include "linear_algebra/Vector.hpp"
+#include "linear_algebra/Norm.hpp"
 
 // forward declarations
 class Direction;

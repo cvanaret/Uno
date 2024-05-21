@@ -118,7 +118,7 @@ std::ostream& operator<<(std::ostream& stream, const SparseVector<ElementType>& 
 template <typename ElementType>
 ElementType norm_inf(const SparseVector<ElementType>& x) {
    ElementType norm = ElementType(0);
-   for (const auto [index, element]: x) {
+   for (const auto [_, element]: x) {
       norm = std::max(norm, std::abs(element));
    }
    return norm;
