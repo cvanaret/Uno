@@ -41,18 +41,18 @@ public:
    using value_type = size_t;
 
    explicit Range(size_t end_index);
-   Range(size_t start_index, size_t end_index);
+   Range(size_t start_value, size_t end_value);
 
    // iterable functions
-   [[nodiscard]] iterator begin() const { return iterator(this->start_index); }
-   [[nodiscard]] iterator end() const { return iterator(this->end_index); }
+   [[nodiscard]] iterator begin() const { return iterator(this->start_value); }
+   [[nodiscard]] iterator end() const { return iterator(this->end_value); }
    [[nodiscard]] size_t size() const override;
 
    void for_each(const std::function<void (size_t, size_t)>& f) const override;
 
 protected:
-   const size_t start_index;
-   const size_t end_index;
+   const size_t start_value;
+   const size_t end_value;
 };
 
 template <RangeDirection direction>
@@ -61,11 +61,11 @@ inline Range<direction>::Range(size_t end_index): Range(0, end_index) {
 }
 
 template <RangeDirection direction>
-inline Range<direction>::Range(size_t start_index, size_t end_index): Collection<size_t>(), start_index(start_index), end_index(end_index) {
-   if (direction == FORWARD && end_index < start_index) {
+inline Range<direction>::Range(size_t start_value, size_t end_value): Collection<size_t>(), start_value(start_value), end_value(end_value) {
+   if (direction == FORWARD && end_value < start_value) {
       throw std::runtime_error("Forward range: end index is smaller than start index\n");
    }
-   else if (direction == BACKWARD && end_index > start_index) {
+   else if (direction == BACKWARD && end_value > start_value) {
       throw std::runtime_error("Backward range: end index is larger than start index\n");
    }
 }
@@ -73,10 +73,10 @@ inline Range<direction>::Range(size_t start_index, size_t end_index): Collection
 template <RangeDirection direction>
 inline size_t Range<direction>::size() const {
    if constexpr (direction == FORWARD) {
-      return this->end_index - this->start_index;
+      return this->end_value - this->start_value;
    }
    else {
-      return this->start_index - this->end_index;
+      return this->start_value - this->end_value;
    }
 }
 
