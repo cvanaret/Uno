@@ -6,9 +6,7 @@
 
 #include "linear_algebra/SparseVector.hpp"
 
-// stores the expression (expression1 + expression2) symbolically
-// limited to types that possess value_type
-// https://stackoverflow.com/questions/11055923/stdenable-if-parameter-vs-template-parameter
+// symbolic matrix-vector product
 template <typename Matrix, typename Vector>
 class MatrixVectorProduct {
 public:
