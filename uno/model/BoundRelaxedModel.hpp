@@ -36,7 +36,7 @@ public:
    [[nodiscard]] BoundType get_variable_bound_type(size_t variable_index) const override { return this->model->get_variable_bound_type(variable_index); }
    [[nodiscard]] const Collection<size_t>& get_lower_bounded_variables() const override { return this->model->get_lower_bounded_variables(); }
    [[nodiscard]] const Collection<size_t>& get_upper_bounded_variables() const override { return this->model->get_upper_bounded_variables(); }
-   [[nodiscard]] const Collection<size_t>& get_slacks() const override { return this->model->get_slacks(); }
+   [[nodiscard]] const SparseVector<size_t>& get_slacks() const override { return this->model->get_slacks(); }
    [[nodiscard]] const Collection<size_t>& get_single_lower_bounded_variables() const override { return this->model->get_single_lower_bounded_variables(); }
    [[nodiscard]] const Collection<size_t>& get_single_upper_bounded_variables() const override { return this->model->get_single_upper_bounded_variables(); }
 

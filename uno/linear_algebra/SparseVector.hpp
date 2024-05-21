@@ -15,8 +15,30 @@
 // - a vector of values of type ElementType
 // the indices are neither unique nor sorted
 template <typename ElementType>
-class SparseVector: public Collection<ElementType> {
+class SparseVector {
 public:
+   class iterator {
+   public:
+      iterator(const SparseVector& vector, size_t index): vector(vector), index(index) { }
+
+      std::pair<size_t, ElementType> operator*() const {
+         return {this->vector.indices[this->index], this->vector.values[this->index]};
+      }
+
+      iterator& operator++() {
+         this->index++;
+         return *this;
+      }
+
+      friend bool operator!=(const iterator& a, const iterator& b) {
+         return &a.vector != &b.vector || a.index != b.index;
+      }
+
+   protected:
+      const SparseVector& vector;
+      size_t index;
+   };
+
    explicit SparseVector(size_t capacity = 0);
 
    [[nodiscard]] size_t size() const;
@@ -25,10 +47,10 @@ public:
    void insert(size_t index, ElementType value);
    void transform(const std::function<ElementType(ElementType)>& f);
    void clear();
-   [[nodiscard]] bool empty() const;
+   [[nodiscard]] bool is_empty() const;
 
-   [[nodiscard]] std::pair<size_t, ElementType> dereference_iterator(size_t index, size_t offset) const override;
-   void increment_iterator(size_t& index) const override;
+   [[nodiscard]] iterator begin() const { return iterator(*this, 0); }
+   [[nodiscard]] iterator end() const { return iterator(*this, this->number_nonzeros); }
 
    template <typename U>
    friend std::ostream& operator<<(std::ostream& stream, const SparseVector<U>& x);
@@ -41,7 +63,7 @@ protected:
 
 // SparseVector methods
 template <typename ElementType>
-SparseVector<ElementType>::SparseVector(size_t capacity): Collection<ElementType>() {
+SparseVector<ElementType>::SparseVector(size_t capacity) {
    this->reserve(capacity);
 }
 
@@ -71,7 +93,7 @@ void SparseVector<ElementType>::clear() {
 }
 
 template <typename ElementType>
-bool SparseVector<ElementType>::empty() const {
+bool SparseVector<ElementType>::is_empty() const {
    return (this->number_nonzeros == 0);
 }
 
@@ -89,16 +111,6 @@ std::ostream& operator<<(std::ostream& stream, const SparseVector<ElementType>& 
       stream << "index " << index << ", value " << element << '\n';
    }
    return stream;
-}
-
-template <typename ElementType>
-std::pair<size_t, ElementType> SparseVector<ElementType>::dereference_iterator(size_t index, size_t /*offset*/) const {
-   return {this->indices[index], this->values[index]};
-}
-
-template <typename ElementType>
-void SparseVector<ElementType>::increment_iterator(size_t& index) const {
-   index++;
 }
 
 // free functions
