@@ -11,60 +11,23 @@
 template <typename Collection1, typename Collection2>
 class ChainCollection: public Collection<typename std::remove_reference_t<Collection1>::value_type> {
 public:
-   /*
-   class iterator {
-   public:
-      using iterator1 = typename std::remove_reference_t<Collection1>::iterator;
-      using iterator2 = typename std::remove_reference_t<Collection2>::iterator;
-
-      iterator(iterator1&& current_iterator1, iterator1&& end_iterator1, iterator2&& current_iterator2):
-            current_iterator1(std::forward<iterator1>(current_iterator1)), end_iterator1(std::forward<iterator1>(end_iterator1)),
-            current_iterator2(std::forward<iterator2>(current_iterator2)) { }
-
-      typename ChainCollection::value_type operator*() {
-         if (this->current_iterator1 != this->end_iterator1) {
-            return *this->current_iterator1;
-         }
-         else {
-            return *this->current_iterator2;
-         }
-      }
-
-      // prefix increment
-      iterator& operator++() {
-         if (this->current_iterator1 != this->end_iterator1) {
-            ++this->current_iterator1;
-         }
-         else {
-            ++this->current_iterator2;
-         }
-         return *this;
-      }
-
-      friend bool operator==(const iterator& a, const iterator& b) {
-         if (a.current_iterator1 != a.end_iterator1) { // in the first collection
-            return (a.current_iterator1 == b.current_iterator1);
-         }
-         else { // in the second collection
-            return (a.current_iterator2 == b.current_iterator2);
-         }
-      };
-
-      friend bool operator!=(const iterator& a, const iterator& b) { return not (a == b); }
-
-   protected:
-      iterator1 current_iterator1;
-      iterator1 end_iterator1;
-      iterator2 current_iterator2;
-   };
-*/
-
    ChainCollection(Collection1&& collection1, Collection2&& collection2);
    void for_each(const std::function<void(size_t /*index*/, typename ChainCollection::value_type /*element*/)>& f) const override;
    [[nodiscard]] size_t size() const override;
 
-   // [[nodiscard]] iterator begin() const { return iterator(this->collection1.begin(), this->collection1.end(), this->collection2.begin()); }
-   // [[nodiscard]] iterator end() const { return iterator(this->collection1.end(), this->collection1.end(), this->collection2.end()); }
+   [[nodiscard]] std::pair<size_t, typename ChainCollection::value_type> dereference_iterator(size_t index, size_t offset) const override {
+      const size_t collection1_size = this->collection1.size();
+      if (index < collection1_size) {
+         return collection1.dereference_iterator(index, offset);
+      }
+      else {
+         return collection2.dereference_iterator(index - collection1_size, offset + collection1_size);
+      }
+   }
+
+   void increment_iterator(size_t& index) const override {
+      index++;
+   }
 
 protected:
    Collection1 collection1;

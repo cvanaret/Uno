@@ -10,15 +10,13 @@
 template <typename Array>
 class CollectionAdapter: public Collection<typename std::remove_reference_t<Array>::value_type> {
 public:
-   // using iterator = typename std::remove_reference_t<Array>::iterator;
-
    explicit CollectionAdapter(Array&& array);
 
    void for_each(const std::function<void(size_t /*index*/, typename CollectionAdapter::value_type /*element*/)>& f) const override;
    [[nodiscard]] size_t size() const override;
 
-   // [[nodiscard]] iterator begin() const { return this->array.begin(); }
-   // [[nodiscard]] iterator end() const  { return this->array.end(); }
+   [[nodiscard]] std::pair<size_t, typename CollectionAdapter::value_type> dereference_iterator(size_t index, size_t offset) const override;
+   void increment_iterator(size_t& index) const override;
 
 protected:
    Array array;
@@ -41,6 +39,16 @@ void CollectionAdapter<Array>::for_each(const std::function<void(size_t /*index*
 template <typename Array>
 size_t CollectionAdapter<Array>::size() const {
    return this->array.size();
+}
+
+template <typename Array>
+std::pair<size_t, typename CollectionAdapter<Array>::value_type> CollectionAdapter<Array>::dereference_iterator(size_t index, size_t offset) const {
+   return {index + offset, this->array[index]};
+}
+
+template <typename Array>
+void CollectionAdapter<Array>::increment_iterator(size_t& index) const {
+   index++;
 }
 
 // free function

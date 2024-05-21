@@ -10,6 +10,28 @@
 template <typename ElementType>
 class Collection {
 public:
+   class iterator {
+   public:
+      iterator(const Collection& collection, size_t index): collection(collection), index(index) { }
+
+      [[nodiscard]] std::pair<size_t, ElementType> operator*() const {
+         return this->collection.dereference_iterator(this->index, 0);
+      }
+
+      iterator& operator++() {
+         this->collection.increment_iterator(this->index);
+         return *this;
+      }
+
+      friend bool operator!=(const iterator& a, const iterator& b) {
+         return &a.collection != &b.collection || a.index != b.index;
+      }
+
+   protected:
+      const Collection& collection;
+      size_t index;
+   };
+
    using value_type = ElementType;
 
    explicit Collection() = default;
@@ -18,6 +40,12 @@ public:
    virtual void for_each(const std::function<void (size_t /*index*/, ElementType /*element*/)>& f) const = 0;
    [[nodiscard]] virtual size_t size() const = 0;
    [[nodiscard]] bool is_empty() const;
+
+   [[nodiscard]] iterator begin() const { return iterator(*this, 0); }
+   [[nodiscard]] iterator end() const { return iterator(*this, this->size()); }
+
+   [[nodiscard]] virtual std::pair<size_t, ElementType> dereference_iterator(size_t index, size_t offset) const = 0;
+   virtual void increment_iterator(size_t& index) const = 0;
 };
 
 template <typename ElementType>

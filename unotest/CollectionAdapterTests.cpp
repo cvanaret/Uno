@@ -11,15 +11,10 @@ TEST(CollectionAdapter, Size) {
    ASSERT_EQ(y.size(), x.size());
 }
 
-/*
-TEST(ChainCollection, Iterators) {
+TEST(CollectionAdapter, Iterator) {
    std::vector<size_t> x{5, 6, 7};
    const auto y = CollectionAdapter(x);
-   size_t index = 0;
-   for (size_t value: y) {
+   for (const auto [index, value]: y) {
       ASSERT_EQ(value, x[index]);
-      index++;
    }
-   std::cout << "\n";
 }
-*/

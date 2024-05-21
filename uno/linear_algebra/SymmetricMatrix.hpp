@@ -30,7 +30,7 @@ public:
 
       friend bool operator!=(const iterator& a, const iterator& b) {
          return &a.matrix != &b.matrix || a.column_index != b.column_index || a.nonzero_index != b.nonzero_index;
-      };
+      }
 
    protected:
       const SymmetricMatrix<ElementType>& matrix;

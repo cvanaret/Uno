@@ -17,31 +17,10 @@
 template <typename ElementType>
 class SparseVector: public Collection<ElementType> {
 public:
-   class iterator {
-   public:
-      iterator(const SparseVector<ElementType>& vector, size_t index) : vector(vector), index(index) { }
-
-      std::pair<size_t, ElementType> operator*() {
-         // copy the element in the pair. Cheap only for trivial types
-         return {this->vector.indices[this->index], this->vector.values[this->index]};
-      }
-
-      iterator& operator++() { this->index++; return *this; }
-
-      friend bool operator!=(const iterator& a, const iterator& b) { return &a.vector != &b.vector || a.index != b.index; };
-
-   private:
-      const SparseVector<ElementType>& vector;
-      size_t index;
-   };
-
    explicit SparseVector(size_t capacity = 0);
    void for_each(const std::function<void(size_t, ElementType)>& f) const override;
    // void for_each_index(const std::function<void (size_t)>& f) const;
    void for_each_value(const std::function<void(ElementType)>& f) const;
-
-   [[nodiscard]] iterator begin() const { return iterator(*this, 0); }
-   [[nodiscard]] iterator end() const { return iterator(*this, this->number_nonzeros); }
 
    [[nodiscard]] size_t size() const;
    void reserve(size_t capacity);
@@ -50,6 +29,9 @@ public:
    void transform(const std::function<ElementType(ElementType)>& f);
    void clear();
    [[nodiscard]] bool empty() const;
+
+   [[nodiscard]] std::pair<size_t, ElementType> dereference_iterator(size_t index, size_t offset) const override;
+   void increment_iterator(size_t& index) const override;
 
    template <typename U>
    friend std::ostream& operator<<(std::ostream& stream, const SparseVector<U>& x);
@@ -124,6 +106,16 @@ std::ostream& operator<<(std::ostream& stream, const SparseVector<ElementType>& 
       stream << "index " << index << ", value " << element << '\n';
    }
    return stream;
+}
+
+template <typename ElementType>
+std::pair<size_t, ElementType> SparseVector<ElementType>::dereference_iterator(size_t index, size_t /*offset*/) const {
+   return {this->indices[index], this->values[index]};
+}
+
+template <typename ElementType>
+void SparseVector<ElementType>::increment_iterator(size_t& index) const {
+   index++;
 }
 
 // free functions
