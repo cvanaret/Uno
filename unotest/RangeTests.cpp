@@ -28,20 +28,20 @@ TEST(Range, BackwardSumLoop) {
    ASSERT_EQ(sum, 12);
 }
 
-TEST(Range, SumForeach) {
+TEST(Range, SumRangeBasedLoop) {
    const Range range(2, 5);
    size_t sum = 0;
-   range.for_each([&](size_t, size_t element) {
+   for (const auto element: range) {
       sum += element;
-   });
+   }
    ASSERT_EQ(sum, 9);
 }
 
 TEST(Range, BackwardSumForeach) {
    const BackwardRange range(5, 2);
    size_t sum = 0;
-   range.for_each([&](size_t, size_t element) {
+   for (const auto element: range) {
       sum += element;
-   });
+   }
    ASSERT_EQ(sum, 12);
 }

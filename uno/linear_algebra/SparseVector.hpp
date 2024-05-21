@@ -18,9 +18,6 @@ template <typename ElementType>
 class SparseVector: public Collection<ElementType> {
 public:
    explicit SparseVector(size_t capacity = 0);
-   void for_each(const std::function<void(size_t, ElementType)>& f) const override;
-   // void for_each_index(const std::function<void (size_t)>& f) const;
-   void for_each_value(const std::function<void(ElementType)>& f) const;
 
    [[nodiscard]] size_t size() const;
    void reserve(size_t capacity);
@@ -46,20 +43,6 @@ protected:
 template <typename ElementType>
 SparseVector<ElementType>::SparseVector(size_t capacity): Collection<ElementType>() {
    this->reserve(capacity);
-}
-
-template <typename ElementType>
-void SparseVector<ElementType>::for_each(const std::function<void(size_t, ElementType)>& f) const {
-   for (size_t index: Range(this->number_nonzeros)) {
-      f(this->indices[index], this->values[index]);
-   }
-}
-
-template <typename ElementType>
-void SparseVector<ElementType>::for_each_value(const std::function<void(ElementType)>& f) const {
-   for (size_t index: Range(this->number_nonzeros)) {
-      f(this->values[index]);
-   }
 }
 
 template <typename ElementType>

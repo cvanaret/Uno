@@ -26,9 +26,9 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
    }
    // Jacobian of general constraints
    for (size_t constraint_index: Range(model.number_constraints)) {
-      current_iterate.evaluations.constraint_jacobian[constraint_index].for_each([&](size_t variable_index, double derivative) {
+      for (const auto [variable_index, derivative]: current_iterate.evaluations.constraint_jacobian[constraint_index]) {
          matrix.insert(derivative, variable_index, model.number_variables + constraint_index);
-      });
+      }
       matrix.finalize_column(model.number_variables + constraint_index);
    }
    DEBUG2 << "Matrix for least-square multipliers:\n" << matrix << '\n';
@@ -36,9 +36,9 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
    /* generate the right-hand side */
    initialize_vector(rhs, 0.);
    // objective gradient
-   current_iterate.evaluations.objective_gradient.for_each([&](size_t variable_index, double derivative) {
+   for (const auto [variable_index, derivative]: current_iterate.evaluations.objective_gradient) {
       rhs[variable_index] += model.objective_sign * derivative;
-   });
+   }
    // variable bound constraints
    for (size_t variable_index: Range(model.number_variables)) {
       rhs[variable_index] -= current_iterate.multipliers.lower_bounds[variable_index] + current_iterate.multipliers.upper_bounds[variable_index];

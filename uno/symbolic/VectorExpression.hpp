@@ -10,6 +10,29 @@
 template <typename Indices, typename Callable>
 class VectorExpression {
 public:
+   class iterator {
+   public:
+      iterator(const VectorExpression& expression, size_t index): expression(expression), index(index) { }
+
+      [[nodiscard]] std::pair<size_t, double> operator*() const {
+         const auto [_, expression_index] = expression.indices.dereference_iterator(this->index);
+         return {expression_index, expression.ith_component[index]};
+      }
+
+      iterator& operator++() {
+         this->index++;
+         return *this;
+      }
+
+      friend bool operator!=(const iterator& a, const iterator& b) {
+         return &a.expression != &b.expression || a.index != b.index;
+      }
+
+   protected:
+      const VectorExpression& expression;
+      size_t index;
+   };
+
    // compatible with algorithms that query the type of the elements
    using value_type = double;
 
@@ -17,7 +40,8 @@ public:
    [[nodiscard]] size_t size() const;
    [[nodiscard]] double operator[](size_t index) const;
 
-   void for_each(const std::function<void (size_t, size_t)>& f) const;
+   iterator begin() const { return iterator(*this, 0); }
+   iterator end() const { return iterator(*this, this->size()); }
 
 protected:
    Indices indices; // store const reference or rvalue (temporary)
@@ -37,11 +61,6 @@ size_t VectorExpression<Indices, Callable>::size() const {
 template <typename Indices, typename Callable>
 double VectorExpression<Indices, Callable>::operator[](size_t index) const {
    return this->ith_component(index);
-}
-
-template <typename Indices, typename Callable>
-void VectorExpression<Indices, Callable>::for_each(const std::function<void (size_t, size_t)>& f) const {
-   this->indices.for_each(f);
 }
 
 #endif // UNO_VECTOREXPRESSION_H

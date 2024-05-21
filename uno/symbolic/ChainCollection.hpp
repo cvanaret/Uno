@@ -12,7 +12,6 @@ template <typename Collection1, typename Collection2>
 class ChainCollection: public Collection<typename std::remove_reference_t<Collection1>::value_type> {
 public:
    ChainCollection(Collection1&& collection1, Collection2&& collection2);
-   void for_each(const std::function<void(size_t /*index*/, typename ChainCollection::value_type /*element*/)>& f) const override;
    [[nodiscard]] size_t size() const override;
 
    [[nodiscard]] std::pair<size_t, typename ChainCollection::value_type> dereference_iterator(size_t index, size_t offset) const override {
@@ -40,12 +39,6 @@ ChainCollection<Collection1, Collection2>::ChainCollection(Collection1&& collect
       collection1(std::forward<Collection1>(collection1)), collection2(std::forward<Collection2>(collection2)) {
    static_assert(std::is_same<typename std::remove_reference_t<Collection1>::value_type,
          typename std::remove_reference_t<Collection2>::value_type>::value, "The iterators should contain the same type");
-}
-
-template <typename Collection1, typename Collection2>
-void ChainCollection<Collection1, Collection2>::for_each(const std::function<void(size_t /*index*/, typename ChainCollection::value_type /*element*/)>& f) const {
-   this->collection1.for_each(f);
-   this->collection2.for_each(f);
 }
 
 template <typename Collection1, typename Collection2>

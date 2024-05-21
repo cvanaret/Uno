@@ -93,7 +93,7 @@ inline HomogeneousEqualityConstrainedModel::HomogeneousEqualityConstrainedModel(
       single_upper_bounded_variables(concatenate(this->model->get_single_upper_bounded_variables(), CollectionAdapter(this->single_upper_bounded_slacks))){
    // register the inequality constraint of each slack
    size_t inequality_index = 0;
-   this->model->get_inequality_constraints().for_each([&](size_t, size_t constraint_index) {
+   for (const auto [_, constraint_index]: this->model->get_inequality_constraints()) {
       const size_t slack_variable_index = this->model->number_variables + inequality_index;
       this->constraint_index_of_inequality_index[inequality_index] = constraint_index;
       this->slack_index_of_constraint_index[constraint_index] = slack_variable_index;
@@ -111,20 +111,20 @@ inline HomogeneousEqualityConstrainedModel::HomogeneousEqualityConstrainedModel(
          }
       }
       inequality_index++;
-   });
+   }
 }
 
 inline void HomogeneousEqualityConstrainedModel::evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const {
    this->model->evaluate_constraints(x, constraints);
    // inequality constraints: add the slacks
-   this->get_slacks().for_each([&](size_t constraint_index, size_t slack_index) {
+   for (const auto [constraint_index, slack_index]: this->get_slacks()) {
       constraints[constraint_index] -= x[slack_index];
-   });
+   }
 
    // equality constraints: make sure they are homogeneous (c(x) = 0)
-   this->model->get_equality_constraints().for_each([&](size_t, size_t constraint_index) {
+   for (const auto [_, constraint_index]: this->model->get_equality_constraints()) {
       constraints[constraint_index] -= this->model->constraint_lower_bound(constraint_index);
-   });
+   }
 }
 
 inline void HomogeneousEqualityConstrainedModel::evaluate_constraint_gradient(const std::vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const {
@@ -139,9 +139,9 @@ inline void HomogeneousEqualityConstrainedModel::evaluate_constraint_gradient(co
 inline void HomogeneousEqualityConstrainedModel::evaluate_constraint_jacobian(const std::vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const {
    this->model->evaluate_constraint_jacobian(x, constraint_jacobian);
    // add the slack contributions
-   this->get_slacks().for_each([&](size_t constraint_index, size_t slack_index) {
+   for (const auto [constraint_index, slack_index]: this->get_slacks()) {
       constraint_jacobian[constraint_index].insert(slack_index, -1.);
-   });
+   }
 }
 
 inline void HomogeneousEqualityConstrainedModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
@@ -189,9 +189,9 @@ inline BoundType HomogeneousEqualityConstrainedModel::get_variable_bound_type(si
 inline void HomogeneousEqualityConstrainedModel::initial_primal_point(std::vector<double>& x) const {
    this->model->initial_primal_point(x);
    // set the slacks
-   this->get_slacks().for_each([&](size_t, size_t slack_index) {
+   for (const auto [_, slack_index]: this->get_slacks()) {
       x[slack_index] = 0.;
-   });
+   }
 }
 
 inline void HomogeneousEqualityConstrainedModel::postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const {

@@ -51,8 +51,6 @@ public:
    [[nodiscard]] std::pair<size_t, size_t> dereference_iterator(size_t index, size_t offset) const override;
    void increment_iterator(size_t& index) const override;
 
-   void for_each(const std::function<void (size_t, size_t)>& f) const override;
-
 protected:
    const size_t start_value;
    const size_t end_value;
@@ -84,22 +82,18 @@ inline size_t Range<direction>::size() const {
 }
 
 template <RangeDirection direction>
-inline void Range<direction>::for_each(const std::function<void (size_t, size_t)>& f) const {
-   size_t index_no_offset = 0;
-   for (size_t index: *this) {
-      f(index_no_offset, index);
-      index_no_offset++;
-   }
-}
-
-template <RangeDirection direction>
 std::pair<size_t, size_t> Range<direction>::dereference_iterator(size_t index, size_t offset) const {
    return {index + offset, this->start_value + index};
 }
 
 template <RangeDirection direction>
 void Range<direction>::increment_iterator(size_t& index) const {
-   index++;
+   if constexpr (direction == FORWARD) {
+      index++;
+   }
+   else {
+      index--;
+   }
 }
 
 using ForwardRange = Range<FORWARD>;

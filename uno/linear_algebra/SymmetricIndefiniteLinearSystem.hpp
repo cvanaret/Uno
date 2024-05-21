@@ -86,9 +86,9 @@ void SymmetricIndefiniteLinearSystem<ElementType>::assemble_matrix(const Symmetr
 
    // Jacobian of general constraints
    for (size_t column_index: Range(number_constraints)) {
-      constraint_jacobian[column_index].for_each([&](size_t row_index, double derivative) {
+      for (const auto [row_index, derivative]: constraint_jacobian[column_index]) {
          this->matrix->insert(derivative, row_index, number_variables + column_index);
-      });
+      }
       this->matrix->finalize_column(column_index);
    }
 }

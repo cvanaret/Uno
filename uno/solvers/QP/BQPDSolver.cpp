@@ -210,17 +210,17 @@ void BQPDSolver::save_hessian_to_local_format(const SymmetricMatrix<double>& hes
 void BQPDSolver::save_gradients_to_local_format(size_t number_constraints, const SparseVector<double>& linear_objective,
       const RectangularMatrix<double>& constraint_jacobian) {
    size_t current_index = 0;
-   linear_objective.for_each([&](size_t variable_index, double derivative) {
+   for (const auto [variable_index, derivative]: linear_objective) {
       this->jacobian[current_index] = derivative;
       this->jacobian_sparsity[current_index + 1] = static_cast<int>(variable_index) + this->fortran_shift;
       current_index++;
-   });
+   }
    for (size_t constraint_index: Range(number_constraints)) {
-      constraint_jacobian[constraint_index].for_each([&](size_t variable_index, double derivative) {
+      for (const auto [variable_index, derivative]: constraint_jacobian[constraint_index]) {
          this->jacobian[current_index] = derivative;
          this->jacobian_sparsity[current_index + 1] = static_cast<int>(variable_index) + this->fortran_shift;
          current_index++;
-      });
+      }
    }
    current_index++;
    this->jacobian_sparsity[0] = static_cast<int>(current_index);
