@@ -14,13 +14,13 @@ public:
    ChainCollection(Collection1&& collection1, Collection2&& collection2);
    [[nodiscard]] size_t size() const override;
 
-   [[nodiscard]] std::pair<size_t, typename ChainCollection::value_type> dereference_iterator(size_t index, size_t offset) const override {
+   [[nodiscard]] typename ChainCollection::value_type dereference_iterator(size_t index) const override {
       const size_t collection1_size = this->collection1.size();
       if (index < collection1_size) {
-         return collection1.dereference_iterator(index, offset);
+         return collection1.dereference_iterator(index);
       }
       else {
-         return collection2.dereference_iterator(index - collection1_size, offset + collection1_size);
+         return collection2.dereference_iterator(index - collection1_size);
       }
    }
 

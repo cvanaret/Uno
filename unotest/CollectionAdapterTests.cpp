@@ -14,7 +14,9 @@ TEST(CollectionAdapter, Size) {
 TEST(CollectionAdapter, Iterator) {
    std::vector<size_t> x{5, 6, 7};
    const auto y = CollectionAdapter(x);
-   for (const auto [index, value]: y) {
+   size_t index = 0;
+   for (const size_t value: y) {
       ASSERT_EQ(value, x[index]);
+      index++;
    }
 }

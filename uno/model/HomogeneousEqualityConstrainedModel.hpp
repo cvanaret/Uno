@@ -93,7 +93,7 @@ inline HomogeneousEqualityConstrainedModel::HomogeneousEqualityConstrainedModel(
       single_upper_bounded_variables(concatenate(this->model->get_single_upper_bounded_variables(), CollectionAdapter(this->single_upper_bounded_slacks))){
    // register the inequality constraint of each slack
    size_t inequality_index = 0;
-   for (const auto [_, constraint_index]: this->model->get_inequality_constraints()) {
+   for (const size_t constraint_index: this->model->get_inequality_constraints()) {
       const size_t slack_variable_index = this->model->number_variables + inequality_index;
       this->constraint_index_of_inequality_index[inequality_index] = constraint_index;
       this->slack_index_of_constraint_index[constraint_index] = slack_variable_index;
@@ -122,7 +122,7 @@ inline void HomogeneousEqualityConstrainedModel::evaluate_constraints(const std:
    }
 
    // equality constraints: make sure they are homogeneous (c(x) = 0)
-   for (const auto [_, constraint_index]: this->model->get_equality_constraints()) {
+   for (const size_t constraint_index: this->model->get_equality_constraints()) {
       constraints[constraint_index] -= this->model->constraint_lower_bound(constraint_index);
    }
 }

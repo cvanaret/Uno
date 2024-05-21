@@ -16,39 +16,15 @@ enum RangeDirection {
 template <RangeDirection direction = FORWARD>
 class Range: public Collection<size_t> {
 public:
-   // https://internalpointers.com/post/writing-custom-iterators-modern-cpp
-   class iterator {
-   public:
-      explicit iterator(size_t value) : value(value) { }
-      const size_t& operator*() const { return this->value; }
-      // prefix increment
-      iterator& operator++() {
-         if constexpr (direction == FORWARD) {
-            this->value++;
-         }
-         else {
-            this->value--;
-         }
-         return *this;
-      }
-
-      friend bool operator!=(const iterator& a, const iterator& b) { return a.value != b.value; };
-
-   private:
-      size_t value;
-   };
-
    using value_type = size_t;
 
    explicit Range(size_t end_index);
    Range(size_t start_value, size_t end_value);
 
    // iterable functions
-   [[nodiscard]] iterator begin() const { return iterator(this->start_value); }
-   [[nodiscard]] iterator end() const { return iterator(this->end_value); }
    [[nodiscard]] size_t size() const override;
 
-   [[nodiscard]] std::pair<size_t, size_t> dereference_iterator(size_t index, size_t offset) const override;
+   [[nodiscard]] size_t dereference_iterator(size_t index) const override;
    void increment_iterator(size_t& index) const override;
 
 protected:
@@ -82,18 +58,18 @@ inline size_t Range<direction>::size() const {
 }
 
 template <RangeDirection direction>
-std::pair<size_t, size_t> Range<direction>::dereference_iterator(size_t index, size_t offset) const {
-   return {index + offset, this->start_value + index};
+size_t Range<direction>::dereference_iterator(size_t index) const {
+   if constexpr (direction == FORWARD) {
+      return this->start_value + index;
+   }
+   else {
+      return this->start_value - index;
+   }
 }
 
 template <RangeDirection direction>
 void Range<direction>::increment_iterator(size_t& index) const {
-   if constexpr (direction == FORWARD) {
-      index++;
-   }
-   else {
-      index--;
-   }
+   index++;
 }
 
 using ForwardRange = Range<FORWARD>;

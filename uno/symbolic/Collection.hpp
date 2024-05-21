@@ -15,8 +15,8 @@ public:
    public:
       iterator(const Collection& collection, size_t index): collection(collection), index(index) { }
 
-      [[nodiscard]] std::pair<size_t, ElementType> operator*() const {
-         return this->collection.dereference_iterator(this->index, 0);
+      [[nodiscard]] ElementType operator*() const {
+         return this->collection.dereference_iterator(this->index);
       }
 
       iterator& operator++() {
@@ -44,7 +44,7 @@ public:
    [[nodiscard]] iterator begin() const { return iterator(*this, 0); }
    [[nodiscard]] iterator end() const { return iterator(*this, this->size()); }
 
-   [[nodiscard]] virtual std::pair<size_t, ElementType> dereference_iterator(size_t index, size_t offset) const = 0;
+   [[nodiscard]] virtual ElementType dereference_iterator(size_t index) const = 0;
    virtual void increment_iterator(size_t& index) const = 0;
 };
 

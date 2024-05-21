@@ -13,7 +13,7 @@ public:
    explicit CollectionAdapter(Array&& array);
    [[nodiscard]] size_t size() const override;
 
-   [[nodiscard]] std::pair<size_t, typename CollectionAdapter::value_type> dereference_iterator(size_t index, size_t offset) const override;
+   [[nodiscard]] typename CollectionAdapter::value_type dereference_iterator(size_t index) const override;
    void increment_iterator(size_t& index) const override;
 
 protected:
@@ -31,8 +31,8 @@ size_t CollectionAdapter<Array>::size() const {
 }
 
 template <typename Array>
-std::pair<size_t, typename CollectionAdapter<Array>::value_type> CollectionAdapter<Array>::dereference_iterator(size_t index, size_t offset) const {
-   return {index + offset, this->array[index]};
+typename CollectionAdapter<Array>::value_type CollectionAdapter<Array>::dereference_iterator(size_t index) const {
+   return this->array[index];
 }
 
 template <typename Array>

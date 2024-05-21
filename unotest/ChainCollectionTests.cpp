@@ -30,8 +30,10 @@ TEST(ChainCollection, Iterator) {
    const auto range = Range(100, 105);
    const auto chain = concatenate(CollectionAdapter(x), range);
    const std::vector<size_t> reference_result{5, 6, 7, 100, 101, 102, 103, 104};
-   for (const auto [index, value]: chain) {
+   size_t index = 0;
+   for (const size_t value: chain) {
       ASSERT_EQ(value, reference_result[index]);
+      index++;
    }
    std::cout << "\n";
 }
