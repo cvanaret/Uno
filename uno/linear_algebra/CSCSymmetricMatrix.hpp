@@ -123,7 +123,7 @@ std::tuple<size_t, size_t, ElementType> CSCSymmetricMatrix<ElementType>::derefer
 
 template <typename ElementType>
 void CSCSymmetricMatrix<ElementType>::increment_iterator(size_t& column_index, size_t& nonzero_index) const {
-   if (this->column_starts[column_index] <= nonzero_index && nonzero_index < this->column_starts[column_index + 1] - 1) {
+   if (this->column_starts[column_index] <= nonzero_index && nonzero_index + 1 < this->column_starts[column_index + 1]) {
       // stay in the column
       nonzero_index++;
    }
@@ -131,7 +131,7 @@ void CSCSymmetricMatrix<ElementType>::increment_iterator(size_t& column_index, s
       // move on to the next non-empty column
       do {
          column_index++;
-      } while (column_index <= this->dimension && this->column_starts[column_index] == this->column_starts[column_index + 1]);
+      } while (column_index < this->dimension && this->column_starts[column_index] == this->column_starts[column_index + 1]);
       nonzero_index = this->column_starts[column_index];
    }
 }
