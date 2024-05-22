@@ -8,6 +8,7 @@
 #include <vector>
 #include "linear_algebra/Norm.hpp"
 #include "optimization/TerminationStatus.hpp"
+#include "symbolic/VectorExpression.hpp"
 
 // forward declarations
 template <typename ElementType>

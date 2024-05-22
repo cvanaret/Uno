@@ -19,9 +19,11 @@ class SparseVector {
 public:
    class iterator {
    public:
+      using value_type = std::pair<size_t, ElementType>;
+
       iterator(const SparseVector& vector, size_t index): vector(vector), index(index) { }
 
-      std::pair<size_t, ElementType> operator*() const {
+      value_type operator*() const {
          return {this->vector.indices[this->index], this->vector.values[this->index]};
       }
 
@@ -38,6 +40,8 @@ public:
       const SparseVector& vector;
       size_t index;
    };
+
+   using value_type = ElementType;
 
    explicit SparseVector(size_t capacity = 0);
 

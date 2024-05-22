@@ -12,6 +12,8 @@ class VectorExpression {
 public:
    class iterator {
    public:
+      using value_type = std::pair<size_t, double>;
+
       iterator(const VectorExpression& expression, size_t index): expression(expression), index(index) { }
 
       [[nodiscard]] std::pair<size_t, double> operator*() const {
@@ -37,7 +39,7 @@ public:
    using value_type = double;
 
    VectorExpression(Indices&& indices, Callable&& component_function);
-   [[nodiscard]] size_t size() const;
+   [[nodiscard]] size_t size() const { return this->indices.size(); }
    [[nodiscard]] double operator[](size_t index) const;
 
    iterator begin() const { return iterator(*this, 0); }
@@ -51,11 +53,6 @@ protected:
 template <typename Indices, typename Callable>
 VectorExpression<Indices, Callable>::VectorExpression(Indices&& indices, Callable&& component_function):
       indices(std::forward<Indices>(indices)), component_function(std::forward<Callable>(component_function)) {
-}
-
-template <typename Indices, typename Callable>
-size_t VectorExpression<Indices, Callable>::size() const {
-   return this->indices.size();
 }
 
 template <typename Indices, typename Callable>

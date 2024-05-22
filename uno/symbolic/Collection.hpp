@@ -13,6 +13,8 @@ public:
    // https://internalpointers.com/post/writing-custom-iterators-modern-cpp
    class iterator {
    public:
+      using value_type = ElementType;
+
       iterator(const Collection& collection, size_t index): collection(collection), index(index) { }
 
       [[nodiscard]] ElementType operator*() const {

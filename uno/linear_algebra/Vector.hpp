@@ -5,9 +5,7 @@
 #define UNO_VECTOR_H
 
 #include <iostream>
-#include <limits>
 #include <vector>
-#include <cmath>
 #include <cassert>
 #include "tools/Logger.hpp"
 #include "symbolic/Range.hpp"

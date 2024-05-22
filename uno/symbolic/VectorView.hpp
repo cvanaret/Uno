@@ -8,13 +8,14 @@
 template <typename Expression>
 class VectorView {
 public:
-   using value_type = typename std::remove_reference_t<Expression>::value_type;
-
+   /*
    class iterator {
    public:
+      using value_type = std::pair<size_t, typename std::remove_reference_t<Expression>::value_type>;
+
       iterator(const VectorView<Expression>& view, size_t index) : view(view), index(index) { }
 
-      std::pair<size_t, value_type> operator*() {
+      value_type operator*() {
          // copy the element in the pair. Cheap only for trivial types
          return {this->index, this->view[this->index]};
       }
@@ -27,6 +28,8 @@ public:
       const VectorView<Expression>& view;
       size_t index;
    };
+*/
+   using value_type = typename std::remove_reference_t<Expression>::value_type;
 
    VectorView(Expression&& expression, size_t length) noexcept;
 
@@ -34,8 +37,8 @@ public:
    [[nodiscard]] const value_type& operator[](size_t index) const noexcept { return this->expression[index]; }
    [[nodiscard]] size_t size() const noexcept { return this->length; }
 
-   [[nodiscard]] iterator begin() const noexcept { return iterator(*this, 0); }
-   [[nodiscard]] iterator end() const noexcept { return iterator(*this, this->length); }
+   // [[nodiscard]] iterator begin() const noexcept { return iterator(*this, 0); }
+   // [[nodiscard]] iterator end() const noexcept { return iterator(*this, this->length); }
 
 protected:
    Expression expression;
