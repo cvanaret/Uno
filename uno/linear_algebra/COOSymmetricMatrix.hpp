@@ -32,7 +32,6 @@ public:
    COOSymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization);
 
    void reset() override;
-   void for_each(const std::function<void(IndexType, IndexType, ElementType)>& f) const override;
    void insert(ElementType element, IndexType row_index, IndexType column_index) override;
    void finalize_column(IndexType /*column_index*/) override { /* do nothing */ }
    [[nodiscard]] ElementType smallest_diagonal_entry() const override;
@@ -85,8 +84,8 @@ void COOSymmetricMatrix<IndexType, ElementType>::reset() {
    }
 }
 
-template <typename ElementType>
-void COOSymmetricMatrix<ElementType>::insert(ElementType term, size_t row_index, size_t column_index) {
+template <typename IndexType, typename ElementType>
+void COOSymmetricMatrix<IndexType, ElementType>::insert(ElementType element, IndexType row_index, IndexType column_index) {
    assert(this->number_nonzeros <= this->row_indices.size() && "The COO matrix doesn't have a sufficient capacity");
    this->entries.push_back(element);
    this->row_indices.push_back(row_index);
@@ -120,8 +119,8 @@ void COOSymmetricMatrix<IndexType, ElementType>::set_regularization(const std::f
    }
 }
 
-template <typename ElementType>
-void COOSymmetricMatrix<ElementType>::print(std::ostream& stream) const {
+template <typename IndexType, typename ElementType>
+void COOSymmetricMatrix<IndexType, ElementType>::print(std::ostream& stream) const {
    for (const auto [row_index, column_index, element]: *this) {
       stream << "m(" << row_index << ", " << column_index << ") = " << element << '\n';
    }
@@ -131,17 +130,17 @@ template <typename IndexType, typename ElementType>
 void COOSymmetricMatrix<IndexType, ElementType>::initialize_regularization() {
    // introduce elements at the start of the entries
    for (size_t row_index: Range(this->dimension)) {
-      this->insert(ElementType(0), row_index, row_index);
+      this->insert(ElementType(0), IndexType(row_index), IndexType(row_index));
    }
 }
 
-template <typename ElementType>
-std::tuple<size_t, size_t, ElementType> COOSymmetricMatrix<ElementType>::dereference_iterator(size_t /*column_index*/, size_t nonzero_index) const {
+template <typename IndexType, typename ElementType>
+std::tuple<size_t, size_t, ElementType> COOSymmetricMatrix<IndexType, ElementType>::dereference_iterator(size_t /*column_index*/, size_t nonzero_index) const {
    return {this->row_indices[nonzero_index], this->column_indices[nonzero_index], this->entries[nonzero_index]};
 }
 
-template <typename ElementType>
-void COOSymmetricMatrix<ElementType>::increment_iterator(size_t& column_index, size_t& nonzero_index) const {
+template <typename IndexType, typename ElementType>
+void COOSymmetricMatrix<IndexType, ElementType>::increment_iterator(size_t& column_index, size_t& nonzero_index) const {
    nonzero_index++;
    // if end reached
    if (nonzero_index == this->number_nonzeros) {
@@ -151,7 +150,7 @@ void COOSymmetricMatrix<ElementType>::increment_iterator(size_t& column_index, s
 
 template <typename IndexType, typename ElementType>
 COOSymmetricMatrix<IndexType, ElementType> COOSymmetricMatrix<IndexType, ElementType>::zero(size_t dimension) {
-   return COOSymmetricMatrix<IndexType, ElementType>(dimension, 0, false);
+   return {dimension, 0, false};
 }
 
 #endif // UNO_COOSYMMETRICMATRIX_H

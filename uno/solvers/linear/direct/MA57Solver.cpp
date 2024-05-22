@@ -117,7 +117,7 @@ void MA57Solver::solve_indefinite_system(const SymmetricMatrix<size_t, double>& 
    // solve the linear system
    if (this->use_iterative_refinement) {
       ma57dd_(&this->job, &n, &nnz, matrix.data_raw_pointer(), this->COO_matrix.row_indices_pointer(), this->COO_matrix.column_indices_pointer(),
-            this->factorization.fact.data(), &this->factorization.lfact, this->factorization.ifact.data(), &this->factorization.lifact,
+            this->fact.data(), &this->factorization.lfact, this->ifact.data(), &this->factorization.lifact,
             rhs.data(), result.data(), this->residuals.data(), this->work.data(), this->iwork.data(), this->icntl.data(),
             this->cntl.data(), this->info.data(), this->rinfo.data());
    }
@@ -125,7 +125,7 @@ void MA57Solver::solve_indefinite_system(const SymmetricMatrix<size_t, double>& 
       // copy rhs into result (overwritten by MA57)
       copy_from(result, rhs);
 
-      ma57cd_(&this->job, &n, this->factorization.fact.data(), &this->factorization.lfact, this->factorization.ifact.data(),
+      ma57cd_(&this->job, &n, this->fact.data(), &this->factorization.lfact, this->ifact.data(),
             &this->factorization.lifact, &this->nrhs, result.data(), &lrhs, this->work.data(), &this->lwork, this->iwork.data(),
             this->icntl.data(), this->info.data());
    }
@@ -162,10 +162,8 @@ size_t MA57Solver::rank() const {
 
 void MA57Solver::save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix) {
    // build the internal matrix representation
-   this->row_indices.clear();
-   this->column_indices.clear();
+   this->COO_matrix.reset();
    for (const auto [row_index, column_index, element]: matrix) {
-      this->row_indices.push_back(static_cast<int>(row_index + this->fortran_shift));
-      this->column_indices.push_back(static_cast<int>(column_index + this->fortran_shift));
+      this->COO_matrix.insert(element, static_cast<int>(row_index + this->fortran_shift), static_cast<int>(column_index + this->fortran_shift));
    }
 }

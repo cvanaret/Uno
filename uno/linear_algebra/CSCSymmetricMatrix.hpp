@@ -20,8 +20,8 @@ public:
    CSCSymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization);
 
    void reset() override;
-   void insert(ElementType term, size_t row_index, size_t column_index) override;
-   void finalize_column(size_t column_index) override;
+   void insert(ElementType term, IndexType row_index, IndexType column_index) override;
+   void finalize_column(IndexType column_index) override;
    [[nodiscard]] ElementType smallest_diagonal_entry() const override;
    void set_regularization(const std::function<ElementType(size_t /*index*/)>& regularization_function) override;
 
@@ -34,7 +34,7 @@ protected:
    // column_starts has dimension+1 elements
    std::vector<size_t> column_starts{};
    std::vector<size_t> row_indices{};
-   size_t current_column{0};
+   IndexType current_column{0};
    std::vector<ElementType> diagonal_entries;
 
    // iterator functions
@@ -61,8 +61,8 @@ void CSCSymmetricMatrix<IndexType, ElementType>::reset() {
    initialize_vector(this->diagonal_entries, ElementType(0));
 }
 
-template <typename ElementType>
-void CSCSymmetricMatrix<ElementType>::insert(ElementType term, size_t row_index, size_t column_index) {
+template <typename IndexType, typename ElementType>
+void CSCSymmetricMatrix<IndexType, ElementType>::insert(ElementType element, IndexType row_index, IndexType column_index) {
    assert(column_index == this->current_column && "The previous columns should be finalized");
 
    this->entries.push_back(element);
@@ -77,7 +77,7 @@ void CSCSymmetricMatrix<ElementType>::insert(ElementType term, size_t row_index,
 }
 
 template <typename IndexType, typename ElementType>
-void CSCSymmetricMatrix<IndexType, ElementType>::finalize_column(size_t column_index) {
+void CSCSymmetricMatrix<IndexType, ElementType>::finalize_column(IndexType column_index) {
    assert(column_index == this->current_column && "You are not finalizing the current column");
    assert(column_index < this->dimension && "The dimension of the matrix was exceeded");
 
@@ -116,13 +116,13 @@ void CSCSymmetricMatrix<IndexType, ElementType>::set_regularization(const std::f
    }
 }
 
-template <typename ElementType>
-std::tuple<size_t, size_t, ElementType> CSCSymmetricMatrix<ElementType>::dereference_iterator(size_t column_index, size_t nonzero_index) const {
+template <typename IndexType, typename ElementType>
+std::tuple<size_t, size_t, ElementType> CSCSymmetricMatrix<IndexType, ElementType>::dereference_iterator(size_t column_index, size_t nonzero_index) const {
    return {this->row_indices[nonzero_index], column_index, this->entries[nonzero_index]};
 }
 
-template <typename ElementType>
-void CSCSymmetricMatrix<ElementType>::increment_iterator(size_t& column_index, size_t& nonzero_index) const {
+template <typename IndexType, typename ElementType>
+void CSCSymmetricMatrix<IndexType, ElementType>::increment_iterator(size_t& column_index, size_t& nonzero_index) const {
    if (this->column_starts[column_index] <= nonzero_index && nonzero_index + 1 < this->column_starts[column_index + 1]) {
       // stay in the column
       nonzero_index++;
@@ -136,8 +136,8 @@ void CSCSymmetricMatrix<ElementType>::increment_iterator(size_t& column_index, s
    }
 }
 
-template <typename ElementType>
-void CSCSymmetricMatrix<ElementType>::print(std::ostream& stream) const {
+template <typename IndexType, typename ElementType>
+void CSCSymmetricMatrix<IndexType, ElementType>::print(std::ostream& stream) const {
    stream << "W = "; print_vector(stream, this->entries, 0, this->number_nonzeros);
    stream << "with column start: "; print_vector(stream, this->column_starts, 0, this->dimension + 1);
    stream << "and row index: "; print_vector(stream, this->row_indices, 0, this->number_nonzeros);

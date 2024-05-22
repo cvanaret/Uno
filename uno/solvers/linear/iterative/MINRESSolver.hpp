@@ -5,6 +5,7 @@
 #define UNO_MINRESSOLVER_H
 
 #include <vector>
+#include <cmath>
 #include "linear_algebra/Vector.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 

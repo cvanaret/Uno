@@ -11,8 +11,6 @@ public:
 
    Matrix() = default;
    virtual ~Matrix() = default;
-
-   virtual void for_each(const std::function<void(IndexType, IndexType, ElementType)>& f) const = 0;
 };
 
 #endif // UNO_MATRIX_H

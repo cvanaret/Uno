@@ -30,9 +30,9 @@ inline void JacobianExpression::for_each(const std::function<void (size_t /*row_
 
    // go through the elements
    for (size_t constraint_index: Range(this->number_rows())) {
-      constraint_jacobian[constraint_index].for_each([&](size_t variable_index, double derivative) {
+      for (const auto [variable_index, derivative]: constraint_jacobian[constraint_index]) {
          f(constraint_index, variable_index, derivative);
-      });
+      }
    }
 }
 

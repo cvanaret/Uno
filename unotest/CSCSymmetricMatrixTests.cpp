@@ -7,8 +7,8 @@
 const size_t n = 5;
 const size_t nnz = 4;
 
-CSCSymmetricMatrix<double> create_CSC_matrix() {
-   CSCSymmetricMatrix<double> matrix(n, nnz, false);
+CSCSymmetricMatrix<size_t, double> create_CSC_matrix() {
+   CSCSymmetricMatrix<size_t, double> matrix(n, nnz, false);
    matrix.insert(2., 0, 0);
    matrix.finalize_column(0);
    matrix.finalize_column(1);
@@ -24,7 +24,7 @@ CSCSymmetricMatrix<double> create_CSC_matrix() {
 }
 
 TEST(CSCSymmetricMatrix, NNZ) {
-   const CSCSymmetricMatrix<double> matrix = create_CSC_matrix();
+   const CSCSymmetricMatrix<size_t, double> matrix = create_CSC_matrix();
    ASSERT_EQ(matrix.number_nonzeros, nnz);
 }
 

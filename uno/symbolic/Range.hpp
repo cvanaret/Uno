@@ -42,12 +42,12 @@ public:
 
    using value_type = size_t;
 
-   explicit Range(size_t end_index);
+   explicit Range(size_t end_value);
    Range(size_t start_value, size_t end_value);
 
    // iterable functions
-   [[nodiscard]] iterator begin() const { return iterator(this->start_index); }
-   [[nodiscard]] iterator end() const { return iterator(this->end_index); }
+   [[nodiscard]] iterator begin() const { return iterator(this->start_value); }
+   [[nodiscard]] iterator end() const { return iterator(this->end_value); }
    [[nodiscard]] size_t size() const override;
 
    [[nodiscard]] size_t dereference_iterator(size_t index) const override;
@@ -59,7 +59,7 @@ protected:
 };
 
 template <RangeDirection direction>
-inline Range<direction>::Range(size_t end_index): Range(0, end_index) {
+inline Range<direction>::Range(size_t end_value): Range(0, end_value) {
    static_assert(direction == FORWARD);
 }
 

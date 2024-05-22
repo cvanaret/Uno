@@ -17,7 +17,7 @@ class SymmetricMatrix: public Matrix<IndexType, ElementType> {
 public:
    class iterator {
    public:
-      iterator(const SymmetricMatrix<ElementType>& matrix, size_t column_index, size_t nonzero_index):
+      iterator(const SymmetricMatrix<IndexType, ElementType>& matrix, size_t column_index, size_t nonzero_index):
          matrix(matrix), column_index(column_index), nonzero_index(nonzero_index) { }
 
       [[nodiscard]] std::tuple<size_t, size_t, ElementType> operator*() const {
@@ -34,7 +34,7 @@ public:
       }
 
    protected:
-      const SymmetricMatrix<ElementType>& matrix;
+      const SymmetricMatrix<IndexType, ElementType>& matrix;
       size_t column_index;
       size_t nonzero_index;
    };
@@ -63,7 +63,7 @@ public:
    // this method will be used by the CSCSymmetricMatrix subclass
    virtual void finalize_column(IndexType column_index) = 0;
    [[nodiscard]] virtual ElementType smallest_diagonal_entry() const = 0;
-   virtual void set_regularization(const std::function<ElementType(size_t /*index*/)>& regularization_function) = 0;
+   virtual void set_regularization(const std::function<ElementType(IndexType /*index*/)>& regularization_function) = 0;
 
    [[nodiscard]] iterator begin() const { return iterator(*this, 0, 0); }
    [[nodiscard]] iterator end() const { return iterator(*this, this->dimension, this->number_nonzeros); }
@@ -88,6 +88,7 @@ protected:
 
 template <typename IndexType, typename ElementType>
 SymmetricMatrix<IndexType, ElementType>::SymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization) :
+      Matrix<IndexType, ElementType>(),
       dimension(dimension),
       // if regularization is used, allocate the necessary space
       capacity(original_capacity + (use_regularization ? dimension : 0)),
@@ -114,13 +115,13 @@ size_t SymmetricMatrix<IndexType, ElementType>::number_columns() const {
 template <typename IndexType, typename ElementType>
 template <typename VectorType, typename ResultType>
 void SymmetricMatrix<IndexType, ElementType>::product(const VectorType& vector, ResultType& result) const {
-   this->for_each([&](IndexType row_index, IndexType column_index, double entry) {
+   for (const auto [row_index, column_index, entry]: *this) {
       result[row_index] += entry*vector[column_index];
       // off-diagonal element on the other side of the diagonal
       if (row_index != column_index) {
          result[column_index] += entry*vector[row_index];
       }
-   });
+   }
 }
 
 template <typename IndexType, typename ElementType>
