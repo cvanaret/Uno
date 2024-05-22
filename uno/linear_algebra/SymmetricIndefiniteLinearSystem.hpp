@@ -74,20 +74,20 @@ void SymmetricIndefiniteLinearSystem<IndexType, ElementType>::assemble_matrix(co
    this->matrix->reset();
    // copy the Lagrangian Hessian in the top left block
    //size_t current_column = 0;
-   hessian.for_each([&](IndexType row_index, IndexType column_index, ElementType entry) {
+   for (const auto [row_index, column_index, element]: hessian) {
       // finalize all empty columns
       /*for (size_t column: Range(current_column, column_index)) {
          this->matrix->finalize_column(column);
          current_column++;
       }*/
-      this->matrix->insert(entry, row_index, column_index);
-   });
+      this->matrix->insert(element, row_index, column_index);
+   }
 
    // Jacobian of general constraints
    for (size_t column_index: Range(number_constraints)) {
-      constraint_jacobian[column_index].for_each([&](IndexType row_index, ElementType derivative) {
+      for (const auto [row_index, derivative]: constraint_jacobian[column_index]) {
          this->matrix->insert(derivative, row_index, number_variables + column_index);
-      });
+      }
       this->matrix->finalize_column(column_index);
    }
 }
@@ -149,7 +149,7 @@ void SymmetricIndefiniteLinearSystem<IndexType, ElementType>::regularize_matrix(
 
       if (not linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_dual_block) {
          good_inertia = true;
-         DEBUG << "Factorization was a success\n\n";
+         DEBUG << "Factorization was a success\n";
          this->previous_primal_regularization = this->primal_regularization;
       }
       else {

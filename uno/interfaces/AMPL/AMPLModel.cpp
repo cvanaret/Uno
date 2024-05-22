@@ -49,7 +49,6 @@ AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
       constraint_status(this->number_constraints),
       equality_constraints_collection(this->equality_constraints),
       inequality_constraints_collection(this->inequality_constraints),
-      slacks(Range(0)),
       lower_bounded_variables_collection(this->lower_bounded_variables),
       upper_bounded_variables_collection(this->upper_bounded_variables),
       single_lower_bounded_variables_collection(this->single_lower_bounded_variables),
@@ -226,7 +225,7 @@ const std::vector<size_t>& AMPLModel::get_linear_constraints() const {
    return this->linear_constraints;
 }
 
-const Collection<size_t>& AMPLModel::get_slacks() const {
+const SparseVector<size_t>& AMPLModel::get_slacks() const {
    return this->slacks;
 }
 

@@ -70,13 +70,15 @@ void MA57Solver::do_symbolic_factorization(const SymmetricMatrix<size_t, double>
    if (0 < info[0]) {
       WARNING << "MA57 has issued a warning: info(1) = " << info[0] << '\n';
    }
-   int lfact = 2 * this->info[8];
-   std::vector<double> fact(static_cast<size_t>(lfact));
-   int lifact = 2 * this->info[9];
-   std::vector<int> ifact(static_cast<size_t>(lifact));
 
-   // store the symbolic factorization
-   this->factorization = {n, nnz, std::move(fact), lfact, std::move(ifact), lifact};
+   // get LFACT and LIFACT and resize FACT and IFACT (no effect if resized to <= size)
+   int lfact = 2 * this->info[8];
+   int lifact = 2 * this->info[9];
+   this->fact.resize(static_cast<size_t>(lfact));
+   this->ifact.resize(static_cast<size_t>(lifact));
+
+   // store the sizes of the symbolic factorization
+   this->factorization = {n, nnz, lfact, lifact};
 }
 
 void MA57Solver::do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) {
@@ -89,10 +91,10 @@ void MA57Solver::do_numerical_factorization(const SymmetricMatrix<size_t, double
    // numerical factorization
    ma57bd_(&n,
          &nnz,
-         /* const */ this->COO_matrix.data_raw_pointer(),
-         /* out */ this->factorization.fact.data(),
+         /* const */ matrix.data_raw_pointer(),
+         /* out */ this->fact.data(),
          /* const */ &this->factorization.lfact,
-         /* out */ this->factorization.ifact.data(),
+         /* out */ this->ifact.data(),
          /* const */ &this->factorization.lifact,
          /* const */ &this->lkeep,
          /* const */ this->keep.data(), this->iwork.data(), this->icntl.data(), this->cntl.data(),
@@ -160,9 +162,10 @@ size_t MA57Solver::rank() const {
 
 void MA57Solver::save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix) {
    // build the internal matrix representation
-   this->COO_matrix.reset();
-   this->COO_matrix.dimension = matrix.dimension;
-   matrix.for_each([&](size_t row_index, size_t column_index, double element) {
-      this->COO_matrix.insert(element, static_cast<int>(row_index + this->fortran_shift), static_cast<int>(column_index + this->fortran_shift));
-   });
+   this->row_indices.clear();
+   this->column_indices.clear();
+   for (const auto [row_index, column_index, element]: matrix) {
+      this->row_indices.push_back(static_cast<int>(row_index + this->fortran_shift));
+      this->column_indices.push_back(static_cast<int>(column_index + this->fortran_shift));
+   }
 }

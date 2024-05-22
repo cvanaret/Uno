@@ -269,9 +269,9 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
    if (accept_iterate) {
       this->check_exact_relaxation(trial_iterate);
       this->compute_primal_dual_residuals(this->l1_relaxed_problem, this->feasibility_problem, trial_iterate);
-      this->set_residuals_statistics(statistics, trial_iterate);
+      this->set_dual_residuals_statistics(statistics, trial_iterate);
    }
-   ConstraintRelaxationStrategy::set_objective_statistics(statistics, trial_iterate);
+   this->set_progress_statistics(statistics, trial_iterate);
    return accept_iterate;
 }
 
@@ -309,15 +309,7 @@ void l1Relaxation::check_exact_relaxation(Iterate& iterate) const {
    }
 }
 
-void l1Relaxation::set_statistics(Statistics& statistics, const Iterate& iterate) const {
-   ConstraintRelaxationStrategy::set_objective_statistics(statistics, iterate);
-   this->set_residuals_statistics(statistics, iterate);
-}
-
-void l1Relaxation::set_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
-   if (this->model.is_constrained()) {
-      statistics.set("primal infeas.", iterate.residuals.infeasibility);
-   }
+void l1Relaxation::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
    statistics.set("complementarity", iterate.residuals.optimality_complementarity);
    statistics.set("stationarity", iterate.residuals.optimality_stationarity);
 }

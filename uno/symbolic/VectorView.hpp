@@ -1,33 +1,35 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_VIEW_H
-#define UNO_VIEW_H
+#ifndef UNO_VECTORVIEW_H
+#define UNO_VECTORVIEW_H
 
 // span of an arbitrary container: allocation-free view of a certain length
 template <typename Expression>
 class VectorView {
 public:
-   using value_type = typename std::remove_reference_t<Expression>::value_type;
-
+   /*
    class iterator {
    public:
-      iterator(const VectorView<Expression>& view, size_t index) : view(view), index(index) {
-      }
-      std::pair<size_t, value_type> operator*() {
+      using value_type = std::pair<size_t, typename std::remove_reference_t<Expression>::value_type>;
+
+      iterator(const VectorView<Expression>& view, size_t index) : view(view), index(index) { }
+
+      value_type operator*() {
          // copy the element in the pair. Cheap only for trivial types
          return {this->index, this->view[this->index]};
       }
-      // prefix increment
+      
       iterator& operator++() { this->index++; return *this; }
 
-      friend bool operator==(const iterator& a, const iterator& b) { return &(a.view) == &(b.view) && a.index == b.index; };
-      friend bool operator!=(const iterator& a, const iterator& b) { return &(a.view) != &(b.view) || a.index != b.index; };
+      friend bool operator!=(const iterator& a, const iterator& b) { return &a.view != &b.view || a.index != b.index; };
 
    private:
       const VectorView<Expression>& view;
       size_t index;
    };
+*/
+   using value_type = typename std::remove_reference_t<Expression>::value_type;
 
    VectorView(Expression&& expression, size_t length) noexcept;
 
@@ -35,8 +37,8 @@ public:
    [[nodiscard]] const value_type& operator[](size_t index) const noexcept { return this->expression[index]; }
    [[nodiscard]] size_t size() const noexcept { return this->length; }
 
-   [[nodiscard]] iterator begin() const noexcept { return iterator(*this, 0); }
-   [[nodiscard]] iterator end() const noexcept { return iterator(*this, this->length); }
+   // [[nodiscard]] iterator begin() const noexcept { return iterator(*this, 0); }
+   // [[nodiscard]] iterator end() const noexcept { return iterator(*this, this->length); }
 
 protected:
    Expression expression;
@@ -54,4 +56,4 @@ inline VectorView<Expression> view(Expression&& expression, size_t length) {
    return {std::forward<Expression>(expression), length};
 }
 
-#endif //UNO_VIEW_H
+#endif //UNO_VECTORVIEW_H

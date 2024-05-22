@@ -52,6 +52,10 @@ protected:
    std::vector<IndexType> column_indices;
 
    void initialize_regularization();
+
+   // iterator functions
+   [[nodiscard]] std::tuple<size_t, size_t, ElementType> dereference_iterator(size_t column_index, size_t nonzero_index) const override;
+   void increment_iterator(size_t& column_index, size_t& nonzero_index) const override;
 };
 
 // implementation
@@ -81,19 +85,8 @@ void COOSymmetricMatrix<IndexType, ElementType>::reset() {
    }
 }
 
-// generic iterator
-template <typename IndexType, typename ElementType>
-void COOSymmetricMatrix<IndexType, ElementType>::for_each(const std::function<void(IndexType, IndexType, ElementType)>& f) const {
-   for (size_t k: Range(this->number_nonzeros)) {
-      const IndexType row_index = this->row_indices[k];
-      const IndexType column_index = this->column_indices[k];
-      const ElementType entry = this->entries[k];
-      f(row_index, column_index, entry);
-   }
-}
-
-template <typename IndexType, typename ElementType>
-void COOSymmetricMatrix<IndexType, ElementType>::insert(ElementType element, IndexType row_index, IndexType column_index) {
+template <typename ElementType>
+void COOSymmetricMatrix<ElementType>::insert(ElementType term, size_t row_index, size_t column_index) {
    assert(this->number_nonzeros <= this->row_indices.size() && "The COO matrix doesn't have a sufficient capacity");
    this->entries.push_back(element);
    this->row_indices.push_back(row_index);
@@ -127,18 +120,32 @@ void COOSymmetricMatrix<IndexType, ElementType>::set_regularization(const std::f
    }
 }
 
-template <typename IndexType, typename ElementType>
-void COOSymmetricMatrix<IndexType, ElementType>::print(std::ostream& stream) const {
-   this->for_each([&](IndexType row_index, IndexType column_index, ElementType entry) {
-      stream << "m(" << row_index << ", " << column_index << ") = " << entry << '\n';
-   });
+template <typename ElementType>
+void COOSymmetricMatrix<ElementType>::print(std::ostream& stream) const {
+   for (const auto [row_index, column_index, element]: *this) {
+      stream << "m(" << row_index << ", " << column_index << ") = " << element << '\n';
+   }
 }
 
 template <typename IndexType, typename ElementType>
 void COOSymmetricMatrix<IndexType, ElementType>::initialize_regularization() {
    // introduce elements at the start of the entries
    for (size_t row_index: Range(this->dimension)) {
-      this->insert(ElementType(0), IndexType(row_index), IndexType(row_index));
+      this->insert(ElementType(0), row_index, row_index);
+   }
+}
+
+template <typename ElementType>
+std::tuple<size_t, size_t, ElementType> COOSymmetricMatrix<ElementType>::dereference_iterator(size_t /*column_index*/, size_t nonzero_index) const {
+   return {this->row_indices[nonzero_index], this->column_indices[nonzero_index], this->entries[nonzero_index]};
+}
+
+template <typename ElementType>
+void COOSymmetricMatrix<ElementType>::increment_iterator(size_t& column_index, size_t& nonzero_index) const {
+   nonzero_index++;
+   // if end reached
+   if (nonzero_index == this->number_nonzeros) {
+      column_index = this->dimension;
    }
 }
 

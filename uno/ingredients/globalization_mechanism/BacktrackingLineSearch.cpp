@@ -96,7 +96,7 @@ void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, c
 
    // reached a small step length: revert to solving the feasibility problem
    if (this->constraint_relaxation_strategy.solving_feasibility_problem()) {
-      throw std::runtime_error("LS on feasibility problem failed.");
+      throw std::runtime_error("Feasibility LS failed");
    }
    else {
       warmstart_information.set_cold_start();

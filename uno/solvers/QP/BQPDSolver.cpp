@@ -182,9 +182,12 @@ void BQPDSolver::save_hessian_to_local_format(const SymmetricMatrix<size_t, doub
    for (size_t column_index: Range(hessian.dimension + 1)) {
       column_starts[column_index] = 0;
    }
-   hessian.for_each([&](size_t /*row_index*/, size_t column_index, double /*entry*/) {
+   for (const auto [row_index, column_index, element]: hessian) {
       column_starts[column_index + 1]++;
-   });
+   }
+   // hessian.for_each([&](size_t /*row_index*/, size_t column_index, double /*entry*/) {
+   //    column_starts[column_index + 1]++;
+   // });
    // carry over the column starts
    for (size_t column_index: Range(1, hessian.dimension + 1)) {
       column_starts[column_index] += column_starts[column_index - 1];
@@ -194,30 +197,30 @@ void BQPDSolver::save_hessian_to_local_format(const SymmetricMatrix<size_t, doub
    // copy the entries
    //std::vector<int> current_indices(hessian.dimension);
    initialize_vector(this->current_hessian_indices, 0);
-   hessian.for_each([&](size_t row_index, size_t column_index, double entry) {
+   for (const auto [row_index, column_index, element]: hessian) {
       const size_t index = static_cast<size_t>(column_starts[column_index] + this->current_hessian_indices[column_index] - this->fortran_shift);
       assert(index <= static_cast<size_t>(column_starts[column_index + 1]) &&
              "BQPD: error in converting the Hessian matrix to the local format. Try setting the sparse format to CSC");
-      this->hessian_values[index] = entry;
+      this->hessian_values[index] = element;
       row_indices[index] = static_cast<int>(row_index) + this->fortran_shift;
       this->current_hessian_indices[column_index]++;
-   });
+   }
 }
 
 void BQPDSolver::save_gradients_to_local_format(size_t number_constraints, const SparseVector<double>& linear_objective,
       const RectangularMatrix<double>& constraint_jacobian) {
    size_t current_index = 0;
-   linear_objective.for_each([&](size_t variable_index, double derivative) {
+   for (const auto [variable_index, derivative]: linear_objective) {
       this->jacobian[current_index] = derivative;
       this->jacobian_sparsity[current_index + 1] = static_cast<int>(variable_index) + this->fortran_shift;
       current_index++;
-   });
+   }
    for (size_t constraint_index: Range(number_constraints)) {
-      constraint_jacobian[constraint_index].for_each([&](size_t variable_index, double derivative) {
+      for (const auto [variable_index, derivative]: constraint_jacobian[constraint_index]) {
          this->jacobian[current_index] = derivative;
          this->jacobian_sparsity[current_index + 1] = static_cast<int>(variable_index) + this->fortran_shift;
          current_index++;
-      });
+      }
    }
    current_index++;
    this->jacobian_sparsity[0] = static_cast<int>(current_index);

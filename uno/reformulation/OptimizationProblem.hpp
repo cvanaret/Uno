@@ -5,7 +5,7 @@
 #define UNO_OPTIMIZATIONPROBLEM_H
 
 #include <vector>
-#include "linear_algebra/Vector.hpp"
+#include "linear_algebra/Norm.hpp"
 #include "model/Model.hpp"
 
 // forward declarations

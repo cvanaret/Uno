@@ -10,8 +10,28 @@ TEST(Range, Size) {
    ASSERT_EQ(range.size(), size);
 }
 
+TEST(Range, Increasing) {
+   const Range range(2, 5); // 2, 3, 4
+   const std::vector<size_t> reference_result{2, 3, 4};
+   size_t index = 0;
+   for (size_t element: range) {
+      ASSERT_EQ(element, reference_result[index]);
+      index++;
+   }
+}
+
+TEST(Range, Decreasing) {
+   const BackwardRange range(5, 2); // 5, 4, 3
+   const std::vector<size_t> reference_result{5, 4, 3};
+   size_t index = 0;
+   for (size_t element: range) {
+      ASSERT_EQ(element, reference_result[index]);
+      index++;
+   }
+}
+
 TEST(Range, SumLoop) {
-   const Range range(2, 5);
+   const Range range(2, 5); // 2, 3, 4
    size_t sum = 0;
    for (size_t element: range) {
       sum += element;
@@ -20,28 +40,10 @@ TEST(Range, SumLoop) {
 }
 
 TEST(Range, BackwardSumLoop) {
-   const Range<BACKWARD> range(5, 2);
+   const BackwardRange range(5, 2); // 5, 4, 3
    size_t sum = 0;
    for (size_t element: range) {
       sum += element;
    }
-   ASSERT_EQ(sum, 12);
-}
-
-TEST(Range, SumForeach) {
-   const Range range(2, 5);
-   size_t sum = 0;
-   range.for_each([&](size_t, size_t element) {
-      sum += element;
-   });
-   ASSERT_EQ(sum, 9);
-}
-
-TEST(Range, BackwardSumForeach) {
-   const Range<BACKWARD> range(5, 2);
-   size_t sum = 0;
-   range.for_each([&](size_t, size_t element) {
-      sum += element;
-   });
    ASSERT_EQ(sum, 12);
 }

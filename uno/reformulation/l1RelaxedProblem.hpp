@@ -61,8 +61,8 @@ protected:
    double objective_multiplier;
    const double constraint_violation_coefficient;
    ElasticVariables elastic_variables;
-   const ChainCollection<const Collection<size_t>&, Range<FORWARD>> lower_bounded_variables; // model variables + elastic variables
-   const ChainCollection<const Collection<size_t>&, Range<FORWARD>> single_lower_bounded_variables; // model variables + elastic variables
+   const ChainCollection<const Collection<size_t>&, ForwardRange> lower_bounded_variables; // model variables + elastic variables
+   const ChainCollection<const Collection<size_t>&, ForwardRange> single_lower_bounded_variables; // model variables + elastic variables
 
    [[nodiscard]] static size_t count_elastic_variables(const Model& model);
    void generate_elastic_variables();
@@ -98,23 +98,24 @@ inline void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, Spar
    }
 
    // elastic contribution
-   const auto insert_elastic_derivative = [&](size_t elastic_index) {
+   for (const auto [_, elastic_index]: this->elastic_variables.positive) {
       objective_gradient.insert(elastic_index, this->constraint_violation_coefficient);
-   };
-   this->elastic_variables.positive.for_each_value(insert_elastic_derivative);
-   this->elastic_variables.negative.for_each_value(insert_elastic_derivative);
+   }
+   for (const auto [_, elastic_index]: this->elastic_variables.negative) {
+      objective_gradient.insert(elastic_index, this->constraint_violation_coefficient);
+   }
 }
 
 inline void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
    iterate.evaluate_constraints(this->model);
    copy_from(constraints, iterate.evaluations.constraints);
    // add the contribution of the elastics
-   this->elastic_variables.positive.for_each([&](size_t constraint_index, size_t elastic_index) {
+   for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
       constraints[constraint_index] -= iterate.primals[elastic_index];
-   });
-   this->elastic_variables.negative.for_each([&](size_t constraint_index, size_t elastic_index) {
+   }
+   for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
       constraints[constraint_index] += iterate.primals[elastic_index];
-   });
+   }
 }
 
 inline void l1RelaxedProblem::evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const {
@@ -122,12 +123,12 @@ inline void l1RelaxedProblem::evaluate_constraint_jacobian(Iterate& iterate, Rec
    // TODO change this
    constraint_jacobian = iterate.evaluations.constraint_jacobian;
    // add the contribution of the elastics
-   this->elastic_variables.positive.for_each([&](size_t constraint_index, size_t elastic_index) {
+   for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
       constraint_jacobian[constraint_index].insert(elastic_index, -1.);
-   });
-   this->elastic_variables.negative.for_each([&](size_t constraint_index, size_t elastic_index) {
+   }
+   for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
       constraint_jacobian[constraint_index].insert(elastic_index, 1.);
-   });
+   }
 }
 
 inline void l1RelaxedProblem::evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers,
@@ -286,12 +287,12 @@ inline void l1RelaxedProblem::generate_elastic_variables() {
 inline void l1RelaxedProblem::set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t, double)>&
       elastic_setting_function) const {
    iterate.set_number_variables(this->number_variables);
-   this->elastic_variables.positive.for_each([&](size_t constraint_index, size_t elastic_index) {
+   for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
       elastic_setting_function(iterate, constraint_index, elastic_index, -1.);
-   });
-   this->elastic_variables.negative.for_each([&](size_t constraint_index, size_t elastic_index) {
+   }
+   for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
       elastic_setting_function(iterate, constraint_index, elastic_index, 1.);
-   });
+   }
 }
 
 #endif // UNO_L1RELAXEDPROBLEM_H

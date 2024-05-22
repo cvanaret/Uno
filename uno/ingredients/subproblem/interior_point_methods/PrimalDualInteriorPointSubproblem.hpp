@@ -56,10 +56,6 @@ protected:
    const double least_square_multiplier_max_norm;
    const double damping_factor; // (Section 3.7 in IPOPT paper)
 
-   // preallocated vectors for bound multiplier displacements
-   std::vector<double> lower_delta_z{};
-   std::vector<double> upper_delta_z{};
-
    bool solving_feasibility_problem{false};
 
    [[nodiscard]] double barrier_parameter() const;
@@ -70,12 +66,15 @@ protected:
    [[nodiscard]] bool is_small_step(const OptimizationProblem& problem, const Iterate& current_iterate, const Direction& direction) const;
    [[nodiscard]] double evaluate_subproblem_objective(const Direction& direction) const;
    [[nodiscard]] double compute_barrier_term_directional_derivative(const Model& model, const Iterate& current_iterate, const Direction& direction) const;
-   [[nodiscard]] double primal_fraction_to_boundary(const OptimizationProblem& problem, const Iterate& current_iterate, double tau);
-   [[nodiscard]] double dual_fraction_to_boundary(const OptimizationProblem& problem, const Iterate& current_iterate, double tau);
+   [[nodiscard]] static double primal_fraction_to_boundary(const OptimizationProblem& problem, const Iterate& current_iterate,
+         const std::vector<double>& primal_direction, double tau);
+   [[nodiscard]] static double dual_fraction_to_boundary(const OptimizationProblem& problem, const Iterate& current_iterate,
+         std::vector<double>& lower_bound_multipliers, std::vector<double>& upper_bound_multipliers, double tau);
    void assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem, const Iterate& current_iterate);
    void generate_augmented_rhs(const OptimizationProblem& problem, const Iterate& current_iterate);
    void assemble_primal_dual_direction(const OptimizationProblem& problem, const Iterate& current_iterate, Direction& direction);
-   void compute_bound_dual_direction(const OptimizationProblem& problem, const Iterate& current_iterate);
+   void compute_bound_dual_direction(const OptimizationProblem& problem, const Iterate& current_iterate, const std::vector<double>& primal_direction,
+      std::vector<double>& lower_bound_multipliers, std::vector<double>& upper_bound_multipliers);
    void compute_least_square_multipliers(const OptimizationProblem& problem, Iterate& iterate);
 };
 

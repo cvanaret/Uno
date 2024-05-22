@@ -20,19 +20,20 @@ TEST(ChainCollection, Size) {
 
 TEST(ChainCollection, Range) {
    const std::vector<size_t> x{5, 6, 7};
-   const auto range = CollectionAdapter(Range(5));
+   const auto range = Range(5);
    const auto chain = concatenate(range, CollectionAdapter(x));
    ASSERT_EQ(chain.size(), range.size() + x.size());
 }
 
-/*
-TEST(ChainCollection, Iterators) {
-   std::vector<size_t> x{5, 6, 7};
+TEST(ChainCollection, Iterator) {
+   const std::vector<size_t> x{5, 6, 7};
    const auto range = Range(100, 105);
    const auto chain = concatenate(CollectionAdapter(x), range);
-   for (size_t index: chain) {
-      std::cout << index << ' ';
+   const std::vector<size_t> reference_result{5, 6, 7, 100, 101, 102, 103, 104};
+   size_t index = 0;
+   for (const size_t value: chain) {
+      ASSERT_EQ(value, reference_result[index]);
+      index++;
    }
    std::cout << "\n";
 }
-*/

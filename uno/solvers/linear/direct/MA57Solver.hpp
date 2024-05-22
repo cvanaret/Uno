@@ -12,9 +12,7 @@
 struct MA57Factorization {
    int n{};
    int nnz{};
-   std::vector<double> fact{};
    int lfact{};
-   std::vector<int> ifact{};
    int lifact{};
 
    MA57Factorization() = default;
@@ -50,6 +48,8 @@ private:
 
    // factorization
    MA57Factorization factorization{};
+   std::vector<double> fact{0}; // do not initialize, resize at every iteration
+   std::vector<int> ifact{0}; // do not initialize, resize at every iteration
    const int lkeep;
    std::vector<int> keep{};
    std::vector<int> iwork{};

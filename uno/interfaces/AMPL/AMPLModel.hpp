@@ -6,6 +6,7 @@
 
 #include <vector>
 #include "model/Model.hpp"
+#include "linear_algebra/SparseVector.hpp"
 #include "symbolic/CollectionAdapter.hpp"
 
 // include AMPL Solver Library (ASL)
@@ -37,7 +38,7 @@ public:
    [[nodiscard]] BoundType get_variable_bound_type(size_t variable_index) const override;
    [[nodiscard]] const Collection<size_t>& get_lower_bounded_variables() const override;
    [[nodiscard]] const Collection<size_t>& get_upper_bounded_variables() const override;
-   [[nodiscard]] const Collection<size_t>& get_slacks() const override;
+   [[nodiscard]] const SparseVector<size_t>& get_slacks() const override;
    [[nodiscard]] const Collection<size_t>& get_single_lower_bounded_variables() const override;
    [[nodiscard]] const Collection<size_t>& get_single_upper_bounded_variables() const override;
 
@@ -82,7 +83,7 @@ private:
    CollectionAdapter<std::vector<size_t>&> equality_constraints_collection;
    std::vector<size_t> inequality_constraints{};
    CollectionAdapter<std::vector<size_t>&> inequality_constraints_collection;
-   Range<FORWARD> slacks;
+   SparseVector<size_t> slacks{};
    std::vector<size_t> lower_bounded_variables;
    CollectionAdapter<std::vector<size_t>&> lower_bounded_variables_collection;
    std::vector<size_t> upper_bounded_variables;

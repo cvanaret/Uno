@@ -23,3 +23,12 @@ TEST(COOSymmetricMatrix, NNZ) {
    const COOSymmetricMatrix<size_t, double> matrix = create_COO_matrix();
    ASSERT_EQ(matrix.number_nonzeros, nnz);
 }
+
+/*
+TEST(COOSymmetricMatrix, Iterator) {
+   const COOSymmetricMatrix<double> matrix = create_COO_matrix();
+   for (const auto [i, j, Mij]: matrix) {
+      std::cout << "COO(" << i << ", " << j << ") = " << Mij << '\n';
+   }
+}
+*/

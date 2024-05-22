@@ -20,9 +20,7 @@ public:
    CSCSymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization);
 
    void reset() override;
-   void for_each(const std::function<void(size_t, size_t, ElementType)>& f) const override;
-   void for_each(size_t column_index, const std::function<void(size_t, ElementType)>& f) const;
-   void insert(ElementType element, size_t row_index, size_t column_index) override;
+   void insert(ElementType term, size_t row_index, size_t column_index) override;
    void finalize_column(size_t column_index) override;
    [[nodiscard]] ElementType smallest_diagonal_entry() const override;
    void set_regularization(const std::function<ElementType(size_t /*index*/)>& regularization_function) override;
@@ -38,6 +36,10 @@ protected:
    std::vector<size_t> row_indices{};
    size_t current_column{0};
    std::vector<ElementType> diagonal_entries;
+
+   // iterator functions
+   [[nodiscard]] std::tuple<size_t, size_t, ElementType> dereference_iterator(size_t column_index, size_t nonzero_index) const override;
+   void increment_iterator(size_t& column_index, size_t& nonzero_index) const override;
 };
 
 template <typename IndexType, typename ElementType>
@@ -59,29 +61,8 @@ void CSCSymmetricMatrix<IndexType, ElementType>::reset() {
    initialize_vector(this->diagonal_entries, ElementType(0));
 }
 
-// generic iterator
-template <typename IndexType, typename ElementType>
-void CSCSymmetricMatrix<IndexType, ElementType>::for_each(const std::function<void(size_t, size_t, ElementType)>& f) const {
-   for (size_t column_index: Range(this->dimension)) {
-      for (size_t k: Range(this->column_starts[column_index], this->column_starts[column_index + 1])) {
-         const size_t row_index = this->row_indices[k];
-         const ElementType entry = this->entries[k];
-         f(row_index, column_index, entry);
-      }
-   }
-}
-
-template <typename IndexType, typename ElementType>
-void CSCSymmetricMatrix<IndexType, ElementType>::for_each(size_t column_index, const std::function<void(size_t, ElementType)>& f) const {
-   for (size_t k: Range(this->column_starts[column_index], this->column_starts[column_index + 1])) {
-      const size_t row_index = this->row_indices[k];
-      const ElementType entry = this->entries[k];
-      f(row_index, entry);
-   }
-}
-
-template <typename IndexType, typename ElementType>
-void CSCSymmetricMatrix<IndexType, ElementType>::insert(ElementType element, size_t row_index, size_t column_index) {
+template <typename ElementType>
+void CSCSymmetricMatrix<ElementType>::insert(ElementType term, size_t row_index, size_t column_index) {
    assert(column_index == this->current_column && "The previous columns should be finalized");
 
    this->entries.push_back(element);
@@ -135,8 +116,28 @@ void CSCSymmetricMatrix<IndexType, ElementType>::set_regularization(const std::f
    }
 }
 
-template <typename IndexType, typename ElementType>
-void CSCSymmetricMatrix<IndexType, ElementType>::print(std::ostream& stream) const {
+template <typename ElementType>
+std::tuple<size_t, size_t, ElementType> CSCSymmetricMatrix<ElementType>::dereference_iterator(size_t column_index, size_t nonzero_index) const {
+   return {this->row_indices[nonzero_index], column_index, this->entries[nonzero_index]};
+}
+
+template <typename ElementType>
+void CSCSymmetricMatrix<ElementType>::increment_iterator(size_t& column_index, size_t& nonzero_index) const {
+   if (this->column_starts[column_index] <= nonzero_index && nonzero_index + 1 < this->column_starts[column_index + 1]) {
+      // stay in the column
+      nonzero_index++;
+   }
+   else {
+      // move on to the next non-empty column
+      do {
+         column_index++;
+      } while (column_index < this->dimension && this->column_starts[column_index] == this->column_starts[column_index + 1]);
+      nonzero_index = this->column_starts[column_index];
+   }
+}
+
+template <typename ElementType>
+void CSCSymmetricMatrix<ElementType>::print(std::ostream& stream) const {
    stream << "W = "; print_vector(stream, this->entries, 0, this->number_nonzeros);
    stream << "with column start: "; print_vector(stream, this->column_starts, 0, this->dimension + 1);
    stream << "and row index: "; print_vector(stream, this->row_indices, 0, this->number_nonzeros);
