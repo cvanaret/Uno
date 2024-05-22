@@ -29,13 +29,13 @@ public:
       throw std::runtime_error("Transpose::product is not implemented yet");
    }
 
-   void for_each(const std::function<void (size_t /*row_index*/, size_t /*column_index*/, double /*element*/)>& f) const {
-      this->expression.for_each([&](size_t row_index, size_t column_index, double element) {
+   void for_each(const std::function<void (size_t /*row_index*/, size_t /*column_index*/, value_type /*element*/)>& f) const {
+      this->expression.for_each([&](size_t row_index, size_t column_index, value_type element) {
          f(column_index, row_index, element);
       });
    }
 
-   void evaluate(Matrix<size_t, double>& /*matrix*/) {
+   void evaluate(Matrix<size_t, value_type>& /*matrix*/) {
    }
 
 protected:
@@ -43,14 +43,14 @@ protected:
 };
 
 // free function
-template <typename E>
-inline auto transpose(E&& expression) {
+template <typename Expression>
+inline auto transpose(Expression&& expression) {
    // any diagonal matrix is its own transpose
-   if constexpr (std::is_base_of_v<DiagonalMatrix, std::remove_reference_t<E>>) {
-      return std::forward<E>(expression);
+   if constexpr (std::is_base_of_v<DiagonalMatrix<typename std::remove_reference_t<Expression>::value_type>, std::remove_reference_t<Expression>>) {
+      return std::forward<Expression>(expression);
    }
    else {
-      return Transpose<E>(std::forward<E>(expression));
+      return Transpose<Expression>(std::forward<Expression>(expression));
    }
 }
 
