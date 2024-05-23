@@ -182,7 +182,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
    else
    */
    if (direction.norm == 0.) {
-      DEBUG << "Zero step acceptable\n\n";
+      DEBUG << "Zero step acceptable\n";
       trial_iterate.evaluate_objective(this->model);
       accept_iterate = true;
       statistics.set("status", "accepted (0 step)");

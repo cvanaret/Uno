@@ -76,7 +76,7 @@ TerminationStatus GlobalizationMechanism::check_convergence_with_given_tolerance
    const bool primal_feasibility = (current_iterate.residuals.infeasibility <= tolerance);
    const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(model.number_variables, tolerance);
 
-   DEBUG << "Termination criteria for tolerance = " << tolerance << ":\n";
+   DEBUG << "\nTermination criteria for tolerance = " << tolerance << ":\n";
    DEBUG << "Stationarity (optimality): " << std::boolalpha << optimality_stationarity << '\n';
    DEBUG << "Stationarity (feasibility): " << std::boolalpha << feasibility_stationarity << '\n';
    DEBUG << "Complementarity (optimality): " << std::boolalpha << optimality_complementarity << '\n';
