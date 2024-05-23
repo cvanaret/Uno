@@ -47,14 +47,12 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
       const double unconstrained_merit = FilterMethod::unconstrained_merit_function(predicted_reduction);
       DEBUG << "Current (infeasibility, objective + auxiliary) = (" << current_progress.infeasibility << ", " << current_merit << ")\n";
       DEBUG << "Trial   (infeasibility, objective + auxiliary) = (" << trial_progress.infeasibility << ", " << trial_merit << ")\n";
-      DEBUG << "Unconstrained predicted reduction = " << unconstrained_merit << '\n';
       DEBUG << "Current filter:\n" << *this->filter;
+      DEBUG << "Unconstrained predicted reduction = " << unconstrained_merit << '\n';
 
       if (this->filter->acceptable(trial_progress.infeasibility, trial_merit)) {
-         DEBUG << "Filter acceptable\n";
-         // compute actual reduction
          const double actual_reduction = this->compute_actual_objective_reduction(current_merit, current_progress.infeasibility, trial_merit);
-         DEBUG << "Actual reduction = " << actual_reduction << '\n';
+         DEBUG << "Unconstrained actual reduction = " << actual_reduction << '\n';
 
          // TODO put this coefficient in the option file
          const bool small_infeasibility = current_progress.infeasibility <= 1e-4 * std::max(1., this->initial_infeasibility);
@@ -99,7 +97,6 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
       }
    }
    statistics.set("status", std::string(accept ? "accepted" : "rejected") + " (" + scenario + ")");
-   DEBUG << '\n';
    return accept;
 }
 
