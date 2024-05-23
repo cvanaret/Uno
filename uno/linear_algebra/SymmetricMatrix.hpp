@@ -99,7 +99,14 @@ ElementType SymmetricMatrix<ElementType>::quadratic_product(const std::vector<El
 
    ElementType result = ElementType(0);
    for (const auto [row_index, column_index, element]: *this) {
-      result += (row_index == column_index ? ElementType(1) : ElementType(2)) * element * x[row_index] * y[column_index];
+      if (row_index == column_index) {
+         // diagonal term
+         result += element * x[row_index] * y[row_index];
+      }
+      else {
+         // off-diagonal term
+         result += element * (x[row_index] * y[column_index] + x[column_index] * y[row_index]);
+      }
    }
    return result;
 }
