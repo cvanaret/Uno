@@ -105,7 +105,7 @@ void print_vector(Stream&& stream, const Array& x, size_t start = 0, size_t leng
 
 template <typename ElementType>
 std::ostream& operator<<(std::ostream& stream, const Vector<ElementType>& vector) {
-   v.print(stream);
+   vector.print(stream);
    return stream;
 }
 
