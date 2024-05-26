@@ -26,7 +26,7 @@ public:
 
    void initialize_statistics(Statistics& statistics, const Options& options) override;
    [[nodiscard]] bool generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
-   void set_initial_point(const std::vector<double>& point) override;
+   void set_initial_point(const Vector<double>& point) override;
 
    void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
    void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& constraint_index) override;
@@ -66,14 +66,14 @@ protected:
    [[nodiscard]] double evaluate_subproblem_objective(const Direction& direction) const;
    [[nodiscard]] double compute_barrier_term_directional_derivative(const Model& model, const Iterate& current_iterate, const Direction& direction) const;
    [[nodiscard]] static double primal_fraction_to_boundary(const OptimizationProblem& problem, const Iterate& current_iterate,
-         const std::vector<double>& primal_direction, double tau);
+         const Vector<double>& primal_direction, double tau);
    [[nodiscard]] static double dual_fraction_to_boundary(const OptimizationProblem& problem, const Iterate& current_iterate,
-         std::vector<double>& lower_bound_multipliers, std::vector<double>& upper_bound_multipliers, double tau);
+         Vector<double>& lower_bound_multipliers, Vector<double>& upper_bound_multipliers, double tau);
    void assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem, const Iterate& current_iterate);
    void generate_augmented_rhs(const OptimizationProblem& problem, const Iterate& current_iterate);
    void assemble_primal_dual_direction(const OptimizationProblem& problem, const Iterate& current_iterate, Direction& direction);
-   void compute_bound_dual_direction(const OptimizationProblem& problem, const Iterate& current_iterate, const std::vector<double>& primal_direction,
-      std::vector<double>& lower_bound_multipliers, std::vector<double>& upper_bound_multipliers);
+   void compute_bound_dual_direction(const OptimizationProblem& problem, const Iterate& current_iterate, const Vector<double>& primal_direction,
+      Vector<double>& lower_bound_multipliers, Vector<double>& upper_bound_multipliers);
    void compute_least_square_multipliers(const OptimizationProblem& problem, Iterate& iterate);
 };
 

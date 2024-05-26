@@ -18,6 +18,8 @@ class Options;
 class Statistics;
 template <typename ElementType>
 class SymmetricMatrix;
+template <typename ElementType>
+class Vector;
 struct WarmstartInformation;
 
 /*! \class Subproblem
@@ -48,7 +50,7 @@ public:
    virtual void postprocess_iterate(const OptimizationProblem& problem, Iterate& iterate) = 0;
 
    [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
-   virtual void set_initial_point(const std::vector<double>& initial_point) = 0;
+   virtual void set_initial_point(const Vector<double>& initial_point) = 0;
 
    size_t number_subproblems_solved{0};
    // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it

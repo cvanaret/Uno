@@ -346,7 +346,7 @@ double PrimalDualInteriorPointSubproblem::evaluate_subproblem_objective(const Di
 
 // TODO use a single function for primal and dual fraction-to-boundary rules
 double PrimalDualInteriorPointSubproblem::primal_fraction_to_boundary(const OptimizationProblem& problem, const Iterate& current_iterate,
-      const std::vector<double>& primal_direction, double tau) {
+      const Vector<double>& primal_direction, double tau) {
    double step_length = 1.;
    for (const size_t variable_index: problem.get_lower_bounded_variables()) {
       if (primal_direction[variable_index] < 0.) {
@@ -369,7 +369,7 @@ double PrimalDualInteriorPointSubproblem::primal_fraction_to_boundary(const Opti
 }
 
 double PrimalDualInteriorPointSubproblem::dual_fraction_to_boundary(const OptimizationProblem& problem, const Iterate& current_iterate,
-      std::vector<double>& lower_bound_multipliers, std::vector<double>& upper_bound_multipliers, double tau) {
+      Vector<double>& lower_bound_multipliers, Vector<double>& upper_bound_multipliers, double tau) {
    double step_length = 1.;
    for (const size_t variable_index: problem.get_lower_bounded_variables()) {
       if (lower_bound_multipliers[variable_index] < 0.) {
@@ -393,7 +393,7 @@ double PrimalDualInteriorPointSubproblem::dual_fraction_to_boundary(const Optimi
 
 // generate the right-hand side
 void PrimalDualInteriorPointSubproblem::generate_augmented_rhs(const OptimizationProblem& problem, const Iterate& current_iterate) {
-   initialize_vector(this->augmented_system.rhs, 0.);
+   this->augmented_system.rhs.fill(0.);
 
    // objective gradient
    for (const auto [variable_index, derivative]: this->evaluations.objective_gradient) {
@@ -442,9 +442,9 @@ void PrimalDualInteriorPointSubproblem::assemble_primal_dual_direction(const Opt
 }
 
 void PrimalDualInteriorPointSubproblem::compute_bound_dual_direction(const OptimizationProblem& problem, const Iterate& current_iterate,
-      const std::vector<double>& primal_direction, std::vector<double>& lower_bound_multipliers, std::vector<double>& upper_bound_multipliers) {
-   initialize_vector(lower_bound_multipliers, 0.);
-   initialize_vector(upper_bound_multipliers, 0.);
+      const Vector<double>& primal_direction, Vector<double>& lower_bound_multipliers, Vector<double>& upper_bound_multipliers) {
+   lower_bound_multipliers.fill(0.);
+   upper_bound_multipliers.fill(0.);
    for (const size_t variable_index: problem.get_lower_bounded_variables()) {
       const double distance_to_bound = current_iterate.primals[variable_index] - problem.variable_lower_bound(variable_index);
       lower_bound_multipliers[variable_index] = (this->barrier_parameter() - primal_direction[variable_index] * current_iterate.multipliers.lower_bounds[variable_index]) /
@@ -504,6 +504,6 @@ size_t PrimalDualInteriorPointSubproblem::get_hessian_evaluation_count() const {
    return this->hessian_model->evaluation_count;
 }
 
-void PrimalDualInteriorPointSubproblem::set_initial_point(const std::vector<double>& /*point*/) {
+void PrimalDualInteriorPointSubproblem::set_initial_point(const Vector<double>& /*point*/) {
    // do nothing
 }

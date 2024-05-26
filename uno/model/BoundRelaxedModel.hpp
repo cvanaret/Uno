@@ -12,20 +12,20 @@ class BoundRelaxedModel: public Model {
 public:
    BoundRelaxedModel(std::unique_ptr<Model> original_model, const Options& options);
 
-   [[nodiscard]] double evaluate_objective(const std::vector<double>& x) const override { return this->model->evaluate_objective(x); }
-   void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const override {
+   [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override { return this->model->evaluate_objective(x); }
+   void evaluate_objective_gradient(const Vector<double>& x, SparseVector<double>& gradient) const override {
       this->model->evaluate_objective_gradient(x, gradient);
    }
-   void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const override {
+   void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const override {
       this->model->evaluate_constraints(x, constraints);
    }
-   void evaluate_constraint_gradient(const std::vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const override {
+   void evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const override {
       this->model->evaluate_constraint_gradient(x, constraint_index, gradient);
    }
-   void evaluate_constraint_jacobian(const std::vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const override {
+   void evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const override {
       this->model->evaluate_constraint_jacobian(x, constraint_jacobian);
    }
-   void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
+   void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          SymmetricMatrix<double>& hessian) const override {
       this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian);
    }
@@ -48,8 +48,8 @@ public:
    [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override { return this->model->get_inequality_constraints(); }
    [[nodiscard]] const std::vector<size_t>& get_linear_constraints() const override { return this->model->get_linear_constraints(); }
 
-   void initial_primal_point(std::vector<double>& x) const override { this->model->initial_primal_point(x); }
-   void initial_dual_point(std::vector<double>& multipliers) const override { this->model->initial_dual_point(multipliers); }
+   void initial_primal_point(Vector<double>& x) const override { this->model->initial_primal_point(x); }
+   void initial_dual_point(Vector<double>& multipliers) const override { this->model->initial_dual_point(multipliers); }
    void postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const override {
       this->model->postprocess_solution(iterate, termination_status);
    }

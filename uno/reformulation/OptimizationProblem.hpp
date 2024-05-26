@@ -39,7 +39,7 @@ public:
    virtual void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const = 0;
    virtual void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const = 0;
    virtual void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const = 0;
-   virtual void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix<double>& hessian) const = 0;
+   virtual void evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers, SymmetricMatrix<double>& hessian) const = 0;
 
    [[nodiscard]] size_t get_number_original_variables() const;
    [[nodiscard]] virtual double variable_lower_bound(size_t variable_index) const = 0;
@@ -57,7 +57,7 @@ public:
 
    [[nodiscard]] virtual double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
          Norm residual_norm) const = 0;
-   [[nodiscard]] virtual double complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
+   [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const = 0;
 };
 

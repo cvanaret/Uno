@@ -5,6 +5,7 @@
 #define UNO_INEQUALITYCONSTRAINEDMETHOD_H
 
 #include "ingredients/subproblem/Subproblem.hpp"
+#include "linear_algebra/Vector.hpp"
 
 class InequalityConstrainedMethod : public Subproblem {
 public:
@@ -12,7 +13,7 @@ public:
    ~InequalityConstrainedMethod() override = default;
    
    void initialize_statistics(Statistics& statistics, const Options& options) override;
-   void set_initial_point(const std::vector<double>& point) override;
+   void set_initial_point(const Vector<double>& point) override;
    void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
    void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
    void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) override;
@@ -23,7 +24,7 @@ public:
    void postprocess_iterate(const OptimizationProblem& model, Iterate& iterate) override;
 
 protected:
-   std::vector<double> initial_point{};
+   Vector<double> initial_point{};
    std::vector<double> direction_lower_bounds{};
    std::vector<double> direction_upper_bounds{};
    std::vector<double> linearized_constraints_lower_bounds{};
@@ -31,7 +32,7 @@ protected:
 
    void set_direction_bounds(const OptimizationProblem& problem, const Iterate& current_iterate);
    void set_linearized_constraint_bounds(const OptimizationProblem& problem, const std::vector<double>& current_constraints);
-   static void compute_dual_displacements(const OptimizationProblem& problem, const Iterate& current_iterate, Direction& direction);
+   static void compute_dual_displacements(const Iterate& current_iterate, Direction& direction);
 };
 
 #endif // UNO_INEQUALITYCONSTRAINEDMETHOD_H

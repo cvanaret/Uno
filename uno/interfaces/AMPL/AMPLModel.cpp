@@ -104,7 +104,7 @@ void AMPLModel::generate_variables() {
    }
 }
 
-double AMPLModel::evaluate_objective(const std::vector<double>& x) const {
+double AMPLModel::evaluate_objective(const Vector<double>& x) const {
    int error_flag = 0;
    double result = this->objective_sign * (*(this->asl)->p.Objval)(this->asl, 0, const_cast<double*>(x.data()), &error_flag);
    if (0 < error_flag) {
@@ -114,7 +114,7 @@ double AMPLModel::evaluate_objective(const std::vector<double>& x) const {
 }
 
 // sparse gradient
-void AMPLModel::evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const {
+void AMPLModel::evaluate_objective_gradient(const Vector<double>& x, SparseVector<double>& gradient) const {
    int error_flag = 0;
    // prevent ASL to crash by catching all evaluation errors
    Jmp_buf err_jmp_uno;
@@ -151,7 +151,7 @@ double AMPLModel::evaluate_constraint(int j, const std::vector<double>& x) const
 }
 */
 
-void AMPLModel::evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const {
+void AMPLModel::evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const {
    int error_flag = 0;
    (*(this->asl)->p.Conval)(this->asl, const_cast<double*>(x.data()), constraints.data(), &error_flag);
    if (0 < error_flag) {
@@ -160,7 +160,7 @@ void AMPLModel::evaluate_constraints(const std::vector<double>& x, std::vector<d
 }
 
 // sparse gradient
-void AMPLModel::evaluate_constraint_gradient(const std::vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const {
+void AMPLModel::evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const {
    // compute the AMPL sparse gradient
    int error_flag = 0;
    (*(this->asl)->p.Congrd)(this->asl, static_cast<int>(constraint_index), const_cast<double*>(x.data()), const_cast<double*>(this->asl_gradient.data()),
@@ -181,7 +181,7 @@ void AMPLModel::evaluate_constraint_gradient(const std::vector<double>& x, size_
    }
 }
 
-void AMPLModel::evaluate_constraint_jacobian(const std::vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const {
+void AMPLModel::evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const {
    for (size_t constraint_index: Range(this->number_constraints)) {
       constraint_jacobian[constraint_index].clear();
       this->evaluate_constraint_gradient(x, constraint_index, constraint_jacobian[constraint_index]);
@@ -245,13 +245,13 @@ const Collection<size_t>& AMPLModel::get_upper_bounded_variables() const {
    return this->upper_bounded_variables_collection;
 }
 
-bool are_all_zeros(const std::vector<double>& multipliers) {
-   return std::all_of(multipliers.cbegin(), multipliers.cend(), [](double xj) {
+bool are_all_zeros(const Vector<double>& multipliers) {
+   return std::all_of(multipliers.begin(), multipliers.end(), [](double xj) {
       return xj == 0.;
    });
 }
 
-size_t AMPLModel::compute_hessian_number_nonzeros(double objective_multiplier, const std::vector<double>& multipliers) const {
+size_t AMPLModel::compute_hessian_number_nonzeros(double objective_multiplier, const Vector<double>& multipliers) const {
    // compute the sparsity
    const int objective_number = -1;
    const int upper_triangular = 1;
@@ -261,7 +261,7 @@ size_t AMPLModel::compute_hessian_number_nonzeros(double objective_multiplier, c
    return static_cast<size_t>(number_nonzeros);
 }
 
-void AMPLModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
+void AMPLModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
       SymmetricMatrix<double>& hessian) const {
    // register the vector of variables
    (*(this->asl)->p.Xknown)(this->asl, const_cast<double*>(x.data()), nullptr);
@@ -337,15 +337,15 @@ BoundType AMPLModel::get_constraint_bound_type(size_t constraint_index) const {
 }
 
 // initial primal point
-void AMPLModel::initial_primal_point(std::vector<double>& x) const {
+void AMPLModel::initial_primal_point(Vector<double>& x) const {
    assert(x.size() >= this->number_variables);
-   std::copy(this->asl->i.X0_, this->asl->i.X0_ + this->number_variables, begin(x));
+   std::copy(this->asl->i.X0_, this->asl->i.X0_ + this->number_variables, x.begin());
 }
 
 // initial dual point
-void AMPLModel::initial_dual_point(std::vector<double>& multipliers) const {
+void AMPLModel::initial_dual_point(Vector<double>& multipliers) const {
    assert(multipliers.size() >= this->number_constraints);
-   std::copy(this->asl->i.pi0_, this->asl->i.pi0_ + this->number_constraints, begin(multipliers));
+   std::copy(this->asl->i.pi0_, this->asl->i.pi0_ + this->number_constraints, multipliers.begin());
 }
 
 void AMPLModel::postprocess_solution(Iterate& /*iterate*/, TerminationStatus /*termination_status*/) const {

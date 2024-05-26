@@ -12,6 +12,8 @@ template <typename ElementType>
 class RectangularMatrix;
 template <typename ElementType>
 class SparseVector;
+template <typename ElementType>
+class Vector;
 class WarmstartInformation;
 
 /*! \class LPSolver
@@ -26,7 +28,7 @@ public:
    virtual void solve_LP(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
          const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
          const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
-         const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point, Direction& direction,
+         const RectangularMatrix<double>& constraint_jacobian, const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information) = 0;
 };
 

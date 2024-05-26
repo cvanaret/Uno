@@ -31,29 +31,30 @@ public:
 */
    using value_type = typename std::remove_reference_t<Expression>::value_type;
 
-   VectorView(Expression&& expression, size_t length) noexcept;
+   VectorView(Expression&& expression, size_t start, size_t end) noexcept;
 
    // preconditions: expression != nullptr, i < length
    [[nodiscard]] const value_type& operator[](size_t index) const noexcept { return this->expression[index]; }
-   [[nodiscard]] size_t size() const noexcept { return this->length; }
+   [[nodiscard]] size_t size() const noexcept { return this->end - this->start; }
 
    // [[nodiscard]] iterator begin() const noexcept { return iterator(*this, 0); }
    // [[nodiscard]] iterator end() const noexcept { return iterator(*this, this->length); }
 
 protected:
    Expression expression;
-   const size_t length;
+   const size_t start;
+   const size_t end;
 };
 
 template <typename Expression>
-VectorView<Expression>::VectorView(Expression&& expression, size_t length) noexcept:
-      expression(std::forward<Expression>(expression)), length(std::min(length, expression.size())) {
+VectorView<Expression>::VectorView(Expression&& expression, size_t start, size_t end) noexcept:
+      expression(std::forward<Expression>(expression)), start(start), end(std::min(end, expression.size())) {
 }
 
 // free function
 template <typename Expression>
-VectorView<Expression> view(Expression&& expression, size_t length) {
-   return {std::forward<Expression>(expression), length};
+VectorView<Expression> view(Expression&& expression, size_t start, size_t end) {
+   return {std::forward<Expression>(expression), start, end};
 }
 
 #endif //UNO_VECTORVIEW_H

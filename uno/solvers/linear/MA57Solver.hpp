@@ -8,6 +8,10 @@
 #include <vector>
 #include "SymmetricIndefiniteLinearSolver.hpp"
 
+// forward declaration
+template <typename ElementType>
+class Vector;
+
 struct MA57Factorization {
    int n{};
    int nnz{};
@@ -31,7 +35,7 @@ public:
    void factorize(const SymmetricMatrix<double>& matrix) override;
    void do_symbolic_factorization(const SymmetricMatrix<double>& matrix) override;
    void do_numerical_factorization(const SymmetricMatrix<double>& matrix) override;
-   void solve_indefinite_system(const SymmetricMatrix<double>& matrix, const std::vector<double>& rhs, std::vector<double>& result) override;
+   void solve_indefinite_system(const SymmetricMatrix<double>& matrix, const Vector<double>& rhs, Vector<double>& result) override;
 
    [[nodiscard]] std::tuple<size_t, size_t, size_t> get_inertia() const override;
    [[nodiscard]] size_t number_negative_eigenvalues() const override;

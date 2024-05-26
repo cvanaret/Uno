@@ -48,7 +48,8 @@ public:
    virtual ~SymmetricMatrix() = default;
 
    virtual void reset();
-   [[nodiscard]] ElementType quadratic_product(const std::vector<ElementType>& x, const std::vector<ElementType>& y) const;
+   template <typename Vector1, typename Vector2>
+   ElementType quadratic_product(const Vector1& x, const Vector2& y) const;
 
    // build the matrix incrementally
    virtual void insert(ElementType term, size_t row_index, size_t column_index) = 0;
@@ -94,7 +95,10 @@ void SymmetricMatrix<ElementType>::reset() {
 }
 
 template <typename ElementType>
-ElementType SymmetricMatrix<ElementType>::quadratic_product(const std::vector<ElementType>& x, const std::vector<ElementType>& y) const {
+template <typename Vector1, typename Vector2>
+ElementType SymmetricMatrix<ElementType>::quadratic_product(const Vector1& x, const Vector2& y) const {
+   static_assert(std::is_same_v<typename Vector1::value_type, ElementType>);
+   static_assert(std::is_same_v<typename Vector2::value_type, ElementType>);
    assert(x.size() == y.size() && "SymmetricMatrix::quadratic_product: the two vectors x and y do not have the same size");
 
    ElementType result = ElementType(0);

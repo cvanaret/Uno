@@ -17,6 +17,8 @@ class Options;
 class Statistics;
 template <typename ElementType>
 class SymmetricMatrix;
+template <typename ElementType>
+class Vector;
 class WarmstartInformation;
 
 class ConstraintRelaxationStrategy {
@@ -34,7 +36,7 @@ public:
    virtual void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          WarmstartInformation& warmstart_information) = 0;
    virtual void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         const std::vector<double>& initial_point, WarmstartInformation& warmstart_information) = 0;
+         const Vector<double>& initial_point, WarmstartInformation& warmstart_information) = 0;
    [[nodiscard]] virtual bool solving_feasibility_problem() const = 0;
    virtual void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate) = 0;
 

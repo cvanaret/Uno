@@ -29,13 +29,13 @@ public:
    void solve_LP(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
          const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
          const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
-         const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point, Direction& direction,
+         const RectangularMatrix<double>& constraint_jacobian, const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information) override = 0;
 
    virtual void solve_QP(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
          const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
          const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
-         const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const std::vector<double>& initial_point,
+         const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const Vector<double>& initial_point,
          Direction& direction, const WarmstartInformation& warmstart_information) = 0;
 };
 

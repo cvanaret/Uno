@@ -5,7 +5,6 @@
 #define UNO_LAGRANGIANGRADIENT_H
 
 #include <iostream>
-#include <vector>
 #include "linear_algebra/Vector.hpp"
 
 // Gradient of the Lagrangian
@@ -15,8 +14,8 @@
 template <typename ElementType>
 class LagrangianGradient {
 public:
-   std::vector<ElementType> objective_contribution{};
-   std::vector<ElementType> constraints_contribution{};
+   Vector<ElementType> objective_contribution{};
+   Vector<ElementType> constraints_contribution{};
 
    using value_type = ElementType;
 

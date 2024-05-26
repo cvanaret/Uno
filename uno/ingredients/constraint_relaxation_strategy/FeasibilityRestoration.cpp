@@ -96,7 +96,7 @@ void FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, 
 
 // an initial point is provided
 void FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-      const std::vector<double>& initial_point, WarmstartInformation& warmstart_information) {
+      const Vector<double>& initial_point, WarmstartInformation& warmstart_information) {
    this->subproblem->set_initial_point(initial_point);
    this->compute_feasible_direction(statistics, current_iterate, direction, warmstart_information);
 }
@@ -132,7 +132,7 @@ void FeasibilityRestoration::solve_subproblem(Statistics& statistics, const Opti
    }
 
    this->subproblem->solve(statistics, problem, current_iterate, direction, warmstart_information);
-   direction.norm = norm_inf(view(direction.primals, this->model.number_variables));
+   direction.norm = norm_inf(view(direction.primals, 0, this->model.number_variables));
    DEBUG3 << direction << '\n';
 }
 

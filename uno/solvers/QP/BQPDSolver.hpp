@@ -6,6 +6,7 @@
 
 #include <vector>
 #include "ingredients/subproblem/SubproblemStatus.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "QPSolver.hpp"
 
 // forward declaration
@@ -45,13 +46,13 @@ public:
    void solve_LP(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
          const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
          const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
-         const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point, Direction& direction,
+         const RectangularMatrix<double>& constraint_jacobian, const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information) override;
 
    void solve_QP(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
          const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
          const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
-         const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const std::vector<double>& initial_point,
+         const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const Vector<double>& initial_point,
          Direction& direction, const WarmstartInformation& warmstart_information) override;
 
 private:
@@ -76,7 +77,7 @@ private:
    double fmin{-1e20};
    int peq_solution{0}, ifail{0};
    const int fortran_shift{1};
-   std::vector<int> current_hessian_indices{};
+   Vector<int> current_hessian_indices{};
 
    size_t number_calls{0};
    const bool print_subproblem;
@@ -84,7 +85,7 @@ private:
    void solve_subproblem(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
          const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
          const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
-         const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point, Direction& direction,
+         const RectangularMatrix<double>& constraint_jacobian, const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information);
    void categorize_constraints(size_t number_variables, size_t number_constraints, Direction& direction);
    void save_hessian_to_local_format(const SymmetricMatrix<double>& hessian);

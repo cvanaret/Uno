@@ -32,10 +32,10 @@ public:
 protected:
    // entries and row_indices have nnz elements
    // column_starts has dimension+1 elements
-   std::vector<size_t> column_starts{};
+   Vector<size_t> column_starts{};
    std::vector<size_t> row_indices{};
    size_t current_column{0};
-   std::vector<ElementType> diagonal_entries;
+   Vector<ElementType> diagonal_entries;
 
    // iterator functions
    [[nodiscard]] std::tuple<size_t, size_t, ElementType> dereference_iterator(size_t column_index, size_t nonzero_index) const override;
@@ -56,9 +56,9 @@ void CSCSymmetricMatrix<ElementType>::reset() {
    // empty the matrix
    SymmetricMatrix<ElementType>::reset();
    this->row_indices.clear();
-   initialize_vector<size_t>(this->column_starts, 0);
+   this->column_starts.fill(0);
    this->current_column = 0;
-   initialize_vector(this->diagonal_entries, ElementType(0));
+   this->diagonal_entries.fill(ElementType(0));
 }
 
 template <typename ElementType>

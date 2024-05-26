@@ -30,7 +30,7 @@ public:
    void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const override;
    void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const override;
    void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const override;
-   void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix<double>& hessian) const override;
+   void evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers, SymmetricMatrix<double>& hessian) const override;
 
    [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
    [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
@@ -48,7 +48,7 @@ public:
 
    [[nodiscard]] double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
          Norm residual_norm) const override;
-   [[nodiscard]] double complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
+   [[nodiscard]] double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const override;
 
    // parameterization
@@ -107,7 +107,7 @@ inline void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, Spar
 
 inline void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
    iterate.evaluate_constraints(this->model);
-   copy_from(constraints, iterate.evaluations.constraints);
+   constraints = iterate.evaluations.constraints;
    // add the contribution of the elastics
    for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
       constraints[constraint_index] -= iterate.primals[elastic_index];
@@ -130,7 +130,7 @@ inline void l1RelaxedProblem::evaluate_constraint_jacobian(Iterate& iterate, Rec
    }
 }
 
-inline void l1RelaxedProblem::evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers,
+inline void l1RelaxedProblem::evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers,
       SymmetricMatrix<double>& hessian) const {
    this->model.evaluate_lagrangian_hessian(x, this->objective_multiplier, multipliers, hessian);
 
@@ -148,7 +148,7 @@ inline double l1RelaxedProblem::stationarity_error(const LagrangianGradient<doub
 }
 
 // complementary slackness error: expression for violated constraints depends on the definition of the relaxed problem
-inline double l1RelaxedProblem::complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
+inline double l1RelaxedProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
       const Multipliers& multipliers, Norm residual_norm) const {
    // complementarity for variable bounds
    const VectorExpression variable_complementarity(Range(this->model.number_variables), [&](size_t variable_index) {

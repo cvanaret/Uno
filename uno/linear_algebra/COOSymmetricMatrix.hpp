@@ -31,7 +31,7 @@ public:
 protected:
    std::vector<size_t> row_indices;
    std::vector<size_t> column_indices;
-   std::vector<ElementType> diagonal_entries;
+   Vector<ElementType> diagonal_entries;
 
    void initialize_regularization();
 
@@ -61,7 +61,7 @@ void COOSymmetricMatrix<ElementType>::reset() {
    SymmetricMatrix<ElementType>::reset();
    this->row_indices.clear();
    this->column_indices.clear();
-   initialize_vector(this->diagonal_entries, ElementType(0));
+   this->diagonal_entries.fill(ElementType(0));
 
    // initialize regularization terms
    if (this->use_regularization) {

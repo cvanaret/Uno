@@ -82,8 +82,8 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Optimizat
 
 // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
 void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(Iterate& iterate, const Multipliers& multipliers) const {
-   initialize_vector(iterate.lagrangian_gradient.objective_contribution, 0.);
-   initialize_vector(iterate.lagrangian_gradient.constraints_contribution, 0.);
+   iterate.lagrangian_gradient.objective_contribution.fill(0.);
+   iterate.lagrangian_gradient.constraints_contribution.fill(0.);
 
    // objective gradient
    for (auto [variable_index, derivative]: iterate.evaluations.objective_gradient) {
@@ -113,9 +113,9 @@ double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Iterate&
    else {
       const double scaling_factor = this->residual_scaling_threshold * static_cast<double>(total_size);
       const double multiplier_norm = norm_1(
-            view(iterate.multipliers.constraints, this->model.number_constraints),
-            view(iterate.multipliers.lower_bounds, this->model.number_variables),
-            view(iterate.multipliers.upper_bounds, this->model.number_variables)
+            view(iterate.multipliers.constraints, 0, this->model.number_constraints),
+            view(iterate.multipliers.lower_bounds, 0, this->model.number_variables),
+            view(iterate.multipliers.upper_bounds, 0, this->model.number_variables)
       );
       return std::max(1., multiplier_norm / scaling_factor);
    }
@@ -129,8 +129,8 @@ double ConstraintRelaxationStrategy::compute_complementarity_scaling(const Itera
    else {
       const double scaling_factor = this->residual_scaling_threshold * static_cast<double>(total_size);
       const double bound_multiplier_norm = norm_1(
-            view(iterate.multipliers.lower_bounds, this->model.number_variables),
-            view(iterate.multipliers.upper_bounds, this->model.number_variables)
+            view(iterate.multipliers.lower_bounds, 0, this->model.number_variables),
+            view(iterate.multipliers.upper_bounds, 0, this->model.number_variables)
       );
       return std::max(1., bound_multiplier_norm / scaling_factor);
    }

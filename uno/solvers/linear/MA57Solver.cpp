@@ -107,7 +107,7 @@ void MA57Solver::do_numerical_factorization(const SymmetricMatrix<double>& matri
          /* out */ this->rinfo.data());
 }
 
-void MA57Solver::solve_indefinite_system(const SymmetricMatrix<double>& matrix, const std::vector<double>& rhs, std::vector<double>& result) {
+void MA57Solver::solve_indefinite_system(const SymmetricMatrix<double>& matrix, const Vector<double>& rhs, Vector<double>& result) {
    // solve
    const int n = static_cast<int>(matrix.dimension);
    int nnz = static_cast<int>(matrix.number_nonzeros);
@@ -122,7 +122,7 @@ void MA57Solver::solve_indefinite_system(const SymmetricMatrix<double>& matrix, 
    }
    else {
       // copy rhs into result (overwritten by MA57)
-      copy_from(result, rhs);
+      result = rhs;
 
       ma57cd_(&this->job, &n, this->fact.data(), &this->factorization.lfact, this->ifact.data(),
             &this->factorization.lifact, &this->nrhs, result.data(), &lrhs, this->work.data(), &this->lwork, this->iwork.data(),
