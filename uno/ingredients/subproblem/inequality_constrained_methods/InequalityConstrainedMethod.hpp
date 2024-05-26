@@ -19,7 +19,7 @@ public:
    void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) override;
 
    void set_auxiliary_measure(const Model& model, Iterate& iterate) override;
-   [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate&, const Direction&, double) const override;
+   [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate&, const Vector<double>&, double) const override;
 
    void postprocess_iterate(const OptimizationProblem& model, Iterate& iterate) override;
 

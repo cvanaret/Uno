@@ -37,8 +37,8 @@ public:
 
    [[nodiscard]] const SymmetricMatrix<double>& get_lagrangian_hessian() const override;
    void set_auxiliary_measure(const Model& model, Iterate& iterate) override;
-   [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate, const Direction& direction,
-         double step_length) const override;
+   [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length) const override;
 
    void postprocess_iterate(const OptimizationProblem& problem, Iterate& iterate) override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
@@ -64,7 +64,8 @@ protected:
    void update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate);
    [[nodiscard]] bool is_small_step(const OptimizationProblem& problem, const Iterate& current_iterate, const Direction& direction) const;
    [[nodiscard]] double evaluate_subproblem_objective(const Direction& direction) const;
-   [[nodiscard]] double compute_barrier_term_directional_derivative(const Model& model, const Iterate& current_iterate, const Direction& direction) const;
+   [[nodiscard]] double compute_barrier_term_directional_derivative(const Model& model, const Iterate& current_iterate,
+         const Vector<double>& primal_direction) const;
    [[nodiscard]] static double primal_fraction_to_boundary(const OptimizationProblem& problem, const Iterate& current_iterate,
          const Vector<double>& primal_direction, double tau);
    [[nodiscard]] static double dual_fraction_to_boundary(const OptimizationProblem& problem, const Iterate& current_iterate,

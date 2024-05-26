@@ -294,8 +294,8 @@ void PrimalDualInteriorPointSubproblem::set_auxiliary_measure(const Model& model
 }
 
 double PrimalDualInteriorPointSubproblem::compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate,
-      const Direction& direction, double step_length) const {
-   const double directional_derivative = this->compute_barrier_term_directional_derivative(model, current_iterate, direction);
+      const Vector<double>& primal_direction, double step_length) const {
+   const double directional_derivative = this->compute_barrier_term_directional_derivative(model, current_iterate, primal_direction);
    // TODO: take exponent of (-directional_derivative), see IPOPT paper
    // TODO: damping terms?
    return step_length * (-directional_derivative);
@@ -303,22 +303,22 @@ double PrimalDualInteriorPointSubproblem::compute_predicted_auxiliary_reduction_
 }
 
 double PrimalDualInteriorPointSubproblem::compute_barrier_term_directional_derivative(const Model& model, const Iterate& current_iterate,
-      const Direction& direction) const {
+      const Vector<double>& primal_direction) const {
    double directional_derivative = 0.;
    for (const size_t variable_index: model.get_lower_bounded_variables()) {
       directional_derivative += -this->barrier_parameter() / (current_iterate.primals[variable_index] -
-                                                              model.variable_lower_bound(variable_index)) * direction.primals[variable_index];
+                                                              model.variable_lower_bound(variable_index)) * primal_direction[variable_index];
    }
    for (const size_t variable_index: model.get_upper_bounded_variables()) {
       directional_derivative += -this->barrier_parameter() / (current_iterate.primals[variable_index] -
-            model.variable_upper_bound(variable_index)) * direction.primals[variable_index];
+            model.variable_upper_bound(variable_index)) * primal_direction[variable_index];
    }
    // damping
    for (const size_t variable_index: model.get_single_lower_bounded_variables()) {
-      directional_derivative += this->damping_factor*this->barrier_parameter()*direction.primals[variable_index];
+      directional_derivative += this->damping_factor * this->barrier_parameter() * primal_direction[variable_index];
    }
    for (const size_t variable_index: model.get_single_upper_bounded_variables()) {
-      directional_derivative -= this->damping_factor*this->barrier_parameter()*direction.primals[variable_index];
+      directional_derivative -= this->damping_factor * this->barrier_parameter() * primal_direction[variable_index];
    }
    return directional_derivative;
 }

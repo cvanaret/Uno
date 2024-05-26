@@ -75,7 +75,7 @@ void InequalityConstrainedMethod::set_auxiliary_measure(const Model& /*model*/, 
 }
 
 double InequalityConstrainedMethod::compute_predicted_auxiliary_reduction_model(const Model& /*model*/, const Iterate& /*current_iterate*/,
-      const Direction& /*direction*/, double /*step_length*/) const {
+      const Vector<double>& /*primal_direction*/, double /*step_length*/) const {
    return 0.;
 }
 

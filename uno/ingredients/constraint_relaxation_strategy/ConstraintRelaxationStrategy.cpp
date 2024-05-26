@@ -35,20 +35,20 @@ void ConstraintRelaxationStrategy::set_objective_measure(Iterate& iterate) const
    };
 }
 
-double ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction,
-      double step_length) const {
+double ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate,
+      const Vector<double>& primal_direction, double step_length) const {
    // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
    const double current_constraint_violation = this->model.constraint_violation(current_iterate.evaluations.constraints, this->progress_norm);
    const double trial_linearized_constraint_violation = this->model.constraint_violation(current_iterate.evaluations.constraints + step_length *
-         (current_iterate.evaluations.constraint_jacobian * direction.primals), this->progress_norm);
+         (current_iterate.evaluations.constraint_jacobian * primal_direction), this->progress_norm);
    return current_constraint_violation - trial_linearized_constraint_violation;
 }
 
 std::function<double(double)> ConstraintRelaxationStrategy::compute_predicted_objective_reduction_model(const Iterate& current_iterate,
-      const Direction& direction, double step_length, const SymmetricMatrix<double>& hessian) const {
+      const Vector<double>& primal_direction, double step_length, const SymmetricMatrix<double>& hessian) const {
    // predicted objective reduction: "-∇f(x)^T (αd) - α^2/2 d^T H d"
-   const double directional_derivative = dot(direction.primals, current_iterate.evaluations.objective_gradient);
-   const double quadratic_term = hessian.quadratic_product(direction.primals, direction.primals);
+   const double directional_derivative = dot(primal_direction, current_iterate.evaluations.objective_gradient);
+   const double quadratic_term = hessian.quadratic_product(primal_direction, primal_direction);
    return [=](double objective_multiplier) {
       return step_length * (-objective_multiplier*directional_derivative) - step_length*step_length/2. * quadratic_term;
    };

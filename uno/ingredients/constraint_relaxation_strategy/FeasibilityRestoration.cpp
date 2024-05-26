@@ -223,9 +223,9 @@ void FeasibilityRestoration::evaluate_progress_measures(Iterate& iterate) const 
 
 ProgressMeasures FeasibilityRestoration::compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length) {
    return {
-      this->compute_predicted_infeasibility_reduction_model(current_iterate, direction, step_length),
-      this->compute_predicted_objective_reduction_model(current_iterate, direction, step_length, this->subproblem->get_lagrangian_hessian()),
-      this->subproblem->compute_predicted_auxiliary_reduction_model(this->model, current_iterate, direction, step_length)
+      this->compute_predicted_infeasibility_reduction_model(current_iterate, direction.primals, step_length),
+      this->compute_predicted_objective_reduction_model(current_iterate, direction.primals, step_length, this->subproblem->get_lagrangian_hessian()),
+      this->subproblem->compute_predicted_auxiliary_reduction_model(this->model, current_iterate, direction.primals, step_length)
    };
 }
 
