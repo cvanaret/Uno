@@ -8,7 +8,6 @@
 #include <vector>
 #include <initializer_list>
 #include "symbolic/Range.hpp"
-#include "symbolic/VectorView.hpp"
 
 template <typename ElementType>
 class Vector {
@@ -25,10 +24,11 @@ public:
    ~Vector() = default;
 
    // copy assignment operator
-   template <typename OtherVector>
-   Vector& operator=(const OtherVector& other) {
+   template <typename Expression>
+   Vector& operator=(const Expression& expression) {
+      static_assert(std::is_same_v<typename Expression::value_type, ElementType>);
       for (size_t index = 0; index < this->size(); index++) {
-         this->vector[index] = other[index];
+         this->vector[index] = expression[index];
       }
       return *this;
    }
@@ -45,11 +45,6 @@ public:
    // random access
    ElementType& operator[](size_t index) { return this->vector[index]; }
    const ElementType& operator[](size_t index) const { return this->vector[index]; }
-
-   // view: lazy subvector (no memory allocation)
-   VectorView<Vector<ElementType>> view(size_t start, size_t end) {
-      return {*this, start, end};
-   }
 
    // size
    [[nodiscard]] size_t size() const { return this->vector.size(); }
@@ -72,31 +67,28 @@ public:
    const ElementType* data() const { return this->vector.data(); }
 
    // sum operator
-   template <typename OtherVector>
-   Vector& operator+=(OtherVector&& other) {
+   template <typename Expression>
+   Vector& operator+=(Expression&& expression) {
       for (size_t index = 0; index < this->size(); index++) {
-         this->vector[index] += other[index];
+         this->vector[index] += expression[index];
       }
       return *this;
    }
 
    // subtract operator
-   template <typename OtherVector>
-   Vector& operator-=(OtherVector&& other) {
+   template <typename Expression>
+   Vector& operator-=(Expression&& expression) {
       for (size_t index = 0; index < this->size(); index++) {
-         this->vector[index] -= other[index];
+         this->vector[index] -= expression[index];
       }
       return *this;
    }
 
    void print(std::ostream& stream) const {
-      for (ElementType element: *this) {
+      for (const ElementType& element: *this) {
          stream << element << ' ';
       }
    }
-
-   template <typename U>
-   friend std::ostream& operator<<(std::ostream& stream, const Vector<U>& vector);
 
 protected:
    std::vector<ElementType> vector;
@@ -111,9 +103,9 @@ void print_vector(Stream&& stream, const Array& x, size_t start = 0, size_t leng
    stream << '\n';
 }
 
-template <typename U>
-std::ostream& operator<<(std::ostream& stream, const Vector<U>& vector) {
-   vector.print(stream);
+template <typename ElementType>
+std::ostream& operator<<(std::ostream& stream, const Vector<ElementType>& vector) {
+   v.print(stream);
    return stream;
 }
 

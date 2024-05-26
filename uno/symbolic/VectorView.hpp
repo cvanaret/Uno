@@ -31,9 +31,15 @@ public:
 */
    using value_type = typename std::remove_reference_t<Expression>::value_type;
 
-   VectorView(Expression&& expression, size_t start, size_t end) noexcept;
+   VectorView(Expression&& expression, size_t start, size_t end):
+         expression(std::forward<Expression>(expression)), start(start), end(std::min(end, expression.size())) {
+      if (end < start) {
+         throw std::runtime_error("The view ends before its starting point.");
+      }
+   }
 
    // preconditions: expression != nullptr, i < length
+   [[nodiscard]] value_type& operator[](size_t index) noexcept { return this->expression[index]; }
    [[nodiscard]] const value_type& operator[](size_t index) const noexcept { return this->expression[index]; }
    [[nodiscard]] size_t size() const noexcept { return this->end - this->start; }
 
@@ -45,11 +51,6 @@ protected:
    const size_t start;
    const size_t end;
 };
-
-template <typename Expression>
-VectorView<Expression>::VectorView(Expression&& expression, size_t start, size_t end) noexcept:
-      expression(std::forward<Expression>(expression)), start(start), end(std::min(end, expression.size())) {
-}
 
 // free function
 template <typename Expression>
