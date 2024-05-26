@@ -8,16 +8,14 @@
 #include "linear_algebra/Vector.hpp"
 
 Scaling::Scaling(size_t number_constraints, double gradient_threshold):
-      gradient_threshold(gradient_threshold),
-      objective_scaling(1.),
-      constraint_scaling(number_constraints, 1.) {
+      gradient_threshold(gradient_threshold), objective_scaling(1.), constraint_scaling(number_constraints, 1.) {
 }
 
 void Scaling::compute(const SparseVector<double>& objective_gradient, const RectangularMatrix<double>& constraint_jacobian) {
-   // set the objective scaling
+   // objective
    this->objective_scaling = std::min(1., this->gradient_threshold / norm_inf(objective_gradient));
 
-   // set the constraints scaling
+   // constraints
    for (size_t constraint_index: Range(this->constraint_scaling.size())) {
       this->constraint_scaling[constraint_index] = std::min(1., this->gradient_threshold / norm_inf(constraint_jacobian[constraint_index]));
    }

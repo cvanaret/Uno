@@ -11,7 +11,7 @@
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 #include "solvers/QP/QPSolver.hpp"
 
-// compute a least-square approximation of the multipliers by solving a linear system (uses existing linear system)
+// compute a least-square approximation of the multipliers by solving a linear system
 void Preprocessing::compute_least_square_multipliers(const Model& model, SymmetricMatrix<double>& matrix, Vector<double>& rhs,
       SymmetricIndefiniteLinearSolver<double>& linear_solver, Iterate& current_iterate, Vector<double>& multipliers, double multiplier_max_norm) {
    current_iterate.evaluate_objective_gradient(model);
