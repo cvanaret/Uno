@@ -7,7 +7,7 @@
 #include "Model.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/Iterate.hpp"
-#include "symbolic/ChainCollection.hpp"
+#include "symbolic/Concatenation.hpp"
 #include "symbolic/CollectionAdapter.hpp"
 #include "symbolic/Range.hpp"
 #include "tools/Infinity.hpp"
@@ -65,10 +65,10 @@ protected:
    std::vector<size_t> upper_bounded_slacks;
    std::vector<size_t> single_lower_bounded_slacks;
    std::vector<size_t> single_upper_bounded_slacks;
-   ChainCollection<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>&>> lower_bounded_variables;
-   ChainCollection<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>&>> upper_bounded_variables;
-   ChainCollection<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>&>> single_lower_bounded_variables;
-   ChainCollection<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>&>> single_upper_bounded_variables;
+   Concatenation<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>&>> lower_bounded_variables;
+   Concatenation<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>&>> upper_bounded_variables;
+   Concatenation<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>&>> single_lower_bounded_variables;
+   Concatenation<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>&>> single_upper_bounded_variables;
 };
 
 // Transform the problem into an equality-constrained problem with constraints c(x) = 0. This implies:

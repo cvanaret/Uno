@@ -11,7 +11,7 @@
 #include "optimization/LagrangianGradient.hpp"
 #include "symbolic/Expression.hpp"
 #include "symbolic/VectorExpression.hpp"
-#include "symbolic/ChainCollection.hpp"
+#include "symbolic/Concatenation.hpp"
 #include "symbolic/Range.hpp"
 #include "tools/Infinity.hpp"
 
@@ -60,8 +60,8 @@ protected:
    double objective_multiplier;
    const double constraint_violation_coefficient;
    ElasticVariables elastic_variables;
-   const ChainCollection<const Collection<size_t>&, ForwardRange> lower_bounded_variables; // model variables + elastic variables
-   const ChainCollection<const Collection<size_t>&, ForwardRange> single_lower_bounded_variables; // model variables + elastic variables
+   const Concatenation<const Collection<size_t>&, ForwardRange> lower_bounded_variables; // model variables + elastic variables
+   const Concatenation<const Collection<size_t>&, ForwardRange> single_lower_bounded_variables; // model variables + elastic variables
 
    [[nodiscard]] static size_t count_elastic_variables(const Model& model);
    void generate_elastic_variables();
