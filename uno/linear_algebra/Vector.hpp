@@ -68,18 +68,9 @@ public:
 
    // sum operator
    template <typename Expression>
-   Vector& operator+=(Expression&& expression) {
+   Vector& operator+=(const Expression& expression) {
       for (size_t index = 0; index < this->size(); index++) {
          this->vector[index] += expression[index];
-      }
-      return *this;
-   }
-
-   // subtract operator
-   template <typename Expression>
-   Vector& operator-=(Expression&& expression) {
-      for (size_t index = 0; index < this->size(); index++) {
-         this->vector[index] -= expression[index];
       }
       return *this;
    }
@@ -107,6 +98,14 @@ template <typename ElementType>
 std::ostream& operator<<(std::ostream& stream, const Vector<ElementType>& vector) {
    vector.print(stream);
    return stream;
+}
+
+// subtract operator
+template <typename ResultExpression, typename Expression>
+void operator-=(ResultExpression&& result, const Expression& expression) {
+   for (size_t index = 0; index < result.size(); index++) {
+      result[index] -= expression[index];
+   }
 }
 
 #endif // UNO_VECTOR_H

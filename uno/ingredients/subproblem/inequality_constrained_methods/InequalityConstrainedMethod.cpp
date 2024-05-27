@@ -6,6 +6,7 @@
 #include "linear_algebra/Vector.hpp"
 #include "reformulation/l1RelaxedProblem.hpp"
 #include "tools/Options.hpp"
+#include "symbolic/VectorView.hpp"
 
 InequalityConstrainedMethod::InequalityConstrainedMethod(size_t number_variables, size_t number_constraints):
       Subproblem(number_variables, number_constraints),
@@ -64,9 +65,9 @@ void InequalityConstrainedMethod::set_linearized_constraint_bounds(const Optimiz
 
 void InequalityConstrainedMethod::compute_dual_displacements(const Iterate& current_iterate, Direction& direction) {
    // compute dual *displacements* (active-set methods usually compute the new duals, not the displacements)
-   direction.multipliers.constraints -= current_iterate.multipliers.constraints;
-   direction.multipliers.lower_bounds -= current_iterate.multipliers.lower_bounds;
-   direction.multipliers.upper_bounds -= current_iterate.multipliers.upper_bounds;
+   view(direction.multipliers.constraints, 0, current_iterate.number_constraints) -= current_iterate.multipliers.constraints;
+   view(direction.multipliers.lower_bounds, 0, current_iterate.number_variables) -= current_iterate.multipliers.lower_bounds;
+   view(direction.multipliers.upper_bounds, 0, current_iterate.number_variables) -= current_iterate.multipliers.upper_bounds;
 }
 
 // auxiliary measure is 0 in inequality-constrained methods
