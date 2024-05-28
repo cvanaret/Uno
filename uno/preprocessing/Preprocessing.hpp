@@ -16,13 +16,15 @@ template <typename IndexType, typename ElementType>
 class SymmetricIndefiniteLinearSolver;
 template <typename IndexType, typename ElementType>
 class SymmetricMatrix;
+template <typename ElementType>
+class Vector;
 
 class Preprocessing {
 public:
-   static void compute_least_square_multipliers(const OptimizationProblem& problem, SymmetricMatrix<size_t, double>& matrix, std::vector<double>& rhs,
-         SymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, Iterate& current_iterate, std::vector<double>& multipliers,
+   static void compute_least_square_multipliers(const Model& model, SymmetricMatrix<size_t, double>& matrix, Vector<double>& rhs,
+         SymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, Iterate& current_iterate, Vector<double>& multipliers,
          double multiplier_max_norm);
-   [[nodiscard]] static bool enforce_linear_constraints(const Model& model, std::vector<double>& x, Multipliers& multipliers, QPSolver& qp_solver);
+   [[nodiscard]] static bool enforce_linear_constraints(const Model& model, Vector<double>& x, Multipliers& multipliers, QPSolver& qp_solver);
 };
 
 #endif //UNO_PREPROCESSING_H

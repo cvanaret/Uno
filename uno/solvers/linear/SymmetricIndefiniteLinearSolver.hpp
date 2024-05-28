@@ -8,6 +8,8 @@
 
 template <typename IndexType, typename ElementType>
 class SymmetricMatrix;
+template <typename ElementType>
+class Vector;
 
 template <typename IndexType, typename ElementType>
 class SymmetricIndefiniteLinearSolver {
@@ -15,8 +17,8 @@ public:
    explicit SymmetricIndefiniteLinearSolver(size_t dimension): dimension(dimension) {};
    virtual ~SymmetricIndefiniteLinearSolver() = default;
 
-   virtual void solve_indefinite_system(const SymmetricMatrix<IndexType, ElementType>& matrix, const std::vector<ElementType>& rhs,
-         std::vector<ElementType>& result, bool from_scratch) = 0;
+   virtual void solve_indefinite_system(const SymmetricMatrix<IndexType, ElementType>& matrix, const Vector<ElementType>& rhs,
+         Vector<ElementType>& result, bool from_scratch) = 0;
 
 protected:
    const size_t dimension;

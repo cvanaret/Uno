@@ -96,7 +96,7 @@ void FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, 
 
 // an initial point is provided
 void FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-      const std::vector<double>& initial_point, WarmstartInformation& warmstart_information) {
+      const Vector<double>& initial_point, WarmstartInformation& warmstart_information) {
    this->subproblem->set_initial_point(initial_point);
    this->compute_feasible_direction(statistics, current_iterate, direction, warmstart_information);
 }
@@ -132,7 +132,7 @@ void FeasibilityRestoration::solve_subproblem(Statistics& statistics, const Opti
    }
 
    this->subproblem->solve(statistics, problem, current_iterate, direction, warmstart_information);
-   direction.norm = norm_inf(view(direction.primals, this->model.number_variables));
+   direction.norm = norm_inf(view(direction.primals, 0, this->model.number_variables));
    DEBUG3 << direction << '\n';
 }
 
@@ -182,7 +182,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
    else
    */
    if (direction.norm == 0.) {
-      DEBUG << "Zero step acceptable\n\n";
+      DEBUG << "Zero step acceptable\n";
       trial_iterate.evaluate_objective(this->model);
       accept_iterate = true;
       statistics.set("status", "accepted (0 step)");
@@ -223,9 +223,9 @@ void FeasibilityRestoration::evaluate_progress_measures(Iterate& iterate) const 
 
 ProgressMeasures FeasibilityRestoration::compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length) {
    return {
-      this->compute_predicted_infeasibility_reduction_model(current_iterate, direction, step_length),
-      this->compute_predicted_objective_reduction_model(current_iterate, direction, step_length, this->subproblem->get_lagrangian_hessian()),
-      this->subproblem->compute_predicted_auxiliary_reduction_model(this->model, current_iterate, direction, step_length)
+      this->compute_predicted_infeasibility_reduction_model(current_iterate, direction.primals, step_length),
+      this->compute_predicted_objective_reduction_model(current_iterate, direction.primals, step_length, this->subproblem->get_lagrangian_hessian()),
+      this->subproblem->compute_predicted_auxiliary_reduction_model(this->model, current_iterate, direction.primals, step_length)
    };
 }
 

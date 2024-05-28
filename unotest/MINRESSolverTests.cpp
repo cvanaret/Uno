@@ -8,7 +8,7 @@
 using IndexType = size_t;
 using NumericalType = double;
 
-void linear_operator(const std::vector<NumericalType>& x, std::vector<NumericalType>& result) {
+void linear_operator(const Vector<NumericalType>& x, Vector<NumericalType>& result) {
    result[0] = 1.*x[0] + 2.*x[1];
    result[1] = 2.*x[0] + 3.*x[1];
 }
@@ -19,8 +19,8 @@ TEST(MINRESSolver, TwoDimensional) {
    const NumericalType tolerance{1e-6};
    // dummy matrix
    COOSymmetricMatrix<IndexType, NumericalType> matrix(0, 0, false);
-   std::vector<NumericalType> rhs{11., 18.};
-   std::vector<NumericalType> result(dimension);
+   Vector<NumericalType> rhs{11., 18.};
+   Vector<NumericalType> result(dimension);
    MINRESSolver<size_t, double, decltype(linear_operator)> solver(linear_operator, dimension);
 
    const bool from_scratch = true;
@@ -30,7 +30,7 @@ TEST(MINRESSolver, TwoDimensional) {
    }
 }
 
-void hs015_linear_operator(const std::vector<NumericalType>& x, std::vector<NumericalType>& result) {
+void hs015_linear_operator(const Vector<NumericalType>& x, Vector<NumericalType>& result) {
    result[0] = 1.*x[0] + 1.*x[4] + 1.*x[5];
    result[1] = 1.*x[1] + -2.*x[4] + 2.*x[5];
    result[2] = 1.*x[2] + -1.*x[4];
@@ -46,8 +46,8 @@ TEST(MINRESSolver, Hs015LeastSquareDuals) {
    const NumericalType tolerance{1e-3};
    // dummy matrix
    COOSymmetricMatrix<IndexType, NumericalType> matrix(0, 0, false);
-   std::vector<NumericalType> rhs{-99, -24.9377, -1, -1, 0, 0 };
-   std::vector<NumericalType> result(dimension);
+   Vector<NumericalType> rhs{-99, -24.9377, -1, -1, 0, 0 };
+   Vector<NumericalType> result(dimension);
    MINRESSolver<size_t, double, decltype(hs015_linear_operator)> solver(hs015_linear_operator, dimension);
 
    const bool from_scratch = true;

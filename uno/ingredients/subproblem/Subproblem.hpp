@@ -18,6 +18,8 @@ class Options;
 class Statistics;
 template <typename IndexType, typename ElementType>
 class SymmetricMatrix;
+template <typename ElementType>
+class Vector;
 struct WarmstartInformation;
 
 /*! \class Subproblem
@@ -43,12 +45,12 @@ public:
    [[nodiscard]] virtual const SymmetricMatrix<size_t, double>& get_lagrangian_hessian() const = 0;
    virtual void set_auxiliary_measure(const Model& model, Iterate& iterate) = 0;
    [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate,
-         const Direction& direction, double step_length) const = 0;
+         const Vector<double>& primal_direction, double step_length) const = 0;
 
    virtual void postprocess_iterate(const OptimizationProblem& problem, Iterate& iterate) = 0;
 
    [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
-   virtual void set_initial_point(const std::vector<double>& initial_point) = 0;
+   virtual void set_initial_point(const Vector<double>& initial_point) = 0;
 
    size_t number_subproblems_solved{0};
    // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it

@@ -12,11 +12,9 @@
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 #include "solvers/QP/QPSolver.hpp"
 
-// compute a least-square approximation of the multipliers by solving a linear system (uses existing linear system)
-void Preprocessing::compute_least_square_multipliers(const OptimizationProblem& problem, SymmetricMatrix<size_t, double>& matrix,
-      std::vector<double>& rhs, SymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, Iterate& current_iterate,
-      std::vector<double>& multipliers, double multiplier_max_norm) {
-   const Model& model = problem.model;
+// compute a least-square approximation of the multipliers by solving a linear system
+void Preprocessing::compute_least_square_multipliers(const Model& model, SymmetricMatrix<size_t, double>& matrix, Vector<double>& rhs,
+      SymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, Iterate& current_iterate, Vector<double>& multipliers, double multiplier_max_norm) {
    current_iterate.evaluate_objective_gradient(model);
    current_iterate.evaluate_constraint_jacobian(model);
 
@@ -36,8 +34,8 @@ void Preprocessing::compute_least_square_multipliers(const OptimizationProblem& 
    }
    DEBUG2 << "Matrix for least-square multipliers:\n" << matrix << '\n';
 
-   // generate the right-hand side
-   initialize_vector(rhs, 0.);
+   /* generate the right-hand side */
+   rhs.fill(0.);
    // objective gradient
    for (const auto [variable_index, derivative]: current_iterate.evaluations.objective_gradient) {
       rhs[variable_index] += model.objective_sign * derivative;
@@ -49,9 +47,8 @@ void Preprocessing::compute_least_square_multipliers(const OptimizationProblem& 
    DEBUG2 << "RHS for least-square multipliers: "; print_vector(DEBUG2, rhs, 0, matrix.dimension);
    
    /* solve the system */
-   std::vector<double> solution(matrix.dimension);
-   const bool from_scratch = true;
-   linear_solver.solve_indefinite_system(matrix, rhs, solution, from_scratch);
+   Vector<double> solution(matrix.dimension);
+   linear_solver.solve_indefinite_system(matrix, rhs, solution, true);
    DEBUG2 << "Solution: "; print_vector(DEBUG2, solution, 0, matrix.dimension);
 
    // if least-square multipliers too big, discard them. Otherwise, keep them
@@ -77,7 +74,7 @@ size_t count_infeasible_linear_constraints(const Model& model, const std::vector
    return infeasible_linear_constraints;
 }
 
-bool Preprocessing::enforce_linear_constraints(const Model& model, std::vector<double>& x, Multipliers& multipliers, QPSolver& qp_solver) {
+bool Preprocessing::enforce_linear_constraints(const Model& model, Vector<double>& x, Multipliers& multipliers, QPSolver& qp_solver) {
    const auto& linear_constraints = model.get_linear_constraints();
    INFO << "Preprocessing phase: the problem has " << linear_constraints.size() << " linear constraints\n";
    if (not linear_constraints.empty()) {
@@ -112,7 +109,7 @@ bool Preprocessing::enforce_linear_constraints(const Model& model, std::vector<d
          }
 
          // solve the strictly convex QP
-         std::vector<double> d0(model.number_variables); // = 0
+         Vector<double> d0(model.number_variables); // = 0
          SparseVector<double> linear_objective; // empty
          WarmstartInformation warmstart_information{true, true, true, true};
          Direction direction(model.number_variables, model.number_constraints);
@@ -124,9 +121,9 @@ bool Preprocessing::enforce_linear_constraints(const Model& model, std::vector<d
          }
 
          // take the step
-         add_vectors(x, direction.primals, 1., x);
-         add_vectors(multipliers.lower_bounds, direction.multipliers.lower_bounds, 1., multipliers.lower_bounds);
-         add_vectors(multipliers.upper_bounds, direction.multipliers.upper_bounds, 1., multipliers.upper_bounds);
+         x += direction.primals;
+         multipliers.lower_bounds += direction.multipliers.lower_bounds;
+         multipliers.upper_bounds += direction.multipliers.upper_bounds;
          for (size_t linear_constraint_index: Range(linear_constraints.size())) {
             const size_t constraint_index = linear_constraints[linear_constraint_index];
             multipliers.constraints[constraint_index] += direction.multipliers.constraints[linear_constraint_index];

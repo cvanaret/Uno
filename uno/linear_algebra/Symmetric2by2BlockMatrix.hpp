@@ -23,7 +23,7 @@ public:
    void for_each(const std::function<void(size_t, size_t, double)>& f) const;
 
    template <typename ElementType>
-   void product(const std::vector<ElementType>& vector, std::vector<ElementType>& result) const;
+   void product(const Vector<ElementType>& vector, Vector<ElementType>& result) const;
    void evaluate(Matrix<size_t, double>& matrix);
 
 protected:
@@ -68,8 +68,8 @@ void Symmetric2by2BlockMatrix<TopLeftBlock, TopRightBlock, BottomRightBlock>::fo
 
 template <typename TopLeftBlock, typename TopRightBlock, typename BottomRightBlock>
 template <typename ElementType>
-void Symmetric2by2BlockMatrix<TopLeftBlock, TopRightBlock, BottomRightBlock>::product(const std::vector<ElementType>& vector, std::vector<ElementType>& result) const {
-   initialize_vector(result, ElementType(0));
+void Symmetric2by2BlockMatrix<TopLeftBlock, TopRightBlock, BottomRightBlock>::product(const Vector<ElementType>& vector, Vector<ElementType>& result) const {
+   result.fill(ElementType(0));
    // create vector views of the vector and the result
    const VectorView vector_top_part = view(vector, 0, this->A.number_columns());
    const VectorView vector_bottom_part = view(vector, this->A.number_rows(), result.size());

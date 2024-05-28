@@ -80,10 +80,10 @@ void QPSubproblem::solve(Statistics& statistics, const OptimizationProblem& prob
    this->solver->solve_QP(problem.number_variables, problem.number_constraints, this->direction_lower_bounds, this->direction_upper_bounds,
          this->linearized_constraints_lower_bounds, this->linearized_constraints_upper_bounds, this->evaluations.objective_gradient,
          this->evaluations.constraint_jacobian, *this->hessian_model->hessian, this->initial_point, direction, warmstart_information);
-   InequalityConstrainedMethod::compute_dual_displacements(problem, current_iterate, direction);
+   InequalityConstrainedMethod::compute_dual_displacements(current_iterate, direction);
    this->number_subproblems_solved++;
    // reset the initial point
-   initialize_vector(this->initial_point, 0.);
+   this->initial_point.fill(0.);
 }
 
 const SymmetricMatrix<size_t, double>& QPSubproblem::get_lagrangian_hessian() const {

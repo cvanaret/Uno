@@ -19,10 +19,10 @@ TEST(Symmetric2by2BlockMatrix, Correctness) {
 
    const size_t block_dimension = 2;
    const Symmetric2by2BlockMatrix block_matrix = assemble_matrix<T>(block_dimension);
-   const std::vector<T> x{1., 2., 100., 200.};
+   const Vector<T> x{1., 2., 100., 200.};
 
    // matrix-vector product
-   std::vector<T> result(x.size(), 0.);
+   Vector<T> result(x.size(), 0.);
    block_matrix.product(x, result);
    const std::vector<T> reference_result{101., 202., 101., 202.};
 
@@ -36,10 +36,10 @@ TEST(Symmetric2by2BlockMatrix, FloatCorrectness) {
 
    const size_t block_dimension = 2;
    const Symmetric2by2BlockMatrix block_matrix = assemble_matrix<T>(block_dimension);
-   const std::vector<T> x{1., 2., 100., 200.};
+   const Vector<T> x{1., 2., 100., 200.};
 
    // matrix-vector product
-   std::vector<T> result(x.size(), 0.);
+   Vector<T> result(x.size(), 0.);
    block_matrix.product(x, result);
    const std::vector<T> reference_result{101., 202., 101., 202.};
 

@@ -14,6 +14,8 @@
 template <typename ElementType>
 class RectangularMatrix {
 public:
+   using value_type = ElementType;
+
    RectangularMatrix(size_t number_rows, size_t number_columns): matrix(number_rows) {
       for (auto& row: this->matrix) {
          row.reserve(number_columns);

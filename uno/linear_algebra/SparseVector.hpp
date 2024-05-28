@@ -128,8 +128,10 @@ ElementType norm_inf(const SparseVector<ElementType>& x) {
    return norm;
 }
 
-template <typename ElementType>
-ElementType dot(const std::vector<ElementType>& x, const SparseVector<ElementType>& y) {
+template <typename Vector, typename ElementType>
+ElementType dot(const Vector& x, const SparseVector<ElementType>& y) {
+   static_assert(std::is_same_v<typename Vector::value_type, ElementType>);
+
    ElementType dot_product = ElementType(0);
    for (const auto [index, y_element]: y) {
       assert(index < x.size() && "Vector.dot: the sparse vector y is larger than the dense vector x");

@@ -41,8 +41,8 @@ bool FletcherFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
       const double merit_predicted_reduction = FilterMethod::unconstrained_merit_function(predicted_reduction);
       DEBUG << "Current: (infeasibility, objective + auxiliary) = (" << current_progress.infeasibility << ", " << current_merit << ")\n";
       DEBUG << "Trial:   (infeasibility, objective + auxiliary) = (" << trial_progress.infeasibility << ", " << trial_merit << ")\n";
-      DEBUG << "Unconstrained predicted reduction = " << merit_predicted_reduction << '\n';
       DEBUG << "Current filter:\n" << *this->filter << '\n';
+      DEBUG << "Unconstrained predicted reduction = " << merit_predicted_reduction << '\n';
 
       if (this->filter->acceptable(trial_progress.infeasibility, trial_merit)) {
          if (this->filter->acceptable_wrt_current_iterate(current_progress.infeasibility, current_merit, trial_progress.infeasibility, trial_merit)) {
@@ -51,7 +51,7 @@ bool FletcherFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
                // unconstrained Armijo sufficient decrease condition: predicted reduction should be positive (f-type)
                const double objective_actual_reduction = this->compute_actual_objective_reduction(current_merit, current_progress.infeasibility,
                      trial_merit);
-               DEBUG << "Actual reduction = " << objective_actual_reduction << '\n';
+               DEBUG << "Unconstrained actual reduction = " << objective_actual_reduction << '\n';
                if (this->armijo_sufficient_decrease(merit_predicted_reduction, objective_actual_reduction)) {
                   DEBUG << "Trial iterate (f-type) was accepted by satisfying the Armijo condition\n";
                   accept = true;
@@ -71,15 +71,16 @@ bool FletcherFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
             }
          }
          else {
+            DEBUG << "Trial iterate not acceptable with respect to current point\n";
             scenario = "current point";
          }
       }
       else {
+         DEBUG << "Trial iterate not filter acceptable\n";
          scenario = "filter";
       }
    }
    statistics.set("status", std::string(accept ? "accepted" : "rejected") + " (" + scenario + ")");
-   DEBUG << '\n';
    return accept;
 }
 

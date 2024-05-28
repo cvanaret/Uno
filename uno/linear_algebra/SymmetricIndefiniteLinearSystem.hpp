@@ -24,8 +24,8 @@ template <typename IndexType, typename ElementType>
 class SymmetricIndefiniteLinearSystem {
 public:
    std::unique_ptr<SymmetricMatrix<IndexType, ElementType>> matrix;
-   std::vector<ElementType> rhs{};
-   std::vector<ElementType> solution{};
+   Vector<ElementType> rhs{};
+   Vector<ElementType> solution{};
 
    SymmetricIndefiniteLinearSystem(const std::string& sparse_format, size_t dimension, size_t number_non_zeros, bool use_regularization,
          const Options& options);

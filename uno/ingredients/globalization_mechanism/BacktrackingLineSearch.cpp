@@ -139,5 +139,5 @@ void BacktrackingLineSearch::set_statistics(Statistics& statistics, const Iterat
 }
 
 void BacktrackingLineSearch::print_iteration(size_t number_iterations, double primal_dual_step_length) {
-   DEBUG << "\tLINE SEARCH iteration " << number_iterations << ", step_length " << primal_dual_step_length << '\n';
+   DEBUG << "\n\tLINE SEARCH iteration " << number_iterations << ", step_length " << primal_dual_step_length << '\n';
 }

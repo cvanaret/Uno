@@ -73,7 +73,7 @@ void l1Relaxation::compute_feasible_direction(Statistics& statistics, Iterate& c
 
 // an initial point is provided
 void l1Relaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-      const std::vector<double>& initial_point, WarmstartInformation& warmstart_information) {
+      const Vector<double>& initial_point, WarmstartInformation& warmstart_information) {
    this->subproblem->set_initial_point(initial_point);
    this->compute_feasible_direction(statistics, current_iterate, direction, warmstart_information);
 }
@@ -143,7 +143,7 @@ void l1Relaxation::solve_subproblem(Statistics& statistics, const OptimizationPr
 
    // solve the subproblem
    this->subproblem->solve(statistics, problem, current_iterate, direction, warmstart_information);
-   direction.norm = norm_inf(view(direction.primals, this->model.number_variables));
+   direction.norm = norm_inf(view(direction.primals, 0, this->model.number_variables));
    DEBUG3 << direction << '\n';
    assert(direction.status == SubproblemStatus::OPTIMAL && "The subproblem was not solved to optimality");
 }
@@ -155,12 +155,9 @@ void l1Relaxation::solve_l1_relaxed_problem(Statistics& statistics, Iterate& cur
 }
 
 void l1Relaxation::decrease_parameter_aggressively(Iterate& current_iterate, const Direction& direction) {
-   add_vectors(current_iterate.multipliers.constraints, direction.multipliers.constraints, direction.primal_dual_step_length,
-         this->trial_multipliers.constraints);
-   add_vectors(current_iterate.multipliers.lower_bounds, direction.multipliers.lower_bounds, direction.bound_dual_step_length,
-         this->trial_multipliers.lower_bounds);
-   add_vectors(current_iterate.multipliers.upper_bounds, direction.multipliers.upper_bounds, direction.bound_dual_step_length,
-         this->trial_multipliers.upper_bounds);
+   this->trial_multipliers.constraints = current_iterate.multipliers.constraints + direction.primal_dual_step_length * direction.multipliers.constraints;
+   this->trial_multipliers.lower_bounds = current_iterate.multipliers.lower_bounds + direction.bound_dual_step_length * direction.multipliers.lower_bounds;
+   this->trial_multipliers.upper_bounds = current_iterate.multipliers.upper_bounds + direction.bound_dual_step_length * direction.multipliers.upper_bounds;
 
    // there must be at least a nonzero dual to avoid trivial stationary points
    if (this->trial_multipliers.not_all_zero(this->model.number_variables, this->small_duals_threshold)) {
@@ -255,7 +252,7 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
 
    bool accept_iterate = false;
    if (direction.norm == 0.) {
-      DEBUG << "Zero step acceptable\n\n";
+      DEBUG << "Zero step acceptable\n";
       trial_iterate.evaluate_objective(this->model);
       accept_iterate = true;
       statistics.set("status", "accepted (0 step)");
@@ -283,9 +280,9 @@ void l1Relaxation::evaluate_progress_measures(Iterate& iterate) const {
 
 ProgressMeasures l1Relaxation::compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length) {
    return {
-      this->compute_predicted_infeasibility_reduction_model(current_iterate, direction, step_length),
-      this->compute_predicted_objective_reduction_model(current_iterate, direction, step_length, this->subproblem->get_lagrangian_hessian()),
-      this->subproblem->compute_predicted_auxiliary_reduction_model(this->model, current_iterate, direction, step_length)
+      this->compute_predicted_infeasibility_reduction_model(current_iterate, direction.primals, step_length),
+      this->compute_predicted_objective_reduction_model(current_iterate, direction.primals, step_length, this->subproblem->get_lagrangian_hessian()),
+      this->subproblem->compute_predicted_auxiliary_reduction_model(this->model, current_iterate, direction.primals, step_length)
    };
 }
 

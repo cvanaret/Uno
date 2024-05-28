@@ -6,6 +6,7 @@
 
 #include "ScalarMultiple.hpp"
 #include "Sum.hpp"
+#include "Subtraction.hpp"
 #include "Indicator.hpp"
 #include "HadamardProduct.hpp"
 #include "Transpose.hpp"

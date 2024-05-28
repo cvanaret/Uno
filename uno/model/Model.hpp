@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include "linear_algebra/Norm.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "optimization/TerminationStatus.hpp"
 #include "symbolic/VectorExpression.hpp"
 
@@ -44,12 +45,12 @@ public:
    // Hessian
    const bool fixed_hessian_sparsity{true};
 
-   [[nodiscard]] virtual double evaluate_objective(const std::vector<double>& x) const = 0;
-   virtual void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const = 0;
-   virtual void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const = 0;
-   virtual void evaluate_constraint_gradient(const std::vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const = 0;
-   virtual void evaluate_constraint_jacobian(const std::vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const = 0;
-   virtual void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
+   [[nodiscard]] virtual double evaluate_objective(const Vector<double>& x) const = 0;
+   virtual void evaluate_objective_gradient(const Vector<double>& x, SparseVector<double>& gradient) const = 0;
+   virtual void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const = 0;
+   virtual void evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const = 0;
+   virtual void evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const = 0;
+   virtual void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          SymmetricMatrix<size_t, double>& hessian) const = 0;
 
    // purely virtual functions
@@ -70,8 +71,8 @@ public:
    [[nodiscard]] virtual const Collection<size_t>& get_inequality_constraints() const = 0;
    [[nodiscard]] virtual const std::vector<size_t>& get_linear_constraints() const = 0;
 
-   virtual void initial_primal_point(std::vector<double>& x) const = 0;
-   virtual void initial_dual_point(std::vector<double>& multipliers) const = 0;
+   virtual void initial_primal_point(Vector<double>& x) const = 0;
+   virtual void initial_dual_point(Vector<double>& multipliers) const = 0;
    virtual void postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const = 0;
 
    [[nodiscard]] virtual size_t number_objective_gradient_nonzeros() const = 0;
@@ -79,7 +80,7 @@ public:
    [[nodiscard]] virtual size_t number_hessian_nonzeros() const = 0;
 
    // auxiliary functions
-   void project_onto_variable_bounds(std::vector<double>& x) const;
+   void project_onto_variable_bounds(Vector<double>& x) const;
    [[nodiscard]] bool is_constrained() const;
 
    // constraint violation

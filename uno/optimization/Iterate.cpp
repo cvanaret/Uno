@@ -80,10 +80,10 @@ void Iterate::set_number_variables(size_t new_number_variables) {
 }
 
 std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
-   stream << "Primal variables: "; print_vector(stream, iterate.primals);
-   stream << "            ┌ Constraint: "; print_vector(stream, iterate.multipliers.constraints);
-   stream << "Multipliers │ Lower bound: "; print_vector(stream, iterate.multipliers.lower_bounds);
-   stream << "            └ Upper bound: "; print_vector(stream, iterate.multipliers.upper_bounds);
+   stream << "Primal variables: " << iterate.primals << '\n';
+   stream << "            ┌ Constraint: " << iterate.multipliers.constraints << '\n';
+   stream << "Multipliers │ Lower bound: " << iterate.multipliers.lower_bounds << '\n';
+   stream << "            └ Upper bound: " << iterate.multipliers.upper_bounds << '\n';
    stream << "Objective value: " << iterate.evaluations.objective << '\n';
 
    stream << "          ┌ Optimality stationarity: " << iterate.residuals.optimality_stationarity << '\n';

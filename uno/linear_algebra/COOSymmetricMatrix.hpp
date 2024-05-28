@@ -18,15 +18,15 @@ class COOSymmetricMatrix: public SymmetricMatrix<IndexType, ElementType> {
 public:
    class View {
    public:
-      View(const COOSymmetricMatrix<IndexType, ElementType>& matrix, size_t start, size_t end): matrix(matrix), start(start), end(end) {
+      View(const COOSymmetricMatrix<IndexType, ElementType>& matrix, IndexType start, IndexType end): matrix(matrix), start(start), end(end) {
          assert(start <= end && "COOSymmetricMatrix::view: start > end");
          assert(end <= matrix.number_nonzeros && "COOSymmetricMatrix::view: end > NNZ");
       }
 
    protected:
       const COOSymmetricMatrix<IndexType, ElementType>& matrix;
-      size_t start;
-      size_t end;
+      IndexType start;
+      IndexType end;
    };
 
    COOSymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization);
@@ -40,7 +40,7 @@ public:
    [[nodiscard]] const IndexType* row_indices_pointer() const { return this->row_indices.data(); }
    [[nodiscard]] const IndexType* column_indices_pointer() const { return this->column_indices.data(); }
 
-   [[nodiscard]] View view(size_t start, size_t end) const { return {*this, start, end}; }
+   [[nodiscard]] View view(IndexType start, IndexType end) const { return {*this, start, end}; }
 
    void print(std::ostream& stream) const override;
 
@@ -49,12 +49,13 @@ public:
 protected:
    std::vector<IndexType> row_indices;
    std::vector<IndexType> column_indices;
+   Vector<ElementType> diagonal_entries;
 
    void initialize_regularization();
 
    // iterator functions
-   [[nodiscard]] std::tuple<size_t, size_t, ElementType> dereference_iterator(size_t column_index, size_t nonzero_index) const override;
-   void increment_iterator(size_t& column_index, size_t& nonzero_index) const override;
+   [[nodiscard]] std::tuple<IndexType, IndexType, ElementType> dereference_iterator(IndexType column_index, IndexType nonzero_index) const override;
+   void increment_iterator(IndexType& column_index, IndexType& nonzero_index) const override;
 };
 
 // implementation
@@ -77,6 +78,7 @@ void COOSymmetricMatrix<IndexType, ElementType>::reset() {
    SymmetricMatrix<IndexType, ElementType>::reset();
    this->row_indices.clear();
    this->column_indices.clear();
+   this->diagonal_entries.fill(ElementType(0));
 
    // initialize regularization terms
    if (this->use_regularization) {
@@ -135,16 +137,16 @@ void COOSymmetricMatrix<IndexType, ElementType>::initialize_regularization() {
 }
 
 template <typename IndexType, typename ElementType>
-std::tuple<size_t, size_t, ElementType> COOSymmetricMatrix<IndexType, ElementType>::dereference_iterator(size_t /*column_index*/, size_t nonzero_index) const {
+std::tuple<IndexType, IndexType, ElementType> COOSymmetricMatrix<IndexType, ElementType>::dereference_iterator(IndexType /*column_index*/, IndexType nonzero_index) const {
    return {this->row_indices[nonzero_index], this->column_indices[nonzero_index], this->entries[nonzero_index]};
 }
 
 template <typename IndexType, typename ElementType>
-void COOSymmetricMatrix<IndexType, ElementType>::increment_iterator(size_t& column_index, size_t& nonzero_index) const {
+void COOSymmetricMatrix<IndexType, ElementType>::increment_iterator(IndexType& column_index, IndexType& nonzero_index) const {
    nonzero_index++;
    // if end reached
-   if (nonzero_index == this->number_nonzeros) {
-      column_index = this->dimension;
+   if (nonzero_index == IndexType(this->number_nonzeros)) {
+      column_index = IndexType(this->dimension);
    }
 }
 

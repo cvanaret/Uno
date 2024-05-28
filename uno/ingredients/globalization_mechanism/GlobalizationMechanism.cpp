@@ -5,6 +5,7 @@
 #include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategy.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
+#include "symbolic/Expression.hpp"
 #include "tools/Options.hpp"
 #include "tools/Statistics.hpp"
 
@@ -22,13 +23,13 @@ void GlobalizationMechanism::assemble_trial_iterate(const Model& model, Iterate&
       double primal_step_length, double dual_step_length, double bound_dual_step_length) {
    trial_iterate.set_number_variables(current_iterate.primals.size());
    // take primal step
-   add_vectors(current_iterate.primals, direction.primals, primal_step_length, trial_iterate.primals);
+   trial_iterate.primals = current_iterate.primals + primal_step_length * direction.primals;
    // project the trial iterate onto the bounds to avoid numerical errors
    model.project_onto_variable_bounds(trial_iterate.primals);
    // take dual step: line-search carried out only on constraint multipliers. Bound multipliers updated with full bound dual step length
-   add_vectors(current_iterate.multipliers.constraints, direction.multipliers.constraints, dual_step_length, trial_iterate.multipliers.constraints);
-   add_vectors(current_iterate.multipliers.lower_bounds, direction.multipliers.lower_bounds, bound_dual_step_length, trial_iterate.multipliers.lower_bounds);
-   add_vectors(current_iterate.multipliers.upper_bounds, direction.multipliers.upper_bounds, bound_dual_step_length, trial_iterate.multipliers.upper_bounds);
+   trial_iterate.multipliers.constraints = current_iterate.multipliers.constraints + dual_step_length * direction.multipliers.constraints;
+   trial_iterate.multipliers.lower_bounds = current_iterate.multipliers.lower_bounds + bound_dual_step_length * direction.multipliers.lower_bounds;
+   trial_iterate.multipliers.upper_bounds = current_iterate.multipliers.upper_bounds + bound_dual_step_length * direction.multipliers.upper_bounds;
    trial_iterate.progress.reset();
    trial_iterate.is_objective_computed = false;
    trial_iterate.is_objective_gradient_computed = false;
@@ -76,7 +77,7 @@ TerminationStatus GlobalizationMechanism::check_convergence_with_given_tolerance
    const bool primal_feasibility = (current_iterate.residuals.infeasibility <= tolerance);
    const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(model.number_variables, tolerance);
 
-   DEBUG << "Termination criteria for tolerance = " << tolerance << ":\n";
+   DEBUG << "\nTermination criteria for tolerance = " << tolerance << ":\n";
    DEBUG << "Stationarity (optimality): " << std::boolalpha << optimality_stationarity << '\n';
    DEBUG << "Stationarity (feasibility): " << std::boolalpha << feasibility_stationarity << '\n';
    DEBUG << "Complementarity (optimality): " << std::boolalpha << optimality_complementarity << '\n';

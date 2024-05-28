@@ -8,6 +8,7 @@
 #include <cmath>
 #include "linear_algebra/Vector.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
+#include "symbolic/Expression.hpp"
 
 enum class Status {
    INITIAL_POINT_OPTIMAL,
@@ -33,22 +34,22 @@ public:
    MINRESSolver(const LinearOperator& linear_operator, size_t max_dimension);
    ~MINRESSolver() override = default;
 
-   void solve_indefinite_system(const SymmetricMatrix<IndexType, NumericalType>& matrix, const std::vector<NumericalType>& rhs,
-         std::vector<NumericalType>& result, bool from_scratch) override;
+   void solve_indefinite_system(const SymmetricMatrix<IndexType, NumericalType>& matrix, const Vector<NumericalType>& rhs,
+         Vector<NumericalType>& result, bool from_scratch) override;
 
 private:
    static constexpr NumericalType tolerance{1e-6};
    const LinearOperator& linear_operator;
    const size_t max_dimension;
    size_t iteration{0};
-   std::vector<NumericalType> p_k;
-   std::vector<NumericalType> v_km1;
-   std::vector<NumericalType> v_k;
-   std::vector<NumericalType> v_kp1;
-   std::vector<NumericalType> d_km2;
-   std::vector<NumericalType> d_km1;
-   std::vector<NumericalType> d_k;
-   std::vector<NumericalType> x_k;
+   Vector<NumericalType> p_k;
+   Vector<NumericalType> v_km1;
+   Vector<NumericalType> v_k;
+   Vector<NumericalType> v_kp1;
+   Vector<NumericalType> d_km2;
+   Vector<NumericalType> d_km1;
+   Vector<NumericalType> d_k;
+   Vector<NumericalType> x_k;
    //NumericalType beta_k;
    NumericalType epsilon_k{0};
    NumericalType phi_km1;
@@ -75,18 +76,18 @@ MINRESSolver<IndexType, NumericalType, LinearOperator>::MINRESSolver(const Linea
 // TODO: user-defined termination criterion
 template <typename IndexType, typename NumericalType, typename LinearOperator>
 void MINRESSolver<IndexType, NumericalType, LinearOperator>::solve_indefinite_system(const SymmetricMatrix<IndexType, NumericalType>& /*matrix*/,
-      const std::vector<NumericalType>& rhs, std::vector<NumericalType>& result, bool /*from_scratch*/) {
+      const Vector<NumericalType>& rhs, Vector<NumericalType>& result, bool /*from_scratch*/) {
    this->iteration = 1;
    // v_0 = 0
-   initialize_vector(this->v_km1, NumericalType(0));
+   this->v_km1.fill(NumericalType(0));
    // compute beta_1 and v_1
-   NumericalType beta_k = std::sqrt(dot_product(rhs, rhs));
+   NumericalType beta_k = std::sqrt(rhs.dot(rhs));
    // set phi_0 = tau_0 = beta_1
    this->phi_km1 = this->tau_km1 = beta_k;
    // std::cout << "beta_1 = " << beta_k << '\n';
    
    this->v_k = rhs;
-   scale(this->v_k, NumericalType(1)/beta_k);
+   this->v_k.scale(NumericalType(1)/beta_k);
    
    bool termination = false;
    while (not termination) {
@@ -122,17 +123,16 @@ void MINRESSolver<IndexType, NumericalType, LinearOperator>::solve_indefinite_sy
       // update solution and matrix condition number
       if (std::abs(gamma2_k) >= NumericalType(tolerance)) {
          // update d_k
-         add_vectors(NumericalType(1), this->v_k, -delta2_k, this->d_km1, this->d_k);
-         add_vectors(NumericalType(1), this->d_k, -this->epsilon_k, this->d_km2, this->d_k);
-         scale(this->d_k, NumericalType(1)/gamma2_k);
+         this->d_k = this->v_k - delta2_k * this->d_km1 - this->epsilon_k * this->d_km2;
+         this->d_k.scale(NumericalType(1)/gamma2_k);
          
          // update x_k
-         add_vectors(NumericalType(1), this->x_k, tau_k, this->d_k, this->x_k);
+         this->x_k += tau_k * this->d_k;
          
          // update v_k
          if (std::abs(beta_kp1) >= NumericalType(tolerance)) {
             this->v_kp1 = this->p_k;
-            scale(this->v_kp1, NumericalType(1)/beta_kp1);
+            this->v_kp1.scale(NumericalType(1)/beta_kp1);
          }
          else {
             break;
@@ -153,7 +153,7 @@ void MINRESSolver<IndexType, NumericalType, LinearOperator>::solve_indefinite_sy
       }
       this->iteration++;
    }
-   copy_from(result, this->x_k);
+   result = this->x_k;
 }
 
 template <typename IndexType, typename NumericalType, typename LinearOperator>
@@ -163,14 +163,13 @@ std::pair<NumericalType, NumericalType> MINRESSolver<IndexType, NumericalType, L
    this->linear_operator(this->v_k, this->p_k);
    
    // compute alpha_k = v_k^T A v_k
-   const NumericalType alpha_k = dot_product(this->v_k, this->p_k);
+   const NumericalType alpha_k = this->v_k.dot(this->p_k);
    
    // compute the full p_k = p_k - beta_k v_k-1 - alpha_k v_k
-   add_vectors(NumericalType(1), this->p_k, -alpha_k, this->v_k, this->p_k);
-   add_vectors(NumericalType(1), this->p_k, -beta_k, this->v_km1, this->p_k);
+   this->p_k = this->p_k - beta_k * this->v_km1 - alpha_k * this->v_k;
    
    // compute beta_k+1 = ||p_k||
-   const NumericalType beta_kp1 = std::sqrt(dot_product(this->p_k, this->p_k));
+   const NumericalType beta_kp1 = std::sqrt(this->p_k.dot(this->p_k));
    return {alpha_k, beta_kp1};
 }
 

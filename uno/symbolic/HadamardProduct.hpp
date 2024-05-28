@@ -14,10 +14,10 @@ public:
    HadamardProduct(E1&& expression1, E2&& expression2): expression1(std::forward<E1>(expression1)), expression2(std::forward<E2>(expression2)) { }
 
    [[nodiscard]] constexpr size_t size() const { return this->expression1.size(); }
-   [[nodiscard]] typename HadamardProduct::value_type operator[](size_t index) const {
-      const double first_term = this->expression1[index];
-      if (first_term == 0.) {
-         return 0.; // avoid evaluating the second expression
+   [[nodiscard]] value_type operator[](size_t index) const {
+      const value_type first_term = this->expression1[index];
+      if (first_term == value_type(0)) {
+         return value_type(0); // avoid evaluating the second expression
       }
       else {
          return first_term * this->expression2[index];

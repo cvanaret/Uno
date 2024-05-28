@@ -151,37 +151,38 @@ std::string to_string(double number) {
    return stream.str();
 }
 
-// print the content of the filter
-std::ostream& operator<<(std::ostream& stream, Filter& filter) {
+void print_line(std::ostream& stream, const std::string& infeasibility, const std::string& objective) {
    const size_t fixed_length_column1 = 14;
    const size_t fixed_length_column2 = 10;
 
+   // compute lengths of columns
+   const size_t infeasibility_length = infeasibility.size();
+   const size_t number_infeasibility_spaces = (infeasibility_length < fixed_length_column1) ? fixed_length_column1 - infeasibility_length : 0;
+   const size_t objective_length = objective.size();
+   const size_t number_objective_spaces = (objective_length < fixed_length_column2) ? fixed_length_column2 - objective_length : 0;
+
+   // print line
+   stream << "│ " << infeasibility;
+   for ([[maybe_unused]] size_t k: Range(number_infeasibility_spaces)) {
+      stream << ' ';
+   }
+   stream << "│ " << objective;
+   for ([[maybe_unused]] size_t k: Range(number_objective_spaces)) {
+      stream << ' ';
+   }
+   stream << "│\n";
+}
+
+// print the content of the filter
+std::ostream& operator<<(std::ostream& stream, Filter& filter) {
    stream << "┌───────────────┬───────────┐\n";
    stream << "│ infeasibility │ objective │\n";
    stream << "├───────────────┼───────────┤\n";
    for (size_t position: Range(filter.number_entries)) {
-      // convert numbers to strings
-      const std::string infeasibility_string = to_string(filter.infeasibility[position]);
-      const std::string objective_string = to_string(filter.objective[position]);
-
-      // compute lengths of columns
-      const size_t infeasibility_length = infeasibility_string.size();
-      const size_t number_infeasibility_spaces = (infeasibility_length < fixed_length_column1) ? fixed_length_column1 - infeasibility_length : 0;
-      const size_t objective_length = objective_string.size();
-      const size_t number_objective_spaces = (objective_length < fixed_length_column2) ? fixed_length_column2 - objective_length : 0;
-
-      // print line
-      stream << "│ " << infeasibility_string;
-      for ([[maybe_unused]] size_t k: Range(number_infeasibility_spaces)) {
-         stream << ' ';
-      }
-      stream << "│ " << objective_string;
-      for ([[maybe_unused]] size_t k: Range(number_objective_spaces)) {
-         stream << ' ';
-      }
-      stream << "│\n";
+      print_line(stream, to_string(filter.infeasibility[position]), to_string(filter.objective[position]));
    }
+   // print upper bound
+   print_line(stream, to_string(filter.infeasibility_upper_bound), "-");
    stream << "└───────────────┴───────────┘\n";
-   std::cout << "Infeasibility upper bound: " << filter.infeasibility_upper_bound << '\n';
    return stream;
 }

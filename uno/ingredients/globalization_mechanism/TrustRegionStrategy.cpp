@@ -122,20 +122,24 @@ void TrustRegionStrategy::possibly_increase_radius(double step_norm) {
    // increase the radius if the trust-region is active
    if (step_norm >= this->radius - this->activity_tolerance) {
       this->radius *= this->increase_factor;
+      DEBUG << "Trust-region radius increased to " << this->radius << '\n';
    }
 }
 
 void TrustRegionStrategy::decrease_radius(double step_norm) {
    // reduce the radius to a value smaller than the primal step norm (otherwise, the reduction won't have an effect)
    this->radius = std::min(this->radius, step_norm) / this->decrease_factor;
+   DEBUG << "Trust-region radius decreased to " << this->radius << '\n';
 }
 
 void TrustRegionStrategy::decrease_radius() {
    this->radius /= this->decrease_factor;
+   DEBUG << "Trust-region radius decreased to " << this->radius << '\n';
 }
 
 void TrustRegionStrategy::decrease_radius_aggressively() {
    this->radius /= this->aggressive_decrease_factor;
+   DEBUG << "Trust-region radius decreased to " << this->radius << '\n';
 }
 
 void TrustRegionStrategy::reset_radius() {
@@ -192,5 +196,5 @@ void TrustRegionStrategy::set_statistics(Statistics& statistics, const Iterate& 
 }
 
 void TrustRegionStrategy::print_iteration(size_t number_iterations) {
-   DEBUG << "\t### Trust-region inner iteration " << number_iterations << " with radius " << this->radius << "\n\n";
+   DEBUG << "\n\t### Trust-region inner iteration " << number_iterations << " with radius " << this->radius << "\n\n";
 }

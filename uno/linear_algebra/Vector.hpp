@@ -6,65 +6,98 @@
 
 #include <iostream>
 #include <vector>
-#include <cassert>
-#include "tools/Logger.hpp"
+#include <initializer_list>
 #include "symbolic/Range.hpp"
 
-// result <- x + scaling_factor * y
 template <typename ElementType>
-void add_vectors(const std::vector<ElementType>& x, const std::vector<ElementType>& y, ElementType scaling_factor, std::vector<ElementType>& result) {
-   assert(x.size() <= y.size() && "Vector.add_vectors: x is longer than y");
-   assert(x.size() <= result.size() && "Vector.add_vectors: result is not long enough");
+class Vector {
+public:
+   using value_type = ElementType;
+   // iterators
+   using iterator = typename std::vector<ElementType>::iterator;
+   using const_iterator = typename std::vector<ElementType>::const_iterator;
 
-   for (size_t index: Range(x.size())) {
-      result[index] = x[index] + scaling_factor * y[index];
+   // constructors and destructor
+   explicit Vector(size_t capacity = 0): vector(capacity) { }
+   explicit Vector(size_t capacity, ElementType value): vector(capacity, value) { }
+   Vector(std::initializer_list<ElementType> initializer_list): vector(initializer_list) { }
+   ~Vector() = default;
+
+   // copy assignment operator
+   template <typename Expression>
+   Vector& operator=(const Expression& expression) {
+      static_assert(std::is_same_v<typename Expression::value_type, ElementType>);
+      for (size_t index = 0; index < this->size(); index++) {
+         this->vector[index] = expression[index];
+      }
+      return *this;
    }
-}
 
-// result <- a*x + b*y
-template <typename ElementType>
-void add_vectors(ElementType a, const std::vector<ElementType>& x, ElementType b, const std::vector<ElementType>& y, std::vector<ElementType>& result) {
-   assert(x.size() <= y.size() && "Vector.add_vectors: x is longer than y");
-   assert(x.size() <= result.size() && "Vector.add_vectors: result is not long enough");
-
-   for (size_t index: Range(x.size())) {
-      result[index] = a*x[index] + b*y[index];
+   // move assignment operator
+   Vector& operator=(std::vector<ElementType>&& other) {
+      if (&other == this) {
+         return *this;
+      }
+      this->vector = std::move(other.vector);
+      return *this;
    }
-}
 
-template <typename ElementType>
-void initialize_vector(std::vector<ElementType>& x, ElementType value) {
-   for (ElementType& element: x) {
-      element = ElementType(value);
+   // random access
+   ElementType& operator[](size_t index) { return this->vector[index]; }
+   const ElementType& operator[](size_t index) const { return this->vector[index]; }
+
+   // size
+   [[nodiscard]] size_t size() const { return this->vector.size(); }
+   [[nodiscard]] bool empty() const { return (this->size() == 0); }
+   void resize(size_t new_size) { this->vector.resize(new_size); }
+
+   // iterators
+   iterator begin() noexcept { return this->vector.begin(); }
+   iterator end() noexcept { return this->vector.end(); }
+   const_iterator begin() const noexcept { return this->vector.cbegin(); }
+   const_iterator end() const noexcept { return this->vector.cend(); }
+
+   void fill(ElementType value) {
+      for (size_t index = 0; index < this->size(); index++) {
+         this->vector[index] = value;
+      }
    }
-}
 
-template <typename ElementType>
-void scale(std::vector<ElementType>& x, ElementType scaling_factor) {
-   for (ElementType& xi: x) {
-      xi *= scaling_factor;
+   void scale(ElementType factor) {
+      for (size_t index = 0; index < this->size(); index++) {
+         this->vector[index] *= factor;
+      }
    }
-}
 
-template <typename ElementType>
-ElementType dot_product(const std::vector<ElementType>& x, const std::vector<ElementType>& y) {
-   assert(x.size() == y.size() && "The vectors do not have the same size.");
-
-   ElementType result = ElementType(0);
-   for (size_t index: Range(x.size())) {
-      result += x[index]*y[index];
+   ElementType dot(const Vector<ElementType>& other) const {
+      ElementType result{0};
+      for (size_t index = 0; index < this->size(); index++) {
+         result += this->operator[](index) * other[index];
+      }
+      return result;
    }
-   return result;
-}
 
-template <typename ElementType>
-void copy_from(std::vector<ElementType>& destination, const std::vector<ElementType>& source, size_t length = std::numeric_limits<size_t>::max()) {
-   length = std::min(length, std::min(source.size(), destination.size()));
-   const auto source_start_position = std::cbegin(source);
-   const auto source_end_position = source_start_position + length;
-   const auto destination_position = std::begin(destination);
-   std::copy(source_start_position, source_end_position, destination_position);
-}
+   ElementType* data() { return this->vector.data(); }
+   const ElementType* data() const { return this->vector.data(); }
+
+   // sum operator
+   template <typename Expression>
+   Vector& operator+=(const Expression& expression) {
+      for (size_t index = 0; index < this->size(); index++) {
+         this->vector[index] += expression[index];
+      }
+      return *this;
+   }
+
+   void print(std::ostream& stream) const {
+      for (const ElementType& element: *this) {
+         stream << element << ' ';
+      }
+   }
+
+protected:
+   std::vector<ElementType> vector;
+};
 
 // use && to allow temporaries (such as std::cout or logger DEBUG, WARNING, etc)
 template <typename Array, typename Stream>
@@ -75,27 +108,18 @@ void print_vector(Stream&& stream, const Array& x, size_t start = 0, size_t leng
    stream << '\n';
 }
 
-// check that an array of integers is in increasing order (x[i] <= x[i+1])
-template <typename Array>
-bool in_increasing_order(const Array& array, size_t length) {
-   size_t index = 0;
-   while (index < length - 1) {
-      if (array[index] > array[index + 1]) {
-         return false;
-      }
-      index++;
-   }
-   return true;
+template <typename ElementType>
+std::ostream& operator<<(std::ostream& stream, const Vector<ElementType>& vector) {
+   vector.print(stream);
+   return stream;
 }
 
-/*
-// see here: https://stackoverflow.com/questions/10173623/override-operators-for-an-existing-class
-template <typename T>
-void operator+=(std::vector<T>& vector, const T& value) {
-   for (T& element: vector) {
-      element += value;
+// subtract operator
+template <typename ResultExpression, typename Expression>
+void operator-=(ResultExpression&& result, const Expression& expression) {
+   for (size_t index = 0; index < result.size(); index++) {
+      result[index] -= expression[index];
    }
 }
-*/
 
 #endif // UNO_VECTOR_H

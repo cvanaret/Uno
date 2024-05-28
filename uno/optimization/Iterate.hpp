@@ -4,7 +4,6 @@
 #ifndef UNO_ITERATE_H
 #define UNO_ITERATE_H
 
-#include <vector>
 #include "Evaluations.hpp"
 #include "TerminationStatus.hpp"
 #include "ingredients/globalization_strategy/ProgressMeasures.hpp"
@@ -21,7 +20,7 @@ public:
 
    size_t number_variables;
    size_t number_constraints;
-   std::vector<double> primals; /*!< \f$\mathbb{R}^n\f$ primal variables */
+   Vector<double> primals;
    Multipliers multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
    double objective_multiplier{1.};
 

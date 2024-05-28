@@ -12,6 +12,8 @@
 class OptimizationProblem;
 class Options;
 class Statistics;
+template <typename ElementType>
+class Vector;
 
 class HessianModel {
 public:
@@ -21,8 +23,8 @@ public:
    std::unique_ptr<SymmetricMatrix<size_t, double>> hessian;
    size_t evaluation_count{0};
 
-   virtual void evaluate(Statistics& statistics, const OptimizationProblem& problem, const std::vector<double>& primal_variables,
-         const std::vector<double>& constraint_multipliers) = 0;
+   virtual void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
+         const Vector<double>& constraint_multipliers) = 0;
 };
 
 // Exact Hessian
@@ -30,8 +32,8 @@ class ExactHessian : public HessianModel {
 public:
    ExactHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options);
 
-   void evaluate(Statistics& statistics, const OptimizationProblem& problem, const std::vector<double>& primal_variables,
-         const std::vector<double>& constraint_multipliers) override;
+   void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
+         const Vector<double>& constraint_multipliers) override;
 };
 
 // Hessian with convexification (inertia correction)
@@ -39,8 +41,8 @@ class ConvexifiedHessian : public HessianModel {
 public:
    ConvexifiedHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options);
 
-   void evaluate(Statistics& statistics, const OptimizationProblem& problem, const std::vector<double>& primal_variables,
-         const std::vector<double>& constraint_multipliers) override;
+   void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
+         const Vector<double>& constraint_multipliers) override;
 
 protected:
    std::unique_ptr<DirectIndefiniteLinearSolver<size_t, double>> linear_solver; /*!< Solver that computes the inertia */

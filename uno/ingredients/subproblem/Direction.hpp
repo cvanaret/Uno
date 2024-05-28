@@ -11,6 +11,10 @@
 #include "optimization/Multipliers.hpp"
 #include "tools/Infinity.hpp"
 
+// forward declaration
+template <typename ElementType>
+class Vector;
+
 /*! \struct ConstraintActivity
 * \brief Constraints at lower or upper bound at the optimum solution
 *
@@ -47,7 +51,7 @@ public:
    size_t number_variables;
    size_t number_constraints;
 
-   std::vector<double> primals; /*!< Primal variables */
+   Vector<double> primals; /*!< Primal variables */
    Multipliers multipliers; /*!< Multipliers */
 
    SubproblemStatus status{SubproblemStatus::OPTIMAL}; /*!< Status of the solution */

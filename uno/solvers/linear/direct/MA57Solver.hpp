@@ -9,6 +9,10 @@
 #include "DirectIndefiniteLinearSolver.hpp"
 #include "linear_algebra/COOSymmetricMatrix.hpp"
 
+// forward declaration
+template <typename ElementType>
+class Vector;
+
 struct MA57Factorization {
    int n{};
    int nnz{};
@@ -31,8 +35,7 @@ public:
 
    void do_symbolic_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
    void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
-   void solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const std::vector<double>& rhs, std::vector<double>& result,
-         bool from_scratch) override;
+   void solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result, bool from_scratch) override;
 
    [[nodiscard]] std::tuple<size_t, size_t, size_t> get_inertia() const override;
    [[nodiscard]] size_t number_negative_eigenvalues() const override;

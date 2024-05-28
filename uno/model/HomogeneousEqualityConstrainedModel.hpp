@@ -7,7 +7,7 @@
 #include "Model.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/Iterate.hpp"
-#include "symbolic/ChainCollection.hpp"
+#include "symbolic/Concatenation.hpp"
 #include "symbolic/CollectionAdapter.hpp"
 #include "symbolic/Range.hpp"
 #include "tools/Infinity.hpp"
@@ -20,12 +20,12 @@ class HomogeneousEqualityConstrainedModel: public Model {
 public:
    explicit HomogeneousEqualityConstrainedModel(std::unique_ptr<Model> original_model);
 
-   [[nodiscard]] double evaluate_objective(const std::vector<double>& x) const override { return this->model->evaluate_objective(x); }
-   void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const override { this->model->evaluate_objective_gradient(x, gradient); }
-   void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const override;
-   void evaluate_constraint_gradient(const std::vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const override;
-   void evaluate_constraint_jacobian(const std::vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const override;
-   void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
+   [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override { return this->model->evaluate_objective(x); }
+   void evaluate_objective_gradient(const Vector<double>& x, SparseVector<double>& gradient) const override { this->model->evaluate_objective_gradient(x, gradient); }
+   void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const override;
+   void evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const override;
+   void evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const override;
+   void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          SymmetricMatrix<size_t, double>& hessian) const override;
 
    [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
@@ -45,8 +45,8 @@ public:
    [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override { return this->inequality_constraints; }
    [[nodiscard]] const std::vector<size_t>& get_linear_constraints() const override { return this->model->get_linear_constraints(); }
 
-   void initial_primal_point(std::vector<double>& x) const override;
-   void initial_dual_point(std::vector<double>& multipliers) const override { this->model->initial_dual_point(multipliers); }
+   void initial_primal_point(Vector<double>& x) const override;
+   void initial_dual_point(Vector<double>& multipliers) const override { this->model->initial_dual_point(multipliers); }
    void postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const override;
 
    [[nodiscard]] size_t number_objective_gradient_nonzeros() const override { return this->model->number_objective_gradient_nonzeros(); }
@@ -65,10 +65,10 @@ protected:
    std::vector<size_t> upper_bounded_slacks;
    std::vector<size_t> single_lower_bounded_slacks;
    std::vector<size_t> single_upper_bounded_slacks;
-   ChainCollection<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>&>> lower_bounded_variables;
-   ChainCollection<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>&>> upper_bounded_variables;
-   ChainCollection<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>&>> single_lower_bounded_variables;
-   ChainCollection<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>&>> single_upper_bounded_variables;
+   Concatenation<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>&>> lower_bounded_variables;
+   Concatenation<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>&>> upper_bounded_variables;
+   Concatenation<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>&>> single_lower_bounded_variables;
+   Concatenation<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>&>> single_upper_bounded_variables;
 };
 
 // Transform the problem into an equality-constrained problem with constraints c(x) = 0. This implies:
@@ -114,7 +114,7 @@ inline HomogeneousEqualityConstrainedModel::HomogeneousEqualityConstrainedModel(
    }
 }
 
-inline void HomogeneousEqualityConstrainedModel::evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const {
+inline void HomogeneousEqualityConstrainedModel::evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const {
    this->model->evaluate_constraints(x, constraints);
    // inequality constraints: add the slacks
    for (const auto [constraint_index, slack_index]: this->get_slacks()) {
@@ -127,7 +127,8 @@ inline void HomogeneousEqualityConstrainedModel::evaluate_constraints(const std:
    }
 }
 
-inline void HomogeneousEqualityConstrainedModel::evaluate_constraint_gradient(const std::vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const {
+inline void HomogeneousEqualityConstrainedModel::evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index,
+      SparseVector<double>& gradient) const {
    this->model->evaluate_constraint_gradient(x, constraint_index, gradient);
    // if the original constraint is an inequality, add the slack contribution
    if (this->model->get_constraint_bound_type(constraint_index) != EQUAL_BOUNDS) {
@@ -136,7 +137,7 @@ inline void HomogeneousEqualityConstrainedModel::evaluate_constraint_gradient(co
    }
 }
 
-inline void HomogeneousEqualityConstrainedModel::evaluate_constraint_jacobian(const std::vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const {
+inline void HomogeneousEqualityConstrainedModel::evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const {
    this->model->evaluate_constraint_jacobian(x, constraint_jacobian);
    // add the slack contributions
    for (const auto [constraint_index, slack_index]: this->get_slacks()) {
@@ -144,8 +145,8 @@ inline void HomogeneousEqualityConstrainedModel::evaluate_constraint_jacobian(co
    }
 }
 
-inline void HomogeneousEqualityConstrainedModel::evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
-      SymmetricMatrix<size_t, double>& hessian) const {
+inline void HomogeneousEqualityConstrainedModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier,
+      const Vector<double>& multipliers, SymmetricMatrix<size_t, double>& hessian) const {
    this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian);
    // extend the dimension of the Hessian by finalizing the remaining columns (note: the slacks do not enter the Hessian)
    for (size_t constraint_index: Range(this->model->number_variables, this->number_variables)) {
@@ -186,7 +187,7 @@ inline BoundType HomogeneousEqualityConstrainedModel::get_variable_bound_type(si
    }
 }
 
-inline void HomogeneousEqualityConstrainedModel::initial_primal_point(std::vector<double>& x) const {
+inline void HomogeneousEqualityConstrainedModel::initial_primal_point(Vector<double>& x) const {
    this->model->initial_primal_point(x);
    // set the slacks
    for (const auto [_, slack_index]: this->get_slacks()) {

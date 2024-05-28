@@ -25,12 +25,12 @@ public:
    explicit AMPLModel(const std::string& file_name);
    ~AMPLModel() override;
 
-   [[nodiscard]] double evaluate_objective(const std::vector<double>& x) const override;
-   void evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const override;
-   void evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const override;
-   void evaluate_constraint_gradient(const std::vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const override;
-   void evaluate_constraint_jacobian(const std::vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const override;
-   void evaluate_lagrangian_hessian(const std::vector<double>& x, double objective_multiplier, const std::vector<double>& multipliers,
+   [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override;
+   void evaluate_objective_gradient(const Vector<double>& x, SparseVector<double>& gradient) const override;
+   void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const override;
+   void evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const override;
+   void evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const override;
+   void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          SymmetricMatrix<size_t, double>& hessian) const override;
 
    [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
@@ -50,8 +50,8 @@ public:
    [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
    [[nodiscard]] const std::vector<size_t>& get_linear_constraints() const override;
 
-   void initial_primal_point(std::vector<double>& x) const override;
-   void initial_dual_point(std::vector<double>& multipliers) const override;
+   void initial_primal_point(Vector<double>& x) const override;
+   void initial_dual_point(Vector<double>& multipliers) const override;
    void postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const override;
 
    [[nodiscard]] size_t number_objective_gradient_nonzeros() const override;
@@ -97,8 +97,21 @@ private:
    void generate_constraints();
 
    void set_number_hessian_nonzeros();
-   [[nodiscard]] size_t compute_hessian_number_nonzeros(double objective_multiplier, const std::vector<double>& multipliers) const;
+   [[nodiscard]] size_t compute_hessian_number_nonzeros(double objective_multiplier, const Vector<double>& multipliers) const;
    static void determine_bounds_types(const std::vector<double>& lower_bounds, const std::vector<double>& upper_bounds, std::vector<BoundType>& status);
 };
+
+// check that an array of integers is in increasing order (x[i] <= x[i+1])
+template <typename Array>
+bool in_increasing_order(const Array& array, size_t length) {
+   size_t index = 0;
+   while (index < length - 1) {
+      if (array[index] > array[index + 1]) {
+         return false;
+      }
+      index++;
+   }
+   return true;
+}
 
 #endif // UNO_AMPLMODEL_H

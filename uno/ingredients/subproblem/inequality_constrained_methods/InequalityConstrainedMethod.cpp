@@ -6,6 +6,7 @@
 #include "linear_algebra/Vector.hpp"
 #include "reformulation/l1RelaxedProblem.hpp"
 #include "tools/Options.hpp"
+#include "symbolic/VectorView.hpp"
 
 InequalityConstrainedMethod::InequalityConstrainedMethod(size_t number_variables, size_t number_constraints):
       Subproblem(number_variables, number_constraints),
@@ -19,8 +20,8 @@ InequalityConstrainedMethod::InequalityConstrainedMethod(size_t number_variables
 void InequalityConstrainedMethod::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) {
 }
 
-void InequalityConstrainedMethod::set_initial_point(const std::vector<double>& point) {
-   copy_from(this->initial_point, point);
+void InequalityConstrainedMethod::set_initial_point(const Vector<double>& point) {
+   this->initial_point = point;
 }
 
 void InequalityConstrainedMethod::initialize_feasibility_problem(const l1RelaxedProblem& /*problem*/, Iterate& /*current_iterate*/) {
@@ -62,15 +63,11 @@ void InequalityConstrainedMethod::set_linearized_constraint_bounds(const Optimiz
    }
 }
 
-void InequalityConstrainedMethod::compute_dual_displacements(const OptimizationProblem& problem, const Iterate& current_iterate, Direction& direction) {
-   // compute dual *displacements* (note: active-set methods usually compute the new duals, not the displacements)
-   for (size_t constraint_index: Range(problem.number_constraints)) {
-      direction.multipliers.constraints[constraint_index] -= current_iterate.multipliers.constraints[constraint_index];
-   }
-   for (size_t variable_index: Range(problem.number_variables)) {
-      direction.multipliers.lower_bounds[variable_index] -= current_iterate.multipliers.lower_bounds[variable_index];
-      direction.multipliers.upper_bounds[variable_index] -= current_iterate.multipliers.upper_bounds[variable_index];
-   }
+void InequalityConstrainedMethod::compute_dual_displacements(const Iterate& current_iterate, Direction& direction) {
+   // compute dual *displacements* (active-set methods usually compute the new duals, not the displacements)
+   view(direction.multipliers.constraints, 0, current_iterate.number_constraints) -= current_iterate.multipliers.constraints;
+   view(direction.multipliers.lower_bounds, 0, current_iterate.number_variables) -= current_iterate.multipliers.lower_bounds;
+   view(direction.multipliers.upper_bounds, 0, current_iterate.number_variables) -= current_iterate.multipliers.upper_bounds;
 }
 
 // auxiliary measure is 0 in inequality-constrained methods
@@ -79,7 +76,7 @@ void InequalityConstrainedMethod::set_auxiliary_measure(const Model& /*model*/, 
 }
 
 double InequalityConstrainedMethod::compute_predicted_auxiliary_reduction_model(const Model& /*model*/, const Iterate& /*current_iterate*/,
-      const Direction& /*direction*/, double /*step_length*/) const {
+      const Vector<double>& /*primal_direction*/, double /*step_length*/) const {
    return 0.;
 }
 

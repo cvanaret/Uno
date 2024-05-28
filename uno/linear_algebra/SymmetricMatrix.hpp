@@ -17,10 +17,10 @@ class SymmetricMatrix: public Matrix<IndexType, ElementType> {
 public:
    class iterator {
    public:
-      iterator(const SymmetricMatrix<IndexType, ElementType>& matrix, size_t column_index, size_t nonzero_index):
+      iterator(const SymmetricMatrix<IndexType, ElementType>& matrix, IndexType column_index, IndexType nonzero_index):
          matrix(matrix), column_index(column_index), nonzero_index(nonzero_index) { }
 
-      [[nodiscard]] std::tuple<size_t, size_t, ElementType> operator*() const {
+      [[nodiscard]] std::tuple<IndexType, IndexType, ElementType> operator*() const {
          return this->matrix.dereference_iterator(this->column_index, this->nonzero_index);
       }
 
@@ -35,8 +35,8 @@ public:
 
    protected:
       const SymmetricMatrix<IndexType, ElementType>& matrix;
-      size_t column_index;
-      size_t nonzero_index;
+      IndexType column_index;
+      IndexType nonzero_index;
    };
 
    using value_type = ElementType;
@@ -49,14 +49,8 @@ public:
    virtual ~SymmetricMatrix() = default;
 
    virtual void reset();
-
-   [[nodiscard]] size_t number_rows() const;
-   [[nodiscard]] size_t number_columns() const;
-
-   template <typename VectorType, typename ResultType>
-   void product(const VectorType& vector, ResultType& result) const;
-
-   [[nodiscard]] ElementType quadratic_product(const std::vector<ElementType>& x, const std::vector<ElementType>& y) const;
+   template <typename Vector1, typename Vector2>
+   ElementType quadratic_product(const Vector1& x, const Vector2& y) const;
 
    // build the matrix incrementally
    virtual void insert(ElementType element, IndexType row_index, IndexType column_index) = 0;
@@ -65,8 +59,8 @@ public:
    [[nodiscard]] virtual ElementType smallest_diagonal_entry() const = 0;
    virtual void set_regularization(const std::function<ElementType(IndexType /*index*/)>& regularization_function) = 0;
 
-   [[nodiscard]] iterator begin() const { return iterator(*this, 0, 0); }
-   [[nodiscard]] iterator end() const { return iterator(*this, this->dimension, this->number_nonzeros); }
+   [[nodiscard]] iterator begin() const { return iterator(*this, IndexType(0), IndexType(0)); }
+   [[nodiscard]] iterator end() const { return iterator(*this, IndexType(this->dimension), IndexType(this->number_nonzeros)); }
 
    [[nodiscard]] const ElementType* data_raw_pointer() const;
 
@@ -80,8 +74,8 @@ protected:
    const bool use_regularization;
 
    // virtual iterator functions
-   [[nodiscard]] virtual std::tuple<size_t, size_t, ElementType> dereference_iterator(size_t column_index, size_t nonzero_index) const = 0;
-   virtual void increment_iterator(size_t& column_index, size_t& nonzero_index) const = 0;
+   [[nodiscard]] virtual std::tuple<IndexType, IndexType, ElementType> dereference_iterator(IndexType column_index, IndexType nonzero_index) const = 0;
+   virtual void increment_iterator(IndexType& column_index, IndexType& nonzero_index) const = 0;
 };
 
 // implementation
@@ -103,34 +97,22 @@ void SymmetricMatrix<IndexType, ElementType>::reset() {
 }
 
 template <typename IndexType, typename ElementType>
-size_t SymmetricMatrix<IndexType, ElementType>::number_rows() const {
-   return this->dimension;
-}
-
-template <typename IndexType, typename ElementType>
-size_t SymmetricMatrix<IndexType, ElementType>::number_columns() const {
-   return this->dimension;
-}
-
-template <typename IndexType, typename ElementType>
-template <typename VectorType, typename ResultType>
-void SymmetricMatrix<IndexType, ElementType>::product(const VectorType& vector, ResultType& result) const {
-   for (const auto [row_index, column_index, entry]: *this) {
-      result[row_index] += entry*vector[column_index];
-      // off-diagonal element on the other side of the diagonal
-      if (row_index != column_index) {
-         result[column_index] += entry*vector[row_index];
-      }
-   }
-}
-
-template <typename IndexType, typename ElementType>
-ElementType SymmetricMatrix<IndexType, ElementType>::quadratic_product(const std::vector<ElementType>& x, const std::vector<ElementType>& y) const {
+template <typename Vector1, typename Vector2>
+ElementType SymmetricMatrix<IndexType, ElementType>::quadratic_product(const Vector1& x, const Vector2& y) const {
+   static_assert(std::is_same_v<typename Vector1::value_type, ElementType>);
+   static_assert(std::is_same_v<typename Vector2::value_type, ElementType>);
    assert(x.size() == y.size() && "SymmetricMatrix::quadratic_product: the two vectors x and y do not have the same size");
 
    ElementType result = ElementType(0);
    for (const auto [row_index, column_index, element]: *this) {
-      result += (row_index == column_index ? ElementType(1) : ElementType(2)) * element * x[row_index] * y[column_index];
+      if (row_index == column_index) {
+         // diagonal term
+         result += element * x[row_index] * y[row_index];
+      }
+      else {
+         // off-diagonal term
+         result += element * (x[row_index] * y[column_index] + x[column_index] * y[row_index]);
+      }
    }
    return result;
 }

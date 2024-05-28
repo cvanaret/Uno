@@ -17,6 +17,8 @@ class Options;
 class Statistics;
 template <typename IndexType, typename ElementType>
 class SymmetricMatrix;
+template <typename ElementType>
+class Vector;
 class WarmstartInformation;
 
 class ConstraintRelaxationStrategy {
@@ -34,7 +36,7 @@ public:
    virtual void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          WarmstartInformation& warmstart_information) = 0;
    virtual void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         const std::vector<double>& initial_point, WarmstartInformation& warmstart_information) = 0;
+         const Vector<double>& initial_point, WarmstartInformation& warmstart_information) = 0;
    [[nodiscard]] virtual bool solving_feasibility_problem() const = 0;
    virtual void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate) = 0;
 
@@ -54,9 +56,10 @@ protected:
 
    void set_objective_measure(Iterate& iterate) const;
    void set_infeasibility_measure(Iterate& iterate) const;
-   [[nodiscard]] double compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction, double step_length) const;
-   [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction_model(const Iterate& current_iterate, const Direction& direction,
-         double step_length, const SymmetricMatrix<size_t, double>& hessian) const;
+   [[nodiscard]] double compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Vector<double>& primal_direction,
+         double step_length) const;
+   [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction_model(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length, const SymmetricMatrix<size_t, double>& hessian) const;
 
    void compute_primal_dual_residuals(const OptimizationProblem& optimality_problem, const OptimizationProblem& feasibility_problem, Iterate& iterate);
    void evaluate_lagrangian_gradient(Iterate& iterate, const Multipliers& multipliers) const;
