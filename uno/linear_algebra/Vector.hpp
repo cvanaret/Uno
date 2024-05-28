@@ -20,25 +20,36 @@ public:
    // constructors and destructor
    explicit Vector(size_t capacity = 0): vector(capacity) { }
    explicit Vector(size_t capacity, ElementType value): vector(capacity, value) { }
+   Vector(const Vector<ElementType>& other): vector(other.vector) { }
+   Vector(Vector<ElementType>&& other) noexcept: vector(std::move(other.vector)) { }
    Vector(std::initializer_list<ElementType> initializer_list): vector(initializer_list) { }
    ~Vector() = default;
 
    // copy assignment operator
+   Vector& operator=(const Vector<ElementType>& other) {
+      if (this != &other) {
+         for (size_t index = 0; index < this->size(); index++) {
+            this->vector[index] = other[index];
+         }
+      }
+      return *this;
+   }
+
+   // move assignment operator
+   Vector& operator=(Vector<ElementType>&& other) noexcept {
+      if (this != &other) {
+         this->vector = std::move(other.vector);
+      }
+      return *this;
+   }
+
+   // assignment operator from an expression
    template <typename Expression>
    Vector& operator=(const Expression& expression) {
       static_assert(std::is_same_v<typename Expression::value_type, ElementType>);
       for (size_t index = 0; index < this->size(); index++) {
          this->vector[index] = expression[index];
       }
-      return *this;
-   }
-
-   // move assignment operator
-   Vector& operator=(std::vector<ElementType>&& other) {
-      if (&other == this) {
-         return *this;
-      }
-      this->vector = std::move(other.vector);
       return *this;
    }
 
@@ -58,14 +69,14 @@ public:
    const_iterator end() const noexcept { return this->vector.cend(); }
 
    void fill(ElementType value) {
-      for (size_t index = 0; index < this->size(); index++) {
-         this->vector[index] = value;
+      for (auto& element: *this) {
+         element = value;
       }
    }
 
    void scale(ElementType factor) {
-      for (size_t index = 0; index < this->size(); index++) {
-         this->vector[index] *= factor;
+      for (auto& element: *this) {
+         element *= factor;
       }
    }
 
