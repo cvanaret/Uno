@@ -5,49 +5,53 @@
 #define UNO_INDICATOR_H
 
 // Indicator: componentwise evaluation of a predicate
-template <typename E, typename Predicate>
+template <typename Expression, typename Predicate>
 class Indicator {
 public:
-   using value_type = typename std::remove_reference_t<E>::value_type;
+   using value_type = typename std::remove_reference_t<Expression>::value_type;
 
-   Indicator(E&& expression, double constant, Predicate predicate):
-      expression(std::forward<E>(expression)), constant(constant), predicate(predicate) {
+   Indicator(Expression&& expression, value_type constant, Predicate predicate):
+      expression(std::forward<Expression>(expression)), constant(constant), predicate(predicate) {
    }
    [[nodiscard]] size_t size() const { return this->expression.size(); }
-   [[nodiscard]] typename Indicator::value_type operator[](size_t index) const {
-      return this->predicate(this->expression[index], this->constant) ? 1. : 0.;
+   [[nodiscard]] value_type operator[](size_t index) const {
+      return this->predicate(this->expression[index], this->constant) ? value_type(1) : value_type(0);
    }
 
 protected:
-   E expression;
-   const double constant;
+   Expression expression;
+   const value_type constant;
    Predicate* predicate; // function pointer
 };
 
 // free functions
-inline bool less_than(double a, double b) { return a <= b; }
-inline bool strictly_less_than(double a, double b) { return a < b; }
-inline bool greater_than(double a, double b) { return a >= b; }
-inline bool strictly_greater_than(double a, double b) { return a > b; }
+template <typename ElementType>
+inline bool less_than(ElementType a, ElementType b) { return a <= b; }
+template <typename ElementType>
+inline bool strictly_less_than(ElementType a, ElementType b) { return a < b; }
+template <typename ElementType>
+inline bool greater_than(ElementType a, ElementType b) { return a >= b; }
+template <typename ElementType>
+inline bool strictly_greater_than(ElementType a, ElementType b) { return a > b; }
 
-template <typename E>
-Indicator<E, decltype(less_than)> operator<=(E&& expression, double constant) {
-   return {std::forward<E>(expression), constant, less_than};
+template <typename Expression, typename ElementType = typename Expression::value_type>
+Indicator<Expression, decltype(less_than<ElementType>)> operator<=(Expression&& expression, ElementType constant) {
+   return {std::forward<Expression>(expression), constant, less_than<ElementType>};
 }
 
-template <typename E>
-Indicator<E, decltype(strictly_less_than)> operator<(E&& expression, double constant) {
-   return {std::forward<E>(expression), constant, strictly_less_than};
+template <typename Expression, typename ElementType = typename Expression::value_type>
+Indicator<Expression, decltype(strictly_less_than<ElementType>)> operator<(Expression&& expression, ElementType constant) {
+   return {std::forward<Expression>(expression), constant, strictly_less_than<ElementType>};
 }
 
-template <typename E>
-Indicator<E, decltype(greater_than)> operator>=(E&& expression, double constant) {
-   return {std::forward<E>(expression), constant, greater_than};
+template <typename Expression, typename ElementType = typename Expression::value_type>
+Indicator<Expression, decltype(greater_than<ElementType>)> operator>=(Expression&& expression, ElementType constant) {
+   return {std::forward<Expression>(expression), constant, greater_than<ElementType>};
 }
 
-template <typename E>
-Indicator<E, decltype(strictly_greater_than)> operator>(E&& expression, double constant) {
-   return {std::forward<E>(expression), constant, strictly_greater_than};
+template <typename Expression, typename ElementType = typename Expression::value_type>
+Indicator<Expression, decltype(strictly_greater_than<ElementType>)> operator>(Expression&& expression, ElementType constant) {
+   return {std::forward<Expression>(expression), constant, strictly_greater_than<ElementType>};
 }
 
 #endif // UNO_INDICATOR_H

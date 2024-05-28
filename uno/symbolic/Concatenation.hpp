@@ -14,7 +14,7 @@ public:
    Concatenation(Collection1&& collection1, Collection2&& collection2);
    [[nodiscard]] size_t size() const override;
 
-   [[nodiscard]] typename Concatenation::value_type dereference_iterator(size_t index) const override {
+   typename Concatenation::value_type dereference_iterator(size_t index) const override {
       const size_t collection1_size = this->collection1.size();
       if (index < collection1_size) {
          return collection1.dereference_iterator(index);
