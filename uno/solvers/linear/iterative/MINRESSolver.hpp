@@ -46,12 +46,10 @@ private:
    Vector<NumericalType> p_k;
    Vector<NumericalType> v_km1;
    Vector<NumericalType> v_k;
-   Vector<NumericalType> v_kp1;
    Vector<NumericalType> d_km2;
    Vector<NumericalType> d_km1;
    Vector<NumericalType> d_k;
    Vector<NumericalType> x_k;
-   //NumericalType beta_k;
    NumericalType epsilon_k{0};
    NumericalType phi_km1;
    NumericalType delta1_k{0};
@@ -68,7 +66,7 @@ MINRESSolver<IndexType, NumericalType, LinearOperator>::MINRESSolver(const Linea
    linear_operator(linear_operator),
    max_dimension(max_dimension),
    p_k(max_dimension),
-   v_km1(max_dimension), v_k(max_dimension), v_kp1(max_dimension),
+   v_km1(max_dimension), v_k(max_dimension),
    d_km2(max_dimension), d_km1(max_dimension), d_k(max_dimension),
    x_k(max_dimension) {
 }
@@ -88,10 +86,10 @@ void MINRESSolver<IndexType, NumericalType, LinearOperator>::solve_indefinite_sy
    
    this->v_k = rhs;
    this->v_k.scale(NumericalType(1)/beta_k);
+   // std::cout << "Current x: "; print_vector(std::cout, this->x_k);
    
    bool termination = false;
    while (not termination) {
-      // std::cout << "\nCurrent x: "; print_vector(std::cout, this->x_k);
       // std::cout << "v_" << this->iteration << " = "; print_vector(std::cout, v_k);
       
       // compute the Lanczos step
@@ -128,22 +126,22 @@ void MINRESSolver<IndexType, NumericalType, LinearOperator>::solve_indefinite_sy
          
          // update x_k
          this->x_k += tau_k * this->d_k;
+         // std::cout << "Current x: "; print_vector(std::cout, this->x_k);
          
          // update v_k
+         this->v_km1 = this->v_k;
          if (std::abs(beta_kp1) >= this->tolerance) {
-            this->v_kp1 = this->p_k;
-            this->v_kp1.scale(NumericalType(1)/beta_kp1);
+            this->v_k = this->p_k;
+            this->v_k.scale(NumericalType(1)/beta_kp1);
          }
          else {
             break;
          }
+         // update the quantities for the next iteration
          beta_k = beta_kp1;
          this->delta1_k = delta1_kp1;
          this->epsilon_k = epsilon_kp1;
          this->phi_km1 = phi_k;
-         
-         this->v_km1 = this->v_k;
-         this->v_k = this->v_kp1;
          this->d_km2 = this->d_km1;
          this->d_km1 = this->d_k;
       }
@@ -164,7 +162,7 @@ std::pair<NumericalType, NumericalType> MINRESSolver<IndexType, NumericalType, L
    // compute alpha_k = v_k^T A v_k
    const NumericalType alpha_k = this->v_k.dot(this->p_k);
    
-   // compute the full p_k = p_k - beta_k v_k-1 - alpha_k v_k
+   // compute p_k = p_k - beta_k v_k-1 - alpha_k v_k
    this->p_k = this->p_k - beta_k * this->v_km1 - alpha_k * this->v_k;
    
    // compute beta_k+1 = ||p_k||
