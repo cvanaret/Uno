@@ -28,6 +28,7 @@ struct GivensRotation {
    NumericalType sine;
 };
 
+// implementation of MINRES based on https://web.stanford.edu/group/SOL/dissertations/sou-cheng-choi-thesis.pdf, p26
 template <typename IndexType, typename NumericalType, typename LinearOperator>
 class MINRESSolver : public SymmetricIndefiniteLinearSolver<IndexType, NumericalType> {
 public:
@@ -53,13 +54,12 @@ private:
    //NumericalType beta_k;
    NumericalType epsilon_k{0};
    NumericalType phi_km1;
-   NumericalType tau_km1;
    NumericalType delta1_k{0};
-   GivensRotation<NumericalType> givens_rotation_km1{-1, 0};
+   GivensRotation<NumericalType> givens_rotation{-1, 0};
    
    // functions
-   std::pair<NumericalType, NumericalType> compute_lanczos_step(NumericalType beta_k);
-   NumericalType compute_symmetric_orthogonalization(NumericalType a, NumericalType b);
+   [[nodiscard]] std::pair<NumericalType, NumericalType> compute_lanczos_step(NumericalType beta_k);
+   [[nodiscard]] NumericalType compute_symmetric_orthogonalization(NumericalType a, NumericalType b);
 };
 
 template <typename IndexType, typename NumericalType, typename LinearOperator>
@@ -83,7 +83,7 @@ void MINRESSolver<IndexType, NumericalType, LinearOperator>::solve_indefinite_sy
    // compute beta_1 and v_1
    NumericalType beta_k = std::sqrt(rhs.dot(rhs));
    // set phi_0 = tau_0 = beta_1
-   this->phi_km1 = this->tau_km1 = beta_k;
+   this->phi_km1 = beta_k;
    // std::cout << "beta_1 = " << beta_k << '\n';
    
    this->v_k = rhs;
@@ -99,29 +99,29 @@ void MINRESSolver<IndexType, NumericalType, LinearOperator>::solve_indefinite_sy
       // std::cout << "beta_" << this->iteration+1 << " = " << lanczos_coefs.beta_kp1 << '\n';
       
       // last left orthogonalization on middle two entries in last column of Tk
-      const NumericalType delta2_k = this->givens_rotation_km1.cosine*this->delta1_k + this->givens_rotation_km1.sine*alpha_k;
-      const NumericalType gamma1_k = this->givens_rotation_km1.sine*this->delta1_k - this->givens_rotation_km1.cosine*alpha_k;
+      const NumericalType delta2_k = this->givens_rotation.cosine * this->delta1_k + this->givens_rotation.sine * alpha_k;
+      const NumericalType gamma1_k = this->givens_rotation.sine * this->delta1_k - this->givens_rotation.cosine * alpha_k;
       
       // test for negative curvature descent
-      if (this->givens_rotation_km1.cosine*gamma1_k >= NumericalType(0)) {
+      if (this->givens_rotation.cosine * gamma1_k >= NumericalType(0)) {
          // std::cout << this->givens_rotation_km1.cosine*gamma1_k << '\n';
          // std::cout << "DIRECTION OF NEGATIVE CURVATURE\n";
       }
       
       // last left orthogonalization to produce first two entries of T_k+1 e_k+1
-      const NumericalType epsilon_kp1 = this->givens_rotation_km1.sine*beta_kp1;
-      const NumericalType delta1_kp1 = -this->givens_rotation_km1.cosine*beta_kp1;
+      const NumericalType epsilon_kp1 = this->givens_rotation.sine * beta_kp1;
+      const NumericalType delta1_kp1 = -this->givens_rotation.cosine * beta_kp1;
       
       // current left orthogonalization to zero out beta_k+1
       const NumericalType gamma2_k = this->compute_symmetric_orthogonalization(gamma1_k, beta_kp1);
       
       // right-hand side, residual norms, and matrix norm
-      const NumericalType tau_k = this->givens_rotation_km1.cosine*this->phi_km1; // step length
-      const NumericalType phi_k = this->givens_rotation_km1.sine*this->phi_km1;
+      const NumericalType tau_k = this->givens_rotation.cosine * this->phi_km1; // step length
+      const NumericalType phi_k = this->givens_rotation.sine * this->phi_km1;
       // TODO
       
       // update solution and matrix condition number
-      if (std::abs(gamma2_k) >= NumericalType(tolerance)) {
+      if (std::abs(gamma2_k) >= this->tolerance) {
          // update d_k
          this->d_k = this->v_k - delta2_k * this->d_km1 - this->epsilon_k * this->d_km2;
          this->d_k.scale(NumericalType(1)/gamma2_k);
@@ -130,7 +130,7 @@ void MINRESSolver<IndexType, NumericalType, LinearOperator>::solve_indefinite_sy
          this->x_k += tau_k * this->d_k;
          
          // update v_k
-         if (std::abs(beta_kp1) >= NumericalType(tolerance)) {
+         if (std::abs(beta_kp1) >= this->tolerance) {
             this->v_kp1 = this->p_k;
             this->v_kp1.scale(NumericalType(1)/beta_kp1);
          }
@@ -140,7 +140,6 @@ void MINRESSolver<IndexType, NumericalType, LinearOperator>::solve_indefinite_sy
          beta_k = beta_kp1;
          this->delta1_k = delta1_kp1;
          this->epsilon_k = epsilon_kp1;
-         this->tau_km1 = tau_k;
          this->phi_km1 = phi_k;
          
          this->v_km1 = this->v_k;
@@ -189,31 +188,31 @@ NumericalType sign(NumericalType x) {
 template <typename IndexType, typename NumericalType, typename LinearOperator>
 NumericalType MINRESSolver<IndexType, NumericalType, LinearOperator>::compute_symmetric_orthogonalization(NumericalType a, NumericalType b) {
    if (b == NumericalType(0)) {
-      this->givens_rotation_km1.sine = NumericalType(0);
+      this->givens_rotation.sine = NumericalType(0);
       if (a == NumericalType(0)) {
-         this->givens_rotation_km1.cosine = NumericalType(1);
+         this->givens_rotation.cosine = NumericalType(1);
       }
       else {
-         this->givens_rotation_km1.cosine = sign(a);
+         this->givens_rotation.cosine = sign(a);
       }
       return std::abs(a);
    }
    else if (a == NumericalType(0)) {
-      this->givens_rotation_km1 = {NumericalType(0), sign(b)};
+      this->givens_rotation = {NumericalType(0), sign(b)};
       return std::abs(b);
    }
    else if (std::abs(b) > std::abs(a)) {
       const NumericalType tau = a/b;
       const NumericalType sine = sign(b)/std::sqrt(1 + tau*tau);
       const NumericalType cosine = sine*tau;
-      this->givens_rotation_km1 = {cosine, sine};
+      this->givens_rotation = {cosine, sine};
       return b/sine;
    }
    else {
       const NumericalType tau = b/a;
       const NumericalType cosine = sign(a)/std::sqrt(1 + tau*tau);
       const NumericalType sine = cosine*tau;
-      this->givens_rotation_km1 = {cosine, sine};
+      this->givens_rotation = {cosine, sine};
       return a/cosine;
    }
 }

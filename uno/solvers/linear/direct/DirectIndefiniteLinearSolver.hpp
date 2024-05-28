@@ -12,7 +12,7 @@ public:
    explicit DirectIndefiniteLinearSolver(size_t max_dimension): SymmetricIndefiniteLinearSolver<IndexType, ElementType>(max_dimension) {
    }
    virtual ~DirectIndefiniteLinearSolver() = default;
-   
+
    virtual void do_symbolic_factorization(const SymmetricMatrix<IndexType, ElementType>& matrix) = 0;
    virtual void do_numerical_factorization(const SymmetricMatrix<IndexType, ElementType>& matrix) = 0;
    
