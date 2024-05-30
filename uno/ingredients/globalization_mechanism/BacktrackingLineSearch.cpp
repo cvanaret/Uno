@@ -62,9 +62,9 @@ void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, c
       try {
          // assemble the trial iterate by going a fraction along the direction
          GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, direction, step_length,
-               // scale or not the dual directions with the step lengths
+               // scale or not the dual direction with the LS step length
                this->scale_duals_with_step_length ? step_length : 1.,
-               this->scale_duals_with_step_length ? direction.bound_dual_step_length : 1.);
+               direction.bound_dual_step_length);
 
          // check whether the trial iterate is accepted
          if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, step_length)) {
