@@ -5,6 +5,7 @@
 #define UNO_VECTOR_H
 
 #include <iostream>
+#include <limits>
 #include <vector>
 #include <initializer_list>
 #include "symbolic/Range.hpp"
