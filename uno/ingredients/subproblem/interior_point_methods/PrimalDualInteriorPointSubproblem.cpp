@@ -429,13 +429,13 @@ void PrimalDualInteriorPointSubproblem::assemble_primal_dual_direction(const Opt
 
    // "fraction-to-boundary" rule for primal variables and constraints multipliers
    const double tau = std::max(this->parameters.tau_min, 1. - this->barrier_parameter());
-   direction.primal_dual_step_length = PrimalDualInteriorPointSubproblem::primal_fraction_to_boundary(problem, current_iterate,
+   direction.primal_step_length = PrimalDualInteriorPointSubproblem::primal_fraction_to_boundary(problem, current_iterate,
          direction.primals, tau);
    // "fraction-to-boundary" rule for bound multipliers
    direction.bound_dual_step_length = PrimalDualInteriorPointSubproblem::dual_fraction_to_boundary(problem, current_iterate,
          direction.multipliers.lower_bounds, direction.multipliers.upper_bounds, tau);
    DEBUG << "Fraction-to-boundary rules:\n";
-   DEBUG << "primal-dual step length = " << direction.primal_dual_step_length << '\n';
+   DEBUG << "primal step length = " << direction.primal_step_length << '\n';
    DEBUG << "bound dual step length = " << direction.bound_dual_step_length << "\n\n";
 
    direction.subproblem_objective = this->evaluate_subproblem_objective(direction);

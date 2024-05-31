@@ -47,7 +47,7 @@ void BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const 
 void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
       Iterate& trial_iterate, const Direction& direction, WarmstartInformation& warmstart_information) {
    // most subproblem methods return a step length of 1. Interior-point methods however apply the fraction-to-boundary condition
-   double step_length = direction.primal_dual_step_length;
+   double step_length = direction.primal_step_length;
    bool reached_small_step_length = false;
    size_t number_iterations = 0;
    while (not reached_small_step_length) {
