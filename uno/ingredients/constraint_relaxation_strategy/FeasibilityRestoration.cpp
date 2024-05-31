@@ -63,6 +63,7 @@ void FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, 
       warmstart_information.set_cold_start();
    }
    */
+   direction.reset();
    // if we are in the optimality phase, solve the optimality problem
    if (this->current_phase == Phase::OPTIMALITY) {
       statistics.set("phase", "OPT");

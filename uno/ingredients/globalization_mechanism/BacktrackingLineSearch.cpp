@@ -34,7 +34,6 @@ void BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const 
    DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
    // compute the direction
-   this->direction.reset();
    this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, this->direction, warmstart_information);
    BacktrackingLineSearch::check_unboundedness(this->direction);
 
@@ -103,7 +102,6 @@ void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, c
       statistics.set("status", "LS failed");
       this->constraint_relaxation_strategy.switch_to_feasibility_problem(statistics, current_iterate);
       warmstart_information.set_cold_start();
-      this->direction.reset();
       this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, this->direction, this->direction.primals,
             warmstart_information);
       BacktrackingLineSearch::check_unboundedness(this->direction);

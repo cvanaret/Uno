@@ -63,6 +63,7 @@ void l1Relaxation::initialize(Statistics& statistics, Iterate& initial_iterate, 
 void l1Relaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
       WarmstartInformation& warmstart_information) {
    statistics.set("penalty param.", this->penalty_parameter);
+   direction.reset();
    if (0. < this->penalty_parameter) {
       this->solve_sequence_of_relaxed_subproblems(statistics, current_iterate, direction, warmstart_information);
    }

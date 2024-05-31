@@ -50,7 +50,6 @@ void TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Mod
             statistics.start_new_line();
          }
          // compute the direction within the trust region
-         this->direction.reset();
          this->constraint_relaxation_strategy.set_trust_region_radius(this->radius);
          this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, this->direction, warmstart_information);
 
