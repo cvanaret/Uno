@@ -307,8 +307,8 @@ void l1Relaxation::check_exact_relaxation(Iterate& iterate) const {
 }
 
 void l1Relaxation::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
-   statistics.set("complementarity", iterate.residuals.optimality_complementarity);
-   statistics.set("stationarity", iterate.residuals.optimality_stationarity);
+   statistics.set("complementarity", iterate.residuals.complementarity);
+   statistics.set("stationarity", iterate.residuals.stationarity);
 }
 
 size_t l1Relaxation::get_hessian_evaluation_count() const {

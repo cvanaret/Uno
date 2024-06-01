@@ -62,7 +62,7 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Optimizat
 
    // stationarity error
    this->evaluate_lagrangian_gradient(iterate, iterate.multipliers);
-   iterate.residuals.optimality_stationarity = optimality_problem.stationarity_error(iterate.lagrangian_gradient, iterate.objective_multiplier,
+   iterate.residuals.stationarity = optimality_problem.stationarity_error(iterate.lagrangian_gradient, iterate.objective_multiplier,
          this->residual_norm);
    iterate.residuals.feasibility_stationarity = feasibility_problem.stationarity_error(iterate.lagrangian_gradient, 0., this->residual_norm);
 
@@ -70,7 +70,7 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Optimizat
    iterate.residuals.infeasibility = this->model.constraint_violation(iterate.evaluations.constraints, this->residual_norm);
 
    // complementarity error
-   iterate.residuals.optimality_complementarity = optimality_problem.complementarity_error(iterate.primals, iterate.evaluations.constraints,
+   iterate.residuals.complementarity = optimality_problem.complementarity_error(iterate.primals, iterate.evaluations.constraints,
          iterate.multipliers, this->residual_norm);
    iterate.residuals.feasibility_complementarity = feasibility_problem.complementarity_error(iterate.primals, iterate.evaluations.constraints,
          iterate.multipliers, this->residual_norm);

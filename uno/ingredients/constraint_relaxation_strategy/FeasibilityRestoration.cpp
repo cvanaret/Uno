@@ -244,8 +244,8 @@ size_t FeasibilityRestoration::maximum_number_constraints() const {
 
 void FeasibilityRestoration::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
    if (this->current_phase == Phase::OPTIMALITY) {
-      statistics.set("complementarity", iterate.residuals.optimality_complementarity);
-      statistics.set("stationarity", iterate.residuals.optimality_stationarity);
+      statistics.set("complementarity", iterate.residuals.complementarity);
+      statistics.set("stationarity", iterate.residuals.stationarity);
    }
    else {
       statistics.set("complementarity", iterate.residuals.feasibility_complementarity);

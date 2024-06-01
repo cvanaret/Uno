@@ -66,21 +66,19 @@ TerminationStatus GlobalizationMechanism::check_termination(const Model& model, 
 
 TerminationStatus GlobalizationMechanism::check_convergence_with_given_tolerance(const Model& model, Iterate& current_iterate, double tolerance) const {
    // evaluate termination conditions based on optimality conditions
-   const bool optimality_stationarity =
-         (current_iterate.residuals.optimality_stationarity / current_iterate.residuals.stationarity_scaling <= tolerance);
+   const bool stationarity = (current_iterate.residuals.stationarity / current_iterate.residuals.stationarity_scaling <= tolerance);
    const bool feasibility_stationarity =
          (current_iterate.residuals.feasibility_stationarity / current_iterate.residuals.stationarity_scaling <= tolerance);
-   const bool optimality_complementarity =
-         (current_iterate.residuals.optimality_complementarity / current_iterate.residuals.complementarity_scaling <= tolerance);
+   const bool complementarity = (current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling <= tolerance);
    const bool feasibility_complementarity =
          (current_iterate.residuals.feasibility_complementarity / current_iterate.residuals.complementarity_scaling <= tolerance);
    const bool primal_feasibility = (current_iterate.residuals.infeasibility <= tolerance);
    const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(model.number_variables, tolerance);
 
    DEBUG << "\nTermination criteria for tolerance = " << tolerance << ":\n";
-   DEBUG << "Stationarity (optimality): " << std::boolalpha << optimality_stationarity << '\n';
+   DEBUG << "Stationarity: " << std::boolalpha << stationarity << '\n';
    DEBUG << "Stationarity (feasibility): " << std::boolalpha << feasibility_stationarity << '\n';
-   DEBUG << "Complementarity (optimality): " << std::boolalpha << optimality_complementarity << '\n';
+   DEBUG << "Complementarity: " << std::boolalpha << complementarity << '\n';
    DEBUG << "Complementarity (feasibility): " << std::boolalpha << feasibility_complementarity << '\n';
    DEBUG << "Primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
    DEBUG << "Not all zero multipliers: " << std::boolalpha << no_trivial_duals << "\n\n";
@@ -88,8 +86,8 @@ TerminationStatus GlobalizationMechanism::check_convergence_with_given_tolerance
    if (current_iterate.is_objective_computed && current_iterate.evaluations.objective < this->unbounded_objective_threshold) {
       return TerminationStatus::UNBOUNDED;
    }
-   else if (optimality_complementarity && primal_feasibility) {
-      if (0. < current_iterate.objective_multiplier && optimality_stationarity) {
+   else if (complementarity && primal_feasibility) {
+      if (0. < current_iterate.objective_multiplier && stationarity) {
          // feasible regular stationary point
          return TerminationStatus::FEASIBLE_KKT_POINT;
       }
