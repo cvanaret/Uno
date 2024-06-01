@@ -55,11 +55,7 @@ public:
    Multipliers multipliers; /*!< Multipliers */
 
    SubproblemStatus status{SubproblemStatus::OPTIMAL}; /*!< Status of the solution */
-
-   // step lengths (default value is 1. This doesn't hold for interior-point methods)
-   double primal_step_length{1.};
-   double bound_dual_step_length{1.};
-
+   
    double norm{INF<double>}; /*!< Norm of \f$x\f$ */
    double subproblem_objective{INF<double>}; /*!< Objective value */
    ActiveSet active_set; /*!< Active set */

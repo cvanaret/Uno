@@ -429,15 +429,23 @@ void PrimalDualInteriorPointSubproblem::assemble_primal_dual_direction(const Opt
 
    // "fraction-to-boundary" rule for primal variables and constraints multipliers
    const double tau = std::max(this->parameters.tau_min, 1. - this->barrier_parameter());
-   direction.primal_step_length = PrimalDualInteriorPointSubproblem::primal_fraction_to_boundary(problem, current_iterate,
+   const double primal_step_length = PrimalDualInteriorPointSubproblem::primal_fraction_to_boundary(problem, current_iterate,
          direction.primals, tau);
    // "fraction-to-boundary" rule for bound multipliers
-   direction.bound_dual_step_length = PrimalDualInteriorPointSubproblem::dual_fraction_to_boundary(problem, current_iterate,
+   const double bound_dual_step_length = PrimalDualInteriorPointSubproblem::dual_fraction_to_boundary(problem, current_iterate,
          direction.multipliers.lower_bounds, direction.multipliers.upper_bounds, tau);
    DEBUG << "Fraction-to-boundary rules:\n";
-   DEBUG << "primal step length = " << direction.primal_step_length << '\n';
-   DEBUG << "bound dual step length = " << direction.bound_dual_step_length << "\n\n";
-
+   DEBUG << "primal step length = " << primal_step_length << '\n';
+   DEBUG << "bound dual step length = " << bound_dual_step_length << "\n\n";
+   // scale the primal-dual variables
+   for (size_t variable_index: Range(problem.number_variables)) {
+      direction.primals[variable_index] *= primal_step_length;
+      direction.multipliers.lower_bounds[variable_index] *= bound_dual_step_length;
+      direction.multipliers.upper_bounds[variable_index] *= bound_dual_step_length;
+   }
+   for (size_t constraint_index: Range(problem.number_constraints)) {
+      direction.multipliers.constraints[constraint_index] *= primal_step_length;
+   }
    direction.subproblem_objective = this->evaluate_subproblem_objective(direction);
 }
 

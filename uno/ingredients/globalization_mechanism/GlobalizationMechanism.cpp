@@ -20,7 +20,7 @@ GlobalizationMechanism::GlobalizationMechanism(ConstraintRelaxationStrategy& con
 }
 
 void GlobalizationMechanism::assemble_trial_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-      double primal_step_length, double dual_step_length, double bound_dual_step_length) {
+      double primal_step_length, double dual_step_length) {
    trial_iterate.set_number_variables(current_iterate.primals.size());
    // take primal step
    trial_iterate.primals = current_iterate.primals + primal_step_length * direction.primals;
@@ -28,8 +28,8 @@ void GlobalizationMechanism::assemble_trial_iterate(const Model& model, Iterate&
    model.project_onto_variable_bounds(trial_iterate.primals);
    // take dual step: line-search carried out only on constraint multipliers. Bound multipliers updated with full bound dual step length
    trial_iterate.multipliers.constraints = current_iterate.multipliers.constraints + dual_step_length * direction.multipliers.constraints;
-   trial_iterate.multipliers.lower_bounds = current_iterate.multipliers.lower_bounds + bound_dual_step_length * direction.multipliers.lower_bounds;
-   trial_iterate.multipliers.upper_bounds = current_iterate.multipliers.upper_bounds + bound_dual_step_length * direction.multipliers.upper_bounds;
+   trial_iterate.multipliers.lower_bounds = current_iterate.multipliers.lower_bounds + direction.multipliers.lower_bounds;
+   trial_iterate.multipliers.upper_bounds = current_iterate.multipliers.upper_bounds + direction.multipliers.upper_bounds;
    trial_iterate.progress.reset();
    trial_iterate.is_objective_computed = false;
    trial_iterate.is_objective_gradient_computed = false;
