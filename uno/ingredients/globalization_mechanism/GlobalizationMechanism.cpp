@@ -96,7 +96,7 @@ TerminationStatus GlobalizationMechanism::check_convergence_with_given_tolerance
          return TerminationStatus::FEASIBLE_FJ_POINT;
       }
    }
-   else if (feasibility_complementarity && feasibility_stationarity) {
+   else if (not primal_feasibility && feasibility_complementarity && feasibility_stationarity) {
       // no primal feasibility, stationary point of constraint violation
       return TerminationStatus::INFEASIBLE_STATIONARY_POINT;
    }
