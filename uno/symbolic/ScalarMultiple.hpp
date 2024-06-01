@@ -5,27 +5,28 @@
 #define UNO_SCALARMULTIPLE_H
 
 // stores the expression (factor * expression) symbolically
-template <typename ExpressionType>
+template <typename Expression>
 class ScalarMultiple {
 public:
-   using value_type = typename std::remove_reference_t<ExpressionType>::value_type;
+   using value_type = typename std::remove_reference_t<Expression>::value_type;
 
-   ScalarMultiple(double factor, ExpressionType&& expression): factor(factor), expression(std::forward<ExpressionType>(expression)) { }
+   ScalarMultiple(value_type factor, Expression&& expression): factor(factor), expression(std::forward<Expression>(expression)) { }
 
    [[nodiscard]] constexpr size_t size() const { return this->expression.size(); }
-   [[nodiscard]] typename ScalarMultiple::value_type operator[](size_t index) const {
-      return (this->factor == 0.) ? 0. : this->factor * this->expression[index];
+   [[nodiscard]] value_type operator[](size_t index) const {
+      return (this->factor == value_type(0)) ? value_type(0) : this->factor * this->expression[index];
    }
 
 protected:
-   const double factor;
-   ExpressionType expression;
+   const value_type factor;
+   Expression expression;
 };
 
 // free function
-template <typename ExpressionType>
-inline ScalarMultiple<ExpressionType> operator*(double factor, ExpressionType&& expression) {
-   return ScalarMultiple<ExpressionType>(factor, std::forward<ExpressionType>(expression));
+template <typename Expression, typename ElementType = typename Expression::value_type,
+      typename std::enable_if<std::is_arithmetic_v<ElementType>, int>::type = 0>
+inline ScalarMultiple<Expression> operator*(ElementType factor, Expression&& expression) {
+   return ScalarMultiple<Expression>(factor, std::forward<Expression>(expression));
 }
 
 #endif // UNO_SCALARMULTIPLE_H

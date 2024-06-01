@@ -1,10 +1,14 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <cassert>
 #include <cmath>
 #include "BarrierParameterUpdateStrategy.hpp"
+#include "optimization/Iterate.hpp"
+#include "reformulation/OptimizationProblem.hpp"
 #include "symbolic/VectorExpression.hpp"
 #include "tools/Logger.hpp"
+#include "tools/Options.hpp"
 
 BarrierParameterUpdateStrategy::BarrierParameterUpdateStrategy(const Options& options):
    barrier_parameter(options.get_double("barrier_initial_parameter")),

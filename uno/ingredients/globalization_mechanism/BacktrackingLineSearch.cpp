@@ -2,11 +2,14 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cassert>
-#include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
+#include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategy.hpp"
 #include "BacktrackingLineSearch.hpp"
 #include "optimization/EvaluationErrors.hpp"
+#include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
+#include "tools/Options.hpp"
+#include "tools/Statistics.hpp"
 
 BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options):
       GlobalizationMechanism(constraint_relaxation_strategy, options),
@@ -31,7 +34,6 @@ void BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const 
    DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
    // compute the direction
-   this->direction.reset();
    this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, this->direction, warmstart_information);
    BacktrackingLineSearch::check_unboundedness(this->direction);
 
@@ -44,7 +46,7 @@ void BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const 
 void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
       Iterate& trial_iterate, const Direction& direction, WarmstartInformation& warmstart_information) {
    // most subproblem methods return a step length of 1. Interior-point methods however apply the fraction-to-boundary condition
-   double step_length = direction.primal_dual_step_length;
+   double step_length = direction.primal_step_length;
    bool reached_small_step_length = false;
    size_t number_iterations = 0;
    while (not reached_small_step_length) {
@@ -59,9 +61,9 @@ void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, c
       try {
          // assemble the trial iterate by going a fraction along the direction
          GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, direction, step_length,
-               // scale or not the dual directions with the step lengths
+               // scale or not the dual direction with the LS step length
                this->scale_duals_with_step_length ? step_length : 1.,
-               this->scale_duals_with_step_length ? direction.bound_dual_step_length : 1.);
+               direction.bound_dual_step_length);
 
          // check whether the trial iterate is accepted
          if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, step_length)) {
@@ -93,14 +95,13 @@ void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, c
 
    // reached a small step length: revert to solving the feasibility problem
    if (this->constraint_relaxation_strategy.solving_feasibility_problem()) {
-      throw std::runtime_error("LS on feasibility problem failed.");
+      throw std::runtime_error("Feasibility LS failed");
    }
    else {
       warmstart_information.set_cold_start();
       statistics.set("status", "LS failed");
       this->constraint_relaxation_strategy.switch_to_feasibility_problem(statistics, current_iterate);
       warmstart_information.set_cold_start();
-      this->direction.reset();
       this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, this->direction, this->direction.primals,
             warmstart_information);
       BacktrackingLineSearch::check_unboundedness(this->direction);
@@ -136,5 +137,5 @@ void BacktrackingLineSearch::set_statistics(Statistics& statistics, const Iterat
 }
 
 void BacktrackingLineSearch::print_iteration(size_t number_iterations, double primal_dual_step_length) {
-   DEBUG << "\tLINE SEARCH iteration " << number_iterations << ", step_length " << primal_dual_step_length << '\n';
+   DEBUG << "\n\tLINE SEARCH iteration " << number_iterations << ", step_length " << primal_dual_step_length << '\n';
 }

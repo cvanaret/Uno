@@ -4,12 +4,22 @@
 #ifndef UNO_CONSTRAINTRELAXATIONSTRATEGY_H
 #define UNO_CONSTRAINTRELAXATIONSTRATEGY_H
 
-#include "ingredients/subproblem/Direction.hpp"
-#include "optimization/Iterate.hpp"
-#include "optimization/WarmstartInformation.hpp"
-#include "reformulation/OptimizationProblem.hpp"
-#include "tools/Statistics.hpp"
-#include "tools/Options.hpp"
+#include <cstddef>
+#include "linear_algebra/Norm.hpp"
+
+// forward declarations
+class Direction;
+class Iterate;
+class Model;
+struct Multipliers;
+class OptimizationProblem;
+class Options;
+class Statistics;
+template <typename ElementType>
+class SymmetricMatrix;
+template <typename ElementType>
+class Vector;
+class WarmstartInformation;
 
 class ConstraintRelaxationStrategy {
 public:
@@ -26,7 +36,7 @@ public:
    virtual void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          WarmstartInformation& warmstart_information) = 0;
    virtual void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         const std::vector<double>& initial_point, WarmstartInformation& warmstart_information) = 0;
+         const Vector<double>& initial_point, WarmstartInformation& warmstart_information) = 0;
    [[nodiscard]] virtual bool solving_feasibility_problem() const = 0;
    virtual void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate) = 0;
 
@@ -46,16 +56,20 @@ protected:
 
    void set_objective_measure(Iterate& iterate) const;
    void set_infeasibility_measure(Iterate& iterate) const;
-   [[nodiscard]] double compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction, double step_length) const;
-   [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction_model(const Iterate& current_iterate, const Direction& direction,
-         double step_length, const SymmetricMatrix<double>& hessian) const;
+   [[nodiscard]] double compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Vector<double>& primal_direction,
+         double step_length) const;
+   [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction_model(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length, const SymmetricMatrix<double>& hessian) const;
 
    void compute_primal_dual_residuals(const OptimizationProblem& optimality_problem, const OptimizationProblem& feasibility_problem, Iterate& iterate);
    void evaluate_lagrangian_gradient(Iterate& iterate, const Multipliers& multipliers) const;
 
    [[nodiscard]] double compute_stationarity_scaling(const Iterate& iterate) const;
    [[nodiscard]] double compute_complementarity_scaling(const Iterate& iterate) const;
-   static void set_objective_statistics(Statistics& statistics, const Iterate& iterate);
+
+   void set_statistics(Statistics& statistics, const Iterate& iterate) const;
+   void set_progress_statistics(Statistics& statistics, const Iterate& iterate) const;
+   virtual void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const = 0;
 };
 
 #endif //UNO_CONSTRAINTRELAXATIONSTRATEGY_H

@@ -6,8 +6,10 @@
 
 #include <vector>
 #include <memory>
-#include "tools/Options.hpp"
 #include "tools/Infinity.hpp"
+
+// forward declaration
+class Options;
 
 struct FilterParameters {
    double beta; /*!< Margin around filter */
@@ -23,11 +25,13 @@ public:
    [[nodiscard]] double get_smallest_infeasibility() const;
    void set_infeasibility_upper_bound(double new_upper_bound);
 
-   virtual void add(double infeasibility_measure, double objective_measure);
-   virtual bool acceptable(double infeasibility_measure, double objective_measure);
-   virtual bool acceptable_wrt_current_iterate(double current_infeasibility_measure, double current_objective_measure, double trial_infeasibility_measure,
-         double trial_objective_measure);
-   virtual double compute_actual_objective_reduction(double current_objective_measure, double current_infeasibility_measure, double trial_objective_measure);
+   virtual void add(double current_infeasibility, double current_objective);
+   virtual bool acceptable(double trial_infeasibility, double trial_objective);
+   virtual bool acceptable_wrt_current_iterate(double current_infeasibility, double current_objective, double trial_infeasibility, double trial_objective);
+   virtual double compute_actual_objective_reduction(double current_objective, double current_infeasibility, double trial_objective);
+
+   [[nodiscard]] bool infeasibility_sufficient_reduction(double current_infeasibility, double trial_infeasibility) const;
+   [[nodiscard]] bool objective_sufficient_reduction(double current_objective, double trial_objective, double trial_infeasibility) const;
 
    friend std::ostream& operator<<(std::ostream& stream, Filter& filter);
 
@@ -40,7 +44,7 @@ protected:
    const FilterParameters parameters; /*!< Set of parameters */
 
    [[nodiscard]] bool is_empty() const;
-   [[nodiscard]] bool acceptable_wrt_upper_bound(double infeasibility_measure) const;
+   [[nodiscard]] bool acceptable_wrt_upper_bound(double trial_infeasibility) const;
    void left_shift(size_t start, size_t shift_size);
    void right_shift(size_t start, size_t shift_size);
 };

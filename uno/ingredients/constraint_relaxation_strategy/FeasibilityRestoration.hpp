@@ -10,7 +10,6 @@
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "reformulation/OptimalityProblem.hpp"
 #include "reformulation/l1RelaxedProblem.hpp"
-#include "tools/Options.hpp"
 
 enum class Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 
@@ -26,7 +25,7 @@ public:
 
    // direction computation
    void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction, WarmstartInformation& warmstart_information) override;
-   void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction, const std::vector<double>& initial_point,
+   void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction, const Vector<double>& initial_point,
          WarmstartInformation& warmstart_information) override;
    [[nodiscard]] bool solving_feasibility_problem() const override;
    void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate) override;
@@ -58,8 +57,7 @@ private:
    void evaluate_progress_measures(Iterate& iterate) const;
    [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length);
 
-   void set_statistics(Statistics& statistics, const Iterate& iterate) const;
-   void set_residuals_statistics(Statistics& statistics, const Iterate& iterate) const;
+   void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const override;
 };
 
 #endif //UNO_FEASIBILITYRESTORATION_H

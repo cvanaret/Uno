@@ -3,6 +3,7 @@
 
 #include <iomanip>
 #include "Result.hpp"
+#include "TerminationStatus.hpp"
 
 void Result::print(bool print_primal_dual_solution) const {
    std::cout << "Status:\t\t\t\t\t";

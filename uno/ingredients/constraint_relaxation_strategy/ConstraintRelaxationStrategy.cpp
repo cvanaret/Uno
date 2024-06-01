@@ -2,8 +2,16 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "ConstraintRelaxationStrategy.hpp"
+#include "ingredients/subproblem/Direction.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
+#include "model/Model.hpp"
+#include "optimization/Iterate.hpp"
+#include "optimization/Multipliers.hpp"
+#include "reformulation/OptimizationProblem.hpp"
 #include "symbolic/VectorView.hpp"
 #include "symbolic/Expression.hpp"
+#include "tools/Options.hpp"
+#include "tools/Statistics.hpp"
 
 ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Model& model, const Options& options):
       model(model),
@@ -27,20 +35,20 @@ void ConstraintRelaxationStrategy::set_objective_measure(Iterate& iterate) const
    };
 }
 
-double ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction,
-      double step_length) const {
+double ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate,
+      const Vector<double>& primal_direction, double step_length) const {
    // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
    const double current_constraint_violation = this->model.constraint_violation(current_iterate.evaluations.constraints, this->progress_norm);
    const double trial_linearized_constraint_violation = this->model.constraint_violation(current_iterate.evaluations.constraints + step_length *
-         (current_iterate.evaluations.constraint_jacobian * direction.primals), this->progress_norm);
+         (current_iterate.evaluations.constraint_jacobian * primal_direction), this->progress_norm);
    return current_constraint_violation - trial_linearized_constraint_violation;
 }
 
 std::function<double(double)> ConstraintRelaxationStrategy::compute_predicted_objective_reduction_model(const Iterate& current_iterate,
-      const Direction& direction, double step_length, const SymmetricMatrix<double>& hessian) const {
+      const Vector<double>& primal_direction, double step_length, const SymmetricMatrix<double>& hessian) const {
    // predicted objective reduction: "-∇f(x)^T (αd) - α^2/2 d^T H d"
-   const double directional_derivative = dot(direction.primals, current_iterate.evaluations.objective_gradient);
-   const double quadratic_term = hessian.quadratic_product(direction.primals, direction.primals);
+   const double directional_derivative = dot(primal_direction, current_iterate.evaluations.objective_gradient);
+   const double quadratic_term = hessian.quadratic_product(primal_direction, primal_direction);
    return [=](double objective_multiplier) {
       return step_length * (-objective_multiplier*directional_derivative) - step_length*step_length/2. * quadratic_term;
    };
@@ -74,8 +82,8 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Optimizat
 
 // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
 void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(Iterate& iterate, const Multipliers& multipliers) const {
-   initialize_vector(iterate.lagrangian_gradient.objective_contribution, 0.);
-   initialize_vector(iterate.lagrangian_gradient.constraints_contribution, 0.);
+   iterate.lagrangian_gradient.objective_contribution.fill(0.);
+   iterate.lagrangian_gradient.constraints_contribution.fill(0.);
 
    // objective gradient
    for (auto [variable_index, derivative]: iterate.evaluations.objective_gradient) {
@@ -105,9 +113,9 @@ double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Iterate&
    else {
       const double scaling_factor = this->residual_scaling_threshold * static_cast<double>(total_size);
       const double multiplier_norm = norm_1(
-            view(iterate.multipliers.constraints, this->model.number_constraints),
-            view(iterate.multipliers.lower_bounds, this->model.number_variables),
-            view(iterate.multipliers.upper_bounds, this->model.number_variables)
+            view(iterate.multipliers.constraints, 0, this->model.number_constraints),
+            view(iterate.multipliers.lower_bounds, 0, this->model.number_variables),
+            view(iterate.multipliers.upper_bounds, 0, this->model.number_variables)
       );
       return std::max(1., multiplier_norm / scaling_factor);
    }
@@ -121,13 +129,21 @@ double ConstraintRelaxationStrategy::compute_complementarity_scaling(const Itera
    else {
       const double scaling_factor = this->residual_scaling_threshold * static_cast<double>(total_size);
       const double bound_multiplier_norm = norm_1(
-            view(iterate.multipliers.lower_bounds, this->model.number_variables),
-            view(iterate.multipliers.upper_bounds, this->model.number_variables)
+            view(iterate.multipliers.lower_bounds, 0, this->model.number_variables),
+            view(iterate.multipliers.upper_bounds, 0, this->model.number_variables)
       );
       return std::max(1., bound_multiplier_norm / scaling_factor);
    }
 }
 
-void ConstraintRelaxationStrategy::set_objective_statistics(Statistics& statistics, const Iterate& iterate) {
+void ConstraintRelaxationStrategy::set_statistics(Statistics& statistics, const Iterate& iterate) const {
+   this->set_progress_statistics(statistics, iterate);
+   this->set_dual_residuals_statistics(statistics, iterate);
+}
+
+void ConstraintRelaxationStrategy::set_progress_statistics(Statistics& statistics, const Iterate& iterate) const {
    statistics.set("objective", iterate.evaluations.objective);
+   if (this->model.is_constrained()) {
+      statistics.set("infeasibility", iterate.progress.infeasibility);
+   }
 }

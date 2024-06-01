@@ -4,19 +4,19 @@
 #ifndef UNO_MA57SOLVER_H
 #define UNO_MA57SOLVER_H
 
+#include <array>
 #include <vector>
 #include "SymmetricIndefiniteLinearSolver.hpp"
-#include "linear_algebra/COOSymmetricMatrix.hpp"
+
+// forward declaration
+template <typename ElementType>
+class Vector;
 
 struct MA57Factorization {
    int n{};
    int nnz{};
-   std::vector<double> fact{};
    int lfact{};
-   std::vector<int> ifact{};
    int lifact{};
-   int lkeep{};
-   std::vector<int> keep{};
 
    MA57Factorization() = default;
 };
@@ -29,13 +29,13 @@ struct MA57Factorization {
  */
 class MA57Solver : public SymmetricIndefiniteLinearSolver<double> {
 public:
-   MA57Solver(size_t max_dimension, size_t max_number_nonzeros);
+   MA57Solver(size_t dimension, size_t number_nonzeros);
    ~MA57Solver() override = default;
 
    void factorize(const SymmetricMatrix<double>& matrix) override;
    void do_symbolic_factorization(const SymmetricMatrix<double>& matrix) override;
    void do_numerical_factorization(const SymmetricMatrix<double>& matrix) override;
-   void solve_indefinite_system(const SymmetricMatrix<double>& matrix, const std::vector<double>& rhs, std::vector<double>& result) override;
+   void solve_indefinite_system(const SymmetricMatrix<double>& matrix, const Vector<double>& rhs, Vector<double>& result) override;
 
    [[nodiscard]] std::tuple<size_t, size_t, size_t> get_inertia() const override;
    [[nodiscard]] size_t number_negative_eigenvalues() const override;
@@ -48,20 +48,27 @@ private:
    std::vector<int> row_indices;
    std::vector<int> column_indices;
 
-   std::vector<int> iwork;
+   // factorization
+   MA57Factorization factorization{};
+   std::vector<double> fact{0}; // do not initialize, resize at every iteration
+   std::vector<int> ifact{0}; // do not initialize, resize at every iteration
+   const int lkeep;
+   std::vector<int> keep{};
+   std::vector<int> iwork{};
    int lwork;
-   std::vector<double> work;
-   /* for ma57id_ (default values of controlling parameters) */
+   std::vector<double> work{};
+
+   // for ma57id_ (default values of controlling parameters)
    std::array<double, 5> cntl{};
    std::array<int, 20> icntl{};
    std::array<double, 20> rinfo{};
    std::array<int, 40> info{};
+
    const int nrhs{1}; // number of right hand side being solved
    const int job{1};
    std::vector<double> residuals;
    const size_t fortran_shift{1};
 
-   MA57Factorization factorization{};
    bool use_iterative_refinement{false};
    void save_matrix_to_local_format(const SymmetricMatrix<double>& row_index);
 };

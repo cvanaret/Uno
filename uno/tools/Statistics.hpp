@@ -6,7 +6,9 @@
 
 #include <string_view>
 #include <map>
-#include "tools/Options.hpp"
+
+// forward declaration
+class Options;
 
 class Statistics {
 public:

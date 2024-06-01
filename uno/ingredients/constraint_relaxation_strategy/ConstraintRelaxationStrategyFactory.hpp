@@ -6,7 +6,9 @@
 
 #include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
-#include "tools/Options.hpp"
+
+// forward declaration
+class Options;
 
 class ConstraintRelaxationStrategyFactory {
 public:

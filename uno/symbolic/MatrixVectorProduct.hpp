@@ -6,9 +6,7 @@
 
 #include "linear_algebra/SparseVector.hpp"
 
-// stores the expression (expression1 + expression2) symbolically
-// limited to types that possess value_type
-// https://stackoverflow.com/questions/11055923/stdenable-if-parameter-vs-template-parameter
+// symbolic matrix-vector product
 template <typename Matrix, typename Vector>
 class MatrixVectorProduct {
 public:
@@ -29,7 +27,9 @@ protected:
 };
 
 // free function
-template <typename Matrix, typename Vector>
+template <typename Matrix, typename Vector,
+      typename std::enable_if<std::is_same_v<typename std::remove_reference_t<Matrix>::value_type,
+                                             typename std::remove_reference_t<Vector>::value_type>, int>::type = 0>
 inline MatrixVectorProduct<Matrix, Vector> operator*(Matrix&& matrix, Vector&& vector) {
    return {std::forward<Matrix>(matrix), std::forward<Vector>(vector)};
 }

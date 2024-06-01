@@ -4,19 +4,22 @@
 #ifndef UNO_SYMMETRICINDEFINITELINEARSOLVER_H
 #define UNO_SYMMETRICINDEFINITELINEARSOLVER_H
 
-#include <vector>
-#include <linear_algebra/SymmetricMatrix.hpp>
+template <typename ElementType>
+class SymmetricMatrix;
+template <typename ElementType>
+class Vector;
 
 template <typename ElementType>
 class SymmetricIndefiniteLinearSolver {
 public:
-   explicit SymmetricIndefiniteLinearSolver(size_t max_dimension): max_dimension(max_dimension) {};
+   explicit SymmetricIndefiniteLinearSolver(size_t dimension): dimension(dimension) {};
    virtual ~SymmetricIndefiniteLinearSolver() = default;
 
    virtual void factorize(const SymmetricMatrix<ElementType>& matrix) = 0;
    virtual void do_symbolic_factorization(const SymmetricMatrix<ElementType>& matrix) = 0;
    virtual void do_numerical_factorization(const SymmetricMatrix<ElementType>& matrix) = 0;
-   virtual void solve_indefinite_system(const SymmetricMatrix<ElementType>& matrix, const std::vector<ElementType>& rhs, std::vector<ElementType>& result) = 0;
+   virtual void solve_indefinite_system(const SymmetricMatrix<ElementType>& matrix, const Vector<ElementType>& rhs,
+         Vector<ElementType>& result) = 0;
 
    [[nodiscard]] virtual std::tuple<size_t, size_t, size_t> get_inertia() const = 0;
    [[nodiscard]] virtual size_t number_negative_eigenvalues() const = 0;
@@ -25,7 +28,7 @@ public:
    [[nodiscard]] virtual size_t rank() const = 0;
 
 protected:
-   const size_t max_dimension;
+   const size_t dimension;
 };
 
 #endif // UNO_SYMMETRICINDEFINITELINEARSOLVER_H

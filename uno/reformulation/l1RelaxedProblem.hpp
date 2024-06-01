@@ -5,9 +5,13 @@
 #define UNO_L1RELAXEDPROBLEM_H
 
 #include "OptimizationProblem.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
+#include "model/Model.hpp"
+#include "optimization/Iterate.hpp"
+#include "optimization/LagrangianGradient.hpp"
 #include "symbolic/Expression.hpp"
 #include "symbolic/VectorExpression.hpp"
-#include "symbolic/ChainCollection.hpp"
+#include "symbolic/Concatenation.hpp"
 #include "symbolic/Range.hpp"
 #include "tools/Infinity.hpp"
 
@@ -26,7 +30,7 @@ public:
    void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const override;
    void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const override;
    void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const override;
-   void evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers, SymmetricMatrix<double>& hessian) const override;
+   void evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers, SymmetricMatrix<double>& hessian) const override;
 
    [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
    [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
@@ -44,7 +48,7 @@ public:
 
    [[nodiscard]] double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
          Norm residual_norm) const override;
-   [[nodiscard]] double complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
+   [[nodiscard]] double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const override;
 
    // parameterization
@@ -56,8 +60,8 @@ protected:
    double objective_multiplier;
    const double constraint_violation_coefficient;
    ElasticVariables elastic_variables;
-   const ChainCollection<const Collection<size_t>&, Range<FORWARD>> lower_bounded_variables; // model variables + elastic variables
-   const ChainCollection<const Collection<size_t>&, Range<FORWARD>> single_lower_bounded_variables; // model variables + elastic variables
+   const Concatenation<const Collection<size_t>&, ForwardRange> lower_bounded_variables; // model variables + elastic variables
+   const Concatenation<const Collection<size_t>&, ForwardRange> single_lower_bounded_variables; // model variables + elastic variables
 
    [[nodiscard]] static size_t count_elastic_variables(const Model& model);
    void generate_elastic_variables();
@@ -93,23 +97,24 @@ inline void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, Spar
    }
 
    // elastic contribution
-   const auto insert_elastic_derivative = [&](size_t elastic_index) {
+   for (const auto [_, elastic_index]: this->elastic_variables.positive) {
       objective_gradient.insert(elastic_index, this->constraint_violation_coefficient);
-   };
-   this->elastic_variables.positive.for_each_value(insert_elastic_derivative);
-   this->elastic_variables.negative.for_each_value(insert_elastic_derivative);
+   }
+   for (const auto [_, elastic_index]: this->elastic_variables.negative) {
+      objective_gradient.insert(elastic_index, this->constraint_violation_coefficient);
+   }
 }
 
 inline void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
    iterate.evaluate_constraints(this->model);
-   copy_from(constraints, iterate.evaluations.constraints);
+   constraints = iterate.evaluations.constraints;
    // add the contribution of the elastics
-   this->elastic_variables.positive.for_each([&](size_t constraint_index, size_t elastic_index) {
+   for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
       constraints[constraint_index] -= iterate.primals[elastic_index];
-   });
-   this->elastic_variables.negative.for_each([&](size_t constraint_index, size_t elastic_index) {
+   }
+   for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
       constraints[constraint_index] += iterate.primals[elastic_index];
-   });
+   }
 }
 
 inline void l1RelaxedProblem::evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const {
@@ -117,15 +122,15 @@ inline void l1RelaxedProblem::evaluate_constraint_jacobian(Iterate& iterate, Rec
    // TODO change this
    constraint_jacobian = iterate.evaluations.constraint_jacobian;
    // add the contribution of the elastics
-   this->elastic_variables.positive.for_each([&](size_t constraint_index, size_t elastic_index) {
+   for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
       constraint_jacobian[constraint_index].insert(elastic_index, -1.);
-   });
-   this->elastic_variables.negative.for_each([&](size_t constraint_index, size_t elastic_index) {
+   }
+   for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
       constraint_jacobian[constraint_index].insert(elastic_index, 1.);
-   });
+   }
 }
 
-inline void l1RelaxedProblem::evaluate_lagrangian_hessian(const std::vector<double>& x, const std::vector<double>& multipliers,
+inline void l1RelaxedProblem::evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers,
       SymmetricMatrix<double>& hessian) const {
    this->model.evaluate_lagrangian_hessian(x, this->objective_multiplier, multipliers, hessian);
 
@@ -143,7 +148,7 @@ inline double l1RelaxedProblem::stationarity_error(const LagrangianGradient<doub
 }
 
 // complementary slackness error: expression for violated constraints depends on the definition of the relaxed problem
-inline double l1RelaxedProblem::complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
+inline double l1RelaxedProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
       const Multipliers& multipliers, Norm residual_norm) const {
    // complementarity for variable bounds
    const VectorExpression variable_complementarity(Range(this->model.number_variables), [&](size_t variable_index) {
@@ -281,12 +286,12 @@ inline void l1RelaxedProblem::generate_elastic_variables() {
 inline void l1RelaxedProblem::set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t, double)>&
       elastic_setting_function) const {
    iterate.set_number_variables(this->number_variables);
-   this->elastic_variables.positive.for_each([&](size_t constraint_index, size_t elastic_index) {
+   for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
       elastic_setting_function(iterate, constraint_index, elastic_index, -1.);
-   });
-   this->elastic_variables.negative.for_each([&](size_t constraint_index, size_t elastic_index) {
+   }
+   for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
       elastic_setting_function(iterate, constraint_index, elastic_index, 1.);
-   });
+   }
 }
 
 #endif // UNO_L1RELAXEDPROBLEM_H

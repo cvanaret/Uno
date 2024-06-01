@@ -3,7 +3,10 @@
 
 #include "HessianModel.hpp"
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
+#include "reformulation/OptimizationProblem.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolverFactory.hpp"
+#include "tools/Options.hpp"
+#include "tools/Statistics.hpp"
 
 HessianModel::HessianModel(size_t dimension, size_t maximum_number_nonzeros, const std::string& sparse_format, bool use_regularization) :
       hessian(SymmetricMatrixFactory<double>::create(sparse_format, dimension, maximum_number_nonzeros, use_regularization)) {
@@ -14,8 +17,8 @@ ExactHessian::ExactHessian(size_t dimension, size_t maximum_number_nonzeros, con
    HessianModel(dimension, maximum_number_nonzeros, options.get_string("sparse_format"), /* use_regularization = */false) {
 }
 
-void ExactHessian::evaluate(Statistics& /*statistics*/, const OptimizationProblem& problem, const std::vector<double>& primal_variables,
-      const std::vector<double>& constraint_multipliers) {
+void ExactHessian::evaluate(Statistics& /*statistics*/, const OptimizationProblem& problem, const Vector<double>& primal_variables,
+      const Vector<double>& constraint_multipliers) {
    // evaluate Lagrangian Hessian
    this->hessian->dimension = problem.number_variables;
    problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, *this->hessian);
@@ -31,8 +34,8 @@ ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t maximum_number_n
       regularization_increase_factor(options.get_double("regularization_increase_factor")) {
 }
 
-void ConvexifiedHessian::evaluate(Statistics& statistics, const OptimizationProblem& problem, const std::vector<double>& primal_variables,
-      const std::vector<double>& constraint_multipliers) {
+void ConvexifiedHessian::evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
+      const Vector<double>& constraint_multipliers) {
    // evaluate Lagrangian Hessian
    this->hessian->dimension = problem.number_variables;
    problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, *this->hessian);

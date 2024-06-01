@@ -3,10 +3,15 @@
 
 #include <cmath>
 #include <cassert>
+#include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategy.hpp"
 #include "TrustRegionStrategy.hpp"
+#include "model/Model.hpp"
 #include "optimization/EvaluationErrors.hpp"
+#include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
+#include "tools/Options.hpp"
+#include "tools/Statistics.hpp"
 
 TrustRegionStrategy::TrustRegionStrategy(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options) :
       GlobalizationMechanism(constraint_relaxation_strategy, options),
@@ -45,7 +50,6 @@ void TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Mod
             statistics.start_new_line();
          }
          // compute the direction within the trust region
-         this->direction.reset();
          this->constraint_relaxation_strategy.set_trust_region_radius(this->radius);
          this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, this->direction, warmstart_information);
 
@@ -62,8 +66,8 @@ void TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Mod
             warmstart_information.set_cold_start();
          }
          else {
-            GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, this->direction, this->direction.primal_dual_step_length,
-                  this->direction.primal_dual_step_length, this->direction.bound_dual_step_length);
+            GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, this->direction, this->direction.primal_step_length,
+                  this->direction.primal_step_length, this->direction.bound_dual_step_length);
             this->reset_active_trust_region_multipliers(model, this->direction, trial_iterate);
 
             // check whether the trial iterate (current iterate + full step) is acceptable
@@ -95,7 +99,7 @@ bool TrustRegionStrategy::is_iterate_acceptable(Statistics& statistics, const Mo
       const Direction& direction, size_t number_iterations) {
    // direction.primal_dual_step_length is usually 1, can be lower if reduced by fraction-to-boundary rule
    bool accept_iterate = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction,
-         direction.primal_dual_step_length);
+         direction.primal_step_length);
 
    this->set_statistics(statistics, trial_iterate, direction, number_iterations);
    if (Logger::level == INFO) statistics.print_current_line();
@@ -117,20 +121,24 @@ void TrustRegionStrategy::possibly_increase_radius(double step_norm) {
    // increase the radius if the trust-region is active
    if (step_norm >= this->radius - this->activity_tolerance) {
       this->radius *= this->increase_factor;
+      DEBUG << "Trust-region radius increased to " << this->radius << '\n';
    }
 }
 
 void TrustRegionStrategy::decrease_radius(double step_norm) {
    // reduce the radius to a value smaller than the primal step norm (otherwise, the reduction won't have an effect)
    this->radius = std::min(this->radius, step_norm) / this->decrease_factor;
+   DEBUG << "Trust-region radius decreased to " << this->radius << '\n';
 }
 
 void TrustRegionStrategy::decrease_radius() {
    this->radius /= this->decrease_factor;
+   DEBUG << "Trust-region radius decreased to " << this->radius << '\n';
 }
 
 void TrustRegionStrategy::decrease_radius_aggressively() {
    this->radius /= this->aggressive_decrease_factor;
+   DEBUG << "Trust-region radius decreased to " << this->radius << '\n';
 }
 
 void TrustRegionStrategy::reset_radius() {
@@ -154,12 +162,9 @@ void TrustRegionStrategy::reset_active_trust_region_multipliers(const Model& mod
    }
 }
 
-bool TrustRegionStrategy::check_termination_with_small_step(const Model& model, Iterate& trial_iterate) const {
-   trial_iterate.evaluate_constraints(model);
-   trial_iterate.residuals.infeasibility = model.constraint_violation(trial_iterate.evaluations.constraints, this->progress_norm);
-
+bool TrustRegionStrategy::check_termination_with_small_step(const Model& /*model*/, Iterate& trial_iterate) const {
    // terminate with a feasible point
-   if (trial_iterate.residuals.infeasibility <= this->tight_tolerance) {
+   if (trial_iterate.progress.infeasibility <= this->tight_tolerance) {
       trial_iterate.status = TerminationStatus::FEASIBLE_SMALL_STEP;
       return true;
    }
@@ -190,5 +195,5 @@ void TrustRegionStrategy::set_statistics(Statistics& statistics, const Iterate& 
 }
 
 void TrustRegionStrategy::print_iteration(size_t number_iterations) {
-   DEBUG << "\t### Trust-region inner iteration " << number_iterations << " with radius " << this->radius << "\n\n";
+   DEBUG << "\n\t### Trust-region inner iteration " << number_iterations << " with radius " << this->radius << "\n\n";
 }

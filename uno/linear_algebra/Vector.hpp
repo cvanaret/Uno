@@ -7,177 +7,84 @@
 #include <iostream>
 #include <limits>
 #include <vector>
-#include <functional>
-#include <cmath>
-#include <cassert>
-#include "symbolic/VectorExpression.hpp"
-#include "tools/Logger.hpp"
+#include <initializer_list>
 #include "symbolic/Range.hpp"
-#include "symbolic/Collection.hpp"
-
-enum class Norm {L1, L2, L2_SQUARED, INF};
-
-inline Norm norm_from_string(const std::string& norm_string) {
-   if (norm_string == "L1") {
-      return Norm::L1;
-   }
-   else if (norm_string == "L2") {
-      return Norm::L2;
-   }
-   else if (norm_string == "L2_squared") {
-      return Norm::L2_SQUARED;
-   }
-   else if (norm_string == "INF") {
-      return Norm::INF;
-   }
-   throw std::invalid_argument("The norm " + norm_string + " is not known");
-}
-
-// result <- x + scaling_factor * y
-template <typename ElementType>
-void add_vectors(const std::vector<ElementType>& x, const std::vector<ElementType>& y, ElementType scaling_factor, std::vector<ElementType>& result) {
-   assert(x.size() <= y.size() && "Vector.add_vectors: x is longer than y");
-   assert(x.size() <= result.size() && "Vector.add_vectors: result is not long enough");
-
-   for (size_t index: Range(x.size())) {
-      result[index] = x[index] + scaling_factor * y[index];
-   }
-}
 
 template <typename ElementType>
-void initialize_vector(std::vector<ElementType>& x, ElementType value) {
-   for (ElementType& element: x) {
-      element = ElementType(value);
+class Vector {
+public:
+   using value_type = ElementType;
+   // iterators
+   using iterator = typename std::vector<ElementType>::iterator;
+   using const_iterator = typename std::vector<ElementType>::const_iterator;
+
+   // constructors and destructor
+   explicit Vector(size_t capacity = 0): vector(capacity) { }
+   explicit Vector(size_t capacity, ElementType value): vector(capacity, value) { }
+   Vector(std::initializer_list<ElementType> initializer_list): vector(initializer_list) { }
+   ~Vector() = default;
+
+   // copy assignment operator
+   template <typename Expression>
+   Vector& operator=(const Expression& expression) {
+      static_assert(std::is_same_v<typename Expression::value_type, ElementType>);
+      for (size_t index = 0; index < this->size(); index++) {
+         this->vector[index] = expression[index];
+      }
+      return *this;
    }
-}
 
-template <typename ElementType>
-void copy_from(std::vector<ElementType>& destination, const std::vector<ElementType>& source, size_t length = std::numeric_limits<size_t>::max()) {
-   length = std::min(length, std::min(source.size(), destination.size()));
-   const auto source_start_position = std::cbegin(source);
-   const auto source_end_position = source_start_position + length;
-   const auto destination_position = std::begin(destination);
-   std::copy(source_start_position, source_end_position, destination_position);
-}
-
-// norms of any array with elements of any type
-
-// compute l1 norm = sum |x|_i
-template <typename ElementType, typename Indices, typename Callable>
-ElementType norm_1(const VectorExpression<Indices, Callable>& expression) {
-   ElementType norm{0};
-   expression.for_each([&](size_t, size_t index) {
-      norm += std::abs(expression[index]);
-   });
-   return norm;
-}
-
-template <typename Array, typename ElementType = typename Array::value_type>
-ElementType norm_1(const Array& x) {
-   ElementType norm{0};
-   for (size_t index: Range(x.size())) {
-      norm += std::abs(x[index]);
+   // move assignment operator
+   Vector& operator=(std::vector<ElementType>&& other) {
+      if (&other == this) {
+         return *this;
+      }
+      this->vector = std::move(other.vector);
+      return *this;
    }
-   return norm;
-}
 
-// l1 norm of several arrays
-template<typename Array, typename... Arrays>
-typename Array::value_type norm_1(const Array& x, const Arrays&... other_arrays) {
-   return norm_1(x) + norm_1(other_arrays...);
-}
+   // random access
+   ElementType& operator[](size_t index) { return this->vector[index]; }
+   const ElementType& operator[](size_t index) const { return this->vector[index]; }
 
-// compute l2 squared norm = sum x_i^2
-template <typename Array, typename ElementType = typename Array::value_type>
-ElementType norm_2_squared(const Array& x) {
-   ElementType norm{0};
-   for (size_t index: Range(x.size())) {
-      const ElementType xi = x[index];
-      norm += xi * xi;
+   // size
+   [[nodiscard]] size_t size() const { return this->vector.size(); }
+   [[nodiscard]] bool empty() const { return (this->size() == 0); }
+   void resize(size_t new_size) { this->vector.resize(new_size); }
+
+   // iterators
+   iterator begin() noexcept { return this->vector.begin(); }
+   iterator end() noexcept { return this->vector.end(); }
+   const_iterator begin() const noexcept { return this->vector.cbegin(); }
+   const_iterator end() const noexcept { return this->vector.cend(); }
+
+   void fill(ElementType value) {
+      for (size_t index = 0; index < this->size(); index++) {
+         this->vector[index] = value;
+      }
    }
-   return norm;
-}
 
-template <typename ElementType, typename Indices, typename Callable>
-ElementType norm_2_squared(const VectorExpression<Indices, Callable>& expression) {
-   ElementType norm{0};
-   expression.for_each([&](size_t, size_t index) {
-      const ElementType xi = expression[index];
-      norm += xi * xi;
-   });
-   return norm;
-}
+   ElementType* data() { return this->vector.data(); }
+   const ElementType* data() const { return this->vector.data(); }
 
-// l2 squared norm of several arrays
-template<typename Array, typename... Arrays>
-typename Array::value_type norm_2_squared(const Array& x, const Arrays&... other_arrays) {
-   return norm_2_squared(x) + norm_2_squared(other_arrays...);
-}
-
-// compute ||x||_2
-template <typename Array>
-typename Array::value_type norm_2(const Array& x) {
-   return std::sqrt(norm_2_squared(x));
-}
-
-// l2 norm of several arrays
-template<typename Array, typename... Arrays>
-typename Array::value_type norm_2(const Array& x, const Arrays&... other_arrays) {
-   return std::sqrt(norm_2_squared(x) + norm_2_squared(other_arrays...));
-}
-
-// compute ||x||_inf
-template <typename ElementType, typename Indices, typename Callable>
-ElementType norm_inf(const VectorExpression<Indices, Callable>& expression) {
-   ElementType norm{0};
-   expression.for_each([&](size_t, size_t index) {
-      norm = std::max(norm, std::abs(expression[index]));
-   });
-   return norm;
-}
-
-template <typename Array, typename ElementType = typename Array::value_type>
-ElementType norm_inf(const Array& x) {
-   ElementType norm{0};
-   for (size_t index: Range(x.size())) {
-      norm = std::max(norm, std::abs(x[index]));
+   // sum operator
+   template <typename Expression>
+   Vector& operator+=(const Expression& expression) {
+      for (size_t index = 0; index < this->size(); index++) {
+         this->vector[index] += expression[index];
+      }
+      return *this;
    }
-   return norm;
-}
 
-template <typename Array, RangeDirection Direction, typename ElementType = typename Array::value_type>
-ElementType norm_inf(const Array& x, const Range<Direction>& range) {
-   ElementType norm{0};
-   for (size_t index: range) {
-      norm = std::max(norm, std::abs(x[index]));
+   void print(std::ostream& stream) const {
+      for (const ElementType& element: *this) {
+         stream << element << ' ';
+      }
    }
-   return norm;
-}
 
-// inf norm of several arrays
-template<typename Array, typename... Arrays>
-typename Array::value_type norm_inf(const Array& x, const Arrays&... other_arrays) {
-   return std::max(norm_inf(x), norm_inf(other_arrays...));
-}
-
-// norm of at least one array
-template<typename Array, typename... Arrays>
-typename Array::value_type norm(Norm norm, const Array& x, const Arrays&... other_arrays) {
-   // choose the right norm
-   if (norm == Norm::L1) {
-      return norm_1(x, other_arrays...);
-   }
-   else if (norm == Norm::L2) {
-      return norm_2(x, other_arrays...);
-   }
-   else if (norm == Norm::L2_SQUARED) {
-      return norm_2_squared(x, other_arrays...);
-   }
-   else if (norm == Norm::INF) {
-      return norm_inf(x, other_arrays...);
-   }
-   throw std::invalid_argument("The norm is not known");
-}
+protected:
+   std::vector<ElementType> vector;
+};
 
 // use && to allow temporaries (such as std::cout or logger DEBUG, WARNING, etc)
 template <typename Array, typename Stream>
@@ -188,27 +95,18 @@ void print_vector(Stream&& stream, const Array& x, size_t start = 0, size_t leng
    stream << '\n';
 }
 
-// check that an array of integers is in increasing order (x[i] <= x[i+1])
-template <typename Array>
-bool in_increasing_order(const Array& array, size_t length) {
-   size_t index = 0;
-   while (index < length - 1) {
-      if (array[index] > array[index + 1]) {
-         return false;
-      }
-      index++;
-   }
-   return true;
+template <typename ElementType>
+std::ostream& operator<<(std::ostream& stream, const Vector<ElementType>& vector) {
+   vector.print(stream);
+   return stream;
 }
 
-/*
-// see here: https://stackoverflow.com/questions/10173623/override-operators-for-an-existing-class
-template <typename T>
-void operator+=(std::vector<T>& vector, const T& value) {
-   for (T& element: vector) {
-      element += value;
+// subtract operator
+template <typename ResultExpression, typename Expression>
+void operator-=(ResultExpression&& result, const Expression& expression) {
+   for (size_t index = 0; index < result.size(); index++) {
+      result[index] -= expression[index];
    }
 }
-*/
 
 #endif // UNO_VECTOR_H

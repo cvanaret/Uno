@@ -2,7 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "Iterate.hpp"
+#include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "model/Model.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "tools/Logger.hpp"
 
@@ -11,11 +13,11 @@ size_t Iterate::number_eval_constraints = 0;
 size_t Iterate::number_eval_objective_gradient = 0;
 size_t Iterate::number_eval_jacobian = 0;
 
-Iterate::Iterate(size_t max_number_variables, size_t max_number_constraints) :
-      number_variables(max_number_variables), number_constraints(max_number_constraints),
-      primals(max_number_variables), multipliers(max_number_variables, max_number_constraints),
-      evaluations(max_number_variables, max_number_constraints),
-      lagrangian_gradient(max_number_variables) {
+Iterate::Iterate(size_t number_variables, size_t number_constraints) :
+      number_variables(number_variables), number_constraints(number_constraints),
+      primals(number_variables), multipliers(number_variables, number_constraints),
+      evaluations(number_variables, number_constraints),
+      lagrangian_gradient(number_variables) {
 }
 
 void Iterate::evaluate_objective(const Model& model) {
@@ -59,9 +61,7 @@ void Iterate::evaluate_objective_gradient(const Model& model) {
 
 void Iterate::evaluate_constraint_jacobian(const Model& model) {
    if (not this->is_constraint_jacobian_computed) {
-      for (auto& row: this->evaluations.constraint_jacobian) {
-         row.clear();
-      }
+      this->evaluations.constraint_jacobian.clear();
       if (model.is_constrained()) {
          model.evaluate_constraint_jacobian(this->primals, this->evaluations.constraint_jacobian);
          Iterate::number_eval_jacobian++;
@@ -80,10 +80,10 @@ void Iterate::set_number_variables(size_t new_number_variables) {
 }
 
 std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
-   stream << "Primal variables: "; print_vector(stream, iterate.primals);
-   stream << "            ┌ Constraint: "; print_vector(stream, iterate.multipliers.constraints);
-   stream << "Multipliers │ Lower bound: "; print_vector(stream, iterate.multipliers.lower_bounds);
-   stream << "            └ Upper bound: "; print_vector(stream, iterate.multipliers.upper_bounds);
+   stream << "Primal variables: " << iterate.primals << '\n';
+   stream << "            ┌ Constraint: " << iterate.multipliers.constraints << '\n';
+   stream << "Multipliers │ Lower bound: " << iterate.multipliers.lower_bounds << '\n';
+   stream << "            └ Upper bound: " << iterate.multipliers.upper_bounds << '\n';
    stream << "Objective value: " << iterate.evaluations.objective << '\n';
 
    stream << "          ┌ Optimality stationarity: " << iterate.residuals.optimality_stationarity << '\n';

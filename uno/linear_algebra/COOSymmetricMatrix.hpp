@@ -16,10 +16,9 @@
 template <typename ElementType>
 class COOSymmetricMatrix: public SymmetricMatrix<ElementType> {
 public:
-   COOSymmetricMatrix(size_t max_dimension, size_t original_capacity, bool use_regularization);
+   COOSymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization);
 
    void reset() override;
-   void for_each(const std::function<void(size_t, size_t, ElementType)>& f) const override;
    void insert(ElementType term, size_t row_index, size_t column_index) override;
    void finalize_column(size_t /*column_index*/) override { /* do nothing */ }
    [[nodiscard]] ElementType smallest_diagonal_entry() const override;
@@ -32,17 +31,21 @@ public:
 protected:
    std::vector<size_t> row_indices;
    std::vector<size_t> column_indices;
-   std::vector<ElementType> diagonal_entries;
+   Vector<ElementType> diagonal_entries;
 
    void initialize_regularization();
+
+   // iterator functions
+   [[nodiscard]] std::tuple<size_t, size_t, ElementType> dereference_iterator(size_t column_index, size_t nonzero_index) const override;
+   void increment_iterator(size_t& column_index, size_t& nonzero_index) const override;
 };
 
 // implementation
 
 template <typename ElementType>
-COOSymmetricMatrix<ElementType>::COOSymmetricMatrix(size_t max_dimension, size_t original_capacity, bool use_regularization):
-      SymmetricMatrix<ElementType>(max_dimension, original_capacity, use_regularization),
-      diagonal_entries(max_dimension, ElementType(0)) {
+COOSymmetricMatrix<ElementType>::COOSymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization):
+      SymmetricMatrix<ElementType>(dimension, original_capacity, use_regularization),
+      diagonal_entries(dimension, ElementType(0)) {
    this->row_indices.reserve(this->capacity);
    this->column_indices.reserve(this->capacity);
 
@@ -58,22 +61,11 @@ void COOSymmetricMatrix<ElementType>::reset() {
    SymmetricMatrix<ElementType>::reset();
    this->row_indices.clear();
    this->column_indices.clear();
-   initialize_vector(this->diagonal_entries, ElementType(0));
+   this->diagonal_entries.fill(ElementType(0));
 
    // initialize regularization terms
    if (this->use_regularization) {
       this->initialize_regularization();
-   }
-}
-
-// generic iterator
-template <typename ElementType>
-void COOSymmetricMatrix<ElementType>::for_each(const std::function<void(size_t, size_t, ElementType)>& f) const {
-   for (size_t k: Range(this->number_nonzeros)) {
-      const size_t row_index = this->row_indices[k];
-      const size_t column_index = this->column_indices[k];
-      const ElementType entry = this->entries[k];
-      f(row_index, column_index, entry);
    }
 }
 
@@ -115,9 +107,9 @@ void COOSymmetricMatrix<ElementType>::set_regularization(const std::function<Ele
 
 template <typename ElementType>
 void COOSymmetricMatrix<ElementType>::print(std::ostream& stream) const {
-   this->for_each([&](size_t row_index, size_t column_index, ElementType entry) {
-      stream << "m(" << row_index << ", " << column_index << ") = " << entry << '\n';
-   });
+   for (const auto [row_index, column_index, element]: *this) {
+      stream << "m(" << row_index << ", " << column_index << ") = " << element << '\n';
+   }
 }
 
 template <typename ElementType>
@@ -125,6 +117,20 @@ void COOSymmetricMatrix<ElementType>::initialize_regularization() {
    // introduce elements at the start of the entries
    for (size_t row_index: Range(this->dimension)) {
       this->insert(ElementType(0), row_index, row_index);
+   }
+}
+
+template <typename ElementType>
+std::tuple<size_t, size_t, ElementType> COOSymmetricMatrix<ElementType>::dereference_iterator(size_t /*column_index*/, size_t nonzero_index) const {
+   return {this->row_indices[nonzero_index], this->column_indices[nonzero_index], this->entries[nonzero_index]};
+}
+
+template <typename ElementType>
+void COOSymmetricMatrix<ElementType>::increment_iterator(size_t& column_index, size_t& nonzero_index) const {
+   nonzero_index++;
+   // if end reached
+   if (nonzero_index == this->number_nonzeros) {
+      column_index = this->dimension;
    }
 }
 

@@ -4,10 +4,16 @@
 #ifndef UNO_GLOBALIZATIONMECHANISM_H
 #define UNO_GLOBALIZATIONMECHANISM_H
 
-#include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategy.hpp"
-#include "model/Model.hpp"
-#include "preprocessing/Scaling.hpp"
-#include "tools/Statistics.hpp"
+#include "ingredients/subproblem/Direction.hpp"
+#include "linear_algebra/Norm.hpp"
+#include "optimization/TerminationStatus.hpp"
+
+// forward declarations
+class ConstraintRelaxationStrategy;
+class Iterate;
+class Model;
+class Options;
+class Statistics;
 
 class GlobalizationMechanism {
 public:

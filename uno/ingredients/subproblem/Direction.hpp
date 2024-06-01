@@ -7,15 +7,13 @@
 #include <vector>
 #include <optional>
 #include <ostream>
+#include "SubproblemStatus.hpp"
 #include "optimization/Multipliers.hpp"
 #include "tools/Infinity.hpp"
 
-enum class SubproblemStatus {
-   OPTIMAL = 0,
-   UNBOUNDED_PROBLEM,
-   INFEASIBLE,
-   ERROR
-};
+// forward declaration
+template <typename ElementType>
+class Vector;
 
 /*! \struct ConstraintActivity
 * \brief Constraints at lower or upper bound at the optimum solution
@@ -48,18 +46,18 @@ struct ConstraintPartition {
 
 class Direction {
 public:
-   Direction(size_t max_number_variables, size_t max_number_constraints);
+   Direction(size_t number_variables, size_t number_constraints);
 
    size_t number_variables;
    size_t number_constraints;
 
-   std::vector<double> primals; /*!< Primal variables */
+   Vector<double> primals; /*!< Primal variables */
    Multipliers multipliers; /*!< Multipliers */
 
    SubproblemStatus status{SubproblemStatus::OPTIMAL}; /*!< Status of the solution */
 
    // step lengths (default value is 1. This doesn't hold for interior-point methods)
-   double primal_dual_step_length{1.};
+   double primal_step_length{1.};
    double bound_dual_step_length{1.};
 
    double norm{INF<double>}; /*!< Norm of \f$x\f$ */

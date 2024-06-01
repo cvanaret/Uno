@@ -17,11 +17,9 @@
 template <typename ElementType>
 class CSCSymmetricMatrix : public SymmetricMatrix<ElementType> {
 public:
-   CSCSymmetricMatrix(size_t max_dimension, size_t original_capacity, bool use_regularization);
+   CSCSymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization);
 
    void reset() override;
-   void for_each(const std::function<void(size_t, size_t, ElementType)>& f) const override;
-   void for_each(size_t column_index, const std::function<void(size_t, ElementType)>& f) const;
    void insert(ElementType term, size_t row_index, size_t column_index) override;
    void finalize_column(size_t column_index) override;
    [[nodiscard]] ElementType smallest_diagonal_entry() const override;
@@ -34,17 +32,21 @@ public:
 protected:
    // entries and row_indices have nnz elements
    // column_starts has dimension+1 elements
-   std::vector<size_t> column_starts{};
+   Vector<size_t> column_starts{};
    std::vector<size_t> row_indices{};
    size_t current_column{0};
-   std::vector<ElementType> diagonal_entries;
+   Vector<ElementType> diagonal_entries;
+
+   // iterator functions
+   [[nodiscard]] std::tuple<size_t, size_t, ElementType> dereference_iterator(size_t column_index, size_t nonzero_index) const override;
+   void increment_iterator(size_t& column_index, size_t& nonzero_index) const override;
 };
 
 template <typename ElementType>
-CSCSymmetricMatrix<ElementType>::CSCSymmetricMatrix(size_t max_dimension, size_t original_capacity, bool use_regularization):
-      SymmetricMatrix<ElementType>(max_dimension, original_capacity, use_regularization),
-      column_starts(max_dimension + 1),
-      diagonal_entries(max_dimension, ElementType(0)) {
+CSCSymmetricMatrix<ElementType>::CSCSymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization):
+      SymmetricMatrix<ElementType>(dimension, original_capacity, use_regularization),
+      column_starts(dimension + 1),
+      diagonal_entries(dimension, ElementType(0)) {
    this->entries.reserve(this->capacity);
    this->row_indices.reserve(this->capacity);
 }
@@ -54,30 +56,9 @@ void CSCSymmetricMatrix<ElementType>::reset() {
    // empty the matrix
    SymmetricMatrix<ElementType>::reset();
    this->row_indices.clear();
-   initialize_vector<size_t>(this->column_starts, 0);
+   this->column_starts.fill(0);
    this->current_column = 0;
-   initialize_vector(this->diagonal_entries, ElementType(0));
-}
-
-// generic iterator
-template <typename ElementType>
-void CSCSymmetricMatrix<ElementType>::for_each(const std::function<void(size_t, size_t, ElementType)>& f) const {
-   for (size_t column_index: Range(this->dimension)) {
-      for (size_t k: Range(this->column_starts[column_index], this->column_starts[column_index + 1])) {
-         const size_t row_index = this->row_indices[k];
-         const ElementType entry = this->entries[k];
-         f(row_index, column_index, entry);
-      }
-   }
-}
-
-template <typename ElementType>
-void CSCSymmetricMatrix<ElementType>::for_each(size_t column_index, const std::function<void(size_t, ElementType)>& f) const {
-   for (size_t k: Range(this->column_starts[column_index], this->column_starts[column_index + 1])) {
-      const size_t row_index = this->row_indices[k];
-      const ElementType entry = this->entries[k];
-      f(row_index, entry);
-   }
+   this->diagonal_entries.fill(ElementType(0));
 }
 
 template <typename ElementType>
@@ -132,6 +113,26 @@ void CSCSymmetricMatrix<ElementType>::set_regularization(const std::function<Ele
       this->entries[k] = element;
       // update diagonal
       this->diagonal_entries[row_index] += element;
+   }
+}
+
+template <typename ElementType>
+std::tuple<size_t, size_t, ElementType> CSCSymmetricMatrix<ElementType>::dereference_iterator(size_t column_index, size_t nonzero_index) const {
+   return {this->row_indices[nonzero_index], column_index, this->entries[nonzero_index]};
+}
+
+template <typename ElementType>
+void CSCSymmetricMatrix<ElementType>::increment_iterator(size_t& column_index, size_t& nonzero_index) const {
+   if (this->column_starts[column_index] <= nonzero_index && nonzero_index + 1 < this->column_starts[column_index + 1]) {
+      // stay in the column
+      nonzero_index++;
+   }
+   else {
+      // move on to the next non-empty column
+      do {
+         column_index++;
+      } while (column_index < this->dimension && this->column_starts[column_index] == this->column_starts[column_index + 1]);
+      nonzero_index = this->column_starts[column_index];
    }
 }
 

@@ -4,9 +4,14 @@
 #include <cassert>
 #include <algorithm>
 #include "BQPDSolver.hpp"
+#include "ingredients/subproblem/Direction.hpp"
+#include "linear_algebra/RectangularMatrix.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "tools/Logger.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "tools/Infinity.hpp"
+#include "tools/Logger.hpp"
+#include "tools/Options.hpp"
 
 #define BIG 1e30
 
@@ -55,7 +60,7 @@ BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_
 void BQPDSolver::solve_QP(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
       const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
       const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
-      const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const std::vector<double>& initial_point,
+      const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const Vector<double>& initial_point,
       Direction& direction, const WarmstartInformation& warmstart_information) {
    if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
       this->save_hessian_to_local_format(hessian);
@@ -71,7 +76,7 @@ void BQPDSolver::solve_QP(size_t number_variables, size_t number_constraints, co
 void BQPDSolver::solve_LP(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
       const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
       const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
-      const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point, Direction& direction,
+      const RectangularMatrix<double>& constraint_jacobian, const Vector<double>& initial_point, Direction& direction,
       const WarmstartInformation& warmstart_information) {
    if (this->print_subproblem) {
       DEBUG << "LP:\n";
@@ -83,7 +88,7 @@ void BQPDSolver::solve_LP(size_t number_variables, size_t number_constraints, co
 void BQPDSolver::solve_subproblem(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
       const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
       const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
-      const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point, Direction& direction,
+      const RectangularMatrix<double>& constraint_jacobian, const Vector<double>& initial_point, Direction& direction,
       const WarmstartInformation& warmstart_information) {
    // initialize wsc_ common block (Hessian & workspace for BQPD)
    // setting the common block here ensures that several instances of BQPD can run simultaneously
@@ -126,8 +131,7 @@ void BQPDSolver::solve_subproblem(size_t number_variables, size_t number_constra
       }
    }
 
-   initialize_vector(direction.primals, 0.);
-   copy_from(direction.primals, initial_point);
+   direction.primals = initial_point;
    const int n = static_cast<int>(number_variables);
    const int m = static_cast<int>(number_constraints);
 
@@ -177,9 +181,9 @@ void BQPDSolver::save_hessian_to_local_format(const SymmetricMatrix<double>& hes
    for (size_t column_index: Range(hessian.dimension + 1)) {
       column_starts[column_index] = 0;
    }
-   hessian.for_each([&](size_t /*row_index*/, size_t column_index, double /*entry*/) {
+   for (const auto [row_index, column_index, element]: hessian) {
       column_starts[column_index + 1]++;
-   });
+   }
    // carry over the column starts
    for (size_t column_index: Range(1, hessian.dimension + 1)) {
       column_starts[column_index] += column_starts[column_index - 1];
@@ -188,31 +192,31 @@ void BQPDSolver::save_hessian_to_local_format(const SymmetricMatrix<double>& hes
    column_starts[hessian.dimension] += this->fortran_shift;
    // copy the entries
    //std::vector<int> current_indices(hessian.dimension);
-   initialize_vector(this->current_hessian_indices, 0);
-   hessian.for_each([&](size_t row_index, size_t column_index, double entry) {
+   this->current_hessian_indices.fill(0);
+   for (const auto [row_index, column_index, element]: hessian) {
       const size_t index = static_cast<size_t>(column_starts[column_index] + this->current_hessian_indices[column_index] - this->fortran_shift);
       assert(index <= static_cast<size_t>(column_starts[column_index + 1]) &&
              "BQPD: error in converting the Hessian matrix to the local format. Try setting the sparse format to CSC");
-      this->hessian_values[index] = entry;
+      this->hessian_values[index] = element;
       row_indices[index] = static_cast<int>(row_index) + this->fortran_shift;
       this->current_hessian_indices[column_index]++;
-   });
+   }
 }
 
 void BQPDSolver::save_gradients_to_local_format(size_t number_constraints, const SparseVector<double>& linear_objective,
       const RectangularMatrix<double>& constraint_jacobian) {
    size_t current_index = 0;
-   linear_objective.for_each([&](size_t variable_index, double derivative) {
+   for (const auto [variable_index, derivative]: linear_objective) {
       this->jacobian[current_index] = derivative;
       this->jacobian_sparsity[current_index + 1] = static_cast<int>(variable_index) + this->fortran_shift;
       current_index++;
-   });
+   }
    for (size_t constraint_index: Range(number_constraints)) {
-      constraint_jacobian[constraint_index].for_each([&](size_t variable_index, double derivative) {
+      for (const auto [variable_index, derivative]: constraint_jacobian[constraint_index]) {
          this->jacobian[current_index] = derivative;
          this->jacobian_sparsity[current_index + 1] = static_cast<int>(variable_index) + this->fortran_shift;
          current_index++;
-      });
+      }
    }
    current_index++;
    this->jacobian_sparsity[0] = static_cast<int>(current_index);
@@ -231,9 +235,7 @@ void BQPDSolver::save_gradients_to_local_format(size_t number_constraints, const
 }
 
 void BQPDSolver::categorize_constraints(size_t number_variables, size_t number_constraints, Direction& direction) {
-   initialize_vector(direction.multipliers.constraints, 0.);
-   initialize_vector(direction.multipliers.lower_bounds, 0.);
-   initialize_vector(direction.multipliers.upper_bounds, 0.);
+   direction.multipliers.reset();
    if (direction.constraint_partition.has_value()) {
       direction.constraint_partition.value().reset();
    }

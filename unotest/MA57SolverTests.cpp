@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <gtest/gtest.h>
+#include "linear_algebra/COOSymmetricMatrix.hpp"
 #include "solvers/linear/MA57Solver.hpp"
 
 const size_t n = 5;
@@ -20,15 +21,16 @@ COOSymmetricMatrix<double> create_matrix() {
    return matrix;
 }
 
-std::vector<double> create_rhs() {
-   std::vector<double> rhs{8., 45., 31., 15., 17.};
+Vector<double> create_rhs() {
+   Vector<double> rhs{8., 45., 31., 15., 17.};
    return rhs;
 }
 
 TEST(MA57Solver, SystemSize5) {
    const COOSymmetricMatrix<double> matrix = create_matrix();
-   const std::vector<double> rhs = create_rhs();
-   std::vector<double> result(n, 0.);
+   const Vector<double> rhs = create_rhs();
+   Vector<double> result(n);
+   result.fill(0.);
 
    MA57Solver solver(n, nnz);
    solver.do_symbolic_factorization(matrix);

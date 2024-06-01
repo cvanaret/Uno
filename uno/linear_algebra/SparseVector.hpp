@@ -15,34 +15,35 @@
 // - a vector of values of type ElementType
 // the indices are neither unique nor sorted
 template <typename ElementType>
-class SparseVector: public Collection<ElementType> {
+class SparseVector {
 public:
    class iterator {
    public:
-      iterator(const SparseVector<ElementType>& vector, size_t index) : vector(vector), index(index) {
-      }
-      std::pair<size_t, ElementType> operator*() {
-         // copy the element in the pair. Cheap only for trivial types
+      using value_type = std::pair<size_t, ElementType>;
+
+      iterator(const SparseVector& vector, size_t index): vector(vector), index(index) { }
+
+      value_type operator*() const {
          return {this->vector.indices[this->index], this->vector.values[this->index]};
       }
-      // prefix increment
-      iterator& operator++() { this->index++; return *this; }
 
-      friend bool operator==(const iterator& a, const iterator& b) { return &(a.vector) == &(b.vector) && a.index == b.index; };
-      friend bool operator!=(const iterator& a, const iterator& b) { return &(a.vector) != &(b.vector) || a.index != b.index; };
+      iterator& operator++() {
+         this->index++;
+         return *this;
+      }
 
-   private:
-      const SparseVector<ElementType>& vector;
+      friend bool operator!=(const iterator& a, const iterator& b) {
+         return &a.vector != &b.vector || a.index != b.index;
+      }
+
+   protected:
+      const SparseVector& vector;
       size_t index;
    };
 
-   explicit SparseVector(size_t capacity = 0);
-   void for_each(const std::function<void(size_t, ElementType)>& f) const override;
-   // void for_each_index(const std::function<void (size_t)>& f) const;
-   void for_each_value(const std::function<void(ElementType)>& f) const;
+   using value_type = ElementType;
 
-   [[nodiscard]] iterator begin() const { return iterator(*this, 0); }
-   [[nodiscard]] iterator end() const { return iterator(*this, this->number_nonzeros); }
+   explicit SparseVector(size_t capacity = 0);
 
    [[nodiscard]] size_t size() const;
    void reserve(size_t capacity);
@@ -50,7 +51,10 @@ public:
    void insert(size_t index, ElementType value);
    void transform(const std::function<ElementType(ElementType)>& f);
    void clear();
-   [[nodiscard]] bool empty() const;
+   [[nodiscard]] bool is_empty() const;
+
+   [[nodiscard]] iterator begin() const { return iterator(*this, 0); }
+   [[nodiscard]] iterator end() const { return iterator(*this, this->number_nonzeros); }
 
    template <typename U>
    friend std::ostream& operator<<(std::ostream& stream, const SparseVector<U>& x);
@@ -63,22 +67,8 @@ protected:
 
 // SparseVector methods
 template <typename ElementType>
-SparseVector<ElementType>::SparseVector(size_t capacity): Collection<ElementType>() {
+SparseVector<ElementType>::SparseVector(size_t capacity) {
    this->reserve(capacity);
-}
-
-template <typename ElementType>
-void SparseVector<ElementType>::for_each(const std::function<void(size_t, ElementType)>& f) const {
-   for (size_t index: Range(this->number_nonzeros)) {
-      f(this->indices[index], this->values[index]);
-   }
-}
-
-template <typename ElementType>
-void SparseVector<ElementType>::for_each_value(const std::function<void(ElementType)>& f) const {
-   for (size_t index: Range(this->number_nonzeros)) {
-      f(this->values[index]);
-   }
 }
 
 template <typename ElementType>
@@ -107,7 +97,7 @@ void SparseVector<ElementType>::clear() {
 }
 
 template <typename ElementType>
-bool SparseVector<ElementType>::empty() const {
+bool SparseVector<ElementType>::is_empty() const {
    return (this->number_nonzeros == 0);
 }
 
@@ -132,14 +122,16 @@ std::ostream& operator<<(std::ostream& stream, const SparseVector<ElementType>& 
 template <typename ElementType>
 ElementType norm_inf(const SparseVector<ElementType>& x) {
    ElementType norm = ElementType(0);
-   for (const auto [index, element]: x) {
+   for (const auto [_, element]: x) {
       norm = std::max(norm, std::abs(element));
    }
    return norm;
 }
 
-template <typename ElementType>
-ElementType dot(const std::vector<ElementType>& x, const SparseVector<ElementType>& y) {
+template <typename Vector, typename ElementType>
+ElementType dot(const Vector& x, const SparseVector<ElementType>& y) {
+   static_assert(std::is_same_v<typename Vector::value_type, ElementType>);
+
    ElementType dot_product = ElementType(0);
    for (const auto [index, y_element]: y) {
       assert(index < x.size() && "Vector.dot: the sparse vector y is larger than the dense vector x");

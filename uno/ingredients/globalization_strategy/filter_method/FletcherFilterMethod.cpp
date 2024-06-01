@@ -2,6 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "FletcherFilterMethod.hpp"
+#include "../ProgressMeasures.hpp"
+#include "optimization/Iterate.hpp"
+#include "tools/Logger.hpp"
+#include "tools/Statistics.hpp"
 
 FletcherFilterMethod::FletcherFilterMethod(const Options& options): FilterMethod(options) {
 }
@@ -17,6 +21,9 @@ bool FletcherFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
    bool accept = false;
    // solving the feasibility problem = working on infeasibility only (no filter acceptability test)
    if (solving_feasibility_problem) {
+      DEBUG << "Current infeasibility = " << current_progress.infeasibility << '\n';
+      DEBUG << "Trial   infeasibility = " << trial_progress.infeasibility << '\n';
+      DEBUG << "Predicted reduction = " << predicted_reduction.infeasibility << '\n';
       if (this->armijo_sufficient_decrease(predicted_reduction.infeasibility, current_progress.infeasibility - trial_progress.infeasibility)) {
          DEBUG << "Trial iterate (h-type) was accepted by satisfying the Armijo condition\n";
          accept = true;
@@ -32,10 +39,10 @@ bool FletcherFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
       const double current_merit = FilterMethod::unconstrained_merit_function(current_progress);
       const double trial_merit = FilterMethod::unconstrained_merit_function(trial_progress);
       const double merit_predicted_reduction = FilterMethod::unconstrained_merit_function(predicted_reduction);
-      DEBUG << "Current: (infeas., objective+auxiliary) = (" << current_progress.infeasibility << ", " << current_merit << ")\n";
-      DEBUG << "Trial:   (infeas., objective+auxiliary) = (" << trial_progress.infeasibility << ", " << trial_merit << ")\n";
-      DEBUG << "Unconstrained predicted reduction: " << merit_predicted_reduction << '\n';
+      DEBUG << "Current: (infeasibility, objective + auxiliary) = (" << current_progress.infeasibility << ", " << current_merit << ")\n";
+      DEBUG << "Trial:   (infeasibility, objective + auxiliary) = (" << trial_progress.infeasibility << ", " << trial_merit << ")\n";
       DEBUG << "Current filter:\n" << *this->filter << '\n';
+      DEBUG << "Unconstrained predicted reduction = " << merit_predicted_reduction << '\n';
 
       if (this->filter->acceptable(trial_progress.infeasibility, trial_merit)) {
          if (this->filter->acceptable_wrt_current_iterate(current_progress.infeasibility, current_merit, trial_progress.infeasibility, trial_merit)) {
@@ -44,7 +51,7 @@ bool FletcherFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
                // unconstrained Armijo sufficient decrease condition: predicted reduction should be positive (f-type)
                const double objective_actual_reduction = this->compute_actual_objective_reduction(current_merit, current_progress.infeasibility,
                      trial_merit);
-               DEBUG << "Actual reduction: " << objective_actual_reduction << '\n';
+               DEBUG << "Unconstrained actual reduction = " << objective_actual_reduction << '\n';
                if (this->armijo_sufficient_decrease(merit_predicted_reduction, objective_actual_reduction)) {
                   DEBUG << "Trial iterate (f-type) was accepted by satisfying the Armijo condition\n";
                   accept = true;
@@ -64,19 +71,20 @@ bool FletcherFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
             }
          }
          else {
+            DEBUG << "Trial iterate not acceptable with respect to current point\n";
             scenario = "current point";
          }
       }
       else {
+         DEBUG << "Trial iterate not filter acceptable\n";
          scenario = "filter";
       }
    }
    statistics.set("status", std::string(accept ? "accepted" : "rejected") + " (" + scenario + ")");
-   DEBUG << '\n';
    return accept;
 }
 
-bool FletcherFilterMethod::is_feasibility_iterate_acceptable(const ProgressMeasures& /*current_progress*/, const ProgressMeasures& trial_progress) const {
+bool FletcherFilterMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures& /*current_progress*/, const ProgressMeasures& trial_progress) const {
    // if the trial infeasibility improves upon the best known infeasibility
-   return (trial_progress.infeasibility < this->filter->get_smallest_infeasibility());
+   return this->filter->infeasibility_sufficient_reduction(this->filter->get_smallest_infeasibility(), trial_progress.infeasibility);
 }

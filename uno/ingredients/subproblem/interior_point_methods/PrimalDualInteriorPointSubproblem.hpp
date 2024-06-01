@@ -8,7 +8,6 @@
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem/HessianModel.hpp"
-#include "tools/Options.hpp"
 #include "BarrierParameterUpdateStrategy.hpp"
 
 struct InteriorPointParameters {
@@ -22,12 +21,12 @@ struct InteriorPointParameters {
 
 class PrimalDualInteriorPointSubproblem : public Subproblem {
 public:
-   PrimalDualInteriorPointSubproblem(size_t max_number_variables, size_t max_number_constraints,
-         size_t max_number_jacobian_nonzeros, size_t max_number_hessian_nonzeros, const Options& options);
+   PrimalDualInteriorPointSubproblem(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros,
+         size_t number_hessian_nonzeros, const Options& options);
 
    void initialize_statistics(Statistics& statistics, const Options& options) override;
    [[nodiscard]] bool generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
-   void set_initial_point(const std::vector<double>& point) override;
+   void set_initial_point(const Vector<double>& point) override;
 
    void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
    void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& constraint_index) override;
@@ -38,8 +37,8 @@ public:
 
    [[nodiscard]] const SymmetricMatrix<double>& get_lagrangian_hessian() const override;
    void set_auxiliary_measure(const Model& model, Iterate& iterate) override;
-   [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate, const Direction& direction,
-         double step_length) const override;
+   [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length) const override;
 
    void postprocess_iterate(const OptimizationProblem& problem, Iterate& iterate) override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
@@ -56,10 +55,6 @@ protected:
    const double least_square_multiplier_max_norm;
    const double damping_factor; // (Section 3.7 in IPOPT paper)
 
-   // preallocated vectors for bound multiplier displacements
-   std::vector<double> lower_delta_z{};
-   std::vector<double> upper_delta_z{};
-
    bool solving_feasibility_problem{false};
 
    [[nodiscard]] double barrier_parameter() const;
@@ -69,13 +64,17 @@ protected:
    void update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate);
    [[nodiscard]] bool is_small_step(const OptimizationProblem& problem, const Iterate& current_iterate, const Direction& direction) const;
    [[nodiscard]] double evaluate_subproblem_objective(const Direction& direction) const;
-   [[nodiscard]] double compute_barrier_term_directional_derivative(const Model& model, const Iterate& current_iterate, const Direction& direction) const;
-   [[nodiscard]] double primal_fraction_to_boundary(const OptimizationProblem& problem, const Iterate& current_iterate, double tau);
-   [[nodiscard]] double dual_fraction_to_boundary(const OptimizationProblem& problem, const Iterate& current_iterate, double tau);
+   [[nodiscard]] double compute_barrier_term_directional_derivative(const Model& model, const Iterate& current_iterate,
+         const Vector<double>& primal_direction) const;
+   [[nodiscard]] static double primal_fraction_to_boundary(const OptimizationProblem& problem, const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double tau);
+   [[nodiscard]] static double dual_fraction_to_boundary(const OptimizationProblem& problem, const Iterate& current_iterate,
+         Vector<double>& lower_bound_multipliers, Vector<double>& upper_bound_multipliers, double tau);
    void assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem, const Iterate& current_iterate);
    void generate_augmented_rhs(const OptimizationProblem& problem, const Iterate& current_iterate);
    void assemble_primal_dual_direction(const OptimizationProblem& problem, const Iterate& current_iterate, Direction& direction);
-   void compute_bound_dual_direction(const OptimizationProblem& problem, const Iterate& current_iterate);
+   void compute_bound_dual_direction(const OptimizationProblem& problem, const Iterate& current_iterate, const Vector<double>& primal_direction,
+      Vector<double>& lower_bound_multipliers, Vector<double>& upper_bound_multipliers);
    void compute_least_square_multipliers(const OptimizationProblem& problem, Iterate& iterate);
 };
 

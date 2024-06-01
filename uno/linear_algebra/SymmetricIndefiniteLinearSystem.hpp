@@ -24,10 +24,10 @@ template <typename ElementType>
 class SymmetricIndefiniteLinearSystem {
 public:
    std::unique_ptr<SymmetricMatrix<ElementType>> matrix;
-   std::vector<ElementType> rhs{};
-   std::vector<ElementType> solution{};
+   Vector<ElementType> rhs{};
+   Vector<ElementType> solution{};
 
-   SymmetricIndefiniteLinearSystem(const std::string& sparse_format, size_t max_dimension, size_t max_number_non_zeros, bool use_regularization,
+   SymmetricIndefiniteLinearSystem(const std::string& sparse_format, size_t dimension, size_t number_non_zeros, bool use_regularization,
          const Options& options);
    void assemble_matrix(const SymmetricMatrix<double>& hessian, const RectangularMatrix<double>& constraint_jacobian,
          size_t number_variables, size_t number_constraints);
@@ -53,11 +53,11 @@ protected:
 };
 
 template <typename ElementType>
-SymmetricIndefiniteLinearSystem<ElementType>::SymmetricIndefiniteLinearSystem(const std::string& sparse_format, size_t max_dimension,
-      size_t max_number_non_zeros, bool use_regularization, const Options& options):
-      matrix(SymmetricMatrixFactory<ElementType>::create(sparse_format, max_dimension, max_number_non_zeros, use_regularization)),
-      rhs(max_dimension),
-      solution(max_dimension),
+SymmetricIndefiniteLinearSystem<ElementType>::SymmetricIndefiniteLinearSystem(const std::string& sparse_format, size_t dimension,
+      size_t number_non_zeros, bool use_regularization, const Options& options):
+      matrix(SymmetricMatrixFactory<ElementType>::create(sparse_format, dimension, number_non_zeros, use_regularization)),
+      rhs(dimension),
+      solution(dimension),
       regularization_failure_threshold(ElementType(options.get_double("regularization_failure_threshold"))),
       primal_regularization_initial_factor(ElementType(options.get_double("primal_regularization_initial_factor"))),
       dual_regularization_fraction(ElementType(options.get_double("dual_regularization_fraction"))),
@@ -75,20 +75,20 @@ void SymmetricIndefiniteLinearSystem<ElementType>::assemble_matrix(const Symmetr
    this->matrix->reset();
    // copy the Lagrangian Hessian in the top left block
    //size_t current_column = 0;
-   hessian.for_each([&](size_t row_index, size_t column_index, double entry) {
+   for (const auto [row_index, column_index, element]: hessian) {
       // finalize all empty columns
       /*for (size_t column: Range(current_column, column_index)) {
          this->matrix->finalize_column(column);
          current_column++;
       }*/
-      this->matrix->insert(entry, row_index, column_index);
-   });
+      this->matrix->insert(element, row_index, column_index);
+   }
 
    // Jacobian of general constraints
    for (size_t column_index: Range(number_constraints)) {
-      constraint_jacobian[column_index].for_each([&](size_t row_index, double derivative) {
+      for (const auto [row_index, derivative]: constraint_jacobian[column_index]) {
          this->matrix->insert(derivative, row_index, number_variables + column_index);
-      });
+      }
       this->matrix->finalize_column(column_index);
    }
 }
@@ -151,7 +151,7 @@ void SymmetricIndefiniteLinearSystem<ElementType>::regularize_matrix(Statistics&
 
       if (not linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_dual_block) {
          good_inertia = true;
-         DEBUG << "Factorization was a success\n\n";
+         DEBUG << "Factorization was a success\n";
          this->previous_primal_regularization = this->primal_regularization;
       }
       else {

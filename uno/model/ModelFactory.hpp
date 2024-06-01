@@ -6,8 +6,10 @@
 
 #include <memory>
 #include "Model.hpp"
-#include "optimization/Iterate.hpp"
-#include "tools/Options.hpp"
+
+// forward declarations
+class Iterate;
+class Options;
 
 class ModelFactory {
 public:
