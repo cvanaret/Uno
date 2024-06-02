@@ -64,14 +64,7 @@ void l1Relaxation::compute_feasible_direction(Statistics& statistics, Iterate& c
       WarmstartInformation& warmstart_information) {
    statistics.set("penalty param.", this->penalty_parameter);
    direction.reset();
-   if (0. < this->penalty_parameter) {
-      this->solve_sequence_of_relaxed_subproblems(statistics, current_iterate, direction, warmstart_information);
-   }
-   else {
-      this->solve_subproblem(statistics, this->feasibility_problem, current_iterate, current_iterate.feasibility_multipliers, direction,
-            warmstart_information);
-      std::swap(direction.multipliers, direction.feasibility_multipliers);
-   }
+   this->solve_sequence_of_relaxed_subproblems(statistics, current_iterate, direction, warmstart_information);
 }
 
 // an initial point is provided
@@ -121,22 +114,19 @@ void l1Relaxation::solve_sequence_of_relaxed_subproblems(Statistics& statistics,
 
          // stage f: update the penalty parameter based on the current dual error
          this->decrease_parameter_aggressively(current_iterate, feasibility_direction);
-         if (this->penalty_parameter == 0.) {
-            direction = feasibility_direction;
+         if (this->penalty_parameter < current_penalty_parameter) {
+            this->solve_l1_relaxed_problem(statistics, current_iterate, direction, this->penalty_parameter, warmstart_information);
+            linearized_residual = this->model.constraint_violation(current_iterate.evaluations.constraints +
+                  current_iterate.evaluations.constraint_jacobian * direction.primals, Norm::L1);
          }
-         else {
-            if (this->penalty_parameter < current_penalty_parameter) {
-               this->solve_l1_relaxed_problem(statistics, current_iterate, direction, this->penalty_parameter, warmstart_information);
-               linearized_residual = this->model.constraint_violation(current_iterate.evaluations.constraints +
-                     current_iterate.evaluations.constraint_jacobian * direction.primals, Norm::L1);
-            }
 
-            // stage d: further decrease penalty parameter to reach a fraction of the ideal decrease
-            this->enforce_linearized_residual_sufficient_decrease(statistics, current_iterate, direction, linearized_residual,
-                  residual_lowest_violation, warmstart_information);
-            // stage e: further decrease penalty parameter to guarantee a descent direction for the l1 merit function
-            this->enforce_descent_direction_for_l1_merit(statistics, current_iterate, direction, feasibility_direction, warmstart_information);
-         }
+         // stage d: further decrease penalty parameter to reach a fraction of the ideal decrease
+         this->enforce_linearized_residual_sufficient_decrease(statistics, current_iterate, direction, linearized_residual,
+               residual_lowest_violation, warmstart_information);
+         // stage e: further decrease penalty parameter to guarantee a descent direction for the l1 merit function
+         this->enforce_descent_direction_for_l1_merit(statistics, current_iterate, direction, feasibility_direction, warmstart_information);
+
+         // save the dual feasibility direction
          direction.feasibility_multipliers = feasibility_direction.multipliers;
       }
    }
