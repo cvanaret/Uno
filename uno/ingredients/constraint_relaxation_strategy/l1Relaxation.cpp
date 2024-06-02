@@ -251,7 +251,7 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
       DEBUG << "Zero step acceptable\n";
       trial_iterate.evaluate_objective(this->model);
       accept_iterate = true;
-      statistics.set("status", "accepted (0 step)");
+      statistics.set("status", "accepted (0 primal step)");
    }
    else {
       // invoke the globalization strategy for acceptance
