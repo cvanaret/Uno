@@ -7,7 +7,7 @@
 
 Direction::Direction(size_t number_variables, size_t number_constraints) :
       number_variables(number_variables), number_constraints(number_constraints),
-      primals(number_variables), multipliers(number_variables, number_constraints),
+      primals(number_variables), multipliers(number_variables, number_constraints), feasibility_multipliers(number_variables, number_constraints),
       active_set(number_variables, number_constraints) {
 }
 
@@ -17,6 +17,9 @@ void Direction::set_dimensions(size_t new_number_variables, size_t new_number_co
 }
 
 void Direction::reset() {
+   this->primals.fill(0.);
+   this->multipliers.reset();
+   this->feasibility_multipliers.reset();
    this->active_set.constraints.at_lower_bound.clear();
    this->active_set.constraints.at_upper_bound.clear();
    this->active_set.bounds.at_lower_bound.clear();
@@ -47,6 +50,9 @@ std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
    stream << "│ constraint multipliers = "; print_vector(stream, direction.multipliers.constraints);
    stream << "│ lower bound multipliers = "; print_vector(stream, direction.multipliers.lower_bounds);
    stream << "│ upper bound multipliers = "; print_vector(stream, direction.multipliers.upper_bounds);
+   stream << "│ feasibility constraint multipliers = "; print_vector(stream, direction.feasibility_multipliers.constraints);
+   stream << "│ feasibility lower bound multipliers = "; print_vector(stream, direction.feasibility_multipliers.lower_bounds);
+   stream << "│ feasibility upper bound multipliers = "; print_vector(stream, direction.feasibility_multipliers.upper_bounds);
 
    stream << "│ objective = " << direction.subproblem_objective << '\n';
    stream << "│ norm = " << direction.norm << '\n';

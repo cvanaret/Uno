@@ -32,7 +32,7 @@ protected:
 
    void set_direction_bounds(const OptimizationProblem& problem, const Iterate& current_iterate);
    void set_linearized_constraint_bounds(const OptimizationProblem& problem, const std::vector<double>& current_constraints);
-   static void compute_dual_displacements(const Iterate& current_iterate, Direction& direction);
+   static void compute_dual_displacements(const Multipliers& current_multipliers, Multipliers& direction_multipliers);
 };
 
 #endif // UNO_INEQUALITYCONSTRAINEDMETHOD_H

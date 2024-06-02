@@ -13,6 +13,7 @@ class Direction;
 class Iterate;
 class l1RelaxedProblem;
 class Model;
+class Multipliers;
 class OptimizationProblem;
 class Options;
 class Statistics;
@@ -33,8 +34,8 @@ public:
    // virtual methods implemented by subclasses
    virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
    virtual bool generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) = 0;
-   virtual void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction,
-         const WarmstartInformation& warmstart_information) = 0;
+   virtual void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
+         Direction& direction, const WarmstartInformation& warmstart_information) = 0;
 
    void set_trust_region_radius(double new_trust_region_radius);
    virtual void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;

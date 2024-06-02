@@ -53,9 +53,10 @@ public:
 
    Vector<double> primals; /*!< Primal variables */
    Multipliers multipliers; /*!< Multipliers */
+   Multipliers feasibility_multipliers; /*!< Multipliers */
 
    SubproblemStatus status{SubproblemStatus::OPTIMAL}; /*!< Status of the solution */
-   
+
    double norm{INF<double>}; /*!< Norm of \f$x\f$ */
    double subproblem_objective{INF<double>}; /*!< Objective value */
    ActiveSet active_set; /*!< Active set */

@@ -60,8 +60,8 @@ protected:
          WarmstartInformation& warmstart_information);
    void solve_l1_relaxed_problem(Statistics& statistics, Iterate& current_iterate, Direction& direction, double current_penalty_parameter,
          const WarmstartInformation& warmstart_information);
-   void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction,
-         const WarmstartInformation& warmstart_information);
+   void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
+         Direction& direction, const WarmstartInformation& warmstart_information);
 
    // functions that decrease the penalty parameter to enforce particular conditions
    void decrease_parameter_aggressively(Iterate& current_iterate, const Direction& direction);
@@ -71,9 +71,9 @@ protected:
    [[nodiscard]] bool linearized_residual_sufficient_decrease(const Iterate& current_iterate, double linearized_residual,
          double residual_lowest_violation) const;
    void enforce_descent_direction_for_l1_merit(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         const Direction& direction_lowest_violation, WarmstartInformation& warmstart_information);
+         const Direction& feasibility_direction, WarmstartInformation& warmstart_information);
    [[nodiscard]] bool is_descent_direction_for_l1_merit_function(const Iterate& current_iterate, const Direction& direction,
-         const Direction& direction_lowest_violation) const;
+         const Direction& feasibility_direction) const;
 
    void evaluate_progress_measures(Iterate& iterate) const;
    [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length);

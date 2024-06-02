@@ -1,8 +1,9 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include <linear_algebra/COOSymmetricMatrix.hpp>
 #include "LPSubproblem.hpp"
+#include "ingredients/subproblem/Direction.hpp"
+#include "linear_algebra/COOSymmetricMatrix.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "reformulation/OptimizationProblem.hpp"
 #include "solvers/LP/LPSolverFactory.hpp"
@@ -32,8 +33,8 @@ void LPSubproblem::evaluate_functions(const OptimizationProblem& problem, Iterat
    }
 }
 
-void LPSubproblem::solve(Statistics& /*statistics*/, const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction,
-      const WarmstartInformation& warmstart_information) {
+void LPSubproblem::solve(Statistics& /*statistics*/, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
+      Direction& direction, const WarmstartInformation& warmstart_information) {
    // evaluate the functions at the current iterate
    this->evaluate_functions(problem, current_iterate, warmstart_information);
 
@@ -51,7 +52,7 @@ void LPSubproblem::solve(Statistics& /*statistics*/, const OptimizationProblem& 
    this->solver->solve_LP(problem.number_variables, problem.number_constraints, this->direction_lower_bounds, this->direction_upper_bounds,
          this->linearized_constraints_lower_bounds, this->linearized_constraints_upper_bounds, this->evaluations.objective_gradient,
          this->evaluations.constraint_jacobian, this->initial_point, direction, warmstart_information);
-   InequalityConstrainedMethod::compute_dual_displacements(current_iterate, direction);
+   InequalityConstrainedMethod::compute_dual_displacements(current_multipliers, direction.multipliers);
    this->number_subproblems_solved++;
    // reset the initial point
    this->initial_point.fill(0.);

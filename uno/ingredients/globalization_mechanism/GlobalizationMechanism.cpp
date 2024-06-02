@@ -26,10 +26,13 @@ void GlobalizationMechanism::assemble_trial_iterate(const Model& model, Iterate&
    trial_iterate.primals = current_iterate.primals + primal_step_length * direction.primals;
    // project the trial iterate onto the bounds to avoid numerical errors
    model.project_onto_variable_bounds(trial_iterate.primals);
-   // take dual step: line-search carried out only on constraint multipliers. Bound multipliers updated with full bound dual step length
+   // take dual step: line-search carried out only on constraint multipliers. Bound multipliers updated with full step
    trial_iterate.multipliers.constraints = current_iterate.multipliers.constraints + dual_step_length * direction.multipliers.constraints;
    trial_iterate.multipliers.lower_bounds = current_iterate.multipliers.lower_bounds + direction.multipliers.lower_bounds;
    trial_iterate.multipliers.upper_bounds = current_iterate.multipliers.upper_bounds + direction.multipliers.upper_bounds;
+   trial_iterate.feasibility_multipliers.constraints = current_iterate.feasibility_multipliers.constraints + dual_step_length * direction.feasibility_multipliers.constraints;
+   trial_iterate.feasibility_multipliers.lower_bounds = current_iterate.feasibility_multipliers.lower_bounds + direction.feasibility_multipliers.lower_bounds;
+   trial_iterate.feasibility_multipliers.upper_bounds = current_iterate.feasibility_multipliers.upper_bounds + direction.feasibility_multipliers.upper_bounds;
    trial_iterate.progress.reset();
    trial_iterate.is_objective_computed = false;
    trial_iterate.is_objective_gradient_computed = false;
@@ -67,11 +70,9 @@ TerminationStatus GlobalizationMechanism::check_termination(const Model& model, 
 TerminationStatus GlobalizationMechanism::check_convergence_with_given_tolerance(const Model& model, Iterate& current_iterate, double tolerance) const {
    // evaluate termination conditions based on optimality conditions
    const bool stationarity = (current_iterate.residuals.stationarity / current_iterate.residuals.stationarity_scaling <= tolerance);
-   const bool feasibility_stationarity =
-         (current_iterate.residuals.feasibility_stationarity / current_iterate.residuals.stationarity_scaling <= tolerance);
+   const bool feasibility_stationarity = (current_iterate.residuals.feasibility_stationarity <= tolerance);
    const bool complementarity = (current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling <= tolerance);
-   const bool feasibility_complementarity =
-         (current_iterate.residuals.feasibility_complementarity / current_iterate.residuals.complementarity_scaling <= tolerance);
+   const bool feasibility_complementarity = (current_iterate.residuals.feasibility_complementarity <= tolerance);
    const bool primal_feasibility = (current_iterate.residuals.infeasibility <= tolerance);
    const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(model.number_variables, tolerance);
 
@@ -86,17 +87,15 @@ TerminationStatus GlobalizationMechanism::check_convergence_with_given_tolerance
    if (current_iterate.is_objective_computed && current_iterate.evaluations.objective < this->unbounded_objective_threshold) {
       return TerminationStatus::UNBOUNDED;
    }
-   else if (complementarity && primal_feasibility) {
-      if (0. < current_iterate.objective_multiplier && stationarity) {
-         // feasible regular stationary point
-         return TerminationStatus::FEASIBLE_KKT_POINT;
-      }
-      else if (feasibility_stationarity && no_trivial_duals) {
-         // feasible but violation of CQ
-         return TerminationStatus::FEASIBLE_FJ_POINT;
-      }
+   else if (stationarity && primal_feasibility && 0. < current_iterate.objective_multiplier && complementarity) {
+      // feasible regular stationary point
+      return TerminationStatus::FEASIBLE_KKT_POINT;
    }
-   else if (not primal_feasibility && feasibility_complementarity && feasibility_stationarity) {
+   else if (feasibility_stationarity && model.is_constrained() && primal_feasibility && complementarity && no_trivial_duals) {
+      // feasible but violation of CQ
+      return TerminationStatus::FEASIBLE_FJ_POINT;
+   }
+   else if (feasibility_stationarity && model.is_constrained() && not primal_feasibility && feasibility_complementarity) {
       // no primal feasibility, stationary point of constraint violation
       return TerminationStatus::INFEASIBLE_STATIONARY_POINT;
    }

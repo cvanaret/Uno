@@ -32,8 +32,8 @@ public:
    void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& constraint_index) override;
    void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) override;
 
-   void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction,
-         const WarmstartInformation& warmstart_information) override;
+   void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
+         Direction& direction, const WarmstartInformation& warmstart_information) override;
 
    [[nodiscard]] const SymmetricMatrix<double>& get_lagrangian_hessian() const override;
    void set_auxiliary_measure(const Model& model, Iterate& iterate) override;
@@ -59,23 +59,24 @@ protected:
 
    [[nodiscard]] double barrier_parameter() const;
    [[nodiscard]] double push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const;
-   void evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+   void evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
          const WarmstartInformation& warmstart_information);
    void update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate);
    [[nodiscard]] bool is_small_step(const OptimizationProblem& problem, const Iterate& current_iterate, const Direction& direction) const;
    [[nodiscard]] double evaluate_subproblem_objective(const Direction& direction) const;
    [[nodiscard]] double compute_barrier_term_directional_derivative(const Model& model, const Iterate& current_iterate,
          const Vector<double>& primal_direction) const;
-   [[nodiscard]] static double primal_fraction_to_boundary(const OptimizationProblem& problem, const Iterate& current_iterate,
+   [[nodiscard]] static double primal_fraction_to_boundary(const OptimizationProblem& problem, const Vector<double>& current_primals,
          const Vector<double>& primal_direction, double tau);
-   [[nodiscard]] static double dual_fraction_to_boundary(const OptimizationProblem& problem, const Iterate& current_iterate,
-         Vector<double>& lower_bound_multipliers, Vector<double>& upper_bound_multipliers, double tau);
-   void assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem, const Iterate& current_iterate);
-   void generate_augmented_rhs(const OptimizationProblem& problem, const Iterate& current_iterate);
-   void assemble_primal_dual_direction(const OptimizationProblem& problem, const Iterate& current_iterate, Direction& direction);
-   void compute_bound_dual_direction(const OptimizationProblem& problem, const Iterate& current_iterate, const Vector<double>& primal_direction,
-      Vector<double>& lower_bound_multipliers, Vector<double>& upper_bound_multipliers);
-   void compute_least_square_multipliers(const OptimizationProblem& problem, Iterate& iterate);
+   [[nodiscard]] static double dual_fraction_to_boundary(const OptimizationProblem& problem, const Multipliers& current_multipliers,
+         Multipliers& direction_multipliers, double tau);
+   void assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem, const Multipliers& current_multipliers);
+   void generate_augmented_rhs(const OptimizationProblem& problem, const Multipliers& current_multipliers);
+   void assemble_primal_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,
+         Vector<double>& direction_primals, Multipliers& direction_multipliers);
+   void compute_bound_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,
+         const Vector<double>& primal_direction, Multipliers& direction_multipliers);
+   void compute_least_square_multipliers(const OptimizationProblem& problem, Iterate& iterate, Vector<double>& constraint_multipliers);
 };
 
 #endif // UNO_INFEASIBLEINTERIORPOINTSUBPROBLEM_H

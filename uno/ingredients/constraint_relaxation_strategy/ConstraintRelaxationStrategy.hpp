@@ -64,8 +64,8 @@ protected:
    void compute_primal_dual_residuals(const OptimizationProblem& optimality_problem, const OptimizationProblem& feasibility_problem, Iterate& iterate);
    void evaluate_lagrangian_gradient(Iterate& iterate, const Multipliers& multipliers) const;
 
-   [[nodiscard]] double compute_stationarity_scaling(const Iterate& iterate) const;
-   [[nodiscard]] double compute_complementarity_scaling(const Iterate& iterate) const;
+   [[nodiscard]] double compute_stationarity_scaling(const Multipliers& multipliers) const;
+   [[nodiscard]] double compute_complementarity_scaling(const Multipliers& multipliers) const;
 
    void set_statistics(Statistics& statistics, const Iterate& iterate) const;
    void set_progress_statistics(Statistics& statistics, const Iterate& iterate) const;

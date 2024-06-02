@@ -64,6 +64,7 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Optimizat
    this->evaluate_lagrangian_gradient(iterate, iterate.multipliers);
    iterate.residuals.stationarity = optimality_problem.stationarity_error(iterate.lagrangian_gradient, iterate.objective_multiplier,
          this->residual_norm);
+   this->evaluate_lagrangian_gradient(iterate, iterate.feasibility_multipliers);
    iterate.residuals.feasibility_stationarity = feasibility_problem.stationarity_error(iterate.lagrangian_gradient, 0., this->residual_norm);
 
    // constraint violation of the original problem
@@ -73,11 +74,11 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Optimizat
    iterate.residuals.complementarity = optimality_problem.complementarity_error(iterate.primals, iterate.evaluations.constraints,
          iterate.multipliers, this->residual_norm);
    iterate.residuals.feasibility_complementarity = feasibility_problem.complementarity_error(iterate.primals, iterate.evaluations.constraints,
-         iterate.multipliers, this->residual_norm);
+         iterate.feasibility_multipliers, this->residual_norm);
 
    // scaling factors
-   iterate.residuals.stationarity_scaling = this->compute_stationarity_scaling(iterate);
-   iterate.residuals.complementarity_scaling = this->compute_complementarity_scaling(iterate);
+   iterate.residuals.stationarity_scaling = this->compute_stationarity_scaling(iterate.multipliers);
+   iterate.residuals.complementarity_scaling = this->compute_complementarity_scaling(iterate.multipliers);
 }
 
 // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
@@ -105,7 +106,7 @@ void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(Iterate& iterate
    }
 }
 
-double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Iterate& iterate) const {
+double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Multipliers& multipliers) const {
    const size_t total_size = this->model.get_lower_bounded_variables().size() + this->model.get_upper_bounded_variables().size() + this->model.number_constraints;
    if (total_size == 0) {
       return 1.;
@@ -113,15 +114,15 @@ double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Iterate&
    else {
       const double scaling_factor = this->residual_scaling_threshold * static_cast<double>(total_size);
       const double multiplier_norm = norm_1(
-            view(iterate.multipliers.constraints, 0, this->model.number_constraints),
-            view(iterate.multipliers.lower_bounds, 0, this->model.number_variables),
-            view(iterate.multipliers.upper_bounds, 0, this->model.number_variables)
+            view(multipliers.constraints, 0, this->model.number_constraints),
+            view(multipliers.lower_bounds, 0, this->model.number_variables),
+            view(multipliers.upper_bounds, 0, this->model.number_variables)
       );
       return std::max(1., multiplier_norm / scaling_factor);
    }
 }
 
-double ConstraintRelaxationStrategy::compute_complementarity_scaling(const Iterate& iterate) const {
+double ConstraintRelaxationStrategy::compute_complementarity_scaling(const Multipliers& multipliers) const {
    const size_t total_size = this->model.get_lower_bounded_variables().size() + this->model.get_upper_bounded_variables().size();
    if (total_size == 0) {
       return 1.;
@@ -129,8 +130,8 @@ double ConstraintRelaxationStrategy::compute_complementarity_scaling(const Itera
    else {
       const double scaling_factor = this->residual_scaling_threshold * static_cast<double>(total_size);
       const double bound_multiplier_norm = norm_1(
-            view(iterate.multipliers.lower_bounds, 0, this->model.number_variables),
-            view(iterate.multipliers.upper_bounds, 0, this->model.number_variables)
+            view(multipliers.lower_bounds, 0, this->model.number_variables),
+            view(multipliers.upper_bounds, 0, this->model.number_variables)
       );
       return std::max(1., bound_multiplier_norm / scaling_factor);
    }
