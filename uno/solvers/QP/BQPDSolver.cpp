@@ -308,28 +308,28 @@ SubproblemStatus BQPDSolver::status_from_bqpd_status(BQPDStatus bqpd_status) {
       case BQPDStatus::UNBOUNDED_PROBLEM:
          return SubproblemStatus::UNBOUNDED_PROBLEM;
       case BQPDStatus::BOUND_INCONSISTENCY:
-         WARNING << YELLOW << "BQPD error: bound inconsistency\n" << RESET;
+         DEBUG << YELLOW << "BQPD error: bound inconsistency\n" << RESET;
          return SubproblemStatus::INFEASIBLE;
       case BQPDStatus::INFEASIBLE:
          return SubproblemStatus::INFEASIBLE;
       // errors
       case BQPDStatus::INCORRECT_PARAMETER:
-         WARNING << YELLOW << "BQPD error: incorrect parameter\n" << RESET;
+         DEBUG << YELLOW << "BQPD error: incorrect parameter\n" << RESET;
          return SubproblemStatus::ERROR;
       case BQPDStatus::LP_INSUFFICIENT_SPACE:
-         WARNING << YELLOW << "BQPD error: LP insufficient space\n" << RESET;
+         DEBUG << YELLOW << "BQPD error: LP insufficient space\n" << RESET;
          return SubproblemStatus::ERROR;
       case BQPDStatus::HESSIAN_INSUFFICIENT_SPACE:
-         WARNING << YELLOW << "BQPD kmax too small, continue anyway\n" << RESET;
+         DEBUG << YELLOW << "BQPD kmax too small, continue anyway\n" << RESET;
          return SubproblemStatus::ERROR;
       case BQPDStatus::SPARSE_INSUFFICIENT_SPACE:
-         WARNING << YELLOW << "BQPD error: sparse insufficient space\n" << RESET;
+         DEBUG << YELLOW << "BQPD error: sparse insufficient space\n" << RESET;
          return SubproblemStatus::ERROR;
       case BQPDStatus::MAX_RESTARTS_REACHED:
-         WARNING << YELLOW << "BQPD max restarts reached\n" << RESET;
+         DEBUG << YELLOW << "BQPD max restarts reached\n" << RESET;
          return SubproblemStatus::ERROR;
       case BQPDStatus::UNDEFINED:
-         WARNING << YELLOW << "BQPD error: undefined\n" << RESET;
+         DEBUG << YELLOW << "BQPD error: undefined\n" << RESET;
          return SubproblemStatus::ERROR;
    }
    throw std::invalid_argument("The BQPD ifail is not consistent with the Uno status values");

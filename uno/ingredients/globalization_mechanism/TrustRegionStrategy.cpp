@@ -57,12 +57,16 @@ void TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Mod
          if (this->direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
             // the subproblem is always bounded, but the objective may exceed a very large negative value
             this->set_statistics(statistics, this->direction, number_iterations);
+            statistics.set("status", "unbounded subproblem");
+            if (Logger::level == INFO) statistics.print_current_line();
             this->decrease_radius_aggressively();
             warmstart_information.set_cold_start();
          }
          else if (this->direction.status == SubproblemStatus::ERROR) {
             this->set_statistics(statistics, this->direction, number_iterations);
-            this->decrease_radius();
+            statistics.set("status", "solver error");
+            if (Logger::level == INFO) statistics.print_current_line();
+            this->decrease_radius(this->direction.norm);
             warmstart_information.set_cold_start();
          }
          else {
@@ -87,8 +91,8 @@ void TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Mod
          this->set_statistics(statistics, number_iterations);
          statistics.set("status", "eval. error");
          if (Logger::level == INFO) statistics.print_current_line();
-         warmstart_information.set_cold_start();
          this->decrease_radius();
+         warmstart_information.set_cold_start();
       }
    }
    throw std::runtime_error("TR strategy failed for unknown reasons, this should not happen.");
