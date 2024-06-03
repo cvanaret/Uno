@@ -69,7 +69,7 @@ TerminationStatus GlobalizationMechanism::check_termination(const Model& model, 
 
 TerminationStatus GlobalizationMechanism::check_convergence_with_given_tolerance(const Model& model, Iterate& current_iterate, double tolerance) const {
    // evaluate termination conditions based on optimality conditions
-   const bool stationarity = (current_iterate.residuals.stationarity / current_iterate.residuals.stationarity_scaling <= tolerance);
+   const bool KKT_stationarity = (current_iterate.residuals.KKT_stationarity / current_iterate.residuals.stationarity_scaling <= tolerance);
    const bool FJ_stationarity = (current_iterate.residuals.FJ_stationarity <= tolerance);
    const bool feasibility_stationarity = (current_iterate.residuals.feasibility_stationarity <= tolerance);
    const bool complementarity = (current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling <= tolerance);
@@ -78,7 +78,8 @@ TerminationStatus GlobalizationMechanism::check_convergence_with_given_tolerance
    const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(model.number_variables, tolerance);
 
    DEBUG << "\nTermination criteria for tolerance = " << tolerance << ":\n";
-   DEBUG << "Stationarity: " << std::boolalpha << stationarity << '\n';
+   DEBUG << "KKT stationarity: " << std::boolalpha << KKT_stationarity << '\n';
+   DEBUG << "FJ stationarity: " << std::boolalpha << FJ_stationarity << '\n';
    DEBUG << "Stationarity (feasibility): " << std::boolalpha << feasibility_stationarity << '\n';
    DEBUG << "Complementarity: " << std::boolalpha << complementarity << '\n';
    DEBUG << "Complementarity (feasibility): " << std::boolalpha << feasibility_complementarity << '\n';
@@ -88,7 +89,7 @@ TerminationStatus GlobalizationMechanism::check_convergence_with_given_tolerance
    if (current_iterate.is_objective_computed && current_iterate.evaluations.objective < this->unbounded_objective_threshold) {
       return TerminationStatus::UNBOUNDED;
    }
-   else if (stationarity && primal_feasibility && 0. < current_iterate.objective_multiplier && complementarity) {
+   else if (KKT_stationarity && primal_feasibility && 0. < current_iterate.objective_multiplier && complementarity) {
       // feasible regular stationary point
       return TerminationStatus::FEASIBLE_KKT_POINT;
    }

@@ -8,7 +8,7 @@
 
 class PrimalDualResiduals {
 public:
-   double stationarity{INF<double>};
+   double KKT_stationarity{INF<double>};
    double FJ_stationarity{INF<double>};
    double feasibility_stationarity{INF<double>};
    double infeasibility{INF<double>};
