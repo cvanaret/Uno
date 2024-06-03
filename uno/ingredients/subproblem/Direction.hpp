@@ -64,7 +64,8 @@ public:
 
    void set_dimensions(size_t new_number_variables, size_t new_number_constraints);
    void reset();
-   friend std::ostream& operator<<(std::ostream& stream, const Direction& step);
+
+   friend std::ostream& operator<<(std::ostream& stream, const Direction& direction);
 };
 
 #endif // UNO_DIRECTION_H
