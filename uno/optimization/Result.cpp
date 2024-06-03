@@ -31,10 +31,10 @@ void Result::print(bool print_primal_dual_solution) const {
 
    std::cout << "Objective value:\t\t\t" << std::defaultfloat << std::setprecision(7) << this->solution.evaluations.objective << '\n';
 
-   std::cout << "┌ Optimality stationarity residual:\t" << this->solution.residuals.optimality_stationarity << '\n';
+   std::cout << "┌ Stationarity residual:\t\t" << this->solution.residuals.stationarity << '\n';
    std::cout << "│ Feasibility stationarity residual:\t" << this->solution.residuals.feasibility_stationarity << '\n';
    std::cout << "│ Constraint violation:\t\t\t" << this->solution.residuals.infeasibility << '\n';
-   std::cout << "│ Optimality complementarity residual:\t" << this->solution.residuals.optimality_complementarity << '\n';
+   std::cout << "│ Complementarity residual:\t\t" << this->solution.residuals.complementarity << '\n';
    std::cout << "└ Feasibility complementarity residual:\t" << this->solution.residuals.feasibility_complementarity << '\n';
 
    std::cout << "┌ Infeasibility measure:\t\t" << this->solution.progress.infeasibility << '\n';

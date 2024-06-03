@@ -50,8 +50,8 @@ private:
    bool switching_to_optimality_phase{false};
 
    [[nodiscard]] const OptimizationProblem& current_problem() const;
-   void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction,
-         WarmstartInformation& warmstart_information);
+   void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
+         Direction& direction, WarmstartInformation& warmstart_information);
    void switch_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate);
 
    void evaluate_progress_measures(Iterate& iterate) const;

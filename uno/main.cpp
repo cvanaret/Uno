@@ -28,6 +28,7 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
    ampl_model->initial_primal_point(initial_iterate.primals);
    ampl_model->project_onto_variable_bounds(initial_iterate.primals);
    ampl_model->initial_dual_point(initial_iterate.multipliers.constraints);
+   initial_iterate.feasibility_multipliers.reset();
 
    // reformulate (scale, add slacks, relax the bounds, ...) if necessary
    std::unique_ptr<Model> model = ModelFactory::reformulate(std::move(ampl_model), initial_iterate, options);

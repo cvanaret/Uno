@@ -69,7 +69,7 @@ void FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, 
       statistics.set("phase", "OPT");
       try {
          DEBUG << "Solving the optimality subproblem\n";
-         this->solve_subproblem(statistics, this->optimality_problem, current_iterate, direction, warmstart_information);
+         this->solve_subproblem(statistics, this->optimality_problem, current_iterate, current_iterate.multipliers, direction, warmstart_information);
          if (direction.status == SubproblemStatus::INFEASIBLE) {
             // switch to the feasibility problem, starting from the current direction
             statistics.set("status", "infeas. subproblem");
@@ -92,7 +92,9 @@ void FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, 
    DEBUG << "Solving the feasibility subproblem\n";
    statistics.set("phase", "FEAS");
    // note: failure of regularization should not happen here, since the feasibility Jacobian has full rank
-   this->solve_subproblem(statistics, this->feasibility_problem, current_iterate, direction, warmstart_information);
+   this->solve_subproblem(statistics, this->feasibility_problem, current_iterate, current_iterate.feasibility_multipliers, direction,
+         warmstart_information);
+   std::swap(direction.multipliers, direction.feasibility_multipliers);
 }
 
 // an initial point is provided
@@ -113,9 +115,6 @@ void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistic
    this->globalization_strategy->register_current_progress(current_iterate.progress);
    this->subproblem->initialize_feasibility_problem(this->feasibility_problem, current_iterate);
 
-   // reset multipliers (this means no curvature in the first feasibility restoration iteration)
-   current_iterate.multipliers.reset();
-   // TODO: allocate the iterates with the maximum number of dimensions and never physically resize
    current_iterate.set_number_variables(this->feasibility_problem.number_variables);
    this->subproblem->set_elastic_variable_values(this->feasibility_problem, current_iterate);
    DEBUG2 << "Current iterate:\n" << current_iterate << '\n';
@@ -125,14 +124,15 @@ void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistic
 }
 
 void FeasibilityRestoration::solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-      Direction& direction, WarmstartInformation& warmstart_information) {
+      const Multipliers& current_multipliers, Direction& direction, WarmstartInformation& warmstart_information) {
    // upon switching to the optimality phase, set a cold start in the subproblem solver
    if (this->switching_to_optimality_phase) {
       this->switching_to_optimality_phase = false;
       warmstart_information.set_cold_start();
    }
 
-   this->subproblem->solve(statistics, problem, current_iterate, direction, warmstart_information);
+   direction.set_dimensions(problem.number_variables, problem.number_constraints);
+   this->subproblem->solve(statistics, problem, current_iterate, current_multipliers, direction, warmstart_information);
    direction.norm = norm_inf(view(direction.primals, 0, this->model.number_variables));
    DEBUG3 << direction << '\n';
 }
@@ -186,7 +186,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
       DEBUG << "Zero step acceptable\n";
       trial_iterate.evaluate_objective(this->model);
       accept_iterate = true;
-      statistics.set("status", "accepted (0 step)");
+      statistics.set("status", "accepted (0 primal step)");
    }
    else {
       // invoke the globalization strategy for acceptance
@@ -244,8 +244,8 @@ size_t FeasibilityRestoration::maximum_number_constraints() const {
 
 void FeasibilityRestoration::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
    if (this->current_phase == Phase::OPTIMALITY) {
-      statistics.set("complementarity", iterate.residuals.optimality_complementarity);
-      statistics.set("stationarity", iterate.residuals.optimality_stationarity);
+      statistics.set("complementarity", iterate.residuals.complementarity);
+      statistics.set("stationarity", iterate.residuals.stationarity);
    }
    else {
       statistics.set("complementarity", iterate.residuals.feasibility_complementarity);

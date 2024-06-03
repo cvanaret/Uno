@@ -66,8 +66,8 @@ void TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Mod
             warmstart_information.set_cold_start();
          }
          else {
-            GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, this->direction, this->direction.primal_step_length,
-                  this->direction.primal_step_length, this->direction.bound_dual_step_length);
+            // take full primal-dual step
+            GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, this->direction, 1., 1.);
             this->reset_active_trust_region_multipliers(model, this->direction, trial_iterate);
 
             // check whether the trial iterate (current iterate + full step) is acceptable
@@ -98,8 +98,7 @@ void TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Mod
 bool TrustRegionStrategy::is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
       const Direction& direction, size_t number_iterations) {
    // direction.primal_dual_step_length is usually 1, can be lower if reduced by fraction-to-boundary rule
-   bool accept_iterate = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction,
-         direction.primal_step_length);
+   bool accept_iterate = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, 1.);
 
    this->set_statistics(statistics, trial_iterate, direction, number_iterations);
    if (Logger::level == INFO) statistics.print_current_line();
