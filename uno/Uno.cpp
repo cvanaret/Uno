@@ -44,7 +44,8 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
          this->globalization_mechanism.compute_next_iterate(statistics, model, current_iterate, trial_iterate);
          // determine if Uno can terminate
          termination = this->termination_criteria(trial_iterate.status, major_iterations, timer.get_duration());
-         std::swap(current_iterate, trial_iterate);
+         // copy the trial iterate into the current iterate for the next iteration
+         current_iterate = trial_iterate;
       }
    }
    catch (std::exception& exception) {
