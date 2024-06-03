@@ -119,40 +119,44 @@ double FunnelMethod::unconstrained_merit_function(const ProgressMeasures& progre
 
 bool FunnelMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) {
+   if (!this->in_restoration_phase && (objective_multiplier == 0.))
+   {
+      this->restoration_entry_infeasibility = current_progress.infeasibility;
+   }
    this->in_restoration_phase = (objective_multiplier == 0.);
    bool accept = false;
    std::string scenario;
-   
    statistics.set("funnel width", this->get_funnel_width());
-
-   bool funnel_acceptable = this->is_infeasibility_acceptable_to_funnel(trial_progress.infeasibility);
    DEBUG << "Current funnel width:\n";
 
-   if (funnel_acceptable)
+   // solving the feasibility problem = working on infeasibility only (no filter acceptability test)
+   if (this->in_restoration_phase)
    {
-      if (this->in_restoration_phase)
-      {
-         if (this->armijo_sufficient_decrease(predicted_reduction.infeasibility, current_progress.infeasibility - trial_progress.infeasibility))
-         {
-            DEBUG << "Trial iterate (h-type) was accepted by satisfying the Armijo condition\n";
-            accept = true;
-         }
-         else
-         {
-            DEBUG << "Trial iterate (h-type) was rejected by violating the Armijo condition\n";
-         }
-         scenario = "h-type Armijo";
-         Iterate::number_eval_objective--;
+      DEBUG << "Current infeasibility = " << current_progress.infeasibility << '\n';
+      DEBUG << "Trial   infeasibility = " << trial_progress.infeasibility << '\n';
+      DEBUG << "Predicted reduction = " << predicted_reduction.infeasibility << '\n';
+      if (this->armijo_sufficient_decrease(predicted_reduction.infeasibility, current_progress.infeasibility - trial_progress.infeasibility)) {
+         DEBUG << "Trial iterate (h-type) was accepted by satisfying the Armijo condition\n";
+         accept = true;
       }
-      else
+      else {
+         DEBUG << "Trial iterate (h-type) was rejected by violating the Armijo condition\n";
+      }
+      scenario = "h-type Armijo";
+      Iterate::number_eval_objective--;
+   }
+   else
+   {
+      bool funnel_acceptable = this->is_infeasibility_acceptable_to_funnel(trial_progress.infeasibility);
+      if (funnel_acceptable)
       {
          // in filter and funnel methods, we construct an unconstrained measure by ignoring infeasibility and scaling the objective measure by 1
          const double current_merit = FunnelMethod::unconstrained_merit_function(current_progress);
          const double trial_merit = FunnelMethod::unconstrained_merit_function(trial_progress);
          const double merit_predicted_reduction = FunnelMethod::unconstrained_merit_function(predicted_reduction);
-         DEBUG << "Current: (infeas., objective+auxiliary) = (" << current_progress.infeasibility << ", " << current_merit << ")\n";
-         DEBUG << "Trial:   (infeas., objective+auxiliary) = (" << trial_progress.infeasibility << ", " << trial_merit << ")\n";
-         DEBUG << "Unconstrained predicted reduction: " << merit_predicted_reduction << '\n';
+         DEBUG << "Current: (infeasibility, objective + auxiliary) = (" << current_progress.infeasibility << ", " << current_merit << ")\n";
+         DEBUG << "Trial:   (infeasibility, objective + auxiliary) = (" << trial_progress.infeasibility << ", " << trial_merit << ")\n";
+         DEBUG << "Unconstrained predicted reduction = " << merit_predicted_reduction << '\n';
 
          if (this->switching_condition(merit_predicted_reduction, current_progress.infeasibility, this->parameters.delta))
          {
@@ -160,7 +164,7 @@ bool FunnelMethod::is_iterate_acceptable(Statistics& statistics, const ProgressM
             // unconstrained Armijo sufficient decrease condition (predicted reduction should be positive)
             const double objective_actual_reduction = this->compute_actual_objective_reduction(current_merit, current_progress.infeasibility,
                      trial_merit);
-            DEBUG << "\t\tActual reduction: " << objective_actual_reduction << '\n';
+            DEBUG << "Unconstrained actual reduction = " << objective_actual_reduction << '\n';
             if (this->armijo_sufficient_decrease(merit_predicted_reduction, objective_actual_reduction))
             {
                DEBUG << "\t\tTrial iterate (f-type) was ACCEPTED by satisfying Armijo condition\n";
@@ -187,11 +191,11 @@ bool FunnelMethod::is_iterate_acceptable(Statistics& statistics, const ProgressM
             scenario = "current point";
          }
       }
-   }
-   else
-   {
-      DEBUG << "\t\tTrial iterate REJECTED by violating Funnel condition\n";
-      scenario = "funnel";
+      else
+      {
+         DEBUG << "\t\tTrial iterate REJECTED by violating Funnel condition\n";
+         scenario = "not in funnel";
+      }
    }
    statistics.set("status", std::string(accept ? "accepted" : "rejected") + " (" + scenario + ")");
    DEBUG << '\n';
