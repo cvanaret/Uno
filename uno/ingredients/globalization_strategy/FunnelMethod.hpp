@@ -44,8 +44,6 @@ public:
    bool is_funnel_sufficient_decrease_satisfied(double infeasibility_measure) const;
    void update_funnel_width(double current_infeasibility_measure, double trial_infeasibility_measure);
    void update_funnel_width_restoration(double current_infeasibility_measure);
-
-   // friend std::ostream& operator<<(std::ostream& stream, FunnelMethod& funnel);
    double get_funnel_width();
    double get_infeasibility_upper_bound() const;
 

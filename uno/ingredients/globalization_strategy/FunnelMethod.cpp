@@ -124,9 +124,9 @@ bool FunnelMethod::is_iterate_acceptable(Statistics& statistics, const ProgressM
    std::string scenario;
    
    statistics.set("funnel width", this->get_funnel_width());
-   DEBUG << "\t\t" <<*this << '\n';
 
    bool funnel_acceptable = this->is_infeasibility_acceptable_to_funnel(trial_progress.infeasibility);
+   DEBUG << "Current funnel width:\n";
 
    if (funnel_acceptable)
    {
@@ -196,13 +196,4 @@ bool FunnelMethod::is_iterate_acceptable(Statistics& statistics, const ProgressM
    statistics.set("status", std::string(accept ? "accepted" : "rejected") + " (" + scenario + ")");
    DEBUG << '\n';
    return accept;
-}
-
-// print the current funnel parameter
-std::ostream& operator<<(std::ostream& stream, FunnelMethod& funnel) {
-   stream << "************\n";
-   stream << "\t\t  Current funnel width:\n";
-   stream << "\t\t\t" << funnel.get_funnel_width() << '\n';
-   stream << "\t\t************\n";
-   return stream;
 }
