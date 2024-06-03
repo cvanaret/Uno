@@ -5,8 +5,8 @@
 #include "FunnelMethod.hpp"
 #include "ProgressMeasures.hpp"
 #include "optimization/Iterate.hpp"
-#include "tools/Logger.hpp"
 #include "tools/Options.hpp"
+#include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 
 FunnelMethod::FunnelMethod(const Options& options) :
@@ -202,7 +202,7 @@ bool FunnelMethod::is_iterate_acceptable(Statistics& statistics, const ProgressM
 std::ostream& operator<<(std::ostream& stream, FunnelMethod& funnel) {
    stream << "************\n";
    stream << "\t\t  Current funnel width:\n";
-   stream << "\t\t\t" << funnel.funnel_width << '\n';
+   stream << "\t\t\t" << funnel.get_funnel_width() << '\n';
    stream << "\t\t************\n";
    return stream;
 }

@@ -17,7 +17,6 @@ struct FunnelMethodParameters {
    double kappa_initial_upper_bound;
    double kappa_initial_multiplication;
    double delta; /*!< Switching constant */
-   double infeasibility_fraction;
    double switching_infeasibility_exponent;
    double kappa_infeasibility_1;
    double kappa_infeasibility_2;
@@ -46,7 +45,7 @@ public:
    void update_funnel_width(double current_infeasibility_measure, double trial_infeasibility_measure);
    void update_funnel_width_restoration(double current_infeasibility_measure);
 
-   friend std::ostream& operator<<(std::ostream& stream, FunnelMethod& funnel);
+   // friend std::ostream& operator<<(std::ostream& stream, FunnelMethod& funnel);
    double get_funnel_width();
    double get_infeasibility_upper_bound() const;
 
