@@ -33,18 +33,12 @@ void FunnelMethod::initialize(Statistics& statistics, const Iterate& initial_ite
    double upper_bound = std::max(this->parameters.kappa_initial_upper_bound,
                                  this->parameters.kappa_initial_multiplication * initial_iterate.progress.infeasibility);
 
-   // std::cout << "Initial kappa upper bound: " << upper_bound << std::endl;
-   // std::cout << "Initial infeasibility: " << initial_iterate.progress.infeasibility << std::endl;
-   // std::cout << "Initial funnel upper bound: " << upper_bound << std::endl;
-   this->initial_funnel_upper_bound = upper_bound;
-   this->funnel_width = this->initial_funnel_upper_bound;
+   this->funnel_width = upper_bound;
    this->first_iteration_in_solver_phase = true;
-//    this->current_iterate_acceptable_to_funnel = true;
+   statistics.set("funnel width", this->get_funnel_width());
 }
 
-void FunnelMethod::reset() {
-   // We do not need to reset anything
-}
+void FunnelMethod::reset(){}
 
 void FunnelMethod::register_current_progress(const ProgressMeasures& current_progress_measures) {
    if (!this->in_restoration_phase){
@@ -69,17 +63,6 @@ double FunnelMethod::compute_actual_objective_reduction(double current_objective
 bool FunnelMethod::switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const {
    return predicted_reduction > switching_fraction * std::pow(current_infeasibility, this->parameters.switching_infeasibility_exponent);
 }
-
-// void FunnelMethod::set_infeasibility_upper_bound(double new_upper_bound, double current_infeasibility, double trial_infeasibility) {
-//    if (!this->in_restoration_phase){
-//     std::cout << "Funnel is reduced after restoration phase" << std::endl;
-//     this->update_funnel_width_restoration(current_infeasibility, trial_infeasibility);
-//    } else {
-//     this->funnel_width = new_upper_bound;
-//     std::cout << "We change funnel upper bound" << std::endl;
-//    }
-//    this->first_iteration_in_solver_phase = true;
-// }
 
 /*This function checks if the trial iterate infeasibility is inside of the current funnel*/
 bool FunnelMethod::is_infeasibility_acceptable_to_funnel(double infeasibility_measure) const {
@@ -134,15 +117,6 @@ double FunnelMethod::get_funnel_width(){
 
 double FunnelMethod::unconstrained_merit_function(const ProgressMeasures& progress) {
    return progress.objective(1.) + progress.auxiliary;
-}
-
-// print the current funnel parameter
-std::ostream& operator<<(std::ostream& stream, FunnelMethod& funnel) {
-   stream << "************\n";
-   stream << "\t\t  Current funnel width:\n";
-   stream << "\t\t\t" << funnel.funnel_width << '\n';
-   stream << "\t\t************\n";
-   return stream;
 }
 
 bool FunnelMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
@@ -224,4 +198,13 @@ bool FunnelMethod::is_iterate_acceptable(Statistics& statistics, const ProgressM
    statistics.set("status", std::string(accept ? "accepted" : "rejected") + " (" + scenario + ")");
    DEBUG << '\n';
    return accept;
+}
+
+// print the current funnel parameter
+std::ostream& operator<<(std::ostream& stream, FunnelMethod& funnel) {
+   stream << "************\n";
+   stream << "\t\t  Current funnel width:\n";
+   stream << "\t\t\t" << funnel.funnel_width << '\n';
+   stream << "\t\t************\n";
+   return stream;
 }

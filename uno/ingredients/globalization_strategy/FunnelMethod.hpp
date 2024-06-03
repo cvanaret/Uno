@@ -5,8 +5,8 @@
 #define UNO_FUNNELSTRATEGY_H
 
 #include "GlobalizationStrategy.hpp"
-#include "tools/Options.hpp"
 #include "tools/Infinity.hpp"
+
 
 /*! \class TwoPhaseConstants
  * \brief Constants for funnel strategy
@@ -46,19 +46,14 @@ public:
    bool is_funnel_sufficient_decrease_satisfied(double infeasibility_measure) const;
    void update_funnel_width(double current_infeasibility_measure, double trial_infeasibility_measure);
    void update_funnel_width_restoration(double current_infeasibility_measure);
-   
 
    friend std::ostream& operator<<(std::ostream& stream, FunnelMethod& funnel);
    double get_funnel_width();
-
    double get_infeasibility_upper_bound() const;
-   // void set_infeasibility_upper_bound(double new_upper_bound, double current_infeasibility, double trial_infeasibility);
 
 protected:   
    double funnel_width;
    double restoration_entry_infeasibility;
-//    bool current_iterate_acceptable_to_funnel;
-   double initial_funnel_upper_bound{INF<double>};
    const FunnelMethodParameters parameters; /*!< Set of constants */
    bool in_restoration_phase;
    bool first_iteration_in_solver_phase; // determines if first iteration of solver phase is used
