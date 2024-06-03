@@ -70,6 +70,7 @@ TerminationStatus GlobalizationMechanism::check_termination(const Model& model, 
 TerminationStatus GlobalizationMechanism::check_convergence_with_given_tolerance(const Model& model, Iterate& current_iterate, double tolerance) const {
    // evaluate termination conditions based on optimality conditions
    const bool stationarity = (current_iterate.residuals.stationarity / current_iterate.residuals.stationarity_scaling <= tolerance);
+   const bool FJ_stationarity = (current_iterate.residuals.FJ_stationarity <= tolerance);
    const bool feasibility_stationarity = (current_iterate.residuals.feasibility_stationarity <= tolerance);
    const bool complementarity = (current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling <= tolerance);
    const bool feasibility_complementarity = (current_iterate.residuals.feasibility_complementarity <= tolerance);
@@ -91,7 +92,7 @@ TerminationStatus GlobalizationMechanism::check_convergence_with_given_tolerance
       // feasible regular stationary point
       return TerminationStatus::FEASIBLE_KKT_POINT;
    }
-   else if (feasibility_stationarity && model.is_constrained() && primal_feasibility && complementarity && no_trivial_duals) {
+   else if (FJ_stationarity && model.is_constrained() && primal_feasibility && complementarity && no_trivial_duals) {
       // feasible but violation of CQ
       return TerminationStatus::FEASIBLE_FJ_POINT;
    }
