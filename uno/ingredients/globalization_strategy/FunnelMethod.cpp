@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include "FunnelMethod.hpp"
+#include "tools/Statistics.hpp"
 
 FunnelMethod::FunnelMethod(const Options& options) :
       GlobalizationStrategy(options),
@@ -19,7 +20,6 @@ FunnelMethod::FunnelMethod(const Options& options) :
       })
       {
 }
-      // in_restoration_phase(in_restoration_phase) {
 
 void FunnelMethod::initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) {
     // Add a column of the of the funnel width in the output table
@@ -99,7 +99,7 @@ bool FunnelMethod::is_funnel_sufficient_decrease_satisfied(double infeasibility_
    }
 }
 
-bool FunnelMethod::is_feasibility_iterate_acceptable(const ProgressMeasures& /*current_progress*/, const ProgressMeasures& trial_progress) const {
+bool FunnelMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures& /*current_progress*/, const ProgressMeasures& trial_progress) const {
    if (this->in_restoration_phase){
         if (this->is_infeasibility_acceptable_to_funnel(trial_progress.infeasibility) && (trial_progress.infeasibility <= this->parameters.kappa_infeasibility_1*this->restoration_entry_infeasibility)){
             return true;
