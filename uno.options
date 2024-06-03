@@ -122,11 +122,6 @@ filter_capacity 50
 nonmonotone_filter_number_dominated_entries 3
 
 ##### funnel options #####
-# funnel strategy options
-
-# funnel type (standard|nonmonotone)
-# funnel_type standard
-
 # funnel options
 funnel_kappa_infeasibility_1 0.9
 funnel_kappa_infeasibility_2 0.9
@@ -136,8 +131,7 @@ funnel_delta 0.999
 
 # funnel strategy options
 funnel_kappa_initial_upper_bound 1.0
-funnel_kappa_initial_multiplication 1.1
-funnel_ubd 1e2
+funnel_kappa_initial_multiplication 1.2
 funnel_fact 1.25
 funnel_switching_infeasibility_exponent 2
 funnel_optimality_phase 
