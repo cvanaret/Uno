@@ -25,5 +25,5 @@ std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(con
 }
 
 std::vector<std::string> GlobalizationStrategyFactory::available_strategies() {
-   return {"l1_merit", "fletcher_filter_strategy", "waechter_filter_strategy"};
+   return {"l1_merit", "fletcher_filter_strategy", "waechter_filter_strategy", "funnel_strategy"};
 }

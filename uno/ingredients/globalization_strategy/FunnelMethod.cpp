@@ -1,8 +1,12 @@
 // Copyright (c) 2018-2024 Charlie Vanaret, David Kiessling
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include <cmath>
+// #include <cmath>
 #include "FunnelMethod.hpp"
+#include "ProgressMeasures.hpp"
+#include "optimization/Iterate.hpp"
+#include "tools/Logger.hpp"
+#include "tools/Options.hpp"
 #include "tools/Statistics.hpp"
 
 FunnelMethod::FunnelMethod(const Options& options) :
