@@ -15,8 +15,6 @@ FunnelMethod::FunnelMethod(const Options& options) :
          options.get_double("funnel_kappa_initial_upper_bound"),
          options.get_double("funnel_kappa_initial_multiplication"),
          options.get_double("funnel_delta"),
-         options.get_double("funnel_ubd"),
-         options.get_double("funnel_fact"),
          options.get_double("funnel_switching_infeasibility_exponent"),
          options.get_double("funnel_kappa_infeasibility_1"),
          options.get_double("funnel_kappa_infeasibility_2"),

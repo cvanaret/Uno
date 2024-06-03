@@ -17,7 +17,6 @@ struct FunnelMethodParameters {
    double kappa_initial_upper_bound;
    double kappa_initial_multiplication;
    double delta; /*!< Switching constant */
-   double upper_bound;
    double infeasibility_fraction;
    double switching_infeasibility_exponent;
    double kappa_infeasibility_1;
