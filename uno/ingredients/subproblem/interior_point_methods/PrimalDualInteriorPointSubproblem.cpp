@@ -10,6 +10,7 @@
 #include "optimization/WarmstartInformation.hpp"
 #include "preprocessing/Preprocessing.hpp"
 #include "reformulation/l1RelaxedProblem.hpp"
+#include "symbolic/VectorView.hpp"
 #include "tools/Infinity.hpp"
 
 PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(size_t number_variables, size_t number_constraints,
@@ -412,7 +413,7 @@ void PrimalDualInteriorPointSubproblem::generate_augmented_rhs(const Optimizatio
       // constraints
       this->augmented_system.rhs[problem.number_variables + constraint_index] = -this->evaluations.constraints[constraint_index];
    }
-   DEBUG2 << "RHS: "; print_vector(DEBUG2, this->augmented_system.rhs, 0, problem.number_variables + problem.number_constraints); DEBUG << '\n';
+   DEBUG2 << "RHS: "; print_vector(DEBUG2, view(this->augmented_system.rhs, 0, problem.number_variables + problem.number_constraints)); DEBUG << '\n';
 }
 
 void PrimalDualInteriorPointSubproblem::assemble_primal_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals,

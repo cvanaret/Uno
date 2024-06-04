@@ -7,6 +7,8 @@
 #include <cmath>
 #include "symbolic/Range.hpp"
 
+// norms of any array with elements of any type
+
 enum class Norm {L1, L2, L2_SQUARED, INF};
 
 inline Norm norm_from_string(const std::string& norm_string) {
@@ -25,18 +27,6 @@ inline Norm norm_from_string(const std::string& norm_string) {
    throw std::invalid_argument("The norm " + norm_string + " is not known");
 }
 
-// norms of any array with elements of any type
-
-template <typename T>
-struct is_pair {
-   static const bool value = false;
-};
-
-template <typename First, typename Second>
-struct is_pair<std::pair<First, Second>> {
-   static const bool value = true;
-};
-
 // generic norm function for iterators that return [key, value] pairs
 // https://stackoverflow.com/questions/38701475/how-to-overload-function-for-different-iterator-value-types-in-c
 template <typename KeyValueIterable, typename AccumulationFunction, typename ElementType = typename KeyValueIterable::value_type,
@@ -48,8 +38,6 @@ ElementType generic_norm(const KeyValueIterable& x, const AccumulationFunction& 
    }
    return result;
 }
-
-//     typename std::enable_if_t<not std::is_member_function_pointer<decltype(&KeyValueIterable::operator[])>::value, int> = 0>
 
 // generic norm function for iterators that return the elements
 template <typename Array, typename AccumulationFunction, typename ElementType = typename Array::value_type>

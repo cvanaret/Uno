@@ -44,13 +44,13 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
    for (size_t variable_index: Range(model.number_variables)) {
       rhs[variable_index] -= current_iterate.multipliers.lower_bounds[variable_index] + current_iterate.multipliers.upper_bounds[variable_index];
    }
-   DEBUG2 << "RHS for least-square multipliers: "; print_vector(DEBUG2, rhs, 0, matrix.dimension);
+   DEBUG2 << "RHS for least-square multipliers: "; print_vector(DEBUG2, view(rhs, 0, matrix.dimension));
    
    /* solve the system */
    Vector<double> solution(matrix.dimension);
    linear_solver.factorize(matrix);
    linear_solver.solve_indefinite_system(matrix, rhs, solution);
-   DEBUG2 << "Solution: "; print_vector(DEBUG2, solution, 0, matrix.dimension);
+   DEBUG2 << "Solution: "; print_vector(DEBUG2, view(solution, 0, matrix.dimension));
 
    // if least-square multipliers too big, discard them. Otherwise, keep them
    if (norm_inf(view(solution, model.number_variables, model.number_variables + model.number_constraints)) <= multiplier_max_norm) {

@@ -88,8 +88,8 @@ protected:
 
 // use && to allow temporaries (such as std::cout or logger DEBUG, WARNING, etc)
 template <typename Array, typename Stream>
-void print_vector(Stream&& stream, const Array& x, size_t start = 0, size_t length = std::numeric_limits<size_t>::max()) {
-   for (size_t index: Range(start, std::min(start + length, x.size()))) {
+void print_vector(Stream&& stream, const Array& x) {
+   for (size_t index: Range(x.size())) {
       stream << x[index] << " ";
    }
    stream << '\n';

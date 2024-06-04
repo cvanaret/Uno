@@ -152,7 +152,7 @@ void BQPDSolver::solve_subproblem(size_t number_variables, size_t number_constra
       direction.primals[variable_index] = std::min(std::max(direction.primals[variable_index], variables_lower_bounds[variable_index]),
             variables_upper_bounds[variable_index]);
    }
-   this->categorize_constraints(number_variables, number_constraints, direction);
+   this->categorize_constraints(number_variables, direction);
 }
 
 BQPDMode BQPDSolver::determine_mode(const WarmstartInformation& warmstart_information) const {
@@ -234,7 +234,7 @@ void BQPDSolver::save_gradients_to_local_format(size_t number_constraints, const
    }
 }
 
-void BQPDSolver::categorize_constraints(size_t number_variables, size_t number_constraints, Direction& direction) {
+void BQPDSolver::categorize_constraints(size_t number_variables, Direction& direction) {
    direction.multipliers.reset();
 
    // active constraints

@@ -87,7 +87,7 @@ private:
          const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
          const RectangularMatrix<double>& constraint_jacobian, const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information);
-   void categorize_constraints(size_t number_variables, size_t number_constraints, Direction& direction);
+   void categorize_constraints(size_t number_variables, Direction& direction);
    void save_hessian_to_local_format(const SymmetricMatrix<double>& hessian);
    void save_gradients_to_local_format(size_t number_constraints, const SparseVector<double>& linear_objective,
          const RectangularMatrix<double>& constraint_jacobian);

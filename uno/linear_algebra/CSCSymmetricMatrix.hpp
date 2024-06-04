@@ -8,6 +8,7 @@
 #include <cassert>
 #include "SymmetricMatrix.hpp"
 #include "tools/Infinity.hpp"
+#include "symbolic/VectorView.hpp"
 
 /*
  * Compressed Sparse Column
@@ -138,9 +139,9 @@ void CSCSymmetricMatrix<ElementType>::increment_iterator(size_t& column_index, s
 
 template <typename ElementType>
 void CSCSymmetricMatrix<ElementType>::print(std::ostream& stream) const {
-   stream << "W = "; print_vector(stream, this->entries, 0, this->number_nonzeros);
-   stream << "with column start: "; print_vector(stream, this->column_starts, 0, this->dimension + 1);
-   stream << "and row index: "; print_vector(stream, this->row_indices, 0, this->number_nonzeros);
+   stream << "W = "; print_vector(stream, view(this->entries, 0, this->number_nonzeros));
+   stream << "with column start: "; print_vector(stream, view(this->column_starts, 0, this->dimension + 1));
+   stream << "and row index: "; print_vector(stream, view(this->row_indices, 0, this->number_nonzeros));
 }
 
 template <typename ElementType>

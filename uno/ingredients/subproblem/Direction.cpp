@@ -4,6 +4,7 @@
 #include "Direction.hpp"
 #include "tools/Logger.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "symbolic/VectorView.hpp"
 
 Direction::Direction(size_t number_variables, size_t number_constraints) :
       number_variables(number_variables), number_constraints(number_constraints),
@@ -43,7 +44,7 @@ std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
    stream << "Direction:\n";
    stream << "│ status: " << status_to_string(direction.status) << '\n';
 
-   stream << "│ primals = "; print_vector(stream, direction.primals, 0, direction.number_variables);
+   stream << "│ primals = "; print_vector(stream, view(direction.primals, 0, direction.number_variables));
    stream << "│ constraint multipliers = "; print_vector(stream, direction.multipliers.constraints);
    stream << "│ lower bound multipliers = "; print_vector(stream, direction.multipliers.lower_bounds);
    stream << "│ upper bound multipliers = "; print_vector(stream, direction.multipliers.upper_bounds);
@@ -76,26 +77,4 @@ std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
    }
    stream << '\n';
    return stream;
-}
-
-ActiveConstraints::ActiveConstraints(size_t capacity) {
-   this->at_lower_bound.reserve(capacity);
-   this->at_upper_bound.reserve(capacity);
-}
-
-ActiveSet::ActiveSet(size_t number_variables, size_t number_constraints): constraints(number_constraints), bounds(number_variables) {
-}
-
-ConstraintPartition::ConstraintPartition(size_t number_constraints) {
-   this->feasible.reserve(number_constraints);
-   this->infeasible.reserve(number_constraints);
-   this->lower_bound_infeasible.reserve(number_constraints);
-   this->upper_bound_infeasible.reserve(number_constraints);
-}
-
-void ConstraintPartition::reset() {
-   this->feasible.clear();
-   this->infeasible.clear();
-   this->lower_bound_infeasible.clear();
-   this->upper_bound_infeasible.clear();
 }

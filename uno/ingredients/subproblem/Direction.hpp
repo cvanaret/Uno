@@ -24,24 +24,17 @@ struct ActiveConstraints {
    std::vector<size_t> at_lower_bound; /*!< List of constraint indices at their lower bound */
    std::vector<size_t> at_upper_bound; /*!< List of constraint indices at their upper bound */
 
-   explicit ActiveConstraints(size_t capacity);
+   explicit ActiveConstraints(size_t capacity) {
+      this->at_lower_bound.reserve(capacity);
+      this->at_upper_bound.reserve(capacity);
+   }
 };
 
 struct ActiveSet {
    ActiveConstraints constraints; /*!< List of general constraints */
    ActiveConstraints bounds; /*!< List of bound constraints */
 
-   ActiveSet(size_t number_variables, size_t number_constraints);
-};
-
-struct ConstraintPartition {
-   std::vector<size_t> feasible{}; /*!< Indices of the feasible constraints */
-   std::vector<size_t> infeasible{}; /*!< Indices of the infeasible constraints */
-   std::vector<size_t> lower_bound_infeasible{}; /*!< Indices of the lower-bound infeasible constraints */
-   std::vector<size_t> upper_bound_infeasible{}; /*!< Indices of the upper_bound infeasible constraints */
-
-   explicit ConstraintPartition(size_t number_constraints);
-   void reset();
+   ActiveSet(size_t number_variables, size_t number_constraints): constraints(number_constraints), bounds(number_variables) { }
 };
 
 class Direction {

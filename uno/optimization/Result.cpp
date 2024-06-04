@@ -4,6 +4,7 @@
 #include <iomanip>
 #include "Result.hpp"
 #include "TerminationStatus.hpp"
+#include "symbolic/VectorView.hpp"
 
 void Result::print(bool print_primal_dual_solution) const {
    std::cout << "Status:\t\t\t\t\t";
@@ -42,12 +43,12 @@ void Result::print(bool print_primal_dual_solution) const {
    std::cout << "└ Auxiliary measure:\t\t\t" << this->solution.progress.auxiliary << '\n';
 
    if (print_primal_dual_solution) {
-      std::cout << "Primal solution:\t\t\t"; print_vector(std::cout, this->solution.primals, 0, this->solution.number_variables);
+      std::cout << "Primal solution:\t\t\t"; print_vector(std::cout, view(this->solution.primals, 0, this->number_variables));
       if (not this->solution.multipliers.constraints.empty()) {
          std::cout << "Constraint multipliers:\t\t\t"; print_vector(std::cout, this->solution.multipliers.constraints);
       }
-      std::cout << "Lower bound multipliers:\t\t"; print_vector(std::cout, this->solution.multipliers.lower_bounds, 0, this->solution.number_variables);
-      std::cout << "Upper bound multipliers:\t\t"; print_vector(std::cout, this->solution.multipliers.upper_bounds, 0, this->solution.number_variables);
+      std::cout << "Lower bound multipliers:\t\t"; print_vector(std::cout, view(this->solution.multipliers.lower_bounds, 0, this->number_variables));
+      std::cout << "Upper bound multipliers:\t\t"; print_vector(std::cout, view(this->solution.multipliers.upper_bounds, 0, this->number_variables));
       std::cout << "Objective multiplier:\t\t\t" << this->solution.objective_multiplier << '\n';
    }
 
