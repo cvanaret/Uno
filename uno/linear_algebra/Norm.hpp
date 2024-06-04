@@ -126,15 +126,6 @@ ElementType norm_inf(const Array& x) {
    return generic_norm(x, norm_inf_accumulation<ElementType>);
 }
 
-template <typename Array, RangeDirection Direction, typename ElementType = typename Array::value_type>
-ElementType norm_inf(const Array& x, const Range<Direction>& range) {
-   ElementType norm{0};
-   for (size_t index: range) {
-      norm = std::max(norm, std::abs(x[index]));
-   }
-   return norm;
-}
-
 // inf norm of several arrays
 template <typename Array, typename... Arrays, typename ElementType = typename Array::value_type>
 ElementType norm_inf(const Array& x, const Arrays& ... other_arrays) {
