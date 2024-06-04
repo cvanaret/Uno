@@ -24,9 +24,6 @@ void Direction::reset() {
    this->active_set.constraints.at_upper_bound.clear();
    this->active_set.bounds.at_lower_bound.clear();
    this->active_set.bounds.at_upper_bound.clear();
-   if (this->constraint_partition.has_value()) {
-      this->constraint_partition.value().reset();
-   }
 }
 
 std::string status_to_string(SubproblemStatus status) {
@@ -78,23 +75,6 @@ std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
       stream << " c" << constraint_index;
    }
    stream << '\n';
-
-   if (direction.constraint_partition.has_value()) {
-      const ConstraintPartition& constraint_partition = direction.constraint_partition.value();
-      stream << "│ general feasible =";
-      for (size_t constraint_index: constraint_partition.feasible) {
-         stream << " c" << constraint_index;
-      }
-      stream << "\n│ general lower infeasible =";
-      for (size_t constraint_index: constraint_partition.lower_bound_infeasible) {
-         stream << " c" << constraint_index;
-      }
-      stream << "\n└ general upper infeasible =";
-      for (size_t constraint_index: constraint_partition.upper_bound_infeasible) {
-         stream << " c" << constraint_index;
-      }
-      stream << '\n';
-   }
    return stream;
 }
 

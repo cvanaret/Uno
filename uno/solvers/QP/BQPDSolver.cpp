@@ -236,13 +236,6 @@ void BQPDSolver::save_gradients_to_local_format(size_t number_constraints, const
 
 void BQPDSolver::categorize_constraints(size_t number_variables, size_t number_constraints, Direction& direction) {
    direction.multipliers.reset();
-   if (direction.constraint_partition.has_value()) {
-      direction.constraint_partition.value().reset();
-   }
-   else {
-      direction.constraint_partition = ConstraintPartition(number_constraints);
-   }
-   ConstraintPartition& constraint_partition = direction.constraint_partition.value();
 
    // active constraints
    for (size_t active_constraint_index: Range(number_variables - static_cast<size_t>(this->k))) {
@@ -262,7 +255,6 @@ void BQPDSolver::categorize_constraints(size_t number_variables, size_t number_c
       else {
          // general constraint
          size_t constraint_index = index - number_variables;
-         constraint_partition.feasible.push_back(constraint_index);
          if (0 <= this->active_set[active_constraint_index]) { // lower bound active
             direction.multipliers.constraints[constraint_index] = this->residuals[index];
             direction.active_set.constraints.at_lower_bound.push_back(constraint_index);
@@ -270,27 +262,6 @@ void BQPDSolver::categorize_constraints(size_t number_variables, size_t number_c
          else { // upper bound active
             direction.multipliers.constraints[constraint_index] = -this->residuals[index];
             direction.active_set.constraints.at_upper_bound.push_back(constraint_index);
-         }
-      }
-   }
-
-   // inactive constraints
-   for (size_t inactive_constraint_index: Range(number_variables - static_cast<size_t>(this->k), number_variables + number_constraints)) {
-      size_t index = static_cast<size_t>(std::abs(this->active_set[inactive_constraint_index]) - this->fortran_shift);
-
-      if (number_variables <= index) { // general constraints
-         size_t constraint_index = index - number_variables;
-         if (this->residuals[index] < 0.) { // infeasible constraint
-            constraint_partition.infeasible.push_back(constraint_index);
-            if (this->active_set[inactive_constraint_index] < 0) { // upper bound violated
-               constraint_partition.upper_bound_infeasible.push_back(constraint_index);
-            }
-            else { // lower bound violated
-               constraint_partition.lower_bound_infeasible.push_back(constraint_index);
-            }
-         }
-         else { // feasible constraint
-            constraint_partition.feasible.push_back(constraint_index);
          }
       }
    }

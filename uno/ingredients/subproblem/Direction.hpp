@@ -60,7 +60,6 @@ public:
    double norm{INF<double>}; /*!< Norm of \f$x\f$ */
    double subproblem_objective{INF<double>}; /*!< Objective value */
    ActiveSet active_set; /*!< Active set */
-   std::optional<ConstraintPartition> constraint_partition{std::nullopt}; /*!< Optional partition of feasible and infeasible constraints */
 
    void set_dimensions(size_t new_number_variables, size_t new_number_constraints);
    void reset();
