@@ -64,6 +64,12 @@ public:
       }
    }
 
+   void scale(ElementType factor) {
+      for (size_t index = 0; index < this->size(); index++) {
+         this->vector[index] *= factor;
+      }
+   }
+
    ElementType* data() { return this->vector.data(); }
    const ElementType* data() const { return this->vector.data(); }
 
