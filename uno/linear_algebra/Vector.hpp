@@ -36,10 +36,9 @@ public:
 
    // move assignment operator
    Vector& operator=(std::vector<ElementType>&& other) {
-      if (&other == this) {
-         return *this;
+      if (&other != this) {
+         this->vector = std::move(other.vector);
       }
-      this->vector = std::move(other.vector);
       return *this;
    }
 

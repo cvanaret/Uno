@@ -42,7 +42,7 @@ void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& initial
    // initial iterate
    const bool is_linearly_feasible = this->subproblem->generate_initial_iterate(this->optimality_problem, initial_iterate);
    this->evaluate_progress_measures(initial_iterate);
-   this->compute_primal_dual_residuals(this->optimality_problem, this->feasibility_problem, initial_iterate);
+   this->compute_primal_dual_residuals(initial_iterate);
    this->set_statistics(statistics, initial_iterate);
    if (not is_linearly_feasible) {
       this->switch_to_feasibility_problem(statistics, initial_iterate);
@@ -200,11 +200,15 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
             this->globalization_strategy->is_infeasibility_sufficiently_reduced(current_iterate.progress, trial_iterate.progress)) {
          this->switch_to_optimality_phase(current_iterate, trial_iterate);
       }
-      this->compute_primal_dual_residuals(this->optimality_problem, this->feasibility_problem, trial_iterate);
+      this->compute_primal_dual_residuals(trial_iterate);
       this->set_dual_residuals_statistics(statistics, trial_iterate);
    }
    ConstraintRelaxationStrategy::set_progress_statistics(statistics, trial_iterate);
    return accept_iterate;
+}
+
+void FeasibilityRestoration::compute_primal_dual_residuals(Iterate& iterate) {
+   ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, this->feasibility_problem, iterate);
 }
 
 const OptimizationProblem& FeasibilityRestoration::current_problem() const {

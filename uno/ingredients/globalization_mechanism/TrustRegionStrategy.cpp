@@ -169,10 +169,12 @@ bool TrustRegionStrategy::check_termination_with_small_step(const Model& /*model
    // terminate with a feasible point
    if (trial_iterate.progress.infeasibility <= this->tight_tolerance) {
       trial_iterate.status = TerminationStatus::FEASIBLE_SMALL_STEP;
+      this->constraint_relaxation_strategy.compute_primal_dual_residuals(trial_iterate);
       return true;
    }
    else if (this->constraint_relaxation_strategy.solving_feasibility_problem()) { // terminate with an infeasible point
       trial_iterate.status = TerminationStatus::INFEASIBLE_SMALL_STEP;
+      this->constraint_relaxation_strategy.compute_primal_dual_residuals(trial_iterate);
       return true;
    }
    else { // do not terminate, infeasible non stationary

@@ -51,7 +51,7 @@ void l1Relaxation::initialize(Statistics& statistics, Iterate& initial_iterate, 
    this->subproblem->set_elastic_variable_values(this->l1_relaxed_problem, initial_iterate);
    const bool is_linearly_feasible = this->subproblem->generate_initial_iterate(this->l1_relaxed_problem, initial_iterate);
    this->evaluate_progress_measures(initial_iterate);
-   this->compute_primal_dual_residuals(this->l1_relaxed_problem, this->feasibility_problem, initial_iterate);
+   this->compute_primal_dual_residuals(initial_iterate);
    this->set_statistics(statistics, initial_iterate);
    if (not is_linearly_feasible) {
       this->switch_to_feasibility_problem(statistics, initial_iterate);
@@ -261,11 +261,15 @@ bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& curren
    }
    if (accept_iterate) {
       this->check_exact_relaxation(trial_iterate);
-      this->compute_primal_dual_residuals(this->l1_relaxed_problem, this->feasibility_problem, trial_iterate);
+      this->compute_primal_dual_residuals(trial_iterate);
       this->set_dual_residuals_statistics(statistics, trial_iterate);
    }
    this->set_progress_statistics(statistics, trial_iterate);
    return accept_iterate;
+}
+
+void l1Relaxation::compute_primal_dual_residuals(Iterate& iterate) {
+   ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->l1_relaxed_problem, this->feasibility_problem, iterate);
 }
 
 void l1Relaxation::evaluate_progress_measures(Iterate& iterate) const {

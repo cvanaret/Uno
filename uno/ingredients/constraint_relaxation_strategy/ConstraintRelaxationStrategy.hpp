@@ -45,6 +45,9 @@ public:
    [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length) = 0;
 
+   // primal-dual residuals
+   virtual void compute_primal_dual_residuals(Iterate& iterate) = 0;
+
    [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
    [[nodiscard]] virtual size_t get_number_subproblems_solved() const = 0;
 
