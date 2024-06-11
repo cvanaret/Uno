@@ -50,13 +50,12 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
    Vector<double> solution(matrix.dimension);
    linear_solver.factorize(matrix);
    linear_solver.solve_indefinite_system(matrix, rhs, solution);
-   DEBUG2 << "Solution: "; print_vector(DEBUG2, view(solution, 0, matrix.dimension));
 
    // if least-square multipliers too big, discard them. Otherwise, keep them
-   if (norm_inf(view(solution, model.number_variables, model.number_variables + model.number_constraints)) <= multiplier_max_norm) {
-      for (size_t constraint_index: Range(model.number_constraints)) {
-         multipliers[constraint_index] = solution[model.number_variables + constraint_index];
-      }
+   const auto trial_multipliers = view(solution, model.number_variables, model.number_variables + model.number_constraints);
+   DEBUG2 << "Trial multipliers: "; print_vector(DEBUG2, trial_multipliers);
+   if (norm_inf(trial_multipliers) <= multiplier_max_norm) {
+      multipliers = trial_multipliers;
    }
    else {
       DEBUG << "Ignoring the least-square multipliers\n";
