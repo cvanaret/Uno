@@ -63,11 +63,11 @@ void InequalityConstrainedMethod::set_linearized_constraint_bounds(const Optimiz
    }
 }
 
-void InequalityConstrainedMethod::compute_dual_displacements(const Iterate& current_iterate, Direction& direction) {
+void InequalityConstrainedMethod::compute_dual_displacements(const Multipliers& current_multipliers, Multipliers& direction_multipliers) {
    // compute dual *displacements* (active-set methods usually compute the new duals, not the displacements)
-   view(direction.multipliers.constraints, 0, current_iterate.number_constraints) -= current_iterate.multipliers.constraints;
-   view(direction.multipliers.lower_bounds, 0, current_iterate.number_variables) -= current_iterate.multipliers.lower_bounds;
-   view(direction.multipliers.upper_bounds, 0, current_iterate.number_variables) -= current_iterate.multipliers.upper_bounds;
+   view(direction_multipliers.constraints, 0, current_multipliers.constraints.size()) -= current_multipliers.constraints;
+   view(direction_multipliers.lower_bounds, 0, current_multipliers.lower_bounds.size()) -= current_multipliers.lower_bounds;
+   view(direction_multipliers.upper_bounds, 0, current_multipliers.upper_bounds.size()) -= current_multipliers.upper_bounds;
 }
 
 // auxiliary measure is 0 in inequality-constrained methods

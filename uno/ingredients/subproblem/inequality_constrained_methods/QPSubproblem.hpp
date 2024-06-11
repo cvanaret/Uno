@@ -15,8 +15,8 @@ public:
 
    void initialize_statistics(Statistics& statistics, const Options& options) override;
    [[nodiscard]] bool generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
-   void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction,
-         const WarmstartInformation& warmstart_information) override;
+   void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
+         Direction& direction, const WarmstartInformation& warmstart_information) override;
    [[nodiscard]] const SymmetricMatrix<size_t, double>& get_lagrangian_hessian() const override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
@@ -27,7 +27,7 @@ protected:
    const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
    const std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
 
-   void evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+   void evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
          const WarmstartInformation& warmstart_information);
 };
 

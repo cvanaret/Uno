@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "QPSubproblem.hpp"
+#include "ingredients/subproblem/Direction.hpp"
 #include "ingredients/subproblem/HessianModelFactory.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/Iterate.hpp"
@@ -46,10 +47,10 @@ bool QPSubproblem::generate_initial_iterate(const OptimizationProblem& problem, 
 }
 
 void QPSubproblem::evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-      const WarmstartInformation& warmstart_information) {
+      const Multipliers& current_multipliers, const WarmstartInformation& warmstart_information) {
    // Lagrangian Hessian
    if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-      this->hessian_model->evaluate(statistics, problem, current_iterate.primals, current_iterate.multipliers.constraints);
+      this->hessian_model->evaluate(statistics, problem, current_iterate.primals, current_multipliers.constraints);
    }
    // objective gradient, constraints and constraint Jacobian
    if (warmstart_information.objective_changed) {
@@ -61,10 +62,10 @@ void QPSubproblem::evaluate_functions(Statistics& statistics, const Optimization
    }
 }
 
-void QPSubproblem::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction,
-      const WarmstartInformation& warmstart_information) {
+void QPSubproblem::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
+      Direction& direction, const WarmstartInformation& warmstart_information) {
    // evaluate the functions at the current iterate
-   this->evaluate_functions(statistics, problem, current_iterate, warmstart_information);
+   this->evaluate_functions(statistics, problem, current_iterate, current_multipliers, warmstart_information);
 
    // set bounds of the variable displacements
    if (warmstart_information.variable_bounds_changed) {
@@ -80,7 +81,7 @@ void QPSubproblem::solve(Statistics& statistics, const OptimizationProblem& prob
    this->solver->solve_QP(problem.number_variables, problem.number_constraints, this->direction_lower_bounds, this->direction_upper_bounds,
          this->linearized_constraints_lower_bounds, this->linearized_constraints_upper_bounds, this->evaluations.objective_gradient,
          this->evaluations.constraint_jacobian, *this->hessian_model->hessian, this->initial_point, direction, warmstart_information);
-   InequalityConstrainedMethod::compute_dual_displacements(current_iterate, direction);
+   InequalityConstrainedMethod::compute_dual_displacements(current_multipliers, direction.multipliers);
    this->number_subproblems_solved++;
    // reset the initial point
    this->initial_point.fill(0.);

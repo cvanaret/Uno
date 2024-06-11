@@ -45,6 +45,9 @@ public:
    [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length) = 0;
 
+   // primal-dual residuals
+   virtual void compute_primal_dual_residuals(Iterate& iterate) = 0;
+
    [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
    [[nodiscard]] virtual size_t get_number_subproblems_solved() const = 0;
 
@@ -64,8 +67,8 @@ protected:
    void compute_primal_dual_residuals(const OptimizationProblem& optimality_problem, const OptimizationProblem& feasibility_problem, Iterate& iterate);
    void evaluate_lagrangian_gradient(Iterate& iterate, const Multipliers& multipliers) const;
 
-   [[nodiscard]] double compute_stationarity_scaling(const Iterate& iterate) const;
-   [[nodiscard]] double compute_complementarity_scaling(const Iterate& iterate) const;
+   [[nodiscard]] double compute_stationarity_scaling(const Multipliers& multipliers) const;
+   [[nodiscard]] double compute_complementarity_scaling(const Multipliers& multipliers) const;
 
    void set_statistics(Statistics& statistics, const Iterate& iterate) const;
    void set_progress_statistics(Statistics& statistics, const Iterate& iterate) const;

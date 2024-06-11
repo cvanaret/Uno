@@ -34,7 +34,6 @@ void BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const 
    DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
    // compute the direction
-   this->direction.reset();
    this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, this->direction, warmstart_information);
    BacktrackingLineSearch::check_unboundedness(this->direction);
 
@@ -47,7 +46,7 @@ void BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const 
 void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
       Iterate& trial_iterate, const Direction& direction, WarmstartInformation& warmstart_information) {
    // most subproblem methods return a step length of 1. Interior-point methods however apply the fraction-to-boundary condition
-   double step_length = direction.primal_dual_step_length;
+   double step_length = 1.;
    bool reached_small_step_length = false;
    size_t number_iterations = 0;
    while (not reached_small_step_length) {
@@ -62,9 +61,8 @@ void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, c
       try {
          // assemble the trial iterate by going a fraction along the direction
          GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, direction, step_length,
-               // scale or not the dual directions with the step lengths
-               this->scale_duals_with_step_length ? step_length : 1.,
-               this->scale_duals_with_step_length ? direction.bound_dual_step_length : 1.);
+               // scale or not the constraint dual direction with the LS step length
+               this->scale_duals_with_step_length ? step_length : 1.);
 
          // check whether the trial iterate is accepted
          if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, step_length)) {
@@ -103,7 +101,6 @@ void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, c
       statistics.set("status", "LS failed");
       this->constraint_relaxation_strategy.switch_to_feasibility_problem(statistics, current_iterate);
       warmstart_information.set_cold_start();
-      this->direction.reset();
       this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, this->direction, this->direction.primals,
             warmstart_information);
       BacktrackingLineSearch::check_unboundedness(this->direction);

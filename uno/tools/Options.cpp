@@ -149,6 +149,9 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["LS_scale_duals_with_step_length"] = "no";
       options["protect_actual_reduction_against_roundoff"] = "no";
    }
+   else {
+      throw std::runtime_error("The preset " + preset_name + " is not known.");
+   }
 }
 
 void get_command_line_arguments(int argc, char* argv[], Options& options) {

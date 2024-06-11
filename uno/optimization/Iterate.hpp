@@ -17,11 +17,14 @@ class Model;
 class Iterate {
 public:
    Iterate(size_t number_variables, size_t number_constraints);
+   Iterate(Iterate&& other) noexcept = default;
+   Iterate& operator=(Iterate&& other) noexcept = default;
 
    size_t number_variables;
    size_t number_constraints;
    Vector<double> primals;
    Multipliers multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
+   Multipliers feasibility_multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
    double objective_multiplier{1.};
 
    // evaluations

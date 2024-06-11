@@ -8,10 +8,11 @@
 
 class PrimalDualResiduals {
 public:
-   double optimality_stationarity{INF<double>};
+   double KKT_stationarity{INF<double>};
+   double FJ_stationarity{INF<double>};
    double feasibility_stationarity{INF<double>};
    double infeasibility{INF<double>};
-   double optimality_complementarity{INF<double>};
+   double complementarity{INF<double>};
    double feasibility_complementarity{INF<double>};
    double stationarity_scaling{INF<double>};
    double complementarity_scaling{INF<double>};

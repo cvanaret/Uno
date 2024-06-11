@@ -50,7 +50,6 @@ void TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Mod
             statistics.start_new_line();
          }
          // compute the direction within the trust region
-         this->direction.reset();
          this->constraint_relaxation_strategy.set_trust_region_radius(this->radius);
          this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, this->direction, warmstart_information);
 
@@ -58,17 +57,21 @@ void TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Mod
          if (this->direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
             // the subproblem is always bounded, but the objective may exceed a very large negative value
             this->set_statistics(statistics, this->direction, number_iterations);
+            statistics.set("status", "unbounded subproblem");
+            if (Logger::level == INFO) statistics.print_current_line();
             this->decrease_radius_aggressively();
             warmstart_information.set_cold_start();
          }
          else if (this->direction.status == SubproblemStatus::ERROR) {
             this->set_statistics(statistics, this->direction, number_iterations);
-            this->decrease_radius();
+            statistics.set("status", "solver error");
+            if (Logger::level == INFO) statistics.print_current_line();
+            this->decrease_radius(this->direction.norm);
             warmstart_information.set_cold_start();
          }
          else {
-            GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, this->direction, this->direction.primal_dual_step_length,
-                  this->direction.primal_dual_step_length, this->direction.bound_dual_step_length);
+            // take full primal-dual step
+            GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, this->direction, 1., 1.);
             this->reset_active_trust_region_multipliers(model, this->direction, trial_iterate);
 
             // check whether the trial iterate (current iterate + full step) is acceptable
@@ -88,8 +91,8 @@ void TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Mod
          this->set_statistics(statistics, number_iterations);
          statistics.set("status", "eval. error");
          if (Logger::level == INFO) statistics.print_current_line();
-         warmstart_information.set_cold_start();
          this->decrease_radius();
+         warmstart_information.set_cold_start();
       }
    }
    throw std::runtime_error("TR strategy failed for unknown reasons, this should not happen.");
@@ -99,8 +102,7 @@ void TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Mod
 bool TrustRegionStrategy::is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
       const Direction& direction, size_t number_iterations) {
    // direction.primal_dual_step_length is usually 1, can be lower if reduced by fraction-to-boundary rule
-   bool accept_iterate = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction,
-         direction.primal_dual_step_length);
+   bool accept_iterate = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, 1.);
 
    this->set_statistics(statistics, trial_iterate, direction, number_iterations);
    if (Logger::level == INFO) statistics.print_current_line();
@@ -167,10 +169,12 @@ bool TrustRegionStrategy::check_termination_with_small_step(const Model& /*model
    // terminate with a feasible point
    if (trial_iterate.progress.infeasibility <= this->tight_tolerance) {
       trial_iterate.status = TerminationStatus::FEASIBLE_SMALL_STEP;
+      this->constraint_relaxation_strategy.compute_primal_dual_residuals(trial_iterate);
       return true;
    }
    else if (this->constraint_relaxation_strategy.solving_feasibility_problem()) { // terminate with an infeasible point
       trial_iterate.status = TerminationStatus::INFEASIBLE_SMALL_STEP;
+      this->constraint_relaxation_strategy.compute_primal_dual_residuals(trial_iterate);
       return true;
    }
    else { // do not terminate, infeasible non stationary

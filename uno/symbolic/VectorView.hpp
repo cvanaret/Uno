@@ -39,8 +39,8 @@ public:
    }
 
    // preconditions: expression != nullptr, i < length
-   [[nodiscard]] value_type& operator[](size_t index) noexcept { return this->expression[index]; }
-   [[nodiscard]] value_type operator[](size_t index) const noexcept { return this->expression[index]; }
+   [[nodiscard]] value_type& operator[](size_t index) noexcept { return this->expression[this->start + index]; }
+   [[nodiscard]] value_type operator[](size_t index) const noexcept { return this->expression[this->start + index]; }
    [[nodiscard]] size_t size() const noexcept { return this->end - this->start; }
 
    // [[nodiscard]] iterator begin() const noexcept { return iterator(*this, 0); }

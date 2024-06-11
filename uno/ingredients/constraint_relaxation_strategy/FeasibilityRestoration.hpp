@@ -35,6 +35,9 @@ public:
    [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length) override;
 
+   // primal-dual residuals
+   void compute_primal_dual_residuals(Iterate& iterate) override;
+
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
    [[nodiscard]] size_t get_number_subproblems_solved() const override;
 
@@ -50,8 +53,8 @@ private:
    bool switching_to_optimality_phase{false};
 
    [[nodiscard]] const OptimizationProblem& current_problem() const;
-   void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction,
-         WarmstartInformation& warmstart_information);
+   void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
+         Direction& direction, WarmstartInformation& warmstart_information);
    void switch_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate);
 
    void evaluate_progress_measures(Iterate& iterate) const;

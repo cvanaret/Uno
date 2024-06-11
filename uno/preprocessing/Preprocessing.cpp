@@ -8,9 +8,9 @@
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
-#include "reformulation/OptimizationProblem.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 #include "solvers/QP/QPSolver.hpp"
+#include "symbolic/VectorView.hpp"
 
 // compute a least-square approximation of the multipliers by solving a linear system
 void Preprocessing::compute_least_square_multipliers(const Model& model, SymmetricMatrix<size_t, double>& matrix, Vector<double>& rhs,
@@ -44,18 +44,17 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
    for (size_t variable_index: Range(model.number_variables)) {
       rhs[variable_index] -= current_iterate.multipliers.lower_bounds[variable_index] + current_iterate.multipliers.upper_bounds[variable_index];
    }
-   DEBUG2 << "RHS for least-square multipliers: "; print_vector(DEBUG2, rhs, 0, matrix.dimension);
+   DEBUG2 << "RHS for least-square multipliers: "; print_vector(DEBUG2, view(rhs, 0, matrix.dimension));
    
    /* solve the system */
    Vector<double> solution(matrix.dimension);
    linear_solver.solve_indefinite_system(matrix, rhs, solution, true);
-   DEBUG2 << "Solution: "; print_vector(DEBUG2, solution, 0, matrix.dimension);
 
    // if least-square multipliers too big, discard them. Otherwise, keep them
-   if (norm_inf(solution, Range(model.number_variables, model.number_variables + model.number_constraints)) <= multiplier_max_norm) {
-      for (size_t constraint_index: Range(model.number_constraints)) {
-         multipliers[constraint_index] = solution[model.number_variables + constraint_index];
-      }
+   const auto trial_multipliers = view(solution, model.number_variables, model.number_variables + model.number_constraints);
+   DEBUG2 << "Trial multipliers: "; print_vector(DEBUG2, trial_multipliers);
+   if (norm_inf(trial_multipliers) <= multiplier_max_norm) {
+      multipliers = trial_multipliers;
    }
    else {
       DEBUG << "Ignoring the least-square multipliers\n";
