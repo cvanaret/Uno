@@ -22,10 +22,20 @@ public:
    explicit Vector(size_t capacity = 0): vector(capacity) { }
    explicit Vector(size_t capacity, ElementType value): vector(capacity, value) { }
    Vector(std::initializer_list<ElementType> initializer_list): vector(initializer_list) { }
+   Vector(const Vector& other) noexcept : vector(other.vector) { }
    Vector(Vector&& other) noexcept : vector(std::move(other.vector)) { }
    ~Vector() = default;
 
    // copy assignment operator
+   Vector& operator=(const Vector& other) {
+      std::cout << "Copying Vector\n";
+      for (size_t index = 0; index < this->size(); index++) {
+         this->vector[index] = other[index];
+      }
+      return *this;
+   }
+
+   // assignment operator from an expression
    template <typename Expression>
    Vector& operator=(const Expression& expression) {
       static_assert(std::is_same_v<typename Expression::value_type, ElementType>);

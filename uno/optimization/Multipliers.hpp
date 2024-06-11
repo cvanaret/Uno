@@ -12,6 +12,10 @@ struct Multipliers {
    Vector<double> constraints{}; /*!< Multipliers of the general constraints */
 
    Multipliers(size_t number_variables, size_t number_constraints);
+   Multipliers(Multipliers&& other) noexcept = default;
+   Multipliers& operator=(const Multipliers& other) noexcept = default;
+   Multipliers& operator=(Multipliers&& other) noexcept = default;
+
    void reset();
    [[nodiscard]] bool not_all_zero(size_t number_variables, double tolerance) const;
 };
