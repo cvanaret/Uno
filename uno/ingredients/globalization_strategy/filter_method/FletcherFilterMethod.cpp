@@ -49,10 +49,9 @@ bool FletcherFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
             // switching condition: check whether the unconstrained predicted reduction is sufficiently positive
             if (this->switching_condition(merit_predicted_reduction, current_progress.infeasibility, this->parameters.delta)) {
                // unconstrained Armijo sufficient decrease condition: predicted reduction should be positive (f-type)
-               const double objective_actual_reduction = this->compute_actual_objective_reduction(current_merit, current_progress.infeasibility,
-                     trial_merit);
-               DEBUG << "Unconstrained actual reduction = " << objective_actual_reduction << '\n';
-               if (this->armijo_sufficient_decrease(merit_predicted_reduction, objective_actual_reduction)) {
+               const double merit_actual_reduction = this->compute_actual_objective_reduction(current_merit, current_progress.infeasibility, trial_merit);
+               DEBUG << "Unconstrained actual reduction = " << merit_actual_reduction << '\n';
+               if (this->armijo_sufficient_decrease(merit_predicted_reduction, merit_actual_reduction)) {
                   DEBUG << "Trial iterate (f-type) was accepted by satisfying the Armijo condition\n";
                   accept = true;
                }
@@ -61,7 +60,7 @@ bool FletcherFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
                }
                scenario = "f-type Armijo";
             }
-               // switching condition violated: predicted reduction is not promising (h-type)
+            // switching condition violated: predicted reduction is not promising (h-type)
             else {
                DEBUG << "Trial iterate (h-type) was accepted by violating the switching condition\n";
                accept = true;
