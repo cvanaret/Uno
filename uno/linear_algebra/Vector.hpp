@@ -28,13 +28,21 @@ public:
 
    // copy assignment operator
    Vector<ElementType>& operator=(const Vector<ElementType>& other) {
-      for (size_t index = 0; index < this->size(); index++) {
-         this->vector[index] = other[index];
+      if (&other != this) {
+         this->vector = other.vector;
       }
       return *this;
    }
 
-   // assignment operator from an expression
+   // move assignment operator
+   Vector<ElementType>& operator=(Vector<ElementType>&& other) noexcept {
+      if (&other != this) {
+         this->vector = std::move(other.vector);
+      }
+      return *this;
+   }
+
+   // assignment operator from some expression
    template <typename Expression>
    Vector<ElementType>& operator=(const Expression& expression) {
       static_assert(std::is_same_v<typename Expression::value_type, ElementType>);
@@ -44,10 +52,11 @@ public:
       return *this;
    }
 
-   // move assignment operator
-   Vector<ElementType>& operator=(Vector<ElementType>&& other) noexcept {
-      if (&other != this) {
-         this->vector = std::move(other.vector);
+   // sum operator
+   template <typename Expression>
+   Vector<ElementType>& operator+=(const Expression& expression) {
+      for (size_t index = 0; index < this->size(); index++) {
+         this->vector[index] += expression[index];
       }
       return *this;
    }
@@ -81,15 +90,6 @@ public:
 
    ElementType* data() { return this->vector.data(); }
    const ElementType* data() const { return this->vector.data(); }
-
-   // sum operator
-   template <typename Expression>
-   Vector<ElementType>& operator+=(const Expression& expression) {
-      for (size_t index = 0; index < this->size(); index++) {
-         this->vector[index] += expression[index];
-      }
-      return *this;
-   }
 
    void print(std::ostream& stream) const {
       for (const ElementType& element: *this) {
