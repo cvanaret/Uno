@@ -22,12 +22,12 @@ public:
    explicit Vector(size_t capacity = 0): vector(capacity) { }
    explicit Vector(size_t capacity, ElementType value): vector(capacity, value) { }
    Vector(std::initializer_list<ElementType> initializer_list): vector(initializer_list) { }
-   Vector(const Vector& other) noexcept : vector(other.vector) { }
-   Vector(Vector&& other) noexcept : vector(std::move(other.vector)) { }
+   Vector(const Vector<ElementType>& other) noexcept : vector(other.vector) { }
+   Vector(Vector<ElementType>&& other) noexcept : vector(std::move(other.vector)) { }
    ~Vector() = default;
 
    // copy assignment operator
-   Vector& operator=(const Vector& other) {
+   Vector<ElementType>& operator=(const Vector<ElementType>& other) {
       for (size_t index = 0; index < this->size(); index++) {
          this->vector[index] = other[index];
       }
@@ -36,7 +36,7 @@ public:
 
    // assignment operator from an expression
    template <typename Expression>
-   Vector& operator=(const Expression& expression) {
+   Vector<ElementType>& operator=(const Expression& expression) {
       static_assert(std::is_same_v<typename Expression::value_type, ElementType>);
       for (size_t index = 0; index < this->size(); index++) {
          this->vector[index] = expression[index];
@@ -45,7 +45,7 @@ public:
    }
 
    // move assignment operator
-   Vector& operator=(Vector&& other) noexcept {
+   Vector<ElementType>& operator=(Vector<ElementType>&& other) noexcept {
       if (&other != this) {
          this->vector = std::move(other.vector);
       }
@@ -84,7 +84,7 @@ public:
 
    // sum operator
    template <typename Expression>
-   Vector& operator+=(const Expression& expression) {
+   Vector<ElementType>& operator+=(const Expression& expression) {
       for (size_t index = 0; index < this->size(); index++) {
          this->vector[index] += expression[index];
       }
