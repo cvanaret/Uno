@@ -28,7 +28,6 @@ public:
 
    // copy assignment operator
    Vector& operator=(const Vector& other) {
-      std::cout << "Copying Vector\n";
       for (size_t index = 0; index < this->size(); index++) {
          this->vector[index] = other[index];
       }
