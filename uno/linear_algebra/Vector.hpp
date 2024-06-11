@@ -22,6 +22,7 @@ public:
    explicit Vector(size_t capacity = 0): vector(capacity) { }
    explicit Vector(size_t capacity, ElementType value): vector(capacity, value) { }
    Vector(std::initializer_list<ElementType> initializer_list): vector(initializer_list) { }
+   Vector(Vector&& other) noexcept : vector(std::move(other.vector)) { }
    ~Vector() = default;
 
    // copy assignment operator
@@ -35,7 +36,7 @@ public:
    }
 
    // move assignment operator
-   Vector& operator=(std::vector<ElementType>&& other) {
+   Vector& operator=(Vector&& other) noexcept {
       if (&other != this) {
          this->vector = std::move(other.vector);
       }
