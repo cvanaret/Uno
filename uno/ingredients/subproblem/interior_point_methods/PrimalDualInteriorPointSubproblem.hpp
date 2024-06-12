@@ -66,7 +66,7 @@ protected:
    void evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
          const WarmstartInformation& warmstart_information);
    void update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate);
-   [[nodiscard]] bool is_small_step(const OptimizationProblem& problem, const Iterate& current_iterate, const Direction& direction) const;
+   [[nodiscard]] bool is_small_step(const OptimizationProblem& problem, const Vector<double>& current_primals, const Vector<double>& direction_primals) const;
    [[nodiscard]] double evaluate_subproblem_objective(const Direction& direction) const;
    [[nodiscard]] double compute_barrier_term_directional_derivative(const Model& model, const Iterate& current_iterate,
          const Vector<double>& primal_direction) const;

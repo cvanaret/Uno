@@ -196,12 +196,6 @@ void PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const Opti
    this->number_subproblems_solved++;
    this->assemble_primal_dual_direction(problem, current_iterate.primals, current_multipliers, direction.primals, direction.multipliers);
    direction.subproblem_objective = this->evaluate_subproblem_objective(direction);
-
-   // determine if the direction is a "small direction" (Section 3.9 of the Ipopt paper) TODO
-   const bool is_small_step = PrimalDualInteriorPointSubproblem::is_small_step(problem, current_iterate, direction);
-   if (is_small_step) {
-      DEBUG << "This is a small step\n";
-   }
 }
 
 void PrimalDualInteriorPointSubproblem::assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem,
@@ -332,9 +326,10 @@ void PrimalDualInteriorPointSubproblem::update_barrier_parameter(const Optimizat
 }
 
 // Section 3.9 in IPOPT paper
-bool PrimalDualInteriorPointSubproblem::is_small_step(const OptimizationProblem& problem, const Iterate& current_iterate, const Direction& direction) const {
+bool PrimalDualInteriorPointSubproblem::is_small_step(const OptimizationProblem& problem, const Vector<double>& current_primals,
+      const Vector<double>& direction_primals) const {
    const VectorExpression relative_direction_size(Range(problem.number_variables), [&](size_t variable_index) {
-      return direction.primals[variable_index] / (1 + std::abs(current_iterate.primals[variable_index]));
+      return direction_primals[variable_index] / (1 + std::abs(current_primals[variable_index]));
    });
    static double machine_epsilon = std::numeric_limits<double>::epsilon();
    return (norm_inf(relative_direction_size) <= this->parameters.small_direction_factor * machine_epsilon);
@@ -424,6 +419,12 @@ void PrimalDualInteriorPointSubproblem::assemble_primal_dual_direction(const Opt
    direction_multipliers.constraints = view(-this->augmented_system.solution, problem.number_variables,
          problem.number_variables + problem.number_constraints);
    this->compute_bound_dual_direction(problem, current_primals, current_multipliers, direction_primals, direction_multipliers);
+
+   // determine if the direction is a "small direction" (Section 3.9 of the Ipopt paper) TODO
+   const bool is_small_step = PrimalDualInteriorPointSubproblem::is_small_step(problem, current_primals, direction_primals);
+   if (is_small_step) {
+      DEBUG << "This is a small step\n";
+   }
 
    // "fraction-to-boundary" rule for primal variables and constraints multipliers
    const double tau = std::max(this->parameters.tau_min, 1. - this->barrier_parameter());
