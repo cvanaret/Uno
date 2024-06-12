@@ -187,13 +187,12 @@ void PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const Opti
    // evaluate the functions at the current iterate
    this->evaluate_functions(statistics, problem, current_iterate, current_multipliers, warmstart_information);
 
-   // set up the augmented system (with the correct inertia)
-   this->assemble_augmented_system(statistics, problem, current_multipliers);
-
    // compute the primal-dual solution
+   this->assemble_augmented_system(statistics, problem, current_multipliers);
    this->augmented_system.solve(*this->linear_solver);
    assert(direction.status == SubproblemStatus::OPTIMAL && "The primal-dual perturbed subproblem was not solved to optimality");
    this->number_subproblems_solved++;
+
    this->assemble_primal_dual_direction(problem, current_iterate.primals, current_multipliers, direction.primals, direction.multipliers);
    direction.subproblem_objective = this->evaluate_subproblem_objective(direction);
 }
@@ -201,8 +200,7 @@ void PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const Opti
 void PrimalDualInteriorPointSubproblem::assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem,
       const Multipliers& current_multipliers) {
    // assemble, factorize and regularize the augmented matrix
-   this->augmented_system.assemble_matrix(*this->hessian_model->hessian, this->constraint_jacobian,
-         problem.number_variables, problem.number_constraints);
+   this->augmented_system.assemble_matrix(*this->hessian_model->hessian, this->constraint_jacobian, problem.number_variables, problem.number_constraints);
    this->augmented_system.factorize_matrix(problem.model, *this->linear_solver);
    const double dual_regularization_parameter = std::pow(this->barrier_parameter(), this->parameters.regularization_exponent);
    this->augmented_system.regularize_matrix(statistics, problem.model, *this->linear_solver, problem.number_variables, problem.number_constraints,
@@ -210,8 +208,8 @@ void PrimalDualInteriorPointSubproblem::assemble_augmented_system(Statistics& st
    [[maybe_unused]] auto[number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = this->linear_solver->get_inertia();
    assert(number_pos_eigenvalues == problem.number_variables && number_neg_eigenvalues == problem.number_constraints && number_zero_eigenvalues == 0);
 
-   // assemble the right-hand side
-   this->generate_augmented_rhs(problem, current_multipliers);
+   // rhs
+   this->assemble_augmented_rhs(problem, current_multipliers);
 }
 
 void PrimalDualInteriorPointSubproblem::initialize_feasibility_problem(const l1RelaxedProblem& /*problem*/, Iterate& /*current_iterate*/) {
@@ -389,7 +387,7 @@ double PrimalDualInteriorPointSubproblem::dual_fraction_to_boundary(const Optimi
 }
 
 // generate the right-hand side
-void PrimalDualInteriorPointSubproblem::generate_augmented_rhs(const OptimizationProblem& problem, const Multipliers& current_multipliers) {
+void PrimalDualInteriorPointSubproblem::assemble_augmented_rhs(const OptimizationProblem& problem, const Multipliers& current_multipliers) {
    this->augmented_system.rhs.fill(0.);
 
    // objective gradient
@@ -448,13 +446,13 @@ void PrimalDualInteriorPointSubproblem::compute_bound_dual_direction(const Optim
       const double distance_to_bound = current_primals[variable_index] - problem.variable_lower_bound(variable_index);
       direction_multipliers.lower_bounds[variable_index] = (this->barrier_parameter() - primal_direction[variable_index] * current_multipliers.lower_bounds[variable_index]) /
                                             distance_to_bound - current_multipliers.lower_bounds[variable_index];
-      assert(is_finite(direction_multipliers.lower_bounds[variable_index]) && "The displacement lower_delta_z is infinite");
+      assert(is_finite(direction_multipliers.lower_bounds[variable_index]) && "The lower bound dual is infinite");
    }
    for (const size_t variable_index: problem.get_upper_bounded_variables()) {
       const double distance_to_bound = current_primals[variable_index] - problem.variable_upper_bound(variable_index);
       direction_multipliers.upper_bounds[variable_index] = (this->barrier_parameter() - primal_direction[variable_index] * current_multipliers.upper_bounds[variable_index]) /
                                             distance_to_bound - current_multipliers.upper_bounds[variable_index];
-      assert(is_finite(direction_multipliers.upper_bounds[variable_index]) && "The displacement upper_delta_z is infinite");
+      assert(is_finite(direction_multipliers.upper_bounds[variable_index]) && "The upper bound dual is infinite");
    }
 }
 
