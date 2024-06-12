@@ -151,13 +151,13 @@ void TrustRegionStrategy::reset_radius() {
 void TrustRegionStrategy::reset_active_trust_region_multipliers(const Model& model, const Direction& direction, Iterate& trial_iterate) const {
    assert(0 < this->radius && "The trust-region radius should be positive");
    // set multipliers for bound constraints active at trust region to 0 (except if one of the original bounds is active)
-   for (size_t variable_index: direction.active_set.bounds.at_lower_bound) {
+   for (size_t variable_index: direction.active_bounds.at_lower_bound) {
       if (variable_index < model.number_variables && std::abs(direction.primals[variable_index] + this->radius) <= this->activity_tolerance &&
             this->activity_tolerance < std::abs(trial_iterate.primals[variable_index] - model.variable_lower_bound(variable_index))) {
          trial_iterate.multipliers.lower_bounds[variable_index] = 0.;
       }
    }
-   for (size_t variable_index: direction.active_set.bounds.at_upper_bound) {
+   for (size_t variable_index: direction.active_bounds.at_upper_bound) {
       if (variable_index < model.number_variables && std::abs(direction.primals[variable_index] - this->radius) <= this->activity_tolerance &&
             this->activity_tolerance < std::abs(model.variable_upper_bound(variable_index) - trial_iterate.primals[variable_index])) {
          trial_iterate.multipliers.upper_bounds[variable_index] = 0.;

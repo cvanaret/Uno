@@ -30,13 +30,6 @@ struct ActiveConstraints {
    }
 };
 
-struct ActiveSet {
-   ActiveConstraints constraints; /*!< List of general constraints */
-   ActiveConstraints bounds; /*!< List of bound constraints */
-
-   ActiveSet(size_t number_variables, size_t number_constraints): constraints(number_constraints), bounds(number_variables) { }
-};
-
 class Direction {
 public:
    Direction(size_t number_variables, size_t number_constraints);
@@ -52,7 +45,7 @@ public:
 
    double norm{INF<double>}; /*!< Norm of \f$x\f$ */
    double subproblem_objective{INF<double>}; /*!< Objective value */
-   ActiveSet active_set; /*!< Active set */
+   ActiveConstraints active_bounds; /*!< Active bound constraints */
 
    void set_dimensions(size_t new_number_variables, size_t new_number_constraints);
    void reset();
