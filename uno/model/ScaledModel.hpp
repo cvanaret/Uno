@@ -107,10 +107,9 @@ inline void ScaledModel::evaluate_lagrangian_hessian(const Vector<double>& x, do
    // scale the objective and constraint multipliers
    const double scaled_objective_multiplier = objective_multiplier*this->scaling.get_objective_scaling();
    // TODO preallocate this vector
-   // TODO check if the multipliers should be scaled
    static Vector<double> scaled_multipliers(this->number_constraints);
    for (size_t constraint_index: Range(this->number_constraints)) {
-      scaled_multipliers[constraint_index] = scaling.get_constraint_scaling(constraint_index) * multipliers[constraint_index];
+      scaled_multipliers[constraint_index] = this->scaling.get_constraint_scaling(constraint_index) * multipliers[constraint_index];
    }
    this->model->evaluate_lagrangian_hessian(x, scaled_objective_multiplier, scaled_multipliers, hessian);
 }

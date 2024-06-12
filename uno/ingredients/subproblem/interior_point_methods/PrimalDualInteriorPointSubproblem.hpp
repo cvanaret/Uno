@@ -44,8 +44,12 @@ public:
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
 protected:
-   SymmetricIndefiniteLinearSystem<double> augmented_system;
+   SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
+   std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
+   RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
    const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
+
+   SymmetricIndefiniteLinearSystem<double> augmented_system;
    const std::unique_ptr<SymmetricIndefiniteLinearSolver<double>> linear_solver;
 
    BarrierParameterUpdateStrategy barrier_parameter_update_strategy;

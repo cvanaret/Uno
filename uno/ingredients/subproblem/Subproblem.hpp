@@ -28,7 +28,7 @@ struct WarmstartInformation;
  */
 class Subproblem {
 public:
-   Subproblem(size_t number_variables, size_t number_constraints);
+   explicit Subproblem() = default;
    virtual ~Subproblem() = default;
 
    // virtual methods implemented by subclasses
@@ -58,8 +58,12 @@ public:
    bool subproblem_definition_changed{false};
 
 protected:
-   Evaluations evaluations;
    double trust_region_radius{INF<double>};
 };
+
+inline void Subproblem::set_trust_region_radius(double new_trust_region_radius) {
+   assert(0. < new_trust_region_radius && "The trust-region radius should be positive.");
+   this->trust_region_radius = new_trust_region_radius;
+}
 
 #endif // UNO_SUBPROBLEM_H
