@@ -65,11 +65,11 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Optimizat
    // - with standard multipliers and 0 objective multiplier (for FJ conditions)
    // - with feasibility multipliers and 0 objective multiplier (for feasibility problem)
    this->evaluate_lagrangian_gradient(iterate, iterate.multipliers);
-   iterate.residuals.KKT_stationarity = optimality_problem.stationarity_error(iterate.lagrangian_gradient, iterate.objective_multiplier,
+   iterate.residuals.KKT_stationarity = OptimizationProblem::stationarity_error(iterate.lagrangian_gradient, iterate.objective_multiplier,
          this->residual_norm);
-   iterate.residuals.FJ_stationarity = optimality_problem.stationarity_error(iterate.lagrangian_gradient, 0., this->residual_norm);
+   iterate.residuals.FJ_stationarity = OptimizationProblem::stationarity_error(iterate.lagrangian_gradient, 0., this->residual_norm);
    this->evaluate_lagrangian_gradient(iterate, iterate.feasibility_multipliers);
-   iterate.residuals.feasibility_stationarity = feasibility_problem.stationarity_error(iterate.lagrangian_gradient, 0., this->residual_norm);
+   iterate.residuals.feasibility_stationarity = OptimizationProblem::stationarity_error(iterate.lagrangian_gradient, 0., this->residual_norm);
 
    // constraint violation of the original problem
    iterate.residuals.infeasibility = this->model.constraint_violation(iterate.evaluations.constraints, this->residual_norm);

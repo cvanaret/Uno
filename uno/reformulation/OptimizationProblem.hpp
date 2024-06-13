@@ -7,14 +7,14 @@
 #include <vector>
 #include "linear_algebra/Norm.hpp"
 #include "model/Model.hpp"
+#include "optimization/LagrangianGradient.hpp"
+#include "symbolic/Expression.hpp"
 
 // forward declarations
 template <typename ElementType>
 class Collection;
 class Iterate;
-template <typename ElementType>
-class LagrangianGradient;
-class Multipliers;
+struct Multipliers;
 template <typename ElementType>
 class RectangularMatrix;
 template <typename ElementType>
@@ -55,8 +55,8 @@ public:
    [[nodiscard]] virtual size_t number_jacobian_nonzeros() const = 0;
    [[nodiscard]] virtual size_t number_hessian_nonzeros() const = 0;
 
-   [[nodiscard]] virtual double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
-         Norm residual_norm) const = 0;
+   [[nodiscard]] static double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
+         Norm residual_norm);
    [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const = 0;
 };
@@ -75,6 +75,13 @@ inline bool OptimizationProblem::has_inequality_constraints() const {
 
 inline size_t OptimizationProblem::get_number_original_variables() const {
    return this->model.number_variables;
+}
+
+inline double OptimizationProblem::stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
+      Norm residual_norm) {
+   // norm of the scaled Lagrangian gradient
+   const auto scaled_lagrangian = objective_multiplier * lagrangian_gradient.objective_contribution + lagrangian_gradient.constraints_contribution;
+   return norm(residual_norm, scaled_lagrangian);
 }
 
 #endif // UNO_OPTIMIZATIONPROBLEM_H

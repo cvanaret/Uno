@@ -33,8 +33,6 @@ public:
    [[nodiscard]] size_t number_jacobian_nonzeros() const override { return this->model.number_jacobian_nonzeros(); }
    [[nodiscard]] size_t number_hessian_nonzeros() const override { return this->model.number_hessian_nonzeros(); }
 
-   [[nodiscard]] double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
-         Norm residual_norm) const override;
    [[nodiscard]] double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const override;
 };
@@ -62,13 +60,6 @@ inline void OptimalityProblem::evaluate_constraint_jacobian(Iterate& iterate, Re
 inline void OptimalityProblem::evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers,
       SymmetricMatrix<double>& hessian) const {
    this->model.evaluate_lagrangian_hessian(x, this->get_objective_multiplier(), multipliers, hessian);
-}
-
-inline double OptimalityProblem::stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
-      Norm residual_norm) const {
-   // norm of the scaled Lagrangian gradient
-   const auto scaled_lagrangian = objective_multiplier * lagrangian_gradient.objective_contribution + lagrangian_gradient.constraints_contribution;
-   return norm(residual_norm, scaled_lagrangian);
 }
 
 inline double OptimalityProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,

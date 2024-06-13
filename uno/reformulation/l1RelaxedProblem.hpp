@@ -46,8 +46,6 @@ public:
    [[nodiscard]] size_t number_jacobian_nonzeros() const override;
    [[nodiscard]] size_t number_hessian_nonzeros() const override;
 
-   [[nodiscard]] double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
-         Norm residual_norm) const override;
    [[nodiscard]] double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, Norm residual_norm) const override;
 
@@ -138,13 +136,6 @@ inline void l1RelaxedProblem::evaluate_lagrangian_hessian(const Vector<double>& 
    for (size_t constraint_index: Range(this->model.number_variables, this->number_variables)) {
       hessian.finalize_column(constraint_index);
    }
-}
-
-inline double l1RelaxedProblem::stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
-      Norm residual_norm) const {
-   // norm of the scaled Lagrangian gradient
-   const auto scaled_lagrangian = objective_multiplier * lagrangian_gradient.objective_contribution + lagrangian_gradient.constraints_contribution;
-   return norm(residual_norm, scaled_lagrangian);
 }
 
 // complementary slackness error: expression for violated constraints depends on the definition of the relaxed problem
