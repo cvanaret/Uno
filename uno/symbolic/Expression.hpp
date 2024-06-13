@@ -12,7 +12,6 @@
 #include "HadamardProduct.hpp"
 #include "Transpose.hpp"
 #include "MatrixExpression.hpp"
-#include "JacobianExpression.hpp"
 #include "MatrixVectorProduct.hpp"
 
 #endif // UNO_EXPRESSION_H

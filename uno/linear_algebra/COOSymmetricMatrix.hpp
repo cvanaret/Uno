@@ -34,7 +34,7 @@ public:
    void reset() override;
    void insert(ElementType element, IndexType row_index, IndexType column_index) override;
    void finalize_column(IndexType /*column_index*/) override { /* do nothing */ }
-   [[nodiscard]] ElementType smallest_diagonal_entry() const override;
+   [[nodiscard]] ElementType smallest_diagonal_entry(size_t max_dimension) const override;
    void set_regularization(const std::function<ElementType(IndexType index)>& regularization_function) override;
 
    [[nodiscard]] const IndexType* row_indices_pointer() const { return this->row_indices.data(); }
@@ -96,16 +96,10 @@ void COOSymmetricMatrix<IndexType, ElementType>::insert(ElementType element, Ind
 }
 
 template <typename IndexType, typename ElementType>
-ElementType COOSymmetricMatrix<IndexType, ElementType>::smallest_diagonal_entry() const {
+ElementType COOSymmetricMatrix<IndexType, ElementType>::smallest_diagonal_entry(size_t max_dimension) const {
    ElementType smallest_entry = INF<ElementType>;
-   for (size_t index: Range(this->number_nonzeros)) {
-      if (this->row_indices[index] == this->column_indices[index]) {
-         smallest_entry = std::min(smallest_entry, this->entries[index]);
-      }
-   }
-   // if no explicit diagonal term, it is 0
-   if (smallest_entry == INF<ElementType>) {
-      smallest_entry = ElementType(0);
+   for (size_t row_index: Range(std::min(this->dimension, max_dimension))) {
+      smallest_entry = std::min(smallest_entry, this->diagonal_entries[row_index]);
    }
    return smallest_entry;
 }

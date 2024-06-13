@@ -17,6 +17,7 @@ public:
 
 protected:
    double initial_infeasibility{INF<double>};
+   const double sufficient_infeasibility_decrease_factor;
 };
 
 #endif // UNO_WAECHTERFILTERMETHOD_H

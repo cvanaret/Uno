@@ -117,6 +117,9 @@ filter_switching_infeasibility_exponent 2
 
 filter_capacity 50
 
+# used by Waechter filter method
+filter_sufficient_infeasibility_decrease_factor 0.9
+
 # nonmonotone filter strategy
 nonmonotone_filter_number_dominated_entries 3
 
