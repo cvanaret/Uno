@@ -19,7 +19,7 @@ template <typename ElementType>
 class SymmetricMatrix;
 template <typename ElementType>
 class Vector;
-class WarmstartInformation;
+struct WarmstartInformation;
 
 class ConstraintRelaxationStrategy {
 public:

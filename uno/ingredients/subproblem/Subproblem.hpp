@@ -13,7 +13,7 @@ class Direction;
 class Iterate;
 class l1RelaxedProblem;
 class Model;
-class Multipliers;
+struct Multipliers;
 class OptimizationProblem;
 class Options;
 class Statistics;

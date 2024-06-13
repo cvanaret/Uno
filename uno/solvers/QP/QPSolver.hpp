@@ -15,7 +15,7 @@ template <typename ElementType>
 class SparseVector;
 template <typename ElementType>
 class SymmetricMatrix;
-class WarmstartInformation;
+struct WarmstartInformation;
 
 /*! \class QPSolver
  * \brief QP solver

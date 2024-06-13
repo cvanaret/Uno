@@ -45,7 +45,7 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
       rhs[variable_index] -= current_iterate.multipliers.lower_bounds[variable_index] + current_iterate.multipliers.upper_bounds[variable_index];
    }
    DEBUG2 << "RHS for least-square multipliers: "; print_vector(DEBUG2, view(rhs, 0, matrix.dimension));
-   
+
    /* solve the system */
    Vector<double> solution(matrix.dimension);
    linear_solver.factorize(matrix);
