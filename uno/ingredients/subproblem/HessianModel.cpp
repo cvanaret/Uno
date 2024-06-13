@@ -47,8 +47,8 @@ void ConvexifiedHessian::evaluate(Statistics& statistics, const OptimizationProb
 
 // Nocedal and Wright, p51
 void ConvexifiedHessian::regularize(Statistics& statistics, SymmetricMatrix<double>& hessian, size_t number_original_variables) {
-   const double smallest_diagonal_entry = hessian.smallest_diagonal_entry();
-   DEBUG << "The minimal diagonal entry of the matrix is " << hessian.smallest_diagonal_entry() << '\n';
+   const double smallest_diagonal_entry = hessian.smallest_diagonal_entry(number_original_variables);
+   DEBUG << "The minimal diagonal entry of the matrix is " << smallest_diagonal_entry << '\n';
 
    double regularization_factor = (smallest_diagonal_entry <= 0.) ? this->regularization_initial_value - smallest_diagonal_entry : 0.;
    bool good_inertia = false;
