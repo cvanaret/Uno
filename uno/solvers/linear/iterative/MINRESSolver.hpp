@@ -82,19 +82,14 @@ void MINRESSolver<IndexType, NumericalType, LinearOperator>::solve_indefinite_sy
    NumericalType beta_k = std::sqrt(rhs.dot(rhs));
    // set phi_0 = tau_0 = beta_1
    this->phi_km1 = beta_k;
-   // std::cout << "beta_1 = " << beta_k << '\n';
    
    this->v_k = rhs;
    this->v_k.scale(NumericalType(1)/beta_k);
-   // std::cout << "Current x: "; print_vector(std::cout, this->x_k);
    
    bool termination = false;
    while (not termination) {
-      // std::cout << "v_" << this->iteration << " = "; print_vector(std::cout, v_k);
-      
       // compute the Lanczos step
       const auto [alpha_k, beta_kp1] = this->compute_lanczos_step(beta_k);
-      // std::cout << "beta_" << this->iteration+1 << " = " << lanczos_coefs.beta_kp1 << '\n';
       
       // last left orthogonalization on middle two entries in last column of Tk
       const NumericalType delta2_k = this->givens_rotation.cosine * this->delta1_k + this->givens_rotation.sine * alpha_k;
@@ -102,7 +97,6 @@ void MINRESSolver<IndexType, NumericalType, LinearOperator>::solve_indefinite_sy
       
       // test for negative curvature descent
       if (this->givens_rotation.cosine * gamma1_k >= NumericalType(0)) {
-         // std::cout << this->givens_rotation_km1.cosine*gamma1_k << '\n';
          // std::cout << "DIRECTION OF NEGATIVE CURVATURE\n";
       }
       
@@ -126,7 +120,6 @@ void MINRESSolver<IndexType, NumericalType, LinearOperator>::solve_indefinite_sy
          
          // update x_k
          this->x_k += tau_k * this->d_k;
-         // std::cout << "Current x: "; print_vector(std::cout, this->x_k);
          
          // update v_k
          this->v_km1 = this->v_k;
@@ -139,11 +132,11 @@ void MINRESSolver<IndexType, NumericalType, LinearOperator>::solve_indefinite_sy
          }
          // update the quantities for the next iteration
          beta_k = beta_kp1;
-         this->delta1_k = delta1_kp1;
-         this->epsilon_k = epsilon_kp1;
-         this->phi_km1 = phi_k;
-         this->d_km2 = this->d_km1;
-         this->d_km1 = this->d_k;
+         this->delta1_k = delta1_kp1; // NumericalType
+         this->epsilon_k = epsilon_kp1; // NumericalType
+         this->phi_km1 = phi_k; // NumericalType
+         this->d_km2 = this->d_km1; // Vector<NumericalType>
+         this->d_km1 = this->d_k; // Vector<NumericalType>
       }
       else {
          break;
@@ -155,7 +148,6 @@ void MINRESSolver<IndexType, NumericalType, LinearOperator>::solve_indefinite_sy
 
 template <typename IndexType, typename NumericalType, typename LinearOperator>
 std::pair<NumericalType, NumericalType> MINRESSolver<IndexType, NumericalType, LinearOperator>::compute_lanczos_step(NumericalType beta_k) {
-   // std::cout << "Starting compute_lanczos_step\n";
    // compute matrix-vector product in p_k
    this->linear_operator(this->v_k, this->p_k);
    
