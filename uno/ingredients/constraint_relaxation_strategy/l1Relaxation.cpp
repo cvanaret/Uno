@@ -3,9 +3,7 @@
 
 #include <cassert>
 #include "l1Relaxation.hpp"
-#include "ingredients/globalization_strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblem/Direction.hpp"
-#include "ingredients/subproblem/SubproblemFactory.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "symbolic/VectorView.hpp"
@@ -19,23 +17,30 @@
  */
 
 l1Relaxation::l1Relaxation(const Model& model, const Options& options) :
-      ConstraintRelaxationStrategy(model, options),
-      // create the l1 feasibility problem (objective multiplier = 0)
-      feasibility_problem(model, 0., options.get_double("l1_constraint_violation_coefficient")),
-      // create the l1 relaxed problem
-      l1_relaxed_problem(model, options.get_double("l1_relaxation_initial_parameter"), options.get_double("l1_constraint_violation_coefficient")),
-      subproblem(SubproblemFactory::create(this->l1_relaxed_problem.number_variables, this->l1_relaxed_problem.number_constraints,
-            this->l1_relaxed_problem.number_objective_gradient_nonzeros(), this->l1_relaxed_problem.number_jacobian_nonzeros(),
-            this->l1_relaxed_problem.number_hessian_nonzeros(), options)),
-      globalization_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), options)),
+      // call delegating constructor
+      l1Relaxation(model,
+            // create the l1 feasibility problem (objective multiplier = 0)
+            l1RelaxedProblem(model, 0., options.get_double("l1_constraint_violation_coefficient")),
+            // create the l1 relaxed problem
+            l1RelaxedProblem(model, options.get_double("l1_relaxation_initial_parameter"), options.get_double("l1_constraint_violation_coefficient")),
+            options) {
+}
+
+// private delegating constructor
+l1Relaxation::l1Relaxation(const Model& model, l1RelaxedProblem&& feasibility_problem, l1RelaxedProblem&& l1_relaxed_problem, const Options& options) :
+      ConstraintRelaxationStrategy(model, l1_relaxed_problem.number_variables, l1_relaxed_problem.number_constraints,
+            l1_relaxed_problem.number_objective_gradient_nonzeros(), l1_relaxed_problem.number_jacobian_nonzeros(),
+            l1_relaxed_problem.number_hessian_nonzeros(), options),
+      feasibility_problem(std::forward<l1RelaxedProblem>(feasibility_problem)),
+      l1_relaxed_problem(std::forward<l1RelaxedProblem>(l1_relaxed_problem)),
       penalty_parameter(options.get_double("l1_relaxation_initial_parameter")),
       tolerance(options.get_double("tolerance")),
       parameters({
-         options.get_bool("l1_relaxation_fixed_parameter"),
-         options.get_double("l1_relaxation_decrease_factor"),
-         options.get_double("l1_relaxation_epsilon1"),
-         options.get_double("l1_relaxation_epsilon2"),
-         options.get_double("l1_relaxation_residual_small_threshold")
+            options.get_bool("l1_relaxation_fixed_parameter"),
+            options.get_double("l1_relaxation_decrease_factor"),
+            options.get_double("l1_relaxation_epsilon1"),
+            options.get_double("l1_relaxation_epsilon2"),
+            options.get_double("l1_relaxation_residual_small_threshold")
       }),
       small_duals_threshold(options.get_double("l1_small_duals_threshold")),
       trial_multipliers(this->l1_relaxed_problem.number_variables, model.number_constraints) {
@@ -65,13 +70,6 @@ void l1Relaxation::compute_feasible_direction(Statistics& statistics, Iterate& c
    statistics.set("penalty param.", this->penalty_parameter);
    direction.reset();
    this->solve_sequence_of_relaxed_subproblems(statistics, current_iterate, direction, warmstart_information);
-}
-
-// an initial point is provided
-void l1Relaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-      const Vector<double>& initial_point, WarmstartInformation& warmstart_information) {
-   this->subproblem->set_initial_point(initial_point);
-   this->compute_feasible_direction(statistics, current_iterate, direction, warmstart_information);
 }
 
 bool l1Relaxation::solving_feasibility_problem() const {
@@ -229,22 +227,11 @@ bool l1Relaxation::is_descent_direction_for_l1_merit_function(const Iterate& cur
    return (predicted_l1_merit_reduction >= this->parameters.epsilon2 * lowest_decrease_objective);
 }
 
-void l1Relaxation::compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate) {
-   if (this->subproblem->subproblem_definition_changed) {
-      DEBUG << "The subproblem definition changed\n";
-      this->globalization_strategy->reset();
-      this->subproblem->set_auxiliary_measure(this->model, current_iterate);
-      this->subproblem->subproblem_definition_changed = false;
-   }
-   this->evaluate_progress_measures(trial_iterate);
-
-   trial_iterate.objective_multiplier = this->l1_relaxed_problem.get_objective_multiplier();
-}
-
 bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
       double step_length) {
    this->subproblem->postprocess_iterate(this->l1_relaxed_problem, trial_iterate);
    this->compute_progress_measures(current_iterate, trial_iterate);
+   trial_iterate.objective_multiplier = this->l1_relaxed_problem.get_objective_multiplier();
 
    bool accept_iterate = false;
    if (direction.norm == 0.) {
@@ -286,10 +273,6 @@ ProgressMeasures l1Relaxation::compute_predicted_reduction_models(Iterate& curre
    };
 }
 
-void l1Relaxation::set_trust_region_radius(double trust_region_radius) {
-   this->subproblem->set_trust_region_radius(trust_region_radius);
-}
-
 size_t l1Relaxation::maximum_number_variables() const {
    return this->l1_relaxed_problem.number_variables;
 }
@@ -311,10 +294,3 @@ void l1Relaxation::set_dual_residuals_statistics(Statistics& statistics, const I
    statistics.set("stationarity", iterate.residuals.KKT_stationarity);
 }
 
-size_t l1Relaxation::get_hessian_evaluation_count() const {
-   return this->subproblem->get_hessian_evaluation_count();
-}
-
-size_t l1Relaxation::get_number_subproblems_solved() const {
-   return this->subproblem->number_subproblems_solved;
-}

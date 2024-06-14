@@ -2,7 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "ConstraintRelaxationStrategy.hpp"
+#include "ingredients/globalization_strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblem/Direction.hpp"
+#include "ingredients/subproblem/SubproblemFactory.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
@@ -13,11 +15,26 @@
 #include "tools/Options.hpp"
 #include "tools/Statistics.hpp"
 
-ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Model& model, const Options& options):
+ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Model& model, size_t number_variables, size_t number_constraints,
+      size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options):
       model(model),
+      globalization_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), options)),
+      subproblem(SubproblemFactory::create(number_variables, number_constraints, number_objective_gradient_nonzeros, number_jacobian_nonzeros,
+            number_hessian_nonzeros, options)),
       progress_norm(norm_from_string(options.get_string("progress_norm"))),
       residual_norm(norm_from_string(options.get_string("residual_norm"))),
       residual_scaling_threshold(options.get_double("residual_scaling_threshold")) {
+}
+
+void ConstraintRelaxationStrategy::set_trust_region_radius(double trust_region_radius) {
+   this->subproblem->set_trust_region_radius(trust_region_radius);
+}
+
+// with initial point
+void ConstraintRelaxationStrategy::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+      const Vector<double>& initial_point, WarmstartInformation& warmstart_information) {
+   this->subproblem->set_initial_point(initial_point);
+   this->compute_feasible_direction(statistics, current_iterate, direction, warmstart_information);
 }
 
 // infeasibility measure: constraint violation
@@ -54,6 +71,16 @@ std::function<double(double)> ConstraintRelaxationStrategy::compute_predicted_ob
    };
 }
 
+void ConstraintRelaxationStrategy::compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate) {
+   if (this->subproblem->subproblem_definition_changed) {
+      DEBUG << "The subproblem definition changed, the globalization strategy is reset and the auxiliary measure is recomputed\n";
+      this->globalization_strategy->reset();
+      this->subproblem->set_auxiliary_measure(this->model, current_iterate);
+      this->subproblem->subproblem_definition_changed = false;
+   }
+   this->evaluate_progress_measures(trial_iterate);
+}
+
 void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const OptimizationProblem& optimality_problem, const OptimizationProblem& feasibility_problem,
       Iterate& iterate) {
    iterate.evaluate_objective_gradient(this->model);
@@ -61,9 +88,9 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Optimizat
    iterate.evaluate_constraint_jacobian(this->model);
 
    // stationarity errors:
-   // - with standard multipliers and current objective multiplier (for KKT conditions)
-   // - with standard multipliers and 0 objective multiplier (for FJ conditions)
-   // - with feasibility multipliers and 0 objective multiplier (for feasibility problem)
+   // - for KKT conditions: with standard multipliers and current objective multiplier
+   // - for FJ conditions: with standard multipliers and 0 objective multiplier
+   // - for feasibility problem: with feasibility multipliers and 0 objective multiplier
    this->evaluate_lagrangian_gradient(iterate, iterate.multipliers);
    iterate.residuals.KKT_stationarity = OptimizationProblem::stationarity_error(iterate.lagrangian_gradient, iterate.objective_multiplier,
          this->residual_norm);
@@ -151,4 +178,12 @@ void ConstraintRelaxationStrategy::set_progress_statistics(Statistics& statistic
    if (this->model.is_constrained()) {
       statistics.set("infeasibility", iterate.progress.infeasibility);
    }
+}
+
+size_t ConstraintRelaxationStrategy::get_hessian_evaluation_count() const {
+   return this->subproblem->get_hessian_evaluation_count();
+}
+
+size_t ConstraintRelaxationStrategy::get_number_subproblems_solved() const {
+   return this->subproblem->number_subproblems_solved;
 }
