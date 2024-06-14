@@ -106,7 +106,6 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["tolerance"] = "1e-8";
       options["loose_tolerance"] = "1e-6";
       options["loose_tolerance_consecutive_iteration_threshold"] = "15";
-      options["switch_to_optimality_requires_acceptance"] = "yes";
       options["switch_to_optimality_requires_linearized_feasibility"] = "no";
       options["LS_scale_duals_with_step_length"] = "yes";
       options["protect_actual_reduction_against_roundoff"] = "yes";
@@ -126,7 +125,6 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["tolerance"] = "1e-6";
       options["loose_tolerance"] = "1e-6";
       options["TR_min_radius"] = "1e-8";
-      options["switch_to_optimality_requires_acceptance"] = "no";
       options["switch_to_optimality_requires_linearized_feasibility"] = "yes";
       options["protect_actual_reduction_against_roundoff"] = "no";
    }

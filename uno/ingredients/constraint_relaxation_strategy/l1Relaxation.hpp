@@ -37,7 +37,7 @@ public:
    void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate) override;
 
    // trial iterate acceptance
-   void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length) override;
+   void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate) override;
    [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length) override;
 

@@ -200,9 +200,6 @@ l1_constraint_violation_coefficient 1
 l1_small_duals_threshold 1e-10
 
 ##### feasibility restoration options #####
-# test acceptance when switching back to the optimality phase
-switch_to_optimality_requires_acceptance no
-
 # test linearized feasibility when switching back to the optimality phase
 switch_to_optimality_requires_linearized_feasibility yes
 

@@ -31,7 +31,7 @@ public:
    void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate) override;
 
    // trial iterate acceptance
-   void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length) override;
+   void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate) override;
    [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length) override;
 
@@ -48,9 +48,9 @@ private:
    const std::unique_ptr<GlobalizationStrategy> globalization_strategy;
    Phase current_phase{Phase::OPTIMALITY};
    const double linear_feasibility_tolerance;
-   const bool switch_to_optimality_requires_acceptance;
    const bool switch_to_optimality_requires_linearized_feasibility;
    bool switching_to_optimality_phase{false};
+   ProgressMeasures reference_optimality_progress{};
 
    [[nodiscard]] const OptimizationProblem& current_problem() const;
    void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
@@ -59,6 +59,8 @@ private:
 
    void evaluate_progress_measures(Iterate& iterate) const;
    [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length);
+   [[nodiscard]] bool can_switch_to_optimality_phase(const Iterate& current_iterate, const Iterate& trial_iterate, const Direction& direction,
+         double step_length);
 
    void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const override;
 };

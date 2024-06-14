@@ -83,7 +83,7 @@ bool FletcherFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
    return accept;
 }
 
-bool FletcherFilterMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures& /*current_progress*/, const ProgressMeasures& trial_progress) const {
+bool FletcherFilterMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures& /*reference_progress*/, const ProgressMeasures& trial_progress) const {
    // if the trial infeasibility improves upon the best known infeasibility
    return this->filter->infeasibility_sufficient_reduction(this->filter->get_smallest_infeasibility(), trial_progress.infeasibility);
 }

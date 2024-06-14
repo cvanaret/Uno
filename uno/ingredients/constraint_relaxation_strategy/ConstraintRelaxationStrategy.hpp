@@ -41,7 +41,7 @@ public:
    virtual void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate) = 0;
 
    // trial iterate acceptance
-   virtual void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length) = 0;
+   virtual void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate) = 0;
    [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length) = 0;
 

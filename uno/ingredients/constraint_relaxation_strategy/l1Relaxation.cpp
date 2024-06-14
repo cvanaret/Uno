@@ -229,13 +229,13 @@ bool l1Relaxation::is_descent_direction_for_l1_merit_function(const Iterate& cur
    return (predicted_l1_merit_reduction >= this->parameters.epsilon2 * lowest_decrease_objective);
 }
 
-void l1Relaxation::compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& /*direction*/, double /*step_length*/) {
+void l1Relaxation::compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate) {
    if (this->subproblem->subproblem_definition_changed) {
       DEBUG << "The subproblem definition changed\n";
       this->globalization_strategy->reset();
+      this->subproblem->set_auxiliary_measure(this->model, current_iterate);
       this->subproblem->subproblem_definition_changed = false;
    }
-   this->evaluate_progress_measures(current_iterate);
    this->evaluate_progress_measures(trial_iterate);
 
    trial_iterate.objective_multiplier = this->l1_relaxed_problem.get_objective_multiplier();
@@ -244,7 +244,7 @@ void l1Relaxation::compute_progress_measures(Iterate& current_iterate, Iterate& 
 bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
       double step_length) {
    this->subproblem->postprocess_iterate(this->l1_relaxed_problem, trial_iterate);
-   this->compute_progress_measures(current_iterate, trial_iterate, direction, step_length);
+   this->compute_progress_measures(current_iterate, trial_iterate);
 
    bool accept_iterate = false;
    if (direction.norm == 0.) {

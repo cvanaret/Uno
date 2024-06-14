@@ -24,6 +24,7 @@ void InequalityConstrainedMethod::initialize_statistics(Statistics& /*statistics
 }
 
 void InequalityConstrainedMethod::set_initial_point(const Vector<double>& point) {
+   // copy the point into the member
    this->initial_point = point;
 }
 

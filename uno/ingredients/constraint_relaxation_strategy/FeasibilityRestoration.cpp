@@ -29,7 +29,6 @@ FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options
          options)),
       globalization_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), options)),
       linear_feasibility_tolerance(options.get_double("tolerance")),
-      switch_to_optimality_requires_acceptance(options.get_bool("switch_to_optimality_requires_acceptance")),
       switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")) {
 }
 
@@ -114,6 +113,8 @@ void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistic
    this->current_phase = Phase::FEASIBILITY_RESTORATION;
    this->globalization_strategy->register_current_progress(current_iterate.progress);
    this->subproblem->initialize_feasibility_problem(this->feasibility_problem, current_iterate);
+   // save the progress of the current point upon switching
+   this->reference_optimality_progress = current_iterate.progress;
 
    current_iterate.set_number_variables(this->feasibility_problem.number_variables);
    this->subproblem->set_elastic_variable_values(this->feasibility_problem, current_iterate);
@@ -137,23 +138,24 @@ void FeasibilityRestoration::solve_subproblem(Statistics& statistics, const Opti
    DEBUG3 << direction << '\n';
 }
 
-void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-      double step_length) {
+void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate) {
    if (this->subproblem->subproblem_definition_changed) {
-      this->subproblem->subproblem_definition_changed = false;
       DEBUG << "The subproblem definition changed, the globalization strategy is reset and the auxiliary measure is recomputed\n";
       this->globalization_strategy->reset();
       this->subproblem->set_auxiliary_measure(this->model, current_iterate);
+      this->subproblem->subproblem_definition_changed = false;
    }
    this->evaluate_progress_measures(trial_iterate);
 
-   // possibly go from restoration phase to optimality phase
-   if (this->current_phase == Phase::FEASIBILITY_RESTORATION && not this->switch_to_optimality_requires_acceptance &&
-         (not this->switch_to_optimality_requires_linearized_feasibility || this->model.constraint_violation(current_iterate.evaluations.constraints +
-         step_length*(current_iterate.evaluations.constraint_jacobian * direction.primals), this->residual_norm) <= this->linear_feasibility_tolerance) &&
-         this->globalization_strategy->is_infeasibility_sufficiently_reduced(current_iterate.progress, trial_iterate.progress)) {
-      this->switch_to_optimality_phase(current_iterate, trial_iterate);
-   }
+   trial_iterate.objective_multiplier = this->current_problem().get_objective_multiplier();
+}
+
+bool FeasibilityRestoration::can_switch_to_optimality_phase(const Iterate& current_iterate, const Iterate& trial_iterate, const Direction& direction,
+      double step_length) {
+   return (not this->switch_to_optimality_requires_linearized_feasibility ||
+      this->model.constraint_violation(current_iterate.evaluations.constraints + step_length*(current_iterate.evaluations.constraint_jacobian *
+      direction.primals), this->residual_norm) <= this->linear_feasibility_tolerance) &&
+      this->globalization_strategy->is_infeasibility_sufficiently_reduced(this->reference_optimality_progress, trial_iterate.progress);
 }
 
 void FeasibilityRestoration::switch_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate) {
@@ -171,17 +173,14 @@ void FeasibilityRestoration::switch_to_optimality_phase(Iterate& current_iterate
 bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
       double step_length) {
    this->subproblem->postprocess_iterate(this->current_problem(), trial_iterate);
-   this->compute_progress_measures(current_iterate, trial_iterate, direction, step_length);
+   this->compute_progress_measures(current_iterate, trial_iterate);
+
+   // possibly go from restoration phase to optimality phase
+   if (this->current_phase == Phase::FEASIBILITY_RESTORATION && this->can_switch_to_optimality_phase(current_iterate, trial_iterate, direction, step_length)) {
+      this->switch_to_optimality_phase(current_iterate, trial_iterate);
+   }
 
    bool accept_iterate = false;
-   /*
-   // detect trivial multipliers
-   if (this->current_phase == Phase::FEASIBILITY_RESTORATION && not trial_iterate.multipliers.not_all_zero(this->model.number_variables, 1e-6)) {
-      DEBUG << "Trivial duals in restoration phase, trial iterate rejected\n\n";
-      statistics.set("status", "rejected (trivial duals)");
-   }
-   else
-   */
    if (direction.norm == 0.) {
       DEBUG << "Zero step acceptable\n";
       trial_iterate.evaluate_objective(this->model);
@@ -194,12 +193,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
       accept_iterate = this->globalization_strategy->is_iterate_acceptable(statistics, current_iterate.progress, trial_iterate.progress,
             predicted_reduction, this->current_problem().get_objective_multiplier());
    }
-   // possibly switch back to optimality phase if the trial iterate in feasibility restoration was accepted
    if (accept_iterate) {
-      if (this->current_phase == Phase::FEASIBILITY_RESTORATION && this->switch_to_optimality_requires_acceptance &&
-            this->globalization_strategy->is_infeasibility_sufficiently_reduced(current_iterate.progress, trial_iterate.progress)) {
-         this->switch_to_optimality_phase(current_iterate, trial_iterate);
-      }
       this->compute_primal_dual_residuals(trial_iterate);
       this->set_dual_residuals_statistics(statistics, trial_iterate);
    }

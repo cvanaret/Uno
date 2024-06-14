@@ -102,8 +102,7 @@ bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const P
    return accept;
 }
 
-bool WaechterFilterMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress) const {
-   // TODO current_progress.infeasibility should be replaced with the infeasibility of the first feasibility restoration iterate
-   return trial_progress.infeasibility <= this->sufficient_infeasibility_decrease_factor * current_progress.infeasibility &&
+bool WaechterFilterMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures& reference_progress, const ProgressMeasures& trial_progress) const {
+   return trial_progress.infeasibility <= this->sufficient_infeasibility_decrease_factor * reference_progress.infeasibility &&
       this->filter->acceptable(trial_progress.infeasibility, FilterMethod::unconstrained_merit_function(trial_progress));
 }
