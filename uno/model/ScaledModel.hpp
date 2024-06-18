@@ -115,13 +115,11 @@ inline void ScaledModel::evaluate_lagrangian_hessian(const Vector<double>& x, do
 }
 
 inline double ScaledModel::constraint_lower_bound(size_t constraint_index) const {
-   const double lb = this->model->constraint_lower_bound(constraint_index);
-   return this->scaling.get_constraint_scaling(constraint_index)*lb;
+   return this->scaling.get_constraint_scaling(constraint_index) * this->model->constraint_lower_bound(constraint_index);
 }
 
 inline double ScaledModel::constraint_upper_bound(size_t constraint_index) const {
-   const double ub = this->model->constraint_upper_bound(constraint_index);
-   return this->scaling.get_constraint_scaling(constraint_index)*ub;
+   return this->scaling.get_constraint_scaling(constraint_index) * this->model->constraint_upper_bound(constraint_index);
 }
 
 inline void ScaledModel::postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const {
