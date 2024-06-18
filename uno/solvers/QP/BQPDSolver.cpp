@@ -40,13 +40,15 @@ BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_
       ub(number_variables + number_constraints),
       jacobian(number_jacobian_nonzeros + number_objective_gradient_nonzeros), // Jacobian + objective gradient
       jacobian_sparsity(number_jacobian_nonzeros + number_objective_gradient_nonzeros + number_constraints + 3),
-      kmax(problem_type == BQPDProblemType::QP ? options.get_int("BQPD_kmax") : 0), alp(this->mlp), lp(this->mlp),
+      kmax(problem_type == BQPDProblemType::QP ? options.get_int("BQPD_kmax") : 0), alp(static_cast<size_t>(this->mlp)),
+      lp(static_cast<size_t>(this->mlp)),
       active_set(number_variables + number_constraints),
       w(number_variables + number_constraints), gradient_solution(number_variables), residuals(number_variables + number_constraints),
       e(number_variables + number_constraints),
       size_hessian_sparsity(problem_type == BQPDProblemType::QP ? number_hessian_nonzeros + number_variables + 3 : 0),
-      size_hessian_workspace(number_hessian_nonzeros + this->kmax * (this->kmax + 9) / 2 + 2 * number_variables + number_constraints + this->mxwk0),
-      size_hessian_sparsity_workspace(this->size_hessian_sparsity + this->kmax + this->mxiwk0),
+      size_hessian_workspace(number_hessian_nonzeros + static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) + 2 * number_variables +
+         number_constraints + this->mxwk0),
+      size_hessian_sparsity_workspace(this->size_hessian_sparsity + static_cast<size_t>(this->kmax) + this->mxiwk0),
       hessian_values(this->size_hessian_workspace),
       hessian_sparsity(this->size_hessian_sparsity_workspace),
       current_hessian_indices(number_variables),
