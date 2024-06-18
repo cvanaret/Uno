@@ -62,7 +62,7 @@ protected:
    const Concatenation<const Collection<size_t>&, ForwardRange> single_lower_bounded_variables; // model variables + elastic variables
 
    [[nodiscard]] static size_t count_elastic_variables(const Model& model);
-   void generate_elastic_variables();
+   static void generate_elastic_variables(const Model& model, ElasticVariables& elastic_variables);
 };
 
 inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient):
@@ -75,7 +75,7 @@ inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_m
             model.number_variables + this->elastic_variables.size()))),
       single_lower_bounded_variables(concatenate(this->model.get_single_lower_bounded_variables(),
             Range(model.number_variables, model.number_variables + this->elastic_variables.size()))) {
-   this->generate_elastic_variables();
+   l1RelaxedProblem::generate_elastic_variables(this->model, this->elastic_variables);
 }
 
 inline double l1RelaxedProblem::get_objective_multiplier() const {
@@ -257,18 +257,18 @@ inline size_t l1RelaxedProblem::count_elastic_variables(const Model& model) {
    return number_elastic_variables;
 }
 
-inline void l1RelaxedProblem::generate_elastic_variables() {
+inline void l1RelaxedProblem::generate_elastic_variables(const Model& model, ElasticVariables& elastic_variables) {
    // generate elastic variables to relax the constraints
-   size_t elastic_index = this->model.number_variables;
-   for (size_t constraint_index: Range(this->model.number_constraints)) {
-      if (is_finite(this->model.constraint_upper_bound(constraint_index))) {
+   size_t elastic_index = model.number_variables;
+   for (size_t constraint_index: Range(model.number_constraints)) {
+      if (is_finite(model.constraint_upper_bound(constraint_index))) {
          // nonnegative variable p that captures the positive part of the constraint violation
-         this->elastic_variables.positive.insert(constraint_index, elastic_index);
+         elastic_variables.positive.insert(constraint_index, elastic_index);
          elastic_index++;
       }
-      if (is_finite(this->model.constraint_lower_bound(constraint_index))) {
+      if (is_finite(model.constraint_lower_bound(constraint_index))) {
          // nonpositive variable n that captures the negative part of the constraint violation
-         this->elastic_variables.negative.insert(constraint_index, elastic_index);
+         elastic_variables.negative.insert(constraint_index, elastic_index);
          elastic_index++;
       }
    }
