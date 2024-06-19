@@ -4,6 +4,17 @@ authors:
 - family-names: "Vanaret"
   given-names: "Charlie"
   orcid: "https://orcid.org/0000-0002-1131-7631"
-title: "Uno (Unifying Nonconvex Optimization)"
-version: 1.0
+title: "Uno"
+version: 1.0.0
 url: "https://github.com/cvanaret/Uno"
+preferred-citation:
+  type: unpublished
+  authors:
+  - family-names: "Vanaret"
+    given-names: "Charlie"
+    orcid: "https://orcid.org/0000-0002-1131-7631"
+  - family-names: "Leyffer"
+    given-names: "Sven"
+    orcid: "https://orcid.org/0000-0001-8839-5876"
+  title: "Unifying nonlinearly constrained nonconvex optimization"
+  year: 2024
