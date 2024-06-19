@@ -79,11 +79,11 @@ See the [INSTALL](INSTALL.md) file.
 
 ## Solving a problem with Uno
 
-At the moment, Uno only reads models from [.nl files](https://en.wikipedia.org/wiki/Nl_(format)).
-To solve an AMPL model, type in the `build` directory: ```./uno_ampl path_to_file/file.nl```
-A couple of CUTEst instances are available in the `/examples` directory.
+At the moment, Uno only reads models from [.nl files](https://en.wikipedia.org/wiki/Nl_(format)). A couple of CUTEst instances are available in the `/examples` directory.
 
-To use Uno from Julia/JuMP, a solution in the short term is to use the package [AmplNLWriter.jl](https://juliahub.com/ui/Packages/General/AmplNLWriter.jl) to dump JuMP models into .nl files.
+To solve an AMPL model, type in the `build` directory: ```./uno_ampl path_to_file/file.nl```
+
+To use Uno with Julia/JuMP, a solution in the short term is to use the package [AmplNLWriter.jl](https://juliahub.com/ui/Packages/General/AmplNLWriter.jl) to dump JuMP models into .nl files.
 
 ### Combination of ingredients
 
