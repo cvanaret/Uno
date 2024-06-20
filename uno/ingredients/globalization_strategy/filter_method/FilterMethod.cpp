@@ -39,15 +39,6 @@ bool FilterMethod::is_iterate_acceptable(Statistics& statistics, const ProgressM
    }
 }
 
-void FilterMethod::reset() {
-   this->filter->reset();
-}
-
-void FilterMethod::register_current_progress(const ProgressMeasures& current_progress) {
-   const double current_objective_measure = FilterMethod::unconstrained_merit_function(current_progress);
-   this->filter->add(current_progress.infeasibility, current_objective_measure);
-}
-
 // solving the feasibility problem = working on infeasibility only (no filter acceptability test)
 bool FilterMethod::is_feasibility_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
       const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction) const {
@@ -67,6 +58,15 @@ bool FilterMethod::is_feasibility_iterate_acceptable(Statistics& statistics, con
    return accept;
 }
 
+void FilterMethod::reset() {
+   this->filter->reset();
+}
+
+void FilterMethod::register_current_progress(const ProgressMeasures& current_progress) {
+   const double current_objective_measure = FilterMethod::unconstrained_merit_function(current_progress);
+   this->filter->add(current_progress.infeasibility, current_objective_measure);
+}
+
 double FilterMethod::unconstrained_merit_function(const ProgressMeasures& progress) {
    return progress.objective(1.) + progress.auxiliary;
 }
@@ -74,6 +74,7 @@ double FilterMethod::unconstrained_merit_function(const ProgressMeasures& progre
 double FilterMethod::compute_actual_objective_reduction(double current_objective_measure, double current_infeasibility, double trial_objective_measure) {
    double actual_reduction = this->filter->compute_actual_objective_reduction(current_objective_measure, current_infeasibility, trial_objective_measure);
    if (this->protect_actual_reduction_against_roundoff) {
+      // TODO put constant in option file
       static double machine_epsilon = std::numeric_limits<double>::epsilon();
       actual_reduction += 10. * machine_epsilon * std::abs(current_objective_measure);
    }
