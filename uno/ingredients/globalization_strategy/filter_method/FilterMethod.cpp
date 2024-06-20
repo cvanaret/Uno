@@ -5,6 +5,7 @@
 #include "filter/FilterFactory.hpp"
 #include "optimization/Iterate.hpp"
 #include "tools/Options.hpp"
+#include "tools/Statistics.hpp"
 
 FilterMethod::FilterMethod(const Options& options) :
       GlobalizationStrategy(options),
@@ -23,6 +24,21 @@ void FilterMethod::initialize(Statistics& /*statistics*/, const Iterate& initial
    this->filter->set_infeasibility_upper_bound(upper_bound);
 }
 
+/* check acceptability of step(s) (filter & sufficient reduction)
+ * filter methods enforce an *unconstrained* sufficient decrease condition
+ * precondition: feasible step
+ * */
+bool FilterMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
+      const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) {
+   const bool solving_feasibility_problem = (objective_multiplier == 0.);
+   if (solving_feasibility_problem) {
+      return this->is_feasibility_iterate_acceptable(statistics, current_progress, trial_progress, predicted_reduction);
+   }
+   else {
+      return this->is_regular_iterate_acceptable(statistics, current_progress, trial_progress, predicted_reduction);
+   }
+}
+
 void FilterMethod::reset() {
    this->filter->reset();
 }
@@ -30,6 +46,25 @@ void FilterMethod::reset() {
 void FilterMethod::register_current_progress(const ProgressMeasures& current_progress) {
    const double current_objective_measure = FilterMethod::unconstrained_merit_function(current_progress);
    this->filter->add(current_progress.infeasibility, current_objective_measure);
+}
+
+// solving the feasibility problem = working on infeasibility only (no filter acceptability test)
+bool FilterMethod::is_feasibility_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
+      const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction) const {
+   DEBUG << "Current infeasibility = " << current_progress.infeasibility << '\n';
+   DEBUG << "Trial   infeasibility = " << trial_progress.infeasibility << '\n';
+   DEBUG << "Predicted reduction = " << predicted_reduction.infeasibility << '\n';
+   bool accept = false;
+   if (this->armijo_sufficient_decrease(predicted_reduction.infeasibility, current_progress.infeasibility - trial_progress.infeasibility)) {
+      DEBUG << "Trial iterate (h-type) was accepted by satisfying the Armijo condition\n";
+      accept = true;
+   }
+   else {
+      DEBUG << "Trial iterate (h-type) was rejected by violating the Armijo condition\n";
+   }
+   Iterate::number_eval_objective--;
+   statistics.set("status", std::string(accept ? "accepted" : "rejected") + " (h-type Armijo)");
+   return accept;
 }
 
 double FilterMethod::unconstrained_merit_function(const ProgressMeasures& progress) {
