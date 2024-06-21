@@ -129,7 +129,7 @@ bool Preprocessing::enforce_linear_constraints(const Model& model, Vector<double
             multipliers.constraints[constraint_index] += direction.multipliers.constraints[linear_constraint_index];
          }
          DEBUG3 << "Linear feasible initial point: "; print_vector(DEBUG3, x);
-         std::cout << '\n';
+         DEBUG3 << '\n';
       }
    }
    return true;

@@ -5,6 +5,7 @@
 #define UNO_L1RELAXEDPROBLEM_H
 
 #include "OptimizationProblem.hpp"
+#include "ingredients/constraint_relaxation_strategy/ElasticVariables.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
@@ -14,13 +15,6 @@
 #include "symbolic/Concatenation.hpp"
 #include "symbolic/Range.hpp"
 #include "tools/Infinity.hpp"
-
-struct ElasticVariables {
-   SparseVector<size_t> positive;
-   SparseVector<size_t> negative;
-   explicit ElasticVariables(size_t capacity): positive(capacity), negative(capacity) {}
-   [[nodiscard]] size_t size() const { return this->positive.size() + this->negative.size(); }
-};
 
 class l1RelaxedProblem: public OptimizationProblem {
 public:
@@ -61,21 +55,27 @@ protected:
    const Concatenation<const Collection<size_t>&, ForwardRange> lower_bounded_variables; // model variables + elastic variables
    const Concatenation<const Collection<size_t>&, ForwardRange> single_lower_bounded_variables; // model variables + elastic variables
 
-   [[nodiscard]] static size_t count_elastic_variables(const Model& model);
-   static void generate_elastic_variables(const Model& model, ElasticVariables& elastic_variables);
+   // delegating constructor
+   l1RelaxedProblem(const Model& model, ElasticVariables&& elastic_variables, double objective_multiplier, double constraint_violation_coefficient);
 };
 
 inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient):
-      OptimizationProblem(model, model.number_variables + l1RelaxedProblem::count_elastic_variables(model), model.number_constraints),
+   // call delegating constructor
+   l1RelaxedProblem(model, ElasticVariables::generate(model), objective_multiplier, constraint_violation_coefficient) {
+}
+
+// private delegating constructor
+inline l1RelaxedProblem::l1RelaxedProblem(const Model& model, ElasticVariables&& elastic_variables, double objective_multiplier,
+         double constraint_violation_coefficient):
+      OptimizationProblem(model, model.number_variables + elastic_variables.size(), model.number_constraints),
       objective_multiplier(objective_multiplier),
       constraint_violation_coefficient(constraint_violation_coefficient),
-      elastic_variables(this->number_constraints),
+      elastic_variables(std::forward<ElasticVariables>(elastic_variables)),
       // lower bounded variables are the model variables + the elastic variables
       lower_bounded_variables(concatenate(this->model.get_lower_bounded_variables(), Range(model.number_variables,
             model.number_variables + this->elastic_variables.size()))),
       single_lower_bounded_variables(concatenate(this->model.get_single_lower_bounded_variables(),
             Range(model.number_variables, model.number_variables + this->elastic_variables.size()))) {
-   l1RelaxedProblem::generate_elastic_variables(this->model, this->elastic_variables);
 }
 
 inline double l1RelaxedProblem::get_objective_multiplier() const {
@@ -241,37 +241,6 @@ inline size_t l1RelaxedProblem::number_hessian_nonzeros() const {
 inline void l1RelaxedProblem::set_objective_multiplier(double new_objective_multiplier) {
    assert(0. <= new_objective_multiplier && "The objective multiplier should be non-negative");
    this->objective_multiplier = new_objective_multiplier;
-}
-
-inline size_t l1RelaxedProblem::count_elastic_variables(const Model& model) {
-   size_t number_elastic_variables = 0;
-   // if the subproblem uses slack variables, the bounds of the constraints are [0, 0]
-   for (size_t constraint_index: Range(model.number_constraints)) {
-      if (is_finite(model.constraint_lower_bound(constraint_index))) {
-         number_elastic_variables++;
-      }
-      if (is_finite(model.constraint_upper_bound(constraint_index))) {
-         number_elastic_variables++;
-      }
-   }
-   return number_elastic_variables;
-}
-
-inline void l1RelaxedProblem::generate_elastic_variables(const Model& model, ElasticVariables& elastic_variables) {
-   // generate elastic variables to relax the constraints
-   size_t elastic_index = model.number_variables;
-   for (size_t constraint_index: Range(model.number_constraints)) {
-      if (is_finite(model.constraint_upper_bound(constraint_index))) {
-         // nonnegative variable p that captures the positive part of the constraint violation
-         elastic_variables.positive.insert(constraint_index, elastic_index);
-         elastic_index++;
-      }
-      if (is_finite(model.constraint_lower_bound(constraint_index))) {
-         // nonpositive variable n that captures the negative part of the constraint violation
-         elastic_variables.negative.insert(constraint_index, elastic_index);
-         elastic_index++;
-      }
-   }
 }
 
 inline void l1RelaxedProblem::set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t, double)>&
