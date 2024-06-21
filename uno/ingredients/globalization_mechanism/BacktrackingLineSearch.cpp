@@ -4,6 +4,7 @@
 #include <cassert>
 #include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategy.hpp"
 #include "BacktrackingLineSearch.hpp"
+#include "model/Model.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
@@ -95,6 +96,9 @@ void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, c
    // reached a small step length: revert to solving the feasibility problem
    if (this->constraint_relaxation_strategy.solving_feasibility_problem()) {
       throw std::runtime_error("Feasibility LS failed");
+   }
+   else if (not model.is_constrained()) {
+      throw std::runtime_error("Regular LS failed");
    }
    else {
       warmstart_information.set_cold_start();
