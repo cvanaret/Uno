@@ -1,6 +1,9 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#ifdef HAS_MPI
+#include "mpi.h"
+#endif
 #include <gtest/gtest.h>
 #include "tools/Logger.hpp"
 
@@ -8,8 +11,18 @@ Level Logger::level = INFO;
 
 // https://www.eriksmistad.no/getting-started-with-google-test-on-ubuntu/
 int main(int argc, char **argv) {
+#ifdef HAS_MPI
+   int myid , ierr;
+   ierr = MPI_Init(&argc , &argv);
+   ierr = MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+#endif
+
     testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+    auto result = RUN_ALL_TESTS();
+#ifdef HAS_MPI
+   ierr = MPI_Finalize() ;
+#endif
+   return result;
 }
 
 //void test_mask_matrix() {

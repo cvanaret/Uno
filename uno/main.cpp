@@ -1,6 +1,9 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#ifdef HAS_MPI
+#include "mpi.h"
+#endif
 #include "ingredients/globalization_mechanism/GlobalizationMechanismFactory.hpp"
 #include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategyFactory.hpp"
 #include "interfaces/AMPL/AMPLModel.hpp"
@@ -47,6 +50,12 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
 Level Logger::level = INFO;
 
 int main(int argc, char* argv[]) {
+#ifdef HAS_MPI
+   int myid , ierr;
+   ierr = MPI_Init(&argc , &argv);
+   ierr = MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+#endif
+
    if (1 < argc) {
       // get the default options
       Options options = get_default_options("uno.options");
@@ -69,5 +78,9 @@ int main(int argc, char* argv[]) {
    else {
       Uno::print_uno_version();
    }
+
+#ifdef HAS_MPI
+   ierr = MPI_Finalize() ;
+#endif
    return EXIT_SUCCESS;
 }
