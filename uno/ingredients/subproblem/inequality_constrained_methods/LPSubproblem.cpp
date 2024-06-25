@@ -14,7 +14,7 @@ LPSubproblem::LPSubproblem(size_t number_variables, size_t number_constraints, s
       InequalityConstrainedMethod(number_variables, number_constraints),
       solver(LPSolverFactory::create(options.get_string("LP_solver"), number_variables, number_constraints,
             number_objective_gradient_nonzeros, number_jacobian_nonzeros, options)),
-      zero_hessian(COOSymmetricMatrix<double>::zero(number_variables)) {
+      zero_hessian(COOSymmetricMatrix<size_t, double>::zero(number_variables)) {
 }
 
 bool LPSubproblem::generate_initial_iterate(const OptimizationProblem& /*problem*/, Iterate& /*initial_iterate*/) {
@@ -58,7 +58,7 @@ void LPSubproblem::solve(Statistics& /*statistics*/, const OptimizationProblem& 
    this->initial_point.fill(0.);
 }
 
-const SymmetricMatrix<double>& LPSubproblem::get_lagrangian_hessian() const {
+const SymmetricMatrix<size_t, double>& LPSubproblem::get_lagrangian_hessian() const {
    return this->zero_hessian;
 }
 

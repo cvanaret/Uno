@@ -13,8 +13,8 @@
 #include "symbolic/VectorView.hpp"
 
 // compute a least-square approximation of the multipliers by solving a linear system
-void Preprocessing::compute_least_square_multipliers(const Model& model, SymmetricMatrix<double>& matrix, Vector<double>& rhs,
-      SymmetricIndefiniteLinearSolver<double>& linear_solver, Iterate& current_iterate, Vector<double>& multipliers, double multiplier_max_norm) {
+void Preprocessing::compute_least_square_multipliers(const Model& model, SymmetricMatrix<size_t, double>& matrix, Vector<double>& rhs,
+      SymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, Iterate& current_iterate, Vector<double>& multipliers, double multiplier_max_norm) {
    current_iterate.evaluate_objective_gradient(model);
    current_iterate.evaluate_constraint_jacobian(model);
 
@@ -85,7 +85,7 @@ bool Preprocessing::enforce_linear_constraints(const Model& model, Vector<double
       INFO << "There are " << infeasible_linear_constraints << " infeasible linear constraints at the initial point\n";
       if (0 < infeasible_linear_constraints) {
          // Hessian
-         const CSCSymmetricMatrix<double> hessian = CSCSymmetricMatrix<double>::identity(model.number_variables);
+         const auto hessian = CSCSymmetricMatrix<size_t, double>::identity(model.number_variables);
          // constraint Jacobian
          RectangularMatrix<double> constraint_jacobian(linear_constraints.size(), model.number_variables);
          for (size_t linear_constraint_index: Range(linear_constraints.size())) {

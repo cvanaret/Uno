@@ -24,7 +24,7 @@ public:
    void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const override;
    void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const override;
    void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const override;
-   void evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers, SymmetricMatrix<double>& hessian) const override;
+   void evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers, SymmetricMatrix<size_t, double>& hessian) const override;
 
    [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
    [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
@@ -129,7 +129,7 @@ inline void l1RelaxedProblem::evaluate_constraint_jacobian(Iterate& iterate, Rec
 }
 
 inline void l1RelaxedProblem::evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers,
-      SymmetricMatrix<double>& hessian) const {
+      SymmetricMatrix<size_t, double>& hessian) const {
    this->model.evaluate_lagrangian_hessian(x, this->objective_multiplier, multipliers, hessian);
 
    // extend the dimension of the Hessian by finalizing the remaining columns (note: the elastics do not enter the Hessian)

@@ -19,7 +19,7 @@ template <typename ElementType>
 class RectangularMatrix;
 template <typename ElementType>
 class SparseVector;
-template <typename ElementType>
+template <typename IndexType, typename ElementType>
 class SymmetricMatrix;
 
 class OptimizationProblem {
@@ -39,7 +39,8 @@ public:
    virtual void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const = 0;
    virtual void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const = 0;
    virtual void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const = 0;
-   virtual void evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers, SymmetricMatrix<double>& hessian) const = 0;
+   virtual void evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers,
+         SymmetricMatrix<size_t, double>& hessian) const = 0;
 
    [[nodiscard]] size_t get_number_original_variables() const;
    [[nodiscard]] virtual double variable_lower_bound(size_t variable_index) const = 0;

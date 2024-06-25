@@ -26,7 +26,7 @@ public:
       this->model->evaluate_constraint_jacobian(x, constraint_jacobian);
    }
    void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-         SymmetricMatrix<double>& hessian) const override {
+         SymmetricMatrix<size_t, double>& hessian) const override {
       this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian);
    }
 

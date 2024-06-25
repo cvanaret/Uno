@@ -26,9 +26,9 @@ lifact, const double rhs[], double x[], double resid[], double work[], int iwork
       double cntl[], int info[], double rinfo[]);
 }
 
-MA57Solver::MA57Solver(size_t dimension, size_t number_nonzeros) : SymmetricIndefiniteLinearSolver<double>(dimension),
+MA57Solver::MA57Solver(size_t dimension, size_t number_nonzeros) : SymmetricIndefiniteLinearSolver<size_t, double>(dimension),
    lkeep(static_cast<int>(5 * dimension + number_nonzeros + std::max(dimension, number_nonzeros) + 42)),
-   keep(static_cast<size_t>(lkeep)),
+   keep(static_cast<size_t>(this->lkeep)),
    iwork(5 * dimension),
    lwork(static_cast<int>(1.2 * static_cast<double>(dimension))),
    work(static_cast<size_t>(this->lwork)), residuals(dimension) {
@@ -42,13 +42,13 @@ MA57Solver::MA57Solver(size_t dimension, size_t number_nonzeros) : SymmetricInde
    this->icntl[8] = 1;
 }
 
-void MA57Solver::factorize(const SymmetricMatrix<double>& matrix) {
+void MA57Solver::factorize(const SymmetricMatrix<size_t, double>& matrix) {
    // general factorization method: symbolic factorization and numerical factorization
    this->do_symbolic_factorization(matrix);
    this->do_numerical_factorization(matrix);
 }
 
-void MA57Solver::do_symbolic_factorization(const SymmetricMatrix<double>& matrix) {
+void MA57Solver::do_symbolic_factorization(const SymmetricMatrix<size_t, double>& matrix) {
    assert(matrix.dimension <= this->dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
    assert(matrix.number_nonzeros <= this->row_indices.capacity() &&
       "MA57Solver: the number of nonzeros of the matrix is larger than the preallocated size");
@@ -86,7 +86,7 @@ void MA57Solver::do_symbolic_factorization(const SymmetricMatrix<double>& matrix
    this->factorization = {n, nnz, lfact, lifact};
 }
 
-void MA57Solver::do_numerical_factorization(const SymmetricMatrix<double>& matrix) {
+void MA57Solver::do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) {
    assert(matrix.dimension <= this->dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
    assert(this->factorization.nnz == static_cast<int>(matrix.number_nonzeros) && "MA57Solver: the numbers of nonzeros do not match");
 
@@ -96,7 +96,7 @@ void MA57Solver::do_numerical_factorization(const SymmetricMatrix<double>& matri
    // numerical factorization
    ma57bd_(&n,
          &nnz,
-         /* const */ matrix.data_raw_pointer(),
+         /* const */ matrix.data_pointer(),
          /* out */ this->fact.data(),
          /* const */ &this->factorization.lfact,
          /* out */ this->ifact.data(),
@@ -107,7 +107,7 @@ void MA57Solver::do_numerical_factorization(const SymmetricMatrix<double>& matri
          /* out */ this->rinfo.data());
 }
 
-void MA57Solver::solve_indefinite_system(const SymmetricMatrix<double>& matrix, const Vector<double>& rhs, Vector<double>& result) {
+void MA57Solver::solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) {
    // solve
    const int n = static_cast<int>(matrix.dimension);
    int nnz = static_cast<int>(matrix.number_nonzeros);
@@ -115,7 +115,7 @@ void MA57Solver::solve_indefinite_system(const SymmetricMatrix<double>& matrix, 
 
    // solve the linear system
    if (this->use_iterative_refinement) {
-      ma57dd_(&this->job, &n, &nnz, matrix.data_raw_pointer(), this->row_indices.data(), this->column_indices.data(),
+      ma57dd_(&this->job, &n, &nnz, matrix.data_pointer(), this->row_indices.data(), this->column_indices.data(),
             this->fact.data(), &this->factorization.lfact, this->ifact.data(), &this->factorization.lifact,
             rhs.data(), result.data(), this->residuals.data(), this->work.data(), this->iwork.data(), this->icntl.data(),
             this->cntl.data(), this->info.data(), this->rinfo.data());
@@ -159,7 +159,7 @@ size_t MA57Solver::rank() const {
    return static_cast<size_t>(this->info[24]);
 }
 
-void MA57Solver::save_matrix_to_local_format(const SymmetricMatrix<double>& matrix) {
+void MA57Solver::save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix) {
    // build the internal matrix representation
    this->row_indices.clear();
    this->column_indices.clear();

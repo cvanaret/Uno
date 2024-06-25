@@ -13,7 +13,7 @@ template <typename ElementType>
 class RectangularMatrix;
 template <typename ElementType>
 class SparseVector;
-template <typename ElementType>
+template <typename IndexType, typename ElementType>
 class SymmetricMatrix;
 struct WarmstartInformation;
 
@@ -35,7 +35,7 @@ public:
    virtual void solve_QP(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
          const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
          const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
-         const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const Vector<double>& initial_point,
+         const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<size_t, double>& hessian, const Vector<double>& initial_point,
          Direction& direction, const WarmstartInformation& warmstart_information) = 0;
 };
 

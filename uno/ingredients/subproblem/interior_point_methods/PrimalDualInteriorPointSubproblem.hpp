@@ -35,7 +35,7 @@ public:
    void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
          Direction& direction, const WarmstartInformation& warmstart_information) override;
 
-   [[nodiscard]] const SymmetricMatrix<double>& get_lagrangian_hessian() const override;
+   [[nodiscard]] const SymmetricMatrix<size_t, double>& get_lagrangian_hessian() const override;
    void set_auxiliary_measure(const Model& model, Iterate& iterate) override;
    [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate,
          const Vector<double>& primal_direction, double step_length) const override;
@@ -50,7 +50,7 @@ protected:
    const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
 
    SymmetricIndefiniteLinearSystem<double> augmented_system;
-   const std::unique_ptr<SymmetricIndefiniteLinearSolver<double>> linear_solver;
+   const std::unique_ptr<SymmetricIndefiniteLinearSolver<size_t, double>> linear_solver;
 
    BarrierParameterUpdateStrategy barrier_parameter_update_strategy;
    double previous_barrier_parameter;

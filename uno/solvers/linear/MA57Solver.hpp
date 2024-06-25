@@ -27,15 +27,15 @@ struct MA57Factorization {
  *
  *  Interface to the symmetric indefinite linear solver MA57
  */
-class MA57Solver : public SymmetricIndefiniteLinearSolver<double> {
+class MA57Solver : public SymmetricIndefiniteLinearSolver<size_t, double> {
 public:
    MA57Solver(size_t dimension, size_t number_nonzeros);
    ~MA57Solver() override = default;
 
-   void factorize(const SymmetricMatrix<double>& matrix) override;
-   void do_symbolic_factorization(const SymmetricMatrix<double>& matrix) override;
-   void do_numerical_factorization(const SymmetricMatrix<double>& matrix) override;
-   void solve_indefinite_system(const SymmetricMatrix<double>& matrix, const Vector<double>& rhs, Vector<double>& result) override;
+   void factorize(const SymmetricMatrix<size_t, double>& matrix) override;
+   void do_symbolic_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
+   void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
+   void solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) override;
 
    [[nodiscard]] std::tuple<size_t, size_t, size_t> get_inertia() const override;
    [[nodiscard]] size_t number_negative_eigenvalues() const override;
@@ -70,7 +70,7 @@ private:
    const size_t fortran_shift{1};
 
    bool use_iterative_refinement{false};
-   void save_matrix_to_local_format(const SymmetricMatrix<double>& row_index);
+   void save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& row_index);
 };
 
 #endif // UNO_MA57SOLVER_H

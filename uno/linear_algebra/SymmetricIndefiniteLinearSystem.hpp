@@ -23,18 +23,18 @@ struct UnstableRegularization : public std::exception {
 template <typename ElementType>
 class SymmetricIndefiniteLinearSystem {
 public:
-   std::unique_ptr<SymmetricMatrix<ElementType>> matrix;
+   std::unique_ptr<SymmetricMatrix<size_t, ElementType>> matrix;
    Vector<ElementType> rhs{};
    Vector<ElementType> solution{};
 
    SymmetricIndefiniteLinearSystem(const std::string& sparse_format, size_t dimension, size_t number_non_zeros, bool use_regularization,
          const Options& options);
-   void assemble_matrix(const SymmetricMatrix<double>& hessian, const RectangularMatrix<double>& constraint_jacobian,
+   void assemble_matrix(const SymmetricMatrix<size_t, double>& hessian, const RectangularMatrix<double>& constraint_jacobian,
          size_t number_variables, size_t number_constraints);
-   void factorize_matrix(const Model& model, SymmetricIndefiniteLinearSolver<ElementType>& linear_solver);
-   void regularize_matrix(Statistics& statistics, const Model& model, SymmetricIndefiniteLinearSolver<ElementType>& linear_solver, size_t size_primal_block,
-         size_t size_dual_block, ElementType dual_regularization_parameter);
-   void solve(SymmetricIndefiniteLinearSolver<ElementType>& linear_solver);
+   void factorize_matrix(const Model& model, SymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver);
+   void regularize_matrix(Statistics& statistics, const Model& model, SymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
+         size_t size_primal_block, size_t size_dual_block, ElementType dual_regularization_parameter);
+   void solve(SymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver);
    // [[nodiscard]] T get_primal_regularization() const;
 
 protected:
@@ -55,7 +55,7 @@ protected:
 template <typename ElementType>
 SymmetricIndefiniteLinearSystem<ElementType>::SymmetricIndefiniteLinearSystem(const std::string& sparse_format, size_t dimension,
       size_t number_non_zeros, bool use_regularization, const Options& options):
-      matrix(SymmetricMatrixFactory<ElementType>::create(sparse_format, dimension, number_non_zeros, use_regularization)),
+      matrix(SymmetricMatrixFactory<size_t, ElementType>::create(sparse_format, dimension, number_non_zeros, use_regularization)),
       rhs(dimension),
       solution(dimension),
       regularization_failure_threshold(ElementType(options.get_double("regularization_failure_threshold"))),
@@ -69,8 +69,8 @@ SymmetricIndefiniteLinearSystem<ElementType>::SymmetricIndefiniteLinearSystem(co
 }
 
 template <typename ElementType>
-void SymmetricIndefiniteLinearSystem<ElementType>::assemble_matrix(const SymmetricMatrix<double>& hessian, const RectangularMatrix<double>& constraint_jacobian,
-      size_t number_variables, size_t number_constraints) {
+void SymmetricIndefiniteLinearSystem<ElementType>::assemble_matrix(const SymmetricMatrix<size_t, double>& hessian,
+      const RectangularMatrix<double>& constraint_jacobian, size_t number_variables, size_t number_constraints) {
    this->matrix->dimension = number_variables + number_constraints;
    this->matrix->reset();
    // copy the Lagrangian Hessian in the top left block
@@ -94,7 +94,7 @@ void SymmetricIndefiniteLinearSystem<ElementType>::assemble_matrix(const Symmetr
 }
 
 template <typename ElementType>
-void SymmetricIndefiniteLinearSystem<ElementType>::factorize_matrix(const Model& model, SymmetricIndefiniteLinearSolver<ElementType>& linear_solver) {
+void SymmetricIndefiniteLinearSystem<ElementType>::factorize_matrix(const Model& model, SymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver) {
    // compute the symbolic factorization only when:
    // the problem has a non-constant augmented system (ie is not an LP or a QP) or it is the first factorization
    if (true || this->number_factorizations == 0 || not model.fixed_hessian_sparsity) {
@@ -106,7 +106,7 @@ void SymmetricIndefiniteLinearSystem<ElementType>::factorize_matrix(const Model&
 
 template <typename ElementType>
 void SymmetricIndefiniteLinearSystem<ElementType>::regularize_matrix(Statistics& statistics, const Model& model,
-      SymmetricIndefiniteLinearSolver<ElementType>& linear_solver, size_t size_primal_block, size_t size_dual_block,
+      SymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver, size_t size_primal_block, size_t size_dual_block,
       ElementType dual_regularization_parameter) {
    DEBUG2 << "Original matrix\n" << *this->matrix << '\n';
    this->primal_regularization = ElementType(0.);
@@ -181,7 +181,7 @@ void SymmetricIndefiniteLinearSystem<ElementType>::regularize_matrix(Statistics&
 }
 
 template <typename ElementType>
-void SymmetricIndefiniteLinearSystem<ElementType>::solve(SymmetricIndefiniteLinearSolver<ElementType>& linear_solver) {
+void SymmetricIndefiniteLinearSystem<ElementType>::solve(SymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver) {
    linear_solver.solve_indefinite_system(*this->matrix, this->rhs, this->solution);
 }
 

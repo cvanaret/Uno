@@ -87,7 +87,7 @@ void QPSubproblem::solve(Statistics& statistics, const OptimizationProblem& prob
    this->initial_point.fill(0.);
 }
 
-const SymmetricMatrix<double>& QPSubproblem::get_lagrangian_hessian() const {
+const SymmetricMatrix<size_t, double>& QPSubproblem::get_lagrangian_hessian() const {
    return *this->hessian_model->hessian;
 }
 

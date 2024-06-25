@@ -4,21 +4,25 @@
 #ifndef UNO_SYMMETRICINDEFINITELINEARSOLVER_H
 #define UNO_SYMMETRICINDEFINITELINEARSOLVER_H
 
-template <typename ElementType>
+#include <cstddef>
+#include <tuple>
+
+// forward declarations
+template <typename IndexType, typename ElementType>
 class SymmetricMatrix;
 template <typename ElementType>
 class Vector;
 
-template <typename ElementType>
+template <typename IndexType, typename ElementType>
 class SymmetricIndefiniteLinearSolver {
 public:
    explicit SymmetricIndefiniteLinearSolver(size_t dimension): dimension(dimension) {};
    virtual ~SymmetricIndefiniteLinearSolver() = default;
 
-   virtual void factorize(const SymmetricMatrix<ElementType>& matrix) = 0;
-   virtual void do_symbolic_factorization(const SymmetricMatrix<ElementType>& matrix) = 0;
-   virtual void do_numerical_factorization(const SymmetricMatrix<ElementType>& matrix) = 0;
-   virtual void solve_indefinite_system(const SymmetricMatrix<ElementType>& matrix, const Vector<ElementType>& rhs,
+   virtual void factorize(const SymmetricMatrix<IndexType, ElementType>& matrix) = 0;
+   virtual void do_symbolic_factorization(const SymmetricMatrix<IndexType, ElementType>& matrix) = 0;
+   virtual void do_numerical_factorization(const SymmetricMatrix<IndexType, ElementType>& matrix) = 0;
+   virtual void solve_indefinite_system(const SymmetricMatrix<IndexType, ElementType>& matrix, const Vector<ElementType>& rhs,
          Vector<ElementType>& result) = 0;
 
    [[nodiscard]] virtual std::tuple<size_t, size_t, size_t> get_inertia() const = 0;

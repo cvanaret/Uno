@@ -9,7 +9,7 @@
 #include "tools/Statistics.hpp"
 
 HessianModel::HessianModel(size_t dimension, size_t maximum_number_nonzeros, const std::string& sparse_format, bool use_regularization) :
-      hessian(SymmetricMatrixFactory<double>::create(sparse_format, dimension, maximum_number_nonzeros, use_regularization)) {
+      hessian(SymmetricMatrixFactory<size_t, double>::create(sparse_format, dimension, maximum_number_nonzeros, use_regularization)) {
 }
 
 // Exact Hessian
@@ -46,7 +46,7 @@ void ConvexifiedHessian::evaluate(Statistics& statistics, const OptimizationProb
 }
 
 // Nocedal and Wright, p51
-void ConvexifiedHessian::regularize(Statistics& statistics, SymmetricMatrix<double>& hessian, size_t number_original_variables) {
+void ConvexifiedHessian::regularize(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian, size_t number_original_variables) {
    const double smallest_diagonal_entry = hessian.smallest_diagonal_entry(number_original_variables);
    DEBUG << "The minimal diagonal entry of the matrix is " << smallest_diagonal_entry << '\n';
 

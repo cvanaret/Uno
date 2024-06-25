@@ -18,7 +18,7 @@ struct Multipliers;
 class OptimizationProblem;
 class Options;
 class Statistics;
-template <typename ElementType>
+template <typename IndexType, typename ElementType>
 class SymmetricMatrix;
 template <typename ElementType>
 class Vector;
@@ -67,7 +67,7 @@ protected:
    [[nodiscard]] double compute_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Vector<double>& primal_direction,
          double step_length) const;
    [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction_model(const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length, const SymmetricMatrix<double>& hessian) const;
+         const Vector<double>& primal_direction, double step_length, const SymmetricMatrix<size_t, double>& hessian) const;
    void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate);
    virtual void evaluate_progress_measures(Iterate& iterate) const = 0;
 
