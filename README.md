@@ -66,7 +66,18 @@ All log files can be found [here](https://github.com/cvanaret/nonconvex_solver_c
 
 ### In an article
 
-Please be patient, we are actively working on our article.
+We have submitted our paper to the Mathematical Programming Computation journal. The preprint is available on [ResearchGate](https://www.researchgate.net/publication/381522383_Unifying_nonlinearly_constrained_nonconvex_optimization).
+
+Until it is published, you can use the following bibtex entry:
+
+```
+@unpublished{VanaretLeyffer2024,
+  author = {Vanaret, Charlie and Leyffer, Sven},
+  title = {Unifying nonlinearly constrained nonconvex optimization},
+  year = {2024},
+  note = {Submitted to Mathematical Programming Computation}
+}
+```
 
 ### On social media
 
