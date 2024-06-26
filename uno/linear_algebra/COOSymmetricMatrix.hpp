@@ -21,7 +21,6 @@ public:
    void reset() override;
    void insert(ElementType term, size_t row_index, size_t column_index) override;
    void finalize_column(size_t /*column_index*/) override { /* do nothing */ }
-   [[nodiscard]] ElementType smallest_diagonal_entry(size_t max_dimension) const override;
    void set_regularization(const std::function<ElementType(size_t index)>& regularization_function) override;
 
    void print(std::ostream& stream) const override;
@@ -31,7 +30,6 @@ public:
 protected:
    std::vector<size_t> row_indices;
    std::vector<size_t> column_indices;
-   Vector<ElementType> diagonal_entries;
 
    void initialize_regularization();
 
@@ -44,8 +42,7 @@ protected:
 
 template <typename ElementType>
 COOSymmetricMatrix<ElementType>::COOSymmetricMatrix(size_t dimension, size_t original_capacity, bool use_regularization):
-      SymmetricMatrix<ElementType>(dimension, original_capacity, use_regularization),
-      diagonal_entries(dimension, ElementType(0)) {
+      SymmetricMatrix<ElementType>(dimension, original_capacity, use_regularization) {
    this->row_indices.reserve(this->capacity);
    this->column_indices.reserve(this->capacity);
 
@@ -61,7 +58,6 @@ void COOSymmetricMatrix<ElementType>::reset() {
    SymmetricMatrix<ElementType>::reset();
    this->row_indices.clear();
    this->column_indices.clear();
-   this->diagonal_entries.fill(ElementType(0));
 
    // initialize regularization terms
    if (this->use_regularization) {
@@ -76,20 +72,6 @@ void COOSymmetricMatrix<ElementType>::insert(ElementType term, size_t row_index,
    this->row_indices.push_back(row_index);
    this->column_indices.push_back(column_index);
    this->number_nonzeros++;
-
-   // possibly update diagonal
-   if (row_index == column_index) {
-      this->diagonal_entries[row_index] += term;
-   }
-}
-
-template <typename ElementType>
-ElementType COOSymmetricMatrix<ElementType>::smallest_diagonal_entry(size_t max_dimension) const {
-   ElementType smallest_entry = INF<ElementType>;
-   for (size_t row_index: Range(std::min(this->dimension, max_dimension))) {
-      smallest_entry = std::min(smallest_entry, this->diagonal_entries[row_index]);
-   }
-   return smallest_entry;
 }
 
 template <typename ElementType>
@@ -100,8 +82,6 @@ void COOSymmetricMatrix<ElementType>::set_regularization(const std::function<Ele
    for (size_t row_index: Range(this->dimension)) {
       const ElementType element = regularization_function(row_index);
       this->entries[row_index] = element;
-      // update diagonal
-      this->diagonal_entries[row_index] += element;
    }
 }
 

@@ -9,6 +9,7 @@
 #include <cassert>
 #include "Vector.hpp"
 #include "SparseVector.hpp"
+#include "tools/Infinity.hpp"
 
 // abstract class
 template <typename ElementType>
@@ -55,7 +56,7 @@ public:
    virtual void insert(ElementType term, size_t row_index, size_t column_index) = 0;
    // this method will be used by the CSCSymmetricMatrix subclass
    virtual void finalize_column(size_t column_index) = 0;
-   [[nodiscard]] virtual ElementType smallest_diagonal_entry(size_t max_dimension) const = 0;
+   [[nodiscard]] ElementType smallest_diagonal_entry(size_t max_dimension) const;
    virtual void set_regularization(const std::function<ElementType(size_t /*index*/)>& regularization_function) = 0;
 
    [[nodiscard]] iterator begin() const { return iterator(*this, 0, 0); }
@@ -92,6 +93,21 @@ template <typename ElementType>
 void SymmetricMatrix<ElementType>::reset() {
    this->number_nonzeros = 0;
    this->entries.clear();
+}
+
+// TODO fix. We need to scan through all the columns
+template <typename ElementType>
+ElementType SymmetricMatrix<ElementType>::smallest_diagonal_entry(size_t max_dimension) const {
+   ElementType smallest_entry = INF<ElementType>;
+   for (const auto [row_index, column_index, element]: *this) {
+      if (row_index == column_index && row_index < max_dimension) {
+         smallest_entry = std::min(smallest_entry, element);
+      }
+   }
+   if (smallest_entry == INF<ElementType>) {
+      smallest_entry = ElementType(0);
+   }
+   return smallest_entry;
 }
 
 template <typename ElementType>
