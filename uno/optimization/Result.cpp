@@ -44,11 +44,16 @@ void Result::print(bool print_primal_dual_solution) const {
 
    if (print_primal_dual_solution) {
       std::cout << "Primal solution:\t\t\t"; print_vector(std::cout, view(this->solution.primals, 0, this->number_variables));
-      if (not this->solution.multipliers.constraints.empty()) {
-         std::cout << "Constraint multipliers:\t\t\t"; print_vector(std::cout, this->solution.multipliers.constraints);
-      }
-      std::cout << "Lower bound multipliers:\t\t"; print_vector(std::cout, view(this->solution.multipliers.lower_bounds, 0, this->number_variables));
-      std::cout << "Upper bound multipliers:\t\t"; print_vector(std::cout, view(this->solution.multipliers.upper_bounds, 0, this->number_variables));
+      std::cout << "┌ Constraint multipliers:\t\t"; print_vector(std::cout, this->solution.multipliers.constraints);
+      std::cout << "│ Lower bound multipliers:\t\t"; print_vector(std::cout, view(this->solution.multipliers.lower_bounds, 0,
+            this->number_variables));
+      std::cout << "└ Upper bound multipliers:\t\t"; print_vector(std::cout, view(this->solution.multipliers.upper_bounds, 0,
+            this->number_variables));
+      std::cout << "┌ Constraint feasibility multipliers:\t"; print_vector(std::cout, this->solution.feasibility_multipliers.constraints);
+      std::cout << "│ Lower bound feasibility multipliers:\t"; print_vector(std::cout, view(this->solution.feasibility_multipliers.lower_bounds, 0,
+            this->number_variables));
+      std::cout << "└ Upper bound feasibility multipliers:\t"; print_vector(std::cout, view(this->solution.feasibility_multipliers.upper_bounds, 0,
+            this->number_variables));
       std::cout << "Objective multiplier:\t\t\t" << this->solution.objective_multiplier << '\n';
    }
 
