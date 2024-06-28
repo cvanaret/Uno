@@ -17,6 +17,27 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
       SymmetricIndefiniteLinearSolver<double>& linear_solver, Iterate& current_iterate, Vector<double>& multipliers, double multiplier_max_norm) {
    current_iterate.evaluate_objective_gradient(model);
    current_iterate.evaluate_constraint_jacobian(model);
+   DEBUG << "Computing least-square multipliers\n";
+   DEBUG2 << "Current primals: " << current_iterate.primals << '\n';
+
+   /* generate the right-hand side */
+   rhs.fill(0.);
+   // objective gradient
+   for (const auto [variable_index, derivative]: current_iterate.evaluations.objective_gradient) {
+      rhs[variable_index] += model.objective_sign * derivative;
+   }
+   // variable bound constraints
+   for (size_t variable_index: Range(model.number_variables)) {
+      rhs[variable_index] -= current_iterate.multipliers.lower_bounds[variable_index] + current_iterate.multipliers.upper_bounds[variable_index];
+   }
+   DEBUG2 << "RHS for least-square multipliers: "; print_vector(DEBUG2, view(rhs, 0, model.number_variables + model.number_constraints));
+
+   // if the residuals on the RHS are all 0, the least-square multipliers are all 0
+   if (norm_inf(view(rhs, 0, model.number_variables + model.number_constraints)) == 0.) {
+      multipliers.fill(0.);
+      DEBUG << "Least-square multipliers are all 0.\n";
+      return;
+   }
 
    /* build the symmetric matrix */
    matrix.reset();
@@ -33,18 +54,6 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
       matrix.finalize_column(model.number_variables + constraint_index);
    }
    DEBUG2 << "Matrix for least-square multipliers:\n" << matrix << '\n';
-
-   /* generate the right-hand side */
-   rhs.fill(0.);
-   // objective gradient
-   for (const auto [variable_index, derivative]: current_iterate.evaluations.objective_gradient) {
-      rhs[variable_index] += model.objective_sign * derivative;
-   }
-   // variable bound constraints
-   for (size_t variable_index: Range(model.number_variables)) {
-      rhs[variable_index] -= current_iterate.multipliers.lower_bounds[variable_index] + current_iterate.multipliers.upper_bounds[variable_index];
-   }
-   DEBUG2 << "RHS for least-square multipliers: "; print_vector(DEBUG2, view(rhs, 0, matrix.dimension));
 
    /* solve the system */
    Vector<double> solution(matrix.dimension);
