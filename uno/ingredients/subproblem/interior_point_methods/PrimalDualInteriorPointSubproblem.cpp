@@ -179,9 +179,7 @@ void PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const Opti
    }
 
    // possibly update the barrier parameter
-   if (not this->solving_feasibility_problem) {
-      this->update_barrier_parameter(problem, current_iterate);
-   }
+   this->update_barrier_parameter(problem, current_iterate);
    statistics.set("barrier param.", this->barrier_parameter());
 
    // evaluate the functions at the current iterate
