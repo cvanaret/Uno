@@ -174,8 +174,9 @@ double l1Relaxation::compute_infeasible_dual_error(Iterate& current_iterate) {
    double error = norm_1(current_iterate.lagrangian_gradient.constraints_contribution);
 
    // complementarity error
+   const double shift_value = 0.;
    error += this->feasibility_problem.complementarity_error(current_iterate.primals, current_iterate.evaluations.constraints,
-         this->trial_multipliers, Norm::L1);
+         this->trial_multipliers, shift_value, Norm::L1);
    return error;
 }
 

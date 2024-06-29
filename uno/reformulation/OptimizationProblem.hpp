@@ -58,7 +58,7 @@ public:
    [[nodiscard]] static double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
          Norm residual_norm);
    [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
-         const Multipliers& multipliers, Norm residual_norm) const = 0;
+         const Multipliers& multipliers, double shift_value, Norm residual_norm) const = 0;
 };
 
 inline OptimizationProblem::OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints):

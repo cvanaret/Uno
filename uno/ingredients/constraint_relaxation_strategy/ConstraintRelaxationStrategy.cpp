@@ -102,10 +102,11 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Optimizat
    iterate.residuals.infeasibility = this->model.constraint_violation(iterate.evaluations.constraints, this->residual_norm);
 
    // complementarity error
+   const double shift_value = 0.;
    iterate.residuals.complementarity = optimality_problem.complementarity_error(iterate.primals, iterate.evaluations.constraints,
-         iterate.multipliers, this->residual_norm);
+         iterate.multipliers, shift_value, this->residual_norm);
    iterate.residuals.feasibility_complementarity = feasibility_problem.complementarity_error(iterate.primals, iterate.evaluations.constraints,
-         iterate.feasibility_multipliers, this->residual_norm);
+         iterate.feasibility_multipliers, shift_value, this->residual_norm);
 
    // scaling factors
    iterate.residuals.stationarity_scaling = this->compute_stationarity_scaling(iterate.multipliers);
