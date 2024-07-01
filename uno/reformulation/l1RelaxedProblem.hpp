@@ -141,8 +141,8 @@ inline void l1RelaxedProblem::evaluate_lagrangian_hessian(const Vector<double>& 
 // complementary slackness error: expression for violated constraints depends on the definition of the relaxed problem
 inline double l1RelaxedProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
       const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
-   // complementarity for variable bounds
-   const VectorExpression variable_complementarity(Range(this->model.number_variables), [&](size_t variable_index) {
+   // bound constraints
+   const VectorExpression bounds_complementarity(Range(this->model.number_variables), [&](size_t variable_index) {
       if (0. < multipliers.lower_bounds[variable_index]) {
          return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->variable_lower_bound(variable_index)) - shift_value;
       }
@@ -152,27 +152,30 @@ inline double l1RelaxedProblem::complementarity_error(const Vector<double>& prim
       return 0.;
    });
 
-   // complementarity for constraint bounds
-   const VectorExpression constraint_complementarity(Range(constraints.size()), [&](size_t constraint_index) {
-      // violated constraints
-      if (constraints[constraint_index] < this->constraint_lower_bound(constraint_index)) { // lower violated
-         return (this->constraint_violation_coefficient - multipliers.constraints[constraint_index]) * (constraints[constraint_index] -
-               this->constraint_lower_bound(constraint_index)) - shift_value;
+   // general constraints
+   const VectorExpression constraints_complementarity(Range(constraints.size()), [&](size_t constraint_index) {
+      // lower violated
+      if (constraints[constraint_index] < this->constraint_lower_bound(constraint_index)) {
+         return (1. - multipliers.constraints[constraint_index]/this->constraint_violation_coefficient) * (constraints[constraint_index] -
+            this->constraint_lower_bound(constraint_index)) - shift_value/this->constraint_violation_coefficient;
       }
-      else if (this->constraint_upper_bound(constraint_index) < constraints[constraint_index]) { // upper violated
-         return (this->constraint_violation_coefficient + multipliers.constraints[constraint_index]) * (constraints[constraint_index] -
-               this->constraint_upper_bound(constraint_index)) - shift_value;
+      // upper violated
+      else if (this->constraint_upper_bound(constraint_index) < constraints[constraint_index]) {
+         return (1. + multipliers.constraints[constraint_index]/this->constraint_violation_coefficient) * (constraints[constraint_index] -
+            this->constraint_upper_bound(constraint_index)) - shift_value/this->constraint_violation_coefficient;
       }
-      // satisfied constraints
-      else if (0. < multipliers.constraints[constraint_index]) { // lower bound
-         return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->constraint_lower_bound(constraint_index)) - shift_value;
-      }
-      else if (multipliers.constraints[constraint_index] < 0.) { // upper bound
-         return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->constraint_upper_bound(constraint_index)) - shift_value;
+      // inequality
+      else if (this->model.get_constraint_bound_type(constraint_index) != EQUAL_BOUNDS) {
+         if (0. < multipliers.constraints[constraint_index]) { // lower bound
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->constraint_lower_bound(constraint_index)) - shift_value;
+         }
+         else if (multipliers.constraints[constraint_index] < 0.) { // upper bound
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->constraint_upper_bound(constraint_index)) - shift_value;
+         }
       }
       return 0.;
    });
-   return norm(residual_norm, variable_complementarity, constraint_complementarity);
+   return norm(residual_norm, bounds_complementarity, constraints_complementarity);
 }
 
 inline double l1RelaxedProblem::variable_lower_bound(size_t variable_index) const {
