@@ -158,7 +158,7 @@ void l1Relaxation::decrease_parameter_aggressively(Iterate& current_iterate, con
       // compute the ideal error (with a zero penalty parameter)
       const double infeasible_dual_error = l1Relaxation::compute_infeasible_dual_error(current_iterate);
       DEBUG << "Ideal dual error: " << infeasible_dual_error << '\n';
-      const double scaled_error = infeasible_dual_error / std::max(1., current_iterate.residuals.infeasibility);
+      const double scaled_error = infeasible_dual_error / std::max(1., current_iterate.residuals.primal_feasibility);
       this->penalty_parameter = std::min(this->penalty_parameter, scaled_error * scaled_error);
       DEBUG << "Further aggressively decrease the penalty parameter to " << this->penalty_parameter << '\n';
    }
@@ -223,8 +223,8 @@ void l1Relaxation::enforce_descent_direction_for_l1_merit(Statistics& statistics
 
 bool l1Relaxation::is_descent_direction_for_l1_merit_function(const Iterate& current_iterate, const Direction& direction,
       const Direction& feasibility_direction) const {
-   const double predicted_l1_merit_reduction = current_iterate.residuals.infeasibility - direction.subproblem_objective;
-   const double lowest_decrease_objective = current_iterate.residuals.infeasibility - feasibility_direction.subproblem_objective;
+   const double predicted_l1_merit_reduction = current_iterate.residuals.primal_feasibility - direction.subproblem_objective;
+   const double lowest_decrease_objective = current_iterate.residuals.primal_feasibility - feasibility_direction.subproblem_objective;
    return (predicted_l1_merit_reduction >= this->parameters.epsilon2 * lowest_decrease_objective);
 }
 

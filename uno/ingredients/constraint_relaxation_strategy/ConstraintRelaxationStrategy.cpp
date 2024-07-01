@@ -99,7 +99,7 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Optimizat
    iterate.residuals.feasibility_stationarity = OptimizationProblem::stationarity_error(iterate.lagrangian_gradient, 0., this->residual_norm);
 
    // constraint violation of the original problem
-   iterate.residuals.infeasibility = this->model.constraint_violation(iterate.evaluations.constraints, this->residual_norm);
+   iterate.residuals.primal_feasibility = this->model.constraint_violation(iterate.evaluations.constraints, this->residual_norm);
 
    // complementarity error
    const double shift_value = 0.;

@@ -74,7 +74,7 @@ TerminationStatus GlobalizationMechanism::check_convergence_with_given_tolerance
    const bool feasibility_stationarity = (current_iterate.residuals.feasibility_stationarity <= tolerance);
    const bool complementarity = (current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling <= tolerance);
    const bool feasibility_complementarity = (current_iterate.residuals.feasibility_complementarity <= tolerance);
-   const bool primal_feasibility = (current_iterate.residuals.infeasibility <= tolerance);
+   const bool primal_feasibility = (current_iterate.residuals.primal_feasibility <= tolerance);
    const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(model.number_variables, tolerance);
 
    DEBUG << "\nTermination criteria for tolerance = " << tolerance << ":\n";
