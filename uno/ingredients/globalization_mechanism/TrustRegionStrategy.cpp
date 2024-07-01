@@ -14,14 +14,15 @@
 #include "tools/Statistics.hpp"
 
 TrustRegionStrategy::TrustRegionStrategy(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options) :
-      GlobalizationMechanism(constraint_relaxation_strategy, options),
+      GlobalizationMechanism(constraint_relaxation_strategy),
       radius(options.get_double("TR_radius")),
       increase_factor(options.get_double("TR_increase_factor")),
       decrease_factor(options.get_double("TR_decrease_factor")),
       aggressive_decrease_factor(options.get_double("TR_aggressive_decrease_factor")),
       activity_tolerance(options.get_double("TR_activity_tolerance")),
       minimum_radius(options.get_double("TR_min_radius")),
-      radius_reset_threshold(options.get_double("TR_radius_reset_threshold")) {
+      radius_reset_threshold(options.get_double("TR_radius_reset_threshold")),
+      tolerance(options.get_double("tolerance")) {
    assert(0 < this->radius && "The trust-region radius should be positive");
    assert(1. < this->increase_factor && "The trust-region increase factor should be > 1");
    assert(1. < this->decrease_factor && "The trust-region decrease factor should be > 1");
@@ -110,9 +111,6 @@ bool TrustRegionStrategy::is_iterate_acceptable(Statistics& statistics, const Mo
    if (accept_iterate) {
       // possibly increase the radius if trust region is active
       this->possibly_increase_radius(direction.norm);
-
-      trial_iterate.status = this->check_termination(model, trial_iterate);
-      accept_iterate = true;
    }
    else if (this->radius < this->minimum_radius) { // rejected, but small radius
       accept_iterate = this->check_termination_with_small_step(model, trial_iterate);
@@ -167,7 +165,7 @@ void TrustRegionStrategy::reset_active_trust_region_multipliers(const Model& mod
 
 bool TrustRegionStrategy::check_termination_with_small_step(const Model& /*model*/, Iterate& trial_iterate) const {
    // terminate with a feasible point
-   if (trial_iterate.progress.infeasibility <= this->tight_tolerance) {
+   if (trial_iterate.progress.infeasibility <= this->tolerance) {
       trial_iterate.status = TerminationStatus::FEASIBLE_SMALL_STEP;
       this->constraint_relaxation_strategy.compute_primal_dual_residuals(trial_iterate);
       return true;

@@ -21,6 +21,7 @@ private:
    const double activity_tolerance;
    const double minimum_radius;
    const double radius_reset_threshold;
+   const double tolerance;
 
    bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, size_t number_iterations);

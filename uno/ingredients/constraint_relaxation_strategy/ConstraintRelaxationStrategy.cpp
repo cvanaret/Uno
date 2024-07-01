@@ -23,7 +23,11 @@ ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Model& model, s
             number_hessian_nonzeros, options)),
       progress_norm(norm_from_string(options.get_string("progress_norm"))),
       residual_norm(norm_from_string(options.get_string("residual_norm"))),
-      residual_scaling_threshold(options.get_double("residual_scaling_threshold")) {
+      residual_scaling_threshold(options.get_double("residual_scaling_threshold")),
+      tight_tolerance(options.get_double("tolerance")),
+      loose_tolerance(options.get_double("loose_tolerance")),
+      loose_tolerance_consecutive_iteration_threshold(options.get_unsigned_int("loose_tolerance_consecutive_iteration_threshold")),
+      unbounded_objective_threshold(options.get_double("unbounded_objective_threshold")) {
 }
 
 void ConstraintRelaxationStrategy::set_trust_region_radius(double trust_region_radius) {
@@ -167,6 +171,69 @@ double ConstraintRelaxationStrategy::compute_complementarity_scaling(const Multi
       );
       return std::max(1., bound_multiplier_norm / scaling_factor);
    }
+}
+
+TerminationStatus ConstraintRelaxationStrategy::check_termination(Iterate& current_iterate) {
+   // test convergence wrt the tight tolerance
+   const TerminationStatus status_tight_tolerance = this->check_convergence_with_given_tolerance(current_iterate, this->tight_tolerance);
+   if (status_tight_tolerance != TerminationStatus::NOT_OPTIMAL || this->loose_tolerance <= this->tight_tolerance) {
+      return status_tight_tolerance;
+   }
+
+   // if not converged, check convergence wrt loose tolerance (provided it is strictly looser than the tight tolerance)
+   const TerminationStatus status_loose_tolerance = this->check_convergence_with_given_tolerance(current_iterate, this->loose_tolerance);
+   // if converged, keep track of the number of consecutive iterations
+   if (status_loose_tolerance != TerminationStatus::NOT_OPTIMAL) {
+      this->loose_tolerance_consecutive_iterations++;
+   }
+   else {
+      this->loose_tolerance_consecutive_iterations = 0;
+      return TerminationStatus::NOT_OPTIMAL;
+   }
+   // check if loose tolerance achieved for enough consecutive iterations
+   if (this->loose_tolerance_consecutive_iteration_threshold <= this->loose_tolerance_consecutive_iterations) {
+      return status_loose_tolerance;
+   }
+   else {
+      return TerminationStatus::NOT_OPTIMAL;
+   }
+}
+
+TerminationStatus ConstraintRelaxationStrategy::check_convergence_with_given_tolerance(Iterate& current_iterate, double tolerance) const {
+   // evaluate termination conditions based on optimality conditions
+   const bool KKT_stationarity = (current_iterate.residuals.KKT_stationarity / current_iterate.residuals.stationarity_scaling <= tolerance);
+   const bool FJ_stationarity = (current_iterate.residuals.FJ_stationarity <= tolerance);
+   const bool feasibility_stationarity = (current_iterate.residuals.feasibility_stationarity <= tolerance);
+   const bool complementarity = (current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling <= tolerance);
+   const bool feasibility_complementarity = (current_iterate.residuals.feasibility_complementarity <= tolerance);
+   const bool primal_feasibility = (current_iterate.residuals.primal_feasibility <= tolerance);
+   const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(this->model.number_variables, tolerance);
+
+   DEBUG << "\nTermination criteria for tolerance = " << tolerance << ":\n";
+   DEBUG << "KKT stationarity: " << std::boolalpha << KKT_stationarity << '\n';
+   DEBUG << "FJ stationarity: " << std::boolalpha << FJ_stationarity << '\n';
+   DEBUG << "Stationarity (feasibility): " << std::boolalpha << feasibility_stationarity << '\n';
+   DEBUG << "Complementarity: " << std::boolalpha << complementarity << '\n';
+   DEBUG << "Complementarity (feasibility): " << std::boolalpha << feasibility_complementarity << '\n';
+   DEBUG << "Primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
+   DEBUG << "Not all zero multipliers: " << std::boolalpha << no_trivial_duals << "\n\n";
+
+   if (current_iterate.is_objective_computed && current_iterate.evaluations.objective < this->unbounded_objective_threshold) {
+      return TerminationStatus::UNBOUNDED;
+   }
+   else if (KKT_stationarity && primal_feasibility && 0. < current_iterate.objective_multiplier && complementarity) {
+      // feasible regular stationary point
+      return TerminationStatus::FEASIBLE_KKT_POINT;
+   }
+   else if (FJ_stationarity && this->model.is_constrained() && primal_feasibility && complementarity && no_trivial_duals) {
+      // feasible but violation of CQ
+      return TerminationStatus::FEASIBLE_FJ_POINT;
+   }
+   else if (feasibility_stationarity && this->model.is_constrained() && not primal_feasibility && feasibility_complementarity) {
+      // no primal feasibility, stationary point of constraint violation
+      return TerminationStatus::INFEASIBLE_STATIONARY_POINT;
+   }
+   return TerminationStatus::NOT_OPTIMAL;
 }
 
 void ConstraintRelaxationStrategy::set_statistics(Statistics& statistics, const Iterate& iterate) const {
