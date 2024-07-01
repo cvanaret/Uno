@@ -225,11 +225,11 @@ TerminationStatus ConstraintRelaxationStrategy::check_convergence_with_given_tol
       // feasible regular stationary point
       return TerminationStatus::FEASIBLE_KKT_POINT;
    }
-   else if (FJ_stationarity && this->model.is_constrained() && primal_feasibility && complementarity && no_trivial_duals) {
+   else if (this->model.is_constrained() && FJ_stationarity && primal_feasibility && complementarity && no_trivial_duals) {
       // feasible but violation of CQ
       return TerminationStatus::FEASIBLE_FJ_POINT;
    }
-   else if (feasibility_stationarity && this->model.is_constrained() && not primal_feasibility && feasibility_complementarity) {
+   else if (this->model.is_constrained() && feasibility_stationarity && not primal_feasibility && feasibility_complementarity) {
       // no primal feasibility, stationary point of constraint violation
       return TerminationStatus::INFEASIBLE_STATIONARY_POINT;
    }
