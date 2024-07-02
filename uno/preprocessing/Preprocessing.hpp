@@ -9,7 +9,7 @@
 // forward declarations
 class Iterate;
 class Model;
-class Multipliers;
+struct Multipliers;
 class QPSolver;
 template <typename ElementType>
 class SymmetricIndefiniteLinearSolver;

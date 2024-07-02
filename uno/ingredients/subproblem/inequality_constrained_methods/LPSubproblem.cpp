@@ -24,12 +24,12 @@ bool LPSubproblem::generate_initial_iterate(const OptimizationProblem& /*problem
 void LPSubproblem::evaluate_functions(const OptimizationProblem& problem, Iterate& current_iterate, const WarmstartInformation& warmstart_information) {
    // objective gradient
    if (warmstart_information.objective_changed) {
-      problem.evaluate_objective_gradient(current_iterate, this->evaluations.objective_gradient);
+      problem.evaluate_objective_gradient(current_iterate, this->objective_gradient);
    }
    // constraints and constraint Jacobian
    if (warmstart_information.constraints_changed) {
-      problem.evaluate_constraints(current_iterate, this->evaluations.constraints);
-      problem.evaluate_constraint_jacobian(current_iterate, this->evaluations.constraint_jacobian);
+      problem.evaluate_constraints(current_iterate, this->constraints);
+      problem.evaluate_constraint_jacobian(current_iterate, this->constraint_jacobian);
    }
 }
 
@@ -45,13 +45,13 @@ void LPSubproblem::solve(Statistics& /*statistics*/, const OptimizationProblem& 
 
    // set bounds of the linearized constraints
    if (warmstart_information.constraint_bounds_changed) {
-      this->set_linearized_constraint_bounds(problem, this->evaluations.constraints);
+      this->set_linearized_constraint_bounds(problem, this->constraints);
    }
 
    // solve the LP
    this->solver->solve_LP(problem.number_variables, problem.number_constraints, this->direction_lower_bounds, this->direction_upper_bounds,
-         this->linearized_constraints_lower_bounds, this->linearized_constraints_upper_bounds, this->evaluations.objective_gradient,
-         this->evaluations.constraint_jacobian, this->initial_point, direction, warmstart_information);
+         this->linearized_constraints_lower_bounds, this->linearized_constraints_upper_bounds, this->objective_gradient,
+         this->constraint_jacobian, this->initial_point, direction, warmstart_information);
    InequalityConstrainedMethod::compute_dual_displacements(current_multipliers, direction.multipliers);
    this->number_subproblems_solved++;
    // reset the initial point

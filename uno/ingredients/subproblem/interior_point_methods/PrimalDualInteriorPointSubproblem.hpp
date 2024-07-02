@@ -44,8 +44,12 @@ public:
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
 protected:
-   SymmetricIndefiniteLinearSystem<double> augmented_system;
+   SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
+   std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
+   RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
    const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
+
+   SymmetricIndefiniteLinearSystem<double> augmented_system;
    const std::unique_ptr<SymmetricIndefiniteLinearSolver<double>> linear_solver;
 
    BarrierParameterUpdateStrategy barrier_parameter_update_strategy;
@@ -62,7 +66,7 @@ protected:
    void evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
          const WarmstartInformation& warmstart_information);
    void update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate);
-   [[nodiscard]] bool is_small_step(const OptimizationProblem& problem, const Iterate& current_iterate, const Direction& direction) const;
+   [[nodiscard]] bool is_small_step(const OptimizationProblem& problem, const Vector<double>& current_primals, const Vector<double>& direction_primals) const;
    [[nodiscard]] double evaluate_subproblem_objective(const Direction& direction) const;
    [[nodiscard]] double compute_barrier_term_directional_derivative(const Model& model, const Iterate& current_iterate,
          const Vector<double>& primal_direction) const;
@@ -71,7 +75,7 @@ protected:
    [[nodiscard]] static double dual_fraction_to_boundary(const OptimizationProblem& problem, const Multipliers& current_multipliers,
          Multipliers& direction_multipliers, double tau);
    void assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem, const Multipliers& current_multipliers);
-   void generate_augmented_rhs(const OptimizationProblem& problem, const Multipliers& current_multipliers);
+   void assemble_augmented_rhs(const OptimizationProblem& problem, const Multipliers& current_multipliers);
    void assemble_primal_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,
          Vector<double>& direction_primals, Multipliers& direction_multipliers);
    void compute_bound_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,

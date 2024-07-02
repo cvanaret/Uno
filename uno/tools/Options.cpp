@@ -106,7 +106,6 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["tolerance"] = "1e-8";
       options["loose_tolerance"] = "1e-6";
       options["loose_tolerance_consecutive_iteration_threshold"] = "15";
-      options["switch_to_optimality_requires_acceptance"] = "yes";
       options["switch_to_optimality_requires_linearized_feasibility"] = "no";
       options["LS_scale_duals_with_step_length"] = "yes";
       options["protect_actual_reduction_against_roundoff"] = "yes";
@@ -126,7 +125,6 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["tolerance"] = "1e-6";
       options["loose_tolerance"] = "1e-6";
       options["TR_min_radius"] = "1e-8";
-      options["switch_to_optimality_requires_acceptance"] = "no";
       options["switch_to_optimality_requires_linearized_feasibility"] = "yes";
       options["protect_actual_reduction_against_roundoff"] = "no";
    }
@@ -149,7 +147,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["LS_scale_duals_with_step_length"] = "no";
       options["protect_actual_reduction_against_roundoff"] = "no";
    }
-      else if (preset_name == "funnelsqp") {
+   else if (preset_name == "funnelsqp") {
       options["constraint_relaxation_strategy"] = "feasibility_restoration";
       options["subproblem"] = "QP";
       options["globalization_mechanism"] = "TR";
@@ -172,6 +170,9 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["funnel_ubd"] = "1e2";
       options["funnel_fact"] = "1.25";
       options["funnel_switching_infeasibility_exponent"] = "2";
+   }
+   else {
+      throw std::runtime_error("The preset " + preset_name + " is not known.");
    }
 }
 

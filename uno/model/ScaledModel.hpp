@@ -65,6 +65,9 @@ inline ScaledModel::ScaledModel(std::unique_ptr<Model> original_model, Iterate& 
       for (size_t constraint_index: Range(this->model->number_constraints)) {
          scale(initial_iterate.evaluations.constraint_jacobian[constraint_index], this->scaling.get_constraint_scaling(constraint_index));
       }
+      // since the definition of the constraints changed, reset the evaluation flags
+      initial_iterate.is_objective_gradient_computed = false;
+      initial_iterate.is_constraint_jacobian_computed = false;
    }
    // check the scaling factors
    assert(0 < this->scaling.get_objective_scaling() && "Objective scaling failed.");
@@ -107,22 +110,19 @@ inline void ScaledModel::evaluate_lagrangian_hessian(const Vector<double>& x, do
    // scale the objective and constraint multipliers
    const double scaled_objective_multiplier = objective_multiplier*this->scaling.get_objective_scaling();
    // TODO preallocate this vector
-   // TODO check if the multipliers should be scaled
    static Vector<double> scaled_multipliers(this->number_constraints);
    for (size_t constraint_index: Range(this->number_constraints)) {
-      scaled_multipliers[constraint_index] = scaling.get_constraint_scaling(constraint_index) * multipliers[constraint_index];
+      scaled_multipliers[constraint_index] = this->scaling.get_constraint_scaling(constraint_index) * multipliers[constraint_index];
    }
    this->model->evaluate_lagrangian_hessian(x, scaled_objective_multiplier, scaled_multipliers, hessian);
 }
 
 inline double ScaledModel::constraint_lower_bound(size_t constraint_index) const {
-   const double lb = this->model->constraint_lower_bound(constraint_index);
-   return this->scaling.get_constraint_scaling(constraint_index)*lb;
+   return this->scaling.get_constraint_scaling(constraint_index) * this->model->constraint_lower_bound(constraint_index);
 }
 
 inline double ScaledModel::constraint_upper_bound(size_t constraint_index) const {
-   const double ub = this->model->constraint_upper_bound(constraint_index);
-   return this->scaling.get_constraint_scaling(constraint_index)*ub;
+   return this->scaling.get_constraint_scaling(constraint_index) * this->model->constraint_upper_bound(constraint_index);
 }
 
 inline void ScaledModel::postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const {

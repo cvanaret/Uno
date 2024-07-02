@@ -32,10 +32,10 @@ void BarrierParameterUpdateStrategy::set_barrier_parameter(double new_barrier_pa
 
 bool BarrierParameterUpdateStrategy::update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate) {
    // primal-dual errors
-   const double scaled_stationarity = current_iterate.residuals.stationarity / current_iterate.residuals.stationarity_scaling;
+   const double scaled_stationarity = current_iterate.residuals.KKT_stationarity / current_iterate.residuals.stationarity_scaling;
    double primal_dual_error = std::max({
       scaled_stationarity,
-      current_iterate.residuals.infeasibility,
+      current_iterate.residuals.primal_feasibility,
          current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling
    });
    DEBUG << "Max scaled primal-dual error for barrier subproblem is " << primal_dual_error << '\n';
@@ -52,7 +52,7 @@ bool BarrierParameterUpdateStrategy::update_barrier_parameter(const Optimization
             this->barrier_parameter) / current_iterate.residuals.complementarity_scaling;
       primal_dual_error = std::max({
          scaled_stationarity,
-         current_iterate.residuals.infeasibility,
+         current_iterate.residuals.primal_feasibility,
          scaled_complementarity_error
       });
       DEBUG << "Max scaled primal-dual error for barrier subproblem is " << primal_dual_error << '\n';

@@ -6,8 +6,7 @@
 
 #include "ScalarMultiple.hpp"
 #include "Sum.hpp"
-#include "Indicator.hpp"
-#include "Hadamard.hpp"
+#include "UnaryNegation.hpp"
 #include "MatrixVectorProduct.hpp"
 
 #endif // UNO_EXPRESSION_H

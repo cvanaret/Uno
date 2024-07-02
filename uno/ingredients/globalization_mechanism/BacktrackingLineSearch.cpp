@@ -4,6 +4,7 @@
 #include <cassert>
 #include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategy.hpp"
 #include "BacktrackingLineSearch.hpp"
+#include "model/Model.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
@@ -12,7 +13,7 @@
 #include "tools/Statistics.hpp"
 
 BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options):
-      GlobalizationMechanism(constraint_relaxation_strategy, options),
+      GlobalizationMechanism(constraint_relaxation_strategy),
       backtracking_ratio(options.get_double("LS_backtracking_ratio")),
       minimum_step_length(options.get_double("LS_min_step_length")),
       scale_duals_with_step_length(options.get_bool("LS_scale_duals_with_step_length")) {
@@ -66,8 +67,6 @@ void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, c
 
          // check whether the trial iterate is accepted
          if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, step_length)) {
-            // check termination criteria
-            trial_iterate.status = this->check_termination(model, trial_iterate);
             this->set_statistics(statistics, trial_iterate, direction, step_length);
             if (Logger::level == INFO) statistics.print_current_line();
             return;
@@ -95,6 +94,9 @@ void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, c
    // reached a small step length: revert to solving the feasibility problem
    if (this->constraint_relaxation_strategy.solving_feasibility_problem()) {
       throw std::runtime_error("Feasibility LS failed");
+   }
+   else if (not model.is_constrained()) {
+      throw std::runtime_error("Regular LS failed");
    }
    else {
       warmstart_information.set_cold_start();

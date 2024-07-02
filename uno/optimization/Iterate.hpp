@@ -17,6 +17,8 @@ class Model;
 class Iterate {
 public:
    Iterate(size_t number_variables, size_t number_constraints);
+   Iterate(Iterate&& other) noexcept = default;
+   Iterate& operator=(Iterate&& other) noexcept = default;
 
    size_t number_variables;
    size_t number_constraints;

@@ -6,7 +6,6 @@
 
 #include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
-#include "ingredients/globalization_strategy/GlobalizationStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "reformulation/l1RelaxedProblem.hpp"
 
@@ -23,7 +22,6 @@ public:
    l1Relaxation(const Model& model, const Options& options);
 
    void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) override;
-   void set_trust_region_radius(double trust_region_radius) override;
 
    [[nodiscard]] size_t maximum_number_variables() const override;
    [[nodiscard]] size_t maximum_number_constraints() const override;
@@ -31,30 +29,28 @@ public:
    // direction computation
    void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          WarmstartInformation& warmstart_information) override;
-   void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction, const Vector<double>& initial_point,
-         WarmstartInformation& warmstart_information) override;
    [[nodiscard]] bool solving_feasibility_problem() const override;
    void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate) override;
 
    // trial iterate acceptance
-   void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length) override;
    [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length) override;
 
-   [[nodiscard]] size_t get_hessian_evaluation_count() const override;
-   [[nodiscard]] size_t get_number_subproblems_solved() const override;
+   // primal-dual residuals
+   void compute_primal_dual_residuals(Iterate& iterate) override;
 
 protected:
    const l1RelaxedProblem feasibility_problem;
    l1RelaxedProblem l1_relaxed_problem;
-   std::unique_ptr<Subproblem> subproblem;
-   const std::unique_ptr<GlobalizationStrategy> globalization_strategy;
    double penalty_parameter;
    const double tolerance;
    const l1RelaxationParameters parameters;
    const double small_duals_threshold;
    // preallocated temporary multipliers
    Multipliers trial_multipliers;
+
+   // delegating constructor
+   l1Relaxation(const Model& model, l1RelaxedProblem&& feasibility_problem, l1RelaxedProblem&& l1_relaxed_problem, const Options& options);
 
    void solve_sequence_of_relaxed_subproblems(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          WarmstartInformation& warmstart_information);
@@ -75,7 +71,7 @@ protected:
    [[nodiscard]] bool is_descent_direction_for_l1_merit_function(const Iterate& current_iterate, const Direction& direction,
          const Direction& feasibility_direction) const;
 
-   void evaluate_progress_measures(Iterate& iterate) const;
+   void evaluate_progress_measures(Iterate& iterate) const override;
    [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length);
 
    void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const override;

@@ -44,7 +44,7 @@ Uno 1.0 implements the following strategies:
    <img src="docs/figures/hypergraph_uno.png" alt="Uno 1.0 hypergraph" width="65%" />
 </p>
 
-**Any strategy combination** can be automatically generated without any programming effort from the user. Note that all combinations do not necessarily result in sensible algorithms, or even convergent approaches. For more details, check out my [presentation at the ICCOPT 2022 conference](https://www.researchgate.net/publication/362254109).
+**Any strategy combination** can be automatically generated without any programming effort from the user. Note that all combinations do not necessarily result in sensible algorithms, or even convergent approaches. For more details, check out our [preprint](https://www.researchgate.net/publication/381522383_Unifying_nonlinearly_constrained_nonconvex_optimization) or my [presentation at the ICCOPT 2022 conference](https://www.researchgate.net/publication/362254109).
 
 Uno 1.0 implements three **presets**, that is strategy combinations that correspond to existing solvers (as well as hyperparameter values found in their documentations):
 * `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method);
@@ -66,7 +66,18 @@ All log files can be found [here](https://github.com/cvanaret/nonconvex_solver_c
 
 ### In an article
 
-Please be patient, we are actively working on our article.
+We have submitted our paper to the Mathematical Programming Computation journal. The preprint is available on [ResearchGate](https://www.researchgate.net/publication/381522383_Unifying_nonlinearly_constrained_nonconvex_optimization).
+
+Until it is published, you can use the following bibtex entry:
+
+```
+@unpublished{VanaretLeyffer2024,
+  author = {Vanaret, Charlie and Leyffer, Sven},
+  title = {Unifying nonlinearly constrained nonconvex optimization},
+  year = {2024},
+  note = {Submitted to Mathematical Programming Computation}
+}
+```
 
 ### On social media
 
@@ -79,8 +90,11 @@ See the [INSTALL](INSTALL.md) file.
 
 ## Solving a problem with Uno
 
+At the moment, Uno only reads models from [.nl files](https://en.wikipedia.org/wiki/Nl_(format)). A couple of CUTEst instances are available in the `/examples` directory.
+
 To solve an AMPL model, type in the `build` directory: ```./uno_ampl path_to_file/file.nl```
-A couple of CUTEst instances are available in the `/examples` directory.
+
+To use Uno with Julia/JuMP, a solution in the short term is to use the package [AmplNLWriter.jl](https://juliahub.com/ui/Packages/General/AmplNLWriter.jl) to dump JuMP models into .nl files.
 
 ### Combination of ingredients
 

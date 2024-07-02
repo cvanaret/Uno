@@ -9,18 +9,22 @@
 #include "symbolic/VectorView.hpp"
 
 InequalityConstrainedMethod::InequalityConstrainedMethod(size_t number_variables, size_t number_constraints):
-      Subproblem(number_variables, number_constraints),
+      Subproblem(),
       initial_point(number_variables),
       direction_lower_bounds(number_variables),
       direction_upper_bounds(number_variables),
       linearized_constraints_lower_bounds(number_constraints),
-      linearized_constraints_upper_bounds(number_constraints) {
+      linearized_constraints_upper_bounds(number_constraints),
+      objective_gradient(number_variables),
+      constraints(number_constraints),
+      constraint_jacobian(number_constraints, number_variables) {
 }
 
 void InequalityConstrainedMethod::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) {
 }
 
 void InequalityConstrainedMethod::set_initial_point(const Vector<double>& point) {
+   // copy the point into the member
    this->initial_point = point;
 }
 

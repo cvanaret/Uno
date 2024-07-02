@@ -14,7 +14,7 @@ template <typename ElementType>
 class SparseVector;
 template <typename ElementType>
 class Vector;
-class WarmstartInformation;
+struct WarmstartInformation;
 
 /*! \class LPSolver
  * \brief LP solver

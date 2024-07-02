@@ -40,13 +40,15 @@ BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_
       ub(number_variables + number_constraints),
       jacobian(number_jacobian_nonzeros + number_objective_gradient_nonzeros), // Jacobian + objective gradient
       jacobian_sparsity(number_jacobian_nonzeros + number_objective_gradient_nonzeros + number_constraints + 3),
-      kmax(problem_type == BQPDProblemType::QP ? options.get_int("BQPD_kmax") : 0), alp(this->mlp), lp(this->mlp),
+      kmax(problem_type == BQPDProblemType::QP ? options.get_int("BQPD_kmax") : 0), alp(static_cast<size_t>(this->mlp)),
+      lp(static_cast<size_t>(this->mlp)),
       active_set(number_variables + number_constraints),
       w(number_variables + number_constraints), gradient_solution(number_variables), residuals(number_variables + number_constraints),
       e(number_variables + number_constraints),
       size_hessian_sparsity(problem_type == BQPDProblemType::QP ? number_hessian_nonzeros + number_variables + 3 : 0),
-      size_hessian_workspace(number_hessian_nonzeros + this->kmax * (this->kmax + 9) / 2 + 2 * number_variables + number_constraints + this->mxwk0),
-      size_hessian_sparsity_workspace(this->size_hessian_sparsity + this->kmax + this->mxiwk0),
+      size_hessian_workspace(number_hessian_nonzeros + static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) + 2 * number_variables +
+         number_constraints + this->mxwk0),
+      size_hessian_sparsity_workspace(this->size_hessian_sparsity + static_cast<size_t>(this->kmax) + this->mxiwk0),
       hessian_values(this->size_hessian_workspace),
       hessian_sparsity(this->size_hessian_sparsity_workspace),
       current_hessian_indices(number_variables),
@@ -152,7 +154,7 @@ void BQPDSolver::solve_subproblem(size_t number_variables, size_t number_constra
       direction.primals[variable_index] = std::min(std::max(direction.primals[variable_index], variables_lower_bounds[variable_index]),
             variables_upper_bounds[variable_index]);
    }
-   this->categorize_constraints(number_variables, number_constraints, direction);
+   this->categorize_constraints(number_variables, direction);
 }
 
 BQPDMode BQPDSolver::determine_mode(const WarmstartInformation& warmstart_information) const {
@@ -234,15 +236,8 @@ void BQPDSolver::save_gradients_to_local_format(size_t number_constraints, const
    }
 }
 
-void BQPDSolver::categorize_constraints(size_t number_variables, size_t number_constraints, Direction& direction) {
+void BQPDSolver::categorize_constraints(size_t number_variables, Direction& direction) {
    direction.multipliers.reset();
-   if (direction.constraint_partition.has_value()) {
-      direction.constraint_partition.value().reset();
-   }
-   else {
-      direction.constraint_partition = ConstraintPartition(number_constraints);
-   }
-   ConstraintPartition& constraint_partition = direction.constraint_partition.value();
 
    // active constraints
    for (size_t active_constraint_index: Range(number_variables - static_cast<size_t>(this->k))) {
@@ -252,45 +247,21 @@ void BQPDSolver::categorize_constraints(size_t number_variables, size_t number_c
          // bound constraint
          if (0 <= this->active_set[active_constraint_index]) { // lower bound active
             direction.multipliers.lower_bounds[index] = this->residuals[index];
-            direction.active_set.bounds.at_lower_bound.push_back(index);
+            direction.active_bounds.at_lower_bound.push_back(index);
          }
          else { // upper bound active */
             direction.multipliers.upper_bounds[index] = -this->residuals[index];
-            direction.active_set.bounds.at_upper_bound.push_back(index);
+            direction.active_bounds.at_upper_bound.push_back(index);
          }
       }
       else {
          // general constraint
          size_t constraint_index = index - number_variables;
-         constraint_partition.feasible.push_back(constraint_index);
          if (0 <= this->active_set[active_constraint_index]) { // lower bound active
             direction.multipliers.constraints[constraint_index] = this->residuals[index];
-            direction.active_set.constraints.at_lower_bound.push_back(constraint_index);
          }
          else { // upper bound active
             direction.multipliers.constraints[constraint_index] = -this->residuals[index];
-            direction.active_set.constraints.at_upper_bound.push_back(constraint_index);
-         }
-      }
-   }
-
-   // inactive constraints
-   for (size_t inactive_constraint_index: Range(number_variables - static_cast<size_t>(this->k), number_variables + number_constraints)) {
-      size_t index = static_cast<size_t>(std::abs(this->active_set[inactive_constraint_index]) - this->fortran_shift);
-
-      if (number_variables <= index) { // general constraints
-         size_t constraint_index = index - number_variables;
-         if (this->residuals[index] < 0.) { // infeasible constraint
-            constraint_partition.infeasible.push_back(constraint_index);
-            if (this->active_set[inactive_constraint_index] < 0) { // upper bound violated
-               constraint_partition.upper_bound_infeasible.push_back(constraint_index);
-            }
-            else { // lower bound violated
-               constraint_partition.lower_bound_infeasible.push_back(constraint_index);
-            }
-         }
-         else { // feasible constraint
-            constraint_partition.feasible.push_back(constraint_index);
          }
       }
    }
@@ -308,28 +279,28 @@ SubproblemStatus BQPDSolver::status_from_bqpd_status(BQPDStatus bqpd_status) {
       case BQPDStatus::UNBOUNDED_PROBLEM:
          return SubproblemStatus::UNBOUNDED_PROBLEM;
       case BQPDStatus::BOUND_INCONSISTENCY:
-         WARNING << YELLOW << "BQPD error: bound inconsistency\n" << RESET;
+         DEBUG << YELLOW << "BQPD error: bound inconsistency\n" << RESET;
          return SubproblemStatus::INFEASIBLE;
       case BQPDStatus::INFEASIBLE:
          return SubproblemStatus::INFEASIBLE;
       // errors
       case BQPDStatus::INCORRECT_PARAMETER:
-         WARNING << YELLOW << "BQPD error: incorrect parameter\n" << RESET;
+         DEBUG << YELLOW << "BQPD error: incorrect parameter\n" << RESET;
          return SubproblemStatus::ERROR;
       case BQPDStatus::LP_INSUFFICIENT_SPACE:
-         WARNING << YELLOW << "BQPD error: LP insufficient space\n" << RESET;
+         DEBUG << YELLOW << "BQPD error: LP insufficient space\n" << RESET;
          return SubproblemStatus::ERROR;
       case BQPDStatus::HESSIAN_INSUFFICIENT_SPACE:
-         WARNING << YELLOW << "BQPD kmax too small, continue anyway\n" << RESET;
+         DEBUG << YELLOW << "BQPD kmax too small, continue anyway\n" << RESET;
          return SubproblemStatus::ERROR;
       case BQPDStatus::SPARSE_INSUFFICIENT_SPACE:
-         WARNING << YELLOW << "BQPD error: sparse insufficient space\n" << RESET;
+         DEBUG << YELLOW << "BQPD error: sparse insufficient space\n" << RESET;
          return SubproblemStatus::ERROR;
       case BQPDStatus::MAX_RESTARTS_REACHED:
-         WARNING << YELLOW << "BQPD max restarts reached\n" << RESET;
+         DEBUG << YELLOW << "BQPD max restarts reached\n" << RESET;
          return SubproblemStatus::ERROR;
       case BQPDStatus::UNDEFINED:
-         WARNING << YELLOW << "BQPD error: undefined\n" << RESET;
+         DEBUG << YELLOW << "BQPD error: undefined\n" << RESET;
          return SubproblemStatus::ERROR;
    }
    throw std::invalid_argument("The BQPD ifail is not consistent with the Uno status values");
