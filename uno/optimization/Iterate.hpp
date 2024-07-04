@@ -1,43 +1,31 @@
-// Copyright (c) 2018-2023 Charlie Vanaret
+// Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_ITERATE_H
 #define UNO_ITERATE_H
 
-#include <vector>
+#include "Evaluations.hpp"
+#include "TerminationStatus.hpp"
 #include "ingredients/globalization_strategy/ProgressMeasures.hpp"
-#include "linear_algebra/SparseVector.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
 #include "optimization/LagrangianGradient.hpp"
-#include "optimization/Model.hpp"
 #include "optimization/Multipliers.hpp"
 #include "optimization/PrimalDualResiduals.hpp"
-#include "tools/Infinity.hpp"
 
-struct Evaluations {
-   double objective{INF<double>}; /*!< Objective value */
-   std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
-   SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
-   RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
-
-   Evaluations(size_t max_number_variables, size_t max_number_constraints):
-         constraints(max_number_constraints),
-         objective_gradient(max_number_variables),
-         constraint_jacobian(max_number_constraints) {
-      for (auto& constraint_gradient: this->constraint_jacobian) {
-         constraint_gradient.reserve(max_number_variables);
-      }
-   }
-};
+// forward declaration
+class Model;
 
 class Iterate {
 public:
-   Iterate(size_t max_number_variables, size_t max_number_constraints);
+   Iterate(size_t number_variables, size_t number_constraints);
+   Iterate(Iterate&& other) noexcept = default;
+   Iterate& operator=(Iterate&& other) noexcept = default;
 
    size_t number_variables;
    size_t number_constraints;
-   std::vector<double> primals; /*!< \f$\mathbb{R}^n\f$ primal variables */
+   Vector<double> primals;
    Multipliers multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
+   Multipliers feasibility_multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
+   double objective_multiplier{1.};
 
    // evaluations
    Evaluations evaluations;
@@ -55,7 +43,7 @@ public:
    PrimalDualResiduals residuals{};
    LagrangianGradient<double> lagrangian_gradient;
 
-   // measures of progress (infeasibility, optimality, auxiliary)
+   // measures of progress (infeasibility, objective, auxiliary)
    ProgressMeasures progress{INF<double>, {}, INF<double>};
 
    // status

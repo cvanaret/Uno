@@ -1,6 +1,12 @@
 ##### termination #####
-# tolerance
+# (tight) tolerance
 tolerance 1e-8
+
+# loose tolerance used if tight tolerance cannot be reached
+loose_tolerance 1e-6
+
+# number of iterations during which the loose tolerance is monitored
+loose_tolerance_consecutive_iteration_threshold 15
 
 # maximum outer iterations
 max_iterations 2000
@@ -22,19 +28,20 @@ statistics_print_header_every_iterations 15
 
 statistics_major_column_order 1
 statistics_minor_column_order 2
-statistics_restoration_phase_column_order 4
 statistics_penalty_parameter_column_order 5
-statistics_regularization_column_order 6
 statistics_barrier_parameter_column_order 8
 statistics_SOC_column_order 9
-statistics_LS_step_length_column_order 30
-statistics_TR_radius_column_order 30
+statistics_TR_radius_column_order 10
+statistics_LS_step_length_column_order 10
+statistics_restoration_phase_column_order 20
+statistics_regularization_column_order 21
 statistics_step_norm_column_order 31
 statistics_objective_column_order 100
 statistics_primal_infeasibility_column_order 101
 statistics_dual_infeasibility_column_order 102
 statistics_complementarity_column_order 104
 statistics_stationarity_column_order 105
+statistics_status_column_order 200
 
 ##### ingredients #####
 # default constraint relaxation strategy (feasibility_restoration|l1_relaxation)
@@ -43,8 +50,8 @@ constraint_relaxation_strategy feasibility_restoration
 # default subproblem (QP|LP|primal_dual_interior_point)
 subproblem QP
 
-# default globalization strategy (l1_merit|leyffer_filter_strategy|waechter_filter_strategy)
-globalization_strategy leyffer_filter_strategy
+# default globalization strategy (l1_merit|fletcher_filter_method|waechter_filter_method)
+globalization_strategy fletcher_filter_method
 
 # default globalization mechanism (TR|LS)
 globalization_mechanism TR
@@ -79,6 +86,10 @@ progress_norm L1
 # norm of the primal-dual residuals (L1|L2|INF)
 residual_norm INF
 
+residual_scaling_threshold 100.
+
+protect_actual_reduction_against_roundoff no
+
 ##### solvers #####
 # default QP solver
 QP_solver BQPD
@@ -93,9 +104,7 @@ linear_solver MA57
 armijo_decrease_fraction 1e-4
 armijo_tolerance 1e-9
 
-##### filter options #####
-# filter strategy options
-
+##### filter method options #####
 # filter type (standard|nonmonotone)
 filter_type standard
 
@@ -107,6 +116,9 @@ filter_fact 1.25
 filter_switching_infeasibility_exponent 2
 
 filter_capacity 50
+
+# used by Waechter filter method
+filter_sufficient_infeasibility_decrease_factor 0.9
 
 # nonmonotone filter strategy
 nonmonotone_filter_number_dominated_entries 3
@@ -188,8 +200,8 @@ l1_constraint_violation_coefficient 1
 l1_small_duals_threshold 1e-10
 
 ##### feasibility restoration options #####
-# test linearized feasibility when switching back to phase 2
-feasibility_restoration_test_linearized_feasibility no
+# test linearized feasibility when switching back to the optimality phase
+switch_to_optimality_requires_linearized_feasibility yes
 
 ##### barrier subproblem options #####
 barrier_initial_parameter 0.1

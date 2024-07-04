@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2023 Charlie Vanaret
+// Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_LOGGER_H
@@ -16,7 +16,7 @@
 #define RESET "\x1B[0m"
 
 enum Level {
-    ERROR = 0, WARNING, INFO, DEBUG, DEBUG2
+    ERROR = 0, WARNING, INFO, DEBUG, DEBUG2, DEBUG3
 };
 
 class Logger {
@@ -56,6 +56,9 @@ inline void Logger::set_logger(const std::string& logger_level) {
    }
    else if (logger_level == "DEBUG2") {
       Logger::level = DEBUG2;
+   }
+   else if (logger_level == "DEBUG3") {
+      Logger::level = DEBUG3;
    }
    else {
       throw std::out_of_range("The logger level " + logger_level + " was not found");

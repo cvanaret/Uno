@@ -1,16 +1,16 @@
-// Copyright (c) 2018-2023 Charlie Vanaret
+// Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_BQPDSOLVER_H
 #define UNO_BQPDSOLVER_H
 
 #include <vector>
+#include "ingredients/subproblem/SubproblemStatus.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "QPSolver.hpp"
-#include "solvers/LP/LPSolver.hpp"
-#include "linear_algebra/SymmetricMatrix.hpp"
-#include "linear_algebra/SparseVector.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
-#include "tools/Options.hpp"
+
+// forward declaration
+class Options;
 
 // see bqpd.f
 enum class BQPDStatus {
@@ -36,52 +36,59 @@ enum BQPDMode {
    UNCHANGED_ACTIVE_SET_AND_JACOBIAN_AND_REDUCED_HESSIAN = 6, // warm start
 };
 
+enum class BQPDProblemType {LP, QP};
+
 class BQPDSolver : public QPSolver {
 public:
-   BQPDSolver(size_t max_number_variables, size_t number_constraints, size_t number_hessian_nonzeros, bool quadratic_programming, const Options& options);
+   BQPDSolver(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros,
+         size_t number_hessian_nonzeros, BQPDProblemType problem_type, const Options& options);
 
-   Direction solve_LP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
-         const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
-         const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point,
+   void solve_LP(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
+         const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
+         const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
+         const RectangularMatrix<double>& constraint_jacobian, const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information) override;
 
-   Direction solve_QP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
-         const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
-         const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const std::vector<double>& initial_point,
-         const WarmstartInformation& warmstart_information) override;
+   void solve_QP(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
+         const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
+         const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
+         const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const Vector<double>& initial_point,
+         Direction& direction, const WarmstartInformation& warmstart_information) override;
 
 private:
-   size_t number_hessian_nonzeros;
-   std::vector<double> lb, ub; // lower and upper bounds of variables and constraints
+   const size_t number_hessian_nonzeros;
+   std::vector<double> lb{}, ub{}; // lower and upper bounds of variables and constraints
 
-   std::vector<double> jacobian;
-   std::vector<int> jacobian_sparsity;
-   int kmax, mlp{1000};
+   std::vector<double> jacobian{};
+   std::vector<int> jacobian_sparsity{};
+   int kmax{0}, mlp{1000};
    size_t mxwk0{2000000}, mxiwk0{500000};
    std::array<int, 100> info{};
-   std::vector<double> alp;
-   std::vector<int> lp, active_set;
-   std::vector<double> w, gradient_solution, residuals, e;
-   size_t size_hessian_sparsity;
-   size_t size_hessian_workspace;
-   size_t size_hessian_sparsity_workspace;
+   std::vector<double> alp{};
+   std::vector<int> lp{}, active_set{};
+   std::vector<double> w{}, gradient_solution{}, residuals{}, e{};
+   size_t size_hessian_sparsity{};
+   size_t size_hessian_workspace{};
+   size_t size_hessian_sparsity_workspace{};
    std::vector<double> hessian_values{};
    std::vector<int> hessian_sparsity{};
    int k{0};
    int iprint{0}, nout{6};
    double fmin{-1e20};
-   int peq_solution{}, ifail{};
+   int peq_solution{0}, ifail{0};
    const int fortran_shift{1};
+   Vector<int> current_hessian_indices{};
 
    size_t number_calls{0};
    const bool print_subproblem;
 
-   Direction solve_subproblem(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
-         const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
-         const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point,
+   void solve_subproblem(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
+         const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
+         const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
+         const RectangularMatrix<double>& constraint_jacobian, const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information);
-   void analyze_constraints(size_t number_variables, size_t number_constraints, Direction& direction);
-   void save_lagrangian_hessian_to_local_format(const SymmetricMatrix<double>& hessian);
+   void categorize_constraints(size_t number_variables, Direction& direction);
+   void save_hessian_to_local_format(const SymmetricMatrix<double>& hessian);
    void save_gradients_to_local_format(size_t number_constraints, const SparseVector<double>& linear_objective,
          const RectangularMatrix<double>& constraint_jacobian);
    [[nodiscard]] BQPDMode determine_mode(const WarmstartInformation& warmstart_information) const;

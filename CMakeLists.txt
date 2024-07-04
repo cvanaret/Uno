@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2023 Charlie Vanaret
+# Copyright (c) 2018-2024 Charlie Vanaret
 # Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 cmake_minimum_required(VERSION 3.7)
@@ -31,12 +31,14 @@ file(GLOB UNO_SOURCE_FILES
     uno/Uno.cpp
     uno/ingredients/globalization_mechanism/*.cpp
     uno/ingredients/globalization_strategy/*.cpp
-    uno/ingredients/globalization_strategy/filter_strategy/*.cpp
-    uno/ingredients/globalization_strategy/filter_strategy/filter/*.cpp
+    uno/ingredients/globalization_strategy/filter_method/*.cpp
+    uno/ingredients/globalization_strategy/filter_method/filter/*.cpp
     uno/ingredients/constraint_relaxation_strategy/*.cpp
     uno/ingredients/subproblem/*.cpp
-    uno/ingredients/subproblem/active_set/*.cpp
-    uno/ingredients/subproblem/interior_point/*.cpp
+    uno/ingredients/subproblem/inequality_constrained_methods/*.cpp
+    uno/ingredients/subproblem/equality_constrained_methods/*.cpp
+    uno/ingredients/subproblem/interior_point_methods/*.cpp
+    uno/model/*.cpp
     uno/optimization/*.cpp
     uno/preprocessing/*.cpp
     uno/tools/*.cpp

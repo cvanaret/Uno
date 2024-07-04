@@ -1,24 +1,28 @@
-// Copyright (c) 2018-2023 Charlie Vanaret
+// Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_MERITFUNCTION_H
 #define UNO_MERITFUNCTION_H
 
 #include "GlobalizationStrategy.hpp"
+#include "tools/Infinity.hpp"
 
 class l1MeritFunction : public GlobalizationStrategy {
 public:
-   explicit l1MeritFunction(Statistics& statistics, const Options& options);
+   explicit l1MeritFunction(const Options& options);
 
-   void initialize(const Iterate& initial_iterate) override;
-   [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Iterate& trial_iterate, const ProgressMeasures& current_progress,
+   void initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) override;
+   [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) override;
-   [[nodiscard]] bool is_infeasibility_acceptable(double infeasibility_measure) const override;
+   [[nodiscard]] bool is_infeasibility_sufficiently_reduced(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress) const override;
    void reset() override;
    void register_current_progress(const ProgressMeasures& current_progress) override;
 
 protected:
    double smallest_known_infeasibility{INF<double>};
+
+   [[nodiscard]] static double constrained_merit_function(const ProgressMeasures& progress, double objective_multiplier);
+   [[nodiscard]] double compute_merit_actual_reduction(double current_merit_value, double trial_merit_value) const;
 };
 
 #endif // UNO_MERITFUNCTION_H

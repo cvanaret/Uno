@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2023 Charlie Vanaret
+// Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <gtest/gtest.h>
@@ -27,10 +27,10 @@ TEST(SparseVector, AllIdentical) {
    x.insert(0, constant_term);
    x.insert(3, constant_term);
    x.insert(7, constant_term);
-   x.for_each([&](size_t index, double entry) {
+   for (const auto [index, entry]: x) {
       EXPECT_TRUE(index <= 7);
       ASSERT_EQ(entry, constant_term);
-   });
+   }
 }
 
 TEST(SparseVector, Clear) {

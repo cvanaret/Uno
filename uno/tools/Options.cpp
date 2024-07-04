@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2023 Charlie Vanaret
+// Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <iostream>
@@ -13,7 +13,9 @@ std::string& Options::operator[](const std::string& key) {
 
 const std::string& Options::at(const std::string& key) const {
    try {
-      return this->options.at(key);
+      const std::string& value = this->options.at(key);
+      this->is_used[key] = true;
+      return value;
    }
    catch(const std::out_of_range&) {
       throw std::out_of_range("The option " + key + " was not found");
@@ -44,10 +46,12 @@ bool Options::get_bool(const std::string& key) const {
    return entry == "yes";
 }
 
-void Options::print() const {
+void Options::print(bool only_used) const {
    std::cout << "Options:\n";
    for (const auto& [key, value]: this->options) {
-      std::cout << "- " << key << " = " << value << '\n';
+      if (not only_used || this->is_used[key]) {
+         std::cout << "- " << key << " = " << value << '\n';
+      }
    }
 }
 
@@ -81,7 +85,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["constraint_relaxation_strategy"] = "feasibility_restoration";
       options["subproblem"] = "primal_dual_interior_point";
       options["globalization_mechanism"] = "LS";
-      options["globalization_strategy"] = "waechter_filter_strategy";
+      options["globalization_strategy"] = "waechter_filter_method";
       options["filter_type"] = "standard";
       options["filter_beta"] = "0.99999";
       options["filter_gamma"] = "1e-8";
@@ -100,14 +104,17 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["scale_functions"] = "yes";
       options["sparse_format"] = "COO";
       options["tolerance"] = "1e-8";
-      options["feasibility_restoration_test_linearized_feasibility"] = "no";
+      options["loose_tolerance"] = "1e-6";
+      options["loose_tolerance_consecutive_iteration_threshold"] = "15";
+      options["switch_to_optimality_requires_linearized_feasibility"] = "no";
       options["LS_scale_duals_with_step_length"] = "yes";
+      options["protect_actual_reduction_against_roundoff"] = "yes";
    }
    else if (preset_name == "filtersqp") {
       options["constraint_relaxation_strategy"] = "feasibility_restoration";
       options["subproblem"] = "QP";
       options["globalization_mechanism"] = "TR";
-      options["globalization_strategy"] = "leyffer_filter_strategy";
+      options["globalization_strategy"] = "fletcher_filter_method";
       options["filter_type"] = "standard";
       options["progress_norm"] = "L1";
       options["residual_norm"] = "L2";
@@ -116,8 +123,10 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["l1_constraint_violation_coefficient"] = "1.";
       options["enforce_linear_constraints"] = "yes";
       options["tolerance"] = "1e-6";
+      options["loose_tolerance"] = "1e-6";
       options["TR_min_radius"] = "1e-8";
-      options["feasibility_restoration_test_linearized_feasibility"] = "yes";
+      options["switch_to_optimality_requires_linearized_feasibility"] = "yes";
+      options["protect_actual_reduction_against_roundoff"] = "no";
    }
    else if (preset_name == "byrd") {
       options["constraint_relaxation_strategy"] = "l1_relaxation";
@@ -131,14 +140,19 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["l1_relaxation_epsilon2"] = "0.1";
       options["l1_constraint_violation_coefficient"] = "1.";
       options["tolerance"] = "1e-6";
+      options["loose_tolerance"] = "1e-6";
       options["progress_norm"] = "L1";
       options["residual_norm"] = "L1";
       options["sparse_format"] = "CSC";
       options["LS_scale_duals_with_step_length"] = "no";
+      options["protect_actual_reduction_against_roundoff"] = "no";
+   }
+   else {
+      throw std::runtime_error("The preset " + preset_name + " is not known.");
    }
 }
 
-void get_command_line_options(int argc, char* argv[], Options& options) {
+void get_command_line_arguments(int argc, char* argv[], Options& options) {
    // build the (name, value) map
    int i = 1;
    while (i < argc - 1) {

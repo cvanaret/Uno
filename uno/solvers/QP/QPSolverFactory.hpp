@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2023 Charlie Vanaret
+// Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_QPSOLVERFACTORY_H
@@ -15,10 +15,11 @@ class QPSolverFactory {
 public:
    // create a QP solver
    static std::unique_ptr<QPSolver> create(const std::string& QP_solver_name, size_t number_variables, size_t number_constraints,
-         size_t maximum_number_nonzeros, bool quadratic_programming, const Options& options) {
+         size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options) {
 #ifdef HAS_BQPD
       if (QP_solver_name == "BQPD") {
-         return std::make_unique<BQPDSolver>(number_variables, number_constraints, maximum_number_nonzeros, quadratic_programming, options);
+         return std::make_unique<BQPDSolver>(number_variables, number_constraints, number_objective_gradient_nonzeros, number_jacobian_nonzeros,
+            number_hessian_nonzeros, BQPDProblemType::QP, options);
       }
 #endif
       throw std::invalid_argument("QP solver name is unknown");

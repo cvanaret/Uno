@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2023 Charlie Vanaret
+// Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_LINEARSOLVERFACTORY_H
@@ -13,11 +13,10 @@
 
 class SymmetricIndefiniteLinearSolverFactory {
 public:
-   static std::unique_ptr<SymmetricIndefiniteLinearSolver<double>> create(const std::string& linear_solver_name, size_t max_dimension,
-         size_t max_number_nonzeros) {
+   static std::unique_ptr<SymmetricIndefiniteLinearSolver<double>> create(const std::string& linear_solver_name, size_t dimension, size_t number_nonzeros) {
 #ifdef HAS_MA57
       if (linear_solver_name == "MA57") {
-         return std::make_unique<MA57Solver>(max_dimension, max_number_nonzeros);
+         return std::make_unique<MA57Solver>(dimension, number_nonzeros);
       }
 #endif
       throw std::invalid_argument("Linear solver name is unknown");

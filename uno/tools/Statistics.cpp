@@ -1,50 +1,51 @@
-// Copyright (c) 2018-2023 Charlie Vanaret
+// Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <iostream>
 #include <iomanip>
 #include "Statistics.hpp"
+#include "Options.hpp"
 
 // TODO move this to the option file
 int Statistics::int_width = 7;
 int Statistics::double_width = 17;
-int Statistics::char_width = 7;
+int Statistics::string_width = 26;
 
 Statistics::Statistics(const Options& options): print_header_every_iterations(options.get_unsigned_int("statistics_print_header_every_iterations")) {
 }
 
-void Statistics::add_column(std::string name, int width, int order) {
+void Statistics::add_column(std::string_view name, int width, int order) {
    this->columns[order] = name;
-   this->widths[std::move(name)] = width;
+   this->widths[name] = width;
 }
 
-void Statistics::add_statistic(std::string name, std::string value) {
-   this->current_line[std::move(name)] = std::move(value);
+void Statistics::set(std::string_view name, std::string value) {
+   this->current_line[name] = std::move(value);
 }
 
-void Statistics::add_statistic(std::string name, int value) {
-   add_statistic(std::move(name), std::to_string(value));
+void Statistics::set(std::string_view name, int value) {
+   this->set(name, std::to_string(value));
 }
 
-void Statistics::add_statistic(std::string name, size_t value) {
-   add_statistic(std::move(name), std::to_string(value));
+void Statistics::set(std::string_view name, size_t value) {
+   this->set(name, std::to_string(value));
 }
 
-void Statistics::add_statistic(std::string name, double value) {
+void Statistics::set(std::string_view name, double value) {
    std::ostringstream stream;
    stream << std::defaultfloat << std::setprecision(7) << value;
-   add_statistic(std::move(name), stream.str());
+   this->set(name, stream.str());
 }
 
 void Statistics::print_header(bool first_occurrence) {
    /* line above */
    std::cout << (first_occurrence ? Statistics::symbol("top-left") : Statistics::symbol("left-mid"));
    int k = 0;
-   for (const std::pair<const int, std::string>& element: this->columns) {
+   for (const auto& element: this->columns) {
       if (0 < k) {
          std::cout << (first_occurrence ? Statistics::symbol("top-mid") : Statistics::symbol("mid-mid"));
       }
-      std::string header = element.second;
+      const std::string& header = element.second;
       for (int j = 0; j < this->widths[header]; j++) {
          std::cout << Statistics::symbol("top");
       }
@@ -54,11 +55,11 @@ void Statistics::print_header(bool first_occurrence) {
    /* headers */
    std::cout << Statistics::symbol("left");
    k = 0;
-   for (const std::pair<const int, std::string>& element: this->columns) {
+   for (const auto& element: this->columns) {
       if (0 < k) {
          std::cout << Statistics::symbol("middle");
       }
-      std::string header = element.second;
+      const std::string& header = element.second;
       std::cout << " " << header;
       for (int j = 0; j < this->widths[header] - static_cast<int>(header.size()) - 1; j++) {
          std::cout << " ";
@@ -74,7 +75,7 @@ void Statistics::print_current_line() {
    }
    std::cout << Statistics::symbol("left-mid");
    int k = 0;
-   for (const std::pair<const int, std::string>& element: this->columns) {
+   for (const auto& element: this->columns) {
       if (0 < k) {
          std::cout << Statistics::symbol("mid-mid");
       }
@@ -88,7 +89,7 @@ void Statistics::print_current_line() {
    /* headers */
    std::cout << Statistics::symbol("left");
    k = 0;
-   for (const std::pair<const int, std::string>& element: this->columns) {
+   for (const auto& element: this->columns) {
       if (0 < k) {
          std::cout << Statistics::symbol("middle");
       }
@@ -116,7 +117,7 @@ void Statistics::print_current_line() {
 void Statistics::print_footer() {
    std::cout << Statistics::symbol("bottom-left");
    int k = 0;
-   for (const std::pair<const int, std::string>& element: this->columns) {
+   for (const auto& element: this->columns) {
       if (0 < k) {
          std::cout << Statistics::symbol("bottom-mid");
       }
@@ -129,12 +130,15 @@ void Statistics::print_footer() {
    std::cout << Statistics::symbol("bottom-right") << '\n';
 }
 
-void Statistics::new_line() {
-   this->current_line.clear();
+void Statistics::start_new_line() {
+   //this->current_line.clear();
+   for (const auto& column: this->columns) {
+      this->current_line[column.second] = "-";
+   }
 }
 
-const std::string& Statistics::symbol(const std::string& value) {
-   static std::map<std::string, std::string> symbols = {
+std::string_view Statistics::symbol(std::string_view value) {
+   static std::map<std::string_view, std::string_view> symbols = {
          {"top", "─"},
          {"top-mid", "┬"},
          {"top-left", "┌"},
