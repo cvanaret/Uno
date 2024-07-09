@@ -40,8 +40,10 @@ public:
    [[nodiscard]] size_t number_jacobian_nonzeros() const override;
    [[nodiscard]] size_t number_hessian_nonzeros() const override;
 
+   void evaluate_lagrangian_gradient(Iterate& iterate, const Multipliers& multipliers) const override;
    [[nodiscard]] double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const override;
+   [[nodiscard]] TerminationStatus check_convergence_with_given_tolerance(Iterate& current_iterate, double tolerance) const override;
 
    // parameterization
    void set_objective_multiplier(double new_objective_multiplier);
@@ -138,6 +140,31 @@ inline void l1RelaxedProblem::evaluate_lagrangian_hessian(const Vector<double>& 
    }
 }
 
+// Lagrangian gradient split in two parts: objective contribution and constraints' contribution
+inline void l1RelaxedProblem::evaluate_lagrangian_gradient(Iterate& iterate, const Multipliers& multipliers) const {
+   iterate.lagrangian_gradient.objective_contribution.fill(0.);
+   iterate.lagrangian_gradient.constraints_contribution.fill(0.);
+
+   // objective gradient
+   for (auto [variable_index, derivative]: iterate.evaluations.objective_gradient) {
+      iterate.lagrangian_gradient.objective_contribution[variable_index] += derivative;
+   }
+
+   // constraints
+   for (size_t constraint_index: Range(iterate.number_constraints)) {
+      if (multipliers.constraints[constraint_index] != 0.) {
+         for (auto [variable_index, derivative]: iterate.evaluations.constraint_jacobian[constraint_index]) {
+            iterate.lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
+         }
+      }
+   }
+
+   // bound constraints
+   for (size_t variable_index: Range(this->model.number_variables)) {
+      iterate.lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.lower_bounds[variable_index] + multipliers.upper_bounds[variable_index];
+   }
+}
+
 // complementary slackness error: expression for violated constraints depends on the definition of the relaxed problem
 inline double l1RelaxedProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
       const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
@@ -176,6 +203,24 @@ inline double l1RelaxedProblem::complementarity_error(const Vector<double>& prim
       return 0.;
    });
    return norm(residual_norm, bounds_complementarity, constraints_complementarity);
+}
+
+inline TerminationStatus l1RelaxedProblem::check_convergence_with_given_tolerance(Iterate& current_iterate, double tolerance) const {
+   // evaluate termination conditions based on optimality conditions
+   const bool stationarity = (current_iterate.residuals.stationarity / current_iterate.residuals.stationarity_scaling <= tolerance);
+   const bool complementarity = (current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling <= tolerance);
+   const bool primal_feasibility = (current_iterate.residuals.primal_feasibility <= tolerance);
+
+   DEBUG << "\nTermination criteria for l1 relaxed problem with tolerance = " << tolerance << ":\n";
+   DEBUG << "Stationarity: " << std::boolalpha << stationarity << '\n';
+   DEBUG << "Complementarity: " << std::boolalpha << complementarity << '\n';
+   DEBUG << "Primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
+
+   if (this->model.is_constrained() && stationarity && not primal_feasibility && complementarity) {
+      // no primal feasibility, stationary point of constraint violation
+      return TerminationStatus::INFEASIBLE_STATIONARY_POINT;
+   }
+   return TerminationStatus::NOT_OPTIMAL;
 }
 
 inline double l1RelaxedProblem::variable_lower_bound(size_t variable_index) const {

@@ -8,6 +8,7 @@
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/LagrangianGradient.hpp"
 #include "optimization/Multipliers.hpp"
 #include "reformulation/OptimizationProblem.hpp"
 #include "symbolic/VectorView.hpp"
@@ -85,8 +86,7 @@ void ConstraintRelaxationStrategy::compute_progress_measures(Iterate& current_it
    this->evaluate_progress_measures(trial_iterate);
 }
 
-void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const OptimizationProblem& optimality_problem, const OptimizationProblem& feasibility_problem,
-      Iterate& iterate) {
+void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const OptimizationProblem& problem, Iterate& iterate, const Multipliers& multipliers) {
    iterate.evaluate_objective_gradient(this->model);
    iterate.evaluate_constraints(this->model);
    iterate.evaluate_constraint_jacobian(this->model);
@@ -95,55 +95,33 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Optimizat
    // - for KKT conditions: with standard multipliers and current objective multiplier
    // - for FJ conditions: with standard multipliers and 0 objective multiplier
    // - for feasibility problem: with feasibility multipliers and 0 objective multiplier
-   this->evaluate_lagrangian_gradient(iterate, iterate.multipliers);
-   iterate.residuals.KKT_stationarity = OptimizationProblem::stationarity_error(iterate.lagrangian_gradient, iterate.objective_multiplier,
+   problem.evaluate_lagrangian_gradient(iterate, multipliers);
+   iterate.residuals.stationarity = ConstraintRelaxationStrategy::stationarity_error(iterate.lagrangian_gradient, problem.get_objective_multiplier(),
          this->residual_norm);
-   iterate.residuals.FJ_stationarity = OptimizationProblem::stationarity_error(iterate.lagrangian_gradient, 0., this->residual_norm);
-   this->evaluate_lagrangian_gradient(iterate, iterate.feasibility_multipliers);
-   iterate.residuals.feasibility_stationarity = OptimizationProblem::stationarity_error(iterate.lagrangian_gradient, 0., this->residual_norm);
 
    // constraint violation of the original problem
    iterate.residuals.primal_feasibility = this->model.constraint_violation(iterate.evaluations.constraints, this->residual_norm);
 
    // complementarity error
    const double shift_value = 0.;
-   iterate.residuals.complementarity = optimality_problem.complementarity_error(iterate.primals, iterate.evaluations.constraints,
-         iterate.multipliers, shift_value, this->residual_norm);
-   iterate.residuals.feasibility_complementarity = feasibility_problem.complementarity_error(iterate.primals, iterate.evaluations.constraints,
-         iterate.feasibility_multipliers, shift_value, this->residual_norm);
+   iterate.residuals.complementarity = problem.complementarity_error(iterate.primals, iterate.evaluations.constraints, multipliers, shift_value,
+         this->residual_norm);
 
    // scaling factors
-   iterate.residuals.stationarity_scaling = this->compute_stationarity_scaling(iterate.multipliers);
-   iterate.residuals.complementarity_scaling = this->compute_complementarity_scaling(iterate.multipliers);
+   iterate.residuals.stationarity_scaling = this->compute_stationarity_scaling(multipliers);
+   iterate.residuals.complementarity_scaling = this->compute_complementarity_scaling(multipliers);
 }
 
-// Lagrangian gradient split in two parts: objective contribution and constraints' contribution
-void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(Iterate& iterate, const Multipliers& multipliers) const {
-   iterate.lagrangian_gradient.objective_contribution.fill(0.);
-   iterate.lagrangian_gradient.constraints_contribution.fill(0.);
-
-   // objective gradient
-   for (auto [variable_index, derivative]: iterate.evaluations.objective_gradient) {
-      iterate.lagrangian_gradient.objective_contribution[variable_index] += derivative;
-   }
-
-   // constraints
-   for (size_t constraint_index: Range(iterate.number_constraints)) {
-      if (multipliers.constraints[constraint_index] != 0.) {
-         for (auto [variable_index, derivative]: iterate.evaluations.constraint_jacobian[constraint_index]) {
-            iterate.lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
-         }
-      }
-   }
-
-   // bound constraints
-   for (size_t variable_index: Range(this->model.number_variables)) {
-      iterate.lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.lower_bounds[variable_index] + multipliers.upper_bounds[variable_index];
-   }
+double ConstraintRelaxationStrategy::stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
+      Norm residual_norm) {
+   // norm of the scaled Lagrangian gradient
+   const auto scaled_lagrangian = objective_multiplier * lagrangian_gradient.objective_contribution + lagrangian_gradient.constraints_contribution;
+   return norm(residual_norm, scaled_lagrangian);
 }
 
 double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Multipliers& multipliers) const {
-   const size_t total_size = this->model.get_lower_bounded_variables().size() + this->model.get_upper_bounded_variables().size() + this->model.number_constraints;
+   const size_t total_size = this->model.get_lower_bounded_variables().size() + this->model.get_upper_bounded_variables().size() +
+         this->model.number_constraints;
    if (total_size == 0) {
       return 1.;
    }
@@ -173,15 +151,15 @@ double ConstraintRelaxationStrategy::compute_complementarity_scaling(const Multi
    }
 }
 
-TerminationStatus ConstraintRelaxationStrategy::check_termination(Iterate& current_iterate) {
+TerminationStatus ConstraintRelaxationStrategy::check_termination(const OptimizationProblem& problem, Iterate& current_iterate) {
    // test convergence wrt the tight tolerance
-   const TerminationStatus status_tight_tolerance = this->check_convergence_with_given_tolerance(current_iterate, this->tight_tolerance);
+   const TerminationStatus status_tight_tolerance = problem.check_convergence_with_given_tolerance(current_iterate, this->tight_tolerance);
    if (status_tight_tolerance != TerminationStatus::NOT_OPTIMAL || this->loose_tolerance <= this->tight_tolerance) {
       return status_tight_tolerance;
    }
 
    // if not converged, check convergence wrt loose tolerance (provided it is strictly looser than the tight tolerance)
-   const TerminationStatus status_loose_tolerance = this->check_convergence_with_given_tolerance(current_iterate, this->loose_tolerance);
+   const TerminationStatus status_loose_tolerance = problem.check_convergence_with_given_tolerance(current_iterate, this->loose_tolerance);
    // if converged, keep track of the number of consecutive iterations
    if (status_loose_tolerance != TerminationStatus::NOT_OPTIMAL) {
       this->loose_tolerance_consecutive_iterations++;
@@ -197,43 +175,6 @@ TerminationStatus ConstraintRelaxationStrategy::check_termination(Iterate& curre
    else {
       return TerminationStatus::NOT_OPTIMAL;
    }
-}
-
-TerminationStatus ConstraintRelaxationStrategy::check_convergence_with_given_tolerance(Iterate& current_iterate, double tolerance) const {
-   // evaluate termination conditions based on optimality conditions
-   const bool KKT_stationarity = (current_iterate.residuals.KKT_stationarity / current_iterate.residuals.stationarity_scaling <= tolerance);
-   const bool FJ_stationarity = (current_iterate.residuals.FJ_stationarity <= tolerance);
-   const bool feasibility_stationarity = (current_iterate.residuals.feasibility_stationarity <= tolerance);
-   const bool complementarity = (current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling <= tolerance);
-   const bool feasibility_complementarity = (current_iterate.residuals.feasibility_complementarity <= tolerance);
-   const bool primal_feasibility = (current_iterate.residuals.primal_feasibility <= tolerance);
-   const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(this->model.number_variables, tolerance);
-
-   DEBUG << "\nTermination criteria for tolerance = " << tolerance << ":\n";
-   DEBUG << "KKT stationarity: " << std::boolalpha << KKT_stationarity << '\n';
-   DEBUG << "FJ stationarity: " << std::boolalpha << FJ_stationarity << '\n';
-   DEBUG << "Stationarity (feasibility): " << std::boolalpha << feasibility_stationarity << '\n';
-   DEBUG << "Complementarity: " << std::boolalpha << complementarity << '\n';
-   DEBUG << "Complementarity (feasibility): " << std::boolalpha << feasibility_complementarity << '\n';
-   DEBUG << "Primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
-   DEBUG << "Not all zero multipliers: " << std::boolalpha << no_trivial_duals << "\n\n";
-
-   if (current_iterate.is_objective_computed && current_iterate.evaluations.objective < this->unbounded_objective_threshold) {
-      return TerminationStatus::UNBOUNDED;
-   }
-   else if (KKT_stationarity && primal_feasibility && 0. < current_iterate.objective_multiplier && complementarity) {
-      // feasible regular stationary point
-      return TerminationStatus::FEASIBLE_KKT_POINT;
-   }
-   else if (this->model.is_constrained() && FJ_stationarity && primal_feasibility && complementarity && no_trivial_duals) {
-      // feasible but violation of CQ
-      return TerminationStatus::FEASIBLE_FJ_POINT;
-   }
-   else if (this->model.is_constrained() && feasibility_stationarity && not primal_feasibility && feasibility_complementarity) {
-      // no primal feasibility, stationary point of constraint violation
-      return TerminationStatus::INFEASIBLE_STATIONARY_POINT;
-   }
-   return TerminationStatus::NOT_OPTIMAL;
 }
 
 void ConstraintRelaxationStrategy::set_statistics(Statistics& statistics, const Iterate& iterate) const {

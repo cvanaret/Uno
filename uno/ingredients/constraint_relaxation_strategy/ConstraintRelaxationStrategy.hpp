@@ -14,6 +14,8 @@
 // forward declarations
 class Direction;
 class Iterate;
+template <typename ElementType>
+class LagrangianGradient;
 class Model;
 struct Multipliers;
 class OptimizationProblem;
@@ -77,14 +79,14 @@ protected:
    void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate);
    virtual void evaluate_progress_measures(Iterate& iterate) const = 0;
 
-   void compute_primal_dual_residuals(const OptimizationProblem& optimality_problem, const OptimizationProblem& feasibility_problem, Iterate& iterate);
-   void evaluate_lagrangian_gradient(Iterate& iterate, const Multipliers& multipliers) const;
+   void compute_primal_dual_residuals(const OptimizationProblem& problem, Iterate& iterate, const Multipliers& multipliers);
+   [[nodiscard]] static double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
+         Norm residual_norm);
 
    [[nodiscard]] double compute_stationarity_scaling(const Multipliers& multipliers) const;
    [[nodiscard]] double compute_complementarity_scaling(const Multipliers& multipliers) const;
 
-   [[nodiscard]] TerminationStatus check_termination(Iterate& current_iterate);
-   [[nodiscard]] TerminationStatus check_convergence_with_given_tolerance(Iterate& current_iterate, double tolerance) const;
+   [[nodiscard]] TerminationStatus check_termination(const OptimizationProblem& problem, Iterate& current_iterate);
 
    void set_statistics(Statistics& statistics, const Iterate& iterate) const;
    void set_progress_statistics(Statistics& statistics, const Iterate& iterate) const;

@@ -33,8 +33,11 @@ public:
    [[nodiscard]] size_t number_jacobian_nonzeros() const override { return this->model.number_jacobian_nonzeros(); }
    [[nodiscard]] size_t number_hessian_nonzeros() const override { return this->model.number_hessian_nonzeros(); }
 
+
+   void evaluate_lagrangian_gradient(Iterate& iterate, const Multipliers& multipliers) const override;
    [[nodiscard]] double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const override;
+   [[nodiscard]] TerminationStatus check_convergence_with_given_tolerance(Iterate& current_iterate, double tolerance) const override;
 };
 
 inline OptimalityProblem::OptimalityProblem(const Model& model): OptimizationProblem(model, model.number_variables, model.number_constraints) {
@@ -60,6 +63,31 @@ inline void OptimalityProblem::evaluate_constraint_jacobian(Iterate& iterate, Re
 inline void OptimalityProblem::evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers,
       SymmetricMatrix<double>& hessian) const {
    this->model.evaluate_lagrangian_hessian(x, this->get_objective_multiplier(), multipliers, hessian);
+}
+
+// Lagrangian gradient split in two parts: objective contribution and constraints' contribution
+inline void OptimalityProblem::evaluate_lagrangian_gradient(Iterate& iterate, const Multipliers& multipliers) const {
+   iterate.lagrangian_gradient.objective_contribution.fill(0.);
+   iterate.lagrangian_gradient.constraints_contribution.fill(0.);
+
+   // objective gradient
+   for (auto [variable_index, derivative]: iterate.evaluations.objective_gradient) {
+      iterate.lagrangian_gradient.objective_contribution[variable_index] += derivative;
+   }
+
+   // constraints
+   for (size_t constraint_index: Range(iterate.number_constraints)) {
+      if (multipliers.constraints[constraint_index] != 0.) {
+         for (auto [variable_index, derivative]: iterate.evaluations.constraint_jacobian[constraint_index]) {
+            iterate.lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
+         }
+      }
+   }
+
+   // bound constraints
+   for (size_t variable_index: Range(this->model.number_variables)) {
+      iterate.lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.lower_bounds[variable_index] + multipliers.upper_bounds[variable_index];
+   }
 }
 
 inline double OptimalityProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
@@ -88,6 +116,34 @@ inline double OptimalityProblem::complementarity_error(const Vector<double>& pri
       return 0.;
    });
    return norm(residual_norm, variable_complementarity, constraint_complementarity);
+}
+
+inline TerminationStatus OptimalityProblem::check_convergence_with_given_tolerance(Iterate& current_iterate, double tolerance) const {
+   // evaluate termination conditions based on optimality conditions
+   const bool stationarity = (current_iterate.residuals.stationarity / current_iterate.residuals.stationarity_scaling <= tolerance);
+   const bool complementarity = (current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling <= tolerance);
+   const bool primal_feasibility = (current_iterate.residuals.primal_feasibility <= tolerance);
+
+   DEBUG << "\nTermination criteria for optimality problem with tolerance = " << tolerance << ":\n";
+   DEBUG << "Stationarity: " << std::boolalpha << stationarity << '\n';
+   DEBUG << "Complementarity: " << std::boolalpha << complementarity << '\n';
+   DEBUG << "Primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
+
+   // TODO constant
+   if (current_iterate.is_objective_computed && current_iterate.evaluations.objective < -1e20) {
+      return TerminationStatus::UNBOUNDED;
+   }
+   else if (stationarity && primal_feasibility && 0. < current_iterate.objective_multiplier && complementarity) {
+      // feasible regular stationary point
+      return TerminationStatus::FEASIBLE_KKT_POINT;
+   }
+   /*
+   else if (this->model.is_constrained() && FJ_stationarity && primal_feasibility && complementarity && no_trivial_duals) {
+      // feasible but violation of CQ
+      return TerminationStatus::FEASIBLE_FJ_POINT;
+   }
+    */
+   return TerminationStatus::NOT_OPTIMAL;
 }
 
 #endif // UNO_OPTIMALITYPROBLEM_H
