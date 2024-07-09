@@ -60,7 +60,7 @@ bool FilterMethod::is_feasibility_iterate_acceptable(Statistics& statistics, con
       DEBUG << "Trial iterate (h-type) was rejected by violating the Armijo condition\n";
    }
    Iterate::number_eval_objective--;
-   statistics.set("status", std::string(accept ? "accepted" : "rejected") + " (h-type Armijo)");
+   statistics.set("status", std::string(accept ? "accepted" : "rejected") + " (Armijo)");
    return accept;
 }
 
