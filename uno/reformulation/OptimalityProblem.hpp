@@ -33,8 +33,8 @@ public:
    [[nodiscard]] size_t number_jacobian_nonzeros() const override { return this->model.number_jacobian_nonzeros(); }
    [[nodiscard]] size_t number_hessian_nonzeros() const override { return this->model.number_hessian_nonzeros(); }
 
-
    void evaluate_lagrangian_gradient(Iterate& iterate, const Multipliers& multipliers) const override;
+   [[nodiscard]] double dual_feasibility_error(const Multipliers& multipliers, Norm residual_norm) const override;
    [[nodiscard]] double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const override;
    [[nodiscard]] TerminationStatus check_convergence_with_given_tolerance(Iterate& current_iterate, double tolerance) const override;
@@ -90,6 +90,26 @@ inline void OptimalityProblem::evaluate_lagrangian_gradient(Iterate& iterate, co
    }
 }
 
+inline double OptimalityProblem::dual_feasibility_error(const Multipliers& multipliers, Norm residual_norm) const {
+   // lower bound constraints: dual should be >= 0
+   const VectorExpression lower_bounds(this->model.get_lower_bounded_variables(), [&](size_t variable_index) {
+      return std::max(0., -multipliers.lower_bounds[variable_index]);
+   });
+
+   // lower bound constraints: dual should be <= 0
+   const VectorExpression upper_bounds(this->model.get_upper_bounded_variables(), [&](size_t variable_index) {
+      return std::max(0., multipliers.upper_bounds[variable_index]);
+   });
+
+   // TODO inequality constraints
+   for (size_t constraint_index: this->model.get_inequality_constraints()) {
+      if (this->model.get_constraint_bound_type(constraint_index) == BOUNDED_LOWER) { // only a finite lower bound
+
+      }
+   }
+   return norm(residual_norm, lower_bounds, upper_bounds);
+}
+
 inline double OptimalityProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
       const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
    // bound constraints
@@ -121,24 +141,26 @@ inline double OptimalityProblem::complementarity_error(const Vector<double>& pri
 inline TerminationStatus OptimalityProblem::check_convergence_with_given_tolerance(Iterate& current_iterate, double tolerance) const {
    // evaluate termination conditions based on optimality conditions
    const bool stationarity = (current_iterate.residuals.stationarity / current_iterate.residuals.stationarity_scaling <= tolerance);
-   const bool complementarity = (current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling <= tolerance);
    const bool primal_feasibility = (current_iterate.residuals.primal_feasibility <= tolerance);
+   const bool dual_feasibility = (current_iterate.residuals.dual_feasibility <= tolerance);
+   const bool complementarity = (current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling <= tolerance);
 
    DEBUG << "\nTermination criteria for optimality problem with tolerance = " << tolerance << ":\n";
    DEBUG << "Stationarity: " << std::boolalpha << stationarity << '\n';
-   DEBUG << "Complementarity: " << std::boolalpha << complementarity << '\n';
    DEBUG << "Primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
+   DEBUG << "Dual feasibility: " << std::boolalpha << dual_feasibility << '\n';
+   DEBUG << "Complementarity: " << std::boolalpha << complementarity << '\n';
 
    // TODO constant
    if (current_iterate.is_objective_computed && current_iterate.evaluations.objective < -1e20) {
       return TerminationStatus::UNBOUNDED;
    }
-   else if (stationarity && primal_feasibility && 0. < current_iterate.objective_multiplier && complementarity) {
+   else if (0. < current_iterate.objective_multiplier && stationarity && primal_feasibility && dual_feasibility && complementarity) {
       // feasible regular stationary point
       return TerminationStatus::FEASIBLE_KKT_POINT;
    }
    /*
-   else if (this->model.is_constrained() && FJ_stationarity && primal_feasibility && complementarity && no_trivial_duals) {
+   else if (this->model.is_constrained() && FJ_stationarity && primal_feasibility && dual_feasibility && complementarity && no_trivial_duals) {
       // feasible but violation of CQ
       return TerminationStatus::FEASIBLE_FJ_POINT;
    }

@@ -34,6 +34,7 @@ void Result::print(bool print_primal_dual_solution) const {
 
    std::cout << "┌ Stationarity residual:\t\t" << this->solution.residuals.stationarity << '\n';
    std::cout << "│ Primal feasibility residual:\t\t" << this->solution.residuals.primal_feasibility << '\n';
+   std::cout << "│ Dual feasibility residual:\t\t" << this->solution.residuals.dual_feasibility << '\n';
    std::cout << "└ Complementarity residual:\t\t" << this->solution.residuals.complementarity << '\n';
 
    std::cout << "┌ Infeasibility measure:\t\t" << this->solution.progress.infeasibility << '\n';
@@ -48,10 +49,8 @@ void Result::print(bool print_primal_dual_solution) const {
       std::cout << "└ Upper bound multipliers:\t\t"; print_vector(std::cout, view(this->solution.multipliers.upper_bounds, 0,
             this->number_variables));
       std::cout << "┌ Constraint feasibility multipliers:\t"; print_vector(std::cout, this->solution.feasibility_multipliers.constraints);
-      std::cout << "│ Lower bound feasibility multipliers:\t"; print_vector(std::cout, view(this->solution.feasibility_multipliers.lower_bounds, 0,
-            this->number_variables));
-      std::cout << "└ Upper bound feasibility multipliers:\t"; print_vector(std::cout, view(this->solution.feasibility_multipliers.upper_bounds, 0,
-            this->number_variables));
+      std::cout << "│ Lower bound feasibility multipliers:\t"; print_vector(std::cout, this->solution.feasibility_multipliers.lower_bounds);
+      std::cout << "└ Upper bound feasibility multipliers:\t"; print_vector(std::cout, this->solution.feasibility_multipliers.upper_bounds);
       std::cout << "Objective multiplier:\t\t\t" << this->solution.objective_multiplier << '\n';
    }
 

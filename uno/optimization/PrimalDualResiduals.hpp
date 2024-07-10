@@ -10,6 +10,7 @@ class PrimalDualResiduals {
 public:
    double stationarity{INF<double>};
    double primal_feasibility{INF<double>};
+   double dual_feasibility{INF<double>};
    double complementarity{INF<double>};
 
    double stationarity_scaling{INF<double>};

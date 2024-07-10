@@ -292,7 +292,8 @@ void l1Relaxation::check_exact_relaxation(Iterate& iterate) const {
 }
 
 void l1Relaxation::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
-   statistics.set("complementarity", iterate.residuals.complementarity);
    statistics.set("stationarity", iterate.residuals.stationarity);
+   statistics.set("dual feas.", iterate.residuals.dual_feasibility);
+   statistics.set("complementarity", iterate.residuals.complementarity);
 }
 

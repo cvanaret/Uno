@@ -102,6 +102,8 @@ void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Optimizat
    // constraint violation of the original problem
    iterate.residuals.primal_feasibility = this->model.constraint_violation(iterate.evaluations.constraints, this->residual_norm);
 
+   iterate.residuals.dual_feasibility = problem.dual_feasibility_error(multipliers, this->residual_norm);
+
    // complementarity error
    const double shift_value = 0.;
    iterate.residuals.complementarity = problem.complementarity_error(iterate.primals, iterate.evaluations.constraints, multipliers, shift_value,
@@ -185,7 +187,7 @@ void ConstraintRelaxationStrategy::set_statistics(Statistics& statistics, const 
 void ConstraintRelaxationStrategy::set_progress_statistics(Statistics& statistics, const Iterate& iterate) const {
    statistics.set("objective", iterate.evaluations.objective);
    if (this->model.is_constrained()) {
-      statistics.set("infeasibility", iterate.progress.infeasibility);
+      statistics.set("primal feas.", iterate.progress.infeasibility);
    }
 }
 

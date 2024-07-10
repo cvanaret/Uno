@@ -41,6 +41,7 @@ public:
    [[nodiscard]] size_t number_hessian_nonzeros() const override;
 
    void evaluate_lagrangian_gradient(Iterate& iterate, const Multipliers& multipliers) const override;
+   [[nodiscard]] double dual_feasibility_error(const Multipliers& multipliers, Norm residual_norm) const override;
    [[nodiscard]] double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const override;
    [[nodiscard]] TerminationStatus check_convergence_with_given_tolerance(Iterate& current_iterate, double tolerance) const override;
@@ -165,58 +166,111 @@ inline void l1RelaxedProblem::evaluate_lagrangian_gradient(Iterate& iterate, con
    }
 }
 
+inline double l1RelaxedProblem::dual_feasibility_error(const Multipliers& multipliers, Norm residual_norm) const {
+   // lower bound constraints: dual should be >= 0
+   const VectorExpression lower_bounds(this->get_lower_bounded_variables(), [&](size_t variable_index) {
+      return std::max(0., -multipliers.lower_bounds[variable_index]);
+   });
+
+   // lower bound constraints: dual should be <= 0
+   const VectorExpression upper_bounds(this->get_upper_bounded_variables(), [&](size_t variable_index) {
+      return std::max(0., multipliers.upper_bounds[variable_index]);
+   });
+
+   // elastic variables
+   std::vector<double> positive_elastic(this->elastic_variables.positive.size());
+   size_t positive_elastic_index = 0;
+   // std::cout << "Positive elastic variables (rho + y - zp):\n";
+   for (auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
+      double error = 1. + (multipliers.constraints[constraint_index] - multipliers.lower_bounds[elastic_index])/this->constraint_violation_coefficient;
+      // std::cout << "1 + " << multipliers.constraints[constraint_index]/this->constraint_violation_coefficient << " - " <<
+      //   multipliers.lower_bounds[elastic_index]/this->constraint_violation_coefficient << " = " << error << '\n';
+      positive_elastic[positive_elastic_index] = error;
+      positive_elastic_index++;
+   }
+   // std::cout << "Negative elastic variables (rho - y - zn):\n";
+   std::vector<double> negative_elastic(this->elastic_variables.negative.size());
+   size_t negative_elastic_index = 0;
+   for (auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
+      double error = 1. - (multipliers.constraints[constraint_index] + multipliers.lower_bounds[elastic_index])/this->constraint_violation_coefficient;
+      // std::cout << "1 - " << multipliers.constraints[constraint_index]/this->constraint_violation_coefficient << " - " <<
+      //         multipliers.lower_bounds[elastic_index]/this->constraint_violation_coefficient << " = " << error << '\n';
+      negative_elastic[negative_elastic_index] = error;
+      negative_elastic_index++;
+   }
+   return norm(residual_norm, lower_bounds, upper_bounds, positive_elastic, negative_elastic);
+}
+
 // complementary slackness error: expression for violated constraints depends on the definition of the relaxed problem
 inline double l1RelaxedProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
       const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
    // bound constraints
-   const VectorExpression bounds_complementarity(Range(this->model.number_variables), [&](size_t variable_index) {
+   const VectorExpression bounds_complementarity(Range(this->number_variables), [&](size_t variable_index) {
+      // std::cout << "l1 complementarity for variable " << variable_index << '\n';
       if (0. < multipliers.lower_bounds[variable_index]) {
-         return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->variable_lower_bound(variable_index)) - shift_value;
+         // std::cout << "z_lb > 0: " << multipliers.lower_bounds[variable_index] << " * (" << primals[variable_index] << " - " <<
+         //    this->variable_lower_bound(variable_index) << ") - " << shift_value << " = ";
+         double error = multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->variable_lower_bound(variable_index)) - shift_value;
+         // scale elastic variables
+         if (variable_index >= this->model.number_variables) {
+            error /= this->constraint_violation_coefficient;
+         }
+         // std::cout << error << '\n';
+         return error;
       }
       if (multipliers.upper_bounds[variable_index] < 0.) {
-         return multipliers.upper_bounds[variable_index] * (primals[variable_index] - this->variable_upper_bound(variable_index)) - shift_value;
+         // std::cout << "z_ub < 0: " << multipliers.upper_bounds[variable_index] << " * (" << primals[variable_index] << " - " <<
+         //          this->variable_upper_bound(variable_index) << ") - " << shift_value << " = ";
+         double error = multipliers.upper_bounds[variable_index] * (primals[variable_index] - this->variable_upper_bound(variable_index)) - shift_value;
+         // scale elastic variables
+         if (variable_index >= this->model.number_variables) {
+            error /= this->constraint_violation_coefficient;
+         }
+         // std::cout << error << '\n';
+         return error;
       }
       return 0.;
    });
 
    // general constraints
-   const VectorExpression constraints_complementarity(Range(constraints.size()), [&](size_t constraint_index) {
-      // lower violated
-      if (constraints[constraint_index] < this->constraint_lower_bound(constraint_index)) {
-         return (1. - multipliers.constraints[constraint_index]/this->constraint_violation_coefficient) * (constraints[constraint_index] -
-            this->constraint_lower_bound(constraint_index)) - shift_value/this->constraint_violation_coefficient;
-      }
-      // upper violated
-      else if (this->constraint_upper_bound(constraint_index) < constraints[constraint_index]) {
-         return (1. + multipliers.constraints[constraint_index]/this->constraint_violation_coefficient) * (constraints[constraint_index] -
-            this->constraint_upper_bound(constraint_index)) - shift_value/this->constraint_violation_coefficient;
-      }
+   const VectorExpression constraints_complementarity(Range(this->number_constraints), [&](size_t constraint_index) {
       // inequality
-      else if (this->model.get_constraint_bound_type(constraint_index) != EQUAL_BOUNDS) {
+      if (this->model.get_constraint_bound_type(constraint_index) != EQUAL_BOUNDS) {
+         // std::cout << "l1 complementarity for constraint " << constraint_index << '\n';
          if (0. < multipliers.constraints[constraint_index]) { // lower bound
-            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->constraint_lower_bound(constraint_index)) - shift_value;
+            // std::cout << "y_lb > 0: " << multipliers.constraints[constraint_index] << " * (" << constraints[constraint_index] << " - " <<
+            //      this->constraint_lower_bound(constraint_index) << ") - " << shift_value << " = ";
+            double error = multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->constraint_lower_bound(constraint_index)) - shift_value;
+            // std::cout << error << '\n';
+            return error;
          }
          else if (multipliers.constraints[constraint_index] < 0.) { // upper bound
-            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->constraint_upper_bound(constraint_index)) - shift_value;
+            // std::cout << "y_ub < 0: " << multipliers.constraints[constraint_index] << " * (" << constraints[constraint_index] << " - " <<
+            //          this->constraint_upper_bound(constraint_index) << ") - " << shift_value << " = ";
+            double error = multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->constraint_upper_bound(constraint_index)) - shift_value;
+            // std::cout << error << '\n';
+            return error;
          }
       }
       return 0.;
    });
-   return norm(residual_norm, bounds_complementarity, constraints_complementarity);
+   return norm(residual_norm, bounds_complementarity);
 }
 
 inline TerminationStatus l1RelaxedProblem::check_convergence_with_given_tolerance(Iterate& current_iterate, double tolerance) const {
    // evaluate termination conditions based on optimality conditions
    const bool stationarity = (current_iterate.residuals.stationarity / current_iterate.residuals.stationarity_scaling <= tolerance);
-   const bool complementarity = (current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling <= tolerance);
    const bool primal_feasibility = (current_iterate.residuals.primal_feasibility <= tolerance);
+   const bool dual_feasibility = (current_iterate.residuals.dual_feasibility <= tolerance);
+   const bool complementarity = (current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling <= tolerance);
 
    DEBUG << "\nTermination criteria for l1 relaxed problem with tolerance = " << tolerance << ":\n";
    DEBUG << "Stationarity: " << std::boolalpha << stationarity << '\n';
-   DEBUG << "Complementarity: " << std::boolalpha << complementarity << '\n';
    DEBUG << "Primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
+   DEBUG << "Dual feasibility: " << std::boolalpha << dual_feasibility << '\n';
+   DEBUG << "Complementarity: " << std::boolalpha << complementarity << '\n';
 
-   if (this->model.is_constrained() && stationarity && not primal_feasibility && complementarity) {
+   if (this->model.is_constrained() && stationarity && not primal_feasibility && dual_feasibility && complementarity) {
       // no primal feasibility, stationary point of constraint violation
       return TerminationStatus::INFEASIBLE_STATIONARY_POINT;
    }

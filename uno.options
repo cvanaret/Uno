@@ -37,10 +37,10 @@ statistics_restoration_phase_column_order 20
 statistics_regularization_column_order 21
 statistics_step_norm_column_order 31
 statistics_objective_column_order 100
-statistics_primal_infeasibility_column_order 101
-statistics_dual_infeasibility_column_order 102
+statistics_primal_feasibility_column_order 101
+statistics_stationarity_column_order 102
+statistics_dual_feasibility_column_order 103
 statistics_complementarity_column_order 104
-statistics_stationarity_column_order 105
 statistics_status_column_order 200
 
 ##### ingredients #####

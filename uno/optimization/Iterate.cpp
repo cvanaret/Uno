@@ -91,8 +91,10 @@ std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
    stream << "                        └ Upper bound: " << iterate.feasibility_multipliers.upper_bounds << '\n';
    stream << "Objective value: " << iterate.evaluations.objective << '\n';
 
+   // TODO print the norms used for progress and residuals
    stream << "          ┌ Stationarity: " << iterate.residuals.stationarity << '\n';
    stream << "Residuals │ Primal feasibility: " << iterate.residuals.primal_feasibility << '\n';
+   stream << "          │ Dual feasibility: " << iterate.residuals.dual_feasibility << '\n';
    stream << "          └ Complementarity: " << iterate.residuals.complementarity << '\n';
 
    stream << "                  ┌ Infeasibility: " << iterate.progress.infeasibility << '\n';

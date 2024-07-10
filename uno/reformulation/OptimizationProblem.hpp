@@ -55,6 +55,7 @@ public:
    [[nodiscard]] virtual size_t number_hessian_nonzeros() const = 0;
 
    virtual void evaluate_lagrangian_gradient(Iterate& iterate, const Multipliers& multipliers) const = 0;
+   [[nodiscard]] virtual double dual_feasibility_error(const Multipliers& multipliers, Norm residual_norm) const = 0;
    [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const = 0;
    [[nodiscard]] virtual TerminationStatus check_convergence_with_given_tolerance(Iterate& current_iterate, double tolerance) const = 0;
