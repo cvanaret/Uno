@@ -17,6 +17,7 @@ public:
    static int int_width;
    static int double_width;
    static int string_width;
+   static int numerical_format_size;
 
    void add_column(std::string_view name, int width, int order);
    void set(std::string_view name, std::string value);
