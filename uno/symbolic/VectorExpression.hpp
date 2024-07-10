@@ -46,8 +46,8 @@ public:
    iterator end() const { return iterator(*this, this->size()); }
 
 protected:
-   Indices indices; // store const reference or rvalue (temporary)
-   Callable component_function;
+   const Indices indices; // store const reference or rvalue (temporary)
+   const Callable component_function;
 };
 
 template <typename Indices, typename Callable>
