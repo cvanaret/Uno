@@ -83,7 +83,7 @@ size_t count_infeasible_linear_constraints(const Model& model, const std::vector
    return infeasible_linear_constraints;
 }
 
-bool Preprocessing::enforce_linear_constraints(const Model& model, Vector<double>& x, Multipliers& multipliers, QPSolver& qp_solver) {
+void Preprocessing::enforce_linear_constraints(const Model& model, Vector<double>& x, Multipliers& multipliers, QPSolver& qp_solver) {
    const auto& linear_constraints = model.get_linear_constraints();
    INFO << "Preprocessing phase: the problem has " << linear_constraints.size() << " linear constraints\n";
    if (not linear_constraints.empty()) {
@@ -125,8 +125,7 @@ bool Preprocessing::enforce_linear_constraints(const Model& model, Vector<double
          qp_solver.solve_QP(model.number_variables, linear_constraints.size(), variables_lower_bounds, variables_upper_bounds, constraints_lower_bounds,
                constraints_upper_bounds, linear_objective, constraint_jacobian, hessian, d0, direction, warmstart_information);
          if (direction.status == SubproblemStatus::INFEASIBLE) {
-            INFO << "Linear constraints cannot be satisfied.\n";
-            return false;
+            throw std::runtime_error("Linear constraints cannot be satisfied at the initial point.");
          }
 
          // take the step
@@ -141,5 +140,4 @@ bool Preprocessing::enforce_linear_constraints(const Model& model, Vector<double
          DEBUG3 << '\n';
       }
    }
-   return true;
 }

@@ -17,8 +17,7 @@ LPSubproblem::LPSubproblem(size_t number_variables, size_t number_constraints, s
       zero_hessian(COOSymmetricMatrix<double>::zero(number_variables)) {
 }
 
-bool LPSubproblem::generate_initial_iterate(const OptimizationProblem& /*problem*/, Iterate& /*initial_iterate*/) {
-   return true;
+void LPSubproblem::generate_initial_iterate(const OptimizationProblem& /*problem*/, Iterate& /*initial_iterate*/) {
 }
 
 void LPSubproblem::evaluate_functions(const OptimizationProblem& problem, Iterate& current_iterate, const WarmstartInformation& warmstart_information) {
