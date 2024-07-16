@@ -26,7 +26,10 @@ LPEQPSubproblem::LPEQPSubproblem(size_t number_variables, size_t number_constrai
             number_objective_gradient_nonzeros, number_jacobian_nonzeros,
             // if the QP solver is used during preprocessing, we need to allocate the Hessian with at least number_variables elements
             std::max(this->enforce_linear_constraints_at_initial_iterate ? number_variables : 0, this->hessian_model->hessian->capacity),
-            options)) {
+            options)),
+      activity_tolerance(options.get_double("TR_activity_tolerance")) {
+   // set a trust-region radius for the LP to avoid unboundedness
+   this->trust_region_radius = 100.;
 }
 
 void LPEQPSubproblem::initialize_statistics(Statistics& statistics, const Options& options) {
@@ -56,7 +59,6 @@ void LPEQPSubproblem::evaluate_functions(Statistics& statistics, const Optimizat
 
 void LPEQPSubproblem::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
       const Multipliers& current_multipliers, Direction& direction, const WarmstartInformation& warmstart_information) {
-    
    // evaluate the functions at the current iterate
    this->evaluate_functions(statistics, problem, current_iterate, current_multipliers, warmstart_information);
 
@@ -73,28 +75,7 @@ void LPEQPSubproblem::solve(Statistics& statistics, const OptimizationProblem& p
    // solve LP subproblem
    Direction LP_direction(problem.number_variables, problem.number_constraints);
    this->solve_LP(problem, current_multipliers, LP_direction, warmstart_information);
-
-   DEBUG << "d^*(LP) = "; print_vector(DEBUG, view(LP_direction.primals, 0, LP_direction.number_variables));
-   DEBUG << "bound constraints active at lower bound =";
-   for (size_t i: LP_direction.active_set.bounds.at_lower_bound) {
-      DEBUG << " x" << i;
-   }
-   DEBUG << '\n';
-   DEBUG << "bound constraints active at upper bound =";
-   for (size_t i: LP_direction.active_set.bounds.at_upper_bound) {
-      DEBUG << " x" << i;
-   }
-   DEBUG << '\n';
-   DEBUG << "constraints at lower bound =";
-   for (size_t j: LP_direction.active_set.constraints.at_lower_bound) {
-      DEBUG << " c" << j;
-   }
-   DEBUG << '\n';
-   DEBUG << "constraints at upper bound =";
-   for (size_t j: LP_direction.active_set.constraints.at_upper_bound) {
-      DEBUG << " c" << j;
-   }
-   DEBUG << '\n';
+   DEBUG << "d^*(LP) = " << LP_direction << '\n';
 
    // set up EQP subproblem: set inactive bounds +/- INF and others as equations
    this->set_variable_EQP_bounds(problem, current_iterate, LP_direction);
@@ -129,17 +110,17 @@ void LPEQPSubproblem::set_variable_EQP_bounds(const OptimizationProblem& problem
       this->direction_upper_bounds[i] = INF<double>;
    }
    // set active lower bounds as equality constraints
-   for (size_t i: LP_direction.active_set.bounds.at_lower_bound) {
-      const double lb = problem.variable_lower_bound(i) - current_iterate.primals[i];
-      if (lb >= -(this->trust_region_radius)) {
-         this->direction_lower_bounds[i] = this->direction_upper_bounds[i] = lb;
+   for (size_t variable_index: LP_direction.active_set.bounds.at_lower_bound) {
+      const double lb = problem.variable_lower_bound(variable_index) - current_iterate.primals[variable_index];
+      if (-this->trust_region_radius + this->activity_tolerance <= lb) {
+         this->direction_lower_bounds[variable_index] = this->direction_upper_bounds[variable_index] = lb;
       }
    }
    // set active lower bounds as equality constraints
-   for (size_t i: LP_direction.active_set.bounds.at_upper_bound) {
-      const double ub = problem.variable_upper_bound(i) - current_iterate.primals[i];
-      if (ub <= this->trust_region_radius) {
-         this->direction_lower_bounds[i] = this->direction_upper_bounds[i] = ub;
+   for (size_t variable_index: LP_direction.active_set.bounds.at_upper_bound) {
+      const double ub = problem.variable_upper_bound(variable_index) - current_iterate.primals[variable_index];
+      if (ub <= this->trust_region_radius - this->activity_tolerance) {
+         this->direction_lower_bounds[variable_index] = this->direction_upper_bounds[variable_index] = ub;
       }
    }
 }
