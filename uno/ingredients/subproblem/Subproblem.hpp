@@ -33,7 +33,7 @@ public:
 
    // virtual methods implemented by subclasses
    virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
-   virtual bool generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) = 0;
+   virtual void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) = 0;
    virtual void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
          Direction& direction, const WarmstartInformation& warmstart_information) = 0;
 
