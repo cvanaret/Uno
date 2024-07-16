@@ -35,8 +35,7 @@ void LPEQPSubproblem::initialize_statistics(Statistics& statistics, const Option
    }
 }
 
-bool LPEQPSubproblem::generate_initial_iterate(const OptimizationProblem& /*problem*/, Iterate& /*first_iterate*/) {
-   return true;
+void LPEQPSubproblem::generate_initial_iterate(const OptimizationProblem& /*problem*/, Iterate& /*first_iterate*/) {
 }
 
 void LPEQPSubproblem::evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
