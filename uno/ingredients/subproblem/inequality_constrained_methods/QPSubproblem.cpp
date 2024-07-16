@@ -35,15 +35,10 @@ void QPSubproblem::initialize_statistics(Statistics& statistics, const Options& 
    }
 }
 
-bool QPSubproblem::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
+void QPSubproblem::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
    if (this->enforce_linear_constraints_at_initial_iterate) {
-      const bool is_feasible = Preprocessing::enforce_linear_constraints(problem.model, initial_iterate.primals, initial_iterate.multipliers,
-            *this->solver);
-      if (not is_feasible) {
-         return false;
-      }
+      Preprocessing::enforce_linear_constraints(problem.model, initial_iterate.primals, initial_iterate.multipliers, *this->solver);
    }
-   return true;
 }
 
 void QPSubproblem::evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,

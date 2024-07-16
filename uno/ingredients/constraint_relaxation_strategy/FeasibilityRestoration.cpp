@@ -43,15 +43,10 @@ void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& initial
    statistics.set("phase", "OPT");
 
    // initial iterate
-   const bool is_linearly_feasible = this->subproblem->generate_initial_iterate(this->optimality_problem, initial_iterate);
+   this->subproblem->generate_initial_iterate(this->optimality_problem, initial_iterate);
    this->evaluate_progress_measures(initial_iterate);
    this->compute_primal_dual_residuals(initial_iterate);
    this->set_statistics(statistics, initial_iterate);
-   if (not is_linearly_feasible) {
-      this->switch_to_feasibility_problem(statistics, initial_iterate);
-      statistics.set("phase", "OPT");
-      statistics.set("status", "linearly infeas.");
-   }
    this->globalization_strategy->initialize(statistics, initial_iterate, options);
 }
 
