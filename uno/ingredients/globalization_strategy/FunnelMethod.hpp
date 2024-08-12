@@ -44,7 +44,6 @@ public:
    bool is_funnel_sufficient_decrease_satisfied(double infeasibility_measure) const;
    void update_funnel_width(double current_infeasibility_measure, double trial_infeasibility_measure);
    void update_funnel_width_restoration(double current_infeasibility_measure);
-   double get_funnel_width();
    double get_infeasibility_upper_bound() const;
 
 protected:   
@@ -54,6 +53,10 @@ protected:
    bool in_restoration_phase;
    bool first_iteration_in_solver_phase; // determines if first iteration of solver phase is used
    
+   [[nodiscard]] bool is_feasibility_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
+         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction);
+   [[nodiscard]] bool is_regular_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
+         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction);
    [[nodiscard]] static double unconstrained_merit_function(const ProgressMeasures& progress);
    [[nodiscard]] double compute_actual_objective_reduction(double current_optimality_measure, double current_infeasibility_measure, double trial_optimality_measure);
    [[nodiscard]] bool switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const;
