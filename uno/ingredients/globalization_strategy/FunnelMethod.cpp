@@ -12,8 +12,8 @@
 FunnelMethod::FunnelMethod(const Options& options) :
       GlobalizationStrategy(options),
       parameters({
-         options.get_double("funnel_kappa_initial_upper_bound"),
-         options.get_double("funnel_kappa_initial_multiplication"),
+         options.get_double("funnel_ubd"),
+         options.get_double("funnel_initial_multiplication"),
          options.get_double("funnel_delta"),
          options.get_double("funnel_switching_infeasibility_exponent"),
          options.get_double("funnel_kappa_infeasibility_1"),
@@ -28,10 +28,10 @@ void FunnelMethod::initialize(Statistics& statistics, const Iterate& initial_ite
     statistics.add_column("funnel width", Statistics::double_width, options.get_int("statistics_funnel_width_column_order"));
 
    // set the funnel upper bound
-   double upper_bound = std::max(this->parameters.kappa_initial_upper_bound,
-                                 this->parameters.kappa_initial_multiplication * initial_iterate.progress.infeasibility);
+   this->funnel_width = std::max(this->parameters.initial_upper_bound,
+                                 this->parameters.initial_multiplication * initial_iterate.progress.infeasibility);
 
-   this->funnel_width = upper_bound;
+   // this->funnel_width = upper_bound;
    this->first_iteration_in_solver_phase = true;
    statistics.set("funnel width", this->get_funnel_width());
 }

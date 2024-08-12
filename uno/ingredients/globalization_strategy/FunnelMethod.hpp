@@ -14,8 +14,8 @@
  *  Set of constants to control the funnel strategy
  */
 struct FunnelMethodParameters {
-   double kappa_initial_upper_bound;
-   double kappa_initial_multiplication;
+   double initial_upper_bound;
+   double initial_multiplication;
    double delta; /*!< Switching constant */
    double switching_infeasibility_exponent;
    double kappa_infeasibility_1;

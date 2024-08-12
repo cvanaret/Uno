@@ -132,8 +132,8 @@ funnel_gamma 0.001
 funnel_delta 0.999
 
 # funnel strategy options
-funnel_kappa_initial_upper_bound 1.0
-funnel_kappa_initial_multiplication 1.2
+funnel_ubd 1.0
+funnel_initial_multiplication 1.2
 funnel_fact 1.25
 funnel_switching_infeasibility_exponent 2
 funnel_optimality_phase 
