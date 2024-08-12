@@ -77,6 +77,12 @@ void LPEQPSubproblem::solve(Statistics& statistics, const OptimizationProblem& p
    this->solve_LP(problem, current_multipliers, LP_direction, warmstart_information);
    DEBUG << "d^*(LP) = " << LP_direction << '\n';
 
+   if (LP_direction.status == SubproblemStatus::INFEASIBLE) {
+      DEBUG << "Infeasible LP, EQP direction will not be computed.\n";
+      direction = LP_direction;
+      return;
+   }
+
    // set up EQP subproblem: set inactive bounds +/- INF and others as equations
    this->set_variable_EQP_bounds(problem, current_iterate, LP_direction);
    this->set_linearized_EQP_bounds(problem, this->constraints, LP_direction);
