@@ -24,8 +24,8 @@ FunnelMethod::FunnelMethod(const Options& options) :
 
 void FunnelMethod::initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options)
 {
-    // Add a column of the of the funnel width in the output table
-    statistics.add_column("funnel width", Statistics::double_width, options.get_int("statistics_funnel_width_column_order"));
+   // Add a column of the of the funnel width in the output table
+   statistics.add_column("funnel width", Statistics::double_width, options.get_int("statistics_funnel_width_column_order"));
 
    // set the funnel upper bound
    double upper_bound = std::max(this->parameters.initial_upper_bound,
@@ -45,7 +45,7 @@ void FunnelMethod::reset(){}
 
 void FunnelMethod::register_current_progress(const ProgressMeasures& current_progress_measures)
 {
-   if (!this->in_restoration_phase)
+   if (this->in_restoration_phase)
    {
     std::cout << "Funnel is reduced after restoration phase" << std::endl;
     this->update_funnel_width_restoration(current_progress_measures.infeasibility);
@@ -166,7 +166,7 @@ bool FunnelMethod::is_regular_iterate_acceptable(Statistics& statistics, const P
       DEBUG << "Trial:   (infeasibility, objective + auxiliary) = (" << trial_progress.infeasibility << ", " << trial_merit << ")\n";
       DEBUG << "Unconstrained predicted reduction = " << merit_predicted_reduction << '\n';
 
-
+      // f-type step
       if (this->switching_condition(merit_predicted_reduction, current_progress.infeasibility, this->parameters.delta))
       {
          DEBUG << "\t\tTrial iterate satisfies switching condition ....\n";
@@ -184,7 +184,8 @@ bool FunnelMethod::is_regular_iterate_acceptable(Statistics& statistics, const P
             DEBUG << "\t\tTrial iterate (f-type) was REJECTED by violating the Armijo condition\n";
          }
          scenario = "f-type Armijo";
-      } 
+      }
+      // h-type step
       else if(this->is_funnel_sufficient_decrease_satisfied(trial_progress.infeasibility))
       {
          DEBUG << "\t\tTrial iterate  (h-type) ACCEPTED by violating the switching condition ...\n";
@@ -205,7 +206,7 @@ bool FunnelMethod::is_regular_iterate_acceptable(Statistics& statistics, const P
       DEBUG << "\t\tTrial iterate REJECTED. Not in funnel\n";
       scenario = "not in funnel";
    }
-   // }
+
    statistics.set("status", std::string(accept ? "accepted" : "rejected") + " (" + scenario + ")");
    DEBUG << '\n';
    return accept;
