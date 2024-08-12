@@ -133,10 +133,8 @@ funnel_delta 0.999
 
 # funnel strategy options
 funnel_ubd 1.0
-funnel_initial_multiplication 1.2
-funnel_fact 1.25
+funnel_fact 1.5
 funnel_switching_infeasibility_exponent 2
-funnel_optimality_phase 
 
 ##### line search options #####
 # backtracking ratio

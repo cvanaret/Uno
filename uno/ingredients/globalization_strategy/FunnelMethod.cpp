@@ -13,7 +13,7 @@ FunnelMethod::FunnelMethod(const Options& options) :
       GlobalizationStrategy(options),
       parameters({
          options.get_double("funnel_ubd"),
-         options.get_double("funnel_initial_multiplication"),
+         options.get_double("funnel_fact"),
          options.get_double("funnel_delta"),
          options.get_double("funnel_switching_infeasibility_exponent"),
          options.get_double("funnel_kappa_infeasibility_1"),
@@ -57,7 +57,8 @@ double FunnelMethod::unconstrained_merit_function(const ProgressMeasures& progre
    return progress.objective(1.) + progress.auxiliary;
 }
 
-double FunnelMethod::compute_actual_objective_reduction(double current_objective_measure, double /*current_infeasibility_measure*/, double trial_objective_measure) {
+double FunnelMethod::compute_actual_objective_reduction(double current_objective_measure, double /*current_infeasibility_measure*/, double trial_objective_measure)
+{
    double actual_reduction = current_objective_measure - trial_objective_measure;
    if (this->protect_actual_reduction_against_roundoff)
    {
@@ -164,6 +165,7 @@ bool FunnelMethod::is_regular_iterate_acceptable(Statistics& statistics, const P
       DEBUG << "Current: (infeasibility, objective + auxiliary) = (" << current_progress.infeasibility << ", " << current_merit << ")\n";
       DEBUG << "Trial:   (infeasibility, objective + auxiliary) = (" << trial_progress.infeasibility << ", " << trial_merit << ")\n";
       DEBUG << "Unconstrained predicted reduction = " << merit_predicted_reduction << '\n';
+
 
       if (this->switching_condition(merit_predicted_reduction, current_progress.infeasibility, this->parameters.delta))
       {

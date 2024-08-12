@@ -167,8 +167,8 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["funnel_beta"] = "0.999";
       options["funnel_gamma"] = "0.001";
       options["funnel_delta"] = "0.999";
-      options["funnel_ubd"] = "1e2";
-      options["funnel_fact"] = "1.25";
+      options["funnel_ubd"] = "1.0";
+      options["funnel_fact"] = "1.5";
       options["funnel_switching_infeasibility_exponent"] = "2";
    }
    else {
