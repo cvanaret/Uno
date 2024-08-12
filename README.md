@@ -16,11 +16,10 @@ $$
 \end{align}
 $$
 
-The theoretical abstract framework for unifying nonlinearly constrained nonconvex optimization was developed by [Charlie Vanaret](https://github.com/cvanaret/) (Zuse-Institut Berlin) and [Sven Leyffer](https://wiki.mcs.anl.gov/leyffer/index.php/Sven_Leyffer) (Argonne National Laboratory).  
+The theoretical abstract framework for unifying nonlinearly constrained nonconvex optimization was developed by [Charlie Vanaret](https://github.com/cvanaret/) (Argonne National Laboratory & Zuse-Institut Berlin) and [Sven Leyffer](https://wiki.mcs.anl.gov/leyffer/index.php/Sven_Leyffer) (Argonne National Laboratory). Uno was designed and implemented by Charlie Vanaret. It is released under the MIT license (see the [license file](LICENSE)).
 
-Uno was designed and implemented by Charlie Vanaret. [Silvio Traversaro](https://github.com/traversaro) contributed to the CMakeLists.
+[Silvio Traversaro](https://github.com/traversaro) and [Alexis Montoison](https://github.com/amontoison) contributed to the CMakeLists.
 
-Uno is released under the MIT license (see the [license file](LICENSE)).
 
 ## Unifying nonlinearly constrained nonconvex optimization
 

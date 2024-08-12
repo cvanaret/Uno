@@ -23,7 +23,7 @@ public:
    static void compute_least_square_multipliers(const Model& model, SymmetricMatrix<double>& matrix, Vector<double>& rhs,
          SymmetricIndefiniteLinearSolver<double>& linear_solver, Iterate& current_iterate, Vector<double>& multipliers,
          double multiplier_max_norm);
-   [[nodiscard]] static bool enforce_linear_constraints(const Model& model, Vector<double>& x, Multipliers& multipliers, QPSolver& qp_solver);
+   static void enforce_linear_constraints(const Model& model, Vector<double>& x, Multipliers& multipliers, QPSolver& qp_solver);
 };
 
 #endif //UNO_PREPROCESSING_H

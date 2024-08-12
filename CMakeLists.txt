@@ -50,8 +50,13 @@ set(REQUIRED_LIBRARIES dl blas lapack)
 
 # automatic detection of optional libraries
 foreach(library_name IN LISTS OPTIONAL_LIBRARIES)
-	find_library(${library_name} ${library_name})
-	# ${library_name} is the name of the library(e.g. ma57)
+    if(${library_name} STREQUAL ma57)
+        # Try to find either libma57 or libhsl
+        find_library(ma57 NAMES ma57 hsl)
+    else()
+        find_library(${library_name} ${library_name})
+    endif()
+	# ${library_name} is the name of the library (e.g. ma57)
 	# ${${library_name}} is the path of the library if found, otherwise ${library_name}-NOTFOUND
 	if(${${library_name}} STREQUAL "${library_name}-NOTFOUND")
 		message(WARNING "Optional library ${library_name} was not found. Use ccmake to configure its path.")
@@ -65,7 +70,7 @@ foreach(library_name IN LISTS OPTIONAL_LIBRARIES)
 		get_filename_component(directory ${${library_name}} DIRECTORY)
 		include_directories(${directory})
         message(STATUS "Library ${library_name} was found")
-        
+
         # add the corresponding sources
         if(${library_name} STREQUAL amplsolver)
             list(APPEND UNO_SOURCE_FILES uno/interfaces/AMPL/AMPLModel.cpp)
