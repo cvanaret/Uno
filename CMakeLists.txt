@@ -118,7 +118,7 @@ if(${amplsolver} STREQUAL "amplsolver-NOTFOUND")
    message(WARNING "Optional library amplsolver (ASL) was not found.")
 else()
    message(STATUS "Library amplsolver was found.")
-   add_executable(uno_ampl uno/interfaces/AMPL/AMPLModel.cpp uno/main.cpp)
+   add_executable(uno_ampl uno/model/AMPLModel.cpp uno/main.cpp)
    
    target_link_libraries(uno_ampl PUBLIC uno ${amplsolver})
    add_definitions("-D HAS_AMPLSOLVER")
