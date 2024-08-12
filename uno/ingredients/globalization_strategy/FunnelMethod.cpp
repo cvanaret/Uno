@@ -20,10 +20,10 @@ FunnelMethod::FunnelMethod(const Options& options) :
          options.get_double("funnel_kappa_infeasibility_2"),
          options.get_double("funnel_beta")
       })
-      {
-}
+{}
 
-void FunnelMethod::initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) {
+void FunnelMethod::initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options)
+{
     // Add a column of the of the funnel width in the output table
     statistics.add_column("funnel width", Statistics::double_width, options.get_int("statistics_funnel_width_column_order"));
 
@@ -36,46 +36,61 @@ void FunnelMethod::initialize(Statistics& statistics, const Iterate& initial_ite
    statistics.set("funnel width", this->get_infeasibility_upper_bound());
 }
 
+double FunnelMethod::get_infeasibility_upper_bound() const
+{
+   return this->funnel_width;
+}
+
 void FunnelMethod::reset(){}
 
-void FunnelMethod::register_current_progress(const ProgressMeasures& current_progress_measures) {
-   if (!this->in_restoration_phase){
+void FunnelMethod::register_current_progress(const ProgressMeasures& current_progress_measures)
+{
+   if (!this->in_restoration_phase)
+   {
     std::cout << "Funnel is reduced after restoration phase" << std::endl;
     this->update_funnel_width_restoration(current_progress_measures.infeasibility);
    }
 }
 
-double FunnelMethod::get_infeasibility_upper_bound() const {
-    return this->funnel_width;
+double FunnelMethod::unconstrained_merit_function(const ProgressMeasures& progress)
+{
+   return progress.objective(1.) + progress.auxiliary;
 }
 
 double FunnelMethod::compute_actual_objective_reduction(double current_objective_measure, double /*current_infeasibility_measure*/, double trial_objective_measure) {
    double actual_reduction = current_objective_measure - trial_objective_measure;
-   if (this->protect_actual_reduction_against_roundoff) {
+   if (this->protect_actual_reduction_against_roundoff)
+   {
       static double machine_epsilon = std::numeric_limits<double>::epsilon();
       actual_reduction += 10. * machine_epsilon * std::abs(current_objective_measure);
    }
    return actual_reduction;
 }
 
-bool FunnelMethod::switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const {
+bool FunnelMethod::switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const
+{
    return predicted_reduction > switching_fraction * std::pow(current_infeasibility, this->parameters.switching_infeasibility_exponent);
 }
 
 /*This function checks if the trial iterate infeasibility is inside of the current funnel*/
-bool FunnelMethod::is_infeasibility_acceptable_to_funnel(double infeasibility_measure) const {
-   if (infeasibility_measure <= this->parameters.beta*this->funnel_width){ // beta is used here
+bool FunnelMethod::is_infeasibility_acceptable_to_funnel(double infeasibility_measure) const
+{
+   if (infeasibility_measure <= this->parameters.beta*this->funnel_width)
+   { // beta is used here
       return true;
    }
-   else {
+   else
+   {
       DEBUG << "\t\tNot acceptable to funnel.\n";
       return false;
    }
 }
 
 /*This function checks if the funnel sufficient decrease condition is satisfied*/
-bool FunnelMethod::is_funnel_sufficient_decrease_satisfied(double infeasibility_measure) const {
-   if (infeasibility_measure <= this->parameters.kappa_infeasibility_1*this->funnel_width){ // kappa_1 is used here
+bool FunnelMethod::is_funnel_sufficient_decrease_satisfied(double infeasibility_measure) const
+{
+   if (infeasibility_measure <= this->parameters.kappa_infeasibility_1*this->funnel_width)
+   { // kappa_1 is used here
       return true;
    }
    else {
@@ -84,38 +99,39 @@ bool FunnelMethod::is_funnel_sufficient_decrease_satisfied(double infeasibility_
    }
 }
 
-bool FunnelMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures& /*current_progress*/, const ProgressMeasures& trial_progress) const {
-   if (this->in_restoration_phase){
-        if (this->is_infeasibility_acceptable_to_funnel(trial_progress.infeasibility) && (trial_progress.infeasibility <= this->parameters.kappa_infeasibility_1*this->restoration_entry_infeasibility)){
-            return true;
-        } else {
-            return false;
-        }
-   } else {
-        return this->is_infeasibility_acceptable_to_funnel(trial_progress.infeasibility);
+bool FunnelMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures& /*current_progress*/, const ProgressMeasures& trial_progress) const
+{
+   if (this->in_restoration_phase)
+   {
+      if (this->is_infeasibility_acceptable_to_funnel(trial_progress.infeasibility) && (trial_progress.infeasibility <= this->parameters.kappa_infeasibility_1*this->restoration_entry_infeasibility)){
+         return true;
+      } else {
+         return false;
+      }
+   }
+   else
+   {
+      return this->is_infeasibility_acceptable_to_funnel(trial_progress.infeasibility);
    }
 }
 
-void FunnelMethod::update_funnel_width(double current_infeasibility_measure, double trial_infeasibility_measure) {
-
+void FunnelMethod::update_funnel_width(double current_infeasibility_measure, double trial_infeasibility_measure)
+{
     this->funnel_width = std::max(this->parameters.kappa_infeasibility_1 *this->funnel_width, 
       trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (current_infeasibility_measure - trial_infeasibility_measure));
    DEBUG << "\t\tNew funnel parameter is: " << this->funnel_width << "\n"; 
    
 }
 
-void FunnelMethod::update_funnel_width_restoration(double current_infeasibility_measure) {
+void FunnelMethod::update_funnel_width_restoration(double current_infeasibility_measure)
+{
    this->funnel_width = std::min(current_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (this->funnel_width - current_infeasibility_measure), this->parameters.beta*this->funnel_width);
    DEBUG << "\t\tNew funnel parameter is: " << this->funnel_width << "\n"; 
 }
 
-double FunnelMethod::unconstrained_merit_function(const ProgressMeasures& progress) {
-   return progress.objective(1.) + progress.auxiliary;
-}
-
 bool FunnelMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
-      const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) {
-   const bool solving_feasibility_problem = (objective_multiplier == 0.);
+      const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier)
+{
    statistics.set("funnel width", this->get_infeasibility_upper_bound());
    DEBUG << "Current funnel width:\n";
    if (!this->in_restoration_phase && (objective_multiplier == 0.))
@@ -134,36 +150,10 @@ bool FunnelMethod::is_iterate_acceptable(Statistics& statistics, const ProgressM
 }
 
 bool FunnelMethod::is_regular_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
-         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier)
+         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction)
 {
-   // if (!this->in_restoration_phase && (objective_multiplier == 0.))
-   // {
-   //    this->restoration_entry_infeasibility = current_progress.infeasibility;
-   // }
-   // this->in_restoration_phase = (objective_multiplier == 0.);
    bool accept = false;
    std::string scenario;
-   // statistics.set("funnel width", this->get_funnel_width());
-   // DEBUG << "Current funnel width:\n";
-
-   // solving the feasibility problem = working on infeasibility only (no filter acceptability test)
-   // if (this->in_restoration_phase)
-   // {
-   //    DEBUG << "Current infeasibility = " << current_progress.infeasibility << '\n';
-   //    DEBUG << "Trial   infeasibility = " << trial_progress.infeasibility << '\n';
-   //    DEBUG << "Predicted reduction = " << predicted_reduction.infeasibility << '\n';
-   //    if (this->armijo_sufficient_decrease(predicted_reduction.infeasibility, current_progress.infeasibility - trial_progress.infeasibility)) {
-   //       DEBUG << "Trial iterate (h-type) was accepted by satisfying the Armijo condition\n";
-   //       accept = true;
-   //    }
-   //    else {
-   //       DEBUG << "Trial iterate (h-type) was rejected by violating the Armijo condition\n";
-   //    }
-   //    scenario = "h-type Armijo";
-   //    Iterate::number_eval_objective--;
-   // }
-   // else
-   // {
    bool funnel_acceptable = this->is_infeasibility_acceptable_to_funnel(trial_progress.infeasibility);
    if (funnel_acceptable)
    {
@@ -210,7 +200,7 @@ bool FunnelMethod::is_regular_iterate_acceptable(Statistics& statistics, const P
    }
    else
    {
-      DEBUG << "\t\tTrial iterate REJECTED by violating Funnel condition\n";
+      DEBUG << "\t\tTrial iterate REJECTED. Not in funnel\n";
       scenario = "not in funnel";
    }
    // }
@@ -220,7 +210,7 @@ bool FunnelMethod::is_regular_iterate_acceptable(Statistics& statistics, const P
 }
 
 bool FunnelMethod::is_feasibility_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
-         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier)
+         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction)
 {
    // drop the objective measure and focus on infeasibility and auxiliary terms (barrier, proximal, ...)
    const double current_merit = current_progress.infeasibility + current_progress.auxiliary;
