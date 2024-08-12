@@ -13,7 +13,7 @@
 
 class SymmetricIndefiniteLinearSolverFactory {
 public:
-   static std::unique_ptr<SymmetricIndefiniteLinearSolver<double>> create(const std::string& linear_solver_name, size_t dimension, size_t number_nonzeros) {
+   static std::unique_ptr<SymmetricIndefiniteLinearSolver<double>> create([[maybe_unused]] const std::string& linear_solver_name, [[maybe_unused]] size_t dimension, [[maybe_unused]] size_t number_nonzeros) {
 #ifdef HAS_MA57
       if (linear_solver_name == "MA57") {
          return std::make_unique<MA57Solver>(dimension, number_nonzeros);

@@ -14,8 +14,9 @@
 class QPSolverFactory {
 public:
    // create a QP solver
-   static std::unique_ptr<QPSolver> create(const std::string& QP_solver_name, size_t number_variables, size_t number_constraints,
-         size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options) {
+   static std::unique_ptr<QPSolver> create([[maybe_unused]] const std::string& QP_solver_name, [[maybe_unused]] size_t number_variables,
+         [[maybe_unused]] size_t number_constraints, [[maybe_unused]] size_t number_objective_gradient_nonzeros,
+         [[maybe_unused]] size_t number_jacobian_nonzeros, [[maybe_unused]] size_t number_hessian_nonzeros, [[maybe_unused]] const Options& options) {
 #ifdef HAS_BQPD
       if (QP_solver_name == "BQPD") {
          return std::make_unique<BQPDSolver>(number_variables, number_constraints, number_objective_gradient_nonzeros, number_jacobian_nonzeros,
