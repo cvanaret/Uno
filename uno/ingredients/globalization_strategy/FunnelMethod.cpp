@@ -20,7 +20,8 @@ FunnelMethod::FunnelMethod(const Options& options) :
          options.get_double("funnel_kappa_infeasibility_2"),
          options.get_double("funnel_beta"),
          options.get_double("funnel_gamma")
-      })
+      }),
+      check_for_current_iterate(options.get_bool("funnel_check_current_point"))
 {}
 
 void FunnelMethod::initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options)
@@ -181,38 +182,49 @@ bool FunnelMethod::is_regular_iterate_acceptable(Statistics& statistics, const P
       DEBUG << "Trial:   (infeasibility, objective + auxiliary) = (" << trial_progress.infeasibility << ", " << trial_merit << ")\n";
       DEBUG << "Unconstrained predicted reduction = " << merit_predicted_reduction << '\n';
 
-      // f-type step
-      if (this->switching_condition(merit_predicted_reduction, current_progress.infeasibility, this->parameters.delta))
+      // IF check_for_current_iterate == false, then condition always fulfilled, we never check
+      // If true, then first part is false, and we always check fur current iterate
+      if (!this->check_for_current_iterate || this->acceptable_wrt_current_iterate(current_progress.infeasibility, current_merit, trial_progress.infeasibility, trial_merit))
       {
-         DEBUG << "\t\tTrial iterate satisfies switching condition ....\n";
-         // unconstrained Armijo sufficient decrease condition (predicted reduction should be positive)
-         const double objective_actual_reduction = this->compute_actual_objective_reduction(current_merit, current_progress.infeasibility,
-                  trial_merit);
-         DEBUG << "Unconstrained actual reduction = " << objective_actual_reduction << '\n';
-         if (this->armijo_sufficient_decrease(merit_predicted_reduction, objective_actual_reduction))
+
+         // f-type step
+         if (this->switching_condition(merit_predicted_reduction, current_progress.infeasibility, this->parameters.delta))
          {
-            DEBUG << "\t\tTrial iterate (f-type) was ACCEPTED by satisfying Armijo condition\n";
-            accept = true;
+            DEBUG << "\t\tTrial iterate satisfies switching condition ....\n";
+            // unconstrained Armijo sufficient decrease condition (predicted reduction should be positive)
+            const double objective_actual_reduction = this->compute_actual_objective_reduction(current_merit, current_progress.infeasibility,
+                     trial_merit);
+            DEBUG << "Unconstrained actual reduction = " << objective_actual_reduction << '\n';
+            if (this->armijo_sufficient_decrease(merit_predicted_reduction, objective_actual_reduction))
+            {
+               DEBUG << "\t\tTrial iterate (f-type) was ACCEPTED by satisfying Armijo condition\n";
+               accept = true;
+            }
+            else
+            { // switching condition holds, but not Armijo condition
+               DEBUG << "\t\tTrial iterate (f-type) was REJECTED by violating the Armijo condition\n";
+            }
+            scenario = "f-type Armijo";
          }
-         else
-         { // switching condition holds, but not Armijo condition
-            DEBUG << "\t\tTrial iterate (f-type) was REJECTED by violating the Armijo condition\n";
+         // h-type step
+         else if(this->is_funnel_sufficient_decrease_satisfied(trial_progress.infeasibility))
+         {
+            DEBUG << "\t\tTrial iterate  (h-type) ACCEPTED by violating the switching condition ...\n";
+            accept = true; // accept the step and reduce the tr-radius
+            DEBUG << "\t\tEntering funnel reduction mechanism\n";
+            this->update_funnel_width(current_progress.infeasibility, trial_progress.infeasibility);
+            statistics.set("funnel width", this->funnel_width);
+            scenario = "h-type";
          }
-         scenario = "f-type Armijo";
+         else 
+         {
+            DEBUG << "\t\tTrial iterate REJECTED by violating switching and funnel sufficient decrease condition\n";
+            scenario = "current point";
+         }
       }
-      // h-type step
-      else if(this->is_funnel_sufficient_decrease_satisfied(trial_progress.infeasibility))
+      else
       {
-         DEBUG << "\t\tTrial iterate  (h-type) ACCEPTED by violating the switching condition ...\n";
-         accept = true; // accept the step and reduce the tr-radius
-         DEBUG << "\t\tEntering funnel reduction mechanism\n";
-         this->update_funnel_width(current_progress.infeasibility, trial_progress.infeasibility);
-         statistics.set("funnel width", this->funnel_width);
-         scenario = "h-type";
-      }
-      else 
-      {
-         DEBUG << "\t\tTrial iterate REJECTED by violating switching and funnel sufficient decrease condition\n";
+         DEBUG << "Trial iterate not acceptable with respect to current point\n";
          scenario = "current point";
       }
    }

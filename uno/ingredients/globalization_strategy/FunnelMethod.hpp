@@ -57,6 +57,7 @@ protected:
    const FunnelMethodParameters parameters; /*!< Set of constants */
    bool in_restoration_phase;
    bool first_iteration_in_solver_phase; // determines if first iteration of solver phase is used
+   bool check_for_current_iterate;
    
    [[nodiscard]] bool is_feasibility_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction);
