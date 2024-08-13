@@ -18,7 +18,8 @@ FunnelMethod::FunnelMethod(const Options& options) :
          options.get_double("funnel_switching_infeasibility_exponent"),
          options.get_double("funnel_kappa_infeasibility_1"),
          options.get_double("funnel_kappa_infeasibility_2"),
-         options.get_double("funnel_beta")
+         options.get_double("funnel_beta"),
+         options.get_double("funnel_gamma")
       })
 {}
 
@@ -128,6 +129,20 @@ void FunnelMethod::update_funnel_width_restoration(double current_infeasibility_
 {
    this->funnel_width = std::min(current_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (this->funnel_width - current_infeasibility_measure), this->parameters.beta*this->funnel_width);
    DEBUG << "\t\tNew funnel parameter is: " << this->funnel_width << "\n"; 
+}
+
+bool FunnelMethod::infeasibility_sufficient_reduction(double current_infeasibility, double trial_infeasibility) const {
+   return (trial_infeasibility < this->parameters.beta * current_infeasibility);
+}
+
+bool FunnelMethod::objective_sufficient_reduction(double current_objective, double trial_objective, double trial_infeasibility) const {
+   return (trial_objective <= current_objective - this->parameters.gamma * trial_infeasibility);
+}
+
+//! check acceptability wrt current point
+bool FunnelMethod::acceptable_wrt_current_iterate(double current_infeasibility, double current_objective, double trial_infeasibility, double trial_objective) {
+   return this->objective_sufficient_reduction(current_objective, trial_objective, trial_infeasibility) ||
+         this->infeasibility_sufficient_reduction(current_infeasibility, trial_infeasibility);
 }
 
 bool FunnelMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,

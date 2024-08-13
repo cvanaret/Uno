@@ -21,6 +21,7 @@ struct FunnelMethodParameters {
    double kappa_infeasibility_1;
    double kappa_infeasibility_2;
    double beta; /*!< Margin around funnel */
+   double gamma; /*!< For acceptability wrt current point. Margin around objective value */
 };
 
 /*! \class FunnelMethod
@@ -45,6 +46,10 @@ public:
    void update_funnel_width(double current_infeasibility_measure, double trial_infeasibility_measure);
    void update_funnel_width_restoration(double current_infeasibility_measure);
    double get_infeasibility_upper_bound() const;
+
+   bool acceptable_wrt_current_iterate(double current_infeasibility, double current_objective, double trial_infeasibility, double trial_objective);
+   [[nodiscard]] bool infeasibility_sufficient_reduction(double current_infeasibility, double trial_infeasibility) const;
+   [[nodiscard]] bool objective_sufficient_reduction(double current_objective, double trial_objective, double trial_infeasibility) const;
 
 protected:   
    double funnel_width;
