@@ -186,7 +186,6 @@ bool FunnelMethod::is_regular_iterate_acceptable(Statistics& statistics, const P
       // If true, then first part is false, and we always check fur current iterate
       if (!this->check_for_current_iterate || this->acceptable_wrt_current_iterate(current_progress.infeasibility, current_merit, trial_progress.infeasibility, trial_merit))
       {
-
          // f-type step
          if (this->switching_condition(merit_predicted_reduction, current_progress.infeasibility, this->parameters.delta))
          {
@@ -219,7 +218,7 @@ bool FunnelMethod::is_regular_iterate_acceptable(Statistics& statistics, const P
          else 
          {
             DEBUG << "\t\tTrial iterate REJECTED by violating switching and funnel sufficient decrease condition\n";
-            scenario = "current point";
+            scenario = "none of f/h-type";
          }
       }
       else
