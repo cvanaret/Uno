@@ -170,6 +170,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["funnel_ubd"] = "1.0";
       options["funnel_fact"] = "1.5";
       options["funnel_switching_infeasibility_exponent"] = "2";
+      options["funnel_update_strategy"] = "2";
    }
    else {
       throw std::runtime_error("The preset " + preset_name + " is not known.");

@@ -19,7 +19,8 @@ FunnelMethod::FunnelMethod(const Options& options) :
          options.get_double("funnel_kappa_infeasibility_1"),
          options.get_double("funnel_kappa_infeasibility_2"),
          options.get_double("funnel_beta"),
-         options.get_double("funnel_gamma")
+         options.get_double("funnel_gamma"),
+         options.get_int("funnel_update_strategy")
       }),
       check_for_current_iterate(options.get_bool("funnel_check_current_point"))
 {}
@@ -33,6 +34,7 @@ void FunnelMethod::initialize(Statistics& statistics, const Iterate& initial_ite
    double upper_bound = std::max(this->parameters.initial_upper_bound,
                                  this->parameters.initial_multiplication * initial_iterate.progress.infeasibility);
 
+   std::cout << "Funnel width: " << upper_bound << std::endl;
    this->funnel_width = upper_bound;
    this->first_iteration_in_solver_phase = true;
    statistics.set("funnel width", this->get_infeasibility_upper_bound());
@@ -120,21 +122,35 @@ bool FunnelMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures&
 
 void FunnelMethod::update_funnel_width(double current_infeasibility_measure, double trial_infeasibility_measure)
 {
-   if (trial_infeasibility_measure <= current_infeasibility_measure)
+   if (this->parameters.funnel_update_strategy == 1)
    {
-      this->funnel_width = std::max(trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (current_infeasibility_measure - trial_infeasibility_measure), this->parameters.kappa_infeasibility_1 *this->funnel_width);
+      if (trial_infeasibility_measure <= current_infeasibility_measure)
+      {
+         this->funnel_width = std::max(trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (current_infeasibility_measure - trial_infeasibility_measure), this->parameters.kappa_infeasibility_1 *this->funnel_width);
+      }
+      else
+      {
+         DEBUG << "Trial infeasibility higher than current infeasibility" << "\n";
+         this->funnel_width = this->parameters.kappa_infeasibility_1 *this->funnel_width;
+      }
    }
-   else
+   else if (this->parameters.funnel_update_strategy == 2)
    {
-      DEBUG << "Trial infeasibility higher than current infeasibility" << "\n";
+      this->funnel_width = trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (this->funnel_width - trial_infeasibility_measure);
+      std::cout << "Update 2" << std::endl;
+   }
+   else if (this->parameters.funnel_update_strategy == 3)
+   {
       this->funnel_width = this->parameters.kappa_infeasibility_1 *this->funnel_width;
    }
+   std::cout << "Funnel width: " << this->funnel_width << std::endl;
    DEBUG << "\t\tNew funnel parameter is: " << this->funnel_width << "\n";    
 }
 
 void FunnelMethod::update_funnel_width_restoration(double current_infeasibility_measure)
 {
    this->funnel_width = current_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (this->funnel_width - current_infeasibility_measure);
+   std::cout << "Funnel width: " << this->funnel_width << std::endl;
    DEBUG << "\t\tNew funnel parameter is: " << this->funnel_width << "\n"; 
 }
 
@@ -267,6 +283,6 @@ bool FunnelMethod::is_feasibility_iterate_acceptable(Statistics& statistics, con
       DEBUG << "Trial iterate (h-type) was rejected by violating the Armijo condition\n";
    }
    Iterate::number_eval_objective--;
-   statistics.set("status", std::string(accept ? "accepted" : "rejected") + " (Armijo)");
+   statistics.set("status", std::string(accept ? "accepted" : "rejected") + " (restoration)");
    return accept;
 }

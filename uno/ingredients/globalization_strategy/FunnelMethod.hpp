@@ -22,6 +22,7 @@ struct FunnelMethodParameters {
    double kappa_infeasibility_2;
    double beta; /*!< Margin around funnel */
    double gamma; /*!< For acceptability wrt current point. Margin around objective value */
+   int funnel_update_strategy;
 };
 
 /*! \class FunnelMethod
