@@ -127,6 +127,12 @@ else()
    include_directories(${directory})
 endif()
 
+###############
+# custom main #
+###############
+add_executable(uno_custom uno/main_custom.cpp)
+target_link_libraries(uno_custom PUBLIC uno)
+
 ##################################
 # optional GoogleTest unit tests #
 ##################################

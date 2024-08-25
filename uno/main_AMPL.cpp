@@ -19,7 +19,7 @@ void* operator new(size_t size) {
 }
 */
 
-void run_uno_ampl(const std::string& model_name, const Options& options) {
+void run_uno(const std::string& model_name, const Options& options) {
    // AMPL model
    std::unique_ptr<Model> ampl_model = std::make_unique<AMPLModel>(model_name);
 
@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
       else {
          // run Uno on the .nl file (last command line argument)
          std::string model_name = std::string(argv[argc - 1]);
-         run_uno_ampl(model_name, options);
+         run_uno(model_name, options);
       }
    }
    else {
