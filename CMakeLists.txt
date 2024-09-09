@@ -10,10 +10,7 @@ endif()
 project(Uno VERSION 1.0
         DESCRIPTION "Uno (Unifying Nonconvex Optimization)"
         LANGUAGES CXX C Fortran)
-
-# set C++17 and enable other languages
 set(CMAKE_CXX_STANDARD 17)
-enable_language(CXX C Fortran)
 
 include(FortranCInterface)
 FortranCInterface_VERIFY(CXX)
@@ -95,7 +92,6 @@ if(${mumps} STREQUAL "mumps-NOTFOUND")
    message(WARNING "Optional library MUMPS was not found.")
 else()
    list(APPEND UNO_SOURCE_FILES uno/solvers/linear/MUMPSSolver.cpp)
-   link_to_uno(mumps ${mumps})
    list(APPEND LIBRARIES ${MUMPS_LIBRARY} ${MUMPS_COMMON_LIBRARY} ${MUMPS_PORD_LIBRARY})
    
    list(APPEND DIRECTORIES ${MUMPS_INCLUDE_DIR})
