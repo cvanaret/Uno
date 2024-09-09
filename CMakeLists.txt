@@ -90,12 +90,31 @@ else()
    link_to_uno(bqpd ${bqpd})
 endif()
 
-find_library(mumps mumps)
+find_package(MUMPS REQUIRED)
 if(${mumps} STREQUAL "mumps-NOTFOUND")
    message(WARNING "Optional library MUMPS was not found.")
 else()
    list(APPEND UNO_SOURCE_FILES uno/solvers/linear/MUMPSSolver.cpp)
    link_to_uno(mumps ${mumps})
+   list(APPEND LIBRARIES ${MUMPS_LIBRARY} ${MUMPS_COMMON_LIBRARY} ${MUMPS_PORD_LIBRARY})
+   
+   list(APPEND DIRECTORIES ${MUMPS_INCLUDE_DIR})
+
+   find_package(ScaLAPACK REQUIRED)
+   list(APPEND LIBRARIES ${ScaLAPACK_LIBRARY})
+   list(APPEND DIRECTORIES ${ScaLAPACK_INCLUDE_DIRS})
+
+   find_package(BLACS REQUIRED)
+   list(APPEND LIBRARIES ${BLACS_LIBRARY})
+   list(APPEND DIRECTORIES ${BLACS_INCLUDE_DIRS})
+
+   find_package(METIS REQUIRED)
+   list(APPEND LIBRARIES ${METIS_LIBRARY})
+   list(APPEND DIRECTORIES ${METIS_INCLUDE_DIRS})
+
+   find_package(MPI REQUIRED)
+   list(APPEND LIBRARIES MPI::MPI_CXX MPI::MPI_Fortran)
+   add_definitions("-D HAS_MPI")
 endif()
 
 # detection of required libraries

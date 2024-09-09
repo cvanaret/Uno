@@ -55,7 +55,7 @@ public:
    // build the matrix incrementally
    virtual void insert(ElementType term, IndexType row_index, IndexType column_index) = 0;
    // this method will be used by the CSCSymmetricMatrix subclass
-   virtual void finalize_column(size_t column_index) = 0;
+   virtual void finalize_column(IndexType column_index) = 0;
    [[nodiscard]] ElementType smallest_diagonal_entry(size_t max_dimension) const;
    virtual void set_regularization(const std::function<ElementType(size_t /*index*/)>& regularization_function) = 0;
 
