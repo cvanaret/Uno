@@ -51,8 +51,9 @@ Level Logger::level = INFO;
 
 int main(int argc, char* argv[]) {
 #ifdef HAS_MPI
-   int myid , ierr;
-   ierr = MPI_Init(&argc , &argv);
+   int myid;
+   [[maybe_unused]] int ierr;
+   ierr = MPI_Init(&argc, &argv);
    ierr = MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 #endif
 

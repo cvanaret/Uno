@@ -88,7 +88,7 @@ else()
 endif()
 
 find_package(MUMPS REQUIRED)
-if(${mumps} STREQUAL "mumps-NOTFOUND")
+if(${MUMPS_LIBRARY} STREQUAL "MUMPS-NOTFOUND")
    message(WARNING "Optional library MUMPS was not found.")
 else()
    list(APPEND UNO_SOURCE_FILES uno/solvers/linear/MUMPSSolver.cpp)
@@ -111,6 +111,7 @@ else()
    find_package(MPI REQUIRED)
    list(APPEND LIBRARIES MPI::MPI_CXX MPI::MPI_Fortran)
    add_definitions("-D HAS_MPI")
+   add_definitions("-D HAS_MUMPS")
 endif()
 
 # detection of required libraries
