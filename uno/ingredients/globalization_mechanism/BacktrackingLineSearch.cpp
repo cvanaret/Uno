@@ -13,7 +13,7 @@
 #include "tools/Statistics.hpp"
 
 BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options):
-      GlobalizationMechanism(constraint_relaxation_strategy, options),
+      GlobalizationMechanism(constraint_relaxation_strategy),
       backtracking_ratio(options.get_double("LS_backtracking_ratio")),
       minimum_step_length(options.get_double("LS_min_step_length")),
       scale_duals_with_step_length(options.get_bool("LS_scale_duals_with_step_length")) {
@@ -24,7 +24,7 @@ BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& con
 
 void BacktrackingLineSearch::initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) {
    statistics.add_column("LS iter", Statistics::int_width + 2, options.get_int("statistics_minor_column_order"));
-   statistics.add_column("step length", Statistics::double_width - 3, options.get_int("statistics_LS_step_length_column_order"));
+   statistics.add_column("step length", Statistics::double_width - 4, options.get_int("statistics_LS_step_length_column_order"));
    
    this->constraint_relaxation_strategy.initialize(statistics, initial_iterate, options);
 }
@@ -66,32 +66,28 @@ void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, c
                this->scale_duals_with_step_length ? step_length : 1.);
 
          // check whether the trial iterate is accepted
-         if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, step_length)) {
-            // check termination criteria
-            trial_iterate.status = this->check_termination(model, trial_iterate);
-            this->set_statistics(statistics, trial_iterate, direction, step_length);
+         const bool is_acceptable = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, step_length);
+         this->set_statistics(statistics, trial_iterate, direction, step_length);
+         if (is_acceptable) {
             if (Logger::level == INFO) statistics.print_current_line();
             return;
          }
-         // small step length
-         else if (step_length < this->minimum_step_length) {
-            DEBUG << "The line search step length is smaller than " << this->minimum_step_length << '\n';
-            reached_small_step_length = true;
-            this->set_statistics(statistics, trial_iterate, direction, step_length);
-         }
-         else {
-            this->set_statistics(statistics, trial_iterate, direction, step_length);
-            step_length = this->decrease_step_length(step_length);
-         }
-         if (Logger::level == INFO) statistics.print_current_line();
       }
       catch (const EvaluationError& e) {
          this->set_statistics(statistics);
          statistics.set("status", "eval. error");
-         if (Logger::level == INFO) statistics.print_current_line();
+      }
+
+      // small step length
+      if (step_length < this->minimum_step_length) {
+         DEBUG << "The line search step length is smaller than " << this->minimum_step_length << '\n';
+         reached_small_step_length = true;
+      }
+      else {
          step_length = this->decrease_step_length(step_length);
       }
-   }
+      if (Logger::level == INFO) statistics.print_current_line();
+   } // end while loop
 
    // reached a small step length: revert to solving the feasibility problem
    if (this->constraint_relaxation_strategy.solving_feasibility_problem()) {

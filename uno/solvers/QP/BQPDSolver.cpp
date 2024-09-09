@@ -280,7 +280,7 @@ SubproblemStatus BQPDSolver::status_from_bqpd_status(BQPDStatus bqpd_status) {
          return SubproblemStatus::UNBOUNDED_PROBLEM;
       case BQPDStatus::BOUND_INCONSISTENCY:
          DEBUG << YELLOW << "BQPD error: bound inconsistency\n" << RESET;
-         return SubproblemStatus::INFEASIBLE;
+         return SubproblemStatus::ERROR;
       case BQPDStatus::INFEASIBLE:
          return SubproblemStatus::INFEASIBLE;
       // errors

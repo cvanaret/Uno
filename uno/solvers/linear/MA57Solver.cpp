@@ -54,7 +54,7 @@ void MA57Solver::do_symbolic_factorization(const SymmetricMatrix<size_t, double>
       "MA57Solver: the number of nonzeros of the matrix is larger than the preallocated size");
 
    // build the internal matrix representation
-   this->save_matrix_to_local_format(matrix);
+   this->save_sparsity_pattern_internally(matrix);
 
    const int n = static_cast<int>(matrix.dimension);
    const int nnz = static_cast<int>(matrix.number_nonzeros);
@@ -159,7 +159,7 @@ size_t MA57Solver::rank() const {
    return static_cast<size_t>(this->info[24]);
 }
 
-void MA57Solver::save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix) {
+void MA57Solver::save_sparsity_pattern_internally(const SymmetricMatrix<size_t, double>& matrix) {
    // build the internal matrix representation
    this->row_indices.clear();
    this->column_indices.clear();

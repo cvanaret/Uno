@@ -23,7 +23,6 @@ public:
    void reset() override;
    void insert(ElementType term, size_t row_index, size_t column_index) override;
    void finalize_column(size_t column_index) override;
-   [[nodiscard]] ElementType smallest_diagonal_entry(size_t max_dimension) const override;
    void set_regularization(const std::function<ElementType(size_t /*index*/)>& regularization_function) override;
 
    void print(std::ostream& stream) const override;
@@ -84,20 +83,6 @@ void CSCSymmetricMatrix<IndexType, ElementType>::finalize_column(size_t column_i
    if (column_index < this->dimension - 1) {
       this->column_starts[column_index + 2] = this->column_starts[column_index + 1];
    }
-}
-
-template <typename IndexType, typename ElementType>
-ElementType CSCSymmetricMatrix<IndexType, ElementType>::smallest_diagonal_entry(size_t max_dimension) const {
-   ElementType smallest_entry = INF<ElementType>;
-   for (const auto [row_index, column_index, element]: *this) {
-      if (row_index == column_index && row_index < IndexType(max_dimension) && element < smallest_entry) {
-         smallest_entry = element;
-      }
-   }
-   if (smallest_entry == INF<ElementType>) {
-      smallest_entry = ElementType(0);
-   }
-   return smallest_entry;
 }
 
 template <typename IndexType, typename ElementType>

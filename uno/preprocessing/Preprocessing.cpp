@@ -17,6 +17,27 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
       SymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, Iterate& current_iterate, Vector<double>& multipliers, double multiplier_max_norm) {
    current_iterate.evaluate_objective_gradient(model);
    current_iterate.evaluate_constraint_jacobian(model);
+   DEBUG << "Computing least-square multipliers\n";
+   DEBUG2 << "Current primals: " << current_iterate.primals << '\n';
+
+   /* generate the right-hand side */
+   rhs.fill(0.);
+   // objective gradient
+   for (const auto [variable_index, derivative]: current_iterate.evaluations.objective_gradient) {
+      rhs[variable_index] += model.objective_sign * derivative;
+   }
+   // variable bound constraints
+   for (size_t variable_index: Range(model.number_variables)) {
+      rhs[variable_index] -= current_iterate.multipliers.lower_bounds[variable_index] + current_iterate.multipliers.upper_bounds[variable_index];
+   }
+   DEBUG2 << "RHS for least-square multipliers: "; print_vector(DEBUG2, view(rhs, 0, model.number_variables + model.number_constraints));
+
+   // if the residuals on the RHS are all 0, the least-square multipliers are all 0
+   if (norm_inf(view(rhs, 0, model.number_variables + model.number_constraints)) == 0.) {
+      multipliers.fill(0.);
+      DEBUG << "Least-square multipliers are all 0.\n";
+      return;
+   }
 
    /* build the symmetric matrix */
    matrix.reset();
@@ -33,18 +54,6 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
       matrix.finalize_column(model.number_variables + constraint_index);
    }
    DEBUG2 << "Matrix for least-square multipliers:\n" << matrix << '\n';
-
-   /* generate the right-hand side */
-   rhs.fill(0.);
-   // objective gradient
-   for (const auto [variable_index, derivative]: current_iterate.evaluations.objective_gradient) {
-      rhs[variable_index] += model.objective_sign * derivative;
-   }
-   // variable bound constraints
-   for (size_t variable_index: Range(model.number_variables)) {
-      rhs[variable_index] -= current_iterate.multipliers.lower_bounds[variable_index] + current_iterate.multipliers.upper_bounds[variable_index];
-   }
-   DEBUG2 << "RHS for least-square multipliers: "; print_vector(DEBUG2, view(rhs, 0, matrix.dimension));
 
    /* solve the system */
    Vector<double> solution(matrix.dimension);
@@ -74,7 +83,7 @@ size_t count_infeasible_linear_constraints(const Model& model, const std::vector
    return infeasible_linear_constraints;
 }
 
-bool Preprocessing::enforce_linear_constraints(const Model& model, Vector<double>& x, Multipliers& multipliers, QPSolver& qp_solver) {
+void Preprocessing::enforce_linear_constraints(const Model& model, Vector<double>& x, Multipliers& multipliers, QPSolver& qp_solver) {
    const auto& linear_constraints = model.get_linear_constraints();
    INFO << "Preprocessing phase: the problem has " << linear_constraints.size() << " linear constraints\n";
    if (not linear_constraints.empty()) {
@@ -116,8 +125,7 @@ bool Preprocessing::enforce_linear_constraints(const Model& model, Vector<double
          qp_solver.solve_QP(model.number_variables, linear_constraints.size(), variables_lower_bounds, variables_upper_bounds, constraints_lower_bounds,
                constraints_upper_bounds, linear_objective, constraint_jacobian, hessian, d0, direction, warmstart_information);
          if (direction.status == SubproblemStatus::INFEASIBLE) {
-            INFO << "Linear constraints cannot be satisfied.\n";
-            return false;
+            throw std::runtime_error("Linear constraints cannot be satisfied at the initial point.");
          }
 
          // take the step
@@ -132,5 +140,4 @@ bool Preprocessing::enforce_linear_constraints(const Model& model, Vector<double
          DEBUG3 << '\n';
       }
    }
-   return true;
 }

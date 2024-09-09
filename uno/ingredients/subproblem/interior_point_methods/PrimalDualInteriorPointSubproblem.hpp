@@ -25,7 +25,7 @@ public:
          size_t number_hessian_nonzeros, const Options& options);
 
    void initialize_statistics(Statistics& statistics, const Options& options) override;
-   [[nodiscard]] bool generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
+   void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
    void set_initial_point(const Vector<double>& point) override;
 
    void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) override;

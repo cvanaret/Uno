@@ -94,7 +94,7 @@ std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
    stream << "          ┌ Stationarity: " << iterate.residuals.KKT_stationarity << '\n';
    stream << "          │ FJ stationarity: " << iterate.residuals.FJ_stationarity << '\n';
    stream << "Residuals │ Feasibility stationarity: " << iterate.residuals.feasibility_stationarity << '\n';
-   stream << "          │ Constraint violation: " << iterate.residuals.infeasibility << '\n';
+   stream << "          │ Primal feasibility: " << iterate.residuals.primal_feasibility << '\n';
    stream << "          │ Complementarity: " << iterate.residuals.complementarity << '\n';
    stream << "          └ Feasibility complementarity: " << iterate.residuals.feasibility_complementarity << '\n';
 

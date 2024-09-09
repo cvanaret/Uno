@@ -9,6 +9,7 @@
 #include "ingredients/globalization_strategy/GlobalizationStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/Norm.hpp"
+#include "optimization/TerminationStatus.hpp"
 
 // forward declarations
 class Direction;
@@ -61,6 +62,11 @@ protected:
    const Norm progress_norm;
    const Norm residual_norm;
    const double residual_scaling_threshold;
+   const double tight_tolerance; /*!< Tight tolerance of the termination criteria */
+   const double loose_tolerance; /*!< Loose tolerance of the termination criteria */
+   size_t loose_tolerance_consecutive_iterations{0};
+   const size_t loose_tolerance_consecutive_iteration_threshold;
+   const double unbounded_objective_threshold;
 
    void set_objective_measure(Iterate& iterate) const;
    void set_infeasibility_measure(Iterate& iterate) const;
@@ -76,6 +82,9 @@ protected:
 
    [[nodiscard]] double compute_stationarity_scaling(const Multipliers& multipliers) const;
    [[nodiscard]] double compute_complementarity_scaling(const Multipliers& multipliers) const;
+
+   [[nodiscard]] TerminationStatus check_termination(Iterate& current_iterate);
+   [[nodiscard]] TerminationStatus check_convergence_with_given_tolerance(Iterate& current_iterate, double tolerance) const;
 
    void set_statistics(Statistics& statistics, const Iterate& iterate) const;
    void set_progress_statistics(Statistics& statistics, const Iterate& iterate) const;

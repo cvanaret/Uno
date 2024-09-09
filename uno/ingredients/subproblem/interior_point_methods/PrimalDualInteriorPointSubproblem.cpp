@@ -52,7 +52,7 @@ inline void PrimalDualInteriorPointSubproblem::initialize_statistics(Statistics&
    statistics.add_column("barrier param.", Statistics::double_width - 1, options.get_int("statistics_barrier_parameter_column_order"));
 }
 
-inline bool PrimalDualInteriorPointSubproblem::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
+inline void PrimalDualInteriorPointSubproblem::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
    if (problem.has_inequality_constraints()) {
       throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel.\n");
    }
@@ -96,7 +96,6 @@ inline bool PrimalDualInteriorPointSubproblem::generate_initial_iterate(const Op
    if (problem.is_constrained()) {
       this->compute_least_square_multipliers(problem, initial_iterate, initial_iterate.multipliers.constraints);
    }
-   return true;
 }
 
 double PrimalDualInteriorPointSubproblem::barrier_parameter() const {
@@ -179,9 +178,7 @@ void PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const Opti
    }
 
    // possibly update the barrier parameter
-   if (not this->solving_feasibility_problem) {
-      this->update_barrier_parameter(problem, current_iterate);
-   }
+   this->update_barrier_parameter(problem, current_iterate);
    statistics.set("barrier param.", this->barrier_parameter());
 
    // evaluate the functions at the current iterate
@@ -468,32 +465,37 @@ void PrimalDualInteriorPointSubproblem::postprocess_iterate(const OptimizationPr
    // rescale the bound multipliers (Eq. 16 in Ipopt paper)
    for (const size_t variable_index: problem.get_lower_bounded_variables()) {
       const double coefficient = this->barrier_parameter() / (iterate.primals[variable_index] - problem.variable_lower_bound(variable_index));
-      const double lb = coefficient / this->parameters.k_sigma;
-      const double ub = coefficient * this->parameters.k_sigma;
-      if (lb <= ub) {
-         const double current_value = iterate.multipliers.lower_bounds[variable_index];
-         iterate.multipliers.lower_bounds[variable_index] = std::max(std::min(iterate.multipliers.lower_bounds[variable_index], ub), lb);
-         if (iterate.multipliers.lower_bounds[variable_index] != current_value) {
-            DEBUG << "Multiplier for lower bound " << variable_index << " rescaled from " << current_value << " to " << iterate.multipliers.lower_bounds[variable_index] << '\n';
+      if (is_finite(coefficient)) {
+         const double lb = coefficient / this->parameters.k_sigma;
+         const double ub = coefficient * this->parameters.k_sigma;
+         if (lb <= ub) {
+            const double current_value = iterate.multipliers.lower_bounds[variable_index];
+            iterate.multipliers.lower_bounds[variable_index] = std::max(std::min(iterate.multipliers.lower_bounds[variable_index], ub), lb);
+            if (iterate.multipliers.lower_bounds[variable_index] != current_value) {
+               DEBUG << "Multiplier for lower bound " << variable_index << " rescaled from " << current_value << " to " << iterate.multipliers.lower_bounds[variable_index] << '\n';
+            }
+         }
+         else {
+            WARNING << YELLOW << "Barrier subproblem: the bounds are in the wrong order in the lower bound multiplier reset" << RESET << '\n';
          }
       }
-      else {
-         WARNING << YELLOW << "Barrier subproblem: the bounds are in the wrong order in the lower bound multiplier reset" << RESET << '\n';
-      }
+
    }
    for (const size_t variable_index: problem.get_upper_bounded_variables()) {
       const double coefficient = this->barrier_parameter() / (iterate.primals[variable_index] - problem.variable_upper_bound(variable_index));
-      const double lb = coefficient * this->parameters.k_sigma;
-      const double ub = coefficient / this->parameters.k_sigma;
-      if (lb <= ub) {
-         const double current_value = iterate.multipliers.upper_bounds[variable_index];
-         iterate.multipliers.upper_bounds[variable_index] = std::max(std::min(iterate.multipliers.upper_bounds[variable_index], ub), lb);
-         if (iterate.multipliers.upper_bounds[variable_index] != current_value) {
-            DEBUG << "Multiplier for upper bound " << variable_index << " rescaled from " << current_value << " to " << iterate.multipliers.upper_bounds[variable_index] << '\n';
+      if (is_finite(coefficient)) {
+         const double lb = coefficient * this->parameters.k_sigma;
+         const double ub = coefficient / this->parameters.k_sigma;
+         if (lb <= ub) {
+            const double current_value = iterate.multipliers.upper_bounds[variable_index];
+            iterate.multipliers.upper_bounds[variable_index] = std::max(std::min(iterate.multipliers.upper_bounds[variable_index], ub), lb);
+            if (iterate.multipliers.upper_bounds[variable_index] != current_value) {
+               DEBUG << "Multiplier for upper bound " << variable_index << " rescaled from " << current_value << " to " << iterate.multipliers.upper_bounds[variable_index] << '\n';
+            }
          }
-      }
-      else {
-         WARNING << YELLOW << "Barrier subproblem: the bounds are in the wrong order in the upper bound multiplier reset" << RESET << '\n';
+         else {
+            WARNING << YELLOW << "Barrier subproblem: the bounds are in the wrong order in the upper bound multiplier reset" << RESET << '\n';
+         }
       }
    }
 }

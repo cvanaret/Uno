@@ -65,6 +65,9 @@ inline ScaledModel::ScaledModel(std::unique_ptr<Model> original_model, Iterate& 
       for (size_t constraint_index: Range(this->model->number_constraints)) {
          scale(initial_iterate.evaluations.constraint_jacobian[constraint_index], this->scaling.get_constraint_scaling(constraint_index));
       }
+      // since the definition of the constraints changed, reset the evaluation flags
+      initial_iterate.is_objective_gradient_computed = false;
+      initial_iterate.is_constraint_jacobian_computed = false;
    }
    // check the scaling factors
    assert(0 < this->scaling.get_objective_scaling() && "Objective scaling failed.");

@@ -16,11 +16,10 @@ $$
 \end{align}
 $$
 
-The theoretical abstract framework for unifying nonlinearly constrained nonconvex optimization was developed by [Charlie Vanaret](https://github.com/cvanaret/) (Zuse-Institut Berlin) and [Sven Leyffer](https://wiki.mcs.anl.gov/leyffer/index.php/Sven_Leyffer) (Argonne National Laboratory).  
+The theoretical abstract framework for unifying nonlinearly constrained nonconvex optimization was developed by [Charlie Vanaret](https://github.com/cvanaret/) (Argonne National Laboratory & Zuse-Institut Berlin) and [Sven Leyffer](https://wiki.mcs.anl.gov/leyffer/index.php/Sven_Leyffer) (Argonne National Laboratory). Uno was designed and implemented by Charlie Vanaret. It is released under the MIT license (see the [license file](LICENSE)).
 
-Uno was designed and implemented by Charlie Vanaret. [Silvio Traversaro](https://github.com/traversaro) contributed to the CMakeLists.
+[Silvio Traversaro](https://github.com/traversaro) and [Alexis Montoison](https://github.com/amontoison) contributed to the CMakeLists.
 
-Uno is released under the MIT license (see the [license file](LICENSE)).
 
 ## Unifying nonlinearly constrained nonconvex optimization
 
@@ -44,7 +43,7 @@ Uno 1.0 implements the following strategies:
    <img src="docs/figures/hypergraph_uno.png" alt="Uno 1.0 hypergraph" width="65%" />
 </p>
 
-**Any strategy combination** can be automatically generated without any programming effort from the user. Note that all combinations do not necessarily result in sensible algorithms, or even convergent approaches. For more details, check out my [presentation at the ICCOPT 2022 conference](https://www.researchgate.net/publication/362254109).
+**Any strategy combination** can be automatically generated without any programming effort from the user. Note that all combinations do not necessarily result in sensible algorithms, or even convergent approaches. For more details, check out our [preprint](https://www.researchgate.net/publication/381522383_Unifying_nonlinearly_constrained_nonconvex_optimization) or my [presentation at the ICCOPT 2022 conference](https://www.researchgate.net/publication/362254109).
 
 Uno 1.0 implements three **presets**, that is strategy combinations that correspond to existing solvers (as well as hyperparameter values found in their documentations):
 * `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method);
@@ -66,7 +65,18 @@ All log files can be found [here](https://github.com/cvanaret/nonconvex_solver_c
 
 ### In an article
 
-Please be patient, we are actively working on our article.
+We have submitted our paper to the Mathematical Programming Computation journal. The preprint is available on [ResearchGate](https://www.researchgate.net/publication/381522383_Unifying_nonlinearly_constrained_nonconvex_optimization).
+
+Until it is published, you can use the following bibtex entry:
+
+```
+@unpublished{VanaretLeyffer2024,
+  author = {Vanaret, Charlie and Leyffer, Sven},
+  title = {Unifying nonlinearly constrained nonconvex optimization},
+  year = {2024},
+  note = {Submitted to Mathematical Programming Computation}
+}
+```
 
 ### On social media
 

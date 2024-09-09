@@ -70,7 +70,7 @@ private:
    const size_t fortran_shift{1};
 
    bool use_iterative_refinement{false};
-   void save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& row_index);
+   void save_sparsity_pattern_internally(const SymmetricMatrix<size_t, double>& matrix);
 };
 
 #endif // UNO_MA57SOLVER_H

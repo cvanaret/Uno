@@ -42,11 +42,17 @@ bool FilterMethod::is_iterate_acceptable(Statistics& statistics, const ProgressM
 // solving the feasibility problem = working on infeasibility only (no filter acceptability test)
 bool FilterMethod::is_feasibility_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
       const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction) const {
-   DEBUG << "Current infeasibility = " << current_progress.infeasibility << '\n';
-   DEBUG << "Trial   infeasibility = " << trial_progress.infeasibility << '\n';
-   DEBUG << "Predicted reduction = " << predicted_reduction.infeasibility << '\n';
+   // drop the objective measure and focus on infeasibility and auxiliary terms (barrier, proximal, ...)
+   const double current_merit = current_progress.infeasibility + current_progress.auxiliary;
+   const double trial_merit = trial_progress.infeasibility + trial_progress.auxiliary;
+   const double predicted_merit_reduction = predicted_reduction.infeasibility + predicted_reduction.auxiliary;
+   const double actual_merit_reduction = current_merit - trial_merit;
+   DEBUG << "Current merit = " << current_merit << '\n';
+   DEBUG << "Trial merit = " << trial_merit << '\n';
+   DEBUG << "Predicted merit reduction = " << predicted_merit_reduction << '\n';
+   DEBUG << "Actual merit reduction = " << actual_merit_reduction << '\n';
    bool accept = false;
-   if (this->armijo_sufficient_decrease(predicted_reduction.infeasibility, current_progress.infeasibility - trial_progress.infeasibility)) {
+   if (this->armijo_sufficient_decrease(predicted_merit_reduction, actual_merit_reduction)) {
       DEBUG << "Trial iterate (h-type) was accepted by satisfying the Armijo condition\n";
       accept = true;
    }
@@ -54,7 +60,7 @@ bool FilterMethod::is_feasibility_iterate_acceptable(Statistics& statistics, con
       DEBUG << "Trial iterate (h-type) was rejected by violating the Armijo condition\n";
    }
    Iterate::number_eval_objective--;
-   statistics.set("status", std::string(accept ? "accepted" : "rejected") + " (h-type Armijo)");
+   statistics.set("status", std::string(accept ? "accepted" : "rejected") + " (Armijo)");
    return accept;
 }
 
