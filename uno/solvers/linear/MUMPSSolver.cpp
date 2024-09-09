@@ -53,22 +53,28 @@ void MUMPSSolver::solve_indefinite_system(const SymmetricMatrix<size_t, double>&
 }
 
 std::tuple <size_t, size_t, size_t> MUMPSSolver::get_inertia() const {
-   // TODO
-   return {0, 0, 0};
+   const size_t number_negative_eigenvalues = this->number_negative_eigenvalues();
+   const size_t number_zero_eigenvalues = this->number_zero_eigenvalues();
+   const size_t number_positive_eigenvalues = this->dimension - (number_negative_eigenvalues + number_zero_eigenvalues);
+   return std::make_tuple(number_positive_eigenvalues, number_negative_eigenvalues, number_zero_eigenvalues);
 }
 
 size_t MUMPSSolver::number_negative_eigenvalues() const {
+   // INFOG(12)
    return static_cast<size_t>(this->mumps_structure.infog[11]);
 }
 
+size_t MUMPSSolver::number_zero_eigenvalues() const {
+   // INFOG(28)
+   return static_cast<size_t>(this->mumps_structure.infog[27]);
+}
+
 bool MUMPSSolver::matrix_is_singular() const {
-   // TODO
-   return false;
+   return (this->number_zero_eigenvalues() > 0);
 }
 
 size_t MUMPSSolver::rank() const {
-   // TODO
-   return 0;
+   return this->dimension - this->number_zero_eigenvalues();
 }
 
 void MUMPSSolver::save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix) {
