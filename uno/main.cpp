@@ -50,7 +50,7 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
 Level Logger::level = INFO;
 
 int main(int argc, char* argv[]) {
-#ifdef HAS_MPI
+#if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
    int myid;
    [[maybe_unused]] int ierr;
    ierr = MPI_Init(&argc, &argv);
@@ -80,7 +80,7 @@ int main(int argc, char* argv[]) {
       Uno::print_uno_version();
    }
 
-#ifdef HAS_MPI
+#if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
    ierr = MPI_Finalize() ;
 #endif
    return EXIT_SUCCESS;

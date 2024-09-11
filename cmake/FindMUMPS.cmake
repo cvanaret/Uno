@@ -36,6 +36,13 @@ find_library(MUMPS_PORD_LIBRARY
   PATHS ${MUMPS_PKGCONF_LIBRARY_DIRS}
 )
 
+# libseq for sequential MUMPS
+set(MUMPS_MPISEQ_DIR ${MUMPS_INCLUDE_DIR}/../libseq)
+
+find_library(MUMPS_MPISEQ_LIBRARY
+  NAMES libmpiseq.a
+  PATHS ${MUMPS_MPISEQ_DIR}
+)
 
 # Set the include dir variables and the libraries and let libfind_process do the rest.
 # NOTE: Singular variables for this library, plural for libraries this lib depends on.

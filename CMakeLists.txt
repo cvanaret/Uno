@@ -96,20 +96,32 @@ else()
    
    list(APPEND DIRECTORIES ${MUMPS_INCLUDE_DIR})
 
-   find_package(ScaLAPACK REQUIRED)
-   list(APPEND LIBRARIES ${ScaLAPACK_LIBRARY})
-   list(APPEND DIRECTORIES ${ScaLAPACK_INCLUDE_DIRS})
+   # TODO handle that in a clean way
+   set(MUMPS_MODE "SEQUENTIAL")
+   if(${MUMPS_MODE} STREQUAL "PARALLEL")
+      add_definitions("-D MUMPS_PARALLEL")
+      find_package(MPI REQUIRED)
+      list(APPEND LIBRARIES MPI::MPI_CXX MPI::MPI_Fortran)
 
-   find_package(BLACS REQUIRED)
-   list(APPEND LIBRARIES ${BLACS_LIBRARY})
-   list(APPEND DIRECTORIES ${BLACS_INCLUDE_DIRS})
+      find_package(BLACS REQUIRED)
+      list(APPEND LIBRARIES ${BLACS_LIBRARY})
+      list(APPEND DIRECTORIES ${BLACS_INCLUDE_DIRS})
 
+      find_package(ScaLAPACK REQUIRED)
+      list(APPEND LIBRARIES ${ScaLAPACK_LIBRARY})
+      list(APPEND DIRECTORIES ${ScaLAPACK_INCLUDE_DIRS})
+   endif()
+   if(${MUMPS_MODE} STREQUAL "SEQUENTIAL")
+      add_definitions("-D MUMPS_SEQUENTIAL")
+      # link dummy parallel library (provided by MUMPS distribution)
+      link_to_uno(MUMPS_MPISEQ_LIBRARY ${MUMPS_MPISEQ_LIBRARY})
+   endif()
+   
    find_package(METIS REQUIRED)
    list(APPEND LIBRARIES ${METIS_LIBRARY})
    list(APPEND DIRECTORIES ${METIS_INCLUDE_DIRS})
 
-   find_package(MPI REQUIRED)
-   list(APPEND LIBRARIES MPI::MPI_CXX MPI::MPI_Fortran)
+   
    add_definitions("-D HAS_MPI")
    add_definitions("-D HAS_MUMPS")
 endif()

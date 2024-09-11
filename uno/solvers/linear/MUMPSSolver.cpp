@@ -1,12 +1,20 @@
 #include "MUMPSSolver.hpp"
+#if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
 #include "mpi.h"
+#endif
 
 #define USE_COMM_WORLD -987654
 
 MUMPSSolver::MUMPSSolver(size_t dimension, size_t number_nonzeros): SymmetricIndefiniteLinearSolver<size_t, double>(dimension),
       COO_matrix(dimension, number_nonzeros, false) {
    this->mumps_structure.sym = MUMPSSolver::GENERAL_SYMMETRIC;
+#if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
+   // TODO load number of processes from option file
    this->mumps_structure.par = 1;
+#endif
+#ifdef MUMPS_SEQUENTIAL
+   this->mumps_structure.par = 1;
+#endif
    this->mumps_structure.job = MUMPSSolver::JOB_INIT;
    this->mumps_structure.comm_fortran = USE_COMM_WORLD;
    dmumps_c(&this->mumps_structure);

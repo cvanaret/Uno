@@ -7,6 +7,14 @@
 * download **optional** solvers:
     * BQPD (indefinite null-space QP solver): https://www.mcs.anl.gov/~leyffer/solvers.html
     * MA57 (sparse indefinite symmetric linear solver): http://www.hsl.rl.ac.uk/catalogue/ma57.html
+    * MUMPS (sparse indefinite symmetric linear solver): https://mumps-solver.org/index.php?page=dwnld
+
+* to compile MUMPS in sequential mode, set the following variables at the end of your Makefile.inc:
+```console
+INCS = $(INCSEQ)
+LIBS = $(LIBSEQ)
+LIBSEQNEEDED = libseqneeded
+```
 
 * install BLAS and LAPACK:
 ```console
