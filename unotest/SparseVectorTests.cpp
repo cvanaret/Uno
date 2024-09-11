@@ -4,6 +4,8 @@
 #include <gtest/gtest.h>
 #include "linear_algebra/SparseVector.hpp"
 
+using namespace uno;
+
 TEST(SparseVector, Empty) {
    SparseVector<double> x(2);
    // x is empty: its size (number of elements) is 0

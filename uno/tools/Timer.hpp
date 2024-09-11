@@ -6,15 +6,17 @@
 
 #include <ctime>
 
-// timer starts upon creation
-class Timer {
-public:
-   Timer();
-   [[nodiscard]] double get_duration() const;
-   [[nodiscard]] static char* get_current_date();
+namespace uno {
+   // timer starts upon creation
+   class Timer {
+   public:
+      Timer();
+      [[nodiscard]] double get_duration() const;
+      [[nodiscard]] static char* get_current_date();
 
-private:
-   std::clock_t start_time;
-};
+   private:
+      std::clock_t start_time;
+   };
+} // namespace
 
 #endif //UNO_TIMER_H

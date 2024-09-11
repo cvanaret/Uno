@@ -6,15 +6,17 @@
 
 #include "FilterMethod.hpp"
 
-class FletcherFilterMethod : public FilterMethod {
-public:
-   explicit FletcherFilterMethod(const Options& options);
+namespace uno {
+   class FletcherFilterMethod : public FilterMethod {
+   public:
+      explicit FletcherFilterMethod(const Options& options);
 
-   [[nodiscard]] bool is_infeasibility_sufficiently_reduced(const ProgressMeasures& reference_progress, const ProgressMeasures& trial_progress) const override;
+      [[nodiscard]] bool is_infeasibility_sufficiently_reduced(const ProgressMeasures& reference_progress, const ProgressMeasures& trial_progress) const override;
 
-protected:
-   [[nodiscard]] bool is_regular_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
-         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction) override;
-};
+   protected:
+      [[nodiscard]] bool is_regular_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
+            const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction) override;
+   };
+} // namespace
 
 #endif // UNO_LEYFFERFILTERMETHOD_H

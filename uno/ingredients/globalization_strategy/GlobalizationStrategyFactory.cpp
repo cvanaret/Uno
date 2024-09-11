@@ -7,19 +7,21 @@
 #include "filter_method/FletcherFilterMethod.hpp"
 #include "filter_method/WaechterFilterMethod.hpp"
 
-std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& strategy_type, const Options& options) {
-   if (strategy_type == "l1_merit") {
-      return std::make_unique<l1MeritFunction>(options);
+namespace uno {
+   std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& strategy_type, const Options& options) {
+      if (strategy_type == "l1_merit") {
+         return std::make_unique<l1MeritFunction>(options);
+      }
+      else if (strategy_type == "fletcher_filter_method") {
+         return std::make_unique<FletcherFilterMethod>(options);
+      }
+      else if (strategy_type == "waechter_filter_method") {
+         return std::make_unique<WaechterFilterMethod>(options);
+      }
+      throw std::invalid_argument("GlobalizationStrategy " + strategy_type + " is not supported");
    }
-   else if (strategy_type == "fletcher_filter_method") {
-      return std::make_unique<FletcherFilterMethod>(options);
-   }
-   else if (strategy_type == "waechter_filter_method") {
-      return std::make_unique<WaechterFilterMethod>(options);
-   }
-   throw std::invalid_argument("GlobalizationStrategy " + strategy_type + " is not supported");
-}
 
-std::vector<std::string> GlobalizationStrategyFactory::available_strategies() {
-   return {"l1_merit", "fletcher_filter_strategy", "waechter_filter_strategy"};
-}
+   std::vector<std::string> GlobalizationStrategyFactory::available_strategies() {
+      return {"l1_merit", "fletcher_filter_strategy", "waechter_filter_strategy"};
+   }
+} // namespace
