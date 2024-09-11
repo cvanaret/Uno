@@ -1,74 +1,64 @@
-// Copyright (c) 2022 Charlie Vanaret
+// Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_ITERATE_H
 #define UNO_ITERATE_H
 
-#include <vector>
-#include <limits>
+#include "Evaluations.hpp"
+#include "TerminationStatus.hpp"
 #include "ingredients/globalization_strategy/ProgressMeasures.hpp"
-#include "linear_algebra/SparseVector.hpp"
-#include "optimization/Model.hpp"
+#include "optimization/LagrangianGradient.hpp"
 #include "optimization/Multipliers.hpp"
-#include "tools/Infinity.hpp"
+#include "optimization/PrimalDualResiduals.hpp"
 
-struct Evaluations {
-   double objective{INF<double>}; /*!< Objective value */
-   std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
-   SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
-   std::vector<SparseVector<double>> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
+namespace uno {
+   // forward declaration
+   class Model;
 
-   Evaluations(size_t max_number_variables, size_t max_number_constraints):
-         constraints(max_number_constraints),
-         objective_gradient(max_number_variables),
-         constraint_jacobian(max_number_constraints) {
-      for (auto& constraint_gradient: this->constraint_jacobian) {
-         constraint_gradient.reserve(max_number_variables);
-      }
-   }
-};
+   class Iterate {
+   public:
+      Iterate(size_t number_variables, size_t number_constraints);
+      Iterate(Iterate&& other) noexcept = default;
+      Iterate& operator=(Iterate&& other) noexcept = default;
 
-class Iterate {
-public:
-   Iterate(size_t max_number_variables, size_t max_number_constraints);
+      size_t number_variables;
+      size_t number_constraints;
+      Vector<double> primals;
+      Multipliers multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
+      Multipliers feasibility_multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
+      double objective_multiplier{1.};
 
-   size_t number_variables;
-   size_t number_constraints;
-   std::vector<double> primals; /*!< \f$\mathbb{R}^n\f$ primal variables */
-   Multipliers multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
+      // evaluations
+      Evaluations evaluations;
+      static size_t number_eval_objective;
+      static size_t number_eval_constraints;
+      static size_t number_eval_objective_gradient;
+      static size_t number_eval_jacobian;
+      // lazy evaluation flags
+      bool is_objective_computed{false};
+      bool are_constraints_computed{false};
+      bool is_objective_gradient_computed{false}; /*!< Flag that indicates if the objective gradient has already been computed */
+      bool is_constraint_jacobian_computed{false}; /*!< Flag that indicates if the constraint Jacobian has already been computed */
 
-   // evaluations
-   Evaluations original_evaluations;
-   static size_t number_eval_objective;
-   static size_t number_eval_constraints;
-   static size_t number_eval_jacobian;
-   // lazy evaluation flags
-   bool is_objective_computed{false};
-   bool are_constraints_computed{false};
-   bool is_objective_gradient_computed{false}; /*!< Flag that indicates if the objective gradient has already been computed */
-   bool is_constraint_jacobian_computed{false}; /*!< Flag that indicates if the constraint Jacobian has already been computed */
+      // primal-dual residuals
+      PrimalDualResiduals residuals{};
+      LagrangianGradient<double> lagrangian_gradient;
 
-   std::vector<double> lagrangian_gradient;
+      // measures of progress (infeasibility, objective, auxiliary)
+      ProgressMeasures progress{INF<double>, {}, INF<double>};
 
-   // residuals
-   double constraint_violation{INF<double>};
-   double stationarity_error{INF<double>};
-   double complementarity_error{INF<double>};
+      // status
+      TerminationStatus status{TerminationStatus::NOT_OPTIMAL};
 
-   // measures of progress (infeasibility, optimality)
-   ProgressMeasures nonlinear_progress{INF<double>, INF<double>};
+      void evaluate_objective(const Model& model);
+      void evaluate_constraints(const Model& model);
+      void evaluate_objective_gradient(const Model& model);
+      void evaluate_constraint_jacobian(const Model& model);
 
-   void evaluate_objective(const Model& model);
-   void evaluate_constraints(const Model& model);
-   void evaluate_objective_gradient(const Model& model);
-   void evaluate_constraint_jacobian(const Model& model);
-   void evaluate_lagrangian_gradient(const Model& model, double objective_multiplier, const std::vector<double>& constraint_multipliers,
-         const std::vector<double>& lower_bounds_multipliers, const std::vector<double>& upper_bounds_multipliers);
+      void set_number_variables(size_t number_variables);
 
-   void set_number_variables(size_t number_variables);
-   void reset_evaluations();
-
-   friend std::ostream& operator<<(std::ostream& stream, const Iterate& iterate);
-};
+      friend std::ostream& operator<<(std::ostream& stream, const Iterate& iterate);
+   };
+} // namespace
 
 #endif // UNO_ITERATE_H

@@ -1,37 +1,34 @@
-// Copyright (c) 2022 Charlie Vanaret
+// Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "Scaling.hpp"
+#include "linear_algebra/Norm.hpp"
+#include "linear_algebra/RectangularMatrix.hpp"
+#include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 
-Scaling::Scaling(size_t number_constraints, double gradient_threshold):
-      gradient_threshold(gradient_threshold),
-      objective_scaling(1.),
-      constraint_scaling(number_constraints, 1.) {
-}
-
-void Scaling::compute(SparseVector<double>& objective_gradient, std::vector<SparseVector<double>>& constraint_jacobian) {
-   // set the objective scaling
-   this->objective_scaling = std::min(1., this->gradient_threshold / norm_inf(objective_gradient));
-
-   // set the constraints scaling
-   for (size_t j = 0; j < this->constraint_scaling.size(); j++) {
-      this->constraint_scaling[j] = std::min(1., this->gradient_threshold / norm_inf(constraint_jacobian[j]));
+namespace uno {
+   Scaling::Scaling(size_t number_constraints, double gradient_threshold):
+         gradient_threshold(gradient_threshold), objective_scaling(1.), constraint_scaling(number_constraints, 1.) {
    }
 
-   // scale the gradients passed as parameters
-   scale(objective_gradient, this->get_objective_scaling());
-   for (size_t j = 0; j < this->constraint_scaling.size(); j++) {
-      scale(constraint_jacobian[j], this->get_constraint_scaling(j));
+   void Scaling::compute(const SparseVector<double>& objective_gradient, const RectangularMatrix<double>& constraint_jacobian) {
+      // objective
+      this->objective_scaling = std::min(1., this->gradient_threshold / norm_inf(objective_gradient));
+
+      // constraints
+      for (size_t constraint_index: Range(this->constraint_scaling.size())) {
+         this->constraint_scaling[constraint_index] = std::min(1., this->gradient_threshold / norm_inf(constraint_jacobian[constraint_index]));
+      }
+      DEBUG2 << "Objective scaling: " << this->objective_scaling << '\n';
+      DEBUG2 << "Constraint scaling: "; print_vector(DEBUG2, this->constraint_scaling);
    }
-   DEBUG << "Objective scaling: " << this->objective_scaling << '\n';
-   DEBUG << "Constraint scaling: "; print_vector(DEBUG, this->constraint_scaling);
-}
 
-double Scaling::get_objective_scaling() const {
-   return this->objective_scaling;
-}
+   double Scaling::get_objective_scaling() const {
+      return this->objective_scaling;
+   }
 
-double Scaling::get_constraint_scaling(size_t j) const {
-   return this->constraint_scaling[j];
-}
+   double Scaling::get_constraint_scaling(size_t constraint_index) const {
+      return this->constraint_scaling[constraint_index];
+   }
+} // namespace

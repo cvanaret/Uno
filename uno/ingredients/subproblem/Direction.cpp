@@ -1,94 +1,76 @@
-// Copyright (c) 2022 Charlie Vanaret
+// Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "Direction.hpp"
 #include "tools/Logger.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "symbolic/VectorView.hpp"
 
-Direction::Direction(size_t max_number_variables, size_t max_number_constraints):
-   number_variables(max_number_variables), number_constraints(max_number_constraints),
-   primals(max_number_variables), multipliers(max_number_variables, max_number_constraints) {
-}
-
-void Direction::set_dimensions(size_t new_number_variables, size_t new_number_constraints) {
-   this->number_variables = new_number_variables;
-   this->number_constraints = new_number_constraints;
-}
-
-std::string status_to_string(Status status) {
-   switch (status) {
-      case Status::OPTIMAL:
-         return "optimal";
-      case Status::UNBOUNDED_PROBLEM:
-         return "unbounded problem";
-      case Status::INFEASIBLE:
-         return "infeasible";
-      default:
-         return "unknown status, something went wrong";
+namespace uno {
+   Direction::Direction(size_t number_variables, size_t number_constraints) :
+         number_variables(number_variables), number_constraints(number_constraints),
+         primals(number_variables), multipliers(number_variables, number_constraints), feasibility_multipliers(number_variables, number_constraints),
+         active_bounds(number_variables) {
    }
-}
 
-std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
-   stream << "\nDirection:\n";
-   stream << "d^* = ";
-   print_vector(stream, direction.primals, 0, direction.number_variables);
-
-   stream << "Status: " << status_to_string(direction.status) << '\n';
-
-   stream << "objective = " << direction.objective << '\n';
-   stream << "norm = " << direction.norm << '\n';
-
-   stream << "bound constraints active at lower bound =";
-   for (size_t i: direction.active_set.bounds.at_lower_bound) {
-      stream << " x" << i;
+   void Direction::set_dimensions(size_t new_number_variables, size_t new_number_constraints) {
+      this->number_variables = new_number_variables;
+      this->number_constraints = new_number_constraints;
    }
-   stream << '\n';
-   stream << "bound constraints active at upper bound =";
-   for (size_t i: direction.active_set.bounds.at_upper_bound) {
-      stream << " x" << i;
-   }
-   stream << '\n';
 
-   stream << "constraints at lower bound =";
-   for (size_t j: direction.active_set.constraints.at_lower_bound) {
-      stream << " c" << j;
+   void Direction::reset() {
+      this->primals.fill(0.);
+      this->multipliers.reset();
+      this->feasibility_multipliers.reset();
+      this->active_bounds.at_lower_bound.clear();
+      this->active_bounds.at_upper_bound.clear();
    }
-   stream << '\n';
-   stream << "constraints at upper bound =";
-   for (size_t j: direction.active_set.constraints.at_upper_bound) {
-      stream << " c" << j;
-   }
-   stream << '\n';
 
-   if (direction.constraint_partition.has_value()) {
-      const ConstraintPartition& constraint_partition = direction.constraint_partition.value();
-      stream << "general feasible =";
-      for (size_t j: constraint_partition.feasible) {
-         stream << " c" << j;
+   std::string status_to_string(SubproblemStatus status) {
+      switch (status) {
+         case SubproblemStatus::OPTIMAL:
+            return "optimal subproblem";
+         case SubproblemStatus::UNBOUNDED_PROBLEM:
+            return "unbounded subproblem";
+         case SubproblemStatus::INFEASIBLE:
+            return "infeasible subproblem";
+         default:
+            return "unknown status, something went wrong";
       }
-      stream << "\ngeneral lower infeasible =";
-      for (size_t j: constraint_partition.lower_bound_infeasible) {
-         stream << " c" << j;
-      }
-      stream << "\ngeneral upper infeasible =";
-      for (size_t j: constraint_partition.upper_bound_infeasible) {
-         stream << " c" << j;
+   }
+
+   std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
+      stream << "Direction:\n";
+      stream << "│ status: " << status_to_string(direction.status) << '\n';
+
+      stream << "│ primals = ";
+      print_vector(stream, view(direction.primals, 0, direction.number_variables));
+      stream << "│ constraint multipliers = ";
+      print_vector(stream, direction.multipliers.constraints);
+      stream << "│ lower bound multipliers = ";
+      print_vector(stream, direction.multipliers.lower_bounds);
+      stream << "│ upper bound multipliers = ";
+      print_vector(stream, direction.multipliers.upper_bounds);
+      stream << "│ feasibility constraint multipliers = ";
+      print_vector(stream, direction.feasibility_multipliers.constraints);
+      stream << "│ feasibility lower bound multipliers = ";
+      print_vector(stream, direction.feasibility_multipliers.lower_bounds);
+      stream << "│ feasibility upper bound multipliers = ";
+      print_vector(stream, direction.feasibility_multipliers.upper_bounds);
+
+      stream << "│ objective = " << direction.subproblem_objective << '\n';
+      stream << "│ norm = " << direction.norm << '\n';
+
+      stream << "│ bound constraints active at lower bound =";
+      for (size_t variable_index: direction.active_bounds.at_lower_bound) {
+         stream << " x" << variable_index;
       }
       stream << '\n';
+      stream << "│ bound constraints active at upper bound =";
+      for (size_t variable_index: direction.active_bounds.at_upper_bound) {
+         stream << " x" << variable_index;
+      }
+      stream << '\n';
+      return stream;
    }
-
-   stream << "objective multiplier = " << direction.objective_multiplier << '\n';
-   stream << "lower bound multipliers = ";
-   print_vector(stream, direction.multipliers.lower_bounds);
-   stream << "upper bound multipliers = ";
-   print_vector(stream, direction.multipliers.upper_bounds);
-   stream << "constraint multipliers = ";
-   print_vector(stream, direction.multipliers.constraints);
-
-   return stream;
-}
-
-ConstraintPartition::ConstraintPartition(size_t number_constraints) {
-   this->feasible.reserve(number_constraints);
-   this->infeasible.reserve(number_constraints);
-}
+} // namespace

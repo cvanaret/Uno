@@ -7,7 +7,8 @@
 #include "linear_algebra/SparseVector.hpp"
 
 #ifdef __cplusplus
-extern "C" {
+namespace uno {
+   extern "C" {
 #endif
 
    // T = double
@@ -18,7 +19,8 @@ extern "C" {
    void SparseVector_display(SparseVector<double>* vector);
 
 #ifdef __cplusplus
-}
+   }
+} // namespace
 #endif
 
 #endif // UNO_SPARSEVECTOR_WRAPPER_H

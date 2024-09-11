@@ -1,57 +1,63 @@
-// Copyright (c) 2022 Charlie Vanaret
+// Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_FEASIBILITYRESTORATION_H
 #define UNO_FEASIBILITYRESTORATION_H
 
+#include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
-#include "ingredients/globalization_strategy/GlobalizationStrategy.hpp"
+#include "ingredients/subproblem/Subproblem.hpp"
 #include "reformulation/OptimalityProblem.hpp"
 #include "reformulation/l1RelaxedProblem.hpp"
-#include "tools/Options.hpp"
 
-enum Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
+namespace uno {
+   enum class Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 
-class FeasibilityRestoration : public ConstraintRelaxationStrategy {
-public:
-   FeasibilityRestoration(const Model& model, const Options& options);
-   void initialize(Statistics& statistics, Iterate& first_iterate) override;
+   class FeasibilityRestoration : public ConstraintRelaxationStrategy {
+   public:
+      FeasibilityRestoration(const Model& model, const Options& options);
 
-   void set_variable_bounds(const Iterate& current_iterate, double trust_region_radius) override;
+      void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) override;
 
-   // direction computation
-   [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate) override;
-   [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) override;
-   [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point)
-      override;
-   [[nodiscard]] Direction compute_second_order_correction(Iterate& trial_iterate) override;
+      [[nodiscard]] size_t maximum_number_variables() const override;
+      [[nodiscard]] size_t maximum_number_constraints() const override;
 
-   [[nodiscard]] bool is_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         PredictedOptimalityReductionModel& predicted_optimality_reduction_model, double step_length) override;
-   [[nodiscard]] PredictedOptimalityReductionModel generate_predicted_optimality_reduction_model(const Direction& direction) const override;
-   void register_accepted_iterate(Iterate& iterate) override;
+      // direction computation
+      void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction, WarmstartInformation& warmstart_information) override;
+      [[nodiscard]] bool solving_feasibility_problem() const override;
+      void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate) override;
 
-   [[nodiscard]] size_t get_hessian_evaluation_count() const override;
-   [[nodiscard]] size_t get_number_subproblems_solved() const override;
+      // trial iterate acceptance
+      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+            double step_length) override;
 
-private:
-   const OptimalityProblem optimality_problem;
-   l1RelaxedProblem feasibility_problem;
-   std::unique_ptr<Subproblem> subproblem;
-   const std::unique_ptr<GlobalizationStrategy> phase_1_strategy;
-   const std::unique_ptr<GlobalizationStrategy> phase_2_strategy;
-   Phase current_phase{OPTIMALITY};
-   // statistics table
-   int statistics_restoration_phase_column_order;
+      // primal-dual residuals
+      void compute_primal_dual_residuals(Iterate& iterate) override;
 
-   [[nodiscard]] const NonlinearProblem& get_current_reformulated_problem() const;
-   [[nodiscard]] GlobalizationStrategy& get_current_globalization_strategy() const;
-   [[nodiscard]] Direction solve_optimality_problem(Statistics& statistics, Iterate& current_iterate);
-   void switch_phase(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction);
-   void switch_to_feasibility_restoration(Iterate& current_iterate, const std::vector<size_t>& infeasible_linearized_constraints);
-   void switch_to_optimality(Iterate& current_iterate, Iterate& trial_iterate);
-   void set_infeasibility_measure(Iterate& iterate) override;
-   void set_restoration_optimality_measure(Iterate& iterate, const std::vector<size_t>& infeasible_linearized_constraints);
-};
+   private:
+      const OptimalityProblem optimality_problem;
+      l1RelaxedProblem feasibility_problem;
+      Phase current_phase{Phase::OPTIMALITY};
+      const double linear_feasibility_tolerance;
+      const bool switch_to_optimality_requires_linearized_feasibility;
+      bool switching_to_optimality_phase{false};
+      ProgressMeasures reference_optimality_progress{};
+
+      // delegating constructor
+      FeasibilityRestoration(const Model& model, OptimalityProblem&& optimality_problem, l1RelaxedProblem&& feasibility_problem, const Options& options);
+
+      [[nodiscard]] const OptimizationProblem& current_problem() const;
+      void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
+            Direction& direction, WarmstartInformation& warmstart_information);
+      void switch_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate);
+
+      void evaluate_progress_measures(Iterate& iterate) const override;
+      [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length);
+      [[nodiscard]] bool can_switch_to_optimality_phase(const Iterate& current_iterate, const Iterate& trial_iterate, const Direction& direction,
+            double step_length);
+
+      void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const override;
+   };
+} // namespace
 
 #endif //UNO_FEASIBILITYRESTORATION_H

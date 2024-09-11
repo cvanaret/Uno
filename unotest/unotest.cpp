@@ -1,10 +1,12 @@
-// Copyright (c) 2022 Charlie Vanaret
+// Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <gtest/gtest.h>
 #include "tools/Logger.hpp"
 
-Level Logger::logger_level = INFO;
+namespace uno {
+   Level Logger::level = INFO;
+} // namespace
 
 // https://www.eriksmistad.no/getting-started-with-google-test-on-ubuntu/
 int main(int argc, char **argv) {

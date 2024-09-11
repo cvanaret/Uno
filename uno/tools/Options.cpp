@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Charlie Vanaret
+// Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <iostream>
@@ -7,165 +7,175 @@
 #include "Options.hpp"
 #include "Logger.hpp"
 
-std::string& Options::operator[](const std::string& key) {
-   return this->options[key];
-}
-
-const std::string& Options::at(const std::string& key) const {
-   try {
-      return this->options.at(key);
+namespace uno {
+   std::string& Options::operator[](const std::string& key) {
+      return this->options[key];
    }
-   catch(const std::out_of_range&) {
-      throw std::out_of_range("The option " + key + " was not found");
+
+   const std::string& Options::at(const std::string& key) const {
+      try {
+         const std::string& value = this->options.at(key);
+         this->is_used[key] = true;
+         return value;
+      }
+      catch(const std::out_of_range&) {
+         throw std::out_of_range("The option " + key + " was not found");
+      }
    }
-}
 
-const std::string& Options::get_string(const std::string& key) const {
-   return this->at(key);
-}
-
-double Options::get_double(const std::string& key) const {
-   const std::string& entry = this->at(key);
-   return std::stod(entry);
-}
-
-int Options::get_int(const std::string& key) const {
-   const std::string& entry = this->at(key);
-   return std::stoi(entry);
-}
-
-size_t Options::get_unsigned_int(const std::string& key) const {
-   const std::string& entry = this->at(key);
-   return std::stoul(entry);
-}
-
-bool Options::get_bool(const std::string& key) const {
-   const std::string& entry = this->at(key);
-   return entry == "yes";
-}
-
-void Options::print() const {
-   std::cout << "Options:\n";
-   for (const auto& [key, value]: this->options) {
-      std::cout << "- " << key << " = " << value << '\n';
+   const std::string& Options::get_string(const std::string& key) const {
+      return this->at(key);
    }
-}
 
-Options get_default_options(const std::string& file_name) {
-   std::ifstream file;
-   file.open(file_name);
-   if (!file) {
-      throw std::invalid_argument("The option file " + file_name + " was not found");
+   double Options::get_double(const std::string& key) const {
+      const std::string& entry = this->at(key);
+      return std::stod(entry);
    }
-   else {
-      // register the default options
-      Options options;
-      std::string key, value;
-      std::string line;
-      while (std::getline(file, line)) {
-         if (!line.empty() && line.find('#') != 0) {
-            std::istringstream iss;
-            iss.str(line);
-            iss >> key >> value;
-            options[key] = value;
+
+   int Options::get_int(const std::string& key) const {
+      const std::string& entry = this->at(key);
+      return std::stoi(entry);
+   }
+
+   size_t Options::get_unsigned_int(const std::string& key) const {
+      const std::string& entry = this->at(key);
+      return std::stoul(entry);
+   }
+
+   bool Options::get_bool(const std::string& key) const {
+      const std::string& entry = this->at(key);
+      return entry == "yes";
+   }
+
+   void Options::print(bool only_used) const {
+      std::cout << "Options:\n";
+      for (const auto& [key, value]: this->options) {
+         if (not only_used || this->is_used[key]) {
+            std::cout << "- " << key << " = " << value << '\n';
          }
       }
-      file.close();
-      return options;
    }
-}
 
-void find_preset(const std::string& preset_name, Options& options) {
-   // shortcuts for state-of-the-art combinations
-   if (preset_name == "ipopt") {
-      options["mechanism"] = "LS";
-      options["constraint-relaxation"] = "feasibility-restoration";
-      options["strategy"] = "filter";
-      options["subproblem"] = "barrier";
-      options["filter_beta"] = "0.99999";
-      options["filter_gamma"] = "1e-8";
-      options["filter_delta"] = "1";
-      options["filter_ubd"] = "1e4";
-      options["filter_fact"] = "1e4";
-      options["filter_switching_infeasibility_exponent"] = "1.1";
-      options["armijo_decrease_fraction"] = "1e-8";
-      options["LS_backtracking_ratio"] = "0.5";
-      options["barrier_tau_min"] = "0.99";
-      options["use_second_order_correction"] = "yes";
-      options["l1_constraint_violation_coefficient"] = "1000";
-      options["residual_norm"] = "INF";
-      options["scale_functions"] = "yes";
-      options["l1_use_proximal_term"] = "yes";
-      options["sparse_format"] = "COO";
-   }
-   else if (preset_name == "filtersqp") {
-      options["mechanism"] = "TR";
-      options["constraint-relaxation"] = "feasibility-restoration";
-      options["strategy"] = "filter";
-      options["subproblem"] = "QP";
-      options["residual_norm"] = "L1";
-      options["l1_use_proximal_term"] = "no";
-      options["sparse_format"] = "CSC";
-      options["TR_radius"] = "1";
-   }
-   else if (preset_name == "byrd") {
-      options["mechanism"] = "LS";
-      options["constraint-relaxation"] = "l1-relaxation";
-      options["strategy"] = "merit";
-      options["subproblem"] = "QP";
-      options["l1_relaxation_initial_parameter"] = "1";
-      options["LS_backtracking_ratio"] = "0.5";
-      options["armijo_decrease_fraction"] = "1e-8";
-      options["l1_relaxation_epsilon1"] = "0.1";
-      options["l1_relaxation_epsilon2"] = "0.1";
-      options["tolerance"] = "1e-6";
-      options["residual_norm"] = "L1";
-      options["sparse_format"] = "CSC";
-   }
-}
-
-void get_command_line_options(int argc, char* argv[], Options& options) {
-   // build the (argument, value) map
-   int i = 1;
-   while (i < argc - 1) {
-      std::string argument_i = std::string(argv[i]);
-      if (argument_i[0] == '-') {
-         if (i < argc - 1) {
-            // remove the '-'
-            const std::string name = argument_i.substr(1);
-            const std::string value_i = std::string(argv[i + 1]);
-            if (name == "preset") {
-               find_preset(value_i, options);
-            }
-            else {
-               options[name] = value_i;
-            }
-            i += 2;
-         }
+   Options Options::get_default_options(const std::string& file_name) {
+      std::ifstream file;
+      file.open(file_name);
+      if (!file) {
+         throw std::invalid_argument("The option file " + file_name + " was not found");
       }
       else {
-         WARNING << "Argument " << argument_i << " was ignored\n";
-         i++;
+         // register the default options
+         Options options;
+         std::string key, value;
+         std::string line;
+         while (std::getline(file, line)) {
+            if (not line.empty() && line.find('#') != 0) {
+               std::istringstream iss;
+               iss.str(line);
+               iss >> key >> value;
+               options[key] = value;
+            }
+         }
+         file.close();
+         return options;
       }
    }
-}
 
-void set_logger(const std::string& logger_level) {
-   try {
-      if (logger_level == "ERROR") {
-         Logger::logger_level = ERROR;
+   void find_preset(const std::string& preset_name, Options& options) {
+      // shortcuts for state-of-the-art combinations
+      if (preset_name == "ipopt") {
+         options["constraint_relaxation_strategy"] = "feasibility_restoration";
+         options["subproblem"] = "primal_dual_interior_point";
+         options["globalization_mechanism"] = "LS";
+         options["globalization_strategy"] = "waechter_filter_method";
+         options["filter_type"] = "standard";
+         options["filter_beta"] = "0.99999";
+         options["filter_gamma"] = "1e-8";
+         options["filter_delta"] = "1";
+         options["filter_ubd"] = "1e4";
+         options["filter_fact"] = "1e4";
+         options["filter_switching_infeasibility_exponent"] = "1.1";
+         options["armijo_decrease_fraction"] = "1e-8";
+         options["LS_backtracking_ratio"] = "0.5";
+         options["LS_min_step_length"] = "5e-7";
+         options["barrier_tau_min"] = "0.99";
+         options["barrier_damping_factor"] = "1e-5";
+         options["l1_constraint_violation_coefficient"] = "1000.";
+         options["progress_norm"] = "L1";
+         options["residual_norm"] = "INF";
+         options["scale_functions"] = "yes";
+         options["sparse_format"] = "COO";
+         options["tolerance"] = "1e-8";
+         options["loose_tolerance"] = "1e-6";
+         options["loose_tolerance_consecutive_iteration_threshold"] = "15";
+         options["switch_to_optimality_requires_linearized_feasibility"] = "no";
+         options["LS_scale_duals_with_step_length"] = "yes";
+         options["protect_actual_reduction_against_roundoff"] = "yes";
       }
-      else if (logger_level == "WARNING") {
-         Logger::logger_level = WARNING;
+      else if (preset_name == "filtersqp") {
+         options["constraint_relaxation_strategy"] = "feasibility_restoration";
+         options["subproblem"] = "QP";
+         options["globalization_mechanism"] = "TR";
+         options["globalization_strategy"] = "fletcher_filter_method";
+         options["filter_type"] = "standard";
+         options["progress_norm"] = "L1";
+         options["residual_norm"] = "L2";
+         options["sparse_format"] = "CSC";
+         options["TR_radius"] = "10";
+         options["l1_constraint_violation_coefficient"] = "1.";
+         options["enforce_linear_constraints"] = "yes";
+         options["tolerance"] = "1e-6";
+         options["loose_tolerance"] = "1e-6";
+         options["TR_min_radius"] = "1e-8";
+         options["switch_to_optimality_requires_linearized_feasibility"] = "yes";
+         options["protect_actual_reduction_against_roundoff"] = "no";
       }
-      else if (logger_level == "INFO") {
-         Logger::logger_level = INFO;
+      else if (preset_name == "byrd") {
+         options["constraint_relaxation_strategy"] = "l1_relaxation";
+         options["subproblem"] = "QP";
+         options["globalization_mechanism"] = "LS";
+         options["globalization_strategy"] = "l1_merit";
+         options["l1_relaxation_initial_parameter"] = "1";
+         options["LS_backtracking_ratio"] = "0.5";
+         options["armijo_decrease_fraction"] = "1e-8";
+         options["l1_relaxation_epsilon1"] = "0.1";
+         options["l1_relaxation_epsilon2"] = "0.1";
+         options["l1_constraint_violation_coefficient"] = "1.";
+         options["tolerance"] = "1e-6";
+         options["loose_tolerance"] = "1e-6";
+         options["progress_norm"] = "L1";
+         options["residual_norm"] = "L1";
+         options["sparse_format"] = "CSC";
+         options["LS_scale_duals_with_step_length"] = "no";
+         options["protect_actual_reduction_against_roundoff"] = "no";
       }
-      else if (logger_level == "DEBUG") {
-         Logger::logger_level = DEBUG;
+      else {
+         throw std::runtime_error("The preset " + preset_name + " is not known.");
       }
    }
-   catch (const std::out_of_range&) {
-      throw std::out_of_range("The logger level " + logger_level + " was not found");
+
+   void Options::get_command_line_arguments(int argc, char* argv[]) {
+      // build the (name, value) map
+      int i = 1;
+      while (i < argc - 1) {
+         std::string argument = std::string(argv[i]);
+         if (argument[0] == '-') {
+            if (i < argc - 1) {
+               // remove the '-'
+               const std::string name = argument.substr(1);
+               const std::string value = std::string(argv[i + 1]);
+               if (name == "preset") {
+                  find_preset(value, *this);
+               }
+               else {
+                  this->operator[](name) = value;
+               }
+               i += 2;
+            }
+         }
+         else {
+            WARNING << "Argument " << argument << " was ignored\n";
+            i++;
+         }
+      }
    }
-}
+} // namespace

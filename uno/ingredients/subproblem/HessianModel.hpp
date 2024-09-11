@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Charlie Vanaret
+// Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_HESSIANMODEL_H
@@ -6,49 +6,52 @@
 
 #include <memory>
 #include <vector>
-#include "reformulation/NonlinearProblem.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
-#include "tools/Options.hpp"
 
-class HessianModel {
-public:
-   HessianModel(size_t dimension, size_t maximum_number_nonzeros, const std::string& sparse_format, bool use_regularization);
-   virtual ~HessianModel() = default;
+namespace uno {
+   // forward declarations
+   class OptimizationProblem;
+   class Options;
+   class Statistics;
+   template <typename ElementType>
+   class Vector;
 
-   std::unique_ptr<SymmetricMatrix<double>> hessian;
-   size_t evaluation_count{0};
+   class HessianModel {
+   public:
+      HessianModel(size_t dimension, size_t maximum_number_nonzeros, const std::string& sparse_format, bool use_regularization);
+      virtual ~HessianModel() = default;
 
-   virtual void evaluate(const NonlinearProblem& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) = 0;
-};
+      std::unique_ptr<SymmetricMatrix<double>> hessian;
+      size_t evaluation_count{0};
 
-// Exact Hessian
-class ExactHessian : public HessianModel {
-public:
-   explicit ExactHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options);
+      virtual void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
+            const Vector<double>& constraint_multipliers) = 0;
+   };
 
-   void evaluate(const NonlinearProblem& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) override;
-};
+   // Exact Hessian
+   class ExactHessian : public HessianModel {
+   public:
+      ExactHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options);
 
-// Hessian with convexification (inertia correction)
-class ConvexifiedHessian : public HessianModel {
-public:
-   ConvexifiedHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options);
+      void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
+            const Vector<double>& constraint_multipliers) override;
+   };
 
-   void evaluate(const NonlinearProblem& problem, const std::vector<double>& primal_variables, const std::vector<double>& constraint_multipliers) override;
+   // Hessian with convexification (inertia correction)
+   class ConvexifiedHessian : public HessianModel {
+   public:
+      ConvexifiedHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options);
 
-protected:
-   std::unique_ptr<SymmetricIndefiniteLinearSolver<double>> linear_solver; /*!< Solver that computes the inertia */
-   const double regularization_initial_value{};
-   const double regularization_increase_factor{};
+      void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
+            const Vector<double>& constraint_multipliers) override;
 
-   void regularize(SymmetricMatrix<double>& hessian, size_t number_original_variables);
-};
+   protected:
+      std::unique_ptr<SymmetricIndefiniteLinearSolver<double>> linear_solver; /*!< Solver that computes the inertia */
+      const double regularization_initial_value{};
+      const double regularization_increase_factor{};
 
-// HessianModel factory
-class HessianModelFactory {
-public:
-   static std::unique_ptr<HessianModel> create(const std::string& hessian_model, size_t dimension, size_t maximum_number_nonzeros,
-         bool convexify, const Options& options);
-};
+      void regularize(Statistics& statistics, SymmetricMatrix<double>& hessian, size_t number_original_variables);
+   };
+} // namespace
 
 #endif // UNO_HESSIANMODEL_H

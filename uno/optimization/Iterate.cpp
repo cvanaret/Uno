@@ -1,126 +1,109 @@
-// Copyright (c) 2022 Charlie Vanaret
+// Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "Iterate.hpp"
+#include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "optimization/Model.hpp"
+#include "model/Model.hpp"
+#include "optimization/EvaluationErrors.hpp"
 #include "tools/Logger.hpp"
 
-size_t Iterate::number_eval_objective = 0;
-size_t Iterate::number_eval_constraints = 0;
-size_t Iterate::number_eval_jacobian = 0;
+namespace uno {
+   size_t Iterate::number_eval_objective = 0;
+   size_t Iterate::number_eval_constraints = 0;
+   size_t Iterate::number_eval_objective_gradient = 0;
+   size_t Iterate::number_eval_jacobian = 0;
 
-Iterate::Iterate(size_t max_number_variables, size_t max_number_constraints) :
-      number_variables(max_number_variables), number_constraints(max_number_constraints),
-      primals(max_number_variables), multipliers(max_number_variables, max_number_constraints),
-      original_evaluations(max_number_variables, max_number_constraints),
-      lagrangian_gradient(max_number_variables) {
-}
-
-void Iterate::evaluate_objective(const Model& model) {
-   if (!this->is_objective_computed) {
-      // evaluate the objective
-      this->original_evaluations.objective = model.evaluate_objective(this->primals);
-      this->is_objective_computed = true;
-      Iterate::number_eval_objective++;
+   Iterate::Iterate(size_t number_variables, size_t number_constraints) :
+         number_variables(number_variables), number_constraints(number_constraints),
+         primals(number_variables), multipliers(number_variables, number_constraints), feasibility_multipliers(number_variables, number_constraints),
+         evaluations(number_variables, number_constraints),
+         lagrangian_gradient(number_variables) {
    }
-}
 
-void Iterate::evaluate_constraints(const Model& model) {
-   if (!this->are_constraints_computed) {
-      // evaluate the constraints
-      model.evaluate_constraints(this->primals, this->original_evaluations.constraints);
-      this->are_constraints_computed = true;
-      Iterate::number_eval_constraints++;
-   }
-}
-
-void Iterate::evaluate_objective_gradient(const Model& model) {
-   if (!this->is_objective_gradient_computed) {
-      this->original_evaluations.objective_gradient.clear();
-      // evaluate the objective gradient
-      model.evaluate_objective_gradient(this->primals, this->original_evaluations.objective_gradient);
-      this->is_objective_gradient_computed = true;
-   }
-}
-
-void Iterate::evaluate_constraint_jacobian(const Model& model) {
-   if (!this->is_constraint_jacobian_computed) {
-      for (auto& row: this->original_evaluations.constraint_jacobian) {
-         row.clear();
-      }
-      // evaluate the constraint Jacobian
-      model.evaluate_constraint_jacobian(this->primals, this->original_evaluations.constraint_jacobian);
-      this->is_constraint_jacobian_computed = true;
-      Iterate::number_eval_jacobian++;
-   }
-}
-
-void Iterate::evaluate_lagrangian_gradient(const Model& model, double objective_multiplier, const std::vector<double>& constraint_multipliers,
-      const std::vector<double>& lower_bounds_multipliers, const std::vector<double>& upper_bounds_multipliers) {
-   initialize_vector(this->lagrangian_gradient, 0.);
-
-   // objective gradient: scale it with the objective multiplier
-   if (objective_multiplier != 0.) {
-      this->evaluate_objective_gradient(model);
-      this->original_evaluations.objective_gradient.for_each([&](size_t i, double derivative) {
-         // in case there are additional variables, ignore them
-         if (i < model.number_variables) {
-            this->lagrangian_gradient[i] += objective_multiplier * derivative;
+   void Iterate::evaluate_objective(const Model& model) {
+      if (not this->is_objective_computed) {
+         // evaluate the objective
+         this->evaluations.objective = model.evaluate_objective(this->primals);
+         Iterate::number_eval_objective++;
+         if (not is_finite(this->evaluations.objective)) {
+            throw FunctionEvaluationError();
          }
-      });
-   }
-
-   // bound constraints
-   for (size_t i = 0; i < model.number_variables; i++) {
-      this->lagrangian_gradient[i] -= lower_bounds_multipliers[i] + upper_bounds_multipliers[i];
-   }
-
-   // constraints
-   this->evaluate_constraint_jacobian(model);
-   for (size_t j = 0; j < model.number_constraints; j++) {
-      const double multiplier_j = constraint_multipliers[j];
-      if (multiplier_j != 0.) {
-         this->original_evaluations.constraint_jacobian[j].for_each([&](size_t i, double derivative) {
-            // in case there are additional variables, ignore them
-            if (i < model.number_variables) {
-               this->lagrangian_gradient[i] -= multiplier_j * derivative;
-            }
-         });
+         this->is_objective_computed = true;
       }
    }
-}
 
-void Iterate::set_number_variables(size_t new_number_variables) {
-   this->primals.resize(new_number_variables);
-   this->multipliers.lower_bounds.resize(new_number_variables);
-   this->multipliers.upper_bounds.resize(new_number_variables);
-   this->original_evaluations.objective_gradient.reserve(new_number_variables);
-   this->lagrangian_gradient.resize(new_number_variables);
-}
+   void Iterate::evaluate_constraints(const Model& model) {
+      if (not this->are_constraints_computed) {
+         if (model.is_constrained()) {
+            // evaluate the constraints
+            model.evaluate_constraints(this->primals, this->evaluations.constraints);
+            Iterate::number_eval_constraints++;
+            // check finiteness
+            if (std::any_of(this->evaluations.constraints.cbegin(), this->evaluations.constraints.cend(), [](double constraint_j) {
+               return not is_finite(constraint_j);
+            })) {
+               throw FunctionEvaluationError();
+            }
+         }
+         this->are_constraints_computed = true;
+      }
+   }
 
-void Iterate::reset_evaluations() {
-   this->is_objective_computed = false;
-   this->is_objective_gradient_computed = false;
-   this->are_constraints_computed = false;
-   this->is_constraint_jacobian_computed = false;
-}
+   void Iterate::evaluate_objective_gradient(const Model& model) {
+      if (not this->is_objective_gradient_computed) {
+         this->evaluations.objective_gradient.clear();
+         // evaluate the objective gradient
+         model.evaluate_objective_gradient(this->primals, this->evaluations.objective_gradient);
+         this->is_objective_gradient_computed = true;
+         Iterate::number_eval_objective_gradient++;
+      }
+   }
 
-std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
-   stream << "Primal variables: ";
-   print_vector(stream, iterate.primals);
-   stream << "Lower bound multipliers: ";
-   print_vector(stream, iterate.multipliers.lower_bounds);
-   stream << "Upper bound multipliers: ";
-   print_vector(stream, iterate.multipliers.upper_bounds);
-   stream << "Constraint multipliers: ";
-   print_vector(stream, iterate.multipliers.constraints);
+   void Iterate::evaluate_constraint_jacobian(const Model& model) {
+      if (not this->is_constraint_jacobian_computed) {
+         this->evaluations.constraint_jacobian.clear();
+         if (model.is_constrained()) {
+            model.evaluate_constraint_jacobian(this->primals, this->evaluations.constraint_jacobian);
+            Iterate::number_eval_jacobian++;
+         }
+         this->is_constraint_jacobian_computed = true;
+      }
+   }
 
-   stream << "Objective value: " << iterate.original_evaluations.objective << '\n';
-   stream << "Constraint violation: " << iterate.constraint_violation << '\n';
-   stream << "Stationarity (KKT/FJ) error: " << iterate.stationarity_error << '\n';
-   stream << "Complementarity error: " << iterate.complementarity_error << '\n';
-   stream << "Infeasibility measure: " << iterate.nonlinear_progress.infeasibility << '\n';
-   stream << "Optimality measure: " << iterate.nonlinear_progress.optimality << '\n';
-   return stream;
-}
+   void Iterate::set_number_variables(size_t new_number_variables) {
+      this->number_variables = new_number_variables;
+      this->primals.resize(new_number_variables);
+      this->multipliers.lower_bounds.resize(new_number_variables);
+      this->multipliers.upper_bounds.resize(new_number_variables);
+      this->feasibility_multipliers.lower_bounds.resize(new_number_variables);
+      this->feasibility_multipliers.upper_bounds.resize(new_number_variables);
+      this->evaluations.objective_gradient.reserve(new_number_variables);
+      this->lagrangian_gradient.resize(new_number_variables);
+   }
+
+   std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
+      stream << "Primal variables: " << iterate.primals << '\n';
+      stream << "            ┌ Constraint: " << iterate.multipliers.constraints << '\n';
+      stream << "Multipliers │ Lower bound: " << iterate.multipliers.lower_bounds << '\n';
+      stream << "            └ Upper bound: " << iterate.multipliers.upper_bounds << '\n';
+      stream << "                        ┌ Constraint: " << iterate.feasibility_multipliers.constraints << '\n';
+      stream << "Feasibility multipliers │ Lower bound: " << iterate.feasibility_multipliers.lower_bounds << '\n';
+      stream << "                        └ Upper bound: " << iterate.feasibility_multipliers.upper_bounds << '\n';
+      stream << "Objective value: " << iterate.evaluations.objective << '\n';
+
+      stream << "          ┌ Stationarity: " << iterate.residuals.KKT_stationarity << '\n';
+      stream << "          │ FJ stationarity: " << iterate.residuals.FJ_stationarity << '\n';
+      stream << "Residuals │ Feasibility stationarity: " << iterate.residuals.feasibility_stationarity << '\n';
+      stream << "          │ Primal feasibility: " << iterate.residuals.primal_feasibility << '\n';
+      stream << "          │ Complementarity: " << iterate.residuals.complementarity << '\n';
+      stream << "          └ Feasibility complementarity: " << iterate.residuals.feasibility_complementarity << '\n';
+
+      stream << "                  ┌ Infeasibility: " << iterate.progress.infeasibility << '\n';
+      stream << "Progress measures │ Optimality: " << iterate.progress.objective(1.) << '\n';
+      stream << "                  └ Auxiliary terms: " << iterate.progress.auxiliary << '\n';
+
+      stream << "Lagrangian gradient: " << iterate.lagrangian_gradient;
+      return stream;
+   }
+} // namespace

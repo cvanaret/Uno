@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Charlie Vanaret
+// Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_INFINITY_H
@@ -7,12 +7,14 @@
 #include <cmath>
 #include <limits>
 
-template <typename T>
-const double INF = std::numeric_limits<T>::infinity();
+namespace uno {
+   template <typename NumericalType>
+   const double INF = std::numeric_limits<NumericalType>::infinity();
 
-template <typename T>
-inline bool is_finite(T value) {
-   return std::abs(value) < INF<T>;
-}
+   template <typename NumericalType>
+   inline bool is_finite(NumericalType value) {
+      return std::abs(value) < INF<NumericalType>;
+   }
+} // namespace
 
 #endif // UNO_INFINITY_H
