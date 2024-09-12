@@ -37,7 +37,7 @@ void FunnelMethod::initialize(Statistics& statistics, const Iterate& initial_ite
                                  this->parameters.initial_multiplication * initial_iterate.progress.infeasibility);
 
    this->funnel_width = upper_bound;
-   ERROR << "Current funnel width: " << this->funnel_width << "\n";
+   DEBUG << "Current funnel width: " << this->funnel_width << "\n";
    this->first_iteration_in_solver_phase = true;
    statistics.set("funnel width", this->get_infeasibility_upper_bound());
 }
@@ -218,7 +218,6 @@ bool FunnelMethod::is_regular_iterate_acceptable(Statistics& statistics, const P
             {
                DEBUG << "\t\tTrial iterate (f-type) was ACCEPTED by satisfying Armijo condition\n";
 
-               // ERROR << "Current funnel width: " << this->funnel_width << "\n";
                accept = true;
             }
             else
@@ -232,8 +231,6 @@ bool FunnelMethod::is_regular_iterate_acceptable(Statistics& statistics, const P
          {
             DEBUG << "\t\tTrial iterate  (h-type) ACCEPTED by violating the switching condition ...\n";
             accept = true; // accept the step and reduce the tr-radius
-
-            // ERROR << "Current funnel width: " << this->funnel_width << "\n";
 
             DEBUG << "\t\tEntering funnel reduction mechanism\n";
             this->update_funnel_width(current_progress.infeasibility, trial_progress.infeasibility);
@@ -262,7 +259,7 @@ bool FunnelMethod::is_regular_iterate_acceptable(Statistics& statistics, const P
    DEBUG << '\n';
    if (accept)
    {
-      ERROR << "Current funnel width: " << this->funnel_width << "\n";
+      DEBUG << "Current funnel width: " << this->funnel_width << "\n";
    }
    return accept;
 }
@@ -293,7 +290,7 @@ bool FunnelMethod::is_feasibility_iterate_acceptable(Statistics& statistics, con
    statistics.set("status", std::string(accept ? "accepted" : "rejected") + " (restoration)");
    if (accept)
    {
-      ERROR << "Current funnel width: " << this->funnel_width << "\n";
+      DEBUG << "Current funnel width: " << this->funnel_width << "\n";
    }
    return accept;
 }
