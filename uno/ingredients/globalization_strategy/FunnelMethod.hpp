@@ -13,6 +13,7 @@
  *
  *  Set of constants to control the funnel strategy
  */
+namespace uno {
 struct FunnelMethodParameters {
    double initial_upper_bound;
    double initial_multiplication;
@@ -70,3 +71,5 @@ protected:
 };
 
 #endif // UNO_FUNNELSTRATEGY_H
+
+}

@@ -9,6 +9,8 @@
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 
+namespace uno {
+
 FunnelMethod::FunnelMethod(const Options& options) :
       GlobalizationStrategy(options),
       parameters({
@@ -295,4 +297,6 @@ bool FunnelMethod::is_feasibility_iterate_acceptable(Statistics& statistics, con
       ERROR << "Current funnel width: " << this->funnel_width << "\n";
    }
    return accept;
+}
+
 }
