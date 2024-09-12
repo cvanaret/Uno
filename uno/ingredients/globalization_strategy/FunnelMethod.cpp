@@ -79,13 +79,8 @@ namespace uno {
          return (infeasibility_measure <= this->parameters.beta*this->funnel_width);
       }
       
-      bool FunnelMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures& /*current_progress*/, const ProgressMeasures& trial_progress) const {
-         if (this->in_restoration_phase) {
-            return this->is_infeasibility_acceptable_to_funnel(trial_progress.infeasibility) && trial_progress.infeasibility <= this->parameters.beta*this->restoration_entry_infeasibility;
-         }
-         else {
-            return this->is_infeasibility_acceptable_to_funnel(trial_progress.infeasibility);
-         }
+      bool FunnelMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures& reference_progress, const ProgressMeasures& trial_progress) const {
+         return this->is_infeasibility_acceptable_to_funnel(trial_progress.infeasibility) && trial_progress.infeasibility <= this->parameters.beta*reference_progress.infeasibility;
       }
       
       void FunnelMethod::update_funnel_width(double current_infeasibility_measure, double trial_infeasibility_measure) {
@@ -108,7 +103,7 @@ namespace uno {
       }
       
       void FunnelMethod::update_funnel_width_restoration(double current_infeasibility_measure) {
-         this->funnel_width = current_infeasibility_measure + this->parameters.kappa * (this->funnel_width - current_infeasibility_measure);
+         this->funnel_width = this->parameters.kappa * this->funnel_width + (1. - this->parameters.kappa) * current_infeasibility_measure;
          DEBUG << "\t\tNew funnel parameter is: " << this->funnel_width << "\n"; 
       }
       
@@ -129,9 +124,6 @@ namespace uno {
       bool FunnelMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
             const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) {
          statistics.set("funnel width", this->get_infeasibility_upper_bound());
-         if (not this->in_restoration_phase && (objective_multiplier == 0.)) {
-            this->restoration_entry_infeasibility = current_progress.infeasibility;
-         }
          this->in_restoration_phase = (objective_multiplier == 0.);
          if (this->in_restoration_phase) {
             return this->is_feasibility_iterate_acceptable(statistics, current_progress, trial_progress, predicted_reduction);
