@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "FunnelMethod.hpp"
-#include "ProgressMeasures.hpp"
+#include "../ProgressMeasures.hpp"
 #include "optimization/Iterate.hpp"
 #include "tools/Options.hpp"
 #include "tools/Logger.hpp"
@@ -10,12 +10,11 @@
 
 namespace uno {
    FunnelMethod::FunnelMethod(const Options& options) :
-         GlobalizationStrategy(options),
+         SwitchingMethod(options),
          parameters({
                options.get_double("funnel_ubd"),
                options.get_double("funnel_fact"),
                options.get_double("funnel_delta"),
-               options.get_double("funnel_switching_infeasibility_exponent"),
                options.get_double("funnel_kappa"),
                options.get_double("funnel_beta"),
                options.get_double("funnel_gamma"),
@@ -27,8 +26,7 @@ namespace uno {
    void FunnelMethod::initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) {
       statistics.add_column("funnel width", Statistics::double_width, options.get_int("statistics_funnel_width_column_order"));
 
-      this->funnel_width = std::max(this->parameters.initial_upper_bound,
-            this->parameters.initial_multiplication * initial_iterate.progress.infeasibility);
+      this->funnel_width = std::max(this->parameters.initial_upper_bound, this->parameters.initial_multiplication * initial_iterate.progress.infeasibility);
       DEBUG << "Current funnel width: " << this->funnel_width << "\n";
       statistics.set("funnel width", this->funnel_width);
    }
@@ -44,10 +42,6 @@ namespace uno {
       }
    }
 
-   double FunnelMethod::unconstrained_merit_function(const ProgressMeasures& progress) {
-      return progress.objective(1.) + progress.auxiliary;
-   }
-
    double FunnelMethod::compute_actual_objective_reduction(double current_objective_measure, double /*current_infeasibility_measure*/,
          double trial_objective_measure) {
       double actual_reduction = current_objective_measure - trial_objective_measure;
@@ -56,14 +50,6 @@ namespace uno {
          actual_reduction += 10. * machine_epsilon * std::abs(current_objective_measure);
       }
       return actual_reduction;
-   }
-
-   bool FunnelMethod::switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const {
-      return predicted_reduction > switching_fraction * std::pow(current_infeasibility, this->parameters.switching_infeasibility_exponent);
-   }
-
-   double FunnelMethod::convex_combination(double a, double b, double coefficient) {
-      return coefficient*a + (1. - coefficient)*b;
    }
 
    /* check if the trial iterate is inside the current funnel */
@@ -117,7 +103,7 @@ namespace uno {
 
    // check acceptability wrt current point
    bool FunnelMethod::acceptable_wrt_current_iterate(double current_infeasibility, double current_objective, double trial_infeasibility,
-         double trial_objective) {
+         double trial_objective) const {
       return this->objective_sufficient_reduction(current_objective, trial_objective, trial_infeasibility) ||
              this->infeasibility_sufficient_reduction(current_infeasibility, trial_infeasibility);
    }
@@ -140,9 +126,9 @@ namespace uno {
       std::string scenario;
       if (this->is_infeasibility_acceptable_to_funnel(trial_progress.infeasibility)) {
          // in filter and funnel methods, we construct an unconstrained measure by ignoring infeasibility and scaling the objective measure by 1
-         const double current_merit = FunnelMethod::unconstrained_merit_function(current_progress);
-         const double trial_merit = FunnelMethod::unconstrained_merit_function(trial_progress);
-         const double merit_predicted_reduction = FunnelMethod::unconstrained_merit_function(predicted_reduction);
+         const double current_merit = SwitchingMethod::unconstrained_merit_function(current_progress);
+         const double trial_merit = SwitchingMethod::unconstrained_merit_function(trial_progress);
+         const double merit_predicted_reduction = SwitchingMethod::unconstrained_merit_function(predicted_reduction);
          DEBUG << "Current: (infeasibility, objective + auxiliary) = (" << current_progress.infeasibility << ", " << current_merit << ")\n";
          DEBUG << "Trial:   (infeasibility, objective + auxiliary) = (" << trial_progress.infeasibility << ", " << trial_merit << ")\n";
          DEBUG << "Unconstrained predicted reduction = " << merit_predicted_reduction << '\n';
@@ -200,28 +186,7 @@ namespace uno {
       return accept;
    }
 
-   // solving the feasibility problem = working on infeasibility only (no filter acceptability test)
-   bool FunnelMethod::is_feasibility_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
-         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction) {
-      // drop the objective measure and focus on infeasibility and auxiliary terms (barrier, proximal, ...)
-      const double current_merit = current_progress.infeasibility + current_progress.auxiliary;
-      const double trial_merit = trial_progress.infeasibility + trial_progress.auxiliary;
-      const double predicted_merit_reduction = predicted_reduction.infeasibility + predicted_reduction.auxiliary;
-      const double actual_merit_reduction = current_merit - trial_merit;
-      DEBUG << "Current merit = " << current_merit << '\n';
-      DEBUG << "Trial merit = " << trial_merit << '\n';
-      DEBUG << "Predicted merit reduction = " << predicted_merit_reduction << '\n';
-      DEBUG << "Actual merit reduction = " << actual_merit_reduction << '\n';
-      bool accept = false;
-      if (this->armijo_sufficient_decrease(predicted_merit_reduction, actual_merit_reduction)) {
-         DEBUG << "Trial iterate (h-type) was accepted by satisfying the Armijo condition\n";
-         accept = true;
-      }
-      else {
-         DEBUG << "Trial iterate (h-type) was rejected by violating the Armijo condition\n";
-      }
-      Iterate::number_eval_objective--;
-      statistics.set("status", std::string(accept ? "accepted" : "rejected") + " (restoration)");
-      return accept;
+   double FunnelMethod::convex_combination(double a, double b, double coefficient) {
+      return coefficient*a + (1. - coefficient)*b;
    }
 } // namespace

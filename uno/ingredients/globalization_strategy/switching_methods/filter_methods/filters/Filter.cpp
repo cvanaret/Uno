@@ -129,7 +129,8 @@ namespace uno {
    }
 
    //! check acceptability wrt current point
-   bool Filter::acceptable_wrt_current_iterate(double current_infeasibility, double current_objective, double trial_infeasibility, double trial_objective) {
+   bool Filter::acceptable_wrt_current_iterate(double current_infeasibility, double current_objective, double trial_infeasibility,
+         double trial_objective) const {
       return this->objective_sufficient_reduction(current_objective, trial_objective, trial_infeasibility) ||
             this->infeasibility_sufficient_reduction(current_infeasibility, trial_infeasibility);
    }

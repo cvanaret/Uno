@@ -28,7 +28,8 @@ namespace uno {
 
       virtual void add(double current_infeasibility, double current_objective);
       virtual bool acceptable(double trial_infeasibility, double trial_objective);
-      virtual bool acceptable_wrt_current_iterate(double current_infeasibility, double current_objective, double trial_infeasibility, double trial_objective);
+      virtual bool acceptable_wrt_current_iterate(double current_infeasibility, double current_objective, double trial_infeasibility,
+            double trial_objective) const;
       virtual double compute_actual_objective_reduction(double current_objective, double current_infeasibility, double trial_objective);
 
       [[nodiscard]] bool infeasibility_sufficient_reduction(double current_infeasibility, double trial_infeasibility) const;

@@ -46,7 +46,7 @@ namespace uno {
       this->number_entries++;
    }
 
-   size_t NonmonotoneFilter::compute_number_dominated_entries(double trial_infeasibility, double trial_objective) {
+   size_t NonmonotoneFilter::compute_number_dominated_entries(double trial_infeasibility, double trial_objective) const {
       size_t number_dominated_entries = 0;
       for (size_t entry_index: Range(this->number_entries)) {
          if (not this->objective_sufficient_reduction(this->objective[entry_index], trial_objective, trial_infeasibility) &&
@@ -77,7 +77,7 @@ namespace uno {
 
    //! check acceptability wrt current point
    bool NonmonotoneFilter::acceptable_wrt_current_iterate(double current_infeasibility, double current_objective,
-         double trial_infeasibility, double trial_objective) {
+         double trial_infeasibility, double trial_objective) const {
       // check acceptability wrt current point (non-monotone)
       size_t number_dominated_entries = this->compute_number_dominated_entries(trial_infeasibility, trial_objective);
       if (not this->objective_sufficient_reduction(current_objective, trial_objective, trial_infeasibility) &&

@@ -4,7 +4,7 @@
 #ifndef UNO_FUNNELSTRATEGY_H
 #define UNO_FUNNELSTRATEGY_H
 
-#include "GlobalizationStrategy.hpp"
+#include "SwitchingMethod.hpp"
 #include "tools/Infinity.hpp"
 
 /*! \class TwoPhaseConstants
@@ -17,7 +17,6 @@ namespace uno {
       double initial_upper_bound;
       double initial_multiplication;
       double delta; /*!< Switching constant */
-      double switching_infeasibility_exponent;
       double kappa;
       double beta; /*!< Margin around funnel */
       double gamma; /*!< For acceptability wrt current point. Margin around objective value */
@@ -29,7 +28,7 @@ namespace uno {
     *
     *  Strategy that accepts or declines a trial step
     */
-   class FunnelMethod : public GlobalizationStrategy {
+   class FunnelMethod: public SwitchingMethod {
    public:
       explicit FunnelMethod(const Options& options);
 
@@ -47,7 +46,8 @@ namespace uno {
       void update_funnel_width(double current_infeasibility_measure, double trial_infeasibility_measure);
       void update_funnel_width_restoration(double current_infeasibility_measure);
 
-      bool acceptable_wrt_current_iterate(double current_infeasibility, double current_objective, double trial_infeasibility, double trial_objective);
+      [[nodiscard]] bool acceptable_wrt_current_iterate(double current_infeasibility, double current_objective, double trial_infeasibility,
+            double trial_objective) const;
       [[nodiscard]] bool infeasibility_sufficient_reduction(double current_infeasibility, double trial_infeasibility) const;
       [[nodiscard]] bool objective_sufficient_reduction(double current_objective, double trial_objective, double trial_infeasibility) const;
 
@@ -57,16 +57,12 @@ namespace uno {
       bool in_restoration_phase{false};
       const bool check_for_current_iterate;
 
-      [[nodiscard]] bool is_feasibility_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
-            const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction);
       [[nodiscard]] bool is_regular_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
             const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction);
-      [[nodiscard]] static double unconstrained_merit_function(const ProgressMeasures& progress);
       [[nodiscard]] double compute_actual_objective_reduction(double current_optimality_measure, double current_infeasibility_measure,
             double trial_optimality_measure);
-      [[nodiscard]] bool switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const;
       [[nodiscard]] static double convex_combination(double a, double b, double coefficient);
    };
-}
+} // namespace
 
 #endif // UNO_FUNNELSTRATEGY_H

@@ -4,9 +4,9 @@
 #include <stdexcept>
 #include "GlobalizationStrategyFactory.hpp"
 #include "l1MeritFunction.hpp"
-#include "filter_method/FletcherFilterMethod.hpp"
-#include "filter_method/WaechterFilterMethod.hpp"
-#include "FunnelMethod.hpp"
+#include "switching_methods/filter_methods/FletcherFilterMethod.hpp"
+#include "switching_methods/filter_methods/WaechterFilterMethod.hpp"
+#include "switching_methods/FunnelMethod.hpp"
 
 namespace uno {
    std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& strategy_type, const Options& options) {
