@@ -53,7 +53,7 @@ void FunnelMethod::register_current_progress(const ProgressMeasures& current_pro
 {
    if (this->in_restoration_phase)
    {
-    std::cout << "Funnel is reduced after restoration phase" << std::endl;
+    DEBUG << "Funnel is reduced after restoration phase\n";
     this->update_funnel_width_restoration(current_progress_measures.infeasibility);
    }
 }
