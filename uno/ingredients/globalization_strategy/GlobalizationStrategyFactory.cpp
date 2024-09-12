@@ -4,9 +4,9 @@
 #include <stdexcept>
 #include "GlobalizationStrategyFactory.hpp"
 #include "l1MeritFunction.hpp"
-#include "FunnelMethod.hpp"
 #include "filter_method/FletcherFilterMethod.hpp"
 #include "filter_method/WaechterFilterMethod.hpp"
+#include "FunnelMethod.hpp"
 
 namespace uno {
    std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& strategy_type, const Options& options) {
@@ -23,9 +23,9 @@ namespace uno {
          return std::make_unique<FunnelMethod>(options);
       }
       throw std::invalid_argument("GlobalizationStrategy " + strategy_type + " is not supported");
-}
+   }
 
-std::vector<std::string> GlobalizationStrategyFactory::available_strategies() {
-   return {"l1_merit", "fletcher_filter_strategy", "waechter_filter_strategy", "funnel_strategy"};
-}
+   std::vector<std::string> GlobalizationStrategyFactory::available_strategies() {
+      return {"l1_merit", "fletcher_filter_method", "waechter_filter_method", "funnel_method"};
+   }
 }
