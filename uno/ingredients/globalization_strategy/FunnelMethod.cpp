@@ -139,7 +139,6 @@ void FunnelMethod::update_funnel_width(double current_infeasibility_measure, dou
    else if (this->parameters.funnel_update_strategy == 2)
    {
       this->funnel_width = trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (this->funnel_width - trial_infeasibility_measure);
-      std::cout << "Update 2" << std::endl;
    }
    else if (this->parameters.funnel_update_strategy == 3)
    {
