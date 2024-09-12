@@ -82,8 +82,8 @@ bool FunnelMethod::switching_condition(double predicted_reduction, double curren
 /*This function checks if the trial iterate infeasibility is inside of the current funnel*/
 bool FunnelMethod::is_infeasibility_acceptable_to_funnel(double infeasibility_measure) const
 {
-   if (infeasibility_measure <= this->parameters.beta*this->funnel_width)
-   { // beta is used here
+   if (infeasibility_measure <= this->funnel_width)
+   {
       return true;
    }
    else
@@ -96,12 +96,12 @@ bool FunnelMethod::is_infeasibility_acceptable_to_funnel(double infeasibility_me
 /*This function checks if the funnel sufficient decrease condition is satisfied*/
 bool FunnelMethod::is_funnel_sufficient_decrease_satisfied(double infeasibility_measure) const
 {
-   if (infeasibility_measure <= this->parameters.kappa_infeasibility_1*this->funnel_width)
-   { // kappa_1 is used here
+   if (infeasibility_measure <= this->parameters.beta*this->funnel_width)
+   {
       return true;
    }
    else {
-      DEBUG << "\t\tFunnel sufficiend decrease not satisfied.\n";
+      DEBUG << "\t\tFunnel sufficient decrease not satisfied.\n";
       return false;
    }
 }
