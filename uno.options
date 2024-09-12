@@ -35,6 +35,7 @@ statistics_TR_radius_column_order 10
 statistics_LS_step_length_column_order 10
 statistics_restoration_phase_column_order 20
 statistics_regularization_column_order 21
+statistics_funnel_width_column_order 25
 statistics_step_norm_column_order 31
 statistics_objective_column_order 100
 statistics_primal_infeasibility_column_order 101
@@ -122,6 +123,19 @@ filter_sufficient_infeasibility_decrease_factor 0.9
 
 # nonmonotone filter strategy
 nonmonotone_filter_number_dominated_entries 3
+
+##### funnel options #####
+# funnel options
+funnel_kappa 0.5
+funnel_beta 0.9999
+funnel_gamma 0.001
+funnel_delta 0.999
+funnel_ubd 1.0
+funnel_fact 1.5
+funnel_switching_infeasibility_exponent 2
+funnel_update_strategy 1
+
+funnel_check_current_point no
 
 ##### line search options #####
 # backtracking ratio

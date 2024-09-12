@@ -6,6 +6,7 @@
 #include "l1MeritFunction.hpp"
 #include "filter_method/FletcherFilterMethod.hpp"
 #include "filter_method/WaechterFilterMethod.hpp"
+#include "FunnelMethod.hpp"
 
 namespace uno {
    std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& strategy_type, const Options& options) {
@@ -18,10 +19,13 @@ namespace uno {
       else if (strategy_type == "waechter_filter_method") {
          return std::make_unique<WaechterFilterMethod>(options);
       }
+      else if (strategy_type == "funnel_method") {
+         return std::make_unique<FunnelMethod>(options);
+      }
       throw std::invalid_argument("GlobalizationStrategy " + strategy_type + " is not supported");
    }
 
    std::vector<std::string> GlobalizationStrategyFactory::available_strategies() {
-      return {"l1_merit", "fletcher_filter_strategy", "waechter_filter_strategy"};
+      return {"l1_merit", "fletcher_filter_method", "waechter_filter_method", "funnel_method"};
    }
-} // namespace
+}
