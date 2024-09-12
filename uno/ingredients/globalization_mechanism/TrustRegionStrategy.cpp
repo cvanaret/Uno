@@ -42,6 +42,7 @@ void TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Mod
    warmstart_information.set_hot_start();
    DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
+   // ERROR << "Current infeasibility = " << current_iterate.progress.infeasibility << "\n";
    size_t number_iterations = 0;
    while (true) { // TODO not very elegant
       try {

@@ -27,6 +27,8 @@ Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& o
    // use the initial primal-dual point to initialize the strategies and generate the initial iterate
    this->initialize(statistics, current_iterate, options);
 
+   ERROR << "Current infeasibility = " << current_iterate.progress.infeasibility << "\n";
+
    bool termination = false;
    current_iterate.status = TerminationStatus::NOT_OPTIMAL;
    // allocate the trial iterate once and for all here

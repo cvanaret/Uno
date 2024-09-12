@@ -177,6 +177,7 @@ TerminationStatus ConstraintRelaxationStrategy::check_termination(Iterate& curre
    // test convergence wrt the tight tolerance
    const TerminationStatus status_tight_tolerance = this->check_convergence_with_given_tolerance(current_iterate, this->tight_tolerance);
    if (status_tight_tolerance != TerminationStatus::NOT_OPTIMAL || this->loose_tolerance <= this->tight_tolerance) {
+      ERROR << "Current infeasibility = " << current_iterate.progress.infeasibility << "\n";
       return status_tight_tolerance;
    }
 

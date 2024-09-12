@@ -34,8 +34,8 @@ void FunnelMethod::initialize(Statistics& statistics, const Iterate& initial_ite
    double upper_bound = std::max(this->parameters.initial_upper_bound,
                                  this->parameters.initial_multiplication * initial_iterate.progress.infeasibility);
 
-   std::cout << "Funnel width: " << upper_bound << std::endl;
    this->funnel_width = upper_bound;
+   ERROR << "Current funnel width: " << this->funnel_width << "\n";
    this->first_iteration_in_solver_phase = true;
    statistics.set("funnel width", this->get_infeasibility_upper_bound());
 }
@@ -143,14 +143,12 @@ void FunnelMethod::update_funnel_width(double current_infeasibility_measure, dou
    {
       this->funnel_width = this->parameters.kappa_infeasibility_1 *this->funnel_width;
    }
-   std::cout << "Funnel width: " << this->funnel_width << std::endl;
    DEBUG << "\t\tNew funnel parameter is: " << this->funnel_width << "\n";    
 }
 
 void FunnelMethod::update_funnel_width_restoration(double current_infeasibility_measure)
 {
    this->funnel_width = current_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (this->funnel_width - current_infeasibility_measure);
-   std::cout << "Funnel width: " << this->funnel_width << std::endl;
    DEBUG << "\t\tNew funnel parameter is: " << this->funnel_width << "\n"; 
 }
 
@@ -172,7 +170,6 @@ bool FunnelMethod::is_iterate_acceptable(Statistics& statistics, const ProgressM
       const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier)
 {
    statistics.set("funnel width", this->get_infeasibility_upper_bound());
-   DEBUG << "Current funnel width:\n";
    if (!this->in_restoration_phase && (objective_multiplier == 0.))
    {
       this->restoration_entry_infeasibility = current_progress.infeasibility;
@@ -219,6 +216,8 @@ bool FunnelMethod::is_regular_iterate_acceptable(Statistics& statistics, const P
             if (this->armijo_sufficient_decrease(merit_predicted_reduction, objective_actual_reduction))
             {
                DEBUG << "\t\tTrial iterate (f-type) was ACCEPTED by satisfying Armijo condition\n";
+
+               // ERROR << "Current funnel width: " << this->funnel_width << "\n";
                accept = true;
             }
             else
@@ -232,6 +231,9 @@ bool FunnelMethod::is_regular_iterate_acceptable(Statistics& statistics, const P
          {
             DEBUG << "\t\tTrial iterate  (h-type) ACCEPTED by violating the switching condition ...\n";
             accept = true; // accept the step and reduce the tr-radius
+
+            // ERROR << "Current funnel width: " << this->funnel_width << "\n";
+
             DEBUG << "\t\tEntering funnel reduction mechanism\n";
             this->update_funnel_width(current_progress.infeasibility, trial_progress.infeasibility);
             statistics.set("funnel width", this->funnel_width);
@@ -257,6 +259,10 @@ bool FunnelMethod::is_regular_iterate_acceptable(Statistics& statistics, const P
 
    statistics.set("status", std::string(accept ? "accepted" : "rejected") + " (" + scenario + ")");
    DEBUG << '\n';
+   if (accept)
+   {
+      ERROR << "Current funnel width: " << this->funnel_width << "\n";
+   }
    return accept;
 }
 
@@ -284,5 +290,9 @@ bool FunnelMethod::is_feasibility_iterate_acceptable(Statistics& statistics, con
    }
    Iterate::number_eval_objective--;
    statistics.set("status", std::string(accept ? "accepted" : "rejected") + " (restoration)");
+   if (accept)
+   {
+      ERROR << "Current funnel width: " << this->funnel_width << "\n";
+   }
    return accept;
 }
