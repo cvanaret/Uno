@@ -7,13 +7,15 @@
 #include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
 
-// forward declaration
-class Options;
+namespace uno {
+   // forward declaration
+   class Options;
 
-class ConstraintRelaxationStrategyFactory {
-public:
-   static std::unique_ptr<ConstraintRelaxationStrategy> create(const Model& model, const Options& options);
-   static std::vector<std::string> available_strategies();
-};
+   class ConstraintRelaxationStrategyFactory {
+   public:
+      static std::unique_ptr<ConstraintRelaxationStrategy> create(const Model& model, const Options& options);
+      static std::vector<std::string> available_strategies();
+   };
+} // namespace
 
 #endif // UNO_CONSTRAINTRELAXATIONSTRATEGYFACTORY_H

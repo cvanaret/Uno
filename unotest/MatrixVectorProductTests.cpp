@@ -6,6 +6,8 @@
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "symbolic/MatrixVectorProduct.hpp"
 
+using namespace uno;
+
 TEST(MatrixVectorProduct, Test) {
    // (3, 7)
    // (7, 11)

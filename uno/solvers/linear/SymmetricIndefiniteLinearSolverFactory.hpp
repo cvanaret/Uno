@@ -11,25 +11,27 @@
 #include "MA57Solver.hpp"
 #endif
 
-class SymmetricIndefiniteLinearSolverFactory {
-public:
-   static std::unique_ptr<SymmetricIndefiniteLinearSolver<double>> create(const std::string& linear_solver_name, size_t dimension, size_t number_nonzeros) {
-#ifdef HAS_MA57
-      if (linear_solver_name == "MA57") {
-         return std::make_unique<MA57Solver>(dimension, number_nonzeros);
+namespace uno {
+   class SymmetricIndefiniteLinearSolverFactory {
+   public:
+      static std::unique_ptr<SymmetricIndefiniteLinearSolver<double>> create([[maybe_unused]] const std::string& linear_solver_name, [[maybe_unused]] size_t dimension, [[maybe_unused]] size_t number_nonzeros) {
+   #ifdef HAS_MA57
+         if (linear_solver_name == "MA57") {
+            return std::make_unique<MA57Solver>(dimension, number_nonzeros);
+         }
+   #endif
+         throw std::invalid_argument("Linear solver name is unknown");
       }
-#endif
-      throw std::invalid_argument("Linear solver name is unknown");
-   }
 
-   // return the list of available QP solvers
-   static std::vector<std::string> available_solvers() {
-      std::vector<std::string> solvers{};
-      #ifdef HAS_MA57
-      solvers.emplace_back("MA57");
-      #endif
-      return solvers;
-   }
-};
+      // return the list of available QP solvers
+      static std::vector<std::string> available_solvers() {
+         std::vector<std::string> solvers{};
+         #ifdef HAS_MA57
+         solvers.emplace_back("MA57");
+         #endif
+         return solvers;
+      }
+   };
+} // namespace
 
 #endif // UNO_LINEARSOLVERFACTORY_H

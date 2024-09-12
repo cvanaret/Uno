@@ -9,10 +9,12 @@
 #include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategy.hpp"
 #include "tools/Options.hpp"
 
-class GlobalizationMechanismFactory {
-public:
-   static std::unique_ptr<GlobalizationMechanism> create(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);
-   static std::vector<std::string> available_strategies();
-};
+namespace uno {
+   class GlobalizationMechanismFactory {
+   public:
+      static std::unique_ptr<GlobalizationMechanism> create(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);
+      static std::vector<std::string> available_strategies();
+   };
+} // namespace
 
 #endif // UNO_GLOBALIZATIONMECHANISMFACTORY_H

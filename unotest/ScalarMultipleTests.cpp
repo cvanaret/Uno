@@ -6,6 +6,8 @@
 #include "symbolic/ScalarMultiple.hpp"
 #include "symbolic/Range.hpp"
 
+using namespace uno;
+
 TEST(ScalarMultiple, TimesThree) {
    const std::vector<double> x{1., 2., 3.};
    const std::vector<double> reference_result{3., 6., 9.};

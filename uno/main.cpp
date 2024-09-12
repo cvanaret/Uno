@@ -19,39 +19,43 @@ void* operator new(size_t size) {
 }
 */
 
-void run_uno_ampl(const std::string& model_name, const Options& options) {
-   // AMPL model
-   std::unique_ptr<Model> ampl_model = std::make_unique<AMPLModel>(model_name);
+namespace uno {
+   void run_uno_ampl(const std::string& model_name, const Options& options) {
+      // AMPL model
+      std::unique_ptr<Model> ampl_model = std::make_unique<AMPLModel>(model_name);
 
-   // initialize initial primal and dual points
-   Iterate initial_iterate(ampl_model->number_variables, ampl_model->number_constraints);
-   ampl_model->initial_primal_point(initial_iterate.primals);
-   ampl_model->project_onto_variable_bounds(initial_iterate.primals);
-   ampl_model->initial_dual_point(initial_iterate.multipliers.constraints);
-   initial_iterate.feasibility_multipliers.reset();
+      // initialize initial primal and dual points
+      Iterate initial_iterate(ampl_model->number_variables, ampl_model->number_constraints);
+      ampl_model->initial_primal_point(initial_iterate.primals);
+      ampl_model->project_onto_variable_bounds(initial_iterate.primals);
+      ampl_model->initial_dual_point(initial_iterate.multipliers.constraints);
+      initial_iterate.feasibility_multipliers.reset();
 
-   // reformulate (scale, add slacks, relax the bounds, ...) if necessary
-   std::unique_ptr<Model> model = ModelFactory::reformulate(std::move(ampl_model), initial_iterate, options);
-   
-   // create the constraint relaxation strategy, the globalization mechanism and the Uno solver
-   auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(*model, options);
-   auto globalization_mechanism = GlobalizationMechanismFactory::create(*constraint_relaxation_strategy, options);
-   Uno uno = Uno(*globalization_mechanism, options);
+      // reformulate (scale, add slacks, relax the bounds, ...) if necessary
+      std::unique_ptr<Model> model = ModelFactory::reformulate(std::move(ampl_model), initial_iterate, options);
 
-   // solve the instance
-   Result result = uno.solve(*model, initial_iterate, options);
-   Uno::print_optimization_summary(options, result);
-   // std::cout << "memory_allocation_amount = " << memory_allocation_amount << '\n';
-}
+      // create the constraint relaxation strategy, the globalization mechanism and the Uno solver
+      auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(*model, options);
+      auto globalization_mechanism = GlobalizationMechanismFactory::create(*constraint_relaxation_strategy, options);
+      Uno uno = Uno(*globalization_mechanism, options);
 
-Level Logger::level = INFO;
+      // solve the instance
+      Result result = uno.solve(*model, initial_iterate, options);
+      Uno::print_optimization_summary(options, result);
+      // std::cout << "memory_allocation_amount = " << memory_allocation_amount << '\n';
+   }
+
+   Level Logger::level = INFO;
+} // namespace
 
 int main(int argc, char* argv[]) {
+   using namespace uno;
+   
    if (1 < argc) {
       // get the default options
-      Options options = get_default_options("uno.options");
+      Options options = Options::get_default_options("uno.options");
       // override them with the command line arguments
-      get_command_line_arguments(argc, argv, options);
+      options.get_command_line_arguments(argc, argv);
       Logger::set_logger(options.get_string("logger"));
 
       if (std::string(argv[1]) == "-v") {

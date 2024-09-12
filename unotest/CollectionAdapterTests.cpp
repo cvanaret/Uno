@@ -5,6 +5,8 @@
 #include "symbolic/CollectionAdapter.hpp"
 #include <vector>
 
+using namespace uno;
+
 TEST(CollectionAdapter, Size) {
    const std::vector<int> x{1, 2, 3};
    const auto y = CollectionAdapter(x);
