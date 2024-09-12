@@ -165,9 +165,10 @@ namespace uno {
          options["switch_to_optimality_requires_acceptance"] = "no";
          options["switch_to_optimality_requires_linearized_feasibility"] = "yes";
 
-         options["funnel_beta"] = "0.999";
+         options["funnel_beta"] = "0.9999";
          options["funnel_gamma"] = "0.001";
          options["funnel_delta"] = "0.999";
+         options["funnel_kappa"] = "0.5";
          options["funnel_ubd"] = "1.0";
          options["funnel_fact"] = "1.5";
          options["funnel_switching_infeasibility_exponent"] = "2";

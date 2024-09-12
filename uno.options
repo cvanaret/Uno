@@ -126,9 +126,8 @@ nonmonotone_filter_number_dominated_entries 3
 
 ##### funnel options #####
 # funnel options
-funnel_kappa_infeasibility_1 0.9
-funnel_kappa_infeasibility_2 0.9
-funnel_beta 0.99
+funnel_kappa 0.5
+funnel_beta 0.9999
 funnel_gamma 0.001
 funnel_delta 0.999
 funnel_ubd 1.0

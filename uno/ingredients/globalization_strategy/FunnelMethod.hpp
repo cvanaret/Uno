@@ -19,11 +19,10 @@ struct FunnelMethodParameters {
    double initial_multiplication;
    double delta; /*!< Switching constant */
    double switching_infeasibility_exponent;
-   double kappa_infeasibility_1;
-   double kappa_infeasibility_2;
+   double kappa;
    double beta; /*!< Margin around funnel */
    double gamma; /*!< For acceptability wrt current point. Margin around objective value */
-   int funnel_update_strategy;
+   int update_strategy;
 };
 
 /*! \class FunnelMethod

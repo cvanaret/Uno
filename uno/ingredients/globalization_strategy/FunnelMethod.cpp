@@ -18,8 +18,7 @@ FunnelMethod::FunnelMethod(const Options& options) :
          options.get_double("funnel_fact"),
          options.get_double("funnel_delta"),
          options.get_double("funnel_switching_infeasibility_exponent"),
-         options.get_double("funnel_kappa_infeasibility_1"),
-         options.get_double("funnel_kappa_infeasibility_2"),
+         options.get_double("funnel_kappa"),
          options.get_double("funnel_beta"),
          options.get_double("funnel_gamma"),
          options.get_int("funnel_update_strategy")
@@ -110,7 +109,7 @@ bool FunnelMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures&
 {
    if (this->in_restoration_phase)
    {
-      if (this->is_infeasibility_acceptable_to_funnel(trial_progress.infeasibility) && (trial_progress.infeasibility <= this->parameters.kappa_infeasibility_1*this->restoration_entry_infeasibility)){
+      if (this->is_infeasibility_acceptable_to_funnel(trial_progress.infeasibility) && (trial_progress.infeasibility <= this->parameters.beta*this->restoration_entry_infeasibility)){
          return true;
       } else {
          return false;
@@ -124,32 +123,32 @@ bool FunnelMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures&
 
 void FunnelMethod::update_funnel_width(double current_infeasibility_measure, double trial_infeasibility_measure)
 {
-   if (this->parameters.funnel_update_strategy == 1)
+   if (this->parameters.update_strategy == 1)
    {
       if (trial_infeasibility_measure <= current_infeasibility_measure)
       {
-         this->funnel_width = std::max(trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (current_infeasibility_measure - trial_infeasibility_measure), this->parameters.kappa_infeasibility_1 *this->funnel_width);
+         this->funnel_width = std::max(trial_infeasibility_measure + this->parameters.kappa * (current_infeasibility_measure - trial_infeasibility_measure), this->parameters.beta *this->funnel_width);
       }
       else
       {
          DEBUG << "Trial infeasibility higher than current infeasibility" << "\n";
-         this->funnel_width = this->parameters.kappa_infeasibility_1 *this->funnel_width;
+         this->funnel_width = this->parameters.beta *this->funnel_width;
       }
    }
-   else if (this->parameters.funnel_update_strategy == 2)
+   else if (this->parameters.update_strategy == 2)
    {
-      this->funnel_width = trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (this->funnel_width - trial_infeasibility_measure);
+      this->funnel_width = trial_infeasibility_measure + this->parameters.kappa * (this->funnel_width - trial_infeasibility_measure);
    }
-   else if (this->parameters.funnel_update_strategy == 3)
+   else if (this->parameters.update_strategy == 3)
    {
-      this->funnel_width = this->parameters.kappa_infeasibility_1 *this->funnel_width;
+      this->funnel_width = this->parameters.beta *this->funnel_width;
    }
    DEBUG << "\t\tNew funnel parameter is: " << this->funnel_width << "\n";    
 }
 
 void FunnelMethod::update_funnel_width_restoration(double current_infeasibility_measure)
 {
-   this->funnel_width = current_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (this->funnel_width - current_infeasibility_measure);
+   this->funnel_width = current_infeasibility_measure + this->parameters.kappa * (this->funnel_width - current_infeasibility_measure);
    DEBUG << "\t\tNew funnel parameter is: " << this->funnel_width << "\n"; 
 }
 
