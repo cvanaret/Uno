@@ -29,6 +29,7 @@ namespace uno {
    class FunnelMethod: public SwitchingMethod {
    public:
       explicit FunnelMethod(const Options& options);
+      ~FunnelMethod() override = default;
 
       void initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) override;
       [[nodiscard]] bool is_infeasibility_sufficiently_reduced(const ProgressMeasures& reference_progress,

@@ -50,6 +50,7 @@ namespace uno {
       DEBUG << "Trial merit = " << trial_merit << '\n';
       DEBUG << "Predicted merit reduction = " << predicted_merit_reduction << '\n';
       DEBUG << "Actual merit reduction = " << actual_merit_reduction << '\n';
+
       bool accept = false;
       if (this->armijo_sufficient_decrease(predicted_merit_reduction, actual_merit_reduction)) {
          DEBUG << "Trial iterate (h-type) was accepted by satisfying the Armijo condition\n";

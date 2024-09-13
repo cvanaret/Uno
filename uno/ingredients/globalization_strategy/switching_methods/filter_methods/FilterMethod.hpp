@@ -24,6 +24,7 @@ namespace uno {
    class FilterMethod: public SwitchingMethod {
    public:
       explicit FilterMethod(const Options& options);
+      ~FilterMethod() override = default;
 
       void initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) override;
       void reset() override;
