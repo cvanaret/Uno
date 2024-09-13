@@ -27,10 +27,10 @@ namespace uno {
       void set_infeasibility_upper_bound(double new_upper_bound);
 
       virtual void add(double current_infeasibility, double current_objective);
-      virtual bool acceptable(double trial_infeasibility, double trial_objective);
-      virtual bool acceptable_wrt_current_iterate(double current_infeasibility, double current_objective, double trial_infeasibility,
+      [[nodiscard]] virtual bool acceptable(double trial_infeasibility, double trial_objective);
+      [[nodiscard]] virtual bool acceptable_wrt_current_iterate(double current_infeasibility, double current_objective, double trial_infeasibility,
             double trial_objective) const;
-      virtual double compute_actual_objective_reduction(double current_objective, double current_infeasibility, double trial_objective);
+      [[nodiscard]] virtual double compute_actual_objective_reduction(double current_objective, double current_infeasibility, double trial_objective);
 
       [[nodiscard]] bool infeasibility_sufficient_reduction(double current_infeasibility, double trial_infeasibility) const;
       [[nodiscard]] bool objective_sufficient_reduction(double current_objective, double trial_objective, double trial_infeasibility) const;

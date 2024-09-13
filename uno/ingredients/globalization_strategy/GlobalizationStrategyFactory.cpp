@@ -6,7 +6,7 @@
 #include "l1MeritFunction.hpp"
 #include "switching_methods/filter_methods/FletcherFilterMethod.hpp"
 #include "switching_methods/filter_methods/WaechterFilterMethod.hpp"
-#include "switching_methods/FunnelMethod.hpp"
+#include "switching_methods/funnel_methods/FunnelMethod.hpp"
 
 namespace uno {
    std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& strategy_type, const Options& options) {

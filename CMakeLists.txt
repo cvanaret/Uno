@@ -34,6 +34,7 @@ file(GLOB UNO_SOURCE_FILES
     uno/ingredients/globalization_strategy/switching_methods/*.cpp
     uno/ingredients/globalization_strategy/switching_methods/filter_methods/*.cpp
     uno/ingredients/globalization_strategy/switching_methods/filter_methods/filters/*.cpp
+    uno/ingredients/globalization_strategy/switching_methods/funnel_methods/*.cpp
     uno/ingredients/constraint_relaxation_strategy/*.cpp
     uno/ingredients/subproblem/*.cpp
     uno/ingredients/subproblem/inequality_constrained_methods/*.cpp

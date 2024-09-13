@@ -135,7 +135,7 @@ funnel_fact 1.5
 funnel_switching_infeasibility_exponent 2
 funnel_update_strategy 1
 
-funnel_check_current_point no
+funnel_require_acceptance_wrt_current_iterate no
 
 ##### line search options #####
 # backtracking ratio
