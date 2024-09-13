@@ -25,7 +25,9 @@ namespace uno {
       [[nodiscard]] virtual bool is_infeasibility_sufficiently_reduced(const ProgressMeasures& reference_progress, const ProgressMeasures& trial_progress) const = 0;
 
       virtual void reset() = 0;
-      virtual void register_current_progress(const ProgressMeasures& current_progress) = 0;
+
+      virtual void notify_switch_to_feasibility(const ProgressMeasures& current_progress) = 0;
+      virtual void notify_switch_to_optimality(const ProgressMeasures& current_progress) = 0;
 
    protected:
       const double armijo_decrease_fraction; /*!< Sufficient reduction constant */

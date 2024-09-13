@@ -18,7 +18,10 @@ namespace uno {
    void l1MeritFunction::reset() {
    }
 
-   void l1MeritFunction::register_current_progress(const ProgressMeasures& /*current_progress*/) {
+   void l1MeritFunction::notify_switch_to_feasibility(const ProgressMeasures& /*current_progress*/) {
+   }
+
+   void l1MeritFunction::notify_switch_to_optimality(const ProgressMeasures& /*current_progress*/) {
    }
 
    bool l1MeritFunction::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,

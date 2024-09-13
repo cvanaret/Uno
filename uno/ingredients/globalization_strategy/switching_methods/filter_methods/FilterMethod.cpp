@@ -19,30 +19,20 @@ namespace uno {
 
    void FilterMethod::initialize(Statistics& /*statistics*/, const Iterate& initial_iterate, const Options& /*options*/) {
       // set the filter upper bound
-      double upper_bound = std::max(this->parameters.upper_bound, this->parameters.infeasibility_factor * initial_iterate.progress.infeasibility);
+      const double upper_bound = std::max(this->parameters.upper_bound, this->parameters.infeasibility_factor * initial_iterate.progress.infeasibility);
       this->filter->set_infeasibility_upper_bound(upper_bound);
-   }
-
-   /* check acceptability of step(s) (filter & sufficient reduction)
-    * filter methods enforce an *unconstrained* sufficient decrease condition
-    * precondition: feasible step
-    * */
-   bool FilterMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
-         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) {
-      const bool solving_feasibility_problem = (objective_multiplier == 0.);
-      if (solving_feasibility_problem) {
-         return this->is_feasibility_iterate_acceptable(statistics, current_progress, trial_progress, predicted_reduction);
-      }
-      else {
-         return this->is_regular_iterate_acceptable(statistics, current_progress, trial_progress, predicted_reduction);
-      }
    }
 
    void FilterMethod::reset() {
       this->filter->reset();
    }
 
-   void FilterMethod::register_current_progress(const ProgressMeasures& current_progress) {
+   void FilterMethod::notify_switch_to_feasibility(const ProgressMeasures& current_progress) {
+      const double current_objective_measure = SwitchingMethod::unconstrained_merit_function(current_progress);
+      this->filter->add(current_progress.infeasibility, current_objective_measure);
+   }
+
+   void FilterMethod::notify_switch_to_optimality(const ProgressMeasures& current_progress) {
       const double current_objective_measure = SwitchingMethod::unconstrained_merit_function(current_progress);
       this->filter->add(current_progress.infeasibility, current_objective_measure);
    }
@@ -57,5 +47,7 @@ namespace uno {
       return actual_reduction;
    }
 
-
+   void FilterMethod::set_statistics(Statistics& /*statistics*/) const {
+      // do nothing
+   }
 } // namespace

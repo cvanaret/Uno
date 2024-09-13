@@ -22,6 +22,22 @@ namespace uno {
       return predicted_reduction > this->delta * std::pow(current_infeasibility, this->switching_infeasibility_exponent);
    }
 
+   /* check acceptability of step
+    * switching methods enforce an *unconstrained* sufficient decrease condition
+    * precondition: feasible step
+    * */
+   bool SwitchingMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
+         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) {
+      this->set_statistics(statistics);
+      const bool solving_feasibility_problem = (objective_multiplier == 0.);
+      if (solving_feasibility_problem) {
+         return this->is_feasibility_iterate_acceptable(statistics, current_progress, trial_progress, predicted_reduction);
+      }
+      else {
+         return this->is_regular_iterate_acceptable(statistics, current_progress, trial_progress, predicted_reduction);
+      }
+   }
+
    // solving the feasibility problem = working on infeasibility only (no filter acceptability test)
    bool SwitchingMethod::is_feasibility_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction) {

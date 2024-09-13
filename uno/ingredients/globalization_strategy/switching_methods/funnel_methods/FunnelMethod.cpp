@@ -22,24 +22,12 @@ namespace uno {
    }
 
    void FunnelMethod::initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) {
-      statistics.add_column("funnel width", Statistics::double_width, options.get_int("statistics_funnel_width_column_order"));
-      const double infeasibility_upper_bound = std::max(this->parameters.initial_upper_bound,
-            this->parameters.infeasibility_factor * initial_iterate.progress.infeasibility);
-      this->funnel.set_infeasibility_upper_bound(infeasibility_upper_bound);
+      const double upper_bound = std::max(this->parameters.initial_upper_bound, this->parameters.infeasibility_factor * initial_iterate.progress.infeasibility);
+      this->funnel.set_infeasibility_upper_bound(upper_bound);
       DEBUG << "Current funnel width: " << this->funnel.current_width() << '\n';
-      statistics.set("funnel width", this->funnel.current_width());
-   }
 
-   bool FunnelMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
-         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) {
+      statistics.add_column("funnel width", Statistics::double_width, options.get_int("statistics_funnel_width_column_order"));
       statistics.set("funnel width", this->funnel.current_width());
-      this->in_restoration_phase = (objective_multiplier == 0.);
-      if (this->in_restoration_phase) {
-         return this->is_feasibility_iterate_acceptable(statistics, current_progress, trial_progress, predicted_reduction);
-      }
-      else {
-         return this->is_regular_iterate_acceptable(statistics, current_progress, trial_progress, predicted_reduction);
-      }
    }
 
    bool FunnelMethod::is_regular_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
@@ -100,7 +88,6 @@ namespace uno {
       }
 
       statistics.set("status", std::string(accept ? "accepted" : "rejected") + " (" + scenario + ")");
-      DEBUG << '\n';
       if (accept) {
          this->funnel.print();
       }
@@ -116,11 +103,12 @@ namespace uno {
       // do nothing
    }
 
-   void FunnelMethod::register_current_progress(const ProgressMeasures& current_progress_measures) {
-      if (this->in_restoration_phase) {
-         DEBUG << "Funnel is reduced after restoration phase\n";
-         this->funnel.update_restoration(current_progress_measures.infeasibility);
-      }
+   void FunnelMethod::notify_switch_to_feasibility(const ProgressMeasures& /*current_progress_measures*/) {
+   }
+
+   void FunnelMethod::notify_switch_to_optimality(const ProgressMeasures& current_progress_measures) {
+      DEBUG << "Funnel is reduced after restoration phase\n";
+      this->funnel.update_restoration(current_progress_measures.infeasibility);
    }
 
    // check acceptability wrt current point
@@ -145,5 +133,9 @@ namespace uno {
          actual_reduction += 10. * machine_epsilon * std::abs(current_objective_measure);
       }
       return actual_reduction;
+   }
+
+   void FunnelMethod::set_statistics(Statistics& statistics) const {
+      statistics.set("funnel width", this->funnel.current_width());
    }
 } // namespace

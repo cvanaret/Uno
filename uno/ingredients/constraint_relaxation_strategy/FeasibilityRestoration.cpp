@@ -95,7 +95,7 @@ namespace uno {
    void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate) {
       DEBUG << "Switching from optimality to restoration phase\n";
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
-      this->globalization_strategy->register_current_progress(current_iterate.progress);
+      this->globalization_strategy->notify_switch_to_feasibility(current_iterate.progress);
       this->subproblem->initialize_feasibility_problem(this->feasibility_problem, current_iterate);
       // save the progress of the current point upon switching
       this->reference_optimality_progress = current_iterate.progress;
@@ -133,7 +133,7 @@ namespace uno {
    void FeasibilityRestoration::switch_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate) {
       DEBUG << "Switching from restoration to optimality phase\n";
       this->current_phase = Phase::OPTIMALITY;
-      this->globalization_strategy->register_current_progress(current_iterate.progress);
+      this->globalization_strategy->notify_switch_to_optimality(current_iterate.progress);
       current_iterate.set_number_variables(this->optimality_problem.number_variables);
       trial_iterate.set_number_variables(this->optimality_problem.number_variables);
       current_iterate.objective_multiplier = trial_iterate.objective_multiplier = 1.;

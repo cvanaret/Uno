@@ -26,19 +26,17 @@ namespace uno {
       explicit FilterMethod(const Options& options);
 
       void initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) override;
-      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
-            const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) override;
       void reset() override;
-      void register_current_progress(const ProgressMeasures& current_progress) override;
+      void notify_switch_to_feasibility(const ProgressMeasures& current_progress) override;
+      void notify_switch_to_optimality(const ProgressMeasures& current_progress) override;
 
    protected:
       // pointer to allow polymorphism
       const std::unique_ptr<Filter> filter;
       const FilterStrategyParameters parameters; /*!< Set of constants */
 
-      [[nodiscard]] virtual bool is_regular_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
-            const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction) = 0;
       [[nodiscard]] double compute_actual_objective_reduction(double current_objective_measure, double current_infeasibility, double trial_objective_measure);
+      void set_statistics(Statistics& statistics) const override;
    };
 } // namespace
 

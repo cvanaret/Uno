@@ -31,12 +31,11 @@ namespace uno {
       explicit FunnelMethod(const Options& options);
 
       void initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) override;
-      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
-            const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) override;
       [[nodiscard]] bool is_infeasibility_sufficiently_reduced(const ProgressMeasures& reference_progress,
             const ProgressMeasures& trial_progress) const override;
       void reset() override;
-      void register_current_progress(const ProgressMeasures& current_progress_measures) override;
+      void notify_switch_to_feasibility(const ProgressMeasures& current_progress_measures) override;
+      void notify_switch_to_optimality(const ProgressMeasures& current_progress_measures) override;
 
       [[nodiscard]] bool acceptable_wrt_current_iterate(double current_infeasibility, double current_objective, double trial_infeasibility,
             double trial_objective) const;
@@ -46,12 +45,12 @@ namespace uno {
    protected:
       Funnel funnel;
       const FunnelMethodParameters parameters; /*!< Set of constants */
-      bool in_restoration_phase{false};
       const bool require_acceptance_wrt_current_iterate;
 
       [[nodiscard]] bool is_regular_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
-            const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction);
+            const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction) override;
       [[nodiscard]] double compute_actual_objective_reduction(double current_optimality_measure, double trial_optimality_measure);
+      void set_statistics(Statistics& statistics) const override;
    };
 } // namespace
 
