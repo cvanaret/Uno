@@ -5,7 +5,7 @@
 #define UNO_L1RELAXEDPROBLEM_H
 
 #include "OptimizationProblem.hpp"
-#include "ingredients/constraint_relaxation_strategy/ElasticVariables.hpp"
+#include "ElasticVariables.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
