@@ -12,7 +12,6 @@ namespace uno {
          SwitchingMethod(options),
          filter(FilterFactory::create(options)),
          parameters({
-            options.get_double("filter_delta"),
             options.get_double("filter_ubd"),
             options.get_double("filter_fact"),
          }) {
@@ -20,7 +19,7 @@ namespace uno {
 
    void FilterMethod::initialize(Statistics& /*statistics*/, const Iterate& initial_iterate, const Options& /*options*/) {
       // set the filter upper bound
-      double upper_bound = std::max(this->parameters.upper_bound, this->parameters.infeasibility_fraction * initial_iterate.progress.infeasibility);
+      double upper_bound = std::max(this->parameters.upper_bound, this->parameters.infeasibility_factor * initial_iterate.progress.infeasibility);
       this->filter->set_infeasibility_upper_bound(upper_bound);
    }
 

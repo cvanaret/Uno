@@ -13,10 +13,11 @@ namespace uno {
       ~SwitchingMethod() override = default;
 
    protected:
+      const double delta;
       const double switching_infeasibility_exponent;
 
       [[nodiscard]] static double unconstrained_merit_function(const ProgressMeasures& progress);
-      [[nodiscard]] bool switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const;
+      [[nodiscard]] bool switching_condition(double predicted_reduction, double current_infeasibility) const;
       [[nodiscard]] bool is_feasibility_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
             const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction);
    };

@@ -90,7 +90,7 @@ namespace uno {
          options["filter_type"] = "standard";
          options["filter_beta"] = "0.99999";
          options["filter_gamma"] = "1e-8";
-         options["filter_delta"] = "1";
+         options["switching_delta"] = "1";
          options["filter_ubd"] = "1e4";
          options["filter_fact"] = "1e4";
          options["filter_switching_infeasibility_exponent"] = "1.1";
@@ -167,7 +167,7 @@ namespace uno {
 
          options["funnel_beta"] = "0.9999";
          options["funnel_gamma"] = "0.001";
-         options["funnel_delta"] = "0.999";
+         options["switching_delta"] = "0.999";
          options["funnel_kappa"] = "0.5";
          options["funnel_ubd"] = "1.0";
          options["funnel_fact"] = "1.5";

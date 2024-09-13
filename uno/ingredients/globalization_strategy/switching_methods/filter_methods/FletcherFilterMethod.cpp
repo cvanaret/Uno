@@ -27,7 +27,7 @@ namespace uno {
       if (this->filter->acceptable(trial_progress.infeasibility, trial_merit)) {
          if (this->filter->acceptable_wrt_current_iterate(current_progress.infeasibility, current_merit, trial_progress.infeasibility, trial_merit)) {
             // switching condition: check whether the unconstrained predicted reduction is sufficiently positive
-            if (this->switching_condition(merit_predicted_reduction, current_progress.infeasibility, this->parameters.delta)) {
+            if (this->switching_condition(merit_predicted_reduction, current_progress.infeasibility)) {
                // unconstrained Armijo sufficient decrease condition: predicted reduction should be positive (f-type)
                const double merit_actual_reduction = this->compute_actual_objective_reduction(current_merit, current_progress.infeasibility, trial_merit);
                DEBUG << "Unconstrained actual reduction = " << merit_actual_reduction << '\n';

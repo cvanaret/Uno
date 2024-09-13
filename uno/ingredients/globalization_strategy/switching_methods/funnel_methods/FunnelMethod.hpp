@@ -16,8 +16,7 @@
 namespace uno {
    struct FunnelMethodParameters {
       double initial_upper_bound;
-      double initial_multiplication;
-      double delta; /*!< Switching constant */
+      double infeasibility_factor;
       double beta; /*!< Margin around funnel */
       double gamma; /*!< For acceptability wrt current point. Margin around objective value */
    };

@@ -15,7 +15,6 @@ namespace uno {
          parameters({
                options.get_double("funnel_ubd"),
                options.get_double("funnel_fact"),
-               options.get_double("funnel_delta"),
                options.get_double("funnel_beta"),
                options.get_double("funnel_gamma"),
          }),
@@ -25,7 +24,7 @@ namespace uno {
    void FunnelMethod::initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) {
       statistics.add_column("funnel width", Statistics::double_width, options.get_int("statistics_funnel_width_column_order"));
       const double infeasibility_upper_bound = std::max(this->parameters.initial_upper_bound,
-            this->parameters.initial_multiplication * initial_iterate.progress.infeasibility);
+            this->parameters.infeasibility_factor * initial_iterate.progress.infeasibility);
       this->funnel.set_infeasibility_upper_bound(infeasibility_upper_bound);
       DEBUG << "Current funnel width: " << this->funnel.current_width() << '\n';
       statistics.set("funnel width", this->funnel.current_width());
@@ -61,7 +60,7 @@ namespace uno {
          if (not this->require_acceptance_wrt_current_iterate ||
              this->acceptable_wrt_current_iterate(current_progress.infeasibility, current_merit, trial_progress.infeasibility, trial_merit)) {
             // f-type step
-            if (this->switching_condition(merit_predicted_reduction, current_progress.infeasibility, this->parameters.delta)) {
+            if (this->switching_condition(merit_predicted_reduction, current_progress.infeasibility)) {
                DEBUG << "Trial iterate satisfies switching condition\n";
                // unconstrained Armijo sufficient decrease condition (predicted reduction should be positive)
                const double objective_actual_reduction = this->compute_actual_objective_reduction(current_merit, trial_merit);

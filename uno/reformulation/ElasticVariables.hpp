@@ -12,8 +12,8 @@ namespace uno {
 
    class ElasticVariables {
    public:
-      SparseVector<size_t> positive;
-      SparseVector<size_t> negative;
+      SparseVector<size_t> positive{};
+      SparseVector<size_t> negative{};
 
       ElasticVariables(size_t number_positive_variables, size_t number_negative_variables);
       [[nodiscard]] size_t size() const { return this->positive.size() + this->negative.size(); }

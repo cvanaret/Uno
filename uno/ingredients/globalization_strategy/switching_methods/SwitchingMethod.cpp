@@ -11,14 +11,15 @@
 
 namespace uno {
    SwitchingMethod::SwitchingMethod(const Options& options): GlobalizationStrategy(options),
-      switching_infeasibility_exponent(options.get_double("filter_switching_infeasibility_exponent")) { }
+      delta(options.get_double("switching_delta")),
+      switching_infeasibility_exponent(options.get_double("switching_infeasibility_exponent")) { }
 
    double SwitchingMethod::unconstrained_merit_function(const ProgressMeasures& progress) {
       return progress.objective(1.) + progress.auxiliary;
    }
 
-   bool SwitchingMethod::switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const {
-      return predicted_reduction > switching_fraction * std::pow(current_infeasibility, this->switching_infeasibility_exponent);
+   bool SwitchingMethod::switching_condition(double predicted_reduction, double current_infeasibility) const {
+      return predicted_reduction > this->delta * std::pow(current_infeasibility, this->switching_infeasibility_exponent);
    }
 
    // solving the feasibility problem = working on infeasibility only (no filter acceptability test)

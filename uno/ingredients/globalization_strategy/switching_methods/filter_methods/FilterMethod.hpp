@@ -17,9 +17,8 @@ namespace uno {
     *  Set of constants to control the filter strategy
     */
    struct FilterStrategyParameters {
-      double delta; /*!< Switching constant */
       double upper_bound;
-      double infeasibility_fraction;
+      double infeasibility_factor;
    };
 
    class FilterMethod: public SwitchingMethod {

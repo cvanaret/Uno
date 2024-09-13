@@ -38,8 +38,7 @@ namespace uno {
 
          // TODO put this coefficient in the option file
          const bool small_infeasibility = current_progress.infeasibility <= 1e-4 * std::max(1., this->initial_infeasibility);
-         const bool switching = (0. < merit_predicted_reduction) && this->switching_condition(merit_predicted_reduction, current_progress.infeasibility,
-               this->parameters.delta);
+         const bool switching = (0. < merit_predicted_reduction) && this->switching_condition(merit_predicted_reduction, current_progress.infeasibility);
          const bool sufficient_decrease = this->armijo_sufficient_decrease(merit_predicted_reduction, merit_actual_reduction);
 
          // switching condition: the unconstrained predicted reduction is sufficiently positive
