@@ -28,7 +28,8 @@ namespace uno {
          tight_tolerance(options.get_double("tolerance")),
          loose_tolerance(options.get_double("loose_tolerance")),
          loose_tolerance_consecutive_iteration_threshold(options.get_unsigned_int("loose_tolerance_consecutive_iteration_threshold")),
-         unbounded_objective_threshold(options.get_double("unbounded_objective_threshold")) {
+         unbounded_objective_threshold(options.get_double("unbounded_objective_threshold")),
+         first_order_predicted_reduction(options.get_string("globalization_mechanism") == "LS") {
    }
 
    void ConstraintRelaxationStrategy::set_trust_region_radius(double trust_region_radius) {
@@ -73,6 +74,15 @@ namespace uno {
       const double quadratic_term = hessian.quadratic_product(primal_direction, primal_direction);
       return [=](double objective_multiplier) {
          return step_length * (-objective_multiplier*directional_derivative) - step_length*step_length/2. * quadratic_term;
+      };
+   }
+
+   std::function<double(double)> ConstraintRelaxationStrategy::compute_predicted_objective_reduction_model(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length) const {
+      // predicted objective reduction: "-∇f(x)^T (αd)"
+      const double directional_derivative = dot(primal_direction, current_iterate.evaluations.objective_gradient);
+      return [=](double objective_multiplier) {
+         return step_length * (-objective_multiplier*directional_derivative) ;
       };
    }
 

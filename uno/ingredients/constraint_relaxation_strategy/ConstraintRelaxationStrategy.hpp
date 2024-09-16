@@ -68,6 +68,8 @@ namespace uno {
       size_t loose_tolerance_consecutive_iterations{0};
       const size_t loose_tolerance_consecutive_iteration_threshold;
       const double unbounded_objective_threshold;
+      // first_order_predicted_reduction is true when the predicted reduction can be taken as first-order (e.g. in line-search methods)
+      const bool first_order_predicted_reduction;
 
       void set_objective_measure(Iterate& iterate) const;
       void set_infeasibility_measure(Iterate& iterate) const;
@@ -75,6 +77,8 @@ namespace uno {
             double step_length) const;
       [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction_model(const Iterate& current_iterate,
             const Vector<double>& primal_direction, double step_length, const SymmetricMatrix<double>& hessian) const;
+      [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction_model(const Iterate& current_iterate,
+            const Vector<double>& primal_direction, double step_length) const;
       void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate);
       virtual void evaluate_progress_measures(Iterate& iterate) const = 0;
 
