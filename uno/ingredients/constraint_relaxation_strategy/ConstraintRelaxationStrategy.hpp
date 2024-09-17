@@ -49,7 +49,7 @@ namespace uno {
       // trial iterate acceptance
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
             double step_length) = 0;
-      [[nodiscard]] TerminationStatus check_termination(Iterate& current_iterate);
+      [[nodiscard]] TerminationStatus check_termination(Iterate& iterate);
 
       // primal-dual residuals
       virtual void compute_primal_dual_residuals(Iterate& iterate) = 0;
@@ -89,7 +89,7 @@ namespace uno {
       [[nodiscard]] double compute_stationarity_scaling(const Multipliers& multipliers) const;
       [[nodiscard]] double compute_complementarity_scaling(const Multipliers& multipliers) const;
 
-      [[nodiscard]] TerminationStatus check_convergence_with_given_tolerance(Iterate& current_iterate, double tolerance) const;
+      [[nodiscard]] TerminationStatus check_first_order_convergence(Iterate& current_iterate, double tolerance) const;
 
       void set_statistics(Statistics& statistics, const Iterate& iterate) const;
       void set_progress_statistics(Statistics& statistics, const Iterate& iterate) const;

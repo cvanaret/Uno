@@ -184,19 +184,22 @@ namespace uno {
       }
    }
 
-   TerminationStatus ConstraintRelaxationStrategy::check_termination(Iterate& current_iterate) {
-      if (current_iterate.is_objective_computed && current_iterate.evaluations.objective < this->unbounded_objective_threshold) {
+   TerminationStatus ConstraintRelaxationStrategy::check_termination(Iterate& iterate) {
+      if (iterate.is_objective_computed && iterate.evaluations.objective < this->unbounded_objective_threshold) {
          return TerminationStatus::UNBOUNDED;
       }
 
+      // compute the residuals
+      this->compute_primal_dual_residuals(iterate);
+
       // test convergence wrt the tight tolerance
-      const TerminationStatus status_tight_tolerance = this->check_convergence_with_given_tolerance(current_iterate, this->tight_tolerance);
+      const TerminationStatus status_tight_tolerance = this->check_first_order_convergence(iterate, this->tight_tolerance);
       if (status_tight_tolerance != TerminationStatus::NOT_OPTIMAL || this->loose_tolerance <= this->tight_tolerance) {
          return status_tight_tolerance;
       }
 
       // if not converged, check convergence wrt loose tolerance (provided it is strictly looser than the tight tolerance)
-      const TerminationStatus status_loose_tolerance = this->check_convergence_with_given_tolerance(current_iterate, this->loose_tolerance);
+      const TerminationStatus status_loose_tolerance = this->check_first_order_convergence(iterate, this->loose_tolerance);
       // if converged, keep track of the number of consecutive iterations
       if (status_loose_tolerance != TerminationStatus::NOT_OPTIMAL) {
          this->loose_tolerance_consecutive_iterations++;
@@ -214,7 +217,7 @@ namespace uno {
       }
    }
 
-   TerminationStatus ConstraintRelaxationStrategy::check_convergence_with_given_tolerance(Iterate& current_iterate, double tolerance) const {
+   TerminationStatus ConstraintRelaxationStrategy::check_first_order_convergence(Iterate& current_iterate, double tolerance) const {
       // evaluate termination conditions based on optimality conditions
       const bool KKT_stationarity = (current_iterate.residuals.KKT_stationarity / current_iterate.residuals.stationarity_scaling <= tolerance);
       const bool FJ_stationarity = (current_iterate.residuals.FJ_stationarity <= tolerance);

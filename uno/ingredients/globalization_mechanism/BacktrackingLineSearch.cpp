@@ -99,6 +99,14 @@ namespace uno {
          throw std::runtime_error("Regular LS failed");
       }
       else {
+         // check if we can terminate at a first-order point
+         trial_iterate.status = this->constraint_relaxation_strategy.check_termination(trial_iterate);
+         if (trial_iterate.status != TerminationStatus::NOT_OPTIMAL) {
+            statistics.set("status", "small step size");
+            return;
+         }
+
+         // switch to solving the feasibility problem
          warmstart_information.set_cold_start();
          statistics.set("status", "LS failed");
          this->constraint_relaxation_strategy.switch_to_feasibility_problem(statistics, current_iterate);

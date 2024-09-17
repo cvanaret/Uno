@@ -78,8 +78,8 @@ namespace uno {
 
                // check whether the trial iterate (current iterate + full step) is acceptable
                if (this->is_iterate_acceptable(statistics, current_iterate, trial_iterate, this->direction, number_iterations)) {
-                  this->reset_radius();
                   trial_iterate.status = this->constraint_relaxation_strategy.check_termination(trial_iterate);
+                  this->reset_radius();
                   return;
                }
                else {
@@ -113,7 +113,6 @@ namespace uno {
       if (accept_iterate) {
          // possibly increase the radius if trust region is active
          this->possibly_increase_radius(direction.norm);
-         //trial_iterate.status = this->constraint_relaxation_strategy.check_termination(trial_iterate);
       }
       else if (this->radius < this->minimum_radius) { // rejected, but small radius
          accept_iterate = this->check_termination_with_small_step(trial_iterate);

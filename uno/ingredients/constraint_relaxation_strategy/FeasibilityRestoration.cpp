@@ -167,7 +167,6 @@ namespace uno {
                predicted_reduction, this->current_problem().get_objective_multiplier());
       }
       if (accept_iterate) {
-         this->compute_primal_dual_residuals(trial_iterate);
          this->set_dual_residuals_statistics(statistics, trial_iterate);
       }
       ConstraintRelaxationStrategy::set_progress_statistics(statistics, trial_iterate);
