@@ -185,6 +185,10 @@ namespace uno {
    }
 
    TerminationStatus ConstraintRelaxationStrategy::check_termination(Iterate& current_iterate) {
+      if (current_iterate.is_objective_computed && current_iterate.evaluations.objective < this->unbounded_objective_threshold) {
+         return TerminationStatus::UNBOUNDED;
+      }
+
       // test convergence wrt the tight tolerance
       const TerminationStatus status_tight_tolerance = this->check_convergence_with_given_tolerance(current_iterate, this->tight_tolerance);
       if (status_tight_tolerance != TerminationStatus::NOT_OPTIMAL || this->loose_tolerance <= this->tight_tolerance) {
@@ -229,10 +233,7 @@ namespace uno {
       DEBUG << "Primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
       DEBUG << "Not all zero multipliers: " << std::boolalpha << no_trivial_duals << "\n\n";
 
-      if (current_iterate.is_objective_computed && current_iterate.evaluations.objective < this->unbounded_objective_threshold) {
-         return TerminationStatus::UNBOUNDED;
-      }
-      else if (KKT_stationarity && primal_feasibility && 0. < current_iterate.objective_multiplier && complementarity) {
+      if (KKT_stationarity && primal_feasibility && 0. < current_iterate.objective_multiplier && complementarity) {
          // feasible regular stationary point
          return TerminationStatus::FEASIBLE_KKT_POINT;
       }

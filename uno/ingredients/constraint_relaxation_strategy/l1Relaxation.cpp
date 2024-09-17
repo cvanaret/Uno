@@ -247,7 +247,6 @@ namespace uno {
       if (accept_iterate) {
          this->check_exact_relaxation(trial_iterate);
          this->compute_primal_dual_residuals(trial_iterate);
-         trial_iterate.status = this->check_termination(trial_iterate);
          this->set_dual_residuals_statistics(statistics, trial_iterate);
       }
       this->set_progress_statistics(statistics, trial_iterate);

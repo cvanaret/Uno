@@ -77,8 +77,9 @@ namespace uno {
                this->reset_active_trust_region_multipliers(model, this->direction, trial_iterate);
 
                // check whether the trial iterate (current iterate + full step) is acceptable
-               if (this->is_iterate_acceptable(statistics, model, current_iterate, trial_iterate, this->direction, number_iterations)) {
+               if (this->is_iterate_acceptable(statistics, current_iterate, trial_iterate, this->direction, number_iterations)) {
                   this->reset_radius();
+                  trial_iterate.status = this->constraint_relaxation_strategy.check_termination(trial_iterate);
                   return;
                }
                else {
@@ -101,7 +102,7 @@ namespace uno {
    }
 
    // the trial iterate is accepted by the constraint relaxation strategy or if the step is small and we cannot switch to solving the feasibility problem
-   bool TrustRegionStrategy::is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
+   bool TrustRegionStrategy::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, size_t number_iterations) {
       // direction.primal_dual_step_length is usually 1, can be lower if reduced by fraction-to-boundary rule
       bool accept_iterate = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, 1.);
@@ -112,9 +113,10 @@ namespace uno {
       if (accept_iterate) {
          // possibly increase the radius if trust region is active
          this->possibly_increase_radius(direction.norm);
+         //trial_iterate.status = this->constraint_relaxation_strategy.check_termination(trial_iterate);
       }
       else if (this->radius < this->minimum_radius) { // rejected, but small radius
-         accept_iterate = this->check_termination_with_small_step(model, trial_iterate);
+         accept_iterate = this->check_termination_with_small_step(trial_iterate);
       }
       return accept_iterate;
    }
@@ -164,7 +166,7 @@ namespace uno {
       }
    }
 
-   bool TrustRegionStrategy::check_termination_with_small_step(const Model& /*model*/, Iterate& trial_iterate) const {
+   bool TrustRegionStrategy::check_termination_with_small_step(Iterate& trial_iterate) const {
       // terminate with a feasible point
       if (trial_iterate.progress.infeasibility <= this->tolerance) {
          trial_iterate.status = TerminationStatus::FEASIBLE_SMALL_STEP;
